@@ -112,7 +112,7 @@ final class Expression_Preparation
 	public static function prepare_string(string_literal_node $node, preparation_context $context): prepared_string_literal
 	{
 		$facts = new prepared_string_literal();
-		$text = $context->collection->token_snapshot()->text_at($node->start_token());
+		$text = $node->literal_spelling($context->collection->token_snapshot());
 		$facts->value = String_Literals::decode($text);
 		$facts->type = $context->string_type;
 		return $facts;

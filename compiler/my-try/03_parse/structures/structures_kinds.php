@@ -35,7 +35,8 @@ enum node_kind
 	case punctuation;
 	case comment;
 	case array_type;
-	case array_literal;
+	case data_construction;
+	case data_entry;
 	case index_expression;
 	case integer_literal;
 	case null_literal;
@@ -63,6 +64,12 @@ enum node_kind
 	case expression_statement;
 	case return_statement;
 	case variable_declaration;
+}
+
+/** Source notation is queried from tokens, never retained as a duplicate node flag. */
+enum data_source_representation {
+	case php_like;
+	case js_like;
 }
 
 /** Keep enum reflection beside its declaration for native lowering. */

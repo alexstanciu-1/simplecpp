@@ -15,9 +15,11 @@ function dispatch_parse(string $text): parsed_file
 
 Compiler_Lifecycle::reset();
 $parsed = dispatch_parse('function unsupported(): int { return 17; }');
-$unsupported = new array_literal_node();
+$unsupported = new data_construction_node();
 $literal = new integer_literal_node();
-$unsupported->elements->append($literal);
+$entry = new data_entry_node();
+$entry->value = $literal;
+$unsupported->entries->append($entry);
 $context = new preparation_context();
 $failures = 0;
 try {

@@ -472,6 +472,16 @@ final class string_literal_node extends expression_node
 
 	private ?prepared_string_literal $prepared_facts = null;
 
+	/** Bare property names normalize to quoted spelling without changing source tokens. */
+	public function literal_spelling(token_list $tokens): string
+	{
+		$text = $tokens->text_at($this->start_token());
+		if (Source_Text::identifier($text)) {
+			return "'" . $text . "'";
+		}
+		return $text;
+	}
+
 	public function kind(): node_kind
 	{
 		return node_kind::string_literal;
@@ -1626,39 +1636,88 @@ final class type_use_modifier_node extends type_node
 	}
 }
 
-final class array_literal_node extends expression_node
+/** All data notation retains the same target and ordered entry structure. */
+final class data_construction_node extends expression_node
 {
 	use Node_Source_Span;
 
-	public Storage $elements /** Storage<expression_node> */;
+	public ?type_node $target_type = null;
+	public Storage $entries /** Storage<data_entry_node> */;
 
 	/** Allocate only the concrete node's ordered syntax collections. */
 	public function __construct()
 	{
-		$this->elements = new Storage /** Storage<expression_node> */();
+		$this->entries = new Storage /** Storage<data_entry_node> */();
 	}
 
 	public function kind(): node_kind
 	{
-		return node_kind::array_literal;
+		return node_kind::data_construction;
 	}
 
-	/**
-	 * Retain only the collection in an independent cursor; do not copy membership.
-	 */
+	/** Derive notation from provenance; an explicit target ends immediately before ::. */
+	public function source_representation(token_list $tokens): data_source_representation
+	{
+		$opening = $this->start_token();
+		if ($this->target_type !== null) {
+			$opening = $this->target_type->end_token() + 1;
+		}
+		$text = $tokens->text_at($opening);
+		if ($text === '[') {
+			return data_source_representation::php_like;
+		}
+		if ($text === '{') {
+			return data_source_representation::js_like;
+		}
+		throw new \LogicException('Data construction has no opening delimiter in its token snapshot');
+	}
+
+	/** Retain one independent inspection cursor over the named owning edges. */
 	public function children(): child_iterator_i
 	{
-		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->elements));
+		return new data_construction_children_iterator($this);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$items /** Storage<expression_node> */ = $this->elements;
+		if ($this->target_type !== null) {
+			$worker->edge($this, $this->target_type);
+		}
+		$items /** Storage<data_entry_node> */ = $this->entries;
 		foreach ($items as $child) {
 			$worker->edge($this, $child);
 		}
+	}
+}
+
+/** An absent key means positional input; a null expression is still an explicit key. */
+final class data_entry_node extends ast_node
+{
+	use Node_Source_Span;
+
+	public ?expression_node $key = null;
+	public expression_node $value;
+
+	public function kind(): node_kind
+	{
+		return node_kind::data_entry;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new data_entry_children_iterator($this);
+	}
+
+	/** Preserve key-before-value order without synthesizing positional keys. */
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		if ($this->key !== null) {
+			$worker->edge($this, $this->key);
+		}
+		$worker->edge($this, $this->value);
 	}
 }
 

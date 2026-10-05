@@ -100,7 +100,7 @@ final class AST_Test
 		self::check($statements[1]->initializer instanceof integer_literal_node);
 		self::check($statements[2]->expression instanceof assignment_expression_node);
 		self::check($statements[2]->expression->target instanceof variable_reference_node);
-		self::check($statements[3]->initializer->elements->is_empty());
+		self::check($statements[3]->initializer->entries->is_empty());
 		self::check($statements[4]->expression->target instanceof index_node);
 	}
 
@@ -210,7 +210,7 @@ PHS;
 		foreach ($first_nodes as $node) {
 			$types[get_class($node)] = true;
 		}
-		foreach ([file_node::class, function_body_node::class, function_node::class, parameter_node::class, named_type_node::class, call_node::class, integer_literal_node::class, string_literal_node::class, variable_reference_node::class, constant_reference_node::class, variable_declaration_node::class, assignment_expression_node::class, array_type_node::class, array_literal_node::class, index_node::class, struct_node::class, field_node::class, field_access_node::class] as $type) {
+		foreach ([file_node::class, function_body_node::class, function_node::class, parameter_node::class, named_type_node::class, call_node::class, integer_literal_node::class, string_literal_node::class, variable_reference_node::class, constant_reference_node::class, variable_declaration_node::class, assignment_expression_node::class, array_type_node::class, data_construction_node::class, data_entry_node::class, index_node::class, struct_node::class, field_node::class, field_access_node::class] as $type) {
 			self::check(isset($types[$type]));
 		}
 		$before = serialize($first);

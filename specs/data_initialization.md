@@ -22,13 +22,17 @@ tracks implementation separately; examples here are contracts, not support claim
 
 | Form | Input shape |
 | --- | --- |
-| `[10, 20, 30,]` | Ordered positional values |
-| `["alice" => 10, "bob" => 20,]` | Ordered key/value entries; keys may be expressions |
-| `{alice: 10, "bob": 20,}` | Ordered named entries; bare names are literal string keys |
+| `[10, 20, 30,]` | PHP-like: ordered positional values |
+| `["alice" => 10, "bob" => 20,]` | PHP-like: ordered key/value entries; keys may be expressions |
+| `{alice: 10, "bob": 20,}` | JS-like: ordered named entries; quoted or bare string keys |
 
 Both keyed forms select the same keyed initialization protocol. A bare property
 name is not variable lookup or field resolution. Quote names that cannot be written
 as ordinary identifiers. Quoted and bare names may coexist in a brace construction.
+Bracket-keyed entries require `=>`; brace-keyed entries require `:`. Reject
+`["key": value]` and `{"key" => value}`. Braces require named entries, not positional
+values or computed property-key expressions. Bare names normalize to literal strings;
+quoted property names use literal source strings, not interpolated expressions.
 
 Values are expressions, including nested constructions. One trailing comma after
 the final entry is optional in every form. Omitted elements, repeated separators,
@@ -38,9 +42,25 @@ spread, property shorthand and method definitions are not introduced by this sta
 
 Braces introduce data construction in expression positions and remain blocks in
 statement positions. Parenthesize a standalone brace expression to disambiguate it
-from a block. This is JSON-like / JavaScript-like source notation, not a new JSON
-text format or a commitment to JavaScript semantics. JSON decoding retains its own
-grammar; source strings retain the source language's string rules.
+from a block. There are only two representation categories: PHP-like and JS-like.
+Quoted-key braces do not introduce a third representation. There is no JSON-validity
+classification or check; source strings retain the source language's string rules.
+
+### Shared syntax model
+
+One parsing algorithm and one construction-node family handle both representations.
+Each ordered entry owns an optional key expression and a required value expression;
+an explicit null key is distinct from an absent key. The construction may also own
+an explicit target type. Parsing preserves duplicate entries without selecting a
+container, factory or runtime storage strategy.
+
+Representation is derived on demand from the opening source token, not retained in
+a duplicate flag. In my-try, `source_representation(token_list)` supplies that query
+using the caller's retained token snapshot, including after span moves/compaction.
+Separator spelling is enforced during parsing and remains recoverable from source;
+generic semantic stages consume the normalized entries rather than branching on
+PHP-like versus JS-like spelling. Semantically deferred mixed positional/keyed input
+may be represented faithfully by syntax; it must not acquire preparation support.
 
 ### Function-valued entries — deferred
 

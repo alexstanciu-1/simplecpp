@@ -110,15 +110,25 @@ trait LLVM_Expressions
 	/** Build a constant aggregate only for an exact-length integer literal initializer. */
 	private function array_initializer(ast_node $node, llvm_local $local): llvm_operand
 	{
-		if ($node->kind() !== node_kind::array_literal) {
+		if ($node->kind() !== node_kind::data_construction) {
 			throw new \RuntimeException('Fixed arrays require an exact-length literal initializer');
 		}
-		$elements /** Storage<expression_node> */ = object_cast($node, array_literal_node::class)->elements;
+		$construction = object_cast($node, data_construction_node::class);
+		if (($construction->target_type !== null)
+			|| ($construction->source_representation($this->prepared->source->token_snapshot()) !== data_source_representation::php_like)) {
+			throw new \RuntimeException('LLVM data construction remains deferred');
+		}
+		$elements /** Storage<data_entry_node> */ = $construction->entries;
 		if (q_count($elements) !== $local->array_type->count) {
 			throw new \RuntimeException('Fixed array initializer length does not match its type');
 		}
 		$values /** vector<string> */ = [];
-		foreach ($elements as $element) {
+		foreach ($elements as $entry)
+		{
+			if ($entry->key !== null) {
+				throw new \RuntimeException('LLVM keyed data construction remains deferred');
+			}
+			$element = $entry->value;
 			if ($element->kind() !== node_kind::integer_literal) {
 				throw new \RuntimeException('Fixed array initializer elements must be integer literals');
 			}

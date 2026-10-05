@@ -1065,6 +1065,13 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->data_construction_ahead())
+		{
+			$start = $this->position;
+			$target = $this->type_syntax($this->current_scope);
+			$this->expect('::');
+			return $this->data_construction($start, $target);
+		}
 		if ($this->text() === 'take') {
 			return $this->take_expression();
 		}
@@ -1106,8 +1113,8 @@ final class Parser_Run
 			$this->finish_node($literal, $start);
 		return $literal;
 		}
-		if ($this->text() === '[') {
-			return $this->array_literal();
+		if (($this->text() === '[') || ($this->text() === '{')) {
+			return $this->data_construction($this->position, null);
 		}
 		if ($this->identifier()) {
 			if ($this->text_at_offset(1) === '::')
@@ -1318,7 +1325,8 @@ final class Parser_Run
 		return Source_Text::identifier($operand) || Source_Text::digit($first)
 			|| ($first === 36) || ($first === 39) || ($first === 34)
 			|| ($operand === '!') || ($operand === '~')
-			|| ($operand === '(') || ($operand === '[') || (($first === 46) && (string_byte_len($operand) > 1));
+			|| ($operand === '(') || ($operand === '[') || ($operand === '{')
+			|| (($first === 46) && (string_byte_len($operand) > 1));
 	}
 
 	/** Distinguish named/template calls from constants followed by relational operators. */
@@ -1386,26 +1394,82 @@ final class Parser_Run
 		return $type;
 	}
 
-	/** Keep initializer elements as syntax; preparation/lowering checks their allowed forms. */
-	private function array_literal(): array_literal_node
+	/** Recognize explicit construction without collecting speculative target names. */
+	private function data_construction_ahead(): bool
 	{
-		$start = $this->expect('[');
-		$literal = new array_literal_node();
-		$elements /** Storage<expression_node> */ = $literal->elements;
-		if ($this->text() !== ']')
-		{
-			do {
-				$elements->append($this->expression());
-				if ($this->text() !== ',') {
-					break;
-				}
-				$this->position++;
-			}
-			while (true);
+		$end = $this->type_syntax_end(0);
+		if ($end < 0) {
+			return false;
 		}
-		$this->expect(']');
-		$this->finish_node($literal, $start);
-		return $literal;
+		if ($this->text_at_offset($end) !== '::') {
+			return false;
+		}
+		$opening = $this->text_at_offset($end + 1);
+		return ($opening === '[') || ($opening === '{');
+	}
+
+	/** One entry loop handles both spellings; target semantics remain outside parsing. */
+	private function data_construction(int $start, ?type_node $target): data_construction_node
+	{
+		$braces = $this->text() === '{';
+		$closing = $braces ? '}' : ']';
+		$separator = $braces ? ':' : '=>';
+		$this->position++;
+		$construction = new data_construction_node();
+		$construction->target_type = $target;
+		$entries /** Storage<data_entry_node> */ = $construction->entries;
+		while ($this->text() !== $closing)
+		{
+			$entry_start = $this->position;
+			$entry = new data_entry_node();
+			$first = $braces ? $this->data_property_key() : $this->expression();
+			if ($this->text() === $separator) {
+				$this->position++;
+				$entry->key = $first;
+				$entry->value = $this->expression();
+			}
+			elseif ($braces) {
+				throw new \RuntimeException($this->error_message('JS-like data entries require a colon after the property name'));
+			}
+			else {
+				$entry->value = $first;
+			}
+			$this->finish_node($entry, $entry_start);
+			$entries->append($entry);
+			if ($this->text() !== ',') {
+				break;
+			}
+			$this->position++;
+		}
+		$this->expect($closing);
+		$this->finish_node($construction, $start);
+		return $construction;
+	}
+
+	/** Bare names are literal string keys, never collected constant/name occurrences. */
+	private function data_property_key(): expression_node
+	{
+		$start = $this->position;
+		if ($this->identifier()) {
+			$this->position++;
+			$key = new string_literal_node();
+			$this->finish_node($key, $start);
+			return $key;
+		}
+		$text = $this->text();
+		if ($text !== '')
+		{
+			$first = string_byte_at($text, 0);
+			if (($first === 39) || ($first === 34))
+			{
+				$this->position++;
+				$quoted = $this->string_expression($start, $text);
+				if ($quoted instanceof string_literal_node) {
+					return $quoted;
+				}
+			}
+		}
+		throw new \RuntimeException($this->error_message('JS-like property names must be bare identifiers or literal strings'));
 	}
 
 	/** Member and index access retain a base expression so reads, writes and references share one shape. */

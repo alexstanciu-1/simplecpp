@@ -51,6 +51,9 @@ unrestricted casts, dynamic `->` and native interior references are not introduc
 
 ## Handoff from chapter 05 — 2026-10-04
 
+The syntax-only checkpoint below is subsequent to this handoff; construction remains
+semantically deferred until the recognized interface protocol is implemented.
+
 Chapter 05's [bounded positive pass](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04)
 is complete with named debt. Nullable/Result/mixed conversions, conditions, value
 probes and explicit mixed/dynamic bridges are available; aggregate payload operations
@@ -96,6 +99,40 @@ conversion prerequisites; shared construction explicitly includes mixed/dynamic 
 nested data. Imported cards below retain their original order and provenance.
 
 ## Progress
+
+### Shared data parser and AST — 2026-10-05
+
+Syntax implemented, not factory preparation or C++ construction. One `data_construction`
+parser path and `data_construction_node` replace the old positional-only array literal.
+The node owns optional explicit type syntax and ordered `data_entry_node` entries;
+keys are optional expressions, values required. PHP-like brackets admit positional
+or arrow-keyed syntax; JS-like braces require quoted/bare names and colons. Both
+support empty input, nested expressions and one trailing comma. Crossed separators,
+missing values, holes, computed brace keys and unsupported spread reject with source
+locations. There is no JSON-validity classification.
+
+`source_representation(token_list)` derives the opening form from source tokens,
+including explicit `Type::[...]` / `Type::{...}` and retained/compacted spans. No
+representation flag is stored. Bare property names normalize through string-literal
+syntax without name lookup; preparation uses the same string-decoding path.
+Duplicate entries and explicit-null-versus-absent keys remain distinguishable.
+Mixed positional/keyed forms can be represented but are not semantically admitted.
+
+`tests/data_construction.php` covers tree initialization/ownership, lazy inspection,
+maintenance, nesting, grammar failures, ordinary expression/block integration,
+retained identity/span compaction, invalid-edit recovery and withheld preparation/C++
+publication. Existing AST/dispatch tests follow the renamed structure. The parked
+LLVM consumer has only a structural adaptation preserving its positional reader;
+no new LLVM feature or native compiler proof is claimed.
+
+Evidence: `/tmp/my-try-data-syntax-20261005-3` (focused PHP suites, shared runner,
+12 slots, CLI fallback because private FPM sockets are unavailable). The separately
+checked interpolation suite has an existing obsolete rejection for `"$x" . 2`;
+the same failure reproduces on committed baseline `de9873cb` in
+`/tmp/my-try-data-syntax-20261005-2/logs/baseline-interpolation.stderr`. Its assertion
+repair is outside this parser slice; do not count that suite as passing.
+
+### End-to-end catalog rows
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 

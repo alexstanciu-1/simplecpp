@@ -69,6 +69,65 @@ abstract class children_iterator implements child_iterator_i
 	}
 }
 
+/** Inspect explicit type syntax followed by ordered entries, without copying membership. */
+final class data_construction_children_iterator extends children_iterator
+{
+	private data_construction_node $source;
+	private bool $target_read = false;
+	private int $next_entry = 0;
+
+	public function __construct(data_construction_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** The optional type precedes entries in both source forms. */
+	protected function read_next(): ?ast_node
+	{
+		if (!$this->target_read) {
+			$this->target_read = true;
+			if ($this->source->target_type !== null) {
+				return $this->source->target_type;
+			}
+		}
+		$entries /** Storage<data_entry_node> */ = $this->source->entries;
+		if ($this->next_entry >= $entries->count()) {
+			return null;
+		}
+		$entry = $entries[$this->next_entry];
+		$this->next_entry++;
+		return $entry;
+	}
+}
+
+/** Key absence skips only the key edge; the value is always required. */
+final class data_entry_children_iterator extends children_iterator
+{
+	private data_entry_node $source;
+	private int $next_field = 0;
+
+	public function __construct(data_entry_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** Expose original entry order to independent inspection cursors. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_field === 0) {
+			$this->next_field = 1;
+			if ($this->source->key !== null) {
+				return $this->source->key;
+			}
+		}
+		if ($this->next_field === 1) {
+			$this->next_field = 2;
+			return $this->source->value;
+		}
+		return null;
+	}
+}
+
 final class nullable_type_children_iterator extends children_iterator
 {
 	private bool $consumed = false;

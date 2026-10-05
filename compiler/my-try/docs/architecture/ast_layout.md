@@ -91,6 +91,29 @@ rejects replacing a live occurrence; there is no second attachment boolean. Reti
 nodes must not re-enter the active graph. Declaration reconciliation keeps the
 existing node and occurrence. Renames follow existing remove/add reconciliation.
 
+## Data construction syntax
+
+`data_construction_node` replaces the positional-only `array_literal_node`. One
+parser entry loop handles PHP-like brackets and JS-like braces. The node owns an
+optional `target_type` and `Storage<data_entry_node>`; each entry owns an optional
+key and required value. Absent keys are positional, never null sentinels. Independent
+inspection cursors and maintenance traverse target, entries, key then value.
+
+`source_representation(token_list)` derives PHP-like/JS-like from the opening token;
+no representation flag or extra opening-token index is retained. With an explicit
+target the opening follows its type span and `::`. Span maintenance therefore
+preserves this query without another index-remapping rule. Tokens remain immutable
+provenance; the parsed-file/caller supplies their lifetime.
+
+Bare brace property names are ordinary `string_literal_node` leaves without collected
+name occurrences. `literal_spelling(token_list)` normalizes bare identifiers to
+quoted spelling for the ordinary string decoder; no data-notation branch is added
+to preparation. Quoted and bare keys retain their real source spans.
+
+Factory resolution, lifetime enforcement and C++ construction remain deferred.
+The parked LLVM reader only adapts to the renamed positional entry structure;
+it rejects keyed/brace/explicit-target constructions and gains no new lowering.
+
 ## Interpolated strings
 
 `interpolated_string_node` owns `Storage<interpolation_part_node>` in source order.
