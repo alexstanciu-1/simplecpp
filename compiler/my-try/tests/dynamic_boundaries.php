@@ -61,6 +61,17 @@ foreach ([
 	'$n uint8 = 1; $d dynamic = $n;',
 	'$d dynamic = 7; $n uint8 = $d;',
 	'function call(int &$v): void {} $d dynamic = 7; call($d);',
+	'$d dynamic = 7; $m mixed = 8; $v = true ? $d : $m;',
+	'$d dynamic = 7; $m mixed = 8; $v = $m ?: $d;',
+	'$d dynamic = 7; $m mixed = 8; $v = $d ?? $m;',
+	'$d dynamic = 7; $m mixed = 8; $v = $d && $m;',
+	'$d dynamic = 7; $v = $d || "yes";',
+	'$d dynamic = 7; $v = $d ?: null;',
+	'$d dynamic = 7; $v = null ?? $d;',
+	'$d dynamic = 7; $v = $d ?? null;',
+	'$d dynamic = 7; $n uint8 = 1; $v = true ? $d : $n;',
+	'$d dynamic = 7; $r result<int> = 1; $v = $d ?? $r;',
+	'$d dynamic = 7; $r result_or_bool<int> = 1; $v = $r ?? $d;',
 ] as $source) {
 	$rejected = false;
 	try { dynamic_boundaries_source($source); }
@@ -78,4 +89,34 @@ $compiler->update_cpp(['/dynamic-boundaries/main.phs']);
 $incremental = Model::$cpp_files[0]->text;
 dynamic_boundaries_source($changed);
 dynamic_boundaries_check(Model::$cpp_files[0]->text === $incremental, 'Dynamic boundary clean/incremental output differs');
+
+// Conditions and selections consume the changed signature without stale mixed facts.
+foreach (['return source() ? 1 : 0;', 'return !source() ? 1 : 0;',
+	'return (source() && true) ? 1 : 0;', 'return source() ?: 1;',
+	'return source() ?? 1;', 'return true ? 1 : source();'] as $consumer) {
+	$valid = 'function source(): mixed { return 7; } function read(): int { ' . $consumer . ' }';
+	$compiler = dynamic_boundaries_source($valid);
+	$changed = str_replace('source(): mixed', 'source(): dynamic', $valid);
+	$record = Model::sources()[0];
+	$record->file->content = $changed;
+	$compiler->update_cpp(['/dynamic-boundaries/main.phs']);
+	$incremental = Model::$cpp_files[0]->text;
+	dynamic_boundaries_source($changed);
+	dynamic_boundaries_check(Model::$cpp_files[0]->text === $incremental,
+		'Dynamic selection clean/incremental output differs: ' . $consumer);
+}
+
+dynamic_boundaries_source('$d dynamic = 0; if ($d) {} $a dynamic = $d ?: 1; $b dynamic = $d ?? 1;');
+$root = Model::syntax_files()[0]->root;
+dynamic_boundaries_check($root->body->statements[1]->require_preparation()->truthiness->operation
+	=== truthiness_operation::boxed_condition, 'Dynamic condition bypassed common truthiness');
+$elvis = $root->body->statements[2]->initializer;
+$coalesce = $root->body->statements[3]->initializer;
+dynamic_boundaries_check(Boxed_Conversions::is_dynamic($elvis->require_preparation()->type)
+	&& !$elvis->require_preparation()->addressable, 'Dynamic join lost its owned family');
+dynamic_boundaries_check($coalesce->require_coalesce_preparation()->presence === coalesce_presence::boxed_nonnull,
+	'Dynamic coalescing used truthiness instead of null presence');
+Preparation_Cleanup::tree($root);
+dynamic_boundaries_check($elvis->preparation() === null && $coalesce->preparation() === null,
+	'Dynamic joins retained facts after cleanup');
 echo "Dynamic boundaries: shared conversions, family signatures, rejection and recovery passed\n";

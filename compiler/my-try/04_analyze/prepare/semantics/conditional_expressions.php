@@ -33,8 +33,8 @@ final class Conditional_Expression_Preparation
 	private static function join(canonical_type_use $selected, canonical_type_use $fallback,
 		preparation_context $context): canonical_type_use
 	{
-		if (Boxed_Conversions::is_mixed($selected) || Boxed_Conversions::is_mixed($fallback)) {
-			return Selection_Result_Preparation::mixed_join($selected, $fallback, $context);
+		if (Boxed_Conversions::is_boxed($selected) || Boxed_Conversions::is_boxed($fallback)) {
+			return Selection_Result_Preparation::boxed_join($selected, $fallback, $context);
 		}
 		$selected_role = Result_Conversions::role($selected);
 		$fallback_role = Result_Conversions::role($fallback);

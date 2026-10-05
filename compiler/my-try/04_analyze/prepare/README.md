@@ -158,9 +158,9 @@ Shorthand reuses its condition's prepared value as its true branch.
 Results are non-addressable values; nested writes cannot introduce bindings. Eager
 parents inspect every conditional child for effects. Emission uses typed lazy returns
 and a single saved left value of the original condition type for shorthand. Bare-null
-branches and cross-payload nullable joins remain deferred. Direct mixed/mixed and
-mixed/scalar joins in either order preserve mixed identity and box only the selected
-scalar. `Selection_Result_Preparation::mixed_join` supplies this bounded domain for
+branches and cross-payload nullable joins remain deferred. Same-family boxed pairs and
+boxed/scalar joins in either order preserve the boxed family and box only the selected
+scalar. `Selection_Result_Preparation::boxed_join` supplies this bounded domain for
 conditional and coalesce workers without widening scalar-only match. Result-led joins preserve
 one exact Result identity: same-wrapper pairs copy the selected state, and exact
 scalar alternatives wrap as value payloads. Nullable/Result and cross-family pairs
@@ -265,13 +265,15 @@ container insertion, reject during preparation. Registered construction/indexing
 iteration signatures carry the receiver's own family for values and nested children;
 mixed scalar key carriers remain a separate int/string key mechanism. Dynamic's
 tagged binding is value-stored; redundant value modifiers normalize through registry
-facts without changing shared container payload identity. Dynamic operator/selection
+facts without changing shared container payload identity. Dynamic numeric/comparison
 admission remains a subsequent slice, not an inference from these conversions.
-`Condition_Truthiness` admits mixed through `mixed_condition`; all condition consumers
-and mixed `!` reuse runtime kind dispatch, not explicit boolean conversion. Boxed
-table/object conditions currently throw at runtime; broader kind truthiness is debt.
-Mixed AND/OR admission belongs to `Mixed_Operators`, separately from general condition
-admission: peers are mixed/bool/ordinary int/float, not strings or wrappers. Ordered
+`Condition_Truthiness` admits both families through `boxed_condition`; all condition
+consumers and boxed `!` reuse runtime kind dispatch, not explicit boolean conversion.
+Mixed table conditions still throw; dynamic containers (including empty containers)
+are true under the runtime's shared-object contract. Dynamic scalar/null conditions
+use the same scalar rules as mixed. Boxed AND/OR admission belongs to `Boxed_Operators`,
+separately from general condition admission: peers are the same boxed family or
+bool/ordinary int/float, not strings or wrappers. Distinct boxed identities reject. Ordered
 operand truthiness facts drive native-bool short circuit. Logical contexts admit
 calls, mutations and compound assignments, while eager parents retain recursive
 effect checks. Mixed xor and wrapper logical contracts remain deferred.
@@ -279,7 +281,7 @@ Unary preparation permits one effectful operand, without introducing new binding
 eager parents still inspect its subtree for operand-order hazards. Runtime payload failure
 is not preparation failure. Reference arguments retain exact stable-storage rules.
 
-`Mixed_Operators` selects unary signs and binary numeric arithmetic on existing
+`Boxed_Operators` currently selects mixed unary signs and binary numeric arithmetic on existing
 operator decisions. Arithmetic admission allows matching mixed or ordinary int/float
 peers, with no extraction. `%` rejects statically known float
 peers; unknown mixed payloads are checked by runtime dispatch. Results stay mixed,
@@ -290,8 +292,9 @@ from runtime stored-kind validation. Both direct runtime operators and generated
 compound updates use `mixed_t::assign_compound_result` after computing the value;
 ordinary mixed assignment remains free to replace the payload kind. Mixed bitwise
 updates and native targets with mixed right operands remain deferred.
-Direct dynamic handles are nonnumeric; future mixed-valued property reads reuse this
-owner without adding a dynamic-object arithmetic family.
+Dynamic is now a tagged family, not a nonnumeric handle. Dynamic numeric/comparison
+and mutation admission still needs integration with this shared owner, including
+stored-kind failure guarantees; it must not restore mixed-valued dynamic reads.
 
 Mixed comparisons reuse that owner and return bool. Equality admits scalar/null
 peers; ordering remains numeric. Operator admission owns those domains, while

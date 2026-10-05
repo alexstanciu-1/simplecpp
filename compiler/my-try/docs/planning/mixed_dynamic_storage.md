@@ -639,7 +639,7 @@ same-family missing values, lazy probes/removal, null-write/noncontainer-iterati
 errors and duplicate-key rejection. Older model/interface expectations were updated,
 not retained as compatibility branches.
 
-Next: operator/condition/selection admission for dynamic-valued reads, then broad
+Next at that checkpoint: operator/condition/selection admission for dynamic-valued reads, then broad
 generated-fixture and JSON/library registration reconciliation. This is not complete
 Chapter 06 support or a native compiler rebuild. The former broad fixtures that
 access native handle APIs remain migration work even when their semantic setup now
@@ -653,3 +653,38 @@ substitution. The first attempt exposed outdated storage/producer-family expecta
 and a test accessor typo; attempt four exposed the old initializer substitution
 expectation. Those expectations now follow the separated-family contract. FPM socket
 startup was unavailable, so PHP used the runner's recorded CLI fallback.
+
+### Tagged conditions and selections — 2026-10-05
+
+`Condition_Truthiness` and the existing selection workers now admit both boxed
+families, publishing `boxed_condition`, `boxed_nonnull` and the shared `boxed_join`
+decisions. There is no second dynamic traversal or emitter. Selected scalar values
+are boxed into the selected family; selected containers retain that family's copy
+semantics. Bare-null alternatives and unsupported wrapper combinations remain
+outside this slice. Coalescing uses null presence; it does not substitute truthiness.
+
+The existing operator owner is renamed `Boxed_Operators`. Logical AND/OR admits
+matching boxed identities or ordinary numeric/bool peers and emits lazy native-bool
+branches. General conditions and negation admit dynamic scalar/null/container values;
+dynamic empty containers are true. Mixed container truthiness keeps its established
+runtime rejection. Mixed/dynamic logical pairs and joins reject during preparation.
+
+Numeric, comparison, concatenation and mutation integration for dynamic remains
+next. In particular, generated mixed compound assignment currently calls the mixed
+stored-kind member; dynamic must share a truthful checked write-back path before
+admitting that operation. No runtime layout change, indexed compound mutation,
+property access, library redesign or native compiler rebuild belongs to this slice.
+
+Proofs cover condition consumers, short circuiting, once-only source evaluation,
+lazy fallback, falsey-versus-null selection, container identity versus scalar copies,
+wrapper-to-dynamic coalescing, preparation rejection, cleanup and clean/incremental
+agreement. The old producer-family rejection tests now use genuinely invalid typed
+containers; separate positive tests prove mixed-to-dynamic producer changes.
+
+Evidence: `/tmp/my-try-dynamic-selections-20261005-4` (PCH) and
+`/tmp/my-try-dynamic-selections-20261005-3` (without PCH) each pass eight PHP suites
+and eighteen generated programs against rebuilt snippet runtime objects. Attempt one
+passed before the extra preparation/cleanup assertions were added; attempt two found
+a test using a declaration accessor on an implicit assignment, corrected by making
+the test declaration explicit. FPM was unavailable and the runner recorded CLI
+fallback. These are generated-program proofs, not a native compiler rebuild.

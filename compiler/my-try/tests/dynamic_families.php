@@ -6,7 +6,8 @@ require __DIR__ . '/mixed.php';
 
 $output = $argv[1];
 $fixtures = array_merge(require __DIR__ . '/fixtures/mixed_dynamic_casts.php',
-	require __DIR__ . '/fixtures/dynamic_boundaries.php');
+	require __DIR__ . '/fixtures/dynamic_boundaries.php',
+	require __DIR__ . '/fixtures/dynamic_selections.php');
 $executions = [];
 foreach ($fixtures as $name => [$source, $predicate]) {
 	Compiler_Lifecycle::reset();

@@ -105,7 +105,7 @@ final class Operator_Preparation
 		if (q_count($operands) === 2) {
 			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {
 				if (Boxed_Conversions::is_mixed($operands[0]) || Boxed_Conversions::is_mixed($operands[1])) {
-					return Mixed_Operators::decide($source_operator, $operands);
+					return Boxed_Operators::decide($source_operator, $operands);
 				}
 				return Nullable_Operators::decide_null_comparison($source_operator, $operands, $context);
 			}
@@ -124,7 +124,7 @@ final class Operator_Preparation
 		}
 		foreach ($operands as $operand) {
 			if (Boxed_Conversions::is_mixed($operand)) {
-				return Mixed_Operators::decide($source_operator, $operands);
+				return Boxed_Operators::decide($source_operator, $operands);
 			}
 		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
@@ -141,7 +141,7 @@ final class Operator_Preparation
 		if ($source_operator === operator_kind::logical_not)
 		{
 			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope))
-				|| Boxed_Conversions::is_mixed($operands[0]))
+				|| Boxed_Conversions::is_boxed($operands[0]))
 			{
 				$decision = new operator_decision();
 				$decision->source_operator = $source_operator;
@@ -153,7 +153,7 @@ final class Operator_Preparation
 		}
 		$operation = operator_operation::integer_positive;
 		if (Boxed_Conversions::is_mixed($operands[0])) {
-			return Mixed_Operators::decide($source_operator, $operands);
+			return Boxed_Operators::decide($source_operator, $operands);
 		}
 		if ($source_operator === operator_kind::logical_not) {
 			$expected = $context->boolean;
@@ -204,8 +204,8 @@ final class Operator_Preparation
 			throw new \LogicException('Logical operation requires two operands');
 		}
 		$boolean = $context->boolean;
-		if (Boxed_Conversions::is_mixed($operands[0]) || Boxed_Conversions::is_mixed($operands[1])) {
-			return Mixed_Operators::decide_logical($source_operator, $operands);
+		if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
+			return Boxed_Operators::decide_logical($source_operator, $operands);
 		}
 		if ((!$operands[0]->matches($boolean)) || (!$operands[1]->matches($boolean))) {
 			throw new \RuntimeException('S2S logical operation requires canonical bool operands');

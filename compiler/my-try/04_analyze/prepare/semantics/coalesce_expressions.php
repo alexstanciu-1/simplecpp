@@ -18,8 +18,8 @@ final class Coalesce_Expression_Preparation
 			self::require_admitted_family($fallback->type);
 			$facts = new prepared_coalesce_expression();
 			$selected_type = $left->type;
-			$facts->presence = Boxed_Conversions::is_mixed($left->type)
-				? coalesce_presence::mixed_nonnull : coalesce_presence::always;
+			$facts->presence = Boxed_Conversions::is_boxed($left->type)
+				? coalesce_presence::boxed_nonnull : coalesce_presence::always;
 			$payload = Nullable_Conversions::payload($selected_type);
 			if ($payload !== null) {
 				$selected_type = $payload;
@@ -30,8 +30,8 @@ final class Coalesce_Expression_Preparation
 				$selected_type = Result_Conversions::require_scalar_payload($left->type, $role);
 				$facts->presence = coalesce_presence::wrapper_value;
 			}
-			if (Boxed_Conversions::is_mixed($selected_type) || Boxed_Conversions::is_mixed($fallback->type)) {
-				$facts->type = Selection_Result_Preparation::mixed_join($selected_type, $fallback->type, $context);
+			if (Boxed_Conversions::is_boxed($selected_type) || Boxed_Conversions::is_boxed($fallback->type)) {
+				$facts->type = Selection_Result_Preparation::boxed_join($selected_type, $fallback->type, $context);
 				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
 			}
 			else {

@@ -160,7 +160,7 @@ covers owned/shared/weak tables. Native compiler rebuilding remains on demand.
 
 Implemented `&&` / `||` and their `and` / `or` spellings when at least one operand
 is mixed. Peers may be mixed, bool, ordinary int or float, in either order. The
-result is bool. `Mixed_Operators` owns admission; each operand retains a separate
+result is bool. `Boxed_Operators` owns admission; each operand retains a separate
 `Condition_Truthiness` decision on the existing binary operator facts. Emission
 uses native-bool C++ short circuit, never overloaded runtime logical operators.
 
@@ -240,7 +240,7 @@ updated, but that whole historical smoke test is not part of this focused proof.
 ## Mixed comparisons and empty-carrier repair — 2026-10-04
 
 Implemented `==`, `!=`, `===`, `!==`, `<`, `<=`, `>` and `>=` through the existing
-binary AST and `Mixed_Operators`. All return owned bool values. Equality/identity
+binary AST and `Boxed_Operators`. All return owned bool values. Equality/identity
 admit matching mixed or mixed with bool, ordinary int, float, string and literal
 null in either order. Ordering admits mixed/mixed and mixed with ordinary numeric
 peers. Known invalid peer types reject during preparation; invalid boxed payloads
@@ -297,7 +297,7 @@ by this slice. Recursive/cyclic table content-comparison hardening is also defer
 ## Mixed numeric arithmetic — 2026-10-04
 
 Implemented binary `+`, `-`, `*`, `/`, `%` and unary `+`/`-` for mixed values.
-`Mixed_Operators` owns candidate selection on existing expression nodes; retained
+`Boxed_Operators` owns candidate selection on existing expression nodes; retained
 operator decisions distinguish mixed runtime dispatch from native integer operations.
 Operand conversion keeps matching mixed unchanged and boxes ordinary int/float peers.
 No operand is implicitly extracted to a scalar and the result remains an owned mixed.
@@ -964,7 +964,7 @@ coalescing can select boxed tables/objects without testing their truthiness; Elv
 still throws for those kinds under MIXED-TRUTH-001.
 
 Ownership/target: the existing conditional/coalesce nodes, workers and lazy typed
-lambda emitter remain in place. `Selection_Result_Preparation::mixed_join` admits
+lambda emitter remain in place. `Selection_Result_Preparation::boxed_join` admits
 the bounded shared result domain and copy capabilities without widening scalar-only
 match. `Mixed_Conversions` admits identity/scalar-box conversions at selection sites,
 not required-value extraction or bare-null construction. `prepared_coalesce_expression`

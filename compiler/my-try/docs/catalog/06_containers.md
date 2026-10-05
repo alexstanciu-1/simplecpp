@@ -95,10 +95,16 @@ Dynamic is a value-stored tagged binding, not a class-like shared handle. Regist
 initialization/indexing/iteration signatures now use dynamic-valued entries, keeping
 the existing separate int/string key domain and common stage algorithms.
 
-Remaining operator gate: direct dynamic arithmetic, conditions and selection joins
-still require their own admission migration. An indexed dynamic read is now dynamic,
-so old source examples relying on its former mixed result need that follow-up or
-an explicit typed boundary. JSON/library registrations and the broad generated
+Tagged dynamic conditions, lazy AND/OR/negation, ternary, Elvis and coalescing now
+reuse the shared boxed owners. Joins retain family identity and selected container
+sharing; mixed/dynamic combinations reject before emission. Coalescing tests null
+presence, not truthiness. The focused suite proves lazy evaluation and incremental
+signature changes as well as runtime scalar/container behavior.
+
+Remaining operator gate: direct dynamic arithmetic, comparisons, concatenation and
+mutation still require admission migration and stored-kind write-back validation.
+An indexed dynamic read is now dynamic, so old numeric examples need that follow-up
+or an explicit typed boundary. JSON/library registrations and the broad generated
 fixture reconciliation are also pending. Do not infer a full Chapter 06/native
 compiler pass from the focused tagged-family suite.
 

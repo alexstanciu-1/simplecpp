@@ -1,19 +1,24 @@
 <?php
 
-/* Mixed operators select runtime dispatch or strict identity, never scalar extraction. */
+/* Boxed logical admission and mixed numeric dispatch; dynamic numeric integration follows separately. */
 namespace scpp\compiler;
 
-final class Mixed_Operators
+final class Boxed_Operators
 {
 	/** Admission is narrower than condition truthiness; wrappers have their own logical contract. */
 	public static function decide_logical(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */): operator_decision
 	{
 		if (q_count($operands) !== 2) {
-			throw new \LogicException('Mixed logical operation requires two operands');
+			throw new \LogicException('Boxed logical operation requires two operands');
 		}
 		if (($source_operator !== operator_kind::logical_and) && ($source_operator !== operator_kind::logical_or)) {
-			throw new \RuntimeException('S2S mixed logical operation supports only AND and OR');
+			throw new \RuntimeException('S2S boxed logical operation supports only AND and OR');
+		}
+		if (Boxed_Conversions::is_boxed($operands[0]) && Boxed_Conversions::is_boxed($operands[1])) {
+			if (!$operands[0]->matches($operands[1])) {
+				throw new \RuntimeException('S2S boxed logical operands require the same boxed family');
+			}
 		}
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
@@ -22,9 +27,9 @@ final class Mixed_Operators
 		$decision->result_type = Language_Types::boolean(Model::$language_scope);
 		foreach ($operands as $operand)
 		{
-			if ($operand->by_value() || (!self::is_numeric_operand($operand)
+			if ($operand->by_value() || (!Boxed_Conversions::is_boxed($operand) && !self::is_numeric_operand($operand)
 				&& !$operand->matches($decision->result_type))) {
-				throw new \RuntimeException('S2S mixed logical operands require mixed, bool, ordinary int or float');
+				throw new \RuntimeException('S2S boxed logical operands require a matching boxed family, bool, ordinary int or float');
 			}
 			$decision->operand_truthiness[] = Condition_Truthiness::decide($operand);
 		}

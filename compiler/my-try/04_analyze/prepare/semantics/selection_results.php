@@ -5,12 +5,12 @@ namespace scpp\compiler;
 
 final class Selection_Result_Preparation
 {
-	/** Only mixed-led selections use this join; match retains its scalar-only domain. */
-	public static function mixed_join(canonical_type_use $left, canonical_type_use $right,
+	/** Boxed-led selections retain their family; match keeps its scalar-only domain. */
+	public static function boxed_join(canonical_type_use $left, canonical_type_use $right,
 		preparation_context $context): canonical_type_use
 	{
-		$result = Boxed_Conversions::is_mixed($left) ? $left : $right;
-		// Conversion admission rejects wrappers, bare null, modifiers and distinct mixed identities.
+		$result = Boxed_Conversions::is_boxed($left) ? $left : $right;
+		// Conversion admission rejects wrappers, bare null, modifiers and distinct boxed identities.
 		Conversion_Preparation::decide($left, $result, conversion_context::conditional_branch);
 		Conversion_Preparation::decide($right, $result, conversion_context::conditional_branch);
 		Capability_Preparation::require_copy($left, $context);

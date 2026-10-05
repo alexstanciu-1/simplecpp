@@ -86,7 +86,7 @@ final class Boxed_Conversions
 		}
 		if (($context === conversion_context::conditional_branch) || ($context === conversion_context::coalesce_value))
 		{
-			if (!$source->by_value() && !$target->by_value() && self::is_mixed($target))
+			if (!$source->by_value() && !$target->by_value() && self::is_boxed($target))
 			{
 				if ($source->matches($target)) {
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
@@ -95,7 +95,7 @@ final class Boxed_Conversions
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::boxed_wrap);
 				}
 			}
-			throw new \RuntimeException('S2S mixed selection requires matching mixed or supported scalar branches');
+			throw new \RuntimeException('S2S boxed selection requires matching boxed family or supported scalar branches');
 		}
 		if ($context === conversion_context::explicit_cast) {
 			if ($source->by_value() || !self::is_scalar_payload($target)) {

@@ -427,7 +427,7 @@ final class CPP_Syntax
 		if ($facts->presence === coalesce_presence::wrapper_value) {
 			$presence = $temporary . '.has_value().native_value()';
 		}
-		elseif ($facts->presence === coalesce_presence::mixed_nonnull) {
+		elseif ($facts->presence === coalesce_presence::boxed_nonnull) {
 			$presence = '!' . $temporary . '.is_null().native_value()';
 		}
 		else {

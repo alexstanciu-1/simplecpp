@@ -53,7 +53,7 @@ try
 		=== conversion_operation::boxed_extract, 'Mixed extraction depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $integer, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Explicit mixed cast reused required extraction');
-	mixed_check(Condition_Truthiness::decide($box)->operation === truthiness_operation::mixed_condition,
+	mixed_check(Condition_Truthiness::decide($box)->operation === truthiness_operation::boxed_condition,
 		'Mixed truthiness depended on source spelling');
 	$renamed_dynamic = $registry->define_dynamic('OtherHandle', type_definition_origin::runtime,
 		[generic_contract::value_storable, generic_contract::copyable_value]);
@@ -62,16 +62,16 @@ try
 		=== conversion_operation::explicit_runtime_cast, 'Checked family crossing depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
-	$arithmetic = Mixed_Operators::decide(operator_kind::addition, [$integer, $box]);
+	$arithmetic = Boxed_Operators::decide(operator_kind::addition, [$integer, $box]);
 	$text = Conversion_Preparation::decide($box, Language_Types::string_type(Model::$language_scope), conversion_context::concatenation);
 	mixed_check($text->operation === conversion_operation::text_conversion, 'Text conversion depended on mixed spelling');
-	$logical = Mixed_Operators::decide_logical(operator_kind::logical_and, [$integer, $box]);
+	$logical = Boxed_Operators::decide_logical(operator_kind::logical_and, [$integer, $box]);
 	mixed_check($logical->operation === operator_operation::condition_and
 		&& $logical->result_type->matches(Language_Types::boolean(Model::$language_scope))
 		&& $logical->operand_truthiness[0]->operation === truthiness_operation::scalar_condition
-		&& $logical->operand_truthiness[1]->operation === truthiness_operation::mixed_condition,
+		&& $logical->operand_truthiness[1]->operation === truthiness_operation::boxed_condition,
 		'Mixed logical normalization lost operand truthiness or depended on spelling');
-	$comparison = Mixed_Operators::decide(operator_kind::identical, [$integer, $box]);
+	$comparison = Boxed_Operators::decide(operator_kind::identical, [$integer, $box]);
 	mixed_check($comparison->operation === operator_operation::mixed_identical
 		&& $comparison->result_type->matches(Language_Types::boolean(Model::$language_scope))
 		&& $comparison->operands[0]->operation === conversion_operation::identity,
@@ -181,7 +181,7 @@ try
 		. '$b bool = !$v; $p bool = isset($v); $e bool = empty($v);');
 	$probe_root = Model::syntax_files()[0]->root;
 	mixed_check($probe_root->body->statements[1]->require_preparation()->truthiness->operation
-		=== truthiness_operation::mixed_condition, 'Missing mixed condition fact');
+		=== truthiness_operation::boxed_condition, 'Missing mixed condition fact');
 	mixed_check(str_contains(Model::$cpp_files[0]->text, 'scpp::cast<scpp::int_t<>>'),
 		'Explicit mixed cast did not use its runtime owner');
 	$probe_nodes = [];
@@ -237,26 +237,25 @@ try
 		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'mixed arithmetic requires'],
 		['$d dynamic; $y = $d + 1;', 'requires canonical int'],
 		['$x mixed = 7; $y = ($x xor true);', 'supports only AND and OR'],
-		['$x mixed = 7; $y = $x && "yes";', 'mixed logical operands require'],
-		['$x mixed = 7; $n ?int = 1; $y = $n || $x;', 'mixed logical operands require'],
-		['$x mixed = 7; $n result<int> = 1; $y = $x && $n;', 'mixed logical operands require'],
-		['$x mixed = 7; $d dynamic; $y = $d || $x;', 'mixed logical operands require'],
-		['$x mixed = 7; $y = $x ?: null;', 'mixed selection requires'],
-		['$x mixed = 7; $y = null ?? $x;', 'mixed selection requires'],
-		['$x mixed = 7; $y = $x ?? null;', 'mixed selection requires'],
-		['$x mixed = 7; $y = true ? null : $x;', 'mixed selection requires'],
-		['$x mixed = 7; $n uint8 = 1; $y = true ? $x : $n;', 'mixed selection requires'],
-		['$x mixed = 7; $small uint8 = 1; $n ?uint8 = $small; $y = $n ?? $x;', 'mixed selection requires'],
-		['$x mixed = 7; $n result<int> = 1; $y = $x ?? $n;', 'mixed selection requires'],
-		['$x mixed = 7; $n result<int> = 1; $y = $n ?: $x;', 'mixed selection requires'],
-		['$x mixed = 7; $n result<int> = 1; $y = true ? $x : $n;', 'mixed selection requires'],
+		['$x mixed = 7; $y = $x && "yes";', 'boxed logical operands require'],
+		['$x mixed = 7; $n ?int = 1; $y = $n || $x;', 'boxed logical operands require'],
+		['$x mixed = 7; $n result<int> = 1; $y = $x && $n;', 'boxed logical operands require'],
+		['$x mixed = 7; $d dynamic; $y = $d || $x;', 'same boxed family'],
+		['$x mixed = 7; $y = $x ?: null;', 'boxed selection requires'],
+		['$x mixed = 7; $y = null ?? $x;', 'boxed selection requires'],
+		['$x mixed = 7; $y = $x ?? null;', 'boxed selection requires'],
+		['$x mixed = 7; $y = true ? null : $x;', 'boxed selection requires'],
+		['$x mixed = 7; $n uint8 = 1; $y = true ? $x : $n;', 'boxed selection requires'],
+		['$x mixed = 7; $small uint8 = 1; $n ?uint8 = $small; $y = $n ?? $x;', 'boxed selection requires'],
+		['$x mixed = 7; $n result<int> = 1; $y = $x ?? $n;', 'boxed selection requires'],
+		['$x mixed = 7; $n result<int> = 1; $y = $n ?: $x;', 'boxed selection requires'],
+		['$x mixed = 7; $n result<int> = 1; $y = true ? $x : $n;', 'boxed selection requires'],
 		['$x mixed = 7; $n result_or_bool<int> = 1; $y = $x ?? $n;', 'does not permit result_or_bool'],
 		['$x mixed = 7; $n result_or_bool<int> = 1; $y = $n ?? $x;', 'does not permit result_or_bool'],
 		['$x mixed = 7; $y = true ? $x : $missing;', 'S2S'],
 		['function consume(mixed &$v): void {} $x mixed = 7; consume($x ?? 1);', 'reference'],
 		['$x mixed = 7; $y = empty($x->field);', 'property-path probes'],
 		['$y = isset($missing);', 'S2S'],
-		['$d dynamic; if ($d) {}', 'condition truthiness'],
 		['function source(): mixed { return 1; } $y = !source() === false;', 'order-independent operands'],
 		['!($new = true);', 'S2S'],
 		['function change(int &$x): void {} $x mixed = 7; change($x);', 'reference'],
@@ -330,7 +329,7 @@ try
 		$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 		$version = $stable->version;
 		file_put_contents($path, str_replace('source(): mixed { return 3;',
-			'source(): dynamic { $d dynamic; return $d;', $valid));
+			'source(): vector<int> { return [];', $valid));
 		foreach ([[$path], []] as $changed)
 		{
 			$compiler->sync($changed);
@@ -375,7 +374,7 @@ try
 				&& $facts->fallback_conversion->operation === conversion_operation::boxed_wrap, 'Incorrect conditional normalization');
 		}
 		else {
-			mixed_check($facts->presence === ($position === 3 ? coalesce_presence::mixed_nonnull : coalesce_presence::always),
+			mixed_check($facts->presence === ($position === 3 ? coalesce_presence::boxed_nonnull : coalesce_presence::always),
 				'Coalesce presence was inferred from conversion identity');
 		}
 	}

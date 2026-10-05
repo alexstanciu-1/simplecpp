@@ -123,7 +123,7 @@ enum coalesce_presence
 {
 	case always;
 	case wrapper_value;
-	case mixed_nonnull;
+	case boxed_nonnull;
 }
 
 /** Owned selected-value domain; wrapper extraction occurs only after presence. */

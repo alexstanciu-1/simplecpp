@@ -82,7 +82,7 @@ require_once __DIR__ . '/04_analyze/conversions/results.php';
 require_once __DIR__ . '/04_analyze/conversions/boxed.php';
 require_once __DIR__ . '/04_analyze/operators/model.php';
 require_once __DIR__ . '/04_analyze/operators/integers.php';
-require_once __DIR__ . '/04_analyze/operators/mixed.php';
+require_once __DIR__ . '/04_analyze/operators/boxed.php';
 require_once __DIR__ . '/04_analyze/operators/preparation.php';
 require_once __DIR__ . '/04_analyze/operators/indexing.php';
 require_once __DIR__ . '/04_analyze/operators/indexing_signature.php';
