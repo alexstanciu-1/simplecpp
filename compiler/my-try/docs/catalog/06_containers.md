@@ -148,13 +148,13 @@ with canonical types. See [model ownership](../architecture/MODEL.md#callable-co
 
 Review correction: C++ target dispatch now lives entirely in `CPP_Callables`, not
 on callable identities or their interface. Collection has moved under parsing.
-Before further feature work, discuss the [stage-boundary audit](../planning/stage_boundary_audit.md)
-and its shared-model hook/invalidation ownership findings.
+The subsequent [stage-owned processing refactor](../planning/stage_owned_processing.md)
+completed the agreed ownership repairs; it is no longer the Chapter 06 prerequisite.
 
 This is model infrastructure, not container construction support: no production
-factories are installed and no static-method source lookup is enabled. Generic
-interface bindings, call-scoped input-view/non-escape contracts and factory execution
-remain the next discussion/implementation boundary. Classes, instance methods and
+executable factories are installed and no static-method source lookup is enabled.
+Generic bindings and internal input identities are covered by the next checkpoint;
+non-escape enforcement and factory execution remain pending. Classes, instance methods and
 closures are not pulled into this slice. The v0.1 runtime-static-symbol catalog is
 precedent for separate signatures/bindings, not a substitute semantic owner here.
 
@@ -169,6 +169,49 @@ PCH-backed generated C++ function programs), `/tmp/my-try-callables-20261005-5`
 (callable model, preparation work and data syntax). Shared runner, 12 slots,
 automatic CLI fallback because the sandbox cannot create FPM sockets. No native
 compiler rebuild, conversion, LLVM work or broad regression run in this slice.
+
+### Initialization binding and input model — 2026-10-05
+
+One `initialization_declaration` / `initialization_binding` path covers vector, hash,
+mixed, dynamic and separately registered runtime providers. Declarations identify
+the exact registry definition, value/key type substitutions, contextual nested target,
+optional exact template-argument constraints and provider-qualified factory identity.
+Absent key type denotes `list_initializable`; a present key denotes
+`key_value_initializable`, not a nullable key or a duplicated role flag.
+
+`Initialization_Preparation` selects the applicable declaration, substitutes types,
+checks copy/storage capability and validates one fixed sequence parameter plus the
+exact target return. It shares the registered callable's sole signature. Built-in
+differences are declarations only; no container-name branch exists in the binder.
+Hash bindings currently cover ordinary int/string keys. Empty brackets prefer list,
+then keyed; empty braces use keyed. Conflicting applicable bindings reject.
+Mixed/dynamic share mixed input types but retain distinct nested-construction defaults.
+
+`Model::$initialization_contracts` owns installed declarations, internal ordinary
+template identities `initializer_list<T>` / `initializer_entry<V, K = string>` and
+concrete binding identities. Definition identity supplies call-scoped/read-only
+input roles. The view deliberately has no owning copy/storage capability; entries
+are immutable copyable values whose key/value formation requires copyable storage.
+Input types have no source exposure or C++ binding yet. This models lifetime intent,
+not enforced non-escape or implemented count/at/iteration APIs.
+
+Binding queries revalidate source-derived input capabilities before cached reuse and
+register declaration dependencies. Preparation reset preserves installed bindings;
+syntax/type reset replaces them. Installed declarations freeze on first publication;
+configuration changes require reset. Source-defined interface implementations remain
+with future prepared declarations, never this runtime catalog.
+
+Evidence: `/tmp/my-try-initialization-model-20261005-3`, ten focused PHP suites through
+the shared 12-slot runner (CLI fallback). `tests/initialization.php` proves all eight
+built-in bindings, shape rejection, signature rejection, input roles, nesting,
+third-party declaration reuse, exact modified targets, source capability edit/recovery
+and reset. No native compiler build, conversion, broad regression or executable
+construction proof is claimed. The unrelated local dependency-cleanup test edit was
+left untouched and is not included in this run.
+
+Next: contextual literal preparation and ordered conversion facts, followed by
+runtime adapters/C++ construction. Preserve the common-family path. User-written
+factory execution still requires interface/method support and enforced non-escape.
 
 ### End-to-end catalog rows
 

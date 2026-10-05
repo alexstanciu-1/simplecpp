@@ -13,6 +13,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `collected_file` | Canonical occurrences and semantic/generation handoffs for that source |
 | `language_scope`, `global_scope` | Built-in/runtime definitions and shared source indexes; global parents to language |
 | `runtime_callables`, `cpp_callable_bindings` | Installed static-factory identities/contracts and separate C++ bindings; reset with canonical types |
+| `initialization_contracts` | Runtime initialization declarations, internal input types and concrete bindings; reset with canonical types |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
 | `prepared_files` | Successfully completed file records referencing the retained syntax |
 | `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
@@ -72,13 +73,36 @@ signature. `Call_Preparation` admits arguments independently of target selection
 owns target dispatch entirely inside the backend; callable identities and their
 interface expose no C++ operation. Dispatch uses source mangling or a separately
 registered static-member binding, with exact target
-identity checks and header collection. There are no installed production factories
-yet: interface selection, input-view/non-escape contracts, method lookup, closures
-and data construction execution remain outside this model checkpoint.
+identity checks and header collection. Initialization now instantiates semantic factory
+identities through this catalog, without executable C++ bindings. Method lookup,
+closures and data construction execution remain deferred.
 
 Callable roots survive preparation reset, but syntax/type reset replaces them
 together. Installed contracts/bindings must not be changed under retained consumers;
 configuration changes require a full compilation reset.
+
+### Initialization contracts
+
+`initialization_declaration` names a registered target definition, type references
+(target, template argument or concrete type), exact argument constraints and a semantic
+factory key. Optional key type distinguishes the two recognized interface roles.
+`initialization_binding` stores the concrete target/value/key/nested-target arguments
+and shares a callable identity; it does not duplicate the callable signature.
+`Initialization_Preparation` owns selection, substitution and signature validation.
+Vector/hash/mixed/dynamic are declarations, not separate preparation algorithms.
+
+`Initialization_Contracts` owns runtime declarations and concrete bindings for one
+registry lifetime. It also owns internal ordinary `initializer_list`/`initializer_entry`
+definition identities; read-only queries identify the call-scoped view and immutable
+input records independently of spelling. Views declare no owning copy/storage
+capability. Both input templates require copyable storable elements; entry reads and
+source lifetime enforcement remain deferred, so neither type is source-exposed.
+
+Capability checks use analysis completion/dependency queries before every binding
+reuse, including nested source-record changes. This catalog never caches source
+interface facts. Installed declarations freeze once a binding is published; config
+changes require reset. Preparation reset keeps these roots, syntax/type reset replaces
+them. No worker or backend spelling is retained. See the [Chapter 06 checkpoint](../catalog/06_containers.md#initialization-binding-and-input-model--2026-10-05).
 
 ## AST and scopes
 

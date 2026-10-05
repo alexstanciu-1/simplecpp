@@ -3,7 +3,8 @@ Doc Status: planning
 
 Recorded 2026-10-05. Hybrid direction and general stage boundary adopted;
 notation/interface standards complete; shared syntax and callable model implemented.
-Factory protocol selection, input views/non-escape and construction remain pending.
+The shared initialization-binding and internal input-type model is implemented;
+literal preparation, non-escape enforcement and executable construction remain pending.
 Language authority remains [the top-level standard](../../../../specs/data_initialization.md).
 This note records lowering choices and implementation gates. The lifetime rules and
 exact interface/input API have now been consolidated into the top-level standard;
@@ -73,8 +74,11 @@ Built-in identity/contracts originate in the registry; source-derived capabiliti
 remain with completed declaration facts and dependency-aware semantic queries.
 Do not conflate collection capabilities with fat/inline/handle representation or
 parameter passing modes. No representation alone grants construction or iteration.
-The exact generic contract representation and bounded non-escape mechanism require
-model discussion before code; this note does not authorize a general borrow checker.
+The agreed bounded contract representation is implemented in `compiler/initialization/`:
+declarations supply substitutions and the analysis-owned binder handles every family.
+Internal input identities record lifetime intent but remain unavailable to source.
+The bounded non-escape mechanism still needs discussion before enabling user factories;
+this note does not authorize a general borrow checker.
 If a wide cross-owner refactor is necessary, stop and discuss it first.
 
 ## Interface documentation checkpoint
