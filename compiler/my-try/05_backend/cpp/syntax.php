@@ -115,6 +115,10 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function statement(statement_node $node): string
 	{
+		if ($node instanceof unset_node) {
+			$removal = object_cast($node, unset_node::class);
+			return "\t" . CPP_Keyed_Path::generate($removal->require_preparation(), $this->context, true) . ";\n";
+		}
 		if ($node instanceof function_body_node) {
 			return $this->generate_function_body(object_cast($node, function_body_node::class));
 		}
@@ -365,6 +369,10 @@ final class CPP_Syntax
 	public function generate_value_probe(value_probe_node $node): string
 	{
 		$facts = $node->require_probe_preparation();
+		$path = $facts->path;
+		if ($path !== null) {
+			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty);
+		}
 		$name = $facts->operation === value_probe_kind::isset ? 'isset' : 'empty';
 		$this->context->headers['lang/php/operators/' . $name . '/' . $name . '.hpp'] = true;
 		return 'scpp::php::' . $name . '(' . $this->expression($node->operand) . ')';

@@ -8,6 +8,11 @@ final class Body_Preparation
 	/** Analysis owns statement dispatch, fact attachment and completion composition. */
 	public static function prepare_statement(statement_node $node, preparation_context $context): statement_completion
 	{
+		if ($node instanceof unset_node) {
+			$removal = object_cast($node, unset_node::class);
+			$removal->set_preparation(Keyed_Path_Preparation::prepare($removal->target, $context, true));
+			return new statement_completion(true);
+		}
 		if ($node instanceof function_body_node) {
 			return self::prepare_statements(object_cast($node, function_body_node::class), $context);
 		}

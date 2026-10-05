@@ -280,6 +280,16 @@ final class Parser_Run
 	/** Select a statement from its leading syntax; names are never looked up here. */
 	private function statement(): ast_node
 	{
+		if ($this->text() === 'unset') {
+			$start = $this->position++;
+			$removal = new unset_node();
+			$this->expect('(');
+			$removal->target = $this->expression();
+			$this->expect(')');
+			$this->expect(';');
+			$removal->set_span($start, $this->position);
+			return $removal;
+		}
 		if ($this->text() === 'switch') { return $this->switch_statement(); }
 		if ($this->text() === 'while') { return $this->while_statement(); }
 		if ($this->text() === 'do') { return $this->do_while_statement(); }

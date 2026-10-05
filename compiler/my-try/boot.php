@@ -100,6 +100,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/calls.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/conditional_expressions.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/coalesce_expressions.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/value_probes.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/keyed_paths.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/take.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/selection_results.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/matches.php';
@@ -110,6 +111,7 @@ require_once __DIR__ . '/05_backend/cpp/declarations.php';
 require_once __DIR__ . '/05_backend/cpp/callable_bindings.php';
 require_once __DIR__ . '/05_backend/cpp/data_construction.php';
 require_once __DIR__ . '/05_backend/cpp/index_write.php';
+require_once __DIR__ . '/05_backend/cpp/keyed_paths.php';
 require_once __DIR__ . '/05_backend/cpp/generate.php';
 require_once __DIR__ . '/05_backend/cpp/syntax.php';
 // Parked LLVM preparation and generation remain loaded for regression entrypoints.

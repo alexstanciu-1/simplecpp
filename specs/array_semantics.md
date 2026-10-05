@@ -364,6 +364,25 @@ If the target is not array/hash compatible and is not the null-state `mixed` boo
 
 ## 10. `unset($a[k])`
 
+### v0.2 keyed removal
+
+Removal follows the same lazy root-to-leaf key evaluation and prefix re-resolution
+as keyed probes, but an existing wrong-kind receiver/intermediate throws. Missing/null
+parents (including absent dynamic handles) stop with no-op; later keys are skipped.
+Invalid runtime key kinds throw. Key-expression exceptions propagate and their prior
+side effects remain. Do not create entries, bootstrap tables, or prune empty parents.
+Only a present final slot is removed, including a slot whose value is null.
+No COW detachment is needed for a no-op; actual removal preserves mixed value semantics
+and dynamic shared identity. Remaining associative keys retain their identities.
+
+The first v0.2 slice admits one keyed target per statement rooted in an established
+local/parameter. Hash, mixed-table and dynamic removal are supported. Vector-element
+removal is deferred pending a decision on shifting versus preserving index identity;
+vectors may still appear as existing intermediate containers. Bare-variable unset,
+properties, intermediate append, native references and cross-family paths remain gated.
+Writes retain their existing evaluation/failure contract; this lazy rule does not
+change assignment or append.
+
 ### 10.1 Missing key
 
 ```php

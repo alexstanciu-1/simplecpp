@@ -12,7 +12,8 @@ final class indexing_declaration
 		private operator_operation $selected_operation,
 		private ?operator_operation $store_operation,
 		private index_append_policy $append_rule, private contract_type_reference $nested_reference,
-		private ?contract_type_reference $path_reference)
+		private ?contract_type_reference $path_reference,
+		private bool $probe_enabled, private bool $erase_enabled)
 	{
 		if (($selected_operation !== operator_operation::index_checked_read)
 			&& ($selected_operation !== operator_operation::index_null_read)) {
@@ -60,11 +61,14 @@ final class indexing_declaration
 		return $this->nested_reference;
 	}
 
-	/** Writable traversal is distinct from a copied value read or literal context. */
+	/** Path traversal is distinct from a copied value read or literal context. */
 	public function path_element(): ?contract_type_reference
 	{
 		return $this->path_reference;
 	}
+
+	public function supports_probes(): bool { return $this->probe_enabled; }
+	public function supports_removal(): bool { return $this->erase_enabled; }
 }
 
 /** Immutable registry-lifetime inventory, separate from initialization opt-in. */
@@ -98,13 +102,13 @@ final class Indexing_Registration
 		$key = contract_type_reference::argument(1);
 		$declarations /** Storage<indexing_declaration> */ = new Storage();
 		$declarations->append(new indexing_declaration($types->definition('vector'), $integer, $value,
-			operator_operation::index_checked_read, operator_operation::index_store, index_append_policy::allowed, $value, $value));
+			operator_operation::index_checked_read, operator_operation::index_store, index_append_policy::allowed, $value, $value, true, false));
 		$declarations->append(new indexing_declaration($types->definition('hash'), $key, $value,
-			operator_operation::index_checked_read, operator_operation::index_store, index_append_policy::integer_key, $value, $value));
+			operator_operation::index_checked_read, operator_operation::index_store, index_append_policy::integer_key, $value, $value, true, true));
 		foreach (['mixed', 'dynamic'] as $name) {
 			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$declarations->append(new indexing_declaration($types->definition($name), $mixed, $mixed,
-				operator_operation::index_null_read, operator_operation::index_store, index_append_policy::allowed, $nested, $nested));
+				operator_operation::index_null_read, operator_operation::index_store, index_append_policy::allowed, $nested, $nested, true, true));
 		}
 		return new Indexing_Contracts($declarations);
 	}

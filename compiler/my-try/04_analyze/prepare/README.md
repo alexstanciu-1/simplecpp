@@ -225,8 +225,18 @@ Ordered path steps additionally retain key conversion and registered traversal t
 they observe syntax without assigning value-read facts to intermediate brackets.
 Dynamic traversal remains dynamic; mixed traversal remains mixed. The current nested
 slice gates cross-family aggregate operations without closing the containment debt.
-Zero-argument reads, string indexing, intermediate append, indexed updates/references and
-keyed probes remain gated. Eager parent effect checks inspect both indexed children.
+Zero-argument reads, string indexing, intermediate append and indexed updates/references
+remain gated. Eager parent effect checks inspect both indexed children.
+
+`Keyed_Path_Preparation` binds lazy probe/removal recipes through the same signature
+and key-domain workers. Registry probe/removal opt-ins are independent of read/write
+permission. Each step observes bracket syntax; no value-read facts are manufactured.
+Unknown mixed keys stay mixed until runtime lookup, allowing probes to report an
+invalid shape without throwing a required-value conversion. Removal rejects such keys.
+`Value_Probe_Preparation::require_type` owns both ordinary and leaf-value admission,
+including registered containers, nullable scalars and Result scalars. Signature binding
+does not require copy capability; copied reads and assignment results request it at
+their own boundaries. Vector-element removal and bare-variable/property unset remain gated.
 
 `String_Conversions::decide_text` owns the bounded concatenation context: mixed,
 ordinary scalar and literal-null operands normalize to string using identity or

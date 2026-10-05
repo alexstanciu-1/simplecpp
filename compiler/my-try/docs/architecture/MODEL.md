@@ -154,6 +154,21 @@ then descends for mutation. Probe references expire before COW/autovivification;
 mutation references never cross source calls. Runtime overloads implement these
 steps without a variadic path-template framework or copying the entire root.
 
+`prepared_keyed_path` is the common non-creating recipe for keyed probes/removal.
+`prepared_value_probe` optionally owns it; the dedicated `unset_node` statement owns
+it directly. Ordered steps observe existing bracket nodes and retain key conversions
+and canonical element types. Runtime operation selection remains in stage workers,
+not in these structures. Root/key syntax facts follow ordinary cleanup/invalidation.
+Registry probe/removal opt-ins do not follow implicitly from write capability.
+
+The CPP worker emits lazy key evaluation with prefix-resolver closures capturing only
+the bound root and saved keys. Resolvers acquire interior pointers only during one
+lookup call; none survives a source key expression. Every reached prefix is checked
+again after key effects. Missing paths skip later keys, and removal only descends
+mutably after confirming an existing final slot. Leaf probes call the established
+PHP runtime presence/emptiness helpers, including wrapper semantics; ordinary throwing
+reads and legacy keyed membership shortcuts are not reused as probes.
+
 The property-free `ast_node` base supplies structural contracts; specialized node
 families own typed syntax fields and uint32 spans. `statement_body_node` shares
 ordered body storage/traversal between executable roots and nested blocks.

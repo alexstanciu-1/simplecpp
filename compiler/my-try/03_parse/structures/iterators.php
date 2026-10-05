@@ -328,6 +328,18 @@ final class value_probe_children_iterator extends children_iterator
 	}
 }
 
+final class unset_children_iterator extends children_iterator
+{
+	private bool $consumed = false;
+	public function __construct(private unset_node $source) {}
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) { return null; }
+		$this->consumed = true;
+		return $this->source->target;
+	}
+}
+
 /** Inspect presence selection in source order without allocating child lists. */
 final class coalesce_expression_children_iterator extends children_iterator
 {

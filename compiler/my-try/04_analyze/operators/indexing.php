@@ -23,6 +23,7 @@ final class Indexing_Preparation
 			throw new \RuntimeException('S2S operator[] with ' . $arity . ' argument(s) overload resolution is deferred');
 		}
 		$signature = self::signature($receiver, $declaration, $context);
+		Capability_Preparation::require_copy($signature->value, $context);
 		self::require_key_domain($operands[1], $context);
 		$decision = self::decision($receiver, $signature, $declaration->operation());
 		$decision->operands[] = Conversion_Preparation::decide($operands[1], $signature->key, conversion_context::argument);
@@ -30,7 +31,7 @@ final class Indexing_Preparation
 	}
 
 	/** Bind the registered key/value/context types once for reads, writes and appends. */
-	private static function signature(canonical_type_use $receiver, indexing_declaration $declaration,
+	public static function signature(canonical_type_use $receiver, indexing_declaration $declaration,
 		preparation_context $context): indexing_signature
 	{
 		if ($receiver->by_value()) {
@@ -51,7 +52,6 @@ final class Indexing_Preparation
 			$signature->path_element = Contract_Type_Substitution::resolve($path_reference, $receiver, $arguments);
 		}
 		self::require_key_domain($signature->key, $context);
-		Capability_Preparation::require_copy($signature->value, $context);
 		return $signature;
 	}
 
@@ -89,6 +89,7 @@ final class Indexing_Preparation
 				throw new \LogicException('Unregistered indexed assignment');
 			}
 			$signature = self::signature($receiver, $declaration, $context);
+			Capability_Preparation::require_copy($signature->value, $context);
 			$operation = operator_operation::index_append;
 			if ($target->index === null)
 			{
@@ -175,7 +176,7 @@ final class Indexing_Preparation
 	}
 
 	/** No PHP bool/float/null key coercion; unknown mixed payloads remain runtime checked. */
-	private static function require_key_domain(canonical_type_use $type, preparation_context $context): void
+	public static function require_key_domain(canonical_type_use $type, preparation_context $context): void
 	{
 		if ($type->matches($context->integer) || $type->matches($context->string_type)
 			|| Mixed_Conversions::is_mixed($type)) {

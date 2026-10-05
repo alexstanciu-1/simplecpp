@@ -139,6 +139,27 @@ This applies to:
 
 ## 7. Lowering rule
 
+### v0.2 keyed evaluation order
+
+Keyed probes traverse lazily, left-to-right. Evaluate/bind the root once, check that
+the current receiver supports lookup, evaluate the reached key once, and inspect its
+entry. Missing/null/non-container intermediates end the probe immediately (`isset`
+false, `empty` true); later key expressions do not run. A null/invalid root therefore
+skips even the first key. Ordinary exceptions in evaluated root/key expressions
+propagate. An invalid runtime key shape yields the probe's absent result, not a
+blanket exception catch. Statically unsupported key/type combinations are preparation
+errors under the v0.2 diagnostic policy.
+
+Key expressions may mutate the root. Re-resolve the reached prefix from the bound
+root and saved earlier keys after each such expression; use its current state, never
+an earlier interior reference. If the prefix disappeared, stop without evaluating
+later keys. No source expression is repeated. No whole-container snapshot is implied.
+Cross-family mixed-table/dynamic paths remain deferred until Chapter 06 closeout.
+
+This replaces the earlier eager-key proposal for probes; writes keep their separate
+keys/RHS/validation/commit ordering. Multiple probe operands, property paths and
+zero-argument bracket probes remain outside the bounded implementation slice.
+
 Generator lowering must preserve the runtime contract above.
 
 Required rule:

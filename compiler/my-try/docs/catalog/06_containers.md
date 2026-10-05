@@ -492,8 +492,62 @@ guards. All 1,151 pre-slice S2S exports remain byte-identical. Both runs used th
 shared 12-slot runner with CLI fallback because FPM sockets were unavailable.
 These are generated-program proofs, not a native compiler rebuild or broad regression.
 
-Next: discuss keyed `isset`/`empty` probes and `unset`, then value iteration.
+The following checkpoint implements keyed probes/removal; value iteration follows.
 **CH06-MIX-DYN-01 is still open and blocks chapter closeout.**
+
+### Lazy keyed probes and removal — 2026-10-05
+
+The user's final decision **replaces eager key evaluation with lazy traversal** for
+`isset`, `empty` and keyed `unset`. Existing write/append ordering is unchanged.
+The top-level probe and array contracts now describe reached-key evaluation, missing/
+null early stops, exceptions and re-resolution after key effects. Invalid probe
+shapes return false/true; wrong-kind removal intermediates and runtime-invalid removal
+keys throw. Missing removal targets are no-ops, with no creation or parent pruning.
+Vector-element removal remains deferred because the old runtime shifts later indexes
+while associative removal preserves remaining key identities.
+
+The existing `value_probe_node` gains optional non-creating path facts. A dedicated
+single-target `unset_node` statement shares the same `prepared_keyed_path` shape.
+Registry probe/removal opt-ins are separate from writes; shared signature/key binding
+feeds one preparation worker and one CPP path emitter. Unknown mixed keys are checked
+by lookup, not forced through throwing typed extraction before probes. Value leaves
+use ordinary runtime probe semantics, including nullable/Result states, containers
+and the documented nonempty string `"0"`.
+
+Prefix-resolver closures retain only the stable root and already-evaluated keys.
+They re-resolve the current prefix after key calls; no interior pointer crosses a
+source call and no whole-container copy is taken. A null/invalid root skips its first
+key. Missing/null intermediates skip later keys. Removal confirms the final slot
+exists before mutable descent, so no-op removal does not detach mixed COW storage.
+Actual removal preserves mixed value semantics and dynamic shared identity.
+
+Legacy keyed helpers are not sufficient by themselves: some typed `isset` helpers
+reduce to membership, and legacy unset lowering/runtime may mutate nested accesses
+or shift vector indexes. The new path uses non-creating lookup plus the established
+**plain-value** PHP presence/emptiness helpers; it does not broadly catch exceptions.
+The PHP experiment on eager nested keys was evidence, not authority: the user chose
+lazy behavior explicitly. Multiple operands, property/bare-variable unset, weak paths,
+native references and cross-family paths remain gated.
+
+Evidence: `/tmp/my-try-keyed-paths-20261005-1` passed five PHP suites and 36 PCH-backed
+generated programs. `/tmp/my-try-keyed-paths-20261005-2` passed five PHP suites and the
+expanded 44-program set without PCH. Coverage includes skipped/once-only keys,
+evaluated-key exceptions, root replacement/removal during keys, nullable and Result
+leaves, no-op identity, mixed COW, dynamic sharing, retained-body signature failure/
+recovery, cleanup and token compaction. No native compiler rebuild is implied.
+
+Final candidate: `/tmp/my-try-keyed-paths-20261005-3` passed all five PHP suites and
+44 generated C++ programs with PCH. All 1,181 pre-existing C++ exports were
+byte-identical to the nested-write checkpoint; 44 new exports were added. PHP used
+the runner's CLI fallback because the sandbox denied FPM socket creation.
+
+Performance debt **CH06-PATH-01**: the bounded resolver design emits O(depth) code but
+may repeat O(depth²) prefix lookups. Keep safe re-resolution until an effect-aware or
+runtime cursor improvement is justified; do not optimize by retaining unsafe interior
+references or copying full containers. This is non-blocking first-pass debt.
+
+Next: discuss value `foreach` across vector, hash, mixed and dynamic; reference iteration
+remains separate. **CH06-MIX-DYN-01 stays open and blocks chapter closeout.**
 
 ### End-to-end catalog rows
 
@@ -520,9 +574,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-INIT-002A](#arr-init-002a) | pending-discussion | `$a = null;` | unverified | unverified | deferred | — |
 | [ARR-INIT-005](#arr-init-005) | pending-discussion | `$a = ["name" => "Alex", "age" => 12];` | unverified | unverified | deferred | — |
 | [ARR-INIT-006](#arr-init-006) | pending-discussion | `$d = ["data" => [["id" => 1], ["id" => 2]]];` | unverified | unverified | deferred | — |
-| [ARR-EXIST-001](#arr-exist-001) | pending-discussion | `isset($a["name"])` | unverified | unverified | deferred | — |
-| [ARR-UNSET-001](#arr-unset-001) | pending-discussion | `unset($a["name"]);` | unverified | unverified | deferred | — |
-| [ARR-EMPTY-001](#arr-empty-001) | pending-discussion | `empty($a["name"])` | unverified | unverified | deferred | — |
+| [ARR-EXIST-001](#arr-exist-001) | bounded-support | `isset($a["name"])` | passed | passed | deferred | Registered containers; lazy paths, null/wrapper-sensitive |
+| [ARR-UNSET-001](#arr-unset-001) | bounded-support | `unset($a["name"]);` | passed | passed | deferred | Associative direct/nested removal; vector leaf removal gated |
+| [ARR-EMPTY-001](#arr-empty-001) | bounded-support | `empty($a["name"])` | passed | passed | deferred | Lazy paths; missing true; string `"0"` nonempty |
 | [ARR-TYPE-001](#arr-type-001) | pending-discussion | `function f(array &$a): void { $a["x"] = 1; }` | unverified | unverified | deferred | — |
 | [ARR-VALUE-001](#arr-value-001) | pending-discussion | `$v vector<int> = [1, 2, 3]; $d = ["data" => $v];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-PARAM-002](#type-param-002) | pending-discussion | `function f(string $s, vector_t $v): string { return $s; }` | unverified | unverified | deferred | — |
@@ -1244,7 +1298,7 @@ $a[] = 1;
 
 ## ARR-EXIST-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Bounded support through [lazy keyed paths](#lazy-keyed-probes-and-removal--2026-10-05); leaf presence respects null and wrapper state.
 
 ### Imported version 1
 
@@ -1281,7 +1335,7 @@ php::isset(a, "name")
 
 ## ARR-UNSET-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Bounded support through [lazy keyed paths](#lazy-keyed-probes-and-removal--2026-10-05); non-creating associative removal, vector leaf removal deferred.
 
 ### Imported version 1
 
@@ -1318,7 +1372,7 @@ a.remove("name");
 
 ## ARR-EMPTY-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Bounded support through [lazy keyed paths](#lazy-keyed-probes-and-removal--2026-10-05); missing paths are empty, string `"0"` is not.
 
 ### Imported version 1
 

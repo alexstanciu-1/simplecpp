@@ -17,6 +17,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For lazy keyed `isset`/`empty` and associative `unset`:
+
+```bash
+python3 compiler/my-try/tests/keyed_paths.py --results /tmp/FRESH_KEYED_RESULTS
+```
+
+Five PHP suites exercise syntax, preparation, retained-body recovery and exports.
+`probe_path_*` / `unset_path_*` generated programs prove skipped keys, key exceptions,
+root replacement, nullable/Result leaf states, no creation, no-op purity and COW/shared
+identity. PCH is default; `--no-pch` checks header completeness. Uses the shared 12-slot
+runner, not a native compiler rebuild.
+
 For common value reads and direct/nested writes/appends:
 
 ```bash

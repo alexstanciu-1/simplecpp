@@ -97,6 +97,25 @@ final class prepared_constant_reference extends prepared_expression {
 final class prepared_value_probe extends prepared_expression
 {
 	public value_probe_kind $operation;
+	public ?prepared_keyed_path $path = null;
+}
+
+/** Non-creating lookup recipe; workers select probing versus removal. */
+final class prepared_keyed_path
+{
+	/** @reference.source keyed syntax graph */
+	public expression_node $root;
+	/** @storage.owner */
+	public Storage $steps /** Storage<prepared_keyed_step> */;
+	public function __construct() { $this->steps = new Storage(); }
+}
+
+final class prepared_keyed_step
+{
+	/** @reference.source keyed syntax graph */
+	public index_node $syntax;
+	public canonical_type_use $element_type;
+	public conversion_decision $key_conversion;
 }
 
 /** Presence interpretation is independent of the selected branch conversion. */

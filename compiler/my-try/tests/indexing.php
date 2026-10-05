@@ -103,8 +103,10 @@ foreach ([
 	['$v vector<int> = [1]; $v[0]++;', 'mutation requires'],
 	['$v vector<int> = [1]; $v[0] += 2;', 'mutation requires'],
 	['function accept(int &$v): void {} $v vector<int> = [1]; accept($v[0]);', 'stable storage'],
-	['$v vector<int> = [1]; $x = isset($v[0]);', 'probe'],
-	['$v vector<int> = [1]; $x = empty($v[0]);', 'probe'],
+	['$v vector<int> = [1]; $x = isset($v[]);', 'explicit keys'],
+	['$v vector<int> = [1]; unset($v[0]);', 'keyed removal'],
+	['$v mixed = {}; unset($v);', 'one keyed target'],
+	['function make(): dynamic { return {}; } unset(make()["a"]);', 'local or parameter root'],
 	['$v vector<int> = [1]; $x = $v[$new = 0];', 'established local declaration for new'],
 ] as [$source, $diagnostic])
 {

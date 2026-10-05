@@ -61,7 +61,52 @@ try {
 		catch (\RuntimeException $error) { $failed = true; }
 		probe_check($failed && Model::$cpp_files->is_empty(), 'Probe accepted invalid arity');
 	}
-	echo "Value probes: syntax, arity, facts and incremental recovery passed\n";
+	$nested = 'function probe(hash<hash<int>> &$v): bool { unset($v["parent"]["x"]); return isset($v["parent"]["y"]); } return 0;';
+	file_put_contents($path, $nested);
+	Compiler_Lifecycle::reset();
+	$compiler = new Compiler();
+	$compiler->init([$directory]);
+	$compiler->exec_cpp();
+	$function = Model::$global_scope->functions_named('probe')[0]->syntax();
+	$body = $function->body;
+	$removal = $body->statements[0];
+	$probe = $body->statements[1]->expression;
+	probe_check($removal instanceof unset_node, 'Unset did not retain statement syntax');
+	probe_check(iterator_to_array($removal->children()) === [$removal->target], 'Unset inspection lost target');
+	$old = $removal->require_preparation();
+	probe_check($old->steps->count() === 2 && $probe->require_probe_preparation()->path->steps->count() === 2, 'Keyed facts lost path steps');
+	probe_check($old->steps[0]->syntax->preparation() === null, 'Keyed path was prepared as a value read');
+	file_put_contents($path, str_replace('hash<hash<int>>', 'hash<hash<string>>', $nested));
+	$compiler->update_cpp([$path]);
+	probe_check($function->body === $body && $old !== $removal->require_preparation(), 'Retained keyed body did not reprepare');
+	file_put_contents($path, str_replace('hash<hash<int>>', 'hash<vector<int>>', $nested));
+	$failed = false;
+	try { $compiler->update_cpp([$path]); }
+	catch (\RuntimeException $error) { $failed = true; }
+	probe_check($failed && Model::$cpp_files->is_empty() && $removal->preparation() === null, 'Invalid unset target retained output/facts');
+	file_put_contents($path, $nested);
+	$compiler->update_cpp([$path]);
+	$incremental = Model::$cpp_files[0]->text;
+	Token_Cleanup::file(Model::syntax_files()[0]);
+	probe_check(Model::syntax_files()[0]->tokens->text_at($removal->start_token()) === 'unset', 'Unset span lost after compaction');
+	Preparation_Cleanup::tree($body);
+	probe_check($removal->preparation() === null && $probe->preparation() === null
+		&& $old->root->preparation() === null, 'Keyed cleanup missed syntax facts');
+	Compiler_Lifecycle::reset();
+	$clean = new Compiler();
+	$clean->init([$directory]);
+	$clean->exec_cpp();
+	probe_check($incremental === Model::$cpp_files[0]->text, 'Keyed clean/incremental recovery differs');
+	foreach (['unset();', 'unset($v[0], $v[1]);'] as $bad) {
+		file_put_contents($path, '$v mixed = {}; ' . $bad);
+		Compiler_Lifecycle::reset();
+		$compiler = new Compiler();
+		$failed = false;
+		try { $compiler->init([$directory]); $compiler->exec_cpp(); }
+		catch (\RuntimeException $error) { $failed = true; }
+		probe_check($failed && Model::$cpp_files->is_empty(), 'Unset accepted invalid arity');
+	}
+	echo "Value probes/removal: syntax, arity, path facts and incremental recovery passed\n";
 } finally {
 	unlink($path);
 	rmdir($directory);

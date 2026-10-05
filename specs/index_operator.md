@@ -58,8 +58,16 @@ contract even though ordinary dynamic value reads return mixed. Path brackets ar
 not prepared or emitted as copied value reads.
 
 String indexing, unregistered receivers, zero-argument value reads, intermediate append,
-indexed updates, native reference arguments and keyed probes remain deferred.
+indexed updates and native reference arguments remain deferred.
 Effective storage modifiers and broader key families are not admitted by this slice.
+
+Keyed `isset`/`empty` use their existing value-probe node with an optional
+`prepared_keyed_path`. A dedicated `unset_node` statement owns the same non-creating
+path fact shape. These operations are independently registered, not inferred from
+readability or writability. The [probe contract](count_empty_isset_contract.md#v02-keyed-evaluation-order)
+defines lazy keys and safe prefix re-resolution; the [removal contract](array_semantics.md#v02-keyed-removal)
+defines no-op versus error behavior. Vector-element removal, bare-variable unset,
+properties, multiple operands and weak/cross-family paths remain gated.
 
 ## Runtime and legacy boundary
 
@@ -76,3 +84,4 @@ a nullable dereference. This does not implement the canonical overload model the
 arguments, postfix bases, traversal, shared diagnostics, retained syntax/collection,
 compaction, read/write/path facts, deferred append/reference uses and incremental recovery.
 `compiler/my-try/tests/container_writes.py` owns focused generated-C++ read/write proofs.
+`compiler/my-try/tests/keyed_paths.py` proves lazy probes and keyed removal.
