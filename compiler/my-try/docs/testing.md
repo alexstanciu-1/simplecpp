@@ -17,7 +17,7 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
-For common value reads and direct writes/appends:
+For common value reads and direct/nested writes/appends:
 
 ```bash
 python3 compiler/my-try/tests/container_reads.py --results /tmp/FRESH_READ_RESULTS
@@ -29,6 +29,8 @@ recovery; the read runner executes `read_*`, and the write runner executes both
 `read_*` and `write_*` exports through the shared 12-slot
 pool. PCH is the default, with `--no-pch` for include completeness. No native compiler
 rebuild is implied. Construction fixtures remain part of the common S2S export suite.
+Nested proofs include ordering, no partial creation on validation failure, COW/shared
+identity, post-RHS root resolution, contextual literals and deferred cross-family gates.
 
 For common data construction across vector/hash/mixed/dynamic:
 

@@ -127,10 +127,47 @@ for dynamic. Shared dynamic payload identity and mixed copy-on-write are preserv
 An assignment expression yields the converted assigned value, not an appended key
 or native reference; a statement need not materialize that otherwise-unused result.
 
-Nested write-path failure/partial-creation guarantees remain to be settled before
-enabling that v0.2 slice. The existing nested autovivification rules below are not
-permission to lower a write through copied read results or retain interior references
-across key/RHS calls. General source-defined indexing remains separate work.
+#### v0.2 nested write paths
+
+Nested writes extend the same operation contract. Bind the local/parameter root;
+evaluate, convert and validate all explicit keys left-to-right; evaluate and convert
+the RHS; validate the complete destination path without mutation; then commit.
+Each source expression executes once. Final append is supported; intermediate
+append (`$rows[][0] = 1`) is deferred. Properties, call-result roots, indexed compound
+updates and native element references remain outside this bounded slice.
+
+Path resolution observes the root's current state **after** key/RHS effects. For
+example, an RHS that replaces the root changes the object/container subsequently
+targeted. The compiler must not preserve an earlier interior reference or read-copy
+snapshot across these calls. Internal traversal references are allowed only after
+source evaluation and cannot escape as source-language references.
+
+Creation and validation rules:
+
+- Existing typed vector/hash intermediates are traversed in place. A missing typed
+  hash intermediate throws; explicitly initialize it first. No vector index grows
+  the vector, including an intermediate index.
+- Mixed table paths may create missing/null intermediate mixed tables. Existing
+  scalar intermediates throw rather than being replaced.
+- Dynamic paths traverse already-constructed dynamic children. Missing/null children
+  and absent dynamic handles throw; construct children explicitly first. Do not
+  bootstrap mixed tables beneath a dynamic receiver.
+- Cross-family mixed-table/dynamic paths and cross-family aggregate insertion through
+  nested writes remain deferred pending the Chapter 06 containment decision. Runtime
+  mixed entry storage of a dynamic handle is representation, not a mixed-table child.
+  Statically known unsupported combinations reject during preparation; unknown mixed
+  payloads are checked at runtime. This bounded gate does not redesign the existing
+  direct-write/construction boxing contract.
+
+Invalid keys skip later key/RHS evaluation. Failed RHS evaluation/conversion and
+path kind/missing/bounds checks cause **no write-induced partial creation or changes**.
+Previously executed key/RHS side effects remain. Mutation-time allocation/copy
+failures still have no general transaction/rollback guarantee. Validation and commit
+are synchronous; concurrent unsynchronized mutation is not made safe by this rule.
+Mixed copy-on-write and dynamic shared identity must both be preserved. No full-root
+transaction copy is required; ordinary COW detachment may copy shared tables.
+
+General source-defined indexing remains separate work.
 
 Examples:
 ```php

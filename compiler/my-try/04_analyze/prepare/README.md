@@ -217,11 +217,15 @@ throw on absence; mixed/dynamic reads yield mixed, with null on absence and runt
 errors for invalid receiver/key kinds. Key conversions and result copy capability
 are prepared, including source-derived dependencies. Index facts are non-addressable.
 The same registry and signature binding select direct indexed-store/append operations
-on established local/parameter receivers. `prepared_index_assignment` retains the
+on established local/parameter-rooted paths. `prepared_index_assignment` retains the
 operation and `container_element` conversion; it never invents a variable binding or
 an addressable slot. RHS literals inherit the registered nested-construction target.
 Construction and writes share element admission, including bounded dynamic boxing.
-Zero-argument reads, string indexing, nested writes, indexed updates/references and
+Ordered path steps additionally retain key conversion and registered traversal type;
+they observe syntax without assigning value-read facts to intermediate brackets.
+Dynamic traversal remains dynamic; mixed traversal remains mixed. The current nested
+slice gates cross-family aggregate operations without closing the containment debt.
+Zero-argument reads, string indexing, intermediate append, indexed updates/references and
 keyed probes remain gated. Eager parent effect checks inspect both indexed children.
 
 `String_Conversions::decide_text` owns the bounded concatenation context: mixed,

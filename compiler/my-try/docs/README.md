@@ -46,6 +46,7 @@ experiment retained for regressions, not a second semantic development path.
 | Built-in data construction | [Runtime adapters and shared C++ execution](catalog/06_containers.md#built-in-construction-execution--2026-10-05), [focused runner](testing.md#commands) |
 | Container value reads | [Shared read checkpoint](catalog/06_containers.md#shared-container-value-reads--2026-10-05), [bracket contract](../../../specs/index_operator.md), [focused runner](testing.md#commands) |
 | Direct container writes/appends | [Shared write checkpoint](catalog/06_containers.md#direct-container-writes-and-appends--2026-10-05), [write semantics](../../../specs/array_semantics.md#22-write-path) |
+| Nested container writes | [Path preparation and failure guarantees](catalog/06_containers.md#nested-write-paths--2026-10-05), [write semantics](../../../specs/array_semantics.md#v02-nested-write-paths) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
 | Next language feature | [Catalog](catalog/README.md), [chapter 06 agreed standard and grouping](catalog/06_containers.md#agreed-standard-and-revised-grouping--2026-10-05), [top-level data initialization standard](../../../specs/data_initialization.md) |

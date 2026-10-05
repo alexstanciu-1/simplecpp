@@ -46,6 +46,10 @@ final class Indexing_Preparation
 		$signature->key = Contract_Type_Substitution::resolve($declaration->key(), $receiver, $arguments);
 		$signature->value = Contract_Type_Substitution::resolve($declaration->value(), $receiver, $arguments);
 		$signature->nested = Contract_Type_Substitution::resolve($declaration->nested(), $receiver, $arguments);
+		$path_reference = $declaration->path_element();
+		if ($path_reference !== null) {
+			$signature->path_element = Contract_Type_Substitution::resolve($path_reference, $receiver, $arguments);
+		}
 		self::require_key_domain($signature->key, $context);
 		Capability_Preparation::require_copy($signature->value, $context);
 		return $signature;
@@ -63,7 +67,7 @@ final class Indexing_Preparation
 		return $decision;
 	}
 
-	/** Direct mutation uses stable whole-wrapper storage, never a copied read result. */
+	/** Mutation starts at stable whole-wrapper storage, never a copied read result. */
 	public static function prepare_write(assignment_expression_node $assignment, index_node $target,
 		preparation_context $context): prepared_index_assignment
 	{
@@ -71,20 +75,20 @@ final class Indexing_Preparation
 		$context->statement_assignment = false;
 		try
 		{
-			if (!($target->base instanceof variable_reference_node)) {
-				throw new \RuntimeException('S2S indexed assignment requires a direct local or parameter; nested write paths are deferred');
-			}
-			$receiver = Expression_Preparation::prepare($target->base, $context);
-			if (!$receiver->addressable) {
-				throw new \RuntimeException('S2S indexed assignment requires stable receiver storage');
-			}
-			$declaration = Model::$indexing_contracts->lookup(Type_Queries::canonical($receiver->type)->definition());
+			$facts = new prepared_index_assignment();
+			$receiver = self::prepare_receiver($target->base, $facts, $context);
+			$declaration = Model::$indexing_contracts->lookup(Type_Queries::canonical($receiver)->definition());
 			if ($declaration === null) {
 				// Preserve the common unsupported operator diagnostic, including string arity.
-				Operator_Preparation::prepare_index($target, $context);
+				$operands /** vector<canonical_type_use> */ = [$receiver];
+				if ($target->index !== null) {
+					$key_node /** expression_node */ = $target->index;
+					$operands[] = Expression_Preparation::prepare($key_node, $context)->type;
+				}
+				self::decide($operands, $context);
 				throw new \LogicException('Unregistered indexed assignment');
 			}
-			$signature = self::signature($receiver->type, $declaration, $context);
+			$signature = self::signature($receiver, $declaration, $context);
 			$operation = operator_operation::index_append;
 			if ($target->index === null)
 			{
@@ -102,7 +106,7 @@ final class Indexing_Preparation
 				}
 				$operation = $write_operation;
 			}
-			$decision = self::decision($receiver->type, $signature, $operation);
+			$decision = self::decision($receiver, $signature, $operation);
 			if ($target->index !== null)
 			{
 				$key_node /** expression_node */ = $target->index;
@@ -111,15 +115,63 @@ final class Indexing_Preparation
 				$decision->operands[] = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument);
 			}
 			$value = Expression_Preparation::prepare($assignment->value, $context, $signature->nested);
-			$facts = new prepared_index_assignment();
 			$facts->type = $signature->value;
 			$facts->decision = $decision;
 			$facts->value_conversion = Conversion_Preparation::decide($value->type, $signature->value, conversion_context::container_element);
+			if (!$facts->path->is_empty()) {
+				if (Mixed_Conversions::is_mixed($receiver)
+					&& ($facts->value_conversion->operation === conversion_operation::mixed_dynamic_box)) {
+					throw new \RuntimeException('S2S nested write of dynamic into mixed is deferred');
+				}
+			}
 			return $facts;
 		}
 		finally {
 			$context->statement_assignment = $previous;
 		}
+	}
+
+	/** Keys are prepared root-to-leaf; traversal does not prepare value-read facts. */
+	private static function prepare_receiver(expression_node $syntax, prepared_index_assignment $facts,
+		preparation_context $context): canonical_type_use
+	{
+		if ($syntax instanceof index_node)
+		{
+			$index = object_cast($syntax, index_node::class);
+			if ($index->index === null) {
+				throw new \RuntimeException('S2S intermediate append in a write path is deferred');
+			}
+			$receiver = self::prepare_receiver($index->base, $facts, $context);
+			$declaration = Model::$indexing_contracts->lookup(Type_Queries::canonical($receiver)->definition());
+			if ($declaration === null) {
+				throw new \RuntimeException('S2S receiver has no nested write-path contract');
+			}
+			$signature = self::signature($receiver, $declaration, $context);
+			$element = $signature->path_element;
+			if ($element === null) {
+				throw new \RuntimeException('S2S receiver has no nested write-path contract');
+			}
+			$key_node /** expression_node */ = $index->index;
+			$key = Expression_Preparation::prepare($key_node, $context);
+			self::require_key_domain($key->type, $context);
+			$step = new prepared_index_path_step();
+			$step->syntax = $index;
+			$step->element_type = $element;
+			$step->key_conversion = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument);
+			$path /** Storage<prepared_index_path_step> */ = $facts->path;
+			$path->append($step);
+			return $step->element_type;
+		}
+		if (!($syntax instanceof variable_reference_node)) {
+			throw new \RuntimeException('S2S indexed assignment requires a direct local or parameter root');
+		}
+		$root = object_cast($syntax, variable_reference_node::class);
+		$prepared = Expression_Preparation::prepare($root, $context);
+		if (!$prepared->addressable) {
+			throw new \RuntimeException('S2S indexed assignment requires stable receiver storage');
+		}
+		$facts->root = $root;
+		return $prepared->type;
 	}
 
 	/** No PHP bool/float/null key coercion; unknown mixed payloads remain runtime checked. */

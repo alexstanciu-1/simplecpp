@@ -42,7 +42,7 @@ on `prepared_index_expression`; they are non-addressable values regardless of th
 syntax node's assignable base class. Ordinary typed consumers convert that value
 after lookup, not by changing lookup policy.
 
-Direct assignment through a local/parameter receiver selects an independently
+Assignment through a local/parameter-rooted path selects an independently
 registered indexed-store or append operation. Empty brackets select append only
 when that receiver's contract permits it; a zero-argument value read is still gated.
 `prepared_index_assignment` records the operation and element conversion, not a
@@ -50,7 +50,14 @@ native slot reference or a local-variable binding. Construction and writes share
 container-element admission and contextual nested-literal typing. See the
 [write contract](array_semantics.md#22-write-path) for ordering and failure guarantees.
 
-String indexing, unregistered receivers, zero-argument value reads, nested mutation,
+Nested targets retain ordered `prepared_index_path_step` facts under the assignment:
+each references its existing bracket syntax and records the key conversion and
+registered traversal result type. Traversal capability is separate from value reads
+and construction opt-in. In particular, dynamic traversal retains a dynamic child
+contract even though ordinary dynamic value reads return mixed. Path brackets are
+not prepared or emitted as copied value reads.
+
+String indexing, unregistered receivers, zero-argument value reads, intermediate append,
 indexed updates, native reference arguments and keyed probes remain deferred.
 Effective storage modifiers and broader key families are not admitted by this slice.
 
@@ -67,5 +74,5 @@ a nullable dereference. This does not implement the canonical overload model the
 
 [Focused tests](../compiler/my-try/tests/indexing.php) prove both arities, expression
 arguments, postfix bases, traversal, shared diagnostics, retained syntax/collection,
-compaction, read/write facts, deferred nested/reference uses and incremental recovery.
+compaction, read/write/path facts, deferred append/reference uses and incremental recovery.
 `compiler/my-try/tests/container_writes.py` owns focused generated-C++ read/write proofs.

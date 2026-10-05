@@ -136,11 +136,23 @@ Cleanup and incremental preparation own these facts through the existing node li
 `prepared_assignment_expression` shares assignment value-result facts. Its storage
 specialization retains `prepared_binding`; `prepared_index_assignment` instead owns
 a selected store/append decision and element conversion. Registry signatures bind
-key, value and nested-literal target once for all bracket operations. Direct writes
-require stable local/parameter wrapper storage, not an interior reference. One CPP
+key, value, nested-literal target and optional write-path element type for bracket operations.
+Writes require stable local/parameter root storage, not an exposed interior reference. One CPP
 write handler emits ordered receiver/key/value temporaries and a runtime operation;
 statement writes use a plain scope, value-producing writes a result lambda. Runtime
 overloads own storage details, bounds, null bootstrap, COW and shared identity.
+
+Nested assignments additionally retain an ordered `Storage<prepared_index_path_step>`
+and the existing root syntax reference. Each step observes its bracket node and owns
+key conversion/traversal-result facts, not a copied value-read decision or a worker.
+The registry's traversal result is independent of its read result (dynamic traversal
+remains dynamic, while its reads return mixed). Analysis owns root-to-leaf preparation;
+the CPP worker consumes the settled path. Cleanup drops the assignment-owned plan and
+ordinary syntax traversal clears root/key/RHS facts. No extra AST shape is introduced.
+After all keys/RHS are evaluated, emission probes the path in a read-only scope and
+then descends for mutation. Probe references expire before COW/autovivification;
+mutation references never cross source calls. Runtime overloads implement these
+steps without a variadic path-template framework or copying the entire root.
 
 The property-free `ast_node` base supplies structural contracts; specialized node
 families own typed syntax fields and uint32 spans. `statement_body_node` shares

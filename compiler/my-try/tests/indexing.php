@@ -90,7 +90,12 @@ foreach ([
 	['function read(hash<int,mixed> $v): int { return $v[0]; }', 'required capability hashable'],
 	['$v vector<int> = [1]; $x = $v[];', 'operator[] with 0 argument(s)'],
 	['$v hash<int> = {}; $v[] = 2;', 'does not support append'],
-	['$v vector<vector<int>> = [[1]]; $v[0][0] = 2;', 'nested write paths are deferred'],
+	['$v vector<vector<int>> = [[1]]; $v[][0] = 2;', 'intermediate append'],
+	['$v vector<int> = [1]; $v[0][0] = 2;', 'operator[] with 1 argument(s)'],
+	['$v vector<vector<int>> = [[1]]; $v[0][0] = "bad";', 'requires matching types'],
+	['$v vector<vector<int>> = [[1]]; $v[true][0] = 2;', 'indexed access keys require'],
+	['$v vector<vector<int>> = [[1]]; $v[0][$new = 0] = 2;', 'established local declaration for new'],
+	['$v mixed = {}; $d dynamic = {}; $v["a"]["b"] = $d;', 'nested write of dynamic into mixed is deferred'],
 	['function make(): dynamic { return {}; } make()["a"] = 1;', 'direct local or parameter'],
 	['$v vector<int> = []; $v[] = "bad";', 'requires matching types'],
 	['$v dynamic = {}; $v[true] = 1;', 'indexed access keys require'],
@@ -140,6 +145,22 @@ Preparation_Cleanup::tree($write);
 if ($write->preparation() !== null || $write->target->base->preparation() !== null
 	|| $write->value->preparation() !== null) {
 	throw new \LogicException('Write facts survived cleanup');
+}
+
+// Write-path brackets own traversal facts through the assignment, not copied reads.
+indexing_prepare('function put(vector<vector<int>> &$v): void { $v[0][] = 1; }');
+$write = Model::$global_scope->functions_named('put')[0]->syntax()->body->statements[0]->expression;
+$facts = $write->require_write_preparation();
+if (!($facts instanceof prepared_index_assignment) || $facts->path->count() !== 1
+	|| $facts->path[0]->syntax !== $write->target->base
+	|| $facts->root !== $write->target->base->base
+	|| $facts->path[0]->syntax->preparation() !== null) {
+	throw new \LogicException('Nested target lost path facts or was prepared as a copied read');
+}
+Preparation_Cleanup::tree($write);
+if ($write->preparation() !== null || $facts->root->preparation() !== null
+	|| $facts->path[0]->syntax->index->preparation() !== null) {
+	throw new \LogicException('Nested write facts survived cleanup');
 }
 
 // Parser-only reuse/compaction proves optional children without inventing overload facts.
@@ -221,18 +242,18 @@ try
 	if ($incremental !== Model::$cpp_files[0]->text) {
 		throw new \LogicException('Recovered read differs from fresh output');
 	}
-	$source = 'function put(vector<int> &$v): void { $v[] = 1; } return 0;';
+	$source = 'function put(vector<vector<int>> &$v): void { $v[0][] = 1; } return 0;';
 	file_put_contents($path, $source);
 	$fresh->update_cpp([$path]);
 	$function = Model::$global_scope->functions_named('put')[0]->syntax();
 	$write = $function->body->statements[0]->expression;
 	$old = $write->require_write_preparation();
-	file_put_contents($path, str_replace('vector<int>', 'hash<int,int>', $source));
+	file_put_contents($path, str_replace('vector<vector<int>>', 'vector<hash<int,int>>', $source));
 	$fresh->update_cpp([$path]);
 	if ($write !== $function->body->statements[0]->expression || $old === $write->require_write_preparation()) {
 		throw new \LogicException('Signature edit did not reprepare retained append');
 	}
-	file_put_contents($path, str_replace('vector<int>', 'hash<int>', $source));
+	file_put_contents($path, str_replace('vector<vector<int>>', 'vector<hash<int>>', $source));
 	$failed = false;
 	try { $fresh->update_cpp([$path]); }
 	catch (\RuntimeException $error) { $failed = true; }

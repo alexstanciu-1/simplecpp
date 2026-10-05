@@ -421,8 +421,26 @@ final class prepared_assignment extends prepared_assignment_expression
 /** Element writes select operations rather than pretending to declare native storage. */
 final class prepared_index_assignment extends prepared_assignment_expression
 {
+	/** @reference.source assignment_expression_node.target (syntax graph) */
+	public variable_reference_node $root;
+	/** @storage.owner */
+	public Storage $path /** Storage<prepared_index_path_step> */;
 	public operator_decision $decision;
 	public conversion_decision $value_conversion;
+
+	public function __construct()
+	{
+		$this->path = new Storage();
+	}
+}
+
+/** Ordered semantic traversal facts; no copied read or native slot binding. */
+final class prepared_index_path_step
+{
+	/** @reference.source assignment_expression_node.target (syntax graph) */
+	public index_node $syntax;
+	public conversion_decision $key_conversion;
+	public canonical_type_use $element_type;
 }
 
 /** A typed value return owns a decision; void and program-entry returns do not. */

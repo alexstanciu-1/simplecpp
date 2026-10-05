@@ -78,6 +78,16 @@ does not itself change boxing, identity or nesting semantics and does not block 
 intermediate preparation/construction slices. Existing cross-family behavior must not
 be treated as final design approval merely because it passes tests.
 
+The nested-write slice explicitly excludes cross-family paths and aggregate
+insertions. Mixed paths stay mixed-table paths; dynamic paths require constructed
+dynamic children and do not autovivify mixed tables. Runtime mixed storage of a
+dynamic child is not a semantic mixed-table child. Unknown crossing payloads reject
+at runtime; statically known unsupported insertion rejects preparation. These are
+bounded implementation gates, not resolution of the overall containment contract.
+Earlier construction/direct-write cross-family fixtures are historical compatibility
+evidence, not an expectation or prerequisite for the new nested slice. Reconcile
+those earlier permissions at the required closeout discussion, not silently here.
+
 Closeout requires an explicit agreed decision, reconciliation of the owning
 `specs/data_initialization.md` / `specs/dynamic_types.md` contracts, and any required
 compiler/runtime changes with focused proofs. Do not close this debt solely by
@@ -422,10 +432,10 @@ integer-hash append policy, mixed null bootstrap/COW and dynamic shared identity
 Absent dynamic handles reject mutation. Assignment expressions yield the converted
 element value, not a key or slot reference.
 
-The bounded target is an established local/parameter wrapper. Nested mutation paths,
+At this checkpoint the target was an established local/parameter wrapper. Nested mutation paths,
 call-result/property receivers, indexed updates, native references and keyed probes
-remain gated. **Next discussion:** nested mutation and its path/failure guarantee;
-then keyed probes and value iteration. Do not lower a nested write through copied
+remained gated; the following checkpoint implements the agreed nested slice.
+Do not lower a nested write through copied
 value-read results or keep interior references across RHS calls.
 
 Evidence: `/tmp/my-try-container-writes-20261005-1` passed seven PHP suites and 58
@@ -439,6 +449,52 @@ unavailable. All 1,117 pre-write S2S exports remain byte-identical. This is not 
 native compiler rebuild or a broad regression run.
 **CH06-MIX-DYN-01 remains open and blocking chapter closeout.**
 
+### Nested write paths — 2026-10-05
+
+Agreed scope: local/parameter roots, explicit intermediate keys, final store or
+append, existing typed intermediates, mixed missing/null table creation, and
+constructed same-family dynamic children. Intermediate append, properties,
+call-result roots, indexed compound updates, weak mixed paths and native references
+remain gated. Cross-family containment is not expected in this slice; see the
+blocking debt above.
+
+The authoritative [nested contract](../../../../specs/array_semantics.md#v02-nested-write-paths)
+now specifies root binding, keys left-to-right, RHS conversion, whole-path validation,
+then commit. Invalid keys skip subsequent expressions. Failed RHS/ordinary path
+validation causes no write-induced partial creation; earlier expression side effects
+remain. The path uses the root's current state after those effects. Allocation/copy
+failures during commit are not promised transactional rollback.
+
+The existing registry gains optional traversal-result type references, separate
+from read results and literal context. Assignment-owned ordered path steps observe
+the existing `index_node` chain; analysis binds conversions and traversal types without
+preparing copied value reads. Dynamic traversal stays dynamic even though ordinary
+reads yield mixed. The common CPP handler emits keys/RHS once, a read-only probe scope,
+then mutable descent and the existing store/append. Runtime overloads own COW and
+storage access; no family-specific AST/preparation walkers or variadic path-template
+framework were added. Compile-size cost is linear in path depth, with fixed-signature
+fat-container helpers and ordinary typed-container overloads. No measured speedup is claimed.
+
+Legacy `renderDimWriteAccess` recursively emitted mutable bracket expressions; its
+type-blind behavior does not supply ordered RHS evaluation or a whole-path preflight.
+The new worker does not reuse copied reads or hold interior references across source
+calls. Missing typed-hash nodes and absent dynamic children require explicit creation;
+this is the agreed bounded clarification, not arbitrary generic default construction.
+
+Initial evidence: `/tmp/my-try-nested-writes-20261005-1` passed seven PHP suites and
+88 PCH-backed generated programs. Focused proofs cover typed paths/final append,
+deep mixed creation/COW, dynamic sharing, contextual RHS literals, ordering, root
+replacement during RHS evaluation, missing/wrong-kind/bounds/conversion failures,
+prepared-path cleanup and retained-body fresh/incremental recovery.
+The final `/tmp/my-try-nested-writes-20261005-2` run passed seven PHP suites and
+92 generated programs without PCH, including cross-family rejection/no-creation
+guards. All 1,151 pre-slice S2S exports remain byte-identical. Both runs used the
+shared 12-slot runner with CLI fallback because FPM sockets were unavailable.
+These are generated-program proofs, not a native compiler rebuild or broad regression.
+
+Next: discuss keyed `isset`/`empty` probes and `unset`, then value iteration.
+**CH06-MIX-DYN-01 is still open and blocks chapter closeout.**
+
 ### End-to-end catalog rows
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -451,7 +507,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-READ-001](#arr-read-001) | bounded-support | `$b vector<int> = [3]; $a = $b[0];` | passed | passed | deferred | `read_typed`, bounds/key/order/nested proofs; all four registered families |
 | [ARR-READ-002](#arr-read-002) | bounded-support | `$b dynamic = {name: "Alex"}; $a = $b["name"];` | passed | passed | deferred | `read_dynamic`, missing/typed-boundary/wrong-kind proofs |
 | [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |
-| [ARR-WRITE-001](#arr-write-001) | bounded-support | `$b vector<int> = [0]; $b[0] = 1;` | passed | passed | deferred | Direct local/parameter receivers; all four families; nested paths deferred |
+| [ARR-WRITE-001](#arr-write-001) | bounded-support | `$b vector<int> = [0]; $b[0] = 1;` | passed | passed | deferred | Local/parameter-rooted direct/nested paths; all four families; cross-family paths gated |
 | [ARR-APPEND-001](#arr-append-001) | bounded-support | `$a vector<int> = []; $a[] = 1;` | passed | passed | deferred | Vector, integer-key hash, mixed and dynamic; string-key hash rejects |
 | [FUNC-DECL-003B](#func-decl-003b) | pending-discussion | `function f(vector<int> $a): void {}` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [FUNC-ARG-001](#func-arg-001) | pending-discussion | `f($x[0]);` | unverified | unverified | deferred | — |
