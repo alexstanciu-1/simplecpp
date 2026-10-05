@@ -346,3 +346,34 @@ for focused native regression verification.
 All 46 selected programs passed under
 `/tmp/my-try-tagged-dynamic-numeric-generated-20261005-1`. This is generated-program
 verification, not a native compiler rebuild or a public tagged-dynamic switch.
+
+### Tagged numeric ordering, strict identity and updates — 2026-10-05
+
+Numeric `<`, `<=`, `>` and `>=` reuse the numeric dispatcher with a bool result;
+primitive comparisons retain widening and NaN behavior. Nonnumeric ordering rejects.
+Strict identity compares runtime kinds before scalar values and compares constructed
+containers by shared target identity, not recursive contents. Null sentinels and
+nullable delegation use the existing identity owner. Loose `==`/`!=` and implicit
+native-operand boxing are not implemented by this checkpoint.
+
+Numeric `+=`, `-=`, `*=`, `/=`, `%=` compute through the existing binary operators,
+then one write-back helper requires the original stored numeric kind. Failed
+computation or kind mismatch does not replace the lhs. Prefix/postfix increment and
+decrement use that same path; postfix returns the previous value. Ordinary assignment
+can still replace an int payload with a computed float, unlike compound assignment.
+Bitwise operations, text/concat updates, indexed source updates and mutation-during-
+iteration policy remain separate work.
+
+The first native test build exposed an existing identity overload issue: the generic
+same-type overload admitted null sentinels and tried native `null_t == null_t` during
+nullable delegation. It now excludes sentinels (and the tagged type), leaving their
+dedicated identity owners selected. Tests cover direct sentinel pairs, absent and
+present-null nullable values, strict scalar kinds, NaN, container alias identity,
+numeric ordering, preserved values on failures and prefix/postfix results.
+
+Evidence: `/tmp/my-try-tagged-dynamic-updates-20261005-2` passed both matching
+runtime/JSON builds and ten debug/release programs after the sentinel-overload fix.
+`/tmp/my-try-tagged-dynamic-updates-generated-20261005-1` passed 40 exported mixed
+comparison/update programs selected through the shared runner. This preserves the
+earlier wider mixed-suite stale-assertion disclosure; it does not claim that suite
+passed, that the compiler was rebuilt natively or that tagged dynamic is emitted yet.

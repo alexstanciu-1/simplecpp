@@ -8,6 +8,9 @@
 #include "operators/conditional/condition_truthiness.hpp"
 #include "operators/count/count.hpp"
 #include "operators/arithmetic/boxed_numeric.hpp"
+#include "operators/identity/boxed_ordering.hpp"
+#include "operators/identity/strict_identity.hpp"
+#include <limits>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -257,6 +260,62 @@ void scalar_boundaries_and_arithmetic() {
 	require_failure([&] { (void)scpp::cast<string_t>(value::make_container()); }, "scalar extraction cannot stringify a container");
 	require(integer.get_int().native_value() == 6, "failed operators leave operands unchanged");
 }
+void comparisons_and_updates() {
+	value integer{int_t<>{3LL}};
+	value floating{scpp::float_t{3.0}};
+	require((integer <= floating).native_value() && (integer >= floating).native_value(), "numeric ordering delegates widening");
+	require(!(integer < floating).native_value() && !(integer > floating).native_value(), "equal numeric ordering");
+	require(!scpp::identical(integer, floating).native_value(), "strict identity preserves kinds");
+	require(scpp::identical(integer, value{int_t<>{3LL}}).native_value(), "strict int identity");
+	require(scpp::identical(value{string_t{"hello"}}, value{string_t{"hello"}}).native_value(), "strict string value identity");
+	value null;
+	require(scpp::identical(null, scpp::null_t{}).native_value() && scpp::identical(scpp::null_t{}, null).native_value(), "null identity in both orders");
+	require(!scpp::identical(integer, scpp::null_t{}).native_value(), "nonnull identity");
+	value first = value::make_container();
+	value alias = first;
+	value second = value::make_container();
+	require(scpp::identical(first, alias).native_value(), "container alias identity");
+	require(!scpp::identical(first, second).native_value(), "equal contents do not confer container identity");
+	require(!scpp::identical(first, null).native_value(), "empty container is not null");
+	scpp::nullable<value> present{null};
+	require(scpp::identical(present, scpp::null_t{}).native_value(), "nullable delegates payload identity");
+	scpp::nullable<value> absent{scpp::null_t{}};
+	require(scpp::identical(absent, scpp::null_t{}).native_value(), "absent nullable identity");
+	require(scpp::identical(scpp::null_t{}, scpp::null_t{}).native_value(), "null sentinel identity excludes generic equality");
+	require(scpp::identical(scpp::nullopt_t{}, scpp::nullopt_t{}).native_value(), "nullopt sentinel identity");
+	require(scpp::identical(scpp::nullptr_t{}, scpp::nullptr_t{}).native_value(), "nullptr sentinel identity");
+	value nan{scpp::float_t{std::numeric_limits<double>::quiet_NaN()}};
+	require(!scpp::identical(nan, nan).native_value(), "NaN retains primitive identity rule");
+	require(!(nan <= floating).native_value(), "NaN ordering not synthesized from opposite comparison");
+	require_failure([&] { (void)(first < second); }, "container ordering rejects");
+	require_failure([&] { (void)(value{string_t{"3"}} < integer); }, "string ordering rejects");
+	integer += value{int_t<>{2LL}};
+	require(integer.get_int().native_value() == 5, "same-kind compound update");
+	require_failure([&] { integer += value{scpp::float_t{1.0}}; }, "compound int rejects float even integral");
+	require(integer.get_int().native_value() == 5, "failed compound retains value");
+	floating += integer;
+	require(floating.get_float().native_value() == 8.0, "float compound accepts integer computation");
+	floating *= value{int_t<>{2LL}};
+	floating /= value{int_t<>{4LL}};
+	floating -= value{scpp::float_t{1.5}};
+	require(floating.get_float().native_value() == 2.5, "multiply divide subtract write-back");
+	require_failure([&] { floating /= value{int_t<>{0LL}}; }, "failed division update");
+	require(floating.get_float().native_value() == 2.5, "failed division preserves lhs");
+	integer %= value{int_t<>{3LL}};
+	require(integer.get_int().native_value() == 2, "remainder update");
+	value snapshot = integer++;
+	require(snapshot.get_int().native_value() == 2 && integer.get_int().native_value() == 3, "postincrement snapshot");
+	value &same = ++integer;
+	require(&same == &integer && integer.get_int().native_value() == 4, "preincrement identity");
+	snapshot = floating--;
+	require(snapshot.get_float().native_value() == 2.5 && floating.get_float().native_value() == 1.5, "float postdecrement");
+	--floating;
+	require(floating.get_float().native_value() == 0.5, "float predecrement");
+	require_failure([&] { ++first; }, "container update rejects");
+	require(scpp::identical(first, alias).native_value() && first.get_table().empty().native_value(), "failed container update preserves identity");
+	integer = integer + value{scpp::float_t{0.5}};
+	require(integer.get_float().native_value() == 4.5, "ordinary assignment may change numeric kind");
+}
 } // namespace
 
 int main() {
@@ -265,4 +324,5 @@ int main() {
 	container_operations();
 	conversions_and_probes();
 	scalar_boundaries_and_arithmetic();
+	comparisons_and_updates();
 }

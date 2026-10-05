@@ -2,6 +2,7 @@
 
 #include "lang/php/support/php_common.hpp"
 #include "scpp/generated/operators.hpp"
+#include "scpp/support/dynamic_value.hpp"
 
 namespace scpp {
 
@@ -19,6 +20,10 @@ inline bool_t identical(Left, Right) {
 template <typename T>
 requires (
 	!std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, detail::dynamic_value>
+	&& !std::is_same_v<std::remove_cvref_t<T>, null_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
 	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, nullable>
 	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_false>
 	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_bool>
@@ -34,6 +39,7 @@ requires (!std::is_same_v<std::remove_cvref_t<Left>, std::remove_cvref_t<Right>>
 inline bool_t identical(const Left &left, const Right &right);
 
 inline bool_t identical(const mixed_t &left, const mixed_t &right);
+inline bool_t identical(const detail::dynamic_value &left, const detail::dynamic_value &right);
 
 template <typename Left, typename Right>
 inline bool_t not_identical(const Left &left, const Right &right);
@@ -98,6 +104,10 @@ inline bool_t php_is_null_value(const mixed_t &value) {
 
 inline bool_t php_is_null_value(const bool_t &) {
 	return bool_t(false);
+}
+
+inline bool_t php_is_null_value(const dynamic_value &value) {
+	return value.is_null();
 }
 
 template <typename Rep>
@@ -217,6 +227,28 @@ inline bool_t identical(const mixed_t &left, const mixed_t &right) {
 	}
 	return detail::identical_same_kind_mixed(left, right);
 }
+
+inline bool_t identical(const detail::dynamic_value &left, const detail::dynamic_value &right) {
+	using kind = detail::dynamic_value::kind_t;
+	if (left.kind() != right.kind()) return bool_t{false};
+	switch (left.kind()) {
+	case kind::null_v: return bool_t{true};
+	case kind::bool_v: return identical(left.get_bool(), right.get_bool());
+	case kind::int_v: return identical(left.get_int(), right.get_int());
+	case kind::float_v: return identical(left.get_float(), right.get_float());
+	case kind::string_v: return identical(left.get_string(), right.get_string());
+	case kind::table_v: return bool_t{left.table_if() == right.table_if()};
+	}
+	throw std::logic_error("dynamic: invalid kind");
+}
+
+template <typename Null>
+requires (std::is_same_v<Null, null_t> || std::is_same_v<Null, nullopt_t> || std::is_same_v<Null, nullptr_t>)
+inline bool_t identical(const detail::dynamic_value &value, Null) { return value.is_null(); }
+
+template <typename Null>
+requires (std::is_same_v<Null, null_t> || std::is_same_v<Null, nullopt_t> || std::is_same_v<Null, nullptr_t>)
+inline bool_t identical(Null, const detail::dynamic_value &value) { return value.is_null(); }
 
 template <typename Right>
 requires (std::is_same_v<std::remove_cvref_t<Right>, null_t> || std::is_same_v<std::remove_cvref_t<Right>, nullopt_t> || std::is_same_v<std::remove_cvref_t<Right>, nullptr_t>)
@@ -495,6 +527,10 @@ inline bool_t identical(const unique_p<T> &left, const unique_p<T> &right) {
 template <typename T>
 requires (
 	!std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, detail::dynamic_value>
+	&& !std::is_same_v<std::remove_cvref_t<T>, null_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
 	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, nullable>
 	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_false>
 	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_bool>
