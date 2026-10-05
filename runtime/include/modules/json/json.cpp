@@ -394,112 +394,59 @@ void json_escape_string(const std::string_view value, std::string &out) {
 	out.push_back('"');
 }
 
-// Private writer unwind signal; unrelated runtime exceptions are not encoding failures.
-struct json_encode_failure final {
-	const char *message;
-};
+} // namespace
 
-[[noreturn]] void fail_json_encode(const char *message) {
-	throw json_encode_failure{message};
+namespace writer_detail {
+
+void writer::write(null_t) { output_ += "null"; }
+void writer::write(const bool_t &value) { output_ += value.native_value() ? "true" : "false"; }
+void writer::write(const int_t<> &value) { output_ += std::to_string(value.native_value()); }
+void writer::write(const float_t &value) {
+	const double native = value.native_value();
+	if (!std::isfinite(native)) throw encode_failure{"json_encode: non-finite float_t is not supported"};
+	std::ostringstream stream;
+	stream << std::setprecision(std::numeric_limits<double>::max_digits10) << native;
+	output_ += stream.str();
+}
+void writer::write(const string_t &value) { json_escape_string(value.native_value(), output_); }
+void writer::key(const string_t &value) { write(value); }
+void writer::key(const int_t<> &value) { json_escape_string(std::to_string(value.native_value()), output_); }
+void writer::key(const mixed_t &value) {
+	if (value.kind() == mixed_t::kind_t::string_v) return key(value.get_string());
+	if (value.kind() == mixed_t::kind_t::int_v) return key(value.get_int());
+	throw encode_failure{"json_encode: object key must lower to string_t or int_t<>"};
 }
 
-using active_tables = std::unordered_set<const void *>;
-template <typename Table>
-void encode_hash(const Table &value, std::string &out, active_tables &active);
-
-template <typename Value>
-bool encode_scalar(const Value &value, std::string &out) {
-	using kind = typename Value::kind_t;
+template <typename Box>
+bool writer::scalar(const Box &value) {
+	using kind = typename Box::kind_t;
 	switch (value.kind()) {
-		case kind::null_v:
-			out += "null";
-			return true;
-		case kind::bool_v:
-			out += value.get_bool().native_value() ? "true" : "false";
-			return true;
-		case kind::int_v:
-			out += std::to_string(value.get_int().native_value());
-			return true;
-		case kind::float_v: {
-			const double native = value.get_float().native_value();
-			if (!std::isfinite(native)) {
-				fail_json_encode("json_encode: non-finite float_t is not supported");
-			}
-			std::ostringstream stream;
-			stream << std::setprecision(std::numeric_limits<double>::max_digits10) << native;
-			out += stream.str();
-			return true;
-		}
-		case kind::string_v:
-			json_escape_string(value.get_string().native_value(), out);
-			return true;
+		case kind::null_v: write(null_t{}); return true;
+		case kind::bool_v: write(value.get_bool()); return true;
+		case kind::int_v: write(value.get_int()); return true;
+		case kind::float_v: write(value.get_float()); return true;
+		case kind::string_v: write(value.get_string()); return true;
 		default: return false;
 	}
 }
-
-void encode_value(const detail::dynamic_value &value, std::string &out, active_tables &active) {
-	if (encode_scalar(value, out)) return;
-	encode_hash(value.get_table(), out, active);
+void writer::write(const detail::dynamic_value &value) {
+	if (scalar(value)) return;
+	table(value.get_table(), value.get_table().is_packed().native_value());
 }
-
-void encode_value(const mixed_t &value, std::string &out, active_tables &active) {
-	if (encode_scalar(value, out)) return;
+void writer::write(const mixed_t &value) {
+	if (scalar(value)) return;
 	switch (value.kind()) {
 		case mixed_t::kind_t::table_v:
 		case mixed_t::kind_t::shared_table_v:
 		case mixed_t::kind_t::dynamic_v:
-			encode_hash(value.get_hash(), out, active);
-			return;
+			table(value.get_hash(), value.get_hash().is_packed().native_value()); return;
 		case mixed_t::kind_t::weak_table_v:
-			fail_json_encode("json_encode: weak tables are not supported");
-		default: fail_json_encode("json_encode: unsupported value kind");
+			throw encode_failure{"json_encode: weak tables are not supported"};
+		default: throw encode_failure{"json_encode: unsupported value kind"};
 	}
 }
 
-template <typename Table>
-void encode_hash(const Table &value, std::string &out, active_tables &active) {
-	if (!active.insert(&value).second) fail_json_encode("json_encode: cyclic container is not supported");
-	struct path_guard final {
-		active_tables &active;
-		const void *identity;
-		~path_guard() { active.erase(identity); }
-	} guard{active, &value};
-	if (value.is_packed().native_value()) {
-		out.push_back('[');
-		bool first = true;
-		for (auto it = value.begin_entries(); it != value.end_entries(); ++it) {
-			if (!first) {
-				out.push_back(',');
-			}
-			first = false;
-			encode_value((*it).value_ref(), out, active);
-		}
-		out.push_back(']');
-		return;
-	}
-
-	out.push_back('{');
-	bool first = true;
-	for (auto it = value.begin_entries(); it != value.end_entries(); ++it) {
-		if (!first) {
-			out.push_back(',');
-		}
-		first = false;
-		const mixed_t key = (*it).key();
-		if (key.kind() == mixed_t::kind_t::string_v) {
-			json_escape_string(key.get_string().native_value(), out);
-		} else if (key.kind() == mixed_t::kind_t::int_v) {
-			json_escape_string(std::to_string(key.get_int().native_value()), out);
-		} else {
-			fail_json_encode("json_encode: object key must lower to string_t or int_t<>");
-		}
-		out.push_back(':');
-		encode_value((*it).value_ref(), out, active);
-	}
-	out.push_back('}');
-}
-
-} // namespace
+} // namespace writer_detail
 
 template <typename Value>
 static result<Value> decode_family(const string_t &json) {
@@ -520,20 +467,7 @@ result<mixed_t> decode_mixed(const string_t &json) {
 	return decode_family<mixed_t>(json);
 }
 
-template <typename Value>
-static result<string_t> encode_family(const Value &value) {
-	try {
-		std::string out;
-		out.reserve(64);
-		active_tables active;
-		encode_value(value, out, active);
-		return string_t(std::move(out));
-	} catch (const json_encode_failure &failure) {
-		return error_t(string_t(failure.message));
-	}
-}
-
-result<string_t> encode(const mixed_t &value) { return encode_family(value); }
-result<string_t> encode(const detail::dynamic_value &value) { return encode_family(value); }
+result<string_t> encode(const mixed_t &value) { return writer_detail::encode(value); }
+result<string_t> encode(const detail::dynamic_value &value) { return writer_detail::encode(value); }
 
 } // namespace scpp::json

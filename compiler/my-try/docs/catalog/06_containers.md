@@ -88,6 +88,8 @@ JSON runtime now decodes directly into tagged dynamic by default or mixed via
 is still outstanding; this breaking runtime checkpoint does not establish source support.
 Typed JSON extraction now accepts either family through one checked path and rejects
 cross-family containers; the former mixed-to-dynamic handle bridge is removed there.
+Typed encoding now traverses inputs directly; the mixed-tree-producing `to_json`
+helper is removed, with an optional string alias recorded in Chapter 15.
 
 The current runtime permits both relationships:
 

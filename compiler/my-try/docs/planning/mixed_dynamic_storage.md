@@ -489,3 +489,27 @@ and prepared family facts. This checkpoint does not claim those are migrated.
 Evidence: `/tmp/my-try-json-extraction-20261005-1` passed matching debug/release
 runtime/JSON builds and all twelve native programs. JSON checks remain active under
 NDEBUG. No source integration suite or native compiler rebuild was run.
+
+### Direct typed JSON writing; tree helper removed — 2026-10-05
+
+The user approved removing `to_json` or making it string-producing. The selected
+option removes its header/API and records an optional checked string alias as
+CH15-JSON-01. `json_encode` remains the string-producing public concept.
+
+One writer now owns scalar output, escaping, checked errors and active-path cycle
+tracking. Typed nullable/vector/hash traversal calls that writer directly; boxed
+mixed/dynamic dispatch uses the same scalar methods and table traversal. No temporary
+mixed trees or cross-family boxing are involved. Scalar/boxed formatting remains
+out of line; only type-dependent traversal/admission is in the writer header.
+
+Typed hashes now honor the existing JSON-object contract for empty/sequential-int
+keys as well. Vectors remain arrays, while mixed/dynamic containers still use their
+hash-derived shape. Tests include nested typed containers with nullable dynamic
+entries, preserved shared identity, repeated aliases, cycle failure/recovery and
+typed hash/vector shape. Public dynamic migration and registrations remain pending;
+this is not a native compiler proof or a measured performance claim.
+
+Evidence: `/tmp/my-try-json-direct-writer-20261005-2` passed matching debug/release
+runtime/JSON builds and all twelve native programs, including the final direct-
+writer tests. Repository code search found no remaining references to the removed
+header/API. The deleted helper remains recoverable from Git history.

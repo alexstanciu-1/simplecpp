@@ -7,7 +7,7 @@
 #include "scpp/shared_p.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/result.hpp"
-#include "scpp/json/to_json.hpp"
+#include "scpp/json/writer.hpp"
 #include "scpp/support/dynamic_value.hpp"
 
 namespace scpp::json {
@@ -39,9 +39,9 @@ namespace scpp::json {
 [[nodiscard]] result<string_t> encode(const detail::dynamic_value &value);
 
 template <typename T>
-	requires(to_json_detail::is_supported_v<T> && !std::is_same_v<detail::remove_cvref_t<T>, mixed_t>)
+	requires(writer_detail::is_supported_v<T> && !std::is_same_v<detail::remove_cvref_t<T>, mixed_t>)
 [[nodiscard]] inline result<string_t> encode(const T &value) {
-	return encode(to_json(value));
+	return writer_detail::encode(value);
 }
 
 [[nodiscard]] inline result<string_t> json_encode(const mixed_t &value) {
@@ -53,7 +53,7 @@ template <typename T>
 }
 
 template <typename T>
-	requires(to_json_detail::is_supported_v<T> && !std::is_same_v<detail::remove_cvref_t<T>, mixed_t>)
+	requires(writer_detail::is_supported_v<T> && !std::is_same_v<detail::remove_cvref_t<T>, mixed_t>)
 [[nodiscard]] inline result<string_t> json_encode(const T &value) {
 	return encode(value);
 }

@@ -266,6 +266,35 @@ static void test_family_aware_typed_extraction() {
 	require(destination.native_value()[1].at(string_t{"id"}).native_value() == 4);
 }
 
+static void test_direct_typed_writer() {
+	using value = scpp::detail::dynamic_value;
+	using scpp::string_t;
+	using scpp::int_t;
+	scpp::hash_t<int_t<>, int_t<>> numbered;
+	require(scpp::json::encode(numbered).value().native_value() == "{}");
+	numbered.set(int_t<>{0}, int_t<>{7});
+	numbered.set(int_t<>{1}, int_t<>{8});
+	require(scpp::json::encode(numbered).value().native_value() == "{\"0\":7,\"1\":8}");
+	scpp::vector_t<int_t<>> empty;
+	require(scpp::json::encode(empty).value().native_value() == "[]");
+	value child = scpp::json::decode(string_t{"{\"name\":\"Alex\"}"}).value();
+	const auto *identity = child.table_if();
+	scpp::vector_t<scpp::nullable<value>> entries;
+	entries.append(scpp::nullable<value>{child});
+	entries.append(scpp::nullable<value>{});
+	entries.append(scpp::nullable<value>{child});
+	scpp::hash_t<decltype(entries)> root;
+	root.set(string_t{"rows"}, entries);
+	require(scpp::json::encode(root).value().native_value()
+		== "{\"rows\":[{\"name\":\"Alex\"},null,{\"name\":\"Alex\"}]}");
+	require(child.table_if() == identity && child.get_table().size() == 1);
+	child.get_table().set(string_t{"self"}, child);
+	const auto failed = scpp::json::encode(root);
+	(void)child.get_table().remove(string_t{"self"});
+	require(failed.has_error().native_value());
+	require(scpp::json::encode(root).has_value().native_value());
+}
+
 } // namespace
 
 int main() {
@@ -279,6 +308,7 @@ int main() {
 	test_json_alias_surface();
 	test_separated_families();
 	test_family_aware_typed_extraction();
+	test_direct_typed_writer();
 	test_json_decode_checked_failures();
 	test_json_encode_checked_failures();
 	return 0;

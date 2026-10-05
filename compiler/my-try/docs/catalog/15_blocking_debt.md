@@ -141,3 +141,13 @@ classification must not be advertised as lossless preservation of original notat
 Review numeric-key objects, mutations that change packed shape, JSON round-trips,
 property access and any storage/ABI cost before choosing a retained representation.
 This is a deferred design consideration, not a prerequisite for the agreed refactor.
+
+### CH15-JSON-01 — optional string-producing `to_json` alias
+
+The user approved removing the misleading mixed-tree-producing runtime `to_json`
+helper on 2026-10-05. `json_encode` / `scpp::json::encode` remain the checked
+string-producing API, using direct traversal rather than intermediate boxed trees.
+Later decide whether a `to_json` alias is useful. If introduced, it must produce
+`result<string>` through the same writer, not construct a mixed/dynamic tree or
+silently bypass checked failures. This naming debt does not block Chapter 06 or
+authorize restoring the removed helper.

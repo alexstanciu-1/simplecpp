@@ -10,8 +10,11 @@ Cycles return an encoding error without partial output; repeated noncyclic alias
 are encoded at each occurrence. Existing checked failures remain unchanged.
 
 Runtime tagged-dynamic encoding is implemented. Compiler-facing registration and
-the public dynamic-type switch remain pending. Typed `to_json` construction still
-uses its mixed-tree path; `from_json` accepts either family as described in the
+the public dynamic-type switch remain pending. The former mixed-tree-producing
+`to_json` helper is removed. Typed scalars, nullable values, vectors and hashes are
+written directly, including nested mixed/dynamic values, without temporary boxed
+trees. A possible string-producing `to_json` alias is deferred, not currently exposed.
+`from_json` accepts either family as described in the
 [decoder contract](json_decode.md#typed-runtime-extraction). Neither gains implicit
 cross-family container conversions.
 
@@ -20,7 +23,6 @@ cross-family container conversions.
 - Source-facing PHP++ / PHS: `json_encode(mixed $value) -> result<string>`
 - Shared writer: `scpp::json::encode(const mixed_t &value) -> result<string_t>`
 - `scpp::json::json_encode` and `scpp::php::json_encode` forward to the checked writer
-- `scpp::json::to_json<T>(const T &value) -> mixed_t` for supported typed JSON value shapes
 - `scpp::json::encode(const T &value)` and `scpp::json::json_encode(const T &value)` return `result<string_t>` for supported typed JSON value shapes
 
 Both strict and legacy PHP++ profiles expose the checked result contract.
@@ -55,9 +57,9 @@ This replaces the former direct string return. Unwrap before printing or passing
 - packed `hash_t<mixed_t>` values encode as JSON arrays
 - non-packed `hash_t<mixed_t>` values encode as JSON objects
 - non-packed integer keys are emitted as JSON string keys
-- supported typed scalar, nullable, vector, and string/int-keyed hash values first normalize through `scpp::json::to_json<T>` and then use the same JSON writer path as `mixed_t`
+- supported typed scalar, nullable, vector, and string/int-keyed hash values are traversed directly by the shared writer; no mixed-tree normalization occurs
 - typed `vector_t<T>` values encode as JSON arrays
-- typed `hash_t<T, string_t>` and `hash_t<T, int_t>` values encode as JSON objects
+- typed `hash_t<T, string_t>` and `hash_t<T, int_t>` values encode as JSON objects, including empty hashes and sequential integer keys
 
 ## Notes
 
