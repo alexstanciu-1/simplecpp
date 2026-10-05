@@ -17,6 +17,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For whole-container parameters/returns and indexed call arguments:
+
+```bash
+python3 compiler/my-try/tests/container_calls.py --results /tmp/FRESH_CONTAINER_CALL_RESULTS
+```
+
+Five focused PHP suites check shared call facts, signature-change recovery and
+reference rejection. `container_call_*` C++ programs check value/COW/shared identity,
+non-creating arguments, typed conversion failures and ordered evaluation. PCH is
+default; `--no-pch` checks header completeness. Uses the shared 12-slot runner and
+does not rebuild the compiler natively.
+
 For non-mutating value `foreach` across vector/hash/mixed/dynamic:
 
 ```bash

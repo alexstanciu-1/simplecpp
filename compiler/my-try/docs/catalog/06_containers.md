@@ -664,6 +664,47 @@ Assessment and decisions still required:
   The present owner/index const ranges need an owner-aware cursor/mutation protocol.
   This would not, by itself, make unsynchronized cross-thread mutation safe.
 
+### Container function boundaries — 2026-10-05
+
+Grouped integration of whole-container parameters/returns, direct/nested indexed
+value arguments and whole-wrapper versus interior reference admission. The owning
+[v0.2 contract](../../../../specs/array_semantics.md#v02-function-boundaries) follows
+ordinary value reads, calls and conversion decisions; no container-specific call
+model, AST, preparation dispatch or emitter path was needed.
+
+Typed vector/hash parameter copies can be changed and returned without changing the
+caller. Mixed copies preserve COW, including a table-valued indexed argument; a
+read-only pass/return retains shared storage. Dynamic value parameters/returns share
+object identity, but rebinding a value parameter does not replace the caller's handle.
+Exact-type whole-container local/parameter references allow mutations and replacement.
+All indexed reference arguments, including container-valued slots, reject during
+preparation rather than binding a temporary or exposing an interior reference.
+
+`Call_Preparation` consumes the ordinary non-addressable index facts and applies the
+parameter conversion. `CPP_Declarations::selected_call` sequences receiver/key reads,
+argument materialization/conversion and later arguments. Missing typed reads and
+failed required extraction prevent later arguments and callee execution. Missing fat
+reads pass null to a mixed parameter without creating keys or detaching COW storage.
+Existing per-call value temporaries remain; optimizing extra native copies is outside
+this correctness slice, not a reason to introduce a special container-call path.
+
+Legacy comparison: imported FUNC-ARG-001 / NOTE-058 forced direct DIM arguments down
+a potentially creating slot path. The current v0.2 read contract supersedes that
+behavior, including nested arguments. Old annotations, `vector_t` source spelling,
+legacy `array`/`?array` entry guards and `var_dump` examples are not automatically
+proved by strict typed/mixed equivalents. In particular, mixed accepts scalars too;
+do not claim a mixed parameter implements the legacy table-only array guard.
+
+Evidence: `/tmp/my-try-container-calls-20261005-1` (PCH) and
+`/tmp/my-try-container-calls-20261005-2` (without PCH) each passed five PHP suites and
+28 generated C++ programs. All 1,259 prior C++ exports remain byte-identical.
+PHP used CLI fallback after sandbox FPM socket denial; no native compiler rebuild
+is implied. The new `tests/container_calls.php` also proves retained
+caller failure/recovery when a callee changes from value to reference passing.
+No production compiler/runtime changes were necessary. Mutation-during-iteration and
+mixed/dynamic containment remain open chapter-closeout blockers; this group does
+not resolve either one or implement reference foreach.
+
 ### End-to-end catalog rows
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -678,8 +719,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |
 | [ARR-WRITE-001](#arr-write-001) | bounded-support | `$b vector<int> = [0]; $b[0] = 1;` | passed | passed | deferred | Local/parameter-rooted direct/nested paths; all four families; cross-family paths gated |
 | [ARR-APPEND-001](#arr-append-001) | bounded-support | `$a vector<int> = []; $a[] = 1;` | passed | passed | deferred | Vector, integer-key hash, mixed and dynamic; string-key hash rejects |
-| [FUNC-DECL-003B](#func-decl-003b) | pending-discussion | `function f(vector<int> $a): void {}` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [FUNC-ARG-001](#func-arg-001) | pending-discussion | `f($x[0]);` | unverified | unverified | deferred | — |
+| [FUNC-DECL-003B](#func-decl-003b) | bounded-support | `function f(vector<int> $a): void {}` | passed | passed | deferred | Strict typed-container signature/copy/return proofs; legacy annotation syntax excluded |
+| [FUNC-ARG-001](#func-arg-001) | bounded-support | `f($x[0]);` | passed | passed | deferred | Ordinary non-creating value read; reference parameters reject indexed arguments |
 | [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; non-mutating value iteration; CH06-ITER-01 blocks closeout |
 | [CTRL-FOREACH-002](#ctrl-foreach-002) | bounded-support | `foreach ($items as $k => $v) { }` | passed | passed | deferred | Typed keys/values, loop-local key, existing value reuse; no snapshots |
 | [CTRL-FOREACH-003](#ctrl-foreach-003) | pending-discussion | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | — |
@@ -692,7 +733,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-EXIST-001](#arr-exist-001) | bounded-support | `isset($a["name"])` | passed | passed | deferred | Registered containers; lazy paths, null/wrapper-sensitive |
 | [ARR-UNSET-001](#arr-unset-001) | bounded-support | `unset($a["name"]);` | passed | passed | deferred | Associative direct/nested removal; vector leaf removal gated |
 | [ARR-EMPTY-001](#arr-empty-001) | bounded-support | `empty($a["name"])` | passed | passed | deferred | Lazy paths; missing true; string `"0"` nonempty |
-| [ARR-TYPE-001](#arr-type-001) | pending-discussion | `function f(array &$a): void { $a["x"] = 1; }` | unverified | unverified | deferred | — |
+| [ARR-TYPE-001](#arr-type-001) | split | `function f(array &$a): void { $a["x"] = 1; }` | unverified | unverified | deferred | Strict whole-wrapper reference counterpart proved; legacy array spelling/entry guard remains separate |
 | [ARR-VALUE-001](#arr-value-001) | pending-discussion | `$v vector<int> = [1, 2, 3]; $d = ["data" => $v];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-PARAM-002](#type-param-002) | pending-discussion | `function f(string $s, vector_t $v): string { return $s; }` | unverified | unverified | deferred | — |
 | [TYPE-PARAM-003A](#type-param-003a) | pending-discussion | `function f(array $a): void { var_dump($a); }` | unverified | unverified | deferred | — |
@@ -701,8 +742,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-006](#note-006) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-022](#note-022) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-053](#note-053) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-055](#note-055) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-058](#note-058) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-055](#note-055) | split | — | unverified | unverified | deferred | Strict value materialization/reference limits proved; legacy array/nullable-array guards deferred |
+| [NOTE-058](#note-058) | bounded-support | `f($x[0]);` | passed | passed | deferred | Old creating-DIM guidance superseded by ordinary non-creating v0.2 reads |
 ## CAST-ARRAY-001
 
 **v0.2 decision / target C++:** Pending discussion.
@@ -886,9 +927,10 @@ explicit-key slot rewrite; body rewrites `$item` to `$items[$key]`
 
 **Strict-mode PHP input example:** `function f(vector<int> $a): void {}`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This is the working source spelling; imported comment annotations remain legacy
+reference material, not the strict v0.2 syntax.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Grouped container-call proof](#container-function-boundaries--2026-10-05). Ordinary signatures and calls preserve typed container values, parameter copies and return types. No special container callable model is introduced.
 
 ### Imported version 1
 
@@ -925,7 +967,7 @@ void_t f(const vector_t<int_t>& a) {}
 
 ## FUNC-ARG-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** [Grouped call proof](#container-function-boundaries--2026-10-05). Use the ordinary non-creating value read and prepared argument conversion. Indexed native-reference arguments reject; the imported autovivification rule is superseded.
 
 ### Imported version 1
 
@@ -1524,7 +1566,7 @@ php::empty(a["name"])
 
 ## ARR-TYPE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Split: strict whole-wrapper vector/hash/mixed/dynamic reference parameters are [proved](#container-function-boundaries--2026-10-05). Legacy `array` syntax and its table-only entry guard are not implemented by substituting `mixed`.
 
 ### Imported version 1
 
@@ -1888,7 +1930,7 @@ void_t f(mixed_t a) { ::scpp::php::expect_array_argument(a, false, "a"); foo(a);
 
 **Source:** [generators/php/specs/rules.md:1236](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Split under the [grouped call checkpoint](#container-function-boundaries--2026-10-05): strict container materialization, COW/shared identity and indexed-reference rejection are proved. Legacy `array`/`?array` spelling and entry guards remain deferred; strict `mixed` does not imply those guards. Imported prose below remains historical evidence.
 
 > ## Array argument materialization
 >
@@ -1907,7 +1949,7 @@ void_t f(mixed_t a) { ::scpp::php::expect_array_argument(a, false, "a"); foo(a);
 
 **Source:** [generators/php/specs/rules.md:1263](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** [Grouped call checkpoint](#container-function-boundaries--2026-10-05): both direct and computed indexed arguments use ordinary non-creating reads. Typed misses throw; fat misses yield null before parameter conversion. The imported creating-slot behavior is superseded, not reproduced.
 
 > ## Direct DIM call arguments
 >

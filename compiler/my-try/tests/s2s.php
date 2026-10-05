@@ -603,7 +603,8 @@ $read_fixtures = require __DIR__ . '/fixtures/container_reads.php';
 $write_fixtures = require __DIR__ . '/fixtures/container_writes.php';
 $keyed_fixtures = require __DIR__ . '/fixtures/keyed_paths.php';
 $iteration_fixtures = require __DIR__ . '/fixtures/iteration.php';
-$value_fixtures = array_merge($result_fixtures, $mixed_fixtures, $data_fixtures, $read_fixtures, $write_fixtures, $keyed_fixtures, $iteration_fixtures);
+$container_call_fixtures = require __DIR__ . '/fixtures/container_calls.php';
+$value_fixtures = array_merge($result_fixtures, $mixed_fixtures, $data_fixtures, $read_fixtures, $write_fixtures, $keyed_fixtures, $iteration_fixtures, $container_call_fixtures);
 foreach ($value_fixtures as $name => [$source, $predicate]) {
 	$cases[$name] = [$source, 0];
 }

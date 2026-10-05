@@ -63,6 +63,34 @@ performant lifetime/invalidation design. It does not block non-mutating value it
 
 ## 2. Core model
 
+### v0.2 function boundaries
+
+Whole-container arguments and returns use ordinary value/copy semantics: typed
+vector/hash values are independent values, mixed tables preserve copy-on-write,
+and dynamic handle copies preserve shared object identity. Replacing a by-value
+dynamic parameter rebinds only that parameter; modifying its shared object is
+observable through the caller's handle. An exact-type whole-container local or
+parameter may bind to an ordinary reference parameter, including wrapper replacement.
+
+An indexed argument such as `consume($items[$key])` is an ordinary value read followed
+by the parameter's ordinary conversion. It never changes into a write path merely
+because it occurs in a call. Missing typed-container entries throw; missing
+mixed/dynamic entries yield null-kind mixed before any required typed conversion.
+Neither form inserts entries. Arguments and their conversions are evaluated in
+source order; failure prevents later argument evaluation and callee entry without
+rolling back earlier source effects. Previously materialized value arguments retain
+their normal copy/identity semantics across later argument evaluation.
+
+Indexed expressions cannot bind to native reference parameters, even when their
+value type matches exactly or the element is itself a container. A temporary is
+not a substitute for a reference to the original slot. These rules supersede old
+generator guidance that direct DIM call arguments could autovivify.
+
+Strict `mixed` parameters are not a spelling alias for legacy PHP `array` parameters:
+they do not implicitly impose a table-only function-entry guard. Legacy `array` /
+`?array` admission and guard support are separately tracked, not established by
+these strict-container boundaries.
+
 ### v0.2 construction boundary
 
 Construction now follows [data initialization](data_initialization.md): positional,

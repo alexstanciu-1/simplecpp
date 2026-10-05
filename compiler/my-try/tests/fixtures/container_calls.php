@@ -1,0 +1,33 @@
+<?php
+
+/* Ordinary calls own container boundaries; no argument-specific indexed write path. */
+return [
+	'container_call_vector' => ['function edit(vector<int> $v): vector<int> { $v[0] = 7; $v[] = 9; return $v; } $v vector<int> = [1]; $out = edit($v);',
+		'local_v.size() == 1 && local_v.at(0).native_value() == 1 && local_out.size() == 2 && local_out.at(0).native_value() == 7 && local_out.at(1).native_value() == 9'],
+	'container_call_hash' => ['function edit(hash<int> $h): hash<int> { $h["x"] = 7; $h["y"] = 9; return $h; } $h hash<int> = {x: 1}; $out = edit($h);',
+		'local_h.size() == 1 && local_h.at(scpp::string_t{"x"}).native_value() == 1 && local_out.size() == 2 && local_out.at(scpp::string_t{"x"}).native_value() == 7'],
+	'container_call_mixed' => ['function edit(mixed $m): mixed { $m["child"]["x"] = 7; return $m; } $m mixed = {child: {x: 1}}; $out = edit($m); $a int = $m["child"]["x"]; $b int = $out["child"]["x"];',
+		'local_a.native_value() == 1 && local_b.native_value() == 7 && local_m.shared_table_if()->get() != local_out.shared_table_if()->get()'],
+	'container_call_readonly_mixed' => ['function pass(mixed $m): mixed { return $m; } $m mixed = {x: 1}; $out = pass($m);',
+		'local_m.shared_table_if()->get() == local_out.shared_table_if()->get()'],
+	'container_call_dynamic' => ['function edit(dynamic $d): dynamic { $d["x"] = 7; return $d; } function replace(dynamic $d): dynamic { $d = {x: 9}; return $d; } $d dynamic = {x: 1}; $alias = edit($d); $other = replace($d); $a int = $d["x"]; $b int = $other["x"];',
+		'local_a.native_value() == 7 && local_b.native_value() == 9 && local_alias.get() == local_d.get() && local_other.get() != local_d.get()'],
+	'container_call_references' => ['function v(vector<int> &$x): void { $x[] = 3; } function h(hash<int> &$x): void { $x["b"] = 4; } function m(mixed &$x): void { $x["b"] = 5; } function d(dynamic &$x): void { $x = {b: 6}; } $v vector<int> = [1]; $h hash<int> = {a: 1}; $m mixed = {a: 1}; $d dynamic = {a: 1}; $old = $d; v($v); h($h); m($m); d($d); $n int = $d["b"];',
+		'local_v.size() == 2 && local_h.size() == 2 && local_m.table_if()->size() == 2 && local_n.native_value() == 6 && local_old.get() != local_d.get() && local_old->size() == 1'],
+	'container_call_indexed_typed' => ['function number(int $x): int { return $x + 1; } function text(string $x): string { return $x; } $v vector<int> = [2]; $h hash<string> = {x: "yes"}; $a = number($v[0]); $b = text($h["x"]);',
+		'local_a.native_value() == 3 && local_b == scpp::string_t{"yes"} && local_v.at(0).native_value() == 2 && local_h.size() == 1'],
+	'container_call_nested_value' => ['function edit(vector<int> $v): vector<int> { $v[] = 9; return $v; } $rows vector<vector<int>> = [[1]]; $out = edit($rows[0]);',
+		'local_rows.at(0).size() == 1 && local_out.size() == 2'],
+	'container_call_nested_mixed' => ['function edit(mixed $v): mixed { $v["x"] = 9; return $v; } $m mixed = {child: {x: 1}}; $out = edit($m["child"]); $a int = $m["child"]["x"]; $b int = $out["x"];',
+		'local_a.native_value() == 1 && local_b.native_value() == 9'],
+	'container_call_missing_fat' => ['function absent(mixed $v): bool { return $v === null; } $m mixed = {}; $alias = $m; $d dynamic = {}; $a = absent($m["missing"]["nested"]); $b = absent($d["missing"]);',
+		'local_a.native_value() && local_b.native_value() && local_m.table_if()->size() == 0 && local_d->size() == 0 && local_m.shared_table_if()->get() == local_alias.shared_table_if()->get()'],
+	'container_call_checked_fat' => ['function consume(int $v, int &$calls): int { $calls++; return $v; } function invoke(mixed $m, int &$calls): int { return consume($m["x"], $calls); } $good mixed = {x: 5}; $bad mixed = {x: true}; $missing mixed = {}; $calls = 0; $v = invoke($good, $calls);',
+		'([&]() { int failed = 0; for (const auto& m : {local_bad, local_missing}) { try { (void)function_invoke(m, local_calls); } catch (const std::exception&) { ++failed; } } return failed == 2 && local_calls.native_value() == 1 && local_v.native_value() == 5 && local_missing.table_if()->size() == 0; }())'],
+	'container_call_typed_missing' => ['function later(int &$n): int { $n++; return 1; } function consume(int $a, int $b, int &$n): int { $n += 10; return $a + $b; } function v(vector<int> $x, int &$n): int { return consume($x[3], later($n), $n); } function h(hash<int> $x, int &$n): int { return consume($x["missing"], later($n), $n); } $v vector<int> = []; $h hash<int> = {};',
+		'([&]() { int failed = 0; scpp::int_t<> n{0LL}; try { (void)function_v(local_v, n); } catch (const std::exception&) { ++failed; } try { (void)function_h(local_h, n); } catch (const std::exception&) { ++failed; } return failed == 2 && n.native_value() == 0 && local_v.size() == 0 && local_h.size() == 0; }())'],
+	'container_call_order' => ['function source(int &$n): vector<int> { $n = $n * 10 + 1; return [7]; } function key(int &$n): int { $n = $n * 10 + 2; return 0; } function later(int &$n): int { $n = $n * 10 + 3; return 2; } function consume(int $a, int $b): int { return $a + $b; } $n = 0; $out = consume(source($n)[key($n)], later($n));',
+		'local_n.native_value() == 123 && local_out.native_value() == 9'],
+	'container_call_value_before_effect' => ['function change(vector<int> &$v): int { $v[0] = 9; return 2; } function consume(int $a, int $b): int { return $a * 10 + $b; } $v vector<int> = [1]; $out = consume($v[0], change($v));',
+		'local_out.native_value() == 12 && local_v.at(0).native_value() == 9'],
+];
