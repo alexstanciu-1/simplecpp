@@ -63,8 +63,10 @@ before publication and treated as immutable afterward, like other prepared facts
 
 `prepared_call` weakly references the selected target and shares its completed
 signature. `Call_Preparation` admits arguments independently of target selection;
-`CPP_Declarations::selected_call` sequences their lowering. C++ target dispatch uses
-source mangling or a separately registered static-member binding, with exact target
+`CPP_Declarations::selected_call` sequences their lowering. `CPP_Callables::reference`
+owns target dispatch entirely inside the backend; callable identities and their
+interface expose no C++ operation. Dispatch uses source mangling or a separately
+registered static-member binding, with exact target
 identity checks and header collection. There are no installed production factories
 yet: interface selection, input-view/non-escape contracts, method lookup, closures
 and data construction execution remain outside this model checkpoint.

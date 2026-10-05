@@ -85,6 +85,15 @@ usable. PHP behavior does not prove native expiration or cycle reclamation.
 
 ## Mutation responsibilities
 
+Stage workers own their processing and must not invoke later-stage processing or
+change later-stage scheduling policy. They may share typed structures, stable
+identities and attached results. The coordinator owns stage sequencing and reset
+order; a shared data link does not transfer algorithm ownership. Parser-called
+collection belongs to `03_parse/collect/`. Backend bindings and naming belong only
+to their backend. Existing cross-stage hooks and retirement/invalidation exceptions
+are inventoried in the [stage-boundary audit](../planning/stage_boundary_audit.md),
+with wider repairs pending discussion rather than implied by this rule.
+
 Workers maintain indexes when indexed names/membership change. Scope methods expose
 encapsulated membership operations; publication policy stays in `Scope_Publication`.
 Removal leaves previously acquired object handles alive but does not authorize those

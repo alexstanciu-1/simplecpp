@@ -69,8 +69,8 @@ Relevant code:
 
 - [`04_analyze/prepare/file.php`](../../04_analyze/prepare/file.php)
 - [`04_analyze/prepare/data/structures.php`](../../04_analyze/prepare/data/structures.php)
-- [`04_analyze/collect/structures.php`](../../04_analyze/collect/structures.php)
-- [`04_analyze/collect/collect.php`](../../04_analyze/collect/collect.php)
+- [`04_analyze/collect/structures.php` (now under parsing)](../../03_parse/collect/structures.php)
+- [`04_analyze/collect/collect.php` (now under parsing)](../../03_parse/collect/collect.php)
 
 The current parser establishes this observed cardinality:
 

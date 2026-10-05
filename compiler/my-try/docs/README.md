@@ -19,6 +19,7 @@ experiment retained for regressions, not a second semantic development path.
 | Collection APIs | [Storage](storage/STORAGE.md) |
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
 | Preparation / C++ emission boundary audit | [Findings, evidence and open repair gates](planning/preparation_emission_audit.md) |
+| Stage dependency and ownership audit | [Forward dependencies, shared structures and discussion groups](planning/stage_boundary_audit.md) |
 | v0.2 early rejection versus runtime guards | [Preparation diagnostic policy](../../../specs/v0_2_preparation_diagnostics.md) |
 | Mandatory performance task once operational | [PCH findings, incremental builds and LLVM/IR investigation](planning/compile_performance.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
@@ -55,7 +56,7 @@ historical, including statements of what was “current” at their recorded che
 | `01_prepare_inputs/` | Module configuration, recursive discovery and source reads |
 | `02_tokenize/` | Byte tokenization and appended source/token storage |
 | `03_parse/` | Typed AST, scopes, retained parsing and token cleanup |
-| `04_analyze/collect/` | Symbol registration called by the parser |
+| `03_parse/collect/` | Symbol registration called by the parser |
 | `04_analyze/prepare/` | Shared semantic work and attached facts |
 | `05_backend/cpp/` | Retained C++ fragments and final text |
 | `05_backend/llvm/` | Parked LLVM preparation/emission |

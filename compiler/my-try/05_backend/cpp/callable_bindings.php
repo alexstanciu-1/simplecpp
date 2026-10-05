@@ -56,6 +56,18 @@ final class CPP_Callable_Bindings
 
 final class CPP_Callables
 {
+	/** Backend-owned dispatch keeps callable identities independent of any output target. */
+	public static function reference(callable_target_i $target, cpp_generation_context $context): string
+	{
+		if ($target instanceof collected_function) {
+			return self::source_reference(object_cast($target, collected_function::class));
+		}
+		if ($target instanceof registered_static_factory) {
+			return self::runtime_reference(object_cast($target, registered_static_factory::class), $context);
+		}
+		throw new \LogicException('C++ callable target is not supported');
+	}
+
 	public static function source_reference(collected_function $target): string
 	{
 		return CPP_Generator::source_name('function', $target->name);

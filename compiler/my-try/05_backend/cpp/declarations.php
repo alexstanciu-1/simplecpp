@@ -240,7 +240,7 @@ final class CPP_Declarations
 			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
 		}
 
-		$text .= "\treturn " . $target->cpp_reference($context) . '(' . $names . ");\n}())";
+		$text .= "\treturn " . CPP_Callables::reference($target, $context) . '(' . $names . ");\n}())";
 		return $text;
 	}
 

@@ -146,6 +146,11 @@ C++ binding supplies the static member and header; it cannot accidentally bind a
 different target with the same registration key. Lifecycle resets align these roots
 with canonical types. See [model ownership](../architecture/MODEL.md#callable-contracts).
 
+Review correction: C++ target dispatch now lives entirely in `CPP_Callables`, not
+on callable identities or their interface. Collection has moved under parsing.
+Before further feature work, discuss the [stage-boundary audit](../planning/stage_boundary_audit.md)
+and its shared-model hook/invalidation ownership findings.
+
 This is model infrastructure, not container construction support: no production
 factories are installed and no static-method source lookup is enabled. Generic
 interface bindings, call-scoped input-view/non-escape contracts and factory execution

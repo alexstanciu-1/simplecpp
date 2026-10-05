@@ -1,14 +1,14 @@
 # Analysis
 Doc Status: supporting
 
-[collect/](collect/) is called directly by the parser, not run as a separate pass.
+[Collection](../03_parse/collect/) belongs to parsing and is called directly by the parser, not run as a separate pass.
 It reuses existing declaration identities and registers new declarations as they
 are recognized. File/member/signature scopes are private to their worker; global
 function/type registration goes through `task_synchronize` and `Scope_Publication`.
 File executable variables remain local. Unresolved occurrences retain syntax and
 scope context for resolution after all parsing/collection workers have joined.
 
-Collected identities are specialized records in `collect/structures.php`:
+Collected identities are specialized records in [03_parse/collect/structures.php](../03_parse/collect/structures.php):
 
 - `collected_name` holds shared occurrence provenance, revision/change state and
   accessors. Each concrete record owns one typed syntax link exposed by `syntax()`.

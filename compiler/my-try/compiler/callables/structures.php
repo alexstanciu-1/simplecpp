@@ -7,8 +7,6 @@ interface callable_target_i
 {
 	/** Source targets require completion and register dependencies; runtime contracts are installed complete. */
 	public function require_signature(preparation_context $context): callable_signature;
-	/** Typed backend dispatch; spelling belongs to the C++ binding owner. */
-	public function cpp_reference(cpp_generation_context $context): string;
 }
 
 /** Published with its owning signature; never mutated after publication. */
@@ -58,9 +56,5 @@ final class registered_static_factory implements callable_target_i
 	public function require_signature(preparation_context $context): callable_signature
 	{
 		return $this->call_contract;
-	}
-	public function cpp_reference(cpp_generation_context $context): string
-	{
-		return CPP_Callables::runtime_reference($this, $context);
 	}
 }

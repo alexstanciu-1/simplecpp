@@ -59,6 +59,18 @@ when historical context is needed; their former plans are not current instructio
 Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
 [ownership](docs/architecture/ownership.md) before changing links or lifetime.
 
+- Stage workers must not depend on later-stage processing. They publish their own
+  facts/change descriptions; the coordinator sequences consumers. Shared structures
+  may cross stage boundaries, but storing another stage's facts is not permission
+  to run its algorithms or mutate its scheduling state. C++ spelling/bindings belong
+  to the C++ backend, not shared semantic identities.
+- Parser-invoked collection is part of `03_parse/collect/`, not a separate analysis
+  pass. Composition/lifecycle orchestration and neutral structural traversal are
+  explicit cross-stage roles, not precedents for forward dependencies in workers.
+  Existing AST phase hooks and incremental cross-owner mutations are recorded in the
+  [stage-boundary audit](docs/planning/stage_boundary_audit.md); do not expand or
+  silently refactor them before the follow-up discussion.
+
 - Model's static fields own shared roots; retained records never retain workers.
   `Compiler_Lifecycle` owns resets. Module configuration changes reset compilation;
   identical configuration preserves retained data.

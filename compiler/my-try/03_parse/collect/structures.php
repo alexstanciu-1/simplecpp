@@ -154,11 +154,6 @@ final class collected_function extends collected_definition implements callable_
 		return $this->syntax_node->require_preparation()->signature;
 	}
 
-	public function cpp_reference(cpp_generation_context $context): string
-	{
-		return CPP_Callables::source_reference($this);
-	}
-
 	public function kind(): collected_name_kind
 	{
 		return collected_name_kind::function_declaration;

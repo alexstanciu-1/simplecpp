@@ -75,9 +75,13 @@ $selected = Call_Preparation::prepare($runtime, $empty, $context);
 callable_check($selected->signature === $signature && weakref_get($selected->target) === $runtime, 'Runtime call changed target/contract identity');
 callable_check(count($file_work->dependencies) === $dependencies, 'Runtime contract manufactured a source dependency');
 $cpp = new cpp_generation_context();
-callable_rejects(fn() => $runtime->cpp_reference($cpp), 'no C++ binding');
+callable_rejects(fn() => CPP_Callables::reference($runtime, $cpp), 'no C++ binding');
 Model::$cpp_callable_bindings->bind_static($runtime, 'from_count', 'test/factory.hpp');
-$reference = $runtime->cpp_reference($cpp);
+$reference = CPP_Callables::reference($runtime, $cpp);
+callable_check(!method_exists(callable_target_i::class, 'cpp_reference')
+	&& !method_exists($runtime, 'cpp_reference') && !method_exists($function->occurrence(), 'cpp_reference'),
+	'Backend dispatch leaked into the callable model');
+callable_check(CPP_Callables::reference($function->occurrence(), $cpp) === 'function_build', 'Source dispatch lost its C++ name');
 callable_check($reference === 'scpp::vector_t<scpp::int_t<>>::from_count', 'Static reference lost concrete owner spelling: ' . $reference);
 callable_check(isset($cpp->headers['test/factory.hpp']) && isset($cpp->headers['scpp/vector_t.hpp']), 'Callable/type headers missing');
 $text = CPP_Declarations::selected_call($selected, $empty, $cpp);
