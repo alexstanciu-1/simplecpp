@@ -110,6 +110,19 @@ std::string mixed_kind_name(mixed_t::kind_t kind) {
 	return "unknown";
 }
 
+std::string dynamic_kind_name(detail::dynamic_value::kind_t kind) {
+	using kinds = detail::dynamic_value::kind_t;
+	switch (kind) {
+		case kinds::null_v: return "null";
+		case kinds::bool_v: return "bool";
+		case kinds::int_v: return "int";
+		case kinds::float_v: return "float";
+		case kinds::string_v: return "string";
+		case kinds::table_v: return "hash";
+	}
+	return "unknown";
+}
+
 void print_header(const char *source_file, int source_line, const char *label, const dbg_options_t &options) {
 	std::cout << "[dbg]";
 	if (has_flag(options, DBG_SOURCE) && source_file != nullptr && source_file[0] != '\0') {
@@ -159,36 +172,53 @@ bool dbg_gate_enabled(const std::string &key) {
 	return gate_registry().count(key) != 0U;
 }
 
+template <typename Box>
+static bool describe_boxed_scalar(const Box &value, dbg_state_t &state, int indent) {
+	using kind = typename Box::kind_t;
+	switch (value.kind()) {
+		case kind::null_v:
+			if (has_flag(state.options, DBG_VALUE)) print_line(indent, "value: null");
+			return true;
+		case kind::bool_v:
+			if (has_flag(state.options, DBG_VALUE)) print_line(indent, std::string("value: ") + (value.get_bool().native_value() ? "true" : "false"));
+			return true;
+		case kind::int_v:
+			if (has_flag(state.options, DBG_VALUE)) print_line(indent, "value: " + std::to_string(value.get_int().native_value()));
+			return true;
+		case kind::float_v:
+			if (has_flag(state.options, DBG_VALUE)) {
+				std::ostringstream out;
+				out << value.get_float().native_value();
+				print_line(indent, "value: " + out.str());
+			}
+			return true;
+		case kind::string_v: {
+			const auto &text = value.get_string().native_value();
+			const auto preview = escape_preview(text, static_cast<std::size_t>(state.max_string_preview));
+			if (has_flag(state.options, DBG_LEN)) print_line(indent, "len: " + std::to_string(text.size()));
+			if (has_flag(state.options, DBG_VALUE)) print_line(indent, "value: \"" + preview + "\"");
+			return true;
+		}
+		default: return false;
+	}
+}
+
+void describe_value(const detail::dynamic_value &value, dbg_state_t &state, int indent, int depth) {
+	if (has_flag(state.options, DBG_TYPE)) {
+		print_line(indent, "type: dynamic_t");
+		print_line(indent, "runtime: " + dynamic_kind_name(value.kind()));
+	}
+	if (describe_boxed_scalar(value, state, indent)) return;
+	describe_hash(value.get_table(), state, indent, depth);
+}
+
 void describe_value(const mixed_t &value, dbg_state_t &state, int indent, int depth) {
 	if (has_flag(state.options, DBG_TYPE)) {
 		print_line(indent, "type: mixed_t");
 		print_line(indent, "runtime: " + mixed_kind_name(value.kind()));
 	}
-
+	if (describe_boxed_scalar(value, state, indent)) return;
 	switch (value.kind()) {
-		case mixed_t::kind_t::null_v:
-			if (has_flag(state.options, DBG_VALUE)) print_line(indent, "value: null");
-			return;
-		case mixed_t::kind_t::bool_v:
-			if (has_flag(state.options, DBG_VALUE)) print_line(indent, std::string("value: ") + (value.bool_value().native_value() ? "true" : "false"));
-			return;
-		case mixed_t::kind_t::int_v:
-			if (has_flag(state.options, DBG_VALUE)) print_line(indent, "value: " + std::to_string(value.int_value().native_value()));
-			return;
-		case mixed_t::kind_t::float_v:
-			if (has_flag(state.options, DBG_VALUE)) {
-				std::ostringstream out;
-				out << value.float_value().native_value();
-				print_line(indent, "value: " + out.str());
-			}
-			return;
-		case mixed_t::kind_t::string_v: {
-			const auto *text = value.string_if();
-			const auto preview = text == nullptr ? std::string() : escape_preview(text->native_value(), static_cast<std::size_t>(state.max_string_preview));
-			if (has_flag(state.options, DBG_LEN) && text != nullptr) print_line(indent, "len: " + std::to_string(text->native_value().size()));
-			if (has_flag(state.options, DBG_VALUE)) print_line(indent, "value: \"" + preview + "\"");
-			return;
-		}
 		case mixed_t::kind_t::table_v: {
 			const auto *table = value.table_if();
 			if (table == nullptr) {
@@ -229,6 +259,7 @@ void describe_value(const mixed_t &value, dbg_state_t &state, int indent, int de
 			describe_hash(*table, state, indent, depth);
 			return;
 		}
+		default: return;
 	}
 }
 
@@ -261,4 +292,3 @@ bool_t dbg_enabled(const char *key) {
 }
 
 } // namespace scpp::php
-

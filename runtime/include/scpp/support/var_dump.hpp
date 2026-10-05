@@ -1,6 +1,7 @@
 #pragma once
 #include "scpp/hash_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/result_or_false.hpp"
 #include "scpp/result_or_bool.hpp"
@@ -10,6 +11,7 @@
 namespace scpp::php {
 
 void var_dump(const mixed_t& v);
+void var_dump(const detail::dynamic_value& v);
 void var_dump(const hash_t<mixed_t>& t);
 
 inline void var_dump(null_t v) { var_dump(mixed_t{v}); }

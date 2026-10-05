@@ -6,6 +6,7 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/nullopt_t.hpp"
@@ -86,6 +87,7 @@ struct dbg_state_t final {
 [[nodiscard]] std::string ptr_label(const void *ptr);
 [[nodiscard]] std::string escape_preview(std::string_view value, std::size_t limit);
 [[nodiscard]] std::string mixed_kind_name(mixed_t::kind_t kind);
+[[nodiscard]] std::string dynamic_kind_name(detail::dynamic_value::kind_t kind);
 void print_header(const char *source_file, int source_line, const char *label, const dbg_options_t &options);
 void print_line(int indent, const std::string &line);
 void dbg_set_gate(const std::string &key);
@@ -102,6 +104,7 @@ template <typename T>
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, float_t>) return "float_t";
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, string_t>) return "string_t";
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, mixed_t>) return "mixed_t";
+	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, detail::dynamic_value>) return "dynamic_t";
 	else return typeid(detail::remove_cvref_t<T>).name();
 }
 
@@ -110,6 +113,10 @@ template <typename T>
 
 template <typename T>
 void describe_value(const T &value, dbg_state_t &state, int indent, int depth);
+
+// Declare boxed dispatch before recursive container/wrapper templates.
+void describe_value(const mixed_t &value, dbg_state_t &state, int indent, int depth);
+void describe_value(const detail::dynamic_value &value, dbg_state_t &state, int indent, int depth);
 
 template <typename T>
 void describe_scalar(const char *kind, const std::string &value, dbg_state_t &state, int indent) {
@@ -140,6 +147,8 @@ template <typename T>
 		return "string len=" + std::to_string(value.native_value().size()) + " \"" + escape_preview(value.native_value(), 80) + "\"";
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, mixed_t>) {
 		return "mixed " + mixed_kind_name(value.kind());
+	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, detail::dynamic_value>) {
+		return "dynamic " + dynamic_kind_name(value.kind());
 	} else {
 		(void)value;
 		return "<not inspectable>";
@@ -177,8 +186,8 @@ template <typename K>
 	}
 }
 
-template <typename T, typename K>
-void describe_hash(const hash_t<T, K> &value, dbg_state_t &state, int indent, int depth) {
+template <typename Table>
+void describe_hash(const Table &value, dbg_state_t &state, int indent, int depth) {
 	const void *identity = static_cast<const void*>(&value);
 	const bool show_ptr = has_flag(state.options, DBG_PTR);
 	std::string head = "hash len=" + std::to_string(value.size());
@@ -200,7 +209,7 @@ void describe_hash(const hash_t<T, K> &value, dbg_state_t &state, int indent, in
 	}
 	state.seen.insert(identity);
 	int count = 0;
-	value.debug_visit_entries([&](const K &key, const T &entry) {
+	value.debug_visit_entries([&](const auto &key, const auto &entry) {
 		if (count >= state.max_items) return;
 		if (has_flag(state.options, DBG_KEYS) && !has_flag(state.options, DBG_SHAPE)) {
 			print_line(indent + 1, "[" + key_preview(key) + "]");
@@ -315,8 +324,6 @@ void describe_value(const result<T> &value, dbg_state_t &state, int indent, int 
 	print_line(indent, "result value: " + inline_value(value.value()));
 	if (depth > 0) describe_value(value.value(), state, indent + 1, depth - 1);
 }
-
-void describe_value(const mixed_t &value, dbg_state_t &state, int indent, int depth);
 
 template <typename T, typename K>
 void describe_value(const hash_t<T, K> &value, dbg_state_t &state, int indent, int depth) {

@@ -5,6 +5,7 @@
 namespace scpp::php {
 
 static void dump_value(const mixed_t& v, int indent_lvl, std::unordered_set<const void*>& seen);
+static void dump_value(const detail::dynamic_value& v, int indent_lvl, std::unordered_set<const void*>& seen);
 
 static void print_indent(int n) {
     for (int i = 0; i < n; ++i) std::cout << "  ";
@@ -16,7 +17,8 @@ static std::string float_to_php_string(double value) {
     return oss.str();
 }
 
-static void dump_table_ptr(const hash_t<mixed_t>* t, const void* identity, int indent_lvl, std::unordered_set<const void*>& seen, const char* label = "array") {
+template <typename Table>
+static void dump_table_ptr(const Table* t, const void* identity, int indent_lvl, std::unordered_set<const void*>& seen, const char* label = "array") {
     if (t == nullptr) {
         std::cout << "NULL\n";
         return;
@@ -28,7 +30,7 @@ static void dump_table_ptr(const hash_t<mixed_t>* t, const void* identity, int i
     seen.insert(identity);
 
     std::cout << label << "(" << t->size() << ") {\n";
-    t->debug_visit_entries([&](const auto& key, const mixed_t& val) {
+    t->debug_visit_entries([&](const auto& key, const auto& val) {
         print_indent(indent_lvl + 1);
         std::cout << "[";
         using key_t = std::remove_cvref_t<decltype(key)>;
@@ -49,26 +51,40 @@ static void dump_table(const hash_t<mixed_t>& t, int indent_lvl, std::unordered_
     dump_table_ptr(&t, &t, indent_lvl, seen);
 }
 
-static void dump_value(const mixed_t& v, int indent_lvl, std::unordered_set<const void*>& seen) {
+template <typename Box>
+static bool dump_boxed_scalar(const Box& v) {
+    using kind = typename Box::kind_t;
     switch (v.kind()) {
-        case mixed_t::kind_t::null_v:
+        case kind::null_v:
             std::cout << "NULL\n";
-            break;
-        case mixed_t::kind_t::bool_v:
-            std::cout << "bool(" << (v.bool_value().native_value() ? "true" : "false") << ")\n";
-            break;
-        case mixed_t::kind_t::int_v:
-            std::cout << "int(" << v.int_value().native_value() << ")\n";
-            break;
-        case mixed_t::kind_t::float_v:
-            std::cout << "float(" << float_to_php_string(v.float_value().native_value()) << ")\n";
-            break;
-        case mixed_t::kind_t::string_v: {
-            const auto* s = v.string_if();
-            const std::string native = (s == nullptr) ? std::string() : s->native_value();
+            return true;
+        case kind::bool_v:
+            std::cout << "bool(" << (v.get_bool().native_value() ? "true" : "false") << ")\n";
+            return true;
+        case kind::int_v:
+            std::cout << "int(" << v.get_int().native_value() << ")\n";
+            return true;
+        case kind::float_v:
+            std::cout << "float(" << float_to_php_string(v.get_float().native_value()) << ")\n";
+            return true;
+        case kind::string_v: {
+            const auto& native = v.get_string().native_value();
             std::cout << "string(" << native.size() << ") \"" << native << "\"\n";
-            break;
+            return true;
         }
+        default: return false;
+    }
+}
+
+static void dump_value(const detail::dynamic_value& v, int indent_lvl, std::unordered_set<const void*>& seen) {
+    if (dump_boxed_scalar(v)) return;
+    const auto* table = v.table_if();
+    dump_table_ptr(table, table, indent_lvl, seen, "object(dynamic_t)");
+}
+
+static void dump_value(const mixed_t& v, int indent_lvl, std::unordered_set<const void*>& seen) {
+    if (dump_boxed_scalar(v)) return;
+    switch (v.kind()) {
         case mixed_t::kind_t::table_v:
             dump_table(*v.table_if(), indent_lvl, seen);
             break;
@@ -91,10 +107,16 @@ static void dump_value(const mixed_t& v, int indent_lvl, std::unordered_set<cons
             dump_table_ptr(ptr, ptr, indent_lvl, seen);
             break;
         }
+        default: break;
     }
 }
 
 void var_dump(const mixed_t& v) {
+    std::unordered_set<const void*> seen;
+    dump_value(v, 0, seen);
+}
+
+void var_dump(const detail::dynamic_value& v) {
     std::unordered_set<const void*> seen;
     dump_value(v, 0, seen);
 }

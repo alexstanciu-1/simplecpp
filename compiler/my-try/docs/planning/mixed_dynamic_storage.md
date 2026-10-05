@@ -409,3 +409,27 @@ runtime/JSON builds and ten native programs. A final rerun after include cleanup
 comparison/text programs through the shared runner. The previously recorded wider
 mixed-suite stale assertion remains unresolved; this is neither a full-suite pass
 nor a native compiler rebuild.
+
+### Tagged debug inspection — 2026-10-05
+
+`dbg` and `var_dump` now inspect the internal tagged value directly, without a mixed
+carrier or cross-family conversion. Scalar rendering is shared with mixed in each
+existing formatter; table traversal is parameterized over the table implementation.
+Dynamic containers retain their debug identity and use the existing seen-address
+guards. This keeps repeated aliases/cycles bounded without inventing a new display
+or ownership policy. `dbg` keeps its existing depth, item and string limits.
+
+Boxed debug overloads are declared before recursive container/wrapper templates, so
+nested mixed and tagged dynamic values select their handlers instead of the generic
+not-inspectable fallback. Tests cover scalar formatting, nested values, typed
+containers, wrappers, shared aliases, cycles, depth-zero output and unchanged shared
+storage after inspection. The temporary test cycle is removed before assertions.
+
+The public alias, JSON/API selection, remaining consumer migration and compiler
+facts are still pending. No source-level type switch or native compiler rebuild is
+claimed by this formatting checkpoint.
+
+Evidence: `/tmp/my-try-tagged-dynamic-debug-20261005-2` passed matching debug/release
+runtime/JSON builds and ten native programs. The first run compiled both runtimes
+but exposed a test-only API typo (`erase` instead of the table's `remove`); the final
+run includes that correction. No broader compiler regression suite was run.

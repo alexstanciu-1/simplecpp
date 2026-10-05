@@ -12,6 +12,8 @@
 #include "operators/identity/strict_identity.hpp"
 #include "operators/identity/boxed_scalar_equality.hpp"
 #include "operators/concat_assign/concat_assign.hpp"
+#include "scpp/support/dbg.hpp"
+#include "scpp/support/var_dump.hpp"
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -355,6 +357,72 @@ void loose_equality_and_text() {
 	require_failure([&] { scpp::concat_assign(first, string_t{"bad"}); }, "container text conversion rejects");
 	require((first == alias).native_value(), "failed text conversion retains container identity");
 }
+
+template <typename Work>
+std::string capture_output(Work work) {
+	std::ostringstream output;
+	struct restore_stream final {
+		std::streambuf *previous;
+		~restore_stream() { std::cout.rdbuf(previous); }
+	} restore{std::cout.rdbuf(output.rdbuf())};
+	work();
+	return output.str();
+}
+
+void debug_inspection() {
+	const value scalars[] = {value{}, value{scpp::bool_t{false}}, value{int_t<>{12LL}},
+		value{scpp::float_t{2.5}}, value{string_t{"a\nb"}}};
+	for (const auto &scalar : scalars) {
+		const auto mixed = scpp::cast<scpp::mixed_t>(scalar);
+		const auto dump = capture_output([&] { scpp::php::var_dump(scalar); });
+		require(dump == capture_output([&] { scpp::php::var_dump(mixed); }), "dump scalar formatting is shared");
+		const auto flags = int_t<>{scpp::DBG_VALUE.native_value() | scpp::DBG_LEN.native_value()};
+		require(capture_output([&] { scpp::php::dbg(scalar, flags); })
+			== capture_output([&] { scpp::php::dbg(mixed, flags); }), "dbg scalar formatting is shared");
+	}
+	require(capture_output([&] { scpp::php::var_dump(scalars[2]); }) == "int(12)\n", "dump expected scalar output");
+	value root = value::make_container();
+	value child = value::make_container();
+	child.get_table().set(string_t{"number"}, value{int_t<>{42LL}});
+	root.get_table().set(string_t{"left"}, child);
+	root.get_table().set(string_t{"right"}, child);
+	const auto flags = int_t<>{scpp::DBG_TYPE.native_value() | scpp::DBG_VALUE.native_value()
+		| scpp::DBG_SHAPE.native_value() | scpp::DBG_DEPTH_5.native_value() | scpp::DBG_PTR.native_value()};
+	const auto inspect = [&] { return capture_output([&] { scpp::php::dbg(root, flags); }); };
+	const auto before = inspect();
+	require(before.find("type: dynamic_t") != std::string::npos && before.find("value: 42") != std::string::npos,
+		"nested dynamic values select boxed debug dispatch");
+	require(before.find("<seen @0x") != std::string::npos, "dbg shared alias uses existing seen guard");
+	require(before.find("not inspectable") == std::string::npos, "dynamic entries are inspectable");
+	const auto dump = capture_output([&] { scpp::php::var_dump(root); });
+	require(dump.find("object(dynamic_t)(2)") != std::string::npos && dump.find("int(42)") != std::string::npos
+		&& dump.find("*RECURSION*") != std::string::npos, "dump traverses same-family storage with alias guard");
+	const auto shallow = capture_output([&] { scpp::php::dbg(root,
+		int_t<>{scpp::DBG_SHAPE.native_value() | scpp::DBG_DEPTH_0.native_value()}); });
+	require(shallow.find("left") == std::string::npos, "dbg honors zero-depth limit");
+	const auto wrapped = capture_output([&] { scpp::php::dbg(scpp::nullable<value>{child}, flags);
+		scpp::php::dbg(scpp::result<value>{child}, flags);
+		scpp::php::dbg(scpp::vector_t<value>{child}, flags); });
+	require(wrapped.find("value: 42") != std::string::npos && wrapped.find("not inspectable") == std::string::npos,
+		"wrapper and typed container traversal preserve dynamic dispatch");
+	// Break the temporary cycle before any assertion, so the proof does not retain it.
+	child.get_table().set(string_t{"self"}, child);
+	const auto cyclic = capture_output([&] { scpp::php::var_dump(child); scpp::php::dbg(child, flags); });
+	(void)child.get_table().remove(string_t{"self"});
+	require(cyclic.find("*RECURSION*") != std::string::npos && cyclic.find("<seen @0x") != std::string::npos,
+		"cyclic data inspection terminates");
+	require(inspect() == before, "inspection neither mutates nor detaches shared containers");
+	scpp::hash_t<value> typed;
+	typed.set(string_t{"child"}, child);
+	const auto typed_dump = capture_output([&] { scpp::php::dbg(typed, flags); });
+	require(typed_dump.find("value: 42") != std::string::npos && typed_dump.find("not inspectable") == std::string::npos,
+		"typed hash dispatches nested dynamic values");
+	scpp::hash_t<scpp::mixed_t> mixed_table;
+	mixed_table.set(string_t{"number"}, scpp::mixed_t{int_t<>{42LL}});
+	const auto mixed_dump = capture_output([&] { scpp::php::dbg(mixed_table, flags); });
+	require(mixed_dump.find("value: 42") != std::string::npos && mixed_dump.find("not inspectable") == std::string::npos,
+		"shared traversal retains nested mixed inspection");
+}
 } // namespace
 
 int main() {
@@ -365,4 +433,5 @@ int main() {
 	scalar_boundaries_and_arithmetic();
 	comparisons_and_updates();
 	loose_equality_and_text();
+	debug_inspection();
 }
