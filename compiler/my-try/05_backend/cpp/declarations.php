@@ -28,7 +28,7 @@ final class CPP_Declarations
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
 		if (($decision->operation === conversion_operation::nullable_wrap)
-			|| ($decision->operation === conversion_operation::mixed_box)) {
+			|| ($decision->operation === conversion_operation::boxed_wrap)) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
 		if (($decision->operation === conversion_operation::result_wrap)
@@ -48,7 +48,7 @@ final class CPP_Declarations
 			return 'static_cast<' . self::type($decision->target_type, $context)
 				. '>((' . $expression . ').native_value())';
 		}
-		if ($decision->operation === conversion_operation::mixed_extract) {
+		if ($decision->operation === conversion_operation::boxed_extract) {
 			$context->headers['scpp/cast.hpp'] = true;
 			return 'scpp::required_cast<' . self::type($decision->target_type, $context)
 				. '>(' . $expression . ')';

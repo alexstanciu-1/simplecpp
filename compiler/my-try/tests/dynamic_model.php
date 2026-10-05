@@ -46,7 +46,8 @@ foreach (['mixed' => 'scpp::mixed_t', 'dynamic' => 'scpp::dynamic_t<>'] as $name
 }
 dynamic_model_check($registry->application_count() === 0, 'Concrete carriers created template applications');
 dynamic_model_check($registry->is_value_type($mixed_type->type_id()), 'Mixed box lost value storage');
-dynamic_model_check(!$registry->is_value_type($dynamic_type->type_id()), 'Dynamic shared storage became value storage');
+dynamic_model_check($registry->is_value_type($dynamic_type->type_id()), 'Dynamic tagged binding lost value storage');
+dynamic_model_check(!$registry->use($dynamic_type->type_id(), true)->by_value(), 'Redundant dynamic value modifier was retained');
 dynamic_model_check(!$registry->use($mixed_type->type_id(), true)->by_value(), 'Redundant mixed value modifier was retained');
 
 $custom = new Type_Registry();

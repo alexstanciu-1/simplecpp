@@ -67,6 +67,7 @@ try {
 		'$v mixed = {a: 1, b: "text", c: null};',
 		'$v dynamic = [1, 2];',
 		'$v dynamic = {};',
+		'$v value<dynamic> = {};',
 		'$v vector<vector<int>> = [[1], [2, 3]];',
 		'$v hash<vector<int>> = {a: [1], b: []};',
 		'$v vector<nullable<int>> = [1, null];',
@@ -100,17 +101,19 @@ try {
 		}
 	}
 
-	// Nesting defaults are independent of mixed-only entry storage. Explicit annotations win.
-	data_preparation_program($path, '$d dynamic = {settings: {enabled: true}, other: mixed::{n: 1}}; return 0;');
+	// Nested and explicitly annotated children stay in the destination family.
+	data_preparation_program($path, '$d dynamic = {settings: {enabled: true}, other: dynamic::{n: 1}}; return 0;');
 	$nodes = data_preparation_nodes();
 	data_preparation_check(Type_Queries::canonical($nodes[1]->require_data_preparation()->type)->definition() instanceof dynamic_semantics, 'Dynamic nested default lost');
-	data_preparation_check(Type_Queries::canonical($nodes[2]->require_data_preparation()->type)->definition() instanceof mixed_semantics, 'Explicit nested target ignored');
-	data_preparation_check($nodes[0]->entries[0]->require_preparation()->value_conversion->operation === conversion_operation::mixed_dynamic_box, 'Nested dynamic was not boxed by identity');
-	data_preparation_check($nodes[0]->entries[1]->require_preparation()->value_conversion->operation === conversion_operation::identity, 'Explicit mixed nested value changed');
-	data_preparation_program($path, '$d dynamic = {}; $m mixed = {nested: {}, existing: $d}; return 0;');
+	data_preparation_check(Type_Queries::canonical($nodes[2]->require_data_preparation()->type)->definition() instanceof dynamic_semantics, 'Explicit nested target ignored');
+	data_preparation_check($nodes[0]->entries[0]->require_preparation()->value_conversion->operation === conversion_operation::identity, 'Nested dynamic lost same-family identity');
+	data_preparation_check($nodes[0]->entries[1]->require_preparation()->value_conversion->operation === conversion_operation::identity, 'Explicit dynamic nested value changed');
+	data_preparation_program($path, '$d mixed = {}; $m mixed = {nested: {}, existing: $d}; return 0;');
 	$nodes = data_preparation_nodes();
 	data_preparation_check(Type_Queries::canonical($nodes[2]->require_data_preparation()->type)->definition() instanceof mixed_semantics, 'Mixed nested default lost');
-	data_preparation_check($nodes[1]->entries[1]->require_preparation()->value_conversion->operation === conversion_operation::mixed_dynamic_box, 'Existing dynamic value was not admitted');
+	data_preparation_check($nodes[1]->entries[1]->require_preparation()->value_conversion->operation === conversion_operation::identity, 'Existing mixed value was not admitted');
+	data_preparation_rejects($path, '$d dynamic = {other: mixed::{n: 1}};', 'family conversion requires');
+	data_preparation_rejects($path, '$m mixed = {other: dynamic::{n: 1}};', 'family conversion requires');
 
 	// Duplicate entries remain source-ordered; no hash-shaped prepared snapshot is created.
 	data_preparation_program($path, '$v hash<int> = {same: 1, same: 2}; return 0;');
@@ -122,7 +125,6 @@ try {
 		&& $node->entries[0]->value->preparation() === null, 'Entry facts survived structural cleanup');
 
 	$rejections = [
-		['$v value<dynamic> = {};', 'effective storage modifiers'],
 		['$v = [];', 'known concrete target'],
 		['$v = null;', 'null requires an explicit'],
 		['$v = [1, 2];', 'known concrete target'],
@@ -149,7 +151,7 @@ try {
 		['$v vector<int> = [$v];', 'itself in its initializer'],
 		['$v vector<int> = [$new = 1];', 'established local'],
 		['function accept(vector<int> &$v): void {} accept([1]);', 'stable storage'],
-		['$d dynamic = {}; $m mixed = $d;', 'mixed boxing currently supports'],
+		['$d dynamic = {}; $m mixed = $d;', 'family conversion requires'],
 		['struct Plain { int $x; } $v Plain = {x: 1};', 'source initialization interfaces are deferred'],
 		['$v dynamic = {x: true ? {} : {}};', 'known concrete target'],
 	];

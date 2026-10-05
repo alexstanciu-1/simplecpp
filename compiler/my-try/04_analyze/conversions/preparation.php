@@ -11,8 +11,8 @@ final class Conversion_Preparation
 	{
 		Type_Preparation::require_value_type($target);
 		if (($context === conversion_context::initializer_key) || ($context === conversion_context::container_element)) {
-			if (Mixed_Conversions::is_mixed($source) || Mixed_Conversions::is_mixed($target)) {
-				return Mixed_Conversions::container_input($source, $target, $context);
+			if (Boxed_Conversions::is_boxed($source) || Boxed_Conversions::is_boxed($target)) {
+				return Boxed_Conversions::container_input($source, $target, $context);
 			}
 			// Ordinary typed input follows the same boundaries as a by-value argument.
 			$input = self::decide($source, $target, conversion_context::argument);
@@ -26,11 +26,11 @@ final class Conversion_Preparation
 			throw new \RuntimeException('S2S explicit cast target cannot use a type-use modifier');
 		}
 		if (($context === conversion_context::explicit_cast) && !self::is_scalar($target)
-			&& !Mixed_Conversions::is_family_crossing($source, $target)) {
+			&& !Boxed_Conversions::is_family_crossing($source, $target)) {
 			throw new \RuntimeException('S2S explicit cast target is not supported');
 		}
-		if (Mixed_Conversions::is_mixed($source) || Mixed_Conversions::is_mixed($target)) {
-			return Mixed_Conversions::decide($source, $target, $context);
+		if (Boxed_Conversions::is_boxed($source) || Boxed_Conversions::is_boxed($target)) {
+			return Boxed_Conversions::decide($source, $target, $context);
 		}
 		if ((Result_Conversions::role($source) !== null) || (Result_Conversions::role($target) !== null)) {
 			return Result_Conversions::decide($source, $target, $context);

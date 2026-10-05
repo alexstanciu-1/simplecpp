@@ -248,9 +248,9 @@ assignment write-back keeps string storage or boxes the result into mixed, repla
 the previous payload kind. Numeric stored-kind validation is separate. Eager
 operand-order checks and interpolation behavior remain unchanged.
 
-`Mixed_Conversions` owns scalar/null boxing and checked required scalar extraction
-at assignment, by-value argument and return boundaries. It recognizes `mixed_semantics`
-and records `mixed_box` / `mixed_extract`; emission constructs the box or calls the
+`Boxed_Conversions` owns scalar/null boxing and checked required scalar extraction
+at assignment, by-value argument and return boundaries for both `mixed_semantics`
+and `dynamic_semantics`. It records `boxed_wrap` / `boxed_extract`; emission constructs the box or calls the
 existing `required_cast<T>`. Same-type copies reuse identity conversion. Ordinary int
 is the only boxed integer admitted in this slice; fixed widths, implicit cross-carrier
 bridges, wrapper boxing and further operator families remain deferred. Selection contexts admit only
@@ -261,9 +261,12 @@ Explicit `mixed`/`dynamic` family crossings use semantic roles and
 `explicit_runtime_cast` in both directions. The runtime preserves scalar/null kind
 and value and rejects every container crossing before destination replacement.
 The old `mixed_dynamic_box` operation is removed. Implicit crossings, including
-container insertion, reject during preparation. Dynamic scalar boxing/extraction and
-same-family construction/indexing/iteration registrations are the next migration slice;
-do not infer their integration from the explicit-cast checkpoint.
+container insertion, reject during preparation. Registered construction/indexing/
+iteration signatures carry the receiver's own family for values and nested children;
+mixed scalar key carriers remain a separate int/string key mechanism. Dynamic's
+tagged binding is value-stored; redundant value modifiers normalize through registry
+facts without changing shared container payload identity. Dynamic operator/selection
+admission remains a subsequent slice, not an inference from these conversions.
 `Condition_Truthiness` admits mixed through `mixed_condition`; all condition consumers
 and mixed `!` reuse runtime kind dispatch, not explicit boolean conversion. Boxed
 table/object conditions currently throw at runtime; broader kind truthiness is debt.
@@ -292,7 +295,7 @@ owner without adding a dynamic-object arithmetic family.
 
 Mixed comparisons reuse that owner and return bool. Equality admits scalar/null
 peers; ordering remains numeric. Operator admission owns those domains, while
-`Mixed_Conversions` normalizes admitted scalar/null peers into mixed without
+`Boxed_Conversions` normalizes admitted scalar/null peers into mixed without
 extraction. Strict identity instead retains each operand's original type and uses
 the shared runtime helper; literal null must not be boxed because empty-handle
 normalization differs from mixed/mixed kind comparison. Nullable null comparisons

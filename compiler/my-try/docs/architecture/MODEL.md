@@ -25,6 +25,15 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 from source records, not parallel retained indexes. `Compiler_Lifecycle` owns root
 initialization/reset; Model does not call processing code.
 
+## Tagged boxed storage
+
+The mixed and dynamic semantic roles remain distinct nominal definitions. Both are
+registered as value-stored tagged bindings; dynamic's shared container identity is
+a payload-copy contract, not class-like storage for every value. The registry's
+normal modifier normalization therefore removes redundant `value<dynamic>`.
+Construction, indexing and iteration contracts independently publish same-family
+value types; their int/string key carrier does not confer cross-family containment.
+
 ## Source and symbol identity
 
 Modules save their key/name, declared path, resolved path and input position. Any

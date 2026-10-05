@@ -88,10 +88,19 @@ First compiler integration checkpoint: explicit mixed/dynamic casts now retain
 `explicit_runtime_cast` in both directions and use checked scalar/null conversion.
 The `mixed_dynamic_box` operation and special nested-write exception are removed;
 ordinary conversion admission rejects implicit crossings, including insertion.
-The focused `dynamic_families.py` runner covers this boundary independently of the
-unmigrated construction/read/write/iteration fixtures. In particular, the current
-registry still describes dynamic entry values as mixed; completing those same-family
-signatures and updating their fixtures is the next checkpoint, not proved support here.
+The focused `dynamic_families.py` runner covers this boundary and the tagged-binding
+integration independently of still-unmigrated broad fixtures. `Boxed_Conversions`
+now serves scalar/null wrapping and checked scalar extraction for both families.
+Dynamic is a value-stored tagged binding, not a class-like shared handle. Registry
+initialization/indexing/iteration signatures now use dynamic-valued entries, keeping
+the existing separate int/string key domain and common stage algorithms.
+
+Remaining operator gate: direct dynamic arithmetic, conditions and selection joins
+still require their own admission migration. An indexed dynamic read is now dynamic,
+so old source examples relying on its former mixed result need that follow-up or
+an explicit typed boundary. JSON/library registrations and the broad generated
+fixture reconciliation are also pending. Do not infer a full Chapter 06/native
+compiler pass from the focused tagged-family suite.
 
 Remaining library-specific integration (notably tasks) is deferred to
 [CH15-LIB-DYN-01](15_blocking_debt.md#ch15-lib-dyn-01--deferred-library-mixeddynamic-integration)

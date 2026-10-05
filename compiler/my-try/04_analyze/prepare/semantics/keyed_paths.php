@@ -58,7 +58,7 @@ final class Keyed_Path_Preparation
 		$key = Expression_Preparation::prepare($key_syntax, $context);
 		Indexing_Preparation::require_key_domain($key->type, $context);
 		$key_target = $signature->key;
-		if (Mixed_Conversions::is_mixed($key->type)) {
+		if (Boxed_Conversions::is_mixed($key->type)) {
 			// Preserve unknown key kinds for nonthrowing probes / checked removal.
 			$key_target = $key->type;
 		}

@@ -15,7 +15,7 @@ final class String_Conversions
 		if ($source->matches($target)) {
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
 		}
-		if (!Mixed_Conversions::is_mixed($source) && !Mixed_Conversions::is_scalar_payload($source)
+		if (!Boxed_Conversions::is_mixed($source) && !Boxed_Conversions::is_scalar_payload($source)
 			&& !Nullable_Conversions::is_null($source)) {
 			throw new \RuntimeException('S2S concatenation requires mixed, ordinary scalar or null operands');
 		}

@@ -71,7 +71,7 @@ final class Mixed_Operators
 			throw new \LogicException('Mixed arithmetic operand count mismatch');
 		}
 		$box = $operands[0];
-		if (!Mixed_Conversions::is_mixed($box)) {
+		if (!Boxed_Conversions::is_mixed($box)) {
 			$box = $operands[1];
 		}
 		$decision->result_type = $box;
@@ -81,7 +81,7 @@ final class Mixed_Operators
 				throw new \RuntimeException('S2S mixed arithmetic requires matching mixed, ordinary int or float operands');
 			}
 			if ($source_operator === operator_kind::remainder) {
-				if (!Mixed_Conversions::is_mixed($operand) && !$operand->matches(Language_Types::integer(Model::$language_scope))) {
+				if (!Boxed_Conversions::is_mixed($operand) && !$operand->matches(Language_Types::integer(Model::$language_scope))) {
 					throw new \RuntimeException('S2S mixed remainder requires mixed or ordinary int operands');
 				}
 			}
@@ -101,7 +101,7 @@ final class Mixed_Operators
 
 	private static function is_numeric_operand(canonical_type_use $operand): bool
 	{
-		return !$operand->by_value() && (Mixed_Conversions::is_mixed($operand)
+		return !$operand->by_value() && (Boxed_Conversions::is_mixed($operand)
 			|| $operand->matches(Language_Types::integer(Model::$language_scope))
 			|| $operand->matches(Language_Types::floating(Model::$language_scope)));
 	}
@@ -143,7 +143,7 @@ final class Mixed_Operators
 			$decision->operation = operator_operation::mixed_greater_equal;
 		}
 		$box = $operands[0];
-		if (!Mixed_Conversions::is_mixed($box)) {
+		if (!Boxed_Conversions::is_mixed($box)) {
 			$box = $operands[1];
 		}
 		foreach ($operands as $operand)
@@ -152,7 +152,7 @@ final class Mixed_Operators
 				throw new \RuntimeException('S2S mixed comparison does not support storage modifiers');
 			}
 			if ($equality) {
-				if (!$operand->matches($box) && !Mixed_Conversions::is_scalar_payload($operand) && !Nullable_Conversions::is_null($operand)) {
+				if (!$operand->matches($box) && !Boxed_Conversions::is_scalar_payload($operand) && !Nullable_Conversions::is_null($operand)) {
 					throw new \RuntimeException('S2S mixed equality requires matching mixed, scalar or null operands');
 				}
 			}

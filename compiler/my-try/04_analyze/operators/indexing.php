@@ -173,7 +173,7 @@ final class Indexing_Preparation
 	public static function require_key_domain(canonical_type_use $type, preparation_context $context): void
 	{
 		if ($type->matches($context->integer) || $type->matches($context->string_type)
-			|| Mixed_Conversions::is_mixed($type)) {
+			|| Boxed_Conversions::is_mixed($type)) {
 			return;
 		}
 		throw new \RuntimeException('S2S indexed access keys require int, string or mixed');

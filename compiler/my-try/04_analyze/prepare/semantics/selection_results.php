@@ -9,7 +9,7 @@ final class Selection_Result_Preparation
 	public static function mixed_join(canonical_type_use $left, canonical_type_use $right,
 		preparation_context $context): canonical_type_use
 	{
-		$result = Mixed_Conversions::is_mixed($left) ? $left : $right;
+		$result = Boxed_Conversions::is_mixed($left) ? $left : $right;
 		// Conversion admission rejects wrappers, bare null, modifiers and distinct mixed identities.
 		Conversion_Preparation::decide($left, $result, conversion_context::conditional_branch);
 		Conversion_Preparation::decide($right, $result, conversion_context::conditional_branch);

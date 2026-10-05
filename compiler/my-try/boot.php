@@ -79,7 +79,7 @@ require_once __DIR__ . '/04_analyze/conversions/floating_points.php';
 require_once __DIR__ . '/04_analyze/conversions/preparation.php';
 require_once __DIR__ . '/04_analyze/conversions/nullable.php';
 require_once __DIR__ . '/04_analyze/conversions/results.php';
-require_once __DIR__ . '/04_analyze/conversions/mixed.php';
+require_once __DIR__ . '/04_analyze/conversions/boxed.php';
 require_once __DIR__ . '/04_analyze/operators/model.php';
 require_once __DIR__ . '/04_analyze/operators/integers.php';
 require_once __DIR__ . '/04_analyze/operators/mixed.php';

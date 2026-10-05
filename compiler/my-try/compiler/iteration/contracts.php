@@ -58,7 +58,8 @@ final class Iteration_Registration
 		$declarations->append(new iteration_declaration($types->definition('vector'), $integer, $value));
 		$declarations->append(new iteration_declaration($types->definition('hash'), $key, $value));
 		foreach (['mixed', 'dynamic'] as $name) {
-			$declarations->append(new iteration_declaration($types->definition($name), $mixed, $mixed));
+			$element = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
+			$declarations->append(new iteration_declaration($types->definition($name), $mixed, $element));
 		}
 		return new Iteration_Contracts($declarations);
 	}

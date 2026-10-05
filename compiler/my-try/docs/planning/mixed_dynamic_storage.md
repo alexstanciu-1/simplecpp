@@ -611,3 +611,45 @@ three programs without PCH. Both rebuilt their snippet runtime. FPM could not bi
 its socket in this environment, so the shared runner used its recorded CLI fallback.
 Earlier attempts stopped on stale probe expectations; no native compiler rebuild
 or broad container-regression pass is claimed.
+
+### Tagged compiler bindings and same-family container signatures — 2026-10-05
+
+Dynamic's semantic definition now identifies value storage for the tagged binding,
+while its role remains distinct from mixed and only container payload copies share
+identity. Registry normalization makes `value<dynamic>` redundant; this does not
+introduce deep copying or change class/container storage generally.
+
+The former `Mixed_Conversions` owner is now `Boxed_Conversions` in
+`04_analyze/conversions/boxed.php`. Both families reuse `boxed_wrap` and
+`boxed_extract` for supported scalar/null construction and checked required scalar
+boundaries. Ordinary scalar payloads remain bool/int/float/string; fixed-width,
+wrapper and implicit family crossings still reject. Explicit dynamic-to-scalar
+casts use the runtime cast owner, distinct from required extraction. Mixed operator
+and selection normalization keeps its previous admission domain.
+
+Initialization, indexing and iteration registrations now substitute each receiver's
+own family into values/children. Mixed key carriers remain separate scalar key
+machinery; no dynamic-typed key domain was added. Existing preparation and emission
+algorithms consume those signatures without separate per-family traversal paths.
+
+Focused source/native probes cover scalar copies and argument/return/ref boundaries,
+failed extraction preserving the destination, nested shared identity despite binding
+replacement, nested iteration, typed loop targets, dynamic in typed containers,
+same-family missing values, lazy probes/removal, null-write/noncontainer-iteration
+errors and duplicate-key rejection. Older model/interface expectations were updated,
+not retained as compatibility branches.
+
+Next: operator/condition/selection admission for dynamic-valued reads, then broad
+generated-fixture and JSON/library registration reconciliation. This is not complete
+Chapter 06 support or a native compiler rebuild. The former broad fixtures that
+access native handle APIs remain migration work even when their semantic setup now
+prepares correctly.
+
+Evidence: `/tmp/my-try-tagged-boundaries-20261005-5` passes eight focused PHP suites
+and thirteen PCH-backed generated programs against a rebuilt snippet runtime.
+`/tmp/my-try-tagged-boundaries-20261005-3` passes seven PHP suites and the same thirteen
+programs without PCH; the subsequently added eighth suite checks initializer model
+substitution. The first attempt exposed outdated storage/producer-family expectations
+and a test accessor typo; attempt four exposed the old initializer substitution
+expectation. Those expectations now follow the separated-family contract. FPM socket
+startup was unavailable, so PHP used the runner's recorded CLI fallback.

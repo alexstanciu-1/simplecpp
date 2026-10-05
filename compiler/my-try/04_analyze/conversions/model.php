@@ -31,8 +31,8 @@ enum conversion_operation
 	case result_false;
 	case result_true;
 	case result_extract;
-	case mixed_box;
-	case mixed_extract;
+	case boxed_wrap;
+	case boxed_extract;
 }
 
 /** Retained semantic result of comparing one produced value with its consumer. */

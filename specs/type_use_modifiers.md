@@ -24,6 +24,12 @@ fields can be copied. Source structs follow the
 [`copyable_value` contract](metaprogramming_contract.md#61-default-contract-for-a-bare-type-parameter).
 Neither the presence nor the normalization of an AST modifier grants copy permission.
 
+Under the [v0.2 separated-family contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05),
+both `mixed` and tagged `dynamic` are value-stored bindings. `value<dynamic>` is
+therefore redundant, just like `value<mixed>`. This does not request deep copying:
+dynamic container payloads still share identity, scalar payloads copy as values,
+and replacing a binding does not replace another binding's payload.
+
 Normalization precedes assignment, argument, reference, return and operator checks,
 and template application interning. Therefore `vector<value<int>>` and `vector<int>`
 reuse the same canonical application, and nested redundant requests such as

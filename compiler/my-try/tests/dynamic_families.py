@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused compiler family-cast migration proofs, independent of unmigrated fixtures."""
+"""Focused tagged-family boundaries and container-signature migration proofs."""
 import argparse
 import json
 from pathlib import Path
@@ -21,7 +21,11 @@ def main():
     programs = output / 'programs'
     programs.mkdir()
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
-        runner.run('family-preparation', ['php', APP / 'tests/dynamic_families.php', programs])
+        suites = ['dynamic_model', 'initialization', 'data_preparation', 'dynamic_boundaries', 'indexing',
+                  'iteration', 'container_calls']
+        run_tasks([Task(name, lambda name=name: runner.run(name, ['php', APP / 'tests' / (name + '.php')]))
+                   for name in suites] + [Task('family-preparation', lambda: runner.run(
+                       'family-preparation', ['php', APP / 'tests/dynamic_families.php', programs]))], jobs=12)
         compiler = CppFixtureCompiler(runner, APP.parents[1], output,
                                       pch=not args.no_pch, return_type_errors=True, runtime=True)
         fixtures = json.loads((programs / 'executions.json').read_text())
@@ -35,7 +39,7 @@ def main():
         run_tasks([Task(Path(item['path']).stem, lambda item=item: execute(item))
                    for item in fixtures], jobs=12)
     (output / 'summary.json').write_text(json.dumps(dict(
-        passed=True, cpp_pch=not args.no_pch, generated_programs=len(fixtures),
+        passed=True, cpp_pch=not args.no_pch, php_suites=len(suites) + 1, generated_programs=len(fixtures),
         native_compiler_rebuild=False), indent=2) + '\n')
 
 

@@ -107,7 +107,7 @@ final class Indexing_Registration
 			operator_operation::index_checked_read, operator_operation::index_store, index_append_policy::integer_key, $value, $value, true, true));
 		foreach (['mixed', 'dynamic'] as $name) {
 			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
-			$declarations->append(new indexing_declaration($types->definition($name), $mixed, $mixed,
+			$declarations->append(new indexing_declaration($types->definition($name), $mixed, $nested,
 				operator_operation::index_null_read, operator_operation::index_store, index_append_policy::allowed, $nested, $nested, true, true));
 		}
 		return new Indexing_Contracts($declarations);

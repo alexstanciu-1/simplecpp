@@ -95,7 +95,7 @@ foreach ([
 	['$v vector<vector<int>> = [[1]]; $v[0][0] = "bad";', 'requires matching types'],
 	['$v vector<vector<int>> = [[1]]; $v[true][0] = 2;', 'indexed access keys require'],
 	['$v vector<vector<int>> = [[1]]; $v[0][$new = 0] = 2;', 'established local declaration for new'],
-	['$v mixed = {}; $d dynamic = {}; $v["a"]["b"] = $d;', 'nested write of dynamic into mixed is deferred'],
+	['$v mixed = {}; $d dynamic = {}; $v["a"]["b"] = $d;', 'family conversion requires'],
 	['function make(): dynamic { return {}; } make()["a"] = 1;', 'direct local or parameter'],
 	['$v vector<int> = []; $v[] = "bad";', 'requires matching types'],
 	['$v dynamic = {}; $v[true] = 1;', 'indexed access keys require'],

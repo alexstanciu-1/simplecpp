@@ -99,9 +99,9 @@ final class Initialization_Registration
 			$string_key, 'simple_cpp.hash.keyed'));
 		foreach (['mixed', 'dynamic'] as $name) {
 			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
-			$contracts->register(new initialization_declaration($types->definition($name), $boxed, null, $nested,
+			$contracts->register(new initialization_declaration($types->definition($name), $nested, null, $nested,
 				$unconstrained, 'simple_cpp.' . $name . '.list'));
-			$contracts->register(new initialization_declaration($types->definition($name), $boxed, $boxed, $nested,
+			$contracts->register(new initialization_declaration($types->definition($name), $nested, $boxed, $nested,
 				$unconstrained, 'simple_cpp.' . $name . '.keyed'));
 		}
 		return $contracts;

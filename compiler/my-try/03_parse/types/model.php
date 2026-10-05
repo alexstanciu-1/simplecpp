@@ -314,7 +314,7 @@ interface mixed_semantics
 {
 }
 
-/** Shared property-bag semantics, not arbitrary scalar boxing or method dispatch. */
+/** Tagged dynamic-family values; only container payloads have shared identity. */
 interface dynamic_semantics
 {
 }
@@ -333,7 +333,7 @@ final class dynamic_type_definition extends abstract_nominal_type_definition imp
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
 		array $capabilities /** vector<generic_contract> */)
 	{
-		parent::__construct($identity, $source_name, $origin, nominal_type_kind::class_type, $capabilities);
+		parent::__construct($identity, $source_name, $origin, nominal_type_kind::structure, $capabilities);
 	}
 }
 

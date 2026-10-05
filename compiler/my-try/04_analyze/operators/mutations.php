@@ -59,15 +59,15 @@ final class Mutation_Preparation
 		$facts->write_back_mode = compound_write_back::converted_assignment;
 		if ($source_operator === operator_kind::concatenation) {
 			// Text replacement may change a mixed payload kind; numeric stored-kind checks do not apply.
-			if (!String_Conversions::is_string($target->type) && !Mixed_Conversions::is_mixed($target->type)) {
+			if (!String_Conversions::is_string($target->type) && !Boxed_Conversions::is_mixed($target->type)) {
 				throw new \RuntimeException('S2S compound concatenation requires string or mixed storage');
 			}
 		}
 		else {
-			if (Mixed_Conversions::is_mixed($target->type)) {
+			if (Boxed_Conversions::is_mixed($target->type)) {
 				$facts->write_back_mode = compound_write_back::mixed_stored_kind;
 			}
-			elseif (Mixed_Conversions::is_mixed($value->type)) {
+			elseif (Boxed_Conversions::is_mixed($value->type)) {
 				throw new \RuntimeException('S2S mixed compound assignment into native storage is deferred');
 			}
 		}
@@ -88,7 +88,7 @@ final class Mutation_Preparation
 			throw new \LogicException('Mutation requires one target');
 		}
 		$integer = $context->integer;
-		$mixed = Mixed_Conversions::is_mixed($operands[0]) && !$operands[0]->by_value();
+		$mixed = Boxed_Conversions::is_mixed($operands[0]) && !$operands[0]->by_value();
 		if (!$operands[0]->matches($integer) && !$mixed) {
 			throw new \RuntimeException('S2S mutation requires canonical int or mixed storage');
 		}

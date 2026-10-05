@@ -30,8 +30,8 @@ try
 {
 	mixed_source($path, '$a mixed = 7; $b mixed = null; $c mixed = $a; $d int = $a;');
 	$root = Model::syntax_files()[0]->root;
-	foreach ([conversion_operation::mixed_box, conversion_operation::mixed_box,
-		conversion_operation::identity, conversion_operation::mixed_extract] as $position => $operation)
+	foreach ([conversion_operation::boxed_wrap, conversion_operation::boxed_wrap,
+		conversion_operation::identity, conversion_operation::boxed_extract] as $position => $operation)
 	{
 		$facts = $root->body->statements[$position]->require_preparation();
 		mixed_check($facts->conversion->operation === $operation, 'Wrong prepared mixed operation');
@@ -48,9 +48,9 @@ try
 	$box = $registry->use($registry->canonical($renamed)->type_id());
 	$integer = Language_Types::integer(Model::$language_scope);
 	mixed_check(Conversion_Preparation::decide($integer, $box, conversion_context::assignment)->operation
-		=== conversion_operation::mixed_box, 'Mixed boxing depended on source spelling');
+		=== conversion_operation::boxed_wrap, 'Mixed boxing depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $integer, conversion_context::return_value)->operation
-		=== conversion_operation::mixed_extract, 'Mixed extraction depended on source spelling');
+		=== conversion_operation::boxed_extract, 'Mixed extraction depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $integer, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Explicit mixed cast reused required extraction');
 	mixed_check(Condition_Truthiness::decide($box)->operation === truthiness_operation::mixed_condition,
@@ -78,7 +78,7 @@ try
 		'Mixed comparison depended on spelling or boxed strict identity operands');
 	mixed_check($arithmetic->operation === operator_operation::mixed_addition
 		&& $arithmetic->result_type->matches($box)
-		&& $arithmetic->operands[0]->operation === conversion_operation::mixed_box
+		&& $arithmetic->operands[0]->operation === conversion_operation::boxed_wrap
 		&& $arithmetic->operands[1]->operation === conversion_operation::identity,
 		'Mixed arithmetic depended on spelling or extracted its operands');
 	mixed_source($path, '$v mixed = 7; $sum mixed = $v + 2; $negative mixed = -$v; $typed int = $v * 3;');
@@ -86,12 +86,12 @@ try
 	$sum_node = $arithmetic_root->body->statements[1]->initializer;
 	$negative_node = $arithmetic_root->body->statements[2]->initializer;
 	mixed_check($sum_node->require_binary_preparation()->decision->operation === operator_operation::mixed_addition
-		&& Mixed_Conversions::is_mixed($sum_node->require_preparation()->type)
+		&& Boxed_Conversions::is_mixed($sum_node->require_preparation()->type)
 		&& !$sum_node->require_preparation()->addressable, 'Mixed arithmetic lost its owned result');
 	mixed_check($negative_node->require_unary_preparation()->decision->operation === operator_operation::mixed_negative,
 		'Mixed unary operation lost its runtime dispatch');
 	mixed_check($arithmetic_root->body->statements[3]->require_preparation()->conversion->operation
-		=== conversion_operation::mixed_extract, 'Typed destination changed arithmetic dispatch');
+		=== conversion_operation::boxed_extract, 'Typed destination changed arithmetic dispatch');
 	Preparation_Cleanup::tree($arithmetic_root);
 	mixed_check($sum_node->preparation() === null && $negative_node->preparation() === null,
 		'Mixed arithmetic retained stale facts');
@@ -114,12 +114,12 @@ try
 		&& String_Conversions::is_string($text_facts->type) && !$text_facts->addressable,
 		'Concatenation lost its text conversion or owned string result');
 	mixed_check($text_root->body->statements[2]->require_preparation()->conversion->operation
-		=== conversion_operation::mixed_box, 'Mixed destination changed concatenation result type');
+		=== conversion_operation::boxed_wrap, 'Mixed destination changed concatenation result type');
 	Preparation_Cleanup::tree($text_root);
 	mixed_check($text_node->preparation() === null, 'Text conversion survived cleanup');
 	mixed_source($path, '$v mixed = 42; $out mixed = ($v .= "!"); $s string = "x"; $copy string = ($s .= $v);');
 	$append_root = Model::syntax_files()[0]->root;
-	foreach ([1 => conversion_operation::mixed_box, 3 => conversion_operation::identity] as $position => $write_back)
+	foreach ([1 => conversion_operation::boxed_wrap, 3 => conversion_operation::identity] as $position => $write_back)
 	{
 		$append_node = $append_root->body->statements[$position]->initializer;
 		$append_facts = $append_node->require_compound_assignment_preparation();
@@ -162,7 +162,7 @@ try
 				&& Nullable_Conversions::is_null($null_operand->target_type), 'Strict identity boxed literal null');
 		}
 		else {
-			mixed_check($decision->operands[1]->operation === conversion_operation::mixed_box,
+			mixed_check($decision->operands[1]->operation === conversion_operation::boxed_wrap,
 				'Ordinary comparison did not normalize its peer');
 		}
 	}
@@ -196,17 +196,17 @@ try
 	$rejections = [
 		['$v int = 7; $x = (dynamic)$v;', 'explicit cast target is not supported'],
 		['$v int = 7; $x = (mixed)$v;', 'explicit cast target is not supported'],
-		['$n uint8 = 7; $x mixed = $n;', 'mixed boxing currently supports'],
-		['$x mixed = 7; $n uint8 = $x;', 'mixed extraction currently supports'],
-		['$v ?int = 7; $x mixed = $v;', 'mixed boxing currently supports'],
-		['$v result<int> = 7; $x mixed = $v;', 'mixed boxing currently supports'],
-		['$x mixed = 7; $v ?int = $x;', 'mixed extraction currently supports'],
-		['$x mixed = 7; $v result<int> = $x;', 'mixed extraction currently supports'],
+		['$n uint8 = 7; $x mixed = $n;', 'boxed wrapping currently supports'],
+		['$x mixed = 7; $n uint8 = $x;', 'boxed extraction currently supports'],
+		['$v ?int = 7; $x mixed = $v;', 'boxed wrapping currently supports'],
+		['$v result<int> = 7; $x mixed = $v;', 'boxed wrapping currently supports'],
+		['$x mixed = 7; $v ?int = $x;', 'boxed extraction currently supports'],
+		['$x mixed = 7; $v result<int> = $x;', 'boxed extraction currently supports'],
 		['$d dynamic; $x mixed = $d;', 'family conversion requires an explicit scalar/null cast'],
 		['$x mixed = 7; $d dynamic = $x;', 'family conversion requires an explicit scalar/null cast'],
 		['$d dynamic; $x mixed = []; $x["child"] = $d;', 'family conversion requires an explicit scalar/null cast'],
 		['$d dynamic; $x mixed = [$d];', 'family conversion requires an explicit scalar/null cast'],
-		['$x mixed = 7; $y = (uint8)$x;', 'explicit mixed casts require'],
+		['$x mixed = 7; $y = (uint8)$x;', 'explicit boxed casts require'],
 		['$x mixed = 7; $y = $x + true;', 'mixed arithmetic requires'],
 		['$x mixed = 7; $y = $x + "1";', 'mixed arithmetic requires'],
 		['$x mixed = 7; $n uint8 = 1; $y = $x + $n;', 'mixed arithmetic requires'],
@@ -292,7 +292,7 @@ try
 	$original = Model::$cpp_files[0]->text;
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
-	file_put_contents($path, str_replace('source(): mixed { return 3;', 'source(): dynamic { $d dynamic; return $d;', $valid));
+	file_put_contents($path, str_replace('source(): mixed { return 3;', 'source(): vector<int> { return [];', $valid));
 	foreach ([[$path], []] as $changed)
 	{
 		$compiler->sync($changed);
@@ -311,7 +311,7 @@ try
 	mixed_check(Model::$cpp_files[0]->text === $original, 'Mixed boundary repair changed output');
 	mixed_source($path, $valid);
 	mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed output differs');
-	foreach (['return (int)source();', 'if (source()) { return 1; } return 0;',
+	foreach (['if (source()) { return 1; } return 0;',
 		'return !source() ? 1 : 0;',
 		'return (source() && true) ? 1 : 0;', 'return (false || source()) ? 1 : 0;',
 		'return source() ?? 1;',
@@ -368,11 +368,11 @@ try
 	{
 		$selection_node = $selection_root->body->statements[$position]->initializer;
 		$facts = $selection_node->require_preparation();
-		mixed_check(Mixed_Conversions::is_mixed($facts->type) && !$facts->addressable,
+		mixed_check(Boxed_Conversions::is_mixed($facts->type) && !$facts->addressable,
 			'Selection lost its owned mixed result');
 		if ($position < 3) {
 			mixed_check($facts->true_conversion->operation === conversion_operation::identity
-				&& $facts->fallback_conversion->operation === conversion_operation::mixed_box, 'Incorrect conditional normalization');
+				&& $facts->fallback_conversion->operation === conversion_operation::boxed_wrap, 'Incorrect conditional normalization');
 		}
 		else {
 			mixed_check($facts->presence === ($position === 3 ? coalesce_presence::mixed_nonnull : coalesce_presence::always),
@@ -392,11 +392,11 @@ try
 		$facts = $coalesce->require_coalesce_preparation();
 		mixed_check($facts->presence === coalesce_presence::wrapper_value
 			&& $facts->left_extraction->operation === ($wrapper === '?int' ? conversion_operation::nullable_extract : conversion_operation::result_extract)
-			&& $facts->left_conversion->operation === conversion_operation::mixed_box
+			&& $facts->left_conversion->operation === conversion_operation::boxed_wrap
 			&& $facts->fallback_conversion->operation === conversion_operation::identity,
 			'Wrapper coalescing did not separate extraction from normalization');
 		mixed_check($facts->left_extraction->target_type->matches($facts->left_conversion->source_type)
-			&& Mixed_Conversions::is_mixed($facts->type) && !$facts->addressable, 'Invalid selected-value composition');
+			&& Boxed_Conversions::is_mixed($facts->type) && !$facts->addressable, 'Invalid selected-value composition');
 		Preparation_Cleanup::tree($wrapper_root);
 		mixed_check($coalesce->preparation() === null && $coalesce->left->preparation() === null
 			&& $coalesce->fallback->preparation() === null, 'Wrapper coalesce facts survived cleanup');

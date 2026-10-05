@@ -49,8 +49,8 @@ $cases = [
 	[$hash_int, true, $integer, $integer, $integer],
 	[$mixed, false, $mixed, null, $mixed],
 	[$mixed, true, $mixed, $mixed, $mixed],
-	[$dynamic, false, $mixed, null, $dynamic],
-	[$dynamic, true, $mixed, $mixed, $dynamic],
+	[$dynamic, false, $dynamic, null, $dynamic],
+	[$dynamic, true, $dynamic, $mixed, $dynamic],
 ];
 foreach ($cases as [$target, $keyed, $value, $key_type, $nested]) {
 	$shape = $keyed ? initialization_shape::keyed : initialization_shape::positional;
