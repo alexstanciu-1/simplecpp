@@ -69,6 +69,9 @@ MIX-LAYOUT-01 is implemented: mixed's reordered borrow counter yields 24 bytes o
 the measured x86-64 ABI, with focused debug/release lifetime proofs. Dynamic's
 representation and family-separation refactor remain pending; this checkpoint does
 not resolve the containment blocker.
+The shared packed/associative table engine is now value-parameterized and proved
+with a non-mixed value type; mixed uses it without new source capabilities. The
+tagged dynamic implementation and family separation still remain next.
 
 The current runtime permits both relationships:
 

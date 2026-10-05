@@ -59,6 +59,11 @@ add_executable(test_hash_t test_hash_t.cpp)
 target_link_libraries(test_hash_t PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_hash_t COMMAND test_hash_t)
 
+# Value-independent packed table engine shared by boxed-value families.
+add_executable(test_packed_table_storage test_packed_table_storage.cpp)
+target_link_libraries(test_packed_table_storage PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_packed_table_storage COMMAND test_packed_table_storage)
+
 # row_arena_t stable-id storage coverage.
 add_executable(test_row_arena_t test_row_arena_t.cpp)
 target_link_libraries(test_row_arena_t PRIVATE scpp_runtime scpp_runtime_test_support)

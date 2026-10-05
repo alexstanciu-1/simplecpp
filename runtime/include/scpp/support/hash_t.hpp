@@ -809,11 +809,15 @@ public:
 	}
 };
 
-template <>
-class hash_t<mixed_t, mixed_t> final {
+namespace hash_detail {
+
+// Packed/list and associative storage share one value-independent key engine.
+// Value copying/default construction belongs to the selected value family.
+template <typename Value>
+class packed_table {
 private:
 	using key_storage_t = std::uint32_t;
-	using native_values_t = std::vector<mixed_t>;
+	using native_values_t = std::vector<Value>;
 	using native_keys_t = std::vector<key_storage_t>;
 
 	static constexpr std::uint32_t TOMBSTONE_KEY = 0xFFFFFFFFu;
@@ -914,7 +918,7 @@ private:
 		return erase_int(index);
 	}
 
-	void insert_or_assign_int(std::uint32_t key, mixed_t value) {
+	void insert_or_assign_int(std::uint32_t key, Value value) {
 		if (std::holds_alternative<std::monostate>(keys_)) {
 			if (!hash_detail::dyn_keys::is_string(key)) {
 				if (key < values_.size()) {
@@ -939,7 +943,7 @@ private:
 		add_to_index(key, physical_index);
 	}
 
-	std::pair<bool, mixed_t *> find_int(std::uint32_t key) {
+	std::pair<bool, Value *> find_int(std::uint32_t key) {
 		if (std::holds_alternative<std::monostate>(keys_)) {
 			if (!hash_detail::dyn_keys::is_string(key) && key < values_.size()) {
 				return {true, &values_[key]};
@@ -947,7 +951,7 @@ private:
 			return {false, nullptr};
 		}
 		auto &keys = std::get<native_keys_t>(keys_);
-		std::pair<bool, mixed_t *> result{false, nullptr};
+		std::pair<bool, Value *> result{false, nullptr};
 		std::visit([&](auto &idx) {
 			using I = std::decay_t<decltype(idx)>;
 			if constexpr (!std::is_same_v<I, std::monostate>) {
@@ -970,7 +974,7 @@ private:
 		return result;
 	}
 
-	std::pair<bool, const mixed_t *> find_int(std::uint32_t key) const {
+	std::pair<bool, const Value *> find_int(std::uint32_t key) const {
 		if (std::holds_alternative<std::monostate>(keys_)) {
 			if (!hash_detail::dyn_keys::is_string(key) && key < values_.size()) {
 				return {true, &values_[key]};
@@ -978,7 +982,7 @@ private:
 			return {false, nullptr};
 		}
 		const auto &keys = std::get<native_keys_t>(keys_);
-		std::pair<bool, const mixed_t *> result{false, nullptr};
+		std::pair<bool, const Value *> result{false, nullptr};
 		std::visit([&](const auto &idx) {
 			using I = std::decay_t<decltype(idx)>;
 			if constexpr (!std::is_same_v<I, std::monostate>) {
@@ -1020,7 +1024,7 @@ private:
 							idx.size_--;
 							idx.deleted_count_++;
 							keys[physical_index] = TOMBSTONE_KEY;
-							values_[physical_index] = mixed_t{};
+							values_[physical_index] = Value{};
 							found = true;
 							return;
 						}
@@ -1067,14 +1071,14 @@ private:
 		return hash_detail::dyn_keys::unpack(keys[index]);
 	}
 
-	[[nodiscard]] mixed_t &value_from_physical_index(std::uint32_t index) {
+	[[nodiscard]] Value &value_from_physical_index(std::uint32_t index) {
 		if (!is_live_physical_index(index)) {
 			throw std::out_of_range("hash_t::value_from_physical_index: invalid entry index");
 		}
 		return values_[index];
 	}
 
-	[[nodiscard]] const mixed_t &value_from_physical_index(std::uint32_t index) const {
+	[[nodiscard]] const Value &value_from_physical_index(std::uint32_t index) const {
 		if (!is_live_physical_index(index)) {
 			throw std::out_of_range("hash_t::value_from_physical_index const: invalid entry index");
 		}
@@ -1082,10 +1086,10 @@ private:
 	}
 
 public:
-	hash_t()
+	packed_table()
 		: keys_(std::monostate{}), hash_index_(std::monostate{}) {}
 
-	hash_t(const hash_t &other)
+	packed_table(const packed_table &other)
 		: values_(other.values_), keys_(std::monostate{}), hash_index_(std::monostate{}) {
 		if (std::holds_alternative<native_keys_t>(other.keys_)) {
 			keys_ = std::get<native_keys_t>(other.keys_);
@@ -1094,17 +1098,17 @@ public:
 		}
 	}
 
-	hash_t(hash_t &&) noexcept = default;
+	packed_table(packed_table &&) noexcept = default;
 
-	hash_t &operator=(const hash_t &other) {
+	packed_table &operator=(const packed_table &other) {
 		if (this == &other) return *this;
-		hash_t copy(other);
+		packed_table copy(other);
 		*this = std::move(copy);
 		return *this;
 	}
 
-	hash_t &operator=(hash_t &&) noexcept = default;
-	~hash_t() = default;
+	packed_table &operator=(packed_table &&) noexcept = default;
+	~packed_table() = default;
 
 	[[nodiscard]] bool_t empty() const noexcept {
 		if (std::holds_alternative<std::monostate>(keys_)) return bool_t{values_.empty()};
@@ -1141,7 +1145,7 @@ public:
 			? std::get<native_keys_t>(keys_).capacity() * sizeof(native_keys_t::value_type)
 			: std::size_t{0};
 		return sizeof(*this)
-			+ values_.capacity() * sizeof(mixed_t)
+			+ values_.capacity() * sizeof(Value)
 			+ keys_bytes
 			+ hash_detail::estimated_index_storage_bytes(hash_index_);
 	}
@@ -1158,45 +1162,45 @@ public:
 
 	class entry_view final {
 	public:
-		entry_view(hash_t *owner, std::uint32_t index) noexcept
+		entry_view(packed_table *owner, std::uint32_t index) noexcept
 			: owner_(owner), index_(index) {}
 
 		[[nodiscard]] mixed_t key() const {
 			return owner_->key_from_physical_index(index_);
 		}
 
-		[[nodiscard]] mixed_t value_copy() const {
+		[[nodiscard]] Value value_copy() const {
 			return owner_->value_from_physical_index(index_);
 		}
 
-		[[nodiscard]] mixed_t &value_ref() const {
+		[[nodiscard]] Value &value_ref() const {
 			return owner_->value_from_physical_index(index_);
 		}
 
 	private:
-		hash_t *owner_;
+		packed_table *owner_;
 		std::uint32_t index_;
 	};
 
 	class const_entry_view final {
 	public:
-		const_entry_view(const hash_t *owner, std::uint32_t index) noexcept
+		const_entry_view(const packed_table *owner, std::uint32_t index) noexcept
 			: owner_(owner), index_(index) {}
 
 		[[nodiscard]] mixed_t key() const {
 			return owner_->key_from_physical_index(index_);
 		}
 
-		[[nodiscard]] mixed_t value_copy() const {
+		[[nodiscard]] Value value_copy() const {
 			return owner_->value_from_physical_index(index_);
 		}
 
-		[[nodiscard]] const mixed_t &value_ref() const {
+		[[nodiscard]] const Value &value_ref() const {
 			return owner_->value_from_physical_index(index_);
 		}
 
 	private:
-		const hash_t *owner_;
+		const packed_table *owner_;
 		std::uint32_t index_;
 	};
 
@@ -1206,7 +1210,7 @@ public:
 		using value_type = entry_view;
 		using iterator_category = std::forward_iterator_tag;
 
-		entry_iterator(hash_t *owner, std::uint32_t index) noexcept
+		entry_iterator(packed_table *owner, std::uint32_t index) noexcept
 			: owner_(owner), index_(index) {
 			skip_dead_entries();
 		}
@@ -1236,7 +1240,7 @@ public:
 			}
 		}
 
-		hash_t *owner_;
+		packed_table *owner_;
 		std::uint32_t index_;
 	};
 
@@ -1246,7 +1250,7 @@ public:
 		using value_type = const_entry_view;
 		using iterator_category = std::forward_iterator_tag;
 
-		const_entry_iterator(const hash_t *owner, std::uint32_t index) noexcept
+		const_entry_iterator(const packed_table *owner, std::uint32_t index) noexcept
 			: owner_(owner), index_(index) {
 			skip_dead_entries();
 		}
@@ -1276,7 +1280,7 @@ public:
 			}
 		}
 
-		const hash_t *owner_;
+		const packed_table *owner_;
 		std::uint32_t index_;
 	};
 
@@ -1296,44 +1300,44 @@ public:
 		return const_entry_iterator(this, static_cast<std::uint32_t>(values_.size()));
 	}
 
-	[[nodiscard]] int_t<> append(const mixed_t &value) {
+	[[nodiscard]] int_t<> append(const Value &value) {
 		const auto key = next_append_key();
-		insert_or_assign_int(key, mixed_t{value});
+		insert_or_assign_int(key, Value{value});
 		return int_t<>{static_cast<std::int64_t>(key)};
 	}
 
-	[[nodiscard]] int_t<> append(mixed_t &&value) {
+	[[nodiscard]] int_t<> append(Value &&value) {
 		const auto key = next_append_key();
 		insert_or_assign_int(key, std::move(value));
 		return int_t<>{static_cast<std::int64_t>(key)};
 	}
 
-	hash_t &set(const int_t<> &key, const mixed_t &value) {
-		insert_or_assign_int(hash_detail::dyn_keys::pack(key), mixed_t{value});
+	packed_table &set(const int_t<> &key, const Value &value) {
+		insert_or_assign_int(hash_detail::dyn_keys::pack(key), Value{value});
 		return *this;
 	}
 
-	hash_t &set(const string_t &key, const mixed_t &value) {
-		insert_or_assign_int(hash_detail::dyn_keys::pack(key), mixed_t{value});
+	packed_table &set(const string_t &key, const Value &value) {
+		insert_or_assign_int(hash_detail::dyn_keys::pack(key), Value{value});
 		return *this;
 	}
 
-	hash_t &set(const mixed_t &key, const mixed_t &value) {
-		insert_or_assign_int(hash_detail::dyn_keys::pack(key), mixed_t{value});
+	packed_table &set(const mixed_t &key, const Value &value) {
+		insert_or_assign_int(hash_detail::dyn_keys::pack(key), Value{value});
 		return *this;
 	}
 
-	hash_t &set(const int_t<> &key, mixed_t &&value) {
+	packed_table &set(const int_t<> &key, Value &&value) {
 		insert_or_assign_int(hash_detail::dyn_keys::pack(key), std::move(value));
 		return *this;
 	}
 
-	hash_t &set(const string_t &key, mixed_t &&value) {
+	packed_table &set(const string_t &key, Value &&value) {
 		insert_or_assign_int(hash_detail::dyn_keys::pack(key), std::move(value));
 		return *this;
 	}
 
-	hash_t &set(const mixed_t &key, mixed_t &&value) {
+	packed_table &set(const mixed_t &key, Value &&value) {
 		insert_or_assign_int(hash_detail::dyn_keys::pack(key), std::move(value));
 		return *this;
 	}
@@ -1350,107 +1354,109 @@ public:
 		return bool_t{find_int(hash_detail::dyn_keys::pack(key)).first};
 	}
 
-	[[nodiscard]] nullable<mixed_t> find(const int_t<> &key) const {
+	[[nodiscard]] nullable<Value> find(const int_t<> &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
-		if (!found) return nullable<mixed_t>(nullopt);
-		nullable<mixed_t> result;
+		if (!found) return nullable<Value>(nullopt);
+		nullable<Value> result;
 		result.native_value() = *ptr;
 		return result;
 	}
 
-	[[nodiscard]] nullable<mixed_t> find(const string_t &key) const {
+	[[nodiscard]] nullable<Value> find(const string_t &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
-		if (!found) return nullable<mixed_t>(nullopt);
-		nullable<mixed_t> result;
+		if (!found) return nullable<Value>(nullopt);
+		nullable<Value> result;
 		result.native_value() = *ptr;
 		return result;
 	}
 
-	[[nodiscard]] nullable<mixed_t> find(const mixed_t &key) const {
+	[[nodiscard]] nullable<Value> find(const mixed_t &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
-		if (!found) return nullable<mixed_t>(nullopt);
-		nullable<mixed_t> result;
+		if (!found) return nullable<Value>(nullopt);
+		nullable<Value> result;
 		result.native_value() = *ptr;
 		return result;
 	}
 
-	[[nodiscard]] mixed_t _find_val(const int_t<> &key) const;
-	[[nodiscard]] mixed_t _find_val(const string_t &key) const;
-	[[nodiscard]] mixed_t _find_val(const mixed_t &key) const;
+	template <typename Key>
+	[[nodiscard]] Value read_or_default(const Key &key) const {
+		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
+		return found ? Value{*ptr} : Value{};
+	}
 
-	template <typename U = mixed_t>
+	template <typename U = Value>
 	[[nodiscard]] U try_ref(const int_t<> &key) const
 		requires(detail::is_shared_p_v<U> && std::copyable<U>)
 	{
 		return at(key);
 	}
 
-	template <typename U = mixed_t>
+	template <typename U = Value>
 	[[nodiscard]] U try_ref(const string_t &key) const
 		requires(detail::is_shared_p_v<U> && std::copyable<U>)
 	{
 		return at(key);
 	}
 
-	template <typename U = mixed_t>
+	template <typename U = Value>
 	[[nodiscard]] U try_ref(const mixed_t &key) const
 		requires(detail::is_shared_p_v<U> && std::copyable<U>)
 	{
 		return at(key);
 	}
 
-	template <typename U = mixed_t>
+	template <typename U = Value>
 	[[nodiscard]] U try_ref(const int_t<> &) const
 		requires((!detail::is_shared_p_v<U>) && std::copyable<U>)
 	{
 		throw std::runtime_error("hash_t::try_ref is supported only for shared_p<T> values in the current safe subset");
 	}
 
-	template <typename U = mixed_t>
+	template <typename U = Value>
 	[[nodiscard]] U try_ref(const string_t &) const
 		requires((!detail::is_shared_p_v<U>) && std::copyable<U>)
 	{
 		throw std::runtime_error("hash_t::try_ref is supported only for shared_p<T> values in the current safe subset");
 	}
 
-	template <typename U = mixed_t>
+	template <typename U = Value>
 	[[nodiscard]] U try_ref(const mixed_t &) const
 		requires((!detail::is_shared_p_v<U>) && std::copyable<U>)
 	{
 		throw std::runtime_error("hash_t::try_ref is supported only for shared_p<T> values in the current safe subset");
 	}
 
-	mixed_t &at(const int_t<> &key) {
+	Value &at(const int_t<> &key) {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) throw std::out_of_range("hash_t::at(int_t<>): not found");
 		return *ptr;
 	}
 
-	mixed_t &at(const string_t &key) {
+	Value &at(const string_t &key) {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) throw std::out_of_range("hash_t::at(string_t): not found");
 		return *ptr;
 	}
 
-	mixed_t &at(const mixed_t &key) {
+	Value &at(const mixed_t &key) {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) throw std::out_of_range("hash_t::at(mixed_t): not found");
 		return *ptr;
 	}
 
-	const mixed_t &at(const int_t<> &key) const {
+	const Value &at(const int_t<> &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) throw std::out_of_range("hash_t::at(int_t<>) const: not found");
 		return *ptr;
 	}
 
-	const mixed_t &at(const string_t &key) const {
+	const Value &at(const string_t &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) throw std::out_of_range("hash_t::at(string_t) const: not found");
 		return *ptr;
 	}
 
-	const mixed_t &at(const mixed_t &key) const {
+	const Value &at(const mixed_t &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) throw std::out_of_range("hash_t::at(mixed_t) const: not found");
 		return *ptr;
@@ -1468,58 +1474,58 @@ public:
 		return erase_int(hash_detail::dyn_keys::pack(key));
 	}
 
-	mixed_t &operator[](const int_t<> &key) {
+	Value &operator[](const int_t<> &key) {
 		const auto packed = hash_detail::dyn_keys::pack(key);
 		auto [found, ptr] = find_int(packed);
 		if (!found) {
-			insert_or_assign_int(packed, mixed_t{});
+			insert_or_assign_int(packed, Value{});
 			return *find_int(packed).second;
 		}
 		return *ptr;
 	}
 
-	mixed_t &operator[](const string_t &key) {
+	Value &operator[](const string_t &key) {
 		const auto packed = hash_detail::dyn_keys::pack(key);
 		auto [found, ptr] = find_int(packed);
 		if (!found) {
-			insert_or_assign_int(packed, mixed_t{});
+			insert_or_assign_int(packed, Value{});
 			return *find_int(packed).second;
 		}
 		return *ptr;
 	}
 
-	mixed_t &operator[](const mixed_t &key) {
+	Value &operator[](const mixed_t &key) {
 		const auto packed = hash_detail::dyn_keys::pack(key);
 		auto [found, ptr] = find_int(packed);
 		if (!found) {
-			insert_or_assign_int(packed, mixed_t{});
+			insert_or_assign_int(packed, Value{});
 			return *find_int(packed).second;
 		}
 		return *ptr;
 	}
 
-	const mixed_t &operator[](const int_t<> &key) const {
+	const Value &operator[](const int_t<> &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) {
-			static const mixed_t null_value{};
+			static const Value null_value{};
 			return null_value;
 		}
 		return *ptr;
 	}
 
-	const mixed_t &operator[](const string_t &key) const {
+	const Value &operator[](const string_t &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) {
-			static const mixed_t null_value{};
+			static const Value null_value{};
 			return null_value;
 		}
 		return *ptr;
 	}
 
-	const mixed_t &operator[](const mixed_t &key) const {
+	const Value &operator[](const mixed_t &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) {
-			static const mixed_t null_value{};
+			static const Value null_value{};
 			return null_value;
 		}
 		return *ptr;
@@ -1544,6 +1550,77 @@ public:
 			fn(int_t<>{static_cast<std::int64_t>(key)}, values_[i]);
 		}
 	}
+};
+
+} // namespace hash_detail
+
+// Preserve the mixed-table public surface while sharing its storage implementation.
+template <>
+class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t> {
+	using storage_type = hash_detail::packed_table<mixed_t>;
+public:
+	hash_t() = default;
+	hash_t(const hash_t &) = default;
+	hash_t(hash_t &&) noexcept = default;
+	hash_t &operator=(const hash_t &) = default;
+	hash_t &operator=(hash_t &&) noexcept = default;
+
+	using storage_type::empty;
+	using storage_type::size;
+	using storage_type::capacity;
+	using storage_type::key_capacity;
+	using storage_type::index_capacity;
+	using storage_type::estimated_storage_bytes;
+	using storage_type::is_packed;
+	using storage_type::clear;
+	using storage_type::entry_view;
+	using storage_type::const_entry_view;
+	using storage_type::entry_iterator;
+	using storage_type::const_entry_iterator;
+	using storage_type::begin_entries;
+	using storage_type::end_entries;
+	using storage_type::append;
+	using storage_type::has;
+	using storage_type::find;
+	using storage_type::try_ref;
+	using storage_type::at;
+	using storage_type::remove;
+	using storage_type::operator[];
+	using storage_type::debug_visit_entries;
+
+	hash_t &set(const int_t<> &key, const mixed_t &value) {
+		storage_type::set(key, value);
+		return *this;
+	}
+
+	hash_t &set(const int_t<> &key, mixed_t &&value) {
+		storage_type::set(key, std::move(value));
+		return *this;
+	}
+
+	hash_t &set(const string_t &key, const mixed_t &value) {
+		storage_type::set(key, value);
+		return *this;
+	}
+
+	hash_t &set(const string_t &key, mixed_t &&value) {
+		storage_type::set(key, std::move(value));
+		return *this;
+	}
+
+	hash_t &set(const mixed_t &key, const mixed_t &value) {
+		storage_type::set(key, value);
+		return *this;
+	}
+
+	hash_t &set(const mixed_t &key, mixed_t &&value) {
+		storage_type::set(key, std::move(value));
+		return *this;
+	}
+
+	[[nodiscard]] mixed_t _find_val(const int_t<> &key) const;
+	[[nodiscard]] mixed_t _find_val(const string_t &key) const;
+	[[nodiscard]] mixed_t _find_val(const mixed_t &key) const;
 };
 
 inline std::uint32_t hash_detail::dyn_keys::pack(const mixed_t &key) {

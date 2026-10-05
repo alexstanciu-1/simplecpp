@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused mixed ABI/lifetime checkpoint; rebuild matching debug/release runtimes."""
+"""Focused boxed storage ABI/lifetime proofs with matching debug/release runtimes."""
 import argparse
 import json
 from pathlib import Path
@@ -20,7 +20,7 @@ def main():
     modes = {'debug': ['-O0'], 'release': ['-O2', '-DNDEBUG']}
     # The older test_mixed_t_dynamic operator suite has independently reproduced
     # baseline failures (bool/int comparison and string +=); see the storage plan.
-    suites = ['test_mixed_layout', 'test_array_semantics']
+    suites = ['test_mixed_layout', 'test_array_semantics', 'test_hash_t', 'test_packed_table_storage']
     flags = ['clang++', '-std=c++23', '-DSCPP_LANGUAGE_TARGET_PHP=1',
              '-I', REPOSITORY / 'runtime/include', '-pthread']
     with CommandRunner(output / 'logs', REPOSITORY, jobs=12) as runner:
@@ -30,6 +30,9 @@ def main():
             runner.run(mode + '-runtime', [*flags, *modes[mode], '-c',
                        REPOSITORY / 'runtime/include/core/runtime.cpp',
                        '-o', directory / 'runtime.o'], timeout=240)
+            runner.run(mode + '-json', [*flags, *modes[mode], '-c',
+                       REPOSITORY / 'runtime/include/modules/json/json.cpp',
+                       '-o', directory / 'json.o'], timeout=240)
         run_tasks([Task(mode + '-runtime', lambda mode=mode: build_runtime(mode))
                    for mode in modes], jobs=12)
 
@@ -37,7 +40,8 @@ def main():
             executable = output / mode / suite
             runner.run(mode + '-' + suite + '-compile', [*flags, *modes[mode],
                        REPOSITORY / 'tests/runtime/native' / (suite + '.cpp'),
-                       output / mode / 'runtime.o', '-o', executable], timeout=240)
+                       output / mode / 'runtime.o', output / mode / 'json.o',
+                       '-o', executable], timeout=240)
             runner.run(mode + '-' + suite + '-execute', [executable])
         run_tasks([Task(mode + '-' + suite, lambda mode=mode, suite=suite: execute(mode, suite))
                    for mode in modes for suite in suites], jobs=12)

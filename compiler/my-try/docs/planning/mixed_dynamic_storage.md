@@ -121,7 +121,8 @@ copy/alias semantics, JSON modes and compiler facts require separate focused pro
 
 1. Mixed layout checkpoint: implemented as above; dynamic and its old bridge API
    are unchanged. No native compiler rebuild is claimed.
-2. New tagged dynamic and reusable private value/table mechanics: next. Keep scalar
+2. Shared table mechanics are implemented in the checkpoint below. New tagged
+   dynamic and reusable private scalar/value mechanics are next. Keep scalar
    semantics in their existing owners; remove obsolete mixed/dynamic coupling as a
    coordinated change rather than leaving both representations partially active.
 3. Migrate runtime consumers together: initialization, reads/writes/paths, iteration,
@@ -134,6 +135,51 @@ copy/alias semantics, JSON modes and compiler facts require separate focused pro
 5. Reconcile authoritative contracts and JSON API registrations, prove focused
    runtime/generated-program behavior and record remaining debt. Native compiler
    validation remains an explicit requested checkpoint.
+
+### Shared packed/associative table foundation — 2026-10-05
+
+Extracted the existing mixed-table algorithm into private implementation machinery
+`hash_detail::packed_table<Value>`. The existing `hash_t<mixed_t, mixed_t>` now uses
+that engine through private inheritance, with no virtual dispatch or extra wrapper
+storage. Its setters preserve their public hash-reference result; `_find_val` keeps
+its out-of-line mixed API and delegates to the engine's copied/default read.
+
+Packed-to-associative shape, normalized int/string keys, insertion order, tombstones,
+rehashing, storage accounting and traversal remain one implementation. Values are
+now typed independently of those keys. The new dynamic can reuse the engine with
+dynamic-valued entries instead of boxing them into mixed or duplicating hash logic.
+Internal key carriers still use mixed scalar keys; that does not admit mixed-valued
+entries. This does not register new source-language hash/key capabilities.
+
+Entry-view/iterator implementation types now belong to the engine. Obtain them
+through the existing range/begin/end APIs, not by constructing them from private
+storage-owner pointers. Internal references remain subject to the existing access
+boundary; no new source reference capability or mutation-during-iteration guarantee
+is introduced. This foundation does not implement the new dynamic representation,
+scalar storage sharing, separated-family casts or JSON changes yet.
+
+`test_packed_table_storage.cpp` instantiates the engine with an independent value
+that cannot be converted to mixed. It checks packed shape, key normalization and
+wrong-kind rejection, copied/default/checked reads, 600-entry growth, tombstone
+iteration order, container copy/move, failed value-copy replacement and the existing
+mixed wrapper. Static checks prove private implementation separation, no polymorphic
+base and no additional wrapper size. Behavioral checks stay enabled under NDEBUG.
+
+Evidence: `/tmp/my-try-packed-storage-20261005-3` passed debug/release runtime and
+JSON builds plus eight native test programs (mixed layout, array semantics, hash
+and independent-value storage). The JSON object is linked because the existing hash
+suite uses JSON encoding in debug assertions. Initial probe corrections were test
+accessor spelling and that missing JSON link, not production algorithm changes.
+The final static assertions were recompiled and executed in both modes under
+`/tmp/my-try-packed-storage-final-20261005` using the matching runtime objects.
+`/tmp/my-try-packed-storage-calls-20261005-1` passed five PHP suites and 28 generated
+container-call programs. `/tmp/my-try-packed-storage-iteration-20261005-1`
+passed five PHP suites and 34 generated iteration programs. These are focused
+proofs, not a native compiler rebuild.
+Final review corrected the engine's unsupported-reference overload to keep its
+mixed scalar key parameter independent of `Value`; a non-mixed-value test now
+exercises that rejection. `/tmp/my-try-packed-storage-20261005-4` rebuilt both
+matching runtimes/JSON objects and passed all eight native programs after this fix.
 
 Future callable-valued entries are recorded as
 [CH15-CALLABLE-01](../catalog/15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries).
