@@ -6,6 +6,9 @@ notation/interface standards complete; shared syntax and callable model implemen
 The shared initialization-binding and internal input-type model is implemented;
 literal preparation, non-escape enforcement and executable construction remain pending.
 Language authority remains [the top-level standard](../../../../specs/data_initialization.md).
+Chapter closeout is blocked by [CH06-MIX-DYN-01](../catalog/06_containers.md#ch06-mix-dyn-01--mixeddynamic-containment-contract):
+discuss mixed/dynamic containment at the end of Chapter 06. Intermediate slices
+continue under current contracts; no new containment restriction is decided here.
 This note records lowering choices and implementation gates. The lifetime rules and
 exact interface/input API have now been consolidated into the top-level standard;
 this note does not claim an implemented borrowing facility or replace that standard.

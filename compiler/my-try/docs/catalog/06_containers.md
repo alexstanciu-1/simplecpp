@@ -7,6 +7,9 @@ Doc Status: planning
 
 Requires values, expressions and basic calls. Establish reads versus writes before nested mutation and foreach.
 
+**Chapter closeout is blocked by CH06-MIX-DYN-01 below.** Continue the agreed slices,
+but discuss and resolve this debt with the user before declaring Chapter 06 complete.
+
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
 ## Agreed standard and revised grouping — 2026-10-05
@@ -48,6 +51,36 @@ literal examples supported using v0.1 fallback
 typing. CH05-DYN-01 is spread across the common operation groups, not a second dynamic
 pass. Existing `(object)` bridges remain separate from direct typed construction;
 unrestricted casts, dynamic `->` and native interior references are not introduced.
+
+## Blocking closeout debt
+
+### CH06-MIX-DYN-01 — mixed/dynamic containment contract
+
+Status: **open; blocking Chapter 06 completion**. Recorded at the user's request;
+discussion is scheduled for the end of this chapter, not silently deferred beyond it.
+
+The current runtime permits both relationships:
+
+- [`dynamic_t<>`](../../../../runtime/include/scpp/dynamic_t.hpp) is a shared hash
+  whose entry values are `mixed_t`.
+- [`mixed_t`](../../../../runtime/include/scpp/support/mixed_t.hpp) can carry a dynamic
+  handle under the `dynamic_v` kind.
+
+The user questioned whether mixed and dynamic should be permitted inside one another
+and requires the compiler to understand the intended distinction. Resolve whether
+this concerns storage representation, nested-construction defaults, or a stronger
+restriction on mixed/dynamic container families within one data tree. Do not infer
+the answer from existing runtime support alone.
+
+Until that discussion, continue under the current authoritative contracts; this debt
+does not itself change boxing, identity or nesting semantics and does not block the
+intermediate preparation/construction slices. Existing cross-family behavior must not
+be treated as final design approval merely because it passes tests.
+
+Closeout requires an explicit agreed decision, reconciliation of the owning
+`specs/data_initialization.md` / `specs/dynamic_types.md` contracts, and any required
+compiler/runtime changes with focused proofs. Do not close this debt solely by
+documenting the current runtime, and do not mark the chapter complete while it is open.
 
 ## Handoff from chapter 05 — 2026-10-04
 
