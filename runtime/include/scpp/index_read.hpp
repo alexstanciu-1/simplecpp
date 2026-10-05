@@ -4,6 +4,7 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/dynamic_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 #include <stdexcept>
 
 namespace scpp {
@@ -28,6 +29,12 @@ inline mixed_t null_index_read(const dynamic_t<> &receiver, const mixed_t &key) 
 	require_index_key(key);
 	if (!receiver.get()) return mixed_t{null};
 	return receiver->_find_val(key);
+}
+
+inline detail::dynamic_value null_index_read(const detail::dynamic_value &receiver, const mixed_t &key) {
+	require_index_key(key);
+	if (receiver.is_null().native_value()) return detail::dynamic_value{};
+	return receiver.get_table().read_or_default(key);
 }
 
 // Keep the permissive legacy get() API unchanged; v0.2 rejects wrong receiver kinds.

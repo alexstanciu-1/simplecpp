@@ -322,11 +322,13 @@ private:
 	hash_t<T, K> *owner_;
 };
 
-// Borrow const membership using the hash's existing const entry iterator.
-template <typename T, typename K = typename default_hash_key<T>::type>
-class foreach_const_hash_range final {
+namespace detail {
+
+// Borrow const membership through the owning table's existing entry iterator.
+template <typename Table>
+class const_entry_range final {
 public:
-	foreach_const_hash_range(const hash_t<T, K> &owner) noexcept
+	const_entry_range(const Table &owner) noexcept
 		: owner_(&owner) {}
 
 	[[nodiscard]] auto begin() const noexcept {
@@ -338,8 +340,13 @@ public:
 	}
 
 private:
-	const hash_t<T, K> *owner_;
+	const Table *owner_;
 };
+
+} // namespace detail
+
+template <typename T, typename K = typename default_hash_key<T>::type>
+using foreach_const_hash_range = detail::const_entry_range<hash_t<T, K>>;
 
 template <typename T>
 [[nodiscard]] inline foreach_vector_range<T> foreach_range(vector_t<T> &value) noexcept {

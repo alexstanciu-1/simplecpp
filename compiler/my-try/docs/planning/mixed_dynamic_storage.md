@@ -126,8 +126,9 @@ copy/alias semantics, JSON modes and compiler facts require separate focused pro
 1. Mixed layout checkpoint: implemented as above; dynamic and its old bridge API
    are unchanged. No native compiler rebuild is claimed.
 2. Shared table mechanics are implemented in the checkpoint below. New tagged
-   dynamic's internal storage is implemented below; switching the public alias and
-   consumers is next. Keep scalar
+   dynamic's internal storage and construction/indexing/iteration adapters are
+   implemented below. Migrate remaining consumers before switching the public alias.
+   Keep scalar
    semantics in their existing owners; remove obsolete mixed/dynamic coupling as a
    coordinated change rather than leaving both representations partially active.
 3. Migrate runtime consumers together: initialization, reads/writes/paths, iteration,
@@ -251,3 +252,33 @@ Leak detection was disabled for that run: the initial sanitizer attempt failed
 because LeakSanitizer cannot run under this sandbox's ptrace environment, not from
 a reported payload defect. No leak-check pass, migrated source-program behavior,
 native compiler rebuild or completed public dynamic migration is claimed.
+
+### Tagged container-operation integration — 2026-10-05
+
+The tagged value now participates in the existing data-initializer, copied-read,
+direct store/append, nested-write validation/commit and value-iteration helpers.
+Construction reuses `populate_list`/`populate_keyed`, including normalized duplicate
+rejection. Const table iteration now uses one `detail::const_entry_range<Table>`;
+the existing `foreach_const_hash_range` spelling remains an alias to that adapter.
+No dynamic-specific traversal algorithm or mixed-entry boxing was added.
+
+Tests exercise nested alias preservation through factories and reads, scalar value
+copies during iteration, same-family null reads, wrong-kind/null write and iteration
+rejection, missing/null nested-child rejection without creation, empty construction,
+normalized duplicates and unchanged assignment destinations on factory failure.
+The typed store boundary rejects mixed and old dynamic-handle values at C++ compile time.
+
+The public alias has **not** switched. These adapters target the new internal type
+so they become the ordinary overloads when the public spelling selects it. Old-handle
+overloads are interim unmigrated consumers, not compatibility promises; remove them
+at the switch. Remaining work includes scalar operators/conversions, probes/removal,
+JSON/adapters, mixed carrier removal and compiler facts. No source-level support or
+new JSON default is claimed by this checkpoint.
+
+Evidence: `/tmp/my-try-tagged-dynamic-operations-20261005-2` passed matching
+debug/release runtime/JSON builds and ten native programs. The first attempt exposed
+a missing brace in the new test, corrected before this passing run.
+`/tmp/my-try-tagged-dynamic-iteration-20261005-1` passed five PHP suites (CLI fallback
+after sandbox FPM socket denial) and 34 generated iteration programs. Those generated
+programs prove the const-range refactor preserves existing paths, not that the new
+tagged type is emitted by the compiler. No native compiler rebuild was performed.

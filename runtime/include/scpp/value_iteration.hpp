@@ -2,6 +2,7 @@
 
 #include "scpp/foreach.hpp"
 #include "scpp/dynamic_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 #include <stdexcept>
 
 namespace scpp {
@@ -30,6 +31,10 @@ inline auto value_iteration(const mixed_t &source) {
 inline auto value_iteration(const dynamic_t<> &source) {
 	if (!source.get()) throw std::runtime_error("foreach: absent dynamic handle");
 	return foreach_range(static_cast<const hash_t<mixed_t>&>(*source));
+}
+
+inline auto value_iteration(const detail::dynamic_value &source) {
+	return detail::const_entry_range(source.get_table());
 }
 
 } // namespace scpp

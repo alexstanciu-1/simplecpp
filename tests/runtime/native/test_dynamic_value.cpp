@@ -1,5 +1,8 @@
 #include "scpp/support/dynamic_value.hpp"
 #include "scpp/hash_t.hpp"
+#include "scpp/data_initializer.hpp"
+#include "scpp/index_write_path.hpp"
+#include "scpp/value_iteration.hpp"
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -19,6 +22,21 @@ static_assert(!std::is_constructible_v<scpp::mixed_t, value>);
 static_assert(!std::is_constructible_v<value, scpp::dynamic_t<>>);
 static_assert(std::is_nothrow_move_constructible_v<value>);
 static_assert(std::is_nothrow_move_assignable_v<value>);
+
+template <typename Entry>
+concept can_store = requires(value &receiver, const scpp::mixed_t &key, const Entry &entry) {
+	scpp::index_store(receiver, key, entry);
+};
+static_assert(can_store<value>);
+static_assert(!can_store<scpp::mixed_t>);
+static_assert(!can_store<scpp::dynamic_t<>>);
+
+template <typename Work>
+void require_failure(Work work, const char *message) {
+	bool rejected = false;
+	try { work(); } catch (const std::runtime_error &) { rejected = true; }
+	require(rejected, message);
+}
 
 void scalar_lifetimes() {
 	// This checkpoint measures the agreed target ABI, not a portable language promise.
@@ -85,9 +103,79 @@ void recursive_containers() {
 	}
 	require(expected == 300, "growth and tombstone traversal");
 }
+
+void container_operations() {
+	using entry = scpp::initializer_entry<value, scpp::mixed_t>;
+	using factory = scpp::data_initializer<value>;
+	scpp::initializer_buffer<value> input{2};
+	input.append(value{int_t<>{10LL}});
+	input.append(value{int_t<>{20LL}});
+	auto list = factory::from_list(input.view());
+	scpp::initializer_buffer<entry> keyed{2};
+	keyed.append(entry{scpp::mixed_t{string_t{"child"}}, list});
+	keyed.append(entry{scpp::mixed_t{string_t{"none"}}, value{}});
+	auto object = factory::from_key_value(keyed.view());
+	const scpp::mixed_t child_key{string_t{"child"}};
+	auto child = scpp::null_index_read(object, child_key);
+	static_assert(std::is_same_v<decltype(child), value>);
+	scpp::index_store(child, scpp::mixed_t{int_t<>{0LL}}, value{int_t<>{30LL}});
+	scpp::index_append(child, value{int_t<>{40LL}});
+	require(list.get_table().at(int_t<>{0LL}).get_int().native_value() == 30, "factory retains nested identity");
+	require(list.get_table().size() == 3, "append shares child storage");
+	int sum = 0;
+	for (auto item : scpp::value_iteration(child)) {
+		auto copied = item.value_copy();
+		static_assert(std::is_same_v<decltype(copied), value>);
+		sum += static_cast<int>(copied.get_int().native_value());
+		copied = value{};
+	}
+	require(sum == 90, "shared iteration adapter copies same-family values");
+	require(list.get_table().at(int_t<>{0LL}).get_int().native_value() == 30, "iteration scalar copies do not replace slots");
+	const value replacement{int_t<>{50LL}};
+	const scpp::mixed_t index{int_t<>{0LL}};
+	const auto &probed_child = scpp::index_path_probe(object, child_key);
+	scpp::index_path_check_store(probed_child, index, replacement);
+	scpp::index_store(scpp::index_path_descend(object, child_key), index, replacement);
+	require(list.get_table().at(int_t<>{0LL}).get_int().native_value() == 50, "nested commit retains shared identity");
+	require_failure([&] { (void)scpp::index_path_probe(object, scpp::mixed_t{string_t{"none"}}); }, "null child does not autovivify");
+	bool missing_path = false;
+	try { (void)scpp::index_path_probe(object, scpp::mixed_t{string_t{"absent"}}); }
+	catch (const std::out_of_range &) { missing_path = true; }
+	require(missing_path && object.get_table().size() == 2, "missing child path does not create");
+	value missing = scpp::null_index_read(object, scpp::mixed_t{string_t{"missing"}});
+	require(missing.is_null().native_value() && object.get_table().size() == 2, "read miss does not create");
+	require(scpp::null_index_read(missing, child_key).is_null().native_value(), "null intermediate read");
+	require_failure([&] { (void)scpp::null_index_read(missing, scpp::mixed_t{false}); }, "null receiver still validates key");
+	require_failure([&] { scpp::index_store(missing, child_key, child); }, "null write rejects bootstrap");
+	require_failure([&] { scpp::index_append(missing, child); }, "null append rejects bootstrap");
+	require(missing.is_null().native_value(), "rejected null mutation preserves null");
+	value scalar{int_t<>{3LL}};
+	require_failure([&] { (void)scpp::null_index_read(scalar, child_key); }, "scalar read rejects");
+	require_failure([&] { scpp::index_store(scalar, child_key, child); }, "scalar write rejects");
+	require_failure([&] { (void)scpp::value_iteration(scalar); }, "scalar foreach rejects");
+	require_failure([&] { (void)scpp::value_iteration(missing); }, "null foreach rejects");
+	require(scalar.get_int().native_value() == 3, "failed scalar operations preserve payload");
+	scpp::initializer_buffer<value> empty_input{0};
+	auto empty = factory::from_list(empty_input.view());
+	int visits = 0;
+	for ([[maybe_unused]] auto item : scpp::value_iteration(empty)) ++visits;
+	require(visits == 0 && !empty.is_null().native_value(), "empty construction and iteration");
+	scpp::initializer_buffer<entry> duplicates{2};
+	duplicates.append(entry{scpp::mixed_t{int_t<>{10LL}}, value{}});
+	duplicates.append(entry{scpp::mixed_t{int_t<>{10LL}}, value{int_t<>{5LL}}});
+	require_failure([&] { object = factory::from_key_value(duplicates.view()); }, "duplicate null entry rejects");
+	require(object.get_table().size() == 2, "failed factory leaves destination unchanged");
+#if defined(SCPP_LANGUAGE_TARGET_PHP) && SCPP_LANGUAGE_TARGET_PHP
+	scpp::initializer_buffer<entry> normalized_duplicates{2};
+	normalized_duplicates.append(entry{scpp::mixed_t{string_t{"10"}}, value{}});
+	normalized_duplicates.append(entry{scpp::mixed_t{int_t<>{10LL}}, value{}});
+	require_failure([&] { (void)factory::from_key_value(normalized_duplicates.view()); }, "normalized duplicate rejects");
+#endif
+}
 } // namespace
 
 int main() {
 	scalar_lifetimes();
 	recursive_containers();
+	container_operations();
 }

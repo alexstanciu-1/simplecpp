@@ -44,6 +44,13 @@ inline const dynamic_t<> &index_path_probe(const dynamic_t<> &receiver, const mi
 	return *child;
 }
 
+inline const detail::dynamic_value &index_path_probe(const detail::dynamic_value &receiver, const mixed_t &key) {
+	require_index_key(key);
+	const auto &child = receiver.get_table().at(key);
+	(void)child.get_table(); // Dynamic intermediates must be constructed containers.
+	return child;
+}
+
 template <typename T>
 T &index_path_descend(vector_t<T> &receiver, const int_t<> &key) {
 	return receiver.at(key);
@@ -62,6 +69,11 @@ inline mixed_t &index_path_descend(mixed_t &receiver, const mixed_t &key) {
 inline dynamic_t<> &index_path_descend(dynamic_t<> &receiver, const mixed_t &key) {
 	(void)index_path_probe(receiver, key);
 	return *receiver->at(key).dynamic_if();
+}
+
+inline detail::dynamic_value &index_path_descend(detail::dynamic_value &receiver, const mixed_t &key) {
+	(void)index_path_probe(receiver, key);
+	return receiver.get_table().at(key);
 }
 
 // Check the leaf before ANY path creation or detachment. Value conversion has
@@ -98,6 +110,11 @@ inline void index_path_check_store(const dynamic_t<> &receiver, const mixed_t &k
 	index_path_check_value(receiver, value);
 }
 
+inline void index_path_check_store(const detail::dynamic_value &receiver, const mixed_t &key, const detail::dynamic_value &) {
+	require_index_key(key);
+	(void)receiver.get_table();
+}
+
 template <typename T>
 void index_path_check_append(const vector_t<T> &, const T &) {}
 
@@ -110,6 +127,10 @@ inline void index_path_check_append(const mixed_t &receiver, const mixed_t &valu
 
 inline void index_path_check_append(const dynamic_t<> &receiver, const mixed_t &value) {
 	index_path_check_value(receiver, value);
+}
+
+inline void index_path_check_append(const detail::dynamic_value &receiver, const detail::dynamic_value &) {
+	(void)receiver.get_table();
 }
 
 } // namespace scpp

@@ -4,6 +4,7 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/dynamic_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/support/dynamic_value.hpp"
 #include <array>
 #include <memory>
 #include <optional>
@@ -138,6 +139,21 @@ struct data_initializer<shared_p<hash_t<V, K>>> final {
 		auto storage = std::make_shared<hash_t<V, K>>();
 		initialization_detail::populate_keyed(*storage, input);
 		return shared_p<hash_t<V, K>>(std::move(storage));
+	}
+};
+
+template <>
+struct data_initializer<detail::dynamic_value> final {
+	using value_type = detail::dynamic_value;
+	static value_type from_list(initializer_list<value_type> input) {
+		auto result = value_type::make_container();
+		initialization_detail::populate_list(result.get_table(), input);
+		return result;
+	}
+	static value_type from_key_value(initializer_list<initializer_entry<value_type, mixed_t>> input) {
+		auto result = value_type::make_container();
+		initialization_detail::populate_keyed(result.get_table(), input);
+		return result;
 	}
 };
 

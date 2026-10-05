@@ -25,6 +25,11 @@ inline void index_store(dynamic_t<> &receiver, const mixed_t &key, const mixed_t
 	receiver->set(key, value);
 }
 
+inline void index_store(detail::dynamic_value &receiver, const mixed_t &key, const detail::dynamic_value &value) {
+	require_index_key(key);
+	receiver.get_table().set(key, value);
+}
+
 inline void index_store(mixed_t &receiver, const mixed_t &key, const mixed_t &value) {
 	require_index_key(key);
 	// Existing mutable access owns null bootstrap and copy-on-write, without escaping its slot.
@@ -43,5 +48,9 @@ inline void index_append(dynamic_t<> &receiver, const mixed_t &value) {
 }
 
 inline void index_append(mixed_t &receiver, const mixed_t &value) { receiver.append(value); }
+
+inline void index_append(detail::dynamic_value &receiver, const detail::dynamic_value &value) {
+	(void)receiver.get_table().append(value);
+}
 
 } // namespace scpp
