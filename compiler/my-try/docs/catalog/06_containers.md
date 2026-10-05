@@ -7,9 +7,10 @@ Doc Status: planning
 
 Requires values, expressions and basic calls. Establish reads versus writes before nested mutation and foreach.
 
-**Chapter closeout is blocked by CH06-MIX-DYN-01 and CH06-ITER-01 below.** Continue
-the agreed slices, but discuss and resolve both debts with the user before declaring
-Chapter 06 complete.
+**Chapter closeout is blocked by CH06-MIX-DYN-01 below.** CH06-ITER-01 has moved to
+[the final blocking-debt chapter](15_blocking_debt.md); its broader design review
+no longer blocks this chapter. Safe runtime rejection remains an immediate
+prerequisite for enabling reference foreach, not a deferred safety promise.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
@@ -546,8 +547,8 @@ may repeat O(depth²) prefix lookups. Keep safe re-resolution until an effect-aw
 runtime cursor improvement is justified; do not optimize by retaining unsafe interior
 references or copying full containers. This is non-blocking first-pass debt.
 
-The following checkpoint implements bounded value iteration. **CH06-MIX-DYN-01 and
-CH06-ITER-01 remain open and block chapter closeout.**
+The following checkpoint implements bounded value iteration. **CH06-MIX-DYN-01
+blocks chapter closeout; CH06-ITER-01 blocks final catalog completion.**
 
 ### Value foreach — 2026-10-05
 
@@ -609,10 +610,11 @@ refresh proof. The same 1,225 prior exports remain unchanged.
 
 #### CH06-ITER-01 — mutation during iteration
 
-Status: **open; blocking Chapter 06 completion**, at the user's explicit request.
-Mutation semantics are deferred for discussion, not waived. Does not block the
-ordinary non-mutating value-iteration slice. The shallow-entry-snapshot proposal was
-not adopted; do not implement it as a default or hidden safety fallback.
+Status: **open; transferred to the final blocking-debt chapter**, at the user's
+explicit request on 2026-10-05. [Chapter 15](15_blocking_debt.md#ch06-iter-01--mutation-policy)
+owns the final completion gate, after the feature chapters and rest break. Mutation
+semantics are deferred for discussion, not waived. The shallow-entry-snapshot
+proposal was not adopted; do not implement it as a default or hidden safety fallback.
 
 Before admitting mutation during iteration, decide the effects of replacing the
 source, inserting/appending/removing entries, changing existing values and mutation
@@ -623,9 +625,12 @@ is not proof of safety; by-value element binding is not a collection snapshot.
 Revisit more performant options with the user, including stable cursors,
 generation-checked iteration or other owner-managed traversal. Compare their
 runtime/storage and native compilation costs before choosing; no option is approved
-by this note. Do not silently define mutation as snapshot, live traversal, a no-op,
-or a newly guaranteed runtime error. Keep mutation/replacement outside the supported
-slice and expose any unavoidable lifetime/safety prerequisite before enabling it.
+by this note. The agreed interim reference-iteration policy is runtime rejection
+before unsafe structural mutation or source replacement, with existing-element
+updates allowed. Guard implementation, alias/call coverage, copy-on-write handling
+and exit cleanup remain prerequisites for enabling reference iteration; this note
+does not claim they are implemented. Existing value iteration remains bounded to
+non-mutating sources. Do not silently adopt snapshot or live-traversal semantics.
 
 **First alternative to evaluate — snapshot on structural mutation (user proposal).**
 Types supporting foreach would cooperate with active traversal cursors. Start
@@ -634,7 +639,8 @@ membership/order or invalidates traversal storage, notify affected cursors and
 preserve a shallow entry snapshot; only then commit the mutation. Existing cursors
 resume from their saved positions on preserved entries; subsequent loops start from
 the changed container. This is a discussion candidate, not an approved implementation
-or a reinstatement of unconditional entry snapshots. CH06-ITER-01 remains blocking.
+or a reinstatement of unconditional entry snapshots. CH06-ITER-01 remains blocking
+for final catalog completion, not Chapter 06 design closeout.
 
 Assessment and decisions still required:
 
@@ -744,7 +750,8 @@ legacy array admission/guards and array casts; existing typed-container boxing i
 mixed/dynamic (ARR-VALUE-001), distinct from contextual nested literal construction;
 source-defined initialization factories/property-driven construction; and the
 previously named vector-removal, weak/cross-family and path-performance limitations.
-This is not chapter closeout: **CH06-ITER-01 and CH06-MIX-DYN-01 remain blocking**.
+This is not chapter closeout: **CH06-MIX-DYN-01 remains a chapter blocker**.
+CH06-ITER-01 is now a final-catalog blocker under Chapter 15.
 
 ### End-to-end catalog rows
 
@@ -762,7 +769,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-APPEND-001](#arr-append-001) | bounded-support | `$a vector<int> = []; $a[] = 1;` | passed | passed | deferred | Vector, integer-key hash, mixed and dynamic; string-key hash rejects |
 | [FUNC-DECL-003B](#func-decl-003b) | bounded-support | `function f(vector<int> $a): void {}` | passed | passed | deferred | Strict typed-container signature/copy/return proofs; legacy annotation syntax excluded |
 | [FUNC-ARG-001](#func-arg-001) | bounded-support | `f($x[0]);` | passed | passed | deferred | Ordinary non-creating value read; reference parameters reject indexed arguments |
-| [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; non-mutating value iteration; CH06-ITER-01 blocks closeout |
+| [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; non-mutating value iteration; CH06-ITER-01 moved to final catalog review |
 | [CTRL-FOREACH-002](#ctrl-foreach-002) | bounded-support | `foreach ($items as $k => $v) { }` | passed | passed | deferred | Typed keys/values, loop-local key, existing value reuse; no snapshots |
 | [CTRL-FOREACH-003](#ctrl-foreach-003) | deferred | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | Reference lifetime/mutation protocol required; not implied by value foreach |
 | [CTRL-FOREACH-004](#ctrl-foreach-004) | deferred | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | Same reference-iteration gate |
@@ -822,7 +829,7 @@ ERROR
 
 ## CTRL-FOREACH-001
 
-**v0.2 decision / target C++:** [Shared value iteration](#value-foreach--2026-10-05), through a checked const-entry range and prepared value binding; mutation/replacement remains unsupported and blocks chapter closeout.
+**v0.2 decision / target C++:** [Shared value iteration](#value-foreach--2026-10-05), through a checked const-entry range and prepared value binding; mutation/replacement remains unsupported, with broader policy review blocking final catalog completion under [Chapter 15](15_blocking_debt.md).
 
 ### Imported version 1
 

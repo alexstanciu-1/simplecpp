@@ -75,6 +75,12 @@ Discuss and split those rows rather than expanding a small slice silently.
 | 12 | [Closures and callable values](12_closures.md) | 13 | 0 |
 | 13 | [Exceptions and cleanup](13_errors.md) | 3 | 1 |
 | 14 | [C++ artifacts, runtime integration and diagnostics](14_output_runtime.md) | 8 | 24 |
+| 15 | [Accumulated blocking debt and final review](15_blocking_debt.md) | — | — |
+
+Chapter 15 stays last and owns explicitly transferred final-review blockers. Review
+them after the feature chapters and the planned rest break; they block overall
+catalog completion. Transferring design debt does not waive immediate feature-safety
+gates or automatically move other chapter blockers.
 
 ## Prerequisite gates
 
