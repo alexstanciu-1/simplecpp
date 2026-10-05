@@ -7,7 +7,7 @@ Doc Status: planning
 
 Requires values, expressions and basic calls. Establish reads versus writes before nested mutation and foreach.
 
-**The core mixed/dynamic integration gate is resolved; final chapter review is next.**
+**The agreed bounded positive pass is complete; see the closeout inventory below.**
 The dated checkpoints below retain their historical scope; earlier references to
 CH06-MIX-DYN-01 being open are superseded by its current status below.
 CH06-ITER-01 has moved to
@@ -18,6 +18,53 @@ Reference foreach remains disabled; its safety foundation and later integration
 are deferred to [CH06-REF-01 in Chapter 15](15_blocking_debt.md#ch06-ref-01--reference-foreach-safety-foundation).
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
+
+## Positive-pass conclusion — 2026-10-05
+
+Reviewed after `81e8c157`. The agreed strict-source container scope is complete,
+with explicit limitations rather than full coverage of every imported v0.1 card.
+No additional implementation or language-policy change is made by this closeout.
+
+| Delivered group | Retained proof owner |
+| --- | --- |
+| Shared PHP-like/JS-like construction syntax, known targets, nested family defaults and duplicate-key rejection | `tests/data_preparation.php`, `tests/fixtures/data_initialization.php`, `tests/data_initialization.py` |
+| Registered initialization contracts and reusable built-in execution | `tests/initialization.php`, `tests/callables.php`, `tests/data_initialization.py` |
+| Reads, direct/nested writes and appends across vector/hash/mixed/dynamic | `tests/indexing.php`, `tests/container_reads.py`, `tests/container_writes.py` |
+| Lazy keyed isset/empty/unset without creating missing paths | `tests/value_probes.php`, `tests/keyed_paths.py` |
+| Bounded non-mutating value/key-value foreach | `tests/iteration.php`, `tests/iteration.py` |
+| Whole-container calls/copies/references and rejection of indexed reference arguments | `tests/container_calls.php`, `tests/fixtures/container_calls.php` |
+| Separated mixed/dynamic runtime and shared compiler operations, including boxed Results | `tests/dynamic_families.py`, `tests/container_regression.py` |
+| Registered JSON free functions and checked family-specific results | `tests/json_api.py` |
+
+### Remaining scope and reopening gates
+
+This consolidates existing deferrals; it does not transfer new blockers to Chapter 15.
+
+| Remaining work | Owner / prerequisite |
+| --- | --- |
+| Mutation/replacement during iteration; reference foreach | Chapter 15: CH06-ITER-01 and CH06-REF-01. Reference foreach stays disabled; current value iteration does not promise mutation safety. |
+| Library redesign/migration and dynamic `->` | Chapter 15: CH15-LIB-DYN-01 and CH15-DYNAMIC-PROP-01 |
+| User-defined initialization factories, property-driven construction | Chapters 10–11 method/interface model plus Chapter 07 input-view non-escape; recognized opt-in and concrete-target rules already documented |
+| Function-valued entries | Chapter 12 callable/capture model and CH15-CALLABLE-01 review |
+| Legacy `array`/`?array` admission and entry guards; `(array)` casts | Explicit legacy-profile/conversion slice; strict typed/mixed equivalents do not prove the old table-only guard |
+| Boxing existing typed containers into mixed/dynamic | ARR-VALUE-001; separate conversion/copy contract, not contextual nested literal construction |
+| Vector-element unset; indexed compound updates; wider append/path forms | Explicit mutation slices; current reads/writes do not imply these capabilities |
+| Effective storage modifiers, weak containers, indexed aliases/reference returns | Ownership/lifetime model in Chapter 07; no unstable native interior references |
+| Expected-type propagation through untyped selection branches | Preparation slice; unknown literal targets still reject |
+| Deep-path probe/removal cost | CH06-PATH-01: existing O(depth²) traversal performance debt; no semantic relaxation |
+| Additional typed JSON encode/extraction source APIs | Runtime availability is not source registration; keep the current boxed overload scope |
+| Native compiler rebuild and broad final validation | Separate requested checkpoint; generated-program proofs are not a native compiler build |
+
+Evidence reviewed (separate checkpoints, not a combined current full-suite run):
+`/tmp/my-try-family-regression-20261005-3/summary.json` records 22 PHP suites and
+318 generated programs; `/tmp/my-try-boxed-results-20261005-6/summary.json` records
+14 suites and 60 programs; `/tmp/my-try-json-20261005-6/summary.json` records 9 suites
+and 7 programs. Result/JSON checkpoints also have recorded no-PCH counterparts.
+This documentation-only review did not rerun those suites or rebuild the compiler.
+
+Next: [Chapter 07](07_references_lifetime.md#handoff-from-chapter-06--2026-10-05),
+starting with a reconciliation of already-supported whole-storage reference calls
+before designing new aliases, reference returns or ownership-template behavior.
 
 ## Agreed standard and revised grouping — 2026-10-05
 
@@ -171,7 +218,7 @@ shadow/failure/retry/removal recovery, incremental family retargeting, reset lif
 and independent native outcomes. It rebuilds core and JSON module objects; no native
 compiler rebuild is implied. Typed extraction and additional typed encode overloads,
 general overload ranking, library redesign, reference foreach and `->` are not added.
-The latter three remain in Chapter 15. Next: final Chapter 06 inventory/closeout review.
+The latter three remain in Chapter 15. The closeout inventory above records the handoff.
 
 ## Handoff from chapter 05 — 2026-10-04
 

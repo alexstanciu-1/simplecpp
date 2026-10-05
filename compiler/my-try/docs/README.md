@@ -57,7 +57,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [Chapter 06 core integration gate resolved; final inventory/closeout review next](catalog/06_containers.md#mixeddynamic-closeout-gate), [catalog](catalog/README.md), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
+| Current handoff | [Chapter 06 bounded closeout and remaining scope](catalog/06_containers.md#positive-pass-conclusion--2026-10-05), [Chapter 07 reference/ownership discussion](catalog/07_references_lifetime.md#handoff-from-chapter-06--2026-10-05), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral

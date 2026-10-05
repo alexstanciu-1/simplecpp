@@ -504,8 +504,9 @@ Version note: the examples below include the existing v0.1 surface. The agreed
 [v0.2 data-initialization standard](data_initialization.md) requires a known target
 type and introduces recognized list/keyed initialization interfaces, `{name: value}`,
 `Type::{...}` / `Type::[...]`, and optional trailing commas. These additions are not
-yet implementation guarantees. Nested mixed/dynamic constructions inherit their
-enclosing family; both store entry values as mixed. Unknown construction targets
+blanket implementation guarantees. The my-try compiler implements built-in construction;
+source-defined factories remain gated. Nested mixed/dynamic constructions inherit their
+enclosing family: mixed entries are mixed, dynamic entries are dynamic. Unknown construction targets
 fail preparation rather than silently becoming mixed.
 
 | Topic | Example |

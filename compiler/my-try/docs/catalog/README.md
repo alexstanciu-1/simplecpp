@@ -92,8 +92,10 @@ The [2026-10-02 preparation/emission audit](../planning/preparation_emission_aud
 is complete. Chapters 03 and 04 have completed their bounded positive passes and
 native checkpoints. Chapter 05 has completed its [bounded positive pass with debt](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04);
 its latest mixed slices have generated-program proofs, not a new native compiler checkpoint.
-Next is the [Chapter 06 common-family construction group](06_containers.md#agreed-standard-and-revised-grouping--2026-10-05),
-following the agreed top-level [data initialization standard](../../../../specs/data_initialization.md).
+Chapter 06 has completed its [bounded positive pass with explicit debt](06_containers.md#positive-pass-conclusion--2026-10-05),
+including separated mixed/dynamic integration and registered JSON APIs. Its evidence
+is PHP plus generated-program execution, not a fresh native compiler checkpoint.
+Next is [Chapter 07 reference/ownership reconciliation and discussion](07_references_lifetime.md#handoff-from-chapter-06--2026-10-05).
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

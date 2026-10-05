@@ -94,7 +94,8 @@ Review affected `noexcept` and native-access boundaries explicitly.
 
 No runtime/compiler implementation was changed by this deferral. Existing bounded
 value foreach remains available; neither safe mutation nor reference iteration is
-claimed by its existing tests. CH06-MIX-DYN-01 stays a separate Chapter 06 blocker.
+claimed by its existing tests. The separate CH06-MIX-DYN-01 core integration gate
+is now resolved; see Chapter 06's positive-pass conclusion.
 
 ## Design considerations for final review
 
@@ -192,7 +193,8 @@ paths, library registrations and disabled-module diagnostics must migrate togeth
 The compile-blocked task attempt was removed from the active tree; it is not a
 completed feature. Existing task code still carries its old mixed assumptions until
 this debt is handled. Existing JSON/MySQL runtime checkpoints remain implemented;
-their source registrations and remaining consumer integration still need review.
+JSON's boxed source APIs are now registered in my-try; MySQL source registration
+and remaining library consumer integration still need review.
 
 ### CH15-DYNAMIC-PROP-01 — dynamic property access
 

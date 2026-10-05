@@ -7,8 +7,9 @@ not this plan. It supports
 [CH06-MIX-DYN-01](../catalog/06_containers.md#ch06-mix-dyn-01--mixeddynamic-containment-contract).
 
 Current handoff: the agreed core family migration and JSON source integration are
-proved; CH06-MIX-DYN-01 is resolved for that bounded scope. Final Chapter 06 inventory
-is next. Earlier checkpoints below record historical gates, not additional current
+proved; CH06-MIX-DYN-01 is resolved for that bounded scope. Chapter 06's bounded
+closeout is recorded in its catalog; Chapter 07 discussion is next.
+Earlier checkpoints below record historical gates, not additional current
 requirements. Library redesign, reference foreach and dynamic `->` remain Chapter 15 work.
 
 ## Recorded improvement: MIX-LAYOUT-01

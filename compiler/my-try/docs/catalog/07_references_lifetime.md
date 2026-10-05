@@ -9,6 +9,35 @@ Requires storage places and calls. Discuss aliasing and lifetime before enabling
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Handoff from chapter 06 — 2026-10-05
+
+Chapter 06's [bounded positive pass](06_containers.md#positive-pass-conclusion--2026-10-05)
+is complete. Do not restart its container implementation or re-enable reference
+foreach: that feature and its safety foundation remain in Chapter 15.
+
+Existing foundation to reconcile first: explicit typed reference parameters already
+bind exact-type, addressable whole local/parameter storage through shared call
+preparation. Container proofs cover vector/hash/mixed mutation and dynamic binding
+replacement. Indexed reads remain non-addressable, including container-valued slots;
+temporaries and inexact reference arguments reject. See `tests/container_calls.php`,
+`tests/fixtures/container_calls.php` and Chapter 04's function proofs. This is not a
+general alias/provenance model or evidence for reference returns.
+
+Proposed discussion groups (not yet implementation approval):
+
+1. Existing reference-parameter behavior and storage eligibility: FUNC-REF-001,
+   strict TYPE-PARAM-003 counterparts and const-reference questions. Verify current
+   support before assigning progress to imported rows.
+2. Ownership-type classification and copying: CH05-OWN-01, shared/unique/weak and
+   effective value restrictions. Keep registry identity, ownership and capabilities distinct.
+3. Local bindings and reset/removal: reference locals, `unset`/`clean`, with explicit
+   lifetime and alias effects. Keyed container removal is not local destruction.
+4. Reference returns and retained aliases: provenance, escape and owner lifetime
+   first; container interiors additionally require COW/storage-stability rules.
+
+No new retained model, reference return, alias or ownership behavior is approved by
+this handoff. Keep legacy spellings separate and retain immediate safety gates.
+
 ## Ownership-type validation debt from chapter 05
 
 **CH05-OWN-01:** ownership templates currently register as ordinary template
