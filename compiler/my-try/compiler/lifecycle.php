@@ -120,6 +120,8 @@ final class Compiler_Lifecycle
 		$registry = new Type_Registry();
 		Model::$type_catalog = Type_Definition_Registration::install($registry);
 		Model::$cpp_type_bindings = CPP_Type_Binding_Registration::install(Model::$type_catalog);
+		Model::$runtime_callables = new Runtime_Callables();
+		Model::$cpp_callable_bindings = new CPP_Callable_Bindings();
 	}
 
 	/** Clear node-owned facts before releasing preparation/output roots or replacing syntax. */

@@ -39,6 +39,7 @@ experiment retained for regressions, not a second semantic development path.
 | Active operator discussion | [Operator preparation and resolution](planning/operators.md) |
 | Data construction implementation direction | [Completed interface standard, adopted hybrid and confirmed stage boundary](planning/data_initialization.md) |
 | Data notation parser/AST | [Shared PHP-like/JS-like syntax checkpoint](catalog/06_containers.md#shared-data-parser-and-ast--2026-10-05), [AST ownership](architecture/ast_layout.md#data-construction-syntax) |
+| Callable model | [Source/runtime contracts and ownership](architecture/MODEL.md#callable-contracts), [Chapter 06 checkpoint](catalog/06_containers.md#callable-model-foundation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
 | Next language feature | [Catalog](catalog/README.md), [chapter 06 agreed standard and grouping](catalog/06_containers.md#agreed-standard-and-revised-grouping--2026-10-05), [top-level data initialization standard](../../../specs/data_initialization.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |

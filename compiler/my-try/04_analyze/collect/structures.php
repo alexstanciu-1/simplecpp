@@ -127,7 +127,7 @@ abstract class collected_definition extends collected_declaration implements pre
 abstract class collected_reference extends collected_name {
 }
 
-final class collected_function extends collected_definition
+final class collected_function extends collected_definition implements callable_target_i
 {
 	/** @reference.source parsed_file.root (syntax graph) */
 	private function_node $syntax_node;
@@ -146,6 +146,17 @@ final class collected_function extends collected_definition
 	public function syntax(): function_node
 	{
 		return $this->syntax_node;
+	}
+
+	public function require_signature(preparation_context $context): callable_signature
+	{
+		$context->worker->require_declaration($context->owner, $this);
+		return $this->syntax_node->require_preparation()->signature;
+	}
+
+	public function cpp_reference(cpp_generation_context $context): string
+	{
+		return CPP_Callables::source_reference($this);
 	}
 
 	public function kind(): collected_name_kind

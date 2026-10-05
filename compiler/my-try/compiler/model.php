@@ -36,6 +36,9 @@ final class Model
 	public static registered_type_catalog $type_catalog;
 	/** C++ representation metadata remains independent of the semantic catalog. */
 	public static CPP_Type_Bindings $cpp_type_bindings;
+	/** Installed callable contracts and independent backend bindings share the type-root lifetime. */
+	public static Runtime_Callables $runtime_callables;
+	public static CPP_Callable_Bindings $cpp_callable_bindings;
 	/**
 	 * Numeric storage of llvm_module records, including their LLVM text.
 	 * @storage.owner

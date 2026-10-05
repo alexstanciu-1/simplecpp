@@ -13,18 +13,20 @@ final class Preparation_Changes
 		}
 		$previous /** Storage<prepared_parameter> */ = $old->parameters;
 		$parameters /** Storage<prepared_parameter> */ = $current->parameters;
-		if ((!$old->return_type->matches($current->return_type)) || (q_count($previous) !== q_count($parameters))) {
+		if ((!$old->signature->return_type->matches($current->signature->return_type)) || (q_count($previous) !== q_count($parameters))) {
 			return false;
 		}
 		foreach ($parameters as $index => $parameter) {
 			$before = $previous[$index];
-			if (($before->element_type === null) !== ($parameter->element_type === null)) {
+			$before_contract = $before->contract;
+			$contract = $parameter->contract;
+			if (($before_contract->element_type === null) !== ($contract->element_type === null)) {
 				return false;
 			}
-			if (!Parameter_Defaults::same($before->default_value, $parameter->default_value)) {
+			if (!Parameter_Defaults::same($before_contract->default_value, $contract->default_value)) {
 				return false;
 			}
-			if ((!$before->type->matches($parameter->type)) || ($before->mode !== $parameter->mode) || (weakref_get($before->declaration) !== weakref_get($parameter->declaration))) {
+			if ((!$before_contract->type->matches($contract->type)) || ($before_contract->mode !== $contract->mode) || (weakref_get($before->declaration) !== weakref_get($parameter->declaration))) {
 				return false;
 			}
 		}

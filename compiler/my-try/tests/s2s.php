@@ -893,7 +893,7 @@ foreach ($cases as $name => [$source, $exit])
 			($source->name !== 'int') || ($source->occurrence()->name !== 'int') ||
 			($parameter_identity === $local_identity) ||
 			(weakref_get($source_facts->declaration) !== $parameter_identity) ||
-			(!$parameter_facts->type->matches($source_facts->type)) || (!$source_facts->type->matches($assignment_facts->type)) ||
+			(!$parameter_facts->storage_type()->matches($source_facts->type)) || (!$source_facts->type->matches($assignment_facts->type)) ||
 			(substr_count($text, $signature) !== 2) || !str_contains($text, $definition) ||
 			str_contains($text, 'int__') || str_contains($text, 'while__')) {
 			throw new \LogicException('IDENT-VAR-001 lost role-prefixed names, identity or signature consistency');

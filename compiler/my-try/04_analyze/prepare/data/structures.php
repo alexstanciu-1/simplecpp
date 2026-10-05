@@ -150,22 +150,22 @@ final class prepared_binary_expression extends prepared_expression {
 abstract class prepared_storage {
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_name $declaration /** weak<collected_name> */;
-	public canonical_type_use $type;
+	abstract public function storage_type(): canonical_type_use;
 }
 
 /** A local binding or member write retains its resolved storage declaration and canonical type. */
 final class prepared_binding extends prepared_storage {
+	public canonical_type_use $type;
 	public binding_kind $resolved_kind;
 	/** Null only when an inferred declaration has no pre-existing expected type. */
 	public ?conversion_decision $conversion = null;
+	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
-/** Parameter facts add the source passing mode to the resolved storage identity. */
+/** Source storage refers to the same contract consumed by calls, without duplicating its type. */
 final class prepared_parameter extends prepared_storage {
-	public passing_mode $mode;
-	/** Present only for a variadic parameter; inherited type is its vector storage type. */
-	public ?canonical_type_use $element_type = null;
-	public ?prepared_parameter_default $default_value = null;
+	public callable_parameter $contract;
+	public function storage_type(): canonical_type_use { return $this->contract->type; }
 }
 
 /** Normalized scalar literal snapshot; never retains mutable default syntax. */
@@ -177,18 +177,21 @@ final class prepared_parameter_default {
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
 final class prepared_function
 {
-	public canonical_type_use $return_type;
+	public callable_signature $signature;
 	/** Ordered aliases of facts owned by parameter specializations. @storage.reference parameter_node.prepared_facts */
 	public Storage $parameters /** Storage<prepared_parameter> */;
 
 	public function __construct()
 	{
+		$this->signature = new callable_signature();
 		$this->parameters = new Storage /** Storage<prepared_parameter> */();
 	}
 }
 
 /** Field identity is scoped by its owning prepared record. */
 final class prepared_field extends prepared_storage {
+	public canonical_type_use $type;
+	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
@@ -226,11 +229,11 @@ final class prepared_call extends prepared_expression
 {
 	/** Fixed prefix length; the remaining source arguments belong to variadic_parameter. */
 	public int $fixed_count = 0;
-	public ?prepared_parameter $variadic_parameter = null;
-	/** @storage.reference collected_file.entries @reference.weak */
-	public collected_function $declaration /** weak<collected_function> */;
-	/** @reference.source function_node.prepared_facts */
-	public prepared_function $signature;
+	public ?callable_parameter $variadic_parameter = null;
+	/** Owned by collection or runtime catalog, never by the call. @reference.weak */
+	public callable_target_i $target /** weak<callable_target_i> */;
+	/** Completed source or registered runtime signature. */
+	public callable_signature $signature;
 	/** One boundary per explicit source argument, including each variadic element. */
 	public Storage $arguments /** Storage<prepared_call_argument> */;
 

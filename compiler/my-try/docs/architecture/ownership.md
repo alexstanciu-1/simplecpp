@@ -44,6 +44,12 @@ name-bearing nodes observe their canonical occurrence. Scope indexes reference
 those same records. Publication shares identities rather than copying definitions.
 
 Prepared facts retain canonical types and reference collected declarations.
+Calls weakly observe a `callable_target_i` owned by source collection or the runtime
+callable catalog. Their declaration-independent signature shares parameter contracts
+with source parameter storage facts where applicable. Runtime factories have no
+source AST or collected-parameter requirement. C++ callable bindings retain their
+exact registered target and are reset with the runtime callable/type roots; they
+never become the owner of source semantic facts. See [callable contracts](MODEL.md#callable-contracts).
 Derived source-record capabilities are owned by `prepared_record`, alongside its
 prepared fields. Registry definitions retain identity and registered contracts;
 they do not cache a second mutable copy of source-derived capabilities. The transient

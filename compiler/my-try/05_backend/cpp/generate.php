@@ -140,7 +140,7 @@ final class CPP_Generator
 			$entry = object_cast($owner->declaration(), collected_name::class);
 			if ($owner->kind() === preparation_kind::function_body) {
 				$syntax = object_cast($entry, collected_function::class)->syntax();
-				$context->return_type = $syntax->require_preparation()->return_type;
+				$context->return_type = $syntax->require_preparation()->signature->return_type;
 				$next->text = self::generate_statements($syntax->body, $context);
 			}
 			elseif ($entry instanceof collected_function) {

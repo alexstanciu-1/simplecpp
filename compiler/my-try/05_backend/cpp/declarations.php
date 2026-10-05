@@ -93,8 +93,9 @@ final class CPP_Declarations
 		$parts = '';
 		$separator = '';
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
-		foreach ($parameters as $parameter) {
-			$entry = object_cast(weakref_get($parameter->declaration), collected_name::class);
+		foreach ($parameters as $storage) {
+			$entry = object_cast(weakref_get($storage->declaration), collected_name::class);
+			$parameter = $storage->contract;
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
 			$parts .= $separator . self::type($parameter->type, $context) . $reference . ' ' . CPP_Generator::local_name($entry);
 			if ($include_defaults && ($parameter->default_value !== null)) {
@@ -107,7 +108,7 @@ final class CPP_Declarations
 			$separator = ', ';
 		}
 
-		return self::type($facts->return_type, $context) . ' ' . CPP_Generator::source_name('function', $syntax->occurrence()->name) . '(' . $parts . ')';
+		return self::type($facts->signature->return_type, $context) . ' ' . CPP_Callables::source_reference($syntax->occurrence()) . '(' . $parts . ')';
 	}
 
 	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */
@@ -117,7 +118,7 @@ final class CPP_Declarations
 		$context->prototypes .= self::signature($syntax, $context, true) . ";\n";
 
 		// The parser permits functions only at file scope; entry return handling resumes below.
-		$context->return_type = $syntax->require_preparation()->return_type;
+		$context->return_type = $syntax->require_preparation()->signature->return_type;
 		$body = CPP_Generator::generate_statements($syntax->body, $context);
 		$context->return_type = null;
 
@@ -185,10 +186,15 @@ final class CPP_Declarations
 	/** Locals snapshot value arguments left-to-right; reference arguments keep the original place. */
 	public static function generate_call(call_node $syntax, cpp_generation_context $context): string
 	{
-		$facts = $syntax->require_call_preparation();
-		$entry = object_cast(weakref_get($facts->declaration), collected_name::class);
-		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
-		$arguments /** Storage<expression_node> */ = $syntax->arguments;
+		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context);
+	}
+
+	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
+	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
+		cpp_generation_context $context): string
+	{
+		$target = object_cast(weakref_get($facts->target), callable_target_i::class);
+		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 
 		// The immediately invoked lambda sequences arguments and contains their temporaries.
@@ -223,18 +229,18 @@ final class CPP_Declarations
 				$packed_separator = ', ';
 			}
 		}
+		// Semantic defaults do not depend on defaults being repeated in a runtime C++ declaration.
+		for ($index = q_count($arguments); $index < $facts->fixed_count; $index++) {
+			$default_value /** prepared_parameter_default */ = $parameters[$index]->default_value;
+			$names .= $separator . self::parameter_default($default_value, $context);
+			$separator = ', ';
+		}
 		if ($facts->variadic_parameter !== null) {
-			// A supplied pack occupies the final C++ position, so omitted fixed defaults are explicit.
-			for ($index = q_count($arguments); $index < $facts->fixed_count; $index++) {
-				$default_value /** prepared_parameter_default */ = $parameters[$index]->default_value;
-				$names .= $separator . self::parameter_default($default_value, $context);
-				$separator = ', ';
-			}
-			$pack /** prepared_parameter */ = $facts->variadic_parameter;
+			$pack /** callable_parameter */ = $facts->variadic_parameter;
 			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
 		}
 
-		$text .= "\treturn " . CPP_Generator::source_name('function', $entry->name) . '(' . $names . ");\n}())";
+		$text .= "\treturn " . $target->cpp_reference($context) . '(' . $names . ");\n}())";
 		return $text;
 	}
 

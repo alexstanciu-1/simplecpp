@@ -12,6 +12,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `parsed_file` | Typed file AST, scope owners, collection, completion state and token snapshot |
 | `collected_file` | Canonical occurrences and semantic/generation handoffs for that source |
 | `language_scope`, `global_scope` | Built-in/runtime definitions and shared source indexes; global parents to language |
+| `runtime_callables`, `cpp_callable_bindings` | Installed static-factory identities/contracts and separate C++ bindings; reset with canonical types |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
 | `prepared_files` | Successfully completed file records referencing the retained syntax |
 | `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
@@ -38,11 +39,39 @@ settle with their definition; locals settle with their body. A body is a process
 unit, not a symbol. Replacing body syntax transfers its retained work identity.
 Unchanged bodies retain nodes, scopes, occurrences and facts.
 Parameters own optional default expressions; normalized scalar default snapshots
-belong to their prepared facts and participate in signature equivalence. Source calls
-retain only explicit arguments, with omitted defaults supplied by the declaration.
+belong to their callable contracts and participate in signature equivalence. Calls
+retain only explicit arguments; emission supplies omitted defaults from the signature.
 Variadic syntax marks one trailing parameter independently of passing mode; its
 prepared element type is distinct from its ordinary vector storage type. Prepared
 calls retain the fixed-prefix/pack boundary without rewriting source arguments.
+
+### Callable contracts
+
+`callable_target_i` is implemented by the existing `collected_function` identity
+and `registered_static_factory`. Source targets require signature completion and
+register the consumer dependency; installed runtime targets already own a complete
+contract. Runtime catalogs do not cache source declaration facts. Registered factory
+keys are provider-qualified semantic identities, independent of C++ names; their
+owner is the exact canonical constructed type and equals their return type.
+
+`callable_signature` and `callable_parameter` have no source-storage links.
+`prepared_function` owns the signature plus its source parameter facts;
+`prepared_parameter` links its collected storage identity to the same parameter
+contract (no duplicated type/mode/default state). `prepared_storage::storage_type()`
+provides the common local/field/parameter storage query. Contracts are populated
+before publication and treated as immutable afterward, like other prepared facts.
+
+`prepared_call` weakly references the selected target and shares its completed
+signature. `Call_Preparation` admits arguments independently of target selection;
+`CPP_Declarations::selected_call` sequences their lowering. C++ target dispatch uses
+source mangling or a separately registered static-member binding, with exact target
+identity checks and header collection. There are no installed production factories
+yet: interface selection, input-view/non-escape contracts, method lookup, closures
+and data construction execution remain outside this model checkpoint.
+
+Callable roots survive preparation reset, but syntax/type reset replaces them
+together. Installed contracts/bindings must not be changed under retained consumers;
+configuration changes require a full compilation reset.
 
 ## AST and scopes
 

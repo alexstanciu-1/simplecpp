@@ -167,15 +167,15 @@ try
 	file_put_contents($path, $ordinary_vector);
 	$compiler->update_cpp([$path]);
 	$pack_parameter = cpp_function('pack')->parameters[0];
-	$vector_type = $pack_parameter->require_preparation()->type;
+	$vector_type = $pack_parameter->require_preparation()->storage_type();
 	$variadic_source = str_replace('pack(vector<int> $items)', 'pack(int ...$items)', $ordinary_vector);
 	file_put_contents($path, $variadic_source);
 	$pack_failed = false;
 	try { $compiler->update_cpp([$path]); }
 	catch (\RuntimeException $error) { $pack_failed = true; }
 	cpp_check($pack_failed && Model::$cpp_files->is_empty(), 'Variadic mode edit failed to invalidate vector caller');
-	cpp_check(cpp_function('pack')->parameters[0] === $pack_parameter && $pack_parameter->require_preparation()->type->matches($vector_type), 'Variadic storage lost canonical vector identity');
-	cpp_check($pack_parameter->variadic && $pack_parameter->require_preparation()->element_type !== null, 'Variadic element facts missing');
+	cpp_check(cpp_function('pack')->parameters[0] === $pack_parameter && $pack_parameter->require_preparation()->storage_type()->matches($vector_type), 'Variadic storage lost canonical vector identity');
+	cpp_check($pack_parameter->variadic && $pack_parameter->require_preparation()->contract->element_type !== null, 'Variadic element facts missing');
 	file_put_contents($path, str_replace('pack($items)', 'pack()', $variadic_source));
 	$compiler->update_cpp([$path]);
 	$pack_output = Model::$cpp_files[0]->text;

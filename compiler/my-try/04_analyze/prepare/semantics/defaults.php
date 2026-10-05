@@ -5,7 +5,7 @@ namespace scpp\compiler;
 
 final class Parameter_Defaults
 {
-	public static function prepare(expression_node $syntax, prepared_parameter $parameter,
+	public static function prepare(expression_node $syntax, callable_parameter $parameter,
 		preparation_context $context): prepared_parameter_default
 	{
 		if ($parameter->mode !== passing_mode::value) {

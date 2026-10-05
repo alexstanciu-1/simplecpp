@@ -17,7 +17,8 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/defaults.php` | Bounded scalar parameter-default normalization and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
-| `semantics/expressions.php` | Expression dispatch, variable/member access, calls and assignments |
+| `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
+| `semantics/calls.php` | Common selected-call signature completion and argument admission |
 | `semantics/selection_results.php` | Shared matching-scalar value-result admission and conversions |
 | `semantics/matches.php` | Strict constant-label match preparation and per-arm facts |
 | `semantics/capabilities.php` | Dependency-aware capability queries and owned-copy admission |
@@ -49,8 +50,12 @@ Expression `require_preparation()` overrides all return `prepared_expression`.
 Concrete callers use named accessors such as `require_call_preparation()` for
 specialized facts; both views return the same attached object.
 
-Facts identify exact collected roles where known: calls reference functions, source
-record types reference structs. Prepared storage deliberately shares the broader
+Facts identify exact roles where known: calls reference `callable_target_i` (source
+functions or installed runtime static factories); source record types reference structs.
+Signatures/parameter contracts are declaration-independent. Source parameter facts
+retain storage identity and share their contract with the signature; storage consumers
+query `storage_type()`. Runtime contracts never fabricate source declarations.
+Prepared storage deliberately shares the broader
 occurrence capability across fields, parameters, explicit variables and first writes.
 A first-write occurrence keeps its collected identity when it introduces storage.
 
@@ -71,6 +76,8 @@ facts through the syntax's typed accessors. Native narrowing is confined to this
 polymorphic literal family rather than imposed on every expression fact.
 Calls retain only explicit argument facts; their count and the prepared signature
 identify the validated defaulted suffix. Defaults are checked even without callers.
+The common C++ call path emits omitted defaults explicitly from those facts, so
+registered runtime bindings need not repeat semantic defaults in C++ declarations.
 Typed variadic parameters retain an element type separately from their canonical
 vector storage type. Signature preparation validates one trailing by-value pack
 without an explicit default. Prepared calls record the fixed-prefix length and pack

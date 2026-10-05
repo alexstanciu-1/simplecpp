@@ -118,7 +118,7 @@ final class Body_Preparation
 			}
 			$binding->resolved_kind = binding_kind::assignment;
 			$binding->declaration = $previous[0]->declaration;
-			$binding->type = $previous[0]->type;
+			$binding->type = $previous[0]->storage_type();
 		}
 
 		// The declaration is still unpublished while its initializer is prepared.
@@ -194,7 +194,7 @@ final class Body_Preparation
 	public static function prepare_body(function_node $syntax, preparation_context $context): void
 	{
 		$signature = $syntax->require_preparation();
-		$context->return_type = $signature->return_type;
+		$context->return_type = $signature->signature->return_type;
 		$locals = $context->locals;
 		$parameters /** Storage<prepared_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {
@@ -203,7 +203,7 @@ final class Body_Preparation
 		}
 
 		$completion = $syntax->body->prepare_completion($context);
-		if ($completion->can_fall_through && (Type_Preparation::canonical($signature->return_type)->family() !== type_family::no_value)) {
+		if ($completion->can_fall_through && (Type_Preparation::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
 			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
 		}
 	}

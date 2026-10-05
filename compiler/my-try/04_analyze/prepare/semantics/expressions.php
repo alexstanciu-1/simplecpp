@@ -194,7 +194,7 @@ final class Expression_Preparation
 
 		$reference = new prepared_variable_reference();
 		$reference->declaration = $targets[0]->declaration;
-		$reference->type = $targets[0]->type;
+		$reference->type = $targets[0]->storage_type();
 		$reference->addressable = true;
 		return $reference;
 	}
@@ -230,57 +230,7 @@ final class Expression_Preparation
 			throw new \RuntimeException('S2S needs one resolved function for ' . $entry->name);
 		}
 
-		$target = $targets[0];
-		$context->worker->require_declaration($context->owner, $target);
-		$facts = new prepared_call();
-		$facts->declaration = $target;
-		$facts->signature = $target->syntax()->require_preparation();
-		$facts->type = $facts->signature->return_type;
-
-		$parameters /** Storage<prepared_parameter> */ = $facts->signature->parameters;
-		$arguments /** Storage<expression_node> */ = $syntax->arguments;
-		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
-		$facts->fixed_count = q_count($parameters);
-		if ($facts->fixed_count > 0) {
-			$last = $parameters[$facts->fixed_count - 1];
-			if ($last->element_type !== null) {
-				$facts->variadic_parameter = $last;
-				$facts->fixed_count -= 1;
-			}
-		}
-		if (($facts->variadic_parameter === null) && (q_count($arguments) > $facts->fixed_count)) {
-			throw new \RuntimeException('S2S call argument count does not match its signature');
-		}
-		// Only fixed parameters need explicit arguments or defaults; the pack may be empty.
-		for ($index = q_count($arguments); $index < $facts->fixed_count; $index++) {
-			if ($parameters[$index]->default_value === null) {
-				throw new \RuntimeException('S2S call is missing a required argument');
-			}
-		}
-
-		// Prepare arguments in source order; references must preserve the selected storage.
-		foreach ($arguments as $index => $argument)
-		{
-			$value = Expression_Preparation::prepare($argument, $context);
-			$parameter_index /** int */ = $facts->fixed_count;
-			if ($index < $facts->fixed_count) { $parameter_index = $index; }
-			$parameter = $parameters[$parameter_index];
-			$argument_type = $parameter->element_type ?? $parameter->type;
-			$prepared_argument = new prepared_call_argument();
-			if ($parameter->mode === passing_mode::reference) {
-				if ((!$value->addressable) || !Type_Preparation::same_storage_type($value->type, $parameter->type)) {
-					throw new \RuntimeException('S2S reference arguments require stable storage of the exact parameter type');
-				}
-			}
-			else {
-				$prepared_argument->conversion = Conversion_Preparation::decide(
-					$value->type, $argument_type, conversion_context::argument);
-				Capability_Preparation::require_copy($argument_type, $context);
-			}
-			$prepared_arguments->append($prepared_argument);
-		}
-
-		return $facts;
+		return Call_Preparation::prepare($targets[0], $syntax->arguments, $context);
 	}
 
 	/** A member selection carries the exact field identity and inherits base addressability. */

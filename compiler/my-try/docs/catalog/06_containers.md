@@ -132,6 +132,39 @@ the same failure reproduces on committed baseline `de9873cb` in
 `/tmp/my-try-data-syntax-20261005-2/logs/baseline-interpolation.stderr`. Its assertion
 repair is outside this parser slice; do not count that suite as passing.
 
+### Callable model foundation — 2026-10-05
+
+The common callable contract no longer requires a source function/parameter AST.
+Existing `collected_function` identities and registered static runtime factories
+implement `callable_target_i`; both expose `callable_signature` with ordered
+`callable_parameter` contracts. Source parameter storage facts share those contracts
+rather than copying type/mode/default state. Source completion/dependency tracking,
+argument admission, defaults, reference checks and variadic packing remain shared.
+
+Runtime factory identities carry their exact canonical target/return type. A separate
+C++ binding supplies the static member and header; it cannot accidentally bind a
+different target with the same registration key. Lifecycle resets align these roots
+with canonical types. See [model ownership](../architecture/MODEL.md#callable-contracts).
+
+This is model infrastructure, not container construction support: no production
+factories are installed and no static-method source lookup is enabled. Generic
+interface bindings, call-scoped input-view/non-escape contracts and factory execution
+remain the next discussion/implementation boundary. Classes, instance methods and
+closures are not pulled into this slice. The v0.1 runtime-static-symbol catalog is
+precedent for separate signatures/bindings, not a substitute semantic owner here.
+
+`tests/callables.php` proves AST-independent registration, exact owner/result identity,
+source contract sharing/dependencies, common argument admission, C++ reference/header
+binding, semantic-default emission, duplicate/mismatched binding rejection and reset
+lifetimes. Source-function fixtures cover existing execution and incremental recovery.
+PHP/model and generated-program checks do not establish native compiler portability.
+
+Evidence: `/tmp/my-try-callables-functions-20261005-2` (12 PHP suites and 77
+PCH-backed generated C++ function programs), `/tmp/my-try-callables-20261005-5`
+(callable model, preparation work and data syntax). Shared runner, 12 slots,
+automatic CLI fallback because the sandbox cannot create FPM sockets. No native
+compiler rebuild, conversion, LLVM work or broad regression run in this slice.
+
 ### End-to-end catalog rows
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.

@@ -2,7 +2,8 @@
 Doc Status: planning
 
 Recorded 2026-10-05. Hybrid direction and general stage boundary adopted;
-notation/interface standards complete; implementation not started.
+notation/interface standards complete; shared syntax and callable model implemented.
+Factory protocol selection, input views/non-escape and construction remain pending.
 Language authority remains [the top-level standard](../../../../specs/data_initialization.md).
 This note records lowering choices and implementation gates. The lifetime rules and
 exact interface/input API have now been consolidated into the top-level standard;
