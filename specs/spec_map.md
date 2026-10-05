@@ -168,7 +168,24 @@ A disagreement should not be silently normalized away. It should be recognized a
 
 ---
 
-## 5. v1 priority rule
+## 5. Version scope and priority
+
+### v0.2 intentional mixed/dynamic break
+
+For v0.2 work, the [separated-family amendment](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
+is the governing contract. The user approved a coordinated breaking runtime change,
+not preservation of the v0.1 mixed/dynamic representation. Its
+[migration and repair rules](dynamic_types.md#v02-migration-and-repair-rules) apply to
+compiler lowering, runtime adapters, libraries, registrations, tests and examples.
+
+Older v1 bridge-preservation rules below do not authorize restoring dynamic-valued
+mixed containers, mixed-valued dynamic containers or the old shared-hash dynamic
+alias in v0.2. Unmigrated consumers and passing historical tests do not override
+that decision. Other explicit typed-boundary rules remain in force where they do
+not conflict with the amendment. Distinguish language version from PHP strict/legacy
+profile: selecting a profile does not opt out of v0.2 family separation.
+
+### v1 priority rule
 
 For v1, the following rule is normative:
 

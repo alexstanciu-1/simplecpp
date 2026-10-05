@@ -65,8 +65,9 @@ compliance. See the [implementation handoff](../compiler/my-try/docs/planning/mi
 
 JSON uses family-specific decoding: `json_decode` returns `result<dynamic>`, including
 scalar roots; `json_decode_mixed` returns `result<mixed>` with value/COW trees.
-`json_encode` accepts either family without cross-family conversion. Runtime support
-precedes the coordinated public-type/registration switch; see the
+`json_encode` accepts either family without cross-family conversion and returns
+`result<string>`. Public tagged runtime support precedes compiler registration and
+source integration; see the
 [JSON migration status](builtins/json/json_decode.md#v02-family-specific-decoding--2026-10-05).
 
 Implementation constraints: independent public types, reusable private mechanics,
@@ -74,6 +75,47 @@ inline numeric/bool payloads rather than per-scalar shared allocations, and indi
 string/shared-container storage for dynamic. The agreed 24-byte target is an ABI
 measurement goal, not a portable language size guarantee. Shared machinery must not
 provide an admission bypass or duplicate scalar operator semantics.
+
+### v0.2 migration and repair rules
+
+This is an **intentional, approved breaking change**, not a temporary experiment or
+an optimization that must preserve the old representation. It applies across the
+v0.2 runtime and its consumers; it is not local to `compiler/my-try`.
+
+- Do not restore `dynamic_t<> = shared_p<hash_t<mixed_t, mixed_t>>`, mixed's
+  `dynamic_v` carrier, `dynamic_box`/`dynamic_init_t`, or the old `to_dynamic`/`to_hash`
+  container bridges to make a failing consumer compile. The public spelling remains
+  `dynamic_t<>`, but its meaning is the independent tagged family above. Old typed
+  dynamic template arguments are not a compatibility surface.
+- Dynamic container aliasing is intentional, including nested containers. Scalar
+  copies and binding replacement must remain independent. “JS-like” does not mean
+  every scalar gets a shared allocation, nor does it import JS coercion rules.
+- Default JSON decoding must stay dynamic even for scalar/null roots. Consumers
+  requiring mixed trees select `json_decode_mixed`; they must not change the default
+  back to mixed or silently cross families. Encoding produces checked string output,
+  not a boxed intermediate tree. The removed tree-producing `to_json` is not a
+  compatibility obligation.
+- When a test or consumer fails, identify the applicable contract before fixing it.
+  An expectation of old boxing, handle APIs, cross-family containment or default
+  mixed JSON is **stale migration evidence**: update its fixture/owner and preserve
+  the meaningful behavioral coverage. Failure of the new contract is a genuine bug
+  to fix, not permission to weaken the test. Unclear behavior needs an explicit
+  contract decision; unrelated failures must not be attributed to migration by default.
+- Known invalid family crossings reject during preparation; runtime-dependent
+  crossings use checked failures. Do not move a statically decidable error into C++
+  compilation simply because v0.1 lowering was type-blind.
+- Library migration may be recorded as explicit debt rather than blocking core
+  integration. Deferred support must not be advertised as working or rescued with
+  cross-family boxing. Prefer library-owned structures/classes for known records;
+  use boxed families for genuinely runtime-shaped data. Shared worker inputs do
+  not imply thread-safe concurrent mutation.
+- Rebuild runtime objects, consumers and PCH together after representation changes.
+  Old binaries/generated output are not proof of current support. Keep semantic
+  acceptance separate from implementation availability and record remaining gaps.
+
+The v1 descriptions below are historical where they conflict with these v0.2 rules.
+Changing this direction requires an explicit approved contract change, not an
+incidental test repair.
 
 ---
 

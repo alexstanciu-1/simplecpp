@@ -2,6 +2,14 @@
 
 Status: draft
 
+Version notice: this guide retains v0.1 generator examples. For v0.2 mixed/dynamic
+work, the [separated-family contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
+and its repair rules take precedence. In particular, default `json_decode` returns
+`result<dynamic>` even for scalar roots; use `json_decode_mixed` for `result<mixed>`.
+The older mixed JSON examples below are not v0.2 migration targets or permission
+to restore cross-family boxing. Runtime availability does not establish compiler
+registration/source support.
+
 PHS - PHP-Like Surface for Simple C++
 
 Purpose: one compact document to learn the current PHP++ / PHS strict surface without importing full PHP expectations.

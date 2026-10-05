@@ -13,9 +13,12 @@ The approved v0.2 surface replaces the v0.1 contract below:
   full-document consumption remain unchanged. Valid null and false are successes.
 - Container shape remains hash-derived; this does not preserve empty `{}` versus `[]`.
 
-Migration status: runtime decoding uses the new internal tagged dynamic storage;
-the public `dynamic_t<>` alias and compiler-facing registrations still require the
-coordinated switch. Do not infer complete source support from runtime availability.
+Migration status: runtime decoding and public `dynamic_t<>` use the new tagged
+dynamic storage. Compiler-facing registrations/source integration still require
+migration. Do not infer complete source support from runtime availability.
+The default-family change is intentional: follow the
+[v0.2 repair rules](../../dynamic_types.md#v02-migration-and-repair-rules), not old
+mixed-return test expectations. Select `json_decode_mixed` when mixed is required.
 The out-of-line dynamic decoder has a new symbol (`decode_dynamic`) to prevent
 linking the former mixed-return ABI. Rebuild runtime artifacts and generated code.
 
@@ -35,9 +38,9 @@ mixed-box-to-dynamic-handle extraction is removed, not retained as compatibility
 call `from_json<T>(decode_mixed(text).value())` after handling the decode result as
 appropriate. The typed helper does not silently select a different decoder based
 on the requested type. It still throws on typed conversion failure; it does not
-introduce another checked-result API. The public dynamic type switch remains pending.
+introduce another checked-result API.
 
-## Current contract
+## Historical v0.1 contract
 
 The following describes the superseded v0.1 surface, not the v0.2 default.
 

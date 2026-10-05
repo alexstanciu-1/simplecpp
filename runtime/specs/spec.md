@@ -7,6 +7,15 @@ See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict
 
 > Transitional implementation note: see `../../specs/mixed_boundary_transitional.md`.
 
+## v0.2 mixed/dynamic precedence
+
+The [separated-family contract and repair rules](../../specs/dynamic_types.md#v02-migration-and-repair-rules)
+override conflicting v1 representation and bridge-preservation text in this document.
+This runtime intentionally breaks the old mixed/dynamic API; do not reintroduce its
+carriers or conversions to satisfy stale tests or unmigrated generated consumers.
+Runtime, consumer objects and PCH must be rebuilt together. Compiler/library support
+must be verified separately rather than inferred from runtime availability.
+
 
 ## Operator Matrix Synchronization
 
@@ -417,7 +426,7 @@ is unchanged.
 
 ### 6.13 `mixed_t`
 - `mixed_t` is the runtime semantic boxed value used by `hash_t`
-- current stored runtime kinds are `null_v`, `bool_v`, `int_v`, `float_v`, `string_v`, `table_v`, `shared_table_v`, `dynamic_v`, and `weak_table_v`
+- v0.2 stored runtime kinds are `null_v`, `bool_v`, `int_v`, `float_v`, `string_v`, `table_v`, `shared_table_v`, and `weak_table_v`; the old `dynamic_v` carrier is removed
 - table presentation should be documented publicly as the three internal table forms: owned table, shared table, weak table
 - current exact scalar accessors are `bool_value()`, `int_value()`, and `float_value()`
 - these exact scalar accessors require matching runtime kind and fail at runtime otherwise
@@ -635,11 +644,20 @@ Packed-mode optimizations must not violate this invariant.
 - `php::count(const hash_t<mixed_t, mixed_t>&)` is supported and returns the logical size of a lowered PHP array.
 
 ### 6.15 `dynamic_t`
-- the committed v1 public/default meaning of `dynamic_t<>` is shared dynamic storage backed by `hash_t<mixed_t, mixed_t>`
-- `mixed_t` stores that form under the dedicated `dynamic_v` runtime kind
-- runtime headers currently expose a broader alias family `dynamic_t<T_VALUE, T_KEY> = shared_p<hash_t<T_VALUE, T_KEY>>`
-- that broader template form is a runtime-side generalization for now, not a language-surface expansion
-- explicit conversion remains the rule between the default dynamic form and plain hash payloads
+
+- v0.2 public `dynamic_t<>` is an independent tagged value: null, bool, int, float,
+  string or shared container of dynamic values; it is not a shared hash of mixed
+- numeric/bool scalars are inline; strings use indirect storage; containers share
+  identity on copy, while scalar copies and variable replacement affect only their binding
+- default construction produces the single null state, not an empty container;
+  null dynamic does not bootstrap a container on write
+- mixed cannot carry dynamic containers and dynamic cannot carry mixed containers;
+  explicit family conversions admit scalar/null values only, with checked rejection otherwise
+- shared private table algorithms and scalar key carriers must not bypass entry-family admission
+- the old parameterized shared-hash alias and dynamic/hash bridges are removed;
+  non-default `dynamic_t<...>` arguments are not supported
+- the measured 24-byte layout is a target-specific implementation result, not a
+  portable source-language size guarantee
 
 ## Compile-time language target
 
