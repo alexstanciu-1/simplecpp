@@ -54,7 +54,8 @@ Nested targets retain ordered `prepared_index_path_step` facts under the assignm
 each references its existing bracket syntax and records the key conversion and
 registered traversal result type. Traversal capability is separate from value reads
 and construction opt-in. In particular, dynamic traversal retains a dynamic child
-contract even though ordinary dynamic value reads return mixed. Path brackets are
+contract; ordinary dynamic value reads also return dynamic under the approved
+separated-family contract (runtime/compiler migration pending). Path brackets are
 not prepared or emitted as copied value reads.
 
 String indexing, unregistered receivers, zero-argument value reads, intermediate append,

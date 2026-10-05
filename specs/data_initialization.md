@@ -16,7 +16,7 @@ See [the authority map](spec_map.md), [dynamic values](dynamic_types.md),
 [preparation diagnostics](v0_2_preparation_diagnostics.md).
 Element assignment and append share this standard's value admission and contextual
 nested-target rules; see [writes](array_semantics.md#22-write-path). This is an explicit
-v0.2 permission at container-element boundaries, not general implicit dynamic boxing.
+v0.2 container-element contract, not permission for implicit cross-family boxing.
 Notation does not otherwise change indexing, iteration, copying, identity or reference safety.
 The compiler [chapter 06](../compiler/my-try/docs/catalog/06_containers.md)
 tracks implementation separately; examples here are contracts, not support claims.
@@ -277,7 +277,7 @@ needs persistent input must explicitly copy values into ordinary owning storage.
 | `hash<V, string>` | None | `key_value_initializable<hash<V, string>, V, string>` |
 | `hash<V, int>` | `list_initializable<hash<V, int>, V>` | `key_value_initializable<hash<V, int>, V, int>` |
 | `mixed` | `list_initializable<mixed, mixed>` | `key_value_initializable<mixed, mixed, mixed>` |
-| `dynamic` | `list_initializable<dynamic, mixed>` | `key_value_initializable<dynamic, mixed, mixed>` |
+| `dynamic` | `list_initializable<dynamic, dynamic>` | `key_value_initializable<dynamic, dynamic, mixed>` |
 
 Other typed hash key families retain their existing key restrictions and require
 their corresponding supported keyed binding; this slice does not enable new key
@@ -294,7 +294,7 @@ Selection rules:
 - Empty `{}` always requires the keyed interface. Thus `vector<int>::{}` rejects,
   while `hash<int>::[]` is an empty hash construction.
 - Empty mixed construction produces an empty table payload, not null. Empty dynamic
-  construction produces a valid empty object, not an absent handle.
+  construction produces a valid empty container, not null.
 
 Keyed factories process entries in source order and must reject duplicate keys at
 the same construction level. This applies to built-ins and opted-in user-defined
@@ -320,14 +320,14 @@ explicitly. This does not retroactively prohibit the existing v0.1 form.
 
 ## 4. Mixed and dynamic nesting and storage
 
-Both mixed container payloads and dynamic objects store entry values as **mixed
-only**, with different payload kinds. There are not two alternative entry types
-called mixed and dynamic.
+The [v0.2 separated-family contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
+supersedes the earlier mixed-only entry proposal. Implementation is still migrating.
 
-- Supported scalar expressions are boxed into the corresponding mixed kinds.
-- A nested mixed container is a mixed value.
-- A nested dynamic object is carried in mixed's `dynamic_v` kind and preserves its
-  shared identity.
+- Mixed containers store mixed values, including scalar/null leaves and mixed children.
+- Dynamic containers store dynamic values, including scalar/null leaves and dynamic
+  children. Scalar boxing does not allocate a shared object for each number/bool.
+- Nested dynamic containers retain shared identity; nested mixed containers retain
+  value/COW semantics. Neither family's entries may contain the other family's container.
 - Arbitrary objects are not automatically boxed or converted into property bags.
 
 Construction type and stored entry type are separate concepts. For nested,
@@ -345,10 +345,12 @@ $other mixed = ["settings" => ["enabled" => true]];
 
 Here `settings` is constructed as dynamic in the first example, and as mixed in
 the second. `settings: dynamic::{enabled: true}` in the first is allowed but
-redundant. An explicit nested annotation can select the other supported family;
-the resulting entry still crosses the mixed-only storage boundary. This default
-does not reinterpret scalars as dynamic objects or automatically convert existing
-mixed values to dynamic. Key admission remains a separate type contract.
+redundant. An explicit annotation selecting the other container family rejects; it
+does not authorize a conversion. Existing values from the other family require an
+explicit scalar/null conversion, checked at runtime when their kind is unknown;
+container payloads reject. Key admission remains separate: the mixed key type in
+the dynamic keyed interface admits only the established integer/string key kinds,
+not mixed entry values.
 
 ## 5. Compile-time and runtime responsibilities
 

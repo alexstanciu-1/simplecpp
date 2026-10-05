@@ -1,8 +1,9 @@
 # Mixed and dynamic storage: layout and shared implementation
 Doc Status: planning
 
-Recorded 2026-10-05. This is an active design discussion, not an amendment to the
-normative dynamic/JSON contracts or authorization for a runtime rewrite. It supports
+Recorded 2026-10-05. This records the approved staged implementation; language
+meaning belongs to the [v0.2 family-separation amendment](../../../../specs/dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05),
+not this plan. It supports
 [CH06-MIX-DYN-01](../catalog/06_containers.md#ch06-mix-dyn-01--mixeddynamic-containment-contract).
 
 ## Recorded improvement: MIX-LAYOUT-01
@@ -57,7 +58,9 @@ they are not portable size guarantees or functional implementation proofs.
 The intended semantic direction separates mixed-family value/COW containers from
 dynamic-family shared containers while allowing scalar/null leaves in each. JSON
 should offer family-specific decoding, defaulting to dynamic including scalar roots.
-Existing normative permissions, casts and JSON APIs still need explicit reconciliation.
+The core normative permissions and casts are reconciled in the v0.2 amendment.
+JSON's exact API/registration migration remains outstanding; its currently available
+`result<mixed>` signature is not changed by a planning note.
 
 ### Confirmed semantic decisions — 2026-10-05
 
@@ -77,7 +80,7 @@ Existing normative permissions, casts and JSON APIs still need explicit reconcil
   current refactor. The 24-byte target and private shared-mechanics direction remain;
   concrete storage layout and integration need implementation proof.
 
-## Shared implementation assessment (proposal, not selected architecture)
+## Shared implementation direction
 
 Prefer independent public types backed by private reusable tagged-value machinery.
 Neither type should derive publicly from the other or expose an unrestricted common
@@ -113,8 +116,9 @@ Important integration checks:
   instantiation/out-of-line helpers may contain template recompilation costs. Measure
   with the existing PCH workflow; no compile-time improvement is claimed yet.
 
-Next design review should choose the private storage boundary and recursive container
-types before any cross-owner changes. Runtime layout/lifetime, family rejection,
+The shared table boundary is now selected and implemented below. The tagged value
+must choose its private scalar lifetime and recursive container representation.
+Runtime layout/lifetime, family rejection,
 copy/alias semantics, JSON modes and compiler facts require separate focused proofs.
 
 ## Implementation sequence and current handoff
@@ -132,7 +136,7 @@ copy/alias semantics, JSON modes and compiler facts require separate focused pro
 4. Update shared compiler capability/conversion/access facts and backend bindings;
    add scalar-dynamic, same-family nested data and rejected-crossing proofs. Keep
    old object-only/shared-hash expectations separate from new normative semantics.
-5. Reconcile authoritative contracts and JSON API registrations, prove focused
+5. Core family contracts are reconciled below. Reconcile JSON API registrations, prove focused
    runtime/generated-program behavior and record remaining debt. Native compiler
    validation remains an explicit requested checkpoint.
 
@@ -185,3 +189,21 @@ Future callable-valued entries are recorded as
 [CH15-CALLABLE-01](../catalog/15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries).
 Their representation is a design consideration, not part of this refactor's
 implementation scope or permission to introduce callable execution early.
+
+### Contract reconciliation before the representation switch — 2026-10-05
+
+The top-level dynamic/data-initialization/array/index/probe contracts now record
+the approved v0.2 separation. This supersedes the earlier mixed-only dynamic-entry
+proposal; it does not retroactively change v0.1 or claim the runtime is migrated.
+Dynamic initialization interfaces now name dynamic input values, and dynamic reads
+and iteration retain dynamic results. Scalar/null explicit family conversions and
+container rejection are consistent across construction and mutation. Scalar copies,
+shared-container aliases, null versus empty construction and non-container iteration
+are explicit. Keys remain independent of entry-value types.
+
+Implementation remains at the shared-table checkpoint. No tagged dynamic type,
+family rejection, new JSON default or compiler capability change is claimed by
+this documentation checkpoint. The old boxing/crossing tests describe the old
+implementation and must be replaced during migration, not preserved as new semantics.
+JSON family-specific decoding is recorded as direction without inventing a mode
+parameter or function name before its callable/API migration.

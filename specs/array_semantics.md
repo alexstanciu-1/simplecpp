@@ -32,9 +32,11 @@ The bounded `foreach ($source as $value)` and `foreach ($source as $key => $valu
 forms accept registered vector, hash, mixed-table and dynamic-container sources.
 Evaluate the source expression once before binding either variable; retain it for
 the loop lifetime, including temporary function results. Vector keys are `int` and
-values are T; hash<V,K> keys are K and values are V. Mixed/dynamic keys and stored
-values use their current mixed-only boundary; this does not resolve the separately
-tracked mixed/dynamic containment question. Vectors visit index order, hashes/tables
+values are T; hash<V,K> keys are K and values are V. Mixed iteration values are mixed;
+dynamic iteration values are dynamic. Both retain the established int/string key
+domain (represented by scalar mixed keys). This follows the approved
+[separated-family contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05),
+whose runtime/compiler migration is still pending. Vectors visit index order, hashes/tables
 visit their established entry order. Each selected value uses its ordinary copy
 semantics; no native reference to an element is exposed.
 
@@ -46,9 +48,9 @@ unchanged. Key and value names must be distinct. Conversion failure propagates b
 that body execution; completed earlier iterations are not rolled back. This v0.2 rule
 supersedes older contradictory generator guidance that both names always shadow.
 
-Preparation rejects statically noniterable types. Mixed is admitted statically but
-checked at runtime: a non-table payload (including null) throws. An absent dynamic
-handle also throws. Valid empty containers execute zero iterations. The old runtime's
+Preparation rejects statically noniterable types. Mixed and dynamic are admitted
+statically but checked at runtime: a non-container payload (including null) throws.
+Valid empty containers execute zero iterations. The old runtime's
 silent-empty mixed fallback is not the v0.2 rule. Weak and cross-family iteration,
 automatic nullable/Result unwrapping, destructuring and by-reference bindings remain
 outside this implementation slice. Ordinary `break`, `continue` and `return` apply;
@@ -58,7 +60,7 @@ an iteration body alone cannot satisfy a required return because the source can 
 This includes mutations through aliases or calls. No shallow/deep collection snapshot
 is introduced; copying the current element is not a snapshot of all entries. Neither
 live-mutation behavior nor a particular rejection/checking policy is promised here.
-CH06-ITER-01 blocks chapter closeout until the user agrees on semantics and a suitable
+CH06-ITER-01 blocks final catalog closeout in Chapter 15 until the user agrees on semantics and a suitable
 performant lifetime/invalidation design. It does not block non-mutating value iteration.
 
 ## 2. Core model
@@ -67,7 +69,8 @@ performant lifetime/invalidation design. It does not block non-mutating value it
 
 Whole-container arguments and returns use ordinary value/copy semantics: typed
 vector/hash values are independent values, mixed tables preserve copy-on-write,
-and dynamic handle copies preserve shared object identity. Replacing a by-value
+and dynamic container copies preserve shared object identity; dynamic scalars copy
+as values. Replacing a by-value
 dynamic parameter rebinds only that parameter; modifying its shared object is
 observable through the caller's handle. An exact-type whole-container local or
 parameter may bind to an ordinary reference parameter, including wrapper replacement.
@@ -75,7 +78,7 @@ parameter may bind to an ordinary reference parameter, including wrapper replace
 An indexed argument such as `consume($items[$key])` is an ordinary value read followed
 by the parameter's ordinary conversion. It never changes into a write path merely
 because it occurs in a call. Missing typed-container entries throw; missing
-mixed/dynamic entries yield null-kind mixed before any required typed conversion.
+mixed/dynamic entries yield null in the receiver's family before any required typed conversion.
 Neither form inserts entries. Arguments and their conversions are evaluated in
 source order; failure prevents later argument evaluation and callee entry without
 rolling back earlier source effects. Previously materialized value arguments retain
@@ -97,8 +100,8 @@ Construction now follows [data initialization](data_initialization.md): position
 keyed and named notation selects a recognized initialization interface on a known
 target type. Typed, mixed and dynamic construction share that protocol. An unresolved
 target is a preparation error, not an implicit dynamic array. Nested mixed/dynamic
-construction inherits its enclosing construction family, while both store values
-through the mixed-only boundary. Factory-specific data validation runs at runtime.
+construction inherits its enclosing construction family, and entries retain that
+family. Cross-family containers reject. Factory-specific data validation runs at runtime.
 
 This updates construction defaults, not the read/write/reference rules below.
 v0.1 implicit array examples are not proof of v0.2 target resolution or support.
@@ -113,11 +116,12 @@ For v0.2, distinguish statically typed containers from mixed/dynamic carriers:
 | --- | --- | --- |
 | `vector<T>` | copied `T` value | runtime bounds error, including negative indexes |
 | `hash<V, K>` | copied `V` value | runtime missing-key error |
-| `mixed` / `dynamic` | `mixed` value | null-kind mixed |
+| `mixed` | `mixed` value | null-kind mixed |
+| `dynamic` | `dynamic` value | null-kind dynamic |
 
 The null-on-miss rules below describe mixed/dynamic array/table reads, not typed
 vector/hash access. A typed destination never changes the lookup policy: dynamic
-lookup first yields mixed (possibly null), then ordinary checked extraction applies.
+lookup first yields its own family value (possibly null), then ordinary checked extraction applies.
 This clarifies the former broad wording without imposing nullable results on typed
 container reads. See [the bracket contract](index_operator.md).
 
@@ -134,11 +138,12 @@ No implicit bool/float/null key coercion is introduced. Static invalid types rej
 during preparation; unknown invalid mixed key kinds throw at runtime, even when the
 receiver is null. Existing numeric-string normalization applies to mixed/dynamic.
 
-Null receivers/intermediates and absent dynamic handles return null for valid keys.
+Null receivers/intermediates return same-family null for valid keys.
 Existing non-container scalars throw instead of being treated as missing keys.
 Nested reads reuse this rule at each step without creating intermediate storage.
 Existing runtime table carriers remain admitted; expired weak carriers read as null.
-This does not resolve Chapter 06's separately recorded mixed/dynamic containment debt.
+Chapter 06's containment debt stays open until implementation matches the approved
+family separation; existing cross-family runtime carriers are not v0.2 permissions.
 
 Examples:
 ```php
@@ -177,14 +182,15 @@ and only integer-keyed typed hashes append. Mixed/dynamic use existing integer/s
 key admission and normalization; appends use the next integer key, not entry count.
 Updating an existing key is valid: construction's duplicate-key prohibition does not
 apply to ordinary writes. Null mixed may bootstrap table storage on write/append.
-An absent dynamic handle rejects mutation; explicitly construct an object first.
+Null dynamic rejects mutation; explicitly construct a container first.
 
 Construction, element assignment and append share a container-element value boundary:
-typed receiving elements apply ordinary checked value conversions; mixed elements
-admit the same scalar/null boxing and dynamic-handle boxing as construction. This
-does not enable implicit dynamic-to-mixed assignment at unrelated boundaries.
+typed receiving elements apply ordinary checked value conversions; mixed/dynamic
+elements admit same-family values and native scalar/null boxing as construction.
+Cross-family containers reject; cross-family scalar/null values require explicit
+conversion. There is no special implicit dynamic-to-mixed element-boxing exception.
 The receiving element supplies context to a direct nested data literal. Mixed/dynamic
-literal defaults follow the enclosing family, independently of mixed slot storage:
+literal defaults follow the enclosing family:
 `$rows[] = [1, 2]` for `vector<vector<int>>`, or `$data["child"] = {enabled: true}`
 for dynamic. Shared dynamic payload identity and mixed copy-on-write are preserved.
 An assignment expression yields the converted assigned value, not an appended key
@@ -213,14 +219,12 @@ Creation and validation rules:
 - Mixed table paths may create missing/null intermediate mixed tables. Existing
   scalar intermediates throw rather than being replaced.
 - Dynamic paths traverse already-constructed dynamic children. Missing/null children
-  and absent dynamic handles throw; construct children explicitly first. Do not
+  throw; construct children explicitly first. Do not
   bootstrap mixed tables beneath a dynamic receiver.
-- Cross-family mixed-table/dynamic paths and cross-family aggregate insertion through
-  nested writes remain deferred pending the Chapter 06 containment decision. Runtime
-  mixed entry storage of a dynamic handle is representation, not a mixed-table child.
-  Statically known unsupported combinations reject during preparation; unknown mixed
-  payloads are checked at runtime. This bounded gate does not redesign the existing
-  direct-write/construction boxing contract.
+- Cross-family mixed-table/dynamic paths and aggregate insertion reject under the
+  separated-family contract, consistently with direct writes and construction.
+  Statically known unsupported combinations reject during preparation; unknown
+  payloads are checked at runtime before destination mutation.
 
 Invalid keys skip later key/RHS evaluation. Failed RHS evaluation/conversion and
 path kind/missing/bounds checks cause **no write-induced partial creation or changes**.

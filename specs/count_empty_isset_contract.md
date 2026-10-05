@@ -154,7 +154,9 @@ Key expressions may mutate the root. Re-resolve the reached prefix from the boun
 root and saved earlier keys after each such expression; use its current state, never
 an earlier interior reference. If the prefix disappeared, stop without evaluating
 later keys. No source expression is repeated. No whole-container snapshot is implied.
-Cross-family mixed-table/dynamic paths remain deferred until Chapter 06 closeout.
+Cross-family mixed-table/dynamic paths are excluded by the approved
+[v0.2 family-separation contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05).
+Runtime/compiler migration remains a Chapter 06 implementation gate.
 
 This replaces the earlier eager-key proposal for probes; writes keep their separate
 keys/RHS/validation/commit ordering. Multiple probe operands, property paths and

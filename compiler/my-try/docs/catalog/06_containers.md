@@ -38,8 +38,9 @@ commas and explicit `Type::[...]` / `Type::{...}`; unknown targets fail preparat
 Factories perform runtime construction/data validation. User-defined types opt in
 through recognized interfaces, not method-name detection. Their compiler connection
 waits for class/struct method/interface support; automatic member mapping is deferred.
-Nested mixed/dynamic construction inherits its enclosing family, but both store
-mixed-only values; dynamic payloads use `dynamic_v` and preserve shared identity.
+Nested mixed/dynamic construction inherits its enclosing family. The approved
+separated-family contract requires same-family entries; the current mixed-only
+dynamic implementation still needs migration. Dynamic containers preserve shared identity.
 Function-valued entries are documented for later implementation. Compiler literal
 pre-preparation belongs to the [v0.3 plan](../../../../docs/v0.3/literal_construction_preparation.md).
 
@@ -80,16 +81,13 @@ The current runtime permits both relationships:
 - [`mixed_t`](../../../../runtime/include/scpp/support/mixed_t.hpp) can carry a dynamic
   handle under the `dynamic_v` kind.
 
-The user questioned whether mixed and dynamic should be permitted inside one another
-and requires the compiler to understand the intended distinction. Resolve whether
-this concerns storage representation, nested-construction defaults, or a stronger
-restriction on mixed/dynamic container families within one data tree. Do not infer
-the answer from existing runtime support alone.
-
-Until that discussion, continue under the current authoritative contracts; this debt
-does not itself change boxing, identity or nesting semantics and does not block the
-intermediate preparation/construction slices. Existing cross-family behavior must not
-be treated as final design approval merely because it passes tests.
+The user approved separate container families and tagged dynamic scalar/null values.
+The [top-level v0.2 amendment](../../../../specs/dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
+now owns that contract, including explicit scalar-only family conversions, shared
+dynamic containers and one null state. The stronger restriction is semantic, not
+merely a rename of mixed storage. Existing crossing behavior is implementation debt,
+not final approval because it passes tests. Core specification reconciliation is
+complete; runtime/compiler integration and JSON API migration remain open.
 
 The nested-write slice explicitly excludes cross-family paths and aggregate
 insertions. Mixed paths stay mixed-table paths; dynamic paths require constructed
@@ -1403,7 +1401,7 @@ auto a = b[static_cast<int_t>(0)];
 
 ## ARR-READ-002
 
-**v0.2 decision / target C++:** Shared mixed/dynamic value reads return mixed and preserve null-on-miss without creating entries; typed destinations then use checked conversion.
+**v0.2 decision / target C++:** Mixed reads return mixed; dynamic reads return dynamic under the approved separated-family contract. Both preserve same-family null-on-miss without creating entries; typed destinations then use checked conversion. The current runtime still returns mixed for dynamic reads and needs migration.
 
 ### Imported version 1
 

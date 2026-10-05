@@ -19,19 +19,60 @@ v0.2 construction standard. Older creation matrices below describe v0.1 dynamic
 defaults, not a fallback for an unresolved v0.2 target. Construction requires a known
 type and a recognized interface; data-dependent factory validation remains runtime.
 
-Nested unannotated data under mixed defaults to mixed; under dynamic it defaults to
-dynamic. Both mixed container payloads and dynamic objects store **mixed-only entry
-values**: scalars are boxed and a nested dynamic object is carried by `dynamic_v`,
-preserving shared identity. Inheriting a construction type is not converting every
-scalar to that type. This does not extend arbitrary object boxing or native references.
-
-The same container-element value admission applies to indexed assignment and append:
-a dynamic handle may be boxed into a mixed entry while retaining its identity.
-This is a specific construction/write boundary, not general implicit dynamic-to-mixed
-assignment. Nested RHS literals inherit the receiver's registered construction family.
+Nested unannotated data inherits its enclosing mixed or dynamic family. Entry values
+belong to that same family, including scalar/null leaves. Construction, assignment
+and append follow the separated-family amendment below; the earlier mixed-only
+entry and `dynamic_v` boxing proposal is superseded for v0.2.
 
 Brace notation and explicit `Type::{...}` / `Type::[...]` construction are agreed
 v0.2 semantics with implementation pending, not already-supported v0.1 forms.
+
+### v0.2 separated mixed/dynamic families — 2026-10-05
+
+This amendment records the approved replacement contract. It overrides the older
+object-only dynamic and cross-family boxing rules below **for v0.2**, not for v0.1.
+Implementation is in progress; the existing shared-hash runtime and its passing
+tests do not yet establish compliance. See the [implementation handoff](../compiler/my-try/docs/planning/mixed_dynamic_storage.md).
+
+- Both families represent null, bool, int, float, string and their own containers.
+  `dynamic` is no longer an object-only handle. A scalar dynamic is still statically
+  dynamic, not a mixed value or a one-element object.
+- Mixed containers contain mixed values; dynamic containers contain dynamic values.
+  Scalar expressions are boxed into the destination family. Neither family may
+  contain a container from the other, including through native adapters or aliases.
+- Mixed containers retain value/COW behavior. Dynamic container copies share identity;
+  mutation is visible through aliases. Scalar copies have value semantics. Replacing
+  a dynamic variable or by-value parameter replaces only that binding's value,
+  whether the old or new value is scalar or container.
+- Default dynamic is null. There is one null state, distinct from a constructed
+  empty container. No old absent-handle versus boxed-null distinction survives.
+- Cross-family scalar/null conversion is explicit and preserves kind and value.
+  Cross-family container conversion rejects, including explicit casts; recursive
+  conversion is deferred. An explicit target annotation does not authorize a crossing.
+  Reject statically known invalid crossings during preparation. Where the source
+  kind is unknown, check at runtime before replacing the receiving value.
+- Indexed reads and iteration values retain the receiver's family. A missing entry
+  yields null in that family. Key admission remains a separate int/string contract;
+  a private mixed scalar key carrier is not permission for mixed-valued dynamic entries.
+  This amendment does not add dynamic-typed keys to the supported source key domain.
+- Null mixed may bootstrap a table on write. Null dynamic requires explicit container
+  construction before mutation. Null or other non-container iteration throws.
+  Existing ordering, lazy probe/removal and write-failure guarantees remain in force.
+- Container shape remains derived from the internal hash's packed-array query.
+  Persistent `[]` versus `{}` identity is deferred, as are callable-valued entries,
+  dynamic `->`, recursive family conversion and reference foreach.
+
+The JSON direction is family-specific decoding: default dynamic, including scalar
+roots; an explicitly selected mixed mode produces value/COW trees. This does not
+introduce an API spelling or silently change the existing `result<mixed>` decode
+signature. JSON API/registration migration is a required integration step before
+claiming that default is available.
+
+Implementation constraints: independent public types, reusable private mechanics,
+inline numeric/bool payloads rather than per-scalar shared allocations, and indirect
+string/shared-container storage for dynamic. The agreed 24-byte target is an ABI
+measurement goal, not a portable language size guarantee. Shared machinery must not
+provide an admission bypass or duplicate scalar operator semantics.
 
 ---
 
