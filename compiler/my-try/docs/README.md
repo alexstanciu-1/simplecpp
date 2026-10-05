@@ -20,6 +20,7 @@ experiment retained for regressions, not a second semantic development path.
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
 | Preparation / C++ emission boundary audit | [Findings, evidence and open repair gates](planning/preparation_emission_audit.md) |
 | Stage dependency and ownership audit | [Forward dependencies, shared structures and discussion groups](planning/stage_boundary_audit.md) |
+| Stage-owned processing refactor | [Agreed no-visitor boundary, implementation batches and open questions](planning/stage_owned_processing.md) |
 | v0.2 early rejection versus runtime guards | [Preparation diagnostic policy](../../../specs/v0_2_preparation_diagnostics.md) |
 | Mandatory performance task once operational | [PCH findings, incremental builds and LLVM/IR investigation](planning/compile_performance.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |

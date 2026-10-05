@@ -5,6 +5,12 @@ Recorded 2026-10-05 against `9cf1d28c`, with the callable correction and collect
 move described below applied. Findings are for discussion, not authorization for a
 pipeline rewrite. Language semantics remain defined by top-level specs.
 
+Follow-up discussion selected stage-owned traversal and dispatch, with no required
+visitor on shared structures and collection explicitly a parsing sub-step. See the
+[refactor plan](stage_owned_processing.md) for the agreed destination, proposed
+batches and remaining questions. Findings below describe the audited implementation;
+the planning follow-up does not mark them repaired.
+
 ## Outcome and rule
 
 The main pipeline is sequenced by the coordinator, not by stages calling the next
@@ -37,8 +43,9 @@ separate decision in SB-02; this audit does not silently forbid all visitors.
 - Added callable regression assertions for the absence of backend methods and both
   backend-owned dispatch paths. No wider findings below were implemented.
 
-The existing `require_signature(preparation_context)` semantic completion hook is
-retained, as agreed. Its implications are explicitly included in SB-02.
+The existing `require_signature(preparation_context)` semantic completion hook was
+retained in that slice. The follow-up plan now places completion/dependency work in
+analysis; the implementation has not yet changed. Its implications are in SB-02.
 
 ## Coverage and method
 
@@ -104,12 +111,12 @@ C++ initiates its own visit; preparation initiates its own node dispatch. This i
 less coupled than the removed hook's direct `CPP_Callables` call, but shared syntax
 still advertises a specific backend and concrete preparation services.
 
-**Options to discuss:** explicitly retain these as narrow shared-model visitor/query
-exceptions, or move phase adapters to consumers and keep a neutral typed syntax
-dispatch protocol. Do not replace every specialized node with one giant switch,
-duplicate child traversal, or rename C++ hooks without removing their dependency.
-Attached prepared facts, owning fields and neutral `maintain()` traversal can remain.
-This would affect many nodes and consumers; it is not part of the current patch.
+**Follow-up decision:** move phase adapters and traversal to their consuming stages;
+do not replace them with a shared visitor or `accept()` protocol. Reuse typed workers
+behind stage-local family dispatch. Attached facts and owning fields remain; the
+neutral maintenance boundary is an explicit question in the refactor plan. Do not
+introduce one giant switch or duplicate recursion within an operation. This affects
+many nodes and consumers and remains unimplemented at this audit checkpoint.
 
 ## SB-03 — parse-layer lookup calls preparation observation
 
