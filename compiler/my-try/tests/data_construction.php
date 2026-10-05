@@ -150,7 +150,7 @@ data_check($parsed->complete, 'Parsing did not recover after an invalid edit');
 data_check($repaired->entries[0]->key->literal_spelling($parsed->tokens) === "'repaired'", 'Recovery retained stale entry syntax');
 data_tree($parsed->root, new \SplObjectStorage());
 
-// No successful semantic/generation publication is implied by parsing data notation.
+// Unknown targets and non-scalar program-entry returns still reject during preparation.
 foreach (['[]', '{key: 1}', 'dynamic::{key: 1}'] as $source)
 {
 	Compiler_Lifecycle::reset();
@@ -165,9 +165,10 @@ foreach (['[]', '{key: 1}', 'dynamic::{key: 1}'] as $source)
 		$compiler->prepare();
 	}
 	catch (\RuntimeException $error) {
-		$failed = str_contains($error->getMessage(), 'Preparation is not supported for this node');
+		$failed = str_contains($error->getMessage(), 'requires a known concrete target')
+			|| str_contains($error->getMessage(), 'entry return requires');
 	}
-	data_check($failed && Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Data syntax escaped deferred preparation');
+	data_check($failed && Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Invalid data return escaped preparation');
 }
 
 echo "data construction syntax OK\n";

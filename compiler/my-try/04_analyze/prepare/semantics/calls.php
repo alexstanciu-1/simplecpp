@@ -49,11 +49,11 @@ final class Call_Preparation
 		// Prepare arguments in source order; references must preserve the selected storage.
 		foreach ($arguments as $index => $argument)
 		{
-			$value = Expression_Preparation::prepare($argument, $context);
 			$parameter_index /** int */ = $facts->fixed_count;
 			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
 			$argument_type = $parameter->element_type ?? $parameter->type;
+			$value = Expression_Preparation::prepare($argument, $context, $argument_type);
 			$prepared_argument = new prepared_call_argument();
 			if ($parameter->mode === passing_mode::reference) {
 				if ((!$value->addressable) || !Type_Preparation::same_storage_type($value->type, $parameter->type)) {

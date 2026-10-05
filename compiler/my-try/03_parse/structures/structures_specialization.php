@@ -1297,6 +1297,12 @@ final class type_use_modifier_node extends type_node
 final class data_construction_node extends expression_node
 {
 	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_data_construction $prepared_facts = null;
+
+	public function require_preparation(): prepared_expression { return $this->prepared_facts; }
+	public function require_data_preparation(): prepared_data_construction { return $this->prepared_facts; }
 
 	public ?type_node $target_type = null;
 	public Storage $entries /** Storage<data_entry_node> */;
@@ -1353,6 +1359,11 @@ final class data_construction_node extends expression_node
 final class data_entry_node extends ast_node
 {
 	use Node_Source_Span;
+	use Preparation_Facts;
+
+	private ?prepared_data_entry $prepared_facts = null;
+
+	public function require_preparation(): prepared_data_entry { return $this->prepared_facts; }
 
 	public ?expression_node $key = null;
 	public expression_node $value;

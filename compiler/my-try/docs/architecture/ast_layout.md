@@ -112,7 +112,12 @@ name occurrences. `literal_spelling(token_list)` normalizes bare identifiers to
 quoted spelling for the ordinary string decoder; no data-notation branch is added
 to preparation. Quoted and bare keys retain their real source spans.
 
-Factory resolution, lifetime enforcement and C++ construction remain deferred.
+The construction attaches `prepared_data_construction` (binding and result type);
+each entry attaches `prepared_data_entry` (optional key conversion and required value
+conversion). Existing maintenance clears these facts. Syntax remains the sole ordered
+entry/expression graph. `Data_Construction_Preparation` owns contextual typing and
+factory-binding selection; neither node has a processing hook. Source lifetime
+enforcement and C++ construction remain deferred.
 The parked LLVM reader only adapts to the renamed positional entry structure;
 it rejects keyed/brace/explicit-target constructions and gains no new lowering.
 

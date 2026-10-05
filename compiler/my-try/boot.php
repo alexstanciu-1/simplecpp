@@ -66,6 +66,7 @@ require_once __DIR__ . '/04_analyze/prepare/cleanup.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/types.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/capabilities.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/initialization.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/data_construction.php';
 require_once __DIR__ . '/04_analyze/conversions/strings.php';
 require_once __DIR__ . '/04_analyze/conversions/booleans.php';
 require_once __DIR__ . '/04_analyze/conversions/truthiness.php';

@@ -14,6 +14,8 @@ enum conversion_context
 	case concatenation;
 	case conditional_branch;
 	case coalesce_value;
+	case initializer_key;
+	case initializer_value;
 }
 
 enum conversion_operation

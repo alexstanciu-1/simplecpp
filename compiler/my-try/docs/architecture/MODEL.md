@@ -104,6 +104,14 @@ interface facts. Installed declarations freeze once a binding is published; conf
 changes require reset. Preparation reset keeps these roots, syntax/type reset replaces
 them. No worker or backend spelling is retained. See the [Chapter 06 checkpoint](../catalog/06_containers.md#initialization-binding-and-input-model--2026-10-05).
 
+Construction syntax now owns `prepared_data_construction` with its selected binding
+and inherited result type. Each existing entry owns `prepared_data_entry` conversions;
+no prepared entry inventory duplicates syntax order. The expected construction type
+is a transient explicit argument from a typed consumer, not mutable ambient context
+or another retained type field. Explicit target syntax takes precedence. Cleanup and
+incremental re-preparation follow the ordinary attached-fact lifecycle. These facts
+do not enable C++ execution or source input-view lifetime operations.
+
 ## AST and scopes
 
 The property-free `ast_node` base supplies structural contracts; specialized node

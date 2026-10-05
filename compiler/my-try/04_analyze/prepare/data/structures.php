@@ -13,6 +13,19 @@ abstract class prepared_expression {
 	public bool $addressable = false;
 }
 
+/** Syntax owns entry order; the binding owns the selected factory contract. */
+final class prepared_data_construction extends prepared_expression
+{
+	public initialization_binding $binding;
+}
+
+/** Conversions belong to the consuming entry, not synthetic cast syntax. */
+final class prepared_data_entry
+{
+	public ?conversion_decision $key_conversion = null;
+	public conversion_decision $value_conversion;
+}
+
 enum take_operation { case nullable_value; case false_result; case error_result; case boolean_result; }
 
 final class prepared_take extends prepared_expression

@@ -10,6 +10,15 @@ final class Conversion_Preparation
 		conversion_context $context): conversion_decision
 	{
 		Type_Preparation::require_value_type($target);
+		if (($context === conversion_context::initializer_key) || ($context === conversion_context::initializer_value)) {
+			if (Mixed_Conversions::is_mixed($source) || Mixed_Conversions::is_mixed($target)) {
+				return Mixed_Conversions::initializer($source, $target, $context);
+			}
+			// Ordinary typed input follows the same boundaries as a by-value argument.
+			$input = self::decide($source, $target, conversion_context::argument);
+			$input->context = $context;
+			return $input;
+		}
 		if ($context === conversion_context::concatenation) {
 			return String_Conversions::decide_text($source, $target, $context);
 		}

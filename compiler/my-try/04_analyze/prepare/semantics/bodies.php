@@ -120,9 +120,16 @@ final class Body_Preparation
 		if (($type_syntax !== null) && (q_count($before_initializer) !== 0)) {
 			throw new \RuntimeException('S2S local ' . $entry->name . ' is already declared in this scope');
 		}
+		$expected_type /** nullable<canonical_type_use> */ = null;
 		if ($type_syntax !== null) {
 			$type /** type_node */ = $type_syntax;
 			$binding->type = Type_Preparation::type($type, $context);
+			$expected_type = $binding->type;
+		}
+		else {
+			// Only an already established destination supplies context to a literal.
+			$existing /** vector<prepared_storage> */ = $locals->named($entry->name);
+			if (q_count($existing) === 1) { $expected_type = $existing[0]->storage_type(); }
 		}
 
 		// Inferred assignment expressions evaluate inner writes before classifying the outer target.
@@ -134,7 +141,7 @@ final class Body_Preparation
 		try {
 			if ($initializer !== null) {
 				$value_node /** expression_node */ = $initializer;
-				$value = Expression_Preparation::prepare($value_node, $context);
+				$value = Expression_Preparation::prepare($value_node, $context, $expected_type);
 			}
 		}
 		finally {
@@ -216,7 +223,7 @@ final class Body_Preparation
 		}
 
 		$expression /** expression_node */ = $syntax->expression;
-		$value = Expression_Preparation::prepare($expression, $context);
+		$value = Expression_Preparation::prepare($expression, $context, $context->return_type);
 		if ($context->return_type !== null) {
 			$type /** canonical_type_use */ = $context->return_type;
 			$facts->conversion = Conversion_Preparation::decide(

@@ -3,8 +3,9 @@ Doc Status: planning
 
 Recorded 2026-10-05. Hybrid direction and general stage boundary adopted;
 notation/interface standards complete; shared syntax and callable model implemented.
-The shared initialization-binding and internal input-type model is implemented;
-literal preparation, non-escape enforcement and executable construction remain pending.
+The shared initialization-binding/internal input-type model and contextual literal
+preparation are implemented. Runtime adapters, C++ construction and source non-escape
+enforcement remain pending; preparation success is not executable support.
 Language authority remains [the top-level standard](../../../../specs/data_initialization.md).
 Chapter closeout is blocked by [CH06-MIX-DYN-01](../catalog/06_containers.md#ch06-mix-dyn-01--mixeddynamic-containment-contract):
 discuss mixed/dynamic containment at the end of Chapter 06. Intermediate slices

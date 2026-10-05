@@ -6,9 +6,14 @@ namespace scpp\compiler;
 final class Expression_Preparation
 {
 	/** Analysis owns family dispatch and attaches the typed result before returning it. */
-	public static function prepare(expression_node $node, preparation_context $context): prepared_expression
+	public static function prepare(expression_node $node, preparation_context $context,
+		?canonical_type_use $expected_type = null): prepared_expression
 	{
-		if ($node instanceof null_literal_node) {
+		if ($node instanceof data_construction_node) {
+			$construction = object_cast($node, data_construction_node::class);
+			$construction->set_preparation(Data_Construction_Preparation::prepare($construction, $context, $expected_type));
+		}
+		elseif ($node instanceof null_literal_node) {
 			$null_literal = object_cast($node, null_literal_node::class);
 			$null_literal->set_preparation(self::prepare_null());
 		}
@@ -159,7 +164,7 @@ final class Expression_Preparation
 		$binding->type = $place->type;
 		$binding->resolved_kind = binding_kind::assignment;
 		$binding->declaration = $place->field->declaration;
-		$value = self::prepare($initializer, $context);
+		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment);
 		Capability_Preparation::require_copy($binding->type, $context);

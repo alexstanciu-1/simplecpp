@@ -21,6 +21,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
 | `semantics/calls.php` | Common selected-call signature completion and argument admission |
 | `semantics/initialization.php` | Shared initialization-interface selection/substitution and factory/input validation; model query only, not literal execution |
+| `semantics/data_construction.php` | Contextual literal targets, input-shape selection and ordered entry conversion facts through common bindings |
 | `semantics/selection_results.php` | Shared matching-scalar value-result admission and conversions |
 | `semantics/matches.php` | Strict constant-label match preparation and per-arm facts |
 | `semantics/capabilities.php` | Dependency-aware capability queries and owned-copy admission |

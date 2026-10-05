@@ -84,8 +84,8 @@ documenting the current runtime, and do not mark the chapter complete while it i
 
 ## Handoff from chapter 05 — 2026-10-04
 
-The syntax-only checkpoint below is subsequent to this handoff; construction remains
-semantically deferred until the recognized interface protocol is implemented.
+The syntax, binding and preparation checkpoints below are subsequent to this handoff;
+construction execution remains deferred until runtime adapters and lowering exist.
 
 Chapter 05's [bounded positive pass](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04)
 is complete with named debt. Nullable/Result/mixed conversions, conditions, value
@@ -242,8 +242,8 @@ and reset. No native compiler build, conversion, broad regression or executable
 construction proof is claimed. The unrelated local dependency-cleanup test edit was
 left untouched and is not included in this run.
 
-Next: contextual literal preparation and ordered conversion facts, followed by
-runtime adapters/C++ construction. Preserve the common-family path. User-written
+The subsequent checkpoint implements contextual literal preparation and ordered
+conversion facts. Next are runtime adapters/C++ construction. Preserve the common-family path. User-written
 factory execution still requires interface/method support and enforced non-escape.
 
 Concrete-target/property clarification: a known concrete property type may supply
@@ -254,6 +254,53 @@ implementation set. Construction and assignment compatibility are separate check
 Property-driven object initialization and automatic key-to-property mapping remain
 deferred. The [top-level rule](../../../../specs/data_initialization.md#concrete-targets-and-property-contexts)
 owns this contract; it does not introduce source class/interface support here.
+
+### Contextual literal preparation — 2026-10-05
+
+`Expression_Preparation::prepare` accepts an optional expected type, passed explicitly
+by typed declarations, established local/field assignments, fixed/variadic arguments
+and function returns. Only direct data constructions consume it; ordinary expressions
+retain their existing typing. Parenthesized literals reuse the same node. Explicit
+`Type::[...]` / `Type::{...}` overrides context, with any outer conversion checked
+separately. No expected-type inference through ternary/coalescing joins is introduced.
+
+One `Data_Construction_Preparation` worker handles all registered families. It checks
+shape, resolves the common initialization binding, and prepares each key before its
+value in source order. It attaches `prepared_data_construction` with the binding/result
+and `prepared_data_entry` with key/value conversions. Syntax remains the sole owner of
+entry order and expressions; duplicates survive, and no second entry tree/hash exists.
+Nested literals use the binding's contextual target, separately from its storage type.
+Entry expressions can call functions or modify existing storage, but cannot introduce
+locals. The construction result is not addressable; reference arguments reject it.
+
+`initializer_key` / `initializer_value` conversion contexts reuse by-value argument
+rules. The mixed conversion owner additionally admits dynamic-to-mixed boxing for
+initializer values, preserving the existing `mixed_dynamic_box` decision; ordinary
+implicit assignment remains unchanged. Statically invalid mixed key types reject;
+mixed-typed keys remain admitted for runtime kind validation. This follows the current
+contract and **does not resolve CH06-MIX-DYN-01**.
+
+The existing cleanup traversal clears construction and entry facts. Function signature
+edits reprepare retained literal bodies against the new target; failed preparation
+clears stale facts and recovery rebuilds them. Known existing struct-field types can
+supply context to field assignment; source object factories and automatic mapping of
+initializer keys onto properties remain deferred.
+
+Evidence: `/tmp/my-try-data-preparation-20261005-2` (ten focused PHP suites) and
+`/tmp/my-try-data-preparation-regression-20261005` (conversion, mixed, incremental C++,
+control-flow and S2S suites), shared runner, 12 slots, CLI fallback. The first focused
+run exposed a test diagnostic-text mismatch, corrected before the passing run.
+Tests cover supported boundaries/nesting, shape/key/value rejections, explicit target
+precedence, context isolation, entry cleanup and incremental signature failure/recovery.
+Generated-source regression exports are not execution proofs for this new feature.
+All 1,049 S2S C++ exports are byte-identical to the pre-feature backend-boundary
+checkpoint at `/tmp/my-try-backend-boundary-20261005-2/s2s`.
+No native compiler rebuild, conversion or new runtime execution was performed.
+
+**Execution gate:** C++ generation still rejects data-construction nodes and publishes
+no executable output for them. Runtime adapters, sequenced temporary input emission,
+ordering/duplicate/failure-cleanup execution proofs and source non-escape enforcement
+remain pending. Catalog rows below are not marked end-to-end supported by this slice.
 
 ### End-to-end catalog rows
 

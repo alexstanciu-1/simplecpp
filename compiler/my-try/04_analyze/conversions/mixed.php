@@ -5,6 +5,31 @@ namespace scpp\compiler;
 
 final class Mixed_Conversions
 {
+	/** Initializer values admit dynamic boxing; unknown mixed key kinds stay runtime checked. */
+	public static function initializer(canonical_type_use $source, canonical_type_use $target,
+		conversion_context $context): conversion_decision
+	{
+		if ($context === conversion_context::initializer_key) {
+			if (self::is_mixed($target)) {
+				if (!self::is_mixed($source) && !String_Conversions::is_string($source)
+					&& !$source->matches(Language_Types::integer(Model::$language_scope))) {
+					throw new \RuntimeException('S2S mixed initializer keys require int, string or runtime-checked mixed');
+				}
+			}
+		}
+		elseif ($context === conversion_context::initializer_value) {
+			if (self::is_mixed($target) && !($source->by_value() || $target->by_value())) {
+				if (Type_Queries::canonical($source)->definition() instanceof dynamic_semantics) {
+					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::mixed_dynamic_box);
+				}
+			}
+		}
+		else { throw new \LogicException('Expected initializer conversion context'); }
+		$decision = self::decide($source, $target, conversion_context::argument);
+		$decision->context = $context;
+		return $decision;
+	}
+
 	/** Explicit shared-handle bridges are distinct from ordinary scalar boxing. */
 	public static function is_dynamic_bridge(canonical_type_use $source, canonical_type_use $target): bool
 	{
