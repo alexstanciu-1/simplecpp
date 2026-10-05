@@ -12,8 +12,8 @@ batches and remaining questions. Findings below describe the audited implementat
 the planning follow-up alone does not mark them repaired. Batch A subsequently
 removed AST C++ hooks and the shared C++ worker interface. Batch B removed AST
 semantic hooks and callable/work-selection processing from shared identities.
-SB-02's shared-model hooks are resolved; analysis-internal work-record adapters are
-tracked separately as batch C. SB-01 and SB-03–07 retain their recorded scope.
+SB-02's shared-model hooks are resolved. Batch C also moved analysis-internal
+work-record dispatch into its worker. SB-01 and SB-03–07 retain their recorded scope.
 
 ## Outcome and rule
 
@@ -122,8 +122,9 @@ behind stage-local family dispatch. Attached facts and owning fields remain; the
 neutral maintenance boundary is an explicit question in the refactor plan. Do not
 introduce one giant switch or duplicate recursion within an operation. This affects
 many nodes and consumers; batches A/B now implement it. Neutral maintenance is
-explicitly retained, with caller-owned recursion. See the plan for validation and
-the remaining analysis-internal work adapter batch.
+explicitly retained, with caller-owned recursion. Batch C subsequently removed
+analysis-internal work adapters too. See the plan for validation and the remaining
+lifecycle/consumption design gates.
 
 ## SB-03 — parse-layer lookup calls preparation observation
 

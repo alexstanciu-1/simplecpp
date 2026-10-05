@@ -222,7 +222,16 @@ final class Preparation_Worker
 		if ($owner->change_status !== change_state::added) {
 			$owner->change_status = change_state::changed;
 		}
-		$owner->enqueue($this);
+		if ($owner instanceof declaration_work) {
+			$this->enqueue_declaration(object_cast($owner, declaration_work::class));
+		}
+		elseif ($owner instanceof function_body_work) {
+			$this->enqueue_function_body(object_cast($owner, function_body_work::class));
+		}
+		elseif ($owner instanceof file_body_work) {
+			$this->enqueue_file_body(object_cast($owner, file_body_work::class));
+		}
+		else { throw new \LogicException('Unsupported preparation work role'); }
 	}
 
 	/** Apply the common queue guard after recording any declaration change. */
@@ -236,7 +245,7 @@ final class Preparation_Worker
 	}
 
 	/** Declaration change state follows its work state even during recursive processing. */
-	public function enqueue_declaration(declaration_work $owner): void
+	private function enqueue_declaration(declaration_work $owner): void
 	{
 		$entry = $owner->required_declaration();
 		if ($entry->change_status !== change_state::added) {
@@ -247,14 +256,14 @@ final class Preparation_Worker
 		}
 	}
 
-	public function enqueue_function_body(function_body_work $owner): void
+	private function enqueue_function_body(function_body_work $owner): void
 	{
 		if ($this->queue_ready($owner)) {
 			$this->function_bodies[$owner] = true;
 		}
 	}
 
-	public function enqueue_file_body(file_body_work $owner): void
+	private function enqueue_file_body(file_body_work $owner): void
 	{
 		if ($this->queue_ready($owner)) {
 			$this->file_bodies[$owner] = true;
@@ -386,9 +395,9 @@ final class Preparation_Worker
 		$context = $this->context($owner);
 		try
 		{
-			$changed = $owner->rebuild($this, $context, $old_dependencies);
+			$changed = $this->rebuild_declaration($owner, $context, $old_dependencies);
 			$this->settle($owner);
-			$owner->settle_members($this);
+			$this->settle_members($owner);
 			if ($changed || $recovering) {
 				$owner->version++;
 				$owner->source->preparation_changes[$owner] = true;
@@ -412,7 +421,7 @@ final class Preparation_Worker
 		$context = $this->context($owner);
 		try
 		{
-			$owner->rebuild($this, $context);
+			$this->rebuild_body($owner, $context);
 			$this->settle($owner);
 			$owner->version++;
 			$owner->source->preparation_changes[$owner] = true;
@@ -420,6 +429,40 @@ final class Preparation_Worker
 		catch (\RuntimeException $error) {
 			$this->failure($owner, $error->getMessage());
 		}
+	}
+
+	/** Dispatch by retained work role; records carry identities, not processing hooks. */
+	private function rebuild_declaration(declaration_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
+	{
+		if ($owner instanceof function_signature_work) {
+			return $this->prepare_function_signature(object_cast($owner, function_signature_work::class), $context);
+		}
+		if ($owner instanceof record_definition_work) {
+			return $this->prepare_record_definition(object_cast($owner, record_definition_work::class), $context, $previous);
+		}
+		throw new \LogicException('Unsupported declaration work role');
+	}
+
+	private function settle_members(declaration_work $owner): void
+	{
+		if ($owner instanceof function_signature_work) {
+			$this->settle_parameters(object_cast($owner, function_signature_work::class)->function_definition());
+		}
+		elseif ($owner instanceof record_definition_work) {
+			$this->settle_fields(object_cast($owner, record_definition_work::class)->record_definition());
+		}
+		else { throw new \LogicException('Unsupported declaration work role'); }
+	}
+
+	private function rebuild_body(body_work $owner, preparation_context $context): void
+	{
+		if ($owner instanceof function_body_work) {
+			$this->prepare_function_body(object_cast($owner, function_body_work::class), $context);
+		}
+		elseif ($owner instanceof file_body_work) {
+			$this->prepare_file_body(object_cast($owner, file_body_work::class), $context);
+		}
+		else { throw new \LogicException('Unsupported body work role'); }
 	}
 
 	/** Success alone clears persistent selection/error state; prior increments need no reset. */
@@ -432,7 +475,7 @@ final class Preparation_Worker
 	}
 
 	/** Preserve parameter fact identities when the effective signature is unchanged. */
-	public function prepare_function_signature(function_signature_work $owner, preparation_context $context): bool
+	private function prepare_function_signature(function_signature_work $owner, preparation_context $context): bool
 	{
 		$syntax = $owner->function_definition()->syntax();
 		$old = $syntax->preparation();
@@ -447,7 +490,7 @@ final class Preparation_Worker
 	}
 
 	/** Nested layout versions matter even if this record retains the same field type identities. */
-	public function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
+	private function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
 	{
 		$syntax = $owner->record_definition()->syntax();
 		$old = $syntax->preparation();
@@ -467,7 +510,7 @@ final class Preparation_Worker
 	}
 
 	/** Demand the signature before replacing selected body facts. */
-	public function prepare_function_body(function_body_work $owner, preparation_context $context): void
+	private function prepare_function_body(function_body_work $owner, preparation_context $context): void
 	{
 		$entry = $owner->function_definition();
 		$syntax = $entry->syntax();
@@ -477,14 +520,14 @@ final class Preparation_Worker
 		$syntax->body->syntax_changed = false;
 	}
 
-	public function prepare_file_body(file_body_work $owner, preparation_context $context): void
+	private function prepare_file_body(file_body_work $owner, preparation_context $context): void
 	{
 		$this->file_body($owner->source->root, $context);
 		$owner->source->root->body->syntax_changed = false;
 	}
 
 	/** Members settle with their enclosing declaration, never during parsing. */
-	public function settle_parameters(collected_function $entry): void
+	private function settle_parameters(collected_function $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
 		$parameters /** Storage<parameter_node> */ = $entry->syntax()->parameters;
@@ -494,7 +537,7 @@ final class Preparation_Worker
 	}
 
 	/** Fields share their record's completion boundary. */
-	public function settle_fields(collected_struct $entry): void
+	private function settle_fields(collected_struct $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
 		$fields /** Storage<field_node> */ = $entry->syntax()->fields;
@@ -712,7 +755,7 @@ final class Preparation_Worker
 	}
 
 	/** Only declarations can be dependency targets; remove incoming edges before common cleanup. */
-	public function retire_declaration(declaration_work $owner): void
+	private function retire_declaration(declaration_work $owner): void
 	{
 		foreach ($owner->dependents as $dependent /** @object-key */) {
 			unset($dependent->dependencies[$owner]);
@@ -720,12 +763,12 @@ final class Preparation_Worker
 		unset($this->declarations[$owner]);
 	}
 
-	public function retire_function_body(function_body_work $owner): void
+	private function retire_function_body(function_body_work $owner): void
 	{
 		unset($this->function_bodies[$owner]);
 	}
 
-	public function retire_file_body(file_body_work $owner): void
+	private function retire_file_body(file_body_work $owner): void
 	{
 		unset($this->file_bodies[$owner]);
 	}
@@ -735,7 +778,16 @@ final class Preparation_Worker
 	{
 		$owner->change_status = change_state::deleted;
 		$owner->source->preparation_changes[$owner] = true;
-		$owner->retire_from($this);
+		if ($owner instanceof declaration_work) {
+			$this->retire_declaration(object_cast($owner, declaration_work::class));
+		}
+		elseif ($owner instanceof function_body_work) {
+			$this->retire_function_body(object_cast($owner, function_body_work::class));
+		}
+		elseif ($owner instanceof file_body_work) {
+			$this->retire_file_body(object_cast($owner, file_body_work::class));
+		}
+		else { throw new \LogicException('Unsupported preparation work role'); }
 		$this->detach_dependencies($owner);
 		$owner->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		unset($this->owners[$owner]);

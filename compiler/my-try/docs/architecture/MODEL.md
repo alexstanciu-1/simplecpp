@@ -189,8 +189,9 @@ Preparation dispatch belongs to expression, type, body and specialized analysis
 workers. They consume typed fields with one invocation-local context and attach
 facts; nodes expose no `prepare`, completion, loop-processing or constant-evaluation
 hooks. `Preparation_Worker` selects declaration and collected-definition work itself.
-Analysis-internal work records still dispatch scheduling/rebuild/settlement to
-`Preparation_Worker`; removing those adapters is the next planned batch.
+Analysis-internal work records retain typed identities, state and queries only.
+`Preparation_Worker` owns queueing, rebuild, member-settlement and retirement
+dispatch; records neither invoke nor retain processing workers/contexts.
 `File_Preparation` is the standalone entry adapter to that scheduler. Facts are
 attached to syntax, not token-indexed maps. See [preparation](../../04_analyze/prepare/README.md).
 
@@ -198,7 +199,7 @@ C++ emission has no node-owned operation hook. `CPP_Syntax` selects typed handle
 through backend-owned expression/statement/interpolation dispatch; handlers control
 their own child traversal. Shared syntax exposes no backend worker protocol or
 universal visitor. The [stage-owned processing plan](../planning/stage_owned_processing.md)
-tracks the remaining preparation and lifecycle batches.
+tracks the remaining lifecycle and backend-consumption batches.
 
 Maintenance is node-owned traversal through named owning fields. Workers implement
 `enter`, `edge` and `token_index`; edge handling chooses recursion. Inspection

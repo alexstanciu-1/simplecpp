@@ -95,7 +95,8 @@ are inventoried in the [stage-boundary audit](../planning/stage_boundary_audit.m
 with repairs sequenced by the [stage-owned processing plan](../planning/stage_owned_processing.md).
 AST preparation/C++ hooks and collected callable/work-selection processing hooks
 have been removed. Stage workers own dispatch/traversal and attached-fact processing.
-Analysis-internal work adapters and cross-owner lifecycle mutations remain pending;
+Analysis-internal work dispatch also belongs to the worker, not retained records.
+Cross-owner lifecycle mutations remain pending;
 neutral maintenance remains a structural facility with caller-controlled recursion.
 
 Workers maintain indexes when indexed names/membership change. Scope methods expose

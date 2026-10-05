@@ -35,12 +35,13 @@ No separate resolution pass precedes it. LLVM preparation remains
 bodies are processing units, never symbols. Fields/parameters settle with their
 definition. Replacing a body transfers its existing work identity.
 
-Analysis-internal work hooks currently delegate queueing, rebuilding, member settlement and typed retirement
-to the worker. Retirement removes each role from its own queue; only declaration
+The worker owns typed dispatch for queueing, rebuilding, member settlement and
+retirement. Work records expose state, identity and typed queries, not processing
+hooks or worker/context parameters. Retirement removes each role from its own queue; only declaration
 work unlinks incoming declaration dependencies. Common retirement clears outgoing
-links and shared indexes after dependent notification. These record-to-worker
-adapters are the next refactor batch; syntax and collected identities no longer
-select work or invoke preparation.
+links and shared indexes after dependent notification. Neither work records nor
+syntax and collected identities select work or invoke preparation. This does not
+change the existing frontend invalidation or cross-owner retirement protocol.
 Declaration work settles before separate function/file body lists. Identity sets
 deduplicate scheduling. Unchanged ready owners retain their facts. The worker creates
 one context per rebuild; function-body setup seeds its locals and return type.

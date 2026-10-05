@@ -51,12 +51,6 @@ abstract class preparation_owner
 
 	/** Common optional declaration query; specialized accessors have distinct names. */
 	abstract public function declaration(): ?collected_definition;
-
-	/** Dispatch selects the work list; scheduling policy stays in the worker. */
-	abstract public function enqueue(Preparation_Worker $worker): void;
-
-	/** Select typed retirement; the worker owns unlinking and queue maintenance. */
-	abstract public function retire_from(Preparation_Worker $worker): void;
 }
 
 /** Declaration work is independently settled before any body consumes its facts. */
@@ -73,20 +67,6 @@ abstract class declaration_work extends preparation_owner
 	{
 		return preparation_kind::declaration;
 	}
-
-	public function enqueue(Preparation_Worker $worker): void
-	{
-		$worker->enqueue_declaration($this);
-	}
-
-	public function retire_from(Preparation_Worker $worker): void
-	{
-		$worker->retire_declaration($this);
-	}
-
-	abstract public function rebuild(Preparation_Worker $worker, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool;
-
-	abstract public function settle_members(Preparation_Worker $worker): void;
 }
 
 final class function_signature_work extends declaration_work
@@ -107,16 +87,6 @@ final class function_signature_work extends declaration_work
 	public function function_definition(): collected_function
 	{
 		return $this->definition;
-	}
-
-	public function rebuild(Preparation_Worker $worker, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
-	{
-		return $worker->prepare_function_signature($this, $context);
-	}
-
-	public function settle_members(Preparation_Worker $worker): void
-	{
-		$worker->settle_parameters($this->definition);
 	}
 }
 
@@ -139,22 +109,11 @@ final class record_definition_work extends declaration_work
 	{
 		return $this->definition;
 	}
-
-	public function rebuild(Preparation_Worker $worker, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
-	{
-		return $worker->prepare_record_definition($this, $context, $previous);
-	}
-
-	public function settle_members(Preparation_Worker $worker): void
-	{
-		$worker->settle_fields($this->definition);
-	}
 }
 
 /** A body is an executable work unit, never a collected symbol. */
 abstract class body_work extends preparation_owner
 {
-	abstract public function rebuild(Preparation_Worker $worker, preparation_context $context): void;
 }
 
 final class function_body_work extends body_work
@@ -181,21 +140,6 @@ final class function_body_work extends body_work
 	{
 		return preparation_kind::function_body;
 	}
-
-	public function enqueue(Preparation_Worker $worker): void
-	{
-		$worker->enqueue_function_body($this);
-	}
-
-	public function retire_from(Preparation_Worker $worker): void
-	{
-		$worker->retire_function_body($this);
-	}
-
-	public function rebuild(Preparation_Worker $worker, preparation_context $context): void
-	{
-		$worker->prepare_function_body($this, $context);
-	}
 }
 
 final class file_body_work extends body_work
@@ -208,20 +152,5 @@ final class file_body_work extends body_work
 	public function kind(): preparation_kind
 	{
 		return preparation_kind::file_body;
-	}
-
-	public function enqueue(Preparation_Worker $worker): void
-	{
-		$worker->enqueue_file_body($this);
-	}
-
-	public function retire_from(Preparation_Worker $worker): void
-	{
-		$worker->retire_file_body($this);
-	}
-
-	public function rebuild(Preparation_Worker $worker, preparation_context $context): void
-	{
-		$worker->prepare_file_body($this, $context);
 	}
 }

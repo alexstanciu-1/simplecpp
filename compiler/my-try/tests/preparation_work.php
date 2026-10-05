@@ -39,16 +39,30 @@ work_check($layout->required_declaration() === $layout->record_definition(), 'Sp
 work_check($signature !== $body, 'Signature and body work collapsed');
 work_check(count($collection->entries) === $count, 'Preparation manufactured body symbols');
 foreach ([$layout, $signature, $body, $entry] as $work) {
+	foreach (['enqueue', 'rebuild', 'settle_members', 'retire_from'] as $hook) {
+		work_check(!method_exists($work, $hook), 'Work record retained processing hook: ' . $hook);
+	}
 	work_check($work->source === $collection, 'Work source does not match its canonical declaration');
 	work_check(!property_exists($work, 'kind') && !property_exists($work, 'declaration'), 'Mutable tag/nullable declaration storage survived');
 	work_check($work->state === preparation_state::ready, 'Work did not settle');
+	work_check($work->change_status === change_state::unchanged && $work->version === 1, 'Initial work did not settle exactly once');
 }
+work_check($record->occurrence()->change_status === change_state::unchanged, 'Record declaration did not settle');
+work_check($record->fields[0]->occurrence()->change_status === change_state::unchanged, 'Record field did not settle');
+work_check($function->occurrence()->change_status === change_state::unchanged, 'Function declaration did not settle');
+work_check($function->parameters[0]->occurrence()->change_status === change_state::unchanged, 'Function parameter did not settle');
 $return = object_cast($parsed->root->body->statements[1], return_node::class);
 $call = object_cast($return->expression, call_node::class)->require_call_preparation();
 work_check(weakref_get($call->target) === $function->occurrence(), 'Call lost its typed function identity');
 $version = $body->version;
 (new File_Preparation($collection, Model::$language_scope))->prepare();
 work_check($body === $function->body->work() && $body->version === $version, 'No-op preparation replaced or rebuilt body work');
+work_check($layout === $record->occurrence()->preparation_work_owner(), 'No-op replaced record work');
+work_check($signature === $function->occurrence()->preparation_work_owner(), 'No-op replaced signature work');
+work_check($entry === $parsed->root->body->work(), 'No-op replaced file-body work');
+foreach ([$layout, $signature, $body, $entry] as $work) {
+	work_check($work->version === 1, 'No-op rebuilt retained work');
+}
 
 // Wrong-role relationships fail at the typed constructor/attachment boundary.
 $rejected = 0;
@@ -72,4 +86,13 @@ catch (\TypeError $expected) {
 }
 work_check($rejected === 3, 'Invalid work-role combination was accepted');
 work_check($function->body->work() === $body, 'Rejected attachment changed retained body work');
-echo "Preparation work: typed roles, canonical relationships, no-op identity and invalid-role rejection passed\n";
+
+// Retirement dispatch must unlink every role, including both directions of dependencies.
+$sources /** Storage<collected_file> */ = new Storage();
+$sources->append($collection);
+(new Preparation_Worker(Model::$language_scope))->discard_sources($sources);
+foreach ([$layout, $signature, $body, $entry] as $work) {
+	work_check($work->change_status === change_state::deleted, 'Discard did not retire work');
+	work_check(count($work->dependencies) === 0 && count($work->dependents) === 0 && count($work->lookups) === 0, 'Retired work retained graph registrations');
+}
+echo "Preparation work: passive typed roles, member settlement, no-op identity, invalid-role rejection and retirement passed\n";

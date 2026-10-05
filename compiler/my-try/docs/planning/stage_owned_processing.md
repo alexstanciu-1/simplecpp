@@ -3,7 +3,7 @@ Doc Status: planning
 
 Recorded 2026-10-05 against `22755175` on `v0.2/develop`.
 This records the agreed direction and bounded implementation batches.
-Batches A and B are implemented in the 2026-10-05 follow-ups; C onward remain pending.
+Batches A–C are implemented in the 2026-10-05 follow-ups; D/E remain design gates.
 The current implementation and
 findings are described in the [stage-boundary audit](stage_boundary_audit.md).
 Language semantics remain owned by the top-level specs.
@@ -88,11 +88,11 @@ Review by behavior, not method spelling. For example, `body_runs_first()` or
 Similarly, `require_preparation()` may remain a checked read of attached facts.
 Moving a method between files without changing its owner is not sufficient.
 
-Analysis-owned work records also currently forward `enqueue`, `rebuild`,
+Analysis-owned work records originally forwarded `enqueue`, `rebuild`,
 `settle_members` and `retire_from` to `Preparation_Worker`. These do not cross a
-stage boundary, but they mix records with processing. Proposed treatment: move
-their processing dispatch into analysis in its own batch, preserving the typed
-record families, state and identity. Do not flatten them into one tagged record.
+stage boundary, but they mixed records with processing. Batch C moved their
+processing dispatch into the analysis worker, preserving typed record families,
+state and identity rather than flattening them into one tagged record.
 
 ## Bounded implementation sequence
 
@@ -127,7 +127,7 @@ at that checkpoint and are removed by B, not retained as an exception.
 - Split into coherent family sub-batches if needed, with old hooks removed from each
   migrated family. No duplicate retained facts or new general visitor layer.
 
-### C. Analysis-internal work dispatch
+### C. Analysis-internal work dispatch — implemented 2026-10-05
 
 Move work-record executable adapters into `Preparation_Worker` or its analysis-owned
 helpers. Keep role-specific records and typed accessors. Preserve enqueue deduplication,
@@ -264,6 +264,29 @@ Analysis-internal work-record adapters remain for C.
   rebuild, conversion, broad regression or lint sweep was performed.
 
 SB-02's shared-model hook migration is complete. Next: C, then review D/E protocols.
+
+### Batch C evidence — 2026-10-05
+
+Candidate: `6064dc5d` plus the batch C source/test/documentation overlay.
+Removed work-record `enqueue`, `rebuild`, `settle_members` and `retire_from`
+hooks. `Preparation_Worker` selects typed handlers directly; those implementation
+handlers are now private. Records retain role-specific identity, state and typed
+queries. No retained structure or scheduling/lifecycle policy was added.
+
+- Focused checks: `/tmp/my-try-work-dispatch-20261005` — 12 PHP suites passed:
+  preparation work, incremental preparation, recovery, incremental C++, callables,
+  capabilities, constructed types, token cleanup/generations, parsing/collection,
+  collected roles and specialization dispatch.
+- Extended work assertions cover absence of processing hooks on all four roles,
+  one-time initial completion, parameter/field settlement, no-op identity/version
+  preservation and retirement unlinking. Existing incremental/recovery cases cover
+  deduplication, nested layout propagation, failed retries and deletion/re-addition.
+- The shared runner used CLI fallback after sandbox socket binding prevented FPM
+  startup. No native build, conversion, broad regression or lint sweep was run.
+  The previously baseline-reproduced dependency-cleanup failure remains D debt;
+  that suite was not rerun or represented as passing in this batch.
+
+Next: discuss D/E lifecycle and consumption protocols before implementation.
 
 ## Remaining questions and non-goals
 
