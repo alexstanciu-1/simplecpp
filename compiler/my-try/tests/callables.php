@@ -120,6 +120,10 @@ callable_rejects(fn() => Model::$cpp_callable_bindings->bind_static($runtime, 'a
 $other = new Runtime_Callables();
 $foreign = $other->register_static_factory($runtime->key(), $signature->return_type, $signature);
 callable_rejects(fn() => Model::$cpp_callable_bindings->definition($foreign), 'different semantic identity');
+$adapted = Model::$runtime_callables->register_static_factory('test.vector_int.adapted', $signature->return_type, $signature);
+Model::$cpp_callable_bindings->bind_adapter($adapted, 'test::factory_adapter', 'build', 'test/adapter.hpp');
+callable_check(CPP_Callables::reference($adapted, $cpp) === 'test::factory_adapter<scpp::vector_t<scpp::int_t<>>>::build'
+	&& isset($cpp->headers['test/adapter.hpp']), 'Adapter binding lost exact owner/member/header');
 callable_rejects(fn() => Call_Preparation::prepare($runtime, $call->arguments, $context), 'argument count');
 $one /** Storage<expression_node> */ = new Storage();
 $one->append($call->arguments[0]);

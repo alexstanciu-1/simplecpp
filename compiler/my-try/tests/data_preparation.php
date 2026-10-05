@@ -1,6 +1,6 @@
 <?php
 
-/* Preparation proofs only; runtime factory execution remains a separate slice. */
+/* Contextual preparation, recovery and settled-fact emission proofs. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 
@@ -122,6 +122,7 @@ try {
 		&& $node->entries[0]->value->preparation() === null, 'Entry facts survived structural cleanup');
 
 	$rejections = [
+		['$v value<dynamic> = {};', 'effective storage modifiers'],
 		['$v = [];', 'known concrete target'],
 		['$v = {name: 1};', 'known concrete target'],
 		['$v vector<int> = {};', 'does not support initialization shape'],
@@ -165,10 +166,14 @@ try {
 	$compiler->sync([$path]);
 	$compiler->prepare();
 	data_preparation_check(!$construction->require_data_preparation()->binding->is_keyed(), 'Contextual construction did not recover');
-	$emission_failed = false;
-	try { $compiler->cpp(); }
-	catch (\RuntimeException $error) { $emission_failed = str_contains($error->getMessage(), 'C++ generation is not supported'); }
-	data_preparation_check($emission_failed && Model::$cpp_files->is_empty(), 'Preparation silently enabled executable construction');
+	$compiler->cpp();
+	data_preparation_check(str_contains(Model::$cpp_files[0]->text, 'scpp::data_initializer<'), 'Construction did not use the registered adapter');
+	$first_cpp = Model::$cpp_files[0]->text;
+	data_preparation_check(!str_contains($first_cpp, 'initializer_buffer'), 'Empty construction allocated input backing');
+	Compiler_Lifecycle::reset_preparation();
+	$compiler->prepare();
+	$compiler->cpp();
+	data_preparation_check(Model::$cpp_files[0]->text === $first_cpp, 'Preparation reset changed construction emission');
 }
 finally {
 	unlink($path);

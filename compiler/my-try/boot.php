@@ -103,6 +103,7 @@ require_once __DIR__ . '/05_backend/cpp/structures.php';
 require_once __DIR__ . '/05_backend/cpp/types.php';
 require_once __DIR__ . '/05_backend/cpp/declarations.php';
 require_once __DIR__ . '/05_backend/cpp/callable_bindings.php';
+require_once __DIR__ . '/05_backend/cpp/data_construction.php';
 require_once __DIR__ . '/05_backend/cpp/generate.php';
 require_once __DIR__ . '/05_backend/cpp/syntax.php';
 // Parked LLVM preparation and generation remain loaded for regression entrypoints.

@@ -1,8 +1,8 @@
 # Data notation and initialization interfaces
 Doc Status: normative
 
-Status: Notation and initialization-interface standards complete, 2026-10-05;
-implementation pending.
+Status: Notation and initialization-interface standards complete, 2026-10-05.
+The compiler catalog tracks partial implementation; source-defined factories remain gated.
 
 ## Authority and version boundary
 
@@ -227,8 +227,9 @@ selected interface declares mixed. The opaque sequence representation and alloca
 strategy are backend concerns, not source-level native views or pointers.
 
 Keyed input preserves source order and duplicate entries until the receiver handles
-them. Do not first materialize a hash that discards duplicates. Duplicate-key and
-accepted-key policies belong to the receiving type's contract, not the notation.
+them. Do not first materialize a hash that discards duplicates. Duplicate keys at
+the same construction level are errors; the receiving type determines key equality
+and normalization, not whether duplicates may be silently overwritten.
 Absent positional keys are not encoded using a null-key sentinel. Supporting an
 explicit null key, if any, is a separate receiving-key contract.
 
@@ -292,10 +293,14 @@ Selection rules:
 - Empty mixed construction produces an empty table payload, not null. Empty dynamic
   construction produces a valid empty object, not an absent handle.
 
-Built-in keyed factories process entries in source order. Duplicate keys overwrite
-the prior value without moving the key from its first insertion position: last value
-wins. All expressions are evaluated, including overwritten entries. User-defined
-factories receive the original entries and may reject duplicates instead.
+Keyed factories process entries in source order and must reject duplicate keys at
+the same construction level. This applies to built-ins and opted-in user-defined
+factories. The same key in separate nested objects/tables is valid. This v0.2 rule
+supersedes the earlier last-value-wins proposal; ordinary assignments that update an
+existing key are unchanged. For v0.2, validation occurs at runtime after materializing
+the typed input sequence. All entry expressions have therefore run before a factory
+reports a duplicate; completed source side effects are not rolled back. A failed
+construction does not publish a partial result or replace the assignment destination.
 
 Duplicates are determined after the receiver's established key conversion and
 normalization. Typed hashes do not implicitly equate integer and string keys. The

@@ -73,9 +73,11 @@ signature. `Call_Preparation` admits arguments independently of target selection
 owns target dispatch entirely inside the backend; callable identities and their
 interface expose no C++ operation. Dispatch uses source mangling or a separately
 registered static-member binding, with exact target
-identity checks and header collection. Initialization now instantiates semantic factory
-identities through this catalog, without executable C++ bindings. Method lookup,
-closures and data construction execution remain deferred.
+identity checks and header collection. Bindings support direct static members and
+adapter templates applied to the exact owner type. Initialization instantiates semantic
+factory identities independently; backend-only definition metadata selects an adapter
+and lazily installs concrete C++ callable bindings during emission. Method lookup and
+closures remain deferred. No adapter spelling lives in semantic facts.
 
 Callable roots survive preparation reset, but syntax/type reset replaces them
 together. Installed contracts/bindings must not be changed under retained consumers;
@@ -109,8 +111,9 @@ and inherited result type. Each existing entry owns `prepared_data_entry` conver
 no prepared entry inventory duplicates syntax order. The expected construction type
 is a transient explicit argument from a typed consumer, not mutable ambient context
 or another retained type field. Explicit target syntax takes precedence. Cleanup and
-incremental re-preparation follow the ordinary attached-fact lifecycle. These facts
-do not enable C++ execution or source input-view lifetime operations.
+incremental re-preparation follow the ordinary attached-fact lifecycle. The backend
+consumes these facts for built-in construction execution; source input-view lifetime
+operations remain gated.
 
 ## AST and scopes
 

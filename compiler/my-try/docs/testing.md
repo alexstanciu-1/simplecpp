@@ -17,6 +17,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For common data construction across vector/hash/mixed/dynamic:
+
+```bash
+python3 compiler/my-try/tests/data_initialization.py --results /tmp/FRESH_DATA_RESULTS
+```
+
+Five PHP suites export and check preparation/bindings, followed by `data_*` generated
+programs and a direct runtime input-lifetime proof, using 12 continuously refilled
+slots. PCH is enabled by default; `--no-pch` checks include completeness. Coverage
+includes source ordering, duplicates, nested defaults, identity, checked failures,
+large input and partial input/factory cleanup. This does not rebuild the compiler.
+
 Run the focused branch/body slice, its related PHP controls and generated C++ programs:
 
 ```bash

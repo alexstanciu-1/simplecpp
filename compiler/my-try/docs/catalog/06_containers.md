@@ -17,7 +17,7 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 The top-level [data initialization standard](../../../../specs/data_initialization.md)
 owns language semantics and supersedes older construction defaults for v0.2. This
 chapter owns implementation progress only. Documentation is complete for the agreed
-contract; no construction implementation is claimed by this checkpoint.
+contract; built-in construction now executes through the shared path described below.
 
 The current sequence replaces the typed-first/dynamic-later handoff grouping:
 
@@ -40,13 +40,14 @@ Function-valued entries are documented for later implementation. Compiler litera
 pre-preparation belongs to the [v0.3 plan](../../../../docs/v0.3/literal_construction_preparation.md).
 
 The notation documentation (step 1) and object initialization-interface documentation
-(step 2) are complete in the top-level standard; compiler/runtime support is pending.
+(step 2) are complete in the top-level standard; built-in compiler/runtime construction
+is implemented, while user-defined factory execution remains gated.
 The adopted [hybrid input/lowering direction](../planning/data_initialization.md)
 uses call-scoped read-only inputs rather than retainable owning sequences; enforcing
 non-escape is a prerequisite. The general-stage versus C++ boundary is confirmed:
 generic semantic checks precede emission; allocation and concrete construction do not
-belong in parsing/collection/preparation. Review retained model and bounded lifetime
-enforcement before coding. Do not mark imported untyped
+belong in parsing/collection/preparation. Bounded lifetime enforcement is required
+before enabling source-defined factories. Do not mark imported untyped
 literal examples supported using v0.1 fallback
 typing. CH05-DYN-01 is spread across the common operation groups, not a second dynamic
 pass. Existing `(object)` bridges remain separate from direct typed construction;
@@ -84,8 +85,8 @@ documenting the current runtime, and do not mark the chapter complete while it i
 
 ## Handoff from chapter 05 — 2026-10-04
 
-The syntax, binding and preparation checkpoints below are subsequent to this handoff;
-construction execution remains deferred until runtime adapters and lowering exist.
+The syntax, binding, preparation and execution checkpoints below supersede this
+historical handoff's construction prerequisites.
 
 Chapter 05's [bounded positive pass](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04)
 is complete with named debt. Nullable/Result/mixed conversions, conditions, value
@@ -225,8 +226,9 @@ template identities `initializer_list<T>` / `initializer_entry<V, K = string>` a
 concrete binding identities. Definition identity supplies call-scoped/read-only
 input roles. The view deliberately has no owning copy/storage capability; entries
 are immutable copyable values whose key/value formation requires copyable storage.
-Input types have no source exposure or C++ binding yet. This models lifetime intent,
-not enforced non-escape or implemented count/at/iteration APIs.
+At this model-only checkpoint, input types had no source exposure or C++ binding.
+The execution checkpoint below adds runtime view APIs and backend bindings, not
+source exposure or enforced source non-escape.
 
 Binding queries revalidate source-derived input capabilities before cached reuse and
 register declaration dependencies. Preparation reset preserves installed bindings;
@@ -242,8 +244,8 @@ and reset. No native compiler build, conversion, broad regression or executable
 construction proof is claimed. The unrelated local dependency-cleanup test edit was
 left untouched and is not included in this run.
 
-The subsequent checkpoint implements contextual literal preparation and ordered
-conversion facts. Next are runtime adapters/C++ construction. Preserve the common-family path. User-written
+The subsequent checkpoints implement contextual literal preparation, ordered
+conversion facts and runtime adapters/C++ construction. Preserve the common-family path. User-written
 factory execution still requires interface/method support and enforced non-escape.
 
 Concrete-target/property clarification: a known concrete property type may supply
@@ -297,10 +299,60 @@ All 1,049 S2S C++ exports are byte-identical to the pre-feature backend-boundary
 checkpoint at `/tmp/my-try-backend-boundary-20261005-2/s2s`.
 No native compiler rebuild, conversion or new runtime execution was performed.
 
-**Execution gate:** C++ generation still rejects data-construction nodes and publishes
-no executable output for them. Runtime adapters, sequenced temporary input emission,
-ordering/duplicate/failure-cleanup execution proofs and source non-escape enforcement
-remain pending. Catalog rows below are not marked end-to-end supported by this slice.
+This preparation-only checkpoint did not enable executable output. The following
+execution checkpoint supersedes that gate for built-ins only.
+
+### Built-in construction execution — 2026-10-05
+
+`CPP_Data_Construction` consumes settled bindings and entry conversions through one
+family-independent lowering path. Backend-only definition metadata selects
+`scpp::data_initializer<Target>::from_list/from_key_value`; concrete callable bindings
+remain separate from semantic factory identities. This supports alias-backed dynamic
+without inventing members on its C++ type. Lifecycle installs backend metadata alongside,
+not inside, semantic registration.
+
+`scpp/data_initializer.hpp` provides immutable entries, a read-only call-scoped view
+and bounded RAII backing. Empty literals pass an empty view with no input allocation.
+Small inputs use bounded optional slots; larger ones use heap backing. The buffer
+template depends only on element type, never literal length. Shared population helpers
+fill final storage directly; mixed wraps shared-table storage, while dynamic retains
+its shared handle and nested `dynamic_v` tags under the current contract.
+
+Each key and converted value is captured once in source order, key before value.
+Duplicate entries reach the factory unchanged and now reject at runtime after key
+normalization (user clarification superseding the initial last-value-wins proposal).
+Repeated names in separate nested constructions remain valid; ordinary key updates
+are unchanged. Checked input-conversion failures and factory failures unwind input
+and partial output; destination assignment occurs only after success. Earlier source
+side effects are not rolled back. Nested constructions follow their binding's target.
+
+Initial evidence: `/tmp/my-try-data-execution-20261005-2` (PCH) and
+`/tmp/my-try-data-execution-20261005-3` (no PCH), five focused PHP suites plus generated
+programs and a direct runtime lifetime/throwing-copy proof. These preceded the duplicate
+policy clarification and are not evidence of its new rejection rule. Neither run
+rebuilds the compiler itself natively. The unrelated local dependency-cleanup edit
+remains untouched. Existing 1,049 pre-feature C++ exports remain byte-identical.
+
+Final duplicate-rejection evidence: `/tmp/my-try-data-execution-20261005-4` — five
+PHP suites, 40 PCH-backed generated C++ programs and the runtime lifetime proof pass.
+This includes normalized collisions, null/false existing values, unchanged destination
+after failure, and repeated names allowed in distinct nested objects.
+
+Remaining construction gates/debt:
+
+- Effective storage-modifier targets reject during preparation; exact modified-target
+  model bindings remain representable. Executable modifier support needs a truthful
+  storage/adapter path, not invalid `value_p` instantiation around handle-like dynamic.
+- User-defined factories/input exposure require method/interface support and enforced
+  non-escape. Built-in synchronous adapters cannot expose input views to source today.
+- Expected-type propagation through selection joins, callable values and automatic
+  object-property mapping remain deferred. Unknown untyped literals still reject.
+- **CH06-MIX-DYN-01 remains open and blocking closeout**; current runtime success is
+  evidence of implementation, not a new containment decision.
+
+Next discussion: shared container reads and runtime-checked mixed/dynamic access,
+before writes/appends, keyed probes and value iteration. Dynamic `->` needs its own
+language discussion; reference iteration remains separately gated.
 
 ### End-to-end catalog rows
 
@@ -308,9 +360,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [ARR-INIT-001](#arr-init-001) | pending-discussion | `$v vector<int> = [];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [ARR-INIT-003](#arr-init-003) | pending-discussion | `$v vector<int> = [1, 2, 3];` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [ARR-INIT-004](#arr-init-004) | pending-discussion | `$m hash<int> = ["a" => 1, "b" => 2];`<br>`$a = [1, 2, 3];` | unverified | unverified | deferred | Source variants need reconciliation |
+| [ARR-INIT-001](#arr-init-001) | supported | `$v vector<int> = [];` | passed | passed | deferred | `data_empty` state proof |
+| [ARR-INIT-003](#arr-init-003) | supported | `$v vector<int> = [10, 20, 30];` | passed | passed | deferred | `data_vector`, nested/large/order proofs |
+| [ARR-INIT-004](#arr-init-004) | bounded-support | `$m hash<int> = ["alice" => 10, "bob" => 20];` | passed | passed | deferred | `data_hash`; imported untyped `$a = [1, 2, 3]` rejects without known target |
 | [ARR-READ-001](#arr-read-001) | pending-discussion | `$a = $b[0];` | unverified | unverified | deferred | — |
 | [ARR-READ-002](#arr-read-002) | pending-discussion | `$a = $b["name"];` | unverified | unverified | deferred | — |
 | [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |

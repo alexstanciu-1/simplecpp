@@ -15,6 +15,9 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		if ($node instanceof data_construction_node) {
+			return CPP_Data_Construction::generate(object_cast($node, data_construction_node::class), $this->context);
+		}
 		if ($node instanceof null_literal_node) {
 			return $this->generate_null_literal(object_cast($node, null_literal_node::class));
 		}

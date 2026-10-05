@@ -4,8 +4,9 @@ Doc Status: planning
 Recorded 2026-10-05. Hybrid direction and general stage boundary adopted;
 notation/interface standards complete; shared syntax and callable model implemented.
 The shared initialization-binding/internal input-type model and contextual literal
-preparation are implemented. Runtime adapters, C++ construction and source non-escape
-enforcement remain pending; preparation success is not executable support.
+preparation are implemented. Built-in runtime adapters and C++ construction now execute
+through the common protocol. User-written factories and source non-escape enforcement
+remain gated; see the current Chapter 06 execution checkpoint.
 Language authority remains [the top-level standard](../../../../specs/data_initialization.md).
 Chapter closeout is blocked by [CH06-MIX-DYN-01](../catalog/06_containers.md#ch06-mix-dyn-01--mixeddynamic-containment-contract):
 discuss mixed/dynamic containment at the end of Chapter 06. Intermediate slices
@@ -97,6 +98,26 @@ and lowering details still need the normal pre-implementation review; this does 
 reopen the agreed API or mark any catalog program as working.
 
 ## C++ compilation and proof gates
+
+Current built-in lowering uses `scpp::data_initializer<Target>` adapters, so alias
+types such as dynamic do not need static members. Backend-only definition metadata
+selects this adapter; the same emitter consumes every prepared construction binding.
+`scpp/data_initializer.hpp` supplies immutable entries and a read-only input view
+backed by an RAII `initializer_buffer<T>`. Empty literals pass an empty view directly.
+Nonempty input uses at most 32 local optional slots within a 4 KiB slot budget, or
+heap backing for larger input. This threshold is implementation detail. The fixed
+template depends on element type, not literal length; no variadic argument packs.
+Shared population helpers fill final vector/hash storage; dynamic allocates its final
+shared hash and mixed wraps that table. No intermediate owning hash is built.
+Keyed population checks presence using the receiver's normalized-key lookup and
+rejects same-level duplicates. It does not use value truthiness or silently overwrite;
+ordinary mutation remains outside this construction-only rule.
+
+Per-entry scoped snapshots ensure key-before-value, once-only source order. Partial
+input/factory failures unwind automatically; publication occurs only after success.
+Effective storage-modifier construction remains preparation-rejected pending a
+truthful adapter/representation path. No source view escape is newly possible:
+input types and source-defined factories are still not exposed.
 
 Use PCH for stable runtime declarations. Prefer fixed-signature typed input views
 over variadic packs, literal-length template parameters and unique per-literal

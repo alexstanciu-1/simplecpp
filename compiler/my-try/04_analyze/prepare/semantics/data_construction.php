@@ -11,6 +11,9 @@ final class Data_Construction_Preparation
 		$target = $expected_type;
 		if ($node->target_type !== null) { $target = Type_Preparation::type($node->target_type, $context); }
 		if ($target === null) { throw new \RuntimeException('S2S data construction requires a known concrete target'); }
+		if ($target->by_value()) {
+			throw new \RuntimeException('S2S data construction with effective storage modifiers is deferred');
+		}
 		$shape = self::shape($node, $context->collection->token_snapshot());
 		$binding = Initialization_Preparation::binding($target, $shape, $context);
 		$facts = new prepared_data_construction();
