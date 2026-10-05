@@ -26,7 +26,7 @@ final class Conversion_Preparation
 			throw new \RuntimeException('S2S explicit cast target cannot use a type-use modifier');
 		}
 		if (($context === conversion_context::explicit_cast) && !self::is_scalar($target)
-			&& !Mixed_Conversions::is_dynamic_bridge($source, $target)) {
+			&& !Mixed_Conversions::is_family_crossing($source, $target)) {
 			throw new \RuntimeException('S2S explicit cast target is not supported');
 		}
 		if (Mixed_Conversions::is_mixed($source) || Mixed_Conversions::is_mixed($target)) {

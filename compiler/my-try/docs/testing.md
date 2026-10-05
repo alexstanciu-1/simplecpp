@@ -17,6 +17,17 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For the compiler's separated-family explicit-cast checkpoint:
+
+```bash
+python3 compiler/my-try/tests/dynamic_families.py --results /tmp/FRESH_FAMILY_CAST_RESULTS
+```
+
+Runs retained mixed boundary/admission/recovery checks and compiles three generated
+family-cast programs against a rebuilt runtime. `--no-pch` checks header completeness.
+This focused export excludes the still-unmigrated container fixtures rather than
+claiming the full S2S suite or native compiler passes.
+
 For the mixed field-layout and shared packed-table storage checkpoints:
 
 ```bash

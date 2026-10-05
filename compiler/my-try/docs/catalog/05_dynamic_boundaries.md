@@ -336,6 +336,12 @@ wrapper, conversion and mixed behavior remains covered by the focused runner.
 
 ## Explicit mixed/dynamic bridges — 2026-10-04
 
+Historical checkpoint, superseded for v0.2 by the
+[separated-family contract](../../../../specs/dynamic_types.md#v02-migration-and-repair-rules).
+Both explicit casts now use checked scalar/null conversion; no shared-container
+bridge or empty-handle tag survives. Current generated tests follow that replacement,
+not the historical expectations below.
+
 Implemented `(mixed)$dynamic` and `(dynamic)$mixed` using the existing cast AST
 and role-based conversion preparation. `Mixed_Conversions` owns bridge permission;
 the retained `mixed_dynamic_box` operation preserves the dynamic carrier tag, while

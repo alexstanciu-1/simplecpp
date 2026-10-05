@@ -583,3 +583,31 @@ removed-helper exports; neither is counted as a passing checkpoint.
 This changes ABI/API: rebuild runtime, consumers and PCH together. Compiler facts,
 boxing/extraction, construction/iteration lowering and source registrations are next.
 Historical generated programs and native compiler binaries are not current proofs.
+
+### Compiler explicit family casts — 2026-10-05
+
+The conversion owner now identifies a family crossing by semantic roles and records
+`explicit_runtime_cast` for both directions. Its runtime checks preserve scalar/null
+kind/value and reject container payloads. Removed `mixed_dynamic_box` from the model
+and emitter; container insertion no longer has an implicit dynamic-to-mixed escape.
+Index writes use the common conversion rejection, not a nested-only special case.
+
+The retained mixed suite updates obsolete Chapter 05 probe rejections to Chapter 06
+admission and retains clean/incremental probe-signature checks. Generated cast fixtures
+now prove scalar/null round trips, independent scalar copies, every mixed table
+carrier rejection, dynamic-container rejection, single evaluation, and destination
+preservation/recovery. No v0.1 handle-identity expectation is retained as a target.
+
+Next: tagged dynamic storage facts and reusable scalar boxing/extraction, then
+same-family initialization/index/iteration signatures and their generated fixtures.
+`tests/data_preparation.php` still contains historical dynamic-box expectations;
+that suite and the broad `s2s.php` export are not a passing proof of this partial
+migration. JSON/library source registrations remain separate integration work.
+
+Evidence: `/tmp/my-try-family-casts-20261005-5` passed the retained PHP checks and
+three PCH-backed generated programs. `/tmp/my-try-family-casts-20261005-6` passed
+the final PHP checks (including refreshed probe-signature recovery) and the same
+three programs without PCH. Both rebuilt their snippet runtime. FPM could not bind
+its socket in this environment, so the shared runner used its recorded CLI fallback.
+Earlier attempts stopped on stale probe expectations; no native compiler rebuild
+or broad container-regression pass is claimed.

@@ -84,6 +84,15 @@ runtime API. Earlier source fixtures that emitted dynamic handles or cross-famil
 boxing are historical evidence, not current passing integration proofs. No native
 compiler rebuild is claimed by the runtime checkpoint.
 
+First compiler integration checkpoint: explicit mixed/dynamic casts now retain
+`explicit_runtime_cast` in both directions and use checked scalar/null conversion.
+The `mixed_dynamic_box` operation and special nested-write exception are removed;
+ordinary conversion admission rejects implicit crossings, including insertion.
+The focused `dynamic_families.py` runner covers this boundary independently of the
+unmigrated construction/read/write/iteration fixtures. In particular, the current
+registry still describes dynamic entry values as mixed; completing those same-family
+signatures and updating their fixtures is the next checkpoint, not proved support here.
+
 Remaining library-specific integration (notably tasks) is deferred to
 [CH15-LIB-DYN-01](15_blocking_debt.md#ch15-lib-dyn-01--deferred-library-mixeddynamic-integration)
 by user direction. It must not delay core compiler migration or be reported as

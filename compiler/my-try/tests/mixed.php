@@ -59,7 +59,7 @@ try
 		[generic_contract::value_storable, generic_contract::copyable_value]);
 	$handle = $registry->use($registry->canonical($renamed_dynamic)->type_id());
 	mixed_check(Conversion_Preparation::decide($handle, $box, conversion_context::explicit_cast)->operation
-		=== conversion_operation::mixed_dynamic_box, 'Dynamic boxing depended on source spelling');
+		=== conversion_operation::explicit_runtime_cast, 'Checked family crossing depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
 	$arithmetic = Mixed_Operators::decide(operator_kind::addition, [$integer, $box]);
@@ -172,7 +172,7 @@ try
 	mixed_source($path, '$d dynamic; $m mixed = (mixed)$d; $again dynamic = (dynamic)$m;');
 	$bridge_root = Model::syntax_files()[0]->root;
 	mixed_check($bridge_root->body->statements[1]->initializer->require_cast_preparation()->conversion->operation
-		=== conversion_operation::mixed_dynamic_box, 'Missing dynamic boxing cast fact');
+		=== conversion_operation::explicit_runtime_cast, 'Missing checked scalar/null family cast fact');
 	Preparation_Cleanup::tree($bridge_root);
 	mixed_check($bridge_root->body->statements[1]->initializer->preparation() === null,
 		'Dynamic cast retained stale facts');
@@ -202,8 +202,10 @@ try
 		['$v result<int> = 7; $x mixed = $v;', 'mixed boxing currently supports'],
 		['$x mixed = 7; $v ?int = $x;', 'mixed extraction currently supports'],
 		['$x mixed = 7; $v result<int> = $x;', 'mixed extraction currently supports'],
-		['$d dynamic; $x mixed = $d;', 'mixed boxing currently supports'],
-		['$x mixed = 7; $d dynamic = $x;', 'mixed extraction currently supports'],
+		['$d dynamic; $x mixed = $d;', 'family conversion requires an explicit scalar/null cast'],
+		['$x mixed = 7; $d dynamic = $x;', 'family conversion requires an explicit scalar/null cast'],
+		['$d dynamic; $x mixed = []; $x["child"] = $d;', 'family conversion requires an explicit scalar/null cast'],
+		['$d dynamic; $x mixed = [$d];', 'family conversion requires an explicit scalar/null cast'],
 		['$x mixed = 7; $y = (uint8)$x;', 'explicit mixed casts require'],
 		['$x mixed = 7; $y = $x + true;', 'mixed arithmetic requires'],
 		['$x mixed = 7; $y = $x + "1";', 'mixed arithmetic requires'],
@@ -252,11 +254,9 @@ try
 		['$x mixed = 7; $n result_or_bool<int> = 1; $y = $n ?? $x;', 'does not permit result_or_bool'],
 		['$x mixed = 7; $y = true ? $x : $missing;', 'S2S'],
 		['function consume(mixed &$v): void {} $x mixed = 7; consume($x ?? 1);', 'reference'],
-		['$x mixed = 7; $y = isset($x[0]);', 'keyed/property-path probes'],
-		['$x mixed = 7; $y = empty($x->field);', 'keyed/property-path probes'],
+		['$x mixed = 7; $y = empty($x->field);', 'property-path probes'],
 		['$y = isset($missing);', 'S2S'],
 		['$d dynamic; if ($d) {}', 'condition truthiness'],
-		['$d dynamic; $y = empty($d);', 'value probes require'],
 		['function source(): mixed { return 1; } $y = !source() === false;', 'order-independent operands'],
 		['!($new = true);', 'S2S'],
 		['function change(int &$x): void {} $x mixed = 7; change($x);', 'reference'],
@@ -265,15 +265,23 @@ try
 	foreach ($rejections as [$source, $message])
 	{
 		$failed = false;
+		$actual_message = 'accepted';
 		try {
 			mixed_source($path, $source);
 		}
 		catch (\RuntimeException $error) {
+			$actual_message = $error->getMessage();
 			$failed = str_contains($error->getMessage(), $message);
 		}
-		mixed_check($failed, 'Missing expected mixed rejection: ' . $source);
+		mixed_check($failed, 'Missing expected mixed rejection: ' . $source . '; got: ' . $actual_message);
 		mixed_check(Model::$cpp_files->is_empty(), 'Rejected mixed boundary published output');
 	}
+
+	// Chapter 06 admits keyed probes on mixed; the payload kind is checked at runtime.
+	mixed_source($path, '$x mixed = 7; $y = isset($x[0]);');
+	mixed_check(!Model::$cpp_files->is_empty(), 'Mixed keyed probe admission regressed');
+	mixed_source($path, '$d dynamic; $y = empty($d); $z = isset($d);');
+	mixed_check(!Model::$cpp_files->is_empty(), 'Dynamic value probe admission regressed');
 
 	// Payload incompatibility is runtime-dependent, not a preparation rejection.
 	mixed_source($path, '$x mixed = "not an integer"; $y int = $x;');
@@ -304,9 +312,9 @@ try
 	mixed_source($path, $valid);
 	mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed output differs');
 	foreach (['return (int)source();', 'if (source()) { return 1; } return 0;',
-		'return !source() ? 1 : 0;', 'return isset(source()) ? 1 : 0;',
+		'return !source() ? 1 : 0;',
 		'return (source() && true) ? 1 : 0;', 'return (false || source()) ? 1 : 0;',
-		'return empty(source()) ? 1 : 0;', 'return source() ?? 1;',
+		'return source() ?? 1;',
 		'return source() ?: 1;', 'return true ? source() : 1;',
 		'return (int)(mixed)(dynamic)source();',
 		'$v mixed = source(); return $v + 1;', 'return -source();',
@@ -337,6 +345,21 @@ try
 		mixed_check(Model::$cpp_files[0]->text === $original, 'Mixed operation repair changed output');
 		mixed_source($path, $valid);
 		mixed_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental mixed operation differs');
+	}
+	// Probe consumers now accept both families; signature changes must still refresh output.
+	foreach (['isset', 'empty'] as $probe_name) {
+		$valid = 'function source(): mixed { return 3; } function read(): bool { return '
+			. $probe_name . '(source()); }';
+		$compiler = mixed_source($path, $valid);
+		$original = Model::$cpp_files[0]->text;
+		$changed_source = str_replace('source(): mixed { return 3;',
+			'source(): dynamic { $d dynamic; return $d;', $valid);
+		file_put_contents($path, $changed_source);
+		$compiler->update_cpp([$path]);
+		$changed_output = Model::$cpp_files[0]->text;
+		mixed_check($changed_output !== $original, 'Probe signature change retained stale output');
+		mixed_source($path, $changed_source);
+		mixed_check(Model::$cpp_files[0]->text === $changed_output, 'Probe clean/incremental output differs');
 	}
 	mixed_source($path, '$v mixed = null; $a mixed = true ? $v : 1; '
 		. '$b mixed = $v ?: 2; $c mixed = $v ?? 3; $d mixed = 4 ?? $v;');

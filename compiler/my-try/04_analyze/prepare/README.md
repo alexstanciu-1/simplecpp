@@ -257,10 +257,13 @@ bridges, wrapper boxing and further operator families remain deferred. Selection
 identity mixed copies and ordinary scalar boxing, never extraction or bare-null branches.
 Explicit bool/int/float/string
 casts record `explicit_runtime_cast` and call `cast<T>`, not `required_cast<T>`.
-Explicit `mixed`/`dynamic` bridges use semantic roles: `mixed_dynamic_box` retains the
-dynamic tag and shared identity; reverse extraction uses `explicit_runtime_cast`.
-Null extracts to an empty handle, whose reboxing remains tagged dynamic rather than
-null. Actual payload rejection belongs to the runtime; implicit bridges remain rejected.
+Explicit `mixed`/`dynamic` family crossings use semantic roles and
+`explicit_runtime_cast` in both directions. The runtime preserves scalar/null kind
+and value and rejects every container crossing before destination replacement.
+The old `mixed_dynamic_box` operation is removed. Implicit crossings, including
+container insertion, reject during preparation. Dynamic scalar boxing/extraction and
+same-family construction/indexing/iteration registrations are the next migration slice;
+do not infer their integration from the explicit-cast checkpoint.
 `Condition_Truthiness` admits mixed through `mixed_condition`; all condition consumers
 and mixed `!` reuse runtime kind dispatch, not explicit boolean conversion. Boxed
 table/object conditions currently throw at runtime; broader kind truthiness is debt.

@@ -119,12 +119,6 @@ final class Indexing_Preparation
 			$facts->type = $signature->value;
 			$facts->decision = $decision;
 			$facts->value_conversion = Conversion_Preparation::decide($value->type, $signature->value, conversion_context::container_element);
-			if (!$facts->path->is_empty()) {
-				if (Mixed_Conversions::is_mixed($receiver)
-					&& ($facts->value_conversion->operation === conversion_operation::mixed_dynamic_box)) {
-					throw new \RuntimeException('S2S nested write of dynamic into mixed is deferred');
-				}
-			}
 			return $facts;
 		}
 		finally {

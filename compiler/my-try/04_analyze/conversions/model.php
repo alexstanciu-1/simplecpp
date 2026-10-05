@@ -32,7 +32,6 @@ enum conversion_operation
 	case result_true;
 	case result_extract;
 	case mixed_box;
-	case mixed_dynamic_box;
 	case mixed_extract;
 }
 

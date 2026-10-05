@@ -5,7 +5,7 @@ namespace scpp\compiler;
 
 final class Mixed_Conversions
 {
-	/** Container elements admit dynamic boxing; unknown mixed key kinds stay runtime checked. */
+	/** Container boundaries never implicitly cross boxed families; mixed keys stay checked. */
 	public static function container_input(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
@@ -17,21 +17,16 @@ final class Mixed_Conversions
 				}
 			}
 		}
-		elseif ($context === conversion_context::container_element) {
-			if (self::is_mixed($target) && !($source->by_value() || $target->by_value())) {
-				if (Type_Queries::canonical($source)->definition() instanceof dynamic_semantics) {
-					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::mixed_dynamic_box);
-				}
-			}
+		elseif ($context !== conversion_context::container_element) {
+			throw new \LogicException('Expected container input conversion context');
 		}
-		else { throw new \LogicException('Expected container input conversion context'); }
 		$decision = self::decide($source, $target, conversion_context::argument);
 		$decision->context = $context;
 		return $decision;
 	}
 
-	/** Explicit shared-handle bridges are distinct from ordinary scalar boxing. */
-	public static function is_dynamic_bridge(canonical_type_use $source, canonical_type_use $target): bool
+	/** Family identity admits an explicit checked scalar/null crossing, never a container bridge. */
+	public static function is_family_crossing(canonical_type_use $source, canonical_type_use $target): bool
 	{
 		$source_dynamic = Type_Queries::canonical($source)->definition() instanceof dynamic_semantics;
 		$target_dynamic = Type_Queries::canonical($target)->definition() instanceof dynamic_semantics;
@@ -59,6 +54,12 @@ final class Mixed_Conversions
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
+		if (self::is_family_crossing($source, $target)) {
+			if (($context !== conversion_context::explicit_cast) || $source->by_value() || $target->by_value()) {
+				throw new \RuntimeException('S2S mixed/dynamic family conversion requires an explicit scalar/null cast without storage modifiers');
+			}
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::explicit_runtime_cast);
+		}
 		if ($context === conversion_context::operator_operand)
 		{
 			if (!$source->by_value() && !$target->by_value() && self::is_mixed($target))
@@ -87,10 +88,6 @@ final class Mixed_Conversions
 			throw new \RuntimeException('S2S mixed selection requires matching mixed or supported scalar branches');
 		}
 		if ($context === conversion_context::explicit_cast) {
-			if (!$source->by_value() && !$target->by_value() && self::is_dynamic_bridge($source, $target)) {
-				return Conversion_Preparation::operation($source, $target, $context,
-					self::is_mixed($target) ? conversion_operation::mixed_dynamic_box : conversion_operation::explicit_runtime_cast);
-			}
 			if ($source->by_value() || !self::is_scalar_payload($target)) {
 				throw new \RuntimeException('S2S explicit mixed casts require bool, ordinary int, float or string without storage modifiers');
 			}

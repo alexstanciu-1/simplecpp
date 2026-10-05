@@ -53,10 +53,6 @@ final class CPP_Declarations
 			return 'scpp::required_cast<' . self::type($decision->target_type, $context)
 				. '>(' . $expression . ')';
 		}
-		if ($decision->operation === conversion_operation::mixed_dynamic_box) {
-			$context->headers['scpp/dynamic_t.hpp'] = true;
-			return self::type($decision->target_type, $context) . '{scpp::dynamic_box(' . $expression . ')}';
-		}
 		if ($decision->operation === conversion_operation::explicit_runtime_cast) {
 			$context->headers['scpp/cast.hpp'] = true;
 			return 'scpp::cast<' . self::type($decision->target_type, $context)
