@@ -25,5 +25,4 @@ final class value_probe_node extends expression_node
 		$worker->edge($this, $this->operand);
 	}
 	public function children(): child_iterator_i { return new value_probe_children_iterator($this); }
-	public function generate_cpp(cpp_generation_worker_i $worker): string { return $worker->generate_value_probe($this); }
 }

@@ -204,7 +204,7 @@ final class CPP_Generator
 		$statements /** Storage<statement_node> */ = $body->statements;
 		$worker = new CPP_Syntax($context);
 		foreach ($statements as $node) {
-			$text .= $node->generate_cpp($worker);
+			$text .= $worker->statement($node);
 		}
 		return $text;
 	}
@@ -220,7 +220,7 @@ final class CPP_Generator
 		}
 
 		$initializer /** expression_node */ = $initializer;
-		$value = $initializer->generate_cpp(new CPP_Syntax($context));
+		$value = (new CPP_Syntax($context))->expression($initializer);
 		return self::generate_storage_value($binding, $name, $value, $explicit_type, $context);
 	}
 
@@ -228,8 +228,8 @@ final class CPP_Generator
 	private static function storage_name(prepared_binding $binding, ?assignable_expression_node $target, cpp_generation_context $context): string
 	{
 		if ($target !== null) {
-			$target_node /** ast_node */ = $target;
-			return $target_node->generate_cpp(new CPP_Syntax($context));
+			$target_node /** assignable_expression_node */ = $target;
+			return (new CPP_Syntax($context))->expression($target_node);
 		}
 		$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
 		return self::local_name($declaration);
@@ -255,8 +255,8 @@ final class CPP_Generator
 			return $context->return_type === null ? "\treturn 0;\n" : "\treturn;\n";
 		}
 
-		$expression /** ast_node */ = $syntax->expression;
-		$value = $expression->generate_cpp(new CPP_Syntax($context));
+		$expression /** expression_node */ = $syntax->expression;
+		$value = (new CPP_Syntax($context))->expression($expression);
 		if ($context->return_type !== null) {
 			$decision = $syntax->require_preparation()->require_conversion();
 			return "\treturn " . CPP_Declarations::conversion($value, $decision, $context) . ";\n";
@@ -270,14 +270,14 @@ final class CPP_Generator
 		if ($expression instanceof assignment_expression_node) {
 			return self::generate_assignment_statement(object_cast($expression, assignment_expression_node::class), $context);
 		}
-		return "\t" . $expression->generate_cpp(new CPP_Syntax($context)) . ";\n";
+		return "\t" . (new CPP_Syntax($context))->expression($expression) . ";\n";
 	}
 
 	/** Render an explicit cast solely from its prepared decision and ordinary operand path. */
 	public static function generate_cast(cast_expression_node $syntax,
 		cpp_generation_context $context): string
 	{
-		$value = $syntax->operand->generate_cpp(new CPP_Syntax($context));
+		$value = (new CPP_Syntax($context))->expression($syntax->operand);
 		return CPP_Declarations::conversion(
 			$value, $syntax->require_cast_preparation()->conversion, $context);
 	}
@@ -292,7 +292,7 @@ final class CPP_Generator
 			throw new \LogicException('Nested assignment requires prepared existing local storage');
 		}
 		$name = self::storage_name($binding, null, $context);
-		$value = $syntax->value->generate_cpp(new CPP_Syntax($context));
+		$value = (new CPP_Syntax($context))->expression($syntax->value);
 		$write = self::generate_storage_value($binding, $name, $value, false, $context);
 		$result_type = CPP_Declarations::type($binding->type, $context);
 		return '([&]() -> ' . $result_type . ' { ' . $write . '; return ' . $name . '; }())';
@@ -313,7 +313,7 @@ final class CPP_Generator
 			$source = self::generate_assignment_sequence(object_cast($value_node, assignment_expression_node::class), $context);
 		}
 		else {
-			$source->value = $value_node->generate_cpp(new CPP_Syntax($context));
+			$source->value = (new CPP_Syntax($context))->expression($value_node);
 		}
 
 		$binding = $syntax->require_assignment_preparation()->binding;
@@ -384,10 +384,10 @@ final class CPP_Generator
 		cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_compound_assignment_preparation();
-		$target = $syntax->target->generate_cpp(new CPP_Syntax($context));
+		$target = (new CPP_Syntax($context))->expression($syntax->target);
 		$place = 'target_' . $context->next_temporary;
 		$context->next_temporary++;
-		$right = $syntax->value->generate_cpp(new CPP_Syntax($context));
+		$right = (new CPP_Syntax($context))->expression($syntax->value);
 		$value = self::render_binary_decision($facts->decision, $place, $right, $context);
 		$value = CPP_Declarations::conversion($value, $facts->write_back, $context);
 		$result_type = CPP_Declarations::type($facts->type, $context);
@@ -424,7 +424,7 @@ final class CPP_Generator
 		else {
 			throw new \LogicException('Unsupported prepared mutation operation');
 		}
-		$target = $syntax->target->generate_cpp(new CPP_Syntax($context));
+		$target = (new CPP_Syntax($context))->expression($syntax->target);
 		$result_type = CPP_Declarations::type($decision->result_type, $context);
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return 'static_cast<' . $result_type . '>(' . $prefix . $target . $suffix . ')';
@@ -437,7 +437,7 @@ final class CPP_Generator
 		if ($decision->operation === operator_operation::condition_not)
 		{
 			$truthiness /** truthiness_decision */ = $decision->truthiness;
-			$operand = $syntax->operand->generate_cpp(new CPP_Syntax($context));
+			$operand = (new CPP_Syntax($context))->expression($syntax->operand);
 			return 'scpp::bool_t(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
 		}
 		$spelling = '';
@@ -460,7 +460,7 @@ final class CPP_Generator
 		}
 		$worker = new CPP_Syntax($context);
 		$operand = CPP_Declarations::conversion(
-			$syntax->operand->generate_cpp($worker), $decision->operands[0], $context);
+			$worker->expression($syntax->operand), $decision->operands[0], $context);
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $spelling . $operand . ')';
 	}
@@ -470,8 +470,8 @@ final class CPP_Generator
 	{
 		$decision = $syntax->require_binary_preparation()->decision;
 		$worker = new CPP_Syntax($context);
-		$left = $syntax->left->generate_cpp($worker);
-		$right = $syntax->right->generate_cpp($worker);
+		$left = $worker->expression($syntax->left);
+		$right = $worker->expression($syntax->right);
 		return self::render_binary_decision($decision, $left, $right, $context);
 	}
 
@@ -677,7 +677,7 @@ final class CPP_Generator
 		$worker = new CPP_Syntax($context);
 		$parts /** Storage<interpolation_part_node> */ = $syntax->parts;
 		foreach ($parts as $part) {
-			$text .= $name . '.append(' . $part->generate_cpp($worker) . '); ';
+			$text .= $name . '.append(' . $worker->interpolation_part($part) . '); ';
 		}
 		return $text . 'return ' . $name . '; }())';
 	}

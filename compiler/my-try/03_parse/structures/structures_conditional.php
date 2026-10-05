@@ -25,7 +25,6 @@ final class coalesce_expression_node extends expression_node
 		$worker->edge($this, $this->fallback);
 	}
 	public function children(): child_iterator_i { return new coalesce_expression_children_iterator($this); }
-	public function generate_cpp(cpp_generation_worker_i $worker): string { return $worker->generate_coalesce_expression($this); }
 }
 
 final class conditional_expression_node extends expression_node
@@ -70,10 +69,5 @@ final class conditional_expression_node extends expression_node
 		$worker->edge($this, $this->condition);
 		if ($this->true_branch !== null) { $worker->edge($this, $this->true_branch); }
 		$worker->edge($this, $this->fallback);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_conditional_expression($this);
 	}
 }

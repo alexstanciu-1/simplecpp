@@ -29,11 +29,6 @@ final class while_node extends loop_node
 		$worker->edge($this, $this->condition);
 		$worker->edge($this, $this->body);
 	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_while($this);
-	}
 }
 
 final class do_while_node extends loop_node
@@ -66,11 +61,6 @@ final class do_while_node extends loop_node
 		$worker->enter($this);
 		$worker->edge($this, $this->body);
 		$worker->edge($this, $this->condition);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_do_while($this);
 	}
 }
 
@@ -125,11 +115,6 @@ final class for_node extends loop_node
 			$worker->edge($this, $update);
 		}
 		$worker->edge($this, $this->body);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_for($this);
 	}
 }
 

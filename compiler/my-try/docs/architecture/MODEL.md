@@ -180,7 +180,8 @@ non-storable sentinel identity, without source exposure or a storage backend bin
 ## Structure and processing boundary
 
 Structures may initialize data, enforce local invariants, expose typed access,
-clear attached facts, and forward operations to their workers. Workers own semantic
+clear attached facts, and currently forward preparation operations to their workers.
+Workers own semantic
 algorithms, scheduling, dependency maintenance and publication. Retained structures
 do not keep processing contexts or workers.
 
@@ -188,6 +189,12 @@ Preparation dispatch passes one invocation-local context directly to nodes. Type
 work records dispatch scheduling/rebuild/settlement to `Preparation_Worker`.
 `File_Preparation` is the standalone entry adapter to that scheduler. Facts are
 attached to syntax, not token-indexed maps. See [preparation](../../04_analyze/prepare/README.md).
+
+C++ emission has no node-owned operation hook. `CPP_Syntax` selects typed handlers
+through backend-owned expression/statement/interpolation dispatch; handlers control
+their own child traversal. Shared syntax exposes no backend worker protocol or
+universal visitor. The [stage-owned processing plan](../planning/stage_owned_processing.md)
+tracks the remaining preparation and lifecycle batches.
 
 Maintenance is node-owned traversal through named owning fields. Workers implement
 `enter`, `edge` and `token_index`; edge handling chooses recursion. Inspection

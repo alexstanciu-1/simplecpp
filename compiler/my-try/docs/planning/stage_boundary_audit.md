@@ -9,7 +9,9 @@ Follow-up discussion selected stage-owned traversal and dispatch, with no requir
 visitor on shared structures and collection explicitly a parsing sub-step. See the
 [refactor plan](stage_owned_processing.md) for the agreed destination, proposed
 batches and remaining questions. Findings below describe the audited implementation;
-the planning follow-up does not mark them repaired.
+the planning follow-up alone does not mark them repaired. Batch A subsequently
+removed AST C++ hooks and the shared C++ worker interface; SB-02 is only partially
+resolved because semantic processing hooks remain.
 
 ## Outcome and rule
 

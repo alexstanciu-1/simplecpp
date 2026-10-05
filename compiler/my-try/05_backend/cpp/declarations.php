@@ -210,7 +210,7 @@ final class CPP_Declarations
 			$parameter = $parameters[$parameter_index];
 			$argument_type = $parameter->element_type ?? $parameter->type;
 			// Generate nested calls before assigning the outer temporary name.
-			$value = $argument->generate_cpp(new CPP_Syntax($context));
+			$value = (new CPP_Syntax($context))->expression($argument);
 			$name = 'argument_' . $context->next_temporary;
 			$context->next_temporary++;
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
@@ -249,6 +249,6 @@ final class CPP_Declarations
 	{
 		$entry = object_cast(weakref_get($syntax->require_field_access_preparation()->field->declaration), collected_name::class);
 		$base = $syntax->base;
-		return '(' . $base->generate_cpp(new CPP_Syntax($context)) . ').' . CPP_Generator::source_name('field', $entry->name);
+		return '(' . (new CPP_Syntax($context))->expression($base) . ').' . CPP_Generator::source_name('field', $entry->name);
 	}
 }

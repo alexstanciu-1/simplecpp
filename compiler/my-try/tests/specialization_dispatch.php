@@ -29,13 +29,44 @@ catch (\RuntimeException $error) {
 	$failures++;
 }
 try {
-	$unsupported->generate_cpp(new CPP_Syntax(new cpp_generation_context()));
+	(new CPP_Syntax(new cpp_generation_context()))->expression($unsupported);
 }
 catch (\RuntimeException $error) {
 	$failures++;
 }
 if ($failures !== 2 || $literal->preparation() !== null || !($unsupported instanceof ast_node_i)) {
 	throw new \LogicException('Unsupported dispatch visited children or lost its interface');
+}
+
+// Shared syntax exposes data and maintenance, never a backend processing protocol.
+if (interface_exists(__NAMESPACE__ . '\\cpp_generation_worker_i')) {
+	throw new \LogicException('C++ worker protocol leaked into the shared model');
+}
+foreach (get_declared_classes() as $class_name) {
+	if ($class_name === ast_node::class || is_subclass_of($class_name, ast_node::class)) {
+		if (method_exists($class_name, 'generate_cpp') || method_exists($class_name, 'accept')) {
+			throw new \LogicException('Syntax still owns backend or universal visitor dispatch: ' . $class_name);
+		}
+	}
+}
+
+// Unsupported emission does not prepare children, attach facts or alter output context.
+$emission_context = new cpp_generation_context();
+$emitter = new CPP_Syntax($emission_context);
+$headers_before = $emission_context->headers;
+$temporary_before = $emission_context->next_temporary;
+try {
+	$emitter->expression($unsupported);
+	throw new \LogicException('Unsupported expression silently emitted');
+}
+catch (\RuntimeException $expected) {
+	if ($expected->getMessage() !== 'C++ generation is not supported for this node') {
+		throw $expected;
+	}
+}
+if ($literal->preparation() !== null || $emission_context->headers !== $headers_before
+	|| $emission_context->next_temporary !== $temporary_before) {
+	throw new \LogicException('Unsupported backend dispatch performed work');
 }
 
 // Shared accessors retain identity, typed assignment and per-instance cleanup for every fact slot.
@@ -97,6 +128,16 @@ $generator = new CPP_Generator();
 $integer_source = dispatch_parse('$a int = 10; return $a;');
 $integer_prepared = (new File_Preparation($integer_source->collection, Model::$language_scope))->prepare();
 $integer_output = $generator->generate($integer_prepared);
+$integer_binding = object_cast($integer_source->root->body->statements[0], variable_declaration_node::class);
+$integer_literal = object_cast($integer_binding->initializer, integer_literal_node::class);
+$literal_facts = $integer_literal->require_integer_literal_preparation();
+$body_work = $integer_source->root->body->work();
+$body_state = $body_work->state;
+$literal_text = (new CPP_Syntax(new cpp_generation_context()))->expression($integer_literal);
+if ($literal_text === '' || $integer_literal->require_integer_literal_preparation() !== $literal_facts
+	|| $integer_source->root->body->work() !== $body_work || $body_work->state !== $body_state) {
+	throw new \LogicException('Backend dispatch changed semantic facts or work identity/state');
+}
 $boolean_source = dispatch_parse('$a bool = false; return $a;');
 $boolean_prepared = (new File_Preparation($boolean_source->collection, Model::$language_scope))->prepare();
 $boolean_output = $generator->generate($boolean_prepared);
@@ -118,4 +159,4 @@ catch (\RuntimeException $error) {
 if (!$failed || ($first_data->preparation() === null) || ($first_literal->preparation() === null) || $mixed->collection->root->body->work()->failed) {
 	throw new \LogicException('Preparation did not preserve independent successful body work');
 }
-echo "Specialization dispatch: inherited contract, unsupported-parent isolation, phase cleanup and invocation state passed\n";
+echo "Specialization dispatch: backend-owned emission, unsupported-parent isolation, fact identity and invocation state passed\n";

@@ -67,16 +67,20 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
 - Parser-invoked collection is part of `03_parse/collect/`, not a separate analysis
   pass. Composition/lifecycle orchestration and neutral structural traversal are
   explicit cross-stage roles, not precedents for forward dependencies in workers.
-  Existing AST phase hooks and incremental cross-owner mutations are recorded in the
-  [stage-boundary audit](docs/planning/stage_boundary_audit.md); do not expand or
-  silently refactor them before the follow-up discussion.
+  C++ dispatch/traversal is backend-owned; do not add AST emission or universal visitor
+  hooks. Remaining preparation hooks and incremental cross-owner mutations follow
+  the agreed [stage-owned processing plan](docs/planning/stage_owned_processing.md).
+  Neutral maintenance remains available; lifecycle protocol redesign still needs its
+  separate discussion before implementation.
 
 - Model's static fields own shared roots; retained records never retain workers.
   `Compiler_Lifecycle` owns resets. Module configuration changes reset compilation;
   identical configuration preserves retained data.
 - Structures may initialize data, preserve local representation invariants, expose
-  typed access/query helpers, clear their facts, and dispatch/traverse typed
-  operations. Workers retain algorithms, scheduling and publication policy.
+  typed access/query helpers and clear their facts. Workers own stage dispatch,
+  traversal, algorithms, scheduling and publication policy. Existing preparation
+  adapters remain temporary until their planned batch; neutral structural maintenance
+  and lazy inspection are retained.
 - Specialized AST node families own named fields; the shared abstract statement
   body owns its statements and common traversal. Do not recreate node/payload registries,
   generic child lists or inspection parents. `children()` is lazy inspection;

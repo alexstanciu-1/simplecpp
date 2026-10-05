@@ -40,11 +40,6 @@ final class switch_node extends breakable_node
 		$groups /** Storage<switch_case_group> */ = $this->groups;
 		foreach ($groups as $group) { $worker->edge($this, $group); }
 	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_switch($this);
-	}
 }
 
 /** Labels select this body together; fallthrough does not extend its lexical scope. */
@@ -74,11 +69,6 @@ final class switch_case_group extends ast_node
 		$labels /** Storage<switch_label> */ = $this->labels;
 		foreach ($labels as $label) { $worker->edge($this, $label); }
 		$worker->edge($this, $this->body);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_switch_group($this);
 	}
 }
 
@@ -117,10 +107,5 @@ final class switch_label extends ast_node
 	{
 		$worker->enter($this);
 		if ($this->value !== null) { $worker->edge($this, $this->value); }
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_switch_label($this);
 	}
 }

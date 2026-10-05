@@ -58,12 +58,6 @@ final class file_node extends ast_node
 		}
 		$worker->edge($this, $this->body);
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_file($this);
-	}
 }
 
 /**
@@ -146,12 +140,6 @@ final class function_body_node extends statement_body_node
 	{
 		return Body_Preparation::prepare_statements($this, $context);
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_function_body($this);
-	}
 }
 
 /** Nested grouping only; it does not own an independent preparation work item. */
@@ -216,12 +204,6 @@ final class if_node extends statement_node
 		if ($this->next_arm !== null) {
 			$worker->edge($this, $this->next_arm);
 		}
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_if($this);
 	}
 }
 
@@ -332,7 +314,6 @@ final class null_literal_node extends expression_node
 		$this->set_preparation(Expression_Preparation::prepare_null());
 	}
 	public function maintain(node_maintenance_worker_i $worker): void { $worker->enter($this); }
-	public function generate_cpp(cpp_generation_worker_i $worker): string { return $worker->generate_null_literal($this); }
 }
 
 final class integer_literal_node extends expression_node
@@ -373,12 +354,6 @@ final class integer_literal_node extends expression_node
 	{
 		$worker->enter($this);
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_integer_literal($this);
-	}
 }
 
 final class float_literal_node extends expression_node
@@ -413,12 +388,6 @@ final class float_literal_node extends expression_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_float_literal($this);
 	}
 }
 
@@ -456,12 +425,6 @@ final class boolean_literal_node extends expression_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_boolean_literal($this);
 	}
 }
 
@@ -508,12 +471,6 @@ final class string_literal_node extends expression_node
 	{
 		$worker->enter($this);
 	}
-
-	/** The generation worker reads decoded bytes and owns target escaping. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_string_literal($this);
-	}
 }
 
 /** Ordered source parts; there are no synthetic concatenation operators or cast nodes. */
@@ -559,11 +516,6 @@ final class interpolated_string_node extends expression_node
 			$worker->edge($this, $part);
 		}
 	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_interpolated_string($this);
-	}
 }
 
 /** Only literal bytes and variable insertions belong to the bounded interpolation grammar. */
@@ -605,11 +557,6 @@ final class interpolation_text_node extends interpolation_part_node
 	{
 		$worker->enter($this);
 	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_interpolation_text($this);
-	}
 }
 
 final class interpolation_value_node extends interpolation_part_node
@@ -645,11 +592,6 @@ final class interpolation_value_node extends interpolation_part_node
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->expression);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_interpolation_value($this);
 	}
 }
 
@@ -702,12 +644,6 @@ final class variable_reference_node extends assignable_expression_node
 	{
 		$worker->enter($this);
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_variable_reference($this);
-	}
 }
 
 /** A named immutable value is an expression, never an assignment target. */
@@ -754,11 +690,6 @@ final class constant_reference_node extends expression_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_constant_reference($this);
 	}
 }
 
@@ -830,12 +761,6 @@ final class call_node extends expression_node
 		foreach ($arguments as $argument) {
 			$worker->edge($this, $argument);
 		}
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_call($this);
 	}
 }
 
@@ -941,12 +866,6 @@ final class function_node extends declaration_node
 		$worker->edge($this, $this->return_type);
 		$worker->edge($this, $this->body);
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_function_signature($this);
-	}
 }
 
 final class parameter_node extends ast_node
@@ -1005,12 +924,6 @@ final class parameter_node extends ast_node
 			$worker->edge($this, $this->default_value);
 		}
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_parameter($this);
-	}
 }
 
 final class compound_assignment_expression_node extends expression_node
@@ -1061,12 +974,6 @@ final class compound_assignment_expression_node extends expression_node
 		$worker->edge($this, $this->target);
 		$worker->edge($this, $this->value);
 	}
-
-	/** The generation worker consumes the prepared operation, never token spelling. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_compound_assignment_expression($this);
-	}
 }
 
 final class mutation_expression_node extends expression_node
@@ -1115,12 +1022,6 @@ final class mutation_expression_node extends expression_node
 		$this->operator_token_index = $worker->token_index($this->operator_token_index);
 		$worker->enter($this);
 		$worker->edge($this, $this->target);
-	}
-
-	/** The generation worker consumes the prepared operation, never token spelling. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_mutation_expression($this);
 	}
 }
 
@@ -1175,12 +1076,6 @@ final class unary_expression_node extends expression_node
 		$worker->enter($this);
 		$worker->edge($this, $this->operand);
 	}
-
-	/** The generation worker consumes the prepared operation, never token spelling. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_unary_expression($this);
-	}
 }
 
 final class binary_expression_node extends expression_node
@@ -1231,12 +1126,6 @@ final class binary_expression_node extends expression_node
 		$worker->edge($this, $this->left);
 		$worker->edge($this, $this->right);
 	}
-
-	/** The generation worker consumes the prepared operation, never token spelling. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_binary_expression($this);
-	}
 }
 
 /** One source-written cast shape; contextual conversions never inject this node. */
@@ -1280,11 +1169,6 @@ final class cast_expression_node extends expression_node
 		$worker->enter($this);
 		$worker->edge($this, $this->target_type);
 		$worker->edge($this, $this->operand);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_cast_expression($this);
 	}
 }
 
@@ -1339,12 +1223,6 @@ final class assignment_expression_node extends expression_node
 		$worker->edge($this, $this->target);
 		$worker->edge($this, $this->value);
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_assignment_expression($this);
-	}
 }
 
 final class expression_statement_node extends statement_node
@@ -1377,12 +1255,6 @@ final class expression_statement_node extends statement_node
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->expression);
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_expression_statement($this);
 	}
 }
 
@@ -1432,12 +1304,6 @@ final class return_node extends statement_node
 		if ($this->expression !== null) {
 			$worker->edge($this, $this->expression);
 		}
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_return($this);
 	}
 }
 
@@ -1498,12 +1364,6 @@ final class variable_declaration_node extends statement_node
 		if ($this->initializer !== null) {
 			$worker->edge($this, $this->initializer);
 		}
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_variable_declaration($this);
 	}
 }
 
@@ -1834,12 +1694,6 @@ final class struct_node extends declaration_node
 			$worker->edge($this, $child);
 		}
 	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_struct($this);
-	}
 }
 
 final class field_node extends ast_node
@@ -1889,12 +1743,6 @@ final class field_node extends ast_node
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->type_syntax);
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_field($this);
 	}
 }
 
@@ -1950,12 +1798,6 @@ final class field_access_node extends assignable_expression_node
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->base);
-	}
-
-	/** The generation worker reads attached facts and owns rendering and child traversal. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_field_access($this);
 	}
 }
 

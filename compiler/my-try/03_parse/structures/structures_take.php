@@ -47,11 +47,6 @@ final class take_expression_node extends expression_node
 	{
 		return new take_children_iterator($this);
 	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_take_expression($this);
-	}
 }
 
 final class take_children_iterator extends children_iterator

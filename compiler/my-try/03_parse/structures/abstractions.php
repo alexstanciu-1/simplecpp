@@ -12,7 +12,6 @@ interface ast_node_i
 {
 	public function kind(): node_kind;
 	public function prepare(preparation_context $context): void;
-	public function generate_cpp(cpp_generation_worker_i $worker): string;
 	public function maintain(node_maintenance_worker_i $worker): void;
 	/**
 	 * Iterate direct children; do not mutate membership during traversal.
@@ -55,11 +54,6 @@ abstract class ast_node implements ast_node_i
 		throw new \RuntimeException('Preparation is not supported for this node');
 	}
 
-	/** Unsupported generation fails rather than silently emitting an empty fragment. */
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		throw new \RuntimeException('C++ generation is not supported for this node');
-	}
 
 	/**
 	 * Leaves expose an empty iterator; compilation does not use this inspection API.
@@ -151,11 +145,6 @@ abstract class statement_body_node extends statement_node
 			$worker->edge($this, $child);
 		}
 	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_block($this);
-	}
 }
 
 /** Structured break targets are distinct from constructs that also accept continue. */
@@ -229,11 +218,6 @@ abstract class control_transfer_node extends statement_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_control_transfer($this);
 	}
 }
 
@@ -348,57 +332,4 @@ interface node_maintenance_worker_i
 	public function enter(ast_node $node): void;
 	public function edge(ast_node $parent, ast_node $child): void;
 	public function token_index(int $index): int;
-}
-
-/**
- * Typed C++ fragment dispatch. The worker retains rendering context and traverses
- * typed fields; source type nodes are consumed through their resolved type facts.
- * Function signature and body fragments remain independent. Existing C++ caches,
- * include requirements and pending generation queues remain backend-owned.
- * Returning text here is not permission to settle pending work before complete
- * fragment/include publication succeeds. This is not a new emission layout.
- */
-interface cpp_generation_worker_i
-{
-	public function generate_file(file_node $node): string;
-	public function generate_function_body(function_body_node $node): string;
-	public function generate_block(statement_body_node $node): string;
-	public function generate_if(if_node $node): string;
-	public function generate_switch(switch_node $node): string;
-	public function generate_switch_group(switch_case_group $node): string;
-	public function generate_switch_label(switch_label $node): string;
-	public function generate_while(while_node $node): string;
-	public function generate_do_while(do_while_node $node): string;
-	public function generate_for(for_node $node): string;
-	public function generate_control_transfer(control_transfer_node $node): string;
-	public function generate_integer_literal(integer_literal_node $node): string;
-	public function generate_null_literal(null_literal_node $node): string;
-	public function generate_float_literal(float_literal_node $node): string;
-	public function generate_boolean_literal(boolean_literal_node $node): string;
-	public function generate_string_literal(string_literal_node $node): string;
-	public function generate_interpolated_string(interpolated_string_node $node): string;
-	public function generate_interpolation_text(interpolation_text_node $node): string;
-	public function generate_interpolation_value(interpolation_value_node $node): string;
-	public function generate_variable_reference(variable_reference_node $node): string;
-	public function generate_constant_reference(constant_reference_node $node): string;
-	public function generate_cast_expression(cast_expression_node $node): string;
-	public function generate_conditional_expression(conditional_expression_node $node): string;
-	public function generate_coalesce_expression(coalesce_expression_node $node): string;
-	public function generate_value_probe(value_probe_node $node): string;
-	public function generate_take_expression(take_expression_node $node): string;
-	public function generate_match_expression(match_expression_node $node): string;
-	public function generate_compound_assignment_expression(compound_assignment_expression_node $node): string;
-	public function generate_mutation_expression(mutation_expression_node $node): string;
-	public function generate_unary_expression(unary_expression_node $node): string;
-	public function generate_binary_expression(binary_expression_node $node): string;
-	public function generate_call(call_node $node): string;
-	public function generate_function_signature(function_node $node): string;
-	public function generate_parameter(parameter_node $node): string;
-	public function generate_assignment_expression(assignment_expression_node $node): string;
-	public function generate_expression_statement(expression_statement_node $node): string;
-	public function generate_return(return_node $node): string;
-	public function generate_variable_declaration(variable_declaration_node $node): string;
-	public function generate_struct(struct_node $node): string;
-	public function generate_field(field_node $node): string;
-	public function generate_field_access(field_access_node $node): string;
 }

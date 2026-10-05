@@ -47,11 +47,6 @@ final class match_expression_node extends expression_node
 			$worker->edge($this, $arm);
 		}
 	}
-
-	public function generate_cpp(cpp_generation_worker_i $worker): string
-	{
-		return $worker->generate_match_expression($this);
-	}
 }
 
 /** Empty labels mean default; otherwise every label selects the same result. */

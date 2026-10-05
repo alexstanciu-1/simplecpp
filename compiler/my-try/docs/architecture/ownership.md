@@ -92,7 +92,10 @@ order; a shared data link does not transfer algorithm ownership. Parser-called
 collection belongs to `03_parse/collect/`. Backend bindings and naming belong only
 to their backend. Existing cross-stage hooks and retirement/invalidation exceptions
 are inventoried in the [stage-boundary audit](../planning/stage_boundary_audit.md),
-with wider repairs pending discussion rather than implied by this rule.
+with repairs sequenced by the [stage-owned processing plan](../planning/stage_owned_processing.md).
+C++ node hooks have been removed: backend workers own dispatch/traversal and consume
+attached facts. Preparation hooks and cross-owner lifecycle mutations remain pending;
+neutral maintenance remains a structural facility with caller-controlled recursion.
 
 Workers maintain indexes when indexed names/membership change. Scope methods expose
 encapsulated membership operations; publication policy stays in `Scope_Publication`.

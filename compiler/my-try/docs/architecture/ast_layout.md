@@ -14,9 +14,10 @@ retains the former `03_parse/proposal/` snapshots when historical comparison is 
 
 `statement_body_node` is an abstract statement owning `Storage<statement_node>`
 and its source span. It shares construction, inspection, maintenance and block
-preparation/generation dispatch. `block_node` is an empty final subclass;
+preparation dispatch. `block_node` is an empty final subclass;
 `function_body_node` adds only executable-unit scope/work state and overrides root
-preparation and generation dispatch. Shared workers accept the abstract body type.
+preparation dispatch. C++ workers select root versus block rendering themselves.
+Shared workers accept the abstract body type.
 Algorithms remain worker-owned. This body abstraction is a named language concept,
 not a generic AST child/payload container.
 
@@ -173,7 +174,12 @@ Nodes receive `preparation_context` directly in `prepare()` and forward themselv
 to the appropriate typed preparation algorithm. Facts remain attached to the node;
 algorithms and statement traversal remain in preparation classes. No separate
 preparation adapter is allocated, and nested work retains its own explicit context.
-`generate_cpp` continues to dispatch through `CPP_Syntax`.
+C++ dispatch belongs entirely to `CPP_Syntax`: `expression()`, `statement()` and
+`interpolation_part()` select typed backend handlers. Known concrete children are
+passed directly to their handlers. No AST `generate_cpp()`, C++ worker interface or
+universal `accept()` protocol remains. Declaration fragments continue through the
+backend's existing typed declaration path; no extra generic declaration walker is
+needed. Preparation hooks are the next, still-unimplemented refactor batch.
 For maintenance, each node enumerates its own named owning fields in grammar order;
 workers implement `enter`, `edge` and `token_index`. The edge callback chooses
 whether to recurse. No abstract maintenance visitor or per-kind visitor methods

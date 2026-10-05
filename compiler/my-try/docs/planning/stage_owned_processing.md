@@ -2,8 +2,9 @@
 Doc Status: planning
 
 Recorded 2026-10-05 against `22755175` on `v0.2/develop`.
-This records the agreed direction and proposes bounded implementation batches.
-No compiler behavior is changed by this document. The current implementation and
+This records the agreed direction and bounded implementation batches.
+Batch A is implemented in the 2026-10-05 follow-up; later batches remain pending.
+The current implementation and
 findings are described in the [stage-boundary audit](stage_boundary_audit.md).
 Language semantics remain owned by the top-level specs.
 
@@ -29,7 +30,7 @@ and owns its traversal, dispatch and algorithms. The coordinator sequences stage
 
 This supersedes the neutral-visitor replacement discussed after SB-02. A visitor
 is not needed to establish the stage boundary. Neutral maintenance is the one
-remaining scope question below, not an implicitly adopted compilation visitor.
+explicitly retained facility below, not an implicitly adopted compilation visitor.
 
 ## Dispatch and traversal shape
 
@@ -99,7 +100,7 @@ Each batch is independently reviewed, validated and committed. This plan is not
 permission to repair every audit finding in one patch. New retained protocols or
 cross-owner redesign beyond the agreed batch require discussion first.
 
-### A. C++ dispatch off the AST — recommended first implementation
+### A. C++ dispatch off the AST — implemented 2026-10-05
 
 - Add backend-local family dispatch using the existing typed handlers.
 - Migrate C++ callers, then remove AST `generate_cpp()` methods and the shared
@@ -171,7 +172,7 @@ Keep historical evidence unchanged. Resume Chapter 06 construction work afterwar
 
 ## Validation and acceptance
 
-This planning-only change needs document/link review, not compiler tests.
+The original planning-only change needed document/link review, not compiler tests.
 For implementation, select focused existing suites and add independent assertions:
 
 - A: specialization dispatch, S2S, callables and incremental C++; generated-program
@@ -199,17 +200,41 @@ Native compiler builds, conversion, broad regressions and style/lint sweeps rema
 on explicit request. No execution-speed or C++ compile-time improvement is claimed
 without measurements; correctness and ownership are the objectives of this refactor.
 
+### Batch A evidence — 2026-10-05
+
+Candidate: `4d4a729c` plus the batch A source/test/documentation overlay.
+Removed the AST C++ methods and shared interface. `CPP_Syntax` owns expression,
+statement and interpolation-part selection; known concrete children use direct
+typed handlers. Removed unused file/declaration visitor adapters; the active
+fragment/declaration path is unchanged. Neutral maintenance and preparation are
+unchanged. Portable-PHP checked narrowing is explicit at family dispatch boundaries.
+
+- Baseline export: `/tmp/my-try-cpp-dispatch-before-20261005`.
+- Function proofs: `/tmp/my-try-cpp-dispatch-functions-20261005` — 12 PHP suites
+  and 77 generated C++ programs passed with PCH.
+- Control-flow proofs: `/tmp/my-try-cpp-dispatch-control-20261005` — 12 PHP suites
+  and 132 generated C++ programs passed with PCH.
+- Final overlay checks: `/tmp/my-try-cpp-dispatch-final-20261005` — seven PHP suites
+  passed, including the extended dispatch test, callables, cleanup and work/retry
+  checks. Its 1,049 exported C++ files are byte-identical to the baseline.
+- There are 19 distinct passing PHP suites across these overlapping selections.
+  New assertions cover absence of AST/backend visitor hooks, unsupported-parent
+  isolation, prepared-fact/work identity and state preservation.
+- The runner used CLI fallback because sandbox Unix-socket binding prevented FPM
+  startup. No native compiler rebuild, conversion, broad regression or lint sweep
+  was performed. Generated-program execution is not native compiler evidence.
+
+SB-02 is partially resolved; B/C remain next. D/E still require protocol review.
+
 ## Remaining questions and non-goals
 
-1. **Neutral maintenance boundary:** keep `maintain(worker)` solely as structural
-   edge/token enumeration, with the invoking operation owning recursion, or remove
-   it too? Recommendation: retain it for this refactor, along with lazy `children()`
-   inspection. Neither becomes the traversal path for preparation or emission.
+1. **Neutral maintenance boundary — agreed:** retain `maintain(worker)` as structural
+   edge/token enumeration, with the invoking operation owning recursion, along with
+   lazy `children()` inspection. Neither becomes the traversal path for preparation or emission.
    Removing it touches cleanup, token remapping and lifecycle traversal and needs
    a separately agreed batch. It is not a back door for stage-specific node hooks.
-2. **First implementation boundary:** recommendation is A first, followed by B/C;
-   review the D/E protocols before implementing them. The user has requested this
-   plan, not execution of the entire sequence.
+2. **Implementation order — agreed:** A first, followed by B/C; review the D/E
+   protocols before implementing them. The first implementation completes A only.
 
 The acknowledgment choice in E and exact change/retirement protocol in D are later
 design gates, not blockers for A. Dispatch helper names and file splits are local

@@ -3,7 +3,7 @@
 /* Typed C++ dispatch over attached facts; fragment publication remains generator-owned. */
 namespace scpp\compiler;
 
-final class CPP_Syntax implements cpp_generation_worker_i
+final class CPP_Syntax
 {
 	private cpp_generation_context $context;
 
@@ -12,9 +12,124 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		$this->context = $context;
 	}
 
-	public function generate_file(file_node $node): string
+	/** Backend-owned selection only; typed handlers own child traversal. */
+	public function expression(expression_node $node): string
 	{
-		return $this->generate_function_body($node->body);
+		if ($node instanceof null_literal_node) {
+			return $this->generate_null_literal(object_cast($node, null_literal_node::class));
+		}
+		if ($node instanceof integer_literal_node) {
+			return $this->generate_integer_literal(object_cast($node, integer_literal_node::class));
+		}
+		if ($node instanceof float_literal_node) {
+			return $this->generate_float_literal(object_cast($node, float_literal_node::class));
+		}
+		if ($node instanceof boolean_literal_node) {
+			return $this->generate_boolean_literal(object_cast($node, boolean_literal_node::class));
+		}
+		if ($node instanceof string_literal_node) {
+			return $this->generate_string_literal(object_cast($node, string_literal_node::class));
+		}
+		if ($node instanceof interpolated_string_node) {
+			return $this->generate_interpolated_string(object_cast($node, interpolated_string_node::class));
+		}
+		if ($node instanceof variable_reference_node) {
+			return $this->generate_variable_reference(object_cast($node, variable_reference_node::class));
+		}
+		if ($node instanceof constant_reference_node) {
+			return $this->generate_constant_reference(object_cast($node, constant_reference_node::class));
+		}
+		if ($node instanceof call_node) {
+			return $this->generate_call(object_cast($node, call_node::class));
+		}
+		if ($node instanceof compound_assignment_expression_node) {
+			return $this->generate_compound_assignment_expression(object_cast($node, compound_assignment_expression_node::class));
+		}
+		if ($node instanceof mutation_expression_node) {
+			return $this->generate_mutation_expression(object_cast($node, mutation_expression_node::class));
+		}
+		if ($node instanceof unary_expression_node) {
+			return $this->generate_unary_expression(object_cast($node, unary_expression_node::class));
+		}
+		if ($node instanceof binary_expression_node) {
+			return $this->generate_binary_expression(object_cast($node, binary_expression_node::class));
+		}
+		if ($node instanceof cast_expression_node) {
+			return $this->generate_cast_expression(object_cast($node, cast_expression_node::class));
+		}
+		if ($node instanceof assignment_expression_node) {
+			return $this->generate_assignment_expression(object_cast($node, assignment_expression_node::class));
+		}
+		if ($node instanceof field_access_node) {
+			return $this->generate_field_access(object_cast($node, field_access_node::class));
+		}
+		if ($node instanceof match_expression_node) {
+			return $this->generate_match_expression(object_cast($node, match_expression_node::class));
+		}
+		if ($node instanceof coalesce_expression_node) {
+			return $this->generate_coalesce_expression(object_cast($node, coalesce_expression_node::class));
+		}
+		if ($node instanceof conditional_expression_node) {
+			return $this->generate_conditional_expression(object_cast($node, conditional_expression_node::class));
+		}
+		if ($node instanceof value_probe_node) {
+			return $this->generate_value_probe(object_cast($node, value_probe_node::class));
+		}
+		if ($node instanceof take_expression_node) {
+			return $this->generate_take_expression(object_cast($node, take_expression_node::class));
+		}
+		throw new \RuntimeException('C++ generation is not supported for this node');
+	}
+
+	/** Backend-owned selection only; typed handlers own child traversal. */
+	public function statement(statement_node $node): string
+	{
+		if ($node instanceof function_body_node) {
+			return $this->generate_function_body(object_cast($node, function_body_node::class));
+		}
+		if ($node instanceof statement_body_node) {
+			return $this->generate_block(object_cast($node, statement_body_node::class));
+		}
+		if ($node instanceof if_node) {
+			return $this->generate_if(object_cast($node, if_node::class));
+		}
+		if ($node instanceof while_node) {
+			return $this->generate_while(object_cast($node, while_node::class));
+		}
+		if ($node instanceof do_while_node) {
+			return $this->generate_do_while(object_cast($node, do_while_node::class));
+		}
+		if ($node instanceof for_node) {
+			return $this->generate_for(object_cast($node, for_node::class));
+		}
+		if ($node instanceof switch_node) {
+			return $this->generate_switch(object_cast($node, switch_node::class));
+		}
+		if ($node instanceof control_transfer_node) {
+			return $this->generate_control_transfer(object_cast($node, control_transfer_node::class));
+		}
+		if ($node instanceof expression_statement_node) {
+			return $this->generate_expression_statement(object_cast($node, expression_statement_node::class));
+		}
+		if ($node instanceof return_node) {
+			return $this->generate_return(object_cast($node, return_node::class));
+		}
+		if ($node instanceof variable_declaration_node) {
+			return $this->generate_variable_declaration(object_cast($node, variable_declaration_node::class));
+		}
+		throw new \RuntimeException('C++ generation is not supported for this node');
+	}
+
+	/** Backend-owned selection only; typed handlers own child traversal. */
+	public function interpolation_part(interpolation_part_node $node): string
+	{
+		if ($node instanceof interpolation_text_node) {
+			return $this->generate_interpolation_text(object_cast($node, interpolation_text_node::class));
+		}
+		if ($node instanceof interpolation_value_node) {
+			return $this->generate_interpolation_value(object_cast($node, interpolation_value_node::class));
+		}
+		throw new \RuntimeException('C++ generation is not supported for this node');
 	}
 
 	public function generate_function_body(function_body_node $node): string
@@ -31,33 +146,33 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	public function generate_if(if_node $node): string
 	{
 		if ($node->arm_kind === if_arm_kind::else_arm) {
-			return 'else ' . $node->body->generate_cpp($this);
+			return 'else ' . $this->generate_block($node->body);
 		}
 		$condition /** expression_node */ = $node->condition;
 		$value = $this->native_condition($condition, $node->require_preparation());
 		$prefix = $node->arm_kind === if_arm_kind::initial ? 'if' : 'else if';
-		$text = $prefix . ' (' . $value . ') ' . $node->body->generate_cpp($this);
+		$text = $prefix . ' (' . $value . ') ' . $this->generate_block($node->body);
 		if ($node->next_arm !== null) {
 			$next /** if_node */ = $node->next_arm;
-			$text .= $next->generate_cpp($this);
+			$text .= $this->generate_if($next);
 		}
 		return $text;
 	}
 
 	private function native_condition(expression_node $expression, prepared_condition $facts): string
 	{
-		return CPP_Declarations::truthiness($expression->generate_cpp($this), $facts->truthiness, $this->context);
+		return CPP_Declarations::truthiness($this->expression($expression), $facts->truthiness, $this->context);
 	}
 
 	/** Native switch preserves single selection, source-order fallthrough and loop continue. */
 	public function generate_switch(switch_node $node): string
 	{
-		$text = 'switch ((' . $node->selector->generate_cpp($this) . ").native_value()) {\n";
+		$text = 'switch ((' . $this->expression($node->selector) . ").native_value()) {\n";
 		$outer_break /** nullable<breakable_node> */ = $this->context->break_target;
 		$this->context->break_target = $node;
 		try {
 			$groups /** Storage<switch_case_group> */ = $node->groups;
-			foreach ($groups as $group) { $text .= $group->generate_cpp($this); }
+			foreach ($groups as $group) { $text .= $this->generate_switch_group($group); }
 		}
 		finally { $this->context->break_target = $outer_break; }
 		return $text . "}\n";
@@ -67,8 +182,8 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	{
 		$text = '';
 		$labels /** Storage<switch_label> */ = $node->labels;
-		foreach ($labels as $label) { $text .= $label->generate_cpp($this); }
-		return $text . $node->body->generate_cpp($this);
+		foreach ($labels as $label) { $text .= $this->generate_switch_label($label); }
+		return $text . $this->generate_block($node->body);
 	}
 
 	public function generate_switch_label(switch_label $node): string
@@ -82,7 +197,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	public function generate_match_expression(match_expression_node $node): string
 	{
 		$result_type = CPP_Declarations::type($node->require_preparation()->type, $this->context);
-		$selector = $node->selector->generate_cpp($this);
+		$selector = $this->expression($node->selector);
 		$temporary = 'match_subject_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$text = '([&]() -> ' . $result_type . ' { const auto ' . $temporary
@@ -92,7 +207,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		foreach ($arms as $arm)
 		{
 			$facts = $arm->require_preparation();
-			$result = CPP_Declarations::conversion($arm->result->generate_cpp($this), $facts->conversion, $this->context);
+			$result = CPP_Declarations::conversion($this->expression($arm->result), $facts->conversion, $this->context);
 			if (q_count($facts->decimals) === 0) {
 				$fallback = 'return ' . $result . '; ';
 				continue;
@@ -127,7 +242,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		$outer_continue /** nullable<loop_node> */ = $this->context->continue_target;
 		$this->context->break_target = $node;
 		$this->context->continue_target = $node;
-		try { return $node->body->generate_cpp($this); }
+		try { return $this->generate_block($node->body); }
 		finally {
 			$this->context->break_target = $outer_break;
 			$this->context->continue_target = $outer_continue;
@@ -151,7 +266,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	{
 		$text = "{\n";
 		$initialization /** Storage<statement_node> */ = $node->initialization;
-		foreach ($initialization as $statement) { $text .= $statement->generate_cpp($this); }
+		foreach ($initialization as $statement) { $text .= $this->statement($statement); }
 		$test = '';
 		$conditions /** Storage<expression_node> */ = $node->conditions;
 		$remaining = q_count($conditions);
@@ -163,13 +278,13 @@ final class CPP_Syntax implements cpp_generation_worker_i
 				$facts /** prepared_condition */ = $node->require_preparation()->condition;
 				$test .= $this->native_condition($condition, $facts);
 			}
-			else { $test .= '(void)(' . $condition->generate_cpp($this) . ')'; }
+			else { $test .= '(void)(' . $this->expression($condition) . ')'; }
 		}
 		$update_text = '';
 		$updates /** Storage<expression_node> */ = $node->updates;
 		foreach ($updates as $update) {
 			if ($update_text !== '') { $update_text .= ', '; }
-			$update_text .= '(void)(' . $update->generate_cpp($this) . ')';
+			$update_text .= '(void)(' . $this->expression($update) . ')';
 		}
 		return $text . 'for (; ' . $test . '; ' . $update_text . ') ' . $this->loop_body($node) . "}\n";
 	}
@@ -197,12 +312,12 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	{
 		$node->require_take_preparation();
 		$this->context->headers['lang/php/support/php_take.hpp'] = true;
-		$source = $node->source->generate_cpp($this);
+		$source = $this->expression($node->source);
 		$name = 'take_source_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
-		$outputs = $node->value_binding->generate_cpp($this);
+		$outputs = $this->expression($node->value_binding);
 		if ($node->alternative_binding !== null) {
-			$outputs .= ', ' . $node->alternative_binding->generate_cpp($this);
+			$outputs .= ', ' . $this->expression($node->alternative_binding);
 		}
 		return '([&]() -> scpp::bool_t { auto ' . $name . ' = ' . $source
 			. '; return scpp::php::take(' . $outputs . ', ' . $name . '); }())';
@@ -221,7 +336,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		$facts = $node->require_probe_preparation();
 		$name = $facts->operation === value_probe_kind::isset ? 'isset' : 'empty';
 		$this->context->headers['lang/php/operators/' . $name . '/' . $name . '.hpp'] = true;
-		return 'scpp::php::' . $name . '(' . $node->operand->generate_cpp($this) . ')';
+		return 'scpp::php::' . $name . '(' . $this->expression($node->operand) . ')';
 	}
 
 	/** Typed returns force value results; runtime evaluation occurs only in the selected arm. */
@@ -229,8 +344,8 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	{
 		$facts = $node->require_coalesce_preparation();
 		$result_type = CPP_Declarations::type($facts->type, $this->context);
-		$left = $node->left->generate_cpp($this);
-		$fallback = CPP_Declarations::conversion($node->fallback->generate_cpp($this), $facts->fallback_conversion, $this->context);
+		$left = $this->expression($node->left);
+		$fallback = CPP_Declarations::conversion($this->expression($node->fallback), $facts->fallback_conversion, $this->context);
 		if ($facts->presence === coalesce_presence::always) {
 			$extracted = CPP_Declarations::conversion($left, $facts->left_extraction, $this->context);
 			$selected = CPP_Declarations::conversion($extracted, $facts->left_conversion, $this->context);
@@ -261,7 +376,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	{
 		$facts = $node->require_conditional_preparation();
 		$result_type = CPP_Declarations::type($facts->type, $this->context);
-		$condition = $node->condition->generate_cpp($this);
+		$condition = $this->expression($node->condition);
 		$prefix = '';
 		$selected = '';
 		if ($node->true_branch === null) {
@@ -274,11 +389,11 @@ final class CPP_Syntax implements cpp_generation_worker_i
 		}
 		else {
 			$branch /** expression_node */ = $node->true_branch;
-			$selected = $branch->generate_cpp($this);
+			$selected = $this->expression($branch);
 		}
 		$test = CPP_Declarations::truthiness($condition, $facts->truthiness, $this->context);
 		$selected = CPP_Declarations::conversion($selected, $facts->true_conversion, $this->context);
-		$fallback = CPP_Declarations::conversion($node->fallback->generate_cpp($this), $facts->fallback_conversion, $this->context);
+		$fallback = CPP_Declarations::conversion($this->expression($node->fallback), $facts->fallback_conversion, $this->context);
 		return '([&]() -> ' . $result_type . ' { ' . $prefix . 'if (' . $test . ') { return '
 			. $selected . '; } return ' . $fallback . '; }())';
 	}
@@ -305,7 +420,7 @@ final class CPP_Syntax implements cpp_generation_worker_i
 
 	public function generate_interpolation_value(interpolation_value_node $node): string
 	{
-		$value = $node->expression->generate_cpp($this);
+		$value = $this->expression($node->expression);
 		return CPP_Declarations::conversion($value, $node->require_preparation()->conversion, $this->context);
 	}
 
@@ -357,28 +472,6 @@ final class CPP_Syntax implements cpp_generation_worker_i
 	public function generate_field_access(field_access_node $node): string
 	{
 		return CPP_Declarations::generate_field_access($node, $this->context);
-	}
-
-	public function generate_function_signature(function_node $node): string
-	{
-		return CPP_Declarations::signature($node, $this->context, true);
-	}
-
-	public function generate_struct(struct_node $node): string
-	{
-		return CPP_Declarations::generate_struct($node, $this->context);
-	}
-
-	public function generate_parameter(parameter_node $node): string
-	{
-		$facts = $node->require_preparation();
-		$reference = $facts->mode === passing_mode::reference ? '&' : '';
-		return CPP_Declarations::type($facts->type, $this->context) . $reference . ' ' . CPP_Generator::local_name($node->occurrence());
-	}
-
-	public function generate_field(field_node $node): string
-	{
-		return CPP_Declarations::type($node->require_preparation()->type, $this->context) . ' ' . CPP_Generator::source_name('field', $node->name);
 	}
 
 	public function generate_expression_statement(expression_statement_node $node): string
