@@ -122,7 +122,7 @@ final class Compiler_Lifecycle
 		Model::$cpp_type_bindings = CPP_Type_Binding_Registration::install(Model::$type_catalog);
 		Model::$runtime_callables = new Runtime_Callables();
 		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog);
-		Model::$index_reads = Index_Read_Registration::install(Model::$type_catalog);
+		Model::$indexing_contracts = Indexing_Registration::install(Model::$type_catalog);
 		Model::$cpp_callable_bindings = new CPP_Callable_Bindings();
 		CPP_Initialization_Registration::install();
 	}

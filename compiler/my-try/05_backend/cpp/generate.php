@@ -284,6 +284,10 @@ final class CPP_Generator
 	public static function generate_assignment_expression(assignment_expression_node $syntax,
 		cpp_generation_context $context): string
 	{
+		$facts = $syntax->require_write_preparation();
+		if ($facts instanceof prepared_index_assignment) {
+			return CPP_Index_Write::generate($syntax, object_cast($facts, prepared_index_assignment::class), $context);
+		}
 		$binding = $syntax->require_assignment_preparation()->binding;
 		if (($binding->resolved_kind !== binding_kind::assignment)
 			|| !($syntax->target instanceof variable_reference_node)) {
@@ -299,12 +303,26 @@ final class CPP_Generator
 	/** Flatten right-associative writes so introduced locals remain in the surrounding body. */
 	private static function generate_assignment_statement(assignment_expression_node $syntax, cpp_generation_context $context): string
 	{
+		$facts = $syntax->require_write_preparation();
+		if ($facts instanceof prepared_index_assignment) {
+			return "\t" . CPP_Index_Write::generate($syntax, object_cast($facts, prepared_index_assignment::class), $context, false) . "\n";
+		}
 		return self::generate_assignment_sequence($syntax, $context)->statements;
 	}
 
 	/** Emit inner writes first and return their stored value to the enclosing assignment. */
 	private static function generate_assignment_sequence(assignment_expression_node $syntax, cpp_generation_context $context): cpp_assignment_sequence
 	{
+		if ($syntax->require_write_preparation() instanceof prepared_index_assignment)
+		{
+			$result = new cpp_assignment_sequence();
+			$name = 'write_result_' . $context->next_temporary;
+			$context->next_temporary++;
+			$result->statements = "\t" . CPP_Declarations::type($syntax->require_preparation()->type, $context)
+				. ' ' . $name . ' = ' . self::generate_assignment_expression($syntax, $context) . ";\n";
+			$result->value = $name;
+			return $result;
+		}
 		$value_node = $syntax->value;
 		$source = new cpp_assignment_sequence();
 		if ($value_node instanceof assignment_expression_node) {

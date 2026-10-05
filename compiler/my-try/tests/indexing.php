@@ -83,13 +83,18 @@ foreach ([
 	['return $missing[];', 'established local declaration for missing'],
 	['$s = "x"; return $s[$missing];', 'established local declaration for missing'],
 	['$s = "x"; $s[$new = 1] = 2;', 'established local declaration for new'],
-	['$v vector<int> = [1]; $x = $v[true];', 'indexed read keys require'],
-	['$v vector<int> = [1]; $x = $v[null];', 'indexed read keys require'],
+	['$v vector<int> = [1]; $x = $v[true];', 'indexed access keys require'],
+	['$v vector<int> = [1]; $x = $v[null];', 'indexed access keys require'],
 	['$v vector<int> = [1]; $x = $v["0"];', 'requires matching types'],
-	['$v dynamic = {}; $x = $v[1.5];', 'indexed read keys require'],
+	['$v dynamic = {}; $x = $v[1.5];', 'indexed access keys require'],
 	['function read(hash<int,mixed> $v): int { return $v[0]; }', 'required capability hashable'],
 	['$v vector<int> = [1]; $x = $v[];', 'operator[] with 0 argument(s)'],
-	['$v vector<int> = [1]; $v[0] = 2;', 'assignment'],
+	['$v hash<int> = {}; $v[] = 2;', 'does not support append'],
+	['$v vector<vector<int>> = [[1]]; $v[0][0] = 2;', 'nested write paths are deferred'],
+	['function make(): dynamic { return {}; } make()["a"] = 1;', 'direct local or parameter'],
+	['$v vector<int> = []; $v[] = "bad";', 'requires matching types'],
+	['$v dynamic = {}; $v[true] = 1;', 'indexed access keys require'],
+	['$v dynamic = {}; $v["a"] = $new = 1;', 'established local declaration for new'],
 	['$v vector<int> = [1]; $v[0]++;', 'mutation requires'],
 	['$v vector<int> = [1]; $v[0] += 2;', 'mutation requires'],
 	['function accept(int &$v): void {} $v vector<int> = [1]; accept($v[0]);', 'stable storage'],
@@ -121,6 +126,20 @@ if (!($read instanceof index_node) || $read->require_preparation()->addressable
 Preparation_Cleanup::tree($read);
 if ($read->preparation() !== null || $read->base->preparation() !== null || $read->index->preparation() !== null) {
 	throw new \LogicException('Read facts survived cleanup');
+}
+
+indexing_prepare('function put(vector<int> &$v): void { $v[] = 1; }');
+$write = Model::$global_scope->functions_named('put')[0]->syntax()->body->statements[0]->expression;
+$facts = $write->require_write_preparation();
+if (!($facts instanceof prepared_index_assignment) || $facts->addressable
+	|| $facts->decision->operation !== operator_operation::index_append
+	|| str_contains(Model::$cpp_files[0]->text, '([&]()')) {
+	throw new \LogicException('Statement append lost operation facts or introduced an unused value lambda');
+}
+Preparation_Cleanup::tree($write);
+if ($write->preparation() !== null || $write->target->base->preparation() !== null
+	|| $write->value->preparation() !== null) {
+	throw new \LogicException('Write facts survived cleanup');
 }
 
 // Parser-only reuse/compaction proves optional children without inventing overload facts.
@@ -202,9 +221,37 @@ try
 	if ($incremental !== Model::$cpp_files[0]->text) {
 		throw new \LogicException('Recovered read differs from fresh output');
 	}
+	$source = 'function put(vector<int> &$v): void { $v[] = 1; } return 0;';
+	file_put_contents($path, $source);
+	$fresh->update_cpp([$path]);
+	$function = Model::$global_scope->functions_named('put')[0]->syntax();
+	$write = $function->body->statements[0]->expression;
+	$old = $write->require_write_preparation();
+	file_put_contents($path, str_replace('vector<int>', 'hash<int,int>', $source));
+	$fresh->update_cpp([$path]);
+	if ($write !== $function->body->statements[0]->expression || $old === $write->require_write_preparation()) {
+		throw new \LogicException('Signature edit did not reprepare retained append');
+	}
+	file_put_contents($path, str_replace('vector<int>', 'hash<int>', $source));
+	$failed = false;
+	try { $fresh->update_cpp([$path]); }
+	catch (\RuntimeException $error) { $failed = true; }
+	if (!$failed || !Model::$cpp_files->is_empty() || $write->preparation() !== null) {
+		throw new \LogicException('Invalid append signature published stale facts/output');
+	}
+	file_put_contents($path, $source);
+	$fresh->update_cpp([$path]);
+	$incremental = Model::$cpp_files[0]->text;
+	Compiler_Lifecycle::reset();
+	$recovered = new Compiler();
+	$recovered->init([$directory]);
+	$recovered->exec_cpp();
+	if ($incremental !== Model::$cpp_files[0]->text) {
+		throw new \LogicException('Recovered append differs from fresh output');
+	}
 }
 finally {
 	unlink($path);
 	rmdir($directory);
 }
-echo "Indexing: arities, read facts, deferred operations, compaction and incremental recovery passed\n";
+echo "Indexing: arities, read/write facts, deferred operations, compaction and incremental recovery passed\n";

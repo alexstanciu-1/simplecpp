@@ -14,7 +14,10 @@ not permission to infer an unresolved v0.2 construction target as mixed.
 See [the authority map](spec_map.md), [dynamic values](dynamic_types.md),
 [array operations](array_semantics.md) and
 [preparation diagnostics](v0_2_preparation_diagnostics.md).
-Notation does not change indexing, iteration, copying, identity or reference safety.
+Element assignment and append share this standard's value admission and contextual
+nested-target rules; see [writes](array_semantics.md#22-write-path). This is an explicit
+v0.2 permission at container-element boundaries, not general implicit dynamic boxing.
+Notation does not otherwise change indexing, iteration, copying, identity or reference safety.
 The compiler [chapter 06](../compiler/my-try/docs/catalog/06_containers.md)
 tracks implementation separately; examples here are contracts, not support claims.
 

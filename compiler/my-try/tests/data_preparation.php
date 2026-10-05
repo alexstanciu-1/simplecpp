@@ -92,7 +92,7 @@ try {
 			foreach ($node->entries as $entry) {
 				$entry_facts = $entry->require_preparation();
 				data_preparation_check(($entry_facts->key_conversion !== null) === ($entry->key !== null), 'Key absence changed');
-				data_preparation_check($entry_facts->value_conversion->context === conversion_context::initializer_value, 'Lost value boundary context');
+				data_preparation_check($entry_facts->value_conversion->context === conversion_context::container_element, 'Lost value boundary context');
 				if ($entry->key !== null) {
 					data_preparation_check($entry_facts->key_conversion->context === conversion_context::initializer_key, 'Lost key boundary context');
 				}

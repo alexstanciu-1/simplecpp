@@ -5,8 +5,8 @@ namespace scpp\compiler;
 
 final class Mixed_Conversions
 {
-	/** Initializer values admit dynamic boxing; unknown mixed key kinds stay runtime checked. */
-	public static function initializer(canonical_type_use $source, canonical_type_use $target,
+	/** Container elements admit dynamic boxing; unknown mixed key kinds stay runtime checked. */
+	public static function container_input(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
 		if ($context === conversion_context::initializer_key) {
@@ -17,14 +17,14 @@ final class Mixed_Conversions
 				}
 			}
 		}
-		elseif ($context === conversion_context::initializer_value) {
+		elseif ($context === conversion_context::container_element) {
 			if (self::is_mixed($target) && !($source->by_value() || $target->by_value())) {
 				if (Type_Queries::canonical($source)->definition() instanceof dynamic_semantics) {
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::mixed_dynamic_box);
 				}
 			}
 		}
-		else { throw new \LogicException('Expected initializer conversion context'); }
+		else { throw new \LogicException('Expected container input conversion context'); }
 		$decision = self::decide($source, $target, conversion_context::argument);
 		$decision->context = $context;
 		return $decision;

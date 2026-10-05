@@ -108,7 +108,7 @@ final class Expression_Preparation
 	}
 
 	/** A variable write enters local binding; supported member writes retain their exact field target. */
-	public static function prepare_assignment(assignment_expression_node $node, preparation_context $context): prepared_assignment
+	public static function prepare_assignment(assignment_expression_node $node, preparation_context $context): prepared_assignment_expression
 	{
 		$statement_assignment = $context->statement_assignment;
 		$context->statement_assignment = $statement_assignment && ($node->value instanceof assignment_expression_node);
@@ -116,7 +116,7 @@ final class Expression_Preparation
 		{
 			$target = $node->target;
 			if ($target instanceof index_node) {
-				self::prepare($target, $context);
+				return Indexing_Preparation::prepare_write($node, object_cast($target, index_node::class), $context);
 			}
 			$facts = new prepared_assignment();
 			if ($target instanceof variable_reference_node) {

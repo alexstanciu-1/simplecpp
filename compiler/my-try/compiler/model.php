@@ -39,7 +39,7 @@ final class Model
 	/** Installed callable contracts and independent backend bindings share the type-root lifetime. */
 	public static Runtime_Callables $runtime_callables;
 	public static Initialization_Contracts $initialization_contracts;
-	public static Index_Read_Contracts $index_reads;
+	public static Indexing_Contracts $indexing_contracts;
 	public static CPP_Callable_Bindings $cpp_callable_bindings;
 	/**
 	 * Numeric storage of llvm_module records, including their LLVM text.

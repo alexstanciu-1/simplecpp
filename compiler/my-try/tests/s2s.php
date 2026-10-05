@@ -600,7 +600,8 @@ $mixed_fixtures = array_merge(require __DIR__ . '/fixtures/mixed_boundaries.php'
 	require __DIR__ . '/fixtures/mixed_concat_updates.php');
 $data_fixtures = require __DIR__ . '/fixtures/data_initialization.php';
 $read_fixtures = require __DIR__ . '/fixtures/container_reads.php';
-$value_fixtures = array_merge($result_fixtures, $mixed_fixtures, $data_fixtures, $read_fixtures);
+$write_fixtures = require __DIR__ . '/fixtures/container_writes.php';
+$value_fixtures = array_merge($result_fixtures, $mixed_fixtures, $data_fixtures, $read_fixtures, $write_fixtures);
 foreach ($value_fixtures as $name => [$source, $predicate]) {
 	$cases[$name] = [$source, 0];
 }

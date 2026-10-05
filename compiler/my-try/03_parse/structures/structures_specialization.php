@@ -1027,7 +1027,7 @@ final class assignment_expression_node extends expression_node
 	use Node_Source_Span;
 	use Preparation_Facts;
 
-	private ?prepared_assignment $prepared_facts = null;
+	private ?prepared_assignment_expression $prepared_facts = null;
 
 	public assignable_expression_node $target;
 	public assignment_operator $operator = assignment_operator::assign;
@@ -1045,12 +1045,17 @@ final class assignment_expression_node extends expression_node
 
 	public function require_preparation(): prepared_expression
 	{
-		return $this->require_assignment_preparation();
+		return $this->require_write_preparation();
+	}
+
+	public function require_write_preparation(): prepared_assignment_expression
+	{
+		return $this->prepared_facts;
 	}
 
 	public function require_assignment_preparation(): prepared_assignment
 	{
-		return $this->prepared_facts;
+		return object_cast($this->prepared_facts, prepared_assignment::class);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */

@@ -394,8 +394,50 @@ constraints already reject `hash<int,mixed>` before read selection.
 All 1,089 pre-read S2S exports remain byte-identical. These are PHP-authored compiler
 and generated-program proofs, not a native compiler rebuild or broad regression run.
 
-Next discussion: common writes/appends, then keyed probes and value iteration.
+Direct writes/appends are implemented in the following checkpoint.
 **CH06-MIX-DYN-01 remains open and blocking Chapter 06 closeout.**
+
+### Direct container writes and appends — 2026-10-05
+
+The three approved refinements are documented in the top-level array, indexing,
+data-initialization and dynamic contracts: ordered receiver/key/RHS/commit, writable
+operations independent of native slot references, and shared container-element
+admission across construction and writes. Failed key validation skips RHS evaluation;
+failed RHS evaluation/conversion does not insert a placeholder. Earlier expression
+effects are not rolled back, and mutation allocation failures are not promised a
+general transaction guarantee. Ordinary writes may replace existing keys; same-level
+duplicate construction keys still throw.
+
+One `Indexing_Contracts` inventory and `Indexing_Preparation` worker bind key/value/
+nested-literal types and select operations for vector, hash, mixed and dynamic.
+`prepared_index_assignment` shares assignment result facts without pretending to own
+a local binding or native element reference. `container_element` replaces the old
+`initializer_value` conversion context and is used by construction, stores and appends.
+Dynamic boxing remains restricted to these element boundaries, not general assignment.
+
+One CPP handler emits receiver, checked key and converted value in order, then calls
+`scpp/index_write.hpp`. Standalone writes use a scoped statement; only value-consuming
+assignments need a result lambda. Runtime overloads retain vector bounds checking,
+integer-hash append policy, mixed null bootstrap/COW and dynamic shared identity.
+Absent dynamic handles reject mutation. Assignment expressions yield the converted
+element value, not a key or slot reference.
+
+The bounded target is an established local/parameter wrapper. Nested mutation paths,
+call-result/property receivers, indexed updates, native references and keyed probes
+remain gated. **Next discussion:** nested mutation and its path/failure guarantee;
+then keyed probes and value iteration. Do not lower a nested write through copied
+value-read results or keep interior references across RHS calls.
+
+Evidence: `/tmp/my-try-container-writes-20261005-1` passed seven PHP suites and 58
+PCH-backed generated programs. The final expanded run
+`/tmp/my-try-container-writes-20261005-2` passed seven PHP suites and 62 generated
+programs without PCH. Coverage includes ordering, normalized keys, RHS failures with
+no insertion/bootstrap, COW versus sharing, contextual nested construction, assignment
+values, preparation rejection, retained-body signature changes and fresh/incremental
+recovery. The shared runner used 12 slots with CLI fallback because FPM sockets were
+unavailable. All 1,117 pre-write S2S exports remain byte-identical. This is not a
+native compiler rebuild or a broad regression run.
+**CH06-MIX-DYN-01 remains open and blocking chapter closeout.**
 
 ### End-to-end catalog rows
 
@@ -409,8 +451,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-READ-001](#arr-read-001) | bounded-support | `$b vector<int> = [3]; $a = $b[0];` | passed | passed | deferred | `read_typed`, bounds/key/order/nested proofs; all four registered families |
 | [ARR-READ-002](#arr-read-002) | bounded-support | `$b dynamic = {name: "Alex"}; $a = $b["name"];` | passed | passed | deferred | `read_dynamic`, missing/typed-boundary/wrong-kind proofs |
 | [ARR-KEY-SEM-001](#arr-key-sem-001) | pending-discussion | `$a[1] = "int"; $a["1"] = "string";` | unverified | unverified | deferred | — |
-| [ARR-WRITE-001](#arr-write-001) | pending-discussion | `$b[0] = 1;` | unverified | unverified | deferred | — |
-| [ARR-APPEND-001](#arr-append-001) | pending-discussion | `$a[] = 1;` | unverified | unverified | deferred | — |
+| [ARR-WRITE-001](#arr-write-001) | bounded-support | `$b vector<int> = [0]; $b[0] = 1;` | passed | passed | deferred | Direct local/parameter receivers; all four families; nested paths deferred |
+| [ARR-APPEND-001](#arr-append-001) | bounded-support | `$a vector<int> = []; $a[] = 1;` | passed | passed | deferred | Vector, integer-key hash, mixed and dynamic; string-key hash rejects |
 | [FUNC-DECL-003B](#func-decl-003b) | pending-discussion | `function f(vector<int> $a): void {}` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [FUNC-ARG-001](#func-arg-001) | pending-discussion | `f($x[0]);` | unverified | unverified | deferred | — |
 | [CTRL-FOREACH-001](#ctrl-foreach-001) | pending-discussion | `foreach ($items as $item) { }` | unverified | unverified | deferred | — |

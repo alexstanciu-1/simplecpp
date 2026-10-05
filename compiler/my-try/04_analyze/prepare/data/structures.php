@@ -405,13 +405,24 @@ final class preparation_lookup
 }
 
 /**
- * Expression facts for a write. Reuse prepared_binding for storage identity and
- * declaration-versus-reassignment outcome; inherited type describes the result.
+ * Common value-result facts for storage assignments and selected element writes.
  */
-final class prepared_assignment extends prepared_expression
+abstract class prepared_assignment_expression extends prepared_expression
+{
+}
+
+/** Storage identity and declaration-versus-reassignment outcome. */
+final class prepared_assignment extends prepared_assignment_expression
 {
 	/** @ownership owner */
 	public prepared_binding $binding;
+}
+
+/** Element writes select operations rather than pretending to declare native storage. */
+final class prepared_index_assignment extends prepared_assignment_expression
+{
+	public operator_decision $decision;
+	public conversion_decision $value_conversion;
 }
 
 /** A typed value return owns a decision; void and program-entry returns do not. */

@@ -92,6 +92,46 @@ Rules:
 - nested value reads also stay non-mutating
 
 ### 2.2 Write path
+
+#### v0.2 operation and evaluation contract
+
+Writable indexed access is a selected operation, not permission to expose native
+element references. Readability, indexed writing, append and future compound updates
+are independent capabilities of the receiver contract. Empty brackets select append
+only when its registered contract supports that operation in assignment context.
+
+Direct writes evaluate/bind the receiver first, then evaluate, convert and validate
+the key (when present), then evaluate and convert the assigned value, then perform
+the store/append. Each expression executes once. Invalid key conversion/kind prevents
+RHS evaluation. Receiver-kind, bounds and storage validation occur at the write;
+failed RHS conversion cannot insert a placeholder key or append an element. Earlier
+source-expression side effects are not rolled back. This is not a promise of strong
+transactional rollback on allocation/copy failures during storage mutation.
+
+Vector indexed writes replace existing elements with checked bounds, never grow at
+index `count`; append explicitly adds one element. Typed hashes insert or replace,
+and only integer-keyed typed hashes append. Mixed/dynamic use existing integer/string
+key admission and normalization; appends use the next integer key, not entry count.
+Updating an existing key is valid: construction's duplicate-key prohibition does not
+apply to ordinary writes. Null mixed may bootstrap table storage on write/append.
+An absent dynamic handle rejects mutation; explicitly construct an object first.
+
+Construction, element assignment and append share a container-element value boundary:
+typed receiving elements apply ordinary checked value conversions; mixed elements
+admit the same scalar/null boxing and dynamic-handle boxing as construction. This
+does not enable implicit dynamic-to-mixed assignment at unrelated boundaries.
+The receiving element supplies context to a direct nested data literal. Mixed/dynamic
+literal defaults follow the enclosing family, independently of mixed slot storage:
+`$rows[] = [1, 2]` for `vector<vector<int>>`, or `$data["child"] = {enabled: true}`
+for dynamic. Shared dynamic payload identity and mixed copy-on-write are preserved.
+An assignment expression yields the converted assigned value, not an appended key
+or native reference; a statement need not materialize that otherwise-unused result.
+
+Nested write-path failure/partial-creation guarantees remain to be settled before
+enabling that v0.2 slice. The existing nested autovivification rules below are not
+permission to lower a write through copied read results or retain interior references
+across key/RHS calls. General source-defined indexing remains separate work.
+
 Examples:
 ```php
 $a["k"] = 1;

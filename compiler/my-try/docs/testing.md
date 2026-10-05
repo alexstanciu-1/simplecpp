@@ -17,14 +17,16 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
-For the common value-read/indexing slice:
+For common value reads and direct writes/appends:
 
 ```bash
 python3 compiler/my-try/tests/container_reads.py --results /tmp/FRESH_READ_RESULTS
+python3 compiler/my-try/tests/container_writes.py --results /tmp/FRESH_WRITE_RESULTS
 ```
 
 Seven focused PHP suites check selection, rejection, attached facts and incremental
-recovery; `read_*` exports exercise generated-C++ behavior through the shared 12-slot
+recovery; the read runner executes `read_*`, and the write runner executes both
+`read_*` and `write_*` exports through the shared 12-slot
 pool. PCH is the default, with `--no-pch` for include completeness. No native compiler
 rebuild is implied. Construction fixtures remain part of the common S2S export suite.
 

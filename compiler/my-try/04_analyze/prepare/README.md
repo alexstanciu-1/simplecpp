@@ -209,15 +209,20 @@ escaping exceptions request a full rebuild. The full policy is in
 
 ## Current language boundary
 
-One-argument container reads use `Index_Read_Preparation` through ordinary operator
+One-argument container reads use `Indexing_Preparation` through ordinary operator
 selection. Registry definitions supply key/result type references and failure policy;
 `Contract_Type_Substitution` is shared with initialization without granting indexing
 from initialization opt-in. Typed vector/hash reads yield copied element values and
 throw on absence; mixed/dynamic reads yield mixed, with null on absence and runtime
 errors for invalid receiver/key kinds. Key conversions and result copy capability
 are prepared, including source-derived dependencies. Index facts are non-addressable.
-Zero-argument brackets, string indexing, indexed writes/updates/references and keyed
-probes remain gated. Eager parent effect checks inspect both indexed children.
+The same registry and signature binding select direct indexed-store/append operations
+on established local/parameter receivers. `prepared_index_assignment` retains the
+operation and `container_element` conversion; it never invents a variable binding or
+an addressable slot. RHS literals inherit the registered nested-construction target.
+Construction and writes share element admission, including bounded dynamic boxing.
+Zero-argument reads, string indexing, nested writes, indexed updates/references and
+keyed probes remain gated. Eager parent effect checks inspect both indexed children.
 
 `String_Conversions::decide_text` owns the bounded concatenation context: mixed,
 ordinary scalar and literal-null operands normalize to string using identity or

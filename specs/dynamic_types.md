@@ -25,6 +25,11 @@ values**: scalars are boxed and a nested dynamic object is carried by `dynamic_v
 preserving shared identity. Inheriting a construction type is not converting every
 scalar to that type. This does not extend arbitrary object boxing or native references.
 
+The same container-element value admission applies to indexed assignment and append:
+a dynamic handle may be boxed into a mixed entry while retaining its identity.
+This is a specific construction/write boundary, not general implicit dynamic-to-mixed
+assignment. Nested RHS literals inherit the receiver's registered construction family.
+
 Brace notation and explicit `Type::{...}` / `Type::[...]` construction are agreed
 v0.2 semantics with implementation pending, not already-supported v0.1 forms.
 

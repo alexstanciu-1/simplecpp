@@ -15,7 +15,7 @@ enum conversion_context
 	case conditional_branch;
 	case coalesce_value;
 	case initializer_key;
-	case initializer_value;
+	case container_element;
 }
 
 enum conversion_operation

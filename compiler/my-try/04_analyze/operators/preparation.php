@@ -100,7 +100,7 @@ final class Operator_Preparation
 			return self::decide_concatenation($operands, $context);
 		}
 		if ($source_operator === operator_kind::index) {
-			return Index_Read_Preparation::decide($operands, $context);
+			return Indexing_Preparation::decide($operands, $context);
 		}
 		if (q_count($operands) === 2) {
 			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {

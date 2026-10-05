@@ -84,6 +84,7 @@ require_once __DIR__ . '/04_analyze/operators/integers.php';
 require_once __DIR__ . '/04_analyze/operators/mixed.php';
 require_once __DIR__ . '/04_analyze/operators/preparation.php';
 require_once __DIR__ . '/04_analyze/operators/indexing.php';
+require_once __DIR__ . '/04_analyze/operators/indexing_signature.php';
 require_once __DIR__ . '/04_analyze/operators/nullable.php';
 require_once __DIR__ . '/04_analyze/operators/mutations.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/defaults.php';
@@ -108,6 +109,7 @@ require_once __DIR__ . '/05_backend/cpp/types.php';
 require_once __DIR__ . '/05_backend/cpp/declarations.php';
 require_once __DIR__ . '/05_backend/cpp/callable_bindings.php';
 require_once __DIR__ . '/05_backend/cpp/data_construction.php';
+require_once __DIR__ . '/05_backend/cpp/index_write.php';
 require_once __DIR__ . '/05_backend/cpp/generate.php';
 require_once __DIR__ . '/05_backend/cpp/syntax.php';
 // Parked LLVM preparation and generation remain loaded for regression entrypoints.

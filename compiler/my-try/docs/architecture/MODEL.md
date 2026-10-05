@@ -14,7 +14,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `language_scope`, `global_scope` | Built-in/runtime definitions and shared source indexes; global parents to language |
 | `runtime_callables`, `cpp_callable_bindings` | Installed static-factory identities/contracts and separate C++ bindings; reset with canonical types |
 | `initialization_contracts` | Runtime initialization declarations, internal input types and concrete bindings; reset with canonical types |
-| `index_reads` | Registry-lifetime read contracts keyed by exact receiver definition; independent of construction opt-in |
+| `indexing_contracts` | Registry-lifetime read/store/append contracts keyed by exact receiver definition; independent of construction opt-in |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
 | `prepared_files` | Successfully completed file records referencing the retained syntax |
 | `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
@@ -124,14 +124,23 @@ operations remain gated.
 ## AST and scopes
 
 `index_node` retains `prepared_index_expression` with a normal `operator_decision`
-and inherited non-addressable value result. `Index_Read_Contracts` supplies exact
-receiver-definition signatures; `Index_Read_Preparation` resolves key/result types,
+and inherited non-addressable value result. `Indexing_Contracts` supplies exact
+receiver-definition signatures; `Indexing_Preparation` resolves key/result types,
 checks conversions/copy capability and selects checked-access or null-on-miss reads.
 One CPP handler sequences receiver/key and calls the selected runtime helper. Stable
 receiver wrappers are locally const-bound (not copied wholesale), temporary receivers
 remain alive through result copying, and no interior reference is exposed to source.
 Writes and reference binding do not follow from the node's syntactic assignable base.
 Cleanup and incremental preparation own these facts through the existing node lifecycle.
+
+`prepared_assignment_expression` shares assignment value-result facts. Its storage
+specialization retains `prepared_binding`; `prepared_index_assignment` instead owns
+a selected store/append decision and element conversion. Registry signatures bind
+key, value and nested-literal target once for all bracket operations. Direct writes
+require stable local/parameter wrapper storage, not an interior reference. One CPP
+write handler emits ordered receiver/key/value temporaries and a runtime operation;
+statement writes use a plain scope, value-producing writes a result lambda. Runtime
+overloads own storage details, bounds, null bootstrap, COW and shared identity.
 
 The property-free `ast_node` base supplies structural contracts; specialized node
 families own typed syntax fields and uint32 spans. `statement_body_node` shares

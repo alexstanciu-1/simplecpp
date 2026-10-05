@@ -1,0 +1,47 @@
+#pragma once
+
+#include "scpp/index_read.hpp"
+
+namespace scpp {
+
+// Validation occurs before RHS evaluation; numeric-string normalization stays in hash storage.
+inline void require_write_key(const int_t<> &) {}
+inline void require_write_key(const string_t &) {}
+inline void require_write_key(const mixed_t &key) { require_index_key(key); }
+
+template <typename T>
+void index_store(vector_t<T> &receiver, const int_t<> &key, const T &value) {
+	receiver.at(key) = value;
+}
+
+template <typename V, typename K>
+void index_store(hash_t<V, K> &receiver, const K &key, const V &value) {
+	receiver.set(key, value);
+}
+
+inline void index_store(dynamic_t<> &receiver, const mixed_t &key, const mixed_t &value) {
+	require_index_key(key);
+	if (!receiver.get()) throw std::runtime_error("indexed write: absent dynamic handle");
+	receiver->set(key, value);
+}
+
+inline void index_store(mixed_t &receiver, const mixed_t &key, const mixed_t &value) {
+	require_index_key(key);
+	// Existing mutable access owns null bootstrap and copy-on-write, without escaping its slot.
+	receiver[key] = value;
+}
+
+template <typename T>
+void index_append(vector_t<T> &receiver, const T &value) { (void)receiver.append(value); }
+
+template <typename V>
+void index_append(hash_t<V, int_t<>> &receiver, const V &value) { (void)receiver.append(value); }
+
+inline void index_append(dynamic_t<> &receiver, const mixed_t &value) {
+	if (!receiver.get()) throw std::runtime_error("indexed append: absent dynamic handle");
+	(void)receiver->append(value);
+}
+
+inline void index_append(mixed_t &receiver, const mixed_t &value) { receiver.append(value); }
+
+} // namespace scpp

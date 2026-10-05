@@ -59,7 +59,7 @@ final class Data_Construction_Preparation
 			$facts->key_conversion = Conversion_Preparation::decide($key->type, $key_type, conversion_context::initializer_key);
 		}
 		$value = Expression_Preparation::prepare($entry->value, $context, $binding->nested_target());
-		$facts->value_conversion = Conversion_Preparation::decide($value->type, $binding->value(), conversion_context::initializer_value);
+		$facts->value_conversion = Conversion_Preparation::decide($value->type, $binding->value(), conversion_context::container_element);
 		$entry->set_preparation($facts);
 	}
 }

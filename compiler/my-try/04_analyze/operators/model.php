@@ -52,6 +52,8 @@ enum operator_kind {
 enum operator_operation {
 	case index_checked_read;
 	case index_null_read;
+	case index_store;
+	case index_append;
 	case nullable_is_null;
 	case nullable_not_null;
 	case integer_bitwise_and;
