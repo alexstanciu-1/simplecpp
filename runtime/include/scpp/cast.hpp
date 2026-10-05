@@ -808,6 +808,31 @@ inline mixed_t cast<mixed_t, detail::dynamic_value>(const detail::dynamic_value 
 	throw std::logic_error("dynamic: invalid kind");
 }
 
+template <typename To>
+requires (std::is_same_v<To, bool_t> || std::is_same_v<To, int_t<>>
+	|| std::is_same_v<To, float_t> || std::is_same_v<To, string_t>)
+inline To cast(const detail::dynamic_value &value) {
+	using kind = detail::dynamic_value::kind_t;
+	switch (value.kind()) {
+	case kind::bool_v: return cast<To>(value.get_bool());
+	case kind::int_v: return cast<To>(value.get_int());
+	case kind::float_v: return cast<To>(value.get_float());
+	case kind::string_v: return cast<To>(value.get_string());
+	case kind::null_v:
+		if constexpr (std::is_same_v<To, string_t>) return cast<To>(null_t{});
+		break;
+	case kind::table_v: break;
+	}
+	throw std::runtime_error("dynamic: payload cannot satisfy scalar cast");
+}
+
+template <typename To>
+requires(detail::is_specialization_of_v<To, nullable>)
+inline To cast(const detail::dynamic_value &value) {
+	if (value.is_null().native_value()) return To(null_t{});
+	return To(cast<detail::nullable_value_type_t<To>>(value));
+}
+
 // mixed_t rvalue cast bridge
 // Keeps move-only extraction centralized while delegating copyable cases to the lvalue overloads.
 template <typename To>
@@ -836,6 +861,24 @@ inline To cast(mixed_t &&value) {
 template <typename To, typename From>
 inline To required_cast(const From &value) {
 	return cast<To>(value);
+}
+
+template <typename To>
+requires (std::is_same_v<To, bool_t> || std::is_same_v<To, int_t<>>
+	|| std::is_same_v<To, float_t> || std::is_same_v<To, string_t>
+	|| detail::is_specialization_of_v<To, nullable>)
+inline To required_cast(const detail::dynamic_value &value) {
+	if constexpr (detail::is_specialization_of_v<To, nullable>) {
+		return cast<To>(value);
+	} else {
+		if (value.is_null().native_value())
+			throw std::runtime_error("dynamic: null cannot satisfy required typed boundary");
+		if constexpr (std::is_same_v<To, int_t<>>) {
+			return value.get_int(); // Required int is exact, unlike an explicit cast.
+		} else {
+			return cast<To>(value);
+		}
+	}
 }
 
 template <typename To>

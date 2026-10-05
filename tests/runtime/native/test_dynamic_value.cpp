@@ -7,6 +7,7 @@
 #include "scpp/cast.hpp"
 #include "operators/conditional/condition_truthiness.hpp"
 #include "operators/count/count.hpp"
+#include "operators/arithmetic/boxed_numeric.hpp"
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -225,6 +226,37 @@ void conversions_and_probes() {
 	require_failure([&] { mixed_destination = scpp::cast<scpp::mixed_t>(container); }, "dynamic container cannot cross");
 	require(mixed_destination.get_int().native_value() == 8, "failed conversion preserves mixed destination");
 }
+void scalar_boundaries_and_arithmetic() {
+	value integer{int_t<>{6LL}};
+	value floating{scpp::float_t{2.5}};
+	require((integer + value{int_t<>{2LL}}).get_int().native_value() == 8, "int arithmetic retains int");
+	require((integer + floating).get_float().native_value() == 8.5, "numeric widening");
+	require((floating - integer).get_float().native_value() == -3.5, "float-int subtraction");
+	require((integer * floating).get_float().native_value() == 15.0, "mixed-kind multiplication");
+	require((floating / value{scpp::float_t{0.5}}).get_float().native_value() == 5.0, "division");
+	require((integer % value{int_t<>{4LL}}).get_int().native_value() == 2, "integer remainder");
+	require((-integer).get_int().native_value() == -6 && (+floating).get_float().native_value() == 2.5, "unary numeric rules");
+	static_assert(std::is_same_v<decltype(integer + floating), value>);
+	require_failure([&] { (void)(integer / value{int_t<>{0LL}}); }, "integer zero divisor rejects");
+	require_failure([&] { (void)(integer / value{scpp::float_t{-0.0}}); }, "floating zero divisor rejects");
+	require_failure([&] { (void)(integer % value{int_t<>{0LL}}); }, "zero modulo rejects");
+	require_failure([&] { (void)(integer % floating); }, "floating modulo rejects");
+	require_failure([&] { (void)(integer + value{string_t{"2"}}); }, "numeric strings not coerced for arithmetic");
+	require_failure([&] { (void)(integer + value{scpp::bool_t{true}}); }, "bool arithmetic rejects");
+	require_failure([&] { (void)(integer + value::make_container()); }, "container arithmetic rejects");
+	require_failure([&] { (void)(-value{}); }, "null arithmetic rejects");
+	require(scpp::cast<int_t<>>(floating).native_value() == 2, "explicit float-int cast");
+	require_failure([&] { (void)scpp::required_cast<int_t<>>(floating); }, "required int rejects floating payload");
+	require(scpp::required_cast<int_t<>>(integer).native_value() == 6, "required int extraction");
+	require(scpp::required_cast<scpp::float_t>(integer).native_value() == 6.0, "required float delegates widening");
+	require(scpp::cast<string_t>(value{}).native_value().empty(), "explicit null-string cast");
+	require_failure([&] { (void)scpp::required_cast<string_t>(value{}); }, "required string rejects null");
+	require_failure([&] { (void)scpp::cast<scpp::bool_t>(value{}); }, "explicit null-bool cast is not condition truthiness");
+	require(!scpp::cast<scpp::nullable<int_t<>>>(value{}).has_value().native_value(), "nullable absent extraction");
+	require(scpp::required_cast<scpp::nullable<int_t<>>>(integer).require_value("test").native_value() == 6, "nullable present extraction");
+	require_failure([&] { (void)scpp::cast<string_t>(value::make_container()); }, "scalar extraction cannot stringify a container");
+	require(integer.get_int().native_value() == 6, "failed operators leave operands unchanged");
+}
 } // namespace
 
 int main() {
@@ -232,4 +264,5 @@ int main() {
 	recursive_containers();
 	container_operations();
 	conversions_and_probes();
+	scalar_boundaries_and_arithmetic();
 }

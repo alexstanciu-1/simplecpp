@@ -312,3 +312,37 @@ resolved that harness issue. `/tmp/my-try-tagged-dynamic-keyed-20261005-1` passe
 PHP suites via CLI fallback and 44 generated keyed-path programs. Generated checks
 exercise existing public paths; the native tagged-value test proves the new internal
 overloads. No native compiler rebuild or public-type switch is claimed.
+
+### Tagged scalar extraction and basic arithmetic — 2026-10-05
+
+Explicit tagged-to-bool/int/float/string casts dispatch to the existing primitive
+cast rules; nullable extraction preserves absence. Required scalar boundaries reject
+null, and required int requires an int payload rather than applying the explicit
+float/string conversion rule. Container extraction into scalars rejects. No new
+numeric parsing or implicit family conversion was introduced.
+
+The arithmetic owner now provides tagged/tagged `+`, `-`, `*`, `/`, integer `%`
+and unary `+`/`-`. A family-parameterized numeric dispatcher selects int/float payloads
+and calls primitive wrapper operators, retaining their result type and zero-divisor
+checks. Results are tagged dynamic values; no mixed temporary carries arithmetic.
+The new owner is included by the runtime umbrella, not generated-operator edits.
+Bool/string/null/container arithmetic rejects. This does not add bitwise operators,
+compound assignments/increments, comparisons, implicit native operand boxing or a
+new overflow policy; inherited primitive arithmetic/cast limitations are unchanged.
+
+The first runtime build crashed Clang 18 during a redundant requires-expression
+inside the generic lambda. Removing that unnecessary check simplified the dispatcher;
+no compiler installation or generated output workaround was needed. The public alias,
+JSON/adapter migration and compiler registrations still remain pending.
+
+Evidence: `/tmp/my-try-tagged-dynamic-numeric-20261005-2` passed matching debug/release
+runtime/JSON builds and ten native programs. The wider mixed runner under
+`/tmp/my-try-tagged-dynamic-numeric-mixed-20261005-1` passed 14 of 15 PHP suites, but
+stopped before native fixtures: `tests/mixed.php` still expects preparation rejection
+for `isset($mixed[0])`, superseded by Chapter 06 keyed-probe support. No PHP implementation
+changed in this slice. That stale assertion remains test debt; the full mixed runner
+is not reported as passing. Exported numeric/cast fixtures were selected separately
+for focused native regression verification.
+All 46 selected programs passed under
+`/tmp/my-try-tagged-dynamic-numeric-generated-20261005-1`. This is generated-program
+verification, not a native compiler rebuild or a public tagged-dynamic switch.
