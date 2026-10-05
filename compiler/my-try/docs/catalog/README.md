@@ -86,7 +86,8 @@ The [2026-10-02 preparation/emission audit](../planning/preparation_emission_aud
 is complete. Chapters 03 and 04 have completed their bounded positive passes and
 native checkpoints. Chapter 05 has completed its [bounded positive pass with debt](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04);
 its latest mixed slices have generated-program proofs, not a new native compiler checkpoint.
-Next is the [Chapter 06 grouped discussion](06_containers.md#handoff-from-chapter-05--2026-10-04).
+Next is the [Chapter 06 common-family construction group](06_containers.md#agreed-standard-and-revised-grouping--2026-10-05),
+following the agreed top-level [data initialization standard](../../../../specs/data_initialization.md).
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.
@@ -103,7 +104,7 @@ those repairs.
 | Assignments and composed expressions (01–02) | Resolve operand/result types, conversions and assignable targets. Establish single evaluation and ordering for chained writes, increments and compound assignments. |
 | Logical operators, branches and conditional expressions (02–03, 05) | Establish lazy evaluation, condition conversion, branch result typing and applicable scope rules. Coalescing also needs the selected nullable/wrapper contract. |
 | Calls and reference arguments (04, 07) | Resolve the callable, argument conversions, value/reference passing and evaluation order. Reference eligibility requires stable storage and the applicable aliasing/lifetime rules. Reconcile the existing bounded function/reference implementation with chapter 07 rows before treating them as new work. |
-| Container iteration and mutation (06–07) | Establish typed construction, key/element semantics, reads, writes and value-copy behavior first. Reference iteration and indexed reference arguments additionally need storage stability and mutation/invalidation rules. |
+| Container iteration and mutation (06–07) | Establish interface-based construction across vector/hash/mixed/dynamic, key/element semantics, reads, writes and value-copy behavior first. Keep runtime kind checks where needed. Reference iteration and indexed reference arguments additionally need storage stability and mutation/invalidation rules. |
 | Reference returns and retained aliases (07) | Establish provenance and lifetime constraints for the supported path before allowing an alias to outlive the immediate operation. Addressability alone is insufficient. |
 | Cross-file names, value types and objects (08–11) | Resolve identities and representation/copy semantics as their first consumers arrive. Object-dependent namespace cases wait for objects; interface-bearing enums wait for interface/method contracts. |
 | Closures and captures (12) | Establish callable signatures and capture-free invocation first; then value-capture copy/identity semantics, followed by reference-capture lifetime and escape constraints. |

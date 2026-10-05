@@ -9,6 +9,38 @@ Requires values, expressions and basic calls. Establish reads versus writes befo
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Agreed standard and revised grouping — 2026-10-05
+
+The top-level [data initialization standard](../../../../specs/data_initialization.md)
+owns language semantics and supersedes older construction defaults for v0.2. This
+chapter owns implementation progress only. Documentation is complete for the agreed
+contract; no construction implementation is claimed by this checkpoint.
+
+The current sequence replaces the typed-first/dynamic-later handoff grouping:
+
+1. Notation and recognized initialization-interface standard (recorded upstream).
+2. Agree exact interface/input API and built-in adapter contracts; implement common
+   construction for vector, hash, mixed and dynamic, including nested data.
+3. Reads, writes/appends, typed boundaries and keyed probes across those families.
+4. Value iteration across those families, with runtime checks for dynamic kinds.
+5. Separately gated reference iteration.
+
+Key decisions: positional brackets, keyed arrows, named braces, optional trailing
+commas and explicit `Type::[...]` / `Type::{...}`; unknown targets fail preparation.
+Factories perform runtime construction/data validation. User-defined types opt in
+through recognized interfaces, not method-name detection. Their compiler connection
+waits for class/struct method/interface support; automatic member mapping is deferred.
+Nested mixed/dynamic construction inherits its enclosing family, but both store
+mixed-only values; dynamic payloads use `dynamic_v` and preserve shared identity.
+Function-valued entries are documented for later implementation. Compiler literal
+pre-preparation belongs to the [v0.3 plan](../../../../docs/v0.3/literal_construction_preparation.md).
+
+Before coding: settle interface/input declarations and built-in empty/duplicate/key
+policies. Do not mark imported untyped literal examples supported using v0.1 fallback
+typing. CH05-DYN-01 is spread across the common operation groups, not a second dynamic
+pass. Existing `(object)` bridges remain separate from direct typed construction;
+unrestricted casts, dynamic `->` and native interior references are not introduced.
+
 ## Handoff from chapter 05 — 2026-10-04
 
 Chapter 05's [bounded positive pass](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04)
@@ -17,11 +49,10 @@ probes and explicit mixed/dynamic bridges are available; aggregate payload opera
 are not implied. Reuse canonical template applications, prepared conversions and
 the existing `index_node`; do not add separate dynamic ASTs for ordinary indexing.
 
-Discussion groups: (1) typed vector/hash construction and reads, (2) writes/appends
-and typed boundaries, (3) dynamic construction/access and keyed probes, (4) value
-iteration, then separately gated reference iteration. Group 3 owns CH05-DYN-01,
-including `(object)[...]`/supported object construction; unrestricted `(object)$value`
-is not implied. Dynamic `->` remains a separate requested language discussion.
+The original typed-first discussion grouping is superseded by the 2026-10-05
+standard/grouping above. CH05-DYN-01 includes `(object)[...]`/supported object
+construction; unrestricted `(object)$value` is not implied. Dynamic `->` remains
+a separate requested language discussion.
 For mixed/dynamic iteration, distinguish valid static admission from runtime checks
 of the actual iterable kind; do not reject all mixed simply for being dynamic.
 
@@ -44,17 +75,17 @@ and nearest break/continue protocol. The [Chapter 03 loop design](03_control_flo
 owns the shared foundation. Iterable/key/value syntax, binding/lifetime facts and
 iteration-specific continuation are TODOs here; the placeholder is not parser support.
 
-Follow the [catalog gates](README.md#prerequisite-gates). Begin with explicit typed
-vector/hash construction and reads, then writes/appends and value-call boundaries,
-then value iteration. Split `ARR-INIT-004` source variants before choosing its strict
-example. Key rules apply before keyed operations; row placement does not defer them.
+Follow the [catalog gates](README.md#prerequisite-gates) and the revised common-family
+sequence above. Split `ARR-INIT-004` source variants against the known-target rule
+before choosing its strict example. Key rules apply before keyed operations; row
+placement does not defer them.
 
 Reference iteration (`CTRL-FOREACH-003/004`) and reference-taking variants of
 `FUNC-ARG-001` require the relevant [reference contracts](07_references_lifetime.md):
 storage stability, aliasing and invalidation on mutation. They are gated, not implied
-by successful value iteration. Dynamic/nested forms, casts and nullable forms require
-their corresponding type/conversion prerequisites; they do not block a typed scalar
-container slice. Imported cards below retain their original order and provenance.
+by successful value iteration. Casts and nullable forms require their corresponding
+conversion prerequisites; shared construction explicitly includes mixed/dynamic and
+nested data. Imported cards below retain their original order and provenance.
 
 ## Progress
 

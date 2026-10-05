@@ -71,6 +71,7 @@ The authority stack for the current project is:
 3. especially important top-level semantic authorities:
    - `specs/dynamic_types.md`
    - `specs/array_semantics.md`
+   - `specs/data_initialization.md` (v0.2 notation and recognized initialization interfaces)
    - `specs/compact_layout_types.md`
    - `specs/metaprogramming_contract.md`
    - `specs/count_empty_isset_contract.md`
@@ -287,6 +288,14 @@ Role:
 
 Authority:
 - normative
+
+### `specs/data_initialization.md`
+Role:
+- v0.2 data notation, compile-time construction-target resolution and runtime initialization interfaces
+- supersedes older implicit literal defaults for v0.2, without claiming implementation availability
+
+Authority:
+- normative; applies to the language, not only the experimental compiler
 
 ### `specs/count_empty_isset_contract.md`
 Role:

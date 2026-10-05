@@ -12,6 +12,22 @@ See `specs/strict_mode.md` for recommended extraction and usage patterns to avoi
 Status: Active  
 Replaces: dynamic_types.md (v1)
 
+### v0.2 data-construction amendment — 2026-10-05
+
+[Data notation and initialization interfaces](data_initialization.md) now owns the
+v0.2 construction standard. Older creation matrices below describe v0.1 dynamic
+defaults, not a fallback for an unresolved v0.2 target. Construction requires a known
+type and a recognized interface; data-dependent factory validation remains runtime.
+
+Nested unannotated data under mixed defaults to mixed; under dynamic it defaults to
+dynamic. Both mixed container payloads and dynamic objects store **mixed-only entry
+values**: scalars are boxed and a nested dynamic object is carried by `dynamic_v`,
+preserving shared identity. Inheriting a construction type is not converting every
+scalar to that type. This does not extend arbitrary object boxing or native references.
+
+Brace notation and explicit `Type::{...}` / `Type::[...]` construction are agreed
+v0.2 semantics with implementation pending, not already-supported v0.1 forms.
+
 ---
 
 ## Prism++ â€” Dynamic Type (`mixed_t`)

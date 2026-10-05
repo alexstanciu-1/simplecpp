@@ -38,7 +38,7 @@ experiment retained for regressions, not a second semantic development path.
 | Mixed and dynamic | [Type model](catalog/05_dynamic_boundaries.md#mixed-and-dynamic-model-foundation--2026-10-04), [scalar boundaries](catalog/05_dynamic_boundaries.md#mixed-scalar-value-boundaries--2026-10-04), [casts and probes](catalog/05_dynamic_boundaries.md#mixed-casts-conditions-and-probes--2026-10-04), [selection joins](catalog/05_dynamic_boundaries.md#direct-mixed-selection-joins--2026-10-04), [language contract](../../../specs/dynamic_types.md) |
 | Active operator discussion | [Operator preparation and resolution](planning/operators.md) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Next language feature | [Catalog](catalog/README.md), [chapter 06 handoff](catalog/06_containers.md#handoff-from-chapter-05--2026-10-04) |
+| Next language feature | [Catalog](catalog/README.md), [chapter 06 agreed standard and grouping](catalog/06_containers.md#agreed-standard-and-revised-grouping--2026-10-05), [top-level data initialization standard](../../../specs/data_initialization.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral

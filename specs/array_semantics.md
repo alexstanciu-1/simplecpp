@@ -4,6 +4,7 @@ Status: Active
 
 See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 See also:
+- [Data notation and initialization interfaces](data_initialization.md) — the v0.2 construction standard; implementation availability is tracked separately
 - `specs/dynamic_types.md`
 - `specs/native_reference_safety.md`
 - `specs/references.md`
@@ -26,6 +27,18 @@ This document does **not** expand the supported native-reference surface.
 Reference safety remains governed by `specs/native_reference_safety.md` and `specs/references.md`.
 
 ## 2. Core model
+
+### v0.2 construction boundary
+
+Construction now follows [data initialization](data_initialization.md): positional,
+keyed and named notation selects a recognized initialization interface on a known
+target type. Typed, mixed and dynamic construction share that protocol. An unresolved
+target is a preparation error, not an implicit dynamic array. Nested mixed/dynamic
+construction inherits its enclosing construction family, while both store values
+through the mixed-only boundary. Factory-specific data validation runs at runtime.
+
+This updates construction defaults, not the read/write/reference rules below.
+v0.1 implicit array examples are not proof of v0.2 target resolution or support.
 
 Prism++ treats array/table operations through three semantic classes:
 

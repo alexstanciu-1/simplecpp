@@ -109,6 +109,10 @@ Contract:
 
 ### Mixed arrays â€” Stable
 
+Version boundary: these implicit-array examples describe the v0.1 surface. For
+v0.2, [data initialization](../data_initialization.md) requires a known construction
+target; use an explicit mixed destination when no other typing context supplies it.
+
 ```php
 $data = [];
 $data[] = 1;
@@ -120,6 +124,10 @@ Contract:
 - Maps to dynamic runtime structure
 
 ### Typed containers â€” Stable
+
+The [v0.2 initialization standard](../data_initialization.md) extends these forms
+with recognized initialization interfaces, named braces, explicit construction
+types and trailing commas. New forms are specified, not yet proven implemented.
 
 ```php
 $list vector<int> = [1, 2, 3];
