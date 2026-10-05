@@ -24,7 +24,8 @@ python3 compiler/my-try/tests/mixed_layout.py --results /tmp/FRESH_MIXED_LAYOUT_
 ```
 
 Rebuilds matching debug and release snippet runtimes and JSON objects, then runs
-layout/lifetime, array-semantics, hash and value-independent packed-storage programs
+layout/lifetime, array-semantics, hash, value-independent packed-storage and internal
+tagged-dynamic programs
 through the shared pool. Dedicated layout and packed-storage behavioral checks remain
 active under NDEBUG. This does not rebuild the compiler.
 The [storage plan](planning/mixed_dynamic_storage.md) records separate baseline

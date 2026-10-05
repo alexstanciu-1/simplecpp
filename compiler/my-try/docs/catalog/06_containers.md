@@ -72,7 +72,9 @@ representation and family-separation refactor remain pending; this checkpoint do
 not resolve the containment blocker.
 The shared packed/associative table engine is now value-parameterized and proved
 with a non-mixed value type; mixed uses it without new source capabilities. The
-tagged dynamic implementation and family separation still remain next.
+internal tagged dynamic storage is now implemented with inline scalars and shared,
+same-family recursive containers. The public alias/consumer migration and source-level
+family enforcement remain next; this does not resolve the chapter blocker.
 
 The current runtime permits both relationships:
 

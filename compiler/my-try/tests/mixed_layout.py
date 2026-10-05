@@ -20,7 +20,8 @@ def main():
     modes = {'debug': ['-O0'], 'release': ['-O2', '-DNDEBUG']}
     # The older test_mixed_t_dynamic operator suite has independently reproduced
     # baseline failures (bool/int comparison and string +=); see the storage plan.
-    suites = ['test_mixed_layout', 'test_array_semantics', 'test_hash_t', 'test_packed_table_storage']
+    suites = ['test_mixed_layout', 'test_array_semantics', 'test_hash_t',
+              'test_packed_table_storage', 'test_dynamic_value']
     flags = ['clang++', '-std=c++23', '-DSCPP_LANGUAGE_TARGET_PHP=1',
              '-I', REPOSITORY / 'runtime/include', '-pthread']
     with CommandRunner(output / 'logs', REPOSITORY, jobs=12) as runner:

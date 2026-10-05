@@ -59,6 +59,11 @@ add_executable(test_hash_t test_hash_t.cpp)
 target_link_libraries(test_hash_t PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_hash_t COMMAND test_hash_t)
 
+# Tagged dynamic storage foundation; public alias migration is still pending.
+add_executable(test_dynamic_value test_dynamic_value.cpp)
+target_link_libraries(test_dynamic_value PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_dynamic_value COMMAND test_dynamic_value)
+
 # Value-independent packed table engine shared by boxed-value families.
 add_executable(test_packed_table_storage test_packed_table_storage.cpp)
 target_link_libraries(test_packed_table_storage PRIVATE scpp_runtime scpp_runtime_test_support)

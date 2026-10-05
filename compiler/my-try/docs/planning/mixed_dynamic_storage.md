@@ -47,8 +47,8 @@ is not a native compiler rebuild or a broad regression run.
 
 The user accepts a 24-byte target for a tagged dynamic value: inline null/bool/int/
 float, indirect string storage and shared container storage. No shared allocation
-per numeric/boolean scalar. The current dynamic is still a shared hash handle alias;
-the proposed tagged type does not exist yet.
+per numeric/boolean scalar. The public dynamic is still a shared hash handle alias;
+the internal tagged value foundation is implemented below, with public migration pending.
 
 A layout-only sketch using current wrappers measured 24 bytes at both -O0 and -O2
 on the above target. Inline `string_t` increased the sketch to 40 bytes. These are
@@ -126,7 +126,8 @@ copy/alias semantics, JSON modes and compiler facts require separate focused pro
 1. Mixed layout checkpoint: implemented as above; dynamic and its old bridge API
    are unchanged. No native compiler rebuild is claimed.
 2. Shared table mechanics are implemented in the checkpoint below. New tagged
-   dynamic and reusable private scalar/value mechanics are next. Keep scalar
+   dynamic's internal storage is implemented below; switching the public alias and
+   consumers is next. Keep scalar
    semantics in their existing owners; remove obsolete mixed/dynamic coupling as a
    coordinated change rather than leaving both representations partially active.
 3. Migrate runtime consumers together: initialization, reads/writes/paths, iteration,
@@ -201,9 +202,52 @@ container rejection are consistent across construction and mutation. Scalar copi
 shared-container aliases, null versus empty construction and non-container iteration
 are explicit. Keys remain independent of entry-value types.
 
-Implementation remains at the shared-table checkpoint. No tagged dynamic type,
+At this documentation checkpoint implementation remained at shared-table storage. No public tagged dynamic type,
 family rejection, new JSON default or compiler capability change is claimed by
 this documentation checkpoint. The old boxing/crossing tests describe the old
 implementation and must be replaced during migration, not preserved as new semantics.
 JSON family-specific decoding is recorded as direction without inventing a mode
 parameter or function name before its callable/API migration.
+
+### Tagged dynamic storage foundation — 2026-10-05
+
+The user approved a coordinated v0.2 breaking runtime change, without preserving
+the old v0.1 mixed/dynamic behavior. Migrate JSON, typed JSON conversion, tasks,
+database adapters and compiler facts together; do not install a legacy-family
+conversion bridge. Regenerate/rebuild consumers and PCH after the public switch.
+
+`scpp::detail::dynamic_value` now implements the target storage independently of
+mixed: a variant of null, inline bool/int/float, an owned string wrapper and a shared
+`packed_table<dynamic_value>`. The existing table engine supplies recursive storage,
+key normalization and traversal; no second hash implementation was introduced.
+Scalar operator semantics have not been duplicated into this storage type.
+
+Copies preserve scalar values, copy the owned string wrapper and share container
+identity. Moves leave null; self-copy/move is safe. String copying completes before
+destination replacement, and payload moves are statically required to be nonthrowing.
+Only the internal factory can create a container payload, so an absent shared handle
+cannot create a second null state. Exact access rejects wrong kinds without mutation.
+Mixed construction/assignment is deleted; no implicit cross-family storage admission
+is exposed. Explicit checked scalar conversions belong to the later cast integration.
+
+This is an internal staging type, not a second source-language family or a
+compatibility mode. The public `dynamic_t` alias, obsolete mixed `dynamic_v` carrier
+and existing consumers are still unchanged. The next coordinated switch must use
+this implementation and remove that old relationship. Do not claim source-level
+family separation, dynamic scalar support or the new JSON default yet.
+
+The focused `test_dynamic_value.cpp` measures 24 bytes/alignment 8 on this target
+and checks exact scalar access, string lifetimes, copy/move/self-assignment, null
+versus empty container, parent/child aliases, variable replacement, child survival
+after removal, same-family missing reads, growth and typed iteration. Compile-time
+checks reject mixed and the old dynamic handle. It is included in the shared
+debug/release runner and CMake runtime tests.
+
+Evidence: `/tmp/my-try-tagged-dynamic-20261005-2` rebuilt matching debug/release
+runtime and JSON objects and passed all ten programs, including the existing mixed,
+array/hash and shared-engine checks. `/tmp/my-try-tagged-dynamic-sanitize-20261005-2`
+passed the new value test with AddressSanitizer and UndefinedBehaviorSanitizer.
+Leak detection was disabled for that run: the initial sanitizer attempt failed
+because LeakSanitizer cannot run under this sandbox's ptrace environment, not from
+a reported payload defect. No leak-check pass, migrated source-program behavior,
+native compiler rebuild or completed public dynamic migration is claimed.
