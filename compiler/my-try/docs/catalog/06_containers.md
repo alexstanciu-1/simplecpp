@@ -627,6 +627,43 @@ by this note. Do not silently define mutation as snapshot, live traversal, a no-
 or a newly guaranteed runtime error. Keep mutation/replacement outside the supported
 slice and expose any unavoidable lifetime/safety prerequisite before enabling it.
 
+**First alternative to evaluate — snapshot on structural mutation (user proposal).**
+Types supporting foreach would cooperate with active traversal cursors. Start
+ordinary traversal without copying entries. Before a mutation changes keys,
+membership/order or invalidates traversal storage, notify affected cursors and
+preserve a shallow entry snapshot; only then commit the mutation. Existing cursors
+resume from their saved positions on preserved entries; subsequent loops start from
+the changed container. This is a discussion candidate, not an approved implementation
+or a reinstatement of unconditional entry snapshots. CH06-ITER-01 remains blocking.
+
+Assessment and decisions still required:
+
+- The common non-mutating path avoids O(n) entry copying, but active-cursor
+  registration/lifetime management and mutation checks have a cost. The first
+  structural change pays for preserving entries. Measure before promising gains.
+- This freezes entries at the first structural mutation, not at loop entry.
+  Existing-value updates before that point can be observed; whether later updates
+  are isolated must be an explicit language decision. Shared objects inside copied
+  entries keep their ordinary shared identity; do not imply a recursive deep clone.
+- Define the event beyond literal key changes: append/insert/remove, clear/reorder,
+  storage relocation and source replacement/destruction may affect traversal.
+  Replacement may instead be handled by retaining the old iterable owner; choose
+  that policy explicitly rather than accidentally following the new wrapper value.
+- Notification belongs at the mutation/storage owner so changes through aliases,
+  calls and dynamic handles cannot bypass it. Coordinate with mixed COW so copying
+  a distinct wrapper does not unnecessarily freeze unaffected traversals.
+- Preserve current/next position and termination state; do not replay consumed
+  entries or leave an old range end/entry pointer active after switching storage.
+  Nested/concurrent-in-the-same-thread cursors may share a full snapshot while keeping
+  independent positions, or preserve remaining entries separately; compare costs.
+- Snapshot preparation must finish before the structural write. If allocation or
+  entry copying fails, leave the structural mutation uncommitted and existing cursors
+  valid; already evaluated source expressions are not rolled back. Cursor registration
+  must release on completion, break, return and exceptions.
+- A post-write generation counter alone cannot implement pre-write preservation.
+  The present owner/index const ranges need an owner-aware cursor/mutation protocol.
+  This would not, by itself, make unsynchronized cross-thread mutation safe.
+
 ### End-to-end catalog rows
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
