@@ -31,7 +31,7 @@ final class Declaration_Preparation
 				throw new \RuntimeException('S2S duplicate parameter name: ' . $parameter->name);
 			}
 			$names[$parameter->name] = true;
-			$parameter->prepare($context);
+			self::prepare_parameter($parameter, $context);
 			$prepared = $parameter->require_preparation();
 			$parameters->append($prepared);
 			$contracts->append($prepared->contract);
@@ -75,7 +75,7 @@ final class Declaration_Preparation
 		$query = new Capability_Preparation($context);
 		$nodes /** Storage<field_node> */ = $syntax->fields;
 		foreach ($nodes as $field) {
-			$field->prepare($context);
+			self::prepare_field($field, $context);
 			$field_facts = $field->require_preparation();
 			$fields->add($field->name, $field_facts);
 			if (!$query->has_capability($field_facts->type, generic_contract::copyable_value)) {

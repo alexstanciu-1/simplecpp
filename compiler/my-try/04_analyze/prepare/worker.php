@@ -162,7 +162,7 @@ final class Preparation_Worker
 		}
 	}
 
-	/** Source change flags seed stable owners; concrete nodes select their typed work. */
+	/** Source change flags seed stable owners; analysis selects their typed work. */
 	private function select(collected_file $source): void
 	{
 		if ($source->root->body->work() === null) {
@@ -172,7 +172,13 @@ final class Preparation_Worker
 		$this->select_owner($file_body);
 		$nodes /** Storage<declaration_node> */ = $source->root->declarations;
 		foreach ($nodes as $node) {
-			$node->select_preparation($this);
+			if ($node instanceof function_node) {
+				$this->select_function(object_cast($node, function_node::class));
+			}
+			elseif ($node instanceof struct_node) {
+				$this->select_record(object_cast($node, struct_node::class));
+			}
+			else { throw new \RuntimeException('Preparation is not supported for this declaration'); }
 		}
 	}
 
@@ -257,7 +263,13 @@ final class Preparation_Worker
 
 	public function declaration_owner(collected_definition $entry): declaration_work
 	{
-		return $entry->preparation_work($this);
+		if ($entry instanceof collected_function) {
+			return $this->function_owner(object_cast($entry, collected_function::class));
+		}
+		if ($entry instanceof collected_struct) {
+			return $this->record_owner(object_cast($entry, collected_struct::class));
+		}
+		throw new \RuntimeException('Preparation work is not supported for this declaration');
 	}
 
 	public function function_owner(collected_function $entry): declaration_work
@@ -543,7 +555,7 @@ final class Preparation_Worker
 	private function file_body(file_node $root, preparation_context $context): void
 	{
 		Preparation_Cleanup::tree($root->body);
-		$root->body->prepare_completion($context);
+		Body_Preparation::prepare_statements($root->body, $context);
 	}
 
 	/** Context is transient and always uses the selected owner's source token generation. */

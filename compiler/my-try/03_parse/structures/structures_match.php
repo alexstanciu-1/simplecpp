@@ -27,11 +27,6 @@ final class match_expression_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Match_Preparation::prepare($this, $context));
-	}
-
 	public function children(): child_iterator_i
 	{
 		return new match_children_iterator($this);

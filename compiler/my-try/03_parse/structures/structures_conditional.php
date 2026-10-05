@@ -14,10 +14,6 @@ final class coalesce_expression_node extends expression_node
 	public function kind(): node_kind { return node_kind::coalesce_expression; }
 	public function require_preparation(): prepared_expression { return $this->require_coalesce_preparation(); }
 	public function require_coalesce_preparation(): prepared_coalesce_expression { return $this->prepared_facts; }
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Coalesce_Expression_Preparation::prepare($this, $context));
-	}
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
@@ -50,11 +46,6 @@ final class conditional_expression_node extends expression_node
 	public function require_conditional_preparation(): prepared_conditional_expression
 	{
 		return $this->prepared_facts;
-	}
-
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Conditional_Expression_Preparation::prepare($this, $context));
 	}
 
 	public function children(): child_iterator_i

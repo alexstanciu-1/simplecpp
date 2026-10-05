@@ -74,7 +74,7 @@ foreach ($parsed->collection->entries as $occurrence) {
 $context = new preparation_context();
 $context->collection = $parsed->collection;
 $context->string_type = Language_Types::string_type(Model::$language_scope);
-$key->prepare($context);
+Expression_Preparation::prepare($key, $context);
 data_check($key->require_string_literal_preparation()->value === 'bare', 'Generic string preparation lost bare key spelling');
 Preparation_Cleanup::tree($node);
 data_check($key->preparation() === null, 'Maintenance missed a keyed child');

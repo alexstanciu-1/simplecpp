@@ -5,8 +5,8 @@ namespace scpp\compiler;
 
 interface callable_target_i
 {
-	/** Source targets require completion and register dependencies; runtime contracts are installed complete. */
-	public function require_signature(preparation_context $context): callable_signature;
+	/** Read an established contract; analysis owns completion and dependency registration. */
+	public function signature(): callable_signature;
 }
 
 /** Published with its owning signature; never mutated after publication. */
@@ -53,7 +53,7 @@ final class registered_static_factory implements callable_target_i
 
 	public function key(): string { return $this->registration_key; }
 	public function owner(): canonical_type_use { return $this->owner_type; }
-	public function require_signature(preparation_context $context): callable_signature
+	public function signature(): callable_signature
 	{
 		return $this->call_contract;
 	}

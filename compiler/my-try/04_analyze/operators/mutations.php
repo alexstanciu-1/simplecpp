@@ -34,7 +34,7 @@ final class Mutation_Preparation
 		preparation_context $context): prepared_expression
 	{
 		if ($syntax instanceof index_node) {
-			$syntax->prepare($context);
+			Expression_Preparation::prepare($syntax, $context);
 		}
 		if (!($syntax instanceof variable_reference_node)) {
 			throw new \RuntimeException('S2S mutation requires an existing local or parameter target');

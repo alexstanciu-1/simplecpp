@@ -3,7 +3,7 @@ Doc Status: planning
 
 Recorded 2026-10-05 against `22755175` on `v0.2/develop`.
 This records the agreed direction and bounded implementation batches.
-Batch A is implemented in the 2026-10-05 follow-up; later batches remain pending.
+Batches A and B are implemented in the 2026-10-05 follow-ups; C onward remain pending.
 The current implementation and
 findings are described in the [stage-boundary audit](stage_boundary_audit.md).
 Language semantics remain owned by the top-level specs.
@@ -70,7 +70,7 @@ Inspection-only trivia remains distinct from executable statements.
 
 ## Owner mapping
 
-| Current hook or coupling | Destination |
+| Original hook or coupling | Destination |
 | --- | --- |
 | AST `prepare`, `prepare_completion` | Analysis expression/body/declaration dispatch and existing semantic workers |
 | Loop `prepare_header`, `prepare_continuation` | `Loop_Preparation` and typed loop handlers |
@@ -110,10 +110,10 @@ cross-owner redesign beyond the agreed batch require discussion first.
 - Update dispatch-specific tests to prove the new boundary, not obsolete method names.
 
 This is a bounded first proof of the destination without simultaneously changing
-invalidation, lookup or retirement. Preparation hooks remain explicitly temporary
-until B, not an exception to the target rule.
+invalidation, lookup or retirement. Preparation hooks remained explicitly temporary
+at that checkpoint and are removed by B, not retained as an exception.
 
-### B. Semantic traversal and queries off shared structures
+### B. Semantic traversal and queries off shared structures — implemented 2026-10-05
 
 - Move expression, type, statement/completion, declaration and auxiliary syntax
   processing to their analysis owners, reusing existing algorithms.
@@ -224,7 +224,46 @@ unchanged. Portable-PHP checked narrowing is explicit at family dispatch boundar
   startup. No native compiler rebuild, conversion, broad regression or lint sweep
   was performed. Generated-program execution is not native compiler evidence.
 
-SB-02 is partially resolved; B/C remain next. D/E still require protocol review.
+At the batch A checkpoint, SB-02 was partially resolved and B/C remained next.
+D/E still require protocol review.
+
+### Batch B evidence — 2026-10-05
+
+Candidate: `060d31ca` plus the batch B source/test/documentation overlay.
+Removed AST preparation/completion, loop header/continuation, constant evaluation
+and declaration work-selection hooks. Existing semantic workers now own dispatch,
+fact attachment and traversal. Collected definitions no longer select preparation
+work. Callable `signature()` is read-only; `Call_Preparation::require_signature`
+owns source completion and dependency registration. No new retained structure,
+universal visitor, scheduler transition or parser invalidation protocol was added.
+Analysis-internal work-record adapters remain for C.
+
+- Baseline export: `/tmp/my-try-analysis-dispatch-before-20261005`.
+- Initial focused checks: `/tmp/my-try-analysis-dispatch-php-20261005` — 12 passed.
+- Function proofs: `/tmp/my-try-analysis-dispatch-functions-20261005-2` — 12 PHP
+  suites and 77 generated programs passed. All 1,049 exported C++ files match the
+  baseline byte-for-byte. The first function run exposed two accidentally renamed
+  conditional/coalesce worker references during consolidation; these were repaired
+  before the successful rerun. That failed run is retained without the `-2` suffix.
+- Control-flow proofs: `/tmp/my-try-analysis-dispatch-control-20261005` — 12 PHP
+  suites and 132 generated programs passed. Generated-program runs use PCH.
+- Supplementary checks: `/tmp/my-try-analysis-dispatch-extra-20261005` — 13 passed,
+  including callable query/accessor separation, work/retry, parsing/collection,
+  capabilities, token cleanup and nullable/Result/mixed/probe/take preparation.
+  Across the overlapping selections, 27 distinct PHP suites passed.
+- **Existing debt, not a green check:** `tests/dependency_cleanup.php` fails at
+  line 37, `Replaced body retained lookup registration`. The unchanged `060d31ca`
+  compiler/test/framework archive reproduces the same failure in
+  `/tmp/my-try-analysis-dispatch-baseline-cleanup-20261005`. The baseline tree is
+  `/tmp/my-try-analysis-baseline-ni9Akt`. Leave the test unchanged and triage its
+  lookup-registration expectation/behavior with D; the remaining checks in that
+  suite are not claimed as passing.
+- Structural checks find no processing worker/context references in AST structures
+  or callable/collected semantic hooks. Neutral maintenance and fact access remain.
+  The shared runner used its sandbox socket-related CLI fallback. No native compiler
+  rebuild, conversion, broad regression or lint sweep was performed.
+
+SB-02's shared-model hook migration is complete. Next: C, then review D/E protocols.
 
 ## Remaining questions and non-goals
 
@@ -234,7 +273,7 @@ SB-02 is partially resolved; B/C remain next. D/E still require protocol review.
    Removing it touches cleanup, token remapping and lifecycle traversal and needs
    a separately agreed batch. It is not a back door for stage-specific node hooks.
 2. **Implementation order — agreed:** A first, followed by B/C; review the D/E
-   protocols before implementing them. The first implementation completes A only.
+   protocols before implementing them. Completed batches are marked above.
 
 The acknowledgment choice in E and exact change/retirement protocol in D are later
 design gates, not blockers for A. Dispatch helper names and file splits are local

@@ -42,12 +42,6 @@ final class file_node extends ast_node
 		return new file_children_iterator($this);
 	}
 
-	/** Dispatch only the file executable body; declarations are independently scheduled. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->body->prepare($context);
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -134,12 +128,6 @@ final class function_body_node extends statement_body_node
 	{
 		return node_kind::function_body;
 	}
-
-	/** The executable root uses the environment already seeded with its parameters. */
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		return Body_Preparation::prepare_statements($this, $context);
-	}
 }
 
 /** Nested grouping only; it does not own an independent preparation work item. */
@@ -175,17 +163,6 @@ final class if_node extends statement_node
 	public function children(): child_iterator_i
 	{
 		return new if_children_iterator($this);
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->prepare_completion($context);
-	}
-
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		return Body_Preparation::prepare_if($this, $context);
 	}
 
 	public function require_preparation(): prepared_condition
@@ -229,12 +206,6 @@ final class named_type_node extends type_node
 	public function kind(): node_kind
 	{
 		return node_kind::named_type;
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Type_Preparation::prepare_named_type($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -289,10 +260,6 @@ final class nullable_type_node extends type_node
 	public type_node $payload;
 	public function kind(): node_kind { return node_kind::nullable_type; }
 	public function require_preparation(): canonical_type_use { return $this->prepared_facts; }
-	public function prepare(preparation_context $context): void
-	{
-		Type_Preparation::prepare_nullable_type($this, $context);
-	}
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
@@ -309,20 +276,11 @@ final class null_literal_node extends expression_node
 	public function kind(): node_kind { return node_kind::null_literal; }
 	public function require_preparation(): prepared_expression { return $this->require_null_preparation(); }
 	public function require_null_preparation(): prepared_null_literal { return $this->prepared_facts; }
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_null());
-	}
 	public function maintain(node_maintenance_worker_i $worker): void { $worker->enter($this); }
 }
 
 final class integer_literal_node extends expression_node
 {
-	public function integer_constant(): string
-	{
-		return $this->require_integer_literal_preparation()->decimal;
-	}
-
 	use Node_Source_Span;
 	use Preparation_Facts;
 
@@ -341,12 +299,6 @@ final class integer_literal_node extends expression_node
 	public function require_integer_literal_preparation(): prepared_integer_literal
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_integer($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -378,12 +330,6 @@ final class float_literal_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_float($this, $context));
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -413,12 +359,6 @@ final class boolean_literal_node extends expression_node
 	public function require_boolean_literal_preparation(): prepared_boolean_literal
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_boolean($this->value, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -460,12 +400,6 @@ final class string_literal_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_string($this, $context));
-	}
-
 	/** Offer this leaf node to maintenance without inventing spelling-specific children. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -500,11 +434,6 @@ final class interpolated_string_node extends expression_node
 	public function require_preparation(): prepared_expression
 	{
 		return $this->prepared_facts;
-	}
-
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_interpolated_string($this, $context));
 	}
 
 	/** Traverse owned parts in source order, preserving their precise token-relative ranges. */
@@ -548,11 +477,6 @@ final class interpolation_text_node extends interpolation_part_node
 		return $this->prepared_facts;
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_interpolation_text($this, $context));
-	}
-
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
@@ -581,11 +505,6 @@ final class interpolation_value_node extends interpolation_part_node
 	public function require_preparation(): prepared_interpolation_value
 	{
 		return $this->prepared_facts;
-	}
-
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_interpolation_value($this, $context));
 	}
 
 	public function maintain(node_maintenance_worker_i $worker): void
@@ -633,12 +552,6 @@ final class variable_reference_node extends assignable_expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_reference($this, $context));
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -649,11 +562,6 @@ final class variable_reference_node extends assignable_expression_node
 /** A named immutable value is an expression, never an assignment target. */
 final class constant_reference_node extends expression_node
 {
-	public function integer_constant(): string
-	{
-		return Integer_Constants::reference($this->require_constant_reference_preparation());
-	}
-
 	use Node_Source_Span;
 	use Collected_Occurrence;
 	use Preparation_Facts;
@@ -680,11 +588,6 @@ final class constant_reference_node extends expression_node
 	public function require_constant_reference_preparation(): prepared_constant_reference
 	{
 		return $this->prepared_facts;
-	}
-
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_constant_reference($this, $context));
 	}
 
 	public function maintain(node_maintenance_worker_i $worker): void
@@ -741,12 +644,6 @@ final class call_node extends expression_node
 	public function require_call_preparation(): prepared_call
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_call($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -819,12 +716,6 @@ final class function_node extends declaration_node
 		$collector->collect_function($this, $scope, $index);
 	}
 
-	/** Forward scheduling by concrete role; the worker owns selection and work state. */
-	public function select_preparation(Preparation_Worker $worker): void
-	{
-		$worker->select_function($this);
-	}
-
 	public function kind(): node_kind
 	{
 		return node_kind::function_declaration;
@@ -841,13 +732,6 @@ final class function_node extends declaration_node
 	public function require_preparation(): prepared_function
 	{
 		return $this->prepared_facts;
-	}
-
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Declaration_Preparation::prepare_function($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -909,12 +793,6 @@ final class parameter_node extends ast_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Declaration_Preparation::prepare_parameter($this, $context);
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -958,12 +836,6 @@ final class compound_assignment_expression_node extends expression_node
 	public function require_compound_assignment_preparation(): prepared_compound_assignment_expression
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward operand typing and operation selection to semantic preparation. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Mutation_Preparation::prepare_compound($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1010,12 +882,6 @@ final class mutation_expression_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward operand typing and operation selection to semantic preparation. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Mutation_Preparation::prepare($this, $context));
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -1027,11 +893,6 @@ final class mutation_expression_node extends expression_node
 
 final class unary_expression_node extends expression_node
 {
-	public function integer_constant(): string
-	{
-		return Integer_Constants::unary($this);
-	}
-
 	use Node_Source_Span;
 	use Preparation_Facts;
 
@@ -1061,12 +922,6 @@ final class unary_expression_node extends expression_node
 	public function require_unary_preparation(): prepared_unary_expression
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward operand typing and operation selection to semantic preparation. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_unary($this, $context));
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1112,12 +967,6 @@ final class binary_expression_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward operand typing and operation selection to semantic preparation. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_binary($this, $context));
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -1159,11 +1008,6 @@ final class cast_expression_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_cast($this, $context));
-	}
-
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
@@ -1171,7 +1015,6 @@ final class cast_expression_node extends expression_node
 		$worker->edge($this, $this->operand);
 	}
 }
-
 
 /**
  * Assignment is an expression at every depth, including a standalone statement.
@@ -1210,12 +1053,6 @@ final class assignment_expression_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward the whole write; the worker must not prepare its target as an ordinary read. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_assignment($this, $context));
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -1242,12 +1079,6 @@ final class expression_statement_node extends statement_node
 	public function children(): child_iterator_i
 	{
 		return new expression_statement_children_iterator($this);
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Body_Preparation::prepare_expression_statement($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1283,18 +1114,6 @@ final class return_node extends statement_node
 	public function require_preparation(): prepared_return
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Body_Preparation::prepare_return($this, $context));
-	}
-
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		$this->prepare($context);
-		return Completion_Preparation::returned();
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1350,12 +1169,6 @@ final class variable_declaration_node extends statement_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Body_Preparation::prepare_local_storage($this->occurrence(), $this->type_syntax, $this->initializer, $context));
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -1390,12 +1203,6 @@ final class array_type_node extends type_node
 	public function children(): child_iterator_i
 	{
 		return new array_type_children_iterator($this);
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Type_Preparation::prepare_array_type($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1437,11 +1244,6 @@ final class template_application_type_node extends type_node
 		return new template_application_type_children_iterator($this);
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		Type_Preparation::prepare_template_application_type($this, $context);
-	}
-
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
@@ -1477,11 +1279,6 @@ final class type_use_modifier_node extends type_node
 	public function children(): child_iterator_i
 	{
 		return new type_use_modifier_children_iterator($this);
-	}
-
-	public function prepare(preparation_context $context): void
-	{
-		Type_Preparation::prepare_type_use_modifier($this, $context);
 	}
 
 	public function maintain(node_maintenance_worker_i $worker): void
@@ -1594,12 +1391,6 @@ final class index_node extends assignable_expression_node
 		return node_kind::index_expression;
 	}
 
-	/** Both arities enter the same operator selection boundary; no overload is defined yet. */
-	public function prepare(preparation_context $context): void
-	{
-		Operator_Preparation::prepare_index($this, $context);
-	}
-
 	/**
 	 * Create an independent iterator retaining this node for lazy inspection.
 	 */
@@ -1655,12 +1446,6 @@ final class struct_node extends declaration_node
 		$collector->collect_struct($this, $scope, $index);
 	}
 
-	/** Forward scheduling by concrete role; the worker owns selection and work state. */
-	public function select_preparation(Preparation_Worker $worker): void
-	{
-		$worker->select_record($this);
-	}
-
 	public function kind(): node_kind
 	{
 		return node_kind::struct_declaration;
@@ -1677,12 +1462,6 @@ final class struct_node extends declaration_node
 	public function require_preparation(): prepared_record
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Declaration_Preparation::prepare_struct($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1730,12 +1509,6 @@ final class field_node extends ast_node
 	public function require_preparation(): prepared_field
 	{
 		return $this->prepared_facts;
-	}
-
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		Declaration_Preparation::prepare_field($this, $context);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
@@ -1787,12 +1560,6 @@ final class field_access_node extends assignable_expression_node
 		return $this->prepared_facts;
 	}
 
-	/** Forward this specialized node and its active context to the owning preparation algorithm. */
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Expression_Preparation::prepare_field_access($this, $context));
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -1816,18 +1583,17 @@ final class field_access_node extends assignable_expression_node
  * including locks, parse-complete gates and dependency notification before cleanup.
  * They call typed maintenance workers only for the selected syntax subtrees.
  *
- * Preparation contract is declared in abstractions.php. Workers consume
- * typed fields directly and attach specialized facts; they never walk children().
- * function_node::prepare() dispatches only its signature. Its body is a separate
- * scheduled function_body_node::prepare(), also used for file executable bodies.
- * The file hook coordinates supplied work; it must not blindly reprepare retained
- * declarations or bodies. Nested block dispatch uses its current enclosing context.
+ * Each stage owns dispatch and consumes typed fields directly, never children().
+ * Analysis attaches specialized facts. Function signatures and executable bodies
+ * retain separate scheduled work; file bodies use the same body representation.
+ * Selection must not blindly reprepare unchanged declarations or bodies.
+ * Nested block processing uses its current enclosing context.
  * Assignment syntax is always expression-shaped, including first writes. Example:
  * $a = $b = 0; is expression_statement(assignment($a, assignment($b, 0))).
  * $a int = 0; is variable_declaration(name=$a, type=int, initializer=0).
  * Target occurrences carry local introduction/reference identity; workers reuse
  * one binding path for declaration and assignment, in the enclosing body context.
  * Inspection order is target then value; it is not an evaluation-order algorithm.
- * Unsupported semantic forms and trivia inherit explicit rejection; adding syntax
+ * Stage dispatch rejects unsupported semantic forms explicitly; adding syntax
  * here does not expand the current backend's language support.
  */

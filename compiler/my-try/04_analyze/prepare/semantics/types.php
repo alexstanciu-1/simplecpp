@@ -20,7 +20,22 @@ final class Type_Preparation
 	/** Named syntax resolves through the existing lexical/publication scope chain. */
 	public static function type(type_node $node, preparation_context $context): canonical_type_use
 	{
-		$node->prepare($context);
+		if ($node instanceof named_type_node) {
+			self::prepare_named_type(object_cast($node, named_type_node::class), $context);
+		}
+		elseif ($node instanceof nullable_type_node) {
+			self::prepare_nullable_type(object_cast($node, nullable_type_node::class), $context);
+		}
+		elseif ($node instanceof array_type_node) {
+			self::prepare_array_type(object_cast($node, array_type_node::class), $context);
+		}
+		elseif ($node instanceof template_application_type_node) {
+			self::prepare_template_application_type(object_cast($node, template_application_type_node::class), $context);
+		}
+		elseif ($node instanceof type_use_modifier_node) {
+			self::prepare_type_use_modifier(object_cast($node, type_use_modifier_node::class), $context);
+		}
+		else { throw new \RuntimeException('Preparation is not supported for this node'); }
 		return $node->require_preparation();
 	}
 

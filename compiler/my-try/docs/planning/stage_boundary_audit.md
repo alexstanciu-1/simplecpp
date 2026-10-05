@@ -10,8 +10,10 @@ visitor on shared structures and collection explicitly a parsing sub-step. See t
 [refactor plan](stage_owned_processing.md) for the agreed destination, proposed
 batches and remaining questions. Findings below describe the audited implementation;
 the planning follow-up alone does not mark them repaired. Batch A subsequently
-removed AST C++ hooks and the shared C++ worker interface; SB-02 is only partially
-resolved because semantic processing hooks remain.
+removed AST C++ hooks and the shared C++ worker interface. Batch B removed AST
+semantic hooks and callable/work-selection processing from shared identities.
+SB-02's shared-model hooks are resolved; analysis-internal work-record adapters are
+tracked separately as batch C. SB-01 and SB-03–07 retain their recorded scope.
 
 ## Outcome and rule
 
@@ -47,7 +49,8 @@ separate decision in SB-02; this audit does not silently forbid all visitors.
 
 The existing `require_signature(preparation_context)` semantic completion hook was
 retained in that slice. The follow-up plan now places completion/dependency work in
-analysis; the implementation has not yet changed. Its implications are in SB-02.
+analysis; batch B implements that query plus a read-only `signature()` accessor.
+The original finding is in SB-02.
 
 ## Coverage and method
 
@@ -118,7 +121,9 @@ do not replace them with a shared visitor or `accept()` protocol. Reuse typed wo
 behind stage-local family dispatch. Attached facts and owning fields remain; the
 neutral maintenance boundary is an explicit question in the refactor plan. Do not
 introduce one giant switch or duplicate recursion within an operation. This affects
-many nodes and consumers and remains unimplemented at this audit checkpoint.
+many nodes and consumers; batches A/B now implement it. Neutral maintenance is
+explicitly retained, with caller-owned recursion. See the plan for validation and
+the remaining analysis-internal work adapter batch.
 
 ## SB-03 — parse-layer lookup calls preparation observation
 

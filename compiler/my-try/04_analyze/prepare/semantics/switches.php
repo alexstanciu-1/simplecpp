@@ -25,7 +25,7 @@ final class Switch_Preparation
 				$labels /** Storage<switch_label> */ = $group->labels;
 				foreach ($labels as $label)
 				{
-					$label->prepare($context);
+					$label->set_preparation(self::label($label, $context));
 					$decimal /** nullable<string> */ = $label->require_preparation()->decimal;
 					if ($decimal === null) {
 						if ($has_default) { throw new \RuntimeException('S2S switch has duplicate default labels'); }
@@ -37,7 +37,7 @@ final class Switch_Preparation
 						$values[$key] = true;
 					}
 				}
-				$body = $group->body->prepare_completion($context);
+				$body = Body_Preparation::prepare_block($group->body, $context);
 				$paths = Completion_Preparation::sequence(
 					Completion_Preparation::alternatives($paths, new statement_completion(true)), $body);
 			}

@@ -1,6 +1,6 @@
 <?php
 
-/* Shared structured-loop entry/exit, with typed header and continuation hooks. */
+/* Shared structured-loop entry/exit, with analysis-owned header and continuation dispatch. */
 namespace scpp\compiler;
 
 final class Loop_Preparation
@@ -14,12 +14,14 @@ final class Loop_Preparation
 		$context->locals = new local_environment($enclosing);
 		try
 		{
-			$facts = $syntax->prepare_header($context);
+			$facts = self::prepare_header($syntax, $context);
 			$syntax->set_preparation($facts);
 			$context->break_target = $syntax;
 			$context->continue_target = $syntax;
-			$body = $syntax->body->prepare_completion($context);
-			$syntax->prepare_continuation($context);
+			$body = Body_Preparation::prepare_block($syntax->body, $context);
+			if ($syntax instanceof for_node) {
+				self::for_continuation(object_cast($syntax, for_node::class), $context);
+			}
 			return Completion_Preparation::loop($body, $syntax->body_runs_first(), $facts->condition !== null);
 		}
 		finally {
@@ -27,6 +29,21 @@ final class Loop_Preparation
 			$context->break_target = $outer_break;
 			$context->continue_target = $outer_continue;
 		}
+	}
+
+	/** Loop family selection does not introduce another body or retained work owner. */
+	private static function prepare_header(loop_node $syntax, preparation_context $context): prepared_loop
+	{
+		if ($syntax instanceof while_node) {
+			return self::condition_header(object_cast($syntax, while_node::class)->condition, $context);
+		}
+		if ($syntax instanceof do_while_node) {
+			return self::condition_header(object_cast($syntax, do_while_node::class)->condition, $context);
+		}
+		if ($syntax instanceof for_node) {
+			return self::for_header(object_cast($syntax, for_node::class), $context);
+		}
+		throw new \RuntimeException('Preparation is not supported for this loop');
 	}
 
 	public static function condition_header(expression_node $condition, preparation_context $context): prepared_loop
@@ -41,7 +58,7 @@ final class Loop_Preparation
 	{
 		$initialization /** Storage<statement_node> */ = $syntax->initialization;
 		foreach ($initialization as $statement) {
-			$statement->prepare($context);
+			Body_Preparation::prepare_statement($statement, $context);
 		}
 		$facts = new prepared_loop();
 		$conditions /** Storage<expression_node> */ = $syntax->conditions;

@@ -23,7 +23,7 @@ $unsupported->entries->append($entry);
 $context = new preparation_context();
 $failures = 0;
 try {
-	$unsupported->prepare($context);
+	Expression_Preparation::prepare($unsupported, $context);
 }
 catch (\RuntimeException $error) {
 	$failures++;
@@ -44,8 +44,11 @@ if (interface_exists(__NAMESPACE__ . '\\cpp_generation_worker_i')) {
 }
 foreach (get_declared_classes() as $class_name) {
 	if ($class_name === ast_node::class || is_subclass_of($class_name, ast_node::class)) {
-		if (method_exists($class_name, 'generate_cpp') || method_exists($class_name, 'accept')) {
-			throw new \LogicException('Syntax still owns backend or universal visitor dispatch: ' . $class_name);
+		foreach (['generate_cpp', 'accept', 'prepare', 'prepare_completion', 'prepare_header',
+			'prepare_continuation', 'select_preparation', 'integer_constant'] as $processing_hook) {
+			if (method_exists($class_name, $processing_hook)) {
+				throw new \LogicException('Syntax still owns stage processing: ' . $class_name . '::' . $processing_hook);
+			}
 		}
 	}
 }

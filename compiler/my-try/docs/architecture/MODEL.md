@@ -48,8 +48,9 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 ### Callable contracts
 
 `callable_target_i` is implemented by the existing `collected_function` identity
-and `registered_static_factory`. Source targets require signature completion and
-register the consumer dependency; installed runtime targets already own a complete
+and `registered_static_factory`. Their `signature()` accessor only reads attached
+contracts. `Call_Preparation::require_signature` completes source declarations and
+registers the consumer dependency; installed runtime targets already own a complete
 contract. Runtime catalogs do not cache source declaration facts. Registered factory
 keys are provider-qualified semantic identities, independent of C++ names; their
 owner is the exact canonical constructed type and equals their return type.
@@ -77,7 +78,7 @@ configuration changes require a full compilation reset.
 
 ## AST and scopes
 
-The property-free `ast_node` base supplies operation contracts; specialized node
+The property-free `ast_node` base supplies structural contracts; specialized node
 families own typed syntax fields and uint32 spans. `statement_body_node` shares
 ordered body storage/traversal between executable roots and nested blocks.
 Conditional arms own explicit body/next-arm edges. The common `loop_node` owns a block
@@ -179,14 +180,17 @@ non-storable sentinel identity, without source exposure or a storage backend bin
 
 ## Structure and processing boundary
 
-Structures may initialize data, enforce local invariants, expose typed access,
-clear attached facts, and currently forward preparation operations to their workers.
-Workers own semantic
-algorithms, scheduling, dependency maintenance and publication. Retained structures
+Structures may initialize data, enforce local invariants, expose typed access and
+clear attached facts. Workers own stage dispatch/traversal, semantic algorithms,
+scheduling, dependency maintenance and publication. Retained structures
 do not keep processing contexts or workers.
 
-Preparation dispatch passes one invocation-local context directly to nodes. Typed
-work records dispatch scheduling/rebuild/settlement to `Preparation_Worker`.
+Preparation dispatch belongs to expression, type, body and specialized analysis
+workers. They consume typed fields with one invocation-local context and attach
+facts; nodes expose no `prepare`, completion, loop-processing or constant-evaluation
+hooks. `Preparation_Worker` selects declaration and collected-definition work itself.
+Analysis-internal work records still dispatch scheduling/rebuild/settlement to
+`Preparation_Worker`; removing those adapters is the next planned batch.
 `File_Preparation` is the standalone entry adapter to that scheduler. Facts are
 attached to syntax, not token-indexed maps. See [preparation](../../04_analyze/prepare/README.md).
 

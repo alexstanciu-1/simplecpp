@@ -17,16 +17,6 @@ final class switch_node extends breakable_node
 
 	public function kind(): node_kind { return node_kind::switch_statement; }
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->prepare_completion($context);
-	}
-
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		return Switch_Preparation::prepare($this, $context);
-	}
-
 	public function children(): child_iterator_i
 	{
 		return new switch_children_iterator($this);
@@ -91,11 +81,6 @@ final class switch_label extends ast_node
 	public function require_preparation(): prepared_switch_label
 	{
 		return $this->prepared_facts;
-	}
-
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Switch_Preparation::label($this, $context));
 	}
 
 	public function children(): child_iterator_i

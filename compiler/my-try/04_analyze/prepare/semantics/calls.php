@@ -6,12 +6,25 @@ namespace scpp\compiler;
 /** Argument admission is independent of how a callable was selected. */
 final class Call_Preparation
 {
+	/** Complete source prerequisites before reading the shared callable contract. */
+	public static function require_signature(callable_target_i $target, preparation_context $context): callable_signature
+	{
+		if ($target instanceof collected_function) {
+			$definition = object_cast($target, collected_function::class);
+			$context->worker->require_declaration($context->owner, $definition);
+		}
+		elseif (!($target instanceof registered_static_factory)) {
+			throw new \LogicException('Unsupported callable target for preparation');
+		}
+		return $target->signature();
+	}
+
 	public static function prepare(callable_target_i $target, Storage $arguments /** Storage<expression_node> */,
 		preparation_context $context): prepared_call
 	{
 		$facts = new prepared_call();
 		$facts->target = $target;
-		$facts->signature = $target->require_signature($context);
+		$facts->signature = self::require_signature($target, $context);
 		$facts->type = $facts->signature->return_type;
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;

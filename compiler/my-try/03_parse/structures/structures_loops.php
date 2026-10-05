@@ -12,11 +12,6 @@ final class while_node extends loop_node
 		return node_kind::while_loop;
 	}
 
-	public function prepare_header(preparation_context $context): prepared_loop
-	{
-		return Loop_Preparation::condition_header($this->condition, $context);
-	}
-
 	public function children(): child_iterator_i
 	{
 		return new loop_pair_children_iterator($this->condition, $this->body);
@@ -38,11 +33,6 @@ final class do_while_node extends loop_node
 	public function kind(): node_kind
 	{
 		return node_kind::do_while_loop;
-	}
-
-	public function prepare_header(preparation_context $context): prepared_loop
-	{
-		return Loop_Preparation::condition_header($this->condition, $context);
 	}
 
 	public function body_runs_first(): bool
@@ -83,16 +73,6 @@ final class for_node extends loop_node
 		return node_kind::for_loop;
 	}
 
-	public function prepare_header(preparation_context $context): prepared_loop
-	{
-		return Loop_Preparation::for_header($this, $context);
-	}
-
-	public function prepare_continuation(preparation_context $context): void
-	{
-		Loop_Preparation::for_continuation($this, $context);
-	}
-
 	public function children(): child_iterator_i
 	{
 		return new for_children_iterator($this);
@@ -120,8 +100,8 @@ final class for_node extends loop_node
 
 /**
  * TODO Chapter 06: complete this reserved loop specialization and make it final.
- * Inherit body, loop-local preparation and nearest break/continue targeting from
- * loop_node. Add named iterable/key/value binding syntax and iteration facts here;
+ * Inherit body and loop facts from loop_node; extend Loop_Preparation for header,
+ * continuation and nearest break/continue handling. Add named iterable/key/value syntax here;
  * do not introduce another statement body or an independent loop protocol.
  * Iteration lifetime, reference/value binding and continuation lowering belong to
  * the foreach slice. No parser admission or executable implementation exists yet.

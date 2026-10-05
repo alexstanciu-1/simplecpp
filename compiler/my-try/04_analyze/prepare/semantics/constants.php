@@ -12,7 +12,22 @@ final class Integer_Constants
 		if (!$prepared->type->matches($context->integer)) {
 			throw new \RuntimeException('S2S ' . $role . ' requires canonical int');
 		}
-		return $syntax->integer_constant();
+		return self::value($syntax);
+	}
+
+	/** Read already-prepared constant forms; never traverse arbitrary expressions. */
+	public static function value(expression_node $syntax): string
+	{
+		if ($syntax instanceof integer_literal_node) {
+			return object_cast($syntax, integer_literal_node::class)->require_integer_literal_preparation()->decimal;
+		}
+		if ($syntax instanceof constant_reference_node) {
+			return self::reference(object_cast($syntax, constant_reference_node::class)->require_constant_reference_preparation());
+		}
+		if ($syntax instanceof unary_expression_node) {
+			return self::unary(object_cast($syntax, unary_expression_node::class));
+		}
+		throw new \RuntimeException('S2S requires a supported constant integer expression');
 	}
 
 	public static function reference(prepared_constant_reference $facts): string
@@ -31,7 +46,7 @@ final class Integer_Constants
 		if (($operation !== operator_operation::integer_positive) && ($operation !== operator_operation::integer_negative)) {
 			throw new \RuntimeException('S2S requires a supported constant integer expression');
 		}
-		$value = $syntax->operand->integer_constant();
+		$value = self::value($syntax->operand);
 		if (($operation === operator_operation::integer_positive) || ($value === '0')) { return $value; }
 		if ($value === '-9223372036854775808') {
 			throw new \RuntimeException('S2S integer constant negation exceeds signed 64-bit representation');

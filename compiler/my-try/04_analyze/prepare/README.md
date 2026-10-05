@@ -30,29 +30,38 @@ No separate resolution pass precedes it. LLVM preparation remains
 
 ## Work and dispatch
 
-Declaration nodes select typed work: `function_signature_work` and
+`Preparation_Worker` selects typed declaration work: `function_signature_work` and
 `record_definition_work`. Bodies use `function_body_work` and `file_body_work`;
 bodies are processing units, never symbols. Fields/parameters settle with their
 definition. Replacing a body transfers its existing work identity.
 
-Work hooks delegate queueing, rebuilding, member settlement and typed retirement
+Analysis-internal work hooks currently delegate queueing, rebuilding, member settlement and typed retirement
 to the worker. Retirement removes each role from its own queue; only declaration
 work unlinks incoming declaration dependencies. Common retirement clears outgoing
-links and shared indexes after dependent notification.
+links and shared indexes after dependent notification. These record-to-worker
+adapters are the next refactor batch; syntax and collected identities no longer
+select work or invoke preparation.
 Declaration work settles before separate function/file body lists. Identity sets
 deduplicate scheduling. Unchanged ready owners retain their facts. The worker creates
 one context per rebuild; function-body setup seeds its locals and return type.
 
-`node->prepare(context)` calls the concrete semantic algorithm and attaches its
-result. There is no intermediate syntax adapter. Typed fields drive traversal;
-unsupported operations fail explicitly. Contexts are never retained on syntax.
+`Expression_Preparation::prepare`, `Type_Preparation::type` and
+`Body_Preparation::prepare_statement` own their family dispatch. Typed handlers
+attach facts and process named fields; auxiliary syntax uses its owning semantic
+worker directly. Loop headers/continuations and bounded constant evaluation are
+analysis-owned too. Unsupported operations fail explicitly without a fallback walk.
+There is no AST processing hook or universal visitor; contexts are never retained on syntax.
 Expression `require_preparation()` overrides all return `prepared_expression`.
 Concrete callers use named accessors such as `require_call_preparation()` for
 specialized facts; both views return the same attached object.
 
 Facts identify exact roles where known: calls reference `callable_target_i` (source
 functions or installed runtime static factories); source record types reference structs.
-Signatures/parameter contracts are declaration-independent. Source parameter facts
+`Call_Preparation::require_signature` completes source declarations and registers
+consumer dependencies before reading the target's read-only `signature()` accessor.
+Installed runtime contracts need no source work. Direct access to absent source
+facts fails without scheduling preparation; consumers needing current semantic facts
+must use the analysis query. Signatures/parameter contracts are declaration-independent. Source parameter facts
 retain storage identity and share their contract with the signature; storage consumers
 query `storage_type()`. Runtime contracts never fabricate source declarations.
 Prepared storage deliberately shares the broader

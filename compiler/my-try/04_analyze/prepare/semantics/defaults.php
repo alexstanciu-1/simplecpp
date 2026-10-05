@@ -41,7 +41,7 @@ final class Parameter_Defaults
 			($literal instanceof boolean_literal_node) || ($literal instanceof string_literal_node))) {
 			throw new \RuntimeException('S2S parameter defaults require scalar literals');
 		}
-		$literal->prepare($context);
+		Expression_Preparation::prepare($literal, $context);
 		$value /** prepared_literal */;
 		if ($literal instanceof integer_literal_node) {
 			$value = object_cast($literal, integer_literal_node::class)->require_integer_literal_preparation();

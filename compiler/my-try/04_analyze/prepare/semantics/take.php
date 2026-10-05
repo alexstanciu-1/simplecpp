@@ -76,7 +76,7 @@ final class Take_Preparation
 			throw new \RuntimeException('S2S take outputs require existing local variables or parameters');
 		}
 		$reference = object_cast($syntax, variable_reference_node::class);
-		$reference->prepare($context);
+		$reference->set_preparation(Expression_Preparation::prepare_reference($reference, $context));
 		$facts = $reference->require_variable_reference_preparation();
 		if (!$facts->type->matches($expected)) {
 			throw new \RuntimeException('S2S take output requires the exact branch type');

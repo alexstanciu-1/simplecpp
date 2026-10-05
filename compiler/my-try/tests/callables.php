@@ -25,6 +25,34 @@ $source->path = 'callables.phs';
 $source->content = 'function build(int $n = 2, int ...$tail): vector<int> { return $tail; } $items = build(3, 4); return 0;';
 $parsed = (new Parser((new Tokenizer($source))->tokenize()))->parse();
 $parsed->root_scope()->set_parent(Model::$language_scope);
+$function = object_cast($parsed->root->declarations[0], function_node::class);
+$source_target = object_cast($function->occurrence(), collected_function::class);
+// A model accessor cannot manufacture missing facts or schedule declaration work.
+$missing_signature = false;
+try { $source_target->signature(); }
+catch (\TypeError $expected) { $missing_signature = true; }
+callable_check($missing_signature && $function->preparation() === null
+	&& $source_target->preparation === null, 'Reading an absent signature ran preparation');
+callable_check(!method_exists(callable_target_i::class, 'require_signature')
+	&& !method_exists($source_target, 'preparation_work'), 'Callable model retains processing hooks');
+
+// The analysis query completes only the signature and registers the requesting owner.
+$query_owner = new file_body_work($parsed->collection);
+$parsed->root->body->attach_work($query_owner);
+$query_context = new preparation_context();
+$query_context->worker = new Preparation_Worker(Model::$language_scope);
+$query_context->owner = $query_owner;
+$queried = Call_Preparation::require_signature($source_target, $query_context);
+callable_check($queried === $source_target->signature()
+	&& $queried === $function->require_preparation()->signature, 'Query copied or lost the completed signature');
+callable_check($query_owner->dependencies->contains($source_target->preparation)
+	&& $source_target->preparation->dependents->contains($query_owner), 'Query lost dependency registration');
+callable_check($source_target->preparation->state === preparation_state::ready
+	&& $function->body->work() === null, 'Signature query traversed the body or failed to settle');
+$signature_version = $source_target->preparation->version;
+$source_target->signature();
+callable_check($source_target->preparation->version === $signature_version
+	&& count($query_owner->dependencies) === 1, 'Read-only signature access changed work');
 (new File_Preparation($parsed->collection, Model::$language_scope))->prepare();
 $function = object_cast($parsed->root->declarations[0], function_node::class);
 $source_facts = $function->require_preparation();
@@ -55,6 +83,8 @@ $signature->parameters->append($parameter);
 $runtime = Model::$runtime_callables->register_static_factory('test.vector_int.from_count', $signature->return_type, $signature);
 callable_check(Model::$runtime_callables->definition($runtime->key()) === $runtime, 'Registration lost identity');
 callable_check($runtime->owner()->matches($signature->return_type), 'Factory owner must be exact canonical target');
+callable_check($runtime->signature() === $signature
+	&& !method_exists($runtime, 'require_signature'), 'Runtime signature accessor requires a processing context');
 callable_check(!property_exists($runtime, 'declaration') && !property_exists($parameter, 'declaration'), 'Runtime model requires fabricated source storage');
 callable_rejects(fn() => Model::$runtime_callables->register_static_factory($runtime->key(), $signature->return_type, $signature), 'Duplicate runtime callable');
 callable_rejects(fn() => Model::$runtime_callables->register_static_factory('bad.owner', $parameter->type, $signature), 'exact owner type');

@@ -27,11 +27,6 @@ final class take_expression_node extends expression_node
 		return $this->prepared_facts;
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Take_Preparation::prepare($this, $context));
-	}
-
 	/** Named owning edges serve cleanup and incremental source movement alike. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{

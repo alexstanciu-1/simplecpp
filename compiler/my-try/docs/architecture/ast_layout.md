@@ -13,10 +13,9 @@ retains the former `03_parse/proposal/` snapshots when historical comparison is 
 ## Typed ownership
 
 `statement_body_node` is an abstract statement owning `Storage<statement_node>`
-and its source span. It shares construction, inspection, maintenance and block
-preparation dispatch. `block_node` is an empty final subclass;
-`function_body_node` adds only executable-unit scope/work state and overrides root
-preparation dispatch. C++ workers select root versus block rendering themselves.
+and its source span. It shares construction, inspection and maintenance.
+`block_node` is an empty final subclass; `function_body_node` adds executable-unit
+scope/work state. Analysis and C++ workers select root versus block processing themselves.
 Shared workers accept the abstract body type.
 Algorithms remain worker-owned. This body abstraction is a named language concept,
 not a generic AST child/payload container.
@@ -43,20 +42,22 @@ decimals and arm conversions. There is no shared statement-selection superclass:
 match has neither bodies nor control-transfer targets. Emission postpones default
 without reordering retained syntax.
 
-`loop_node extends breakable_node` owns one block body and common preparation/facts.
+`loop_node extends breakable_node` owns one block body and common prepared facts.
 While/do-while own a condition and inspect it before/after the body respectively.
 For owns three ordered typed collections (initialization statements, conditions,
 updates), inspected in header order followed by the body. Maintenance visits those
 same named edges; execution order is not inferred from inspection order. The reserved
-abstract `foreach_node` shares the loop protocol but has no executable/parser support.
+abstract `foreach_node` shares the loop model but has no executable/parser support;
+its eventual processing extends the existing stage-owned loop workers.
 Break/continue nodes retain a weak prepared target, never an owning parent link.
 
 `switch_node extends breakable_node` owns its selector and `Storage<switch_case_group>`.
 Each group owns `Storage<switch_label>` and one `block_node`; adjacent labels share
 that body and its lexical scope. Labels have an explicit value/default kind, with an
 expression only for value labels. Lazy inspection and maintenance traverse selector,
-groups, labels and bodies in source order. Constant evaluation dispatches through
-expressions; only supported literal/reference/unary-sign forms supply exact integers.
+groups, labels and bodies in source order. Analysis-owned `Integer_Constants` selects
+supported literal/reference/unary-sign forms over their prepared facts; syntax has
+no constant-evaluation processing hook.
 
 `function_node` owns parameters, a `type_node` return type and a
 `function_body_node`. `struct_node` owns fields. `file_node` owns file declarations
@@ -170,16 +171,17 @@ node or iterator does not by itself authorize semantic work after retirement.
 
 ## Specialization dispatch
 
-Nodes receive `preparation_context` directly in `prepare()` and forward themselves
-to the appropriate typed preparation algorithm. Facts remain attached to the node;
-algorithms and statement traversal remain in preparation classes. No separate
-preparation adapter is allocated, and nested work retains its own explicit context.
+Analysis owns expression/type/statement selection and auxiliary syntax processing.
+Typed handlers consume named fields and attach the same specialized facts; each
+operation owns its traversal and invocation-local context. AST nodes expose no
+`prepare()`, completion, loop-processing or work-selection hooks. Executable roots
+use their seeded environment; nested blocks enter and restore a child environment.
 C++ dispatch belongs entirely to `CPP_Syntax`: `expression()`, `statement()` and
 `interpolation_part()` select typed backend handlers. Known concrete children are
 passed directly to their handlers. No AST `generate_cpp()`, C++ worker interface or
 universal `accept()` protocol remains. Declaration fragments continue through the
 backend's existing typed declaration path; no extra generic declaration walker is
-needed. Preparation hooks are the next, still-unimplemented refactor batch.
+needed. No shared compilation visitor replaces the removed hooks.
 For maintenance, each node enumerates its own named owning fields in grammar order;
 workers implement `enter`, `edge` and `token_index`. The edge callback chooses
 whether to recurse. No abstract maintenance visitor or per-kind visitor methods

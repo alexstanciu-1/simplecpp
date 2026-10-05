@@ -5,6 +5,47 @@ namespace scpp\compiler;
 
 final class Body_Preparation
 {
+	/** Analysis owns statement dispatch, fact attachment and completion composition. */
+	public static function prepare_statement(statement_node $node, preparation_context $context): statement_completion
+	{
+		if ($node instanceof function_body_node) {
+			return self::prepare_statements(object_cast($node, function_body_node::class), $context);
+		}
+		if ($node instanceof statement_body_node) {
+			return self::prepare_block(object_cast($node, statement_body_node::class), $context);
+		}
+		if ($node instanceof if_node) {
+			return self::prepare_if(object_cast($node, if_node::class), $context);
+		}
+		if ($node instanceof loop_node) {
+			return Loop_Preparation::prepare(object_cast($node, loop_node::class), $context);
+		}
+		if ($node instanceof switch_node) {
+			return Switch_Preparation::prepare(object_cast($node, switch_node::class), $context);
+		}
+		if ($node instanceof control_transfer_node) {
+			$transfer = object_cast($node, control_transfer_node::class);
+			$transfer->set_preparation(Control_Transfer_Preparation::prepare($transfer, $context));
+			return Completion_Preparation::transfer($transfer->transfer_kind());
+		}
+		if ($node instanceof return_node) {
+			$return_statement = object_cast($node, return_node::class);
+			$return_statement->set_preparation(self::prepare_return($return_statement, $context));
+			return Completion_Preparation::returned();
+		}
+		if ($node instanceof expression_statement_node) {
+			self::prepare_expression_statement(object_cast($node, expression_statement_node::class), $context);
+			return new statement_completion(true);
+		}
+		if ($node instanceof variable_declaration_node) {
+			$variable = object_cast($node, variable_declaration_node::class);
+			$variable->set_preparation(self::prepare_local_storage(
+				$variable->occurrence(), $variable->type_syntax, $variable->initializer, $context));
+			return new statement_completion(true);
+		}
+		throw new \RuntimeException('Preparation is not supported for this node');
+	}
+
 	/** Prepare all syntax, including unreachable statements; compose only reachable normal exits. */
 	public static function prepare_statements(statement_body_node $body,
 			preparation_context $context): statement_completion
@@ -13,7 +54,7 @@ final class Body_Preparation
 		$nodes /** Storage<statement_node> */ = $body->statements;
 		foreach ($nodes as $node)
 		{
-			$completion = $node->prepare_completion($context);
+			$completion = self::prepare_statement($node, $context);
 			$result = Completion_Preparation::sequence($result, $completion);
 		}
 		return $result;
@@ -40,7 +81,7 @@ final class Body_Preparation
 			if (($syntax->condition !== null) || ($syntax->next_arm !== null)) {
 				throw new \LogicException('Else arm must have neither condition nor successor');
 			}
-			return $syntax->body->prepare_completion($context);
+			return self::prepare_block($syntax->body, $context);
 		}
 		if ($syntax->condition === null) {
 			throw new \LogicException('Conditional arm requires a condition');
@@ -48,7 +89,7 @@ final class Body_Preparation
 		$condition /** expression_node */ = $syntax->condition;
 		$facts = self::prepare_condition($condition, $context);
 		$syntax->set_preparation($facts);
-		$taken = $syntax->body->prepare_completion($context);
+		$taken = self::prepare_block($syntax->body, $context);
 		$unmatched = new statement_completion(true);
 		if ($syntax->next_arm !== null)
 		{
@@ -56,7 +97,7 @@ final class Body_Preparation
 			if ($next->arm_kind === if_arm_kind::initial) {
 				throw new \LogicException('Conditional successor must be elseif or else');
 			}
-			$unmatched = $next->prepare_completion($context);
+			$unmatched = self::prepare_if($next, $context);
 		}
 		return Completion_Preparation::alternatives($taken, $unmatched);
 	}
@@ -202,7 +243,7 @@ final class Body_Preparation
 			$locals->add($entry->name, $parameter);
 		}
 
-		$completion = $syntax->body->prepare_completion($context);
+		$completion = self::prepare_statements($syntax->body, $context);
 		if ($completion->can_fall_through && (Type_Preparation::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
 			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
 		}

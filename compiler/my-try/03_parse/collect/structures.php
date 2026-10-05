@@ -119,7 +119,6 @@ abstract class collected_definition extends collected_declaration implements pre
 	{
 		return $this->preparation;
 	}
-	abstract public function preparation_work(Preparation_Worker $worker): declaration_work;
 
 }
 
@@ -138,19 +137,13 @@ final class collected_function extends collected_definition implements callable_
 		$this->syntax_node = $node;
 	}
 
-	public function preparation_work(Preparation_Worker $worker): declaration_work
-	{
-		return $worker->function_owner($this);
-	}
-
 	public function syntax(): function_node
 	{
 		return $this->syntax_node;
 	}
 
-	public function require_signature(preparation_context $context): callable_signature
+	public function signature(): callable_signature
 	{
-		$context->worker->require_declaration($context->owner, $this);
 		return $this->syntax_node->require_preparation()->signature;
 	}
 
@@ -169,11 +162,6 @@ final class collected_struct extends collected_definition
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
-	}
-
-	public function preparation_work(Preparation_Worker $worker): declaration_work
-	{
-		return $worker->record_owner($this);
 	}
 
 	public function syntax(): struct_node

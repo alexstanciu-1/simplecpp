@@ -7,11 +7,10 @@ enum assignment_operator {
 	case assign;
 }
 
-/** Inspection contract; compilation-step contracts can be added independently. */
+/** Shared structural contract; processing dispatch belongs to the consuming stage. */
 interface ast_node_i
 {
 	public function kind(): node_kind;
-	public function prepare(preparation_context $context): void;
 	public function maintain(node_maintenance_worker_i $worker): void;
 	/**
 	 * Iterate direct children; do not mutate membership during traversal.
@@ -48,13 +47,6 @@ abstract class ast_node implements ast_node_i
 	public abstract function kind(): node_kind;
 	public abstract function maintain(node_maintenance_worker_i $worker): void;
 
-	/** Trivia and semantic forms without active preparation support fail explicitly. */
-	public function prepare(preparation_context $context): void
-	{
-		throw new \RuntimeException('Preparation is not supported for this node');
-	}
-
-
 	/**
 	 * Leaves expose an empty iterator; compilation does not use this inspection API.
 	 */
@@ -74,12 +66,6 @@ abstract class type_node extends ast_node
 /** An expression produces a value; concrete forms define their own operands. */
 abstract class expression_node extends ast_node
 {
-	/** Bounded constant evaluation is explicit; ordinary runtime values are not labels. */
-	public function integer_constant(): string
-	{
-		throw new \RuntimeException('S2S requires a supported constant integer expression');
-	}
-
 	/** Shared expression view; specialized facts use distinctly named concrete accessors. */
 	public function require_preparation(): prepared_expression
 	{
@@ -95,12 +81,6 @@ abstract class assignable_expression_node extends expression_node
 /** Executable-body items: explicit local declarations, expression statements, returns and blocks. */
 abstract class statement_node extends ast_node
 {
-	/** Ordinary statements complete normally after their semantic work succeeds. */
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		$this->prepare($context);
-		return new statement_completion(true);
-	}
 }
 
 /** Shared ordered code body; concrete functions add only executable-unit state. */
@@ -126,16 +106,6 @@ abstract class statement_body_node extends statement_node
 		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->statements));
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->prepare_completion($context);
-	}
-
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		return Body_Preparation::prepare_block($this, $context);
-	}
-
 	/** Expose owning statements once; maintenance workers choose whether to recurse. */
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
@@ -152,7 +122,7 @@ abstract class breakable_node extends statement_node
 {
 }
 
-/** Shared loop body, preparation entry and facts; concrete forms own their headers. */
+/** Shared loop body and facts; concrete forms own their header syntax. */
 abstract class loop_node extends breakable_node
 {
 	use Node_Source_Span;
@@ -167,29 +137,13 @@ abstract class loop_node extends breakable_node
 		return $this->prepared_facts;
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->prepare_completion($context);
-	}
-
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		return Loop_Preparation::prepare($this, $context);
-	}
-
-	public abstract function prepare_header(preparation_context $context): prepared_loop;
-
-	public function prepare_continuation(preparation_context $context): void
-	{
-	}
-
 	public function body_runs_first(): bool
 	{
 		return false;
 	}
 }
 
-/** Bare transfers share preparation and emission, retaining their selected target. */
+/** Bare transfers share selected-target facts; stages own preparation and emission. */
 abstract class control_transfer_node extends statement_node
 {
 	use Node_Source_Span;
@@ -204,17 +158,6 @@ abstract class control_transfer_node extends statement_node
 		return $this->prepared_facts;
 	}
 
-	public function prepare(preparation_context $context): void
-	{
-		$this->set_preparation(Control_Transfer_Preparation::prepare($this, $context));
-	}
-
-	public function prepare_completion(preparation_context $context): statement_completion
-	{
-		$this->prepare($context);
-		return Completion_Preparation::transfer($this->transfer_kind());
-	}
-
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
@@ -224,7 +167,6 @@ abstract class control_transfer_node extends statement_node
 /** File-level declarations only in the current grammar: functions and structs. */
 abstract class declaration_node extends ast_node
 {
-	abstract public function select_preparation(Preparation_Worker $worker): void;
 }
 
 /** Inspection-only syntax; punctuation/comments are not executable statements. */

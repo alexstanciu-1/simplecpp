@@ -5,10 +5,100 @@ namespace scpp\compiler;
 
 final class Expression_Preparation
 {
-	/** Prepare through the specialized node and return the facts it attached. */
+	/** Analysis owns family dispatch and attaches the typed result before returning it. */
 	public static function prepare(expression_node $node, preparation_context $context): prepared_expression
 	{
-		$node->prepare($context);
+		if ($node instanceof null_literal_node) {
+			$null_literal = object_cast($node, null_literal_node::class);
+			$null_literal->set_preparation(self::prepare_null());
+		}
+		elseif ($node instanceof integer_literal_node) {
+			$integer_literal = object_cast($node, integer_literal_node::class);
+			$integer_literal->set_preparation(self::prepare_integer($integer_literal, $context));
+		}
+		elseif ($node instanceof float_literal_node) {
+			$float_literal = object_cast($node, float_literal_node::class);
+			$float_literal->set_preparation(self::prepare_float($float_literal, $context));
+		}
+		elseif ($node instanceof boolean_literal_node) {
+			$boolean_literal = object_cast($node, boolean_literal_node::class);
+			$boolean_literal->set_preparation(self::prepare_boolean($boolean_literal->value, $context));
+		}
+		elseif ($node instanceof string_literal_node) {
+			$string_literal = object_cast($node, string_literal_node::class);
+			$string_literal->set_preparation(self::prepare_string($string_literal, $context));
+		}
+		elseif ($node instanceof interpolated_string_node) {
+			$interpolated_string = object_cast($node, interpolated_string_node::class);
+			$interpolated_string->set_preparation(self::prepare_interpolated_string($interpolated_string, $context));
+		}
+		elseif ($node instanceof variable_reference_node) {
+			$variable = object_cast($node, variable_reference_node::class);
+			$variable->set_preparation(self::prepare_reference($variable, $context));
+		}
+		elseif ($node instanceof constant_reference_node) {
+			$constant = object_cast($node, constant_reference_node::class);
+			$constant->set_preparation(self::prepare_constant_reference($constant, $context));
+		}
+		elseif ($node instanceof call_node) {
+			$call = object_cast($node, call_node::class);
+			$call->set_preparation(self::prepare_call($call, $context));
+		}
+		elseif ($node instanceof compound_assignment_expression_node) {
+			$compound = object_cast($node, compound_assignment_expression_node::class);
+			$compound->set_preparation(Mutation_Preparation::prepare_compound($compound, $context));
+		}
+		elseif ($node instanceof mutation_expression_node) {
+			$mutation = object_cast($node, mutation_expression_node::class);
+			$mutation->set_preparation(Mutation_Preparation::prepare($mutation, $context));
+		}
+		elseif ($node instanceof unary_expression_node) {
+			$unary = object_cast($node, unary_expression_node::class);
+			$unary->set_preparation(self::prepare_unary($unary, $context));
+		}
+		elseif ($node instanceof binary_expression_node) {
+			$binary = object_cast($node, binary_expression_node::class);
+			$binary->set_preparation(self::prepare_binary($binary, $context));
+		}
+		elseif ($node instanceof cast_expression_node) {
+			$cast = object_cast($node, cast_expression_node::class);
+			$cast->set_preparation(self::prepare_cast($cast, $context));
+		}
+		elseif ($node instanceof assignment_expression_node) {
+			$assignment = object_cast($node, assignment_expression_node::class);
+			$assignment->set_preparation(self::prepare_assignment($assignment, $context));
+		}
+		elseif ($node instanceof field_access_node) {
+			$field_access = object_cast($node, field_access_node::class);
+			$field_access->set_preparation(self::prepare_field_access($field_access, $context));
+		}
+		elseif ($node instanceof index_node) {
+			$indexed = object_cast($node, index_node::class);
+			Operator_Preparation::prepare_index($indexed, $context);
+		}
+		elseif ($node instanceof match_expression_node) {
+			$match_expression = object_cast($node, match_expression_node::class);
+			$match_expression->set_preparation(Match_Preparation::prepare($match_expression, $context));
+		}
+		elseif ($node instanceof coalesce_expression_node) {
+			$coalesce = object_cast($node, coalesce_expression_node::class);
+			$coalesce->set_preparation(Coalesce_Expression_Preparation::prepare($coalesce, $context));
+		}
+		elseif ($node instanceof conditional_expression_node) {
+			$conditional = object_cast($node, conditional_expression_node::class);
+			$conditional->set_preparation(Conditional_Expression_Preparation::prepare($conditional, $context));
+		}
+		elseif ($node instanceof value_probe_node) {
+			$probe = object_cast($node, value_probe_node::class);
+			$probe->set_preparation(Value_Probe_Preparation::prepare($probe, $context));
+		}
+		elseif ($node instanceof take_expression_node) {
+			$take_expression = object_cast($node, take_expression_node::class);
+			$take_expression->set_preparation(Take_Preparation::prepare($take_expression, $context));
+		}
+		else {
+			throw new \RuntimeException('Preparation is not supported for this node');
+		}
 		return $node->require_preparation();
 	}
 
@@ -21,7 +111,7 @@ final class Expression_Preparation
 		{
 			$target = $node->target;
 			if ($target instanceof index_node) {
-				$target->prepare($context);
+				self::prepare($target, $context);
 			}
 			$facts = new prepared_assignment();
 			if ($target instanceof variable_reference_node) {
@@ -56,7 +146,7 @@ final class Expression_Preparation
 		$statement_assignment = $context->statement_assignment;
 		$context->statement_assignment = false;
 		try {
-			$target->prepare($context);
+			self::prepare($target, $context);
 		}
 		finally {
 			$context->statement_assignment = $statement_assignment;
@@ -69,7 +159,7 @@ final class Expression_Preparation
 		$binding->type = $place->type;
 		$binding->resolved_kind = binding_kind::assignment;
 		$binding->declaration = $place->field->declaration;
-		$value = Expression_Preparation::prepare($initializer, $context);
+		$value = self::prepare($initializer, $context);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment);
 		Capability_Preparation::require_copy($binding->type, $context);
@@ -124,11 +214,25 @@ final class Expression_Preparation
 	{
 		$parts /** Storage<interpolation_part_node> */ = $node->parts;
 		foreach ($parts as $part) {
-			$part->prepare($context);
+			self::prepare_part($part, $context);
 		}
 		$facts = new prepared_interpolated_string();
 		$facts->type = $context->string_type;
 		return $facts;
+	}
+
+	/** Interpolation parts are auxiliary syntax, not executable expressions. */
+	private static function prepare_part(interpolation_part_node $part, preparation_context $context): void
+	{
+		if ($part instanceof interpolation_text_node) {
+			$text_part = object_cast($part, interpolation_text_node::class);
+			$text_part->set_preparation(self::prepare_interpolation_text($text_part, $context));
+		}
+		elseif ($part instanceof interpolation_value_node) {
+			$value_part = object_cast($part, interpolation_value_node::class);
+			$value_part->set_preparation(self::prepare_interpolation_value($value_part, $context));
+		}
+		else { throw new \RuntimeException('Preparation is not supported for this node'); }
 	}
 
 	/** Reuse the existing escape decoder on a complete literal-part boundary. */
@@ -237,7 +341,7 @@ final class Expression_Preparation
 	public static function prepare_field_access(field_access_node $syntax, preparation_context $context): prepared_field_access
 	{
 		$base = $syntax->base;
-		$value = Expression_Preparation::prepare($base, $context);
+		$value = self::prepare($base, $context);
 		$declaration = Type_Preparation::source_record($value->type);
 		if ($declaration === null) {
 			throw new \RuntimeException('S2S member access requires a struct value');
