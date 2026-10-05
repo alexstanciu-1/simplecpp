@@ -6,12 +6,10 @@
 #include "operators/conditional/condition_truthiness.hpp"
 #include "operators/empty/empty.hpp"
 #include "operators/isset/isset.hpp"
+#include "operators/identity/boxed_scalar_equality.hpp"
 
 #include <sstream>
-#include <cctype>
-#include <cerrno>
-#include <cmath>
-#include <cstdlib>
+#include <string_view>
 #include <utility>
 
 namespace scpp {
@@ -137,18 +135,8 @@ namespace {
 	return left.assign_compound_result(std::move(result));
 }
 
-[[nodiscard]] bool_t compare_with_null_eq(const mixed_t &value) {
+[[nodiscard]] bool_t compare_container_with_null_eq(const mixed_t &value) {
 	switch (value.kind()) {
-		case mixed_t::kind_t::null_v:
-			return bool_t{true};
-		case mixed_t::kind_t::bool_v:
-			return bool_t(false) == value.bool_value();
-		case mixed_t::kind_t::int_v:
-			return bool_t(false) == cast<bool_t>(value.int_value());
-		case mixed_t::kind_t::float_v:
-			return bool_t(false) == cast<bool_t>(value.float_value());
-		case mixed_t::kind_t::string_v:
-			return cast<string_t>(null_t{}) == *value.string_if();
 		case mixed_t::kind_t::table_v:
 			return bool_t{value.table_if() == nullptr};
 		case mixed_t::kind_t::shared_table_v:
@@ -157,6 +145,7 @@ namespace {
 			return *value.dynamic_if() == null_t{};
 		case mixed_t::kind_t::weak_table_v:
 			return *value.weak_table_if() == null_t{};
+		default: break;
 	}
 	throw runtime_error_binary("==", mixed_t{null_t{}}, value);
 }
@@ -166,110 +155,6 @@ namespace {
 		"scpp::mixed_t runtime error: table-vs-table equality currently has no deep-compare implementation. "
 		"Requirement: use identity-bearing table carriers where identity comparison is defined, or add explicit deep table comparison semantics."
 	);
-}
-
-[[nodiscard]] bool parse_double_string_loose(const std::string &value, double &out) {
-	const char *begin = value.c_str();
-	char *parse_end = nullptr;
-	errno = 0;
-	const double parsed = std::strtod(begin, &parse_end);
-	if (parse_end == begin) {
-		return false;
-	}
-	while (*parse_end != '\0') {
-		const unsigned char ch = static_cast<unsigned char>(*parse_end);
-		if (std::isspace(ch) == 0) {
-			return false;
-		}
-		++parse_end;
-	}
-	if (errno == ERANGE || !std::isfinite(parsed)) {
-		return false;
-	}
-	out = parsed;
-	return true;
-}
-
-[[nodiscard]] bool_t compare_string_to_bool_eq(const string_t &left, const bool_t &right) {
-	const std::string value = left.native_value();
-	const bool left_truthy = !(value.empty() || value == "0");
-	return bool_t(left_truthy) == right;
-}
-
-[[nodiscard]] bool_t compare_numeric_to_string_eq(const double left, const string_t &right) {
-	double right_numeric = 0.0;
-	if (!parse_double_string_loose(right.native_value(), right_numeric)) {
-		return bool_t(false);
-	}
-	return bool_t(left == right_numeric);
-}
-
-[[nodiscard]] bool_t compare_scalar_boolish_eq(const mixed_t &left, const mixed_t &right) {
-	switch (left.kind()) {
-		case mixed_t::kind_t::null_v:
-			switch (right.kind()) {
-				case mixed_t::kind_t::bool_v:
-					return bool_t(false) == right.bool_value();
-				case mixed_t::kind_t::int_v:
-					return bool_t(false) == cast<bool_t>(right.int_value());
-				case mixed_t::kind_t::float_v:
-					return bool_t(false) == cast<bool_t>(right.float_value());
-				case mixed_t::kind_t::string_v:
-					return compare_string_to_bool_eq(*right.string_if(), bool_t(false));
-				default:
-					break;
-			}
-			break;
-		case mixed_t::kind_t::bool_v:
-			switch (right.kind()) {
-				case mixed_t::kind_t::null_v:
-					return left.bool_value() == bool_t(false);
-				case mixed_t::kind_t::bool_v:
-					return left.bool_value() == right.bool_value();
-				case mixed_t::kind_t::int_v:
-					return left.bool_value() == cast<bool_t>(right.int_value());
-				case mixed_t::kind_t::float_v:
-					return left.bool_value() == cast<bool_t>(right.float_value());
-				case mixed_t::kind_t::string_v:
-					return left.bool_value() == compare_string_to_bool_eq(*right.string_if(), bool_t(true));
-				default:
-					break;
-			}
-			break;
-		case mixed_t::kind_t::int_v:
-			switch (right.kind()) {
-				case mixed_t::kind_t::null_v:
-					return cast<bool_t>(left.int_value()) == bool_t(false);
-				case mixed_t::kind_t::bool_v:
-					return cast<bool_t>(left.int_value()) == right.bool_value();
-				default:
-					break;
-			}
-			break;
-		case mixed_t::kind_t::float_v:
-			switch (right.kind()) {
-				case mixed_t::kind_t::null_v:
-					return cast<bool_t>(left.float_value()) == bool_t(false);
-				case mixed_t::kind_t::bool_v:
-					return cast<bool_t>(left.float_value()) == right.bool_value();
-				default:
-					break;
-			}
-			break;
-		case mixed_t::kind_t::string_v:
-			switch (right.kind()) {
-				case mixed_t::kind_t::null_v:
-					return compare_string_to_bool_eq(*left.string_if(), bool_t(false));
-				case mixed_t::kind_t::bool_v:
-					return compare_string_to_bool_eq(*left.string_if(), right.bool_value());
-				default:
-					break;
-			}
-			break;
-		default:
-			break;
-	}
-	throw runtime_error_binary("==", left, right);
 }
 
 } // namespace
@@ -1049,36 +934,11 @@ mixed_t operator>>(const mixed_t &left, const mixed_t &right) {
 }
 
 bool_t operator==(const mixed_t &left, const mixed_t &right) {
+	if (detail::is_boxed_scalar(left) && detail::is_boxed_scalar(right))
+		return detail::boxed_scalar_equal(left, right);
 	if (left.kind() == mixed_t::kind_t::null_v || right.kind() == mixed_t::kind_t::null_v) {
-		return compare_with_null_eq(left.kind() == mixed_t::kind_t::null_v ? right : left);
+		return compare_container_with_null_eq(left.kind() == mixed_t::kind_t::null_v ? right : left);
 	}
-	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::int_v)
-		return left.int_value_ == right.int_value_;
-	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::float_v)
-		return left.int_value_ == right.float_value_;
-	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::int_v)
-		return left.float_value_ == right.int_value_;
-	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::float_v)
-		return left.float_value_ == right.float_value_;
-	if (left.kind() == mixed_t::kind_t::bool_v  && right.kind() == mixed_t::kind_t::bool_v)
-		return left.bool_value_ == right.bool_value_;
-	if ((left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::int_v)
-	 || (left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::float_v)
-	 || (left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::string_v)
-	 || (left.kind() == mixed_t::kind_t::int_v && right.kind() == mixed_t::kind_t::bool_v)
-	 || (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::bool_v)
-	 || (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::bool_v))
-		return compare_scalar_boolish_eq(left, right);
-	if (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::string_v)
-		return *left.string_value_ == *right.string_value_;
-	if (left.kind() == mixed_t::kind_t::int_v && right.kind() == mixed_t::kind_t::string_v)
-		return compare_numeric_to_string_eq(static_cast<double>(left.int_value_.native_value()), *right.string_value_);
-	if (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::int_v)
-		return compare_numeric_to_string_eq(static_cast<double>(right.int_value_.native_value()), *left.string_value_);
-	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::string_v)
-		return compare_numeric_to_string_eq(left.float_value_.native_value(), *right.string_value_);
-	if (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::float_v)
-		return compare_numeric_to_string_eq(right.float_value_.native_value(), *left.string_value_);
 	if ((left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::bool_v)
 	 || (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::int_v)
 	 || (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::float_v)

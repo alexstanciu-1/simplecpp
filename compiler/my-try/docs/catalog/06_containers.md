@@ -79,7 +79,8 @@ conversions, truthiness/count/probes and non-creating keyed removal are also int
 for the internal type. Required scalar extraction and basic numeric
 arithmetic now delegate to the established primitive rules for the internal tagged
 value. Numeric ordering, strict identity and numeric updates also have internal
-adapters; loose equality remains pending. The public alias/remaining-consumer migration and source-level
+adapters. Scalar loose equality is shared with mixed; tagged container identity and
+text updates are implemented internally. The public alias/remaining-consumer migration and source-level
 family enforcement remain next; this does not resolve the chapter blocker.
 
 The current runtime permits both relationships:

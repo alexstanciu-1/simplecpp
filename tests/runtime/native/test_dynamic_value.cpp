@@ -10,6 +10,8 @@
 #include "operators/arithmetic/boxed_numeric.hpp"
 #include "operators/identity/boxed_ordering.hpp"
 #include "operators/identity/strict_identity.hpp"
+#include "operators/identity/boxed_scalar_equality.hpp"
+#include "operators/concat_assign/concat_assign.hpp"
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -316,6 +318,43 @@ void comparisons_and_updates() {
 	integer = integer + value{scpp::float_t{0.5}};
 	require(integer.get_float().native_value() == 4.5, "ordinary assignment may change numeric kind");
 }
+void loose_equality_and_text() {
+	const scpp::mixed_t samples[] = {scpp::mixed_t{}, scpp::mixed_t{false}, scpp::mixed_t{true},
+		scpp::mixed_t{int_t<>{0LL}}, scpp::mixed_t{int_t<>{2LL}}, scpp::mixed_t{scpp::float_t{2.0}},
+		scpp::mixed_t{string_t{""}}, scpp::mixed_t{string_t{"0"}}, scpp::mixed_t{string_t{"2"}},
+		scpp::mixed_t{string_t{" 2 "}}, scpp::mixed_t{string_t{"2x"}}, scpp::mixed_t{string_t{"false"}}};
+	for (const auto &left : samples) for (const auto &right : samples) {
+		const auto a = scpp::cast<value>(left);
+		const auto b = scpp::cast<value>(right);
+		require((a == b).native_value() == (left == right).native_value(), "shared scalar equality parity");
+		require((a != b).native_value() != (a == b).native_value(), "inequality complements equality");
+	}
+	const value null;
+	require((null == value{string_t{""}}).native_value(), "null equals empty text");
+	require(!(null == value{string_t{"0"}}).native_value(), "null differs from text zero");
+	require((value{scpp::bool_t{false}} == value{string_t{"0"}}).native_value(), "false equals text zero");
+	require((value{scpp::bool_t{true}} == value{string_t{"false"}}).native_value(), "bool equality uses truthiness not explicit bool cast");
+	require((value{int_t<>{2LL}} == value{string_t{" 2 "}}).native_value(), "numeric equality accepts surrounding whitespace");
+	require(!(value{int_t<>{2LL}} == value{string_t{"2x"}}).native_value(), "numeric equality rejects trailing text");
+	require(!(value{string_t{"2"}} == value{string_t{"02"}}).native_value(), "two strings compare as strings");
+	value first = value::make_container();
+	value alias = first;
+	value second = value::make_container();
+	require((first == alias).native_value() && (first != second).native_value(), "container loose equality is identity");
+	require(!(first == null).native_value() && !(null == first).native_value(), "container is not null");
+	require(!(first == value{scpp::bool_t{true}}).native_value(), "container equality does not coerce to true");
+	value text{int_t<>{12LL}};
+	auto &same = scpp::concat_assign(text, string_t{" apples"});
+	require(&same == &text && text.get_string().native_value() == "12 apples", "text update changes kind and returns destination");
+	value empty;
+	scpp::concat_assign(empty, string_t{"start"});
+	require(empty.get_string().native_value() == "start", "null text context is empty prefix");
+	value copy = text;
+	scpp::concat_assign(text, text.get_string());
+	require(text.get_string().native_value() == "12 apples12 apples" && copy.get_string().native_value() == "12 apples", "aliased RHS and copied text remain safe");
+	require_failure([&] { scpp::concat_assign(first, string_t{"bad"}); }, "container text conversion rejects");
+	require((first == alias).native_value(), "failed text conversion retains container identity");
+}
 } // namespace
 
 int main() {
@@ -325,4 +364,5 @@ int main() {
 	conversions_and_probes();
 	scalar_boundaries_and_arithmetic();
 	comparisons_and_updates();
+	loose_equality_and_text();
 }

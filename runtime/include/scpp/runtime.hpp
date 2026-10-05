@@ -58,6 +58,7 @@
 #include "scpp/generated/operators.hpp"
 #include "operators/arithmetic/boxed_numeric.hpp"
 #include "operators/identity/boxed_ordering.hpp"
+#include "operators/identity/boxed_scalar_equality.hpp"
 
 #if defined(SCPP_ENABLE_CALL_DEPTH_GUARD) && SCPP_ENABLE_CALL_DEPTH_GUARD
 #define SCPP_CALL_DEPTH_GUARD(name, file, line) ::scpp::call_depth_guard __scpp_call_depth_guard((name), (file), (line))

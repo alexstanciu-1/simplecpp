@@ -377,3 +377,35 @@ runtime/JSON builds and ten debug/release programs after the sentinel-overload f
 comparison/update programs selected through the shared runner. This preserves the
 earlier wider mixed-suite stale-assertion disclosure; it does not claim that suite
 passed, that the compiler was rebuilt natively or that tagged dynamic is emitted yet.
+
+### Shared scalar equality and tagged text updates — 2026-10-05
+
+Scalar loose equality moved out of mixed's implementation into one family-parameterized
+operator owner. Mixed and tagged dynamic now use that same algorithm for scalar pairs;
+no mixed temporary or second numeric-string parser is used for dynamic comparisons.
+The established null, bool/string truthiness, numeric-string parsing and string/string
+rules are preserved. Mixed's remaining container/weak handling stays with mixed.
+Tagged dynamic containers compare by shared target identity; container/scalar equality
+is false, not truthiness coercion or recursive content comparison. Inequality negates
+the same equality result.
+
+Text context continues through the explicit scalar string cast. The concat-assignment
+owner accepts tagged lhs plus an already-converted string RHS: convert/copy the lhs,
+append, then publish the tagged string result. Failure preserves the destination;
+an RHS referring to its old string remains valid until the completed replacement.
+There is no dynamic string overload for arithmetic `+`.
+
+Tests include independent expected equality cases and a mixed/tagged scalar-pair
+parity matrix, container aliases versus separate empty containers, null/scalar
+text updates, self-referential string RHS and rejected container text conversion.
+The public alias, JSON and external consumer migration remain pending. Earlier
+generated fixtures still exercise the old public types; they are regression checks
+for the shared helper extraction, not evidence of a completed type switch.
+
+Evidence: `/tmp/my-try-tagged-dynamic-equality-20261005-1` passed matching debug/release
+runtime/JSON builds and ten native programs. A final rerun after include cleanup,
+`/tmp/my-try-tagged-dynamic-equality-20261005-2`, passed the same checks.
+`/tmp/my-try-tagged-dynamic-equality-generated-20261005-1` passed 52 exported mixed
+comparison/text programs through the shared runner. The previously recorded wider
+mixed-suite stale assertion remains unresolved; this is neither a full-suite pass
+nor a native compiler rebuild.
