@@ -457,10 +457,6 @@ template <typename TValue, typename TKey>
 		shared_table != nullptr && shared_table->has_value().native_value()) {
 		return shared_table->get();
 	}
-	if (const auto *dynamic_table = items.dynamic_if();
-		dynamic_table != nullptr && dynamic_table->has_value().native_value()) {
-		return dynamic_table->get();
-	}
 	return nullptr;
 }
 
@@ -470,7 +466,7 @@ template <typename TValue, typename TKey>
 		return *table;
 	}
 	throw runtime_error(
-		"task_run(): mixed/dynamic input must resolve to a vector-like or hash-like collection",
+		"task_run(): mixed input must resolve to a vector-like or hash-like collection",
 		"invalid_task_input_transfer",
 		"scpp::tasks",
 		"task_run"

@@ -47,21 +47,12 @@ inline int_t<> count(const hash_t<T, K> &value) {
 	return int_t<>(static_cast<std::int64_t>(value.size()));
 }
 
-// Implements count() for dynamic values that currently hold an array/hash payload.
-// How: generated code may still keep arrays inside mixed_t, so count() unwraps exactly one dynamic layer and rejects non-countable payloads explicitly.
+// Mixed cardinality accepts only its own countable table carriers.
 inline int_t<> count(const mixed_t &value) {
 	return count(detail::countable_hash_or_throw(value, "count"));
 }
 
-// Implements count() for the first-class shared dynamic-object handle surface.
-// How: dynamic_t<> remains a thin shared handle around the existing hash-backed dynamic storage, so count() forwards directly to the pointed payload.
-inline int_t<> count(const dynamic_t<> &value) {
-	if (!static_cast<bool>(value)) {
-		throw std::runtime_error("php::count(dynamic_t<>) expects a present dynamic handle");
-	}
-	return count(*value);
-}
-
+// Tagged dynamic cardinality is checked by its container accessor.
 inline int_t<> count(const detail::dynamic_value &value) {
 	return int_t<>{static_cast<std::int64_t>(value.get_table().size())};
 }

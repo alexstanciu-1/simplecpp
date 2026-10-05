@@ -19,6 +19,7 @@ debts. Other chapter blockers remain in place unless explicitly transferred.
 | --- | --- | --- | --- |
 | CH06-ITER-01 — mutation/replacement during iteration | [Chapter 06](06_containers.md#ch06-iter-01--mutation-during-iteration) | Open; blocks final catalog completion, not Chapter 06 design closeout | Agree the long-term policy, reconcile contracts, implement required changes and prove behavior/safety |
 | CH06-REF-01 — reference foreach safety foundation | [CTRL-FOREACH-003/004](06_containers.md#ctrl-foreach-003) | Open; reference foreach stays disabled; final-catalog blocker | Establish runtime guards and binding lifetime/COW guarantees before compiler integration |
+| CH15-LIB-DYN-01 — library mixed/dynamic migration | [Chapter 06](06_containers.md) | Deferred by user; does not block core type migration | Audit/adapt affected library APIs and prove their enabled/disabled paths before declaring those libraries migrated |
 
 ## CH06-ITER-01 — mutation policy
 
@@ -151,3 +152,37 @@ Later decide whether a `to_json` alias is useful. If introduced, it must produce
 `result<string>` through the same writer, not construct a mixed/dynamic tree or
 silently bypass checked failures. This naming debt does not block Chapter 06 or
 authorize restoring the removed helper.
+
+### CH15-LIB-DYN-01 — deferred library mixed/dynamic integration
+
+User direction on 2026-10-05: do not delay the core mixed/dynamic migration for
+library integration issues. Record affected APIs here; do not restore cross-family
+boxing or claim deferred libraries work with the new types. Keep base-runtime
+compilation independent of deferred optional-library integration where needed.
+
+Review library-owned models before mechanically substituting dynamic for mixed.
+The user identified hurried generic boxed APIs: use specific structures/classes for
+known library records, scheduling state and results where appropriate. Reserve
+mixed/dynamic for genuinely runtime-shaped user data. This design review is deferred,
+not authority to redesign every library during the core runtime migration.
+
+Tasks decisions already agreed:
+
+- Boxed task results and `task_join` use the new dynamic family, not mixed.
+- Workers may receive dynamic containers with shared identity. This does not imply
+  automatic locking or make simultaneous unsynchronized mutation safe.
+- Complete the worker-transfer/synchronization contract and enforcement separately;
+  test shared reads, synchronized mutation, alias lifetime and result publication.
+
+The attempted integration found that `hash<dynamic, mixed>` is rejected by typed
+key admission; only `hash<mixed, mixed>` currently wraps the shared packed/associative
+engine for mixed int/string keys. Resolve this through a reusable wrapper or a
+task-owned scheduling representation, not by converting dynamic values into mixed.
+Keep source key-domain support separate from private scheduler storage capability.
+
+Task batch storage, result boxing/join, dynamic input scheduling, error/cancellation
+paths, library registrations and disabled-module diagnostics must migrate together.
+The compile-blocked task attempt was removed from the active tree; it is not a
+completed feature. Existing task code still carries its old mixed assumptions until
+this debt is handled. Existing JSON/MySQL runtime checkpoints remain implemented;
+their source registrations and remaining consumer integration still need review.

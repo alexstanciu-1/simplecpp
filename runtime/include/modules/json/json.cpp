@@ -438,7 +438,6 @@ void writer::write(const mixed_t &value) {
 	switch (value.kind()) {
 		case mixed_t::kind_t::table_v:
 		case mixed_t::kind_t::shared_table_v:
-		case mixed_t::kind_t::dynamic_v:
 			table(value.get_hash(), value.get_hash().is_packed().native_value()); return;
 		case mixed_t::kind_t::weak_table_v:
 			throw encode_failure{"json_encode: weak tables are not supported"};

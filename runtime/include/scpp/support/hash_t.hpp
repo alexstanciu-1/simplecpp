@@ -11,7 +11,6 @@
 #include "scpp/string_t.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/mixed_t.hpp"
-#include "scpp/dynamic_t.hpp"
 #include "scpp/util/global_string_pool.hpp"
 
 #include <concepts>
@@ -1696,11 +1695,6 @@ template <typename... Items>
 	auto table = shared_p<hash_t<mixed_t>>(std::make_shared<hash_t<mixed_t>>());
 	(table_add_item_(*table, std::forward<Items>(items)), ...);
 	return table;
-}
-
-template <typename... Items>
-[[nodiscard]] inline dynamic_init_t dynamic_(Items &&...items) {
-	return dynamic_box(shared_table_(std::forward<Items>(items)...));
 }
 
 } // namespace scpp

@@ -66,58 +66,35 @@ Status: **open; blocking Chapter 06 completion**. Recorded at the user's request
 discussion is scheduled for the end of this chapter, not silently deferred beyond it.
 
 Active discussion: [mixed/dynamic storage and shared implementation](../planning/mixed_dynamic_storage.md).
-MIX-LAYOUT-01 is implemented: mixed's reordered borrow counter yields 24 bytes on
-the measured x86-64 ABI, with focused debug/release lifetime proofs. Dynamic's
-representation and family-separation refactor remain pending; this checkpoint does
-not resolve the containment blocker.
-The shared packed/associative table engine is now value-parameterized and proved
-with a non-mixed value type; mixed uses it without new source capabilities. The
-internal tagged dynamic storage is now implemented with inline scalars and shared,
-same-family recursive containers. Construction, reads, direct/nested writes and
-value iteration now have adapters for that internal type. Scalar-only explicit family
-conversions, truthiness/count/probes and non-creating keyed removal are also integrated
-for the internal type. Required scalar extraction and basic numeric
-arithmetic now delegate to the established primitive rules for the internal tagged
-value. Numeric ordering, strict identity and numeric updates also have internal
-adapters. Scalar loose equality is shared with mixed; tagged container identity and
-text updates are implemented internally. Debug inspection now traverses tagged values
-directly using shared scalar formatting and table guards. The public alias/remaining-consumer migration and source-level
-family enforcement remain next; this does not resolve the chapter blocker.
-JSON runtime now decodes directly into tagged dynamic by default or mixed via
-`decode_mixed`, and encodes both directly. Source registration/public-type migration
-is still outstanding; this breaking runtime checkpoint does not establish source support.
-Typed JSON extraction now accepts either family through one checked path and rejects
-cross-family containers; the former mixed-to-dynamic handle bridge is removed there.
-Typed encoding now traverses inputs directly; the mixed-tree-producing `to_json`
-helper is removed, with an optional string alias recorded in Chapter 15.
-MySQL ordinary/prepared row adapters now construct tagged dynamic rows directly;
-connector-enabled/disabled offline checks pass. Public type/source registration
-and remaining runtime consumers still require the coordinated switch.
+The core runtime now uses the separated families. Both mixed and public
+`dynamic_t<>` measure 24 bytes on the tested x86-64 ABI. Dynamic has inline scalars,
+one null state and shared, same-family recursive containers. Mixed's `dynamic_v`
+carrier and the old dynamic/hash bridges are removed. Construction, indexed
+operations, value iteration, scalar conversions/operators, probes and debug
+inspection use the tagged dynamic implementation; mixed construction directly
+owns mixed-table storage.
 
-The current runtime permits both relationships:
+JSON defaults to tagged dynamic, including scalar roots; explicit mixed decoding,
+family-aware typed extraction and direct string encoding remain implemented.
+MySQL ordinary/prepared row adapters construct tagged dynamic rows directly.
 
-- [`dynamic_t<>`](../../../../runtime/include/scpp/dynamic_t.hpp) is a shared hash
-  whose entry values are `mixed_t`.
-- [`mixed_t`](../../../../runtime/include/scpp/support/mixed_t.hpp) can carry a dynamic
-  handle under the `dynamic_v` kind.
+**Remaining gate:** compiler family facts, boxing/extraction lowering, initializer/
+iteration bindings and source registrations must be reconciled with this breaking
+runtime API. Earlier source fixtures that emitted dynamic handles or cross-family
+boxing are historical evidence, not current passing integration proofs. No native
+compiler rebuild is claimed by the runtime checkpoint.
 
-The user approved separate container families and tagged dynamic scalar/null values.
+Remaining library-specific integration (notably tasks) is deferred to
+[CH15-LIB-DYN-01](15_blocking_debt.md#ch15-lib-dyn-01--deferred-library-mixeddynamic-integration)
+by user direction. It must not delay core compiler migration or be reported as
+completed library support. Library-owned structures/classes should replace generic
+boxed payloads where they model the actual concept better.
+
 The [top-level v0.2 amendment](../../../../specs/dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
-now owns that contract, including explicit scalar-only family conversions, shared
-dynamic containers and one null state. The stronger restriction is semantic, not
-merely a rename of mixed storage. Existing crossing behavior is implementation debt,
-not final approval because it passes tests. Core specification reconciliation is
-complete; runtime/compiler integration and JSON API migration remain open.
-
-The nested-write slice explicitly excludes cross-family paths and aggregate
-insertions. Mixed paths stay mixed-table paths; dynamic paths require constructed
-dynamic children and do not autovivify mixed tables. Runtime mixed storage of a
-dynamic child is not a semantic mixed-table child. Unknown crossing payloads reject
-at runtime; statically known unsupported insertion rejects preparation. These are
-bounded implementation gates, not resolution of the overall containment contract.
-Earlier construction/direct-write cross-family fixtures are historical compatibility
-evidence, not an expectation or prerequisite for the new nested slice. Reconcile
-those earlier permissions at the required closeout discussion, not silently here.
+owns the agreed contract. Explicit scalar-only family conversion remains checked;
+containers cannot cross families. Dynamic nested writes require constructed dynamic
+children; mixed retains its own null bootstrap. Runtime separation is implemented,
+but this chapter blocker remains open until source-level integration is proved.
 
 Closeout requires an explicit agreed decision, reconciliation of the owning
 `specs/data_initialization.md` / `specs/dynamic_types.md` contracts, and any required
@@ -355,8 +332,9 @@ not inside, semantic registration.
 and bounded RAII backing. Empty literals pass an empty view with no input allocation.
 Small inputs use bounded optional slots; larger ones use heap backing. The buffer
 template depends only on element type, never literal length. Shared population helpers
-fill final storage directly; mixed wraps shared-table storage, while dynamic retains
-its shared handle and nested `dynamic_v` tags under the current contract.
+fill final storage directly. Since the separated-family runtime switch, mixed owns
+mixed-table storage and dynamic constructs shared tables of tagged dynamic values.
+The earlier handle/`dynamic_v` lowering requires compiler integration updates.
 
 Each key and converted value is captured once in source order, key before value.
 Duplicate entries reach the factory unchanged and now reject at runtime after key

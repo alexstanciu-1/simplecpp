@@ -37,8 +37,6 @@ inline const char *condition_truthy_mixed_kind_name(const mixed_t::kind_t kind) 
 			return "hash_t";
 		case mixed_t::kind_t::shared_table_v:
 			return "shared_hash_t";
-		case mixed_t::kind_t::dynamic_v:
-			return "dynamic_t";
 		case mixed_t::kind_t::weak_table_v:
 			return "weak_hash_t";
 	}

@@ -18,16 +18,11 @@ bool keyed_ready(const T *receiver, bool) { return receiver != nullptr; }
 
 inline bool keyed_ready(const mixed_t *receiver, bool removing) {
 	if (!receiver || receiver->kind() == mixed_t::kind_t::null_v) return false;
-	if (receiver->kind() == mixed_t::kind_t::dynamic_v
-		|| receiver->kind() == mixed_t::kind_t::weak_table_v)
-		throw std::runtime_error("keyed path: cross-family/weak mixed paths are deferred");
+	if (receiver->kind() == mixed_t::kind_t::weak_table_v)
+		throw std::runtime_error("keyed path: weak mixed paths are deferred");
 	if (receiver->kind() != mixed_t::kind_t::table_v
 		&& receiver->kind() != mixed_t::kind_t::shared_table_v) return keyed_invalid(removing);
 	return receiver->table_if() != nullptr;
-}
-
-inline bool keyed_ready(const dynamic_t<> *receiver, bool) {
-	return receiver && receiver->get();
 }
 
 inline bool keyed_ready(const detail::dynamic_value *receiver, bool removing) {
@@ -77,11 +72,6 @@ inline const mixed_t *keyed_lookup(const mixed_t *receiver, const mixed_t &key, 
 	return keyed_lookup(receiver->table_if(), key, removing);
 }
 
-inline const mixed_t *keyed_lookup(const dynamic_t<> *receiver, const mixed_t &key, bool removing) {
-	if (!keyed_ready(receiver, removing) || !keyed_valid_key(key, removing)) return nullptr;
-	return keyed_lookup(receiver->get(), key, removing);
-}
-
 inline const detail::dynamic_value *keyed_lookup(const detail::dynamic_value *receiver, const mixed_t &key, bool removing) {
 	if (!keyed_ready(receiver, removing) || !keyed_valid_key(key, removing)) return nullptr;
 	const auto &table = receiver->get_table();
@@ -92,17 +82,6 @@ inline const detail::dynamic_value *keyed_lookup(const detail::dynamic_value *re
 template <typename R, typename K>
 auto keyed_child(const R *receiver, const K &key, bool removing) {
 	return keyed_lookup(receiver, key, removing);
-}
-
-inline const dynamic_t<> *keyed_child(const dynamic_t<> *receiver, const mixed_t &key, bool removing) {
-	const auto *entry = keyed_lookup(receiver, key, removing);
-	if (!entry || entry->kind() == mixed_t::kind_t::null_v) return nullptr;
-	if (entry->kind() == mixed_t::kind_t::table_v || entry->kind() == mixed_t::kind_t::shared_table_v
-		|| entry->kind() == mixed_t::kind_t::weak_table_v)
-		throw std::runtime_error("keyed path: mixed-table child in dynamic is deferred");
-	const auto *child = entry->dynamic_if();
-	if (!child) keyed_invalid(removing);
-	return child;
 }
 
 template <typename R, typename K>
@@ -140,10 +119,6 @@ inline mixed_t &keyed_descend(mixed_t &receiver, const mixed_t &key) {
 	return receiver[key]; // The existing mutable owner performs COW before descent.
 }
 
-inline dynamic_t<> &keyed_descend(dynamic_t<> &receiver, const mixed_t &key) {
-	return *receiver->at(key).dynamic_if();
-}
-
 inline detail::dynamic_value &keyed_descend(detail::dynamic_value &receiver, const mixed_t &key) {
 	return receiver.get_table().at(key);
 }
@@ -154,7 +129,6 @@ void keyed_erase(hash_t<V, K> &receiver, const Input &key) {
 }
 
 inline void keyed_erase(mixed_t &receiver, const mixed_t &key) { (void)receiver.remove(key); }
-inline void keyed_erase(dynamic_t<> &receiver, const mixed_t &key) { (void)receiver->remove(key); }
 
 inline void keyed_erase(detail::dynamic_value &receiver, const mixed_t &key) {
 	(void)receiver.get_table().remove(key);

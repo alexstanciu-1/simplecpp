@@ -25,12 +25,6 @@ inline void require_index_key(const mixed_t &key) {
 		throw std::runtime_error("indexed read: key must be int or string");
 }
 
-inline mixed_t null_index_read(const dynamic_t<> &receiver, const mixed_t &key) {
-	require_index_key(key);
-	if (!receiver.get()) return mixed_t{null};
-	return receiver->_find_val(key);
-}
-
 inline detail::dynamic_value null_index_read(const detail::dynamic_value &receiver, const mixed_t &key) {
 	require_index_key(key);
 	if (receiver.is_null().native_value()) return detail::dynamic_value{};
@@ -43,8 +37,6 @@ inline mixed_t null_index_read(const mixed_t &receiver, const mixed_t &key) {
 	switch (receiver.kind()) {
 	case mixed_t::kind_t::null_v:
 		return mixed_t{null};
-	case mixed_t::kind_t::dynamic_v:
-		return null_index_read(*receiver.dynamic_if(), key);
 	case mixed_t::kind_t::weak_table_v: {
 		auto held = receiver.weak_table_if()->lock();
 		return held ? held->_find_val(key) : mixed_t{null};

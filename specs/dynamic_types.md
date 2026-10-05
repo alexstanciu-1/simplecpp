@@ -31,8 +31,9 @@ v0.2 semantics with implementation pending, not already-supported v0.1 forms.
 
 This amendment records the approved replacement contract. It overrides the older
 object-only dynamic and cross-family boxing rules below **for v0.2**, not for v0.1.
-Implementation is in progress; the existing shared-hash runtime and its passing
-tests do not yet establish compliance. See the [implementation handoff](../compiler/my-try/docs/planning/mixed_dynamic_storage.md).
+The core runtime now uses separated tagged dynamic and mixed families. Compiler
+integration remains in progress; runtime proofs alone do not establish source-level
+compliance. See the [implementation handoff](../compiler/my-try/docs/planning/mixed_dynamic_storage.md).
 
 - Both families represent null, bool, int, float, string and their own containers.
   `dynamic` is no longer an object-only handle. A scalar dynamic is still statically

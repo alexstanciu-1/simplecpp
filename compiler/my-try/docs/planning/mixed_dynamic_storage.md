@@ -47,8 +47,9 @@ is not a native compiler rebuild or a broad regression run.
 
 The user accepts a 24-byte target for a tagged dynamic value: inline null/bool/int/
 float, indirect string storage and shared container storage. No shared allocation
-per numeric/boolean scalar. The public dynamic is still a shared hash handle alias;
-the internal tagged value foundation is implemented below, with public migration pending.
+per numeric/boolean scalar. Public `dynamic_t<>` now aliases the tagged implementation;
+the old shared-hash alias and mixed dynamic carrier have been removed. Compiler
+family facts/lowering and source registrations remain the next integration gate.
 
 A layout-only sketch using current wrappers measured 24 bytes at both -O0 and -O2
 on the above target. Inline `string_t` increased the sketch to 40 bytes. These are
@@ -61,7 +62,7 @@ should offer family-specific decoding, defaulting to dynamic including scalar ro
 The core normative permissions and casts are reconciled in the v0.2 amendment.
 The approved JSON names are `json_decode` (result<dynamic>), `json_decode_mixed`
 (result<mixed>) and `json_encode` for either family. Runtime implementation is recorded
-below; compiler registrations/public-type migration remain outstanding.
+below; compiler registrations and source integration remain outstanding.
 
 ### Confirmed semantic decisions — 2026-10-05
 
@@ -136,6 +137,10 @@ copy/alias semantics, JSON modes and compiler facts require separate focused pro
    casts, truthiness/probes/count/identity, formatting/debugging and JSON. The inventory
    also finds dynamic assumptions in tasks and MySQL adapters and typed JSON conversion;
    reconcile these consumers rather than claiming only compiler-local impact.
+   Updated user direction: unresolved library-specific integration moves to
+   [CH15-LIB-DYN-01](../catalog/15_blocking_debt.md#ch15-lib-dyn-01--deferred-library-mixeddynamic-integration).
+   Do not let optional-library redesign hold up the core public-type/compiler switch;
+   isolate unsupported integration without introducing cross-family compatibility.
 4. Update shared compiler capability/conversion/access facts and backend bindings;
    add scalar-dynamic, same-family nested data and rejected-crossing proofs. Keep
    old object-only/shared-hash expectations separate from new normative semantics.
@@ -533,3 +538,48 @@ Evidence: `/tmp/my-try-mysql-rows-20261005-1` passed all four programs with the 
 Connector/C package. No database was contacted and no native compiler was rebuilt.
 Tasks consumers, old public dynamic alias/mixed carrier, compiler facts and source
 registrations remain pending; this is a breaking runtime-consumer checkpoint.
+
+### Library integration deferred; resume core migration — 2026-10-05
+
+The user approved dynamic task result storage and shared dynamic worker inputs,
+then directed library integration issues into debt rather than delaying the core.
+The task attempt failed during compilation because `hash<dynamic, mixed>` reaches
+typed-key rejection. No task execution or thread-safety proof passed.
+
+The unfinished task edits/tests were removed, restoring task runtime files exactly
+to the committed checkpoint. Recoverable experiment files are in
+`/tmp/my-try-deferred-tasks-20261005.patch`,
+`/tmp/my-try-deferred-tasks_dynamic.py` and
+`/tmp/my-try-deferred-test_tasks_dynamic.cpp`; failure logs are under
+`/tmp/my-try-tasks-dynamic-20261005-1`. Durable decisions/prerequisites are recorded in
+CH15-LIB-DYN-01, not left dependent on temporary artifacts.
+
+Core public dynamic alias/old mixed-carrier removal is now implemented. Next work is
+compiler family facts/lowering/registrations. Do not resume task/hash redesign as a prerequisite.
+
+### Public dynamic switch and carrier removal — 2026-10-05
+
+Public `dynamic_t<>` now names the tagged implementation. Non-default legacy
+template arguments reject; no compatibility handle or dynamic/hash conversion bridge
+remains. Mixed no longer has a `dynamic_v` enum, union alternative, constructor or
+accessor. Mixed construction directly owns mixed tables, rather than depending on
+the old dynamic alias. Duplicate old-handle operations are removed; the already
+proved tagged algorithms now serve the public type.
+
+The task header's obsolete mixed dynamic-carrier branch/export assumptions were
+removed only to preserve base-runtime compilation. Task integration remains
+CH15-LIB-DYN-01; no new scheduling or worker-transfer support is claimed.
+
+Evidence: `/tmp/my-try-public-dynamic-20261005-3` passes matching debug/release
+core/JSON builds and all twelve native programs. Public-type tests prove 24-byte
+layout, shared dynamic identity, independent scalar bindings, cross-family admission
+rejection, typed/native key probes and mixed factory copy independence.
+MySQL follow-up `/tmp/my-try-public-dynamic-mysql-20261005-1` passes all four
+Connector/C-enabled/disabled debug/release offline programs against matching rebuilt
+objects. No live database or native compiler rebuild was involved.
+The first two attempts exposed an intermediate lifecycle-edit/link failure and stale
+removed-helper exports; neither is counted as a passing checkpoint.
+
+This changes ABI/API: rebuild runtime, consumers and PCH together. Compiler facts,
+boxing/extraction, construction/iteration lowering and source registrations are next.
+Historical generated programs and native compiler binaries are not current proofs.

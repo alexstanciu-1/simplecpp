@@ -51,19 +51,8 @@ void container_lifetime() {
 	owned_copy[scpp::string_t{"n"}] = scpp::mixed_t{scpp::int_t<>{10LL}};
 	require(owned.get(scpp::string_t{"n"}).int_value().native_value() == 9, "owned table copy");
 
-	// Historical dynamic carrier stays unchanged in this layout-only checkpoint.
-	// Family separation is a distinct refactor, not implied by these assertions.
-	const auto before = table.use_count();
-	{
-		scpp::mixed_t object{scpp::dynamic_box(table)};
-		scpp::mixed_t alias{object};
-		alias[scpp::string_t{"n"}] = scpp::mixed_t{scpp::int_t<>{11LL}};
-		require(object.get(scpp::string_t{"n"}).int_value().native_value() == 11, "shared identity");
-		scpp::mixed_t moved{std::move(alias)};
-		require(alias.is_null().native_value(), "container move clears source");
-		moved = scpp::null_t{};
-	}
-	require(table.use_count() == before, "shared carrier destruction balances ownership");
+	// Shared dynamic lifetimes are covered independently by test_dynamic_value;
+	// mixed retains only its own table carriers.
 	scpp::mixed_t weak{scpp::weak(table)};
 	scpp::mixed_t weak_copy{weak};
 	require(weak_copy.weak_table_if()->lock().get() == table.get(), "weak carrier copy");

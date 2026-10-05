@@ -104,7 +104,6 @@ std::string mixed_kind_name(mixed_t::kind_t kind) {
 		case mixed_t::kind_t::string_v: return "string";
 		case mixed_t::kind_t::table_v: return "hash";
 		case mixed_t::kind_t::shared_table_v: return "shared_hash";
-		case mixed_t::kind_t::dynamic_v: return "dynamic";
 		case mixed_t::kind_t::weak_table_v: return "weak_hash";
 	}
 	return "unknown";
@@ -233,16 +232,6 @@ void describe_value(const mixed_t &value, dbg_state_t &state, int indent, int de
 			const auto *table = shared == nullptr ? nullptr : shared->get();
 			if (table == nullptr) {
 				print_line(indent, "shared_hash null");
-				return;
-			}
-			describe_hash(*table, state, indent, depth);
-			return;
-		}
-		case mixed_t::kind_t::dynamic_v: {
-			const auto *dynamic = value.dynamic_if();
-			const auto *table = dynamic == nullptr ? nullptr : dynamic->get();
-			if (table == nullptr) {
-				print_line(indent, "dynamic null");
 				return;
 			}
 			describe_hash(*table, state, indent, depth);

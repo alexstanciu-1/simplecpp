@@ -89,10 +89,6 @@ inline bool_t php_is_null_value(const mixed_t &value) {
 			const auto *shared_value = value.shared_table_if();
 			return bool_t(shared_value != nullptr && (*shared_value == null_t{}).native_value());
 		}
-		case mixed_t::kind_t::dynamic_v: {
-			const auto *dynamic_value = value.dynamic_if();
-			return bool_t(dynamic_value != nullptr && (*dynamic_value == null_t{}).native_value());
-		}
 		case mixed_t::kind_t::weak_table_v: {
 			const auto *weak_value = value.weak_table_if();
 			return bool_t(weak_value != nullptr && (*weak_value == null_t{}).native_value());
@@ -203,8 +199,7 @@ inline bool_t identical_same_kind_mixed(const mixed_t &left, const mixed_t &righ
 		case mixed_t::kind_t::string_v:
 			return bool_t(left.get_string().native_value() == right.get_string().native_value());
 		case mixed_t::kind_t::table_v:
-		case mixed_t::kind_t::shared_table_v:
-		case mixed_t::kind_t::dynamic_v: {
+		case mixed_t::kind_t::shared_table_v: {
 			const auto *left_table = left.table_if();
 			const auto *right_table = right.table_if();
 			// Empty handles have no contents to dereference; an allocated empty table is distinct.

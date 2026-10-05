@@ -15,34 +15,34 @@ void require(bool condition) {
 
 static void test_json_decode_scalar_values() {
 	const auto null_value = scpp::json::json_decode(scpp::string_t("null")).value();
-	require(null_value.kind() == scpp::detail::dynamic_value::kind_t::null_v);
+	require(null_value.kind() == scpp::dynamic_t<>::kind_t::null_v);
 
 	const auto bool_value = scpp::json::json_decode(scpp::string_t("true")).value();
-	require(bool_value.kind() == scpp::detail::dynamic_value::kind_t::bool_v);
+	require(bool_value.kind() == scpp::dynamic_t<>::kind_t::bool_v);
 	require(bool_value.get_bool().native_value());
 
 	const auto int_value = scpp::json::json_decode(scpp::string_t("123")).value();
-	require(int_value.kind() == scpp::detail::dynamic_value::kind_t::int_v);
+	require(int_value.kind() == scpp::dynamic_t<>::kind_t::int_v);
 	require(int_value.get_int().native_value() == 123);
 
 	const auto float_value = scpp::json::json_decode(scpp::string_t("1.5e2")).value();
-	require(float_value.kind() == scpp::detail::dynamic_value::kind_t::float_v);
+	require(float_value.kind() == scpp::dynamic_t<>::kind_t::float_v);
 	require(float_value.get_float().native_value() == 150.0);
 
 	const auto string_value = scpp::json::json_decode(scpp::string_t("\"hello\"")).value();
-	require(string_value.kind() == scpp::detail::dynamic_value::kind_t::string_v);
+	require(string_value.kind() == scpp::dynamic_t<>::kind_t::string_v);
 	require(string_value.get_string().native_value() == "hello");
 }
 
 static void test_json_decode_array_and_object_shapes() {
 	const auto array_value = scpp::json::json_decode(scpp::string_t("[1,2,3]")).value();
-	require(array_value.kind() == scpp::detail::dynamic_value::kind_t::table_v);
+	require(array_value.kind() == scpp::dynamic_t<>::kind_t::table_v);
 	require(array_value.get_table().is_packed().native_value());
 	require(array_value.get_table().size() == 3);
 	require(array_value.get_table().at(scpp::int_t<>(0)).get_int().native_value() == 1);
 
 	const auto object_value = scpp::json::json_decode(scpp::string_t("{\"id\":10,\"name\":\"Alex\"}")).value();
-	require(object_value.kind() == scpp::detail::dynamic_value::kind_t::table_v);
+	require(object_value.kind() == scpp::dynamic_t<>::kind_t::table_v);
 	require(!object_value.get_table().is_packed().native_value());
 	require(object_value.get_table().at(scpp::string_t("id")).get_int().native_value() == 10);
 	require(object_value.get_table().at(scpp::string_t("name")).get_string().native_value() == "Alex");
@@ -50,18 +50,18 @@ static void test_json_decode_array_and_object_shapes() {
 
 static void test_json_decode_nested_shared_model() {
 	const auto value = scpp::json::json_decode(scpp::string_t("[{\"id\":10},{\"id\":20}]")).value();
-	require(value.kind() == scpp::detail::dynamic_value::kind_t::table_v);
+	require(value.kind() == scpp::dynamic_t<>::kind_t::table_v);
 
 	const auto &outer = value.get_table();
 	require(outer.is_packed().native_value());
-	require(outer.at(scpp::int_t<>(0)).kind() == scpp::detail::dynamic_value::kind_t::table_v);
+	require(outer.at(scpp::int_t<>(0)).kind() == scpp::dynamic_t<>::kind_t::table_v);
 	require(!outer.at(scpp::int_t<>(0)).get_table().is_packed().native_value());
 	require(outer.at(scpp::int_t<>(0)).get_table().at(scpp::string_t("id")).get_int().native_value() == 10);
 }
 
 static void test_json_decode_unicode_and_escapes() {
 	const auto value = scpp::json::json_decode(scpp::string_t("\"A\\n\\u20AC\\uD83D\\uDE00\"")).value();
-	require(value.kind() == scpp::detail::dynamic_value::kind_t::string_v);
+	require(value.kind() == scpp::dynamic_t<>::kind_t::string_v);
 	require(value.get_string().native_value() == std::string("A\n€😀"));
 }
 
@@ -76,7 +76,7 @@ static void test_json_encode_shapes() {
 	auto shared_table = scpp::shared<scpp::hash_t<scpp::mixed_t>>();
 	static_cast<void>(shared_table->append(scpp::mixed_t(scpp::int_t<>(7))));
 	static_cast<void>(shared_table->append(scpp::mixed_t(scpp::string_t("ok"))));
-	require(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t<>(shared_table)))).value().native_value() == "[7,\"ok\"]");
+	require(scpp::json::json_encode(scpp::mixed_t(shared_table)).value().native_value() == "[7,\"ok\"]");
 }
 
 static void test_json_encode_typed_values() {
@@ -105,7 +105,7 @@ static void test_json_encode_key_contracts() {
 	auto object_like = scpp::shared<scpp::hash_t<scpp::mixed_t>>();
 	object_like->set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t<>(1)));
 	object_like->set(scpp::int_t<>(42), scpp::mixed_t(scpp::int_t<>(2)));
-	require(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t<>(object_like)))).value().native_value() == "{\"a\":1,\"42\":2}");
+	require(scpp::json::json_encode(scpp::mixed_t(object_like)).value().native_value() == "{\"a\":1,\"42\":2}");
 
 }
 
@@ -117,7 +117,7 @@ static void test_json_decode_checked_failures() {
 		"\"\\x\"", "\"\\uZZZZ\"", "\"\\uD800\"", "\"\\uDC00\"",
 		"\"\\uD800\\u0041\"", "\"\n\""
 	};
-	scpp::detail::dynamic_value output(scpp::string_t("unchanged"));
+	scpp::dynamic_t<> output(scpp::string_t("unchanged"));
 	scpp::error_t error;
 	for (const char *text : invalid) {
 		const auto parsed = scpp::json::decode(scpp::string_t(text));
@@ -131,9 +131,9 @@ static void test_json_decode_checked_failures() {
 	require(scpp::php::take(output, error, scpp::json::decode(scpp::string_t("{\"name\":\"repaired\"}"))).native_value());
 	require(output.get_table().at(scpp::string_t("name")).get_string().native_value() == "repaired");
 	require(scpp::php::take(output, error, scpp::json::decode(scpp::string_t("null"))).native_value());
-	require(output.kind() == scpp::detail::dynamic_value::kind_t::null_v);
+	require(output.kind() == scpp::dynamic_t<>::kind_t::null_v);
 	require(scpp::php::take(output, error, scpp::json::decode(scpp::string_t("false"))).native_value());
-	require(output.kind() == scpp::detail::dynamic_value::kind_t::bool_v);
+	require(output.kind() == scpp::dynamic_t<>::kind_t::bool_v);
 	require(!output.get_bool().native_value());
 }
 
@@ -179,12 +179,12 @@ static void test_json_encode_checked_failures() {
 
 static void test_json_alias_surface() {
 	const auto value = scpp::json::decode(scpp::string_t("[1,2]")).value();
-	require(value.kind() == scpp::detail::dynamic_value::kind_t::table_v);
+	require(value.kind() == scpp::dynamic_t<>::kind_t::table_v);
 	require(scpp::json::encode(value).value().native_value() == "[1,2]");
 }
 
 static void test_separated_families() {
-	using value = scpp::detail::dynamic_value;
+	using value = scpp::dynamic_t<>;
 	using scpp::string_t;
 	using scpp::int_t;
 	const string_t text{"{\"child\":{\"id\":1},\"items\":[null,false,2.5]}"};
@@ -226,11 +226,11 @@ static void test_separated_families() {
 }
 
 static void test_family_aware_typed_extraction() {
-	using value = scpp::detail::dynamic_value;
+	using value = scpp::dynamic_t<>;
 	using scpp::string_t;
 	using scpp::int_t;
 	using rows = scpp::vector_t<scpp::hash_t<int_t<>>>;
-	static_assert(!scpp::json::from_json_detail::is_supported_v<scpp::dynamic_t<>>);
+	static_assert(scpp::json::from_json_detail::is_supported_v<scpp::dynamic_t<>>);
 	static_assert(std::is_same_v<scpp::json::json_value, value>);
 	const string_t text{"[{\"id\":3},{\"id\":4}]"};
 	const auto dynamic = scpp::json::decode(text).value();
@@ -267,7 +267,7 @@ static void test_family_aware_typed_extraction() {
 }
 
 static void test_direct_typed_writer() {
-	using value = scpp::detail::dynamic_value;
+	using value = scpp::dynamic_t<>;
 	using scpp::string_t;
 	using scpp::int_t;
 	scpp::hash_t<int_t<>, int_t<>> numbered;

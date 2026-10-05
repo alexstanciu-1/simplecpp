@@ -419,7 +419,6 @@ inline string_t to_string(const mixed_t &value) {
 		case mixed_t::kind_t::shared_table_v:
 		case mixed_t::kind_t::weak_table_v:
 			return string_t("Array");
-		case mixed_t::kind_t::dynamic_v:
 			return string_t("Object");
 	}
 	return string_t("");

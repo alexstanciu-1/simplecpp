@@ -14,7 +14,7 @@ template <typename Value> class packed_table;
 
 namespace scpp::detail {
 
-// Internal target of the coordinated dynamic_t migration. No legacy-family bridge.
+// Storage implementation of public dynamic_t<>. No mixed-container bridge.
 // Operation semantics stay in their existing operator/cast owners.
 class dynamic_value final {
 public:

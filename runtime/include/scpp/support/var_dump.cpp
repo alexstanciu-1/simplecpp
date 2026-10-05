@@ -94,12 +94,6 @@ static void dump_value(const mixed_t& v, int indent_lvl, std::unordered_set<cons
             dump_table_ptr(ptr, ptr, indent_lvl, seen);
             break;
         }
-        case mixed_t::kind_t::dynamic_v: {
-            const auto* dynamic = v.dynamic_if();
-            const auto* ptr = (dynamic == nullptr) ? nullptr : dynamic->get();
-            dump_table_ptr(ptr, ptr, indent_lvl, seen, "object(dynamic_t)");
-            break;
-        }
         case mixed_t::kind_t::weak_table_v: {
             const auto* weak = v.weak_table_if();
             const auto locked = (weak == nullptr) ? shared_p<hash_t<mixed_t>>(null_t{}) : weak->lock();

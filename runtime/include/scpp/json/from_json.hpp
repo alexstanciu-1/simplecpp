@@ -45,7 +45,6 @@ template <typename Value>
 		switch (value.kind()) {
 			case kind::shared_table_v: return "shared_table";
 			case kind::weak_table_v: return "weak_table";
-			case kind::dynamic_v: return "dynamic";
 			default: break;
 		}
 	}

@@ -40,8 +40,6 @@ using ::scpp::detail::vector_has_index;
 
 } // namespace detail
 
-using ::scpp::to_dynamic;
-using ::scpp::to_hash;
 
 template <typename T>
 inline void vector_reserve(vector_t<T> &values, const int_t<> &capacity) {

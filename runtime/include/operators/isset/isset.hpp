@@ -153,19 +153,6 @@ inline bool_t isset(const mixed_t &value, const int key) {
 	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
-inline bool_t isset(const dynamic_t<> &value, const mixed_t &key) {
-	if (!static_cast<bool>(value)) {
-		return bool_t(false);
-	}
-	if (key.kind() == mixed_t::kind_t::int_v) {
-		return ::scpp::isset(*value, key.int_value());
-	}
-	if (key.kind() == mixed_t::kind_t::string_v) {
-		return ::scpp::isset(*value, *key.string_if());
-	}
-	return bool_t(false);
-}
-
 inline bool_t isset(const detail::dynamic_value &value, const mixed_t &key) {
 	const auto *table = value.table_if();
 	if (!table || (key.kind() != mixed_t::kind_t::int_v && key.kind() != mixed_t::kind_t::string_v)) return bool_t{false};
@@ -173,26 +160,8 @@ inline bool_t isset(const detail::dynamic_value &value, const mixed_t &key) {
 	return detail::isset_from_probe(detail::probe_value(table->at(key)).state);
 }
 
-inline bool_t isset(const dynamic_t<> &value, const int_t<> &key) {
-	if (!static_cast<bool>(value)) {
-		return bool_t(false);
-	}
-	return ::scpp::isset(*value, key);
-}
-
-inline bool_t isset(const dynamic_t<> &value, const string_t &key) {
-	if (!static_cast<bool>(value)) {
-		return bool_t(false);
-	}
-	return ::scpp::isset(*value, key);
-}
-
-inline bool_t isset(const dynamic_t<> &value, const char *key) {
-	return isset(value, string_t{key});
-}
-
-inline bool_t isset(const dynamic_t<> &value, const int key) {
-	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
+inline bool_t isset(const detail::dynamic_value &value, int key) {
+	return ::scpp::isset(value, mixed_t{int_t<>{static_cast<std::int64_t>(key)}});
 }
 
 template <typename T, typename Key>

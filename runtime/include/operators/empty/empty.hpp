@@ -246,13 +246,6 @@ inline bool_t empty(const detail::dynamic_value &value) {
 	return detail::empty_scalar(value);
 }
 
-inline bool_t empty(const dynamic_t<> &value) {
-	if (!static_cast<bool>(value)) {
-		return bool_t(true);
-	}
-	return value->empty();
-}
-
 template <typename T>
 inline bool_t empty(const vector_t<T> &value, const int_t<> &key) {
 	if (!detail::vector_has_index(value.size(), key)) {
@@ -397,13 +390,6 @@ inline bool_t empty(const mixed_t &value, const int key) {
 	return empty(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
-inline bool_t empty(const dynamic_t<> &value, const mixed_t &key) {
-	if (!static_cast<bool>(value)) {
-		return bool_t(true);
-	}
-	return ::scpp::empty(mixed_t{dynamic_box(value)}, key);
-}
-
 inline bool_t empty(const detail::dynamic_value &value, const mixed_t &key) {
 	const auto *table = value.table_if();
 	if (!table || (key.kind() != mixed_t::kind_t::int_v && key.kind() != mixed_t::kind_t::string_v)) return bool_t{true};
@@ -411,26 +397,8 @@ inline bool_t empty(const detail::dynamic_value &value, const mixed_t &key) {
 	return detail::empty_scalar(table->at(key));
 }
 
-inline bool_t empty(const dynamic_t<> &value, const int_t<> &key) {
-	if (!static_cast<bool>(value)) {
-		return bool_t(true);
-	}
-	return ::scpp::empty(mixed_t{dynamic_box(value)}, key);
-}
-
-inline bool_t empty(const dynamic_t<> &value, const string_t &key) {
-	if (!static_cast<bool>(value)) {
-		return bool_t(true);
-	}
-	return ::scpp::empty(mixed_t{dynamic_box(value)}, key);
-}
-
-inline bool_t empty(const dynamic_t<> &value, const char *key) {
-	return empty(value, string_t{key});
-}
-
-inline bool_t empty(const dynamic_t<> &value, const int key) {
-	return empty(value, int_t<>{static_cast<std::int64_t>(key)});
+inline bool_t empty(const detail::dynamic_value &value, int key) {
+	return ::scpp::empty(value, mixed_t{int_t<>{static_cast<std::int64_t>(key)}});
 }
 
 } // namespace scpp

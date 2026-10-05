@@ -1,4 +1,4 @@
-#include "scpp/support/dynamic_value.hpp"
+#include "scpp/dynamic_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/data_initializer.hpp"
 #include "scpp/index_write_path.hpp"
@@ -20,7 +20,7 @@
 #include <utility>
 
 namespace {
-using value = scpp::detail::dynamic_value;
+using value = scpp::dynamic_t<>;
 using scpp::int_t;
 using scpp::string_t;
 
@@ -31,7 +31,7 @@ void require(bool condition, const char *message) {
 static_assert(!std::is_constructible_v<value, scpp::mixed_t>);
 static_assert(!std::is_assignable_v<value &, scpp::mixed_t>);
 static_assert(!std::is_constructible_v<scpp::mixed_t, value>);
-static_assert(!std::is_constructible_v<value, scpp::dynamic_t<>>);
+static_assert(!std::is_constructible_v<value, scpp::shared_p<scpp::hash_t<scpp::mixed_t>>>);
 static_assert(std::is_nothrow_move_constructible_v<value>);
 static_assert(std::is_nothrow_move_assignable_v<value>);
 
@@ -39,15 +39,41 @@ template <typename Entry>
 concept can_store = requires(value &receiver, const scpp::mixed_t &key, const Entry &entry) {
 	scpp::index_store(receiver, key, entry);
 };
+template <typename... Args>
+concept public_dynamic_arguments = requires { typename scpp::dynamic_t<Args...>; };
+static_assert(public_dynamic_arguments<>);
+static_assert(!public_dynamic_arguments<scpp::mixed_t>);
 static_assert(can_store<value>);
 static_assert(!can_store<scpp::mixed_t>);
-static_assert(!can_store<scpp::dynamic_t<>>);
+static_assert(!can_store<scpp::shared_p<scpp::hash_t<scpp::mixed_t>>>);
 
 template <typename Work>
 void require_failure(Work work, const char *message) {
 	bool rejected = false;
 	try { work(); } catch (const std::runtime_error &) { rejected = true; }
 	require(rejected, message);
+}
+
+void mixed_construction_is_independent() {
+	scpp::initializer_buffer<scpp::mixed_t> input{1};
+	input.append(scpp::mixed_t{int_t<>{7LL}});
+	auto original = scpp::data_initializer<scpp::mixed_t>::from_list(input.view());
+	auto copy = original;
+	scpp::index_store(copy, scpp::mixed_t{int_t<>{0LL}}, scpp::mixed_t{int_t<>{9LL}});
+	require(scpp::null_index_read(original, scpp::mixed_t{int_t<>{0LL}}).get_int().native_value() == 7,
+		"mixed factory preserves value semantics");
+	scpp::initializer_buffer<scpp::initializer_entry<scpp::mixed_t, scpp::mixed_t>> keyed{1};
+	keyed.append({scpp::mixed_t{string_t{"name"}}, original});
+	auto object = scpp::data_initializer<scpp::mixed_t>::from_key_value(keyed.view());
+	require(object.get_hash().at(string_t{"name"}).get_hash().at(int_t<>{0LL}).get_int().native_value() == 7,
+		"mixed keyed factory preserves its family");
+	auto dynamic = value::make_container();
+	scpp::index_append(dynamic, value{int_t<>{7LL}});
+	require(scpp::isset(dynamic, 0).native_value() && !scpp::empty(dynamic, 0).native_value(),
+		"native integer probes use the same tagged path");
+	require(scpp::isset(dynamic, int_t<>{0LL}).native_value()
+		&& scpp::isset(dynamic, string_t{"0"}).native_value() && scpp::isset(dynamic, "0").native_value(),
+		"typed and text probe keys normalize consistently");
 }
 
 void scalar_lifetimes() {
@@ -426,6 +452,7 @@ void debug_inspection() {
 } // namespace
 
 int main() {
+	mixed_construction_is_independent();
 	scalar_lifetimes();
 	recursive_containers();
 	container_operations();

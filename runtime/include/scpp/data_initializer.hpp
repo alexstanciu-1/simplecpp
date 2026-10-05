@@ -160,10 +160,14 @@ struct data_initializer<detail::dynamic_value> final {
 template <>
 struct data_initializer<mixed_t> final {
 	static mixed_t from_list(initializer_list<mixed_t> input) {
-		return mixed_t{data_initializer<dynamic_t<>>::from_list(input)};
+		auto storage = std::make_unique<hash_t<mixed_t>>();
+		initialization_detail::populate_list(*storage, input);
+		return mixed_t{std::move(storage)};
 	}
 	static mixed_t from_key_value(initializer_list<initializer_entry<mixed_t, mixed_t>> input) {
-		return mixed_t{data_initializer<dynamic_t<>>::from_key_value(input)};
+		auto storage = std::make_unique<hash_t<mixed_t>>();
+		initialization_detail::populate_keyed(*storage, input);
+		return mixed_t{std::move(storage)};
 	}
 };
 
