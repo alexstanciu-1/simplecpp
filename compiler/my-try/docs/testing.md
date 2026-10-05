@@ -44,6 +44,18 @@ The exporter marks these entries explicitly with `state_probe`; fixture name
 suffixes are not the selection protocol. `--no-pch` is also available. This uses a
 rebuilt snippet runtime, not a rebuilt native compiler.
 
+For registered JSON source calls and checked runtime results:
+
+```bash
+python3 compiler/my-try/tests/json_api.py --results /tmp/FRESH_JSON_RESULTS
+```
+
+Runs focused callable/preparation/recovery suites and generated JSON programs.
+Builds matching core runtime and `modules/json/json.cpp` objects before linking;
+emitted JSON headers alone do not supply the out-of-line implementation. PCH is
+enabled by default; `--no-pch` checks header independence. This is separate from
+the generic fixture export because JSON needs its module object at link time.
+
 For the mixed field-layout and shared packed-table storage checkpoints:
 
 ```bash

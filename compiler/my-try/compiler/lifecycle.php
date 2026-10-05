@@ -72,6 +72,8 @@ final class Compiler_Lifecycle
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
+		JSON_Callable_Registration::install(Model::$language_scope);
+		CPP_JSON_Registration::install();
 		Model::$global_scope = new scope();
 		Model::$global_scope->set_parent(Model::$language_scope);
 		self::reset_cpp();
@@ -108,6 +110,8 @@ final class Compiler_Lifecycle
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
+		JSON_Callable_Registration::install(Model::$language_scope);
+		CPP_JSON_Registration::install();
 		Model::$global_scope = new scope();
 		Model::$global_scope->set_parent(Model::$language_scope);
 

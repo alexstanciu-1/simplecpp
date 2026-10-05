@@ -73,7 +73,7 @@ Concrete callers use named accessors such as `require_call_preparation()` for
 specialized facts; both views return the same attached object.
 
 Facts identify exact roles where known: calls reference `callable_target_i` (source
-functions or installed runtime static factories); source record types reference structs.
+functions, installed runtime free functions or static factories); source record types reference structs.
 `Call_Preparation::require_signature` completes source declarations and registers
 consumer dependencies before reading the target's read-only `signature()` accessor.
 Installed runtime contracts need no source work. Direct access to absent source
@@ -81,6 +81,13 @@ facts fails without scheduling preparation; consumers needing current semantic f
 must use the analysis query. Signatures/parameter contracts are declaration-independent. Source parameter facts
 retain storage identity and share their contract with the signature; storage consumers
 query `storage_type()`. Runtime contracts never fabricate source declarations.
+Named calls use ordinary nearest-scope lookup. One target follows normal argument
+admission. Multiple installed free-function targets require fixed, required,
+by-value parameters and one exact parameter-type match. Arguments are prepared once
+without a candidate's expected type; ambiguous data literals need an explicit target.
+Return types do not select overloads. Source overloads and conversion ranking remain
+deferred. Selected calls reuse the existing conversion, copy and lowering paths;
+there are no JSON spelling checks in parsing or preparation.
 Prepared storage deliberately shares the broader
 occurrence capability across fields, parameters, explicit variables and first writes.
 A first-write occurrence keeps its collected identity when it introduces storage.

@@ -632,7 +632,7 @@ final class Preparation_Worker
 			}
 		}
 		elseif ($lookup->kind === preparation_lookup_kind::function_name) {
-			foreach ($lookup->lookup_scope->functions_named($lookup->name) as $function) {
+			foreach ($lookup->lookup_scope->callables_named($lookup->name) as $function) {
 				$result[] = $function;
 			}
 		}

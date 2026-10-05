@@ -53,15 +53,15 @@ final class Observed_Lookup
 	}
 
 	/** Callable lookup follows the same nearest-pool rule as type lookup. */
-	public static function functions(scope $start, string $name, preparation_context $context): array /** vector<collected_function> */
+	public static function functions(scope $start, string $name, preparation_context $context): array /** vector<callable_target_i> */
 	{
 		$current_scope = $start;
-		$result /** vector<collected_function> */ = [];
+		$result /** vector<callable_target_i> */ = [];
 		while (true)
 		{
 			$current_scope = Scope_Lookup::visible($current_scope);
 			$context->worker->observe($current_scope, $name, preparation_lookup_kind::function_name, $context->owner);
-			$result = $current_scope->functions_named($name);
+			$result = $current_scope->callables_named($name);
 			if (q_count($result) !== 0) {
 				break;
 			}

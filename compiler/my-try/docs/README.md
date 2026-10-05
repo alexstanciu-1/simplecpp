@@ -43,6 +43,7 @@ experiment retained for regressions, not a second semantic development path.
 | Data construction implementation direction | [Completed interface standard, adopted hybrid and confirmed stage boundary](planning/data_initialization.md) |
 | Data notation parser/AST | [Shared PHP-like/JS-like syntax checkpoint](catalog/06_containers.md#shared-data-parser-and-ast--2026-10-05), [AST ownership](architecture/ast_layout.md#data-construction-syntax) |
 | Callable model | [Source/runtime contracts and ownership](architecture/MODEL.md#callable-contracts), [Chapter 06 checkpoint](catalog/06_containers.md#callable-model-foundation--2026-10-05) |
+| Registered JSON source APIs | [Runtime free functions, exact selection and checked results](catalog/06_containers.md#runtime-free-functions-and-json-source-integration--2026-10-05), [focused runner](testing.md#commands) |
 | Initialization binding model | [Shared declarations and input roles](catalog/06_containers.md#initialization-binding-and-input-model--2026-10-05), [retained ownership](architecture/MODEL.md#initialization-contracts) |
 | Built-in data construction | [Runtime adapters and shared C++ execution](catalog/06_containers.md#built-in-construction-execution--2026-10-05), [focused runner](testing.md#commands) |
 | Container value reads | [Shared read checkpoint](catalog/06_containers.md#shared-container-value-reads--2026-10-05), [bracket contract](../../../specs/index_operator.md), [focused runner](testing.md#commands) |
@@ -56,7 +57,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Next language feature | [Catalog](catalog/README.md), [chapter 06 agreed standard and grouping](catalog/06_containers.md#agreed-standard-and-revised-grouping--2026-10-05), [top-level data initialization standard](../../../specs/data_initialization.md) |
+| Current handoff | [Chapter 06 core integration gate resolved; final inventory/closeout review next](catalog/06_containers.md#mixeddynamic-closeout-gate), [catalog](catalog/README.md), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral

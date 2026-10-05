@@ -7,7 +7,10 @@ Doc Status: planning
 
 Requires values, expressions and basic calls. Establish reads versus writes before nested mutation and foreach.
 
-**Chapter closeout is blocked by CH06-MIX-DYN-01 below.** CH06-ITER-01 has moved to
+**The core mixed/dynamic integration gate is resolved; final chapter review is next.**
+The dated checkpoints below retain their historical scope; earlier references to
+CH06-MIX-DYN-01 being open are superseded by its current status below.
+CH06-ITER-01 has moved to
 [the final blocking-debt chapter](15_blocking_debt.md); its broader design review
 no longer blocks this chapter. Safe runtime rejection remains an immediate
 prerequisite for enabling reference foreach, not a deferred safety promise.
@@ -58,12 +61,14 @@ typing. CH05-DYN-01 is spread across the common operation groups, not a second d
 pass. Existing `(object)` bridges remain separate from direct typed construction;
 unrestricted casts, dynamic `->` and native interior references are not introduced.
 
-## Blocking closeout debt
+## Mixed/dynamic closeout gate
 
 ### CH06-MIX-DYN-01 — mixed/dynamic containment contract
 
-Status: **open; blocking Chapter 06 completion**. Recorded at the user's request;
-discussion is scheduled for the end of this chapter, not silently deferred beyond it.
+Status: **resolved for the agreed core v0.2 slice — 2026-10-05**. The approved
+breaking family separation, shared compiler integration and JSON source boundary
+are implemented with focused proofs. This is not a claim of complete optional-library
+support, broad final regression or a fresh native compiler rebuild.
 
 Active discussion: [mixed/dynamic storage and shared implementation](../planning/mixed_dynamic_storage.md).
 The core runtime now uses the separated families. Both mixed and public
@@ -78,7 +83,7 @@ JSON defaults to tagged dynamic, including scalar roots; explicit mixed decoding
 family-aware typed extraction and direct string encoding remain implemented.
 MySQL ordinary/prepared row adapters construct tagged dynamic rows directly.
 
-**Remaining gate:** JSON source registration; boxed Result integration is recorded below.
+JSON source registration and boxed Result integration are recorded below.
 Compiler family facts, boxing/extraction, initializer and iteration bindings have
 been reconciled with the breaking runtime API. Broad fixture reconciliation is
 recorded below; no native compiler rebuild is implied by generated-program proofs.
@@ -111,9 +116,8 @@ Indexed compound mutation and broader operator families remain deferred. Dynamic
 Broad generated fixtures now follow tagged dynamic accessors and same-family
 construction, retaining value-copy/sharing, ordering and failure-state assertions.
 The shared `container_regression.py` runner integrates the newer boxed-family
-matrix with the retained container cases. JSON source registrations remain next;
-this is not a full Chapter 06/native
-compiler pass.
+matrix with the retained container cases. This is not a full Chapter 06/native
+compiler pass; the JSON source checkpoint is separate below.
 
 Boxed Result integration now extends the existing payload policy to both mixed and
 dynamic in all three Result families. Outer wrappers own wrapping/extraction and
@@ -122,7 +126,7 @@ No parallel dynamic algorithm or backend case was added. The shared matrix cover
 value/null/sentinel/error states, conditions/probes, take, lazy joins/coalescing,
 typed-container boundaries and family-specific copy/sharing. See the
 [Chapter 05 checkpoint](05_dynamic_boundaries.md#boxed-result-payload-extension--2026-10-05).
-JSON source API registration remains the next integration slice.
+JSON source API registration now uses the shared callable foundation described below.
 
 Remaining library-specific integration (notably tasks) is deferred to
 [CH15-LIB-DYN-01](15_blocking_debt.md#ch15-lib-dyn-01--deferred-library-mixeddynamic-integration)
@@ -133,13 +137,41 @@ boxed payloads where they model the actual concept better.
 The [top-level v0.2 amendment](../../../../specs/dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
 owns the agreed contract. Explicit scalar-only family conversion remains checked;
 containers cannot cross families. Dynamic nested writes require constructed dynamic
-children; mixed retains its own null bootstrap. Runtime separation is implemented,
-but this chapter blocker remains open until source-level integration is proved.
+children; mixed retains its own null bootstrap. Runtime separation and source-level
+integration now have their bounded proofs.
 
 Closeout requires an explicit agreed decision, reconciliation of the owning
 `specs/data_initialization.md` / `specs/dynamic_types.md` contracts, and any required
-compiler/runtime changes with focused proofs. Do not close this debt solely by
-documenting the current runtime, and do not mark the chapter complete while it is open.
+compiler/runtime changes with focused proofs. Those requirements are met for this
+gate; final chapter inventory remains a separate review.
+
+### Runtime free functions and JSON source integration — 2026-10-05
+
+Installed `registered_function` identities share callable signatures and argument
+admission with source calls and initialization factories. Their scope index participates
+in ordinary nearest-pool lookup and lookup-change subscriptions; source retirement
+remains source-only. Multiple installed signatures select by exact fixed required
+by-value argument types. No source overload ranking or return-directed selection
+was introduced. C++ free symbols/headers live exclusively in backend bindings.
+
+Registered strict-source signatures:
+
+- `json_decode(string) -> result<dynamic>` (including scalar/null/false roots).
+- `json_decode_mixed(string) -> result<mixed>`.
+- `json_encode(mixed)` and `json_encode(dynamic) -> result<string>`.
+
+Encoding preserves the selected family; untyped data literals need an explicit
+target. Parsing/preparation contain no JSON-specific dispatch. Malformed documents,
+non-finite encoding and dynamic cycles use existing checked runtime errors. Failed
+take preserves its value destination; successful null/false remains a success.
+Mixed copies stay independent and dynamic child containers retain sharing.
+
+`tests/json_api.py` proves ordinary lookup, selected target identity, ambiguity,
+shadow/failure/retry/removal recovery, incremental family retargeting, reset lifetimes
+and independent native outcomes. It rebuilds core and JSON module objects; no native
+compiler rebuild is implied. Typed extraction and additional typed encode overloads,
+general overload ranking, library redesign, reference foreach and `->` are not added.
+The latter three remain in Chapter 15. Next: final Chapter 06 inventory/closeout review.
 
 ## Handoff from chapter 05 — 2026-10-04
 

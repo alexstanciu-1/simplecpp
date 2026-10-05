@@ -9,8 +9,12 @@ object-like output remains determined by the existing hash shape query.
 Cycles return an encoding error without partial output; repeated noncyclic aliases
 are encoded at each occurrence. Existing checked failures remain unchanged.
 
-Runtime tagged-dynamic encoding is implemented. Compiler-facing registration and
-the public dynamic-type switch remain pending. The former mixed-tree-producing
+Runtime tagged-dynamic encoding and the public dynamic-type switch are implemented.
+The experimental `compiler/my-try` strict source path registers the mixed and
+dynamic overloads with exact argument-type selection. Untyped literals must state
+their family, for example `json_encode(dynamic::{name: "Alex"})`; scalar and typed
+container encode overloads remain runtime-only in this compiler slice.
+The former mixed-tree-producing
 `to_json` helper is removed. Typed scalars, nullable values, vectors and hashes are
 written directly, including nested mixed/dynamic values, without temporary boxed
 trees. A possible string-producing `to_json` alias is deferred, not currently exposed.
@@ -21,6 +25,7 @@ cross-family container conversions.
 ## Current contract
 
 - Source-facing PHP++ / PHS: `json_encode(mixed $value) -> result<string>`
+- v0.2 source-facing overload: `json_encode(dynamic $value) -> result<string>`
 - Shared writer: `scpp::json::encode(const mixed_t &value) -> result<string_t>`
 - `scpp::json::json_encode` and `scpp::php::json_encode` forward to the checked writer
 - `scpp::json::encode(const T &value)` and `scpp::json::json_encode(const T &value)` return `result<string_t>` for supported typed JSON value shapes

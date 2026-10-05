@@ -15,6 +15,8 @@ final class scope
 	private Key_Storage_List $variables /** Key_Storage_List<collected_name> */;
 	/** @storage.reference collected_file.entries @reference.weak */
 	private Key_Storage_List $functions /** Key_Storage_List<collected_function> */;
+	/** @storage.reference Model.runtime_callables @reference.weak */
+	private Key_Storage_List $runtime_functions /** Key_Storage_List<registered_function> */;
 	/** Definitions owned here; published scopes retain the same definition objects. */
 	private Key_Storage_List $types /** Key_Storage_List<type_definition_i> */;
 	/** Constant namespace is independent of variables, functions and types. */
@@ -25,6 +27,7 @@ final class scope
 		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
 		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
+		$this->runtime_functions = new Key_Storage_List /** Key_Storage_List<registered_function> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition_i> */();
 		$this->constants = new Key_Storage_List /** Key_Storage_List<constant_definition> */();
 	}
@@ -153,6 +156,26 @@ final class scope
 	{
 		$items /** Key_Storage_List<collected_function> */ = $this->functions;
 		return $items->named($name);
+	}
+
+	public function register_function(registered_function $target): void
+	{
+		$functions /** Key_Storage_List<registered_function> */ = $this->runtime_functions;
+		$functions->add($target->name(), $target);
+	}
+
+	/** A single visible name pool; source inventories remain source-only for retirement. */
+	public function callables_named(string $name): array /** vector<callable_target_i> */
+	{
+		$result /** vector<callable_target_i> */ = [];
+		foreach ($this->functions_named($name) as $source_function) {
+			$result[] = $source_function;
+		}
+		$functions /** Key_Storage_List<registered_function> */ = $this->runtime_functions;
+		foreach ($functions->named($name) as $runtime_function) {
+			$result[] = $runtime_function;
+		}
+		return $result;
 	}
 
 	/** The small definition store owns records; lookup does not introduce another registry. */

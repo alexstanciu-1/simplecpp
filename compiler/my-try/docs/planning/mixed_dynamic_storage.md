@@ -6,6 +6,11 @@ meaning belongs to the [v0.2 family-separation amendment](../../../../specs/dyna
 not this plan. It supports
 [CH06-MIX-DYN-01](../catalog/06_containers.md#ch06-mix-dyn-01--mixeddynamic-containment-contract).
 
+Current handoff: the agreed core family migration and JSON source integration are
+proved; CH06-MIX-DYN-01 is resolved for that bounded scope. Final Chapter 06 inventory
+is next. Earlier checkpoints below record historical gates, not additional current
+requirements. Library redesign, reference foreach and dynamic `->` remain Chapter 15 work.
+
 ## Recorded improvement: MIX-LAYOUT-01
 
 Keep the existing mixed borrow counter, but move it beside the kind tag, before
@@ -804,3 +809,29 @@ used recorded CLI fallback after FPM socket startup failed.
 The complete S2S fixture export also passes at
 `/tmp/my-try-boxed-results-export-20261005-1`; its broader generated programs were
 not recompiled in this focused slice.
+
+## Registered JSON source API checkpoint — 2026-10-05
+
+The reusable free-function target joins the existing callable protocol without a
+synthetic AST or construction owner. Scope indexing, dependency observation,
+exact fixed-signature selection and common argument admission are semantic;
+qualified symbols/header collection remain C++ backend-owned. JSON installs the
+approved dynamic/default and explicit mixed decoders and both boxed encode overloads.
+No JSON call-name branch was added to parser, preparation or call lowering.
+
+Evidence: `tests/json_api.py --results /tmp/my-try-json-20261005-6` passes 9 PHP
+suites and 7 generated programs with PCH. The same matrix passes without PCH in
+`/tmp/my-try-json-20261005-5`. Each builds matching core/JSON runtime objects;
+neither rebuilds the compiler natively. Tests cover scalar/container roots, null/false
+success, malformed input, nonfinite values, cycles versus repeated aliases, take
+destination preservation, single argument evaluation and family copy/sharing.
+Lookup proofs cover ambiguity, source shadowing, failed preparation/retry/removal,
+incremental argument-family changes, clean agreement and reset identity boundaries.
+
+Attempt one exposed a Python runner named `json.py` shadowing the standard library;
+the runner is now `json_api.py`. Attempt two exposed an initialization test assuming
+that no installed API interns Result applications, plus an overly broad call-site
+edit; both were corrected. Attempt three passed. Attempt four added lifecycle tests
+and no-PCH coverage, exposing test-native string assertions that relied on PCH
+operators; assertions now compare native strings directly. Attempts five/six pass.
+PHP used the recorded CLI fallback because FPM socket startup was unavailable.

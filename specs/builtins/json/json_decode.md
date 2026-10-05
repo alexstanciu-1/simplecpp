@@ -14,8 +14,9 @@ The approved v0.2 surface replaces the v0.1 contract below:
 - Container shape remains hash-derived; this does not preserve empty `{}` versus `[]`.
 
 Migration status: runtime decoding and public `dynamic_t<>` use the new tagged
-dynamic storage. Compiler-facing registrations/source integration still require
-migration. Do not infer complete source support from runtime availability.
+dynamic storage. The experimental `compiler/my-try` strict source path registers
+both decoder signatures through ordinary runtime-function lookup. This does not
+claim complete library migration or typed `from_json` source registration.
 The default-family change is intentional: follow the
 [v0.2 repair rules](../../dynamic_types.md#v02-migration-and-repair-rules), not old
 mixed-return test expectations. Select `json_decode_mixed` when mixed is required.

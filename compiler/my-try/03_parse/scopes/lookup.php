@@ -51,14 +51,14 @@ final class Scope_Lookup
 	}
 
 	/** Callable lookup follows the same nearest-pool rule as type lookup. */
-	public static function functions(scope $start, string $name): array /** vector<collected_function> */
+	public static function functions(scope $start, string $name): array /** vector<callable_target_i> */
 	{
 		$current_scope = $start;
-		$result /** vector<collected_function> */ = [];
+		$result /** vector<callable_target_i> */ = [];
 		while (true)
 		{
 			$current_scope = self::visible($current_scope);
-			$result = $current_scope->functions_named($name);
+			$result = $current_scope->callables_named($name);
 			if (q_count($result) !== 0) {
 				break;
 			}

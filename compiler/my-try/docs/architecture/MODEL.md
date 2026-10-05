@@ -12,7 +12,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `parsed_file` | Typed file AST, scope owners, collection, completion state and token snapshot |
 | `collected_file` | Canonical occurrences and semantic/generation handoffs for that source |
 | `language_scope`, `global_scope` | Built-in/runtime definitions and shared source indexes; global parents to language |
-| `runtime_callables`, `cpp_callable_bindings` | Installed static-factory identities/contracts and separate C++ bindings; reset with canonical types |
+| `runtime_callables`, `cpp_callable_bindings` | Installed free-function/static-factory identities/contracts and separate C++ bindings; reset with canonical types |
 | `initialization_contracts` | Runtime initialization declarations, internal input types and concrete bindings; reset with canonical types |
 | `indexing_contracts` | Registry-lifetime read/store/append contracts keyed by exact receiver definition; independent of construction opt-in |
 | `iteration_contracts` | Registry-lifetime key/value signatures keyed by exact receiver definition; independent of bracket/initialization capability |
@@ -64,12 +64,20 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 ### Callable contracts
 
 `callable_target_i` is implemented by the existing `collected_function` identity
-and `registered_static_factory`. Their `signature()` accessor only reads attached
+and by `registered_function` and `registered_static_factory`. Their `signature()` accessor only reads attached
 contracts. `Call_Preparation::require_signature` completes source declarations and
 registers the consumer dependency; installed runtime targets already own a complete
 contract. Runtime catalogs do not cache source declaration facts. Registered factory
 keys are provider-qualified semantic identities, independent of C++ names; their
 owner is the exact canonical constructed type and equals their return type.
+
+Free functions have provider-qualified keys and source names, but no fabricated
+receiver, AST or construction owner. Scope `runtime_functions` indexes catalog-owned
+identities; `functions` remains the source-only retirement inventory. `callables_named`
+combines them for ordinary nearest-scope lookup and analysis lookup observations.
+Installed pools are immutable under retained consumers. Runtime overload selection
+admits exactly matching fixed, required, by-value parameter signatures; it is not
+general conversion ranking. JSON is the first installed free-function provider.
 
 `callable_signature` and `callable_parameter` have no source-storage links.
 `prepared_function` owns the signature plus its source parameter facts;
@@ -83,7 +91,7 @@ signature. `Call_Preparation` admits arguments independently of target selection
 `CPP_Declarations::selected_call` sequences their lowering. `CPP_Callables::reference`
 owns target dispatch entirely inside the backend; callable identities and their
 interface expose no C++ operation. Dispatch uses source mangling or a separately
-registered static-member binding, with exact target
+registered free-symbol or static-member binding, with exact target
 identity checks and header collection. Bindings support direct static members and
 adapter templates applied to the exact owner type. Initialization instantiates semantic
 factory identities independently; backend-only definition metadata selects an adapter

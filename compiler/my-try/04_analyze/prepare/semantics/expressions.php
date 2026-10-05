@@ -335,11 +335,11 @@ final class Expression_Preparation
 		$entry = $syntax->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
 		$targets = Observed_Lookup::functions($lexical_scope, $entry->name, $context);
-		if (q_count($targets) !== 1) {
+		if (q_count($targets) === 0) {
 			throw new \RuntimeException('S2S needs one resolved function for ' . $entry->name);
 		}
 
-		return Call_Preparation::prepare($targets[0], $syntax->arguments, $context);
+		return Call_Preparation::prepare_named($targets, $syntax->arguments, $context);
 	}
 
 	/** A member selection carries the exact field identity and inherits base addressability. */

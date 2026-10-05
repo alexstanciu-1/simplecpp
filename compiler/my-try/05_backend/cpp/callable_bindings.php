@@ -3,6 +3,40 @@
 /* Backend call spelling is not part of the semantic callable identity or signature. */
 namespace scpp\compiler;
 
+/** Free symbols have no fabricated receiver or construction owner. */
+final class cpp_function_binding
+{
+	private registered_function $semantic_target;
+	private string $qualified_symbol;
+	private string $required_header;
+
+	/** Publish backend spelling separately from the installed semantic identity. */
+	public function __construct(registered_function $target, string $symbol, string $header)
+	{
+		if ($symbol === '') {
+			throw new \InvalidArgumentException('C++ function symbol must not be empty');
+		}
+		$this->semantic_target = $target;
+		$this->qualified_symbol = $symbol;
+		$this->required_header = $header;
+	}
+
+	public function target(): registered_function
+	{
+		return $this->semantic_target;
+	}
+
+	public function symbol(): string
+	{
+		return $this->qualified_symbol;
+	}
+
+	public function header(): string
+	{
+		return $this->required_header;
+	}
+}
+
 final class cpp_callable_binding
 {
 	private registered_static_factory $semantic_target;
@@ -30,11 +64,33 @@ final class cpp_callable_binding
 final class CPP_Callable_Bindings
 {
 	private Keyed_Storage $definitions /** Keyed_Storage<cpp_callable_binding> */;
+	private Keyed_Storage $functions /** Keyed_Storage<cpp_function_binding> */;
 	private array $initializers /** hash<cpp_initialization_adapter, int> */ = [];
 
 	public function __construct()
 	{
 		$this->definitions = new Keyed_Storage /** Keyed_Storage<cpp_callable_binding> */();
+		$this->functions = new Keyed_Storage /** Keyed_Storage<cpp_function_binding> */();
+	}
+
+	public function bind_function(registered_function $target, string $symbol, string $header): void
+	{
+		$functions /** Keyed_Storage<cpp_function_binding> */ = $this->functions;
+		$functions->add($target->key(), new cpp_function_binding($target, $symbol, $header));
+	}
+
+	/** Reject stale identities even when their provider keys have been reinstalled. */
+	public function function_binding(registered_function $target): cpp_function_binding
+	{
+		$functions /** Keyed_Storage<cpp_function_binding> */ = $this->functions;
+		if (!isset($functions[$target->key()])) {
+			throw new \LogicException('Runtime function has no C++ binding');
+		}
+		$binding = $functions[$target->key()];
+		if ($binding->target() !== $target) {
+			throw new \LogicException('C++ function binding belongs to a different semantic identity');
+		}
+		return $binding;
 	}
 
 	public function bind_static(registered_static_factory $target, string $member, string $header): void
@@ -97,6 +153,14 @@ final class CPP_Callables
 	{
 		if ($target instanceof collected_function) {
 			return self::source_reference(object_cast($target, collected_function::class));
+		}
+		if ($target instanceof registered_function) {
+			$binding = Model::$cpp_callable_bindings->function_binding(object_cast($target, registered_function::class));
+			$header = $binding->header();
+			if ($header !== '') {
+				$context->headers[$header] = true;
+			}
+			return $binding->symbol();
 		}
 		if ($target instanceof registered_static_factory) {
 			return self::runtime_reference(object_cast($target, registered_static_factory::class), $context);

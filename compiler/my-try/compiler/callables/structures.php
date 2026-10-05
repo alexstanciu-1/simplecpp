@@ -3,10 +3,44 @@
 /* Callable contracts have no source-storage requirement or backend spelling. */
 namespace scpp\compiler;
 
-interface callable_target_i
+interface callable_target_i extends preparation_lookup_candidate_i
 {
 	/** Read an established contract; analysis owns completion and dependency registration. */
 	public function signature(): callable_signature;
+}
+
+/** Installed free-function identity; source spelling is separate from provider identity. */
+final class registered_function implements callable_target_i
+{
+	private string $registration_key;
+	private string $source_name;
+	private callable_signature $call_contract;
+
+	/** Catalog installation publishes a complete, immutable-by-contract signature. */
+	public function __construct(string $key, string $name, callable_signature $signature)
+	{
+		if (($key === '') || ($name === '')) {
+			throw new \InvalidArgumentException('Runtime function identity and name must not be empty');
+		}
+		$this->registration_key = $key;
+		$this->source_name = $name;
+		$this->call_contract = $signature;
+	}
+
+	public function key(): string
+	{
+		return $this->registration_key;
+	}
+
+	public function name(): string
+	{
+		return $this->source_name;
+	}
+
+	public function signature(): callable_signature
+	{
+		return $this->call_contract;
+	}
 }
 
 /** Published with its owning signature; never mutated after publication. */

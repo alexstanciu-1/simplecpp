@@ -35,7 +35,10 @@ $mixed = $registry->use(Model::$type_catalog->canonical('mixed')->type_id());
 $dynamic = $registry->use(Model::$type_catalog->canonical('dynamic')->type_id());
 $context = new preparation_context();
 $context->worker = new Preparation_Worker(Model::$language_scope);
-initialization_check($registry->application_count() === 0, 'Installation eagerly instantiated input types');
+$isolated_registry = new Type_Registry();
+$isolated_types = Type_Definition_Registration::install($isolated_registry);
+Initialization_Registration::install($isolated_types);
+initialization_check($isolated_registry->application_count() === 0, 'Installation eagerly instantiated input types');
 initialization_check(Model::$language_scope->types_named('initializer_list') === []
 	&& Model::$language_scope->types_named('initializer_entry') === [], 'Unsafe input types became source-visible');
 

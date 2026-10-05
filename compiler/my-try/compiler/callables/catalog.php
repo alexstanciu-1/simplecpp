@@ -6,10 +6,38 @@ namespace scpp\compiler;
 final class Runtime_Callables
 {
 	private Keyed_Storage $definitions /** Keyed_Storage<registered_static_factory> */;
+	private Keyed_Storage $functions /** Keyed_Storage<registered_function> */;
 
 	public function __construct()
 	{
 		$this->definitions = new Keyed_Storage /** Keyed_Storage<registered_static_factory> */();
+		$this->functions = new Keyed_Storage /** Keyed_Storage<registered_function> */();
+	}
+
+	/** Own a free-function identity independently of scope indexing and backend binding. */
+	public function register_function(string $key, string $name, callable_signature $signature): registered_function
+	{
+		$this->require_unused_key($key);
+		Callable_Contracts::validate($signature);
+		$target = new registered_function($key, $name, $signature);
+		$functions /** Keyed_Storage<registered_function> */ = $this->functions;
+		$functions->add($key, $target);
+		return $target;
+	}
+
+	public function function_definition(string $key): registered_function
+	{
+		$functions /** Keyed_Storage<registered_function> */ = $this->functions;
+		return $functions[$key];
+	}
+
+	private function require_unused_key(string $key): void
+	{
+		$definitions /** Keyed_Storage<registered_static_factory> */ = $this->definitions;
+		$functions /** Keyed_Storage<registered_function> */ = $this->functions;
+		if (isset($definitions[$key]) || isset($functions[$key])) {
+			throw new \LogicException('Duplicate runtime callable identity');
+		}
 	}
 
 	/** Keys are provider-qualified semantic identities, not C++ names or source lookup names. */
@@ -17,9 +45,7 @@ final class Runtime_Callables
 		callable_signature $signature): registered_static_factory
 	{
 		$definitions /** Keyed_Storage<registered_static_factory> */ = $this->definitions;
-		if (isset($definitions[$key])) {
-			throw new \LogicException('Duplicate runtime callable identity');
-		}
+		$this->require_unused_key($key);
 		Callable_Contracts::validate($signature);
 		$target = new registered_static_factory($key, $owner, $signature);
 		$definitions->add($key, $target);

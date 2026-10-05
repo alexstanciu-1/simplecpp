@@ -13,14 +13,70 @@ final class Call_Preparation
 			$definition = object_cast($target, collected_function::class);
 			$context->worker->require_declaration($context->owner, $definition);
 		}
-		elseif (!($target instanceof registered_static_factory)) {
+		elseif (!($target instanceof registered_static_factory) && !($target instanceof registered_function)) {
 			throw new \LogicException('Unsupported callable target for preparation');
 		}
 		return $target->signature();
 	}
 
+	/** Bounded installed overload selection: exact fixed value signatures, without conversion ranking. */
+	public static function prepare_named(array $targets /** vector<callable_target_i> */,
+		Storage $arguments /** Storage<expression_node> */, preparation_context $context): prepared_call
+	{
+		if (q_count($targets) === 1) {
+			return self::prepare($targets[0], $arguments, $context);
+		}
+		if (q_count($targets) === 0) {
+			throw new \RuntimeException('S2S named call has no resolved function');
+		}
+
+		foreach ($targets as $candidate)
+		{
+			if (!($candidate instanceof registered_function)) {
+				throw new \RuntimeException('S2S source function overloads are deferred');
+			}
+			$parameters /** Storage<callable_parameter> */ = $candidate->signature()->parameters;
+			foreach ($parameters as $parameter)
+			{
+				if (($parameter->mode !== passing_mode::value) || ($parameter->default_value !== null)
+					|| ($parameter->element_type !== null)) {
+					throw new \RuntimeException('S2S runtime overloads require fixed required value parameters');
+				}
+			}
+		}
+
+		// Prepare once without a candidate's contextual type; ambiguous literals need explicit targets.
+		foreach ($arguments as $argument) {
+			Expression_Preparation::prepare($argument, $context);
+		}
+		$matches /** vector<callable_target_i> */ = [];
+		foreach ($targets as $candidate)
+		{
+			$parameters /** Storage<callable_parameter> */ = $candidate->signature()->parameters;
+			if (q_count($parameters) !== q_count($arguments)) {
+				continue;
+			}
+			$matched = true;
+			foreach ($arguments as $index => $argument)
+			{
+				if (!$argument->require_preparation()->type->matches($parameters[$index]->type)) {
+					$matched = false;
+					break;
+				}
+			}
+			if ($matched) {
+				$matches[] = $candidate;
+			}
+		}
+		if (q_count($matches) !== 1) {
+			throw new \RuntimeException('S2S runtime call requires one exact signature; use explicit argument types');
+		}
+		return self::prepare($matches[0], $arguments, $context, true);
+	}
+
+	/** Admit one selected contract; exact-overload selection has already prepared its arguments. */
 	public static function prepare(callable_target_i $target, Storage $arguments /** Storage<expression_node> */,
-		preparation_context $context): prepared_call
+		preparation_context $context, bool $arguments_prepared = false): prepared_call
 	{
 		$facts = new prepared_call();
 		$facts->target = $target;
@@ -53,7 +109,8 @@ final class Call_Preparation
 			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
 			$argument_type = $parameter->element_type ?? $parameter->type;
-			$value = Expression_Preparation::prepare($argument, $context, $argument_type);
+			$value /** prepared_expression */ = $arguments_prepared
+				? $argument->require_preparation() : Expression_Preparation::prepare($argument, $context, $argument_type);
 			$prepared_argument = new prepared_call_argument();
 			if ($parameter->mode === passing_mode::reference) {
 				if ((!$value->addressable) || !Type_Preparation::same_storage_type($value->type, $parameter->type)) {
