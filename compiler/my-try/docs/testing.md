@@ -29,8 +29,20 @@ dynamic condition, lazy-selection and shared boxed-operator programs against a r
 The operator matrix uses the same source/probe cases for mixed and dynamic, with
 explicit family-specific expectations only for container identity and text labels.
 `--no-pch` checks header completeness.
-This focused export excludes the still-unmigrated container fixtures rather than
-claiming the full S2S suite or native compiler passes.
+This is a focused export, not a full S2S suite or native compiler rebuild.
+
+For the broader Chapter 05/06 mixed/dynamic and container regression:
+
+```bash
+python3 compiler/my-try/tests/container_regression.py --results /tmp/FRESH_CONTAINER_RESULTS
+```
+
+Runs 22 retained PHP suites, including the full S2S fixture export. It compiles the
+selected families' state probes, each containing the original entry program plus
+independent assertions, without also compiling a redundant uninstrumented copy.
+The exporter marks these entries explicitly with `state_probe`; fixture name
+suffixes are not the selection protocol. `--no-pch` is also available. This uses a
+rebuilt snippet runtime, not a rebuilt native compiler.
 
 For the mixed field-layout and shared packed-table storage checkpoints:
 

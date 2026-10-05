@@ -34,11 +34,11 @@ foreach (['nullable', 'result', 'result_or_false'] as $family)
 			. 'auto text = function_choose(absent, fallback, n, f); '
 			. 'fallback = scpp::mixed_t{scpp::string_t{"changed"}}; '
 			. 'auto nil = function_choose(absent, scpp::mixed_t{scpp::null}, n, f); '
-			. 'auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); scpp::mixed_t object{scpp::dynamic_box(table)}; '
+			. 'auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); scpp::mixed_t object{table}; '
 			. 'auto handle = function_choose(absent, object, n, f); '
 			. 'return n.native_value() == 3 && f.native_value() == 3 && !absent.has_value().native_value()'
 			. ' && text.get_string().native_value() == "fallback" && nil.is_null().native_value()'
-			. ' && handle.dynamic_if()->get() == table.get() && object.dynamic_if()->get() == table.get()'
+			. ' && handle.table_if() == table.get() && object.table_if() == table.get()'
 			. ' && table->empty().native_value(); }())';
 		$fixtures['mixed_wrapper_coalesce_' . $family . '_' . $payload] = [$source, $probe];
 	}

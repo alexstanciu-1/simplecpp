@@ -66,15 +66,15 @@ $fixtures['mixed_selection_failure'] = [
 		. 'try { function_branchfail(out, n); } catch (const std::runtime_error&) { ++caught; } '
 		. 'return caught == 4 && n.native_value() == 4 && out.get_string().native_value() == "old"; }())',
 ];
-$fixtures['mixed_selection_table_bridge'] = [
+$fixtures['mixed_selection_shared_table'] = [
 	'function choose(mixed $v): mixed { return true ? $v : 1; } '
 		. 'function coalesce(mixed $v): mixed { return $v ?? 1; } '
 		. 'function elvis(mixed $v): mixed { return $v ?: 1; }',
 	'([&]() { auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); '
-		. 'scpp::mixed_t object{scpp::dynamic_box(table)}; auto selected = function_choose(object); '
+		. 'scpp::mixed_t object{table}; auto selected = function_choose(object); '
 		. 'auto present = function_coalesce(object); bool caught = false; '
 		. 'try { (void)function_elvis(object); } catch (const std::runtime_error&) { caught = true; } '
-		. 'return caught && selected.dynamic_if()->get() == table.get() && present.dynamic_if()->get() == table.get()'
+		. 'return caught && selected.table_if() == table.get() && present.table_if() == table.get()'
 		. ' && table->empty().native_value(); }())',
 ];
 return $fixtures;

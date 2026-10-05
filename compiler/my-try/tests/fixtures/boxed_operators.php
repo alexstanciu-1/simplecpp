@@ -1,7 +1,7 @@
 <?php
 
 /* One source/probe matrix for both families; only the family spelling is substituted. */
-$cases = [];
+$operator_cases = [];
 foreach (['add' => ['+', '+=', 11, 11.0], 'subtract' => ['-', '-=', 7, 7.0],
 	'multiply' => ['*', '*=', 18, 18.0], 'divide' => ['/', '/=', 4, 4.5],
 	'remainder' => ['%', '%=', 1, 0.0]] as $name => [$op, $update, $integer, $floating]) {
@@ -28,9 +28,9 @@ foreach (['add' => ['+', '+=', 11, 11.0], 'subtract' => ['-', '-=', 7, 7.0],
 		. 'try { function_store(a, bad, out); } catch (const std::runtime_error&) { ++caught; } '
 		. 'if (a.get_int().native_value() != 9 || out.get_string().native_value() != "old") return false; } '
 		. 'return caught == 4 && b.get_int().native_value() == 2; }())';
-	$cases[$name] = [$source, $probe];
+	$operator_cases[$name] = [$source, $probe];
 }
-$cases['unary_and_snapshots'] = [
+$operator_cases['unary_and_snapshots'] = [
 	'function source(BOX $v, int &$n): BOX { $n++; return $v; } '
 		. 'function positive(BOX $v, int &$n): BOX { return +source($v, $n); } '
 		. 'function negative(BOX $v, int &$n): BOX { return -source($v, $n); } '
@@ -49,7 +49,7 @@ $cases['unary_and_snapshots'] = [
 		. '&& v.get_int().native_value() == 4 && before.get_float().native_value() == 1.5 '
 		. '&& f.get_float().native_value() == 2.5; }())',
 ];
-$cases['failures'] = [
+$operator_cases['failures'] = [
 	'function divide(BOX &$v, BOX $rhs): void { $v /= $rhs; } '
 		. 'function modulo(BOX &$v, BOX $rhs): void { $v %= $rhs; } '
 		. 'function increment(BOX &$v): void { $v++; } '
@@ -67,7 +67,7 @@ $cases['failures'] = [
 		. 'function_ordinary(v); try { function_typed(v); } catch (const std::runtime_error&) { ++caught; } '
 		. 'return caught == 5 && v.get_float().native_value() == 9.5 && text.get_string().native_value() == "2"; }())',
 ];
-$cases['comparisons'] = [
+$operator_cases['comparisons'] = [
 	'function check(): bool { $n BOX = 1; $s BOX = "1"; $f BOX = 1.0; $b BOX = true; $nil BOX = null; '
 		. 'return $n === 1 && 1 === $n && $n !== 1.0 && 1.0 !== $n '
 		. '&& $s === "1" && "1" === $s && $f === 1.0 && 1.0 === $f '
@@ -79,7 +79,7 @@ $cases['comparisons'] = [
 		. 'try { function_invalid(B{scpp::string_t{"1"}}, out); } catch (const std::runtime_error&) { ++caught; } '
 		. 'return function_check().native_value() && caught == 1 && out.native_value(); }())',
 ];
-$cases['text'] = [
+$operator_cases['text'] = [
 	'function append(BOX &$v): BOX { return $v .= "!"; } '
 		. 'function join(BOX $v): string { return "[" . $v . "]"; } '
 		. 'function failure(BOX &$v): void { $v .= (1 / 0); } '
@@ -92,7 +92,7 @@ $cases['text'] = [
 		. 'return caught == 2 && old.get_string().native_value() == "7!" '
 		. '&& v.get_string().native_value() == "7!!" && copy.get_int().native_value() == 7; }())',
 ];
-$cases['containers'] = [
+$operator_cases['containers'] = [
 	'function read(): BOX { $v BOX = {n: 7}; return $v["n"] + 1; } '
 		. 'function aliases(): bool { $a BOX = {n: 1}; $b = $a; return $a === $b; } '
 		. 'function independent(): bool { $a BOX = {n: 1}; $b BOX = {n: 1}; return $a === $b; } '
@@ -103,7 +103,7 @@ $cases['containers'] = [
 ];
 $fixtures = [];
 foreach (['mixed' => 'scpp::mixed_t', 'dynamic' => 'scpp::dynamic_t<>'] as $family => $cpp) {
-	foreach ($cases as $name => [$source, $probe]) {
+	foreach ($operator_cases as $name => [$source, $probe]) {
 		$fixtures['boxed_' . $family . '_' . $name] = [str_replace('BOX', $family, $source),
 			str_replace(['CPPBOX', 'INDEPENDENT', 'CONTAINER'],
 				[$cpp, $family === 'mixed' ? 'true' : 'false', $family === 'mixed' ? 'Array' : 'Object'], $probe)];

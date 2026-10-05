@@ -70,6 +70,8 @@ foreach ([
 	'$d dynamic = 7; $m mixed = 8; $v = $d === $m;',
 	'$d dynamic = 7; $m mixed = 8; $v = $d . $m;',
 	'$d dynamic = 7; $m mixed = 8; $d += $m;',
+	'function store(dynamic &$d, mixed $v): void { $d["child"]["new"] = $v; }',
+	'function store(mixed &$m, dynamic $v): void { $m["child"]["new"] = $v; }',
 	'$d dynamic = 7; $v = $d || "yes";',
 	'$d dynamic = 7; $v = $d ?: null;',
 	'$d dynamic = 7; $v = null ?? $d;',

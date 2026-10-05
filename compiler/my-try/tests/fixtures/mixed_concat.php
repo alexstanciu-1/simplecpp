@@ -8,7 +8,7 @@ foreach (['null' => ['scpp::mixed_t{scpp::null}', ''],
 	'float' => ['scpp::mixed_t{scpp::float_t{1.5}}', '1.5'],
 	'string' => ['scpp::mixed_t{scpp::string_t{"hello"}}', 'hello'],
 	'table' => ['scpp::mixed_t{scpp::shared<scpp::hash_t<scpp::mixed_t>>()}', 'Array'],
-	'dynamic' => ['scpp::mixed_t{scpp::dynamic_box(scpp::shared<scpp::hash_t<scpp::mixed_t>>())}', 'Object']]
+	'owned_table' => ['scpp::mixed_t{scpp::unique<scpp::hash_t<scpp::mixed_t>>()}', 'Array']]
 	as $name => [$value, $expected])
 {
 	$fixtures['mixed_concat_' . $name] = [

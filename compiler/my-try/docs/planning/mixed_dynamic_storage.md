@@ -728,3 +728,38 @@ at `/tmp/my-try-boxed-operators-20261005-regressions`; they are now included in 
 focused runner for subsequent runs. Attempt two exposed the text-conversion gap;
 attempt one covered only the pre-existing eighteen generated fixtures. FPM socket
 startup was unavailable; all PHP checks used recorded CLI fallback.
+
+### Broad generated-program reconciliation — 2026-10-05
+
+The retained Chapter 05/06 native observations now use tagged dynamic accessors
+and same-family payloads. Source-created mixed tables are observed through
+`table_if()` rather than assuming the old shared native carrier. Their copied
+wrappers are distinct; dynamic container copies preserve identity. Existing
+ordering, lazy access, copy isolation and failure/partial-creation checks remain.
+Native mixed shared/weak carriers still have their own retained coverage.
+
+Impossible cross-family native insertion is replaced by non-constructibility
+assertions and source preparation rejections. Explicit container casts still test
+runtime failure before partial creation. This does not restore an old family bridge
+or relax the separated-family contract.
+
+`container_regression.py` runs 22 retained PHP suites, including the full S2S export,
+then compiles/runs 318 selected assertion-bearing programs against a rebuilt snippet
+runtime. Each state probe includes its original entry program; the runner uses an
+explicit export flag instead of compiling that program twice. The newer boundary,
+selection and shared operator matrices are now part of the common export. Their
+integration exposed a fixture-local `$cases` variable overwriting the exporter's
+case collection; that variable is now fixture-specific.
+
+No production compiler/runtime change was needed at this checkpoint. Next is
+shared mixed/dynamic Result payload admission, followed by JSON source registration.
+Optional library integration remains Chapter 15 debt. This is not a native compiler
+rebuild or Chapter 06 completion.
+
+Evidence: `/tmp/my-try-family-regression-20261005-3` passes all 22 PHP suites and
+318 assertion-bearing generated programs with PCH. The preceding `-2` run passed
+636 programs before duplicate base compilations were removed. The final run also
+includes the added nested-write preparation rejections and strengthened retained
+mixed-carrier assertions. Attempt one exposed the fixture variable collision and
+an incorrect suite filename in the new runner, both corrected. PHP used recorded
+CLI fallback because FPM socket startup was unavailable.

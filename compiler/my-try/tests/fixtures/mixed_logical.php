@@ -19,7 +19,7 @@ foreach (['and' => '&&', 'or' => '||', 'wordand' => 'and', 'wordor' => 'or'] as 
 		. 'bool expected = a ' . ($is_and ? '&&' : '||') . ' b; bool needed = ' . ($is_and ? 'a' : '!a') . '; '
 		. 'if (function_evaluate(values[i], values[j], l, r).native_value() != expected '
 		. '|| l.native_value() != 1 || r.native_value() != int(needed)) return false; } '
-		. 'auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); scpp::mixed_t bad{scpp::dynamic_box(table)}; '
+		. 'scpp::mixed_t bad{scpp::unique<scpp::hash_t<scpp::mixed_t>>()}; '
 		. 'scpp::mixed_t skip{' . ($is_and ? 'false' : 'true') . '}, need{' . ($is_and ? 'true' : 'false') . '}; '
 		. 'scpp::int_t<> l{0LL}, r{0LL}; function_evaluate(skip, bad, l, r); '
 		. 'if (l.native_value() != 1 || r.native_value() != 0) return false; int caught = 0; '

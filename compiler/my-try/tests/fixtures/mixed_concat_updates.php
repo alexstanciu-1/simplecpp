@@ -43,9 +43,9 @@ $fixtures['mixed_concat_update_boundaries'] = [
 $fixtures['mixed_concat_update_tables'] = [
 	'function update(mixed &$v): mixed { return $v .= "!"; }',
 	'([&]() { auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); '
-		. 'scpp::mixed_t a{table}, b{scpp::dynamic_box(table)}, alias{table}; '
+		. 'scpp::mixed_t a{table}, b{scpp::unique<scpp::hash_t<scpp::mixed_t>>()}, alias{table}; '
 		. 'if (function_update(a).get_string().native_value() != "Array!" '
-		. '|| function_update(b).get_string().native_value() != "Object!") return false; '
+		. '|| function_update(b).get_string().native_value() != "Array!") return false; '
 		. 'return table->empty().native_value() && alias.shared_table_if()->get() == table.get(); }())',
 ];
 return $fixtures;

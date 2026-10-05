@@ -597,7 +597,10 @@ $mixed_fixtures = array_merge(require __DIR__ . '/fixtures/mixed_boundaries.php'
 	require __DIR__ . '/fixtures/mixed_updates.php',
 	require __DIR__ . '/fixtures/mixed_logical.php',
 	require __DIR__ . '/fixtures/mixed_concat.php',
-	require __DIR__ . '/fixtures/mixed_concat_updates.php');
+	require __DIR__ . '/fixtures/mixed_concat_updates.php',
+	require __DIR__ . '/fixtures/dynamic_boundaries.php',
+	require __DIR__ . '/fixtures/dynamic_selections.php',
+	require __DIR__ . '/fixtures/boxed_operators.php');
 $data_fixtures = require __DIR__ . '/fixtures/data_initialization.php';
 $read_fixtures = require __DIR__ . '/fixtures/container_reads.php';
 $write_fixtures = require __DIR__ . '/fixtures/container_writes.php';
@@ -633,7 +636,7 @@ foreach ($cases as $name => [$source, $exit])
 			$probe_text = "#include \"scpp/memory.hpp\"\n#include \"scpp/hash_t.hpp\"\n" . $probe_text;
 		}
 		file_put_contents($probe_path, $probe_text);
-		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
+		$executions[] = ['path' => $probe_path, 'exit_code' => 0, 'state_probe' => true];
 	}
 	if ($name === 'nullable_explicit_string') {
 		$probe_path = $directory . '/' . $name . '_value.cpp';

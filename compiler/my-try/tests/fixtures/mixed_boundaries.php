@@ -98,12 +98,11 @@ foreach ($payloads as $payload => [$cpp_type, $initial, $values])
 			. ' && bad.kind() == scpp::mixed_t::kind_t::shared_table_v; }())',
 	];
 }
-$fixtures['mixed_copy_dynamic_bridge'] = [
+$fixtures['mixed_copy_separated_families'] = [
 	'function pass(mixed $v): mixed { return $v; } function passdynamic(dynamic $v): dynamic { return $v; }',
-	'([&]() { auto object = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); '
-		. 'scpp::mixed_t original{scpp::dynamic_box(object)}; auto copy = function_pass(original); '
-		. 'return copy.kind() == scpp::mixed_t::kind_t::dynamic_v'
-		. ' && copy.dynamic_if()->get() == original.dynamic_if()->get()'
-		. ' && function_passdynamic(object).get() == object.get(); }())',
+	'([&]() { auto object = scpp::dynamic_t<>::make_container(); auto copy = function_passdynamic(object); '
+		. 'scpp::mixed_t original{scpp::unique<scpp::hash_t<scpp::mixed_t>>()}; auto value = function_pass(original); '
+		. 'return copy.table_if() == object.table_if() && value.table_if() != original.table_if() '
+		. '&& value.table_if()->size() == 0 && original.table_if()->size() == 0; }())',
 ];
 return $fixtures;

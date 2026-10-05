@@ -28,7 +28,7 @@ foreach (['add' => ['+', 11, 11.0], 'subtract' => ['-', 7, 7.0],
 	$probe .= 'auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); int caught = 0; '
 		. 'scpp::mixed_t out{scpp::string_t{"unchanged"}}; '
 		. 'for (const auto& bad : {scpp::mixed_t{scpp::null}, scpp::mixed_t{true}, '
-		. 'scpp::mixed_t{scpp::string_t{"12"}}, scpp::mixed_t{table}, scpp::mixed_t{scpp::dynamic_box(table)}}) { '
+		. 'scpp::mixed_t{scpp::string_t{"12"}}, scpp::mixed_t{table}, scpp::mixed_t{scpp::unique<scpp::hash_t<scpp::mixed_t>>()}}) { '
 		. 'try { function_store(bad, b, out); } catch (const std::runtime_error&) { ++caught; } '
 		. 'try { function_store(a, bad, out); } catch (const std::runtime_error&) { ++caught; } } '
 		. 'return caught == 10 && out.get_string().native_value() == "unchanged"'

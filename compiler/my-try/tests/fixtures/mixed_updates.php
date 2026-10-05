@@ -41,7 +41,7 @@ foreach (['preincrement' => ['++$v', 5, 5, 2.5, 2.5], 'postincrement' => ['$v++'
 			. 'if (floating.float_value().native_value() != ' . $float_result . ' || value.float_value().native_value() != ' . $float_stored . ') return false; '
 			. 'auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); int caught = 0; '
 			. 'for (auto bad : {scpp::mixed_t{true}, scpp::mixed_t{scpp::null}, scpp::mixed_t{scpp::string_t{"2"}}, '
-			. 'scpp::mixed_t{scpp::dynamic_box(table)}}) { auto kind = bad.kind(); '
+			. 'scpp::mixed_t{scpp::unique<scpp::hash_t<scpp::mixed_t>>()}}) { auto kind = bad.kind(); '
 			. 'try { function_update(bad); } catch (const std::runtime_error&) { ++caught; } '
 			. 'if (bad.kind() != kind) return false; } '
 			. 'return caught == 4 && result.int_value().native_value() == ' . $result . '; }())',

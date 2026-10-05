@@ -39,8 +39,8 @@ Factories perform runtime construction/data validation. User-defined types opt i
 through recognized interfaces, not method-name detection. Their compiler connection
 waits for class/struct method/interface support; automatic member mapping is deferred.
 Nested mixed/dynamic construction inherits its enclosing family. The approved
-separated-family contract requires same-family entries; the current mixed-only
-dynamic implementation still needs migration. Dynamic containers preserve shared identity.
+separated-family contract requires same-family entries; both runtime and compiler
+construction signatures now enforce it. Dynamic containers preserve shared identity.
 Function-valued entries are documented for later implementation. Compiler literal
 pre-preparation belongs to the [v0.3 plan](../../../../docs/v0.3/literal_construction_preparation.md).
 
@@ -78,18 +78,17 @@ JSON defaults to tagged dynamic, including scalar roots; explicit mixed decoding
 family-aware typed extraction and direct string encoding remain implemented.
 MySQL ordinary/prepared row adapters construct tagged dynamic rows directly.
 
-**Remaining gate:** compiler family facts, boxing/extraction lowering, initializer/
-iteration bindings and source registrations must be reconciled with this breaking
-runtime API. Earlier source fixtures that emitted dynamic handles or cross-family
-boxing are historical evidence, not current passing integration proofs. No native
-compiler rebuild is claimed by the runtime checkpoint.
+**Remaining gate:** boxed Result payload operations and JSON source registration.
+Compiler family facts, boxing/extraction, initializer and iteration bindings have
+been reconciled with the breaking runtime API. Broad fixture reconciliation is
+recorded below; no native compiler rebuild is implied by generated-program proofs.
 
 First compiler integration checkpoint: explicit mixed/dynamic casts now retain
 `explicit_runtime_cast` in both directions and use checked scalar/null conversion.
 The `mixed_dynamic_box` operation and special nested-write exception are removed;
 ordinary conversion admission rejects implicit crossings, including insertion.
 The focused `dynamic_families.py` runner covers this boundary and the tagged-binding
-integration independently of still-unmigrated broad fixtures. `Boxed_Conversions`
+integration as a smaller focused checkpoint. `Boxed_Conversions`
 now serves scalar/null wrapping and checked scalar extraction for both families.
 Dynamic is a value-stored tagged binding, not a class-like shared handle. Registry
 initialization/indexing/iteration signatures now use dynamic-valued entries, keeping
@@ -107,9 +106,12 @@ local/parameter mutations and checked stored-kind write-back. One parameterized 
 matrix exercises both families, including dynamic-valued indexed reads. Family
 differences remain runtime-owned; no implicit cross-family operator admission was added.
 Indexed compound mutation, broader operator families and `->` remain deferred.
-JSON/library registrations and the broad generated
-fixture reconciliation are also pending. Do not infer a full Chapter 06/native
-compiler pass from the focused tagged-family suite.
+Broad generated fixtures now follow tagged dynamic accessors and same-family
+construction, retaining value-copy/sharing, ordering and failure-state assertions.
+The shared `container_regression.py` runner integrates the newer boxed-family
+matrix with the retained container cases. Boxed Result payload operations and
+JSON source registrations remain next; this is not a full Chapter 06/native
+compiler pass.
 
 Remaining library-specific integration (notably tasks) is deferred to
 [CH15-LIB-DYN-01](15_blocking_debt.md#ch15-lib-dyn-01--deferred-library-mixeddynamic-integration)

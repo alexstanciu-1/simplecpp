@@ -106,7 +106,7 @@ $fixtures['mixed_condition_table_runtime_failure'] = [
 		. 'function present(mixed $v): bool { return isset($v); } '
 		. 'function vacant(mixed $v): bool { return empty($v); }',
 	'([&]() { auto table = scpp::shared<scpp::hash_t<scpp::mixed_t>>(); '
-		. 'scpp::mixed_t boxed{table}; scpp::mixed_t object{scpp::dynamic_box(table)}; int caught = 0; '
+		. 'scpp::mixed_t boxed{table}; scpp::mixed_t object{scpp::unique<scpp::hash_t<scpp::mixed_t>>()}; int caught = 0; '
 		. 'try { (void)function_condition(boxed); } catch (const std::runtime_error&) { ++caught; } '
 		. 'try { (void)function_negate(boxed); } catch (const std::runtime_error&) { ++caught; } '
 		. 'try { (void)function_condition(object); } catch (const std::runtime_error&) { ++caught; } '
@@ -114,6 +114,6 @@ $fixtures['mixed_condition_table_runtime_failure'] = [
 		. 'return caught == 4 && function_present(boxed).native_value() && function_vacant(boxed).native_value()'
 		. ' && function_present(object).native_value() && function_vacant(object).native_value()'
 		. ' && table->empty().native_value() && boxed.shared_table_if()->get() == table.get()'
-		. ' && object.dynamic_if()->get() == table.get(); }())',
+		. ' && object.table_if()->size() == 0 && object.table_if() != table.get(); }())',
 ];
 return $fixtures;
