@@ -102,6 +102,33 @@ is now resolved; see Chapter 06's positive-pass conclusion.
 These items require review, not automatic implementation or an implicit promotion
 to blocking feature debt. Preserve the distinction from the blocking inventory above.
 
+### CH15-S2S-LIMITS-01 — review inherited S2S limitations
+
+Requested on 2026-10-06: review all old S2S limitations against the capabilities of
+the v0.2 semantic compiler. Do not preserve a restriction solely because the old
+type-blind generator could not resolve types, storage origins or control flow.
+This is a catalog-wide review debt, not approval to enable every excluded feature.
+
+Inventory restrictions and workarounds from the imported catalog cards, legacy
+generator rules/diagnostics/tests and relevant top-level contracts. For each, record
+its source, original reason, current semantic owner, prerequisites and disposition:
+already solved with proof, safely removable in a bounded slice, still a deliberate
+language/safety rule, or deferred with an explicit blocker. Link existing debts
+rather than duplicating their implementation queues.
+
+Candidates include conditional/loop alias restrictions (body-local aliases are
+already proved in Chapter 07), single-final-return restrictions, type-blind lowering
+workarounds, delayed C++ diagnostics and avoidable runtime checks. Preserve runtime
+checks for genuinely value-dependent failures; compile-time knowledge does not
+remove their necessity. Native interior-reference safety, family separation and
+intentional ownership restrictions are not automatically obsolete.
+
+Complete the review with a traceable disposition ledger and agreed follow-up slices.
+Any changed language contract needs explicit approval and an owning-spec update;
+implementation needs focused accepted/rejected, lifetime and incremental-recovery
+proofs where relevant. Record generated-program and native-compiler evidence
+separately. Reviewing a limitation does not itself resolve it or enable its syntax.
+
 ### CH15-CALLABLE-01 — callable values in mixed/dynamic entries
 
 Recorded at the user's request on 2026-10-05. Consider function/closure values in
