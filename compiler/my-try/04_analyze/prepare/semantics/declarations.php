@@ -37,6 +37,7 @@ final class Declaration_Preparation
 			$contracts->append($prepared->contract);
 		}
 
+		Reference_Preparation::prepare_signature($syntax, $facts->signature);
 		Callable_Contracts::validate($facts->signature);
 		$syntax->set_preparation($facts);
 	}

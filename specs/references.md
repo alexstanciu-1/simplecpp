@@ -119,6 +119,61 @@ The following are not native-reference bindable in the current safe subset:
 - any path that would require `mixed_t::as_*_ref()`
 - any path that would require exposing a native reference or pointer to interior dynamic storage
 
+## v0.2 bounded local aliases and reference returns
+
+The `compiler/my-try` implementation accepts both inferred and explicitly typed
+local bindings:
+
+```php
+$value int = 10;
+$alias =& $value;
+$typed_alias int =& $value;
+$alias = 20;                 // writes value; does not rebind alias
+$copy = $alias;              // normal value copy
+```
+
+Binding must introduce a new local. An existing variable cannot change from owning
+storage to an alias, and an alias cannot be rebound. Explicit types must designate
+the exact storage type (including the existing same-representation integer aliases);
+binding never inserts a conversion temporary. Ordinary lexical scope/shadowing rules
+apply, including rejecting a self-reference in an explicitly typed initializer.
+Plain nested blocks may contain bindings; conditional/loop/switch regions may not.
+An already established alias may be used and written within those regions.
+
+The target must already exist and outlive the alias's lexical scope. Whole locals,
+parameters, direct stable struct fields and alias chains are supported. Interior
+container/dynamic slots and temporary-derived fields remain forbidden. The alias
+does not extend its owner's lifetime. Aliasing a dynamic variable aliases its whole
+tagged value: replacing through the alias replaces that variable, unlike copying a
+dynamic value that shares a container payload.
+
+Initial reference-returning functions require an explicit return type matching
+exactly one fixed reference parameter; other by-value parameters are permitted.
+Their only return statement must be the final unconditional statement of the
+function body. It must select that whole parameter, directly or through local aliases:
+
+```php
+function &identity(int &$value): int {
+    $alias =& $value;
+    return $alias;
+}
+$value int = 10;
+$borrowed =& identity($value);
+$copy = identity($value);
+```
+
+Returning a local, by-value parameter, temporary or field/slot selection rejects
+during preparation. Calls substitute the supplying argument's storage origin; a
+reference-returning call does not extend its argument's lifetime. Capturing with
+`=&` preserves the alias, whereas normal assignment copies according to the type's
+ordinary copy contract. No implicit move or copyability exemption is introduced.
+
+For this initial implementation, reference-returning calls inside a reference-returning
+function are gated pending forwarding integration, even when a narrower case could
+be proven safe. Runtime-registered reference returns, const references and reference
+foreach are separate work. The advisory warning policy below remains intended;
+my-try's missing retained warning delivery is tracked as CH07-WARN-01 in its catalog.
+
 ## Runtime note
 
 The current safe subset treats typed native-reference extraction from `mixed_t` as disabled runtime surface. The legacy `.as_*_ref()` helpers may remain present temporarily for transition purposes, but they are not part of the supported safe reference model.

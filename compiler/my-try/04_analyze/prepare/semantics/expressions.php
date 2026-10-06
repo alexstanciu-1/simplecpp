@@ -111,7 +111,24 @@ final class Expression_Preparation
 	public static function prepare_assignment(assignment_expression_node $node, preparation_context $context): prepared_assignment_expression
 	{
 		$statement_assignment = $context->statement_assignment;
+		if ($node->binds_reference)
+		{
+			if (!$statement_assignment || !($node->target instanceof variable_reference_node)) {
+				throw new \RuntimeException('S2S reference binding requires a standalone local declaration');
+			}
+			$variable_target = object_cast($node->target, variable_reference_node::class);
+			$alias = new prepared_assignment();
+			$alias->binding = Reference_Preparation::bind($variable_target->occurrence(), null, $node->value, $context);
+			$alias->type = $alias->binding->type;
+			return $alias;
+		}
 		$context->statement_assignment = $statement_assignment && ($node->value instanceof assignment_expression_node);
+		if ($node->value instanceof assignment_expression_node) {
+			$inner_assignment = object_cast($node->value, assignment_expression_node::class);
+			if ($inner_assignment->binds_reference) {
+				$context->statement_assignment = false;
+			}
+		}
 		try
 		{
 			$target = $node->target;
@@ -304,7 +321,7 @@ final class Expression_Preparation
 		$reference = new prepared_variable_reference();
 		$reference->declaration = $targets[0]->declaration;
 		$reference->type = $targets[0]->storage_type();
-		$reference->place = new prepared_place($targets[0]);
+		$reference->place = Reference_Preparation::storage_place($targets[0]);
 		return $reference;
 	}
 

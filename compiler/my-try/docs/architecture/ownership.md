@@ -26,6 +26,13 @@ must follow the existing declaration-fact identity and retirement protocol. Symb
 reference-return contracts retain only a parameter index, never caller storage. These
 records describe origin, not permission to escape or ownership of the runtime value.
 
+Alias declaration facts share the original place in `alias_target`, never the target
+expression or another syntax edge. Reference-return facts similarly share the verified
+place. Transient body contexts hold the expected reference parameter and sole permitted
+return statement; neither is copied into callable contracts. Local aliases require
+earlier visible storage and cannot rebind or escape their lexical owner. Calls preserve
+the supplying argument's place, not a new lambda-local or callee-parameter lifetime.
+
 Model owns modules and global/language scopes. Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable

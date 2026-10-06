@@ -82,7 +82,12 @@ final class Call_Preparation
 		$facts->target = $target;
 		$facts->signature = self::require_signature($target, $context);
 		if ($facts->signature->reference_return !== null) {
-			throw new \RuntimeException('S2S reference-return calls await lifetime integration');
+			if (!($target instanceof collected_function)) {
+				throw new \RuntimeException('S2S runtime reference-return calls await lifetime integration');
+			}
+			if ($context->reference_return_parameter !== null) {
+				throw new \RuntimeException('S2S reference-return forwarding is deferred');
+			}
 		}
 		$facts->type = $facts->signature->return_type;
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
@@ -128,6 +133,10 @@ final class Call_Preparation
 			$prepared_arguments->append($prepared_argument);
 		}
 
+		if ($facts->signature->reference_return !== null) {
+			$origin /** reference_return_contract */ = $facts->signature->reference_return;
+			$facts->place = $arguments[$origin->parameter_index()]->require_preparation()->place;
+		}
 		return $facts;
 	}
 }

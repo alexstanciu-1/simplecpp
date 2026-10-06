@@ -105,7 +105,8 @@ final class CPP_Declarations
 		}
 
 		$function_declaration = object_cast($syntax->occurrence(), collected_function::class);
-		return self::type($facts->signature->return_type, $context) . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';
+		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
+		return self::type($facts->signature->return_type, $context) . $return_reference . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';
 	}
 
 	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */
@@ -195,7 +196,8 @@ final class CPP_Declarations
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 
 		// The immediately invoked lambda sequences arguments and contains their temporaries.
-		$text = '([&]() -> ' . self::type($facts->type, $context) . " {\n";
+		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
+		$text = '([&]() -> ' . self::type($facts->type, $context) . $return_reference . " {\n";
 		$names = '';
 		$separator = '';
 		$packed_names = '';

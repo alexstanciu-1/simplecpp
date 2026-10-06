@@ -48,7 +48,7 @@ reference parameter, with an explicit exact return type and a single return.
 Locals, by-value parameters and temporaries cannot supply an escaping reference.
 Forwarding requires a proven origin, not merely an addressable result.
 
-Implemented model-only foundation:
+Implemented at the model-only checkpoint (source integration follows below):
 
 - `prepared_expression::place` replaces the independent addressability flag.
   `addressable()` derives from its presence. A `prepared_place` identifies an
@@ -65,7 +65,7 @@ Implemented model-only foundation:
 
 Existing whole-storage reference calls and direct stable struct-field arguments
 continue unchanged, including by-value versus by-reference dynamic binding behavior.
-The compiler does not yet implement source reference returns or local alias syntax.
+At that checkpoint, source reference returns and local alias syntax were not enabled.
 Ownership-template classification, const semantics and escaping initialization views
 remain separate work; reference foreach stays disabled under Chapter 15.
 
@@ -80,8 +80,60 @@ semantics. Evidence: `/tmp/my-try-ch07-model-20261006`,
 `/tmp/my-try-ch07-baseline-proof-20261006`; the final model recheck is under
 `/tmp/my-try-ch07-model-final-20261006`. No native compiler rebuild for this slice.
 
-Next: integrate reduced local alias bindings, then the single-reference-parameter
-return case with body validation, call-site provenance and C++ reference lowering.
+The next checkpoint below integrates those previously gated source paths.
+
+## Local aliases and bounded reference returns — 2026-10-06
+
+Implemented both `$alias =& $value` and `$alias T =& $value` using the existing
+assignment/declaration nodes with explicit syntax markers. Function syntax records
+`function &name`. Parsing/collection do not decide lifetime safety.
+
+`Reference_Preparation` owns alias admission, original-place selection, symbolic
+return obligations and body validation. Bindings retain an optional shared
+`alias_target` place; reads retain their own declaration/name but use that original
+place. Ordinary writes do not rebind it. No reference type is added to the registry.
+New alias roots reject, and no conversion/copy is performed at a binding boundary.
+Transient context flags prohibit new bindings within conditional/loop/switch regions.
+Plain blocks follow existing lexical lifetime and shadowing rules.
+
+Reference-returning signatures require exactly one fixed reference parameter of
+the exact return type. Other by-value parameters remain possible. Declaration work
+publishes the origin without inspecting a body; body work independently requires
+one final unconditional return of that whole parameter, directly or through aliases.
+Every statement is checked, including unreachable returns. Successful preparation
+of the whole compilation remains required before emission. Body-only unsafe edits
+therefore withhold output even when the published signature remains unchanged.
+
+Calls substitute the actual argument's stable place. C++ signatures and sequencing
+lambdas both return `T&`; alias declarations emit `T&`, ordinary assignments still
+copy, and verified returns bypass value conversion. Direct stable struct fields may
+be call arguments, but projecting a field within the reference-returning body is
+outside its whole-parameter contract. No owner lifetime is extended.
+
+Limits: source reference-returning calls inside reference-returning functions remain
+gated pending forwarding integration, including their indirect use through aliases.
+Installed runtime reference returns, const semantics, reset/removal and ownership
+classification are not added. Reference foreach stays in Chapter 15.
+
+**CH07-WARN-01:** the existing return-by-reference advisory remains intended, but
+my-try has no retained warning/reporting path. Add it through a diagnostics owner,
+with incremental replacement/cleanup and host/native delivery, rather than emitting
+backend-specific warnings from preparation. Safety rejections already happen during
+preparation; this debt concerns non-fatal advice only.
+
+Proof runner: `python3 compiler/my-try/tests/references.py --results FRESH`.
+It checks alias/parameter origin, scope, exact typing, rebindings, temporary/interior
+rejections, alias returns, value copies, left-to-right argument evaluation and
+incremental signature/body failure/recovery. It compiles and executes generated C++;
+it does not rebuild the compiler natively. See the authoritative
+[reference contract](../../../../specs/references.md#v02-bounded-local-aliases-and-reference-returns).
+
+Verified evidence: `/tmp/my-try-references-verified-20261006` passes 8 focused PHP
+suites, 34 rejection cases and all 11 generated-C++ executions. Six additional
+retained suites pass under `/tmp/my-try-references-regression-20261006` and
+`/tmp/my-try-references-calls-20261006` (the calls suite was rerun with its required
+output-directory argument). No native compiler rebuild was performed. The two
+pre-existing operator-suite failures from the model checkpoint remain separate debt.
 
 ## Ownership-type validation debt from chapter 05
 
@@ -104,15 +156,15 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [FUNC-REF-001](#func-ref-001) | pending-discussion | `function f(int &$a): void {}` | unverified | unverified | deferred | — |
-| [FUNC-REF-002](#func-ref-002) | pending-discussion | `function &f(): int {}` | unverified | unverified | deferred | — |
-| [FUNC-REF-003](#func-ref-003) | pending-discussion | `function &f(int &$a): int {}` | unverified | unverified | deferred | — |
-| [FUNC-REF-004](#func-ref-004) | pending-discussion | `function &f($a) { return $a; }` | unverified | unverified | deferred | — |
+| [FUNC-REF-001](#func-ref-001) | supported | `function f(int &$a): void {}` | prepared | verified | deferred | Existing call path plus references proof |
+| [FUNC-REF-002](#func-ref-002) | rejected-bounded | `function &f(): int {}` | rejects | no output | deferred | Requires exactly one reference parameter |
+| [FUNC-REF-003](#func-ref-003) | supported-with-debt | `function &f(int &$a): int { return $a; }` | prepared | verified | deferred | Whole-parameter lifetime proof; CH07-WARN-01 |
+| [FUNC-REF-004](#func-ref-004) | rejected | `function &f($a) { return $a; }` | explicit types required | no output | deferred | Existing signature grammar |
 | [VAR-UNSET-001](#var-unset-001) | pending-discussion | `unset($a);` | unverified | unverified | deferred | — |
 | [VAR-CLEAN-001](#var-clean-001) | pending-discussion | `clean($a);` | unverified | unverified | deferred | — |
-| [REF-RETURN-001](#ref-return-001) | pending-discussion | `function &bounce(array &$a) { return get_inner($a); }` | unverified | unverified | deferred | — |
-| [REF-RETURN-002](#ref-return-002) | pending-discussion | `function &get_inner(array &$arr): array { return $arr["inner"]; }` | unverified | unverified | deferred | — |
-| [REF-BIND-001](#ref-bind-001) | pending-discussion | `$inner =& $arr["inner"];` | unverified | unverified | deferred | — |
+| [REF-RETURN-001](#ref-return-001) | deferred-gated | `function &bounce(int &$a): int { return id($a); }` | rejects | no output | deferred | Forwarding integration remains next |
+| [REF-RETURN-002](#ref-return-002) | rejected | Reference return of an indexed element | rejects | no output | deferred | Whole-parameter return only; no native interior reference |
+| [REF-BIND-001](#ref-bind-001) | rejected | `$inner =& $arr["inner"];` | rejects | no output | deferred | No native container-interior alias |
 | [TYPE-VAR-003A](#type-var-003a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-003B](#type-var-003b) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-003C](#type-var-003c) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
@@ -121,14 +173,14 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-PARAM-003F](#type-param-003f) | pending-discussion | `function f(const vector<int> &$values): int { return count($values); }` | unverified | unverified | deferred | — |
 | [WARN-TYPE-PARAM-001](#warn-type-param-001) | pending-discussion | `function f(array $a): void { $a = []; }` | unverified | unverified | deferred | — |
 | [TYPE-VAR-007A](#type-var-007a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-VAR-008](#type-var-008) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [TYPE-VAR-008](#type-var-008) | supported-strict | `$r int =& $x;` | prepared | verified | deferred | Reduced local binding; legacy annotation spelling not added |
 | [NOTE-038](#note-038) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 | [NOTE-056](#note-056) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-059](#note-059) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-059](#note-059) | debt | Reference-return advice | warning delivery deferred | — | deferred | CH07-WARN-01 |
 | [NOTE-060](#note-060) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## FUNC-REF-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
 
 ### Imported version 1
 
@@ -165,7 +217,7 @@ void_t f(int_t& a);
 
 ## FUNC-REF-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
 
 ### Imported version 1
 
@@ -202,7 +254,7 @@ int_t& f();
 
 ## FUNC-REF-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
 
 ### Imported version 1
 
@@ -239,7 +291,7 @@ int_t& f(int_t& a);
 
 ## FUNC-REF-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
 
 ### Imported version 1
 
@@ -350,7 +402,7 @@ php::clean(a);
 
 ## REF-RETURN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
 
 ### Imported version 1
 
@@ -387,7 +439,7 @@ ERROR
 
 ## REF-RETURN-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
 
 ### Imported version 1
 
@@ -424,7 +476,7 @@ ERROR
 
 ## REF-BIND-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
 
 ### Imported version 1
 

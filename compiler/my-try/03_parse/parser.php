@@ -654,6 +654,10 @@ final class Parser_Run
 		}
 
 		$this->expect('function');
+		$returns_reference = $this->text() === '&';
+		if ($returns_reference) {
+			$this->position++;
+		}
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return') || ($this->text() === 'void'))) {
 			throw new \RuntimeException($this->error_message('Expected function name'));
 		}
@@ -740,6 +744,7 @@ final class Parser_Run
 		}
 
 		$function->return_type = $return_type;
+		$function->returns_reference = $returns_reference;
 		$body->syntax_changed = $body->syntax_changed || $body_changed;
 		$function->set_parsed_body($body);
 		$function->parameters = $parameters;
@@ -848,6 +853,10 @@ final class Parser_Run
 			: object_cast($type, type_node::class);
 		if ($this->text() === '=') {
 			$this->position++;
+			$declaration->binds_reference = $this->text() === '&';
+			if ($declaration->binds_reference) {
+				$this->position++;
+			}
 			$declaration->initializer = $this->expression();
 		}
 		if ($terminated) { $this->expect(';'); }
@@ -915,6 +924,10 @@ final class Parser_Run
 					}
 					$assignment = new assignment_expression_node();
 					$assignment->target = object_cast($left, assignable_expression_node::class);
+					$assignment->binds_reference = $this->text() === '&';
+					if ($assignment->binds_reference) {
+						$this->position++;
+					}
 					$assignment->value = $this->binary_expression($precedence);
 					$this->finish_node($assignment, $start);
 					$left = $assignment;

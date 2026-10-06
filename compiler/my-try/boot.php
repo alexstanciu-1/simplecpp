@@ -45,6 +45,7 @@ require_once __DIR__ . '/compiler/iteration/contracts.php';
 require_once __DIR__ . '/compiler/initialization/structures.php';
 require_once __DIR__ . '/compiler/initialization/catalog.php';
 require_once __DIR__ . '/04_analyze/prepare/data/structures.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/references.php';
 require_once __DIR__ . '/03_parse/structures/structures_specialization.php';
 require_once __DIR__ . '/03_parse/structures/structures_conditional.php';
 require_once __DIR__ . '/03_parse/structures/structures_probes.php';

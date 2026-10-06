@@ -75,10 +75,13 @@ specialized facts; both views return the same attached object.
 Expression `place` is optional storage provenance, not an independent addressability
 flag; consumers query `addressable()`. Reference preparation creates whole-declaration
 or parameter roots; stable direct struct-field preparation extends that place.
-Copied/indexed values and temporary-derived fields remain placeless. Escape checks
-belong to analysis, not place records. Callable signatures can describe a symbolic
-whole-reference-parameter return, but calls using it still reject until lifetime
-integration. No reference-return source behavior is enabled by this model alone.
+Copied/indexed values and temporary-derived fields remain placeless. `Reference_Preparation`
+owns alias declaration admission and original-place selection. Its bounded source
+reference-return path publishes a whole-parameter contract at declaration time and
+verifies the sole final return during body work. Calls substitute the actual argument's
+place; returned facts bypass value conversion. Runtime reference returns and forwarding
+within reference-returning bodies remain gated. Alias/return syntax carries explicit
+markers but makes no lifetime decisions; C++ emission only consumes completed facts.
 
 Facts identify exact roles where known: calls reference `callable_target_i` (source
 functions, installed runtime free functions or static factories); source record types reference structs.

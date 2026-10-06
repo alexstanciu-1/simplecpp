@@ -239,6 +239,9 @@ final class CPP_Generator
 		$prefix = '';
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
+			if ($binding->alias_target !== null) {
+				$prefix = CPP_Declarations::type($binding->type, $context) . '& ';
+			}
 		}
 		if ($binding->conversion !== null) {
 			$value = CPP_Declarations::conversion($value, $binding->conversion, $context);
@@ -256,6 +259,9 @@ final class CPP_Generator
 		$expression /** expression_node */ = $syntax->expression;
 		$value = (new CPP_Syntax($context))->expression($expression);
 		if ($context->return_type !== null) {
+			if ($syntax->require_preparation()->reference_target !== null) {
+				return "\treturn " . $value . ";\n";
+			}
 			$decision = $syntax->require_preparation()->require_conversion();
 			return "\treturn " . CPP_Declarations::conversion($value, $decision, $context) . ";\n";
 		}

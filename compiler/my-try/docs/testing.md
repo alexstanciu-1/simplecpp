@@ -17,6 +17,16 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For local aliases and bounded reference returns:
+
+```bash
+python3 compiler/my-try/tests/references.py --results /tmp/FRESH_REFERENCE_RESULTS
+```
+
+Runs focused preparation/model/recovery suites and compiles/executes generated
+alias and reference-return programs with PCH. `--php-only` skips C++ execution.
+Neither mode rebuilds the compiler itself natively.
+
 For the compiler's tagged-family boundaries and container-signature checkpoint:
 
 ```bash

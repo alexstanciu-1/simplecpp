@@ -8,6 +8,21 @@ final class Body_Preparation
 	/** Analysis owns statement dispatch, fact attachment and completion composition. */
 	public static function prepare_statement(statement_node $node, preparation_context $context): statement_completion
 	{
+		$allowed = $context->alias_declarations_allowed;
+		if (($node instanceof if_node) || ($node instanceof loop_node) || ($node instanceof switch_node)) {
+			$context->alias_declarations_allowed = false;
+		}
+		try {
+			return self::prepare_statement_core($node, $context);
+		}
+		finally {
+			$context->alias_declarations_allowed = $allowed;
+		}
+	}
+
+	/** Dispatch within the lexical reference-binding policy selected by the enclosing statement. */
+	private static function prepare_statement_core(statement_node $node, preparation_context $context): statement_completion
+	{
 		if ($node instanceof unset_node) {
 			$removal = object_cast($node, unset_node::class);
 			$removal->set_preparation(Keyed_Path_Preparation::prepare($removal->target, $context, true));
@@ -44,6 +59,11 @@ final class Body_Preparation
 		}
 		if ($node instanceof variable_declaration_node) {
 			$variable = object_cast($node, variable_declaration_node::class);
+			if ($variable->binds_reference) {
+				$variable->set_preparation(Reference_Preparation::bind(
+					$variable->occurrence(), $variable->type_syntax, $variable->initializer, $context));
+				return new statement_completion(true);
+			}
 			$variable->set_preparation(self::prepare_local_storage(
 				$variable->occurrence(), $variable->type_syntax, $variable->initializer, $context));
 			return new statement_completion(true);
@@ -215,6 +235,9 @@ final class Body_Preparation
 	/** Function returns use the signature; program-entry returns remain scalar exit values. */
 	public static function prepare_return(return_node $syntax, preparation_context $context): prepared_return
 	{
+		if ($context->reference_return_parameter !== null) {
+			return Reference_Preparation::prepare_return($syntax, $context);
+		}
 		$facts = new prepared_return();
 		if ($syntax->expression === null)
 		{
@@ -248,6 +271,7 @@ final class Body_Preparation
 	{
 		$signature = $syntax->require_preparation();
 		$context->return_type = $signature->signature->return_type;
+		Reference_Preparation::begin_body($syntax, $context);
 		$locals = $context->locals;
 		$parameters /** Storage<prepared_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {

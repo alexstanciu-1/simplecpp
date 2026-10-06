@@ -36,6 +36,9 @@ final class prepared_place
 				if ($binding->resolved_kind !== binding_kind::declaration) {
 					throw new \LogicException('A storage root must be a declaration, not a write');
 				}
+				if ($binding->alias_target !== null) {
+					throw new \LogicException('An alias must reuse its original storage place');
+				}
 			}
 			elseif (!($storage instanceof prepared_parameter)) {
 				throw new \LogicException('A storage root requires a local or parameter');
@@ -252,9 +255,11 @@ abstract class prepared_storage {
 
 /** A local binding or member write retains its resolved storage declaration and canonical type. */
 final class prepared_binding extends prepared_storage {
+	/** Alias declarations retain the original place, never a second owning root. */
+	public ?prepared_place $alias_target = null;
 	public canonical_type_use $type;
 	public binding_kind $resolved_kind;
-	/** Null only when an inferred declaration has no pre-existing expected type. */
+	/** Absent for alias bindings, uninitialized storage and inferred value declarations. */
 	public ?conversion_decision $conversion = null;
 	public function storage_type(): canonical_type_use { return $this->type; }
 }
@@ -374,6 +379,11 @@ final class preparation_context
 	public ?canonical_type_use $return_type = null;
 	/** Only a statement-root assignment and its direct RHS chain may introduce locals. */
 	public bool $statement_assignment = false;
+	/** Structured conditional/loop regions prohibit new alias bindings. */
+	public bool $alias_declarations_allowed = true;
+	/** Transient reference-return obligation; neither field is retained on facts. */
+	public ?prepared_parameter $reference_return_parameter = null;
+	public ?return_node $reference_return_statement = null;
 	public canonical_type_use $integer;
 	public canonical_type_use $boolean;
 	public canonical_type_use $floating;
@@ -548,6 +558,8 @@ final class prepared_index_path_step
 final class prepared_return
 {
 	public ?conversion_decision $conversion = null;
+	/** A verified reference return bypasses value conversion and copying. */
+	public ?prepared_place $reference_target = null;
 
 	public function require_conversion(): conversion_decision
 	{

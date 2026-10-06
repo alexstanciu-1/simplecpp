@@ -673,6 +673,8 @@ final class function_node extends declaration_node
 	public string $name;
 	public Storage $parameters /** Storage<parameter_node> */;
 	public type_node $return_type;
+	/** Explicit source marker; its lifetime contract is established by preparation. */
+	public bool $returns_reference = false;
 	public function_body_node $body;
 	/** A failed later parse may retain an earlier body; this is not current-file completion. */
 	private bool $parsed_body = false;
@@ -1031,6 +1033,7 @@ final class assignment_expression_node extends expression_node
 
 	public assignable_expression_node $target;
 	public assignment_operator $operator = assignment_operator::assign;
+	public bool $binds_reference = false;
 	public expression_node $value;
 
 	public function kind(): node_kind
@@ -1149,6 +1152,7 @@ final class variable_declaration_node extends statement_node
 	public string $name;
 	public type_node $type_syntax;
 	public ?expression_node $initializer = null;
+	public bool $binds_reference = false;
 
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void

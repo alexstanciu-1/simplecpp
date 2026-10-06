@@ -89,9 +89,12 @@ before publication and treated as immutable afterward, like other prepared facts
 An optional `reference_return_contract` identifies a whole reference parameter by
 its immutable index; absence denotes a value return. Structural validation requires
 an exact-type fixed reference parameter. This is a symbolic contract, not a source
-body proof or a caller lifetime. Signature comparison includes it. Reference-return
-execution remains gated during preparation until lifetime integration; initialization
-factories require value returns.
+body proof or a caller lifetime. Signature comparison includes it. Source signatures
+derive it from exactly one fixed reference parameter; body preparation verifies the
+whole-parameter return independently. Calls substitute the actual argument's place.
+Runtime reference-return execution remains gated; initialization factories require
+value returns. Reference-returning calls within reference-returning bodies remain
+outside this first integration.
 
 Expression facts carry optional `prepared_place`, with `addressable()` derived from
 presence. Places select original local declarations or parameters and may project
@@ -99,6 +102,15 @@ through direct stable struct fields. `root_storage()` preserves that identity;
 parameter facts distinguish value and reference origins. Values, indexed reads and
 temporary-derived fields have no place. Place queries do not decide whether a borrow
 may escape; that analysis belongs to workers. See [ownership](ownership.md).
+
+`prepared_binding::alias_target` retains a shared original place for an alias
+declaration. Alias reads keep the alias's own collected identity for naming but
+select that original place; alias chains cannot manufacture a new root. The existing
+assignment and explicit declaration nodes record `binds_reference`, and function
+syntax records `returns_reference`. `Reference_Preparation` admits these forms and
+checks the transient body obligation. Verified returns retain `reference_target`
+instead of a value conversion. C++ call sequencing preserves `T&` in its lambda
+return type; ordinary value destinations still copy normally.
 
 `prepared_call` weakly references the selected target and shares its completed
 signature. `Call_Preparation` admits arguments independently of target selection;
