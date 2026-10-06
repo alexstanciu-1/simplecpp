@@ -29,6 +29,9 @@ final class Conversion_Preparation
 			&& !Boxed_Conversions::is_family_crossing($source, $target)) {
 			throw new \RuntimeException('S2S explicit cast target is not supported');
 		}
+		if ((Ownership_Conversions::role($source) !== null) || (Ownership_Conversions::role($target) !== null)) {
+			return Ownership_Conversions::decide($source, $target, $context);
+		}
 		if ((Result_Conversions::role($source) !== null) || (Result_Conversions::role($target) !== null)) {
 			return Result_Conversions::decide($source, $target, $context);
 		}

@@ -39,8 +39,8 @@ final class Cleanup_Preparation
 					throw new \RuntimeException('S2S unset cannot detach a native reference parameter');
 				}
 			}
-			if (Nullable_Conversions::payload($value->type) === null) {
-				throw new \RuntimeException('S2S whole-variable unset requires nullable storage; use clean for values');
+			if ((Nullable_Conversions::payload($value->type) === null) && (Ownership_Conversions::role($value->type) === null)) {
+				throw new \RuntimeException('S2S whole-variable unset requires nullable storage or an ownership handle; use clean for values');
 			}
 		}
 		elseif (!self::supports_clean($value->type)) {

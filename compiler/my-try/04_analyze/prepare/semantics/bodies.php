@@ -212,7 +212,7 @@ final class Body_Preparation
 			}
 		}
 		if ($value !== null) {
-			Capability_Preparation::require_copy($binding->type, $context);
+			Capability_Preparation::require_initialization($binding->type, $binding->conversion, $context);
 		}
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$locals->add($entry->name, $binding);

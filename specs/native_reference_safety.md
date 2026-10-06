@@ -63,7 +63,7 @@ auto& box_ref = box;
 reference detachment or destruction of the variable's storage. The name remains
 usable and native aliases to that storage remain bound.
 
-- Whole-variable `unset` resets nullable storage to its absent state. Applying it
+- Whole-variable `unset` resets nullable storage or a shared/unique/weak handle to its absent state. Applying it
   directly to a native alias or reference parameter is rejected, not interpreted
   as PHP-style alias detachment. Resetting the original nullable owner while aliases
   exist is valid; all those aliases observe absence and can later assign a value.
@@ -75,7 +75,7 @@ usable and native aliases to that storage remain bound.
   cleaning dynamic storage does **not** clear the old shared container in place.
   Other copied dynamic bindings retain that object; native aliases to the reset
   variable instead observe null. No cross-family conversion is involved.
-- `clean` is not the nullable-reset spelling; use `unset` on the owner or ordinary
+- `clean` is not the nullable/ownership-handle reset spelling; use `unset` on the owner or ordinary
   null assignment through an alias/reference parameter. Result wrappers and arbitrary
   structs do not acquire a cleanup contract from this rule.
 - Keyed `unset($container[$key])` is a separate removal operation governed by
@@ -83,8 +83,8 @@ usable and native aliases to that storage remain bound.
   remain unchanged, including when the root variable is a native alias.
 
 The initial compiler slice accepts a single variable operand as a statement.
-Direct property resets, indexed `clean`, value-producing forms and ownership-pointer
-families await their own admission/model work. An already valid local alias to a
+Direct property resets, indexed `clean` and value-producing forms
+await their own admission/model work. An already valid local alias to a
 stable field can be cleaned according to its selected storage type. These limits
 do not relax the prohibition on heap-interior references.
 

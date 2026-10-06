@@ -194,7 +194,8 @@ not claimed without measurements. This supersedes the imported `php::clean` spel
 for this compiler. Legacy runtime scalar `unset` overloads remain implementation
 evidence, not permission to bypass the narrower source contract.
 
-Non-goals/debt: ownership-pointer resets (CH07-OWN-EXEC-01), arbitrary structs/Result
+Ownership-pointer resets were deferred here and are integrated in the empty-state
+checkpoint below. Remaining non-goals/debt: arbitrary structs/Result
 cleanup, direct property resets, indexed `clean`, variadic/value-producing forms,
 PHP-style symbol removal and reference detachment. Legacy runtime overload cleanup
 is separate from this compiler admission slice; no runtime behavior was broadened.
@@ -249,6 +250,32 @@ Evidence: `/tmp/my-try-ownership-final-20261006` passed nine focused PHP suites,
 runner used its documented CLI fallback because FPM socket creation was denied.
 No native compiler rebuild, runtime wrapper change or performance claim is included.
 
+## Ownership empty state and presence — 2026-10-06
+
+All three ownership families support default empty construction, null storage
+initialization/assignment and whole-variable `unset`. Native alias/reference-parameter
+null assignment works; `unset` directly on those references still rejects. `clean`
+does not accept ownership handles. Unique null construction is a prepared
+`ownership_empty` conversion, not a relaxation of its noncopyable capability.
+
+Shared/unique conditions (including loops and ternary conditions), unary `!`,
+`isset`, `empty` and strict null comparisons inspect handle presence without copying
+or reading the pointee. Weak implicit presence forms reject during preparation.
+The existing nullable comparison worker is generalized as `Presence_Operators`;
+all families use shared conversion/probe/reset paths, not new per-family AST nodes.
+Parsing remains unchanged and C++ emission consumes prepared decisions.
+
+Null argument/return conversions, explicit bool casts, direct handle `&&`/`||`,
+handle-valued selection joins, allocation, source moves and weak locking remain
+outside this slice. Use boolean presence probes for combined conditions.
+Nonempty destruction/weak expiration proofs await construction/locking integration.
+
+Evidence: `tests/ownership.py`, `/tmp/my-try-ownership-state-20261006-final`:
+12 focused PHP suites, 34 source rejections, seven generated C++ programs without
+PCH. Recovery includes changing a shared signature to weak while retaining its
+presence-using body, no-change retry, repair and cleanup/re-preparation. FPM socket
+restrictions required CLI fallback. The compiler itself was not rebuilt natively.
+
 ## Ownership-type validation debt from chapter 05
 
 **CH05-OWN-01 — resolved:** the model slice above supplies semantic ownership
@@ -256,8 +283,8 @@ classification and rejects direct nesting/value wrapping by definition role.
 Direct nesting is deliberately excluded from v0.2, not pending automatic enablement.
 
 **CH07-OWN-EXEC-01 — remaining ownership operations:** source allocation, explicit
-move spelling and transfer/return analysis, weak locking, empty-state/null/reset
-integration, class/member lifetime rules and precise additional target constraints
+move spelling and transfer/return analysis, weak locking,
+class/member lifetime rules and precise additional target constraints
 remain separate work. Current formation of a type does not certify those operations.
 Low-level pointer escapes and specialized deleters remain deferred. Do not revive
 source weak truthiness from the runtime's expiration-only bool convenience.

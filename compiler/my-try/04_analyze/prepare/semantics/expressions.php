@@ -184,7 +184,7 @@ final class Expression_Preparation
 		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment);
-		Capability_Preparation::require_copy($binding->type, $context);
+		Capability_Preparation::require_initialization($binding->type, $binding->conversion, $context);
 		Type_Preparation::require_value_type($binding->type);
 		return $binding;
 	}

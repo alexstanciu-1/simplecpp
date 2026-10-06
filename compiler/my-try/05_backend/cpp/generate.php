@@ -514,16 +514,16 @@ final class CPP_Generator
 			// Both operands are native bool: C++ must skip the RHS when the left decides the result.
 			return 'scpp::bool_t((' . $logical_left . ') ' . $logical_spelling . ' (' . $logical_right . '))';
 		}
-		if (($decision->operation === operator_operation::nullable_is_null)
-			|| ($decision->operation === operator_operation::nullable_not_null)) {
-			// Preparation admits exactly one nullable and one non-storable null sentinel.
+		if (($decision->operation === operator_operation::presence_is_null)
+			|| ($decision->operation === operator_operation::presence_not_null)) {
+			// Preparation admits one nullable/owning handle and one non-storable null sentinel.
 			// Presence is independent of payload identity and evaluates the value once.
 			$value = $left;
 			if (Type_Queries::canonical($decision->operands[0]->source_type)->family() === type_family::null_sentinel) {
 				$value = $right;
 			}
 			$presence = '(' . $value . ').has_value()';
-			if ($decision->operation === operator_operation::nullable_is_null) {
+			if ($decision->operation === operator_operation::presence_is_null) {
 				$context->headers['scpp/generated/operators.hpp'] = true;
 				return '(!' . $presence . ')';
 			}

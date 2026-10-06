@@ -454,7 +454,7 @@ type exposure or storage binding. `$x = null` still rejects without a destinatio
   and test presence rather than payload truthiness. Reference parameters retain
   exact-storage rules; extraction never manufactures a reference.
 
-Owners: `conversions/nullable.php`, `operators/nullable.php`, shared type/expression
+Owners: `conversions/nullable.php`, `operators/presence.php`, shared type/expression
 preparation and prepared decisions consumed by C++ emission. Tests: `tests/nullable.py`
 and the `nullable_*` exports in `tests/s2s.php`; incremental recovery and syntax/fact
 cleanup are covered by `tests/nullable.php`. This is PHP-hosted compiler plus generated

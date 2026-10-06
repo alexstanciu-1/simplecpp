@@ -107,7 +107,7 @@ final class Operator_Preparation
 				if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
 					return Boxed_Operators::decide($source_operator, $operands);
 				}
-				return Nullable_Operators::decide_null_comparison($source_operator, $operands, $context);
+				return Presence_Operators::decide_null_comparison($source_operator, $operands, $context);
 			}
 		}
 		if (($source_operator === operator_kind::pre_increment) || ($source_operator === operator_kind::post_increment)
@@ -141,7 +141,7 @@ final class Operator_Preparation
 		if ($source_operator === operator_kind::logical_not)
 		{
 			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope))
-				|| Boxed_Conversions::is_boxed($operands[0]))
+				|| Boxed_Conversions::is_boxed($operands[0]) || (Ownership_Conversions::role($operands[0]) !== null))
 			{
 				$decision = new operator_decision();
 				$decision->source_operator = $source_operator;

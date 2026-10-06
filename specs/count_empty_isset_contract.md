@@ -30,6 +30,17 @@ Normative rule:
 - keyed `isset(...)` must not collapse into pure key-existence semantics when the stored value can be `null`
 - wrapper sentinel states must not be reported as present merely because a wrapper object exists
 
+### v0.2 ownership-handle admission
+
+For `shared<T>` and `unique<T>`, `isset` means the handle is present and `empty`
+means it is absent. Neither reads the pointee or copies the handle. A present
+handle to false/zero is still present and not empty. Conditions, unary negation
+and strict null comparisons use that same presence meaning.
+Weak handles require explicit locking; implicit conditions, negation, probes and
+null comparisons are rejected during preparation. Legacy runtime weak observers
+do not grant source-level permission or keep the observed object alive.
+Ownership handles do not acquire a `count` contract.
+
 ## 3. `count(...)`
 
 `count(...)` returns the logical size only for countable carriers.

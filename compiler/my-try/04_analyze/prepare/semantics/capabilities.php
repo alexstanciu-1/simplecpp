@@ -19,6 +19,18 @@ final class Capability_Preparation implements type_capability_query
 		return $record->syntax()->require_preparation()->has_capability($capability);
 	}
 
+	/** Constructing an empty handle does not read/copy an existing handle, including unique. */
+	public static function require_initialization(canonical_type_use $type_use,
+		?conversion_decision $conversion, preparation_context $context): void
+	{
+		if ($conversion !== null) {
+			if ($conversion->operation === conversion_operation::ownership_empty) {
+				return;
+			}
+		}
+		self::require_copy($type_use, $context);
+	}
+
 	/** Current owned-value boundaries require copying; implicit ownership transfer is deferred. */
 	public static function require_copy(canonical_type_use $type_use, preparation_context $context): void
 	{

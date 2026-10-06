@@ -353,6 +353,17 @@ than silently stealing on ordinary assignment; source move syntax, temporary/ret
 transfer rules, allocation and broader member operations remain separate slices.
 This model decision does not claim those operations are already implemented.
 
+Empty-state integration: all three families default empty and accept null storage
+initialization/assignment. Whole-variable `unset` resets the handle; aliases remain
+bound. Null assignment through a native alias/reference parameter is valid, while
+`unset` directly on either remains rejected. `clean` does not accept these handles.
+Empty unique construction is not a copy and does not enable ordinary unique copying.
+Shared/unique conditions, negation, `isset`, `empty` and strict null comparisons
+inspect handle presence, never the pointee's truthiness. Weak implicit presence
+forms reject during preparation; use explicit locking once available.
+The initial source slice does not add null argument/return conversions, handle-valued
+selection joins, explicit bool casts or direct handle logical binary operations.
+
 #### Runtime API baseline
 
 - these wrappers have the same role as `std::shared_ptr`, `std::unique_ptr`, and `std::weak_ptr`, but remain part of the project semantic API rather than raw STL leakage

@@ -25,6 +25,7 @@ enum conversion_operation
 	case explicit_runtime_cast;
 	case text_conversion;
 	case nullable_empty;
+	case ownership_empty;
 	case nullable_wrap;
 	case nullable_extract;
 	case result_wrap;
@@ -56,6 +57,7 @@ enum truthiness_operation
 	case boolean_identity;
 	case scalar_condition;
 	case nullable_condition;
+	case ownership_presence;
 	case result_condition;
 	case error_condition;
 	case boxed_condition;

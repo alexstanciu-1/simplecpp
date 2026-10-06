@@ -54,8 +54,8 @@ enum operator_operation {
 	case index_null_read;
 	case index_store;
 	case index_append;
-	case nullable_is_null;
-	case nullable_not_null;
+	case presence_is_null;
+	case presence_not_null;
 	case integer_bitwise_and;
 	case integer_bitwise_or;
 	case integer_bitwise_xor;

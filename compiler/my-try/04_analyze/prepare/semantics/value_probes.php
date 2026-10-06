@@ -34,6 +34,10 @@ final class Value_Probe_Preparation
 			throw new \RuntimeException('S2S probes do not support effective storage modifiers');
 		}
 		$payload = Nullable_Conversions::payload($type);
+		if (Ownership_Conversions::role($type) !== null) {
+			Ownership_Conversions::require_presence($type);
+			return;
+		}
 		$result_role = Result_Conversions::role($type);
 		$container = Model::$indexing_contracts->lookup(Type_Queries::canonical($type)->definition());
 		if ($container !== null) {

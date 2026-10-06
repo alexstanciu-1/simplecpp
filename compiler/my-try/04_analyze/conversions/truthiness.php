@@ -8,6 +8,14 @@ final class Condition_Truthiness
 	/** Wrapper conditions use their state/payload contract, never explicit bool casts. */
 	public static function decide(canonical_type_use $source): truthiness_decision
 	{
+		if (Ownership_Conversions::role($source) !== null)
+		{
+			Ownership_Conversions::require_presence($source);
+			$decision = new truthiness_decision();
+			$decision->source_type = $source;
+			$decision->operation = truthiness_operation::ownership_presence;
+			return $decision;
+		}
 		if (Boxed_Conversions::is_boxed($source))
 		{
 			if ($source->by_value()) {

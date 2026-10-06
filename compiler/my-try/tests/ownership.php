@@ -26,6 +26,9 @@ function ownership_source(string $source): string
 }
 
 $cases = [
+	'empty_reset' => 'function reset_unique(unique<int> &$u): void { $u = null; } $s shared<int> = null; $u unique<int> = null; $w weak<int> = null; $a =& $u; $a = null; reset_unique($u); $s = null; $w = null; unset($s); unset($u); unset($w); if (isset($u)) { return 1; } if (!empty($s)) { return 2; } return 0;',
+	'presence' => '$s shared<int>; $u unique<int>; if ($s) { return 1; } elseif ($u) { return 2; } while ($u) { return 3; } for (; $s;) { return 4; } do { if (!$u) { break; } return 5; } while ($s); $n = $u ? 1 : 0; if ($s !== null) { return 6; } if (null !== $u) { return 7; } if (!($s === null)) { return 8; } if (!(null === $u)) { return 9; } return $n;',
+	'observe_once' => 'function observe(shared<int> $s, int &$calls): shared<int> { $calls += 1; return $s; } $s shared<int>; $calls = 0; if (observe($s, $calls)) { return 1; } $p = observe($s, $calls) === null; $q = isset(observe($s, $calls)); $r = empty(observe($s, $calls)); if ($calls !== 4) { return 2; } if (!$p) { return 3; } if ($q) { return 4; } if (!$r) { return 5; } return 0;',
 	'handles' => '$s shared<int>; $copy = $s; $w weak<int>; $observer = $w; $u unique<int>; $alias =& $u; return 0;',
 	'holder' => 'struct Holder { unique<int> $item; } $h shared<Holder>; $copy = $h; $w weak<Holder>; $observer = $w; $owned unique<Holder>; return 0;',
 	'container' => '$v vector<shared<int>>; $h hash<weak<int>>; $s shared<vector<shared<int>>>; return 0;',
@@ -53,6 +56,17 @@ $rejections[] = ['function bad(shared<unique<int>> $v): void {}', 'Direct owners
 $rejections[] = ['$v vector<shared<shared<int>>>;', 'Direct ownership wrapper nesting'];
 $rejections[] = ['$v unique<int>; $copy = $v;', 'copyable'];
 $rejections[] = ['$w weak<int>; if ($w) {}', 'truthiness'];
+foreach (['!$w', 'isset($w)', 'empty($w)', '$w === null', 'null !== $w'] as $expression) {
+	$rejections[] = ['$w weak<int>; $test = ' . $expression . ';', 'explicit lock'];
+}
+foreach (['shared', 'unique', 'weak'] as $family) {
+	$rejections[] = ['$v ' . $family . '<int>; clean($v);', 'clean'];
+	$rejections[] = ['$v ' . $family . '<int>; $alias =& $v; unset($alias);', 'alias'];
+	$rejections[] = ['$v ' . $family . '<int> = 1;', 'ownership boundary'];
+}
+$rejections[] = ['$u unique<int>; $copy = ($u = null);', 'copyable'];
+$rejections[] = ['function consume(unique<int> $u): void {} consume(null);', 'ownership boundary'];
+$rejections[] = ['function make(): unique<int> { return null; }', 'ownership boundary'];
 foreach ($rejections as [$source, $message])
 {
 	$failed = false;
@@ -71,14 +85,14 @@ mkdir($directory);
 $path = $directory . '/main.phs';
 try
 {
-	$valid = 'function borrow(shared<int> &$v): void {} $s shared<int>; borrow($s); return 0;';
+	$valid = 'function borrow(shared<int> &$v): void {} function absent(shared<int> $v): bool { return !$v; } $s shared<int>; borrow($s); if (!absent($s)) { return 1; } return 0;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = Model::$cpp_files[0]->text;
-	foreach (['shared<shared<int>>', 'value<shared<int>>'] as $invalid_type)
+	foreach (['shared<shared<int>>', 'value<shared<int>>', 'weak<int>'] as $invalid_type)
 	{
 		file_put_contents($path, str_replace('shared<int>', $invalid_type, $valid));
 		foreach ([[$path], []] as $changes)

@@ -24,7 +24,8 @@ final class CPP_Declarations
 			$context->headers['lang/php/support/php_string.hpp'] = true;
 			return 'scpp::php::to_string(' . $expression . ')';
 		}
-		if ($decision->operation === conversion_operation::nullable_empty) {
+		if (($decision->operation === conversion_operation::nullable_empty)
+			|| ($decision->operation === conversion_operation::ownership_empty)) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
 		if (($decision->operation === conversion_operation::nullable_wrap)
@@ -65,6 +66,9 @@ final class CPP_Declarations
 	/** Render the prepared condition operation using the established runtime authority. */
 	public static function truthiness(string $expression, truthiness_decision $decision, cpp_generation_context $context): string
 	{
+		if ($decision->operation === truthiness_operation::ownership_presence) {
+			return 'static_cast<bool>((' . $expression . ').has_value())';
+		}
 		if ($decision->operation === truthiness_operation::boolean_identity) {
 			return '(' . $expression . ').native_value()';
 		}
