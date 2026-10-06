@@ -36,8 +36,11 @@ python3 compiler/my-try/tests/namespaces.py --results /tmp/FRESH_NAMESPACE_RESUL
 Checks semicolon/braced namespaces, reopened bodies, same-namespace cross-file
 functions/structs, duplicate rejection, absent global/parent fallback, unchanged
 identity, edits, namespace moves and failed-parse recovery. Compiles the resulting
-units without PCH and converts tokenizer/parser source. Qualified-reference syntax
-and imports remain outside this slice; no native compiler rebuild is claimed.
+units without PCH and converts tokenizer/parser source. Qualified calls, struct type
+paths (locals, fields, signatures and construction), and a registry-supplied constant
+exercise rooted/current-relative resolution. The retained qualified-lookup fixture
+uses authored syntax and checks missing namespace additions, moves, ambiguity and
+consumer cleanup. Imports remain outside this slice; no native compiler rebuild is claimed.
 
 For the namespace identity/backend model checkpoint:
 

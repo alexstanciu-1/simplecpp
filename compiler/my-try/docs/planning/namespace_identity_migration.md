@@ -6,9 +6,9 @@ Language rules are agreed in [the v0.2 contract](../../../../specs/namespaces_v0
 Status: coordinated migration approved by the user; implementation in progress.
 Canonical identity/backend, executable-work links and source-body inventory consumers
 are implemented below. Named namespace parsing/reconciliation and scope-retention
-integration are implemented with bare-name lookup. Dependency-observed qualified
-lookup has a model-level checkpoint; qualified-reference parsing remains unfinished.
-Imports follow source integration.
+integration are implemented with bare-name and dependency-observed qualified lookup.
+Qualified-reference parsing is integrated for supported calls, named types and
+registered constant references. Body-local imports are next.
 
 ## Why this is more than adding namespace parsing
 
@@ -302,3 +302,31 @@ The portable-PHP skill informed explicit scope ownership and nullable guards. No
 conversion, native compiler rebuild or generated-program execution is claimed for
 this model slice. **Qualified-reference source parsing remains next**, followed by
 body-local imports. The shared namespace runner includes the new model fixture.
+
+## Qualified source-reference checkpoint — 2026-10-06
+
+One parser name scanner now serves consumption and lookahead for rooted and
+current-relative paths. Existing call, constant-reference and named-type nodes retain
+the complete spelling and token span. Local/field/parameter/return types, template
+type arguments, cast lookahead and construction use the same type path. Nullable
+declaration lookahead now reuses that scanner instead of maintaining a second type
+grammar. Parsing does not resolve the path or mutate the namespace registry for a
+reference; collection and analysis keep their existing ownership.
+
+The qualified lookup recovery fixture now starts from authored source, rather than
+manually changing a collected name. Source constant declarations, imports, qualified
+runtime aliases, new member-call features and template-call execution remain outside
+this slice. Existing type/wrapper/constructor admission still applies after parsing.
+There are no C++ emitter changes: lowering consumes the already resolved canonical
+definition identities and artifact dependencies.
+
+Evidence on `12c6a802` plus this overlay:
+`/tmp/my-try-qualified-parser-20261006-4/summary.json` records six PHP suites,
+16 generated-program executions without PCH, and tokenizer/parser conversion.
+Rooted/global/current-relative calls, rooted/relative struct locals, qualified
+signature/field types, construction and registry-supplied constants are exercised.
+Syntax-only nullable/template payload checks do not claim broader wrapper admission.
+The initial construction fixture tried shared-handle field access, outside existing
+member-access support; the corrected fixture isolates qualified construction.
+The compiler itself was not rebuilt. The portable-PHP skill guided explicit types
+and the shared scan/consume structure. Next: the agreed body-local import families.

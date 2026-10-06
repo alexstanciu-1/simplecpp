@@ -43,10 +43,32 @@ $cases = [
 	'nested_path' => ['main.phs' => 'namespace A\B { function value(): int { return 7; } return value(); }'],
 	'global_block' => ['main.phs' => 'namespace A {} namespace { return 7; }'],
 	'semicolon_reopen' => ['main.phs' => 'namespace A; function value(): int { return 7; } namespace A; return value();'],
+	'qualified_root' => ['main.phs' => 'namespace App; return \\Lib\\value();',
+		'lib.phs' => 'namespace Lib; function value(): int { return 7; }'],
+	'qualified_relative' => ['main.phs' => 'namespace App; $box Sub\\Box; $box->value = Sub\\value(); return $box->value;',
+		'lib.phs' => 'namespace App\\Sub; struct Box { int $value; } function value(): int { return 7; }',
+		'other.phs' => 'namespace Sub; function value(): int { return 11; }'],
+	'qualified_global' => ['main.phs' => 'namespace App; function value(): int { return 11; } return \\value();',
+		'lib.phs' => 'function value(): int { return 7; }'],
+	'qualified_types' => ['main.phs' => 'namespace App; $box \\Lib\\Box; $box->value = 7; return \\Lib\\read(\\Lib\\copy($box));',
+		'lib.phs' => 'namespace Lib; struct Box { int $value; } function copy(\\Lib\\Box $box): \\Lib\\Box { return $box; } function read(\\Lib\\Box $box): int { return $box->value; }'],
+	'qualified_fields' => ['main.phs' => 'namespace App; struct Outer { \\Lib\\Box $box; } $outer Outer; $outer->box->value = 7; return $outer->box->value;',
+		'lib.phs' => 'namespace Lib; struct Box { int $value; }'],
+	'qualified_new' => ['main.phs' => 'namespace App; $box = new \\Lib\\Box(); return 7;',
+		'lib.phs' => 'namespace Lib; struct Box { int $value; }'],
+	'qualified_constant' => ['main.phs' => 'namespace App; return \\Lib\\LIMIT;'],
 ];
 $outputs = [];
 foreach ($cases as $name => $sources) {
 	$compiler = namespace_project($sources);
+	if ($name === 'qualified_constant') {
+		// Registry-supplied constant; source constant declarations are a separate feature.
+		$constant = new integer_constant_definition();
+		$constant->name = 'LIMIT';
+		$constant->type = Language_Types::integer(Model::$language_scope);
+		$constant->decimal = '7';
+		Model::$namespaces->register('Lib')->published_scope()->register_constant($constant);
+	}
 	$compiler->exec_cpp();
 	$outputs[$name] = CPP_Output::encode(Model::$cpp_files);
 }
@@ -57,6 +79,11 @@ foreach ([
 	'function value(): int { return 1; } namespace A { return value(); }' => 'value',
 	'namespace A { function value(): int { return 1; } } namespace A\B { return value(); }' => 'value',
 	'namespace A { function value(): int { return 1; } } namespace A { function value(): int { return 2; } return value(); }' => 'duplicate function name',
+	'namespace A { function value(): int { return 7; } return Missing\\value(); }' => 'Missing\\value',
+	'namespace A { return \\Missing\\value(); }' => 'Missing\\value',
+	'namespace A { return \\Missing\\LIMIT; }' => 'Missing\\LIMIT',
+	'namespace A { $box \\Missing\\Box; return 0; }' => 'Missing\\Box',
+	'return \\Lib\\();' => 'source name',
 ] as $text => $message) {
 	$compiler = namespace_project(['main.phs' => $text]);
 	$failed = false;

@@ -476,7 +476,7 @@ final class Parser_Run
 		if (string_byte_starts_with($this->text(), '$'))
 		{
 			$next = $this->text_at_offset(1);
-			if ($this->nullable_declaration_ahead() || (Source_Text::identifier($next) && ($next !== 'and') && ($next !== 'or') && ($next !== 'xor'))) {
+			if (($next === '\\') || $this->nullable_declaration_ahead() || (Source_Text::identifier($next) && ($next !== 'and') && ($next !== 'or') && ($next !== 'xor'))) {
 				return $this->variable_declaration();
 			}
 			return $this->expression_statement();
@@ -567,7 +567,7 @@ final class Parser_Run
 		while ($this->text() !== ';')
 		{
 			$next = $this->text_at_offset(1);
-			if (string_byte_starts_with($this->text(), '$') && ($this->nullable_declaration_ahead() || (Source_Text::identifier($next)
+			if (string_byte_starts_with($this->text(), '$') && (($next === '\\') || $this->nullable_declaration_ahead() || (Source_Text::identifier($next)
 				&& ($next !== 'and') && ($next !== 'or') && ($next !== 'xor')))) {
 				$initialization->append($this->variable_declaration(false));
 			}
@@ -740,7 +740,7 @@ final class Parser_Run
 		if ($this->text() === 'public') {
 			$this->position++;
 		}
-		if (!$this->identifier() && ($this->text() !== '?')) {
+		if (!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) {
 			throw new \RuntimeException($this->error_message('Expected field type'));
 		}
 		$type = $this->type_syntax($scope);
@@ -875,7 +875,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Function requires an explicit return type, including void'));
 		}
 		$this->expect(':');
-		if ((!$this->identifier() && ($this->text() !== '?')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
+		if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected return type name'));
 		}
 
@@ -922,7 +922,7 @@ final class Parser_Run
 			$access = storage_access::read_only;
 			$this->position++;
 		}
-		if ((!$this->identifier() && ($this->text() !== '?')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
+		if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected parameter type'));
 		}
 		$type = $this->type_syntax($scope);
@@ -991,6 +991,35 @@ final class Parser_Run
 	private function identifier(): bool
 	{
 		return Source_Text::identifier($this->text());
+	}
+
+	/** Scan one source name without resolving it or collecting speculative occurrences. */
+	private function source_name_end(int $offset): int
+	{
+		if ($this->text_at_offset($offset) === '\\') { $offset++; }
+		if (!Source_Text::identifier($this->text_at_offset($offset))) { return -1; }
+		$offset++;
+		while ($this->text_at_offset($offset) === '\\') {
+			$offset++;
+			if (!Source_Text::identifier($this->text_at_offset($offset))) { return -1; }
+			$offset++;
+		}
+		return $offset;
+	}
+
+	/** Existing name-bearing nodes retain source spelling, not a resolved identity. */
+	private function source_name(): string
+	{
+		$length = $this->source_name_end(0);
+		if ($length < 0) {
+			throw new \RuntimeException($this->error_message('Expected source name with identifier path segments'));
+		}
+		$name = '';
+		for ($offset = 0; $offset < $length; $offset++) {
+			$name .= $this->text();
+			$this->position++;
+		}
+		return $name;
 	}
 
 	/** Preserve the return keyword, optional expression and terminating semicolon. */
@@ -1358,7 +1387,7 @@ final class Parser_Run
 		if (($this->text() === '[') || ($this->text() === '{')) {
 			return $this->data_construction($this->position, null);
 		}
-		if ($this->identifier()) {
+		if ($this->identifier() || ($this->text() === '\\')) {
 			if ($this->text_at_offset(1) === '::')
 			{
 				$start = $this->position;
@@ -1377,9 +1406,9 @@ final class Parser_Run
 			if ($this->call_ahead()) {
 				return $this->call_expression();
 			}
-			$start = $this->position++;
+			$start = $this->position;
 			$constant = new constant_reference_node();
-			$constant->name = $this->name_at($start);
+			$constant->name = $this->source_name();
 			$this->finish_node($constant, $start);
 			$constant->collect($this->collector, $this->current_scope, $start);
 			return $constant;
@@ -1566,7 +1595,7 @@ final class Parser_Run
 		$first = string_byte_at($operand, 0);
 		return Source_Text::identifier($operand) || Source_Text::digit($first)
 			|| ($first === 36) || ($first === 39) || ($first === 34)
-			|| ($operand === '!') || ($operand === '~')
+			|| ($operand === '!') || ($operand === '~') || ($operand === '\\')
 			|| ($operand === '(') || ($operand === '[') || ($operand === '{')
 			|| (($first === 46) && (string_byte_len($operand) > 1));
 	}
@@ -1587,10 +1616,11 @@ final class Parser_Run
 	/** Scan the existing name / name<type,...> grammar; -1 means no complete type form. */
 	private function type_syntax_end(int $offset): int
 	{
-		if (!Source_Text::identifier($this->text_at_offset($offset))) {
+		while ($this->text_at_offset($offset) === '?') { $offset++; }
+		$offset = $this->source_name_end($offset);
+		if ($offset < 0) {
 			return -1;
 		}
-		$offset++;
 		if ($this->text_at_offset($offset) !== '<') {
 			return $offset;
 		}
@@ -1754,17 +1784,15 @@ final class Parser_Run
 		$call = new call_node();
 		$template_arguments /** Storage<named_type_node> */ = $call->template_arguments;
 		$arguments /** Storage<expression_node> */ = $call->arguments;
-		$call->name = $this->name_at($this->position++);
+		$call->name = $this->source_name();
 		if ($this->text() === '<')
 		{
 			$this->position++;
 			do
 			{
-				if (!$this->identifier()) {
-					throw new \RuntimeException($this->error_message('Expected explicit template type argument'));
-				}
-				$type_start = $this->position++;
-				$type = $this->named_type($type_start);
+				$type_start = $this->position;
+				$type_name = $this->source_name();
+				$type = $this->named_type($type_start, $type_name);
 				$template_arguments->append($type);
 				$type->collect($this->collector, $this->current_scope, $type_start);
 				if ($this->text() !== ',') {
@@ -1824,10 +1852,10 @@ final class Parser_Run
 	}
 
 	/** Type names retain spelling independently of token generations. */
-	private function named_type(int $start): named_type_node
+	private function named_type(int $start, string $name): named_type_node
 	{
 		$node = new named_type_node();
-		$node->name = $this->name_at($start);
+		$node->name = $name;
 		$this->finish_node($node, $start);
 		return $node;
 	}
@@ -1842,11 +1870,11 @@ final class Parser_Run
 			$this->finish_node($optional, $start);
 			return $optional;
 		}
-		if (!$this->identifier()) {
+		if (!$this->identifier() && ($this->text() !== '\\')) {
 			throw new \RuntimeException($this->error_message('Expected type name'));
 		}
-		$start = $this->position++;
-		$name = $this->name_at($start);
+		$start = $this->position;
+		$name = $this->source_name();
 		$modifier = Model::$type_catalog->source()->modifier_or_null($name);
 		if (($modifier !== null) && ($this->text() === '<'))
 		{
@@ -1859,7 +1887,7 @@ final class Parser_Run
 			$this->finish_node($modified, $start);
 			return $modified;
 		}
-		$definition = $this->named_type($start);
+		$definition = $this->named_type($start, $name);
 		$definition->collect($this->collector, $lookup_scope, $start);
 		if ($this->text() !== '<') {
 			return $definition;
@@ -1889,20 +1917,8 @@ final class Parser_Run
 	private function nullable_declaration_ahead(): bool
 	{
 		if ($this->text_at_offset(1) !== '?') { return false; }
-		$offset = 2;
-		while ($this->text_at_offset($offset) === '?') { $offset++; }
-		if (!Source_Text::identifier($this->text_at_offset($offset))) { return false; }
-		$offset++;
-		if ($this->text_at_offset($offset) === '<') {
-			$depth = 1;
-			$offset++;
-			while ($depth > 0) {
-				$text = $this->text_at_offset($offset++);
-				if ($text === '<') { $depth++; }
-				elseif ($text === '>') { $depth -= 1; }
-				elseif (($text !== '?') && ($text !== ',') && !Source_Text::identifier($text)) { return false; }
-			}
-		}
+		$offset = $this->type_syntax_end(1);
+		if ($offset < 0) { return false; }
 		$following = $this->text_at_offset($offset);
 		return ($following === '=') || ($following === ';');
 	}

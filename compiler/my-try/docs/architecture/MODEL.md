@@ -375,8 +375,10 @@ intern an empty namespace for an observed miss. Later parser publication fills t
 same pool, so the existing per-name/per-kind subscriptions detect additions, removals
 and ambiguity without another dependency graph. These empty identities persist until
 syntax reset, like other interned namespaces. Bare-name language availability is
-unchanged. This is currently lookup-model support; qualified source-reference parsing
-and import bindings remain separate follow-ups.
+unchanged. The parser preserves qualified spelling in the existing call,
+constant-reference and named-type nodes, using one source-name scanner for lookahead
+and consumption. It neither interns reference namespaces nor resolves targets.
+Type grammar consumers share that path; import bindings remain a separate follow-up.
 
 Type definitions live under `compiler/types/`; constant definitions live under
 `compiler/constants/`. Built-ins are initialized into independent type and constant

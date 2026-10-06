@@ -33,10 +33,11 @@ is approved and in progress: canonical identity/backend consumers and explicit
 executable-body work links are implemented. Source-body inventory, preparation,
 entry selection, retirement and C++ consumers share the new model. Implicit global,
 semicolon/braced named bodies and retained reconciliation are implemented with
-unqualified current-namespace lookup. Qualified lookup now has a model-level
-foundation with exact rooted/current-relative pools and retained miss observations.
-Qualified-reference parsing and imports remain pending; namespace paths in
-declarations already accept multiple segments.
+unqualified current-namespace lookup. Qualified references now share exact
+rooted/current-relative lookup and retained miss observations for supported calls,
+named types and registered constants. Imports remain next; source constant
+declarations, new class/static-member capabilities and qualified runtime aliases
+are not enabled by this slice.
 Imported cards below are not implementation evidence; their obsolete import restrictions
 do not override the agreed contract or newer generator rules.
 
@@ -46,7 +47,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| CH08-NS-LOOKUP-01 | implemented-model | Rooted/current-relative reference names supplied to lookup | model verified | not yet source-admitted | deferred | `tests/qualified_lookup.php`: kinds, misses, additions, moves, ambiguity and subscription cleanup; parser admission next |
+| CH08-NS-LOOKUP-01 | implemented-bounded | Rooted/current-relative calls and qualified named types | verified | verified | deferred | `tests/namespaces.py`, `tests/qualified_lookup.php`: authored paths, kinds, misses, additions, moves, ambiguity and subscription cleanup |
 | CH08-PROGRAM-01 | implemented | Explicit entry + cross-file functions | verified | verified | deferred | `tests/project_cpp.py`: admission, retained edits/recovery, relocation, separate units with/without PCH |
 | CH08-DEPS-01 | implemented-bounded | Record references, values, fields and inferred copies across files | unchanged | verified | deferred | `tests/project_cpp.py`: standalone headers, layout-edit isolation, clang transitive dependencies; template payloads conservatively complete |
 | CH08-PUBLISH-01 | implemented-bounded | CLI `--output` / optional coordinator publisher | unchanged | verified | deferred | `tests/output_publication.py`: preservation, ownership, recovery, locking and direct published-unit execution; native adapter/facade proved, whole native compiler not rebuilt |
@@ -54,7 +55,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH08-REBUILD-01 | verified-bounded | Body/default/signature/layout edits, insert/delete, relocation and compiler identity | unchanged | verified | deferred | `tests/native_invalidation.py`: ten executed revisions, exact native rebuild sets, phase timings; optimization deferred to Chapter 15 |
 | CH08-NS-IDENTITY-01 | implemented-model | Canonical namespaces and qualified definition identities | model verified | verified | deferred | `tests/namespace_identity.py`: supplied namespace scopes, same-short-name type/function collision proof; authored syntax proof below |
 | CH08-NS-BODIES-01 | implemented | Separate namespace-body occurrences and one selected executable body | verified-bounded | verified | global single-body only | `tests/namespace_bodies.py`: independent bodies, entry admission, stale-output rejection and retirement |
-| CH08-NS-PARSE-01 | implemented-bounded | `namespace A;` / `namespace A { ... }` / `namespace { ... }` | verified | verified | rejected for named/multiple bodies | `tests/namespaces.py`: reopening, same-namespace cross-file lookup, distinct qualified definitions, no-op/edit/move/recovery; qualified references and imports next |
+| CH08-NS-PARSE-01 | implemented-bounded | `namespace A;` / `namespace A { ... }` / `namespace { ... }` | verified | verified | rejected for named/multiple bodies | `tests/namespaces.py`: reopening, same-namespace cross-file lookup, distinct qualified definitions, no-op/edit/move/recovery; imports next |
 | [CLASS-STATIC-NS-003](#class-static-ns-003) | pending-discussion | `$x = new X(); return $x::make();` | unverified | unverified | deferred | — |
 | [CLASS-STATIC-NS-002](#class-static-ns-002) | pending-discussion | `namespace A; function f() { return \A\X::make(); }` | unverified | unverified | deferred | — |
 | [NS-EXEC-006](#ns-exec-006) | pending-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | — |
@@ -66,8 +67,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NS-USE-003](#ns-use-003) | pending-discussion | `namespace App; use Lib\X;` | unverified | unverified | deferred | — |
 | [NS-USE-004](#ns-use-004) | pending-discussion | `namespace App; use function Lib\f as g;` | unverified | unverified | deferred | — |
 | [NS-USE-005](#ns-use-005) | pending-discussion | `namespace App; use function Lib\{f, g};` | unverified | unverified | deferred | — |
-| [NS-QUALIFIED-001](#ns-qualified-001) | pending-discussion | `namespace App; function f() { \Lib\g(); }` | unverified | unverified | deferred | — |
-| [NS-QUALIFIED-002](#ns-qualified-002) | pending-discussion | `namespace App; function f() { A\B\g(); }` | unverified | unverified | deferred | — |
+| [NS-QUALIFIED-001](#ns-qualified-001) | implemented-bounded | `namespace App; return \Lib\value();` | verified | verified | deferred | `tests/namespaces.py`: rooted call and type paths |
+| [NS-QUALIFIED-002](#ns-qualified-002) | implemented-bounded | `namespace App; return Sub\value();` | verified | verified | deferred | `tests/namespaces.py`: selects App\Sub, not global Sub |
 | [NS-QUALIFIED-003](#ns-qualified-003) | pending-discussion | `namespace App; function f() { g(); }` | unverified | unverified | deferred | — |
 | [NS-SYMBOL-PATH-001](#ns-symbol-path-001) | pending-discussion | `namespace A\B; const X = 1; class MyClass {} function my_function() {}` | unverified | unverified | deferred | — |
 | [NS-VAR-001](#ns-var-001) | pending-discussion | `namespace A\B; $x = 1; echo $x;` | unverified | unverified | deferred | — |
@@ -500,7 +501,10 @@ ERROR
 
 ## NS-QUALIFIED-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented for supported calls and named type
+references through exact rooted lookup. The C++ backend consumes canonical identities,
+not source-path spelling. See CH08-NS-LOOKUP-01 and `tests/namespaces.py`; imports,
+new class/static-member features and qualified runtime aliases remain separate.
 
 ### Imported version 1
 
@@ -537,7 +541,9 @@ namespace scpp::App { void f() { ::scpp::Lib::g(); } }
 
 ## NS-QUALIFIED-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented for supported calls and named type
+references. Non-root paths start below the current source namespace, without ancestor
+or global-tail fallback. See CH08-NS-LOOKUP-01 and `tests/namespaces.py`.
 
 ### Imported version 1
 

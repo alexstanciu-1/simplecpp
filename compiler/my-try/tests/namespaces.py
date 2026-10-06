@@ -41,7 +41,7 @@ def main():
                            cli_reason='Portable namespace parser conversion')))
         run_tasks(tasks, jobs=12)
     (output / 'summary.json').write_text(json.dumps(dict(passed=True, php_suites=len(suites),
-        generated_programs=len(fixtures), qualified_reference_syntax=False,
+        generated_programs=len(fixtures), qualified_reference_syntax=True,
         native_compiler_rebuilt=False), indent=2) + '\n')
 
 

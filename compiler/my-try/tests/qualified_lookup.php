@@ -9,7 +9,7 @@ function qualified_check(bool $condition, string $message): void
 
 Compiler_Lifecycle::reset();
 $module = new module('/qualified-proof', '/qualified-proof', '/qualified-proof');
-foreach (['main.phs' => 'namespace Client; return target();', 'lib.phs' => ''] as $path => $text) {
+foreach (['main.phs' => 'namespace Client; return Sub\\target();', 'lib.phs' => ''] as $path => $text) {
 	$file = new file();
 	$file->path = $path;
 	$file->content = $text;
@@ -24,10 +24,9 @@ $main = $module->sources['main.phs'];
 $library = $module->sources['lib.phs'];
 $body = $main->parsed->root->single_body()->body;
 
-// Model-only fixture: qualified source parsing is deliberately not claimed here.
+// Authored qualified spelling reaches the same retained lookup and dependency path.
 $call = $body->statements[0]->expression;
-$call->name = 'Sub\\target';
-$call->occurrence()->name = $call->name;
+qualified_check($call->name === 'Sub\\target' && $call->occurrence()->name === $call->name, 'Parser lost qualified spelling');
 $local = $main->parsed->root_scope();
 qualified_check(Scope_Lookup::functions($local, $call->name) === [], 'Absent plain lookup returned a candidate');
 qualified_check(Model::$namespaces->find('Client\\Sub') === null, 'Plain lookup mutated namespace registry');
@@ -120,4 +119,14 @@ foreach ($work->lookups as $remaining) {
 	qualified_check($remaining->lookup_scope !== $pool, 'Removed qualified use retained its forward subscription');
 }
 
-echo "Qualified lookup model: exact rooted/relative pools, kinds, pure lookup, misses, addition, move and repair passed\n";
+// Syntax-only coverage of shared type scanning; this does not admit new wrapper semantics.
+$syntax_file = new file();
+$syntax_file->path = 'qualified-syntax.phs';
+$syntax_file->content = 'namespace Client; function probe(?\\Lib\\Box $x): ?\\Lib\\Box { $copy ?\\Lib\\Box = null; $list vector<\\Lib\\Box> = []; for ($i \\Lib\\Box; false;) {} return $x; }';
+$syntax = (new Parser((new Tokenizer($syntax_file))->tokenize()))->parse();
+$function = $syntax->root->single_body()->declarations[0];
+qualified_check($function->return_type->payload->name === '\\Lib\\Box', 'Nullable return lost qualified payload');
+qualified_check($function->body->statements[0]->type_syntax->payload->name === '\\Lib\\Box', 'Nullable local lookahead lost qualified payload');
+qualified_check($function->body->statements[1]->type_syntax->arguments[0]->name === '\\Lib\\Box', 'Template payload lost qualified name');
+
+echo "Qualified lookup: authored paths, exact pools, kinds, pure lookup, misses, addition, move and repair passed\n";
