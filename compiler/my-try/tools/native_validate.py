@@ -123,7 +123,7 @@ def validate(args, target, results, logs, started, runner):
         run('init', ['php', cli, 'init', '--php-profile=strict'], project, cli_reason='CLI build tool with process exit status')
     config = json.loads(config_path.read_text())
     config['build']['cxx'] = 'clang++-18'
-    config['runtime']['modules'] = ['compiler', 'filesystem', 'tasks']
+    config['runtime']['modules'] = ['compiler', 'filesystem', 'tasks', 'process', 'datetime']
     config_path.write_text(json.dumps(config, indent=2) + '\n')
     analysis_options = ['--no-stan'] if args.no_stan else []
     print('Building native compiler ' + ('without STAN...' if args.no_stan else 'with normal STAN...'), flush=True)

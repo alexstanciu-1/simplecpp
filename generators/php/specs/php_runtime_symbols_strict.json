@@ -1,5 +1,11 @@
 {
     "php_runtime_symbol_targets": {
+        "scpp_output_permissions": "fs::output_permissions",
+        "scpp_input_digest": "fs::input_digest",
+        "scpp_output_digest": "fs::output_digest",
+        "scpp_output_stage": "fs::output_stage",
+        "scpp_output_discard": "fs::output_discard",
+        "scpp_output_promote": "fs::output_promote",
         "scpp_output_root": "fs::output_root",
         "scpp_output_read": "fs::output_read",
         "scpp_output_write": "fs::output_write",

@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 // Generated global facade. Owned by function_map.php; no per-file imports.
+function fs_output_permissions(string $root, string $relative): int { return \scpp\fs_output_permissions($root, $relative); }
+function fs_file_digest(string $path): string { return \scpp\fs_file_digest($path); }
+function fs_output_digest(string $root, string $relative): string { return \scpp\fs_output_digest($root, $relative); }
 function fs_output_root(string $path): string { return \scpp\fs_output_root($path); }
 function fs_output_read(string $root, string $relative): ?string { return \scpp\fs_output_read($root, $relative); }
 function fs_output_write(string $root, string $relative, string $bytes): bool { return \scpp\fs_output_write($root, $relative, $bytes); }

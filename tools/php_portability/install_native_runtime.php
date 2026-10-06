@@ -23,6 +23,7 @@ try {
     ];
     if (in_array('--filesystem', $argv, true)) {
         $artifacts['filesystem.phs'] = file_get_contents(__DIR__ . '/runtime/filesystem.phs');
+        $artifacts['output_stage.phs'] = file_get_contents(__DIR__ . '/runtime/output_stage.phs');
     }
     if (in_array('--json', $argv, true)) {
         $artifacts['json_document.phs'] = file_get_contents(__DIR__ . '/runtime/json_document.phs');

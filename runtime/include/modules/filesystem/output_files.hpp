@@ -9,6 +9,7 @@
 #include <string>
 #include <system_error>
 #include "scpp/bool_t.hpp"
+#include "scpp/int_t.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/result.hpp"
@@ -91,6 +92,31 @@ inline nullable<string_t> read(const files::path &path) {
 	return string_t(std::move(bytes));
 }
 inline error_t failure(const std::exception &error) { return error_t(string_t(error.what())); }
+inline std::string digest(const files::path &path) {
+	if (!files::exists(path_status(path))) return {};
+	if (!files::is_regular_file(path_status(path))) throw std::runtime_error("Unsafe digest input");
+	std::ifstream stream(path, std::ios::binary);
+	if (!stream) throw std::runtime_error("Cannot open digest input");
+	sha256_state state;
+	std::array<char, 65536> bytes{};
+	while (stream) {
+		stream.read(bytes.data(), bytes.size());
+		state.update(std::string_view(bytes.data(), static_cast<std::size_t>(stream.gcount())));
+	}
+	if (!stream.eof()) throw std::runtime_error("Cannot read digest input");
+	return state.finish();
+}
+inline files::path stage_path(const std::string &root, const std::string &name) {
+	if (!name.starts_with(".scpp-stage-") || name.size() <= 12) throw std::runtime_error("Invalid stage name");
+	for (char c : name.substr(12)) {
+		if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')))
+			throw std::runtime_error("Invalid stage name");
+	}
+	const auto path = target(root, name, false);
+	if (files::exists(path_status(path)) && files::hard_link_count(path) != 1)
+		throw std::runtime_error("Staged output has external hard links");
+	return path;
+}
 } // namespace scpp::fs::output_detail
 
 namespace scpp::fs {
@@ -152,4 +178,71 @@ inline result<bool_t> output_remove(const string_t &root,const string_t &relativ
 	} catch (const std::exception &error) { return output_detail::failure(error); }
 }
 inline string_t output_sha256(const string_t &bytes) { return string_t(output_detail::sha256(bytes.native_value())); }
+inline result<string_t> output_digest(const string_t &root, const string_t &relative) {
+	try { return string_t(output_detail::digest(output_detail::target(root.native_value(), relative.native_value(), false))); }
+	catch (const std::exception &error) { return output_detail::failure(error); }
+}
+inline result<int_t<>> output_permissions(const string_t &root, const string_t &relative) {
+	try {
+		const auto info = output_detail::path_status(output_detail::target(root.native_value(), relative.native_value(), false));
+		if (!std::filesystem::exists(info)) return int_t<>(0);
+		return int_t<>(static_cast<std::int64_t>(info.permissions() & std::filesystem::perms::mask));
+	} catch (const std::exception &error) { return output_detail::failure(error); }
+}
+inline result<string_t> input_digest(const string_t &input) {
+	try {
+		const auto &path = input.native_value();
+		output_detail::require_linux();
+		if (path.empty() || path.front() != '/' || path.find('\0') != std::string::npos) throw std::runtime_error("Digest input must be absolute");
+		const auto resolved = std::filesystem::canonical(path);
+		if (!std::filesystem::is_regular_file(resolved)) throw std::runtime_error("Digest input must be regular");
+		return string_t(output_detail::digest(resolved));
+	} catch (const std::exception &error) { return output_detail::failure(error); }
+}
+inline result<string_t> output_stage(const string_t &root) {
+	try {
+		output_detail::root_name(root.native_value());
+		output_detail::directories(root.native_value(), false);
+#ifdef __linux__
+		std::string path = root.native_value() + "/.scpp-stage-XXXXXX";
+		const int descriptor = ::mkstemp(path.data());
+		if (descriptor < 0) throw std::runtime_error("Cannot reserve staged output");
+		if (::close(descriptor) != 0) { ::unlink(path.c_str()); throw std::runtime_error("Cannot close staged output"); }
+		return string_t(std::filesystem::path(path).filename().string());
+#else
+		throw std::runtime_error("Output staging requires Linux");
+#endif
+	} catch (const std::exception &error) { return output_detail::failure(error); }
+}
+inline result<bool_t> output_discard(const string_t &root, const string_t &stage) {
+	try { return bool_t(std::filesystem::remove(output_detail::stage_path(root.native_value(), stage.native_value()))); }
+	catch (const std::exception &error) { return output_detail::failure(error); }
+}
+inline result<bool_t> output_promote(const string_t &root, const string_t &stage, const string_t &relative,
+	const string_t &expected, const bool_t &executable) {
+	try {
+		const auto &authorization = expected.native_value();
+		if (!authorization.empty()) {
+			if (authorization.size() != 64) throw std::runtime_error("Invalid expected digest");
+			for (char c : authorization) if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
+				throw std::runtime_error("Invalid expected digest");
+		}
+		if (relative.native_value().starts_with(".scpp-stage-")) throw std::runtime_error("Reserved promotion target");
+		const auto source = output_detail::stage_path(root.native_value(), stage.native_value());
+		if (!std::filesystem::exists(output_detail::path_status(source))) throw std::runtime_error("Missing staged output");
+		const auto destination = output_detail::target(root.native_value(), relative.native_value(), true);
+		const auto current = output_detail::digest(destination);
+		if (current != authorization) throw std::runtime_error("Promotion target changed or is unowned");
+		const auto mode = executable.native_value() ? std::filesystem::perms::owner_all
+			: std::filesystem::perms::owner_read | std::filesystem::perms::owner_write;
+		if (!current.empty() && current == output_detail::digest(source)
+			&& (output_detail::path_status(destination).permissions() & std::filesystem::perms::mask) == mode) {
+			if (!std::filesystem::remove(source)) throw std::runtime_error("Cannot discard unchanged stage");
+			return bool_t(false);
+		}
+		std::filesystem::permissions(source, mode);
+		std::filesystem::rename(source, destination);
+		return bool_t(true);
+	} catch (const std::exception &error) { return output_detail::failure(error); }
+}
 } // namespace scpp::fs

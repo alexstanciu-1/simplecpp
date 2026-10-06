@@ -312,5 +312,42 @@ exception spelling. PHP publication passed before native facade stabilization.
 Runners used documented CLI fallback because sandbox FPM sockets were unavailable.
 The compiler/publisher itself was not rebuilt natively; that remains on request.
 
-Next: slice 5, incremental native objects/link membership and compatible persistent
-runtime-only PCH reuse. Filesystem publication alone is not a native build cache.
+The following checkpoint implements the bounded first slice of native caching.
+
+## Staged native output and cache — 2026-10-06
+
+User-approved prerequisite: shared `Output_Stage` owns a temporary output path for
+an external writer; checked promotion renames it without copying binary payloads
+through PHP strings. Explicit close runs after process completion, including failure.
+Streaming content digests and output permissions have PHP/native implementations.
+
+`06_native/Native_CPP_Build` consumes the ready publication under its shared lock and
+owns a separately reserved cache. Runtime-only PCH, per-unit objects and exact-member
+linking share one action/publication path. Ready metadata follows successful promotion;
+failed attempts remain pending while already completed actions can be reused.
+The [native build guide](../architecture/native_cpp_build.md) owns the current CLI,
+dependencies, recovery and bounds. No semantic/emission stage runs native processing.
+
+Evidence: candidate `13e0d571` plus this staging/cache overlay, temporary local results:
+
+- `/tmp/my-try-ch08-stage-20261006-2/summary.json`: PHP/native staging, streaming SHA,
+  consumed aliases, permissions, converted facade and retained publication checks.
+- `/tmp/my-try-ch08-native-cache-20261006-4/summary.json`: real Clang cold/warm/body
+  edits, PCH on/off, optimization changes, runtime-header invalidation, exact source
+  removal, cache repair, reservation contention and failed-action retry.
+- `/tmp/my-try-ch08-depfiles-20261006-2/logs`: escaped dependency names, continuation,
+  duplicate paths and malformed-rule rejection.
+
+The initial behavior checkpoint was `/tmp/my-try-ch08-native-cache-20261006-1`
+(54.78s). Extended checks caught an explicit native `int_t<>` spelling and an
+unsupported PHP string cast; authored sources were repaired. The dependency-parser
+fixture also needed a test-string correction. Conversion is not a native compiler
+rebuild: the builder ran in PHP, generated programs and the shared adapter ran natively.
+
+Next: fuller signature/layout/insert/delete invalidation acceptance, phase timing and
+validation overhead, then namespace/import cards. General optional-module linkage and
+automatic detection of toolchain shared-library/default-search changes remain open;
+use a fresh cache for those toolchain changes. The current core-runtime cache assumes
+quiescent inputs and a stable toolchain installation, not a hermetic environment.
+Parallel native actions and garbage collection are deferred. No full compiler native
+rebuild was requested or performed in this slice.

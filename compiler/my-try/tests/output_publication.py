@@ -21,7 +21,7 @@ def main():
     output = args.results.resolve()
     output.mkdir(parents=True, exist_ok=False)
     expected = ''.join(hashlib.sha256(bytes(i % 256 for i in range(length))).hexdigest() + '\n'
-                       for length in [0, 1, 3, 55, 56, 63, 64, 65, 127, 128, 10000]).encode()
+                       for length in [0, 1, 3, 55, 56, 63, 64, 65, 127, 128, 10000, 131071, 131072, 131073]).encode()
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12, journals=[output / 'commands.json']) as runner:
         executable = output / 'adapter'
         compiler = CppFixtureCompiler(runner, APP.parents[1], output, pch=False)

@@ -509,8 +509,11 @@ Names never use object IDs, absolute checkout paths or traversal counters. Tempo
 remain body-local. Optional disk publication belongs to the coordinator's invocation-local
 `Output_Publication`, not these records or the backend. Its scalar before/after
 inventory owns recovery authorization without retaining semantic objects or workers.
-See the [publication protocol](output_publication.md). Native object/PCH caching remains
-the next [Chapter 08 roadmap](../planning/incremental_cpp_artifacts.md) slice.
+See the [publication protocol](output_publication.md). The [native build owner](native_cpp_build.md)
+consumes that settled disk boundary with invocation-local configuration, action
+results and build counts. Its action/dependency cache is filesystem state, never a
+second semantic graph or a Model worker root. The Chapter 08 roadmap owns acceptance
+and further native-cache performance work.
 Test-only `CPP_Probe` preserves artifact boundaries in editable text; its reader rebuilds
 separate files and compiles them separately rather than flattening into a unity unit.
 

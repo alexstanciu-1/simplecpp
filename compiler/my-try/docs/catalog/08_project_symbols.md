@@ -22,8 +22,11 @@ per-source implementation groups and one entry. See the roadmap's dated evidence
 Bare-record declaration-versus-complete-type dependencies are implemented; runtime
 template payloads remain conservatively complete. Content-aware disk publication is
 implemented with ownership checks, locking and failed-revision recovery; see its
-[protocol](../architecture/output_publication.md). Next is native object/link caching
-and persistent runtime-only PCH reuse. Namespace/import cards remain pending.
+[protocol](../architecture/output_publication.md). Native object/link caching
+and persistent runtime-only PCH reuse have a bounded implementation; see
+[native build ownership and limits](../architecture/native_cpp_build.md). The next
+acceptance slice covers broader edit invalidation and phase timings. Namespace/import
+cards remain pending.
 
 ## Progress
 
@@ -34,6 +37,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH08-PROGRAM-01 | implemented | Explicit entry + cross-file functions | verified | verified | deferred | `tests/project_cpp.py`: admission, retained edits/recovery, relocation, separate units with/without PCH |
 | CH08-DEPS-01 | implemented-bounded | Record references, values, fields and inferred copies across files | unchanged | verified | deferred | `tests/project_cpp.py`: standalone headers, layout-edit isolation, clang transitive dependencies; template payloads conservatively complete |
 | CH08-PUBLISH-01 | implemented-bounded | CLI `--output` / optional coordinator publisher | unchanged | verified | deferred | `tests/output_publication.py`: preservation, ownership, recovery, locking and direct published-unit execution; native adapter/facade proved, whole native compiler not rebuilt |
+| CH08-NATIVE-01 | implemented-bounded | Native objects, runtime PCH and exact-member linking | unchanged | verified | deferred | `tests/native_cache.py`: real Clang cold/warm/edit, failure recovery, runtime invalidation and cache repair; core runtime only, fuller acceptance matrix pending |
 | [CLASS-STATIC-NS-003](#class-static-ns-003) | pending-discussion | `$x = new X(); return $x::make();` | unverified | unverified | deferred | — |
 | [CLASS-STATIC-NS-002](#class-static-ns-002) | pending-discussion | `namespace A; function f() { return \A\X::make(); }` | unverified | unverified | deferred | — |
 | [NS-EXEC-006](#ns-exec-006) | pending-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | — |

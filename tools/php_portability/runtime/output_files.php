@@ -120,6 +120,87 @@ final class Output_Files
         if (!@unlink(self::path($root, $relative, false))) { throw new \RuntimeException('Cannot remove output file'); }
         return true;
     }
+
+    public static function digest(string $root, string $relative): string
+    {
+        $path = self::path($root, $relative, false);
+        if (!self::regular_or_missing($path)) { return ''; }
+        $digest = hash_file('sha256', $path);
+        if ($digest === false) { throw new \RuntimeException('Cannot hash output file'); }
+        return $digest;
+    }
+
+    /** Internal stage primitives; the named owner retains the freshly allocated name. */
+    public static function stage(string $root): string
+    {
+        $name = '.scpp-stage-' . bin2hex(random_bytes(16));
+        $path = self::path($root, $name, false);
+        $stream = @fopen($path, 'x+b');
+        if ($stream === false) { throw new \RuntimeException('Cannot reserve staged output'); }
+        try {
+            if (!chmod($path, 0600)) { throw new \RuntimeException('Cannot protect staged output'); }
+        } catch (\Throwable $error) { unlink($path); throw $error; }
+        finally { fclose($stream); }
+        return $name;
+    }
+
+    private static function stage_path(string $root, string $name): string
+    {
+        if (!preg_match('/^\.scpp-stage-[a-zA-Z0-9]+$/D', $name)) { throw new \RuntimeException('Invalid stage name'); }
+        $path = self::path($root, $name, false);
+        if (self::regular_or_missing($path)) {
+            if (lstat($path)['nlink'] !== 1) { throw new \RuntimeException('Staged output has external hard links'); }
+        }
+        return $path;
+    }
+
+    public static function discard(string $root, string $name): void
+    {
+        $path = self::stage_path($root, $name);
+        if (self::regular_or_missing($path) && !unlink($path)) { throw new \RuntimeException('Cannot discard staged output'); }
+    }
+
+    public static function promote(string $root, string $stage, string $relative, string $expected, bool $executable): bool
+    {
+        if ($expected !== '' && !preg_match('/^[a-f0-9]{64}$/D', $expected)) { throw new \RuntimeException('Invalid expected digest'); }
+        if (str_starts_with($relative, '.scpp-stage-')) { throw new \RuntimeException('Reserved promotion target'); }
+        $source = self::stage_path($root, $stage);
+        if (!self::regular_or_missing($source)) { throw new \RuntimeException('Missing staged output'); }
+        $target = self::path($root, $relative, true);
+        $current = self::digest($root, $relative);
+        if ($current !== $expected) { throw new \RuntimeException('Promotion target changed or is unowned'); }
+        $mode = $executable ? 0700 : 0600;
+        if ($current !== '' && $current === self::digest($root, $stage) && (fileperms($target) & 07777) === $mode) {
+            self::discard($root, $stage);
+            return false;
+        }
+        if (!chmod($source, $mode)) { throw new \RuntimeException('Cannot set staged output permissions'); }
+        if (!@rename($source, $target)) { throw new \RuntimeException('Cannot promote staged output'); }
+        return true;
+    }
+}
+
+/** Explicit single-attempt owner. Aliases share the consumed/closed state. */
+final class Output_Stage
+{
+    private string $root;
+    private string $relative;
+    private bool $owned = true;
+    private function __clone() {}
+    public function __construct(string $root) { $this->root = $root; $this->relative = Output_Files::stage($root); }
+    public function path(): string {
+        if (!$this->owned) { throw new \RuntimeException('Stage is closed'); }
+        return $this->root . '/' . $this->relative;
+    }
+    public function promote(string $relative, string $expected_digest, bool $executable): bool {
+        if (!$this->owned) { throw new \RuntimeException('Stage is closed'); }
+        $changed = Output_Files::promote($this->root, $this->relative, $relative, $expected_digest, $executable);
+        $this->owned = false;
+        return $changed;
+    }
+    public function close(): void {
+        if ($this->owned) { Output_Files::discard($this->root, $this->relative); $this->owned = false; }
+    }
 }
 
 function fs_output_root(string $path): string { return Output_Files::root($path); }
@@ -127,3 +208,19 @@ function fs_output_read(string $root, string $relative): ?string { return Output
 function fs_output_write(string $root, string $relative, string $bytes): bool { return Output_Files::write($root, $relative, $bytes); }
 function fs_output_remove(string $root, string $relative, string $expected): bool { return Output_Files::remove($root, $relative, $expected); }
 function content_sha256(string $bytes): string { return hash('sha256', $bytes); }
+function fs_output_digest(string $root, string $relative): string { return Output_Files::digest($root, $relative); }
+function fs_output_permissions(string $root, string $relative): int {
+    $path = Output_Files::path($root, $relative, false);
+    if (!is_file($path)) { return 0; }
+    $mode = fileperms($path);
+    if ($mode === false) { throw new \RuntimeException('Cannot read output permissions'); }
+    return $mode & 07777;
+}
+function fs_file_digest(string $path): string {
+    if ($path === '' || $path[0] !== '/' || str_contains($path, "\0")) { throw new \RuntimeException('Digest input must be absolute'); }
+    $resolved = realpath($path);
+    if ($resolved === false || !is_file($resolved)) { throw new \RuntimeException('Digest input must be a regular file'); }
+    $digest = hash_file('sha256', $resolved);
+    if ($digest === false) { throw new \RuntimeException('Cannot hash input file'); }
+    return $digest;
+}

@@ -377,6 +377,12 @@ final class RuntimeShallowSourceGenerator
 			],
 			'strict' => [
 				'scpp_output_root' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'scpp_output_permissions' => ['return' => 'result<int>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string']]],
+				'scpp_input_digest' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'scpp_output_digest' => ['return' => 'result<string>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string']]],
+				'scpp_output_stage' => ['return' => 'result<string>', 'params' => [['name' => 'root', 'type' => 'string']]],
+				'scpp_output_discard' => ['return' => 'result<bool>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'stage', 'type' => 'string']]],
+				'scpp_output_promote' => ['return' => 'result<bool>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'stage', 'type' => 'string'], ['name' => 'relative', 'type' => 'string'], ['name' => 'expected', 'type' => 'string'], ['name' => 'executable', 'type' => 'bool']]],
 				'scpp_output_read' => ['return' => 'result<nullable<string>>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string']]],
 				'scpp_output_write' => ['return' => 'result<bool>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string'], ['name' => 'bytes', 'type' => 'string']]],
 				'scpp_output_remove' => ['return' => 'result<bool>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string'], ['name' => 'expected', 'type' => 'string']]],

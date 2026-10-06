@@ -11,6 +11,33 @@ output_check(fs_output_write($root, 'empty.cpp', ''));
 output_check(fs_output_read($root, 'empty.cpp') === '');
 output_check(!fs_output_write($root, 'empty.cpp', ''));
 output_check(fs_output_remove($root, 'empty.cpp', ''));
+$stage = new \scpp\Output_Stage($root);
+$alias = $stage;
+$stage_path = $stage->path();
+file_put_contents($stage_path, "#!/bin/sh\nexit 7\n");
+$inode = stat($stage_path)['ino'];
+output_check($stage->promote('program', '', true));
+clearstatcache();
+output_check(stat($root . '/program')['ino'] === $inode && (fileperms($root . '/program') & 07777) === 0700);
+$failed = false;
+try { $alias->path(); } catch (RuntimeException $error) { $failed = true; }
+output_check($failed);
+$stage->close();
+$stage = new \scpp\Output_Stage($root);
+file_put_contents($stage->path(), "#!/bin/sh\nexit 7\n");
+output_check(!$stage->promote('program', fs_output_digest($root, 'program'), true));
+clearstatcache();
+output_check(stat($root . '/program')['ino'] === $inode);
+$stage = new \scpp\Output_Stage($root);
+$aborted_path = $stage->path();
+file_put_contents($aborted_path, 'replacement');
+$failed = false;
+try { $stage->promote('program', '', true); } catch (RuntimeException $error) { $failed = true; }
+output_check($failed && is_file($aborted_path));
+$stage->close();
+$stage->close();
+output_check(!file_exists($aborted_path));
+output_check(fs_output_digest($root, 'program') === hash('sha256', "#!/bin/sh\nexit 7\n"));
 $path = 'units/data.cpp';
 $bytes = "abc\0def";
 output_check(fs_output_write($root, $path, $bytes));
@@ -38,8 +65,11 @@ foreach (['../escape', '/absolute', 'a//b', 'a/./b', 'a/../b', 'link', 'pipe', '
 }
 output_check(fs_output_remove($root, $path, $bytes));
 output_check(!fs_output_remove($root, $path, $bytes));
-foreach ([0, 1, 3, 55, 56, 63, 64, 65, 127, 128, 10000] as $length) {
+foreach ([0, 1, 3, 55, 56, 63, 64, 65, 127, 128, 10000, 131071, 131072, 131073] as $length) {
 	$input = '';
 	for ($i = 0; $i < $length; $i++) { $input .= chr($i % 256); }
+	fs_output_write($root, 'chunks.cpp', $input);
+	output_check(fs_output_digest($root, 'chunks.cpp') === content_sha256($input));
+	output_check(fs_file_digest($root . '/chunks.cpp') === content_sha256($input));
 	echo content_sha256($input), "\n";
 }

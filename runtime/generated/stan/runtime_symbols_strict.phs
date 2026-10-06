@@ -117,10 +117,16 @@ function regex_replace_callback(string $pattern, string $subject): result_or_fal
 function regex_replace_callback_array(string $subject): result_or_false<string> {}
 function regex_split(string $pattern, string $subject): result_or_false<vector<string>> {}
 function rtrim(string $text): string {}
+function scpp_input_digest(string $path): result<string> {}
+function scpp_output_digest(string $root, string $relative): result<string> {}
+function scpp_output_discard(string $root, string $stage): result<bool> {}
+function scpp_output_permissions(string $root, string $relative): result<int> {}
+function scpp_output_promote(string $root, string $stage, string $relative, string $expected, bool $executable): result<bool> {}
 function scpp_output_read(string $root, string $relative): result<nullable<string>> {}
 function scpp_output_remove(string $root, string $relative, string $expected): result<bool> {}
 function scpp_output_root(string $path): result<string> {}
 function scpp_output_sha256(string $bytes): string {}
+function scpp_output_stage(string $root): result<string> {}
 function scpp_output_write(string $root, string $relative, string $bytes): result<bool> {}
 function shell_exec(string $command): mixed {}
 function source_buffer_byte_at(source_buffer $buffer, int $offset): byte {}

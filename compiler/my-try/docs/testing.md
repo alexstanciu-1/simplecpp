@@ -17,6 +17,19 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For persistent native object/PCH/link caching:
+
+```bash
+python3 compiler/my-try/tests/native_cache.py --results /tmp/FRESH_NATIVE_CACHE_RESULTS
+```
+
+Checks real Clang cold/warm/body-edit builds, PCH on/off, optimization changes,
+runtime-header invalidation, missing binaries/objects, executable permissions,
+source removal, reservation contention and preparation/compile failure recovery.
+Also converts the native owner. This exercises a PHP-hosted builder and generated
+native programs, not a native rebuild of the compiler. See the
+[bounded build contract](architecture/native_cpp_build.md) for deferred coverage.
+
 For persistent output publication and its shared filesystem adapter:
 
 ```bash
@@ -29,7 +42,9 @@ handoff retry, CLI restart and shared/exclusive lock contention. Builds the actu
 published units under a shared lock. Also converts/builds a small portable facade
 against this checkout (`--no-stan`), without rebuilding the compiler. PHP fixtures
 under `tests/fixtures/` need runner-provided setup. No persistent native/PCH cache
-or power-loss recovery is claimed.
+or power-loss recovery is claimed by that publication suite; native caching has its
+own suite above. Staged promotion, alias consumption, permissions and streaming SHA
+boundaries are included in its PHP/native adapter and converted-facade checks.
 
 For cross-file C++ generation and artifact isolation:
 

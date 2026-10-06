@@ -1,5 +1,23 @@
 // Filesystem facade: ordinary observation failures become false for caller-owned diagnostics.
 // Output errors must remain errors, never be confused with absent/unchanged files.
+function scpp_portability_output_permissions(string $root, string $relative): int {
+    $value int = 0;
+    $failure error;
+    if (!take($value, $failure, scpp_output_permissions($root, $relative))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_input_digest(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, scpp_input_digest($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_digest(string $root, string $relative): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, scpp_output_digest($root, $relative))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
 function scpp_portability_output_root(string $path): string {
     $value string = '';
     $failure error;

@@ -1,6 +1,12 @@
 # Writing convertible PHP
 Doc Status: supporting
 
+External native output uses the shared [output-files contract](output_files.md):
+`scpp\Output_Stage` reserves one output path, promotes after its writer has stopped,
+and closes explicitly in `finally`. Use streaming digest helpers for large native
+artifacts instead of reading PCH/object bytes into strings. Compiler cache policy
+does not belong in these filesystem primitives.
+
 Use this guide when writing executable `.php` for conversion by
 `tools/php_portability`. It summarizes the [portable profile](README.md), not the
 full PHP language or the full Simple C++ target. The compiler migration's proof

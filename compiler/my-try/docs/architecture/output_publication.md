@@ -66,8 +66,9 @@ the directory for link members or treat an old executable as the failed revision
 This is cooperative process-interruption recovery, not multi-file atomic rename,
 a hostile-filesystem sandbox or power-loss durability. SIGKILL can leave unreferenced
 adapter temporary files; these are ignored, never adopted. Missing/corrupt ownership
-metadata needs explicit operator repair, not automatic adoption. Native objects,
-depfiles, toolchain keys and persistent runtime-only PCH reuse are the next slice.
+metadata needs explicit operator repair, not automatic adoption. The
+[native C++ consumer](native_cpp_build.md) owns objects, depfiles, compatibility keys
+and persistent runtime-only PCH reuse; those policies do not enter the publisher.
 
 `tests/output_publication.py` covers PHP/native adapters, persisted crash boundaries,
 preservation, ownership refusal/retry, preparation handoffs, CLI restart/failure,

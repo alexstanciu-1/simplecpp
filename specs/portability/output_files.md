@@ -42,6 +42,45 @@ are for the portability framework; this does not register new my-try source APIs
 Native code is header-only for this bounded tooling slice, selected through the
 filesystem module. No extra link/crypto library is required.
 
+## Staged native output — 2026-10-06
+
+The approved extension supplies `scpp\Output_Stage(root)`, a named, single-attempt
+owner for an exclusively created mode-0600 regular file in the selected root.
+`path()` returns the absolute path for a trusted external compiler's output.
+The compiler may replace that file; callers must join/close the external process
+before promotion or cleanup. Ordinary aliases share the same consumed state.
+The owner cannot be reconstructed from an arbitrary path.
+
+`promote(relative, expected_digest, executable)` validates the staged regular file
+(including rejecting external hard links) and the destination, then atomically
+renames on the same filesystem. The expected digest must match current destination
+bytes; empty string requires absence, not an empty file. The caller establishes
+ownership before supplying that authorization. Promotion normalizes permissions
+to owner-only 0700 for executables or 0600 for other artifacts, never carries
+setuid/setgid or broad tool-produced permissions. It does not copy binary content.
+Identical content and permissions preserve destination inode/mtime and consume the
+stage; return false. A replacement returns true. Failures retain the stage for cleanup.
+
+`close()` discards only this owner's staged path and is idempotent after close or
+successful promotion. Use it in `finally`: implicit last-reference cleanup is not
+promised. Symlink/special-file/hard-link substitutions are refused, not followed.
+SIGKILL can leave orphan staging files, which must never be treated as committed
+cache entries. No wildcard/recursive cleanup or arbitrary-path stage adoption exists.
+The exclusive caller reservation covers target checking through promotion.
+
+`fs_output_digest(root, relative)` streams a regular file into SHA-256, returning
+empty string only for absence. `fs_output_permissions(root, relative)` returns
+permission bits (zero when absent) without changing them. Output path restrictions
+still apply. `fs_file_digest(absolute_path)` is a separate read-only input operation:
+resolve input symlinks, require a regular file, stream its digest, and throw on
+absence/error. Compiler/system inputs are not constrained to output-name spelling.
+
+The SHA-256 accumulator is shared by byte and streamed-file hashing. PHP/native
+framework assembly installs the matching `Output_Stage` class with `--filesystem`.
+Internal `scpp_output_stage/discard/promote` entrypoints serve that owner, not a new
+source-language arbitrary file-mutation API. Manifest/cache policy remains outside
+the adapter. This extends the mechanism; it does not change PHP++ source semantics.
+
 Proof runner: `compiler/my-try/tests/output_publication.py`. It checks independent
 SHA-256 expectations across block/padding boundaries, binary and empty IO, PHP/native
 path/error parity, and a converted native facade (`--no-stan`). This does not imply

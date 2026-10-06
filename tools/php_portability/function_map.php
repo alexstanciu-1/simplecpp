@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 // Fixed global authoring names; php is the internal implementation, target the native binding.
 return [
+	'fs_output_permissions' => ['php' => 'scpp\\fs_output_permissions', 'target' => 'scpp_portability_output_permissions', 'arity' => 2],
+	'fs_file_digest' => ['php' => 'scpp\\fs_file_digest', 'target' => 'scpp_portability_input_digest', 'arity' => 1],
+	'fs_output_digest' => ['php' => 'scpp\\fs_output_digest', 'target' => 'scpp_portability_output_digest', 'arity' => 2],
 	'fs_output_root' => ['php' => 'scpp\\fs_output_root', 'target' => 'scpp_portability_output_root', 'arity' => 1],
 	'fs_output_read' => ['php' => 'scpp\\fs_output_read', 'target' => 'scpp_portability_output_read', 'arity' => 2],
 	'fs_output_write' => ['php' => 'scpp\\fs_output_write', 'target' => 'scpp_portability_output_write', 'arity' => 3],
