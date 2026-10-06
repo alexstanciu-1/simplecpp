@@ -260,12 +260,14 @@ enum wrapper payloads, broader initialization and remaining hardening are record
 in [CH15](15_blocking_debt.md#chapter-09-closeout-follow-ups).
 These are explicit deferrals, not new semantic prohibitions or silent completions.
 
-The combined CH08/09 native compiler checkpoint was attempted. Process/file-lock
-integration is now proved; it is blocked by the separate missing shape-preserving
-JSON document API in this checkout; see the
-[portability report](../portability/conversion_review.md#chapter-0809-attempt--2026-10-06-blocked).
-Until it passes, the latest native evidence remains the CH07 revision;
-the 20-suite/24-program checkpoint above proves PHP and generated C++ only.
+The combined CH08/09 native compiler now builds with process/file-lock and JSON
+document prerequisites integrated. Its main 1,111-case sweep passed before a
+namespace-scope lifetime repair; all 44 partitioned CH08/09 projects pass after
+that repair and the explicit-entry proof-driver fix. The final cumulative
+supplementary/rejection/recovery sweep remains; see the
+[portability report](../portability/conversion_review.md#chapter-0809-native-progress--2026-10-06-partial).
+CH07 remains the latest complete cumulative native checkpoint; these bounded
+post-repair passes do not silently replace it.
 
 ## TYPE-VAR-006
 

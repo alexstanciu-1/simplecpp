@@ -9,7 +9,7 @@ function check(bool $condition, string $message): void {
 	if (!$condition) { throw new RuntimeException($message); }
 }
 $mapper = new TypeMapper();
-foreach (['file_lock_handle', 'process_handle', 'process_output'] as $alias) {
+foreach (['file_lock_handle', 'process_handle', 'process_output', 'json_document', 'json_node', 'json_parse_error'] as $alias) {
 	foreach ([$alias, '\\' . $alias] as $type) {
 		check($mapper->isRuntimeProvidedType($type), 'runtime declaration owner: ' . $type);
 		check($mapper->mapDeclaredType($type) === 'shared_p<' . $alias . '>', 'shared representation: ' . $type);

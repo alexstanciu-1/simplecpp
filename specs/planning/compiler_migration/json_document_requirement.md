@@ -16,6 +16,16 @@ supersedes the candidate's earlier last-value-wins requirement. The candidate mu
 be adapted and proved before native integration; its historical pass is not proof
 of this newer contract. The PHP schema view already enforces rejection.
 
+Current v0.2 integration: the bounded document API from that candidate has been
+ported without replacing separated mixed/dynamic storage. Shared lexical reading
+serves the existing family decoder and immutable document parser. Native document
+and value-decoder suites pass the shared 23-case unique-key corpus; document
+diagnostics use `duplicate_key` with the repeated key's opening-quote byte offset.
+The strict multi-file API fixture passes normal STAN, build/run, retained-view
+lifetime, raw-number/checked-integer access and invalid-signature rejection.
+See the [normative document contract](../../builtins/json/document.md).
+This prerequisite proof is separate from the combined CH08/09 native compiler run.
+
 ## Concrete compiler need
 
 Manifest validation must reject an object where a list is required, including an

@@ -16,6 +16,7 @@ enable_testing()
 
 add_library(scpp_json SHARED
 	include/modules/json/json.cpp
+	include/modules/json/document.cpp
 )
 
 target_include_directories(scpp_json

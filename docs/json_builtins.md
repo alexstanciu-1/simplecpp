@@ -2,6 +2,20 @@
 Doc Status: supporting
 This page summarizes the first-pass Prism++ / Simple C++ JSON builtin surface.
 
+## v0.2 contract and schema-reader update
+
+The [separated-family contract](../specs/dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
+supersedes the historical mixed-return examples below: default `json_decode`
+returns `result<dynamic>`; `json_decode_mixed` explicitly selects value/COW data.
+All JSON parsing rejects duplicate decoded object names under the
+[unique-name rule](../specs/builtins/json/json_decode.md#unique-object-names--2026-10-06).
+
+For schema validation, use the separate [immutable document API](../specs/builtins/json/document.md):
+`json_document_parse`, `json_document_root` and checked `json_node_*` accessors.
+This preserves object/array shape, exact key strings and raw number tokens.
+Nodes retain their backing storage after the document handle is released.
+It does not change ordinary value decoding or introduce mixed/dynamic nesting.
+
 JSON is now runtime-owned and lives under `namespace scpp::json`. The PHP layer keeps only a thin wrapper in `namespace scpp::php`.
 
 ## Header split

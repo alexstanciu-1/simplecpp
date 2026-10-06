@@ -11,3 +11,14 @@ to all JSON parsing, not only compiler metadata: duplicate object names reject.
 - `json_encode`
 
 See also: `specs/builtins/json/first_pass.md`.
+
+## Shape-preserving document API
+
+The [immutable document contract](document.md) provides checked schema reading
+without changing `json_decode`'s dynamic-family return. Documents preserve array
+versus object shape, exact keys and number tokens. Retained node views share
+immutable storage and outlive their originating document handle.
+
+`json_document_parse`, `json_document_root` and the `json_node_*` accessors
+belong to the JSON module. Duplicate decoded keys fail with `duplicate_key`,
+not last-value-wins. There is no mutation or serialization API in this slice.

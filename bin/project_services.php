@@ -18076,6 +18076,7 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	];
 	if (in_array('json', $modules, true)) {
 		$lines[] = '#include "modules/json/json.cpp"';
+		$lines[] = '#include "modules/json/document.cpp"';
 	}
 	if (in_array('datetime', $modules, true)) {
 		$lines[] = '#include "modules/datetime/datetime.cpp"';
@@ -18131,6 +18132,7 @@ function render_shared_release_base_runtime_composition_source(array $runtimeCon
 	];
 	if (in_array('json', $modules, true)) {
 		$lines[] = '#include "modules/json/json.cpp"';
+		$lines[] = '#include "modules/json/document.cpp"';
 	}
 	if (in_array('datetime', $modules, true)) {
 		$lines[] = '#include "modules/datetime/datetime.cpp"';

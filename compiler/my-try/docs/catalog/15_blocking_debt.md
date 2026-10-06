@@ -55,9 +55,11 @@ otherwise core-independent test links `scpp_runtime`: shared JSON/filesystem
 modules reference symbols in the preceding static core archive, which is not
 extracted when the executable itself has no core reference. Preserve this for
 build-system review; do not alter mixed/dynamic semantics to satisfy linkage.
-Focused process/lock safety targets depend only on their actual implementation;
+Focused process/lock/document safety targets depend only on their actual implementation;
 strict CLI composition/build/run is proved separately. Evidence:
 `/tmp/scpp-v02-process-lock-native-20261006/`, initial `test_process` link failure.
+The JSON document integration reproduced the same issue with `test_json_document`;
+its isolated document test and complete strict JSON module build/run both pass.
 
 ### CH15-CLEANUP-PERF-01 — compiler cleanup performance and IDE debug endpoint
 

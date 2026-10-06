@@ -165,6 +165,15 @@ add_executable(test_json test_json.cpp)
 target_link_libraries(test_json PRIVATE scpp_lang_php scpp_json scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_json COMMAND test_json)
 
+# Isolate document behavior from the known aggregate static/shared link-order debt.
+# The strict CLI test separately proves the complete JSON module composition.
+add_executable(test_json_document test_json_document.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include/modules/json/document.cpp)
+target_link_libraries(test_json_document PRIVATE scpp_runtime_test_support)
+target_include_directories(test_json_document PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
+target_compile_features(test_json_document PRIVATE cxx_std_23)
+add_test(NAME scpp_test_json_document COMMAND test_json_document)
+
 # datetime runtime and PHP wrapper coverage.
 add_executable(test_datetime test_datetime.cpp)
 target_link_libraries(test_datetime PRIVATE scpp_lang_php scpp_datetime scpp_runtime scpp_runtime_test_support)

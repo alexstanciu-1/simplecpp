@@ -162,7 +162,10 @@ incomplete and later phases wait for a successful join. Mutation is not transact
 failed parses retain partial identities for retry. The parsed file keeps its previous
 scope owners and newly selected scopes throughout parsing, including after failure.
 Only successful parsing replaces that inventory with the selected scopes; weak
-body observers must never outlive their scope owners during this handoff. Retired nodes must not re-enter
+namespace-body scope observers are published only after selection has retained
+their scope, before the constructing local handle can expire. Reused occurrences
+select that same scope owner rather than relying on PHP references to prolong it.
+Weak body observers must never outlive their scope owners during this handoff. Retired nodes must not re-enter
 the active graph. Stage entry checks reject incomplete/deleted owners; cleanup may
 visit them. See [lifecycle](../lifecycle/incremental.md).
 

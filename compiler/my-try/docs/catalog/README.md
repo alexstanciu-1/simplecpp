@@ -106,8 +106,10 @@ explicit enum parameter defaults and [compiler-provided `enum_name`](09_value_ty
 are implemented, together with [checked numeric enum helpers](09_value_types.md#numeric-enum-helpers--2026-10-06).
 CH09's [bounded closeout](09_value_types.md#bounded-closeout--2026-10-06) is approved;
 constructor work carries to CH10 and remaining enum extensions are explicit debt.
-The requested combined CH08/09 native checkpoint is [blocked on target runtime prerequisites](../portability/conversion_review.md#chapter-0809-attempt--2026-10-06-blocked); no separate CH08
-native build was performed. CH10 starts with shared class/struct model discussion.
+The requested combined CH08/09 compiler builds natively and its 44 partitioned
+projects pass after scope/harness repairs; [final cumulative validation remains](../portability/conversion_review.md#chapter-0809-native-progress--2026-10-06-partial).
+No separate CH08 native build was performed. CH10 follows validation and starts
+with shared class/struct model discussion.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

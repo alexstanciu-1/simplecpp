@@ -258,8 +258,13 @@ final class Parser_Run
 					$local_scope->set_parent($identity->published_scope());
 				}
 			}
+			// Own the scope before the temporary expires; namespace bodies observe it weakly.
+			$this->retain_scope($local_scope);
 			$selected = new namespace_body_node($local_scope);
 			$bodies->append($selected);
+		}
+		else {
+			$this->retain_scope($selected->body_scope());
 		}
 		$body /** namespace_body_node */ = $selected;
 		$this->claimed_bodies[$body] = true;
@@ -272,7 +277,6 @@ final class Parser_Run
 	private function parse_source_body(namespace_body_node $namespace_body, bool $braced, int $source_start): void
 	{
 		$this->source_scope = $namespace_body->body_scope();
-		$this->retain_scope($this->source_scope);
 		$this->current_scope = new scope();
 		$this->current_scope->set_parent($this->source_scope);
 		$this->retain_scope($this->current_scope);

@@ -12,6 +12,14 @@ final class ScppStrictRuntimeCatalogTest
 	public function run(): int
 	{
 		$catalog = new StanPhpRuntimeFunctionCatalog();
+		foreach (['json_document_parse' => 'result<json_document>', 'json_document_root' => 'result<json_node>',
+			'json_node_kind' => 'result<string>', 'json_node_size' => 'result<int>', 'json_node_at' => 'result<json_node>',
+			'json_node_key' => 'result<string>', 'json_node_has' => 'result<bool>', 'json_node_member' => 'result<json_node>',
+			'json_node_string' => 'result<string>', 'json_node_boolean' => 'result<bool>', 'json_node_number' => 'result<string>',
+			'json_node_int' => 'result<int>'] as $name => $return) {
+			$this->assertSame($return, $catalog->returnType($name), 'JSON document return contract');
+			$this->assertSame('json', $catalog->requiredModule($name), 'JSON document module ownership');
+		}
 		foreach ([
 			'layout_sizeof',
 			'layout_alignof',
@@ -34,6 +42,9 @@ final class ScppStrictRuntimeCatalogTest
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 		$this->assertContains('public function get_message(): string', $strictRuntimeSymbols, 'captured errors should expose their message to STAN');
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
+		$this->assertContains('json_parse_error &$diagnostic', $strictRuntimeSymbols, 'JSON diagnostic output reference');
+		$this->assertContains('class json_document', $strictRuntimeSymbols, 'JSON opaque document declaration');
+		$this->assertContains('class json_node', $strictRuntimeSymbols, 'JSON retained node declaration');
 		$this->assertContains('function fs_read_snapshot(string $path, int $expected_mtime, int $expected_size): result<string>', $strictRuntimeSymbols, 'filesystem concrete signature');
 		$this->assertContains('function layout_sizeof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_sizeof');
 		$this->assertContains('function layout_alignof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_alignof');

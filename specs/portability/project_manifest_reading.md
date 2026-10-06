@@ -38,8 +38,9 @@ JSON document/node API. The converter adds no type resolution or JSON syntax rul
 The PHP adapter additionally scans original key tokens after grammar validation,
 before publishing a view, because PHP's decoded objects have lost duplicates.
 This host-only check is not a second JSON grammar implementation. Native value
-decoders enforce the rule while parsing; the separate #240 document candidate
-still needs its equivalent adaptation before adoption on v0.2.
+decoders and the integrated v0.2 document parser enforce the rule while parsing.
+The latter reports `duplicate_key`, the repeated key and its opening-quote byte
+offset; no last-value-wins candidate behavior is retained.
 Install native support with `--json --filesystem` and enable those modules.
 
 This is a bounded schema adapter, not full lossless JSON interoperability. It exposes

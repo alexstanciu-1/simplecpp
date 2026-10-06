@@ -9,10 +9,11 @@ The [Chapter 07 closeout](../catalog/07_references_lifetime.md) and Chapter 15 d
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Chapter 08/09 attempt — 2026-10-06 blocked
+## Chapter 08/09 native progress — 2026-10-06 partial
 
 Candidate base `3d47e9288bde404720fcba726872a5af0b6af357`, working-tree overlay,
-evidence `/tmp/my-try-ch0809-native-20261006/`. No native compiler pass is claimed.
+evidence `/tmp/my-try-ch0809-native-20261006/`. The compiler now builds natively;
+the complete post-repair validation sweep is still pending (details below).
 Attempts 1–2 stopped at conversion (string casts; readonly enum artifact field).
 Attempt 3 converted but rejected the required `process` module. A diagnostic fourth
 attempt temporarily omitted that setting and reached C++ compilation, exposing
@@ -35,25 +36,55 @@ command copy before mutation. Attempt 9 reaches the framework and proof driver b
 fails because the **shape-preserving JSON document API is absent**: `json_document`,
 `json_parse_error`, `json_node` and `json_document_*`/`json_node_*` operations.
 The proof driver's old file-root accesses are also updated to namespace-body access.
-That final driver repair still needs native revalidation.
+That file-root driver repair is included in the successful native build below.
 
-The [JSON document requirement](../../../../specs/planning/compiler_migration/json_document_requirement.md)
-records candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`, but its Git object
-and historical `/tmp/scpp-json-240-probe` checkout are not present locally. Ordinary
-mixed/dynamic decoding is not equivalent: schema consumers need exact object/list
-shape, missing-versus-null and checked integer/boolean access. Integrating this
-separate runtime/parser API and its registration/tests needs user approval; do not
-silently weaken the facade, change public JSON decode semantics, switch targets or
-drop CH08. The native harness now checks the required strict JSON symbols before
-conversion/build as well as the process/lock headers.
+Following user approval, candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`
+was retrieved and its bounded document API integrated. Its former last-value-wins
+policy is replaced by mandatory duplicate-key rejection. The document parser and
+current mixed/dynamic decoder share lexical reading without reverting family
+separation. Native JSON/document suites, the shared 23-case unique-key corpus,
+strict multi-file API build/run with normal STAN, and runtime declaration/catalog
+checks pass. The [document contract](../../../../specs/builtins/json/document.md)
+owns shape, raw numbers, checked access, diagnostics and retained-node lifetimes.
+
+Attempts 10–11 compiled the compiler but failed linking: the harness installed the
+JSON facade without enabling the `json` runtime module. A forced runtime refresh
+alone did not fix that configuration error. The harness now enables the module.
+Attempt 12, on base `93e31799` plus the integration overlay, builds and links the
+native compiler, passes all 23 host suites, the initial type/control-flow proofs,
+and **1,111** PHP/native output comparisons and generated-program executions.
+It then stops at the new namespace projects: their weak scope observers exposed
+a native-only ownership gap before the selecting method returned.
+
+The parser now retains new namespace scopes before publishing weak observers;
+reused bodies select the same owner. The focused native retry also exposed the
+proof driver's omitted multi-file entry selection; it now selects `main/main.phs`.
+After both repairs, a rebuilt native compiler passes all **44 partitioned projects**
+(13 namespace, 7 source-constant, 24 enum), exact PHP/native artifacts, independent
+generated-program outcomes and the final incremental build. Evidence:
+`/tmp/my-try-ch0809-focused-20261006-2/`, runner
+`/tmp/my_try_ch0809_focused.py`; its summary records the repaired parser hash.
+The first focused retry is retained in `/tmp/my-try-ch0809-focused-20261006/`.
+The namespace regression separately passes 7 PHP suites, 24 generated programs
+and tokenizer/parser conversion in `/tmp/my-try-namespace-lifetime-20261006/`.
+
+**Remaining:** run the complete native harness again with the final parser/driver
+repairs, including supplementary probes and rejection/recovery, which attempt 12
+never reached. The 1,111-case result predates those two repairs; do not combine
+these separate checkpoints into a full final pass. CH07 remains the latest complete
+cumulative checkpoint. The native harness checks the
+required strict JSON symbols and process/lock headers before conversion/build.
+Ordinary mixed/dynamic decoding remains unsuitable for schema consumers; no facade
+weakening, target switch or dropped CH08 checks are authorized.
 
 Authored repairs use supported integer-to-text concatenation, a private enum-kind
 field with read-only accessor, explicit typed Storage receivers, explicit nullable
 lookup, a qualified type name hidden by an inherited field, and an unpromoted
 constructor field so the base constructor stays first. These follow the portable-PHP
-skill; full native revalidation still requires the JSON prerequisite.
+skill; the JSON prerequisite is now proved, and final cumulative revalidation remains.
 The harness is extended to compare and execute partitioned namespace/constants/enum
-projects with independent enum assertions; that new native leg remains unexecuted.
+projects with independent enum assertions; that native leg now passes in the
+focused post-repair run above.
 The stale tokenizer byte expectation now includes the CH08 namespace separator;
 the complete tokenizer suite passes without dropping rejection assertions.
 
@@ -62,7 +93,7 @@ namespaces, source constants, enums, cleanup), under
 `/tmp/my-try-ch0809-final-php-20261006/`. The native-cache regression also passes in
 126.79 seconds under `/tmp/my-try-ch0809-cache-recheck-20261006/`, covering real
 generated-program builds and cache lifecycle from the PHP-hosted builder, not a
-native compiler execution. The combined native fixture sweep has not run.
+native compiler execution. The combined sweep's newer partial outcome is recorded above.
 
 After these source repairs, the focused enum, namespace and constant runners pass:
 20/7/10 PHP suites respectively and 24/24/10 generated programs; namespace tokenizer

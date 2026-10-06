@@ -153,6 +153,7 @@ elseif (string_byte_starts_with($path, 's2s:'))
 	$paths /** vector<string> */ = [string_byte_slice($path, 4, string_byte_len($path) - 4)];
 	$compiler = new Compiler();
 	$compiler->init($paths);
+	$compiler->select_entry('main', 'main.phs');
 	try
 	{
 		$compiler->exec_cpp();
