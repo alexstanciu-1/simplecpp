@@ -42,7 +42,7 @@ final class CPP_Output
 			throw new \LogicException('Single-unit inspection requires exactly one C++ artifact');
 		}
 		$artifact = $artifacts[0];
-		if ($artifact->artifact_kind !== cpp_artifact_kind::translation_unit) {
+		if ($artifact->kind() !== cpp_artifact_kind::translation_unit) {
 			throw new \LogicException('Single-unit inspection requires a C++ translation unit');
 		}
 		return $artifact;

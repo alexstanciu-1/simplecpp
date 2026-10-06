@@ -23,7 +23,7 @@ final class CPP_Compiler_Functions
 		if ($facts->kind() === compiler_function_kind::enum_name) { return 'enum_name'; }
 		if ($facts->kind() === compiler_function_kind::enum_value) { return 'enum_value'; }
 		$input = object_cast(Type_Queries::canonical($facts->input_type)->definition(), integer_type_definition::class);
-		return 'enum_from_value_' . ($input->signed() ? 'i' : 'u') . (string)$input->bit_width();
+		return 'enum_from_value_' . ($input->signed() ? 'i' : 'u') . $input->bit_width();
 	}
 
 	private static function path(string $kind, string $name): string

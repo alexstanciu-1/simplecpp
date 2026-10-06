@@ -388,6 +388,7 @@ $syntax_before = serialize(Model::syntax_files()[0]->root);
 $generated = (new CPP_Generator())->generate_program(Model::$prepared_files, Model::$prepared_entry);
 enum_check(serialize(Model::syntax_files()[0]->root) === $syntax_before, 'Enum generation mutated the syntax graph');
 
+if (isset($argv[2])) { file_put_contents($argv[2], json_encode($fixtures, JSON_THROW_ON_ERROR)); }
 if (isset($argv[1])) {
 	foreach ($outputs as $name => $payload) {
 		file_put_contents($argv[1] . '/' . $name . '.json', $payload);

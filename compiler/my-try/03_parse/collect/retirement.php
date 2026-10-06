@@ -44,10 +44,12 @@ final class Collection_Retirement
 		$source->type_references = self::present($entries, $source->type_references);
 		$source->field_references = self::present($entries, $source->field_references);
 		$source->pending_bindings = self::present($entries, $source->pending_bindings);
-		if (!$source->root->retired_namespace_bodies->is_empty()) {
+		$retired_bodies /** Storage<namespace_body_node> */ = $source->root->retired_namespace_bodies;
+		if (!$retired_bodies->is_empty()) {
 			$source->root->retired_namespace_bodies = new Storage /** Storage<namespace_body_node> */();
 		}
-		if (!$source->retired_scopes->is_empty()) {
+		$retired_scopes /** Storage<scope> */ = $source->retired_scopes;
+		if (!$retired_scopes->is_empty()) {
 			$source->retired_scopes = new Storage /** Storage<scope> */();
 		}
 		if ($source->deleted)

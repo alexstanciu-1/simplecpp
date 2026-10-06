@@ -166,6 +166,11 @@ $standalone = (new Parser((new Tokenizer($standalone_source))->tokenize(), null,
 $standalone = (new Parser((new Tokenizer($standalone_source))->tokenize(), null, $standalone))->parse();
 namespace_check($standalone->root_scope() === $standalone_scope, 'Empty standalone reparse lost its namespace environment');
 
+if (isset($argv[2])) {
+	$native_cases = $cases;
+	unset($native_cases['qualified_constant']); // Depends on a host-installed registry constant.
+	file_put_contents($argv[2], json_encode($native_cases, JSON_THROW_ON_ERROR));
+}
 if (isset($argv[1])) {
 	foreach ($outputs as $name => $output) { file_put_contents($argv[1] . '/' . $name . '.json', $output); }
 }

@@ -85,7 +85,7 @@ final class Output_Publication
 			$manifest .= $separator . '{"path":' . json_quote($path) . ',"sha256":' . json_quote($digest)
 				. ',"id":' . json_quote($artifact->identity) . ',"kind":' . json_quote($artifact->kind_name()) . '}';
 			$separator = ',';
-			if ($artifact->artifact_kind === cpp_artifact_kind::translation_unit) {
+			if ($artifact->kind() === cpp_artifact_kind::translation_unit) {
 				$units++;
 			}
 		}

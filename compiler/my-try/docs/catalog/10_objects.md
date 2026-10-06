@@ -23,6 +23,17 @@ visibility or other class/struct differences. Record any agreed exceptions or
 deferred capabilities explicitly. This note sets the Chapter 10 discussion agenda;
 it does not claim that class support or the AST unification is implemented today.
 
+## Chapter 09 carryovers
+
+CH09's approved bounded closeout transfers constructor integration for explicit
+`value<T>` (TYPE-VAR-006), nullable inline records (TYPE-VAR-006A), and discussion of
+bare `value`/`shared`/`unique` constructor shortcuts (TYPE-VAR-007) here. Preserve
+existing struct value/copy behavior; do not mark argument-bearing construction or
+nullable record operations complete from those earlier proofs. Explicit types remain
+the current boundary until shortcuts are agreed. Include both class and struct forms.
+Enum methods/interfaces (ENUM-004) must revisit the shared CH10/11 foundations,
+not establish a parallel enum-only method system in CH09.
+
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
 ## Progress

@@ -32,6 +32,22 @@ deferral does not change ordinary typed-object member access or existing contrac
 
 ## Non-blocking follow-ups
 
+### Chapter 09 closeout follow-ups
+
+Approved on 2026-10-06; these do not block the bounded CH09 feature closeout.
+Review PHP-style enum reflection (`cases/from/tryFrom`, pseudo-properties), string
+backing, nullable/Result enum payloads, enum field/default initialization, broader
+constant case expressions and exhaustiveness analysis. Explicit `enum_name`,
+`enum_value` and checked `enum_from_value` are implemented; they do not establish
+support for the imported reflection example. Existing rejections stay in force.
+Constructor/nullable-object/shortcut cards belong to CH10; enum methods/interfaces
+await CH10/11 shared models. Reconcile those owning chapters before final closure.
+
+Keep pre-existing test maintenance visible: `tests/model.php` hardcoded built-in
+counts and `tests/tokenizer.php` byte-contract expectations were independently
+reproduced before enum changes. Repair them before claiming the affected broad
+suites pass; do not suppress assertions to obtain native validation.
+
 ### CH15-CLEANUP-PERF-01 — compiler cleanup performance and IDE debug endpoint
 
 Recorded by user request on 2026-10-06. **Not a blocker for v0.2.** Review compiler

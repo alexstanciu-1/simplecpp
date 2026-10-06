@@ -168,6 +168,7 @@ foreach ([
 	constant_check($rejected, 'Unsupported CH08 boundary emitted: ' . $text);
 }
 
+if (isset($argv[2])) { file_put_contents($argv[2], json_encode($cases, JSON_THROW_ON_ERROR)); }
 if (isset($argv[1])) {
 	foreach ($outputs as $name => $output) { file_put_contents($argv[1] . '/' . $name . '.json', $output); }
 }

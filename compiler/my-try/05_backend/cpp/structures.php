@@ -39,7 +39,7 @@ enum cpp_artifact_kind {
 /** One final artifact; its logical identity is independent of storage position. */
 final class cpp_artifact {
 	public readonly string $identity;
-	public readonly cpp_artifact_kind $artifact_kind;
+	private cpp_artifact_kind $artifact_kind;
 	public readonly string $file_name;
 	public readonly string $text;
 
@@ -57,6 +57,11 @@ final class cpp_artifact {
 	public function kind_name(): string
 	{
 		return $this->artifact_kind === cpp_artifact_kind::header ? 'header' : 'translation_unit';
+	}
+
+	public function kind(): cpp_artifact_kind
+	{
+		return $this->artifact_kind;
 	}
 }
 

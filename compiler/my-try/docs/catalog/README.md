@@ -104,9 +104,10 @@ Chapter 09's [bounded enum execution](09_value_types.md#enum-execution--2026-10-
 includes same-enum equality, switch/match and enum-valued ternary/match results;
 explicit enum parameter defaults and [compiler-provided `enum_name`](09_value_types.md#compiler-provided-callables-and-enum_name--2026-10-06)
 are implemented, together with [checked numeric enum helpers](09_value_types.md#numeric-enum-helpers--2026-10-06).
-Next reconcile remaining value-type/reflection cards for bounded CH09 closeout.
-By user request there is no Chapter 08 native
-compiler build; aim to finish Chapter 09 before the combined native checkpoint.
+CH09's [bounded closeout](09_value_types.md#bounded-closeout--2026-10-06) is approved;
+constructor work carries to CH10 and remaining enum extensions are explicit debt.
+The requested combined CH08/09 native checkpoint is [blocked on target runtime prerequisites](../portability/conversion_review.md#chapter-0809-attempt--2026-10-06-blocked); no separate CH08
+native build was performed. CH10 starts with shared class/struct model discussion.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

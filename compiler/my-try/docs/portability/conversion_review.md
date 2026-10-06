@@ -9,6 +9,40 @@ The [Chapter 07 closeout](../catalog/07_references_lifetime.md) and Chapter 15 d
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Chapter 08/09 attempt — 2026-10-06 blocked
+
+Candidate base `3d47e9288bde404720fcba726872a5af0b6af357`, working-tree overlay,
+evidence `/tmp/my-try-ch0809-native-20261006/`. No native compiler pass is claimed.
+Attempts 1–2 stopped at conversion (string casts; readonly enum artifact field).
+Attempt 3 converted but rejected the required `process` module. A diagnostic fourth
+attempt temporarily omitted that setting and reached C++ compilation, exposing
+source-portability issues; it did not supply the missing runtime. The module setting
+is restored and the harness now checks required process/file-lock headers up front.
+
+CH08 native build/publication uses the OS facades described in
+[os_helpers.md](../../../../specs/portability/os_helpers.md). Their native process
+and filesystem-lock implementations exist in candidate `2f0d667f`, but are absent
+from this v0.2 checkout (which does not contain that commit). Integrating/adapting
+those APIs requires coordinated runtime, registration and build-config work, with
+separate process/locking safety proofs. Do not silently switch targets, drop CH08
+from the native source set, or restore old mixed/dynamic semantics. User direction
+is required before that expansion.
+
+Authored repairs use supported integer-to-text concatenation, a private enum-kind
+field with read-only accessor, explicit typed Storage receivers, explicit nullable
+lookup, a qualified type name hidden by an inherited field, and an unpromoted
+constructor field so the base constructor stays first. These follow the portable-PHP
+skill; latest repairs still require native revalidation after the prerequisite lands.
+The harness is extended to compare and execute partitioned namespace/constants/enum
+projects with independent enum assertions; that new native leg remains unexecuted.
+Existing stale tokenizer expectations may also require repair before the full sweep.
+
+After these source repairs, the focused enum, namespace and constant runners pass:
+20/7/10 PHP suites respectively and 24/24/10 generated programs; namespace tokenizer
+and parser conversion also pass. Evidence is under
+`/tmp/my-try-ch0809-portable-{enums,namespaces,constants}-20261006/`.
+These overlapping suites are not 37 distinct suites and are not native compiler proof.
+
 ## Latest native checkpoint — 2026-10-06 Chapter 07
 
 The worktree based on `0aab4b9f6f1ea99869c335dc0de0fbc4cb281686`, with the authored

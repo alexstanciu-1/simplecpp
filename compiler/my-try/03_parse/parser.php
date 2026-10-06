@@ -102,7 +102,8 @@ final class Parser_Run
 		}
 		$file_scope /** scope */ = $selected_scope ?? new scope();
 		if ($previous !== null) {
-			if ($previous->root->namespace_bodies->is_empty()) {
+			$prior_bodies /** Storage<namespace_body_node> */ = $previous->root->namespace_bodies;
+			if ($prior_bodies->is_empty()) {
 				// Reappearance after completed deletion starts fresh syntax in the retained source.
 				$revived_root = new file_node($file_scope);
 				$revived_root->set_span(0, 0);

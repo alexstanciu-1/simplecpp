@@ -20,13 +20,13 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [TYPE-VAR-006](#type-var-006) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-VAR-006A](#type-var-006a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-VAR-007](#type-var-007) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [TYPE-VAR-006](#type-var-006) | partial; constructor integration CH10 | `$b value<Point> = $a;` | bounded support | bounded proof | deferred | Value storage/copy already covered; argument-bearing construction deferred |
+| [TYPE-VAR-006A](#type-var-006a) | deferred CH10 | Nullable inline object construction | not claimed | not claimed | deferred | Nullable record operations/construction must be integrated together |
+| [TYPE-VAR-007](#type-var-007) | deferred CH10 discussion | Bare ownership constructor shortcut | not claimed | not claimed | deferred | Explicit types remain current; no shortcut added |
 | [ENUM-001](#enum-001) | bounded pass | `enum Suit { case Hearts; case Spades; }` | proved | proved | deferred | [Execution checkpoint](#enum-execution--2026-10-06) |
 | [ENUM-002](#enum-002) | bounded pass | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | proved | proved | deferred | Includes exact fixed-width backing; [execution checkpoint](#enum-execution--2026-10-06) |
-| [ENUM-003](#enum-003) | partial; remainder pending-discussion | `Color::tryFrom('green')?->name ?? 'null'` | partial | partial | deferred | enum_name and [numeric helpers proved](#numeric-enum-helpers--2026-10-06); imported reflection/string-backing form remains deferred |
-| [ENUM-004](#enum-004) | pending-discussion | `enum Status implements HasLabel { case Open; public function label(): string { return 'open'; } }` | unverified | unverified | deferred | — |
+| [ENUM-003](#enum-003) | bounded helpers; remainder CH15 | `Color::tryFrom('green')?->name ?? 'null'` | partial | partial | deferred | Explicit name/numeric helpers proved; reflection/string backing deferred |
+| [ENUM-004](#enum-004) | deferred until CH10/11 models | Enum methods/interfaces | not claimed | not claimed | deferred | Requires shared method/interface foundations |
 
 ## Enum model foundation — 2026-10-06
 
@@ -246,15 +246,33 @@ shadowing, cached output, backing/value edits, helper retirement, generation pur
 and clean/incremental agreement. Shared runner used CLI fallback. No native compiler
 rebuild or portability conversion was performed.
 
-Next: reconcile the remaining CH09 cards against existing value-type support and
-deferred class/reflection prerequisites before agreeing the bounded closeout.
-The combined native compiler checkpoint remains after the intended CH09 pass.
+### Bounded closeout — 2026-10-06
+
+User approved concluding CH09's bounded feature pass, not claiming all imported
+examples are implemented. Core enums, exact storage, selection, explicit defaults
+and name/numeric helpers are proved above. Existing struct value-copy support is
+reused rather than reimplemented.
+
+TYPE-VAR-006/006A/007 construction and shortcut decisions carry to
+[CH10's class/struct integration](10_objects.md#chapter-09-carryovers).
+ENUM-004 awaits CH10/11 method/interface foundations. PHP reflection, string backing,
+enum wrapper payloads, broader initialization and remaining hardening are recorded
+in [CH15](15_blocking_debt.md#chapter-09-closeout-follow-ups).
+These are explicit deferrals, not new semantic prohibitions or silent completions.
+
+The combined CH08/09 native compiler checkpoint was attempted and is blocked by
+missing native process/file-lock APIs in this checkout; see the
+[portability report](../portability/conversion_review.md#chapter-0809-attempt--2026-10-06-blocked).
+Until it passes, the latest native evidence remains the CH07 revision;
+the 20-suite/24-program checkpoint above proves PHP and generated C++ only.
 
 ## TYPE-VAR-006
 
 **Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Existing bounded struct value storage/copy retained;
+constructor integration carries to CH10. The imported argument-bearing example is
+not claimed complete.
 
 ### Imported version 1
 
@@ -293,7 +311,8 @@ value_p<Point> p = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));
 
 **Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Nullable inline object operations and construction
+carry to CH10; no native support is claimed for this imported example.
 
 ### Imported version 1
 
@@ -332,7 +351,8 @@ nullable<Point> p{Point(static_cast<int_t>(1), static_cast<int_t>(2))};
 
 **Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Bare constructor shortcuts carry to CH10 discussion;
+explicit type spellings remain current.
 
 ### Imported version 1
 
@@ -442,7 +462,8 @@ generated native C++ scoped enum with explicit integral enumerator values
 
 ## ENUM-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit name/numeric helpers are proved above.
+The imported PHP reflection/string-backing example remains deferred to CH15.
 
 ### Imported version 1
 
@@ -477,7 +498,8 @@ helper-based enum API
 
 ## ENUM-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred until CH10/11 shared method/interface models;
+no parallel enum-only method model is introduced here.
 
 ### Imported version 1
 

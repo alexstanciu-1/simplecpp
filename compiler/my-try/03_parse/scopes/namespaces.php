@@ -78,6 +78,7 @@ final class Namespace_Registry
 	public function find(string $path): ?namespace_identity
 	{
 		$identities /** Keyed_Storage<namespace_identity> */ = $this->identities;
-		return $identities[$path] ?? null;
+		if (isset($identities[$path])) { return $identities[$path]; }
+		return null;
 	}
 }

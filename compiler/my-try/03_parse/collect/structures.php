@@ -118,7 +118,7 @@ abstract class collected_definition extends collected_declaration implements pre
 	/** Stable source identity is separate from local lookup spelling and backend encoding. */
 	public function qualified_name(): string
 	{
-		$declaration_scope = object_cast(weakref_get($this->scope), scope::class);
+		$declaration_scope = object_cast(weakref_get($this->scope), \scpp\compiler\scope::class);
 		$identity = $declaration_scope->source_namespace();
 		if ($identity === null) {
 			return $this->name;
@@ -168,9 +168,11 @@ final class collected_function extends collected_definition implements callable_
 
 final class collected_constant extends collected_definition implements constant_target_i
 {
-	public function __construct(collected_file $collection, private constant_declaration_node $syntax_node)
+	private constant_declaration_node $syntax_node;
+	public function __construct(collected_file $collection, constant_declaration_node $node)
 	{
 		parent::__construct($collection);
+		$this->syntax_node = $node;
 	}
 	public function syntax(): constant_declaration_node { return $this->syntax_node; }
 	public function kind(): collected_name_kind { return collected_name_kind::constant_declaration; }

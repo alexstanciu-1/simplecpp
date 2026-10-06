@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import sys
 import time
 
 from test_runner import CommandRunner, DEFAULT_JOBS, Task, positive_jobs, run_tasks
@@ -19,6 +20,8 @@ from cpp_artifacts import probe_text
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
 STAGES = ['01_prepare_inputs', '02_tokenize', '03_parse', '04_analyze', '05_backend', '06_native', 'compiler']
+sys.path.insert(0, str(APP / 'tests'))
+from enums import native_checks as enum_native_checks
 
 
 def php_literal(text):
@@ -77,6 +80,14 @@ def main():
 
 def validate(args, target, results, logs, started, runner):
     run = runner.run
+
+    # CH08 uses these APIs; excluding its sources would not prove the native compiler.
+    required_runtime = ['runtime/include/modules/process/process.hpp',
+                        'runtime/include/modules/filesystem/file_lock.hpp']
+    missing = [name for name in required_runtime if not (target / name).is_file()]
+    if missing:
+        raise RuntimeError('Native CH08 runtime prerequisites missing: ' + ', '.join(missing)
+                           + '; see specs/portability/os_helpers.md; select/integrate a compatible candidate')
 
     source = results / 'source'
     source.mkdir(exist_ok=args.resume)
@@ -265,6 +276,35 @@ def validate(args, target, results, logs, started, runner):
     source_outcomes = run_tasks([Task(name, lambda name=name, text=text, code=code:
                                       validate_source(name, text, code))
                                 for name, text, code in valid_cases], args.jobs)
+    # Chapter 08/09 fixtures keep separate sources/artifacts, including shared enum helpers.
+    chapter0809_counts = {}
+    for suite in ['namespaces', 'source_constants', 'enums']:
+        exports = results / (suite + '-artifacts')
+        exports.mkdir(exist_ok=args.resume)
+        manifest_path = results / (suite + '-sources.json')
+        run('php-' + suite + '-suite', ['php', APP / 'tests' / (suite + '.php'), exports, manifest_path])
+        projects = json.loads(manifest_path.read_text())
+        chapter0809_counts[suite] = len(projects)
+
+        def validate_project(name, sources):
+            key = suite + '-' + name
+            folder = results / 'chapter0809' / key
+            folder.mkdir(parents=True, exist_ok=args.resume)
+            for relative, text in sources.items():
+                (folder / relative).write_text(text)
+            (folder / 'request.txt').write_text('s2s:' + str(folder))
+            host = run(key + '-host', ['php', '-r', php_code], cwd=folder)
+            native = run(key + '-native', [executable], cwd=folder)
+            if host != native or native.startswith(b'ERROR\n'):
+                raise RuntimeError(key + ': partitioned native output differs or rejects')
+            bundle = json.loads(native)
+            if suite == 'enums':
+                bundle = enum_native_checks(name, bundle)
+            fixture_compiler.compile_artifacts(key + '-clang', json.dumps(bundle).encode(), folder / 'program')
+            run(key + '-execute', [folder / 'program'], expected=-6 if name == 'enum_unhandled' else 7)
+
+        run_tasks([Task(suite + '-' + name, lambda name=name, sources=sources: validate_project(name, sources))
+                   for name, sources in projects.items()], args.jobs)
     executed_cpp = {row.value for row in source_outcomes}
     float_spelling_assertions = sum(name.startswith('float_form_') for name, _, _ in valid_cases)
     # These instrumented programs assert exact values, string bytes and error/store
@@ -367,6 +407,7 @@ def validate(args, target, results, logs, started, runner):
                    chapter07_rejections={suite: len(manifest['rejected'])
                                          for suite, manifest in chapter07_programs.items()},
                    chapter07_lifetime_probes=len(chapter07_probes),
+                   chapter0809_partitioned_executions=chapter0809_counts,
                    cpp_pch=not args.no_pch, host_php_suites=len(host_suites),
                    s2s_valid_executions=len(valid_cases), s2s_float_spelling_assertions=float_spelling_assertions,
                    s2s_supplementary_probe_executions=probe_executions,

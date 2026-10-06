@@ -38,7 +38,7 @@ final class Enum_Preparation
 			if (isset($cases[$node->name])) {
 				throw new \RuntimeException('S2S duplicate enum case name: ' . $node->name);
 			}
-			$decimal = (string)$ordinal;
+			$decimal = '' . $ordinal;
 			if ($backing === null) {
 				if ($node->value !== null) {
 					throw new \RuntimeException('S2S unit enum cases cannot have values');
@@ -114,7 +114,7 @@ final class Enum_Preparation
 				}
 			}
 			if ($fits) {
-				$name = ($signed ? 'int' : 'uint') . (string)$width;
+				$name = ($signed ? 'int' : 'uint') . $width;
 				return object_cast(Model::$type_catalog->definition($name), integer_type_definition::class);
 			}
 		}
