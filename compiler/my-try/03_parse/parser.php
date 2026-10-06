@@ -1119,6 +1119,19 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if (($this->text() === 'weak') || ($this->text() === 'lock'))
+		{
+			$start = $this->position;
+			$observation = new ownership_observation_node();
+			$observation->operation = $this->text() === 'weak'
+				? ownership_observation_kind::derive_weak : ownership_observation_kind::lock_shared;
+			$this->position++;
+			$this->expect('(');
+			$observation->operand = $this->expression();
+			$this->expect(')');
+			$this->finish_node($observation, $start);
+			return $observation;
+		}
 		if ($this->text() === 'move')
 		{
 			$start = $this->position++;

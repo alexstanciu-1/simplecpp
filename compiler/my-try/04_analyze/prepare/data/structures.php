@@ -65,6 +65,12 @@ final class prepared_move extends prepared_expression
 	public prepared_place $source_place;
 }
 
+/** Handle-valued observation result, never a place or an implicit pointee conversion. */
+final class prepared_ownership_observation extends prepared_expression
+{
+	public ownership_observation_kind $operation;
+}
+
 /** A storage selection, not an owning payload or a certificate that a borrow may escape. */
 final class prepared_place
 {

@@ -1,6 +1,6 @@
 <?php
 
-/* Ownership admission, default allocation and recovery; explicit moves/locking remain deferred. */
+/* Ownership admission, transfers, observations, lifetime and incremental recovery. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 
@@ -30,9 +30,29 @@ final class Ownership_Construction_Probe implements node_maintenance_worker_i
 {
 	public int $count = 0;
 	public int $moves = 0;
+	public int $observations = 0;
 
 	public function enter(ast_node $node): void
 	{
+		if ($node instanceof ownership_observation_node)
+		{
+			$observation = object_cast($node, ownership_observation_node::class);
+			$facts = $observation->require_observation_preparation();
+			ownership_source_check(!$facts->addressable() && !$facts->is_fresh_value(), 'Observation is not fresh allocation or a place');
+			ownership_source_check($facts->operation === $observation->operation, 'Observation lost its operation');
+			$input_type = $observation->operand->require_preparation()->type;
+			$input_role = Ownership_Conversions::role($input_type);
+			$output_role = Ownership_Conversions::role($facts->type);
+			$input_payload = $input_role->target_type(object_cast(Type_Queries::canonical($input_type), applied_template_type::class));
+			$output_payload = $output_role->target_type(object_cast(Type_Queries::canonical($facts->type), applied_template_type::class));
+			ownership_source_check($input_payload->matches($output_payload), 'Observation changed payload identity');
+			$expected_family = $facts->operation === ownership_observation_kind::derive_weak ? ownership_kind::weak : ownership_kind::shared;
+			ownership_source_check($output_role->ownership_family() === $expected_family, 'Observation selected wrong handle family');
+			$children = iterator_to_array($observation->children());
+			ownership_source_check(count($children) === 1 && $children[0] === $observation->operand, 'Observation lost its inspection edge');
+			$this->observations++;
+			return;
+		}
 		if ($node instanceof call_node)
 		{
 			$call = object_cast($node, call_node::class);
@@ -89,6 +109,12 @@ final class Ownership_Construction_Probe implements node_maintenance_worker_i
 }
 
 $cases = [
+	'weak_lifetime' => 'struct P { unique<int> $child; } $owner = new P(); $observer = weak($owner); $copy = $observer; $held = lock($copy); if (!$owner) { return 1; } if (!$held) { return 2; } $owner = null; if (!isset(lock($observer))) { return 3; } $held = null; if (lock($observer)) { return 4; } if (lock($copy) !== null) { return 5; } return 0;',
+	'weak_empty' => '$owner shared<int>; $observer weak<int> = weak($owner); $held shared<int> = lock($observer); if ($held) { return 1; } $copy = $observer; $observer = null; if (!empty(lock($copy))) { return 2; } $nested shared<vector<int>>; $nested_observer = weak($nested); if (lock($nested_observer)) { return 3; } return 0;',
+	'weak_temporary' => 'struct P { int $x; } function make(): shared<P> { return new P(); } $observer = weak(make()); if (lock($observer)) { return 1; } $held = lock(weak(make())); if (!$held) { return 2; } $direct = lock(weak(new P())); if (!$direct) { return 3; } return 0;',
+	'weak_once' => 'struct P { int $x; } function source(shared<P> $p, int &$calls): shared<P> { $calls += 1; return $p; } function observe(weak<P> $w, int &$calls): weak<P> { $calls += 1; return $w; } $owner = new P(); $calls = 0; $observer = weak(source($owner, $calls)); if ($calls !== 1) { return 1; } $held = lock(observe($observer, $calls)); if ($calls !== 2) { return 2; } $owner = null; if (!$held) { return 3; } $held = null; if (lock(observe($observer, $calls))) { return 4; } if ($calls !== 3) { return 5; } return 0;',
+	'weak_boundaries' => 'struct P { int $x; } function derive(shared<P> &$p): weak<P> { return weak($p); } function acquire(weak<P> $w): shared<P> { return lock($w); } function present(shared<P> $p): bool { return isset($p); } $owner = new P(); $alias =& $owner; $observer = derive($alias); $weak_alias =& $observer; if (!present(lock($weak_alias))) { return 1; } $held = acquire(weak($owner)); $owner = null; if (!$held) { return 2; } unset($held); if (present(acquire($observer))) { return 3; } return 0;',
+	'weak_condition_release' => 'struct P { int $x; } $owner = new P(); $observer = weak($owner); if (lock($observer)) { $owner = null; if (lock($observer)) { return 1; } } else { return 2; } return 0;',
 	'consume_return' => 'struct P { int $x; } function produce(): unique<P> { $p unique<P> = new P(); return move($p); } function forward(): unique<P> { return produce(); } function consume(unique<P> $p): bool { return isset($p); } $a = forward(); if (!$a) { return 1; } if (!consume(move($a))) { return 2; } if (isset($a)) { return 3; } if (!consume(produce())) { return 4; } $a = produce(); if (!$a) { return 5; } return 0;',
 	'consume_forward_parameter' => 'struct P { int $x; } function relay(unique<P> $p): unique<P> { return move($p); } function extract(unique<P> &$p): unique<P> { return move($p); } $a unique<P> = new P(); $b = relay(move($a)); if (isset($a)) { return 1; } $c = extract($b); if (isset($b)) { return 2; } if (!$c) { return 3; } return 0;',
 	'consume_order' => 'struct P { int $x; } function inspect(unique<P> $first, bool $source_present, unique<P> $second): int { if (!isset($first)) { return 1; } if ($source_present) { return 2; } if (isset($second)) { return 3; } return 0; } $a unique<P> = new P(); $result = inspect(move($a), isset($a), move($a)); return $result;',
@@ -120,6 +146,7 @@ foreach ($cases as $name => $source) {
 	Model::syntax_files()[0]->root->maintain($probe);
 	ownership_source_check($probe->count === substr_count($source, 'new '), 'Construction syntax count differs');
 	ownership_source_check($probe->moves === substr_count($source, 'move('), 'Move syntax count differs');
+	ownership_source_check($probe->observations === substr_count($source, 'weak(') + substr_count($source, 'lock('), 'Observation syntax count differs');
 	$executions[] = ['path' => $path, 'exit_code' => 0];
 }
 
@@ -171,7 +198,51 @@ CPP;
 $lifetime_path = $output . '/move_lifetime.cpp';
 file_put_contents($lifetime_path, "#define main generated_program_main\n" . $lifetime_source . "\n" . $lifetime_harness);
 $executions[] = ['path' => $lifetime_path, 'exit_code' => 0];
+
+// Native identity and destruction checks call the generated observation functions unchanged.
+$observation_native_source = ownership_source('struct P { shared<int> $marker; unique<int> $noncopyable; } function observe(shared<P> &$p): weak<P> { return weak($p); } function acquire(weak<P> &$w): shared<P> { return lock($w); } return 0;');
+$observation_harness = <<<'CPP'
+#undef main
+#include "scpp/memory.hpp"
+int main() {
+    auto owner = scpp::shared<record_P>();
+    owner->field_marker = scpp::shared<scpp::int_t<>>();
+    auto marker = scpp::weak(owner->field_marker);
+    auto* identity = owner.get();
+    auto observer = function_observe(owner);
+    if (owner.get() != identity || observer.use_count() != 1) return 1;
+    auto observer_copy = observer;
+    if (observer.use_count() != 1) return 2;
+    auto held = function_acquire(observer_copy);
+    if (held.get() != identity || observer.use_count() != 2) return 3;
+    owner.reset();
+    if (held.get() != identity || observer.use_count() != 1) return 4;
+    if (static_cast<bool>(marker.expired())) return 5;
+    held.reset();
+    if (!static_cast<bool>(marker.expired())) return 6;
+    if (function_acquire(observer).get() != nullptr) return 7;
+    if (function_acquire(observer_copy).get() != nullptr) return 8;
+    return 0;
+}
+CPP;
+$observation_path = $output . '/weak_identity.cpp';
+file_put_contents($observation_path, "#define main generated_program_main\n" . $observation_native_source . "\n" . $observation_harness);
+$executions[] = ['path' => $observation_path, 'exit_code' => 0];
 $rejections = [];
+foreach (['unique<int>', 'weak<int>', 'int', 'dynamic', '?int'] as $invalid_type) {
+	$rejections[] = ['$v ' . $invalid_type . '; $w = weak($v);', 'requires shared ownership'];
+}
+foreach (['shared<int>', 'unique<int>', 'int', 'mixed', '?int'] as $invalid_type) {
+	$rejections[] = ['$v ' . $invalid_type . '; $held = lock($v);', 'requires weak ownership'];
+}
+$rejections[] = ['$w = weak(null);', 'requires shared ownership'];
+$rejections[] = ['$held = lock(null);', 'requires weak ownership'];
+$rejections[] = ['$s shared<int>; $w weak<int> = $s;', 'ownership boundary'];
+$rejections[] = ['$s shared<int>; $w weak<string> = weak($s);', 'ownership boundary'];
+$rejections[] = ['$w weak<int>; $s shared<string> = lock($w);', 'ownership boundary'];
+$rejections[] = ['$s shared<int>; $alias =& weak($s);', 'stable'];
+$rejections[] = ['$w weak<int>; $alias =& lock($w);', 'stable'];
+$rejections[] = ['function borrow(shared<int> &$s): void {} $w weak<int>; borrow(lock($w));', 'stable'];
 foreach (['move($a);', 'if (move($a)) {}', '$b = empty(move($a));', '$b =& move($a);', '$b = move(move($a));'] as $invalid) {
 	$rejections[] = ['struct P { int $x; } $a unique<P> = new P(); ' . $invalid, 'move requires'];
 }
@@ -334,6 +405,31 @@ try
 	$compiler->prepare();
 	$compiler->cpp();
 	ownership_source_check(Model::$cpp_files[0]->text === $consume_output, 'Consume cleanup changed output');
+
+	$observation_source = 'function source(): shared<int> { $s shared<int>; return $s; } function read(): bool { $w = weak(source()); return isset(lock($w)); } return 0;';
+	file_put_contents($path, $observation_source);
+	$compiler->update_cpp([$path]);
+	$observation_output = Model::$cpp_files[0]->text;
+	file_put_contents($path, str_replace('shared<int>', 'weak<int>', $observation_source));
+	foreach ([[$path], []] as $changes) {
+		$failed = false;
+		try { $compiler->update_cpp($changes); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'requires shared ownership'); }
+		ownership_source_check($failed && Model::$cpp_files->is_empty(), 'Signature edit reused invalid observation facts');
+	}
+	file_put_contents($path, $observation_source);
+	$compiler->update_cpp([$path]);
+	ownership_source_check(Model::$cpp_files[0]->text === $observation_output, 'Observation repair changed output');
+	Compiler_Lifecycle::reset_preparation();
+	$compiler->prepare();
+	$compiler->cpp();
+	ownership_source_check(Model::$cpp_files[0]->text === $observation_output, 'Observation cleanup changed output');
+	$changed_payload = str_replace('shared<int>', 'shared<string>', $observation_source);
+	file_put_contents($path, $changed_payload);
+	$compiler->update_cpp([$path]);
+	$incremental_output = Model::$cpp_files[0]->text;
+	ownership_source_check($incremental_output !== $observation_output, 'Payload edit did not change emitted types');
+	ownership_source_check($incremental_output === ownership_source($changed_payload), 'Observation payload edit differs from fresh preparation');
 }
 finally {
 	unlink($path);

@@ -354,8 +354,43 @@ cleanup. Native markers prove return identity and release of an earlier consumin
 argument when a later nullable extraction throws, before the intended callee is entered.
 FPM required CLI fallback. The compiler itself was not rebuilt natively.
 
-Next discussion: weak derivation and explicit locking. Broader constructors and
-ownership member operations remain separate work.
+Weak derivation and explicit locking are completed in the next checkpoint.
+
+## Weak derivation and explicit locking — 2026-10-06
+
+`weak(shared<T>)` produces exact `weak<T>` without allocation, pointee copying or
+strong retention. `lock(weak<T>)` produces exact `shared<T>`: ownership of the same
+object on success, empty shared on expiration. Both accept expressions, evaluate
+their operand once and return non-addressable values. Weak truthiness and implicit
+shared-to-weak conversion remain rejected. Retain the lock result when a later body
+needs ownership; a condition-only temporary does not keep the object alive in that body.
+See the [language contract](../../../../specs/type_use_modifiers.md#v02-weak-derivation-and-explicit-locking--2026-10-06).
+
+One `ownership_observation_node`/fact family and `Ownership_Observation_Preparation`
+own both operations. The parser records syntax only; preparation uses the definition's
+ownership role and exact payload, and C++ consumes the settled operation. Target C++
+is one `::scpp::weak(operand)` or `(operand).lock()`, using the existing runtime.
+No per-payload adapters, generic-call instantiation, persistent temporaries or member
+dispatch are introduced. This adds no new template framework or runtime allocation;
+no compile-time speedup is claimed.
+
+Legacy reconciliation: `generators/php/specs/rules.md` already documents `weak($object)`;
+the legacy STAN `weakref_get` entry deliberately leaves its result broad and lets
+the native template own T. v0.2 prepares the exact result instead. Runtime ownership
+tests 007/012 cover copying, roundtrip identity and expiration; their direct weak
+observers/null comparison do not authorize those source operations. The accepted
+`lock(...)` spelling is a language operation, not a new registered runtime builtin.
+
+Evidence: `/tmp/my-try-weak-lock-20261006-final`, `tests/ownership.py`: 14 focused
+PHP suites, 88 rejections and 26 generated-C++ executions without PCH. Coverage includes
+empty/expired locks, exact payload rejection, noncopyable pointees, single evaluation,
+temporary full-expression lifetime, aliases/calls/returns, identity, owner counts and
+destruction. Signature edits fail on unchanged consumers and no-change retry; repair,
+cleanup and payload edits agree with fresh preparation. FPM used CLI fallback.
+The compiler itself was not rebuilt natively; no runtime implementation changed.
+
+Next discussion: remaining Chapter 07 scope and debt, including const-reference
+parameters. Broader constructors, pointee member access and inheritance remain separate work.
 
 ## Ownership-type validation debt from chapter 05
 
@@ -364,7 +399,7 @@ classification and rejects direct nesting/value wrapping by definition role.
 Direct nesting is deliberately excluded from v0.2, not pending automatic enablement.
 
 **CH07-OWN-EXEC-01 — remaining ownership operations:** broader construction,
-variadic/selection transfer extensions, weak locking,
+variadic/selection transfer extensions,
 class/member lifetime rules and precise additional target constraints
 remain separate work. Current formation of a type does not certify those operations.
 Low-level pointer escapes and specialized deleters remain deferred. Do not revive
@@ -390,7 +425,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [REF-RETURN-001](#ref-return-001) | supported-bounded | `function &bounce(int &$a): int { return id($a); }` | origin checked | verified | deferred | Nonrecursive whole-parameter forwarding; unsafe origins reject |
 | [REF-RETURN-002](#ref-return-002) | rejected | Reference return of an indexed element | rejects | no output | deferred | Whole-parameter return only; no native interior reference |
 | [REF-BIND-001](#ref-bind-001) | rejected | `$inner =& $arr["inner"];` | rejects | no output | deferred | No native container-interior alias |
-| [TYPE-VAR-003A](#type-var-003a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [TYPE-VAR-003A](#type-var-003a) | supported-strict | `$w weak<int> = null;` | prepared | verified | deferred | `tests/ownership.php`; also explicit derivation/locking; legacy annotation alias not added |
 | [TYPE-VAR-003B](#type-var-003b) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-003C](#type-var-003c) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-PARAM-003](#type-param-003) | pending-discussion | `function f(string &$s, vector_t &$v): void {}` | unverified | unverified | deferred | — |
@@ -743,9 +778,13 @@ ERROR
 
 ## TYPE-VAR-003A
 
-**Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
+**Strict-first scope:** Explicit `weak<T>` storage, empty/null reset and handle copies;
+derivation and acquisition follow the [weak checkpoint](#weak-derivation-and-explicit-locking--2026-10-06).
+The imported annotation spelling below is legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Exact `::scpp::weak_p<T>` storage, never another
+object wrapper. `weak($owner)` lowers to `::scpp::weak(owner)`; `lock($observer)`
+lowers to `(observer).lock()` after shared preparation establishes the result.
 
 ### Imported version 1
 

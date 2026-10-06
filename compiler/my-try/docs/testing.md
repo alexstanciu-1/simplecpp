@@ -27,8 +27,10 @@ Runs model, registration, capability, allocation, local transfer, empty/reset/pr
 and source recovery checks, then compiles generated programs without PCH. A native
 lifetime harness calls generated local/call/return transfer code to observe identity,
 replacement and unwinding release, including failure of a later argument before
-callee entry. Allocation is bounded to default source structs. Weak locking,
-source user-destructors and a native compiler rebuild are not proved.
+callee entry. Weak derivation/locking checks include empty and expired states,
+single evaluation, temporary lifetime, noncopyable pointees and native identity/
+strong-owner counts/destruction. Allocation is bounded to default source structs.
+Source user-destructors and a native compiler rebuild are not proved.
 
 For whole-storage unset/clean and their alias effects:
 

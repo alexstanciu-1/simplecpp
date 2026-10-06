@@ -213,6 +213,16 @@ facts to move owning temporaries into parameters, never referenced source storag
 Returns already emit owned prvalues directly, without adding `std::move` to prvalues.
 Field transfer, unique variadic packing and contextual `new` expansion remain gated.
 
+`ownership_observation_node` owns one operand and its derive-weak/lock-shared operation.
+`Ownership_Observation_Preparation` validates the operand's definition-owned role and
+interns the opposite handle family with the exact same payload identity. Attached
+`prepared_ownership_observation` carries the admitted operation and inherited result
+type, without a place, retained worker or extra syntax inventory. Ordinary copyable
+handle boundaries apply; neither operation is fresh pointee construction. Cleanup
+uses the owning operand edge. C++ emits one runtime derivation call or one lock,
+without duplicating the operand, copying the pointee or retaining a hidden strong owner.
+This does not add generic callable instantiation or source member-call dispatch.
+
 `index_node` retains `prepared_index_expression` with a normal `operator_decision`
 and inherited non-addressable value result. `Indexing_Contracts` supplies exact
 receiver-definition signatures; `Indexing_Preparation` resolves key/result types,

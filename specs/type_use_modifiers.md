@@ -136,3 +136,43 @@ This is not Rust exclusive-borrow enforcement.
 
 Unique variadic packs, cross-type ownership conversions, conditional ownership joins,
 field/container transfer and implicit null argument/return conversions remain deferred.
+
+## v0.2 weak derivation and explicit locking — 2026-10-06
+
+`weak(expression)` derives `weak<T>` from an exact `shared<T>` operand. It neither
+allocates nor copies the pointee, consumes the shared handle, or retains strong
+ownership. Empty shared produces empty weak. Weak handles are copyable independently
+of pointee copyability. `unique<T>` and other families are not accepted; implicit
+shared-to-weak conversions and cross-payload conversions remain rejected.
+
+`lock(expression)` accepts exact `weak<T>` and returns `shared<T>`. A successful
+lock acquires ownership of the same object. An empty or expired weak returns empty
+shared, not an exception or an additional nullable wrapper. Both operations evaluate
+their single operand exactly once and produce non-addressable handle values. They
+are language ownership operations, not user-overloadable calls or general member
+dispatch. The helper spelling does not enable source `$observer->lock()`.
+
+Retain the acquired handle for the required lifetime:
+
+```php
+$owner = new Item();
+$observer = weak($owner);
+$held = lock($observer);
+if ($held) {
+    $owner = null;
+    // $held still owns the same Item.
+}
+```
+
+Weak truthiness, negation, `isset`/`empty` and strict-null comparisons remain
+rejected; apply those operations to the locked shared result instead. A condition
+such as `if (lock($observer))` tests acquisition but does not retain that temporary
+owner throughout the body. Lock once into a local when the body needs ownership.
+Locking is ownership acquisition, not a mutex or a guarantee of pointee thread safety.
+
+Shared-valued temporary expressions are valid operands. `weak(make_item())` expires
+after the temporary's full expression if no other strong owner exists. In contrast,
+`$held = lock(weak(make_item()));` acquires ownership before that temporary is released.
+No hidden persistent owner is introduced to make an otherwise expired weak usable.
+General handle member access, expiration/count observers, inheritance conversions
+and broader construction remain separate slices.

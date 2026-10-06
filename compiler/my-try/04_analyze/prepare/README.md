@@ -21,6 +21,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/cleanup.php` | Whole-storage unset/clean admission and routing to independent keyed removal |
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
 | `semantics/calls.php` | Common selected-call signature completion and argument admission |
+| `semantics/ownership_observation.php` | Exact-payload weak derivation and explicit strong acquisition |
 | `semantics/initialization.php` | Shared initialization-interface selection/substitution and factory/input validation; model query only, not literal execution |
 | `semantics/data_construction.php` | Contextual literal targets, input-shape selection and ordered entry conversion facts through common bindings |
 | `semantics/selection_results.php` | Shared matching-scalar value-result admission and conversions |

@@ -39,6 +39,7 @@ enum node_kind
 	case data_construction;
 	case object_construction;
 	case move_expression;
+	case ownership_observation;
 	case data_entry;
 	case index_expression;
 	case integer_literal;

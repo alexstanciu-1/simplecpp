@@ -362,7 +362,8 @@ bound. Null assignment through a native alias/reference parameter is valid, whil
 Empty unique construction is not a copy and does not enable ordinary unique copying.
 Shared/unique conditions, negation, `isset`, `empty` and strict null comparisons
 inspect handle presence, never the pointee's truthiness. Weak implicit presence
-forms reject during preparation; use explicit locking once available.
+forms reject during preparation; use the
+[explicit locking source operation](../../specs/type_use_modifiers.md#v02-weak-derivation-and-explicit-locking--2026-10-06).
 The initial source slice does not add null argument/return conversions, handle-valued
 selection joins, explicit bool casts or direct handle logical binary operations.
 Default source-struct allocation is now admitted by the

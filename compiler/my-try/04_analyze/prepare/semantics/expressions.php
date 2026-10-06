@@ -10,7 +10,11 @@ final class Expression_Preparation
 		?canonical_type_use $expected_type = null,
 		expression_consumer $consumer = expression_consumer::value): prepared_expression
 	{
-		if ($node instanceof move_expression_node) {
+		if ($node instanceof ownership_observation_node) {
+			$observation = object_cast($node, ownership_observation_node::class);
+			$observation->set_preparation(Ownership_Observation_Preparation::prepare($observation, $context));
+		}
+		elseif ($node instanceof move_expression_node) {
 			$move = object_cast($node, move_expression_node::class);
 			$move->set_preparation(Move_Preparation::prepare($move, $context, $consumer));
 		}

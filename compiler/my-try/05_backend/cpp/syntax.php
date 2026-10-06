@@ -15,6 +15,18 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		if ($node instanceof ownership_observation_node)
+		{
+			$observation = object_cast($node, ownership_observation_node::class);
+			$facts = $observation->require_observation_preparation();
+			$operand = $this->expression($observation->operand);
+			if ($facts->operation === ownership_observation_kind::derive_weak) {
+				$this->context->headers['scpp/memory.hpp'] = true;
+				return '::scpp::weak(' . $operand . ')';
+			}
+			$this->context->headers['scpp/weak_p.hpp'] = true;
+			return '(' . $operand . ').lock()';
+		}
 		if ($node instanceof move_expression_node)
 		{
 			$move = object_cast($node, move_expression_node::class);
