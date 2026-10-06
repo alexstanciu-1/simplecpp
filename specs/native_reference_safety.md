@@ -57,6 +57,37 @@ shared_p<Box> box;
 auto& box_ref = box;
 ```
 
+## v0.2 whole-storage reset and aliases — 2026-10-06
+
+`unset($variable)` and `clean($variable)` are storage resets, never symbol deletion,
+reference detachment or destruction of the variable's storage. The name remains
+usable and native aliases to that storage remain bound.
+
+- Whole-variable `unset` resets nullable storage to its absent state. Applying it
+  directly to a native alias or reference parameter is rejected, not interpreted
+  as PHP-style alias detachment. Resetting the original nullable owner while aliases
+  exist is valid; all those aliases observe absence and can later assign a value.
+- `clean` writes the defined default value through a local, parameter or native
+  alias. Supported scalar defaults are false, numeric zero and empty string;
+  typed vectors/hashes become empty. This permission does not follow merely from
+  a type being constructible, indexable or storable.
+- `clean` resets mixed and dynamic storage to their own null values. In particular,
+  cleaning dynamic storage does **not** clear the old shared container in place.
+  Other copied dynamic bindings retain that object; native aliases to the reset
+  variable instead observe null. No cross-family conversion is involved.
+- `clean` is not the nullable-reset spelling; use `unset` on the owner or ordinary
+  null assignment through an alias/reference parameter. Result wrappers and arbitrary
+  structs do not acquire a cleanup contract from this rule.
+- Keyed `unset($container[$key])` is a separate removal operation governed by
+  [array semantics](array_semantics.md#10-unsetak). Its existing lazy/no-creation rules
+  remain unchanged, including when the root variable is a native alias.
+
+The initial compiler slice accepts a single variable operand as a statement.
+Direct property resets, indexed `clean`, value-producing forms and ownership-pointer
+families await their own admission/model work. An already valid local alias to a
+stable field can be cleaned according to its selected storage type. These limits
+do not relax the prohibition on heap-interior references.
+
 ## Forbidden native-reference sources
 
 Expressions rooted in dynamic interior access are not native-reference bindable.

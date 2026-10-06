@@ -73,12 +73,12 @@ try {
 	$probe = $body->statements[1]->expression;
 	probe_check($removal instanceof unset_node, 'Unset did not retain statement syntax');
 	probe_check(iterator_to_array($removal->children()) === [$removal->target], 'Unset inspection lost target');
-	$old = $removal->require_preparation();
+	$old = $removal->require_preparation()->path;
 	probe_check($old->steps->count() === 2 && $probe->require_probe_preparation()->path->steps->count() === 2, 'Keyed facts lost path steps');
 	probe_check($old->steps[0]->syntax->preparation() === null, 'Keyed path was prepared as a value read');
 	file_put_contents($path, str_replace('hash<hash<int>>', 'hash<hash<string>>', $nested));
 	$compiler->update_cpp([$path]);
-	probe_check($function->body === $body && $old !== $removal->require_preparation(), 'Retained keyed body did not reprepare');
+	probe_check($function->body === $body && $old !== $removal->require_preparation()->path, 'Retained keyed body did not reprepare');
 	file_put_contents($path, str_replace('hash<hash<int>>', 'hash<vector<int>>', $nested));
 	$failed = false;
 	try { $compiler->update_cpp([$path]); }

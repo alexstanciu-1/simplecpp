@@ -280,9 +280,13 @@ final class Parser_Run
 	/** Select a statement from its leading syntax; names are never looked up here. */
 	private function statement(): ast_node
 	{
-		if ($this->text() === 'unset') {
+		if (($this->text() === 'unset') || ($this->text() === 'clean'))
+		{
+			$cleaning = $this->text() === 'clean';
 			$start = $this->position++;
-			$removal = new unset_node();
+			$removal /** cleanup_node */ = $cleaning
+				? object_cast(new clean_node(), cleanup_node::class)
+				: object_cast(new unset_node(), cleanup_node::class);
 			$this->expect('(');
 			$removal->target = $this->expression();
 			$this->expect(')');

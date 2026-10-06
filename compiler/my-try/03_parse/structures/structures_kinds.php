@@ -54,6 +54,7 @@ enum node_kind
 	case coalesce_expression;
 	case value_probe;
 	case unset_statement;
+	case clean_statement;
 	case take_expression;
 	case match_expression;
 	case match_arm;

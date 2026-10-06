@@ -169,6 +169,51 @@ PHP checks after adding the single-file failed-emission guard, and
 `/tmp/my-try-forward-regression-20261006` passes four additional retained suites.
 The compiler itself was not rebuilt natively for this slice.
 
+## Whole-storage resets — 2026-10-06
+
+Agreed and implemented: `unset($owner)` resets nullable storage; native aliases
+and reference parameters cannot be unset. `clean($variable)` resets bool/integer/
+float/string, vector/hash and mixed/dynamic storage, including write-through aliases
+and reference parameters. Neither removes a name or changes its lifetime. Mixed and
+dynamic become null; a separate copied dynamic binding retains its old shared object.
+The [normative contract](../../../../specs/native_reference_safety.md#v02-whole-storage-reset-and-aliases--2026-10-06)
+also distinguishes keyed removal, whose lazy/no-creation behavior is unchanged.
+
+One `cleanup_node` abstract owns the target syntax/maintenance; final `unset_node`
+and `clean_node` retain the distinct language operations. `Cleanup_Preparation`
+selects either a `prepared_storage_reset` with the admitted canonical type or a
+`prepared_keyed_removal` owning the established keyed recipe. Reset admission uses
+semantic roles and exact registered built-in identities, not C++ names, generic
+default constructibility or incidental indexing permission. Alias unset checks the
+named binding rather than its flattened original place. No new lifetime graph exists.
+
+C++ consumes that decision: `target = ExactType{};` for resets, the existing lazy
+path lowerer for removal. The fixed reset form needs no helper/template framework,
+interior borrow or duplicate per-container generator. Compile-time improvement is
+not claimed without measurements. This supersedes the imported `php::clean` spelling
+for this compiler. Legacy runtime scalar `unset` overloads remain implementation
+evidence, not permission to bypass the narrower source contract.
+
+Non-goals/debt: ownership-pointer resets (CH05-OWN-01), arbitrary structs/Result
+cleanup, direct property resets, indexed `clean`, variadic/value-producing forms,
+PHP-style symbol removal and reference detachment. Legacy runtime overload cleanup
+is separate from this compiler admission slice; no runtime behavior was broadened.
+
+Proof: `tests/cleanup.py` runs retained preparation/recovery suites and generated C++
+cases for defaults, alias persistence, reference/value parameters, field aliases,
+mixed COW and dynamic shared-object preservation. `tests/keyed_paths.py` verifies
+existing lazy keyed behavior after the shared syntax/fact refactor. These are
+generated-program proofs, not a native compiler rebuild.
+
+Evidence: `/tmp/my-try-cleanup-final-20261006-2` passes seven PHP suites,
+22 reset rejection cases and all 12 reset programs without PCH. The earlier
+`/tmp/my-try-cleanup-20261006-3` passes the same 12 program scenarios with PCH;
+the final run additionally strengthens type-change/arity checks and float-default
+verification. `/tmp/my-try-cleanup-keyed-20261006` passes five PHP suites and
+44 existing keyed programs. `/tmp/my-try-cleanup-final-php-20261006` repeats all
+seven focused PHP suites after final source consolidation. The runner used its documented CLI fallback because
+the sandbox denied FPM socket creation.
+
 ## Ownership-type validation debt from chapter 05
 
 **CH05-OWN-01:** ownership templates currently register as ordinary template
@@ -194,8 +239,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [FUNC-REF-002](#func-ref-002) | rejected-bounded | `function &f(): int {}` | rejects | no output | deferred | Requires exactly one reference parameter |
 | [FUNC-REF-003](#func-ref-003) | supported-with-debt | `function &f(int &$a): int { return $a; }` | prepared | verified | deferred | Whole-parameter lifetime proof; CH07-WARN-01 |
 | [FUNC-REF-004](#func-ref-004) | rejected | `function &f($a) { return $a; }` | explicit types required | no output | deferred | Existing signature grammar |
-| [VAR-UNSET-001](#var-unset-001) | pending-discussion | `unset($a);` | unverified | unverified | deferred | — |
-| [VAR-CLEAN-001](#var-clean-001) | pending-discussion | `clean($a);` | unverified | unverified | deferred | — |
+| [VAR-UNSET-001](#var-unset-001) | supported-bounded | `$a ?int = 1; unset($a);` | prepared | verified | deferred | `tests/cleanup.php`; nullable owner only, alias/reference rejection |
+| [VAR-CLEAN-001](#var-clean-001) | supported-bounded | `$a int = 1; clean($a);` | prepared | verified | deferred | `tests/cleanup.php`; defined scalar/container/boxed resets |
 | [REF-RETURN-001](#ref-return-001) | supported-bounded | `function &bounce(int &$a): int { return id($a); }` | origin checked | verified | deferred | Nonrecursive whole-parameter forwarding; unsafe origins reject |
 | [REF-RETURN-002](#ref-return-002) | rejected | Reference return of an indexed element | rejects | no output | deferred | Whole-parameter return only; no native interior reference |
 | [REF-BIND-001](#ref-bind-001) | rejected | `$inner =& $arr["inner"];` | rejects | no output | deferred | No native container-interior alias |
@@ -362,7 +407,9 @@ ERROR
 
 ## VAR-UNSET-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See [whole-storage resets](#whole-storage-resets--2026-10-06).
+Preparation admits nullable owner variables and emits exact-type default assignment;
+alias/reference-parameter unset rejects. Keyed removal retains its separate contract.
 
 ### Imported version 1
 
@@ -399,7 +446,10 @@ php::unset(a);
 
 ## VAR-CLEAN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See [whole-storage resets](#whole-storage-resets--2026-10-06).
+Admitted value variables and aliases reset by exact-type default assignment. Dynamic
+copies preserve the old object; native aliases observe reset storage. Unsupported
+types reject during preparation rather than relying on a C++ default constructor.
 
 ### Imported version 1
 

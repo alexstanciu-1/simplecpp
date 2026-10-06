@@ -115,9 +115,8 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function statement(statement_node $node): string
 	{
-		if ($node instanceof unset_node) {
-			$removal = object_cast($node, unset_node::class);
-			return "\t" . CPP_Keyed_Path::generate($removal->require_preparation(), $this->context, true) . ";\n";
+		if ($node instanceof cleanup_node) {
+			return $this->generate_cleanup(object_cast($node, cleanup_node::class));
 		}
 		if ($node instanceof function_body_node) {
 			return $this->generate_function_body(object_cast($node, function_body_node::class));
@@ -178,6 +177,19 @@ final class CPP_Syntax
 	public function generate_block(statement_body_node $node): string
 	{
 		return "{\n" . CPP_Generator::generate_statements($node, $this->context) . "}\n";
+	}
+
+	/** Consume the admitted operation; reset storage without clearing a shared pointee in place. */
+	private function generate_cleanup(cleanup_node $node): string
+	{
+		$facts = $node->require_preparation();
+		if ($facts instanceof prepared_keyed_removal) {
+			$keyed = object_cast($facts, prepared_keyed_removal::class);
+			return "\t" . CPP_Keyed_Path::generate($keyed->path, $this->context, true) . ";\n";
+		}
+		$type /** canonical_type_use */ = $facts->storage_type();
+		return "\t" . $this->expression($node->target) . ' = '
+			. CPP_Declarations::type($type, $this->context) . "{};\n";
 	}
 
 	/** C++ native branches preserve lazy arm selection; truthiness is already decided. */

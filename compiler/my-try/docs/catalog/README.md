@@ -96,7 +96,9 @@ including separated mixed/dynamic integration and registered JSON APIs. The requ
 [native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
 covers these Chapter 05/06 slices. Chapter 07 now supports
 [local aliases, bounded reference returns and nonrecursive forwarding](07_references_lifetime.md#nonrecursive-reference-forwarding--2026-10-06)
-with PHP and generated-C++ proofs; recursion and warning delivery remain separate work.
+with PHP and generated-C++ proofs, followed by
+[whole-storage unset/clean](07_references_lifetime.md#whole-storage-resets--2026-10-06).
+Recursion, ownership classification and warning delivery remain separate work.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

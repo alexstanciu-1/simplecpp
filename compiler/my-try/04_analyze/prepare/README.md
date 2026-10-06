@@ -18,6 +18,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/defaults.php` | Bounded scalar parameter-default normalization and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
+| `semantics/cleanup.php` | Whole-storage unset/clean admission and routing to independent keyed removal |
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
 | `semantics/calls.php` | Common selected-call signature completion and argument admission |
 | `semantics/initialization.php` | Shared initialization-interface selection/substitution and factory/input validation; model query only, not literal execution |
@@ -258,7 +259,11 @@ invalid shape without throwing a required-value conversion. Removal rejects such
 `Value_Probe_Preparation::require_type` owns both ordinary and leaf-value admission,
 including registered containers, nullable scalars and Result scalars. Signature binding
 does not require copy capability; copied reads and assignment results request it at
-their own boundaries. Vector-element removal and bare-variable/property unset remain gated.
+their own boundaries. Vector-element removal and direct property unset remain gated.
+`Cleanup_Preparation` separately admits nullable-owner unset and defined scalar,
+vector/hash and mixed/dynamic clean operations. Native alias/reference-parameter
+unset rejects; clean writes through them. The selected type/reset fact authorizes
+default-value replacement, not arbitrary C++ constructibility or shared-object mutation.
 
 `String_Conversions::decide_text` owns the bounded concatenation context: boxed,
 ordinary scalar and literal-null operands normalize to string using identity or

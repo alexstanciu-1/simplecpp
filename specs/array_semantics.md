@@ -445,8 +445,12 @@ and dynamic shared identity. Remaining associative keys retain their identities.
 The first v0.2 slice admits one keyed target per statement rooted in an established
 local/parameter. Hash, mixed-table and dynamic removal are supported. Vector-element
 removal is deferred pending a decision on shifting versus preserving index identity;
-vectors may still appear as existing intermediate containers. Bare-variable unset,
-properties, intermediate append, native references and cross-family paths remain gated.
+vectors may still appear as existing intermediate containers. Properties,
+intermediate append, native interior references and cross-family paths remain gated.
+Whole-variable reset is separately governed by the
+[v0.2 reset/alias contract](native_reference_safety.md#v02-whole-storage-reset-and-aliases--2026-10-06).
+An established local alias may supply the root of keyed removal; this grants no
+reference to a container slot and does not detach the alias.
 Writes retain their existing evaluation/failure contract; this lazy rule does not
 change assignment or append.
 

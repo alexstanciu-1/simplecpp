@@ -23,19 +23,32 @@ final class value_probe_node extends expression_node
 	public function children(): child_iterator_i { return new value_probe_children_iterator($this); }
 }
 
-/** Removal is a statement, not a value probe or ordinary callable. */
-final class unset_node extends statement_node
+/** Reset/removal syntax shares its target edge, not its semantic admission. */
+abstract class cleanup_node extends statement_node
 {
 	use Node_Source_Span;
 	use Preparation_Facts;
 	public expression_node $target;
-	private ?prepared_keyed_path $prepared_facts = null;
-	public function kind(): node_kind { return node_kind::unset_statement; }
-	public function require_preparation(): prepared_keyed_path { return $this->prepared_facts; }
+	private ?prepared_cleanup $prepared_facts = null;
+	public function require_preparation(): prepared_cleanup { return $this->prepared_facts; }
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->target);
 	}
-	public function children(): child_iterator_i { return new unset_children_iterator($this); }
+	public function children(): child_iterator_i { return new cleanup_children_iterator($this); }
+}
+
+final class unset_node extends cleanup_node {
+	public function kind(): node_kind
+	{
+		return node_kind::unset_statement;
+	}
+}
+
+final class clean_node extends cleanup_node {
+	public function kind(): node_kind
+	{
+		return node_kind::clean_statement;
+	}
 }

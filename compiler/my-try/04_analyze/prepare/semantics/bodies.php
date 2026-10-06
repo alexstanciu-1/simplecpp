@@ -23,9 +23,9 @@ final class Body_Preparation
 	/** Dispatch within the lexical reference-binding policy selected by the enclosing statement. */
 	private static function prepare_statement_core(statement_node $node, preparation_context $context): statement_completion
 	{
-		if ($node instanceof unset_node) {
-			$removal = object_cast($node, unset_node::class);
-			$removal->set_preparation(Keyed_Path_Preparation::prepare($removal->target, $context, true));
+		if ($node instanceof cleanup_node) {
+			$removal = object_cast($node, cleanup_node::class);
+			$removal->set_preparation(Cleanup_Preparation::prepare($removal, $context));
 			return new statement_completion(true);
 		}
 		if ($node instanceof function_body_node) {

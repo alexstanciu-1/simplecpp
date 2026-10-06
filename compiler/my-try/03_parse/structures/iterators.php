@@ -328,10 +328,10 @@ final class value_probe_children_iterator extends children_iterator
 	}
 }
 
-final class unset_children_iterator extends children_iterator
+final class cleanup_children_iterator extends children_iterator
 {
 	private bool $consumed = false;
-	public function __construct(private unset_node $source) {}
+	public function __construct(private cleanup_node $source) {}
 	protected function read_next(): ?ast_node
 	{
 		if ($this->consumed) { return null; }

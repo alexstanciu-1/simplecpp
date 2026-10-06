@@ -405,6 +405,14 @@ container covariance are not authorized by this rule. Scalar conversion policy
 is unchanged.
 
 ### 6.11 Reset/cleanup semantics
+
+For v0.2, the [whole-storage/alias contract](../../specs/native_reference_safety.md#v02-whole-storage-reset-and-aliases--2026-10-06)
+defines the admitted resets. `clean` resets mixed/dynamic to their own null states,
+never clears a shared dynamic object in place. Source preparation rejects unsupported
+types and alias `unset`; permissive legacy runtime overloads do not grant source
+permission. The current compiler lowers admitted resets to exact-type default-value
+assignment rather than relying on the historical `php::clean` helper spelling.
+
 - `unset` is restricted to types that can represent an empty/null state
 - in practice, `unset` is for nullable / pointer-like families, not for plain non-nullable value types
 - `unset` must not be used for native references

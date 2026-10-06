@@ -17,6 +17,16 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For whole-storage unset/clean and their alias effects:
+
+```bash
+python3 compiler/my-try/tests/cleanup.py --results /tmp/FRESH_CLEANUP_RESULTS
+```
+
+Runs focused PHP/recovery checks and generated C++ executions for default states,
+alias persistence and dynamic binding replacement. `--php-only` skips C++;
+`--no-pch` checks emitted include completeness. This does not rebuild the compiler.
+
 For local aliases and bounded reference returns:
 
 ```bash

@@ -172,6 +172,35 @@ final class prepared_keyed_path
 	}
 }
 
+/** A cleanup either replaces whole storage or removes an existing keyed slot. */
+abstract class prepared_cleanup {
+	abstract public function storage_type(): ?canonical_type_use;
+}
+
+final class prepared_storage_reset extends prepared_cleanup
+{
+	public function __construct(private canonical_type_use $target_type)
+	{
+	}
+
+	public function storage_type(): ?canonical_type_use
+	{
+		return $this->target_type;
+	}
+}
+
+final class prepared_keyed_removal extends prepared_cleanup
+{
+	public function __construct(public prepared_keyed_path $path)
+	{
+	}
+
+	public function storage_type(): ?canonical_type_use
+	{
+		return null;
+	}
+}
+
 final class prepared_keyed_step
 {
 	/** @reference.source keyed syntax graph */

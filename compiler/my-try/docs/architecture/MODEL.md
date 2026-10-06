@@ -212,11 +212,18 @@ mutation references never cross source calls. Runtime overloads implement these
 steps without a variadic path-template framework or copying the entire root.
 
 `prepared_keyed_path` is the common non-creating recipe for keyed probes/removal.
-`prepared_value_probe` optionally owns it; the dedicated `unset_node` statement owns
-it directly. Ordered steps observe existing bracket nodes and retain key conversions
+`prepared_value_probe` optionally owns it; an `unset_node` owns it through
+`prepared_keyed_removal`. Ordered steps observe existing bracket nodes and retain key conversions
 and canonical element types. Runtime operation selection remains in stage workers,
 not in these structures. Root/key syntax facts follow ordinary cleanup/invalidation.
 Registry probe/removal opt-ins do not follow implicitly from write capability.
+
+`cleanup_node` shares the single target edge, maintenance and fact slot between
+final unset/clean statements. `Cleanup_Preparation` owns their distinct admission.
+Its alternative `prepared_storage_reset` retains only the exact admitted reset type;
+target syntax already owns the resolved variable/place. Reset facts do not retain
+environments or workers, duplicate provenance, or grant arbitrary default construction.
+Emission uses exact-type default assignment; aliases stay bound to the same storage.
 
 The CPP worker emits lazy key evaluation with prefix-resolver closures capturing only
 the bound root and saved keys. Resolvers acquire interior pointers only during one

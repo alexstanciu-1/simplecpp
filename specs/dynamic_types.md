@@ -47,6 +47,11 @@ compliance. See the [implementation handoff](../compiler/my-try/docs/planning/mi
   whether the old or new value is scalar or container.
 - Default dynamic is null. There is one null state, distinct from a constructed
   empty container. No old absent-handle versus boxed-null distinction survives.
+- `clean($value)` resets mixed or dynamic storage to its own null state, including
+  through a native alias or reference parameter. It does not clear a shared dynamic
+  container in place; other copied bindings preserve their object. Whole-variable
+  `unset` is not the spelling for either boxed family. See the
+  [reset/alias contract](native_reference_safety.md#v02-whole-storage-reset-and-aliases--2026-10-06).
 - Cross-family scalar/null conversion is explicit and preserves kind and value.
   Cross-family container conversion rejects, including explicit casts; recursive
   conversion is deferred. An explicit target annotation does not authorize a crossing.

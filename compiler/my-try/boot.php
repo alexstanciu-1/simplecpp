@@ -106,6 +106,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/conditional_expressions.ph
 require_once __DIR__ . '/04_analyze/prepare/semantics/coalesce_expressions.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/value_probes.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/keyed_paths.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/cleanup.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/take.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/selection_results.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/matches.php';
