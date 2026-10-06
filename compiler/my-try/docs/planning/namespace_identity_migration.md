@@ -3,8 +3,9 @@ Doc Status: planning
 
 Recorded 2026-10-06 after the approved namespace/import discussion.
 Language rules are agreed in [the v0.2 contract](../../../../specs/namespaces_v0_2.md).
-Status: cross-owner migration proposal; implementation paused for explicit approval.
-No namespace syntax or partial namespace model has been enabled by this document.
+Status: coordinated migration approved by the user; implementation in progress.
+Canonical identity/backend checkpoint implemented below. Namespace body syntax,
+qualified-path lookup and their lifecycle integration remain unfinished.
 
 ## Why this is more than adding namespace parsing
 
@@ -91,3 +92,43 @@ runtime redesign or native toolchain-generalization is part of this prerequisite
 The smallest reasonable choices are the coordinated migration above, or a model-only
 checkpoint with namespaces still disabled. The latter must not be presented as
 working qualified lookup. A parser-only/string-prefix shortcut is not recommended.
+
+## Canonical identity/backend checkpoint — 2026-10-06
+
+`Namespace_Registry` now owns canonical identities and their published scopes. The
+global scope is obtained through that same registry; both full compilation and syntax
+resets replace it. Scope backlinks are weak; namespace scopes parent to language
+scope, never another namespace's user-symbol scope. Registration requires the existing
+parser publication reservation when invoked from parallel workers. No new parse-worker
+registration calls are enabled yet; production initialization currently registers global.
+
+Collected definitions expose `qualified_name()` independently of local `name` lookup.
+Source type registration, C++ callable/type headers, source symbols, record-dependency
+keys and forward declarations now use qualified identity. Publication still registers
+the short name in its target namespace's pool. Backend separator encoding is reversible
+and does not collide with literal `Uq`; existing global names/output paths are unchanged.
+
+`tests/namespace_identity.py` explicitly supplies distinct namespace scopes to the
+existing parser API, proves `A\Box`/`B\Box` and `A\answer`/`B\answer` coexist, and
+compiles their separate generated units without PCH. It also checks interning, invalid
+paths, language visibility without parent/global leakage, and reset identity.
+This is model/backend evidence, **not** support for authored `namespace` declarations,
+imports or qualified-reference syntax. That distinction is retained in its summary.
+
+Next: source namespace bodies and their retained work/retirement path, then parser
+declarations and dependency-observed qualified lookup. Continue under the existing
+approval; no further semantic decision has been requested by this checkpoint.
+
+Evidence on `738a1e7d` plus this checkpoint overlay:
+
+- `/tmp/my-try-namespace-identity-20261006-5/summary.json`: model checks, separate-unit
+  generated execution without PCH, and scope-model conversion.
+- `/tmp/my-try-namespace-global-project-20261006-1/summary.json`: five retained PHP
+  suites, 26 generated executions with/without PCH, 30 standalone-header checks and
+  three transitive dependency checks; global artifact behavior remains intact.
+
+Initial fixture corrections fixed a trailing-backslash PHP string and used the
+standalone parser's explicit publication adapter instead of calling its task-only
+shared publication path outside a work callback. No language/runtime behavior was
+relaxed. The native compiler itself was not rebuilt. The portable-PHP skill informed
+weak namespace backlinks and explicit typed storage receivers in the new registry.

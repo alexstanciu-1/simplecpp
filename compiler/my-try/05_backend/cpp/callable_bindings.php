@@ -155,7 +155,7 @@ final class CPP_Callables
 	{
 		if ($target instanceof collected_function) {
 			$function = object_cast($target, collected_function::class);
-			$context->headers[CPP_Artifacts::callable_header($function->name)] = true;
+			$context->headers[CPP_Artifacts::callable_header($function->qualified_name())] = true;
 			return self::source_reference($function);
 		}
 		if ($target instanceof registered_function) {
@@ -174,7 +174,7 @@ final class CPP_Callables
 
 	public static function source_reference(collected_function $target): string
 	{
-		return CPP_Generator::source_name('function', $target->name);
+		return CPP_Generator::source_name('function', $target->qualified_name());
 	}
 
 	public static function runtime_reference(registered_static_factory $target,

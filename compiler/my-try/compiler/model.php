@@ -26,10 +26,12 @@ final class Model
 	public static bool $rebuild_required = false;
 	/**
 	 * Established by reset; sync updates candidate lists while retaining deleted entries.
-	 * @ownership owner
-	 * Directly owned record; not an element of a Storage.
+	 * @reference.source Model.namespaces global identity's published scope
+	 * Convenience root referencing the registry-owned global member scope.
 	 */
 	public static scope $global_scope;
+	/** Canonical namespace identities own published source scopes; reset with syntax. */
+	public static Namespace_Registry $namespaces;
 	/** Built-in and runtime definitions; parent of global scope. @ownership owner */
 	public static scope $language_scope;
 	/** Canonical semantic definitions, concrete identities and source-definition associations. */

@@ -45,7 +45,14 @@ worker is retained afterward and edges cannot create shared-handle cycles. Prepa
 failure marks affected reference-return body work dirty through the existing scheduler,
 so a cycle cannot leave a reusable ready fragment behind.
 
-Model owns modules and global/language scopes. Modules own source records; sources
+Model owns modules, language scope and the namespace registry. Namespace identities
+own published member scopes; Model's global_scope is a convenience alias to the
+global namespace's member scope. Scope-to-namespace backlinks are weak. Lexical
+children inherit source identity through scope ancestry, whereas every namespace's
+published scope parents directly to language scope, not a parent namespace.
+The registry resets with syntax and currently integrates global production parsing;
+named namespace bodies and their parser/lifecycle integration remain in progress.
+Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable
 scopes. Specialized node families own named children; the abstract statement body

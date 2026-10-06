@@ -17,7 +17,7 @@ final class Scope_Publication
 				if ($definition->origin() === type_definition_origin::source) {
 					$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 					if ($declaration === $entry) {
-						$global->register_type($definition);
+						$global->register_type_as($entry->name, $definition);
 						break;
 					}
 				}
@@ -40,7 +40,13 @@ final class Scope_Publication
 				$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 				object_cast($declaration, collected_declaration::class)->exported = true;
 			}
-			$global->register_type($definition);
+			if ($definition->origin() === type_definition_origin::source) {
+				$source = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+				$global->register_type_as($source->name, $definition);
+			}
+			else {
+				$global->register_type($definition);
+			}
 		}
 		$local_scope->set_publication($global);
 	}

@@ -28,6 +28,7 @@ require_once __DIR__ . '/03_parse/scopes/candidates.php';
 require_once __DIR__ . '/compiler/constants/structures.php';
 require_once __DIR__ . '/compiler/types/language.php';
 require_once __DIR__ . '/03_parse/scopes/structures.php';
+require_once __DIR__ . '/03_parse/scopes/namespaces.php';
 require_once __DIR__ . '/03_parse/scopes/lookup.php';
 require_once __DIR__ . '/compiler/constants/language.php';
 require_once __DIR__ . '/compiler/types/source.php';

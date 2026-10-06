@@ -17,6 +17,17 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For the namespace identity/backend model checkpoint:
+
+```bash
+python3 compiler/my-try/tests/namespace_identity.py --results /tmp/FRESH_NAMESPACE_IDENTITY_RESULTS
+```
+
+Supplies namespace scopes explicitly to the parser API and checks canonical identity,
+same-short-name types/functions, language visibility, reset and noncolliding C++ artifacts.
+Compiles separate generated units without PCH and converts the scope model. This does
+not claim authored namespace syntax, qualified path parsing or a native compiler rebuild.
+
 For persistent native object/PCH/link caching:
 
 ```bash

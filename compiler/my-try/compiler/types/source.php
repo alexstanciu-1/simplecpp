@@ -8,7 +8,7 @@ final class Source_Types
 	/** Preserve declaration provenance while constructing one shared type identity. */
 	public static function definition(collected_struct $entry): nominal_type_definition
 	{
-		$type = Model::$type_catalog->define_source_structure($entry->name, $entry);
+		$type = Model::$type_catalog->define_source_structure($entry->qualified_name(), $entry);
 		return object_cast($type->nominal_definition(), nominal_type_definition::class);
 	}
 }

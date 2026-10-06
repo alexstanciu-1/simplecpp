@@ -65,12 +65,12 @@ final class CPP_Types
 		}
 		if ($definition->origin() === type_definition_origin::source) {
 			$entry = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
-			$result->spelling = CPP_Generator::source_name('record', $entry->name);
+			$result->spelling = CPP_Generator::source_name('record', $entry->qualified_name());
 			if ($requirement === cpp_type_requirement::complete) {
-				self::add_header($result, CPP_Artifacts::type_header($entry->name));
+				self::add_header($result, CPP_Artifacts::type_header($entry->qualified_name()));
 			}
 			else {
-				$result->forward_declarations[$entry->name] = true;
+				$result->forward_declarations[$entry->qualified_name()] = true;
 			}
 			$result->literal = cpp_literal_kind::none;
 			return $result;

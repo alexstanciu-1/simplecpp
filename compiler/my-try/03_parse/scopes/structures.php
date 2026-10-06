@@ -5,6 +5,9 @@ namespace scpp\compiler;
 
 final class scope
 {
+	/** Namespace owns its published scope; this backlink must not retain that owner. */
+	private ?namespace_identity $namespace_owner /** weak<namespace_identity> */ = null;
+
 	/** Upward observers; owners are Model roots or parsed_file.scopes. */
 	private ?scope $enclosing /** weak<scope> */ = null;
 	private ?scope $publication /** weak<scope> */ = null;
@@ -30,6 +33,33 @@ final class scope
 		$this->runtime_functions = new Key_Storage_List /** Key_Storage_List<registered_function> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition_i> */();
 		$this->constants = new Key_Storage_List /** Key_Storage_List<constant_definition> */();
+	}
+
+	/** A published namespace scope cannot be reassigned to another namespace. */
+	public function set_namespace(namespace_identity $identity): void
+	{
+		$previous = weakref_get($this->namespace_owner);
+		if ($previous !== null) {
+			if ($previous !== $identity) {
+				throw new \LogicException('A published namespace scope cannot change identity');
+			}
+		}
+		$this->namespace_owner = $identity;
+	}
+
+	/** Lexical children inherit source identity, not namespace-parent lookup. */
+	public function source_namespace(): ?namespace_identity
+	{
+		$identity = weakref_get($this->namespace_owner);
+		if ($identity !== null) {
+			return $identity;
+		}
+		$parent = $this->parent_scope();
+		if ($parent !== null) {
+			$parent_scope /** scope */ = $parent;
+			return $parent_scope->source_namespace();
+		}
+		return null;
 	}
 
 	public function set_parent(scope $parent): void

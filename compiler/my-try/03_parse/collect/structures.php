@@ -113,6 +113,17 @@ abstract class collected_declaration extends collected_name
 /** Functions and records are independently scheduled; members settle with their owner. */
 abstract class collected_definition extends collected_declaration implements preparation_lookup_candidate_i
 {
+	/** Stable source identity is separate from local lookup spelling and backend encoding. */
+	public function qualified_name(): string
+	{
+		$declaration_scope = object_cast(weakref_get($this->scope), scope::class);
+		$identity = $declaration_scope->source_namespace();
+		if ($identity === null) {
+			return $this->name;
+		}
+		return $identity->member_name($this->name);
+	}
+
 	public ?declaration_work $preparation = null;
 
 	public function preparation_work_owner(): ?preparation_owner

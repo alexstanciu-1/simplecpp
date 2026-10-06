@@ -28,8 +28,9 @@ and persistent runtime-only PCH reuse have a bounded implementation; see
 broader invalidation matrix and build-phase timings are verified. Validation-overhead
 optimization is deferred to [Chapter 15](15_blocking_debt.md#ch15-native-cache-perf-01--native-cache-validation-overhead).
 Namespace/import semantics are agreed in the [v0.2 contract](../../../../specs/namespaces_v0_2.md).
-Implementation awaits approval of the [identity/body ownership prerequisite](../planning/namespace_identity_migration.md),
-which spans collection, preparation/lifecycle and backend identity consumers.
+The [identity/body ownership migration](../planning/namespace_identity_migration.md)
+is approved and in progress: canonical identity/backend consumers are implemented;
+namespace-body parsing, lifecycle integration and qualified lookup remain pending.
 Imported cards below are not implementation evidence; their obsolete import restrictions
 do not override the agreed contract or newer generator rules.
 
@@ -44,6 +45,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH08-PUBLISH-01 | implemented-bounded | CLI `--output` / optional coordinator publisher | unchanged | verified | deferred | `tests/output_publication.py`: preservation, ownership, recovery, locking and direct published-unit execution; native adapter/facade proved, whole native compiler not rebuilt |
 | CH08-NATIVE-01 | implemented-bounded | Native objects, runtime PCH and exact-member linking | unchanged | verified | deferred | `tests/native_cache.py`: real Clang cold/warm/edit, failure recovery, runtime invalidation and cache repair; core runtime only |
 | CH08-REBUILD-01 | verified-bounded | Body/default/signature/layout edits, insert/delete, relocation and compiler identity | unchanged | verified | deferred | `tests/native_invalidation.py`: ten executed revisions, exact native rebuild sets, phase timings; optimization deferred to Chapter 15 |
+| CH08-NS-IDENTITY-01 | implemented-model | Canonical namespaces and qualified definition identities | model only | verified | deferred | `tests/namespace_identity.py`: supplied namespace scopes, same-short-name type/function collision proof; source namespace syntax still pending |
 | [CLASS-STATIC-NS-003](#class-static-ns-003) | pending-discussion | `$x = new X(); return $x::make();` | unverified | unverified | deferred | — |
 | [CLASS-STATIC-NS-002](#class-static-ns-002) | pending-discussion | `namespace A; function f() { return \A\X::make(); }` | unverified | unverified | deferred | — |
 | [NS-EXEC-006](#ns-exec-006) | pending-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | — |

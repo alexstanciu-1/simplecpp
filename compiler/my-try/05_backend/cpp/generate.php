@@ -84,19 +84,19 @@ final class CPP_Generator
 			Preparation_Status::require_active($owner);
 			if ($owner->kind() !== preparation_kind::declaration) { continue; }
 			$fragment = $this->program->fragments[$owner];
-			$definition = object_cast($owner->declaration(), collected_name::class);
+			$definition = object_cast($owner->declaration(), collected_definition::class);
 			$path = '';
 			$identity = '';
 			$text = '';
 			if ($definition instanceof collected_struct) {
 				$this->validate_record_dependencies(object_cast($definition, collected_struct::class), $record_context);
-				$path = CPP_Artifacts::type_header($definition->name);
-				$identity = 'type:' . $definition->name;
+				$path = CPP_Artifacts::type_header($definition->qualified_name());
+				$identity = 'type:' . $definition->qualified_name();
 				$text = $fragment->text;
 			}
 			else {
-				$path = CPP_Artifacts::callable_header($definition->name);
-				$identity = 'callable:' . $definition->name;
+				$path = CPP_Artifacts::callable_header($definition->qualified_name());
+				$identity = 'callable:' . $definition->qualified_name();
 				$text = $fragment->prototype_text . ";\n";
 			}
 			$result->append(new cpp_artifact($identity, cpp_artifact_kind::header, $path,
@@ -115,7 +115,7 @@ final class CPP_Generator
 				$body_owner = object_cast($function->body->work(), preparation_owner::class);
 				$signature = $this->program->fragments[$signature_owner];
 				$body = $this->program->fragments[$body_owner];
-				$headers[CPP_Artifacts::callable_header($function->occurrence()->name)] = true;
+				$headers[CPP_Artifacts::callable_header($function->occurrence()->qualified_name())] = true;
 				foreach ($signature->definition_headers as $header => $used) {
 					$headers[$header] = true;
 				}
@@ -206,7 +206,7 @@ final class CPP_Generator
 	/** Validate complete by-value edges; every record definition remains in its own header. */
 	private function validate_record_dependencies(collected_struct $entry, cpp_generation_context $context): void
 	{
-		$key = $entry->name;
+		$key = $entry->qualified_name();
 		if (isset($context->record_states[$key])) {
 			if ($context->record_states[$key] === cpp_record_state::visiting) {
 				throw new \RuntimeException('Cyclic C++ record assembly dependency');
@@ -850,6 +850,9 @@ final class CPP_Generator
 			}
 			elseif ($byte === 95) {
 				$suffix .= 'U_';
+			}
+			elseif ($byte === 92) {
+				$suffix .= 'Uq';
 			}
 			else {
 				$suffix .= string_byte_from_int($byte);

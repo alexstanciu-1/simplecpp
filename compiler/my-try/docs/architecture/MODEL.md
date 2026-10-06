@@ -11,7 +11,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `source_record` | File input, current token/parse results, scan revision and pending change state |
 | `parsed_file` | Typed file AST, scope owners, collection, completion state and token snapshot |
 | `collected_file` | Canonical occurrences and semantic/generation handoffs for that source |
-| `language_scope`, `global_scope` | Built-in/runtime definitions and shared source indexes; global parents to language |
+| `language_scope`, `namespaces`, `global_scope` | Language definitions; canonical namespaces own published member scopes; global_scope aliases the registry's global member scope |
 | `runtime_callables`, `cpp_callable_bindings` | Installed free-function/static-factory identities/contracts and separate C++ bindings; reset with canonical types |
 | `initialization_contracts` | Runtime initialization declarations, internal input types and concrete bindings; reset with canonical types |
 | `indexing_contracts` | Registry-lifetime read/store/append contracts keyed by exact receiver definition; independent of construction opt-in |
@@ -503,8 +503,11 @@ future inline/template dependency roles require their own proofs. No source sema
 or preparation invalidation rules change with native include precision.
 
 `CPP_Artifacts` owns reversible filesystem-safe encodings, callable/type header paths
-and logical-module/relative-source unit paths. Current globally scoped declaration
-names are unique semantic keys; namespace support must extend them with qualification.
+and logical-module/relative-source unit paths. Collected definitions expose qualified
+source names separately from local lookup spelling; canonical namespace identity
+feeds type registration, artifact keys, source symbols and forward declarations.
+Global spellings remain stable. Namespace-body syntax/lookup integration is still
+pending; the registry/backend checkpoint alone does not admit authored namespaces.
 Names never use object IDs, absolute checkout paths or traversal counters. Temporaries
 remain body-local. Optional disk publication belongs to the coordinator's invocation-local
 `Output_Publication`, not these records or the backend. Its scalar before/after
