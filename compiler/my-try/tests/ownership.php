@@ -3,6 +3,7 @@
 /* Ownership admission, transfers, observations, lifetime and incremental recovery. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function ownership_source_check(bool $condition, string $message): void
 {
@@ -22,7 +23,7 @@ function ownership_source(string $source): string
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
 	(new Compiler())->exec_cpp();
-	return CPP_Output::single_unit(Model::$cpp_files)->text;
+	return CPP_Probe::text(Model::$cpp_files);
 }
 
 /** Inspect the retained construction contract independently of C++ execution. */
@@ -325,7 +326,7 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	foreach (['shared<shared<int>>', 'value<shared<int>>', 'weak<int>'] as $invalid_type)
 	{
 		file_put_contents($path, str_replace('shared<int>', $invalid_type, $valid));
@@ -342,17 +343,17 @@ try
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Ownership repair changed output');
+		ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Ownership repair changed output');
 	}
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	$compiler->cpp();
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Ownership cleanup/reprepare changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Ownership cleanup/reprepare changed output');
 
 	$construction_source = 'struct Field { int $n; } struct Box { Field $field; } function build(): shared<Box> { return new Box(); } $u unique<Box> = new Box(); return 0;';
 	file_put_contents($path, $construction_source);
 	$compiler->update_cpp([$path]);
-	$construction_output = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$construction_output = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, str_replace('int $n', 'result<int> $n', $construction_source));
 	foreach ([[$path], []] as $changes) {
 		$failed = false;
@@ -364,16 +365,16 @@ try
 	}
 	file_put_contents($path, $construction_source);
 	$compiler->update_cpp([$path]);
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $construction_output, 'Construction repair changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $construction_output, 'Construction repair changed output');
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	$compiler->cpp();
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $construction_output, 'Construction cleanup changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $construction_output, 'Construction cleanup changed output');
 
 	$move_source = 'function transfer(unique<int> &$a, unique<int> &$b): void { $b = move($a); } $a unique<int>; $b unique<int>; transfer($a, $b); return 0;';
 	file_put_contents($path, $move_source);
 	$compiler->update_cpp([$path]);
-	$move_output = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$move_output = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, str_replace('unique<int>', 'shared<int>', $move_source));
 	foreach ([[$path], []] as $changes) {
 		$failed = false;
@@ -383,16 +384,16 @@ try
 	}
 	file_put_contents($path, $move_source);
 	$compiler->update_cpp([$path]);
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $move_output, 'Move repair changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $move_output, 'Move repair changed output');
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	$compiler->cpp();
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $move_output, 'Move cleanup changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $move_output, 'Move cleanup changed output');
 
 	$consume_source = 'function sink(unique<int> $p): void {} $a unique<int>; sink(move($a)); return 0;';
 	file_put_contents($path, $consume_source);
 	$compiler->update_cpp([$path]);
-	$consume_output = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$consume_output = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, str_replace('unique<int> $p', 'unique<int> &$p', $consume_source));
 	foreach ([[$path], []] as $changes) {
 		$failed = false;
@@ -402,16 +403,16 @@ try
 	}
 	file_put_contents($path, $consume_source);
 	$compiler->update_cpp([$path]);
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $consume_output, 'Consume repair changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $consume_output, 'Consume repair changed output');
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	$compiler->cpp();
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $consume_output, 'Consume cleanup changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $consume_output, 'Consume cleanup changed output');
 
 	$observation_source = 'function source(): shared<int> { $s shared<int>; return $s; } function read(): bool { $w = weak(source()); return isset(lock($w)); } return 0;';
 	file_put_contents($path, $observation_source);
 	$compiler->update_cpp([$path]);
-	$observation_output = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$observation_output = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, str_replace('shared<int>', 'weak<int>', $observation_source));
 	foreach ([[$path], []] as $changes) {
 		$failed = false;
@@ -421,15 +422,15 @@ try
 	}
 	file_put_contents($path, $observation_source);
 	$compiler->update_cpp([$path]);
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $observation_output, 'Observation repair changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $observation_output, 'Observation repair changed output');
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	$compiler->cpp();
-	ownership_source_check(CPP_Output::single_unit(Model::$cpp_files)->text === $observation_output, 'Observation cleanup changed output');
+	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $observation_output, 'Observation cleanup changed output');
 	$changed_payload = str_replace('shared<int>', 'shared<string>', $observation_source);
 	file_put_contents($path, $changed_payload);
 	$compiler->update_cpp([$path]);
-	$incremental_output = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental_output = CPP_Probe::text(Model::$cpp_files);
 	ownership_source_check($incremental_output !== $observation_output, 'Payload edit did not change emitted types');
 	ownership_source_check($incremental_output === ownership_source($changed_payload), 'Observation payload edit differs from fresh preparation');
 }

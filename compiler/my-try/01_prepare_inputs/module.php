@@ -24,6 +24,7 @@ final class Module_Loader
 				throw new \LogicException('Module root must be a directory: ' . $input->declared_path);
 			}
 			$candidate = new module($input->declared_path, $resolved, $input->name);
+			$candidate->logical_name = $input->logical_name;
 			$candidate->position = $position;
 			$candidate->disk_source = true;
 			$position++;

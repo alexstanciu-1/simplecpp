@@ -2,6 +2,7 @@
 
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function fallthrough_check(bool $condition, string $message): void
 {
@@ -59,7 +60,7 @@ try
 	$compiler = fallthrough_program($path, $valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('return 7;', '$a = 7;', $valid));
@@ -70,7 +71,7 @@ try
 	fallthrough_check($stable->version === $version, 'Failure rebuilt independent body');
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	fallthrough_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Recovery differs from clean output');
+	fallthrough_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Recovery differs from clean output');
 
 	// A signature-only edit must recheck the unchanged body's completion.
 	$compiler = fallthrough_program($path, 'function missing(): void {} return 0;');
@@ -96,7 +97,7 @@ try
 		$compiler->cpp();
 		if (isset($argv[1])) {
 			$output = $argv[1] . '/' . $name . '.cpp';
-			file_put_contents($output, CPP_Output::single_unit(Model::$cpp_files)->text);
+			file_put_contents($output, CPP_Probe::text(Model::$cpp_files));
 			$executions[] = ['path' => $output, 'exit_code' => $expected];
 		}
 	}

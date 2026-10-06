@@ -1,6 +1,7 @@
 <?php
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Parse either fresh syntax or an edit while preserving the existing collection owner. */
 function indexing_parse(string $text, ?parsed_file $previous = null): parsed_file
@@ -141,7 +142,7 @@ $facts = $write->require_write_preparation();
 if (!($facts instanceof prepared_index_assignment) || $facts->addressable()
 	|| !$facts->destination_type()->matches(Language_Types::integer(Model::$language_scope))
 	|| $facts->decision->operation !== operator_operation::index_append
-	|| str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, '([&]()')) {
+	|| str_contains(CPP_Probe::text(Model::$cpp_files), '([&]()')) {
 	throw new \LogicException('Statement append lost operation facts or introduced an unused value lambda');
 }
 Preparation_Cleanup::tree($write);
@@ -204,7 +205,7 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$expected = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$expected = CPP_Probe::text(Model::$cpp_files);
 	foreach (['return $s[];', 'return $s[0];'] as $use)
 	{
 		file_put_contents($path, '$s = "abc"; ' . $use);
@@ -220,7 +221,7 @@ try
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		if (CPP_Output::single_unit(Model::$cpp_files)->text !== $expected) {
+		if (CPP_Probe::text(Model::$cpp_files) !== $expected) {
 			throw new \LogicException('Bracket failure recovery changed valid output');
 		}
 	}
@@ -244,12 +245,12 @@ try
 	}
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$fresh = new Compiler();
 	$fresh->init([$directory]);
 	$fresh->exec_cpp();
-	if ($incremental !== CPP_Output::single_unit(Model::$cpp_files)->text) {
+	if ($incremental !== CPP_Probe::text(Model::$cpp_files)) {
 		throw new \LogicException('Recovered read differs from fresh output');
 	}
 	$source = 'function put(vector<vector<int>> &$v): void { $v[0][] = 1; } return 0;';
@@ -272,12 +273,12 @@ try
 	}
 	file_put_contents($path, $source);
 	$fresh->update_cpp([$path]);
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$recovered = new Compiler();
 	$recovered->init([$directory]);
 	$recovered->exec_cpp();
-	if ($incremental !== CPP_Output::single_unit(Model::$cpp_files)->text) {
+	if ($incremental !== CPP_Probe::text(Model::$cpp_files)) {
 		throw new \LogicException('Recovered append differs from fresh output');
 	}
 }

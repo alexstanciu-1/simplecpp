@@ -46,6 +46,8 @@ final class Compiler_Lifecycle
 	/** Retire compilation roots without traversing facts; recovery retains disk/in-memory inputs only. */
 	public static function reset_compilation(bool $retain_inputs = false): void
 	{
+		if (!$retain_inputs) { Model::$entry_selection = null; }
+		Model::$prepared_entry = null;
 		if (self::$syntax_initialized) {
 			self::discard_preparation_links();
 		}
@@ -135,6 +137,7 @@ final class Compiler_Lifecycle
 	/** Clear node-owned facts before releasing preparation/output roots or replacing syntax. */
 	public static function reset_preparation(): void
 	{
+		Model::$prepared_entry = null;
 		if (self::$syntax_initialized)
 		{
 			foreach (Model::syntax_files() as $parsed)

@@ -3,6 +3,7 @@
 /* Whole-storage resets preserve binding identity and never mutate a copied dynamic object. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function cleanup_check(bool $condition, string $message): void
 {
@@ -22,7 +23,7 @@ function cleanup_source(string $source): string
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
 	(new Compiler())->exec_cpp();
-	return CPP_Output::single_unit(Model::$cpp_files)->text;
+	return CPP_Probe::text(Model::$cpp_files);
 }
 
 $cases = [
@@ -100,7 +101,7 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$function = Model::$global_scope->functions_named('reset')[0]->syntax();
 	$body = $function->body;
 	$reset = $body->statements[0];
@@ -123,13 +124,13 @@ try
 		cleanup_check($function->body === $body, 'Signature edit replaced unchanged body');
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		cleanup_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Reset recovery changed output');
+		cleanup_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Reset recovery changed output');
 	}
 	Token_Cleanup::file(Model::syntax_files()[0]);
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	$compiler->cpp();
-	cleanup_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Cleanup/reprepare changed reset output');
+	cleanup_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Cleanup/reprepare changed reset output');
 
 	$clean_source = 'function reset(int &$n): void { clean($n); } return 0;';
 	file_put_contents($path, $clean_source);
@@ -144,7 +145,7 @@ try
 		cleanup_check($clean_function->body === $clean_body, 'Clean type edit replaced retained body');
 		cleanup_check(Type_Queries::canonical($reset_type)->definition() === Model::$type_catalog->definition($type_name), 'Clean retained an old reset type');
 	}
-	$clean_output = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$clean_output = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, str_replace('int &$n', 'result<int> &$n', $clean_source));
 	$failed = false;
 	try {
@@ -156,7 +157,7 @@ try
 	cleanup_check($failed && Model::$cpp_files->is_empty(), 'Clean signature edit admitted Result cleanup');
 	file_put_contents($path, $clean_source);
 	$compiler->update_cpp([$path]);
-	cleanup_check(CPP_Output::single_unit(Model::$cpp_files)->text === $clean_output, 'Clean recovery changed output');
+	cleanup_check(CPP_Probe::text(Model::$cpp_files) === $clean_output, 'Clean recovery changed output');
 }
 finally {
 	unlink($path);

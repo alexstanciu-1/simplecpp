@@ -5,6 +5,40 @@ namespace scpp\compiler;
 
 final class Source_Registry
 {
+	/** Logical identity is stable under checkout relocation, unlike the reconciliation key. */
+	public static function logical_module(module $owner): string
+	{
+		if ($owner->logical_name !== '') {
+			$name = $owner->logical_name;
+			for ($index = 0; $index < string_byte_len($name); $index++) {
+				$byte = string_byte_at($name, $index);
+				if (!(($byte >= 65 && $byte <= 90) || ($byte >= 97 && $byte <= 122)
+					|| ($byte >= 48 && $byte <= 57) || ($byte === 95) || ($byte === 45) || ($byte === 46))) {
+					throw new \RuntimeException('Logical module names must not contain filesystem paths');
+				}
+			}
+			if (($name === '.') || ($name === '..')) { throw new \RuntimeException('Invalid logical module name'); }
+			return $name;
+		}
+		$count = 0;
+		foreach (Model::$modules as $candidate) {
+			if ($candidate->changes !== change_state::deleted) { $count++; }
+		}
+		if ($count > 1) { throw new \RuntimeException('Multiple modules require explicit logical names'); }
+		return 'main';
+	}
+
+	/** Standalone parsed files use the same single-module convenience identity. */
+	public static function collection_module(collected_file $collection): string
+	{
+		foreach (Model::sources() as $record) {
+			if ($record->parsed !== null) {
+				if ($record->parsed->collection === $collection) { return self::logical_module($record->owning_module()); }
+			}
+		}
+		return 'main';
+	}
+
 	/** Normalize lexical components even when a deletion notification names a missing path. */
 	public static function normalize(string $path): string
 	{

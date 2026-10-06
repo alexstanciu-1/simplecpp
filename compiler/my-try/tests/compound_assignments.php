@@ -2,6 +2,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Prepare one isolated operator source through shared semantics and C++ lowering. */
 function compound_test_source(string $text): parsed_file
@@ -139,11 +140,11 @@ try
 	if (($function->body !== $body) || ($tokens->text_at($compound->operator_token_index) !== '*=')) {
 		throw new \LogicException('Token cleanup lost the retained compound operator');
 	}
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+	if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 		throw new \LogicException('Incremental compound output differs from a fresh build');
 	}
 }

@@ -16,8 +16,11 @@ records the agreed direction, ownership boundaries, staged work and runtime-PCH
 requirements. Start with stable identities, explicit entry selection and cross-file
 functions; preserve narrow declarations and separate implementation units. Namespace
 and import groups follow on the same output architecture. The output-consumer
-migration is approved. The artifact-delivery foundation is implemented; actual
-multi-source lowering, entry selection and partitioning remain the next batch.
+migration, entry selection and cross-file partitioning are implemented. Shared
+preparation owns entry admission; the backend emits narrow callable/type headers,
+per-source implementation groups and one entry. See the roadmap's dated evidence.
+Next is declaration-versus-complete-type dependency precision, then persistent
+publication/native caching. Namespace/import cards below remain pending.
 
 ## Progress
 
@@ -25,6 +28,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| CH08-PROGRAM-01 | implemented | Explicit entry + cross-file functions | verified | verified | deferred | `tests/project_cpp.py`: admission, retained edits/recovery, relocation, separate units with/without PCH |
 | [CLASS-STATIC-NS-003](#class-static-ns-003) | pending-discussion | `$x = new X(); return $x::make();` | unverified | unverified | deferred | — |
 | [CLASS-STATIC-NS-002](#class-static-ns-002) | pending-discussion | `namespace A; function f() { return \A\X::make(); }` | unverified | unverified | deferred | — |
 | [NS-EXEC-006](#ns-exec-006) | pending-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | — |

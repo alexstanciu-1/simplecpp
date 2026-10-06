@@ -18,6 +18,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `iteration_contracts` | Registry-lifetime key/value signatures keyed by exact receiver definition; independent of bracket/initialization capability |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
 | `prepared_files` | Successfully completed file records referencing the retained syntax |
+| `entry_selection`, `prepared_entry` | Logical module/path configuration and the optional validated executable entry; not another source owner |
 | `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
 | `cpp_files`, `llvm_files` | Published backend artifacts |
 
@@ -36,9 +37,16 @@ value types; their int/string key carrier does not confer cross-family containme
 
 ## Source and symbol identity
 
-Modules save their key/name, declared path, resolved path and input position. Any
+Modules save their reconciliation key/name, logical name, declared path, resolved path and input position. Any
 configuration/order change forces a full rebuild. Files save module-relative paths;
 IO boundaries compute full paths. A source record observes its owning module.
+The unnamed single module has logical output identity `main`; multiple modules
+require explicit logical names. Those names do not introduce source namespaces.
+`select_entry` invalidates prepared-program publication without replacing syntax or
+work identities. `Program_Preparation` validates entry membership and declaration-only
+non-entry sources after semantic work settles, before publishing a prepared program.
+Standalone `prepare()` can analyze multiple sources without an entry; executable
+entrypoints use `prepare(true)`. C++ never invokes preparation or selects an entry.
 
 The parser reuses matching declaration nodes and their canonical collected identities.
 Only applicable name-bearing syntax has an occurrence backlink. Retained names are
@@ -448,7 +456,7 @@ Successful semantic changes/deletions accumulate in `collected_file.preparation_
 The backend retains fragments keyed by existing work owners, with completion versions,
 dirty state, text, includes and record dependencies. It renders selected fragments;
 unchanged bodies are not traversed. Generation reads but never clears the handoff.
-`Compiler::cpp()` acknowledges its prepared source only after successful output
+`Compiler::cpp()` acknowledges all its prepared sources only after successful output
 publication. Standalone `CPP_Generator::generate` returns output without acknowledging
 shared changes; repeated calls can reuse fragments while the handoff remains pending.
 `Preparation_Status` and `Type_Queries` provide read-only work guards and established
@@ -465,13 +473,21 @@ collection before acknowledging consumed work. `CPP_Output::encode` serializes a
 artifacts with duplicate identity/path rejection; it does not generate or write files.
 The CLI/native transport is versioned independently from semantic identity.
 
-Assembly currently preserves the single-`main.cpp` layout and orders record dependencies.
-It reconstructs includes from live fragments. Generated names use role prefixes and
-saved source names; temporary numbering is per body. Future namespaces, overloads
-and richer shadowing require a naming review. No disk writer or Ninja integration
-is implied. The [Chapter 08 roadmap](../planning/incremental_cpp_artifacts.md) owns
-the approved partitioning migration. Single-unit test adapters reject partitioned
-output rather than silently dropping files; they are not another renderer.
+`generate_program` emits one header per callable and record, initial per-source
+implementation groups, and `entry.cpp`. The single-file `generate` adapter delegates
+to that same path. Includes come from live fragment dependencies recorded while
+rendering resolved calls and type representations, including nested template arguments.
+There is no all-project declaration header or combined-output renderer. Source-type
+uses conservatively include complete definitions; declaration-only precision is next.
+
+`CPP_Artifacts` owns reversible filesystem-safe encodings, callable/type header paths
+and logical-module/relative-source unit paths. Current globally scoped declaration
+names are unique semantic keys; namespace support must extend them with qualification.
+Names never use object IDs, absolute checkout paths or traversal counters. Temporaries
+remain body-local. No persistent disk publisher or native object cache is implied.
+The [Chapter 08 roadmap](../planning/incremental_cpp_artifacts.md) owns those next slices.
+Test-only `CPP_Probe` preserves artifact boundaries in editable text; its reader rebuilds
+separate files and compiles them separately rather than flattening into a unity unit.
 
 ## Lifecycle and legacy boundary
 

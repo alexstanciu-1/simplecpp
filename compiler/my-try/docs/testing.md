@@ -17,6 +17,24 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For cross-file C++ generation and artifact isolation:
+
+```bash
+python3 compiler/my-try/tests/project_cpp.py --results /tmp/FRESH_PROJECT_RESULTS
+```
+
+Checks explicit entry, declaration-only non-entry sources, named modules, body-only
+artifact isolation, defaults, references, source records, containers, ownership,
+insertion/deletion, signature changes, recovery and relocation. Programs compile as
+separate translation units with and without the run-local PCH. Persistent native
+caching and rebuilding the compiler itself remain separate milestones.
+
+`tests/cpp_probe.php` supplies an editable artifact-section transport for existing
+native assertions. The shared fixture compiler preserves each section's file and
+compiles units separately. Prefix includes/macros apply to the probe files; appended
+native harness code belongs to the entry and may include otherwise-unused declaration
+headers for its assertions. `content()` is inspection-only, not compilable output.
+
 For the Chapter 08 artifact-delivery foundation:
 
 ```bash
@@ -28,7 +46,7 @@ publication, single-unit probe guards and retained generation. Compiles generate
 single-source output plus a handcrafted header/two-unit bundle as separate objects,
 with and without the run-local PCH. This is not multi-source lowering, persistent
 PCH caching or a native compiler rebuild. Existing source-instrumentation fixtures
-use a checked single-unit adapter until the partitioning slice adapts their probes.
+now preserve partitioned files through the editable artifact transport described above.
 
 For ownership classification and direct type-composition admission:
 

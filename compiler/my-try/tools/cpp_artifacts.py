@@ -48,6 +48,42 @@ def single_unit_text(payload):
     return artifacts[0]['text']
 
 
+def probe_text(payload):
+    """Match the editable PHP test transport without flattening generated files."""
+    artifacts = decode_artifacts(payload)
+    if len(artifacts) == 1:
+        return single_unit_text(payload)
+    return ''.join('// SCPP-ARTIFACT ' + json.dumps({key: artifact[key] for key in ('id', 'kind', 'path')},
+                   ensure_ascii=True, separators=(',', ':')).replace('/', '\\/') + '\n'
+                   + artifact['text'] + '// SCPP-END-ARTIFACT\n' for artifact in artifacts)
+
+
+def probe_bundle(text):
+    """Recover files after test-only textual instrumentation, without combining definitions."""
+    pattern = re.compile(r'^// SCPP-ARTIFACT (\{[^\n]*\})\n(.*?)^// SCPP-END-ARTIFACT\n', re.M | re.S)
+    matches = list(pattern.finditer(text))
+    if not matches:
+        return None
+    prefix = text[:matches[0].start()]
+    suffix = text[matches[-1].end():]
+    artifacts = []
+    previous = matches[0].start()
+    for match in matches:
+        if text[previous:match.start()].strip():
+            raise ValueError('Instrumentation crossed artifact boundaries')
+        artifact = json.loads(match[1])
+        artifact['text'] = prefix + match[2]
+        artifacts.append(artifact)
+        previous = match.end()
+    entry = next(artifact for artifact in artifacts if artifact['id'] == 'entry')
+    if suffix.strip():
+        # Appended native probes may name declarations unused by the source entry.
+        headers = ''.join('#include "' + artifact['path'] + '"\n' for artifact in artifacts
+                          if artifact['kind'] == 'header')
+        entry['text'] = headers + entry['text'] + suffix
+    return json.dumps({'format': 'scpp-cpp-artifacts-v1', 'artifacts': artifacts})
+
+
 def materialize_artifacts(payload, directory):
     """Write all artifacts into a fresh private fixture directory, not a project cache."""
     artifacts = decode_artifacts(payload)

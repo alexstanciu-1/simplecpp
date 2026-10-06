@@ -154,7 +154,9 @@ final class CPP_Callables
 	public static function reference(callable_target_i $target, cpp_generation_context $context): string
 	{
 		if ($target instanceof collected_function) {
-			return self::source_reference(object_cast($target, collected_function::class));
+			$function = object_cast($target, collected_function::class);
+			$context->headers[CPP_Artifacts::callable_header($function->name)] = true;
+			return self::source_reference($function);
 		}
 		if ($target instanceof registered_function) {
 			$binding = Model::$cpp_callable_bindings->function_binding(object_cast($target, registered_function::class));

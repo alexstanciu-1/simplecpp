@@ -135,7 +135,7 @@ Analysis consumes persistent source-change flags and owns semantic retirement.
 The lifecycle coordinator validates the parse join, orders semantic unlinking,
 then calls frontend `Collection_Retirement` for membership/type-association/syntax
 disposal. C++ generation never clears the semantic change handoff: `Compiler::cpp()`
-acknowledges its source after publishing successful output. Standalone generation
+acknowledges every consumed source after publishing the complete successful artifact set. Standalone generation
 leaves the handoff intact. Backend reads use `Preparation_Status`/`Type_Queries`,
 not preparation workers;
 neutral maintenance remains a structural facility with caller-controlled recursion.

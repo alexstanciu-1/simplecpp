@@ -1,6 +1,7 @@
 <?php
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function combined_check(bool $condition, string $message): void
 {
@@ -28,24 +29,24 @@ try
 	$caller_body = $caller->body;
 	$version = $caller->body->work()->version;
 	$tokens = $record->tokens;
-	$output = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$output = CPP_Probe::text(Model::$cpp_files);
 	$compiler->exec_cpp();
-	combined_check($record->tokens === $tokens && $caller->body->work()->version === $version && CPP_Output::single_unit(Model::$cpp_files)->text === $output, 'No-op combined compilation rebuilt facts or changed output');
+	combined_check($record->tokens === $tokens && $caller->body->work()->version === $version && CPP_Probe::text(Model::$cpp_files) === $output, 'No-op combined compilation rebuilt facts or changed output');
 
 	file_put_contents($path, str_replace('return $x;', 'return 11;', $initial));
 	$compiler->update_cpp([$path, $path]);
 	combined_check($record->parsed === $parsed && $record->tokens !== $tokens, 'Combined sync lost retained syntax or token replacement');
 	combined_check($target->require_preparation() === $signature && $caller->body === $caller_body && $caller->body->work()->version === $version, 'Implementation-only edit rebuilt the caller');
-	combined_check(CPP_Output::single_unit(Model::$cpp_files)->text !== $output, 'Implementation edit did not reach emitted output');
+	combined_check(CPP_Probe::text(Model::$cpp_files) !== $output, 'Implementation edit did not reach emitted output');
 
 	file_put_contents($path, str_replace('target(int $x): int', 'target(int $x): uint8', $initial));
 	$compiler->update_cpp([$path]);
 	combined_check($caller->body === $caller_body && $caller->body->work()->version === $version + 1, 'Signature change did not rebuild the retained caller exactly once');
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	combined_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental, 'Incremental and fresh C++ differ');
+	combined_check(CPP_Probe::text(Model::$cpp_files) === $incremental, 'Incremental and fresh C++ differ');
 
 	file_put_contents($path, 'function broken(');
 	try {

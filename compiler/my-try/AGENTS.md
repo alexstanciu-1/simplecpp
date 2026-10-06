@@ -86,8 +86,8 @@ Read [MODEL](docs/architecture/MODEL.md) before changing retained data and
   that same protocol; analysis must not remove frontend membership or syntax.
 - Backends read settled data through read-only queries (`Preparation_Status`,
   `Type_Queries`), not preparation workers. C++ generation never acknowledges the
-  shared change handoff; `Compiler::cpp()` clears its emitted source's changes only
-  after output publication. Standalone generation leaves changes intact.
+  shared change handoff; `Compiler::cpp()` clears all consumed sources' changes only
+  after successful whole-artifact publication. Standalone generation leaves changes intact.
 - Structures may initialize data, preserve local representation invariants, expose
   typed access/query helpers and clear their facts. Workers own stage dispatch,
   traversal, algorithms, scheduling and publication policy, including work-record
@@ -130,7 +130,10 @@ Ownership tags document intent; only supported bindings implement native behavio
 ## Performance and documentation
 
 Prioritize reduced native recompilation through modular output, stable names and
-precise dependencies. Current output remains one `main.cpp`; partitioning is debt.
+precise dependencies. Single-source and multi-source programs share partitioned
+output: callable/type headers, per-source implementation groups and `entry.cpp`.
+Complete-type include precision, persistent publication and native/PCH caching remain
+in the [Chapter 08 roadmap](docs/planning/incremental_cpp_artifacts.md).
 Do not benchmark every spelling or promise devirtualization/layout gains without
 measurement. Preserve semantics, lifetime and diagnostics during optimization.
 

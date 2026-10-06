@@ -1,6 +1,7 @@
 <?php
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function json_check(bool $condition, string $message): void
 {
@@ -56,7 +57,7 @@ foreach ([
 // A nearer source definition owns the name even when its signature differs.
 $valid = 'function read(): result<dynamic> { return json_decode("null"); } function stable(): int { return 9; }';
 $compiler = json_source($valid);
-$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+$original = CPP_Probe::text(Model::$cpp_files);
 $stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 $version = $stable->version;
 $record = Model::sources()[0];
@@ -76,9 +77,9 @@ foreach ([['/json-proof/main.phs'], []] as $changes)
 }
 $record->file->content = $valid;
 $compiler->update_cpp(['/json-proof/main.phs']);
-json_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Removing source shadow did not restore runtime target');
+json_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Removing source shadow did not restore runtime target');
 json_source($valid);
-json_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Runtime call clean/incremental mismatch');
+json_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Runtime call clean/incremental mismatch');
 
 // A generic registered name uses the same scope, exact-selection and backend paths.
 $catalog = Model::$runtime_callables;
@@ -121,9 +122,9 @@ $compiler = json_source('function write(): result<string> { return json_encode(m
 $record = Model::sources()[0];
 $record->file->content = 'function write(): result<string> { return json_encode(dynamic::{n: 1}); }';
 $compiler->update_cpp(['/json-proof/main.phs']);
-$retargeted = CPP_Output::single_unit(Model::$cpp_files)->text;
+$retargeted = CPP_Probe::text(Model::$cpp_files);
 json_source($record->file->content);
-json_check(CPP_Output::single_unit(Model::$cpp_files)->text === $retargeted, 'Runtime overload retarget differs from clean build');
+json_check(CPP_Probe::text(Model::$cpp_files) === $retargeted, 'Runtime overload retarget differs from clean build');
 $old_target = Model::$runtime_callables->function_definition('json.decode.dynamic');
 Compiler_Lifecycle::reset_preparation();
 json_check(Model::$runtime_callables->function_definition('json.decode.dynamic') === $old_target, 'Preparation reset replaced runtime identity');
@@ -145,7 +146,7 @@ foreach (require __DIR__ . '/fixtures/json.php' as $name => [$source, $predicate
 {
 	$programs[$name] = [$source, 0];
 	json_source($source);
-	$text = str_replace('int main()', 'int unused_entry()', CPP_Output::single_unit(Model::$cpp_files)->text);
+	$text = str_replace('int main()', 'int unused_entry()', CPP_Probe::text(Model::$cpp_files));
 	$text = '#include <limits>' . "\n" . $text . "\nint main() { return (" . $predicate . ") ? 0 : 91; }\n";
 	$path = $output . '/' . $name . '.cpp';
 	file_put_contents($path, $text);

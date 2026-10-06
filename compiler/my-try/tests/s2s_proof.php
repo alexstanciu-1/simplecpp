@@ -23,7 +23,7 @@ final class S2S_Proof
 		$compiler = new Compiler();
 		$compiler->exec_cpp();
 		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
-		$original = CPP_Output::single_unit($outputs)->text;
+		$original = CPP_Probe::text($outputs);
 		$functions /** vector<collected_function> */ = Model::$global_scope->functions_named('choose');
 		$retained_body = $functions[0]->syntax()->body;
 		$stable_functions /** vector<collected_function> */ = Model::$global_scope->functions_named('stable');
@@ -34,7 +34,7 @@ final class S2S_Proof
 		$compiler->update_cpp($paths);
 		$functions = Model::$global_scope->functions_named('choose');
 		$outputs = Model::$cpp_files;
-		if (($functions[0]->syntax()->body !== $retained_body) || (CPP_Output::single_unit($outputs)->text !== $original)) {
+		if (($functions[0]->syntax()->body !== $retained_body) || (CPP_Probe::text($outputs) !== $original)) {
 			throw new \LogicException('Native control-flow span move lost body identity or output');
 		}
 
@@ -60,7 +60,7 @@ final class S2S_Proof
 		$record->file->content = $valid;
 		$compiler->update_cpp($paths);
 		$outputs = Model::$cpp_files;
-		if (CPP_Output::single_unit($outputs)->text !== $original) {
+		if (CPP_Probe::text($outputs) !== $original) {
 			throw new \LogicException('Native match repair changed generated output');
 		}
 		return $original;
@@ -170,7 +170,7 @@ final class S2S_Proof
 		}
 
 		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
-		$text = CPP_Output::single_unit($outputs)->text;
+		$text = CPP_Probe::text($outputs);
 		if ((q_strpos($text, '#include "scpp/vector_t.hpp"') === false)
 			|| (q_strpos($text, '#include "scpp/hash_t.hpp"') === false)
 			|| (q_strpos($text, '#include "scpp/value_p.hpp"') !== false)
@@ -237,7 +237,7 @@ final class S2S_Proof
 		}
 		$compiler->cpp();
 		$outputs = Model::$cpp_files;
-		if ((CPP_Output::single_unit($outputs)->text !== $expected) || (CPP_Output::single_unit($outputs) === $old_output)) {
+		if ((CPP_Probe::text($outputs) !== $expected) || (CPP_Output::single_unit($outputs) === $old_output)) {
 			throw new \LogicException('Repeated generation changed bytes or reused output records');
 		}
 		if ($first_data->require_assignment_preparation()->binding !== $first) {
@@ -261,7 +261,7 @@ final class S2S_Proof
 			throw new \LogicException('Incremental update replaced stable source membership');
 		}
 		$outputs = Model::$cpp_files;
-		if ((CPP_Output::single_unit($outputs)->text === $expected) || ($old_output->text !== $expected)) {
+		if ((CPP_Probe::text($outputs) === $expected) || ($old_output->text !== $expected)) {
 			throw new \LogicException('Update damaged old output or failed to regenerate');
 		}
 		// Detached body handles may retain old facts; only the current tree is eligible for generation.

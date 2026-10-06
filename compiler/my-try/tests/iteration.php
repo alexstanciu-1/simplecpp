@@ -3,6 +3,7 @@
 /* Iteration model, static rejection, retained-body dependency and cleanup proof. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function iteration_check(bool $condition, string $message): void
 {
@@ -19,7 +20,7 @@ try {
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$function = Model::$global_scope->functions_named('sum')[0]->syntax();
 	$body = $function->body;
 	$loop = $body->statements[1];
@@ -42,7 +43,7 @@ try {
 	iteration_check($function->body === $body && $loop->preparation() === null, 'Retained loop or cleanup failed');
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	iteration_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Iteration repair changed output');
+	iteration_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Iteration repair changed output');
 	Token_Cleanup::file(Model::syntax_files()[0]);
 	Preparation_Cleanup::tree(Model::syntax_files()[0]->root);
 	iteration_check($loop->preparation() === null && $loop->iterable->preparation() === null, 'Cleanup retained iteration facts');
@@ -50,7 +51,7 @@ try {
 	$clean = new Compiler();
 	$clean->init([$directory]);
 	$clean->exec_cpp();
-	iteration_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean and incremental iteration differ');
+	iteration_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental iteration differ');
 	foreach ([
 		'$v = 3; foreach ($v as $x) {}',
 		'$v vector<int> = [1]; foreach ($v as &$x) {}',

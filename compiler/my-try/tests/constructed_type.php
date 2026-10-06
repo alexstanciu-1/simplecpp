@@ -3,6 +3,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function constructed_check(bool $condition, string $message): void
 {
@@ -122,7 +123,11 @@ PHS;
 		'Redundant nested modifier split the canonical application');
 
 	$compiler->cpp();
-	$text = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$text = CPP_Probe::text(Model::$cpp_files);
+	foreach (Model::$cpp_files as $artifact) {
+		constructed_check(substr_count($artifact->text, '#include "scpp/int_t.hpp"') <= 1,
+			'An artifact repeated a direct runtime include');
+	}
 	constructed_check(str_contains($text, '#include "scpp/vector_t.hpp"')
 		&& str_contains($text, 'scpp::vector_t<scpp::int_t<>> local_first;')
 		&& str_contains($text, 'scpp::vector_t<scpp::int_t<>> local_second;')
@@ -132,7 +137,7 @@ PHS;
 		&& str_contains($text, '#include "scpp/weak_p.hpp"')
 		&& str_contains($text, '#include "scpp/unique_p.hpp"')
 		&& !str_contains($text, '#include "scpp/value_p.hpp"')
-		&& (substr_count($text, '#include "scpp/int_t.hpp"') === 1)
+		&& (substr_count($text, '#include "scpp/int_t.hpp"') >= 1)
 		&& str_contains($text, 'scpp::vector_t<scpp::int_t<>> local_nestedU_value;')
 		&& str_contains($text, 'scpp::int_t<> field_item;')
 		&& str_contains($text, 'scpp::vector_t<scpp::int_t<>> field_items;')
@@ -154,14 +159,14 @@ PHS;
 	$compiler->update_cpp([$path]);
 	$plain_statement = object_cast(Model::syntax_files()[0]->root->body->statements[7], variable_declaration_node::class);
 	constructed_check(($plain_statement->type_syntax instanceof named_type_node)
-		&& (CPP_Output::single_unit(Model::$cpp_files)->text === $text)
+		&& (CPP_Probe::text(Model::$cpp_files) === $text)
 		&& (Model::$type_catalog->registry()->application_count() === $initial_applications + 8),
 		'Redundant modifier removal changed semantic identity or C++ output');
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
 	$explicit_statement = object_cast(Model::syntax_files()[0]->root->body->statements[7], variable_declaration_node::class);
 	constructed_check(($explicit_statement->type_syntax instanceof type_use_modifier_node)
-		&& (CPP_Output::single_unit(Model::$cpp_files)->text === $text)
+		&& (CPP_Probe::text(Model::$cpp_files) === $text)
 		&& (Model::$type_catalog->registry()->application_count() === $initial_applications + 8),
 		'Redundant modifier restoration lost AST spelling or canonical reuse');
 
@@ -194,7 +199,7 @@ PHS;
 	$compiler->exec_cpp();
 	$normalized = Model::syntax_files()[0]->root->body->statements[0]->type_syntax->require_preparation();
 	constructed_check($normalized->matches(Language_Types::integer(Model::$language_scope))
-		&& !str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'value_p'),
+		&& !str_contains(CPP_Probe::text(Model::$cpp_files), 'value_p'),
 		'Redundant nested value modifiers stopped normalizing to int');
 
 	echo "Constructed type: runtime families, contracts, nesting, value modifiers, exact reuse and recursive C++ bindings passed\n";

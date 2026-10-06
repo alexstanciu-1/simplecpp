@@ -16,27 +16,38 @@ final class CPP_Generator
 	/** Assemble output without acknowledging shared changes; publication belongs to the caller. */
 	public function generate(prepared_file $prepared): Storage /** Storage<cpp_artifact> */
 	{
-		$source = $prepared->source;
+		$files /** Storage<prepared_file> */ = new Storage();
+		$files->append($prepared);
+		return $this->generate_program($files, $prepared);
+	}
+
+	/** One partitioning path for single-source and multi-source programs. */
+	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
+	{
 		$ordered /** Storage<preparation_owner> */ = new Storage();
-		$nodes /** Storage<declaration_node> */ = $source->root->declarations;
-		foreach ($nodes as $node)
+		$found_entry = false;
+		foreach ($files as $prepared)
 		{
-			if (($node->kind() === node_kind::function_declaration) || ($node->kind() === node_kind::struct_declaration)) {
-				$entry = $node->occurrence();
-				$ordered->append(object_cast($entry->preparation_work_owner(), preparation_owner::class));
-				if ($node->kind() === node_kind::function_declaration) {
+			$source = $prepared->source;
+			$nodes /** Storage<declaration_node> */ = $source->root->declarations;
+			foreach ($nodes as $node) {
+				$definition = $node->occurrence();
+				$ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class));
+				if ($node instanceof function_node) {
 					$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
 				}
 			}
-		}
-		$ordered->append(object_cast($source->root->body->work(), preparation_owner::class));
-
-		// Deletion remains pending until assembly succeeds, but stale fragments leave storage immediately.
-		foreach ($source->preparation_changes as $owner /** @object-key */) {
-			if ($owner->change_status === change_state::deleted) {
-				unset($this->program->fragments[$owner]);
+			if ($prepared === $entry_file) { $found_entry = true; }
+			// Validate every file's freshness, even a declaration-only source.
+			if (!Preparation_Status::complete(object_cast($source->root->body->work(), preparation_owner::class))) {
+				throw new \RuntimeException('C++ generation requires completed preparation');
+			}
+			foreach ($source->preparation_changes as $retired /** @object-key */) {
+				if ($retired->change_status === change_state::deleted) { unset($this->program->fragments[$retired]); }
 			}
 		}
+		if (!$found_entry) { throw new \RuntimeException('Prepared entry is outside the program'); }
+		$ordered->append(object_cast($entry_file->source->root->body->work(), preparation_owner::class));
 		$definitions /** Storage<preparation_owner> */ = new Storage();
 		$bodies /** Storage<preparation_owner> */ = new Storage();
 		foreach ($ordered as $owner)
@@ -66,42 +77,58 @@ final class CPP_Generator
 			$this->render($owner);
 		}
 
-		$context = new cpp_generation_context();
-		$entry_text = '';
+		$result /** Storage<cpp_artifact> */ = new Storage();
+		$record_context = new cpp_generation_context();
 		foreach ($ordered as $owner)
 		{
 			Preparation_Status::require_active($owner);
+			if ($owner->kind() !== preparation_kind::declaration) { continue; }
 			$fragment = $this->program->fragments[$owner];
-			foreach ($fragment->headers as $header => $used) {
-				$context->headers[$header] = true;
+			$definition = object_cast($owner->declaration(), collected_name::class);
+			$path = '';
+			$identity = '';
+			$text = '';
+			if ($definition instanceof collected_struct) {
+				$this->validate_record_dependencies(object_cast($definition, collected_struct::class), $record_context);
+				$path = CPP_Artifacts::type_header($definition->name);
+				$identity = 'type:' . $definition->name;
+				$text = $fragment->text;
 			}
-			if ($owner->kind() === preparation_kind::file_body) {
-				$entry_text = $fragment->text;
+			else {
+				$path = CPP_Artifacts::callable_header($definition->name);
+				$identity = 'callable:' . $definition->name;
+				$text = $fragment->prototype_text . ";\n";
 			}
-			elseif ($owner->kind() === preparation_kind::function_body) {
-				$entry = object_cast($owner->declaration(), collected_name::class);
-				$signature_owner = object_cast($entry->preparation_work_owner(), preparation_owner::class);
-				$context->functions .= $this->program->fragments[$signature_owner]->text . "\n{\n" . $fragment->text . "}\n\n";
+			$result->append(new cpp_artifact($identity, cpp_artifact_kind::header, $path,
+				"#pragma once\n" . CPP_Artifacts::includes($fragment->headers, $path) . $text));
+		}
+		foreach ($files as $prepared)
+		{
+			$headers /** hash<bool> */ = [];
+			$body_text = '';
+			$nodes /** Storage<declaration_node> */ = $prepared->source->root->declarations;
+			foreach ($nodes as $node) {
+				if (!($node instanceof function_node)) { continue; }
+				$function = object_cast($node, function_node::class);
+				$signature_owner = object_cast($function->occurrence()->preparation_work_owner(), preparation_owner::class);
+				$body_owner = object_cast($function->body->work(), preparation_owner::class);
+				$signature = $this->program->fragments[$signature_owner];
+				$body = $this->program->fragments[$body_owner];
+				$headers[CPP_Artifacts::callable_header($function->occurrence()->name)] = true;
+				foreach ($body->headers as $header => $used) { $headers[$header] = true; }
+				$body_text .= $signature->text . "\n{\n" . $body->text . "}\n\n";
 			}
-			else
-			{
-				$entry = object_cast($owner->declaration(), collected_name::class);
-				if ($entry instanceof collected_struct) {
-					$this->assemble_record(object_cast($entry, collected_struct::class), $context);
-				}
-				else {
-					$context->prototypes .= $fragment->prototype_text . ";\n";
-				}
+			if ($body_text !== '') {
+				$path = CPP_Artifacts::unit_path($prepared->source);
+				$result->append(new cpp_artifact('implementation:' . $path, cpp_artifact_kind::translation_unit,
+					$path, CPP_Artifacts::includes($headers, '') . $body_text));
 			}
 		}
-		$text = '';
-		foreach ($context->headers as $header => $used) {
-			$text .= '#include "' . $header . '"' . "\n";
-		}
-		$text .= $context->records . $context->prototypes . $context->functions;
-		$text .= "\nint main()\n{\n" . $entry_text . "\treturn 0;\n}\n";
-		$result /** Storage<cpp_artifact> */ = new Storage();
-		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'main.cpp', $text));
+		$entry_owner = object_cast($entry_file->source->root->body->work(), preparation_owner::class);
+		$entry_fragment = $this->program->fragments[$entry_owner];
+		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
+			CPP_Artifacts::includes($entry_fragment->headers, '') . "\nint main()\n{\n"
+			. $entry_fragment->text . "\treturn 0;\n}\n"));
 		return $result;
 	}
 
@@ -127,7 +154,6 @@ final class CPP_Generator
 			throw new \LogicException('C++ generation requires successfully prepared work');
 		}
 		$context = new cpp_generation_context();
-		$context->expand_records = false;
 		$next = new cpp_fragment();
 		if ($owner->kind() === preparation_kind::file_body) {
 			$next->text = self::generate_file_body($owner->source->root, $context);
@@ -167,8 +193,8 @@ final class CPP_Generator
 		$this->program->fragments[$owner] = $next;
 	}
 
-	/** Dependency ordering is file assembly policy; cached record text never embeds another record. */
-	private function assemble_record(collected_struct $entry, cpp_generation_context $context): void
+	/** Validate complete by-value edges; every record definition remains in its own header. */
+	private function validate_record_dependencies(collected_struct $entry, cpp_generation_context $context): void
 	{
 		$key = $entry->name;
 		if (isset($context->record_states[$key])) {
@@ -182,9 +208,8 @@ final class CPP_Generator
 		$fragment = $this->program->fragments[$owner];
 		$records /** Storage<collected_struct> */ = $fragment->records;
 		foreach ($records as $dependency) {
-			$this->assemble_record($dependency, $context);
+			$this->validate_record_dependencies($dependency, $context);
 		}
-		$context->records .= $fragment->text;
 		$context->record_states[$key] = cpp_record_state::complete;
 	}
 

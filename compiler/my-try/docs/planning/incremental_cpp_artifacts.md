@@ -2,8 +2,9 @@
 Doc Status: planning
 
 Recorded: 2026-10-06. Baseline: `480b2543` on `v0.2/develop`.
-Status: artifact-delivery foundation implemented; partitioned generation and the
-remaining roadmap are pending. This is not a language spec.
+Status: entry selection and partitioned cross-file generation implemented. Precise
+declaration-versus-definition dependencies, persistent publication and native caching
+remain pending. This is not a language spec.
 
 ## Direction and evidence
 
@@ -25,8 +26,8 @@ or application PCH should become a dependency of every unit.
 
 - Input discovery already owns modules and module-relative source identities.
 - Collection/preparation already handles multiple sources and resolved cross-file calls.
-- C++ retains declaration/body fragments, but `Compiler::cpp()` currently requires one
-  prepared source and publishes a single `main.cpp` artifact through the common collection API.
+- C++ retains declaration/body fragments and publishes callable/type headers, initial
+  per-source implementation groups and one `entry.cpp` through the common artifact API.
 - `06_native/Native_Runner` currently executes LLVM output. It is not a C++ project
   builder. C++ fixture helpers have per-run PCH support, not a persistent build cache.
 
@@ -67,16 +68,16 @@ incremental native support after a compile-everything demonstration in slice 2.
 One selected source supplies executable statements; other sources supply declarations.
 Discovery/directory order must never select execution order. Follow the build-owned
 composition contract in [project_build_v1](../../../../specs/project_build_v1.md).
-The proposed compatibility convenience is to infer the sole source for existing
+The implemented convenience is to infer the sole source for existing
 single-source invocations; multiple sources require explicit selection. Validate
-non-entry executable statements instead of silently ignoring them. Record the exact
-v0.2 entry rule in an owning top-level spec before enabling it.
+non-entry executable statements instead of silently ignoring them. The authoritative
+v0.2 entry rule is in `specs/project_build_v1.md`, linked above.
 
 Backend artifact keys use stable logical module/source identity, canonical symbol
 identity and artifact role. They must not use process-local object IDs, traversal
-counters, source line numbers or absolute checkout paths. Current module names may
-default to an absolute path: resolve the logical build identity explicitly rather
-than accidentally making that default part of portable output names.
+counters, source line numbers or absolute checkout paths. Module reconciliation keys
+may remain paths; separate logical names now select output identity. A single unnamed
+module uses `main`; multi-module programs require explicit names.
 
 Keep semantic identity distinct from C++ spelling and filesystem-safe encoding.
 Namespace support must extend qualified identity, not replace every identity with
@@ -144,8 +145,7 @@ and fixture/native consumers together; do not keep a second monolithic renderer.
 This crosses backend, coordinator and tooling ownership. The user approved this
 coordinated migration on 2026-10-06. The benefit is one generation contract; the risk is disrupting
 existing output consumers, requiring focused single-source and multi-source proofs.
-The smaller alternative is to keep the public interface temporarily single-source
-while landing internal artifact planning, then perform that same cutover in slice 2.
+The artifact-delivery checkpoint preceded the now-completed partitioning cutover.
 
 Reconcile stale imported Chapter 08 cards with current normative specs before their
 slices: old `require_once` textual lowering is not project composition, and the old
@@ -162,13 +162,13 @@ where they meet this contract; the roadmap does not authorize changing legacy S2
 The generator now returns `Storage<cpp_artifact>` and the coordinator publishes the
 collection together before acknowledging preparation. Artifact records own immutable
 identity, kind, relative path and final bytes, without syntax/preparation references.
-The existing assembly currently produces the stable `entry` artifact at `main.cpp`.
+At that checkpoint assembly produced the stable `entry` artifact at `main.cpp`.
 
 CLI and ordinary native-validation requests serialize the entire collection using
-`scpp-cpp-artifacts-v1`; they no longer return the first file. Existing tests which
-inspect/instrument one C++ unit use an explicit rejecting single-unit adapter. This
-is a temporary consumer boundary, not a second renderer or a flattening API. Those
-probes must be adapted to named artifact roles as partitioning lands.
+`scpp-cpp-artifacts-v1`; they no longer return the first file. At that checkpoint,
+tests inspecting/instrumenting one C++ unit used an explicit rejecting single-unit
+adapter: a temporary consumer boundary, not a second renderer or a flattening API. Those
+probes were subsequently adapted during the partitioning checkpoint below.
 
 The fixture build helper validates a complete bundle, writes it to a fresh private
 directory, compiles each translation unit separately and links only those objects.
@@ -190,5 +190,46 @@ uses an intentionally unknown test-only expression, retaining the rejection/puri
 assertions. Both runners used their documented CLI fallback because this sandbox
 could not bind the FPM sockets.
 
-Next: explicit entry/source identity and cross-file function generation (slices 1–2),
-including replacement of the guarded single-unit instrumentation at that cutover.
+## Entry and partitioning checkpoint — 2026-10-06
+
+Slices 1–2 are implemented. Program preparation admits one explicit entry (or the
+sole source), rejects executable statements elsewhere, and distinguishes analysis-only
+file preparation from executable-program completion. Configuration uses logical module
+and relative source path, preserving existing module reconciliation keys.
+
+Single-file and multi-file generation use `generate_program`. Callable declarations
+and source record definitions have individual headers. Initial implementation groups
+follow logical module/source identity; entry statements occupy `entry.cpp`. Defaults
+occur only in declarations. Includes follow resolved call/type rendering, including
+nested type arguments. No project-wide header/PCH or alternate combined renderer exists.
+Complete source types are included conservatively: distinguishing declaration-only
+uses from complete-definition consumers is still slice 3, not silently claimed complete.
+
+Test instrumentation now preserves artifact sections. The shared fixture compiler
+materializes those sections and separately compiles/link units. Appended native probes
+may explicitly include extra declaration headers; the direct JSON cross-file proofs
+test unmodified production output without that probe convenience.
+
+Evidence (local temporary paths):
+
+- `/tmp/my-try-ch08-project-20261006-3/summary.json`: entry and module admission,
+  exact body-only artifact isolation, clean/incremental equivalence, insertion/deletion,
+  signature invalidation, multi-source failed-publication handoff/retry, module reorder
+  and fresh-process relocation; cross-file executions with/without run-local PCH.
+- `/tmp/my-try-ch08-crossfile-functions-20261006-2/summary.json`: 12 PHP suites and
+  77 function executions using the partitioned probe transport.
+- `/tmp/my-try-ch08-partition-ownership-20261006-1/summary.json`: 14 PHP suites and
+  26 ownership/weak/lifetime executions without PCH.
+- `/tmp/my-try-ch08-partition-artifacts-20261006-1/summary.json`: five PHP suites
+  and four artifact transport/build executions with/without PCH, including the
+  native-validation driver's PHP transport and failure/recovery path.
+
+Earlier function checks exposed monolithic include-count/order assumptions in tests;
+these now check per-artifact includes and explicit type-header dependencies. An added
+failure-injection case initially used an already-forbidden effectful binary expression;
+the fixture now sequences the call explicitly. No language relaxation was made.
+Native compiler rebuilding, native incremental scheduling, persistent PCH reuse and
+filesystem mtime preservation are not proved or implemented by this checkpoint.
+
+Next: slice 3's dependency precision, followed by content-aware disk publication and
+the native object/link/runtime-PCH cache. Namespaces/imports retain their later group.

@@ -2,6 +2,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Prepare one isolated operator source through shared semantics and C++ lowering. */
 function operator_test_source(string $text): parsed_file
@@ -41,7 +42,7 @@ foreach ($decision->operands as $operand) {
 		throw new \LogicException('Integer addition lost an ordered identity operand conversion');
 	}
 }
-$text = CPP_Output::single_unit(Model::$cpp_files)->text;
+$text = CPP_Probe::text(Model::$cpp_files);
 if (!str_contains($text, 'auto local_b = (local_a + static_cast<scpp::int_t<>>(2LL));')
 || !str_contains($text, '#include "scpp/generated/operators.hpp"')) {
 	throw new \LogicException('C++ addition did not consume the prepared operator decision');
@@ -55,7 +56,7 @@ $outer = object_cast($assignment->value, binary_expression_node::class);
 $inner = object_cast($outer->left, binary_expression_node::class);
 if (($inner->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)
 || ($outer->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)
-|| !str_contains(CPP_Output::single_unit(Model::$cpp_files)->text,
+|| !str_contains(CPP_Probe::text(Model::$cpp_files),
 'auto local_a = ((static_cast<scpp::int_t<>>(1LL) + static_cast<scpp::int_t<>>(2LL)) + static_cast<scpp::int_t<>>(3LL));')) {
 	throw new \LogicException('Left-associative addition chain lost recursive operator decisions');
 }
@@ -79,7 +80,7 @@ foreach ($decision->operands as $operand) {
 		throw new \LogicException('Subtraction lost its ordered identity operand conversions');
 	}
 }
-if (!str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'auto local_b = (local_a - static_cast<scpp::int_t<>>(3LL));')) {
+if (!str_contains(CPP_Probe::text(Model::$cpp_files), 'auto local_b = (local_a - static_cast<scpp::int_t<>>(3LL));')) {
 	throw new \LogicException('Subtraction did not lower its selected operation');
 }
 
@@ -167,7 +168,7 @@ foreach ($binary_cases as [$symbol, $kind, $operation, $comparison])
 		}
 	}
 	if ($kind === operator_kind::identical) {
-		if (!str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp::php::identical(')) {
+		if (!str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::php::identical(')) {
 			throw new \LogicException('Strict identity bypassed its runtime helper');
 		}
 	}
@@ -214,7 +215,7 @@ foreach ($decision->operands as $operand) {
 		throw new \LogicException('Logical operands bypassed conversion preparation');
 	}
 }
-if (!str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp::bool_t(static_cast<bool>(')) {
+if (!str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::bool_t(static_cast<bool>(')) {
 	throw new \LogicException('Logical lowering did not select the native short-circuit bridge');
 }
 
@@ -369,11 +370,11 @@ try
 	if (($function->body !== $body) || ($tokens->text_at($binary->operator_token_index) !== '*')) {
 		throw new \LogicException('Token cleanup lost the retained multiplication operator');
 	}
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+	if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 		throw new \LogicException('Incremental arithmetic output differs from a fresh build');
 	}
 }
@@ -422,11 +423,11 @@ try
 	if (($function->body !== $body) || ($tokens->text_at($unary->operator_token_index) !== '~')) {
 		throw new \LogicException('Token cleanup lost the retained unary operator');
 	}
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+	if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 		throw new \LogicException('Incremental unary output differs from a fresh build');
 	}
 }

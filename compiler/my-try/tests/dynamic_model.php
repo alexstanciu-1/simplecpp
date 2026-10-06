@@ -4,6 +4,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function dynamic_model_check(bool $condition, string $message): void
 {
@@ -86,7 +87,7 @@ $modules->add($input_module->name, $input_module);
 $compiler = new Compiler();
 $compiler->exec_cpp();
 $outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
-$text = CPP_Output::single_unit($outputs)->text;
+$text = CPP_Probe::text($outputs);
 dynamic_model_check(str_contains($text, 'scpp::mixed_t local_boxed;')
 	&& str_contains($text, 'scpp::dynamic_t<> local_objectU_table;'), 'Source declarations lost carrier bindings');
 if (isset($argv[1])) {

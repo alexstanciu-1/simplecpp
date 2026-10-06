@@ -3,6 +3,7 @@
 /* Canonical take preparation, output restrictions and retained recovery. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function take_check(bool $condition, string $message): void
 {
@@ -60,7 +61,7 @@ try
 		. 'function read(): bool { $v = 0; return take($v) = source(); } '
 		. 'function stable(): int { return 9; } $ok = read();';
 	$compiler = take_source($path, $valid);
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('?int { return 3;', '?float { return 3.5;', $valid));
@@ -75,9 +76,9 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	take_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Take repair changed output');
+	take_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Take repair changed output');
 	take_source($path, $valid);
-	take_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental take differ');
+	take_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental take differ');
 	echo "take: PASS\n";
 }
 finally

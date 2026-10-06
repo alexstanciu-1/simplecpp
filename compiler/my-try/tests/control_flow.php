@@ -3,6 +3,7 @@
 /* Prove structured branches, loops, switches, completion and incremental recovery. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 require_once __DIR__ . '/s2s_proof.php';
 
 function control_check(bool $condition, string $message): void
@@ -188,9 +189,9 @@ try
 		$compiler = control_program($path, $source);
 		$compiler->prepare();
 		$compiler->cpp();
-		$first = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$first = CPP_Probe::text(Model::$cpp_files);
 		$compiler->cpp();
-		control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $first, 'Repeated emission changed ' . $name);
+		control_check(CPP_Probe::text(Model::$cpp_files) === $first, 'Repeated emission changed ' . $name);
 		if (isset($argv[1])) {
 			$output = $argv[1] . '/' . $name . '.cpp';
 			file_put_contents($output, $first);
@@ -202,14 +203,14 @@ try
 	$compiler = control_program($path, 'return (bool) "yes";');
 	$compiler->prepare();
 	$compiler->cpp();
-	$cast_text = str_replace('int main()', 'int cast_probe()', CPP_Output::single_unit(Model::$cpp_files)->text);
+	$cast_text = str_replace('int main()', 'int cast_probe()', CPP_Probe::text(Model::$cpp_files));
 	$cast_text .= "\nint main() { try { cast_probe(); } catch (const scpp::runtime_error& error) { return error.code() == \"invalid_cast_string_literal\" ? 0 : 2; } return 1; }\n";
 	if (isset($argv[1])) {
 		$output = $argv[1] . '/truth_explicit_cast_reject.cpp';
 		file_put_contents($output, $cast_text);
 		$executions[] = ['path' => $output, 'exit_code' => 0];
 		$base = $argv[1] . '/truth_explicit_cast_reject.base.cpp';
-		file_put_contents($base, CPP_Output::single_unit(Model::$cpp_files)->text);
+		file_put_contents($base, CPP_Probe::text(Model::$cpp_files));
 		$native_probes[] = ['name' => 'truth_explicit_cast_reject', 'source' => 'return (bool) "yes";',
 			'base_path' => $base, 'path' => $output, 'exit_code' => 0];
 	}
@@ -218,14 +219,14 @@ try
 	$compiler = control_program($path, 'return match (2) { 1 => 7 };');
 	$compiler->prepare();
 	$compiler->cpp();
-	$match_text = str_replace('int main()', 'int match_probe()', CPP_Output::single_unit(Model::$cpp_files)->text);
+	$match_text = str_replace('int main()', 'int match_probe()', CPP_Probe::text(Model::$cpp_files));
 	$match_text .= "\n#include <string>\nint main() { try { match_probe(); } catch (const std::runtime_error& error) { return std::string(error.what()) == \"Unhandled match expression\" ? 0 : 2; } return 1; }\n";
 	if (isset($argv[1])) {
 		$output = $argv[1] . '/match_unhandled.cpp';
 		file_put_contents($output, $match_text);
 		$executions[] = ['path' => $output, 'exit_code' => 0];
 		$base = $argv[1] . '/match_unhandled.base.cpp';
-		file_put_contents($base, CPP_Output::single_unit(Model::$cpp_files)->text);
+		file_put_contents($base, CPP_Probe::text(Model::$cpp_files));
 		$native_probes[] = ['name' => 'match_unhandled', 'source' => 'return match (2) { 1 => 7 };',
 			'base_path' => $base, 'path' => $output, 'exit_code' => 0];
 	}
@@ -357,18 +358,18 @@ try
 	control_check($grouped_arm->require_preparation()->conversion->context === conversion_context::conditional_branch, 'Missing match result conversion');
 	control_check(!$selection->require_preparation()->addressable(), 'Match result is addressable');
 	$compiler->cpp();
-	$match_original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$match_original = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, "\n\n" . $match_source);
 	$compiler->update_cpp([$path]);
 	control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $match_body, 'Moved match body lost identity');
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $match_original, 'Moved match changed output');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $match_original, 'Moved match changed output');
 
 	// Unselected arms still register dependencies and survive failed retries and repair.
 	$match_valid = 'function branch(): int { return 2; } function f(): int { return match (1) { 1 => 8, 2 => branch() }; } function stable(): int { return 9; } return f();';
 	$compiler = control_program($path, $match_valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	$match_original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$match_original = CPP_Probe::text(Model::$cpp_files);
 	$match_stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$match_version = $match_stable->version;
 	foreach ([
@@ -385,12 +386,12 @@ try
 		control_check($match_stable->version === $match_version, 'Match failure rebuilt independent body');
 		file_put_contents($path, $match_valid);
 		$compiler->update_cpp([$path]);
-		control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $match_original, 'Match repair changed output');
+		control_check(CPP_Probe::text(Model::$cpp_files) === $match_original, 'Match repair changed output');
 	}
 	$compiler = control_program($path, $match_valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $match_original, 'Clean/incremental match mismatch');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $match_original, 'Clean/incremental match mismatch');
 
 	// Conditional shape owns two or three distinct children and always produces a value.
 	$conditional_source = 'function f(): int { $a = true ? 1 : 2; return $a ?: 3; } return f();';
@@ -406,18 +407,18 @@ try
 	control_check(!$full->require_preparation()->addressable() && !$short->require_preparation()->addressable(), 'Conditional result became an lvalue');
 	control_check($full->require_conditional_preparation()->true_conversion->context === conversion_context::conditional_branch, 'Missing conditional join decision');
 	$compiler->cpp();
-	$conditional_original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$conditional_original = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, "\n\n" . $conditional_source);
 	$compiler->update_cpp([$path]);
 	control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $conditional_body, 'Moved conditional body lost identity');
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $conditional_original, 'Moved conditional changed output');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $conditional_original, 'Moved conditional changed output');
 
 	// Branch-signature changes invalidate unchanged conditional consumers; retry then repair.
 	$conditional_valid = 'function branch(): int { return 2; } function f(): int { return true ? 1 : branch(); } function stable(): int { return 8; } return f();';
 	$compiler = control_program($path, $conditional_valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	$conditional_original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$conditional_original = CPP_Probe::text(Model::$cpp_files);
 	$conditional_stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$conditional_version = $conditional_stable->version;
 	foreach ([
@@ -433,12 +434,12 @@ try
 		control_check($conditional_stable->version === $conditional_version, 'Conditional failure rebuilt independent body');
 		file_put_contents($path, $conditional_valid);
 		$compiler->update_cpp([$path]);
-		control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $conditional_original, 'Conditional repair changed output');
+		control_check(CPP_Probe::text(Model::$cpp_files) === $conditional_original, 'Conditional repair changed output');
 	}
 	$compiler = control_program($path, $conditional_valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $conditional_original, 'Clean/incremental conditional mismatch');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $conditional_original, 'Clean/incremental conditional mismatch');
 
 	// Case grouping, named inspection edges and distinct break/continue targets.
 	$switch_source = 'function f(): int { for ($i = 0; $i < 2; $i++) { switch ($i) { case 0: case +1: break; default: continue; } } return 4; } return f();';
@@ -460,18 +461,18 @@ try
 	control_check(iterator_to_array($first_group->labels[0]->children()) === [$first_group->labels[0]->value], 'Case value inspection');
 	control_check(iterator_to_array($default_group->labels[0]->children()) === [], 'Default inspection must be empty');
 	$compiler->cpp();
-	$switch_original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$switch_original = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, "\n\n" . $switch_source);
 	$compiler->update_cpp([$path]);
 	control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $switch_body, 'Moving unchanged switch lost body identity');
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $switch_original, 'Moving switch changed generated output');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $switch_original, 'Moving switch changed generated output');
 
 	// Signature, label and completion failures withhold output and recover incrementally.
 	$switch_valid = 'function selector(): int { return 1; } function f(): int { switch (selector()) { case 1: return 7; default: return 8; } } function stable(): int { return 3; } return f();';
 	$compiler = control_program($path, $switch_valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	$switch_original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$switch_original = CPP_Probe::text(Model::$cpp_files);
 	$switch_stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$switch_version = $switch_stable->version;
 	foreach ([
@@ -489,7 +490,7 @@ try
 		control_check($switch_stable->version === $switch_version, 'Switch failure rebuilt independent body');
 		file_put_contents($path, $switch_valid);
 		$compiler->update_cpp([$path]);
-		control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $switch_original, 'Switch repair differs from original output');
+		control_check(CPP_Probe::text(Model::$cpp_files) === $switch_original, 'Switch repair differs from original output');
 	}
 	file_put_contents($path, str_replace('case 1:', 'case :', $switch_valid));
 	$parse_failed = false;
@@ -498,11 +499,11 @@ try
 	control_check($parse_failed && !Model::$rebuild_required && Model::$cpp_files->is_empty(), 'Malformed switch did not fail cleanly');
 	file_put_contents($path, $switch_valid);
 	$compiler->update_cpp([$path]);
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $switch_original, 'Malformed switch repair changed output');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $switch_original, 'Malformed switch repair changed output');
 	$compiler = control_program($path, $switch_valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $switch_original, 'Clean/incremental switch mismatch');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $switch_original, 'Clean/incremental switch mismatch');
 
 	// Named loop edges, prepared transfer identities and independent lazy cursors.
 	$loop_source = 'function f(): int { for ($i = 0; $i < 2; $i++) { while (true) { break; } continue; } do { return 4; } while (false); } return f();';
@@ -520,18 +521,18 @@ try
 	control_check(iterator_to_array($loop->children()) === iterator_to_array($loop->children()), 'Loop inspection cannot be repeated');
 	control_check(is_subclass_of(foreach_node::class, loop_node::class), 'Foreach lost its shared loop foundation');
 	$compiler->cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, "\n\n" . $loop_source);
 	$compiler->update_cpp([$path]);
 	control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $function_body, 'Moved unchanged loop body lost identity');
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Moving loop syntax changed output');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Moving loop syntax changed output');
 
 	// Loop condition dependencies, transfer cleanup and completion recover without a rebuild.
 	$valid_loop = 'function predicate(): bool { return false; } function f(): int { do { return 7; } while (predicate()); } function stable(): int { return 3; } return f();';
 	$compiler = control_program($path, $valid_loop);
 	$compiler->prepare();
 	$compiler->cpp();
-	$original_loop = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original_loop = CPP_Probe::text(Model::$cpp_files);
 	$stable_loop = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$stable_version = $stable_loop->version;
 	foreach ([
@@ -548,12 +549,12 @@ try
 		control_check($stable_loop->version === $stable_version, 'Loop failure rebuilt independent body');
 		file_put_contents($path, $valid_loop);
 		$compiler->update_cpp([$path]);
-		control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original_loop, 'Loop repair changed output');
+		control_check(CPP_Probe::text(Model::$cpp_files) === $original_loop, 'Loop repair changed output');
 	}
 	$compiler = control_program($path, $valid_loop);
 	$compiler->prepare();
 	$compiler->cpp();
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original_loop, 'Clean/incremental loop mismatch');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $original_loop, 'Clean/incremental loop mismatch');
 
 	// A supported scalar signature change must replace the condition fact and required headers.
 	$truth_valid = 'function predicate(): bool { return true; } function f(): int { if (predicate()) { return 7; } else { return 8; } } return f();';
@@ -568,14 +569,14 @@ try
 		control_check(Model::$global_scope->functions_named('f')[0]->syntax()->body === $truth_body, 'Scalar signature edit replaced unchanged consumer syntax');
 		$decision = $truth_body->statements[0]->require_preparation()->truthiness;
 		control_check($decision->operation === ($type === 'bool' ? truthiness_operation::boolean_identity : truthiness_operation::scalar_condition), 'Scalar signature edit kept stale truthiness facts');
-		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$text = CPP_Probe::text(Model::$cpp_files);
 		control_check(str_contains($text, 'condition_truthiness.hpp') === ($type !== 'bool'), 'Scalar signature edit kept stale truthiness headers');
 	}
-	$truth_incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$truth_incremental = CPP_Probe::text(Model::$cpp_files);
 	$compiler = control_program($path, $truth_valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $truth_incremental, 'Clean/incremental truthiness mismatch');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $truth_incremental, 'Clean/incremental truthiness mismatch');
 
 	// Prepared storage identities distinguish outer assignments from typed shadows.
 	$compiler = control_program($path, '$x int = 1; if (true) { $x = 2; $x int = 3; $x = 4; } return $x;');
@@ -594,17 +595,17 @@ try
 	$children = iterator_to_array($arm->children());
 	control_check($children === [$arm->condition, $arm->body], 'Conditional inspection order');
 	$compiler->cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, "\n\n" . file_get_contents($path));
 	$compiler->update_cpp([$path]);
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Moving branch syntax changed output');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Moving branch syntax changed output');
 
 	// A condition signature change must invalidate a retained consumer, then recover cleanly.
 	$valid = 'function predicate(): bool { return true; } function f(): int { if (predicate()) { return 7; } else { return 8; } } function stable(): int { return 3; } return f();';
 	$compiler = control_program($path, $valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	foreach ([
@@ -620,13 +621,13 @@ try
 		control_check($stable->version === $version, 'Independent body rebuilt');
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Recovery differs from original output');
+		control_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Recovery differs from original output');
 	}
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	$compiler = control_program($path, $valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	control_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental, 'Clean/incremental mismatch');
+	control_check(CPP_Probe::text(Model::$cpp_files) === $incremental, 'Clean/incremental mismatch');
 	if (isset($argv[1])) {
 		file_put_contents($argv[1] . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
 		file_put_contents($argv[1] . '/programs.json', json_encode([

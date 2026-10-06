@@ -2,6 +2,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Isolate source publication, preparation and C++ emission for logical expressions. */
 function logical_test_source(string $text): parsed_file
@@ -120,11 +121,11 @@ try
 		|| (Model::tokens()[0]->text_at($expression->operator_token_index) !== 'xor')) {
 		throw new \LogicException('Compaction lost retained logical syntax');
 	}
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+	if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 		throw new \LogicException('Incremental logical output differs from fresh output');
 	}
 	file_put_contents($path, str_replace('($a = false)', '($missing = false)', $source));
@@ -140,7 +141,7 @@ try
 	}
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
-	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+	if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 		throw new \LogicException('Logical recovery did not restore fresh output');
 	}
 }

@@ -30,6 +30,8 @@ final class file
 
 final class module
 {
+	/** Empty denotes the single-module convenience identity; not a filesystem key. */
+	public string $logical_name = '';
 	public string $name;
 	public string $declared_path;
 	public string $resolved_path;
@@ -88,6 +90,7 @@ final class source_record
 /** Incoming module configuration; an omitted name preserves the exact path spelling. */
 final class module_input
 {
+	public string $logical_name;
 	public string $name;
 	public string $declared_path;
 
@@ -95,5 +98,19 @@ final class module_input
 	{
 		$this->declared_path = $path;
 		$this->name = $name ?? $path;
+		$this->logical_name = $name ?? '';
+	}
+}
+
+/** Executable selection uses a logical module and normalized module-relative path. */
+final class program_entry_selection
+{
+	public readonly string $module_name;
+	public readonly string $source_path;
+
+	public function __construct(string $module_name, string $source_path)
+	{
+		$this->module_name = $module_name;
+		$this->source_path = $source_path;
 	}
 }

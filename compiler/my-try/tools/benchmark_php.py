@@ -125,13 +125,14 @@ if ($work === 'suite') {
 }
 require ''' + php_literal(APP / 'boot.php') + ''';
 require ''' + php_literal(APP / 'tests/s2s_proof.php') + ''';
+require ''' + php_literal(APP / 'tests/cpp_probe.php') + ''';
 S2S_Proof::run();
 $compiler = new Compiler();
 $compiler->init([''' + php_literal(fixtures) + ''' . '/' . $value]);
 $compiler->exec_cpp();
 $compiler->prepare();
 $compiler->cpp();
-echo CPP_Output::single_unit(Model::$cpp_files)->text;
+echo CPP_Output::encode(Model::$cpp_files);
 ''')
     references = {}
     rows = []

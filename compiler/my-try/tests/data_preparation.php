@@ -3,6 +3,7 @@
 /* Contextual preparation, recovery and settled-fact emission proofs. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function data_preparation_check(bool $condition, string $message): void
 {
@@ -180,13 +181,13 @@ try {
 	$compiler->prepare();
 	data_preparation_check(!$construction->require_data_preparation()->binding->is_keyed(), 'Contextual construction did not recover');
 	$compiler->cpp();
-	data_preparation_check(str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp::data_initializer<'), 'Construction did not use the registered adapter');
-	$first_cpp = CPP_Output::single_unit(Model::$cpp_files)->text;
+	data_preparation_check(str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::data_initializer<'), 'Construction did not use the registered adapter');
+	$first_cpp = CPP_Probe::text(Model::$cpp_files);
 	data_preparation_check(!str_contains($first_cpp, 'initializer_buffer'), 'Empty construction allocated input backing');
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	$compiler->cpp();
-	data_preparation_check(CPP_Output::single_unit(Model::$cpp_files)->text === $first_cpp, 'Preparation reset changed construction emission');
+	data_preparation_check(CPP_Probe::text(Model::$cpp_files) === $first_cpp, 'Preparation reset changed construction emission');
 }
 finally {
 	unlink($path);

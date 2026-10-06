@@ -14,7 +14,7 @@ import time
 
 from test_runner import CommandRunner, DEFAULT_JOBS, Task, positive_jobs, run_tasks
 from cpp_fixture import CppFixtureCompiler
-from cpp_artifacts import single_unit_text
+from cpp_artifacts import probe_text
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
@@ -92,6 +92,7 @@ def validate(args, target, results, logs, started, runner):
     (pipeline / 'b.phs').write_text('$')
     driver = (APP / 'tests/native_driver.php.in').read_text()
     shutil.copyfile(APP / 'tests/s2s_proof.php', source / 's2s_proof.php')
+    shutil.copyfile(APP / 'tests/cpp_probe.php', source / 'cpp_probe.php')
     driver = (driver.replace('__REQUEST_FILE__', php_literal('request.txt'))
               .replace('__RECOVERY_DIR__', php_literal(recovery))
               .replace('__PIPELINE_DIR__', php_literal(pipeline))
@@ -162,7 +163,7 @@ def validate(args, target, results, logs, started, runner):
         cases = [(suite + '/' + path.name, path) for suite in ['llvm', 'calls']
                  for path in sorted((fixtures / suite).iterdir()) if path.is_dir()]
         cases.append(('sample/01_base', APP / 'tests/samples/01_base'))
-    php_code = 'require ' + php_literal(APP / 'boot.php') + '; require ' + php_literal(APP / 'tests/s2s_proof.php') + '; require ' + php_literal(source / 'main.php') + ';'
+    php_code = 'require ' + php_literal(APP / 'boot.php') + '; require ' + php_literal(APP / 'tests/cpp_probe.php') + '; require ' + php_literal(APP / 'tests/s2s_proof.php') + '; require ' + php_literal(source / 'main.php') + ';'
     # Compile generated C++ from both host implementations, independently of LLVM parity.
     request.write_text('s2s-proof')
     expected_cpp = run('s2s-host', ['php', '-r', php_code], cwd=results)
@@ -178,8 +179,8 @@ def validate(args, target, results, logs, started, runner):
     if native_type_cpp != expected_type_cpp:
         raise RuntimeError('Native constructed-type C++ emission differs from PHP')
     (results / 'types.cpp').write_bytes(native_type_cpp)
-    run('types-clang', ['clang++-18', '-std=c++20', '-I', ROOT / 'runtime/include',
-                        results / 'types.cpp', '-o', results / 'types-program'])
+    proof_compiler = CppFixtureCompiler(runner, ROOT, results, pch=False, return_type_errors=True, cxx='clang++-18')
+    proof_compiler.compile('types-clang', results / 'types.cpp', results / 'types-program')
     run('types-execute', [results / 'types-program'])
     request.write_text('control-proof')
     expected_control_cpp = run('control-host', ['php', '-r', php_code], cwd=results)
@@ -187,8 +188,7 @@ def validate(args, target, results, logs, started, runner):
     if native_control_cpp != expected_control_cpp:
         raise RuntimeError('Native control-flow incremental proof differs from PHP')
     (results / 'control.cpp').write_bytes(native_control_cpp)
-    run('control-clang', ['clang++-18', '-std=c++20', '-Werror=return-type',
-                          '-I', ROOT / 'runtime/include', results / 'control.cpp', '-o', results / 'control-program'])
+    proof_compiler.compile('control-clang', results / 'control.cpp', results / 'control-program')
     run('control-execute', [results / 'control-program'], expected=8)
     # Reuse every valid authored S2S case instead of maintaining native-only fixture subsets.
     s2s_fixtures = results / 's2s-fixtures'
@@ -238,7 +238,7 @@ def validate(args, target, results, logs, started, runner):
         native_output = run(name + '-s2s-native', [executable], cwd=folder)
         if native_output != host_output or native_output.startswith(b'ERROR\n'):
             raise RuntimeError(name + ': native S2S output differs from PHP or was rejected')
-        generated = single_unit_text(native_output)
+        generated = probe_text(native_output)
         if name.startswith('field_'):
             alias = name[len('field_'):]
             native_type = 'uint8' if alias == 'byte' else alias
@@ -291,7 +291,7 @@ def validate(args, target, results, logs, started, runner):
         (folder / 'request.txt').write_text('s2s:' + str(folder))
         host_output = run(name + '-host', ['php', '-r', php_code], cwd=folder)
         native_output = run(name + '-native', [executable], cwd=folder)
-        if native_output != host_output or single_unit_text(native_output).encode() != Path(item['base_path']).read_bytes():
+        if native_output != host_output or probe_text(native_output).encode() != Path(item['base_path']).read_bytes():
             raise RuntimeError(name + ': native runtime-error probe base differs from PHP')
         validate_probe(item)
 

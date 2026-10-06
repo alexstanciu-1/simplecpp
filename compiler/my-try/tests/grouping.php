@@ -2,6 +2,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Parse without preparation so grammar decisions cannot depend on resolved names. */
 function grouping_parse(string $text): parsed_file
@@ -133,11 +134,11 @@ try
 	file_put_contents($path, $changed);
 	$compiler->update_cpp([$path]);
 	grouping_check($function->body !== $body, 'Regrouping retained stale body syntax');
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	grouping_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental, 'Regrouping differs between fresh and incremental generation');
+	grouping_check(CPP_Probe::text(Model::$cpp_files) === $incremental, 'Regrouping differs between fresh and incremental generation');
 }
 finally {
 	unlink($path);

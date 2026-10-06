@@ -1,6 +1,7 @@
 <?php
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Test-only unknown specialization; do not use a language feature that may gain support. */
 final class dispatch_unknown_expression extends expression_node
@@ -140,7 +141,7 @@ foreach ($fact_pairs as $pair)
 $generator = new CPP_Generator();
 $integer_source = dispatch_parse('$a int = 10; return $a;');
 $integer_prepared = (new File_Preparation($integer_source->collection, Model::$language_scope))->prepare();
-$integer_output = CPP_Output::single_unit($generator->generate($integer_prepared));
+$integer_output = CPP_Probe::text($generator->generate($integer_prepared));
 $integer_binding = object_cast($integer_source->root->body->statements[0], variable_declaration_node::class);
 $integer_literal = object_cast($integer_binding->initializer, integer_literal_node::class);
 $literal_facts = $integer_literal->require_integer_literal_preparation();
@@ -153,8 +154,8 @@ if ($literal_text === '' || $integer_literal->require_integer_literal_preparatio
 }
 $boolean_source = dispatch_parse('$a bool = false; return $a;');
 $boolean_prepared = (new File_Preparation($boolean_source->collection, Model::$language_scope))->prepare();
-$boolean_output = CPP_Output::single_unit($generator->generate($boolean_prepared));
-if (str_contains($boolean_output->text, 'scpp/int_t.hpp') || !str_contains($boolean_output->text, 'scpp/bool_t.hpp') || (substr_count($integer_output->text, 'scpp::int_t<> local_a') !== 1)) {
+$boolean_output = CPP_Probe::text($generator->generate($boolean_prepared));
+if (str_contains($boolean_output, 'scpp/int_t.hpp') || !str_contains($boolean_output, 'scpp/bool_t.hpp') || (substr_count($integer_output, 'scpp::int_t<> local_a') !== 1)) {
 	throw new \LogicException('Generation leaked context or visited a binding twice');
 }
 

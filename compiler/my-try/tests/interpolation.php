@@ -2,6 +2,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Prepare one isolated operator source through shared semantics and C++ lowering. */
 function interpolation_test_source(string $text): parsed_file
@@ -105,11 +106,11 @@ try
 		|| (substr($token, $part->byte_offset, $part->byte_length) !== '{$x}')) {
 		throw new \LogicException('Compaction damaged interpolation ranges or collected identity');
 	}
-	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+	if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 		throw new \LogicException('Incremental interpolation differs from fresh generation');
 	}
 	foreach (['{$missing}', '{$x + 1}'] as $invalid)
@@ -133,7 +134,7 @@ try
 		}
 		file_put_contents($path, $source);
 		$compiler->update_cpp([$path]);
-		if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+		if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 			throw new \LogicException('Interpolation recovery did not restore fresh output');
 		}
 	}

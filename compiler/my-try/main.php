@@ -14,22 +14,27 @@ if (PHP_SAPI !== 'cli') {
 	header('Content-Type: text/plain; charset=UTF-8');
 }
 
-// CLI: --s2s SOURCE_DIRECTORY. HTTP: ?mode=s2s&source=SOURCE_DIRECTORY.
+// CLI: --s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH]. HTTP also accepts entry=RELATIVE_PATH.
 // No parameter retains the existing sample/debug report.
 $s2s = false;
 $source_directory = '';
+$entry_path = '';
 $usage_error = false;
 if (PHP_SAPI === 'cli')
 {
 	if ($argc !== 1)
 	{
-		if (($argc !== 3) || ($argv[1] !== '--s2s')) {
+		if ((($argc !== 3) && ($argc !== 5)) || ($argv[1] !== '--s2s')) {
 			$usage_error = true;
 		}
 		else {
 			$s2s = true;
 			$source_directory = $argv[2];
 			$usage_error = $source_directory === '';
+			if ($argc === 5) {
+				$entry_path = $argv[4];
+				$usage_error = $usage_error || ($argv[3] !== '--entry') || ($entry_path === '');
+			}
 		}
 	}
 }
@@ -37,7 +42,8 @@ else
 {
 	$mode = $_GET['mode'] ?? 'report';
 	$source_directory = $_GET['source'] ?? '';
-	if ((!is_string($mode)) || (!is_string($source_directory))) {
+	$entry_path = $_GET['entry'] ?? '';
+	if ((!is_string($mode)) || (!is_string($source_directory)) || (!is_string($entry_path))) {
 		$usage_error = true;
 	}
 	elseif ($mode === 's2s') {
@@ -51,11 +57,11 @@ else
 if ($usage_error)
 {
 	if (PHP_SAPI === 'cli') {
-		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY]\n");
+		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH]]\n");
 	}
 	else {
 		http_response_code(400);
-		echo "Usage: main.php?mode=s2s&source=SOURCE_DIRECTORY (or mode=report)\n";
+		echo "Usage: main.php?mode=s2s&source=SOURCE_DIRECTORY&entry=RELATIVE_PATH (entry optional for one source; or mode=report)\n";
 	}
 	exit(1);
 }
@@ -65,6 +71,7 @@ if ($s2s)
 	try {
 		$compiler = new Compiler();
 		$compiler->init([$source_directory]);
+		if ($entry_path !== '') { $compiler->select_entry('main', $entry_path); }
 		$compiler->exec_cpp();
 		echo CPP_Output::encode(Model::$cpp_files);
 	}

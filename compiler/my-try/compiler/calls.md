@@ -12,8 +12,9 @@ Compiler::sync(paths)
   tokenize -> join -> retained parse/collect -> join/revision sweep
   Compiler_Lifecycle::retire_deleted_sources
     guard successful join -> semantic notification/unlinking -> Collection_Retirement disposal
-Compiler::prepare() -> same retirement protocol -> declaration list -> function-body list -> file-body list -> pending preparation changes
-Compiler::cpp() -> select dirty definition/body fragments -> render -> assemble -> publish main.cpp -> acknowledge source changes
+Compiler::select_entry(logical_module, relative_path) -> invalidate prepared program/output, retain syntax/work
+Compiler::prepare(require_entry) -> same retirement protocol -> declarations/bodies -> program-entry admission -> publish prepared files/entry
+Compiler::cpp() -> dirty fragments -> render -> declaration headers/source units/entry -> publish all artifacts -> acknowledge all source changes
 ```
 
 Standalone tokenize/parse/prepare entrypoints use these same phases. Parser calls

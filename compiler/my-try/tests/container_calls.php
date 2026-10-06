@@ -3,6 +3,7 @@
 /* Container calls reuse ordinary read/conversion facts and stable-reference admission. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function container_call_check(bool $condition, string $message): void
 {
@@ -22,7 +23,7 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$function = Model::$global_scope->functions_named('run')[0]->syntax();
 	$body = $function->body;
 	$call = $body->statements[0]->expression;
@@ -45,12 +46,12 @@ try
 	container_call_check($function->body === $body, 'Unchanged caller body was replaced');
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	container_call_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Indexed call recovery changed output');
+	container_call_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Indexed call recovery changed output');
 	Compiler_Lifecycle::reset();
 	$clean = new Compiler();
 	$clean->init([$directory]);
 	$clean->exec_cpp();
-	container_call_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean and incremental indexed calls differ');
+	container_call_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental indexed calls differ');
 	foreach ([
 		'function f(int &$x): void {} $v vector<int> = [1]; f($v[0]);',
 		'function f(int &$x): void {} $h hash<int> = {x: 1}; f($h["x"]);',

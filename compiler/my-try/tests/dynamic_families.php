@@ -20,7 +20,7 @@ foreach ($fixtures as $name => [$source, $predicate]) {
 	Source_Registry::add($input_module, $file);
 	Model::$modules->add($input_module->name, $input_module);
 	(new Compiler())->exec_cpp();
-	$text = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$text = CPP_Probe::text(Model::$cpp_files);
 	if (str_contains($text, 'dynamic_box')) {
 		throw new \LogicException('Removed handle bridge returned to C++ output');
 	}

@@ -5,6 +5,13 @@ namespace scpp\compiler;
 
 final class CPP_Output
 {
+	public static function artifact(Storage $artifacts /** Storage<cpp_artifact> */, string $identity): cpp_artifact
+	{
+		foreach ($artifacts as $artifact) {
+			if ($artifact->identity === $identity) { return $artifact; }
+		}
+		throw new \LogicException('Missing C++ artifact: ' . $identity);
+	}
 	/** Versioned transport for CLI/native consumers; emit every artifact, not index zero. */
 	public static function encode(Storage $artifacts /** Storage<cpp_artifact> */): string
 	{

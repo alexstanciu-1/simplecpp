@@ -8,7 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
-from cpp_artifacts import decode_artifacts, materialize_artifacts, single_unit_text
+from cpp_artifacts import decode_artifacts, materialize_artifacts, single_unit_text, probe_text
 from cpp_fixture import CppFixtureCompiler
 from native_validate import php_literal
 
@@ -60,7 +60,7 @@ def main():
         rejection_checks(output)
         payload = runner.run('artifact-cli', ['php', ROOT / 'main.php', '--s2s', source],
                              cli_reason='Tests the artifact CLI delivery contract')
-        if 'function_answer' not in single_unit_text(payload):
+        if 'function_answer' not in probe_text(payload):
             raise RuntimeError('CLI failed to deliver generated program')
         recovery = output / 'recovery'
         recovery.mkdir()
@@ -76,6 +76,7 @@ def main():
         driver_path.write_text(driver)
         host_path = output / 'host.php'
         host_path.write_text('<?php\nrequire ' + php_literal(ROOT / 'boot.php')
+                             + ';\nrequire ' + php_literal(ROOT / 'tests/cpp_probe.php')
                              + ';\nrequire ' + php_literal(ROOT / 'tests/s2s_proof.php')
                              + ';\nrequire ' + php_literal(driver_path) + ';\n')
         driver_output = runner.run('artifact-driver-host', ['php', host_path])

@@ -4,6 +4,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function mixed_check(bool $condition, string $message): void
 {
@@ -37,7 +38,7 @@ try
 		mixed_check($facts->conversion->operation === $operation, 'Wrong prepared mixed operation');
 		mixed_check($facts->conversion->result_type->matches($facts->type), 'Mixed boundary lost target identity');
 	}
-	mixed_check(str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp::required_cast<scpp::int_t<>>'),
+	mixed_check(str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::required_cast<scpp::int_t<>>'),
 		'Required extraction became an implicit or explicit cast');
 	Preparation_Cleanup::tree($root);
 	mixed_check($root->body->statements[3]->preparation() === null, 'Mixed conversion facts survived cleanup');
@@ -142,7 +143,7 @@ try
 		&& !$update_facts->addressable(), 'Mixed update lost its guarded storage write-back or owned snapshot');
 	mixed_check($mutation_node->require_mutation_preparation()->decision->operation === operator_operation::boxed_post_increment
 		&& !$mutation_node->require_preparation()->addressable(), 'Mixed postfix mutation lost its old-value snapshot');
-	mixed_check(str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp::detail::assign_numeric_result('),
+	mixed_check(str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::detail::assign_numeric_result('),
 		'Mixed compound emission bypassed stored-kind validation');
 	Preparation_Cleanup::tree($update_root);
 	mixed_check($compound_node->preparation() === null && $mutation_node->preparation() === null,
@@ -182,7 +183,7 @@ try
 	$probe_root = Model::syntax_files()[0]->root;
 	mixed_check($probe_root->body->statements[1]->require_preparation()->truthiness->operation
 		=== truthiness_operation::boxed_condition, 'Missing mixed condition fact');
-	mixed_check(str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp::cast<scpp::int_t<>>'),
+	mixed_check(str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::cast<scpp::int_t<>>'),
 		'Explicit mixed cast did not use its runtime owner');
 	$probe_nodes = [];
 	foreach ([2, 3, 4, 5] as $position) {
@@ -287,7 +288,7 @@ try
 	$valid = 'function source(): mixed { return 3; } function read(): int { return source(); } '
 		. 'function stable(): int { return 9; } $v = read();';
 	$compiler = mixed_source($path, $valid);
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('source(): mixed { return 3;', 'source(): vector<int> { return [];', $valid));
@@ -306,9 +307,9 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	mixed_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Mixed boundary repair changed output');
+	mixed_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Mixed boundary repair changed output');
 	mixed_source($path, $valid);
-	mixed_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental mixed output differs');
+	mixed_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental mixed output differs');
 	foreach (['if (source()) { return 1; } return 0;',
 		'return !source() ? 1 : 0;',
 		'return (source() && true) ? 1 : 0;', 'return (false || source()) ? 1 : 0;',
@@ -324,7 +325,7 @@ try
 		$valid = 'function source(): mixed { return 3; } function read(): int { '
 			. $consumer . ' } function stable(): int { return 9; } $v = read();';
 		$compiler = mixed_source($path, $valid);
-		$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$original = CPP_Probe::text(Model::$cpp_files);
 		$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 		$version = $stable->version;
 		file_put_contents($path, str_replace('source(): mixed { return 3;',
@@ -340,24 +341,24 @@ try
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		mixed_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Mixed operation repair changed output');
+		mixed_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Mixed operation repair changed output');
 		mixed_source($path, $valid);
-		mixed_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental mixed operation differs');
+		mixed_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental mixed operation differs');
 	}
 	// Probe consumers now accept both families; signature changes must still refresh output.
 	foreach (['isset', 'empty'] as $probe_name) {
 		$valid = 'function source(): mixed { return 3; } function read(): bool { return '
 			. $probe_name . '(source()); }';
 		$compiler = mixed_source($path, $valid);
-		$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$original = CPP_Probe::text(Model::$cpp_files);
 		$changed_source = str_replace('source(): mixed { return 3;',
 			'source(): dynamic { $d dynamic; return $d;', $valid);
 		file_put_contents($path, $changed_source);
 		$compiler->update_cpp([$path]);
-		$changed_output = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$changed_output = CPP_Probe::text(Model::$cpp_files);
 		mixed_check($changed_output !== $original, 'Probe signature change retained stale output');
 		mixed_source($path, $changed_source);
-		mixed_check(CPP_Output::single_unit(Model::$cpp_files)->text === $changed_output, 'Probe clean/incremental output differs');
+		mixed_check(CPP_Probe::text(Model::$cpp_files) === $changed_output, 'Probe clean/incremental output differs');
 	}
 	mixed_source($path, '$v mixed = null; $a mixed = true ? $v : 1; '
 		. '$b mixed = $v ?: 2; $c mixed = $v ?? 3; $d mixed = 4 ?? $v;');
@@ -403,7 +404,7 @@ try
 			. 'function read(): mixed { $fallback mixed = null; return source() ?? $fallback; } '
 			. 'function stable(): int { return 9; } $v = read();';
 		$compiler = mixed_source($path, $valid);
-		$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$original = CPP_Probe::text(Model::$cpp_files);
 		$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 		$version = $stable->version;
 		file_put_contents($path, str_replace('source(): ' . $wrapper, 'source(): result_or_bool<int>', $valid));
@@ -418,9 +419,9 @@ try
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		mixed_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Wrapper join repair changed output');
+		mixed_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Wrapper join repair changed output');
 		mixed_source($path, $valid);
-		mixed_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental wrapper join differs');
+		mixed_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental wrapper join differs');
 	}
 	echo "Mixed: boundaries, casts, conditions/probes/joins, deferred cases and incremental recovery passed\n";
 }

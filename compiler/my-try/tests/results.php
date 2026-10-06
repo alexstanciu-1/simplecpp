@@ -3,6 +3,7 @@
 /* Prepared construction decisions, deliberate exclusions and incremental recovery. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function result_check(bool $condition, string $message): void
 {
@@ -137,7 +138,7 @@ try
 		. 'function pass(): result<int> { return source(); } '
 		. 'function stable(): int { return 9; } $a = pass();';
 	$compiler = result_source($path, $valid);
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('source(): result<int>', 'source(): result_or_false<int>', $valid));
@@ -156,14 +157,14 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Result repair changed output');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Result repair changed output');
 	result_source($path, $valid);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean and incremental Result output differ');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental Result output differ');
 
 	$valid = 'function source(): result<int> { return 3; } function read(): int { return source(); } '
 		. 'function stable(): int { return 9; } $v = read();';
 	$compiler = result_source($path, $valid);
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('result<int> { return 3;', 'result<float> { return 3.5;', $valid));
@@ -182,16 +183,16 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Extraction repair changed output');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Extraction repair changed output');
 	result_source($path, $valid);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean and incremental extraction output differ');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental extraction output differ');
 	foreach (['if (source()) { return true; } return false;',
 		'return isset(source());', 'return empty(source());'] as $consumer)
 	{
 		$valid = 'function source(): result<int> { return 0; } function read(): bool { '
 			. $consumer . ' } function stable(): int { return 9; } $ok = read();';
 		$compiler = result_source($path, $valid);
-		$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$original = CPP_Probe::text(Model::$cpp_files);
 		$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 		$version = $stable->version;
 		file_put_contents($path, str_replace('result<int> { return 0;', 'void { return;', $valid));
@@ -206,9 +207,9 @@ try
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Result probe/condition repair changed output');
+		result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Result probe/condition repair changed output');
 		result_source($path, $valid);
-		result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental Result probe/condition differ');
+		result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental Result probe/condition differ');
 	}
 	result_source($path, '$r result<int> = 0; if ($r) {} $p bool = isset($r); $e bool = empty($r);');
 	$probe_root = Model::syntax_files()[0]->root;
@@ -237,7 +238,7 @@ try
 	$valid = 'function source(): result<int> { return 1; } function read(): result<int> { return source() ?: 2; } '
 		. 'function stable(): int { return 9; } $r = read();';
 	$compiler = result_source($path, $valid);
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('source(): result<int> { return 1;', 'source(): result<float> { return 1.5;', $valid));
@@ -251,9 +252,9 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Conditional repair changed output');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Conditional repair changed output');
 	result_source($path, $valid);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental conditional output differs');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental conditional output differs');
 	result_source($path, '$r result<int> = 0; $v int = $r ?? 2;');
 	$coalesce_root = Model::syntax_files()[0]->root;
 	$coalesce_node = $coalesce_root->body->statements[1]->initializer;
@@ -270,7 +271,7 @@ try
 	$valid = 'function source(): result<int> { return 1; } function read(): int { return source() ?? 2; } '
 		. 'function stable(): int { return 9; } $r = read();';
 	$compiler = result_source($path, $valid);
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('source(): result<int>', 'source(): result_or_bool<int>', $valid));
@@ -284,9 +285,9 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Coalesce repair changed output');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Coalesce repair changed output');
 	result_source($path, $valid);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental coalesce output differs');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental coalesce output differs');
 	foreach (['mixed', 'dynamic'] as $family) {
 		$other = $family === 'mixed' ? 'dynamic' : 'mixed';
 		$source = '$v ' . $family . ' = 7; $r result<' . $family . '> = $v; $out ' . $family . ' = $r; '
@@ -319,7 +320,7 @@ try
 	$valid = 'function source(): result<mixed> { $v mixed = 7; return $v; } '
 		. 'function read(): mixed { return source(); } function stable(): int { return 9; }';
 	$compiler = result_source($path, $valid);
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace(['result<mixed>', '$v mixed'], ['result<dynamic>', '$v dynamic'], $valid));
@@ -333,9 +334,9 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Boxed Result repair changed output');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Boxed Result repair changed output');
 	result_source($path, $valid);
-	result_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Boxed Result clean/incremental output differs');
+	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Boxed Result clean/incremental output differs');
 	echo "Results: scalar/boxed boundaries, conditions/probes/joins/coalescing, rejections and recovery passed\n";
 }
 finally {

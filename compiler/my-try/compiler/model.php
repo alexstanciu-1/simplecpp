@@ -49,6 +49,8 @@ final class Model
 	public static Storage $llvm_files /** Storage<llvm_module> */;
 	/** Complete source preparation for C++ generation. @storage.owner */
 	public static Storage $prepared_files /** Storage<prepared_file> */;
+	public static ?program_entry_selection $entry_selection = null;
+	public static ?prepared_file $prepared_entry = null;
 	/** Final C++ artifacts. @storage.owner */
 	public static Storage $cpp_files /** Storage<cpp_artifact> */;
 	/** Retained C++ fragments survive output invalidation, but not a full compilation reset. */

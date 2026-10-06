@@ -2,6 +2,7 @@
 
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function capability_check(bool $condition, string $message): void
 {
@@ -113,7 +114,7 @@ try
 	$compiler = capability_program($path, $valid);
 	$compiler->prepare();
 	$compiler->cpp();
-	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
+	$original = CPP_Probe::text(Model::$cpp_files);
 	$outer = Model::$global_scope->source_types_named('Outer')[0];
 	$version = $outer->preparation->version;
 	file_put_contents($path, str_replace('int $item', 'unique<int> $item', $valid));
@@ -130,7 +131,7 @@ try
 	capability_check(q_count(Model::$cpp_files) === 0, 'Failed copy published completed output');
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	capability_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Copy recovery differs from clean output');
+	capability_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Copy recovery differs from clean output');
 
 	$positive = 'struct Inner { int $item; } struct Outer { Inner $inner; } '
 		. 'function copy(Outer &$a): Outer { return $a; } '
@@ -142,7 +143,7 @@ try
 	$compiler->prepare();
 	$compiler->cpp();
 	if (isset($argv[2])) {
-		file_put_contents($argv[2], CPP_Output::single_unit(Model::$cpp_files)->text);
+		file_put_contents($argv[2], CPP_Probe::text(Model::$cpp_files));
 	}
 
 	// Reference-only use must remain valid for non-copyable records and handles.
@@ -152,7 +153,7 @@ try
 	$compiler->prepare();
 	$compiler->cpp();
 	if (isset($argv[1])) {
-		file_put_contents($argv[1], CPP_Output::single_unit(Model::$cpp_files)->text);
+		file_put_contents($argv[1], CPP_Probe::text(Model::$cpp_files));
 	}
 	echo "Capabilities: memberwise facts, storage constraints, copy boundaries, references and incremental recovery passed\n";
 }

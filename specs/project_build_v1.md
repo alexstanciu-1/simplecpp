@@ -804,6 +804,33 @@ Measured builds enable the internal Ninja explain probe so the benchmark report
 can be compared with `.prism/last_run.json` rebuild provenance when a work tree
 is retained for inspection.
 
+## v0.2 semantic compiler: executable source selection
+
+This subsection defines the bounded program-composition contract for
+`compiler/my-try`; it does not change the legacy generator's build implementation.
+
+- A one-source executable may infer that source as its entry. An executable with
+  multiple sources must select an entry by logical module and module-relative path.
+- Only the selected source may contain top-level executable statements. Other
+  sources contribute declarations. Executable statements outside the entry are a
+  preparation error; they are neither ignored nor executed in discovery order.
+- The selected source must exist in the current source set. Deleting it does not
+  select another source automatically. A declaration-only entry is permitted.
+- Module reconciliation/IO paths are not portable program identities. The unnamed
+  single-module convenience form has logical identity `main`. Multi-module
+  programs require explicit unique logical names, distinct from filesystem roots.
+  Names use ASCII letters, digits, `_`, `-` and `.`, excluding `.` and `..` alone.
+  Module names do not introduce source namespaces or change symbol visibility.
+- Same-program declarations are resolved through shared collection/preparation,
+  without source-language file inclusions. Existing duplicate-name and reference,
+  ownership and lifetime contracts continue to apply across source boundaries.
+- Standalone declaration/body analysis may run without an executable entry. That
+  analysis result alone is not an executable program ready for backend generation.
+
+Output partitioning and PCH placement are backend/build policies, not source-language
+execution semantics. Single-source and multi-source executable generation use the
+same backend path.
+
 ## Project dependencies
 
 Project composition is controlled by `scpp build`, not by source-language `require`, `require_once`, `include`, or `include_once`.

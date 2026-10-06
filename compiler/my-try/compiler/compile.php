@@ -20,6 +20,14 @@ final class Compiler
 		$this->jobs = \scpp\compiler\DEFAULT_COMPILER_JOBS;
 	}
 
+	public function select_entry(string $module_name, string $source_path): void
+	{
+		Model::$entry_selection = new program_entry_selection($module_name, $source_path);
+		Model::$prepared_entry = null;
+		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Compiler_Lifecycle::reset_cpp();
+	}
+
 	/** Unnamed modules use their declared path as the reconciliation key. */
 	public function init(array $paths /** vector<string> */): void
 	{
@@ -51,13 +59,14 @@ final class Compiler
 				if ($record->changes === change_state::deleted) {
 					$record->changes = change_state::added;
 				}
-				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position) || ($record->disk_source !== $candidate->disk_source)) {
+				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position) || ($record->disk_source !== $candidate->disk_source) || ($record->logical_name !== $candidate->logical_name)) {
 					$record->changes = change_state::changed;
 				}
 				else {
 					$record->changes = change_state::unchanged;
 				}
 				$record->declared_path = $candidate->declared_path;
+				$record->logical_name = $candidate->logical_name;
 				$record->resolved_path = $candidate->resolved_path;
 				$record->position = $candidate->position;
 				$record->disk_source = $candidate->disk_source;
@@ -136,7 +145,7 @@ final class Compiler
 	public function exec_cpp(): void
 	{
 		$this->sync_live();
-		$this->prepare();
+		$this->prepare(true);
 		$this->cpp();
 	}
 
@@ -150,7 +159,7 @@ final class Compiler
 	public function update_cpp(array $paths /** vector<string> */): void
 	{
 		$this->sync($paths);
-		$this->prepare();
+		$this->prepare(true);
 		$this->cpp();
 	}
 
@@ -167,6 +176,7 @@ final class Compiler
 		}
 		Compiler_Lifecycle::reset_cpp();
 		Compiler_Lifecycle::reset_llvm();
+		Model::$prepared_entry = null;
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
 		foreach (Model::$modules as $module) {
 			if (($module->changes !== change_state::deleted) && $module->disk_source) {
@@ -231,7 +241,7 @@ final class Compiler
 	}
 
 	/** Earlier failures block this phase; initial and subsequent preparation use identical work lists. */
-	public function prepare(): void
+	public function prepare(bool $require_entry = false): void
 	{
 		if (Model::$rebuild_required) {
 			$this->sync([]);
@@ -260,9 +270,13 @@ final class Compiler
 		}
 		Compiler_Lifecycle::reset_cpp();
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Model::$prepared_entry = null;
 		try {
 			Compiler_Lifecycle::retire_deleted_sources($sources, Model::$language_scope);
-			Model::$prepared_files = (new Preparation_Worker(Model::$language_scope))->prepare($sources);
+			$prepared = (new Preparation_Worker(Model::$language_scope))->prepare($sources);
+			$entry = Program_Preparation::entry($prepared, Model::$entry_selection, $require_entry);
+			Model::$prepared_files = $prepared;
+			Model::$prepared_entry = $entry;
 		}
 		catch (\RuntimeException $error) {
 			// Expected diagnostics retain the existing incremental retry state.
@@ -280,12 +294,13 @@ final class Compiler
 	{
 		Compiler_Lifecycle::reset_cpp();
 		$prepared /** Storage<prepared_file> */ = Model::$prepared_files;
-		if (q_count($prepared) !== 1) {
-			throw new \RuntimeException('C++ emission requires one prepared source file; run prepare first');
+		if ($prepared->is_empty() || (Model::$prepared_entry === null)) {
+			throw new \RuntimeException('C++ emission requires a prepared program entry; run prepare first');
 		}
 		$output /** Storage<cpp_artifact> */;
 		try {
-			$output = (new CPP_Generator(Model::$cpp_output_program))->generate($prepared[0]);
+			$entry /** prepared_file */ = Model::$prepared_entry;
+			$output = (new CPP_Generator(Model::$cpp_output_program))->generate_program($prepared, $entry);
 		}
 		catch (\RuntimeException $error) {
 			throw $error;
@@ -296,8 +311,9 @@ final class Compiler
 		}
 		Model::$cpp_files = $output;
 		// The single active consumer acknowledges only after successful output publication.
-		$source = $prepared[0]->source;
-		$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		foreach ($prepared as $file) {
+			$file->source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		}
 	}
 
 	/** Run parked LLVM preparation and emit modules for existing regression callers. */

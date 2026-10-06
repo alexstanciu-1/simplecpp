@@ -114,21 +114,6 @@ final class CPP_Declarations
 		return self::type($facts->signature->return_type, $context) . $return_reference . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';
 	}
 
-	/** Declaration hooks accumulate output outside main while leaving executable traversal unchanged. */
-	public static function generate_function(function_node $syntax, cpp_generation_context $context): string
-	{
-		$signature = self::signature($syntax, $context, false);
-		$context->prototypes .= self::signature($syntax, $context, true) . ";\n";
-
-		// The parser permits functions only at file scope; entry return handling resumes below.
-		$context->return_type = $syntax->require_preparation()->signature->return_type;
-		$body = CPP_Generator::generate_statements($syntax->body, $context);
-		$context->return_type = null;
-
-		$context->functions .= $signature . "\n{\n" . $body . "}\n\n";
-		return '';
-	}
-
 	/** Consume normalized default facts; syntax and source tokens have no authority here. */
 	private static function parameter_default(prepared_parameter_default $facts, cpp_generation_context $context): string
 	{
@@ -150,7 +135,7 @@ final class CPP_Declarations
 		return self::conversion($text, $facts->conversion, $context);
 	}
 
-	/** Complete nested value layouts before their users; reject a recursive by-value layout. */
+	/** Render only this layout; nested representations contribute header dependencies. */
 	public static function generate_struct(struct_node $syntax, cpp_generation_context $context): string
 	{
 		$key = '' . $syntax->occurrence()->name;
@@ -169,14 +154,6 @@ final class CPP_Declarations
 		foreach ($fields->items() as $field)
 		{
 			$type = $field->type;
-			$source_record = Type_Queries::source_record($type);
-			if ($source_record !== null) {
-				$record_entry /** collected_struct */ = $source_record;
-				if ($context->expand_records) {
-					self::generate_struct($record_entry->syntax(), $context);
-				}
-			}
-
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$text .= "\t" . self::type($type, $context) . ' ' . CPP_Generator::source_name('field', $entry->name) . ";\n";
 		}

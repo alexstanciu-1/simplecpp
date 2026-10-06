@@ -58,7 +58,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [Chapter 07 bounded closeout](catalog/07_references_lifetime.md#positive-pass-conclusion--2026-10-06), [next: Chapter 08 discussion](catalog/08_project_symbols.md), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
+| Current handoff | [Chapter 08 entry/partitioning implemented](catalog/08_project_symbols.md), [next: dependency precision and incremental publication](planning/incremental_cpp_artifacts.md), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
@@ -88,16 +88,20 @@ From the repository root:
 
 ```bash
 php compiler/my-try/main.php --s2s SOURCE_DIRECTORY
+php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --entry main.phs
 php compiler/my-try/tests/tokenizer.php
 ```
 
 The S2S mode prints a `scpp-cpp-artifacts-v1` JSON bundle to stdout and reports
 failures on stderr. Its `artifacts` array contains `id`, `kind` (`translation_unit`
 or `header`), relative `path` and final `text` for every output. Do not compile the
-JSON as C++ or consume only its first artifact. Current assembly still emits one
-`main.cpp`; the shared delivery path also supports partitioned output. Without a mode,
+JSON as C++ or consume only its first artifact. Assembly emits callable/type headers,
+per-source implementation groups and `entry.cpp`, including for single-source programs.
+Multiple sources require `--entry` (module-relative); only that source may contain
+top-level executable statements. The programmatic multi-module API uses explicit
+logical names and `select_entry(module, path)`. Without a mode,
 `main.php` runs the legacy sample/debug report, including native sample execution.
-The browser accepts `mode=s2s&source=SOURCE_DIRECTORY`; the local Apache template
+The browser accepts `mode=s2s&source=SOURCE_DIRECTORY&entry=main.phs`; the local Apache template
 is [tools/apache/scpp-my-try.conf](../tools/apache/scpp-my-try.conf).
 
 Focused PHP tests are the default. Some fixtures require an existing temporary

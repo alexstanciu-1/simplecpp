@@ -52,6 +52,7 @@ final class CPP_Types
 		if ($definition->origin() === type_definition_origin::source) {
 			$entry = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			$result->spelling = CPP_Generator::source_name('record', $entry->name);
+			self::add_header($result, CPP_Artifacts::type_header($entry->name));
 			$result->literal = cpp_literal_kind::none;
 			return $result;
 		}

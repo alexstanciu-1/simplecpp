@@ -1,6 +1,7 @@
 """Run-local C++ fixture compilation; prepare shared headers before scheduling jobs."""
 from pathlib import Path
-from cpp_artifacts import materialize_artifacts
+import tempfile
+from cpp_artifacts import materialize_artifacts, probe_bundle
 
 
 def build_runtime_object(runner, repository, output, *, cxx='clang++'):
@@ -43,12 +44,15 @@ class CppFixtureCompiler:
             self.pch_flags = ['-include-pch', artifact]
 
     def compile(self, name, source, executable):
+        bundle = probe_bundle(Path(source).read_text())
+        if bundle is not None:
+            return self.compile_artifacts(name, bundle, executable)
         return self.runner.run(name, [*self.flags, *self.pch_flags, source, *self.link_flags, '-o', executable])
 
     def compile_artifacts(self, name, payload, executable):
         """Compile each declared unit separately; headers are inputs, never link members."""
         executable = Path(executable).resolve()
-        directory = executable.parent / (executable.name + '.artifacts')
+        directory = Path(tempfile.mkdtemp(prefix=executable.name + '.artifacts-', dir=executable.parent)) / 'sources'
         sources = materialize_artifacts(payload, directory)
         objects = []
         for index, source in enumerate(sources):

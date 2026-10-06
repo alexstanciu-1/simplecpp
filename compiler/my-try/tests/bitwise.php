@@ -2,6 +2,7 @@
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 /** Prepare one isolated operator source through shared semantics and C++ lowering. */
 function bitwise_test_source(string $text): parsed_file
@@ -62,11 +63,11 @@ foreach ([['return 8 << 1;', 'return 8 >> 1;', 0],
 			|| (Model::tokens()[0]->operator_text_at($expression->operator_token_index) !== $expected)) {
 			throw new \LogicException('Compaction lost a retained shift spelling');
 		}
-		$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
+		$incremental = CPP_Probe::text(Model::$cpp_files);
 		Compiler_Lifecycle::reset();
 		$compiler->init([$directory]);
 		$compiler->exec_cpp();
-		if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+		if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 			throw new \LogicException('Incremental shift output differs from fresh output');
 		}
 		if ($slot === 0)
@@ -84,7 +85,7 @@ foreach ([['return 8 << 1;', 'return 8 >> 1;', 0],
 			}
 			file_put_contents($path, $changed);
 			$compiler->update_cpp([$path]);
-			if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
+			if (CPP_Probe::text(Model::$cpp_files) !== $incremental) {
 				throw new \LogicException('Shift recovery did not restore fresh output');
 			}
 		}

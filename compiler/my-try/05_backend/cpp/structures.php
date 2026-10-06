@@ -70,15 +70,11 @@ final class cpp_generation_context
 
 	/** Output sections are assembled after traversal so declarations precede all uses. */
 	public string $records = '';
-	public string $prototypes = '';
-	public string $functions = '';
 
 	/** Null selects native main-return spelling; a function uses its prepared return type. */
 	public ?canonical_type_use $return_type = null;
 	/** Invocation-local allocation keeps nested argument temporaries distinct. */
 	public int $next_temporary = 0;
-	/** Fragment rendering leaves dependency ordering to assembly. */
-	public bool $expand_records = true;
 }
 
 /** One independently replaceable C++ fragment; no references to transient generation workers. */
