@@ -41,6 +41,7 @@ final class Preparation_Worker
 			}
 		}
 		$this->changed_lookups();
+		Import_Preparation::validate($sources);
 
 		// Declaration processing may schedule more declarations; identity sets coalesce notifications.
 		while (q_count($this->declarations) !== 0)
@@ -85,6 +86,10 @@ final class Preparation_Worker
 			$prepared /** prepared_file */ = $source->prepared;
 			$prepared->entry_body = Program_Preparation::source_body($source);
 			$result->append($prepared);
+		}
+		foreach ($result as $prepared) {
+			$bodies /** Storage<namespace_body_node> */ = $prepared->source->root->namespace_bodies;
+			foreach ($bodies as $body) { $body->imports_changed = false; }
 		}
 		return $result;
 	}
@@ -651,7 +656,10 @@ final class Preparation_Worker
 	private function candidates(preparation_lookup $lookup): array /** vector<preparation_lookup_candidate_i> */
 	{
 		$result /** vector<preparation_lookup_candidate_i> */ = [];
-		if ($lookup->kind === preparation_lookup_kind::type) {
+		if ($lookup->kind === preparation_lookup_kind::import_name) {
+			foreach ($lookup->lookup_scope->imports_named($lookup->name) as $binding) { $result[] = $binding; }
+		}
+		elseif ($lookup->kind === preparation_lookup_kind::type) {
 			foreach ($lookup->lookup_scope->source_types_named($lookup->name) as $record) {
 				$result[] = $record;
 			}

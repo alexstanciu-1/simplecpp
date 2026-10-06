@@ -18,6 +18,9 @@ final class LLVM_Preparation {
 				throw new \RuntimeException('Namespace bodies are not supported by the parked LLVM backend');
 			}
 			$identity = $source->root->single_body()->body_scope()->source_namespace();
+			if (!$source->root->single_body()->imports->is_empty()) {
+				throw new \RuntimeException('Imports are not supported by the parked LLVM backend');
+			}
 			if ($identity !== null) {
 				if ($identity->path() !== '') {
 					throw new \RuntimeException('Namespaces are not supported by the parked LLVM backend');

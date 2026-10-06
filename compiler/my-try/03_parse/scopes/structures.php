@@ -12,6 +12,9 @@ final class scope
 	private ?scope $enclosing /** weak<scope> */ = null;
 	private ?scope $publication /** weak<scope> */ = null;
 	private bool $function_boundary = false;
+	private bool $import_environment = false;
+	/** Non-publication index of namespace_body_node.imports; aliases are not declarations. */
+	private Key_Storage_List $imports /** Key_Storage_List<import_node> */;
 	private Key_Storage_List $preparation_lookups /** Key_Storage_List<preparation_lookup> */;
 	private array $template_parameters /** hash<int> */ = [];
 	/** @storage.reference collected_file.entries @reference.weak */
@@ -27,6 +30,7 @@ final class scope
 
 	public function __construct()
 	{
+		$this->imports = new Key_Storage_List /** Key_Storage_List<import_node> */();
 		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
 		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
@@ -80,6 +84,20 @@ final class scope
 	public function mark_function(): void
 	{
 		$this->function_boundary = true;
+	}
+
+	public function set_imports(Storage $bindings /** Storage<import_node> */): void
+	{
+		$index /** Key_Storage_List<import_node> */ = new Key_Storage_List();
+		foreach ($bindings as $binding) { $index->add($binding->alias, $binding); }
+		$this->imports = $index;
+		$this->import_environment = true;
+	}
+
+	public function has_import_environment(): bool { return $this->import_environment; }
+	public function imports_named(string $name): array /** vector<import_node> */
+	{
+		return $this->imports->named($name);
 	}
 
 	public function is_function(): bool

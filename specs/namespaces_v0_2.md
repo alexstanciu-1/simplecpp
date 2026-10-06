@@ -49,6 +49,15 @@ a new definition or re-export a qualified member of the importing namespace.
 For example, importing `Lib\compute as calculate` in `App` does not define
 `\App\calculate`.
 
+Plain imports expose the supported symbol kinds at the target name independently:
+a type and a function with the same qualified name may both be imported by one
+plain `use`. Explicit `use function` / `use const` expose only that kind. Binding
+conflicts are checked per kind, including collisions with declarations in the
+current namespace. Repeating the same target binding is idempotent; different
+targets for the same local name and kind conflict. Every import is validated even
+when unused. Imports apply throughout their declaring namespace body, irrespective
+of their textual position among declarations and executable statements.
+
 Missing targets, wrong symbol kinds and conflicting bindings are preparation-time
 errors under the v0.2 diagnostic policy, not deferred C++ name-resolution behavior.
 Imports do not load files or alter project discovery/execution order.

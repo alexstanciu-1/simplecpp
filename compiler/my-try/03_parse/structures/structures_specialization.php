@@ -55,12 +55,33 @@ final class file_node extends ast_node
 	}
 }
 
+/** Source restriction; plain imports may expose each supported symbol kind. */
+enum import_kind {
+	case symbol;
+	case function_name;
+	case constant;
+}
+
+/** One normalized binding with its item span; groups never create definitions. */
+final class import_node extends ast_node implements preparation_lookup_candidate_i
+{
+	use Node_Source_Span;
+	public import_kind $restriction = import_kind::symbol;
+	public string $target;
+	public string $alias;
+	public function kind(): node_kind { return node_kind::import_binding; }
+	public function maintain(node_maintenance_worker_i $worker): void { $worker->enter($this); }
+}
+
 /** One source occurrence, with its own declaration/import environment and executable body. */
 final class namespace_body_node extends ast_node
 {
 	use Node_Source_Span;
 
 	public Storage $declarations /** Storage<declaration_node> */;
+	public Storage $imports /** Storage<import_node> */;
+	/** Persistent parser handoff; analysis consumes only after successful preparation. */
+	public bool $imports_changed = true;
 	public function_body_node $body;
 	/**
 	 * Required observer; the parser retains this scope in parsed_file.scopes.
@@ -74,6 +95,7 @@ final class namespace_body_node extends ast_node
 	{
 		$this->body_scope_reference = $body_scope;
 		$this->declarations = new Storage /** Storage<declaration_node> */();
+		$this->imports = new Storage /** Storage<import_node> */();
 		$this->body = new function_body_node($body_scope);
 		$this->body->set_span(0, 0);
 		$this->set_span(0, 0);
@@ -91,7 +113,7 @@ final class namespace_body_node extends ast_node
 	}
 
 	/**
-	 * Lazily inspect declarations then body; spans retain original source locations.
+	 * Lazily inspect imports, declarations and body; spans retain original source locations.
 	 */
 	public function children(): child_iterator_i
 	{
@@ -103,6 +125,8 @@ final class namespace_body_node extends ast_node
 	{
 		$worker->enter($this);
 		$items /** Storage<declaration_node> */ = $this->declarations;
+		$imports /** Storage<import_node> */ = $this->imports;
+		foreach ($imports as $binding) { $worker->edge($this, $binding); }
 		foreach ($items as $child) {
 			$worker->edge($this, $child);
 		}

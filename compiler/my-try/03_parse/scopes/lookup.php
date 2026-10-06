@@ -59,6 +59,11 @@ final class Scope_Lookup
 		$result /** vector<constant_definition> */ = [];
 		while (true)
 		{
+			foreach ($current_scope->imports_named($name) as $binding) {
+				if (($binding->restriction !== import_kind::symbol) && ($binding->restriction !== import_kind::constant)) { continue; }
+				$imported = self::constants($current_scope, $binding->target);
+				if (q_count($imported) !== 0) { return $imported; }
+			}
 			$current_scope = self::visible($current_scope);
 			$result = $current_scope->constants_named($name);
 			if (q_count($result) !== 0) {
@@ -88,6 +93,11 @@ final class Scope_Lookup
 		$result /** vector<type_definition_i> */ = [];
 		while (true)
 		{
+			foreach ($current_scope->imports_named($name) as $binding) {
+				if ($binding->restriction !== import_kind::symbol) { continue; }
+				$imported = self::types($current_scope, $binding->target);
+				if (q_count($imported) !== 0) { return $imported; }
+			}
 			$current_scope = self::visible($current_scope);
 			$result = $current_scope->types_named($name);
 			if (q_count($result) !== 0) {
@@ -117,6 +127,11 @@ final class Scope_Lookup
 		$result /** vector<callable_target_i> */ = [];
 		while (true)
 		{
+			foreach ($current_scope->imports_named($name) as $binding) {
+				if (($binding->restriction !== import_kind::symbol) && ($binding->restriction !== import_kind::function_name)) { continue; }
+				$imported = self::functions($current_scope, $binding->target);
+				if (q_count($imported) !== 0) { return $imported; }
+			}
 			$current_scope = self::visible($current_scope);
 			$result = $current_scope->callables_named($name);
 			if (q_count($result) !== 0) {

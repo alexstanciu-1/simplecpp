@@ -18,12 +18,12 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     programs = output / 'programs'
     programs.mkdir()
-    suites = ['namespaces', 'qualified_lookup', 'ast', 'incremental_preparation', 'lifecycle_handoff', 'token_cleanup']
+    suites = ['namespaces', 'imports', 'qualified_lookup', 'ast', 'incremental_preparation', 'lifecycle_handoff', 'token_cleanup']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12,
                        journals=[output / 'commands.json']) as runner:
         def suite(name):
             command = ['php', APP / 'tests' / (name + '.php')]
-            if name == 'namespaces':
+            if name in ('namespaces', 'imports'):
                 command.append(programs)
             runner.run(name, command)
         run_tasks([Task(name, lambda name=name: suite(name)) for name in suites], jobs=12)
@@ -41,7 +41,7 @@ def main():
                            cli_reason='Portable namespace parser conversion')))
         run_tasks(tasks, jobs=12)
     (output / 'summary.json').write_text(json.dumps(dict(passed=True, php_suites=len(suites),
-        generated_programs=len(fixtures), qualified_reference_syntax=True,
+        generated_programs=len(fixtures), qualified_reference_syntax=True, body_local_imports=True,
         native_compiler_rebuilt=False), indent=2) + '\n')
 
 

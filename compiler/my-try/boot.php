@@ -71,6 +71,7 @@ require_once __DIR__ . '/04_analyze/prepare/changes.php';
 require_once __DIR__ . '/04_analyze/prepare/status.php';
 require_once __DIR__ . '/04_analyze/prepare/worker.php';
 require_once __DIR__ . '/04_analyze/prepare/lookup.php';
+require_once __DIR__ . '/04_analyze/prepare/imports.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/literals.php';
 require_once __DIR__ . '/04_analyze/prepare/cleanup.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/types.php';

@@ -29,6 +29,9 @@ final class CPP_Generator
 		foreach ($files as $prepared)
 		{
 			$source = $prepared->source;
+			if (!Preparation_Status::imports_current($source)) {
+				throw new \RuntimeException('C++ generation requires preparation after import changes');
+			}
 			$namespace_bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
 			foreach ($namespace_bodies as $namespace_body) {
 				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;

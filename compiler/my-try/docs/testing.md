@@ -40,7 +40,11 @@ units without PCH and converts tokenizer/parser source. Qualified calls, struct 
 paths (locals, fields, signatures and construction), and a registry-supplied constant
 exercise rooted/current-relative resolution. The retained qualified-lookup fixture
 uses authored syntax and checks missing namespace additions, moves, ambiguity and
-consumer cleanup. Imports remain outside this slice; no native compiler rebuild is claimed.
+consumer cleanup. Import fixtures cover plain/function/constant bindings, aliases,
+homogeneous groups, reopened-body/file isolation, unused-import rejection, no-op
+identity, value/type retargeting, target-addition recovery and stale-output guards.
+Source constant declarations remain outside this slice (constant targets are registered
+by the fixture). No native compiler rebuild is claimed.
 
 For the namespace identity/backend model checkpoint:
 

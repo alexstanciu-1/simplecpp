@@ -8,7 +8,9 @@ Canonical identity/backend, executable-work links and source-body inventory cons
 are implemented below. Named namespace parsing/reconciliation and scope-retention
 integration are implemented with bare-name and dependency-observed qualified lookup.
 Qualified-reference parsing is integrated for supported calls, named types and
-registered constant references. Body-local imports are next.
+registered constant references. Body-local plain/function/constant imports, aliases
+and homogeneous groups are integrated. Remaining Chapter 08 cards need reconciliation
+against these bounded proofs and their deferred prerequisites.
 
 ## Why this is more than adding namespace parsing
 
@@ -330,3 +332,41 @@ The initial construction fixture tried shared-handle field access, outside exist
 member-access support; the corrected fixture isolates qualified construction.
 The compiler itself was not rebuilt. The portable-PHP skill guided explicit types
 and the shared scan/consume structure. Next: the agreed body-local import families.
+
+## Body-local imports checkpoint — 2026-10-06
+
+The agreed plain-symbol import rule is recorded in the authoritative namespace spec.
+One normalized import node carries the absolute target, alias and kind restriction;
+homogeneous groups yield individual bindings. Namespace bodies own them and local
+scopes index them without publication. Parser reconciliation preserves unchanged
+binding identity, inspection/cleanup traverses imports, and analysis checks every
+import including unused ones before processing declarations. Imports apply throughout
+their body. Same-target repetition is idempotent; conflicting targets and namespace
+declarations reject per symbol kind. Other files/reopened bodies receive no bindings.
+
+Consumers observe local `import_name` membership plus existing qualified target pools.
+No additional work-record family or cached target graph was needed. The validation
+pass deliberately revisits all imports on each preparation invocation; caching that
+pass is not part of this first implementation. A persistent `imports_changed` handoff
+blocks generation from saved facts after import-only edits and is acknowledged only
+after successful preparation. C++ uses original identities and headers; no aliases
+are re-exported or emitted as forwarding functions. Parked LLVM explicitly rejects imports.
+
+Evidence on `544e87a0` plus this overlay:
+
+- `/tmp/my-try-imports-20261006-3/summary.json`: seven PHP suites, 24 generated
+  executions without PCH, tokenizer/parser conversion.
+- `/tmp/my-try-imports-extra-20261006-1/commands.json`: import signature retargeting
+  and cross-file isolation, observed lookup, namespace-body/collection regression,
+  S2S syntax purity and preparation-source conversion pass.
+- `/tmp/my-try-imports-final-20261006-1/commands.json`: final import suite also
+  verifies alias removal and repair against the prior clean output.
+
+Initial fixtures used two effectful calls in arithmetic, outside existing operand
+admission; explicit temporaries isolate import behavior. Conversion caught a missing
+constructor-side object-hash annotation, fixed following the portable-PHP skill.
+The purity snapshot excludes the new source-change handoff just as it excludes
+`syntax_changed`, not import syntax or indexes. Native compiler execution was not run.
+Source constant declarations, namespace aliases, mixed-kind groups, non-group comma
+import lists, qualified runtime aliases and later class/static-member features remain
+outside this slice. Next: reconcile remaining Chapter 08 cards and debt.

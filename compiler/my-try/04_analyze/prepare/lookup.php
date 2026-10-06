@@ -30,6 +30,14 @@ final class Observed_Lookup
 		$result /** vector<constant_definition> */ = [];
 		while (true)
 		{
+			if ($current_scope->has_import_environment()) {
+				$context->worker->observe($current_scope, $name, preparation_lookup_kind::import_name, $context->owner);
+			}
+			foreach ($current_scope->imports_named($name) as $binding) {
+				if (($binding->restriction !== import_kind::symbol) && ($binding->restriction !== import_kind::constant)) { continue; }
+				$imported = self::constants($current_scope, $binding->target, $context);
+				if (q_count($imported) !== 0) { return $imported; }
+			}
 			$current_scope = Scope_Lookup::visible($current_scope);
 			$context->worker->observe($current_scope, $name, preparation_lookup_kind::constant, $context->owner);
 			$result = $current_scope->constants_named($name);
@@ -57,6 +65,14 @@ final class Observed_Lookup
 		$result /** vector<type_definition_i> */ = [];
 		while (true)
 		{
+			if ($current_scope->has_import_environment()) {
+				$context->worker->observe($current_scope, $name, preparation_lookup_kind::import_name, $context->owner);
+			}
+			foreach ($current_scope->imports_named($name) as $binding) {
+				if ($binding->restriction !== import_kind::symbol) { continue; }
+				$imported = self::types($current_scope, $binding->target, $context);
+				if (q_count($imported) !== 0) { return $imported; }
+			}
 			$current_scope = Scope_Lookup::visible($current_scope);
 			$context->worker->observe($current_scope, $name, preparation_lookup_kind::type, $context->owner);
 			$result = $current_scope->types_named($name);
@@ -84,6 +100,14 @@ final class Observed_Lookup
 		$result /** vector<callable_target_i> */ = [];
 		while (true)
 		{
+			if ($current_scope->has_import_environment()) {
+				$context->worker->observe($current_scope, $name, preparation_lookup_kind::import_name, $context->owner);
+			}
+			foreach ($current_scope->imports_named($name) as $binding) {
+				if (($binding->restriction !== import_kind::symbol) && ($binding->restriction !== import_kind::function_name)) { continue; }
+				$imported = self::functions($current_scope, $binding->target, $context);
+				if (q_count($imported) !== 0) { return $imported; }
+			}
 			$current_scope = Scope_Lookup::visible($current_scope);
 			$context->worker->observe($current_scope, $name, preparation_lookup_kind::function_name, $context->owner);
 			$result = $current_scope->callables_named($name);

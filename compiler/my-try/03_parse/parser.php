@@ -286,6 +286,7 @@ final class Parser_Run
 		$body = new function_body_node($this->current_scope);
 		$statements /** Storage<statement_node> */ = $body->statements;
 		$declarations /** Storage<declaration_node> */ = new Storage();
+		$imports /** Storage<import_node> */ = new Storage();
 		$body_changed = !$this->reuse_previous;
 		$index = 0;
 		while ($this->position < $this->tokens->end_token)
@@ -299,6 +300,10 @@ final class Parser_Run
 				break;
 			}
 			$start = $this->position;
+			if ($this->text() === 'use') {
+				$this->import_statement($imports);
+				continue;
+			}
 			$node = $this->statement();
 			if ($node instanceof declaration_node) {
 				$declarations->append(object_cast($node, declaration_node::class));
@@ -335,10 +340,95 @@ final class Parser_Run
 		$body->set_span($body_start, $this->position);
 		$namespace_body->body = $body;
 		$namespace_body->declarations = $declarations;
+		$this->reconcile_imports($namespace_body, $imports);
 		if ($braced) {
 			$this->expect('}');
 		}
 		$namespace_body->set_span($source_start, $this->position);
+	}
+
+	/** Imports are syntax, not executable statements or published declarations. */
+	private function import_statement(Storage $imports /** Storage<import_node> */): void
+	{
+		$this->expect('use');
+		$restriction = import_kind::symbol;
+		if ($this->text() === 'function') { $restriction = import_kind::function_name; $this->position++; }
+		elseif ($this->text() === 'const') { $restriction = import_kind::constant; $this->position++; }
+		$start = $this->position;
+		if ($this->text() === '\\') { $this->position++; }
+		$prefix = '';
+		$grouped = false;
+		while (true) {
+			if (!$this->identifier()) { throw new \RuntimeException($this->error_message('Expected import path segment')); }
+			$prefix .= $this->text();
+			$this->position++;
+			if ($this->text() !== '\\') { break; }
+			$this->position++;
+			$prefix .= '\\';
+			if ($this->text() === '{') { $grouped = true; break; }
+		}
+		if ($grouped) {
+			$this->position++;
+			do {
+				$item_start = $this->position;
+				if (!$this->identifier() || ($this->text() === 'function') || ($this->text() === 'const')) {
+					throw new \RuntimeException($this->error_message('Expected homogeneous grouped import member'));
+				}
+				$member = $this->source_name();
+				$this->import_binding($imports, $restriction, '\\' . $prefix . $member, $item_start);
+				if ($this->text() !== ',') { break; }
+				$this->position++;
+			} while ($this->text() !== '}');
+			$this->expect('}');
+		}
+		else { $this->import_binding($imports, $restriction, '\\' . $prefix, $start); }
+		$this->expect(';');
+	}
+
+	private function import_binding(Storage $imports /** Storage<import_node> */, import_kind $restriction,
+		string $target, int $start): void
+	{
+		$binding = new import_node();
+		$binding->restriction = $restriction;
+		$binding->target = $target;
+		$binding->alias = Source_Name_Path::member($target);
+		if ($this->text() === 'as') {
+			$this->position++;
+			if (!$this->identifier()) { throw new \RuntimeException($this->error_message('Expected import alias')); }
+			$binding->alias = $this->text();
+			$this->position++;
+		}
+		$this->finish_node($binding, $start);
+		$imports->append($binding);
+	}
+
+	/** Preserve unchanged binding identity; analysis observes changed membership itself. */
+	private function reconcile_imports(namespace_body_node $body, Storage $imports /** Storage<import_node> */): void
+	{
+		$previous /** Storage<import_node> */ = $body->imports;
+		$selected /** Storage<import_node> */ = new Storage();
+		$used /** hash<bool, shared<import_node>> */ = new \SplObjectStorage /** hash<bool, shared<import_node>> */();
+		foreach ($imports as $binding) {
+			$match = $binding;
+			foreach ($previous as $old) {
+				if (isset($used[$old])) { continue; }
+				if (($old->target === $binding->target) && ($old->alias === $binding->alias) && ($old->restriction === $binding->restriction)) {
+					$match = $old;
+					$used[$old] = true;
+					$old->set_span($binding->start_token(), $binding->end_token());
+					break;
+				}
+			}
+			$selected->append($match);
+		}
+		$body->imports = $selected;
+		if (q_count($selected) !== q_count($previous)) { $body->imports_changed = true; }
+		else {
+			foreach ($selected as $index => $binding) {
+				if ($binding !== $previous[$index]) { $body->imports_changed = true; }
+			}
+		}
+		$body->body_scope()->set_imports($selected);
 	}
 
 	/** Match braces only to delimit comparison; changed bodies still go through normal parsing. */

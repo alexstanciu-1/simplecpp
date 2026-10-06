@@ -17,6 +17,7 @@ enum preparation_state {
 }
 
 enum preparation_lookup_kind {
+	case import_name;
 	case type;
 	case function_name;
 	case constant;

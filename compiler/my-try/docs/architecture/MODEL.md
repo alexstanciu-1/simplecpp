@@ -378,7 +378,24 @@ syntax reset, like other interned namespaces. Bare-name language availability is
 unchanged. The parser preserves qualified spelling in the existing call,
 constant-reference and named-type nodes, using one source-name scanner for lookahead
 and consumption. It neither interns reference namespaces nor resolves targets.
-Type grammar consumers share that path; import bindings remain a separate follow-up.
+Type grammar consumers share that path.
+
+Namespace bodies own normalized `import_node` inventories (absolute target spelling,
+local alias, plain/function/constant restriction). Their local scopes index the same
+nodes without publishing them. Plain and observed lookup inspect local imports before
+following namespace publication; explicit qualified paths bypass aliases. Plain
+imports expose each supported kind independently; target identities are never copied
+or renamed. `Import_Preparation` validates every import, including unused bindings,
+on each preparation invocation before declaration processing. It checks per-kind
+conflicts and missing/wrong-kind targets; this bounded pass does not cache resolutions.
+
+Analysis observes `import_name` membership on body-local scopes as well as the
+qualified target's ordinary name pool. Parser reconciliation retains matching binding
+identities across no-op edits; replacement/addition/removal invalidates consumers via
+the existing lookup graph. `imports_changed` is a persistent syntax handoff consumed
+only on successful preparation. The backend's read-only status guard rejects saved
+output after import-only edits. No import work is disguised as a function, no C++
+`using` declarations implement source semantics, and no alias is re-exported.
 
 Type definitions live under `compiler/types/`; constant definitions live under
 `compiler/constants/`. Built-ins are initialized into independent type and constant

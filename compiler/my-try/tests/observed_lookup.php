@@ -69,7 +69,7 @@ foreach ([$local, $middle, $proxy, $outer] as $pool) {
 lookup_check(Observed_Lookup::functions($local, 'target', $context) === [$first], 'Observed function selection differs');
 lookup_check(Observed_Lookup::types($local, 'target', $context) === [$integer], 'Observed type selection differs');
 lookup_check(Observed_Lookup::constants($local, 'target', $context) === [$constant], 'Observed constant selection differs');
-foreach (preparation_lookup_kind::cases() as $kind) {
+foreach ([preparation_lookup_kind::type, preparation_lookup_kind::function_name, preparation_lookup_kind::constant] as $kind) {
 	lookup_path($owner, [$local, $middle, $outer], 'target', $kind);
 }
 lookup_check(count($owner->lookups) === 9, 'Namespaces collapsed their observations');
@@ -82,7 +82,7 @@ lookup_check($first->preparation_work_owner() === null && $second->preparation_w
 lookup_check(Observed_Lookup::functions($local, 'Target', $context) === [], 'Function lookup lost exact spelling');
 lookup_check(Observed_Lookup::types($local, 'Target', $context) === [], 'Type lookup lost exact spelling');
 lookup_check(Observed_Lookup::constants($local, 'Target', $context) === [], 'Constant lookup lost exact spelling');
-foreach (preparation_lookup_kind::cases() as $kind) {
+foreach ([preparation_lookup_kind::type, preparation_lookup_kind::function_name, preparation_lookup_kind::constant] as $kind) {
 	lookup_path($owner, [$local, $middle, $outer], 'Target', $kind);
 }
 
@@ -101,7 +101,7 @@ lookup_check(Observed_Lookup::constants($local, 'target', $context) === [$altern
 lookup_check(Scope_Lookup::functions($local, 'target') === [$second, $first], 'Plain nearest function pool differs');
 lookup_check(Scope_Lookup::types($local, 'target') === [$floating, $integer], 'Plain nearest type pool differs');
 lookup_check(Scope_Lookup::constants($local, 'target') === [$alternative, $constant], 'Plain nearest constant pool differs');
-foreach (preparation_lookup_kind::cases() as $kind) {
+foreach ([preparation_lookup_kind::type, preparation_lookup_kind::function_name, preparation_lookup_kind::constant] as $kind) {
 	lookup_path($near_owner, [$local, $middle], 'target', $kind);
 }
 lookup_check(count($near_owner->lookups) === 6, 'Lookup visited beyond the nearest pool');

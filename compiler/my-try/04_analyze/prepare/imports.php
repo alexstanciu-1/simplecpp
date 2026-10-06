@@ -1,0 +1,65 @@
+<?php
+namespace scpp\compiler;
+
+/** Whole-body admission is independent of use; no cached target copies or re-exports. */
+final class Import_Preparation
+{
+	public static function validate(Storage $sources /** Storage<collected_file> */): void
+	{
+		foreach ($sources as $source) {
+			if ($source->deleted) { continue; }
+			$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+			foreach ($bodies as $body) { self::body($body); }
+		}
+	}
+
+	private static function body(namespace_body_node $body): void
+	{
+		$local = $body->body_scope();
+		$identity = $local->source_namespace();
+		$members = $identity === null ? $local : $identity->published_scope();
+		$bindings /** Storage<import_node> */ = $body->imports;
+		$selected /** hash<string> */ = [];
+		foreach ($bindings as $binding) {
+			$kinds /** vector<preparation_lookup_kind> */ = [];
+			$found = false;
+			if ($binding->restriction === import_kind::symbol) {
+				$kinds[] = preparation_lookup_kind::type;
+			}
+			if ($binding->restriction !== import_kind::constant) { $kinds[] = preparation_lookup_kind::function_name; }
+			if ($binding->restriction !== import_kind::function_name) { $kinds[] = preparation_lookup_kind::constant; }
+			foreach ($kinds as $kind) {
+				$count = 0;
+				$conflicts = 0;
+				$key = '';
+				if ($kind === preparation_lookup_kind::type) {
+					$count = q_count(Scope_Lookup::types($local, $binding->target));
+					$conflicts = q_count($members->types_named($binding->alias));
+					$key = 'type:' . $binding->alias;
+				}
+				elseif ($kind === preparation_lookup_kind::function_name) {
+					$count = q_count(Scope_Lookup::functions($local, $binding->target));
+					$conflicts = q_count($members->callables_named($binding->alias));
+					$key = 'function:' . $binding->alias;
+				}
+				else {
+					$count = q_count(Scope_Lookup::constants($local, $binding->target));
+					$conflicts = q_count($members->constants_named($binding->alias));
+					$key = 'constant:' . $binding->alias;
+				}
+				if ($count === 0) { continue; }
+				$found = true;
+				if ($count !== 1) { throw new \RuntimeException('Ambiguous import target: ' . $binding->target); }
+				$own_target = $identity === null ? '\\' . $binding->alias : '\\' . $identity->member_name($binding->alias);
+				if (($conflicts !== 0) && ($own_target !== $binding->target)) {
+					throw new \RuntimeException('Import conflicts with namespace declaration: ' . $binding->alias);
+				}
+				if (isset($selected[$key])) {
+					if ($selected[$key] !== $binding->target) { throw new \RuntimeException('Conflicting import binding: ' . $binding->alias); }
+				}
+				$selected[$key] = $binding->target;
+			}
+			if (!$found) { throw new \RuntimeException('Missing import target or wrong symbol kind: ' . $binding->target); }
+		}
+	}
+}

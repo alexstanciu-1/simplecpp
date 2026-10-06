@@ -35,7 +35,9 @@ entry selection, retirement and C++ consumers share the new model. Implicit glob
 semicolon/braced named bodies and retained reconciliation are implemented with
 unqualified current-namespace lookup. Qualified references now share exact
 rooted/current-relative lookup and retained miss observations for supported calls,
-named types and registered constants. Imports remain next; source constant
+named types and registered constants. Body-local plain/function/constant imports,
+aliases and homogeneous groups are implemented. Plain imports expose each supported
+symbol kind independently, without namespace aliases or re-export. Source constant
 declarations, new class/static-member capabilities and qualified runtime aliases
 are not enabled by this slice.
 Imported cards below are not implementation evidence; their obsolete import restrictions
@@ -47,6 +49,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| CH08-IMPORTS-01 | implemented-bounded | Plain/function/constant imports, aliases and homogeneous groups | verified | verified | explicitly rejected | `tests/imports.php`, `tests/namespaces.py`: kind preservation, body/file isolation, validation of unused imports, retargeting and recovery |
 | CH08-NS-LOOKUP-01 | implemented-bounded | Rooted/current-relative calls and qualified named types | verified | verified | deferred | `tests/namespaces.py`, `tests/qualified_lookup.php`: authored paths, kinds, misses, additions, moves, ambiguity and subscription cleanup |
 | CH08-PROGRAM-01 | implemented | Explicit entry + cross-file functions | verified | verified | deferred | `tests/project_cpp.py`: admission, retained edits/recovery, relocation, separate units with/without PCH |
 | CH08-DEPS-01 | implemented-bounded | Record references, values, fields and inferred copies across files | unchanged | verified | deferred | `tests/project_cpp.py`: standalone headers, layout-edit isolation, clang transitive dependencies; template payloads conservatively complete |
@@ -55,18 +58,18 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH08-REBUILD-01 | verified-bounded | Body/default/signature/layout edits, insert/delete, relocation and compiler identity | unchanged | verified | deferred | `tests/native_invalidation.py`: ten executed revisions, exact native rebuild sets, phase timings; optimization deferred to Chapter 15 |
 | CH08-NS-IDENTITY-01 | implemented-model | Canonical namespaces and qualified definition identities | model verified | verified | deferred | `tests/namespace_identity.py`: supplied namespace scopes, same-short-name type/function collision proof; authored syntax proof below |
 | CH08-NS-BODIES-01 | implemented | Separate namespace-body occurrences and one selected executable body | verified-bounded | verified | global single-body only | `tests/namespace_bodies.py`: independent bodies, entry admission, stale-output rejection and retirement |
-| CH08-NS-PARSE-01 | implemented-bounded | `namespace A;` / `namespace A { ... }` / `namespace { ... }` | verified | verified | rejected for named/multiple bodies | `tests/namespaces.py`: reopening, same-namespace cross-file lookup, distinct qualified definitions, no-op/edit/move/recovery; imports next |
+| CH08-NS-PARSE-01 | implemented-bounded | `namespace A;` / `namespace A { ... }` / `namespace { ... }` | verified | verified | rejected for named/multiple bodies | `tests/namespaces.py`: reopening, same-namespace cross-file lookup, distinct qualified definitions, no-op/edit/move/recovery |
 | [CLASS-STATIC-NS-003](#class-static-ns-003) | pending-discussion | `$x = new X(); return $x::make();` | unverified | unverified | deferred | — |
 | [CLASS-STATIC-NS-002](#class-static-ns-002) | pending-discussion | `namespace A; function f() { return \A\X::make(); }` | unverified | unverified | deferred | — |
 | [NS-EXEC-006](#ns-exec-006) | pending-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | — |
 | [NS-EXEC-005](#ns-exec-005) | pending-discussion | `namespace A { compute(1); namespace B { class X {} } compute(3); }` | unverified | unverified | deferred | — |
 | [NS-DECL-001](#ns-decl-001) | pending-discussion | `namespace App;` | unverified | unverified | deferred | — |
 | [NS-DECL-002](#ns-decl-002) | pending-discussion | `namespace App { function f() {} }` | unverified | unverified | deferred | — |
-| [NS-USE-001](#ns-use-001) | pending-discussion | `namespace App; use function Lib\f;` | unverified | unverified | deferred | — |
-| [NS-USE-002](#ns-use-002) | pending-discussion | `namespace App; use const Lib\X;` | unverified | unverified | deferred | — |
-| [NS-USE-003](#ns-use-003) | pending-discussion | `namespace App; use Lib\X;` | unverified | unverified | deferred | — |
-| [NS-USE-004](#ns-use-004) | pending-discussion | `namespace App; use function Lib\f as g;` | unverified | unverified | deferred | — |
-| [NS-USE-005](#ns-use-005) | pending-discussion | `namespace App; use function Lib\{f, g};` | unverified | unverified | deferred | — |
+| [NS-USE-001](#ns-use-001) | implemented-bounded | `namespace App; use function Lib\f;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
+| [NS-USE-002](#ns-use-002) | implemented-bounded | `namespace App; use const Lib\X;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
+| [NS-USE-003](#ns-use-003) | implemented-bounded | `namespace App; use Lib\X;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
+| [NS-USE-004](#ns-use-004) | implemented-bounded | `namespace App; use function Lib\f as g;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
+| [NS-USE-005](#ns-use-005) | implemented-bounded | `namespace App; use function Lib\{f, g};` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
 | [NS-QUALIFIED-001](#ns-qualified-001) | implemented-bounded | `namespace App; return \Lib\value();` | verified | verified | deferred | `tests/namespaces.py`: rooted call and type paths |
 | [NS-QUALIFIED-002](#ns-qualified-002) | implemented-bounded | `namespace App; return Sub\value();` | verified | verified | deferred | `tests/namespaces.py`: selects App\Sub, not global Sub |
 | [NS-QUALIFIED-003](#ns-qualified-003) | pending-discussion | `namespace App; function f() { g(); }` | unverified | unverified | deferred | — |
@@ -316,7 +319,10 @@ namespace scpp::App { ... }
 
 ## NS-USE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented through body-local binding lookup and
+shared preparation, not generated C++ using declarations or forwarding aliases.
+See CH08-IMPORTS-01 and the v0.2 namespace spec; imported historical limits below
+do not override this decision.
 
 ### Imported version 1
 
@@ -353,7 +359,10 @@ namespace scpp::App { using ::scpp::Lib::f; }
 
 ## NS-USE-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented through body-local binding lookup and
+shared preparation, not generated C++ using declarations or forwarding aliases.
+See CH08-IMPORTS-01 and the v0.2 namespace spec; imported historical limits below
+do not override this decision.
 
 ### Imported version 1
 
@@ -390,7 +399,10 @@ namespace scpp::App { using ::scpp::Lib::X; }
 
 ## NS-USE-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented through body-local binding lookup and
+shared preparation, not generated C++ using declarations or forwarding aliases.
+See CH08-IMPORTS-01 and the v0.2 namespace spec; imported historical limits below
+do not override this decision.
 
 ### Imported version 1
 
@@ -427,7 +439,10 @@ ERROR
 
 ## NS-USE-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented through body-local binding lookup and
+shared preparation, not generated C++ using declarations or forwarding aliases.
+See CH08-IMPORTS-01 and the v0.2 namespace spec; imported historical limits below
+do not override this decision.
 
 ### Imported version 1
 
@@ -464,7 +479,10 @@ ERROR
 
 ## NS-USE-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented through body-local binding lookup and
+shared preparation, not generated C++ using declarations or forwarding aliases.
+See CH08-IMPORTS-01 and the v0.2 namespace spec; imported historical limits below
+do not override this decision.
 
 ### Imported version 1
 

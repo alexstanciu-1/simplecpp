@@ -56,6 +56,11 @@ join, retaining missing-target observations through the same member-scope owner.
 Plain lookup never interns them. Future parallel preparation must synchronize this
 registration; the current preparation worker is sequential. Parser registration
 continues under its existing publication lock.
+Body-local scopes index their namespace body's import syntax without publishing it.
+Lookup snapshots may retain replaced import nodes until analysis detaches observations;
+import nodes have no back-reference to the scope or body. Their identity is a binding,
+not a target definition. Import edits record a persistent source-change flag, while
+analysis owns validation, subscriptions and successful acknowledgement.
 Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable

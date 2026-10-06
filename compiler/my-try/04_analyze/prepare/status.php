@@ -5,6 +5,15 @@ namespace scpp\compiler;
 
 final class Preparation_Status
 {
+	/** Import-only edits cannot reuse saved output before body-wide admission completes. */
+	public static function imports_current(collected_file $source): bool
+	{
+		$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+		foreach ($bodies as $body) {
+			if ($body->imports_changed) { return false; }
+		}
+		return true;
+	}
 	/** Source changes remain independent of work state until analysis consumes them. */
 	public static function source_changed(preparation_owner $owner): bool
 	{

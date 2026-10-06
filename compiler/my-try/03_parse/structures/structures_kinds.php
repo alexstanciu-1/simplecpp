@@ -16,6 +16,7 @@ enum node_kind
 	case field_expression;
 	case file;
 	case namespace_body;
+	case import_binding;
 	case function_declaration;
 	case parameter_declaration;
 	case block;

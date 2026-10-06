@@ -831,6 +831,7 @@ final class field_access_children_iterator extends children_iterator
 
 enum namespace_body_children_stage
 {
+	case imports;
 	case declarations;
 	case body;
 	case finished;
@@ -840,8 +841,8 @@ enum namespace_body_children_stage
 final class namespace_body_children_iterator extends children_iterator
 {
 	private namespace_body_node $source;
-	private namespace_body_children_stage $stage = namespace_body_children_stage::declarations;
-	private ?storage_children_iterator $declarations_cursor = null;
+	private namespace_body_children_stage $stage = namespace_body_children_stage::imports;
+	private ?storage_children_iterator $collection_cursor = null;
 
 	public function __construct(namespace_body_node $source)
 	{
@@ -855,17 +856,26 @@ final class namespace_body_children_iterator extends children_iterator
 		{
 			switch ($this->stage)
 			{
+				case namespace_body_children_stage::imports:
+					if ($this->collection_cursor === null) {
+						$this->collection_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->imports));
+					}
+					else { $this->collection_cursor->next(); }
+					if ($this->collection_cursor->valid()) { return $this->collection_cursor->current(); }
+					$this->collection_cursor = null;
+					$this->stage = namespace_body_children_stage::declarations;
+					break;
 				case namespace_body_children_stage::declarations:
-					if ($this->declarations_cursor === null) {
-						$this->declarations_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->declarations));
+					if ($this->collection_cursor === null) {
+						$this->collection_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->declarations));
 					}
 					else {
-						$this->declarations_cursor->next();
+						$this->collection_cursor->next();
 					}
-					if ($this->declarations_cursor->valid()) {
-						return $this->declarations_cursor->current();
+					if ($this->collection_cursor->valid()) {
+						return $this->collection_cursor->current();
 					}
-					$this->declarations_cursor = null;
+					$this->collection_cursor = null;
 					$this->stage = namespace_body_children_stage::body;
 					break;
 				case namespace_body_children_stage::body:
