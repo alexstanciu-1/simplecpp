@@ -228,7 +228,7 @@ Assignments are explicit policy. This section says which source-target pairs are
 | `nullable<T> <- null_t / nullopt_t / nullptr_t` | Nullable may be reset to empty by any configured null-equivalent sentinel. | `$maybe = null;` | `maybe = ::scpp::null_t();` | Config explicitly treats these sentinels as reset sources. |
 | `shared_p<T> <- shared_p<T>` | Shared handles copy assign. | `$a = $b; // object handles` | `a = b;` | Copies the shared ownership handle, not the object. |
 | `shared_p<T> <- null_t / nullptr_t / nullopt_t` | Shared handle may reset to null via configured sentinels. | `$obj = null;` | `obj = ::scpp::null_t();` | Null-equivalent reset is deliberate and explicit. |
-| `unique_p<T> <- unique_p<T>` | Unique handles assign by move, not copy. | `$a = $b; // exclusive owner transfer in lowered model` | `a = std::move(b);` | Reflects move-only ownership. |
+| `unique_p<T> <- unique_p<T>` | Unique handles transfer explicitly, never by ordinary named assignment. | `$a = move($b);` | `a = unique_p<T>(std::move(b));` | v0.2 extracts an owning value before replacement; ordinary `$a = $b` rejects. See `../../specs/type_use_modifiers.md`. |
 | `unique_p<T> <- null_t / nullptr_t / nullopt_t` | Unique handle may reset to null. | `$obj = null;` | `obj = ::scpp::null_t();` | Reset is allowed even though copy is not. |
 | `weak_p<T> <- weak_p<T>` | Weak handles copy assign. | `$a = $b; // observers` | `a = b;` | Observers are cheap copyable handles. |
 | `weak_p<T> <- shared_p<T> / shared_p<U> when U* convertible to T*` | Weak observer may be assigned from shared owner, including covariant shared-to-weak downgrade. | `$weak = $shared;` | `weak = shared;` | This mirrors the cast/helper downgrade path and the runtime converting assignment support. |

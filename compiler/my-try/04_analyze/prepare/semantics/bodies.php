@@ -166,7 +166,11 @@ final class Body_Preparation
 		try {
 			if ($initializer !== null) {
 				$value_node /** expression_node */ = $initializer;
-				$value = Expression_Preparation::prepare($value_node, $context, $expected_type, $type_syntax !== null);
+				$consumer = expression_consumer::local_storage;
+				if ($type_syntax !== null) {
+					$consumer = expression_consumer::typed_local_initialization;
+				}
+				$value = Expression_Preparation::prepare($value_node, $context, $expected_type, $consumer);
 			}
 		}
 		finally {
@@ -192,6 +196,11 @@ final class Body_Preparation
 			$binding->resolved_kind = binding_kind::assignment;
 			$binding->declaration = $previous[0]->declaration;
 			$binding->type = $previous[0]->storage_type();
+			if ($value !== null) {
+				if ($value->value_origin === expression_value_origin::explicit_transfer) {
+					Move_Preparation::require_whole_place(Reference_Preparation::storage_place($previous[0]));
+				}
+			}
 		}
 
 		// The declaration is still unpublished while its initializer is prepared.

@@ -349,9 +349,10 @@ needed. Revisit compiler-supported direct nesting only for a concrete unmet use.
 The existing prohibition on `value<ownership-wrapper>` remains. Ownership category,
 copy capability and pointee copyability are distinct: shared/weak handle copying
 must not require a copyable pointee. Named unique transfers must be explicit rather
-than silently stealing on ordinary assignment; source move syntax, temporary/return
-transfer rules, allocation and broader member operations remain separate slices.
-This model decision does not claim those operations are already implemented.
+than silently stealing on ordinary assignment. The
+[v0.2 explicit-transfer contract](../../specs/type_use_modifiers.md#v02-explicit-unique-transfer--2026-10-06)
+admits immediate extraction with `move($source)` at local consuming boundaries.
+Consuming arguments/returns, broader allocation and member operations remain separate slices.
 
 Empty-state integration: all three families default empty and accept null storage
 initialization/assignment. Whole-variable `unset` resets the handle; aliases remain

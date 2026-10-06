@@ -88,6 +88,17 @@ await their own admission/model work. An already valid local alias to a
 stable field can be cleaned according to its selected storage type. These limits
 do not relax the prohibition on heap-interior references.
 
+## v0.2 unique transfer and stable aliases
+
+`move($source)` transfers ownership, not the variable's storage or its native aliases.
+Aliases to that whole storage remain bound and observe the empty source after extraction.
+An approved destination alias receives ownership through its existing storage binding.
+Reference parameters likewise refer to caller-owned handle storage; this does not
+require or introduce a Rust-style exclusive-borrow rule. The initial direct syntax
+excludes field projections and locally known field aliases on either side, and does
+not expose container-interior references. See the
+[explicit-transfer contract](type_use_modifiers.md#v02-explicit-unique-transfer--2026-10-06).
+
 ## Forbidden native-reference sources
 
 Expressions rooted in dynamic interior access are not native-reference bindable.

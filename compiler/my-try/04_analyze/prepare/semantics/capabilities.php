@@ -19,12 +19,12 @@ final class Capability_Preparation implements type_capability_query
 		return $record->syntax()->require_preparation()->has_capability($capability);
 	}
 
-	/** Exact fresh construction and empty-handle conversion do not copy existing storage. */
+	/** Exact owned temporaries and empty-handle conversions initialize without copying existing storage. */
 	public static function require_initialization(canonical_type_use $type_use,
 		?conversion_decision $conversion, preparation_context $context, ?prepared_expression $value = null): void
 	{
 		if ($value !== null) {
-			if ($value->is_fresh_value() && $value->type->matches($type_use)) {
+			if ($value->is_owned_temporary() && $value->type->matches($type_use)) {
 				return;
 			}
 		}

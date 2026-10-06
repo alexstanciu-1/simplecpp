@@ -1119,6 +1119,16 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->text() === 'move')
+		{
+			$start = $this->position++;
+			$move = new move_expression_node();
+			$this->expect('(');
+			$move->operand = $this->expression();
+			$this->expect(')');
+			$this->finish_node($move, $start);
+			return $move;
+		}
 		if ($this->text() === 'new') {
 			return $this->object_construction();
 		}

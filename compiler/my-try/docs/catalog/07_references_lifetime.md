@@ -303,14 +303,43 @@ Remaining: user constructors/destructors, runtime value construction, pointee ac
 unique reassignment/argument/return transfer and explicit moves; weak derivation/locking
 is a separate slice. New syntax alone does not enable those paths.
 
+## Explicit local unique transfers — 2026-10-06
+
+`$b = move($a)` and `$b unique<T> = move($a)` now consume exact-type unique
+ownership from whole local/parameter storage, including valid native aliases.
+The source remains empty usable storage. Existing destinations release their old
+ownership; self-transfer, including aliased reference parameters, preserves the object.
+Ordinary unique copies, field projections/known field aliases, discarded/probed moves,
+value-producing/chained assignments, shared/weak moves and consuming calls/returns reject.
+
+One move syntax/fact family and `Move_Preparation` own admission. Immediate consumer
+context replaces the prior construction-only boolean, without propagating to children.
+The existing initialization capability path consumes fresh construction or explicit
+transfer, while type copyability stays unchanged. C++ emits `Unique(std::move(source))`
+to materialize ownership at evaluation time; no runtime wrapper changes are required.
+The normative [transfer contract](../../../../specs/type_use_modifiers.md#v02-explicit-unique-transfer--2026-10-06)
+records alias effects, self-transfer and no rollback after a later failure. The old
+non-authoritative implicit-move example in `runtime/specs/config.review.md` is corrected.
+
+Evidence: `/tmp/my-try-move-local-20261006-final`, `tests/ownership.py`: 12 focused
+PHP suites, 62 source rejections and 15 C++ executions without PCH. Native instrumentation
+calls the unmodified generated transfer function, verifying object identity, old
+destination release, self-transfer, source emptiness and release during exception
+unwinding. Retained checks cover signature edits to shared, no-change failure retry,
+repair and cleanup/re-preparation. FPM required CLI fallback. This is not a native
+compiler rebuild or source-language exception/user-destructor integration proof.
+
+Next: consuming by-value arguments and unique returns, using the same transfer model
+and deliberate temporary forwarding. Weak derivation/locking follows separately.
+
 ## Ownership-type validation debt from chapter 05
 
 **CH05-OWN-01 — resolved:** the model slice above supplies semantic ownership
 classification and rejects direct nesting/value wrapping by definition role.
 Direct nesting is deliberately excluded from v0.2, not pending automatic enablement.
 
-**CH07-OWN-EXEC-01 — remaining ownership operations:** broader construction, explicit
-move spelling and transfer/return analysis, weak locking,
+**CH07-OWN-EXEC-01 — remaining ownership operations:** broader construction,
+consuming argument/return transfer integration, weak locking,
 class/member lifetime rules and precise additional target constraints
 remain separate work. Current formation of a type does not certify those operations.
 Low-level pointer escapes and specialized deleters remain deferred. Do not revive

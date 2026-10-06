@@ -1,0 +1,45 @@
+<?php
+
+/* Explicit extraction into an owned result; copying and addressability remain independent. */
+namespace scpp\compiler;
+
+final class Move_Preparation
+{
+	/** Only the immediate approved consumer can authorize extraction of whole unique storage. */
+	public static function prepare(move_expression_node $syntax, preparation_context $context,
+		expression_consumer $consumer): prepared_move
+	{
+		if ($consumer === expression_consumer::value) {
+			throw new \RuntimeException('S2S move requires a direct local initialization or statement assignment');
+		}
+		if (!($syntax->operand instanceof variable_reference_node)) {
+			throw new \RuntimeException('S2S move requires a whole local or parameter variable');
+		}
+		$value = Expression_Preparation::prepare($syntax->operand, $context);
+		$role = Ownership_Conversions::role($value->type);
+		if ($role === null) {
+			throw new \RuntimeException('S2S move requires unique ownership');
+		}
+		if ($role->ownership_family() !== ownership_kind::unique) {
+			throw new \RuntimeException('S2S move requires unique ownership');
+		}
+		if (!$value->addressable()) {
+			throw new \RuntimeException('S2S move requires mutable source storage');
+		}
+		$place /** prepared_place */ = $value->place;
+		self::require_whole_place($place);
+		$facts = new prepared_move();
+		$facts->type = $value->type;
+		$facts->value_origin = expression_value_origin::explicit_transfer;
+		$facts->source_place = $place;
+		return $facts;
+	}
+
+	/** Do not widen the slice by spelling a field projection through a local alias. */
+	public static function require_whole_place(prepared_place $place): void
+	{
+		if ($place->base() !== null) {
+			throw new \RuntimeException('S2S move through field aliases is deferred');
+		}
+	}
+}

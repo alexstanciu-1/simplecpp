@@ -10,6 +10,15 @@ enum expression_value_origin
 {
 	case ordinary;
 	case fresh_construction;
+	case explicit_transfer;
+}
+
+/** The immediate consumer selects admission; this does not propagate into child expressions. */
+enum expression_consumer
+{
+	case value;
+	case local_storage;
+	case typed_local_initialization;
 }
 
 /** Common backend-neutral result of preparing an expression. */
@@ -29,6 +38,18 @@ abstract class prepared_expression {
 	{
 		return $this->place !== null;
 	}
+
+	public function is_owned_temporary(): bool
+	{
+		return ($this->value_origin === expression_value_origin::fresh_construction)
+			|| ($this->value_origin === expression_value_origin::explicit_transfer);
+	}
+}
+
+/** Source place is observed, not exported as the move result's addressability. */
+final class prepared_move extends prepared_expression
+{
+	public prepared_place $source_place;
 }
 
 /** A storage selection, not an owning payload or a certificate that a borrow may escape. */

@@ -189,6 +189,18 @@ It does not admit moves, unique argument/return transfers or new type capabiliti
 The backend chooses the runtime allocation helper from the prepared ownership decision.
 Constructor overloads/bodies and runtime value construction are not implemented here.
 
+`move_expression_node` owns one operand. Its `prepared_move` retains the selected
+source place but has no result place: extraction produces an owned temporary, not
+a borrow. The shared expression origin distinguishes explicit transfer from fresh
+construction and ordinary values. Initialization can consume an exact owned temporary
+without changing the type's copy capability. `Move_Preparation` checks unique whole
+storage and the immediate `expression_consumer`; consumer admission is an explicit
+transient argument and never leaks into child expressions. Local destination aliases
+are checked through the existing original-place query. C++ materializes an exact
+handle from `std::move(source)`, rather than publishing an rvalue reference or adding
+source-derived semantic checks. Cleanup drops the facts and the shared source-place
+reference through ordinary node maintenance. Calls and returns remain gated.
+
 `index_node` retains `prepared_index_expression` with a normal `operator_decision`
 and inherited non-addressable value result. `Indexing_Contracts` supplies exact
 receiver-definition signatures; `Indexing_Preparation` resolves key/result types,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ownership model/admission proofs and existing empty-handle C++ lowering."""
+"""Ownership model, allocation, explicit local transfers and generated C++ lifetime proofs."""
 import argparse
 import json
 from pathlib import Path

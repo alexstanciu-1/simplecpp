@@ -15,6 +15,15 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		if ($node instanceof move_expression_node)
+		{
+			$move = object_cast($node, move_expression_node::class);
+			$facts = $move->require_move_preparation();
+			$this->context->headers['utility'] = true;
+			// Materialize an owner now: std::move alone would only change the value category.
+			return CPP_Declarations::type($facts->type, $this->context)
+				. '(std::move(' . $this->expression($move->operand) . '))';
+		}
 		if ($node instanceof object_construction_node) {
 			$construction = object_cast($node, object_construction_node::class)->require_construction_preparation();
 			$this->context->headers['scpp/memory.hpp'] = true;

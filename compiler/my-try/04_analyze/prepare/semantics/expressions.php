@@ -7,13 +7,18 @@ final class Expression_Preparation
 {
 	/** Analysis owns family dispatch and attaches the typed result before returning it. */
 	public static function prepare(expression_node $node, preparation_context $context,
-		?canonical_type_use $expected_type = null, bool $direct_initialization = false): prepared_expression
+		?canonical_type_use $expected_type = null,
+		expression_consumer $consumer = expression_consumer::value): prepared_expression
 	{
-		if ($node instanceof object_construction_node)
+		if ($node instanceof move_expression_node) {
+			$move = object_cast($node, move_expression_node::class);
+			$move->set_preparation(Move_Preparation::prepare($move, $context, $consumer));
+		}
+		elseif ($node instanceof object_construction_node)
 		{
 			$object_construction = object_cast($node, object_construction_node::class);
 			$destination /** nullable<canonical_type_use> */ = null;
-			if ($direct_initialization) {
+			if ($consumer === expression_consumer::typed_local_initialization) {
 				$destination = $expected_type;
 			}
 			$object_construction->set_preparation(Object_Construction_Preparation::prepare($object_construction, $context, $destination));

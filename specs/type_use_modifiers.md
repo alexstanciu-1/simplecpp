@@ -88,3 +88,27 @@ Result fields and unrecognized runtime construction contracts reject in preparat
 Runtime value-type construction, user constructor/destructor bodies, inheritance,
 pointee member access and explicit allocation-helper source spellings are separate
 slices; `new` does not turn those existing value types into heap objects implicitly.
+
+## v0.2 explicit unique transfer — 2026-10-06
+
+`move($source)` extracts unique ownership into an owning value when evaluated.
+Unlike C++ `std::move` alone, it performs the move construction immediately.
+The source becomes empty but remains valid storage; its native aliases remain
+bound and observe that empty state. No pointee copying or allocation is involved.
+Moving an empty handle is valid. Replacement releases the destination's previous
+ownership after extraction; self-transfer, including through an alias, preserves
+the original ownership. There is no Rust-style moved-variable invalidation.
+
+The first slice accepts an exact-type unique transfer as the direct initializer or
+statement assignment of whole local/parameter storage. Valid aliases of that whole
+storage are accepted on either side. The result owns its value, is not addressable,
+and cannot be bound by native reference. Ordinary named unique copies still reject.
+Discarded moves, presence tests of moves, value-producing/chained assignments,
+conditional joins, arguments/returns, direct fields (including locally known aliases), container
+elements, shared/weak moves and cross-type transfers remain outside this slice.
+Invalid combinations reject in preparation; no source transfer happens at compile time.
+
+Transfers are not transactional: a later runtime failure does not undo a completed
+extraction. Owning temporaries release their resources during unwinding. Consuming
+argument integration must preserve the compiler's ordered argument evaluation;
+it is deferred and is not claimed by the initial local-transfer implementation.
