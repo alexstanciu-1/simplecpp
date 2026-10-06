@@ -67,6 +67,8 @@ $fixtures['enum_unhandled'] = ['main.phs' => 'enum E { case A; case B; } return 
 $fixtures['enum_joins'] = ['main.phs' => 'enum E { case A; case B; } function choose(bool $b, E $a, E $z): E { return $b ? $a : $z; } function accept(E $v): int { if ($v === E::B) { return 7; } return 1; } $a = E::A; $b = E::B; $copy = true ? $a : $b; $a = E::B; if ($copy !== E::A) { return 2; } $m = match ($a) { E::A => $a, E::B => $b }; $b = E::A; if ($m !== E::B) { return 3; } return accept(choose(false, $b, match (1) { 1 => E::B, default => E::A }));'];
 $fixtures['enum_join_lazy'] = ['main.phs' => 'enum E { case A; case B; } function condition(int &$n): bool { $n += 1; return false; } function branch(int &$n, E $v): E { $n += 10; return $v; } $n = 0; $v = condition($n) ? branch($n, E::A) : branch($n, E::B); if ($n !== 11 || $v !== E::B) { return 1; } $m = match ($v) { default => branch($n, E::A), E::B => branch($n, E::B), E::B => branch($n, E::A) }; if ($n !== 21 || $m !== E::B) { return 2; } $z = match (0) { 1 => E::A, default => (true ? E::B : E::A) }; if ($z !== E::B) { return 3; } return 7;'];
 $fixtures['enum_join_import'] = ['main.phs' => 'namespace App; use Lib\E as Alias; function choose(bool $b): Alias { return $b ? Alias::A : \Lib\E::B; } $v value<Alias> = match (0) { 0 => choose(false), default => Alias::A }; if ($v !== Alias::B) { return 1; } return 7;', 'lib.phs' => 'namespace Lib; enum E: uint64 { case A = 0; case B = 18446744073709551615; }'];
+$fixtures['enum_defaults'] = ['main.phs' => 'enum E { case A; case B; } function choose(E $v = E::B): E { return $v; } $a = choose(); $b = choose(E::A); if ($a !== E::B || $b !== E::A) { return 1; } return 7;'];
+$fixtures['enum_defaults_import'] = ['main.phs' => 'namespace App; use function Lib\choose; use Lib\E as Alias; $v = choose(); if ($v !== Alias::High) { return 1; } return 7;', 'lib.phs' => 'namespace Lib; function choose(E $v = E::High): E { return $v; } enum E: uint64 { case High = 18446744073709551615; }'];
 for ($index = 0; $index < 257; $index++) {
 	$many .= 'case C' . $index . ';';
 }
@@ -103,12 +105,44 @@ foreach ([
 	'$v = E::A ?? E::B;' => 'coalesce',
 	'$a = E::A; $b = E::B; $ref E =& (true ? $a : $b);' => 'stable storage',
 	'$a = E::A; $ref E =& match (0) { 0 => $a };' => 'stable storage',
+	'function f(E $v = F::A): E { return $v; }' => 'same enum type',
+	'function f(E $v = 0): E { return $v; }' => 'constant enum case',
+	'function f(E $v = null): E { return $v; }' => 'constant enum case',
+	'function f(E $v = E::Missing): E { return $v; }' => 'unknown enum case',
+	'function f(E $v = true ? E::A : E::B): E { return $v; }' => 'constant enum case',
+	'function f(E &$v = E::A): E { return $v; }' => 'reference parameter defaults',
 ] as $source => $diagnostic) {
 	$compiler = enum_project(['main.phs' => 'enum E { case A; case B; } enum F { case A; } ' . $source]);
 	$compiler->tokenize();
 	$compiler->parse();
 	enum_failure($compiler, $diagnostic);
 }
+
+// Omitted calls consume immutable declaration defaults and recover after failed edits.
+$default_source = 'enum E { case A; case B; } function f(E $v = E::A): E { return $v; } $v = f(); return 7;';
+$compiler = enum_project(['main.phs' => $default_source]);
+$compiler->exec_cpp();
+$default_file = Model::sources()[0];
+$default_function = $default_file->parsed->root->single_body()->declarations[1];
+$old_default = $default_function->require_preparation()->signature->parameters[0]->default_value;
+$default_output = CPP_Output::encode(Model::$cpp_files);
+enum_edit($compiler, $default_file, "\n" . $default_source);
+$compiler->prepare(true);
+$compiler->cpp();
+enum_check($default_function->require_preparation()->signature->parameters[0]->default_value === $old_default, 'No-op replaced enum default');
+enum_edit($compiler, $default_file, str_replace('$v = E::A', '$v = E::B', $default_source));
+$compiler->prepare(true);
+$compiler->cpp();
+$new_default = $default_function->require_preparation()->signature->parameters[0]->default_value;
+enum_check(!Parameter_Defaults::same($old_default, $new_default), 'Default case edit did not change signature');
+enum_check($old_default->value->value_key() === 'A:0', 'Default edit mutated old snapshot');
+enum_check(CPP_Output::encode(Model::$cpp_files) !== $default_output, 'Default edit did not update output');
+enum_edit($compiler, $default_file, str_replace('$v = E::A', '$v = E::Missing', $default_source));
+enum_failure($compiler, 'unknown enum case');
+enum_edit($compiler, $default_file, $default_source);
+$compiler->prepare(true);
+$compiler->cpp();
+enum_check(CPP_Output::encode(Model::$cpp_files) === $default_output, 'Default repair changed clean output');
 
 // Known expected widths/values are independent of the storage selector under test.
 $widths = [

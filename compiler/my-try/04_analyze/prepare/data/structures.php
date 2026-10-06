@@ -168,9 +168,15 @@ final class prepared_take extends prepared_expression
 	public take_operation $operation;
 }
 
+/** Constant expression values used by defaults; not every constant is a literal. */
+abstract class prepared_constant_expression extends prepared_expression {
+	public abstract function value_key(): string;
+}
+
 /** Literal identity is its canonical type and local value key, not source position. */
-abstract class prepared_literal extends prepared_expression {
+abstract class prepared_literal extends prepared_constant_expression {
 	public abstract function literal_key(): string;
+	public function value_key(): string { return $this->literal_key(); }
 }
 
 final class prepared_null_literal extends prepared_literal {
@@ -373,7 +379,7 @@ final class prepared_parameter extends prepared_storage {
 
 /** Normalized scalar literal snapshot; never retains mutable default syntax. */
 final class prepared_parameter_default {
-	public prepared_literal $value;
+	public prepared_constant_expression $value;
 	public conversion_decision $conversion;
 }
 

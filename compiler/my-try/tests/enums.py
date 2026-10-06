@@ -37,7 +37,7 @@ def main():
     programs.mkdir()
     suites = ['enums', 'enum_model', 'type_catalog', 'parse_collection', 'incremental_preparation',
               'incremental_cpp', 'capabilities', 'ast', 'token_cleanup', 'namespaces', 'imports', 'source_constants',
-              'control_flow', 'operators', 'nullable', 'results', 'mixed']
+              'control_flow', 'operators', 'nullable', 'results', 'mixed', 'callables']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12, journals=[output / 'commands.json']) as runner:
         def suite(name):
             command = ['php', APP / 'tests' / (name + '.php')]

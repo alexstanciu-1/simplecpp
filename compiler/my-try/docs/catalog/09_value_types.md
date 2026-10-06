@@ -166,8 +166,39 @@ The PHP suites include scalar control flow and nullable/Result/mixed regression
 checks. FPM was unavailable in the sandbox, so the shared runner used CLI fallback.
 No portability conversion or native compiler rebuild was performed.
 
-Next discussion: enum default initialization and helper scope. CH09 remains open;
-the combined native compiler checkpoint is deferred.
+### Explicit parameter defaults and helper prerequisite — 2026-10-06
+
+By-value enum parameters accept explicit same-enum case defaults, including
+qualified/imported names and forward enum declarations. Shared prepared constant
+expressions distinguish literals from enum references; default equivalence compares
+canonical type and immutable value identity. Normal signature dependencies and C++
+prototype/omitted-argument emission are reused. Integer/null/computed/wrong-enum
+defaults and reference defaults reject. No implicit local or field default is added.
+The portable-PHP skill guided the common typed fact role and snapshot ownership.
+
+Checkpoint: **18 PHP suites and 16 generated C++ programs passed** in
+`/tmp/my-try-enum-defaults-20261006-2`, including cross-file uint64 defaults,
+explicit overrides, unchanged-signature reuse, edited-default invalidation and
+failed-edit recovery. Shared runner used CLI fallback; no native compiler rebuild.
+
+`enum_name` is approved in principle but **not implemented**. Inspection found that
+`callable_target_i::signature()` and registered functions expose only complete fixed
+contracts. An enum-generic helper cannot honestly publish one concrete parameter
+type before argument-driven selection. Do not bypass lexical lookup by matching
+the spelling in the parser/emitter, register a fake mixed signature, or manufacture
+runtime registrations for each source enum.
+
+Next discussion: a compiler-provided callable-definition/specialization protocol.
+Keep ordinary call syntax and lookup; let analysis select a concrete enum signature
+and retain declaration dependencies, and let C++ own metadata/helper emission.
+This affects callable identities, lookup/preparation and emission; obtain approval
+before the cross-owner model refactor. It could later serve enum numeric helpers.
+Risks/proofs include ordinary-call regression, shadowing/import policy, invalidation,
+cross-file metadata, single evaluation and generated helper placement. A dedicated
+intrinsic syntax node is a narrower alternative but would need an explicit language
+intrinsic/reserved-name decision. Do not choose it silently.
+
+CH09 remains open; the combined native compiler checkpoint is deferred.
 
 ## TYPE-VAR-006
 

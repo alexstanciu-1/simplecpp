@@ -102,7 +102,9 @@ chapter owners. Chapter 08 has completed its [bounded positive pass with debt](0
 including artifacts/cache baseline, namespace/imports and scalar source constants.
 Chapter 09's [bounded enum execution](09_value_types.md#enum-execution--2026-10-06)
 includes same-enum equality, switch/match and enum-valued ternary/match results;
-enum defaults and helper scope are next for discussion. By user request there is no Chapter 08 native
+explicit enum parameter defaults are implemented and `enum_name` awaits approval of
+its [callable-model prerequisite](09_value_types.md#explicit-parameter-defaults-and-helper-prerequisite--2026-10-06).
+By user request there is no Chapter 08 native
 compiler build; aim to finish Chapter 09 before the combined native checkpoint.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported

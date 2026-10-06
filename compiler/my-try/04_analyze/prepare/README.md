@@ -17,7 +17,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/enums.php`, `data/enums.php` | Enum backing/ranges, compact storage, immutable case snapshots and selected references |
-| `semantics/defaults.php` | Bounded scalar parameter-default normalization and value equivalence |
+| `semantics/defaults.php` | Scalar-literal and exact enum-case parameter defaults, normalization and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
 | `semantics/cleanup.php` | Whole-storage unset/clean admission and routing to independent keyed removal |
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
@@ -128,14 +128,14 @@ Effective signature/layout changes notify consumers; body-only edits do not
 invalidate callers. Required record completion detects cycles;
 recursive function calls remain valid. Return-type checks are per-body context.
 Parameters own optional default expressions. Signature preparation admits trailing
-by-value scalar literal defaults, normalizes a single numeric sign without general
-expression folding, and retains the literal value plus argument conversion. These
+by-value scalar literal or exact enum-case defaults, normalizes a single numeric sign
+without general expression folding, and retains the constant value plus argument conversion. These
 snapshots participate in signature equivalence, including absent/present changes.
-The snapshot is a `prepared_literal`, not an arbitrary prepared expression. Its
-typed family exposes a local `literal_key()`; equivalence compares canonical type
+The snapshot is a `prepared_constant_expression`, not an arbitrary prepared expression.
+Scalar literals and enum-case references expose a local `value_key()`; equivalence compares canonical type
 and key, preserving exact floating spelling. Default preparation obtains concrete
 facts through the syntax's typed accessors. Native narrowing is confined to this
-polymorphic literal family rather than imposed on every expression fact.
+polymorphic constant family rather than imposed on every expression fact.
 Calls retain only explicit argument facts; their count and the prepared signature
 identify the validated defaulted suffix. Defaults are checked even without callers.
 The common C++ call path emits omitted defaults explicitly from those facts, so
@@ -144,7 +144,7 @@ Typed variadic parameters retain an element type separately from their canonical
 vector storage type. Signature preparation validates one trailing by-value pack
 without an explicit default. Prepared calls record the fixed-prefix length and pack
 parameter, convert each tail argument to the element type and permit an empty tail.
-Fixed scalar defaults may precede the pack. Signature equivalence distinguishes a
+Fixed scalar or enum defaults may precede the pack. Signature equivalence distinguishes a
 variadic parameter from an ordinary vector parameter even with identical storage.
 Vector construction uses the existing registry and copy/storage capability contracts;
 source vector indexing and iteration remain separate Chapter 06 work.

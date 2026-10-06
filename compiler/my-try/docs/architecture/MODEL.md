@@ -79,7 +79,7 @@ mutate preparation-work state: declaration change flags and body `syntax_changed
 persist until analysis successfully consumes them. Repeated parsing cannot clear
 pending source changes. Read-only source-change queries also guard saved prepared
 results against premature emission.
-Parameters own optional default expressions; normalized scalar default snapshots
+Parameters own optional default expressions; normalized scalar/enum default snapshots
 belong to their callable contracts and participate in signature equivalence. Calls
 retain only explicit arguments; emission supplies omitted defaults from the signature.
 Variadic syntax marks one trailing parameter independently of passing mode; its
@@ -453,6 +453,12 @@ owns selector and label admission; the existing switch/match workers still own
 duplicate/fallback policy, traversal and completion. C++ owns native selector and
 label spelling. `Enum_Operators` selects same-enum equality/inequality through the
 ordinary operator-decision path, producing a language bool.
+
+`prepared_constant_expression` is the shared default-value fact role for scalar
+literals and enum case references. It supplies value identity alongside canonical
+type without classifying enum references as literals. Parameter defaults retain
+immutable case snapshots; normal declaration dependencies invalidate signatures and
+omitted calls. C++ defaults use the same enum-reference spelling as expressions.
 
 `ownership_type_definition` is another final template sibling implementing
 `ownership_semantics`, with an immutable shared/unique/weak kind and exact target

@@ -269,6 +269,19 @@ Result admission is independent of condition truthiness and selector admission.
 This extension does not admit enum conditions, enum Elvis operands, enum `??`
 results or enum payloads in nullable/Result wrappers. Those remain separate slices.
 
+### 3.3 v0.2 explicit enum parameter defaults
+
+An ordinary by-value enum parameter may name a case of that exact enum as its
+default, including qualified/imported case references. Omitted arguments receive
+that value; explicit arguments retain normal typed-boundary rules. The default
+resolves in the declaration's lexical scope, not the caller's scope.
+
+Integer values, another enum's cases, null and computed expressions are not admitted
+as enum parameter defaults. Existing optional-parameter ordering rules apply;
+reference-parameter defaults remain deferred. This does not establish an implicit
+enum default: local enum storage still requires explicit initialization, without
+silently choosing zero or the first declared case.
+
 ## 4. Union Semantics
 
 Restricted payload unions lower as generated C++ `union` declarations.

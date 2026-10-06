@@ -1,6 +1,6 @@
 <?php
 
-/* Declaration-owned scalar defaults; bounded normalization, not expression folding. */
+/* Declaration-owned constant defaults; bounded admission, not expression folding. */
 namespace scpp\compiler;
 
 final class Parameter_Defaults
@@ -11,10 +11,23 @@ final class Parameter_Defaults
 		if ($parameter->mode !== passing_mode::value) {
 			throw new \RuntimeException('S2S reference parameter defaults are deferred');
 		}
-		if (!Conversion_Preparation::is_scalar($parameter->type)) {
+		$value /** prepared_constant_expression */;
+		if (Type_Queries::is_enum($parameter->type)) {
+			if (!($syntax instanceof static_member_reference_node)) {
+				throw new \RuntimeException('S2S enum parameter defaults require a constant enum case reference');
+			}
+			$reference = object_cast(Expression_Preparation::prepare($syntax, $context), prepared_enum_case_reference::class);
+			if (!$reference->type->matches($parameter->type)) {
+				throw new \RuntimeException('S2S enum parameter default requires the same enum type');
+			}
+			$value = $reference;
+		}
+		elseif (!Conversion_Preparation::is_scalar($parameter->type)) {
 			throw new \RuntimeException('S2S parameter defaults require scalar value types');
 		}
-		$value = self::literal($syntax, $context);
+		else {
+			$value = self::literal($syntax, $context);
+		}
 		$facts = new prepared_parameter_default();
 		$facts->value = $value;
 		$facts->conversion = Conversion_Preparation::decide(
@@ -76,6 +89,6 @@ final class Parameter_Defaults
 		$left = $before->value;
 		$right = $after->value;
 		if (!$left->type->matches($right->type)) { return false; }
-		return $left->literal_key() === $right->literal_key();
+		return $left->value_key() === $right->value_key();
 	}
 }

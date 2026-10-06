@@ -32,7 +32,11 @@ final class prepared_enum
 }
 
 /** The type identifies the enum; the selected case is a shared immutable value snapshot. */
-final class prepared_enum_case_reference extends prepared_expression
+final class prepared_enum_case_reference extends prepared_constant_expression
 {
 	public prepared_enum_case $selected_case;
+	public function value_key(): string
+	{
+		return $this->selected_case->name . ':' . $this->selected_case->decimal;
+	}
 }

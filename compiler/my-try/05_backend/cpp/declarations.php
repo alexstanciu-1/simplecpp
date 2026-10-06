@@ -145,7 +145,10 @@ final class CPP_Declarations
 		elseif ($value instanceof prepared_string_literal) {
 			$text = CPP_Generator::generate_string(object_cast($value, prepared_string_literal::class), $context);
 		}
-		else { throw new \LogicException('Prepared parameter default is not a scalar literal'); }
+		elseif ($value instanceof prepared_enum_case_reference) {
+			$text = CPP_Enums::reference(object_cast($value, prepared_enum_case_reference::class), $context);
+		}
+		else { throw new \LogicException('Unsupported prepared parameter default'); }
 		return self::conversion($text, $facts->conversion, $context);
 	}
 
