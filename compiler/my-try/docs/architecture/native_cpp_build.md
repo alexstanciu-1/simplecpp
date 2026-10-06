@@ -87,7 +87,10 @@ automatic garbage collection is deferred. Cache maintenance must honor reservati
 
 First-pass costs are deliberate: dependency scans and content validation run even on
 a warm build; native actions are sequential within one builder. Follow-up work owns
-the fuller edit/signature/layout acceptance matrix, phase timings, bounded parallel
-actions and reducing validation overhead without weakening dependency correctness.
+bounded parallel actions and extended toolchain acceptance. The core edit/signature/
+layout matrix and phase timings are now covered by `tests/native_invalidation.py`;
+see the [dated roadmap evidence](../planning/incremental_cpp_artifacts.md#broader-native-invalidation-and-phase-timing--2026-10-06).
+Reducing validation overhead without weakening dependency correctness is
+deferred by user request to [CH15-NATIVE-CACHE-PERF-01](../catalog/15_blocking_debt.md#ch15-native-cache-perf-01--native-cache-validation-overhead).
 Toolchain shared-library/search-environment completeness and optional runtime-module
 linkage require further acceptance work before claiming a hermetic/general cache.

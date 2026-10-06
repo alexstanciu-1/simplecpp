@@ -4,7 +4,9 @@ Doc Status: planning
 Recorded: 2026-10-06. Baseline: `480b2543` on `v0.2/develop`.
 Status: entry selection, partitioned cross-file generation and bounded bare-record
 declaration-versus-definition dependencies and persistent publication implemented.
-Native caching remains pending. This is not a language spec.
+Bounded native caching and the core edit/rebuild acceptance matrix are implemented.
+Validation-overhead optimization is deferred to CH15-NATIVE-CACHE-PERF-01.
+This is not a language spec.
 
 ## Direction and evidence
 
@@ -30,6 +32,8 @@ or application PCH should become a dependency of every unit.
   per-source implementation groups and one `entry.cpp` through the common artifact API.
 - `06_native/Native_Runner` currently executes LLVM output. It is not a C++ project
   builder. C++ fixture helpers have per-run PCH support, not a persistent build cache.
+- `06_native/Native_CPP_Build` owns the bounded persistent C++ object/link/runtime-PCH
+  cache. Its acceptance evidence and remaining limits are recorded below.
 
 Reuse these semantic records and fragment owners; do not introduce another symbol or
 type model. Existing semantic invalidation is not the native recompilation graph.
@@ -344,10 +348,65 @@ unsupported PHP string cast; authored sources were repaired. The dependency-pars
 fixture also needed a test-string correction. Conversion is not a native compiler
 rebuild: the builder ran in PHP, generated programs and the shared adapter ran natively.
 
-Next: fuller signature/layout/insert/delete invalidation acceptance, phase timing and
-validation overhead, then namespace/import cards. General optional-module linkage and
+Next: fuller signature/layout/insert/delete invalidation acceptance and phase timing,
+then namespace/import cards. Validation-overhead optimization was transferred to
+[CH15-NATIVE-CACHE-PERF-01](../catalog/15_blocking_debt.md#ch15-native-cache-perf-01--native-cache-validation-overhead).
+General optional-module linkage and
 automatic detection of toolchain shared-library/default-search changes remain open;
 use a fresh cache for those toolchain changes. The current core-runtime cache assumes
 quiescent inputs and a stable toolchain installation, not a hermetic environment.
 Parallel native actions and garbage collection are deferred. No full compiler native
 rebuild was requested or performed in this slice.
+
+## Broader native invalidation and phase timing — 2026-10-06
+
+Candidate `f27de2e6` plus test/documentation overlay; no production-cache policy change.
+`tests/native_invalidation.py` passed ten real Clang build/execution scenarios in
+73.36s: `/tmp/my-try-ch08-invalidation-20261006-2/summary.json`, with per-build phase
+and exact compiled-source evidence in `observations.json`.
+
+| Edit | Compiled objects | PCH created | Linked |
+| --- | ---: | ---: | ---: |
+| Cold six-object program | 6 | 1 | 1 |
+| No change | 0 | 0 | 0 |
+| Read-function body | 1 | 0 | 1 |
+| Default argument | 2: definition and caller | 0 | 1 |
+| Signature: added optional parameter | 2: definition and caller | 0 | 1 |
+| Record layout | 2: field reader and entry; identity/forwarding remain reused | 0 | 1 |
+| Unrelated new source/function | 1: new unit | 0 | 1 |
+| Remove that source | 0 | 0 | 0: exact previous link membership reused |
+| Relocate source tree, same logical identities/publication root | 0 | 0 | 0 |
+| Change compiler-proxy bytes | 6 | 1 | 1 |
+
+The deletion case demonstrates exact historical link-result reuse, not a requirement
+to run the linker after every membership change. Removed cached objects are not linked.
+No-op generated files preserve bytes/inode/mtime. The existing `native_cache.py`
+checkpoint supplies runtime-header/optimization changes, missing-output repair,
+PCH/no-PCH equivalence, contention and failed-action retry coverage.
+
+Native phase observations (seconds, illustrative single runs, not medians):
+
+| Build | Total | PCH creation | Object compilation | Link |
+| --- | ---: | ---: | ---: | ---: |
+| Cold | 19.346 | 2.939 | 11.744 | 0.253 |
+| Warm | 3.328 | 0 | 0 | 0 |
+| Body edit | 4.426 | 0 | 0.841 | 0.235 |
+
+Remaining time includes dependency scans, standalone PCH validation, version queries,
+hashing/parsing and process/proxy overhead; their recorded fields must not be mistaken
+for compilation. A host-only fixture separates bootstrap, initialization, frontend
+sync and semantic preparation; emission/publication are deliberately one timed owner
+boundary. Each publication starts a fresh PHP compiler; retained semantic latency is
+not measured. The Clang proxy adds instrumentation overhead and changes tool identity,
+so these numbers are not a regression comparison with the smaller uninstrumented
+two-source fixture. Inputs are not filesystem-cache-flushed; host load is uncontrolled.
+
+The first fixture attempt violated the existing order-independent binary operand rule
+by combining a field read directly with arithmetic. A typed local sequences the read;
+no compiler semantics were relaxed. All ten programs then executed with expected results.
+Compiler-proxy identity changes prove byte fingerprint invalidation, not an upgrade
+across actual Clang ABIs. System-header search changes, arbitrary flags, optional module
+linking and more general toolchain completeness remain outside this bounded proof.
+
+Next: discuss namespace/import groups. Cache-validation optimization stays in
+Chapter 15; this checkpoint does not close that debt or claim a native compiler rebuild.

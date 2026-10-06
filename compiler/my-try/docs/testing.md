@@ -30,6 +30,25 @@ Also converts the native owner. This exercises a PHP-hosted builder and generate
 native programs, not a native rebuild of the compiler. See the
 [bounded build contract](architecture/native_cpp_build.md) for deferred coverage.
 
+For the broader native rebuild-set and phase-timing matrix:
+
+```bash
+python3 compiler/my-try/tests/native_invalidation.py --results /tmp/FRESH_INVALIDATION_RESULTS
+```
+
+Tests body/default/signature/layout changes, unrelated source insertion/removal,
+source relocation and compiler identity changes against exact compiled-unit sets.
+A host-only publication fixture times bootstrap, initialization, frontend sync,
+preparation and combined emission/publication through existing coordinator methods.
+A test-only Clang proxy records version queries, dependency scans, PCH validation/
+creation, object compilation and linking. `native_other` includes PHP bookkeeping,
+hashing/parsing and proxy startup; it is not labelled pure hashing time. Each action
+sequence runs serially in one shared-runner task, with executable results checked.
+The proxy changes compiler identity and adds overhead: compare these observations
+within this run, not as an optimization benchmark against uninstrumented history.
+Every publication starts a fresh PHP compiler; timings do not claim retained semantic
+incremental speed. Cache reuse persists across processes. No native compiler rebuild.
+
 For persistent output publication and its shared filesystem adapter:
 
 ```bash

@@ -102,6 +102,29 @@ is now resolved; see Chapter 06's positive-pass conclusion.
 These items require review, not automatic implementation or an implicit promotion
 to blocking feature debt. Preserve the distinction from the blocking inventory above.
 
+### CH15-NATIVE-CACHE-PERF-01 — native cache validation overhead
+
+Transferred by user request on 2026-10-06; optimization is deferred, not a reason to
+weaken Chapter 08 invalidation/recovery proofs. The PHP-hosted cache on `f27de2e6`
+took 1.88–1.92s for a no-op two-source build. Approximate measured costs: standalone
+PCH validation 0.74s, four fresh full dependency scans 0.65s, dependency-list parsing
+0.25s, input hashing 0.15s, and compiler-version query 0.07s. Hashing made 1,705
+calls for 531 distinct paths. Direct PCH-backed compilation of the tiny function
+still took 0.78–0.80s, plus about 0.24s linking. These are isolated observations,
+not a universal performance guarantee or a native-compiler rebuild measurement.
+
+Evidence: `/tmp/scpp-cache-investigation-20261006-1/` (temporary profiling only).
+The earlier 0.88s compile/link observation in [performance findings](../planning/compile_performance.md)
+excluded this cache-validation machinery and PCH construction.
+
+Review redundant standalone validation, dependency reuse with sound change detection,
+per-build digest deduplication and process-start costs in the native-build owner.
+Preserve Clang's normal PCH checks, header-search/shadowing correctness, content-based
+invalidation, reservations and failed-build recovery. Do not substitute timestamp-only
+reuse or silently trust stale dependencies. Require measured cold/no-op/edit phases
+and the Chapter 08 acceptance matrix before closing; broader toolchain/search and
+parallel-action work retain their own scope. No optimization is implemented by deferral.
+
 ### Chapter 07 closeout debt — 2026-10-06
 
 Transferred for final review by user approval; these do not require expanding the
