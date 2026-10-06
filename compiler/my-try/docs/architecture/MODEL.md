@@ -88,7 +88,8 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ### Callable contracts
 
-`callable_target_i` is implemented by the existing `collected_function` identity
+`callable_definition_i` is the ordinary lookup identity role. Its fixed-signature
+child `callable_target_i` is implemented by the existing `collected_function` identity
 and by `registered_function` and `registered_static_factory`. Their `signature()` accessor only reads attached
 contracts. `Call_Preparation::require_signature` completes source declarations and
 registers the consumer dependency; installed runtime targets already own a complete
@@ -99,10 +100,22 @@ owner is the exact canonical constructed type and equals their return type.
 Free functions have provider-qualified keys and source names, but no fabricated
 receiver, AST or construction owner. Scope `runtime_functions` indexes catalog-owned
 identities; `functions` remains the source-only retirement inventory. `callables_named`
-combines them for ordinary nearest-scope lookup and analysis lookup observations.
+combines them with language-scope-owned `compiler_function_definition` identities
+for ordinary nearest-scope lookup and analysis lookup observations.
 Installed pools are immutable under retained consumers. Runtime overload selection
 admits exactly matching fixed, required, by-value parameter signatures; it is not
 general conversion ranking. JSON is the first installed free-function provider.
+
+Compiler definitions describe an immutable operation kind, not a preselected
+signature. `Compiler_Call_Preparation` selects argument-dependent contracts and
+uses common `Call_Preparation::admit`; `prepared_call` weakly references the
+definition and owns the concrete signature plus optional specialization facts.
+`prepared_enum_name_call` shares the settled enum snapshot after analysis registers
+its declaration dependency. No new AST node, runtime registry entry per enum,
+general template cache or earlier-stage backend callback is required.
+C++ owns helper spelling/emission. Cached fragments retain read-only helper
+requests; assembly deduplicates requests from live fragments into separate helper
+headers/translation units, keeping string metadata out of enum type headers.
 
 `callable_signature` and `callable_parameter` have no source-storage links.
 Parameter `storage_access` is independent of `passing_mode` and canonical type

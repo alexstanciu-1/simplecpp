@@ -282,6 +282,24 @@ reference-parameter defaults remain deferred. This does not establish an implici
 enum default: local enum storage still requires explicit initialization, without
 silently choosing zero or the first declared case.
 
+### 3.4 v0.2 enum case names
+
+The compiler-provided `enum_name(value)` accepts exactly one enum argument and
+returns its original, unqualified case name as a `string`, preserving spelling and
+case. Unit enums, int-backed enums and fixed-integer-backed enums are supported.
+The argument is evaluated exactly once. Wrong arity and non-enum arguments are
+preparation errors; no string/integer coercion selects an enum implicitly.
+
+This is an ordinary callable name under the existing lexical lookup/import rules,
+not reserved syntax. A source function or imported source-function alias can shadow
+it. Its language-scope definition is compiler-provided, not an optional runtime
+module registration. Analysis selects the concrete enum signature and observes its
+declaration metadata before generation. An invalid enum value introduced through
+native code throws at runtime rather than inventing a case name.
+
+This helper does not enable numeric conversion, PHP enum reflection methods,
+implicit enum defaults or user-defined generic functions.
+
 ## 4. Union Semantics
 
 Restricted payload unions lower as generated C++ `union` declarations.

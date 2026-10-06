@@ -3,10 +3,23 @@
 /* Callable contracts have no source-storage requirement or backend spelling. */
 namespace scpp\compiler;
 
-interface callable_target_i extends preparation_lookup_candidate_i
+/** Lookup identity need not have an argument-independent signature. */
+interface callable_definition_i extends preparation_lookup_candidate_i {}
+
+interface callable_target_i extends callable_definition_i
 {
 	/** Read an established contract; analysis owns completion and dependency registration. */
 	public function signature(): callable_signature;
+}
+
+enum compiler_function_kind { case enum_name; }
+
+/** Language-owned identity only; stage workers own selection and emission. */
+final class compiler_function_definition implements callable_definition_i
+{
+	public function __construct(private string $source_name, private compiler_function_kind $operation) {}
+	public function name(): string { return $this->source_name; }
+	public function kind(): compiler_function_kind { return $this->operation; }
 }
 
 /** Installed free-function identity; source spelling is separate from provider identity. */

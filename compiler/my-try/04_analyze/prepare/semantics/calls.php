@@ -20,11 +20,15 @@ final class Call_Preparation
 	}
 
 	/** Bounded installed overload selection: exact fixed value signatures, without conversion ranking. */
-	public static function prepare_named(array $targets /** vector<callable_target_i> */,
+	public static function prepare_named(array $targets /** vector<callable_definition_i> */,
 		Storage $arguments /** Storage<expression_node> */, preparation_context $context): prepared_call
 	{
 		if (q_count($targets) === 1) {
-			return self::prepare($targets[0], $arguments, $context);
+			$target = $targets[0];
+			if ($target instanceof compiler_function_definition) {
+				return Compiler_Call_Preparation::prepare(object_cast($target, compiler_function_definition::class), $arguments, $context);
+			}
+			return self::prepare(object_cast($target, callable_target_i::class), $arguments, $context);
 		}
 		if (q_count($targets) === 0) {
 			throw new \RuntimeException('S2S named call has no resolved function');
@@ -35,7 +39,8 @@ final class Call_Preparation
 			if (!($candidate instanceof registered_function)) {
 				throw new \RuntimeException('S2S source function overloads are deferred');
 			}
-			$parameters /** Storage<callable_parameter> */ = $candidate->signature()->parameters;
+			$registered = object_cast($candidate, registered_function::class);
+			$parameters /** Storage<callable_parameter> */ = $registered->signature()->parameters;
 			foreach ($parameters as $parameter)
 			{
 				if (($parameter->mode !== passing_mode::value) || ($parameter->default_value !== null)
@@ -52,7 +57,8 @@ final class Call_Preparation
 		$matches /** vector<callable_target_i> */ = [];
 		foreach ($targets as $candidate)
 		{
-			$parameters /** Storage<callable_parameter> */ = $candidate->signature()->parameters;
+			$registered_candidate = object_cast($candidate, registered_function::class);
+			$parameters /** Storage<callable_parameter> */ = $registered_candidate->signature()->parameters;
 			if (q_count($parameters) !== q_count($arguments)) {
 				continue;
 			}
@@ -65,7 +71,7 @@ final class Call_Preparation
 				}
 			}
 			if ($matched) {
-				$matches[] = $candidate;
+				$matches[] = $registered_candidate;
 			}
 		}
 		if (q_count($matches) !== 1) {
@@ -78,9 +84,17 @@ final class Call_Preparation
 	public static function prepare(callable_target_i $target, Storage $arguments /** Storage<expression_node> */,
 		preparation_context $context, bool $arguments_prepared = false): prepared_call
 	{
+		return self::admit($target, self::require_signature($target, $context), $arguments, $context, $arguments_prepared);
+	}
+
+	/** Concrete contracts share boundaries whether fixed or selected from compiler metadata. */
+	public static function admit(callable_definition_i $target, callable_signature $signature,
+		Storage $arguments /** Storage<expression_node> */, preparation_context $context,
+		bool $arguments_prepared): prepared_call
+	{
 		$facts = new prepared_call();
 		$facts->target = $target;
-		$facts->signature = self::require_signature($target, $context);
+		$facts->signature = $signature;
 		if ($facts->signature->reference_return !== null) {
 			if (!($target instanceof collected_function)) {
 				throw new \RuntimeException('S2S runtime reference-return calls await lifetime integration');

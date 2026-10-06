@@ -22,6 +22,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/cleanup.php` | Whole-storage unset/clean admission and routing to independent keyed removal |
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
 | `semantics/calls.php` | Common selected-call signature completion and argument admission |
+| `semantics/compiler_calls.php`, `data/compiler_calls.php` | Argument-selected compiler-call signatures and immutable specialization facts |
 | `semantics/ownership_observation.php` | Exact-payload weak derivation and explicit strong acquisition |
 | `semantics/initialization.php` | Shared initialization-interface selection/substitution and factory/input validation; model query only, not literal execution |
 | `semantics/data_construction.php` | Contextual literal targets, input-shape selection and ordered entry conversion facts through common bindings |
@@ -92,8 +93,12 @@ It includes unchanged bodies without re-preparing them; ordinary value recursion
 remains allowed. Alias/return syntax carries explicit
 markers but makes no lifetime decisions; C++ emission only consumes completed facts.
 
-Facts identify exact roles where known: calls reference `callable_target_i` (source
-functions, installed runtime free functions or static factories); source record types reference structs.
+Facts identify exact roles where known: calls reference `callable_definition_i`;
+fixed `callable_target_i` targets are source functions, installed runtime free
+functions or static factories. Language-owned compiler definitions instead select
+concrete signatures through `Compiler_Call_Preparation`, then reuse common argument
+admission. The enum-name specialization observes the enum declaration and retains
+its immutable snapshot, not backend spelling. Source record types reference structs.
 `Call_Preparation::require_signature` completes source declarations and registers
 consumer dependencies before reading the target's read-only `signature()` accessor.
 Installed runtime contracts need no source work. Direct access to absent source

@@ -69,6 +69,7 @@ enum cpp_record_state {
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;
 	public array $headers /** hash<bool> */ = [];
@@ -88,6 +89,8 @@ final class cpp_generation_context
 /** One independently replaceable C++ fragment; no references to transient generation workers. */
 final class cpp_fragment
 {
+	/** Used helper requests survive cached body reuse; assembly deduplicates live fragments. */
+	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public change_state $change_status = change_state::added;
 	/** Completion version is meaningful only for an unchanged fragment. */
 	public int $version = 0;

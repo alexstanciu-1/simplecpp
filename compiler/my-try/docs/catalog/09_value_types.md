@@ -25,7 +25,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-VAR-007](#type-var-007) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [ENUM-001](#enum-001) | bounded pass | `enum Suit { case Hearts; case Spades; }` | proved | proved | deferred | [Execution checkpoint](#enum-execution--2026-10-06) |
 | [ENUM-002](#enum-002) | bounded pass | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | proved | proved | deferred | Includes exact fixed-width backing; [execution checkpoint](#enum-execution--2026-10-06) |
-| [ENUM-003](#enum-003) | pending-discussion | `Color::tryFrom('green')?->name ?? 'null'` | unverified | unverified | deferred | — |
+| [ENUM-003](#enum-003) | partial; remainder pending-discussion | `Color::tryFrom('green')?->name ?? 'null'` | partial | partial | deferred | [enum_name proved](#compiler-provided-callables-and-enum_name--2026-10-06); imported reflection/string-backing form remains deferred |
 | [ENUM-004](#enum-004) | pending-discussion | `enum Status implements HasLabel { case Open; public function label(): string { return 'open'; } }` | unverified | unverified | deferred | — |
 
 ## Enum model foundation — 2026-10-06
@@ -97,7 +97,8 @@ Current gates: decimal literals with one optional sign only (not arbitrary const
 expressions); enum locals require an explicit initializer; enum-valued fields await
 field-initialization support. These gates do not establish a language-wide enum
 default policy. Equality and switch/match were added in the subsequent slice below;
-helpers, string backing and methods/interfaces remain deferred. No implicit integer
+`enum_name` was added below; other helpers, string backing and methods/interfaces
+remain deferred. No implicit integer
 conversion, arithmetic or truthiness.
 
 Proof: `python3 compiler/my-try/tests/enums.py --results FRESH` passed **12 PHP suites
@@ -181,22 +182,40 @@ Checkpoint: **18 PHP suites and 16 generated C++ programs passed** in
 explicit overrides, unchanged-signature reuse, edited-default invalidation and
 failed-edit recovery. Shared runner used CLI fallback; no native compiler rebuild.
 
-`enum_name` is approved in principle but **not implemented**. Inspection found that
-`callable_target_i::signature()` and registered functions expose only complete fixed
-contracts. An enum-generic helper cannot honestly publish one concrete parameter
-type before argument-driven selection. Do not bypass lexical lookup by matching
-the spelling in the parser/emitter, register a fake mixed signature, or manufacture
-runtime registrations for each source enum.
+The fixed-signature callable model could not honestly describe `enum_name` before
+argument selection. The approved model prerequisite is now implemented below.
 
-Next discussion: a compiler-provided callable-definition/specialization protocol.
-Keep ordinary call syntax and lookup; let analysis select a concrete enum signature
-and retain declaration dependencies, and let C++ own metadata/helper emission.
-This affects callable identities, lookup/preparation and emission; obtain approval
-before the cross-owner model refactor. It could later serve enum numeric helpers.
-Risks/proofs include ordinary-call regression, shadowing/import policy, invalidation,
-cross-file metadata, single evaluation and generated helper placement. A dedicated
-intrinsic syntax node is a narrower alternative but would need an explicit language
-intrinsic/reserved-name decision. Do not choose it silently.
+### Compiler-provided callables and enum_name — 2026-10-06
+
+`callable_definition_i` identifies lookup candidates; `callable_target_i` remains
+the fixed-signature role. Language-scope-owned compiler definitions describe an
+operation without a fake mixed signature or per-enum runtime registrations.
+Analysis selects an exact enum-to-string signature, observes enum declaration
+dependencies and shares ordinary call admission. Prepared specialization facts
+retain immutable enum metadata; no parser name checks or AST processing hooks.
+
+`enum_name(value)` returns the exact unqualified case name for unit, int-backed and
+fixed-backed enums. It evaluates its argument once and rejects non-enums/wrong arity
+during preparation. Ordinary lookup, source shadowing and imported source aliases
+apply. Invalid native enum values throw defensively. These preserve the helper's
+case-name contract while adding v0.2 semantic validation; PHP reflection helpers,
+implicit coercion and general user-template instantiation are not enabled.
+
+C++ owns one helper header/implementation per used enum. Enum type headers stay
+string-free. Cached fragments retain read-only requests; assembly considers only
+live fragments, so removing/shadowing the last use removes its helper artifacts.
+The portable-PHP skill guided explicit typed facts and a query-bearing specialization
+base, without stage-processing callbacks.
+
+Checkpoint: **20 PHP suites and 20 generated C++ programs passed** in
+`/tmp/my-try-enum-name-final-20261006-1`. Proof covers exact names, once-only effects,
+cross-file sharing, shadowing/imports, cached generation, enum edits, last-use
+deletion, clean/incremental agreement and generation purity. FPM unavailable:
+shared runner used CLI fallback. This is not native compiler rebuild evidence.
+
+Next discussion: numeric enum helpers (`enum_value` and checked `enum_from_value`),
+especially integer exposure/backing contracts. PHP `cases/from/tryFrom` and wrapper
+payloads remain separate; this does not complete the whole imported reflection card.
 
 CH09 remains open; the combined native compiler checkpoint is deferred.
 

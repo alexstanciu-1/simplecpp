@@ -75,6 +75,7 @@ final class Compiler_Lifecycle
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
 		JSON_Callable_Registration::install(Model::$language_scope);
+		Language_Callables::install(Model::$language_scope);
 		CPP_JSON_Registration::install();
 		Model::$namespaces = new Namespace_Registry(Model::$language_scope);
 		Model::$global_scope = Model::$namespaces->register('')->published_scope();
@@ -113,6 +114,7 @@ final class Compiler_Lifecycle
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
 		JSON_Callable_Registration::install(Model::$language_scope);
+		Language_Callables::install(Model::$language_scope);
 		CPP_JSON_Registration::install();
 		Model::$namespaces = new Namespace_Registry(Model::$language_scope);
 		Model::$global_scope = Model::$namespaces->register('')->published_scope();

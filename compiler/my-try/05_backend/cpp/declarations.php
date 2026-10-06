@@ -190,7 +190,6 @@ final class CPP_Declarations
 	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context): string
 	{
-		$target = object_cast(weakref_get($facts->target), callable_target_i::class);
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 
@@ -246,7 +245,16 @@ final class CPP_Declarations
 			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
 		}
 
-		$text .= "\treturn " . CPP_Callables::reference($target, $context) . '(' . $names . ");\n}())";
+		$reference = '';
+		if ($facts->specialization !== null) {
+			$specialization /** prepared_compiler_call */ = $facts->specialization;
+			$reference = CPP_Compiler_Functions::reference($specialization, $context);
+		}
+		else {
+			$target = object_cast(weakref_get($facts->target), callable_target_i::class);
+			$reference = CPP_Callables::reference($target, $context);
+		}
+		$text .= "\treturn " . $reference . '(' . $names . ");\n}())";
 		return $text;
 	}
 

@@ -114,17 +114,17 @@ final class Scope_Lookup
 	}
 
 	/** Callable lookup follows the same nearest-pool rule as type lookup. */
-	public static function functions(scope $start, string $name): array /** vector<callable_target_i> */
+	public static function functions(scope $start, string $name): array /** vector<callable_definition_i> */
 	{
 		if (Source_Name_Path::separator($name) >= 0) {
 			$identity = Model::$namespaces->find(Source_Name_Path::namespace_path($start, $name));
 			if ($identity === null) {
-				return /** vector<callable_target_i> */ [];
+				return /** vector<callable_definition_i> */ [];
 			}
 			return $identity->published_scope()->callables_named(Source_Name_Path::member($name));
 		}
 		$current_scope = $start;
-		$result /** vector<callable_target_i> */ = [];
+		$result /** vector<callable_definition_i> */ = [];
 		while (true)
 		{
 			foreach ($current_scope->imports_named($name) as $binding) {

@@ -90,14 +90,14 @@ final class Observed_Lookup
 	}
 
 	/** Callable lookup follows the same nearest-pool rule as type lookup. */
-	public static function functions(scope $start, string $name, preparation_context $context): array /** vector<callable_target_i> */
+	public static function functions(scope $start, string $name, preparation_context $context): array /** vector<callable_definition_i> */
 	{
 		if (Source_Name_Path::separator($name) >= 0) {
 			$members = self::qualified_pool($start, $name, preparation_lookup_kind::function_name, $context);
 			return $members->callables_named(Source_Name_Path::member($name));
 		}
 		$current_scope = $start;
-		$result /** vector<callable_target_i> */ = [];
+		$result /** vector<callable_definition_i> */ = [];
 		while (true)
 		{
 			if ($current_scope->has_import_environment()) {

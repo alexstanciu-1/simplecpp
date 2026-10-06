@@ -157,6 +157,13 @@ final class CPP_Generator
 		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
 			CPP_Artifacts::preamble($entry_fragment->headers, $entry_fragment->forward_declarations, '') . "\nint main()\n{\n"
 			. $entry_fragment->text . "\treturn 0;\n}\n"));
+		$helpers /** hash<prepared_compiler_call> */ = [];
+		foreach ($ordered as $owner) {
+			foreach ($this->program->fragments[$owner]->compiler_helpers as $key => $request) {
+				$helpers[$key] = $request;
+			}
+		}
+		foreach ($helpers as $request) { CPP_Compiler_Functions::append_artifacts($request, $result); }
 		return $result;
 	}
 
@@ -221,6 +228,7 @@ final class CPP_Generator
 			}
 		}
 		$next->headers = $context->headers;
+		$next->compiler_helpers = $context->compiler_helpers;
 		$next->forward_declarations = $context->forward_declarations;
 		$next->version = $owner->version;
 		$next->change_status = change_state::unchanged;

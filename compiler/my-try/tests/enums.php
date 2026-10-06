@@ -69,6 +69,10 @@ $fixtures['enum_join_lazy'] = ['main.phs' => 'enum E { case A; case B; } functio
 $fixtures['enum_join_import'] = ['main.phs' => 'namespace App; use Lib\E as Alias; function choose(bool $b): Alias { return $b ? Alias::A : \Lib\E::B; } $v value<Alias> = match (0) { 0 => choose(false), default => Alias::A }; if ($v !== Alias::B) { return 1; } return 7;', 'lib.phs' => 'namespace Lib; enum E: uint64 { case A = 0; case B = 18446744073709551615; }'];
 $fixtures['enum_defaults'] = ['main.phs' => 'enum E { case A; case B; } function choose(E $v = E::B): E { return $v; } $a = choose(); $b = choose(E::A); if ($a !== E::B || $b !== E::A) { return 1; } return 7;'];
 $fixtures['enum_defaults_import'] = ['main.phs' => 'namespace App; use function Lib\choose; use Lib\E as Alias; $v = choose(); if ($v !== Alias::High) { return 1; } return 7;', 'lib.phs' => 'namespace Lib; function choose(E $v = E::High): E { return $v; } enum E: uint64 { case High = 18446744073709551615; }'];
+$fixtures['enum_names'] = ['main.phs' => 'enum E { case First; case second_name; } enum U: uint64 { case High = 18446744073709551615; } function first(): string { return enum_name(E::First); } function last(): string { return enum_name(U::High); } function pick(int &$n): E { $n += 1; return E::second_name; } function once(int &$n): string { return enum_name(pick($n)); } return 7;'];
+$fixtures['enum_names_cross_file'] = ['main.phs' => 'use Lib\E as Alias; use function Lib\name; function first(): string { return name(Alias::B); } function last(): string { return enum_name(Alias::A); } return 7;', 'lib.phs' => 'namespace Lib; enum E { case A; case B; } function name(E $v): string { return enum_name($v); }'];
+$fixtures['enum_name_shadow'] = ['main.phs' => 'function enum_name(int $value): int { return $value; } return enum_name(7);'];
+$fixtures['enum_name_import_shadow'] = ['main.phs' => 'use function Lib\label as enum_name; return enum_name(7);', 'lib.phs' => 'namespace Lib; function label(int $v): int { return $v; }'];
 for ($index = 0; $index < 257; $index++) {
 	$many .= 'case C' . $index . ';';
 }
@@ -78,7 +82,63 @@ foreach ($fixtures as $name => $sources) {
 	$compiler = enum_project($sources);
 	$compiler->exec_cpp();
 	$outputs[$name] = CPP_Output::encode(Model::$cpp_files);
+	if ($name === 'enum_names_cross_file') {
+		$helpers = 0;
+		foreach (Model::$cpp_files as $artifact) {
+			if (str_starts_with($artifact->identity, 'helper:')) { $helpers++; }
+			if (str_starts_with($artifact->identity, 'type:')) {
+				enum_check(!str_contains($artifact->text, 'string_t'), 'Enum type header gained string dependency');
+			}
+		}
+		enum_check($helpers === 2, 'Cross-file callers did not share one header/implementation helper pair');
+	}
+	if (($name === 'enum_name_shadow') || ($name === 'enum_name_import_shadow')) {
+		foreach (Model::$cpp_files as $artifact) {
+			enum_check(!str_starts_with($artifact->identity, 'helper:'), 'Shadowed source function requested intrinsic helper');
+		}
+	}
 }
+
+// Helper requests survive fragment reuse, track metadata changes and disappear with their uses.
+$name_source = 'enum E { case A; } function name(E $v): string { return enum_name($v); } return 7;';
+$compiler = enum_project(['main.phs' => $name_source]);
+$compiler->exec_cpp();
+$name_file = Model::sources()[0];
+$name_output = CPP_Output::encode(Model::$cpp_files);
+$name_identity = Scope_Lookup::functions(Model::$language_scope, 'enum_name')[0];
+enum_check($name_identity instanceof compiler_function_definition && !method_exists($name_identity, 'signature'), 'Compiler definition fabricated a fixed signature');
+$name_syntax = serialize($name_file->parsed->root);
+(new CPP_Generator())->generate_program(Model::$prepared_files, Model::$prepared_entry);
+enum_check(serialize($name_file->parsed->root) === $name_syntax, 'Helper generation mutated semantic facts');
+enum_edit($compiler, $name_file, "\n" . $name_source);
+$compiler->prepare(true);
+$compiler->cpp();
+enum_check(CPP_Output::encode(Model::$cpp_files) === $name_output, 'Cached fragments lost helper requests');
+$changed_names = str_replace('case A;', 'case A; case B;', $name_source);
+enum_edit($compiler, $name_file, $changed_names);
+$compiler->prepare(true);
+$compiler->cpp();
+$changed_output = CPP_Output::encode(Model::$cpp_files);
+enum_check($changed_output !== $name_output, 'Enum metadata edit left helper unchanged');
+enum_edit($compiler, $name_file, $name_source . ' function enum_name(E $v): string { return "source"; }');
+$compiler->prepare(true);
+$compiler->cpp();
+foreach (Model::$cpp_files as $artifact) {
+	enum_check(!str_starts_with($artifact->identity, 'helper:'), 'New source shadow retained compiler helper');
+}
+enum_edit($compiler, $name_file, $name_source);
+$compiler->prepare(true);
+$compiler->cpp();
+enum_check(CPP_Output::encode(Model::$cpp_files) === $name_output, 'Removing source shadow did not restore compiler helper');
+enum_edit($compiler, $name_file, 'enum E { case A; } return 7;');
+$compiler->prepare(true);
+$compiler->cpp();
+foreach (Model::$cpp_files as $artifact) {
+	enum_check(!str_starts_with($artifact->identity, 'helper:'), 'Deleted caller retained helper artifact');
+}
+$compiler = enum_project(['main.phs' => $changed_names]);
+$compiler->exec_cpp();
+enum_check(CPP_Output::encode(Model::$cpp_files) === $changed_output, 'Incremental helper output differs from clean generation');
 
 foreach ([
 	'$v = E::A == F::A;' => 'same enum type',
@@ -111,6 +171,9 @@ foreach ([
 	'function f(E $v = E::Missing): E { return $v; }' => 'unknown enum case',
 	'function f(E $v = true ? E::A : E::B): E { return $v; }' => 'constant enum case',
 	'function f(E &$v = E::A): E { return $v; }' => 'reference parameter defaults',
+	'$v = enum_name(1);' => 'requires an enum argument',
+	'$v = enum_name();' => 'exactly one enum argument',
+	'$v = enum_name(E::A, E::B);' => 'exactly one enum argument',
 ] as $source => $diagnostic) {
 	$compiler = enum_project(['main.phs' => 'enum E { case A; case B; } enum F { case A; } ' . $source]);
 	$compiler->tokenize();

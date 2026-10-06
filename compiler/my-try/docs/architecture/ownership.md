@@ -107,8 +107,10 @@ snapshot entry. Effective-equal edits preserve facts; changed inventories publis
 new snapshots and invalidate consumers through the existing work graph.
 
 Prepared facts retain canonical types and reference collected declarations.
-Calls weakly observe a `callable_target_i` owned by source collection or the runtime
-callable catalog. Their declaration-independent signature shares parameter contracts
+Calls weakly observe a `callable_definition_i` owned by source collection, the runtime
+callable catalog or the language scope. Fixed targets expose `callable_target_i`;
+compiler definitions acquire concrete signatures during argument-driven analysis.
+Their declaration-independent signature shares parameter contracts
 with source parameter storage facts where applicable. Runtime free functions and factories have no
 source AST or collected-parameter requirement. C++ callable bindings retain their
 exact registered target and are reset with the runtime callable/type roots; they
@@ -116,6 +118,11 @@ never become the owner of source semantic facts. See [callable contracts](MODEL.
 Scope runtime-function pools are non-owning indexes of catalog identities, separate
 from source collection membership. Both feed name-pool observations; retiring source
 declarations must never remove installed runtime targets.
+Language scopes strongly own compiler-function definitions, separately from source
+retirement membership. Call-owned specialization facts share immutable prepared enum
+metadata; they never retain workers or syntax. C++ fragments may retain those same
+read-only helper requests across body reuse. Only live fragments contribute to
+artifact assembly, so unused helper artifacts disappear without a new semantic root.
 Derived source-record capabilities are owned by `prepared_record`, alongside its
 prepared fields. Registry definitions retain identity and registered contracts;
 they do not cache a second mutable copy of source-derived capabilities. The transient

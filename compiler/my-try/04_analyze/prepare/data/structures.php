@@ -439,9 +439,11 @@ final class prepared_call extends prepared_expression
 	/** Fixed prefix length; the remaining source arguments belong to variadic_parameter. */
 	public int $fixed_count = 0;
 	public ?callable_parameter $variadic_parameter = null;
-	/** Owned by collection or runtime catalog, never by the call. @reference.weak */
-	public callable_target_i $target /** weak<callable_target_i> */;
-	/** Completed source or registered runtime signature. */
+	/** Owned by collection, runtime catalog or language scope. @reference.weak */
+	public callable_definition_i $target /** weak<callable_definition_i> */;
+	/** Call-owned specialization; no worker, syntax or target backlink. */
+	public ?prepared_compiler_call $specialization = null;
+	/** Completed fixed or argument-selected compiler signature. */
 	public callable_signature $signature;
 	/** One boundary per explicit source argument, including each variadic element. */
 	public Storage $arguments /** Storage<prepared_call_argument> */;
