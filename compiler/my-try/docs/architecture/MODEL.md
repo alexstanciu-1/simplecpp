@@ -57,6 +57,8 @@ symbol model. See [analysis](../../04_analyze/README.md) for typed collected rol
 Function signatures and bodies have separate work identities. Fields/parameters
 settle with their definition; locals settle with their body. A body is a processing
 unit, not a symbol. Replacing body syntax transfers its retained work identity.
+Work records explicitly observe the selected executable body rather than deriving
+it from the source file; dirty-state queries and C++ body rendering share that query.
 Unchanged bodies retain nodes, scopes, occurrences and facts. Parsing does not
 mutate preparation-work state: declaration change flags and body `syntax_changed`
 persist until analysis successfully consumes them. Repeated parsing cannot clear

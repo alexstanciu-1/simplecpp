@@ -96,6 +96,10 @@ consumer dependency before reading them. Unknown/failed preparation is not a neg
 capability answer. Nested changes propagate even when canonical type IDs are stable.
 
 Declaration work belongs to collected definitions; body work belongs to body nodes.
+Each body-work record weakly observes its exact executable body; its source-file
+link supplies provenance, not an implicit `root->body` selection. Parser replacement
+detaches the old body's attachment, rebinds that observer and attaches the same work
+to the new body. This structural transfer does not change scheduling or settled facts.
 Dependency and lookup memberships currently use strong identity containers with
 explicit unlinking. C++ fragments refer to existing work identities. Retained model
 records never own workers or operation contexts.

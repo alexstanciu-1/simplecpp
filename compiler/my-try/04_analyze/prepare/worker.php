@@ -172,7 +172,7 @@ final class Preparation_Worker
 	private function select(collected_file $source): void
 	{
 		if ($source->root->body->work() === null) {
-			$source->root->body->attach_work(new file_body_work($source));
+			$source->root->body->attach_work(new file_body_work($source, $source->root->body));
 		}
 		$file_body /** body_work */ = $source->root->body->work();
 		$this->select_owner($file_body);
@@ -515,8 +515,10 @@ final class Preparation_Worker
 
 	private function prepare_file_body(file_body_work $owner, preparation_context $context): void
 	{
-		$this->file_body($owner->source->root, $context);
-		$owner->source->root->body->syntax_changed = false;
+		$body = $owner->executable_body();
+		Preparation_Cleanup::tree($body);
+		Body_Preparation::prepare_statements($body, $context);
+		$body->syntax_changed = false;
 	}
 
 	/** Members settle with their enclosing declaration, never during parsing. */
@@ -585,13 +587,6 @@ final class Preparation_Worker
 		if ($error !== '') {
 			throw new \RuntimeException($error);
 		}
-	}
-
-	/** File declarations are prepared by their own list, never as executable entry statements. */
-	private function file_body(file_node $root, preparation_context $context): void
-	{
-		Preparation_Cleanup::tree($root->body);
-		Body_Preparation::prepare_statements($root->body, $context);
 	}
 
 	/** Context is transient and always uses the selected owner's source token generation. */

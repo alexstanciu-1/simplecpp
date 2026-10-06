@@ -11,11 +11,8 @@ final class Preparation_Status
 		if ($owner instanceof declaration_work) {
 			return object_cast($owner, declaration_work::class)->required_declaration()->change_status !== change_state::unchanged;
 		}
-		if ($owner instanceof function_body_work) {
-			return object_cast($owner, function_body_work::class)->function_definition()->syntax()->body->syntax_changed;
-		}
-		if ($owner instanceof file_body_work) {
-			return $owner->source->root->body->syntax_changed;
+		if ($owner instanceof body_work) {
+			return object_cast($owner, body_work::class)->executable_body()->syntax_changed;
 		}
 		throw new \LogicException('Unsupported preparation work role');
 	}

@@ -162,18 +162,18 @@ final class CPP_Generator
 		}
 		$context = new cpp_generation_context();
 		$next = new cpp_fragment();
-		if ($owner->kind() === preparation_kind::file_body) {
-			$next->text = self::generate_file_body($owner->source->root, $context);
+		if ($owner instanceof body_work) {
+			$body_owner = object_cast($owner, body_work::class);
+			if ($body_owner instanceof function_body_work) {
+				$function = object_cast($body_owner, function_body_work::class)->function_definition()->syntax();
+				$context->return_type = $function->require_preparation()->signature->return_type;
+			}
+			$next->text = self::generate_statements($body_owner->executable_body(), $context);
 		}
 		else
 		{
 			$entry = object_cast($owner->declaration(), collected_name::class);
-			if ($owner->kind() === preparation_kind::function_body) {
-				$syntax = object_cast($entry, collected_function::class)->syntax();
-				$context->return_type = $syntax->require_preparation()->signature->return_type;
-				$next->text = self::generate_statements($syntax->body, $context);
-			}
-			elseif ($entry instanceof collected_function) {
+			if ($entry instanceof collected_function) {
 				$function_syntax = object_cast($entry, collected_function::class)->syntax();
 				$definition_context = new cpp_generation_context();
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
@@ -221,12 +221,6 @@ final class CPP_Generator
 			$this->validate_record_dependencies($dependency, $context);
 		}
 		$context->record_states[$key] = cpp_record_state::complete;
-	}
-
-	/** File executable statements form one body; declarations have their own fragments. */
-	private static function generate_file_body(file_node $root, cpp_generation_context $context): string
-	{
-		return self::generate_statements($root->body, $context);
 	}
 
 	/** The worker visits executable children once; declaration hooks collect separate output sections. */

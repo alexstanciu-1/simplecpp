@@ -29,7 +29,8 @@ broader invalidation matrix and build-phase timings are verified. Validation-ove
 optimization is deferred to [Chapter 15](15_blocking_debt.md#ch15-native-cache-perf-01--native-cache-validation-overhead).
 Namespace/import semantics are agreed in the [v0.2 contract](../../../../specs/namespaces_v0_2.md).
 The [identity/body ownership migration](../planning/namespace_identity_migration.md)
-is approved and in progress: canonical identity/backend consumers are implemented;
+is approved and in progress: canonical identity/backend consumers and explicit
+executable-body work links are implemented;
 namespace-body parsing, lifecycle integration and qualified lookup remain pending.
 Imported cards below are not implementation evidence; their obsolete import restrictions
 do not override the agreed contract or newer generator rules.

@@ -114,6 +114,25 @@ final class record_definition_work extends declaration_work
 /** A body is an executable work unit, never a collected symbol. */
 abstract class body_work extends preparation_owner
 {
+	/** Syntax owns this work; observe the exact executable unit, not its file root. */
+	private function_body_node $body_reference /** weak<function_body_node> */;
+
+	public function __construct(collected_file $source, function_body_node $body)
+	{
+		parent::__construct($source);
+		$this->body_reference = $body;
+	}
+
+	public function executable_body(): function_body_node
+	{
+		return \weakref_get($this->body_reference);
+	}
+
+	/** Structural identity transfer only; preparation state remains analysis-owned. */
+	public function rebind_body(function_body_node $body): void
+	{
+		$this->body_reference = $body;
+	}
 }
 
 final class function_body_work extends body_work
@@ -122,7 +141,7 @@ final class function_body_work extends body_work
 
 	public function __construct(collected_function $definition)
 	{
-		parent::__construct($definition->collection);
+		parent::__construct($definition->collection, $definition->syntax()->body);
 		$this->definition = $definition;
 	}
 

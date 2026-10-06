@@ -4,7 +4,7 @@ Doc Status: planning
 Recorded 2026-10-06 after the approved namespace/import discussion.
 Language rules are agreed in [the v0.2 contract](../../../../specs/namespaces_v0_2.md).
 Status: coordinated migration approved by the user; implementation in progress.
-Canonical identity/backend checkpoint implemented below. Namespace body syntax,
+Canonical identity/backend and explicit executable-work links implemented below. Namespace body syntax,
 qualified-path lookup and their lifecycle integration remain unfinished.
 
 ## Why this is more than adding namespace parsing
@@ -132,3 +132,35 @@ standalone parser's explicit publication adapter instead of calling its task-onl
 shared publication path outside a work callback. No language/runtime behavior was
 relaxed. The native compiler itself was not rebuilt. The portable-PHP skill informed
 weak namespace backlinks and explicit typed storage receivers in the new registry.
+
+## Executable-work ownership checkpoint — 2026-10-06
+
+`body_work` now explicitly observes its executable `function_body_node` through a
+weak link. Source-file provenance no longer implicitly selects the file root's body
+for change queries, source-body preparation or C++ fragment rendering. Function and
+source bodies share the same backend statement-rendering path; function signatures
+still provide return context. Parser body replacement rebinds the observer while
+transferring the existing work identity, without touching analysis scheduling state.
+
+This removes a prerequisite assumption, not the entire single-body file model.
+File selection, retirement enumeration and entry admission still await the source
+namespace-body inventory. Namespace syntax and qualified lookup remain disabled;
+the next step remains the approved body/parser/lifecycle migration, then lookup.
+
+Evidence on `5aa37d61` plus this checkpoint overlay:
+
+- `/tmp/my-try-body-work-20261006-1/commands.json`: seven focused PHP suites pass,
+  including independent change flags for two body records sharing one source,
+  replacement/repeated parsing, failed-parse repair and join-ordered retirement.
+- `/tmp/my-try-body-work-project-20261006-1/summary.json`: five project PHP suites,
+  26 generated executions with/without PCH, 30 standalone headers and three
+  transitive dependency checks pass.
+- `/tmp/my-try-body-work-conversion-20261006-1/commands.json`: parser and preparation
+  directory conversion pass. Whole C++ backend conversion encounters the preexisting
+  `structures.php:42` readonly enum-field restriction; the field is unchanged from
+  the base revision and is not repaired in this ownership slice.
+- `/tmp/my-try-body-work-emitter-conversion-20261006-1/commands.json`: the changed
+  emitter file converts independently. This is not whole-backend or native compiler
+  validation. The compiler itself was not rebuilt.
+
+The portable-PHP skill informed the weak body observer and typed query boundary.

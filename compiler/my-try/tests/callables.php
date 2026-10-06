@@ -37,7 +37,7 @@ callable_check(!method_exists(callable_target_i::class, 'require_signature')
 	&& !method_exists($source_target, 'preparation_work'), 'Callable model retains processing hooks');
 
 // The analysis query completes only the signature and registers the requesting owner.
-$query_owner = new file_body_work($parsed->collection);
+$query_owner = new file_body_work($parsed->collection, $parsed->root->body);
 $parsed->root->body->attach_work($query_owner);
 $query_context = new preparation_context();
 $query_context->worker = new Preparation_Worker(Model::$language_scope);

@@ -31,11 +31,16 @@ try {
 	$version = $body->version;
 	$file_version = $file_body->version;
 	$signature_version = $signature->version;
+	$old_function_body = $function->body;
+	$old_file_body = $collection->root->body;
 
 	// Reparse twice before analysis: identities move, but semantic state does not.
 	file_put_contents($path, 'function value(): int { return 2; } return 3;');
 	$compiler->sync([$path]);
 	handoff_check($function->body->work() === $body && $collection->root->body->work() === $file_body, 'Parsing replaced work identities');
+	handoff_check($body->executable_body() === $function->body && $file_body->executable_body() === $collection->root->body, 'Replacement did not rebind work to current syntax');
+	handoff_check($old_function_body !== $body->executable_body() && $old_file_body !== $file_body->executable_body(), 'Changed bodies retained obsolete syntax');
+	handoff_check($old_function_body->work() === null && $old_file_body->work() === null, 'Old syntax retained transferred work');
 	foreach ([$body, $file_body, $signature] as $work) {
 		handoff_check($work->state === preparation_state::ready && $work->change_status === change_state::unchanged, 'Parser changed analysis scheduling state');
 	}
@@ -67,11 +72,13 @@ try {
 	catch (\RuntimeException $expected) { $failed = true; }
 	handoff_check($failed && !$collection->parse_complete, 'Expected incomplete parse');
 	handoff_check($body->version === $version && $body->state === preparation_state::ready, 'Failed parser changed semantic state');
+	handoff_check($body->executable_body() === $function->body, 'Partial parse left work observing obsolete syntax');
 	file_put_contents($path, 'function value(): uint32 { return 4; } return 3;');
 	$compiler->sync([$path]);
 	$compiler->sync([$path]);
 	$compiler->prepare();
 	handoff_check($function->body->work() === $body && $body->version === $version + 1, 'Failed-parse repair lost pending body work');
+	handoff_check($body->executable_body() === $function->body && $file_body->executable_body() === $collection->root->body, 'Repair lost executable-body links');
 
 	// A failed semantic attempt keeps its source change and diagnostic through reparse.
 	file_put_contents($path, 'function value(): uint32 { return $missing; } return 3;');

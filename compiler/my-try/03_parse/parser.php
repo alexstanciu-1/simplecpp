@@ -215,6 +215,7 @@ final class Parser_Run
 	{
 		$work = $old->detach_work();
 		if ($work !== null) {
+			$work->rebind_body($body);
 			$body->attach_work($work);
 		}
 	}

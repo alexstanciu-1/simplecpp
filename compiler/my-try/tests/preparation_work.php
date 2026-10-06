@@ -31,6 +31,8 @@ work_check($signature instanceof function_signature_work, 'Function was not assi
 work_check($body instanceof function_body_work, 'Function body was not assigned body work');
 work_check($entry instanceof file_body_work, 'File body was not assigned file-body work');
 work_check($entry->declaration() === null, 'File body acquired a named declaration');
+work_check($entry->executable_body() === $parsed->root->body, 'File work lost its explicit executable body');
+work_check($body->executable_body() === $function->body, 'Function work lost its explicit executable body');
 work_check($body->declaration() === $signature->declaration(), 'Body and signature lost the shared function identity');
 work_check($signature->required_declaration() === $signature->function_definition(), 'Required and specialized signature access lost identity');
 work_check($body->function_definition() === $signature->function_definition(), 'Specialized body access lost function identity');
@@ -86,6 +88,21 @@ catch (\TypeError $expected) {
 }
 work_check($rejected === 3, 'Invalid work-role combination was accepted');
 work_check($function->body->work() === $body, 'Rejected attachment changed retained body work');
+
+// Two executable units in one source must not query the same file-root change flag.
+// This exercises the body-work model without claiming namespace syntax admission.
+$second_scope = new scope();
+$second_body = new function_body_node($second_scope);
+$second_work = new file_body_work($collection, $second_body);
+$second_body->attach_work($second_work);
+work_check($second_work->source === $entry->source, 'Independent body work lost its common source');
+work_check(Preparation_Status::source_changed($second_work), 'Additional body change was read from the file root');
+work_check(!Preparation_Status::source_changed($entry), 'Additional body change contaminated the entry body');
+$second_body->syntax_changed = false;
+$parsed->root->body->syntax_changed = true;
+work_check(!Preparation_Status::source_changed($second_work), 'File-root change contaminated additional body work');
+work_check(Preparation_Status::source_changed($entry), 'Entry work missed its own changed body');
+$parsed->root->body->syntax_changed = false;
 
 // Retirement dispatch must unlink every role, including both directions of dependencies.
 $sources /** Storage<collected_file> */ = new Storage();
