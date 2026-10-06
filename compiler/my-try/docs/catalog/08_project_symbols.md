@@ -9,6 +9,15 @@ Requires declarations and calls. Begin with cross-file functions; object-depende
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Implementation roadmap
+
+The [multi-file output and incremental-build roadmap](../planning/incremental_cpp_artifacts.md)
+records the agreed direction, ownership boundaries, staged work and runtime-PCH
+requirements. Start with stable identities, explicit entry selection and cross-file
+functions; preserve narrow declarations and separate implementation units. Namespace
+and import groups follow on the same output architecture. Implementation has not
+started; the output-consumer migration gate is called out in the roadmap.
+
 ## Progress
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
