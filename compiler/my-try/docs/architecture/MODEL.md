@@ -184,8 +184,8 @@ and selects a default shared or direct-local contextual unique/shared result.
 ownership selection. The shared `expression_value_origin` fact marks proven fresh
 construction separately from ordinary values; its query does not rely on subtype dispatch.
 This distinguishes new construction from copying;
-the shared initialization capability check uses that query only for matching storage.
-It does not admit moves, unique argument/return transfers or new type capabilities.
+the shared value-boundary decision uses that query only for matching storage.
+It does not grant new type capabilities or contextual construction outside explicit locals.
 The backend chooses the runtime allocation helper from the prepared ownership decision.
 Constructor overloads/bodies and runtime value construction are not implemented here.
 
@@ -199,7 +199,19 @@ transient argument and never leaks into child expressions. Local destination ali
 are checked through the existing original-place query. C++ materializes an exact
 handle from `std::move(source)`, rather than publishing an rvalue reference or adding
 source-derived semantic checks. Cleanup drops the facts and the shared source-place
-reference through ordinary node maintenance. Calls and returns remain gated.
+reference through ordinary node maintenance.
+
+`Value_Boundary_Preparation` selects copy, owned-temporary consumption, reference
+binding or empty construction independently of conversion. Local/member binding,
+call-argument and return facts retain that operation. Copy capability checks remain
+in `Capability_Preparation`; conversion facts still own type adaptation. Fixed
+value arguments and value returns supply immediate consuming context; reference
+arguments do not. Unique-valued calls publish `owned_call_result`, while reference
+calls preserve their source place and ordinary origin. No AST rewriting or type-name
+test is used to distinguish them. The C++ call sequencer reads argument boundary
+facts to move owning temporaries into parameters, never referenced source storage.
+Returns already emit owned prvalues directly, without adding `std::move` to prvalues.
+Field transfer, unique variadic packing and contextual `new` expansion remain gated.
 
 `index_node` retains `prepared_index_expression` with a normal `operator_decision`
 and inherited non-addressable value result. `Indexing_Contracts` supplies exact

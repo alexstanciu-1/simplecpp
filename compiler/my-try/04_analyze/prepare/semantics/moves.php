@@ -10,7 +10,7 @@ final class Move_Preparation
 		expression_consumer $consumer): prepared_move
 	{
 		if ($consumer === expression_consumer::value) {
-			throw new \RuntimeException('S2S move requires a direct local initialization or statement assignment');
+			throw new \RuntimeException('S2S move requires an approved consuming storage, argument or return boundary');
 		}
 		if (!($syntax->operand instanceof variable_reference_node)) {
 			throw new \RuntimeException('S2S move requires a whole local or parameter variable');

@@ -332,6 +332,31 @@ compiler rebuild or source-language exception/user-destructor integration proof.
 Next: consuming by-value arguments and unique returns, using the same transfer model
 and deliberate temporary forwarding. Weak derivation/locking follows separately.
 
+## Consuming arguments and unique returns — 2026-10-06
+
+Fixed by-value unique parameters accept explicit `move($source)` or exact unique-valued
+call results. Named copies reject. Value returns accept explicit moves or onward call
+results; reference returns remain borrowed places, not owning values. Contextual `new`
+is unchanged: unique construction still requires an explicitly typed local initializer.
+
+`Value_Boundary_Preparation` centralizes copy/consume/reference/empty-construction
+admission for the existing local, argument and return facts. C++ preserves ordered
+argument temporaries and moves only those with a prepared consume decision into the
+callee. No extra allocation, duplicated unique-specific call path or type-spelling
+lookup is added. Named returned parameters still need an explicit move. Unique
+variadic packs, ownership joins and field/container transfer remain gated.
+
+Evidence: `/tmp/my-try-consuming-20261006-checked`, `tests/ownership.py`: 14 focused
+PHP suites, 70 source rejections and 19 generated C++ executions without PCH. Covers returning/forwarding
+unique values, consuming parameters, source-order double extraction, alias replacement,
+unchanged reference behavior, passing-mode edit failure/retry/repair and preparation
+cleanup. Native markers prove return identity and release of an earlier consuming
+argument when a later nullable extraction throws, before the intended callee is entered.
+FPM required CLI fallback. The compiler itself was not rebuilt natively.
+
+Next discussion: weak derivation and explicit locking. Broader constructors and
+ownership member operations remain separate work.
+
 ## Ownership-type validation debt from chapter 05
 
 **CH05-OWN-01 — resolved:** the model slice above supplies semantic ownership
@@ -339,7 +364,7 @@ classification and rejects direct nesting/value wrapping by definition role.
 Direct nesting is deliberately excluded from v0.2, not pending automatic enablement.
 
 **CH07-OWN-EXEC-01 — remaining ownership operations:** broader construction,
-consuming argument/return transfer integration, weak locking,
+variadic/selection transfer extensions, weak locking,
 class/member lifetime rules and precise additional target constraints
 remain separate work. Current formation of a type does not certify those operations.
 Low-level pointer escapes and specialized deleters remain deferred. Do not revive

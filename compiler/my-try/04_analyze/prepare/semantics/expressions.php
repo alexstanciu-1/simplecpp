@@ -198,7 +198,11 @@ final class Expression_Preparation
 		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment);
-		Capability_Preparation::require_initialization($binding->type, $binding->conversion, $context);
+		// Field ownership transfer remains outside the whole-storage boundary slice.
+		if ($value->value_origin === expression_value_origin::owned_call_result) {
+			throw new \RuntimeException('S2S consuming ownership into fields is deferred');
+		}
+		$binding->boundary = Value_Boundary_Preparation::decide($binding->type, $binding->conversion, $context, $value);
 		Type_Preparation::require_value_type($binding->type);
 		return $binding;
 	}

@@ -19,24 +19,7 @@ final class Capability_Preparation implements type_capability_query
 		return $record->syntax()->require_preparation()->has_capability($capability);
 	}
 
-	/** Exact owned temporaries and empty-handle conversions initialize without copying existing storage. */
-	public static function require_initialization(canonical_type_use $type_use,
-		?conversion_decision $conversion, preparation_context $context, ?prepared_expression $value = null): void
-	{
-		if ($value !== null) {
-			if ($value->is_owned_temporary() && $value->type->matches($type_use)) {
-				return;
-			}
-		}
-		if ($conversion !== null) {
-			if ($conversion->operation === conversion_operation::ownership_empty) {
-				return;
-			}
-		}
-		self::require_copy($type_use, $context);
-	}
-
-	/** Current owned-value boundaries require copying; implicit ownership transfer is deferred. */
+	/** Ordinary values require copy capability; explicit temporary consumption is a separate boundary. */
 	public static function require_copy(canonical_type_use $type_use, preparation_context $context): void
 	{
 		$query = new Capability_Preparation($context);

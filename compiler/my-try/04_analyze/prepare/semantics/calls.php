@@ -47,7 +47,7 @@ final class Call_Preparation
 
 		// Prepare once without a candidate's contextual type; ambiguous literals need explicit targets.
 		foreach ($arguments as $argument) {
-			Expression_Preparation::prepare($argument, $context);
+			Expression_Preparation::prepare($argument, $context, null, expression_consumer::consuming_argument);
 		}
 		$matches /** vector<callable_target_i> */ = [];
 		foreach ($targets as $candidate)
@@ -87,6 +87,15 @@ final class Call_Preparation
 			}
 		}
 		$facts->type = $facts->signature->return_type;
+		if ($facts->signature->reference_return === null)
+		{
+			$role = Ownership_Conversions::role($facts->type);
+			if ($role !== null) {
+				if ($role->ownership_family() === ownership_kind::unique) {
+					$facts->value_origin = expression_value_origin::owned_call_result;
+				}
+			}
+		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		$facts->fixed_count = q_count($parameters);
@@ -114,19 +123,19 @@ final class Call_Preparation
 			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
 			$argument_type = $parameter->element_type ?? $parameter->type;
-			$value /** prepared_expression */ = $arguments_prepared
-				? $argument->require_preparation() : Expression_Preparation::prepare($argument, $context, $argument_type);
-			$prepared_argument = new prepared_call_argument();
-			if ($parameter->mode === passing_mode::reference) {
-				if ((!$value->addressable()) || !Type_Preparation::same_storage_type($value->type, $parameter->type)) {
-					throw new \RuntimeException('S2S reference arguments require stable storage of the exact parameter type');
-				}
+			$consumer = expression_consumer::value;
+			if (($parameter->mode === passing_mode::value) && ($parameter->element_type === null)) {
+				$consumer = expression_consumer::consuming_argument;
 			}
-			else {
+			$value /** prepared_expression */ = $arguments_prepared
+				? $argument->require_preparation() : Expression_Preparation::prepare($argument, $context, $argument_type, $consumer);
+			$prepared_argument = new prepared_call_argument();
+			if ($parameter->mode === passing_mode::value) {
 				$prepared_argument->conversion = Conversion_Preparation::decide(
 					$value->type, $argument_type, conversion_context::argument);
-				Capability_Preparation::require_copy($argument_type, $context);
 			}
+			$prepared_argument->boundary = Value_Boundary_Preparation::decide(
+				$argument_type, $prepared_argument->conversion, $context, $value, $parameter->mode);
 			$prepared_arguments->append($prepared_argument);
 		}
 

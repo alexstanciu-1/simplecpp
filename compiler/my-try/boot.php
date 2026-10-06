@@ -78,6 +78,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/contract_types.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/data_construction.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/object_construction.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/moves.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/value_boundaries.php';
 require_once __DIR__ . '/04_analyze/conversions/strings.php';
 require_once __DIR__ . '/04_analyze/conversions/booleans.php';
 require_once __DIR__ . '/04_analyze/conversions/truthiness.php';

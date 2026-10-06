@@ -99,16 +99,40 @@ Moving an empty handle is valid. Replacement releases the destination's previous
 ownership after extraction; self-transfer, including through an alias, preserves
 the original ownership. There is no Rust-style moved-variable invalidation.
 
-The first slice accepts an exact-type unique transfer as the direct initializer or
+Local transfer accepts an exact-type unique transfer as the direct initializer or
 statement assignment of whole local/parameter storage. Valid aliases of that whole
 storage are accepted on either side. The result owns its value, is not addressable,
 and cannot be bound by native reference. Ordinary named unique copies still reject.
 Discarded moves, presence tests of moves, value-producing/chained assignments,
-conditional joins, arguments/returns, direct fields (including locally known aliases), container
+conditional joins, direct fields (including locally known aliases), container
 elements, shared/weak moves and cross-type transfers remain outside this slice.
 Invalid combinations reject in preparation; no source transfer happens at compile time.
 
 Transfers are not transactional: a later runtime failure does not undo a completed
-extraction. Owning temporaries release their resources during unwinding. Consuming
-argument integration must preserve the compiler's ordered argument evaluation;
-it is deferred and is not claimed by the initial local-transfer implementation.
+extraction. Owning temporaries release their resources during unwinding.
+
+## v0.2 consuming arguments and unique returns — 2026-10-06
+
+Fixed by-value `unique<T>` parameters consume exact-type owned values. A named
+variable requires `move($variable)`; passing it directly is a rejected copy.
+Reference parameters still bind stable storage without transfer; a move result
+cannot bind to a reference parameter.
+
+A by-value unique function result is an owned temporary: it may initialize or
+replace local storage, feed another fixed by-value parameter, or be returned onward
+without another `move`. A reference-returning call is not an owned temporary.
+Named value returns require `return move($variable);`, including named by-value
+parameters. This also permits explicit extraction from a reference parameter;
+the caller's referenced storage becomes empty. `return produce();` forwards a
+unique-valued call result. Contextual `return new T();` remains rejected for a
+unique result: first construct an explicitly typed unique local.
+
+Explicit arguments are evaluated left-to-right into temporaries. Each move extracts
+at its own evaluation point; consuming temporaries then transfer into the callee.
+A later argument failure prevents entry into that callee, destroys already-created
+argument temporaries and does not restore moved sources. Two explicit moves of the
+same source therefore supply its prior ownership first, then an empty handle.
+This is not Rust exclusive-borrow enforcement.
+
+Unique variadic packs, cross-type ownership conversions, conditional ownership joins,
+field/container transfer and implicit null argument/return conversions remain deferred.

@@ -64,6 +64,7 @@ final class Reference_Preparation
 		}
 		Type_Preparation::require_value_type($binding->type);
 		$binding->alias_target = $value->place;
+		$binding->boundary = value_boundary_operation::bind_reference;
 		$locals->add($entry->name, $binding);
 		return $binding;
 	}
@@ -132,6 +133,7 @@ final class Reference_Preparation
 		}
 		$facts = new prepared_return();
 		$facts->reference_target = $place;
+		$facts->boundary = value_boundary_operation::bind_reference;
 		return $facts;
 	}
 }

@@ -351,8 +351,9 @@ copy capability and pointee copyability are distinct: shared/weak handle copying
 must not require a copyable pointee. Named unique transfers must be explicit rather
 than silently stealing on ordinary assignment. The
 [v0.2 explicit-transfer contract](../../specs/type_use_modifiers.md#v02-explicit-unique-transfer--2026-10-06)
-admits immediate extraction with `move($source)` at local consuming boundaries.
-Consuming arguments/returns, broader allocation and member operations remain separate slices.
+admits immediate extraction with `move($source)` at local and fixed by-value argument/return
+boundaries. By-value unique call results are owned temporaries; reference results are not.
+Broader allocation, variadic transfer and member operations remain separate slices.
 
 Empty-state integration: all three families default empty and accept null storage
 initialization/assignment. Whole-variable `unset` resets the handle; aliases remain

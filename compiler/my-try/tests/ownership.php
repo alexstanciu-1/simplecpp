@@ -33,6 +33,22 @@ final class Ownership_Construction_Probe implements node_maintenance_worker_i
 
 	public function enter(ast_node $node): void
 	{
+		if ($node instanceof call_node)
+		{
+			$call = object_cast($node, call_node::class);
+			$call_facts = $call->require_call_preparation();
+			$role = Ownership_Conversions::role($call_facts->type);
+			if ($role !== null) {
+				if ($role->ownership_family() === ownership_kind::unique) {
+					ownership_source_check($call_facts->is_owned_temporary() === ($call_facts->signature->reference_return === null), 'Unique call result lost value/reference distinction');
+				}
+			}
+			foreach ($call_facts->arguments as $index => $argument_fact) {
+				if ($argument_fact->boundary === value_boundary_operation::consume_value) {
+					ownership_source_check($call->arguments[$index]->require_preparation()->is_owned_temporary(), 'Consume decision selected an ordinary value');
+				}
+			}
+		}
 		if ($node instanceof move_expression_node) {
 			$move = object_cast($node, move_expression_node::class);
 			$facts = $move->require_move_preparation();
@@ -73,6 +89,10 @@ final class Ownership_Construction_Probe implements node_maintenance_worker_i
 }
 
 $cases = [
+	'consume_return' => 'struct P { int $x; } function produce(): unique<P> { $p unique<P> = new P(); return move($p); } function forward(): unique<P> { return produce(); } function consume(unique<P> $p): bool { return isset($p); } $a = forward(); if (!$a) { return 1; } if (!consume(move($a))) { return 2; } if (isset($a)) { return 3; } if (!consume(produce())) { return 4; } $a = produce(); if (!$a) { return 5; } return 0;',
+	'consume_forward_parameter' => 'struct P { int $x; } function relay(unique<P> $p): unique<P> { return move($p); } function extract(unique<P> &$p): unique<P> { return move($p); } $a unique<P> = new P(); $b = relay(move($a)); if (isset($a)) { return 1; } $c = extract($b); if (isset($b)) { return 2; } if (!$c) { return 3; } return 0;',
+	'consume_order' => 'struct P { int $x; } function inspect(unique<P> $first, bool $source_present, unique<P> $second): int { if (!isset($first)) { return 1; } if ($source_present) { return 2; } if (isset($second)) { return 3; } return 0; } $a unique<P> = new P(); $result = inspect(move($a), isset($a), move($a)); return $result;',
+	'consume_alias' => 'struct P { int $x; } function identity(unique<P> $p): unique<P> { return move($p); } $a unique<P> = new P(); $alias =& $a; $alias = identity(move($a)); if (!$a) { return 1; } $b = identity(move($alias)); if (isset($a)) { return 2; } if (!$b) { return 3; } return 0;',
 	'move_local' => 'struct P { int $x; } $a unique<P> = new P(); $alias =& $a; $b = move($a); if (isset($a)) { return 1; } if (!empty($alias)) { return 2; } if (!$b) { return 3; } $a = move($b); if (!$alias) { return 4; } if ($b !== null) { return 5; } $c unique<P> = move($alias); if ($a !== null) { return 6; } if (!$c) { return 7; } return 0;',
 	'move_replace' => 'struct P { int $x; } $a unique<P> = new P(); $b unique<P> = new P(); $a = move($b); if (!$a) { return 1; } if (isset($b)) { return 2; } $a = move($a); if (!$a) { return 3; } $alias =& $a; $alias = move($a); if (!$a) { return 4; } $a = move($alias); if (!$alias) { return 5; } $a = move($b); if (!empty($alias)) { return 6; } $c = move($b); if (!empty($c)) { return 7; } return 0;',
 	'move_parameters' => 'struct P { int $x; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } $a unique<P> = new P(); $b unique<P>; transfer($a, $b); if (isset($a)) { return 1; } if (!$b) { return 2; } transfer($b, $b); if (!$b) { return 3; } return 0;',
@@ -104,7 +124,7 @@ foreach ($cases as $name => $source) {
 }
 
 // Native instrumentation consumes unmodified generated transfer code; weak markers expose destruction.
-$lifetime_source = ownership_source('struct P { shared<int> $marker; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } return 0;');
+$lifetime_source = ownership_source('struct P { shared<int> $marker; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } function relay(unique<P> $p): unique<P> { return move($p); } function call_relay(unique<P> &$p): unique<P> { return relay(move($p)); } function fail(): int { $n ?int = null; return $n; } function sink(unique<P> $p, int $n, int &$entered): void { $entered += 1; } function fail_after(unique<P> &$p, int &$entered): void { sink(move($p), fail(), $entered); } return 0;');
 $lifetime_harness = <<<'CPP'
 #undef main
 #include "scpp/memory.hpp"
@@ -130,6 +150,21 @@ int main() {
     } catch (const std::runtime_error&) {}
     if (destination.get() != nullptr) return 5;
     if (!static_cast<bool>(source_lifetime.expired())) return 6;
+    source = scpp::unique<record_P>();
+    source->field_marker = scpp::shared<scpp::int_t<>>();
+    auto call_lifetime = scpp::weak(source->field_marker);
+    identity = source.get();
+    auto returned = function_callU_relay(source);
+    if (source.get() != nullptr || returned.get() != identity) return 7;
+    if (static_cast<bool>(call_lifetime.expired())) return 8;
+    scpp::int_t<> entered{0};
+    bool failed = false;
+    try {
+        function_failU_after(returned, entered);
+    } catch (const std::exception&) { failed = true; }
+    if (!failed || entered.native_value() != 0) return 9;
+    if (returned.get() != nullptr) return 10;
+    if (!static_cast<bool>(call_lifetime.expired())) return 11;
     return 0;
 }
 CPP;
@@ -137,10 +172,19 @@ $lifetime_path = $output . '/move_lifetime.cpp';
 file_put_contents($lifetime_path, "#define main generated_program_main\n" . $lifetime_source . "\n" . $lifetime_harness);
 $executions[] = ['path' => $lifetime_path, 'exit_code' => 0];
 $rejections = [];
-foreach (['move($a);', 'if (move($a)) {}', '$b = empty(move($a));', '$b =& move($a);', '$b = move(move($a));', 'function consume(unique<P> $p): void {} consume(move($a));'] as $invalid) {
+foreach (['move($a);', 'if (move($a)) {}', '$b = empty(move($a));', '$b =& move($a);', '$b = move(move($a));'] as $invalid) {
 	$rejections[] = ['struct P { int $x; } $a unique<P> = new P(); ' . $invalid, 'move requires'];
 }
-$rejections[] = ['struct P { int $x; } function bad(unique<P> &$a): unique<P> { return move($a); }', 'move requires'];
+$rejections[] = ['function consume(unique<int> $a): void {} $a unique<int>; consume($a);', 'copyable'];
+$rejections[] = ['function bad(unique<int> $a): unique<int> { return $a; }', 'copyable'];
+$rejections[] = ['function borrow(unique<int> &$a): void {} $a unique<int>; borrow(move($a));', 'move requires'];
+$rejections[] = ['function bad(unique<int> ...$a): void {}', 'copyable'];
+$rejections[] = ['function &borrow(unique<int> &$a): unique<int> { return $a; } $a unique<int>; $b = borrow($a);', 'copyable'];
+$rejections[] = ['function produce(): unique<int> { $p unique<int>; return move($p); } $a =& produce();', 'stable'];
+$rejections[] = ['function produce(): unique<int> { $p unique<int>; return move($p); } struct H { unique<int> $p; } $h H; $h->p = produce();', 'fields'];
+$rejections[] = ['function produce(): unique<int> { $p unique<int>; return move($p); } struct H { unique<int> $p; } $h H; $alias =& $h->p; $alias = produce();', 'field aliases'];
+$rejections[] = ['function bad(unique<int> $a): unique<string> { return move($a); }', 'ownership boundary'];
+$rejections[] = ['function consume(unique<string> $a): void {} $a unique<int>; consume(move($a));', 'ownership boundary'];
 $rejections[] = ['$a shared<int>; $b = move($a);', 'unique ownership'];
 $rejections[] = ['$a weak<int>; $b = move($a);', 'unique ownership'];
 $rejections[] = ['$a = 1; $b = move($a);', 'unique ownership'];
@@ -271,6 +315,25 @@ try
 	$compiler->prepare();
 	$compiler->cpp();
 	ownership_source_check(Model::$cpp_files[0]->text === $move_output, 'Move cleanup changed output');
+
+	$consume_source = 'function sink(unique<int> $p): void {} $a unique<int>; sink(move($a)); return 0;';
+	file_put_contents($path, $consume_source);
+	$compiler->update_cpp([$path]);
+	$consume_output = Model::$cpp_files[0]->text;
+	file_put_contents($path, str_replace('unique<int> $p', 'unique<int> &$p', $consume_source));
+	foreach ([[$path], []] as $changes) {
+		$failed = false;
+		try { $compiler->update_cpp($changes); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'move requires'); }
+		ownership_source_check($failed && Model::$cpp_files->is_empty(), 'Passing-mode edit reused consuming argument facts');
+	}
+	file_put_contents($path, $consume_source);
+	$compiler->update_cpp([$path]);
+	ownership_source_check(Model::$cpp_files[0]->text === $consume_output, 'Consume repair changed output');
+	Compiler_Lifecycle::reset_preparation();
+	$compiler->prepare();
+	$compiler->cpp();
+	ownership_source_check(Model::$cpp_files[0]->text === $consume_output, 'Consume cleanup changed output');
 }
 finally {
 	unlink($path);

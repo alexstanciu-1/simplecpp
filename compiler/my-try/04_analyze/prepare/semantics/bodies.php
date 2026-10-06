@@ -197,7 +197,8 @@ final class Body_Preparation
 			$binding->declaration = $previous[0]->declaration;
 			$binding->type = $previous[0]->storage_type();
 			if ($value !== null) {
-				if ($value->value_origin === expression_value_origin::explicit_transfer) {
+				if (($value->value_origin === expression_value_origin::explicit_transfer)
+					|| ($value->value_origin === expression_value_origin::owned_call_result)) {
 					Move_Preparation::require_whole_place(Reference_Preparation::storage_place($previous[0]));
 				}
 			}
@@ -221,7 +222,7 @@ final class Body_Preparation
 			}
 		}
 		if ($value !== null) {
-			Capability_Preparation::require_initialization($binding->type, $binding->conversion, $context, $value);
+			$binding->boundary = Value_Boundary_Preparation::decide($binding->type, $binding->conversion, $context, $value);
 		}
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$locals->add($entry->name, $binding);
@@ -260,13 +261,14 @@ final class Body_Preparation
 		}
 
 		$expression /** expression_node */ = $syntax->expression;
-		$value = Expression_Preparation::prepare($expression, $context, $context->return_type);
+		$value = Expression_Preparation::prepare($expression, $context, $context->return_type,
+			expression_consumer::consuming_return);
 		if ($context->return_type !== null) {
 			$type /** canonical_type_use */ = $context->return_type;
 			$facts->conversion = Conversion_Preparation::decide(
 				$value->type, $type, conversion_context::return_value);
 			if (Type_Queries::canonical($type)->family() !== type_family::no_value) {
-				Capability_Preparation::require_copy($type, $context);
+				$facts->boundary = Value_Boundary_Preparation::decide($type, $facts->conversion, $context, $value);
 			}
 		}
 		elseif (!Type_Preparation::entry_return_type($value->type)) {

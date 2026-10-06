@@ -11,6 +11,7 @@ enum expression_value_origin
 	case ordinary;
 	case fresh_construction;
 	case explicit_transfer;
+	case owned_call_result;
 }
 
 /** The immediate consumer selects admission; this does not propagate into child expressions. */
@@ -19,6 +20,17 @@ enum expression_consumer
 	case value;
 	case local_storage;
 	case typed_local_initialization;
+	case consuming_argument;
+	case consuming_return;
+}
+
+/** Storage admission is independent of type conversion and runtime representation. */
+enum value_boundary_operation
+{
+	case copy_value;
+	case consume_value;
+	case bind_reference;
+	case construct_empty;
 }
 
 /** Common backend-neutral result of preparing an expression. */
@@ -42,7 +54,8 @@ abstract class prepared_expression {
 	public function is_owned_temporary(): bool
 	{
 		return ($this->value_origin === expression_value_origin::fresh_construction)
-			|| ($this->value_origin === expression_value_origin::explicit_transfer);
+			|| ($this->value_origin === expression_value_origin::explicit_transfer)
+			|| ($this->value_origin === expression_value_origin::owned_call_result);
 	}
 }
 
@@ -325,6 +338,7 @@ abstract class prepared_storage {
 
 /** A local binding or member write retains its resolved storage declaration and canonical type. */
 final class prepared_binding extends prepared_storage {
+	public ?value_boundary_operation $boundary = null;
 	/** Alias declarations retain the original place, never a second owning root. */
 	public ?prepared_place $alias_target = null;
 	public canonical_type_use $type;
@@ -418,6 +432,7 @@ final class prepared_call extends prepared_expression
 /** A reference argument has no conversion; a by-value argument requires one decision. */
 final class prepared_call_argument
 {
+	public value_boundary_operation $boundary;
 	public ?conversion_decision $conversion = null;
 
 	public function require_conversion(): conversion_decision
@@ -642,6 +657,7 @@ final class prepared_index_path_step
 /** A typed value return owns a decision; void and program-entry returns do not. */
 final class prepared_return
 {
+	public ?value_boundary_operation $boundary = null;
 	public ?conversion_decision $conversion = null;
 	/** A verified reference return bypasses value conversion and copying. */
 	public ?prepared_place $reference_target = null;

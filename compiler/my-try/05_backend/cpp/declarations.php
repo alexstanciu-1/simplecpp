@@ -216,13 +216,18 @@ final class CPP_Declarations
 			$value = (new CPP_Syntax($context))->expression($argument);
 			$name = 'argument_' . $context->next_temporary;
 			$context->next_temporary++;
-			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
-			if ($parameter->mode === passing_mode::value) {
+			$boundary = $prepared_arguments[$index]->boundary;
+			$reference = $boundary === value_boundary_operation::bind_reference ? '&' : '';
+			if ($boundary !== value_boundary_operation::bind_reference) {
 				$value = self::conversion(
 					$value, $prepared_arguments[$index]->require_conversion(), $context);
 			}
 
 			$text .= "\t" . self::type($argument_type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+			if ($boundary === value_boundary_operation::consume_value) {
+				$context->headers['utility'] = true;
+				$name = 'std::move(' . $name . ')';
+			}
 			if ($index < $facts->fixed_count) {
 				$names .= $separator . $name;
 				$separator = ', ';

@@ -25,10 +25,10 @@ python3 compiler/my-try/tests/ownership.py --results /tmp/FRESH_OWNERSHIP_RESULT
 
 Runs model, registration, capability, allocation, local transfer, empty/reset/presence
 and source recovery checks, then compiles generated programs without PCH. A native
-lifetime harness calls generated transfer code to observe identity, replacement and
-unwinding release. Allocation is bounded to default source structs. Consuming unique
-arguments/returns, weak locking, source user-destructors and a native compiler rebuild
-are not proved.
+lifetime harness calls generated local/call/return transfer code to observe identity,
+replacement and unwinding release, including failure of a later argument before
+callee entry. Allocation is bounded to default source structs. Weak locking,
+source user-destructors and a native compiler rebuild are not proved.
 
 For whole-storage unset/clean and their alias effects:
 
