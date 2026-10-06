@@ -164,7 +164,7 @@ abstract class control_transfer_node extends statement_node
 	}
 }
 
-/** File-level declarations only in the current grammar: functions and structs. */
+/** Source namespace-body declarations, distinct from executable statements. */
 abstract class declaration_node extends ast_node
 {
 }

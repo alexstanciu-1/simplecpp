@@ -12,7 +12,7 @@ redundant modifier.
 The current registry establishes default value storage from its registered facts:
 
 - boolean, integer and floating families;
-- nominal definitions whose kind is `structure`;
+- nominal definitions whose kind is `structure` or `enumeration`;
 - template applications whose registered result kind is `structure`.
 
 This rule does not inspect source spelling, C++ type names or target layout. A custom
@@ -23,6 +23,11 @@ fields can be copied. Source structs follow the
 [memberwise copy contract](compact_layout_types.md); owned copies require the
 [`copyable_value` contract](metaprogramming_contract.md#61-default-contract-for-a-bare-type-parameter).
 Neither the presence nor the normalization of an AST modifier grants copy permission.
+
+Enums retain their own nominal identity even when stored in an integer representation.
+Redundant `value<Enum>` normalization does not grant integer conversions, arithmetic,
+reference compatibility with the backing integer, or default initialization. Enum
+backing/storage rules remain governed by [compact layout types](compact_layout_types.md#3-enum-semantics).
 
 Under the [v0.2 separated-family contract](dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05),
 both `mixed` and tagged `dynamic` are value-stored bindings. `value<dynamic>` is

@@ -248,9 +248,9 @@ final class scope
 	}
 
 	/** Source-only identity snapshot for preparation observations and legacy consumers. */
-	public function source_types_named(string $name): array /** vector<collected_struct> */
+	public function source_types_named(string $name): array /** vector<collected_type_definition> */
 	{
-		$result /** vector<collected_struct> */ = [];
+		$result /** vector<collected_type_definition> */ = [];
 		foreach ($this->types_named($name) as $definition) {
 			if ($definition->origin() === type_definition_origin::source) {
 				$result[] = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());

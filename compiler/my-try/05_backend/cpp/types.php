@@ -65,6 +65,9 @@ final class CPP_Types
 		}
 		if ($definition->origin() === type_definition_origin::source) {
 			$entry = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+			if (!($entry instanceof collected_struct)) {
+				throw new \LogicException('C++ representation is not implemented for this source type declaration');
+			}
 			$result->spelling = CPP_Generator::source_name('record', $entry->qualified_name());
 			if ($requirement === cpp_type_requirement::complete) {
 				self::add_header($result, CPP_Artifacts::type_header($entry->qualified_name()));

@@ -23,10 +23,60 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-VAR-006](#type-var-006) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-006A](#type-var-006a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-007](#type-var-007) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [ENUM-001](#enum-001) | pending-discussion | `enum Suit { case Hearts; case Spades; }` | unverified | unverified | deferred | — |
-| [ENUM-002](#enum-002) | pending-discussion | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | unverified | unverified | deferred | — |
+| [ENUM-001](#enum-001) | agreed | `enum Suit { case Hearts; case Spades; }` | model proved; grammar/preparation pending | pending | deferred | [Model checkpoint](#enum-model-foundation--2026-10-06) |
+| [ENUM-002](#enum-002) | agreed | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | shared model proved; backing validation pending | pending | deferred | Includes exact fixed-width backing; [model checkpoint](#enum-model-foundation--2026-10-06) |
 | [ENUM-003](#enum-003) | pending-discussion | `Color::tryFrom('green')?->name ?? 'null'` | unverified | unverified | deferred | — |
 | [ENUM-004](#enum-004) | pending-discussion | `enum Status implements HasLabel { case Open; public function label(): string { return 'open'; } }` | unverified | unverified | deferred | — |
+
+## Enum model foundation — 2026-10-06
+
+Agreed grouping: reconcile value-storage/construction cards against existing CH07
+support and CH10 prerequisites; implement core unit/integer/fixed-backed enums
+together; keep extended helpers, string backing, methods/interfaces separate.
+
+The first implemented slice is deliberately model-only:
+
+- One `enum_node` owns optional backing syntax and ordered `enum_case_node` entries;
+  each case owns an optional value expression. No redundant flavor flag or namespace
+  constant publication. Inspection and maintenance share the same owning edges.
+- Final `enum_type_definition` extends the existing nominal abstract with the
+  `enumeration` kind. It remains nominal, value-stored and distinct from integers.
+  Registry normalization removes redundant `value<Enum>`, without granting operations.
+- `collected_type_definition` groups source structs and enums. The existing weak
+  source-type association, publication, reuse and retirement paths accept that role.
+  Record-only queries/consumers remain explicitly narrowed; no second registry.
+- Backing resolution, exact case values, storage choice and source capabilities belong
+  to subsequent preparation. No mutable derived facts or C++ spelling live in the registry.
+
+Next vertical slice: authored declarations/case references, typed boundaries and C++
+`enum class` artifacts. Unit storage is smallest fitting unsigned; `int` backing uses
+the smallest fitting integer, signed when negatives require it; explicit fixed backing
+is exact width under [the normative contract](../../../../specs/compact_layout_types.md#3-enum-semantics).
+Legacy `enumStorageType`, `emitEnumClass` and `validateEnumCases` were reviewed:
+preserve literal-only backing, nonempty enums, unique names/values and range checks.
+Do not inherit host-integer precision assumptions. Default initialization and helper
+admission are not decided by this model checkpoint.
+
+Proof: [enum_model.php](../../tests/enum_model.php) assembles syntax directly and checks
+identity, storage normalization, distinct same-name declarations, source association,
+both publication paths, reuse, retirement, ordered independent traversal and the
+remaining source/C++ gates. Existing struct/namespace/incremental regressions remain
+separate proofs. No enum parser, preparation facts, execution or native compiler build
+is claimed. The portable-PHP skill guided typed collections, explicit narrowing and
+weak association ownership.
+
+Focused PHP checkpoint: **11 suites passed** (`enum_model`, `type_catalog`,
+`parse_collection`, `incremental_cpp`, `incremental_preparation`, `capabilities`,
+`ast`, `token_cleanup`, `namespaces`, `source_constants`, `s2s`) through the shared
+12-slot runner, with automatic CLI fallback after sandbox FPM startup rejection.
+Command evidence: `/tmp/my-try-enum-model-final-20261006-1/commands.json`.
+No portability conversion or native compiler rebuild was run.
+
+Validation note: the older [model.php](../../tests/model.php) fails its hardcoded
+built-in-count assertion before reaching source checks. Reproduced identically on
+unchanged `d12ab9db`; this is pre-existing test-maintenance debt, not an enum regression.
+Repair/reconcile that legacy suite before using it as a current whole-model proof.
+
 ## TYPE-VAR-006
 
 **Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
@@ -146,7 +196,8 @@ value_p<Point> p = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));
 
 ## ENUM-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared nominal enum model; prepared unit cases will
+lower to compact `enum class`. [Model-only checkpoint](#enum-model-foundation--2026-10-06).
 
 ### Imported version 1
 
@@ -181,7 +232,9 @@ generated native C++ scoped enum with compact underlying storage
 
 ## ENUM-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Same model as unit enums; preparation will distinguish
+compact `int` backing from exact fixed-width backing through resolved type identity.
+[Model-only checkpoint](#enum-model-foundation--2026-10-06).
 
 ### Imported version 1
 

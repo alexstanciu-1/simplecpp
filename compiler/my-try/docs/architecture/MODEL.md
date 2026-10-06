@@ -425,6 +425,20 @@ operation capability. Registered copy/storage contracts do not claim deep copyin
 hashability, comparison, iteration or member dispatch. Runtime payload tags and
 value-dependent validation remain runtime-owned; backend bindings are independent.
 
+`enum_type_definition` is another final nominal sibling with the `enumeration` kind.
+It reuses `nominal_type` interning and default value-storage normalization without
+becoming an integer or a record. The registry owns no case inventory, backing syntax,
+computed storage width or source-derived capabilities. These remain subsequent
+declaration-preparation work, not installed registry facts.
+
+`collected_type_definition` is the common source-declaration role for structs and
+enums. `Source_Type_Declarations` weakly associates exact semantic IDs with that
+role; collection/publication/retirement share the existing paths. `Type_Queries::source_declaration`
+reads that general association, whereas `source_record` returns only a struct.
+Struct reconciliation and record-only backend consumers explicitly narrow the role.
+There is no parallel enum registry or new Model root. Enum source parsing, prepared
+facts and emission remain disabled in the model-only checkpoint.
+
 `ownership_type_definition` is another final template sibling implementing
 `ownership_semantics`, with an immutable shared/unique/weak kind and exact target
 query. Its fixed handle-copy capabilities do not depend on pointee copyability.

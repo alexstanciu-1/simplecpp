@@ -12,6 +12,8 @@ enum node_category {
 enum node_kind
 {
 	case struct_declaration;
+	case enum_declaration;
+	case enum_case;
 	case field_declaration;
 	case field_expression;
 	case file;

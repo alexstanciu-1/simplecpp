@@ -41,8 +41,11 @@ final class Symbol_Collector
 	public function previous_struct(scope $scope, string $name): ?struct_node
 	{
 		foreach ($scope->source_types_named($name) as $entry) {
+			if (!($entry instanceof collected_struct)) {
+				continue;
+			}
 			if ($this->unseen($entry)) {
-				return $entry->syntax();
+				return object_cast($entry, collected_struct::class)->syntax();
 			}
 		}
 		return null;
@@ -121,10 +124,26 @@ final class Symbol_Collector
 			return;
 		}
 		$entry = new collected_struct($this->collection, $node);
+		$this->register_source_type($entry, $scope, $node->name, $index);
+	}
+
+	/** Model entry point; source enum grammar and preparation remain a subsequent slice. */
+	public function collect_enum(enum_node $node, scope $scope, int $index): void
+	{
+		if ($this->reuse($node, $index)) {
+			return;
+		}
+		$entry = new collected_enum($this->collection, $node);
+		$this->register_source_type($entry, $scope, $node->name, $index);
+	}
+
+	/** All nominal source declarations share publication and association ownership. */
+	private function register_source_type(collected_type_definition $entry, scope $scope, string $name, int $index): void
+	{
 		$entry->retained_symbol = true;
-		$this->append($entry, $scope, $node->name, $index);
-		$structure_definition = Source_Types::definition($entry);
-		$scope->register_type_as($entry->name, object_cast($structure_definition, type_definition_i::class));
+		$this->append($entry, $scope, $name, $index);
+		$definition = Source_Types::definition($entry);
+		$scope->register_type_as($entry->name, object_cast($definition, type_definition_i::class));
 		$this->publish($entry, $scope);
 	}
 

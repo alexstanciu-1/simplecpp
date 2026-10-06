@@ -1752,7 +1752,7 @@ $language_integer = Type_Queries::canonical(Language_Types::integer(Model::$lang
 if (count($found) !== 1 || $found[0] !== $language_integer) {
 	throw new \LogicException('Deleted source type blocked parent lookup');
 }
-$replacement = Model::$type_catalog->define_source_structure('int', $entry)->nominal_definition();
+$replacement = Model::$type_catalog->define_source_structure('int', object_cast($entry, collected_struct::class))->nominal_definition();
 $entry->changes = 0;
 $local->register_type($replacement);
 if (Scope_Lookup::types($local, 'int')[0] !== $replacement) {

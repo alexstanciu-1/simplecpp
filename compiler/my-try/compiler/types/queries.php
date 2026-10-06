@@ -10,7 +10,8 @@ final class Type_Queries
 		return Model::$type_catalog->registry()->type($type->type_id());
 	}
 
-	public static function source_record(canonical_type_use $type): ?collected_struct
+	/** Resolve only established source provenance; runtime/language definitions have no source owner. */
+	public static function source_declaration(canonical_type_use $type): ?collected_type_definition
 	{
 		$canonical = self::canonical($type);
 		$definition = $canonical->definition();
@@ -18,5 +19,15 @@ final class Type_Queries
 			return null;
 		}
 		return Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+	}
+
+	/** A source type need not have fields or record layout. */
+	public static function source_record(canonical_type_use $type): ?collected_struct
+	{
+		$declaration = self::source_declaration($type);
+		if ($declaration instanceof collected_struct) {
+			return object_cast($declaration, collected_struct::class);
+		}
+		return null;
 	}
 }

@@ -11,7 +11,7 @@ final class Scope_Publication
 		if (($entry instanceof collected_function) || ($entry instanceof collected_constant)) {
 			$global->register($entry);
 		}
-		elseif ($entry instanceof collected_struct)
+		elseif ($entry instanceof collected_type_definition)
 		{
 			foreach ($local_scope->types_named($entry->name) as $definition) {
 				if ($definition->origin() === type_definition_origin::source) {

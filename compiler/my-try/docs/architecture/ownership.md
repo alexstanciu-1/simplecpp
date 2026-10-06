@@ -96,6 +96,13 @@ owners retained by the parsed file. Occurrences observe syntax, collection and s
 name-bearing nodes observe their canonical occurrence. Scope indexes reference
 those same records. Publication shares identities rather than copying definitions.
 
+Enums own optional backing-type syntax and ordered case nodes; each case owns its
+optional value expression. Cases have no namespace constant occurrence or parent
+backlink. The enum's collected source-type identity shares the ordinary declaration
+inventory; the generalized semantic-definition association observes it weakly.
+No new scope, registry root, worker or prepared case inventory is introduced by the
+enum model slice.
+
 Prepared facts retain canonical types and reference collected declarations.
 Calls weakly observe a `callable_target_i` owned by source collection or the runtime
 callable catalog. Their declaration-independent signature shares parameter contracts

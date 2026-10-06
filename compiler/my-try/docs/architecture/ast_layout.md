@@ -12,6 +12,13 @@ retains the former `03_parse/proposal/` snapshots when historical comparison is 
 
 ## Typed ownership
 
+`enum_node` is one declaration shape with a name, optional backing-type syntax and
+ordered `Storage<enum_case_node>`. Each case owns a name and optional value expression.
+No unit/int/fixed-width flag duplicates the syntax. Independent lazy inspection
+cursors and maintenance visit backing syntax before cases, and a case's value once.
+This is a model-only foundation; parser admission and preparation/emission remain
+the next slice. Cases are not namespace-level constant declarations.
+
 `statement_body_node` is an abstract statement owning `Storage<statement_node>`
 and its source span. It shares construction, inspection and maintenance.
 `block_node` is an empty final subclass; `function_body_node` adds executable-unit

@@ -114,13 +114,14 @@ final class LLVM_Legacy_Name_Preparation
 					$result->template_slots[$entry->token_index] = $current_scope->template_slot($entry->name);
 					break;
 				}
-				$type_candidates /** vector<collected_struct> */ = [];
+				$type_candidates /** vector<collected_type_definition> */ = [];
 				$type_candidates = $current_scope->source_types_named($entry->name);
 				if (q_count($type_candidates) !== 0) {
 					if (q_count($type_candidates) !== 1) {
 						throw new \RuntimeException('Ambiguous struct type: ' . $entry->name);
 					}
-					$result->types[$entry->token_index] = $type_candidates[0];
+					// Parked LLVM retains its record-only admission; general type lookup does not widen it.
+					$result->types[$entry->token_index] = object_cast($type_candidates[0], collected_struct::class);
 					break;
 				}
 				$parent = $current_scope->parent_scope();

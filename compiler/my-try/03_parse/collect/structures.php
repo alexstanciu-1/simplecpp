@@ -9,6 +9,7 @@ namespace scpp\compiler;
 enum collected_name_kind
 {
 	case struct_declaration;
+	case enum_declaration;
 	case field_declaration;
 	case field_reference;
 	case variable_declaration;
@@ -177,7 +178,39 @@ final class collected_constant extends collected_definition implements constant_
 	public function value(): constant_value { return $this->syntax_node->require_preparation(); }
 }
 
-final class collected_struct extends collected_definition
+/** Shared source-type identity; record-only consumers must explicitly narrow to collected_struct. */
+abstract class collected_type_definition extends collected_definition
+{
+}
+
+final class collected_enum extends collected_type_definition
+{
+	/** @reference.source parsed_file.root (syntax graph) */
+	private enum_node $syntax_node;
+
+	public function __construct(collected_file $collection, enum_node $node)
+	{
+		parent::__construct($collection);
+		$this->syntax_node = $node;
+	}
+
+	public function syntax(): ast_node
+	{
+		return $this->syntax_node;
+	}
+
+	public function enum_syntax(): enum_node
+	{
+		return $this->syntax_node;
+	}
+
+	public function kind(): collected_name_kind
+	{
+		return collected_name_kind::enum_declaration;
+	}
+}
+
+final class collected_struct extends collected_type_definition
 {
 	/** @reference.source parsed_file.root (syntax graph) */
 	private struct_node $syntax_node;

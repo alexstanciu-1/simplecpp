@@ -69,6 +69,53 @@ abstract class children_iterator implements child_iterator_i
 	}
 }
 
+/** Optional backing syntax precedes the enum-owned case sequence. */
+final class enum_children_iterator extends children_iterator
+{
+	private bool $backing_read = false;
+	private Storage_Cursor $case_cursor /** Storage_Cursor<enum_case_node> */;
+
+	public function __construct(private enum_node $source)
+	{
+		$this->case_cursor = new Storage_Cursor /** Storage_Cursor<enum_case_node> */($source->cases);
+	}
+
+	/** Independent cursors share syntax, not a copied case inventory. */
+	protected function read_next(): ?ast_node
+	{
+		if (!$this->backing_read) {
+			$this->backing_read = true;
+			if ($this->source->backing_type !== null) {
+				return $this->source->backing_type;
+			}
+		}
+		if (!$this->case_cursor->valid()) {
+			return null;
+		}
+		$case_node = $this->case_cursor->current();
+		$this->case_cursor->next();
+		return $case_node;
+	}
+}
+
+final class enum_case_children_iterator extends children_iterator
+{
+	private bool $consumed = false;
+
+	public function __construct(private enum_case_node $source)
+	{
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) {
+			return null;
+		}
+		$this->consumed = true;
+		return $this->source->value;
+	}
+}
+
 /** Inspect the declaration's single initializer without manufacturing a child collection. */
 final class constant_children_iterator extends children_iterator
 {

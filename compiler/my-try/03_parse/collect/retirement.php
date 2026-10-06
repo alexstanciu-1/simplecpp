@@ -29,8 +29,8 @@ final class Collection_Retirement
 				$published /** scope */ = $global;
 				$published->unregister($entry);
 			}
-			if ($entry instanceof collected_struct) {
-				Model::$type_catalog->source_declarations()->retire(object_cast($entry, collected_struct::class));
+			if ($entry instanceof collected_type_definition) {
+				Model::$type_catalog->source_declarations()->retire(object_cast($entry, collected_type_definition::class));
 			}
 			$removed[] = $entry->local_index;
 		}

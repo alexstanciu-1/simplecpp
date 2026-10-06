@@ -268,16 +268,16 @@ final class Runtime_Type_Providers
 final class source_type_declaration
 {
 	/** @storage.reference collected_file.entries @reference.weak */
-	private collected_struct $source_declaration /** weak<collected_struct> */;
+	private collected_type_definition $source_declaration /** weak<collected_type_definition> */;
 
-	public function __construct(collected_struct $declaration)
+	public function __construct(collected_type_definition $declaration)
 	{
 		$this->source_declaration = $declaration;
 	}
 
-	public function declaration(): collected_struct
+	public function declaration(): collected_type_definition
 	{
-		return object_cast(weakref_get($this->source_declaration), collected_struct::class);
+		return object_cast(weakref_get($this->source_declaration), collected_type_definition::class);
 	}
 }
 
@@ -286,7 +286,7 @@ final class Source_Type_Declarations
 {
 	private array $declarations /** hash<source_type_declaration, int> */ = [];
 
-	public function register(nominal_type_definition $definition, collected_struct $declaration): void
+	public function register(abstract_nominal_type_definition $definition, collected_type_definition $declaration): void
 	{
 		if ($definition->origin() !== type_definition_origin::source) {
 			throw new \InvalidArgumentException('Source declaration requires a source type definition');
@@ -298,7 +298,7 @@ final class Source_Type_Declarations
 		$this->declarations[$id] = new source_type_declaration($declaration);
 	}
 
-	public function declaration(int $definition_id): collected_struct
+	public function declaration(int $definition_id): collected_type_definition
 	{
 		Type_Identity::require_valid($definition_id, 'Source type definition identity');
 		if (!isset($this->declarations[$definition_id])) {
@@ -313,7 +313,7 @@ final class Source_Type_Declarations
 	}
 
 	/** Remove every semantic association for one retired collected declaration. */
-	public function retire(collected_struct $declaration): void
+	public function retire(collected_type_definition $declaration): void
 	{
 		foreach ($this->declarations as $definition_id => $association) {
 			if ($association->declaration() === $declaration) {
@@ -382,6 +382,16 @@ final class registered_type_catalog
 		$capabilities /** vector<generic_contract> */ = [];
 		$definition = $this->type_registry->define_nominal($name, type_definition_origin::source,
 			nominal_type_kind::structure, $capabilities);
+		$this->source_declaration_index->register($definition, $declaration);
+		$type = $this->type_registry->canonical($definition);
+		return object_cast($type, nominal_type::class);
+	}
+
+	/** No case-derived capabilities or backing representation are published before preparation. */
+	public function define_source_enum(string $name, collected_enum $declaration): nominal_type
+	{
+		$capabilities /** vector<generic_contract> */ = [];
+		$definition = $this->type_registry->define_enum($name, type_definition_origin::source, $capabilities);
 		$this->source_declaration_index->register($definition, $declaration);
 		$type = $this->type_registry->canonical($definition);
 		return object_cast($type, nominal_type::class);

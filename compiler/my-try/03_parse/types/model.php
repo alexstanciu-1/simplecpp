@@ -39,6 +39,7 @@ enum nominal_type_kind: int
 {
 	case structure = 1;
 	case class_type = 2;
+	case enumeration = 3;
 }
 
 enum floating_format: int
@@ -277,7 +278,7 @@ final class floating_type_definition extends semantic_type_definition implements
 	}
 }
 
-/** A source or predefined structure/class definition; its members retain their existing owners. */
+/** A nominal identity; source members and derived facts retain their existing owners. */
 abstract class abstract_nominal_type_definition extends semantic_type_definition implements concrete_type_definition_i
 {
 	private nominal_type_kind $nominal_kind_data;
@@ -307,6 +308,16 @@ abstract class abstract_nominal_type_definition extends semantic_type_definition
 
 final class nominal_type_definition extends abstract_nominal_type_definition
 {
+}
+
+/** Enum identity is nominal; backing syntax, case values and storage selection are not registry facts. */
+final class enum_type_definition extends abstract_nominal_type_definition
+{
+	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */)
+	{
+		parent::__construct($identity, $source_name, $origin, nominal_type_kind::enumeration, $capabilities);
+	}
 }
 
 /** Broad boxed-value semantics; operation admission remains preparation-owned. */
@@ -1000,6 +1011,14 @@ final class Type_Registry implements type_capability_query
 		return $definition;
 	}
 
+	public function define_enum(string $name, type_definition_origin $origin,
+		array $capabilities /** vector<generic_contract> */): enum_type_definition
+	{
+		$definition = new enum_type_definition($this->allocate_definition_id(), $name, $origin, $capabilities);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
 	public function define_dynamic(string $name, type_definition_origin $origin,
 		array $capabilities /** vector<generic_contract> */): dynamic_type_definition
 	{
@@ -1140,7 +1159,8 @@ final class Type_Registry implements type_capability_query
 		$definition = $type->definition();
 		if ($definition instanceof abstract_nominal_type_definition) {
 			$nominal = object_cast($definition, abstract_nominal_type_definition::class);
-			return $nominal->nominal_kind() === nominal_type_kind::structure;
+			return ($nominal->nominal_kind() === nominal_type_kind::structure)
+				|| ($nominal->nominal_kind() === nominal_type_kind::enumeration);
 		}
 		if ($definition instanceof abstract_template_type_definition) {
 			$template_definition = object_cast($definition, abstract_template_type_definition::class);
