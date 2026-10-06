@@ -17,18 +17,20 @@ final class Structure_Access_Test
 	/** Named access, generic traversal and snapshots must observe the same published tree. */
 	public static function run(): void
 	{
+		Compiler_Lifecycle::reset();
 		$source = new file();
 		$source->path = 'access.phs';
 		$source->content = 'function add(int $a, int $b): int { return $a; } $x int = add(1, 2);';
 		$parsed = (new Parser((new Tokenizer($source))->tokenize()))->parse();
 		$root = $parsed->root;
-		$function = $root->declarations[0];
-		$binding = $root->body->statements[0];
+		self::check(iterator_to_array($root->children()) === [$root->single_body()], 'File bypassed namespace-body ownership');
+		$function = $root->single_body()->declarations[0];
+		$binding = $root->single_body()->body->statements[0];
 		$call = $binding->initializer;
 		self::check($parsed->source_file() === $source, 'Source identity changed');
-		self::check($parsed->root_scope() === $root->file_scope(), 'File scope changed');
-		self::check($root->body->local_scope() !== $root->file_scope(), 'File and executable scopes collapsed');
-		self::check($function->signature_scope()->parent_scope() === $root->file_scope(), 'Signature scope ancestry changed');
+		self::check($parsed->root_scope() === $root->single_body()->body_scope(), 'File scope changed');
+		self::check($root->single_body()->body->local_scope() !== $root->single_body()->body_scope(), 'File and executable scopes collapsed');
+		self::check($function->signature_scope()->parent_scope() === $root->single_body()->body_scope(), 'Signature scope ancestry changed');
 		$children = iterator_to_array($function->children());
 		self::check($children === [$function->parameters[0], $function->parameters[1], $function->return_type, $function->body], 'Function grammar order changed');
 		self::check(iterator_to_array($call->children()) === [$call->arguments[0], $call->arguments[1]], 'Call order changed');

@@ -29,7 +29,7 @@ try
 	{
 		take_source($path, '$r result<int> = 1; $v = 0; $e error; $ok bool = ' . $expression . ';');
 		$root = Model::syntax_files()[0]->root;
-		$node = $root->body->statements[3]->initializer;
+		$node = $root->single_body()->body->statements[3]->initializer;
 		take_check($node instanceof take_expression_node, 'Take spellings must share a node');
 		take_check($node->require_preparation()->operation === take_operation::error_result, 'Wrong take family');
 		Preparation_Cleanup::tree($root);

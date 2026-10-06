@@ -463,6 +463,17 @@ final class prepared_call_argument
 /** Completed file preparation; the source tree owns the actual facts. */
 final class prepared_file {
 	public collected_file $source;
+	/** Selected by analysis, never by a backend; syntax remains the owner. */
+	public ?function_body_node $entry_body /** weak<function_body_node> */ = null;
+
+	public function executable_body(): function_body_node
+	{
+		$body = \weakref_get($this->entry_body);
+		if ($body === null) {
+			throw new \RuntimeException('Executable body requires completed file preparation');
+		}
+		return $body;
+	}
 }
 
 /** Invocation-local call-cycle vertex; integer edges do not retain other vertices. */

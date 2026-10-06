@@ -24,7 +24,7 @@ function operator_test_source(string $text): parsed_file
 }
 
 $syntax = operator_test_source('$a = 1; $b = $a + 2; return $b;');
-$statements /** Storage<statement_node> */ = $syntax->root->body->statements;
+$statements /** Storage<statement_node> */ = $syntax->root->single_body()->body->statements;
 $assignment = object_cast(object_cast($statements[1], expression_statement_node::class)->expression,
 assignment_expression_node::class);
 $binary = object_cast($assignment->value, binary_expression_node::class);
@@ -49,7 +49,7 @@ if (!str_contains($text, 'auto local_b = (local_a + static_cast<scpp::int_t<>>(2
 }
 
 $syntax = operator_test_source('$a = 1 + 2 + 3; return $a;');
-$statements = $syntax->root->body->statements;
+$statements = $syntax->root->single_body()->body->statements;
 $assignment = object_cast(object_cast($statements[0], expression_statement_node::class)->expression,
 assignment_expression_node::class);
 $outer = object_cast($assignment->value, binary_expression_node::class);
@@ -62,7 +62,7 @@ if (($inner->require_binary_preparation()->decision->operation !== operator_oper
 }
 
 $syntax = operator_test_source('$a = 10; $b = $a - 3; return $b;');
-$statements = $syntax->root->body->statements;
+$statements = $syntax->root->single_body()->body->statements;
 $assignment = object_cast(object_cast($statements[1], expression_statement_node::class)->expression,
 assignment_expression_node::class);
 $binary = object_cast($assignment->value, binary_expression_node::class);
@@ -86,13 +86,13 @@ if (!str_contains(CPP_Probe::text(Model::$cpp_files), 'auto local_b = (local_a -
 
 // Mixed additive chains share precedence; grouping changes the existing binary tree.
 $syntax = operator_test_source('return 10 - 3 + 2;');
-$outer = $syntax->root->body->statements[0]->expression;
+$outer = $syntax->root->single_body()->body->statements[0]->expression;
 if (($outer->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)
 || ($outer->left->require_binary_preparation()->decision->operation !== operator_operation::integer_subtraction)) {
 	throw new \LogicException('Addition and subtraction do not share left associativity');
 }
 $syntax = operator_test_source('return 10 - (3 - 2);');
-$outer = $syntax->root->body->statements[0]->expression;
+$outer = $syntax->root->single_body()->body->statements[0]->expression;
 if (($outer->left instanceof binary_expression_node)
 || ($outer->right->require_binary_preparation()->decision->operation !== operator_operation::integer_subtraction)) {
 	throw new \LogicException('Subtraction lost right grouping');
@@ -100,7 +100,7 @@ if (($outer->left instanceof binary_expression_node)
 
 // Multiplication retains the same operand facts and forms a tighter binary subtree.
 $syntax = operator_test_source('return 2 + 3 * 4 - 5;');
-$outer = $syntax->root->body->statements[0]->expression;
+$outer = $syntax->root->single_body()->body->statements[0]->expression;
 $sum = $outer->left;
 $product = $sum->right;
 $decision = $product->require_binary_preparation()->decision;
@@ -120,12 +120,12 @@ foreach ($decision->operands as $operand) {
 	}
 }
 $syntax = operator_test_source('return 2 * 3 * 4;');
-$outer = $syntax->root->body->statements[0]->expression;
+$outer = $syntax->root->single_body()->body->statements[0]->expression;
 if (!($outer->left instanceof binary_expression_node) || ($outer->right instanceof binary_expression_node)) {
 	throw new \LogicException('Multiplication chain lost left associativity');
 }
 $syntax = operator_test_source('return (2 + 3) * 4;');
-$product = $syntax->root->body->statements[0]->expression;
+$product = $syntax->root->single_body()->body->statements[0]->expression;
 if (($product->require_binary_preparation()->decision->operation !== operator_operation::integer_multiplication)
 || ($product->left->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)) {
 	throw new \LogicException('Grouping did not override multiplication precedence');
@@ -153,7 +153,7 @@ $binary_cases = [
 foreach ($binary_cases as [$symbol, $kind, $operation, $comparison])
 {
 	$syntax = operator_test_source('return 7 ' . $symbol . ' 3;');
-	$decision = $syntax->root->body->statements[0]->expression->require_binary_preparation()->decision;
+	$decision = $syntax->root->single_body()->body->statements[0]->expression->require_binary_preparation()->decision;
 	$integer = Language_Types::integer(Model::$language_scope);
 	$result = $comparison ? Language_Types::boolean(Model::$language_scope) : $integer;
 	if (($decision->source_operator !== $kind) || ($decision->operation !== $operation)
@@ -174,18 +174,18 @@ foreach ($binary_cases as [$symbol, $kind, $operation, $comparison])
 	}
 }
 $syntax = operator_test_source('return 1 + 2 * 3 == 7;');
-$comparison = $syntax->root->body->statements[0]->expression;
+$comparison = $syntax->root->single_body()->body->statements[0]->expression;
 if (($comparison->require_binary_preparation()->decision->operation !== operator_operation::integer_equal)
 || ($comparison->left->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)) {
 	throw new \LogicException('Comparison did not bind below arithmetic');
 }
 $syntax = operator_test_source('return PHP_INT_MAX < 1;');
-if (!($syntax->root->body->statements[0]->expression->left instanceof constant_reference_node)) {
+if (!($syntax->root->single_body()->body->statements[0]->expression->left instanceof constant_reference_node)) {
 	throw new \LogicException('Constant followed by relational operator became a template call');
 }
 
 $syntax = operator_test_source('$a = "a" . "b";');
-$assignment = $syntax->root->body->statements[0]->expression;
+$assignment = $syntax->root->single_body()->body->statements[0]->expression;
 $decision = $assignment->value->require_binary_preparation()->decision;
 $string_type = Language_Types::string_type(Model::$language_scope);
 if (($decision->source_operator !== operator_kind::concatenation)
@@ -202,7 +202,7 @@ foreach ($decision->operands as $operand) {
 }
 
 $syntax = operator_test_source('return true || false && false;');
-$outer = $syntax->root->body->statements[0]->expression;
+$outer = $syntax->root->single_body()->body->statements[0]->expression;
 $decision = $outer->require_binary_preparation()->decision;
 if (($decision->operation !== operator_operation::boolean_or)
 || ($outer->right->require_binary_preparation()->decision->operation !== operator_operation::boolean_and)
@@ -227,7 +227,7 @@ foreach ([['+', '3', operator_operation::integer_positive],
 	['!', 'false', operator_operation::boolean_not]] as [$symbol, $literal, $operation])
 {
 	$syntax = operator_test_source('return ' . $symbol . $literal . ';');
-	$unary = $syntax->root->body->statements[0]->expression;
+	$unary = $syntax->root->single_body()->body->statements[0]->expression;
 	$decision = $unary->require_unary_preparation()->decision;
 	$expected = $symbol === '!' ? Language_Types::boolean(Model::$language_scope) : Language_Types::integer(Model::$language_scope);
 	if (($decision->operation !== $operation) || (count($decision->operands) !== 1)
@@ -250,18 +250,18 @@ foreach ([['+', '3', operator_operation::integer_positive],
 	}
 }
 $syntax = operator_test_source('return -2 * 3;');
-$binary = $syntax->root->body->statements[0]->expression;
+$binary = $syntax->root->single_body()->body->statements[0]->expression;
 if (!($binary instanceof binary_expression_node) || !($binary->left instanceof unary_expression_node)) {
 	throw new \LogicException('Unary sign did not bind tighter than multiplication');
 }
 $syntax = operator_test_source('return -(2 * 3);');
-$unary = $syntax->root->body->statements[0]->expression;
+$unary = $syntax->root->single_body()->body->statements[0]->expression;
 if (!($unary instanceof unary_expression_node) || !($unary->operand instanceof binary_expression_node)) {
 	throw new \LogicException('Unary operand lost grouping');
 }
 
 $syntax = operator_test_source('function value(): int { return 1; } return -value();');
-$unary = $syntax->root->body->statements[0]->expression;
+$unary = $syntax->root->single_body()->body->statements[0]->expression;
 if ($unary->require_unary_preparation()->decision->operation !== operator_operation::integer_negative) {
 	throw new \LogicException('Single-operand call lost unary preparation');
 }

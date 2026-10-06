@@ -111,7 +111,7 @@ foreach ([$template, $prefix . $template, $prefix . 'function other(): int { ret
 	$source->content = $text;
 	$parsed = (new Parser((new Tokenizer($source))->tokenize(), null, $previous))->parse();
 	$function = null;
-	foreach ($parsed->root->declarations as $declaration) {
+	foreach ($parsed->root->single_body()->declarations as $declaration) {
 		if ($declaration->occurrence()->name === 'pair') {
 			$function = object_cast($declaration, function_node::class);
 		}

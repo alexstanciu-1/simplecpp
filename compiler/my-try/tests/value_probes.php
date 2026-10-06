@@ -22,7 +22,7 @@ try {
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);
-	$statements = Model::syntax_files()[0]->root->body->statements;
+	$statements = Model::syntax_files()[0]->root->single_body()->body->statements;
 	foreach ([0 => value_probe_kind::isset, 1 => value_probe_kind::empty] as $index => $kind) {
 		$probe = $statements[$index]->initializer;
 		probe_check($probe instanceof value_probe_node && $probe->probe_kind === $kind, 'Wrong probe syntax');
@@ -50,7 +50,7 @@ try {
 	$clean->exec_cpp();
 	probe_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental probe output differ');
 	$root = Model::syntax_files()[0]->root;
-	$probe = $root->body->statements[0]->initializer;
+	$probe = $root->single_body()->body->statements[0]->initializer;
 	Preparation_Cleanup::tree($root);
 	probe_check($probe->preparation() === null && $probe->operand->preparation() === null, 'Probe cleanup missed facts');
 	foreach (['isset()', 'empty()', 'isset(1, 2)', 'empty(1, 2)'] as $bad) {

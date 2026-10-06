@@ -49,8 +49,8 @@ try
 	$target_facts = $target->require_preparation();
 	$untouched_body = $untouched->body;
 	$untouched_version = $untouched->body->work()->version;
-	$entry_version = $c->parsed->collection->root->body->work()->version;
-	$entry_node = $c->parsed->root->body->statements[0];
+	$entry_version = $c->parsed->collection->root->single_body()->body->work()->version;
+	$entry_node = $c->parsed->root->single_body()->body->statements[0];
 	$entry_facts = $entry_node->require_preparation();
 	$compiler->prepare();
 	preparation_check($caller->body->work()->version === $caller_version, 'No-op preparation rebuilt a body');
@@ -61,7 +61,7 @@ try
 	preparation_check($caller->body->work()->version === $caller_version, 'Implementation-only change rebuilt a caller');
 	preparation_check($target->require_preparation() === $target_facts, 'Body-only change replaced its signature');
 	preparation_check(($untouched->body === $untouched_body) && ($untouched->body->work()->version === $untouched_version), 'Changed file rebuilt an unchanged neighboring body');
-	preparation_check($c->parsed->collection->root->body->work()->version === $entry_version, 'Unrelated file body was rebuilt');
+	preparation_check($c->parsed->collection->root->single_body()->body->work()->version === $entry_version, 'Unrelated file body was rebuilt');
 	preparation_check($entry_node->require_preparation() === $entry_facts, 'Unrelated attached facts were cleared');
 
 	preparation_edit($compiler, $a, 'function target(uint32 $x): int { return 5; } function untouched(): int { return 8; }');
@@ -73,7 +73,7 @@ try
 	// Unchanged top-level executable syntax and facts survive declarations inserted before it.
 	preparation_edit($compiler, $c, 'function added(): int { return 1; } $local int = 3; return $local;');
 	$compiler->prepare();
-	preparation_check($c->parsed->collection->root->body->work()->version === $entry_version, 'Declaration insertion rebuilt unchanged entry code');
+	preparation_check($c->parsed->collection->root->single_body()->body->work()->version === $entry_version, 'Declaration insertion rebuilt unchanged entry code');
 	preparation_check($entry_node->require_preparation() === $entry_facts, 'Moved entry syntax lost its facts');
 
 	// Removing a dependency from a body removes both graph directions.
@@ -178,7 +178,7 @@ try
 	preparation_check(q_count($c->parsed->collection->entries) === 0, 'Deleted file retained collected rows');
 	preparation_edit($compiler, $c, '$again = 4; return $again;');
 	$compiler->prepare();
-	preparation_check($c->parsed->collection->root->body->work()->state === preparation_state::ready, 'Deleted file could not reappear after cleanup');
+	preparation_check($c->parsed->collection->root->single_body()->body->work()->state === preparation_state::ready, 'Deleted file could not reappear after cleanup');
 }
 finally {
 	foreach (glob($directory . '/*') as $path) {

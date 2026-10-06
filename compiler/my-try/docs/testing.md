@@ -17,6 +17,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For source namespace-body ownership and entry/lifecycle integration:
+
+```bash
+python3 compiler/my-try/tests/namespace_bodies.py --results /tmp/FRESH_NAMESPACE_BODY_RESULTS
+```
+
+Checks the implicit global parser path and explicitly assembled multi-body inventories,
+one-body entry admission, failed-preparation output guards and join-ordered retirement.
+Compiles the selected/empty entries without PCH and converts parser/preparation source.
+Named namespace syntax and retained named-body reconciliation remain pending; this
+does not rebuild the compiler itself.
+
 For the namespace identity/backend model checkpoint:
 
 ```bash

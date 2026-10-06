@@ -4,6 +4,35 @@ namespace scpp\compiler;
 /** Executable-program admission is semantic preparation, not backend policy. */
 final class Program_Preparation
 {
+	/** One file may contribute several bodies, but never concatenate their execution. */
+	public static function source_body(collected_file $source): function_body_node
+	{
+		$selected /** nullable<function_body_node> */ = null;
+		$empty_body /** nullable<function_body_node> */ = null;
+		$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+		foreach ($bodies as $namespace_body)
+		{
+			$body = $namespace_body->body;
+			if ($body->statements->is_empty()) {
+				if ($empty_body === null) {
+					$empty_body = $body;
+				}
+				continue;
+			}
+			if ($selected !== null) {
+				throw new \RuntimeException('Executable statements may belong to only one namespace body: ' . $source->source_file()->path);
+			}
+			$selected = $body;
+		}
+		if ($selected !== null) {
+			return $selected;
+		}
+		if ($empty_body !== null) {
+			return $empty_body;
+		}
+		throw new \LogicException('A parsed file must contain a source namespace body');
+	}
+
 	public static function entry(Storage $files /** Storage<prepared_file> */,
 		?program_entry_selection $selection, bool $required): ?prepared_file
 	{
@@ -34,7 +63,7 @@ final class Program_Preparation
 		$entry /** prepared_file */ = $selected;
 		foreach ($files as $prepared) {
 			if ($prepared !== $entry) {
-				if (!$prepared->source->root->body->statements->is_empty()) {
+				if (!$prepared->executable_body()->statements->is_empty()) {
 					throw new \RuntimeException('Top-level executable statements are only allowed in the selected entry: '
 						. $prepared->source->source_file()->path);
 				}

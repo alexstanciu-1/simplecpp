@@ -24,7 +24,7 @@ function conversion_test_source(string $text): parsed_file
 }
 
 $syntax = conversion_test_source('$a int = 1; $b uint8 = 2; $a = $a; $b = $a; return $b;');
-$statements /** Storage<statement_node> */ = $syntax->root->body->statements;
+$statements /** Storage<statement_node> */ = $syntax->root->single_body()->body->statements;
 $identity_declaration = object_cast($statements[0], variable_declaration_node::class)->require_preparation()->conversion;
 $integer_declaration = object_cast($statements[1], variable_declaration_node::class)->require_preparation()->conversion;
 $identity_assignment = object_cast(object_cast($statements[2], expression_statement_node::class)->expression,
@@ -46,7 +46,7 @@ if (!str_contains($text, 'scpp::int_t<std::uint8_t> local_b = static_cast<scpp::
 }
 
 $syntax = conversion_test_source('$a uint8 = 1; $b byte = $a; return $b;');
-$statements = $syntax->root->body->statements;
+$statements = $syntax->root->single_body()->body->statements;
 $alias = object_cast($statements[1], variable_declaration_node::class)->require_preparation()->conversion;
 if (($alias === null) || ($alias->operation !== conversion_operation::identity)
 	|| !$alias->source_type->matches($alias->target_type)) {
@@ -66,12 +66,12 @@ if (!$failed) {
 
 $syntax = conversion_test_source(
 	'function narrow(int32 $value): uint8 { return $value; } $source int64 = 7; return narrow($source);');
-$declarations /** Storage<declaration_node> */ = $syntax->root->declarations;
+$declarations /** Storage<declaration_node> */ = $syntax->root->single_body()->declarations;
 $function = object_cast($declarations[0], function_node::class);
 $function_statements /** Storage<statement_node> */ = $function->body->statements;
 $function_return = object_cast($function_statements[0], return_node::class);
 $return_decision = $function_return->require_preparation()->require_conversion();
-$entry_statements /** Storage<statement_node> */ = $syntax->root->body->statements;
+$entry_statements /** Storage<statement_node> */ = $syntax->root->single_body()->body->statements;
 $entry_return = object_cast($entry_statements[1], return_node::class);
 $call = object_cast($entry_return->expression, call_node::class);
 $call_arguments /** Storage<prepared_call_argument> */ = $call->require_call_preparation()->arguments;
@@ -89,7 +89,7 @@ if (!str_contains($text, 'return static_cast<scpp::int_t<std::uint8_t>>((local_v
 }
 
 $syntax = conversion_test_source('function observe(int &$value): void {} $value = 1; observe($value);');
-$entry_statements = $syntax->root->body->statements;
+$entry_statements = $syntax->root->single_body()->body->statements;
 $call_statement = object_cast($entry_statements[1], expression_statement_node::class);
 $reference_call = object_cast($call_statement->expression, call_node::class);
 $reference_arguments /** Storage<prepared_call_argument> */ = $reference_call->require_call_preparation()->arguments;
@@ -115,7 +115,7 @@ foreach ($scalar_sources as $target => $unused) {
 }
 $cast_source .= '$fixed = (uint8)$source_int; return 0;';
 $syntax = conversion_test_source($cast_source);
-$statements = $syntax->root->body->statements;
+$statements = $syntax->root->single_body()->body->statements;
 $position = q_count($scalar_sources);
 $runtime_casts = 0;
 foreach ($scalar_sources as $target => $unused)
@@ -156,7 +156,7 @@ if (($runtime_casts !== 13) || (substr_count($text, 'scpp::cast<') !== $runtime_
 $syntax = conversion_test_source(
 	'function source(): float { return 2.5; } $value = (int)source(); $nested = (string)(float)$value; '
 	. '$sum = (int)2.5 + 1; return $value;');
-$statements = $syntax->root->body->statements;
+$statements = $syntax->root->single_body()->body->statements;
 $value_assignment = object_cast(object_cast($statements[0], expression_statement_node::class)->expression,
 	assignment_expression_node::class);
 $value_cast = object_cast($value_assignment->value, cast_expression_node::class);
@@ -215,7 +215,7 @@ if (!$failed) {
 $syntax = conversion_test_source(
 	'struct Box { int32 $value; } $box Box; $box->value = 9; '
 	. '$field = (int)$box->value; $alias uint8 = 7; $same = (byte)$alias; return $field;');
-$statements = $syntax->root->body->statements;
+$statements = $syntax->root->single_body()->body->statements;
 $field_assignment = object_cast(object_cast($statements[2], expression_statement_node::class)->expression,
 	assignment_expression_node::class);
 $field_cast = object_cast($field_assignment->value, cast_expression_node::class);

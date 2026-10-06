@@ -58,7 +58,7 @@ final class AST_Test
 		foreach ($syntax->scopes as $scope) {
 			self::initialized($scope);
 		}
-		self::initialized($syntax->root->file_scope());
+		self::initialized($syntax->root->single_body()->body_scope());
 		self::check($syntax->collection->root === $syntax->root);
 		self::check($syntax->collection->token_snapshot() === $syntax->tokens);
 		$nodes = new \SplObjectStorage();
@@ -66,7 +66,7 @@ final class AST_Test
 		self::visit($syntax->root, $syntax, $nodes, $payloads);
 		foreach ($payloads as $payload)
 		{
-			if ($payload instanceof function_body_node && $payload->local_scope() !== $syntax->root->file_scope())
+			if ($payload instanceof function_body_node && $payload->local_scope() !== $syntax->root->single_body()->body_scope())
 			{
 				$found = false;
 				foreach ($syntax->scopes as $owned) {
@@ -91,11 +91,11 @@ final class AST_Test
 		$parser = new Parser(self::tokens('function f(int $a, int &$b): void { return; } $x int; $y int = 1; $x = 2; $items int[1] = []; $items[0] = 3;'));
 		$result = $parser->parse();
 		self::verify($result);
-		$function = $result->root->declarations[0];
+		$function = $result->root->single_body()->declarations[0];
 		self::check($function->parameters[0]->mode === passing_mode::value);
 		self::check($function->parameters[1]->mode === passing_mode::reference);
 		self::check($function->body->statements[0]->expression === null);
-		$statements = $result->root->body->statements;
+		$statements = $result->root->single_body()->body->statements;
 		self::check($statements[0] instanceof variable_declaration_node && $statements[0]->initializer === null);
 		self::check($statements[1]->initializer instanceof integer_literal_node);
 		self::check($statements[2]->expression instanceof assignment_expression_node);
@@ -124,15 +124,15 @@ final class AST_Test
 		$parser->init(self::tokens('function next(): void { return; }'), $scope);
 		$next = $parser->parse();
 		self::verify($next);
-		self::check($next->root->file_scope() === $scope);
-		self::check($next->root->body->local_scope()->parent_scope() === $scope);
+		self::check($next->root->single_body()->body_scope() === $scope);
+		self::check($next->root->single_body()->body->local_scope()->parent_scope() === $scope);
 		self::check(count($scope->functions_named('kept')) === 1 && count($scope->functions_named('next')) === 1);
 		self::check((count($scope->functions_named('broken')) === 1) && (count($scope->types_named('Pending')) === 1));
 		// Omitting the target on re-init must clear the previous external scope.
 		$parser->init(self::tokens(''));
 		$standalone = $parser->parse();
 		self::verify($standalone);
-		self::check($standalone->root->file_scope() !== $scope);
+		self::check($standalone->root->single_body()->body_scope() !== $scope);
 		self::check($standalone->scopes[0]->parent_scope() === null);
 	}
 
@@ -233,8 +233,8 @@ PHS;
 		self::check($failed && serialize($first) === $before);
 		$parser->init(self::tokens(''));
 		$empty = $parser->parse();
-		self::check(count(self::verify($empty)) === 2);
-		self::check($empty->root->body->statements->is_empty() && $empty->root->declarations->is_empty());
+		self::check(count(self::verify($empty)) === 3);
+		self::check($empty->root->single_body()->body->statements->is_empty() && $empty->root->single_body()->declarations->is_empty());
 		echo "AST: typed object graph, lazy children, node coverage, order, collection identity and parser reuse passed\n";
 	}
 }

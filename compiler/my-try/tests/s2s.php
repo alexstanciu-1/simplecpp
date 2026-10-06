@@ -703,7 +703,7 @@ foreach ($cases as $name => [$source, $exit])
 	if ($name === 'constant_int_max')
 	{
 		$text = CPP_Probe::text(Model::$cpp_files);
-		$assignment = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$assignment = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
 		$constant = object_cast($assignment->value, constant_reference_node::class);
 		$facts = $constant->require_constant_reference_preparation();
 		$definition = object_cast($facts->definition, integer_constant_definition::class);
@@ -719,7 +719,7 @@ foreach ($cases as $name => [$source, $exit])
 	if ($name === 'chain')
 	{
 		$text = CPP_Probe::text(Model::$cpp_files);
-		$outer = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$outer = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
 		$inner = object_cast($outer->value, assignment_expression_node::class);
 		$outer_binding = $outer->require_assignment_preparation()->binding;
 		$inner_binding = $inner->require_assignment_preparation()->binding;
@@ -743,7 +743,7 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'chain_same_target')
 	{
-		$outer = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$outer = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
 		$inner = object_cast($outer->value, assignment_expression_node::class);
 		$outer_binding = $outer->require_assignment_preparation()->binding;
 		$inner_binding = $inner->require_assignment_preparation()->binding;
@@ -779,9 +779,9 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'var_chain_003')
 	{
-		$first = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
-		$second = object_cast($syntax->root->body->statements[1]->expression, assignment_expression_node::class);
-		$third = object_cast($syntax->root->body->statements[2]->expression, assignment_expression_node::class);
+		$first = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
+		$second = object_cast($syntax->root->single_body()->body->statements[1]->expression, assignment_expression_node::class);
+		$third = object_cast($syntax->root->single_body()->body->statements[2]->expression, assignment_expression_node::class);
 		$second_source = object_cast($second->value, variable_reference_node::class);
 		$third_source = object_cast($third->value, variable_reference_node::class);
 		$first_facts = $first->require_assignment_preparation();
@@ -810,8 +810,8 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'var_chain_004')
 	{
-		$first = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
-		$second = object_cast($syntax->root->body->statements[1]->expression, assignment_expression_node::class);
+		$first = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
+		$second = object_cast($syntax->root->single_body()->body->statements[1]->expression, assignment_expression_node::class);
 		$binary = object_cast($second->value, binary_expression_node::class);
 		$left = object_cast($binary->left, variable_reference_node::class);
 		$right = object_cast($binary->right, integer_literal_node::class);
@@ -834,8 +834,8 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'var_reassign_002')
 	{
-		$first = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
-		$second = object_cast($syntax->root->body->statements[1]->expression, assignment_expression_node::class);
+		$first = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
+		$second = object_cast($syntax->root->single_body()->body->statements[1]->expression, assignment_expression_node::class);
 		$binary = object_cast($second->value, binary_expression_node::class);
 		$self_reference = object_cast($binary->left, variable_reference_node::class);
 		$first_facts = $first->require_assignment_preparation();
@@ -858,8 +858,8 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'var_reassign_003')
 	{
-		$first = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
-		$second = object_cast($syntax->root->body->statements[1]->expression, assignment_expression_node::class);
+		$first = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
+		$second = object_cast($syntax->root->single_body()->body->statements[1]->expression, assignment_expression_node::class);
 		$binary = object_cast($second->value, binary_expression_node::class);
 		$left = object_cast($binary->left, variable_reference_node::class);
 		$right = object_cast($binary->right, variable_reference_node::class);
@@ -888,7 +888,7 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'ident_var_001')
 	{
-		$function = object_cast($syntax->root->declarations[0], function_node::class);
+		$function = object_cast($syntax->root->single_body()->declarations[0], function_node::class);
 		$parameter = $function->parameters[0];
 		$assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
 		$target = object_cast($assignment->target, variable_reference_node::class);
@@ -926,11 +926,11 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'ident_var_escaping')
 	{
-		$function = object_cast($syntax->root->declarations[0], function_node::class);
+		$function = object_cast($syntax->root->single_body()->declarations[0], function_node::class);
 		$assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
 		$target = object_cast($assignment->target, variable_reference_node::class);
 		$source = object_cast($assignment->value, variable_reference_node::class);
-		$call = object_cast(object_cast($syntax->root->body->statements[0], return_node::class)->expression, call_node::class);
+		$call = object_cast(object_cast($syntax->root->single_body()->body->statements[0], return_node::class)->expression, call_node::class);
 		$text = CPP_Probe::text(Model::$cpp_files);
 		$signature = 'scpp::int_t<> function_U_f(scpp::int_t<> local_U_x, scpp::int_t<> local_UUU_x, '
 			. 'scpp::int_t<> local_aU_U_b, scpp::int_t<> local_aUUU_UUU_b)';
@@ -959,11 +959,11 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'function_locals')
 	{
-		$function = object_cast($syntax->root->declarations[0], function_node::class);
+		$function = object_cast($syntax->root->single_body()->declarations[0], function_node::class);
 		$parameter = $function->parameters[0]->require_preparation();
 		$function_assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
 		$function_binding = $function_assignment->require_assignment_preparation()->binding;
-		$entry_assignment = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
+		$entry_assignment = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
 		$entry_binding = $entry_assignment->require_assignment_preparation()->binding;
 		$parameter_identity = weakref_get($parameter->declaration);
 		$entry_identity = weakref_get($entry_binding->declaration);
@@ -1220,7 +1220,7 @@ foreach ($rejections as $source)
 // A fresh local copies one established value; source and target keep distinct identities.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$b int = 11; $a = $b; $b = 19; return $a;');
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $source_declaration = object_cast($children[0], variable_declaration_node::class);
 $copy_assignment = object_cast($children[1]->expression, assignment_expression_node::class);
 $source_reference = object_cast($copy_assignment->value, variable_reference_node::class);
@@ -1310,7 +1310,7 @@ foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 // Reassignment preserves one local identity and type; explicit syntax cannot redeclare it.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 1; $a = 2; return $a;');
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $declaration_assignment = object_cast($children[0]->expression, assignment_expression_node::class);
 $reassignment = object_cast($children[1]->expression, assignment_expression_node::class);
 $result_reference = object_cast($children[2]->expression, variable_reference_node::class);
@@ -1357,7 +1357,7 @@ if (!str_contains(CPP_Probe::text(Model::$cpp_files),
 
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 1; $a = $a; return $a;');
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $self_reassignment = object_cast($children[1]->expression, assignment_expression_node::class);
 $self_reference = object_cast($self_reassignment->value, variable_reference_node::class);
 $compiler = new Compiler();
@@ -1393,7 +1393,7 @@ foreach ($reassignment_rejections as $source => $diagnostic)
 // Explicit local types are authoritative semantic boundaries, not deferred C++ failures.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$x string = "test"; $x = "next";');
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $declaration = object_cast($children[0], variable_declaration_node::class);
 $assignment = object_cast($children[1]->expression, assignment_expression_node::class);
 $before = s2s_snapshot($syntax);
@@ -1499,7 +1499,7 @@ foreach (['.', '.e2', '1e', '1e+', '1e-', '1.2.3', '1e2e3', '1.0f', '1_0.5', '0x
 // Floating facts retain exact text and canonical identity; cleanup belongs to specialization.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 1.2345678901234567; $b = $a;');
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $float_node = $children[0]->expression->value;
 $float_data = object_cast($float_node, float_literal_node::class);
 $before = s2s_snapshot($syntax);
@@ -1542,7 +1542,7 @@ $m = "";
 PHS;
 $string_source .= "\n" . '$e = \'' . string_byte_from_int(0) . '\';';
 $syntax = s2s_parse($string_source);
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $expected_values = ['x', "can't", 'slash' . "\\" . 'path', "\\n", "line\nnext",
 	'quote"slash' . "\\" . 'dollar$', 'unknown' . "\\" . 'q', 'hexA', 'octalA',
 	"controls\r\t\v\f" . string_byte_from_int(27), '', '', string_byte_from_int(0)];
@@ -1592,7 +1592,7 @@ if (s2s_snapshot($syntax) !== $before) {
 // Boolean literals keep canonical identity without entering reference/name collection.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = false; $b = $a; return $b;');
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $binding_data = $children[0]->expression;
 $literal_node = $binding_data->value;
 $literal_data = object_cast($literal_node, boolean_literal_node::class);
@@ -1627,7 +1627,7 @@ if (($literal_data->preparation() !== null) || ($reference_data->preparation() !
 // A standalone failure must preserve syntax; partial-fact recovery remains deferred.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; $b = $missing;');
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $first_data = $children[0]->expression;
 $first_literal_data = object_cast($first_data->value, integer_literal_node::class);
 $before = s2s_snapshot($syntax);
@@ -1657,7 +1657,7 @@ if (!$failed || !Model::$prepared_files->is_empty() || !Model::$cpp_files->is_em
 	throw new \LogicException('Emission implicitly prepared source');
 }
 $compiler->prepare();
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $first_data = $children[0]->expression;
 $first_literal_data = object_cast($first_data->value, integer_literal_node::class);
 $binding_facts = $first_data->require_assignment_preparation();
@@ -1676,7 +1676,7 @@ $compiler->cpp();
 $valid_integer_type = $first_literal_data->require_integer_literal_preparation()->type;
 $first_literal_data->require_integer_literal_preparation()->type = new canonical_type_use(Type_Identity::maximum());
 // Fault injection must invalidate the fragment whose prepared representation was altered.
-Model::$cpp_output_program->fragments[$syntax->collection->root->body->work()]->change_status = change_state::changed;
+Model::$cpp_output_program->fragments[$syntax->collection->root->single_body()->body->work()]->change_status = change_state::changed;
 $failed = false;
 try {
 	$compiler->cpp();
@@ -1705,7 +1705,7 @@ if (($first_data->preparation() !== null) || ($first_literal_data->preparation()
 // The cleanup traversal reaches nested expression specializations through syntax-only parents.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('function nested(): int { return 7; }');
-$children = $syntax->root->declarations;
+$children = $syntax->root->single_body()->declarations;
 $body = object_cast($children[0], function_node::class)->body;
 $statements = $body->statements;
 $nested_literal_data = object_cast(object_cast($statements[0], return_node::class)->expression, integer_literal_node::class);
@@ -1724,7 +1724,7 @@ Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
 (new Compiler())->prepare();
 (new Compiler())->cpp();
-$children = $syntax->root->body->statements;
+$children = $syntax->root->single_body()->body->statements;
 $first_data = $children[0]->expression;
 $first_literal_data = object_cast($first_data->value, integer_literal_node::class);
 Compiler_Lifecycle::reset_syntax();
@@ -1735,7 +1735,7 @@ if (($first_data->preparation() !== null) || ($first_literal_data->preparation()
 // Ordinary parent traversal permits source shadowing; reserved-name enforcement is deferred.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('struct int { int $field; }');
-$root = $syntax->root->file_scope();
+$root = $syntax->root->single_body()->body_scope();
 $local = new scope();
 $local->set_parent($root);
 $found = Scope_Lookup::types($local, 'int');

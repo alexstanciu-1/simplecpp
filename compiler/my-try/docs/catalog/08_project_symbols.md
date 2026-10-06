@@ -30,8 +30,10 @@ optimization is deferred to [Chapter 15](15_blocking_debt.md#ch15-native-cache-p
 Namespace/import semantics are agreed in the [v0.2 contract](../../../../specs/namespaces_v0_2.md).
 The [identity/body ownership migration](../planning/namespace_identity_migration.md)
 is approved and in progress: canonical identity/backend consumers and explicit
-executable-body work links are implemented;
-namespace-body parsing, lifecycle integration and qualified lookup remain pending.
+executable-body work links are implemented. Source-body inventory, preparation,
+entry selection, retirement and C++ consumers now share the new model; global
+parsing uses an implicit body. Named namespace parsing/reconciliation and qualified
+lookup remain pending.
 Imported cards below are not implementation evidence; their obsolete import restrictions
 do not override the agreed contract or newer generator rules.
 
@@ -47,6 +49,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH08-NATIVE-01 | implemented-bounded | Native objects, runtime PCH and exact-member linking | unchanged | verified | deferred | `tests/native_cache.py`: real Clang cold/warm/edit, failure recovery, runtime invalidation and cache repair; core runtime only |
 | CH08-REBUILD-01 | verified-bounded | Body/default/signature/layout edits, insert/delete, relocation and compiler identity | unchanged | verified | deferred | `tests/native_invalidation.py`: ten executed revisions, exact native rebuild sets, phase timings; optimization deferred to Chapter 15 |
 | CH08-NS-IDENTITY-01 | implemented-model | Canonical namespaces and qualified definition identities | model only | verified | deferred | `tests/namespace_identity.py`: supplied namespace scopes, same-short-name type/function collision proof; source namespace syntax still pending |
+| CH08-NS-BODIES-01 | implemented-model | Separate namespace-body occurrences and one selected executable body | global parsing + multi-body model proof | verified | single-body adapter only | `tests/namespace_bodies.py`: independent bodies, entry admission, stale-output rejection and retirement; named-body grammar/reconciliation pending |
 | [CLASS-STATIC-NS-003](#class-static-ns-003) | pending-discussion | `$x = new X(); return $x::make();` | unverified | unverified | deferred | — |
 | [CLASS-STATIC-NS-002](#class-static-ns-002) | pending-discussion | `namespace A; function f() { return \A\X::make(); }` | unverified | unverified | deferred | — |
 | [NS-EXEC-006](#ns-exec-006) | pending-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | — |

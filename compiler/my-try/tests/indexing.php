@@ -31,7 +31,7 @@ foreach (['$base[]', '$base[1 + 2 * 3]', '$base[$x = 2]', '$base[f()]',
 	'($a + $b)[]', '$base[][f()][0]'] as $source)
 {
 	$syntax = indexing_parse('return ' . $source . ';');
-	$node = $syntax->root->body->statements[0]->expression;
+	$node = $syntax->root->single_body()->body->statements[0]->expression;
 	if (!($node instanceof index_node)) {
 		throw new \LogicException('Bracket suffix was not parsed uniformly: ' . $source);
 	}
@@ -42,7 +42,7 @@ foreach (['$base[]', '$base[1 + 2 * 3]', '$base[$x = 2]', '$base[f()]',
 	Preparation_Cleanup::tree($syntax->root);
 }
 $syntax = indexing_parse('return $base[1 + 2 * 3];');
-$index = $syntax->root->body->statements[0]->expression->index;
+$index = $syntax->root->single_body()->body->statements[0]->expression->index;
 if (!($index instanceof binary_expression_node) || !($index->right instanceof binary_expression_node)) {
 	throw new \LogicException('Bracket argument lost ordinary expression precedence');
 }
@@ -126,7 +126,7 @@ foreach ([
 }
 
 indexing_prepare('$v vector<int> = [1]; $x = $v[0]; return 0;');
-$read = Model::syntax_files()[0]->root->body->statements[1]->expression->value;
+$read = Model::syntax_files()[0]->root->single_body()->body->statements[1]->expression->value;
 if (!($read instanceof index_node) || $read->require_preparation()->addressable()
 	|| !$read->require_preparation()->type->matches(Language_Types::integer(Model::$language_scope))) {
 	throw new \LogicException('Read did not retain its exact value-only result type');
@@ -152,7 +152,7 @@ if ($write->preparation() !== null || $write->target->base->preparation() !== nu
 }
 
 indexing_prepare('$value int = 1; $value = 2;');
-$ordinary_write = Model::syntax_files()[0]->root->body->statements[1]->expression;
+$ordinary_write = Model::syntax_files()[0]->root->single_body()->body->statements[1]->expression;
 if (!$ordinary_write->require_write_preparation()->destination_type()->matches(
 	$ordinary_write->require_assignment_preparation()->binding->storage_type())) {
 	throw new \LogicException('Assignment family lost its storage destination query');

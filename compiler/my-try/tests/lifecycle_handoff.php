@@ -26,26 +26,26 @@ try {
 	$signature = $entry->preparation;
 	$body = $function->body->work();
 	$collection = $entry->collection;
-	$file_body = $collection->root->body->work();
+	$file_body = $collection->root->single_body()->body->work();
 	$prepared = $collection->prepared;
 	$version = $body->version;
 	$file_version = $file_body->version;
 	$signature_version = $signature->version;
 	$old_function_body = $function->body;
-	$old_file_body = $collection->root->body;
+	$old_file_body = $collection->root->single_body()->body;
 
 	// Reparse twice before analysis: identities move, but semantic state does not.
 	file_put_contents($path, 'function value(): int { return 2; } return 3;');
 	$compiler->sync([$path]);
-	handoff_check($function->body->work() === $body && $collection->root->body->work() === $file_body, 'Parsing replaced work identities');
-	handoff_check($body->executable_body() === $function->body && $file_body->executable_body() === $collection->root->body, 'Replacement did not rebind work to current syntax');
+	handoff_check($function->body->work() === $body && $collection->root->single_body()->body->work() === $file_body, 'Parsing replaced work identities');
+	handoff_check($body->executable_body() === $function->body && $file_body->executable_body() === $collection->root->single_body()->body, 'Replacement did not rebind work to current syntax');
 	handoff_check($old_function_body !== $body->executable_body() && $old_file_body !== $file_body->executable_body(), 'Changed bodies retained obsolete syntax');
 	handoff_check($old_function_body->work() === null && $old_file_body->work() === null, 'Old syntax retained transferred work');
 	foreach ([$body, $file_body, $signature] as $work) {
 		handoff_check($work->state === preparation_state::ready && $work->change_status === change_state::unchanged, 'Parser changed analysis scheduling state');
 	}
 	$compiler->sync([$path]);
-	handoff_check($function->body->syntax_changed && $collection->root->body->syntax_changed, 'Repeated parsing erased unconsumed body changes');
+	handoff_check($function->body->syntax_changed && $collection->root->single_body()->body->syntax_changed, 'Repeated parsing erased unconsumed body changes');
 	$failed = false;
 	try { $stale = (new CPP_Generator())->generate($prepared); }
 	catch (\RuntimeException $expected) { $failed = true; }
@@ -53,7 +53,7 @@ try {
 	$compiler->prepare();
 	handoff_check($body->version === $version + 1 && $file_body->version === $file_version + 1, 'Accumulated changes did not rebuild each body exactly once');
 	handoff_check($signature->version === $signature_version, 'Body edit rebuilt the signature');
-	handoff_check(!$function->body->syntax_changed && !$collection->root->body->syntax_changed, 'Successful preparation did not consume source changes');
+	handoff_check(!$function->body->syntax_changed && !$collection->root->single_body()->body->syntax_changed, 'Successful preparation did not consume source changes');
 
 	// A signature change stays on the collected identity until analysis consumes it.
 	file_put_contents($path, 'function value(): uint32 { return 2; } return 3;');
@@ -78,7 +78,7 @@ try {
 	$compiler->sync([$path]);
 	$compiler->prepare();
 	handoff_check($function->body->work() === $body && $body->version === $version + 1, 'Failed-parse repair lost pending body work');
-	handoff_check($body->executable_body() === $function->body && $file_body->executable_body() === $collection->root->body, 'Repair lost executable-body links');
+	handoff_check($body->executable_body() === $function->body && $file_body->executable_body() === $collection->root->single_body()->body, 'Repair lost executable-body links');
 
 	// A failed semantic attempt keeps its source change and diagnostic through reparse.
 	file_put_contents($path, 'function value(): uint32 { return $missing; } return 3;');

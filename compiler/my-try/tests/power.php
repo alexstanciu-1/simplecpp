@@ -25,7 +25,7 @@ function power_test_source(string $text): parsed_file
 
 
 $syntax = power_test_source('return -2 ** 3 ** 2;');
-$unary = $syntax->root->body->statements[0]->expression;
+$unary = $syntax->root->single_body()->body->statements[0]->expression;
 if (!($unary instanceof unary_expression_node) || !($unary->operand instanceof binary_expression_node)
 	|| !($unary->operand->right instanceof binary_expression_node)) {
 	throw new \LogicException('Power precedence or right associativity lost its AST shape');
@@ -42,7 +42,7 @@ if (($unary->preparation() !== null) || ($unary->operand->right->preparation() !
 	throw new \LogicException('Power cleanup left attached child facts');
 }
 $syntax = power_test_source('return 2 ** -2 ** 2;');
-$power = $syntax->root->body->statements[0]->expression;
+$power = $syntax->root->single_body()->body->statements[0]->expression;
 if (!($power->right instanceof unary_expression_node)
 	|| !($power->right->operand instanceof binary_expression_node)) {
 	throw new \LogicException('Signed exponent did not retain its own nested power');

@@ -29,25 +29,28 @@ final class CPP_Generator
 		foreach ($files as $prepared)
 		{
 			$source = $prepared->source;
-			$nodes /** Storage<declaration_node> */ = $source->root->declarations;
-			foreach ($nodes as $node) {
-				$definition = $node->occurrence();
-				$ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class));
-				if ($node instanceof function_node) {
-					$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
+			$namespace_bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+			foreach ($namespace_bodies as $namespace_body) {
+				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
+				foreach ($nodes as $node) {
+					$definition = $node->occurrence();
+					$ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class));
+					if ($node instanceof function_node) {
+						$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
+					}
+				}
+				// Validate every body, including declaration-only contributions.
+				if (!Preparation_Status::complete(object_cast($namespace_body->body->work(), preparation_owner::class))) {
+					throw new \RuntimeException('C++ generation requires completed preparation');
 				}
 			}
 			if ($prepared === $entry_file) { $found_entry = true; }
-			// Validate every file's freshness, even a declaration-only source.
-			if (!Preparation_Status::complete(object_cast($source->root->body->work(), preparation_owner::class))) {
-				throw new \RuntimeException('C++ generation requires completed preparation');
-			}
 			foreach ($source->preparation_changes as $retired /** @object-key */) {
 				if ($retired->change_status === change_state::deleted) { unset($this->program->fragments[$retired]); }
 			}
 		}
 		if (!$found_entry) { throw new \RuntimeException('Prepared entry is outside the program'); }
-		$ordered->append(object_cast($entry_file->source->root->body->work(), preparation_owner::class));
+		$ordered->append(object_cast($entry_file->executable_body()->work(), preparation_owner::class));
 		$definitions /** Storage<preparation_owner> */ = new Storage();
 		$bodies /** Storage<preparation_owner> */ = new Storage();
 		foreach ($ordered as $owner)
@@ -107,23 +110,26 @@ final class CPP_Generator
 			$headers /** hash<bool> */ = [];
 			$declarations /** hash<bool> */ = [];
 			$body_text = '';
-			$nodes /** Storage<declaration_node> */ = $prepared->source->root->declarations;
-			foreach ($nodes as $node) {
-				if (!($node instanceof function_node)) { continue; }
-				$function = object_cast($node, function_node::class);
-				$signature_owner = object_cast($function->occurrence()->preparation_work_owner(), preparation_owner::class);
-				$body_owner = object_cast($function->body->work(), preparation_owner::class);
-				$signature = $this->program->fragments[$signature_owner];
-				$body = $this->program->fragments[$body_owner];
-				$headers[CPP_Artifacts::callable_header($function->occurrence()->qualified_name())] = true;
-				foreach ($signature->definition_headers as $header => $used) {
-					$headers[$header] = true;
+			$namespace_bodies /** Storage<namespace_body_node> */ = $prepared->source->root->namespace_bodies;
+			foreach ($namespace_bodies as $namespace_body) {
+				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
+				foreach ($nodes as $node) {
+					if (!($node instanceof function_node)) { continue; }
+					$function = object_cast($node, function_node::class);
+					$signature_owner = object_cast($function->occurrence()->preparation_work_owner(), preparation_owner::class);
+					$body_owner = object_cast($function->body->work(), preparation_owner::class);
+					$signature = $this->program->fragments[$signature_owner];
+					$body = $this->program->fragments[$body_owner];
+					$headers[CPP_Artifacts::callable_header($function->occurrence()->qualified_name())] = true;
+					foreach ($signature->definition_headers as $header => $used) {
+						$headers[$header] = true;
+					}
+					foreach ($body->headers as $header => $used) { $headers[$header] = true; }
+					foreach ($body->forward_declarations as $name => $used) {
+						$declarations[$name] = true;
+					}
+					$body_text .= $signature->text . "\n{\n" . $body->text . "}\n\n";
 				}
-				foreach ($body->headers as $header => $used) { $headers[$header] = true; }
-				foreach ($body->forward_declarations as $name => $used) {
-					$declarations[$name] = true;
-				}
-				$body_text .= $signature->text . "\n{\n" . $body->text . "}\n\n";
 			}
 			if ($body_text !== '') {
 				$path = CPP_Artifacts::unit_path($prepared->source);
@@ -131,7 +137,7 @@ final class CPP_Generator
 					$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text));
 			}
 		}
-		$entry_owner = object_cast($entry_file->source->root->body->work(), preparation_owner::class);
+		$entry_owner = object_cast($entry_file->executable_body()->work(), preparation_owner::class);
 		$entry_fragment = $this->program->fragments[$entry_owner];
 		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
 			CPP_Artifacts::preamble($entry_fragment->headers, $entry_fragment->forward_declarations, '') . "\nint main()\n{\n"

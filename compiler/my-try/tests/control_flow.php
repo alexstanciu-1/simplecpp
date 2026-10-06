@@ -582,7 +582,7 @@ try
 	$compiler = control_program($path, '$x int = 1; if (true) { $x = 2; $x int = 3; $x = 4; } return $x;');
 	$compiler->prepare();
 	$parsed = Model::syntax_files()[0];
-	$statements = $parsed->root->body->statements;
+	$statements = $parsed->root->single_body()->body->statements;
 	$outer = $statements[0]->require_preparation();
 	$arm = $statements[1];
 	$inner = $arm->body->statements;

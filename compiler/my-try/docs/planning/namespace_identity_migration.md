@@ -4,8 +4,9 @@ Doc Status: planning
 Recorded 2026-10-06 after the approved namespace/import discussion.
 Language rules are agreed in [the v0.2 contract](../../../../specs/namespaces_v0_2.md).
 Status: coordinated migration approved by the user; implementation in progress.
-Canonical identity/backend and explicit executable-work links implemented below. Namespace body syntax,
-qualified-path lookup and their lifecycle integration remain unfinished.
+Canonical identity/backend, executable-work links and source-body inventory consumers
+are implemented below. Named namespace parsing/reconciliation, its scope-retention
+integration and qualified-path lookup remain unfinished.
 
 ## Why this is more than adding namespace parsing
 
@@ -164,3 +165,56 @@ Evidence on `5aa37d61` plus this checkpoint overlay:
   validation. The compiler itself was not rebuilt.
 
 The portable-PHP skill informed the weak body observer and typed query boundary.
+
+## Source-body inventory checkpoint — 2026-10-06
+
+Files now own `Storage<namespace_body_node>`. Each occurrence owns its declarations
+and executable body and observes its declaration/import scope. Global parsing
+constructs an implicit occurrence through this model; the old flat file fields are
+removed rather than retained as a parallel representation. Single-body test/adaptor
+clients use an explicitly guarded query. Parked LLVM is adapted only to that bounded
+query; no namespace semantics have been added to LLVM.
+
+Preparation, reset, retirement and C++ traverse all active source bodies. Analysis
+selects one executable body and rejects multiple nonempty bodies; a declaration-only
+file selects its first empty body. The prepared selection is invalidated before
+retry/reset and upon removed-body retirement. C++ consumes that fact and does not
+decide which body to execute. Removed bodies have a separate owning retirement
+inventory; analysis unlinks work before frontend disposal releases it. An empty
+retirement inventory retains identity across no-op preparation, preserving syntax
+purity. Token cleanup waits for outstanding body retirement. Reappearing deleted
+sources create fresh syntax within their retained source/collection identity.
+
+This completes the inventory-consumer prerequisite, **not** authored namespace
+syntax. The next parser slice must select/reconcile bodies by namespace identity
+and source occurrence, preserve scope owners through failed parsing and semantic
+retirement, publish declarations into the appropriate namespace under synchronization,
+and retain the implicit-global path. Qualified-reference parsing and observed lookup
+follow. Do not describe the manually assembled multi-body proof as parser support.
+
+Evidence on `b178859c` plus this checkpoint overlay:
+
+- `tests/namespace_bodies.py`: eight focused PHP suites, two generated executions
+  without PCH and parser/preparation conversion. Final evidence:
+  `/tmp/my-try-namespace-bodies-final-20261006-2/summary.json`.
+- `/tmp/my-try-namespace-body-project-20261006-1/summary.json`: five project suites,
+  26 generated executions with/without PCH, 30 standalone headers and three actual
+  transitive dependency checks pass.
+- The changed-consumer sweep initially caught deleted-source revival and no-op
+  retirement-container replacement; both were repaired. Rechecks in
+  `/tmp/my-try-namespace-body-repairs-20261006-1/commands.json` pass multi-body,
+  incremental preparation, S2S syntax-purity and parked LLVM suites. The first sweep
+  also omitted the required output-directory arguments for S2S/LLVM; the recheck
+  supplies them. No root-level output files were created by the failed attempt.
+- Interpolation and logical diagnostic expectations fail identically on an isolated
+  `b178859c` baseline; `/tmp/my-try-namespace-body-baseline-20261006-1/commands.json`
+  records expected-failure reproductions, not passing behavioral suites.
+- Local edits in `tests/dependency_cleanup.php` retain their failing shared-lookup
+  expectation and are not incorporated into this change. Its committed fixture,
+  with only the body-access migration, passes in the changed-consumer sweep.
+  `structure_access.php` now initializes the language model before parsing types;
+  its previous missing initialization was exposed by its focused check.
+
+The portable-PHP skill informed weak scope/entry links and explicit typed body
+inventories. No native compiler rebuild or full-backend conversion is claimed;
+the previously recorded readonly enum-field conversion limitation remains separate.

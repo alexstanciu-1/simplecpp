@@ -142,14 +142,14 @@ $generator = new CPP_Generator();
 $integer_source = dispatch_parse('$a int = 10; return $a;');
 $integer_prepared = (new File_Preparation($integer_source->collection, Model::$language_scope))->prepare();
 $integer_output = CPP_Probe::text($generator->generate($integer_prepared));
-$integer_binding = object_cast($integer_source->root->body->statements[0], variable_declaration_node::class);
+$integer_binding = object_cast($integer_source->root->single_body()->body->statements[0], variable_declaration_node::class);
 $integer_literal = object_cast($integer_binding->initializer, integer_literal_node::class);
 $literal_facts = $integer_literal->require_integer_literal_preparation();
-$body_work = $integer_source->root->body->work();
+$body_work = $integer_source->root->single_body()->body->work();
 $body_state = $body_work->state;
 $literal_text = (new CPP_Syntax(new cpp_generation_context()))->expression($integer_literal);
 if ($literal_text === '' || $integer_literal->require_integer_literal_preparation() !== $literal_facts
-	|| $integer_source->root->body->work() !== $body_work || $body_work->state !== $body_state) {
+	|| $integer_source->root->single_body()->body->work() !== $body_work || $body_work->state !== $body_state) {
 	throw new \LogicException('Backend dispatch changed semantic facts or work identity/state');
 }
 $boolean_source = dispatch_parse('$a bool = false; return $a;');
@@ -161,7 +161,7 @@ if (str_contains($boolean_output, 'scpp/int_t.hpp') || !str_contains($boolean_ou
 
 // Independent successful work survives a failing body; the phase still withholds completion.
 $mixed = dispatch_parse('$a = 10; function unsupported(): int { return missing(); }');
-$first_data = $mixed->root->body->statements[0]->expression;
+$first_data = $mixed->root->single_body()->body->statements[0]->expression;
 $first_literal = object_cast($first_data->value, integer_literal_node::class);
 $failed = false;
 try {
@@ -170,7 +170,7 @@ try {
 catch (\RuntimeException $error) {
 	$failed = true;
 }
-if (!$failed || ($first_data->preparation() === null) || ($first_literal->preparation() === null) || $mixed->collection->root->body->work()->failed) {
+if (!$failed || ($first_data->preparation() === null) || ($first_literal->preparation() === null) || $mixed->collection->root->single_body()->body->work()->failed) {
 	throw new \LogicException('Preparation did not preserve independent successful body work');
 }
 echo "Specialization dispatch: backend-owned emission, unsupported-parent isolation, fact identity and invocation state passed\n";

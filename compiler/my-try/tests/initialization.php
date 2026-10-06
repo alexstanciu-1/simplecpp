@@ -168,7 +168,7 @@ try {
 	$parsed = Model::syntax_files()[0];
 	$context = new preparation_context();
 	$context->worker = new Preparation_Worker(Model::$language_scope);
-	$context->owner = $parsed->root->body->work();
+	$context->owner = $parsed->root->single_body()->body->work();
 	$context->collection = $parsed->collection;
 	$vector_definition = object_cast(Model::$type_catalog->definition('vector'), abstract_template_type_definition::class);
 	$target = $registry->use($registry->intern_application($vector_definition, [$item_type], new Capability_Preparation($context))->type_id());

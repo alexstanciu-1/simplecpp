@@ -16,6 +16,9 @@ final class Token_Cleanup implements node_maintenance_worker_i
 	public static function file(parsed_file $parsed): void
 	{
 		$tokens = $parsed->tokens;
+		if (!$parsed->root->retired_namespace_bodies->is_empty()) {
+			return;
+		}
 		if ((!$parsed->complete) || (($tokens->first_token === 0) && ($tokens->content_offset === 0))) {
 			return;
 		}

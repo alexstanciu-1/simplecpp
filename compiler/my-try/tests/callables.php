@@ -25,7 +25,7 @@ $source->path = 'callables.phs';
 $source->content = 'function build(int $n = 2, int ...$tail): vector<int> { return $tail; } $items = build(3, 4); return 0;';
 $parsed = (new Parser((new Tokenizer($source))->tokenize()))->parse();
 $parsed->root_scope()->set_parent(Model::$language_scope);
-$function = object_cast($parsed->root->declarations[0], function_node::class);
+$function = object_cast($parsed->root->single_body()->declarations[0], function_node::class);
 $source_target = object_cast($function->occurrence(), collected_function::class);
 // A model accessor cannot manufacture missing facts or schedule declaration work.
 $missing_signature = false;
@@ -37,8 +37,8 @@ callable_check(!method_exists(callable_target_i::class, 'require_signature')
 	&& !method_exists($source_target, 'preparation_work'), 'Callable model retains processing hooks');
 
 // The analysis query completes only the signature and registers the requesting owner.
-$query_owner = new file_body_work($parsed->collection, $parsed->root->body);
-$parsed->root->body->attach_work($query_owner);
+$query_owner = new file_body_work($parsed->collection, $parsed->root->single_body()->body);
+$parsed->root->single_body()->body->attach_work($query_owner);
 $query_context = new preparation_context();
 $query_context->worker = new Preparation_Worker(Model::$language_scope);
 $query_context->owner = $query_owner;
@@ -54,16 +54,16 @@ $source_target->signature();
 callable_check($source_target->preparation->version === $signature_version
 	&& count($query_owner->dependencies) === 1, 'Read-only signature access changed work');
 (new File_Preparation($parsed->collection, Model::$language_scope))->prepare();
-$function = object_cast($parsed->root->declarations[0], function_node::class);
+$function = object_cast($parsed->root->single_body()->declarations[0], function_node::class);
 $source_facts = $function->require_preparation();
-$assignment = object_cast($parsed->root->body->statements[0]->expression, assignment_expression_node::class);
+$assignment = object_cast($parsed->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
 $call = object_cast($assignment->value, call_node::class);
 $call_facts = $call->require_call_preparation();
 callable_check(weakref_get($call_facts->target) === $function->occurrence(), 'Source callable identity was copied');
 callable_check($call_facts->signature === $source_facts->signature, 'Call lost its shared signature');
 callable_check($source_facts->parameters[0]->contract === $source_facts->signature->parameters[0], 'Parameter contract was duplicated');
 callable_check($source_facts->parameters[0]->storage_type() === $source_facts->signature->parameters[0]->type, 'Source storage type differs from call contract');
-$file_work = $parsed->root->body->work();
+$file_work = $parsed->root->single_body()->body->work();
 callable_check($file_work->dependencies->contains($function->occurrence()->preparation), 'Source signature dependency missing');
 
 // Build an independent installed contract, using canonical types and a source-free default.

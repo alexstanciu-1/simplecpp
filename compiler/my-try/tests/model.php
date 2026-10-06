@@ -354,7 +354,7 @@ final class Model_Test
 		$node->collect($collector, $scope, 0);
 		$position = $node->occurrence()->local_index;
 		$root = new file_node($scope);
-		$root->body = new function_body_node($scope);
+		$root->single_body()->body = new function_body_node($scope);
 		$result = $collector->finish($root);
 		if (($position !== 1) || ($result->entries[1]->local_index !== 1) || ($result->variable_references !== [1]) || isset($result->entries[0])) {
 			throw new \RuntimeException('Occurrence index did not use the assigned storage position');

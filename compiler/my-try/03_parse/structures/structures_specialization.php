@@ -3,8 +3,60 @@
 /* Typed syntax model; workers own compilation algorithms and traversal. */
 namespace scpp\compiler;
 
-/** File-level symbols and the implicit executable body have separate owners. */
+/** A source file owns occurrences, not a merged namespace or executable body. */
 final class file_node extends ast_node
+{
+	use Node_Source_Span;
+
+	public Storage $namespace_bodies /** Storage<namespace_body_node> */;
+	/** Removed occurrences survive until coordinator-ordered semantic retirement. */
+	public Storage $retired_namespace_bodies /** Storage<namespace_body_node> */;
+
+	/** Global source starts with one implicit occurrence through the same body inventory. */
+	public function __construct(scope $initial_scope)
+	{
+		$this->namespace_bodies = new Storage /** Storage<namespace_body_node> */();
+		$this->retired_namespace_bodies = new Storage /** Storage<namespace_body_node> */();
+		$bodies /** Storage<namespace_body_node> */ = $this->namespace_bodies;
+		$bodies->append(new namespace_body_node($initial_scope));
+	}
+
+	/** Bounded standalone/global adapters must not silently select from several bodies. */
+	public function single_body(): namespace_body_node
+	{
+		$bodies /** Storage<namespace_body_node> */ = $this->namespace_bodies;
+		if (q_count($bodies) !== 1) {
+			throw new \LogicException('This operation requires exactly one source namespace body');
+		}
+		foreach ($bodies as $body) {
+			return $body;
+		}
+		throw new \LogicException('Missing source namespace body');
+	}
+
+	public function kind(): node_kind
+	{
+		return node_kind::file;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->namespace_bodies));
+	}
+
+	/** Active syntax traversal excludes the separately retained retirement inventory. */
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$bodies /** Storage<namespace_body_node> */ = $this->namespace_bodies;
+		foreach ($bodies as $body) {
+			$worker->edge($this, $body);
+		}
+	}
+}
+
+/** One source occurrence, with its own declaration/import environment and executable body. */
+final class namespace_body_node extends ast_node
 {
 	use Node_Source_Span;
 
@@ -15,23 +67,27 @@ final class file_node extends ast_node
 	 * @storage.reference parsed_file.scopes
 	 * @reference.weak
 	 */
-	private scope $file_scope_reference /** weak<scope> */;
+	private scope $body_scope_reference /** weak<scope> */;
 
-	public function __construct(scope $file_scope)
+	/** Initialize an empty source occurrence before parsing publishes declarations. */
+	public function __construct(scope $body_scope)
 	{
-		$this->file_scope_reference = $file_scope;
+		$this->body_scope_reference = $body_scope;
 		$this->declarations = new Storage /** Storage<declaration_node> */();
+		$this->body = new function_body_node($body_scope);
+		$this->body->set_span(0, 0);
+		$this->set_span(0, 0);
 	}
 
 	/** Required lexical context, independent of syntax ownership. */
-	public function file_scope(): scope
+	public function body_scope(): scope
 	{
-		return \weakref_get($this->file_scope_reference);
+		return \weakref_get($this->body_scope_reference);
 	}
 
 	public function kind(): node_kind
 	{
-		return node_kind::file;
+		return node_kind::namespace_body;
 	}
 
 	/**
@@ -39,7 +95,7 @@ final class file_node extends ast_node
 	 */
 	public function children(): child_iterator_i
 	{
-		return new file_children_iterator($this);
+		return new namespace_body_children_iterator($this);
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */

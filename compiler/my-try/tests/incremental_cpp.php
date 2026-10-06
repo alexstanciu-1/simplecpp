@@ -35,7 +35,7 @@ try
 	$signature = Model::$cpp_output_program->fragments[$target_owner];
 	$body = Model::$cpp_output_program->fragments[$target_body];
 	$caller_fragment = Model::$cpp_output_program->fragments[$caller_body];
-	$entry = Model::$cpp_output_program->fragments[$source->root->body->work()];
+	$entry = Model::$cpp_output_program->fragments[$source->root->single_body()->body->work()];
 	$text = CPP_Probe::text(Model::$cpp_files);
 	$compiler->exec_cpp();
 	cpp_check(CPP_Probe::text(Model::$cpp_files) === $text && Model::$cpp_output_program->fragments[$target_body] === $body, 'No-op generation rerendered body');
@@ -81,7 +81,7 @@ try
 	cpp_check(CPP_Output::encode(Model::$cpp_files) === CPP_Output::encode($standalone), 'Coordinator publication changed standalone output');
 	cpp_check(count($source->preparation_changes) === 0, 'Successful generation did not consume handoff');
 	cpp_check(Model::$cpp_output_program->fragments[$target_body] !== $body, 'Changed body reused stale text');
-	cpp_check(Model::$cpp_output_program->fragments[$target_owner] === $signature && Model::$cpp_output_program->fragments[$caller_body] === $caller_fragment && Model::$cpp_output_program->fragments[$source->root->body->work()] === $entry, 'Body edit rerendered unchanged fragments');
+	cpp_check(Model::$cpp_output_program->fragments[$target_owner] === $signature && Model::$cpp_output_program->fragments[$caller_body] === $caller_fragment && Model::$cpp_output_program->fragments[$source->root->single_body()->body->work()] === $entry, 'Body edit rerendered unchanged fragments');
 
 	// Insertion moves tokens but cannot rename existing declarations or perturb cached temporaries.
 	$changed = 'function before(): int { return target(); } ' . str_replace('return 1;', 'return 22;', $initial);

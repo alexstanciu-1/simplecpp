@@ -115,7 +115,7 @@ final class S2S_Proof
 		}
 
 		$prepared_files /** Storage<prepared_file> */ = Model::$prepared_files;
-		$statements /** Storage<statement_node> */ = $prepared_files[0]->source->root->body->statements;
+		$statements /** Storage<statement_node> */ = $prepared_files[0]->source->root->single_body()->body->statements;
 		$first = object_cast($statements[0], variable_declaration_node::class);
 		$second = object_cast($statements[1], variable_declaration_node::class);
 		$first_syntax = object_cast($first->type_syntax, template_application_type_node::class);
@@ -199,7 +199,7 @@ final class S2S_Proof
 
 		$prepared_files /** Storage<prepared_file> */ = Model::$prepared_files;
 		$prepared = $prepared_files[0];
-		$children /** Storage<statement_node> */ = $prepared->source->root->body->statements;
+		$children /** Storage<statement_node> */ = $prepared->source->root->single_body()->body->statements;
 		$first_data = object_cast(object_cast($children[0], expression_statement_node::class)->expression, assignment_expression_node::class);
 		$assignment_data = object_cast(object_cast($children[2], expression_statement_node::class)->expression, assignment_expression_node::class);
 		$literal_data = object_cast($first_data->value, integer_literal_node::class);

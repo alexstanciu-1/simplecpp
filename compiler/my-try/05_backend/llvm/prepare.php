@@ -71,7 +71,7 @@ final class LLVM_Preparation_Run
 		foreach ($files as $file)
 		{
 			$entries /** Storage<collected_name> */ = $file->source->entries;
-			foreach ($file->source->root->body->statements as $statement) {
+			foreach ($file->source->root->single_body()->body->statements as $statement) {
 				if (!(($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::struct_declaration))) {
 					$this->register($file, null, []);
 					break;
@@ -128,7 +128,7 @@ final class LLVM_Preparation_Run
 		$function->declaration = $definition;
 		$function->arguments = $arguments;
 		$function->is_entry = $definition === null;
-		$function->body = $definition === null ? $file->source->root->body : object_cast($definition, collected_function::class)->syntax()->body;
+		$function->body = $definition === null ? $file->source->root->single_body()->body : object_cast($definition, collected_function::class)->syntax()->body;
 		if ($definition === null) {
 			$function->name = $this->policy->entry_name;
 			$function->return_type = $this->policy->entry_return_type;

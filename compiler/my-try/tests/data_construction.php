@@ -50,7 +50,7 @@ $cases = [
 foreach ($cases as [$source, $braces, $count])
 {
 	$parsed = data_parse('return ' . $source . ';');
-	$node = $parsed->root->body->statements[0]->expression;
+	$node = $parsed->root->single_body()->body->statements[0]->expression;
 	data_check($node instanceof data_construction_node, 'Missing common node: ' . $source);
 	data_check($node->entries->count() === $count, 'Wrong entry count: ' . $source);
 	$expected = $braces ? data_source_representation::js_like : data_source_representation::php_like;
@@ -61,7 +61,7 @@ foreach ($cases as [$source, $braces, $count])
 }
 
 $parsed = data_parse('return {bare: $value, "quoted": 2, bare: 3};');
-$node = $parsed->root->body->statements[0]->expression;
+$node = $parsed->root->single_body()->body->statements[0]->expression;
 $key = $node->entries[0]->key;
 data_check($key instanceof string_literal_node, 'Bare property key did not normalize to a string');
 data_check($key->optional_occurrence() === null, 'Bare property key was collected as a name');
@@ -81,7 +81,7 @@ data_check($key->preparation() === null, 'Maintenance missed a keyed child');
 data_check(String_Literals::decode($key->literal_spelling($parsed->tokens)) === 'bare', 'Normalized bare key did not decode');
 
 $parsed = data_parse('return [null => 1, 2];');
-$node = $parsed->root->body->statements[0]->expression;
+$node = $parsed->root->single_body()->body->statements[0]->expression;
 data_check($node->entries[0]->key instanceof null_literal_node, 'Explicit null key became absent');
 data_check($node->entries[1]->key === null, 'Positional entry acquired a synthetic key');
 // Mixed shapes stay faithfully parsed; admitting them is not this syntax slice.
@@ -105,13 +105,13 @@ foreach (['["a": 1]', '{"a" => 1}', '{a => 1}', '{1}', '{$key: 1}', '{1: 2}',
 
 // Normal blocks, indexing, calls, comparison and static constants retain their paths.
 $parsed = data_parse('{ $x = 1; } return ({name: 1})["name"];');
-data_check($parsed->root->body->statements[0] instanceof block_node, 'Statement braces stopped being blocks');
-data_check($parsed->root->body->statements[1]->expression instanceof index_node, 'Shared postfix path lost');
+data_check($parsed->root->single_body()->body->statements[0] instanceof block_node, 'Statement braces stopped being blocks');
+data_check($parsed->root->single_body()->body->statements[1]->expression instanceof index_node, 'Shared postfix path lost');
 foreach (['error::$no_error', 'f<int>(1)', '$a < $b', '($a)', 'f({name: 1})'] as $source) {
 	data_parse('return ' . $source . ';');
 }
 $parsed = data_parse('return (mixed){key: 1};');
-data_check($parsed->root->body->statements[0]->expression instanceof cast_expression_node, 'Brace expression lost ordinary cast parsing');
+data_check($parsed->root->single_body()->body->statements[0]->expression instanceof cast_expression_node, 'Brace expression lost ordinary cast parsing');
 
 // Retained nested trees continue to query their spelling after span moves/compaction.
 $source = 'function f(): mixed { return dynamic::{settings: {enabled: true}, values: [1, 2,]}; }';

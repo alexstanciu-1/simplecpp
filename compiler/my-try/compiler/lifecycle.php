@@ -144,9 +144,16 @@ final class Compiler_Lifecycle
 			{
 				Preparation_Cleanup::tree($parsed->root);
 				$source = $parsed->collection;
-				if ($source->root->body->work() !== null) {
-					$source->root->body->work()->state = preparation_state::pending;
-					$source->root->body->work()->change_status = change_state::changed;
+				if ($source->prepared !== null) {
+					$source->prepared->entry_body = null;
+				}
+				$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+				foreach ($bodies as $namespace_body) {
+					$work = $namespace_body->body->work();
+					if ($work !== null) {
+						$work->state = preparation_state::pending;
+						$work->change_status = change_state::changed;
+					}
 				}
 				$entries /** Storage<collected_name> */ = $source->entries;
 				foreach ($entries as $entry)

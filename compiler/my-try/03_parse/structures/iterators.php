@@ -829,7 +829,7 @@ final class field_access_children_iterator extends children_iterator
 	}
 }
 
-enum file_children_stage
+enum namespace_body_children_stage
 {
 	case declarations;
 	case body;
@@ -837,13 +837,13 @@ enum file_children_stage
 }
 
 /** Independent source owner plus explicit grammar stage and collection progress. */
-final class file_children_iterator extends children_iterator
+final class namespace_body_children_iterator extends children_iterator
 {
-	private file_node $source;
-	private file_children_stage $stage = file_children_stage::declarations;
+	private namespace_body_node $source;
+	private namespace_body_children_stage $stage = namespace_body_children_stage::declarations;
 	private ?storage_children_iterator $declarations_cursor = null;
 
-	public function __construct(file_node $source)
+	public function __construct(namespace_body_node $source)
 	{
 		$this->source = $source;
 	}
@@ -851,11 +851,11 @@ final class file_children_iterator extends children_iterator
 	/** Resume the current collection or named field; exhausted collections move to the next stage. */
 	protected function read_next(): ?ast_node
 	{
-		while ($this->stage !== file_children_stage::finished)
+		while ($this->stage !== namespace_body_children_stage::finished)
 		{
 			switch ($this->stage)
 			{
-				case file_children_stage::declarations:
+				case namespace_body_children_stage::declarations:
 					if ($this->declarations_cursor === null) {
 						$this->declarations_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->declarations));
 					}
@@ -866,10 +866,10 @@ final class file_children_iterator extends children_iterator
 						return $this->declarations_cursor->current();
 					}
 					$this->declarations_cursor = null;
-					$this->stage = file_children_stage::body;
+					$this->stage = namespace_body_children_stage::body;
 					break;
-				case file_children_stage::body:
-					$this->stage = file_children_stage::finished;
+				case namespace_body_children_stage::body:
+					$this->stage = namespace_body_children_stage::finished;
 					return $this->source->body;
 			}
 		}

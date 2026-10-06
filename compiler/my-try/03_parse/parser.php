@@ -71,12 +71,25 @@ final class Parser_Run
 		$this->tokens = $tokens;
 		$this->position = $tokens->first_token;
 		$this->scopes = new Storage /** Storage<scope> */();
-		$file_scope /** scope */ = $previous !== null ? $previous->root_scope() : ($target_scope ?? new scope());
+		$selected_scope /** nullable<scope> */ = $target_scope;
+		if ($previous !== null) {
+			if (!$previous->root->namespace_bodies->is_empty()) {
+				$selected_scope = $previous->root_scope();
+			}
+		}
+		$file_scope /** scope */ = $selected_scope ?? new scope();
+		if ($previous !== null) {
+			if ($previous->root->namespace_bodies->is_empty()) {
+				// Reappearance after completed deletion starts fresh syntax in the retained source.
+				$revived_root = new file_node($file_scope);
+				$revived_root->set_span(0, 0);
+				$previous->root = $revived_root;
+				$previous->collection->root = $revived_root;
+			}
+		}
 		if ($previous === null) {
 			$root = new file_node($file_scope);
 			$root->set_span(0, 0);
-			$root->body = new function_body_node($file_scope);
-			$root->body->set_span(0, 0);
 			$new_collection = new collected_file($tokens);
 			$new_collection->root = $root;
 			$this->parsed = new parsed_file($tokens, $root, $new_collection, new Storage /** Storage<scope> */());
@@ -131,7 +144,7 @@ final class Parser_Run
 	public function parse(): parsed_file
 	{
 		$root = $this->parsed->root;
-		$old_body = $root->body;
+		$old_body = $root->single_body()->body;
 		$old_statements /** Storage<statement_node> */ = $old_body->statements;
 		$body = new function_body_node($this->current_scope);
 		$statements /** Storage<statement_node> */ = $body->statements;
@@ -175,8 +188,9 @@ final class Parser_Run
 		}
 		$body->syntax_changed = $body->syntax_changed || $body_changed;
 		$body->set_span($this->tokens->first_token, $this->position);
-		$root->body = $body;
-		$root->declarations = $declarations;
+		$root->single_body()->body = $body;
+		$root->single_body()->declarations = $declarations;
+		$root->single_body()->set_span($this->tokens->first_token, $this->position);
 		$root->set_span($this->tokens->first_token, $this->position);
 		$this->collector->finish($root);
 		// Release obsolete scopes only after all selected syntax and collection links are published.

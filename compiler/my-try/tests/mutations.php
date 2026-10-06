@@ -30,7 +30,7 @@ foreach ([['++$x', operator_operation::integer_pre_increment, false],
 	['$x--', operator_operation::integer_post_decrement, true]] as [$source, $operation, $postfix])
 {
 	$syntax = mutation_test_source('$x = 3; $a = ' . $source . '; return $a;');
-	$mutation = $syntax->root->body->statements[1]->expression->value;
+	$mutation = $syntax->root->single_body()->body->statements[1]->expression->value;
 	$decision = $mutation->require_mutation_preparation()->decision;
 	$integer = Language_Types::integer(Model::$language_scope);
 	if (($mutation->kind() !== node_kind::mutation_expression) || ($mutation->postfix !== $postfix)
@@ -59,7 +59,7 @@ foreach ([['++$x', operator_operation::integer_pre_increment, false],
 }
 
 $syntax = mutation_test_source('$x = 1; return -$x++;');
-$unary = $syntax->root->body->statements[1]->expression;
+$unary = $syntax->root->single_body()->body->statements[1]->expression;
 if ($unary->require_unary_preparation()->decision->operation !== operator_operation::integer_negative) {
 	throw new \LogicException('Single mutation operand lost unary preparation');
 }

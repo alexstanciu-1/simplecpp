@@ -34,14 +34,14 @@ try
 	foreach ([conversion_operation::boxed_wrap, conversion_operation::boxed_wrap,
 		conversion_operation::identity, conversion_operation::boxed_extract] as $position => $operation)
 	{
-		$facts = $root->body->statements[$position]->require_preparation();
+		$facts = $root->single_body()->body->statements[$position]->require_preparation();
 		mixed_check($facts->conversion->operation === $operation, 'Wrong prepared mixed operation');
 		mixed_check($facts->conversion->result_type->matches($facts->type), 'Mixed boundary lost target identity');
 	}
 	mixed_check(str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::required_cast<scpp::int_t<>>'),
 		'Required extraction became an implicit or explicit cast');
 	Preparation_Cleanup::tree($root);
-	mixed_check($root->body->statements[3]->preparation() === null, 'Mixed conversion facts survived cleanup');
+	mixed_check($root->single_body()->body->statements[3]->preparation() === null, 'Mixed conversion facts survived cleanup');
 
 	$registry = Model::$type_catalog->registry();
 	$renamed = $registry->define_mixed('OtherBox', type_definition_origin::runtime,
@@ -84,21 +84,21 @@ try
 		'Mixed arithmetic depended on spelling or extracted its operands');
 	mixed_source($path, '$v mixed = 7; $sum mixed = $v + 2; $negative mixed = -$v; $typed int = $v * 3;');
 	$arithmetic_root = Model::syntax_files()[0]->root;
-	$sum_node = $arithmetic_root->body->statements[1]->initializer;
-	$negative_node = $arithmetic_root->body->statements[2]->initializer;
+	$sum_node = $arithmetic_root->single_body()->body->statements[1]->initializer;
+	$negative_node = $arithmetic_root->single_body()->body->statements[2]->initializer;
 	mixed_check($sum_node->require_binary_preparation()->decision->operation === operator_operation::boxed_addition
 		&& Boxed_Conversions::is_mixed($sum_node->require_preparation()->type)
 		&& !$sum_node->require_preparation()->addressable(), 'Mixed arithmetic lost its owned result');
 	mixed_check($negative_node->require_unary_preparation()->decision->operation === operator_operation::boxed_negative,
 		'Mixed unary operation lost its runtime dispatch');
-	mixed_check($arithmetic_root->body->statements[3]->require_preparation()->conversion->operation
+	mixed_check($arithmetic_root->single_body()->body->statements[3]->require_preparation()->conversion->operation
 		=== conversion_operation::boxed_extract, 'Typed destination changed arithmetic dispatch');
 	Preparation_Cleanup::tree($arithmetic_root);
 	mixed_check($sum_node->preparation() === null && $negative_node->preparation() === null,
 		'Mixed arithmetic retained stale facts');
 	mixed_source($path, '$v mixed = "0"; $answer bool = $v || 2;');
 	$logical_root = Model::syntax_files()[0]->root;
-	$logical_node = $logical_root->body->statements[1]->initializer;
+	$logical_node = $logical_root->single_body()->body->statements[1]->initializer;
 	$logical_facts = $logical_node->require_binary_preparation();
 	mixed_check($logical_facts->decision->operation === operator_operation::condition_or
 		&& count($logical_facts->decision->operand_truthiness) === 2
@@ -108,13 +108,13 @@ try
 	mixed_check($logical_node->preparation() === null, 'Logical operand facts survived cleanup');
 	mixed_source($path, '$v mixed = 7; $text string = "x" . $v; $boxed mixed = $v . null;');
 	$text_root = Model::syntax_files()[0]->root;
-	$text_node = $text_root->body->statements[1]->initializer;
+	$text_node = $text_root->single_body()->body->statements[1]->initializer;
 	$text_facts = $text_node->require_binary_preparation();
 	mixed_check($text_facts->decision->operation === operator_operation::string_concatenation
 		&& $text_facts->decision->operands[1]->operation === conversion_operation::text_conversion
 		&& String_Conversions::is_string($text_facts->type) && !$text_facts->addressable(),
 		'Concatenation lost its text conversion or owned string result');
-	mixed_check($text_root->body->statements[2]->require_preparation()->conversion->operation
+	mixed_check($text_root->single_body()->body->statements[2]->require_preparation()->conversion->operation
 		=== conversion_operation::boxed_wrap, 'Mixed destination changed concatenation result type');
 	Preparation_Cleanup::tree($text_root);
 	mixed_check($text_node->preparation() === null, 'Text conversion survived cleanup');
@@ -122,7 +122,7 @@ try
 	$append_root = Model::syntax_files()[0]->root;
 	foreach ([1 => conversion_operation::boxed_wrap, 3 => conversion_operation::identity] as $position => $write_back)
 	{
-		$append_node = $append_root->body->statements[$position]->initializer;
+		$append_node = $append_root->single_body()->body->statements[$position]->initializer;
 		$append_facts = $append_node->require_compound_assignment_preparation();
 		mixed_check($append_facts->write_back_mode === compound_write_back::converted_assignment
 			&& $append_facts->write_back->operation === $write_back
@@ -130,12 +130,12 @@ try
 			&& !$append_facts->addressable(), 'Text update lost replacement semantics or owned snapshot');
 	}
 	Preparation_Cleanup::tree($append_root);
-	mixed_check($append_root->body->statements[1]->initializer->preparation() === null,
+	mixed_check($append_root->single_body()->body->statements[1]->initializer->preparation() === null,
 		'Text update facts survived cleanup');
 	mixed_source($path, '$v mixed = 7; $after mixed = ($v += 1); $before mixed = $v++;');
 	$update_root = Model::syntax_files()[0]->root;
-	$compound_node = $update_root->body->statements[1]->initializer;
-	$mutation_node = $update_root->body->statements[2]->initializer;
+	$compound_node = $update_root->single_body()->body->statements[1]->initializer;
+	$mutation_node = $update_root->single_body()->body->statements[2]->initializer;
 	$update_facts = $compound_node->require_compound_assignment_preparation();
 	mixed_check($update_facts->write_back_mode === compound_write_back::boxed_stored_kind
 		&& $update_facts->decision->operation === operator_operation::boxed_addition
@@ -153,7 +153,7 @@ try
 	$comparison_root = Model::syntax_files()[0]->root;
 	foreach ([1, 2, 3, 4] as $position)
 	{
-		$comparison_node = $comparison_root->body->statements[$position]->initializer;
+		$comparison_node = $comparison_root->single_body()->body->statements[$position]->initializer;
 		$decision = $comparison_node->require_binary_preparation()->decision;
 		mixed_check($decision->result_type->matches(Language_Types::boolean(Model::$language_scope))
 			&& !$comparison_node->require_preparation()->addressable(), 'Comparison lost its owned bool result');
@@ -168,26 +168,26 @@ try
 		}
 	}
 	Preparation_Cleanup::tree($comparison_root);
-	mixed_check($comparison_root->body->statements[1]->initializer->preparation() === null,
+	mixed_check($comparison_root->single_body()->body->statements[1]->initializer->preparation() === null,
 		'Mixed comparison retained stale facts');
 	mixed_source($path, '$d dynamic; $m mixed = (mixed)$d; $again dynamic = (dynamic)$m;');
 	$bridge_root = Model::syntax_files()[0]->root;
-	mixed_check($bridge_root->body->statements[1]->initializer->require_cast_preparation()->conversion->operation
+	mixed_check($bridge_root->single_body()->body->statements[1]->initializer->require_cast_preparation()->conversion->operation
 		=== conversion_operation::explicit_runtime_cast, 'Missing checked scalar/null family cast fact');
 	Preparation_Cleanup::tree($bridge_root);
-	mixed_check($bridge_root->body->statements[1]->initializer->preparation() === null,
+	mixed_check($bridge_root->single_body()->body->statements[1]->initializer->preparation() === null,
 		'Dynamic cast retained stale facts');
 
 	mixed_source($path, '$v mixed = "false"; if ($v) {} $n int = (int)$v; '
 		. '$b bool = !$v; $p bool = isset($v); $e bool = empty($v);');
 	$probe_root = Model::syntax_files()[0]->root;
-	mixed_check($probe_root->body->statements[1]->require_preparation()->truthiness->operation
+	mixed_check($probe_root->single_body()->body->statements[1]->require_preparation()->truthiness->operation
 		=== truthiness_operation::boxed_condition, 'Missing mixed condition fact');
 	mixed_check(str_contains(CPP_Probe::text(Model::$cpp_files), 'scpp::cast<scpp::int_t<>>'),
 		'Explicit mixed cast did not use its runtime owner');
 	$probe_nodes = [];
 	foreach ([2, 3, 4, 5] as $position) {
-		$probe_nodes[] = $probe_root->body->statements[$position]->initializer;
+		$probe_nodes[] = $probe_root->single_body()->body->statements[$position]->initializer;
 	}
 	Preparation_Cleanup::tree($probe_root);
 	foreach ($probe_nodes as $probe_node) {
@@ -365,7 +365,7 @@ try
 	$selection_root = Model::syntax_files()[0]->root;
 	foreach ([1, 2, 3, 4] as $position)
 	{
-		$selection_node = $selection_root->body->statements[$position]->initializer;
+		$selection_node = $selection_root->single_body()->body->statements[$position]->initializer;
 		$facts = $selection_node->require_preparation();
 		mixed_check(Boxed_Conversions::is_mixed($facts->type) && !$facts->addressable(),
 			'Selection lost its owned mixed result');
@@ -380,14 +380,14 @@ try
 	}
 	Preparation_Cleanup::tree($selection_root);
 	foreach ([1, 2, 3, 4] as $position) {
-		$selection_node = $selection_root->body->statements[$position]->initializer;
+		$selection_node = $selection_root->single_body()->body->statements[$position]->initializer;
 		mixed_check($selection_node->preparation() === null, 'Selection retained stale facts');
 	}
 	foreach (['?int', 'result<int>', 'result_or_false<int>'] as $wrapper)
 	{
 		mixed_source($path, '$v ' . $wrapper . ' = 0; $fallback mixed = null; $out mixed = $v ?? $fallback;');
 		$wrapper_root = Model::syntax_files()[0]->root;
-		$coalesce = $wrapper_root->body->statements[2]->initializer;
+		$coalesce = $wrapper_root->single_body()->body->statements[2]->initializer;
 		$facts = $coalesce->require_coalesce_preparation();
 		mixed_check($facts->presence === coalesce_presence::wrapper_value
 			&& $facts->left_extraction->operation === ($wrapper === '?int' ? conversion_operation::nullable_extract : conversion_operation::result_extract)

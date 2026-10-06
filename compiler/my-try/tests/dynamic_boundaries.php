@@ -23,7 +23,7 @@ function dynamic_boundaries_source(string $source): Compiler
 }
 
 dynamic_boundaries_source('$a dynamic = 7; $b dynamic = $a; $c int = $b;');
-$nodes = Model::syntax_files()[0]->root->body->statements;
+$nodes = Model::syntax_files()[0]->root->single_body()->body->statements;
 foreach ([conversion_operation::boxed_wrap, conversion_operation::identity,
 	conversion_operation::boxed_extract] as $position => $expected) {
 	dynamic_boundaries_check($nodes[$position]->require_preparation()->conversion->operation === $expected,
@@ -120,10 +120,10 @@ foreach (['return source() ? 1 : 0;', 'return !source() ? 1 : 0;',
 
 dynamic_boundaries_source('$d dynamic = 0; if ($d) {} $a dynamic = $d ?: 1; $b dynamic = $d ?? 1;');
 $root = Model::syntax_files()[0]->root;
-dynamic_boundaries_check($root->body->statements[1]->require_preparation()->truthiness->operation
+dynamic_boundaries_check($root->single_body()->body->statements[1]->require_preparation()->truthiness->operation
 	=== truthiness_operation::boxed_condition, 'Dynamic condition bypassed common truthiness');
-$elvis = $root->body->statements[2]->initializer;
-$coalesce = $root->body->statements[3]->initializer;
+$elvis = $root->single_body()->body->statements[2]->initializer;
+$coalesce = $root->single_body()->body->statements[3]->initializer;
 dynamic_boundaries_check(Boxed_Conversions::is_dynamic($elvis->require_preparation()->type)
 	&& !$elvis->require_preparation()->addressable(), 'Dynamic join lost its owned family');
 dynamic_boundaries_check($coalesce->require_coalesce_preparation()->presence === coalesce_presence::boxed_nonnull,
@@ -144,10 +144,10 @@ foreach (['mixed', 'dynamic'] as $family) {
 	}
 	dynamic_boundaries_source('$v ' . $family . ' = 1; $out ' . $family . ' = $v + 1; $v += 1;');
 	$root = Model::syntax_files()[0]->root;
-	dynamic_boundaries_check($root->body->statements[1]->initializer->require_binary_preparation()->decision->operation
+	dynamic_boundaries_check($root->single_body()->body->statements[1]->initializer->require_binary_preparation()->decision->operation
 		=== operator_operation::boxed_addition, 'Family bypassed shared operator identity');
 	Preparation_Cleanup::tree($root);
-	dynamic_boundaries_check($root->body->statements[1]->initializer->preparation() === null,
+	dynamic_boundaries_check($root->single_body()->body->statements[1]->initializer->preparation() === null,
 		'Boxed arithmetic retained stale facts');
 }
 echo "Dynamic boundaries: shared conversions, family signatures, rejection and recovery passed\n";

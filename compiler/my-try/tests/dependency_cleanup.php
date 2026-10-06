@@ -23,7 +23,7 @@ try
 	$a = Model::$global_scope->functions_named('a')[0]->preparation;
 	$b = Model::$global_scope->functions_named('b')[0]->preparation;
 	$b_body = object_cast($b->declaration(), collected_function::class)->syntax()->body->work();
-	$file_body = Model::collected_files()[0]->root->body->work();
+	$file_body = Model::collected_files()[0]->root->single_body()->body->work();
 	$old_lookups = [];
 	foreach ($b_body->lookups as $candidate) {
 		$old_lookups[] = $candidate;
@@ -71,7 +71,7 @@ try
 	$compiler->sync([$path]);
 	$compiler->prepare();
 	$a = Model::$global_scope->functions_named('a')[0]->preparation;
-	$file_body = Model::collected_files()[0]->root->body->work();
+	$file_body = Model::collected_files()[0]->root->single_body()->body->work();
 	Compiler_Lifecycle::reset();
 	cleanup_check(count($a->dependents) === 0 && count($file_body->dependencies) === 0 && count($file_body->lookups) === 0, 'Full reset retained dependency graph');
 }

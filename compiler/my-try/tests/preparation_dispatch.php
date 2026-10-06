@@ -19,7 +19,7 @@ foreach ([false, true] as $nested)
 	$source->content = 'struct Box { int32 $value; } function put(Box &$box, int $n): int { $box->value = $n; $x = $n; $x = 7; return $x; } $box Box; return put($box, 9);';
 	$parsed = (new Parser((new Tokenizer($source))->tokenize()))->parse();
 	$parsed->root_scope()->set_parent(Model::$language_scope);
-	$function = object_cast($parsed->root->declarations[1], function_node::class);
+	$function = object_cast($parsed->root->single_body()->declarations[1], function_node::class);
 	$statements /** Storage<statement_node> */ = $function->body->statements;
 	if ($nested)
 	{

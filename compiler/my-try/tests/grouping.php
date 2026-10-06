@@ -33,7 +33,7 @@ function grouping_span(ast_node $node, parsed_file $syntax): string
 
 // Equal arithmetic results cannot establish grouping: inspect both tree shapes.
 $syntax = grouping_parse('return 1 + (2 + 3);');
-$right_group = $syntax->root->body->statements[0]->expression;
+$right_group = $syntax->root->single_body()->body->statements[0]->expression;
 grouping_check(($right_group instanceof binary_expression_node)
 	&& ($right_group->left instanceof integer_literal_node)
 	&& ($right_group->right instanceof binary_expression_node), 'Right grouping lost its tree shape');
@@ -41,7 +41,7 @@ grouping_check(grouping_span($right_group->right, $syntax) === '2 + 3', 'Groupin
 grouping_check(grouping_span($right_group, $syntax) === '1 + ( 2 + 3 )', 'Outer binary lost consumed grouping');
 
 $syntax = grouping_parse('return ((1 + 2)) + 3;');
-$left_group = $syntax->root->body->statements[0]->expression;
+$left_group = $syntax->root->single_body()->body->statements[0]->expression;
 grouping_check(($left_group->left instanceof binary_expression_node)
 	&& ($left_group->right instanceof integer_literal_node), 'Left grouping lost its tree shape');
 grouping_check(grouping_span($left_group->left, $syntax) === '1 + 2', 'Nested grouping rewrote the inner span');
@@ -49,49 +49,49 @@ grouping_check(grouping_span($left_group, $syntax) === '( ( 1 + 2 ) ) + 3', 'Out
 
 // Names in grouping collect exactly one value occurrence, never a speculative type.
 $syntax = grouping_parse('return ((PHP_INT_MAX));');
-$constant = $syntax->root->body->statements[0]->expression;
+$constant = $syntax->root->single_body()->body->statements[0]->expression;
 grouping_check($constant instanceof constant_reference_node, 'Parenthesized constant became a cast');
 grouping_check((count($syntax->collection->entries) === 1)
 	&& ($syntax->collection->entries[0] === $constant->occurrence()), 'Lookahead collected a speculative occurrence');
 grouping_check(grouping_span($constant, $syntax) === 'PHP_INT_MAX', 'Constant lost its own source span');
 
 $syntax = grouping_parse('return (Unknown) + 1;');
-grouping_check($syntax->root->body->statements[0]->expression->left instanceof constant_reference_node,
+grouping_check($syntax->root->single_body()->body->statements[0]->expression->left instanceof constant_reference_node,
 	'Name grouping depended on name resolution');
 $syntax = grouping_parse('return (Unknown)$x;');
-grouping_check($syntax->root->body->statements[0]->expression instanceof cast_expression_node,
+grouping_check($syntax->root->single_body()->body->statements[0]->expression instanceof cast_expression_node,
 	'Unknown cast target did not remain a semantic lookup');
 $syntax = grouping_parse('return (Unknown)(1);');
-grouping_check($syntax->root->body->statements[0]->expression instanceof cast_expression_node,
+grouping_check($syntax->root->single_body()->body->statements[0]->expression instanceof cast_expression_node,
 	'Parenthesized cast operand lost cast priority');
 $syntax = grouping_parse('return (Unknown)[1];');
-grouping_check($syntax->root->body->statements[0]->expression instanceof cast_expression_node,
+grouping_check($syntax->root->single_body()->body->statements[0]->expression instanceof cast_expression_node,
 	'Array cast operand lost cast priority');
 $syntax = grouping_parse('return (hash<string, vector<int>>)$x;');
-grouping_check($syntax->root->body->statements[0]->expression->target_type instanceof template_application_type_node,
+grouping_check($syntax->root->single_body()->body->statements[0]->expression->target_type instanceof template_application_type_node,
 	'Cast lookahead lost nested type applications');
 $syntax = grouping_parse('return (value<vector<int>>)$x;');
-grouping_check($syntax->root->body->statements[0]->expression->target_type instanceof type_use_modifier_node,
+grouping_check($syntax->root->single_body()->body->statements[0]->expression->target_type instanceof type_use_modifier_node,
 	'Cast lookahead lost type-use modifiers');
 
 $syntax = grouping_parse('return (int)(1 + 2);');
-$cast = $syntax->root->body->statements[0]->expression;
+$cast = $syntax->root->single_body()->body->statements[0]->expression;
 grouping_check(($cast instanceof cast_expression_node) && ($cast->operand instanceof binary_expression_node),
 	'Cast did not own its grouped operand');
 grouping_check(grouping_span($cast, $syntax) === '( int ) ( 1 + 2 )', 'Cast lost grouped operand provenance');
 $syntax = grouping_parse('return ((int)$x) + 2;');
-grouping_check($syntax->root->body->statements[0]->expression->left instanceof cast_expression_node,
+grouping_check($syntax->root->single_body()->body->statements[0]->expression->left instanceof cast_expression_node,
 	'Grouping around a cast changed its precedence');
 
 // Postfix access owns the consumed group; its base still describes only the inner value.
 $syntax = grouping_parse('return (($box))->value;');
-$field = $syntax->root->body->statements[0]->expression;
+$field = $syntax->root->single_body()->body->statements[0]->expression;
 grouping_check(($field instanceof field_access_node) && ($field->base instanceof variable_reference_node),
 	'Grouped member base acquired an extra node');
 grouping_check(grouping_span($field, $syntax) === '( ( $box ) ) -> value', 'Member span lost grouped base');
 grouping_check(grouping_span($field->base, $syntax) === '$box', 'Member base lost variable provenance');
 $syntax = grouping_parse('return ($items)[(0)];');
-$index = $syntax->root->body->statements[0]->expression;
+$index = $syntax->root->single_body()->body->statements[0]->expression;
 grouping_check(($index instanceof index_node) && ($index->index instanceof integer_literal_node),
 	'Grouping changed index syntax');
 grouping_check(grouping_span($index, $syntax) === '( $items ) [ ( 0 ) ]', 'Index span lost grouped base');

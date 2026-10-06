@@ -15,7 +15,7 @@ function parse_update(Compiler $compiler, source_record $source, string $content
 {
 	// This parser-only fixture models successful downstream consumption before its next edit.
 	// Persistent unresolved state is covered separately by preparation_recovery.php.
-	$source->parsed->root->body->syntax_changed = false;
+	$source->parsed->root->single_body()->body->syntax_changed = false;
 	foreach ($source->parsed->collection->entries as $entry) {
 		if ($entry instanceof collected_function) {
 			if ($entry->syntax()->has_parsed_body()) {
@@ -80,18 +80,18 @@ try
 	parse_check($get->syntax() === $function_node, 'Function node identity was replaced');
 	parse_check(($function->parameters[0] === $parameter) && ($parameter->occurrence() === $parameter_entry), 'Parameter identity was replaced');
 	parse_check($function->body === $body, 'Unchanged function body was not retained');
-	parse_check(!$function->body->syntax_changed && !$parsed->root->body->syntax_changed, 'Declaration order or token offsets changed an executable-body flag');
+	parse_check(!$function->body->syntax_changed && !$parsed->root->single_body()->body->syntax_changed, 'Declaration order or token offsets changed an executable-body flag');
 	parse_check($get->change_status === change_state::unchanged, 'Unchanged signature marked changed');
 	parse_check($get->revision !== $old_revision, 'Presence revision was not advanced');
 	parse_check(Model::$global_scope->types_named('Box')[0] === $type, 'Canonical type identity was replaced');
 	parse_check(object_cast($box, struct_node::class)->fields[0] === $field, 'Field node identity was replaced');
 	parse_check(q_count(Model::$global_scope->functions_named('get')) === 1, 'Repeated registration duplicated a global symbol');
-	parse_check($parsed->root->declarations[0] === $function_node, 'AST source order was not rebuilt');
+	parse_check($parsed->root->single_body()->declarations[0] === $function_node, 'AST source order was not rebuilt');
 
 	parse_update($compiler, $a, 'function get(bool $x): int { return 7; } struct Box { float $value; } get(1); $local int = 1;');
 	parse_check($get->change_status === change_state::changed, 'Signature change was missed');
 	parse_check($parameter_entry->change_status === change_state::changed, 'Parameter change was missed');
-	parse_check($function->body->syntax_changed && $parsed->root->body->syntax_changed, 'Executable changes were missed');
+	parse_check($function->body->syntax_changed && $parsed->root->single_body()->body->syntax_changed, 'Executable changes were missed');
 	parse_check($field->occurrence()->change_status === change_state::changed, 'Field change was missed');
 	parse_check($removed->change_status === change_state::deleted, 'Removed field was not marked deleted');
 

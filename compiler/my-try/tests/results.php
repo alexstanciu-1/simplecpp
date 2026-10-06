@@ -37,7 +37,7 @@ try
 		conversion_operation::result_false, conversion_operation::identity];
 	foreach ($expected as $position => $operation)
 	{
-		$facts = $root->body->statements[$position]->require_preparation();
+		$facts = $root->single_body()->body->statements[$position]->require_preparation();
 		result_check($facts->conversion->operation === $operation, 'Wrong prepared Result state');
 		result_check($facts->conversion->result_type->matches($facts->type), 'Result conversion lost destination identity');
 	}
@@ -72,11 +72,11 @@ try
 	result_check(Result_Conversions::role($registry->use($ordinary_type->type_id())) === null,
 		'Ordinary template spelling granted Result semantics');
 	Preparation_Cleanup::tree($root);
-	result_check($root->body->statements[1]->initializer->preparation() === null,
+	result_check($root->single_body()->body->statements[1]->initializer->preparation() === null,
 		'Cleanup retained sentinel reference facts');
 
 	result_source($path, '$r result<int> = 7; $v int = $r;');
-	$extraction = Model::syntax_files()[0]->root->body->statements[1];
+	$extraction = Model::syntax_files()[0]->root->single_body()->body->statements[1];
 	result_check($extraction->require_preparation()->conversion->operation === conversion_operation::result_extract,
 		'Required value boundary lost its checked extraction decision');
 	Preparation_Cleanup::tree(Model::syntax_files()[0]->root);
@@ -213,10 +213,10 @@ try
 	}
 	result_source($path, '$r result<int> = 0; if ($r) {} $p bool = isset($r); $e bool = empty($r);');
 	$probe_root = Model::syntax_files()[0]->root;
-	result_check($probe_root->body->statements[1]->require_preparation()->truthiness->operation
+	result_check($probe_root->single_body()->body->statements[1]->require_preparation()->truthiness->operation
 		=== truthiness_operation::result_condition, 'Missing Result condition fact');
-	$presence_node = $probe_root->body->statements[2]->initializer;
-	$empty_node = $probe_root->body->statements[3]->initializer;
+	$presence_node = $probe_root->single_body()->body->statements[2]->initializer;
+	$empty_node = $probe_root->single_body()->body->statements[3]->initializer;
 	Preparation_Cleanup::tree($probe_root);
 	result_check($presence_node->preparation() === null && $presence_node->operand->preparation() === null
 		&& $empty_node->preparation() === null, 'Result probes retained stale facts');
@@ -224,7 +224,7 @@ try
 		. '$b result<int> = false ? 2 : $r; $c result<int> = $r ?: 3;');
 	$join_root = Model::syntax_files()[0]->root;
 	foreach ([1, 2, 3] as $index) {
-		$join_node = $join_root->body->statements[$index]->initializer;
+		$join_node = $join_root->single_body()->body->statements[$index]->initializer;
 		$join_facts = $join_node->require_conditional_preparation();
 		result_check(!$join_facts->addressable(), 'Conditional wrapper became an alias');
 		result_check($join_facts->true_conversion->operation === ($index === 2
@@ -257,7 +257,7 @@ try
 	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental conditional output differs');
 	result_source($path, '$r result<int> = 0; $v int = $r ?? 2;');
 	$coalesce_root = Model::syntax_files()[0]->root;
-	$coalesce_node = $coalesce_root->body->statements[1]->initializer;
+	$coalesce_node = $coalesce_root->single_body()->body->statements[1]->initializer;
 	$coalesce_facts = $coalesce_node->require_coalesce_preparation();
 	result_check($coalesce_facts->left_extraction->operation === conversion_operation::result_extract
 		&& $coalesce_facts->left_extraction->context === conversion_context::coalesce_value
@@ -293,7 +293,7 @@ try
 		$source = '$v ' . $family . ' = 7; $r result<' . $family . '> = $v; $out ' . $family . ' = $r; '
 			. '$err error; take($out, $err) = $r; $join result<' . $family . '> = true ? $v : $r; $selected = $r ?? $v;';
 		result_source($path, $source);
-		$body = Model::syntax_files()[0]->root->body;
+		$body = Model::syntax_files()[0]->root->single_body()->body;
 		result_check($body->statements[1]->require_preparation()->conversion->operation === conversion_operation::result_wrap
 			&& $body->statements[2]->require_preparation()->conversion->operation === conversion_operation::result_extract,
 			'Boxed payload bypassed outer Result conversion owner');

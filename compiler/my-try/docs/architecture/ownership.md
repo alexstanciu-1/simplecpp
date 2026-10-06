@@ -56,6 +56,13 @@ Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable
 scopes. Specialized node families own named children; the abstract statement body
+is reused inside each source `namespace_body_node`. A file owns the active namespace
+body inventory; a separate retirement inventory keeps removed occurrences alive
+until analysis unlinks their work and frontend disposal releases them. Retired bodies
+are not active inspection children. Token normalization waits while that retirement
+inventory is nonempty. Parser integration for named-body selection and its retained
+scope inventory remains pending; global parsing already uses the same body node.
+The abstract statement body
 owns its ordered statements. Conditional arms own their block and successor arm;
 there is no payload or generic parent/sibling graph. Loops own their block body and
 typed header children. Prepared control transfers observe the enclosing breakable

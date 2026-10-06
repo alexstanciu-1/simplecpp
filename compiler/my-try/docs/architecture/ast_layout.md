@@ -60,8 +60,10 @@ supported literal/reference/unary-sign forms over their prepared facts; syntax h
 no constant-evaluation processing hook.
 
 `function_node` owns parameters, a `type_node` return type and a
-`function_body_node`. `struct_node` owns fields. `file_node` owns file declarations
-and a separate executable body. Statements cannot contain file declarations:
+`function_body_node`. `struct_node` owns fields. `file_node` owns source-ordered
+`namespace_body_node` occurrences, including the implicit global occurrence. Each
+namespace body owns declarations and a separate executable `function_body_node`,
+and observes its own declaration/import scope. Statements cannot contain declarations:
 functions/structs extend `declaration_node`, whereas explicit local variables,
 expression statements, returns and blocks extend `statement_node`.
 
@@ -211,7 +213,7 @@ Inspection parents are deferred until a concrete consumer needs them. There is n
 parent field, accessor or attachment pass. `children()` returns an independent lazy
 `child_iterator_i`. Composite cursors retain their source, and single-list cursors
 retain the original collection. No child lists are copied. Order is grammar order;
-file inspection groups declarations before its executable body. Mutation during
+file inspection visits namespace bodies; each groups declarations before its executable body. Mutation during
 iteration is unsupported. Cursors are forward-only; restarting requires a fresh
 cursor. Iterator keys are traversal positions, not AST IDs.
 

@@ -71,7 +71,7 @@ foreach ($lists as $property => $role) {
 }
 role_check(count($indexed) === count($parsed->collection->entries), 'Inventory refresh lost a collected occurrence');
 
-$function = object_cast($parsed->root->declarations[1], function_node::class);
+$function = object_cast($parsed->root->single_body()->declarations[1], function_node::class);
 $first = object_cast($function->body->statements[1], expression_statement_node::class)->expression;
 $second = object_cast($function->body->statements[2], expression_statement_node::class)->expression;
 (new File_Preparation($parsed->collection, Model::$language_scope))->prepare();

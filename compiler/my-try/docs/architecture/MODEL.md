@@ -17,7 +17,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `indexing_contracts` | Registry-lifetime read/store/append contracts keyed by exact receiver definition; independent of construction opt-in |
 | `iteration_contracts` | Registry-lifetime key/value signatures keyed by exact receiver definition; independent of bracket/initialization capability |
 | AST/collected definitions | Specialized facts and retained declaration/body work |
-| `prepared_files` | Successfully completed file records referencing the retained syntax |
+| `prepared_files` | Successfully completed file records referencing retained syntax and the analysis-selected executable body |
 | `entry_selection`, `prepared_entry` | Logical module/path configuration and the optional validated executable entry; not another source owner |
 | `cpp_output_program` | Retained declaration/body fragments and cached text/includes |
 | `cpp_files`, `llvm_files` | Published backend artifacts |
@@ -49,6 +49,15 @@ Standalone `prepare()` can analyze multiple sources without an entry; executable
 entrypoints use `prepare(true)`. C++ never invokes preparation or selects an entry.
 
 The parser reuses matching declaration nodes and their canonical collected identities.
+Files own namespace-body occurrences, not flattened declarations or a second entry
+body. Each occurrence owns its declarations and executable body. Current source
+parsing constructs the implicit global occurrence; named-body grammar is pending.
+The guarded `single_body()` query supports explicitly single-body clients and parked
+LLVM; general analysis and C++ generation traverse the body inventory. Analysis
+publishes the sole executable body (or the first empty body for declaration-only
+files) in `prepared_file`. More than one nonempty body rejects before emission.
+Failed preparation clears that selection so a saved result cannot bypass admission.
+
 Only applicable name-bearing syntax has an occurrence backlink. Retained names are
 independent of token indexes. Duplicate names remain distinct candidates. The
 collector registers symbols during parsing; there is no collection pass or second

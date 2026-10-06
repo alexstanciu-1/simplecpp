@@ -27,7 +27,7 @@ foreach (['and' => operator_kind::logical_and, 'or' => operator_kind::logical_or
 	'xor' => operator_kind::logical_xor] as $word => $kind)
 {
 	$syntax = logical_test_source('$a = false; $a = true ' . $word . ' false;');
-	$expression = $syntax->root->body->statements[1]->expression;
+	$expression = $syntax->root->single_body()->body->statements[1]->expression;
 	if (!($expression instanceof binary_expression_node)
 		|| !($expression->left instanceof assignment_expression_node)
 		|| ($expression->require_binary_preparation()->decision->source_operator !== $kind)
@@ -36,7 +36,7 @@ foreach (['and' => operator_kind::logical_and, 'or' => operator_kind::logical_or
 	}
 }
 $syntax = logical_test_source('$a = false; $b = false; return $a = $b = true or false xor true and false || true;');
-$outer = $syntax->root->body->statements[2]->expression;
+$outer = $syntax->root->single_body()->body->statements[2]->expression;
 if (!($outer->left instanceof assignment_expression_node)
 	|| !($outer->left->value instanceof assignment_expression_node)
 	|| ($outer->require_binary_preparation()->decision->source_operator !== operator_kind::logical_or)
@@ -46,7 +46,7 @@ if (!($outer->left instanceof assignment_expression_node)
 	throw new \LogicException('Combined precedence ladder or right-associative assignment changed');
 }
 $syntax = logical_test_source('$a = 1; return (($a)) = 2;');
-$assignment = $syntax->root->body->statements[1]->expression;
+$assignment = $syntax->root->single_body()->body->statements[1]->expression;
 if (!($assignment->target->occurrence() instanceof collected_variable_write)) {
 	throw new \LogicException('Normalized grouped target lost its write occurrence');
 }

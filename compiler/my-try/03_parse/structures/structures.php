@@ -41,6 +41,6 @@ final class parsed_file
 
 	public function root_scope(): scope
 	{
-		return $this->root->file_scope();
+		return $this->root->single_body()->body_scope();
 	}
 }

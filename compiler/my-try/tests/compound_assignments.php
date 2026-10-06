@@ -38,7 +38,7 @@ foreach ([['&=', '7', '3', operator_operation::integer_bitwise_and],
 	['.=', '"a"', '"b"', operator_operation::string_concatenation]] as [$symbol, $initial, $right, $operation])
 {
 	$syntax = compound_test_source('$x = ' . $initial . '; $a = ($x ' . $symbol . ' ' . $right . '); return 0;');
-	$compound = $syntax->root->body->statements[1]->expression->value;
+	$compound = $syntax->root->single_body()->body->statements[1]->expression->value;
 	$facts = $compound->require_compound_assignment_preparation();
 	$expected = $symbol === '.=' ? Language_Types::string_type(Model::$language_scope) : Language_Types::integer(Model::$language_scope);
 	if (($compound->kind() !== node_kind::compound_assignment_expression)

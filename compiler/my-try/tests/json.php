@@ -27,7 +27,7 @@ function json_source(string $text): Compiler
 
 json_source('$d result<dynamic> = json_decode("null"); $m result<mixed> = json_decode_mixed("false"); '
 	. '$a result<string> = json_encode(dynamic::{n: 1}); $b result<string> = json_encode(mixed::{n: 2});');
-$body = Model::syntax_files()[0]->root->body;
+$body = Model::syntax_files()[0]->root->single_body()->body;
 foreach (['json.decode.dynamic', 'json.decode.mixed', 'json.encode.dynamic', 'json.encode.mixed'] as $index => $key) {
 	$facts = $body->statements[$index]->initializer->require_call_preparation();
 	json_check(weakref_get($facts->target) === Model::$runtime_callables->function_definition($key), 'Wrong installed JSON target');

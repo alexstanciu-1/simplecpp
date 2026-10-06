@@ -20,18 +20,18 @@ $parsed->root_scope()->set_parent(Model::$language_scope);
 $collection = $parsed->collection;
 $count = count($collection->entries);
 $prepared = (new File_Preparation($collection, Model::$language_scope))->prepare();
-$record = object_cast($parsed->root->declarations[0], struct_node::class);
-$function = object_cast($parsed->root->declarations[1], function_node::class);
+$record = object_cast($parsed->root->single_body()->declarations[0], struct_node::class);
+$function = object_cast($parsed->root->single_body()->declarations[1], function_node::class);
 $layout = $record->occurrence()->preparation_work_owner();
 $signature = $function->occurrence()->preparation_work_owner();
 $body = $function->body->work();
-$entry = $parsed->root->body->work();
+$entry = $parsed->root->single_body()->body->work();
 work_check($layout instanceof record_definition_work, 'Record was not assigned layout work');
 work_check($signature instanceof function_signature_work, 'Function was not assigned signature work');
 work_check($body instanceof function_body_work, 'Function body was not assigned body work');
 work_check($entry instanceof file_body_work, 'File body was not assigned file-body work');
 work_check($entry->declaration() === null, 'File body acquired a named declaration');
-work_check($entry->executable_body() === $parsed->root->body, 'File work lost its explicit executable body');
+work_check($entry->executable_body() === $parsed->root->single_body()->body, 'File work lost its explicit executable body');
 work_check($body->executable_body() === $function->body, 'Function work lost its explicit executable body');
 work_check($body->declaration() === $signature->declaration(), 'Body and signature lost the shared function identity');
 work_check($signature->required_declaration() === $signature->function_definition(), 'Required and specialized signature access lost identity');
@@ -53,7 +53,7 @@ work_check($record->occurrence()->change_status === change_state::unchanged, 'Re
 work_check($record->fields[0]->occurrence()->change_status === change_state::unchanged, 'Record field did not settle');
 work_check($function->occurrence()->change_status === change_state::unchanged, 'Function declaration did not settle');
 work_check($function->parameters[0]->occurrence()->change_status === change_state::unchanged, 'Function parameter did not settle');
-$return = object_cast($parsed->root->body->statements[1], return_node::class);
+$return = object_cast($parsed->root->single_body()->body->statements[1], return_node::class);
 $call = object_cast($return->expression, call_node::class)->require_call_preparation();
 work_check(weakref_get($call->target) === $function->occurrence(), 'Call lost its typed function identity');
 $version = $body->version;
@@ -61,7 +61,7 @@ $version = $body->version;
 work_check($body === $function->body->work() && $body->version === $version, 'No-op preparation replaced or rebuilt body work');
 work_check($layout === $record->occurrence()->preparation_work_owner(), 'No-op replaced record work');
 work_check($signature === $function->occurrence()->preparation_work_owner(), 'No-op replaced signature work');
-work_check($entry === $parsed->root->body->work(), 'No-op replaced file-body work');
+work_check($entry === $parsed->root->single_body()->body->work(), 'No-op replaced file-body work');
 foreach ([$layout, $signature, $body, $entry] as $work) {
 	work_check($work->version === 1, 'No-op rebuilt retained work');
 }
@@ -99,10 +99,10 @@ work_check($second_work->source === $entry->source, 'Independent body work lost 
 work_check(Preparation_Status::source_changed($second_work), 'Additional body change was read from the file root');
 work_check(!Preparation_Status::source_changed($entry), 'Additional body change contaminated the entry body');
 $second_body->syntax_changed = false;
-$parsed->root->body->syntax_changed = true;
+$parsed->root->single_body()->body->syntax_changed = true;
 work_check(!Preparation_Status::source_changed($second_work), 'File-root change contaminated additional body work');
 work_check(Preparation_Status::source_changed($entry), 'Entry work missed its own changed body');
-$parsed->root->body->syntax_changed = false;
+$parsed->root->single_body()->body->syntax_changed = false;
 
 // Retirement dispatch must unlink every role, including both directions of dependencies.
 $sources /** Storage<collected_file> */ = new Storage();

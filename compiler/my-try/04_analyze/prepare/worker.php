@@ -34,6 +34,9 @@ final class Preparation_Worker
 		}
 		foreach ($sources as $source) {
 			if (!$source->deleted) {
+				if ($source->prepared !== null) {
+					$source->prepared->entry_body = null;
+				}
 				$this->select($source);
 			}
 		}
@@ -80,6 +83,7 @@ final class Preparation_Worker
 				$source->prepared->source = $source;
 			}
 			$prepared /** prepared_file */ = $source->prepared;
+			$prepared->entry_body = Program_Preparation::source_body($source);
 			$result->append($prepared);
 		}
 		return $result;
@@ -116,9 +120,18 @@ final class Preparation_Worker
 		$result /** hash<bool, shared<preparation_owner>> */ = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		foreach ($sources as $source)
 		{
+			$bodies /** Storage<namespace_body_node> */ = $source->root->retired_namespace_bodies;
+			foreach ($bodies as $namespace_body) {
+				if ($namespace_body->body->work() !== null) {
+					$result[$namespace_body->body->work()] = true;
+				}
+			}
 			if ($all || $source->deleted) {
-				if ($source->root->body->work() !== null) {
-					$result[$source->root->body->work()] = true;
+				$active_bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+				foreach ($active_bodies as $namespace_body) {
+					if ($namespace_body->body->work() !== null) {
+						$result[$namespace_body->body->work()] = true;
+					}
 				}
 			}
 			$entries /** Storage<collected_name> */ = $source->entries;
@@ -171,12 +184,22 @@ final class Preparation_Worker
 	/** Source change flags seed stable owners; analysis selects their typed work. */
 	private function select(collected_file $source): void
 	{
-		if ($source->root->body->work() === null) {
-			$source->root->body->attach_work(new file_body_work($source, $source->root->body));
+		$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+		foreach ($bodies as $namespace_body) {
+			$this->select_source_body($source, $namespace_body);
 		}
-		$file_body /** body_work */ = $source->root->body->work();
+	}
+
+	/** Select each occurrence's executable work and independently owned declarations. */
+	private function select_source_body(collected_file $source, namespace_body_node $namespace_body): void
+	{
+		$body = $namespace_body->body;
+		if ($body->work() === null) {
+			$body->attach_work(new file_body_work($source, $body));
+		}
+		$file_body /** body_work */ = $body->work();
 		$this->select_owner($file_body);
-		$nodes /** Storage<declaration_node> */ = $source->root->declarations;
+		$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
 		foreach ($nodes as $node) {
 			if ($node instanceof function_node) {
 				$this->select_function(object_cast($node, function_node::class));
@@ -695,8 +718,20 @@ final class Preparation_Worker
 				}
 			}
 		}
+		$bodies /** Storage<namespace_body_node> */ = $source->root->retired_namespace_bodies;
+		if (!$bodies->is_empty()) {
+			if ($source->prepared !== null) {
+				$source->prepared->entry_body = null;
+			}
+		}
+		foreach ($bodies as $namespace_body) {
+			$namespace_body->body->detach_work();
+		}
 		if ($source->deleted) {
-			$source->root->body->detach_work();
+			$active_bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+			foreach ($active_bodies as $namespace_body) {
+				$namespace_body->body->detach_work();
+			}
 			$source->prepared = null;
 		}
 	}

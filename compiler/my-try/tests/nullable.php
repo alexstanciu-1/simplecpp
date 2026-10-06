@@ -25,7 +25,7 @@ try {
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);
-	$statements = Model::syntax_files()[0]->root->body->statements;
+	$statements = Model::syntax_files()[0]->root->single_body()->body->statements;
 	$a = $statements[0];
 	$b = $statements[1];
 	nullable_check($a->type_syntax instanceof nullable_type_node, 'Nullable shorthand syntax was lost');
@@ -91,8 +91,8 @@ try {
 	$clean->exec_cpp();
 	nullable_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental nullable output differ');
 	$root = Model::syntax_files()[0]->root;
-	$syntax = $root->body->statements[0];
-	$coalesce = $root->body->statements[2]->initializer;
+	$syntax = $root->single_body()->body->statements[0];
+	$coalesce = $root->single_body()->body->statements[2]->initializer;
 	Preparation_Cleanup::tree($root);
 	nullable_check($syntax->preparation() === null && $syntax->type_syntax->preparation() === null
 		&& $syntax->type_syntax->payload->preparation() === null && $syntax->initializer->preparation() === null,

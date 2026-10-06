@@ -175,7 +175,7 @@ final class LLVM_Test
 	/** Prove that the independent body block owns locals and declarations emit no call. */
 	private static function check_function_scope(collected_file $file, llvm_module $module): void
 	{
-		$global = $file->root->file_scope();
+		$global = $file->root->single_body()->body_scope();
 		$function = $global->functions_named('example')[0]->syntax();
 		$local = $function->body->local_scope();
 		if (($function->body->kind() !== node_kind::function_body) || ($local === $global) || ($local->parent_scope() !== $function->signature_scope()) || ($function->signature_scope()->parent_scope() !== $global) || !$local->is_function() || (count($global->variables_named('a')) !== 0) || (count($local->variables_named('a')) !== 1)) {
