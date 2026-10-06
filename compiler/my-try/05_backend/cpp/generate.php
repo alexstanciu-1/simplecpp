@@ -37,6 +37,13 @@ final class CPP_Generator
 				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
 				foreach ($nodes as $node) {
 					$definition = $node->occurrence();
+					if ($node instanceof constant_declaration_node) {
+						if (!Preparation_Status::complete(object_cast($definition->preparation_work_owner(), preparation_owner::class))) {
+							throw new \RuntimeException('C++ generation requires completed constant preparation');
+						}
+						// Scalar constants substitute settled values; no storage or standalone artifact.
+						continue;
+					}
 					$ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class));
 					if ($node instanceof function_node) {
 						$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
@@ -416,30 +423,42 @@ final class CPP_Generator
 	/** Lower semantic constant values without preserving runtime- or host-specific names. */
 	public static function generate_constant(prepared_constant_reference $reference, cpp_generation_context $context): string
 	{
-		$definition = $reference->definition;
-		if ($definition instanceof no_error_constant_definition) {
-			return CPP_Declarations::type($definition->type, $context) . '::no_error';
+		$value = $reference->value;
+		if ($value instanceof no_error_constant_value) {
+			return CPP_Declarations::type($value->type, $context) . '::no_error';
 		}
-		if ($definition instanceof sentinel_constant_definition)
+		if ($value instanceof sentinel_constant_value)
 		{
-			if ($definition->type->matches(Model::$type_catalog->null_type())) {
+			if ($value->type->matches(Model::$type_catalog->null_type())) {
 				$context->headers['scpp/null_t.hpp'] = true;
 				return 'scpp::null';
 			}
-			if ($definition->type->matches(Model::$type_catalog->boolean_sentinel_type(false))) {
+			if ($value->type->matches(Model::$type_catalog->boolean_sentinel_type(false))) {
 				$context->headers['scpp/false_sentinel_t.hpp'] = true;
 				return 'scpp::false_sentinel';
 			}
-			if ($definition->type->matches(Model::$type_catalog->boolean_sentinel_type(true))) {
+			if ($value->type->matches(Model::$type_catalog->boolean_sentinel_type(true))) {
 				$context->headers['scpp/true_sentinel_t.hpp'] = true;
 				return 'scpp::true_sentinel';
 			}
 			throw new \LogicException('Unknown canonical sentinel constant');
 		}
-		if (!($definition instanceof integer_constant_definition)) {
-			throw new \RuntimeException('C++ constant emission is not implemented for this definition');
+		if ($value instanceof float_constant_value) {
+			$floating = object_cast($value, float_constant_value::class);
+			return self::generate_float_value($floating->type, $floating->decimal, $context);
 		}
-		$integer = object_cast($definition, integer_constant_definition::class);
+		if ($value instanceof boolean_constant_value) {
+			$boolean = object_cast($value, boolean_constant_value::class);
+			return self::generate_boolean_value($boolean->type, $boolean->value, $context);
+		}
+		if ($value instanceof string_constant_value) {
+			$string = object_cast($value, string_constant_value::class);
+			return self::generate_string_value($string->type, $string->value, $context);
+		}
+		if (!($value instanceof integer_constant_value)) {
+			throw new \RuntimeException('C++ constant emission is not implemented for this value');
+		}
+		$integer = object_cast($value, integer_constant_value::class);
 		return self::generate_integer_value($integer->type, $integer->decimal, $context);
 	}
 
@@ -744,25 +763,35 @@ final class CPP_Generator
 	/** Preserve decimal spelling until the target toolchain performs floating conversion. */
 	public static function generate_float(prepared_float_literal $literal, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($literal->type);
+		return self::generate_float_value($literal->type, $literal->decimal, $context);
+	}
+
+	public static function generate_float_value(canonical_type_use $type, string $decimal, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($type);
 		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::floating) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
 
-		return 'static_cast<' . $mapping->spelling . '>(' . $literal->decimal . ')';
+		return 'static_cast<' . $mapping->spelling . '>(' . $decimal . ')';
 	}
 
 	/** Boolean source normalization is already complete before backend spelling. */
 	public static function generate_boolean(prepared_boolean_literal $literal, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($literal->type);
+		return self::generate_boolean_value($literal->type, $literal->value, $context);
+	}
+
+	public static function generate_boolean_value(canonical_type_use $type, bool $value, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($type);
 		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::boolean) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
 
-		$spelling = $literal->value ? 'true' : 'false';
+		$spelling = $value ? 'true' : 'false';
 
 		return 'static_cast<' . $mapping->spelling . '>(' . $spelling . ')';
 	}
@@ -786,17 +815,22 @@ final class CPP_Generator
 	/** Render decoded bytes as a C++ literal, retaining length when a C string would truncate. */
 	public static function generate_string(prepared_string_literal $literal, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($literal->type);
+		return self::generate_string_value($literal->type, $literal->value, $context);
+	}
+
+	public static function generate_string_value(canonical_type_use $type, string $value, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($type);
 		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::string_value) {
 			throw new \RuntimeException('C++ string literal emission requires the canonical string type');
 		}
 
-		$spelling = self::cpp_string_literal($literal->value);
-		if (!self::contains_zero_byte($literal->value)) {
+		$spelling = self::cpp_string_literal($value);
+		if (!self::contains_zero_byte($value)) {
 			return $mapping->spelling . '(' . $spelling . ')';
 		}
-		return $mapping->spelling . '(std::string(' . $spelling . ', ' . string_byte_len($literal->value) . '))';
+		return $mapping->spelling . '(std::string(' . $spelling . ', ' . string_byte_len($value) . '))';
 	}
 
 	/** Escape every byte without allowing a hexadecimal escape to consume its neighbor. */

@@ -91,6 +91,13 @@ final class function_signature_work extends declaration_work
 	}
 }
 
+final class constant_definition_work extends declaration_work
+{
+	public function __construct(private collected_constant $definition) { parent::__construct($definition->collection); }
+	public function required_declaration(): collected_definition { return $this->definition; }
+	public function constant_definition(): collected_constant { return $this->definition; }
+}
+
 final class record_definition_work extends declaration_work
 {
 	private collected_struct $definition;

@@ -69,6 +69,19 @@ abstract class children_iterator implements child_iterator_i
 	}
 }
 
+/** Inspect the declaration's single initializer without manufacturing a child collection. */
+final class constant_children_iterator extends children_iterator
+{
+	private bool $consumed = false;
+	public function __construct(private constant_declaration_node $source) {}
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) { return null; }
+		$this->consumed = true;
+		return $this->source->initializer;
+	}
+}
+
 /** Inspect explicit type syntax followed by ordered entries, without copying membership. */
 final class data_construction_children_iterator extends children_iterator
 {

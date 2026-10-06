@@ -29,8 +29,9 @@ is deferred to validation, not established as unrestricted shadowing semantics.
 
 Specialized AST nodes own typed fields, saved names and applicable facts. Collection
 runs during parsing; resolution/preparation follows the join. Incremental work has
-separate signature/record and body owners; bodies are not symbols. C++ caches fragments
-and assembles one `main.cpp`. See [model](architecture/MODEL.md),
+separate declaration (signature/record/constant) and body owners; bodies are not
+symbols. C++ caches fragments and assembles narrow declaration headers, per-source
+implementation units and `entry.cpp`. See [model](architecture/MODEL.md),
 [lifecycle](lifecycle/incremental.md) and [remaining debt](planning/incremental_strategy.md).
 
 ## Validation and proof boundaries

@@ -1525,6 +1525,29 @@ final class index_node extends assignable_expression_node
 	}
 }
 
+final class constant_declaration_node extends declaration_node
+{
+	use Node_Source_Span;
+	use Collected_Occurrence;
+	use Preparation_Facts;
+	private ?constant_value $prepared_facts = null;
+	public string $name;
+	public expression_node $initializer;
+
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
+	{
+		$collector->collect_constant($this, $scope, $index);
+	}
+	public function kind(): node_kind { return node_kind::constant_declaration; }
+	public function require_preparation(): constant_value { return $this->prepared_facts; }
+	public function children(): child_iterator_i { return new constant_children_iterator($this); }
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->initializer);
+	}
+}
+
 final class struct_node extends declaration_node
 {
 	use Node_Source_Span;

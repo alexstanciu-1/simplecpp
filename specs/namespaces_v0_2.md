@@ -62,6 +62,32 @@ Missing targets, wrong symbol kinds and conflicting bindings are preparation-tim
 errors under the v0.2 diagnostic policy, not deferred C++ name-resolution behavior.
 Imports do not load files or alter project discovery/execution order.
 
+## Source constants — bounded v0.2 slice
+
+Global and named namespace bodies admit `const NAME = initializer;` declarations.
+The type is inferred from the initializer. Constants are immutable values, not
+executable statements or mutable namespace storage. The initial supported values
+are `bool`, canonical signed `int`, `float` and `string`.
+
+Initializers accept scalar literals, references to supported constants, parentheses
+and numeric unary `+`/`-`. Numeric signs require `int` or `float`; they do not apply
+truthiness or numeric-string coercion. Preserve exact integer values and decoded
+string bytes; floating literal rounding follows the target floating representation.
+Out-of-range integer values/negation reject rather than wrapping.
+
+Forward and cross-file references use ordinary namespace and body-local import
+rules. All declarations are checked, including unused ones. Missing or ambiguous
+references, duplicate constant names in the same namespace, dependency cycles and
+unsupported initializers reject during preparation. A constant's initializer sees
+its declaring body’s imports, not the environment of a consuming reference.
+
+This first slice does not enable arithmetic folding, function calls, null/wrapper/
+container/object constants, explicit constant type annotations, comma-separated
+declarations, local constant declarations or class constants. These are delivery
+boundaries, not a commitment to forbid later extensions. Existing parameter-default
+admission is unchanged. Source constants do not expand general scalar-operator
+availability; compile-time numeric signs are evaluated by constant preparation.
+
 ## Execution and scope of delivery
 
 The selected-entry-file rule remains unchanged. Non-entry files contribute only

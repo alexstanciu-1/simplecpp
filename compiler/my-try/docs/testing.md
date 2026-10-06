@@ -43,8 +43,21 @@ uses authored syntax and checks missing namespace additions, moves, ambiguity an
 consumer cleanup. Import fixtures cover plain/function/constant bindings, aliases,
 homogeneous groups, reopened-body/file isolation, unused-import rejection, no-op
 identity, value/type retargeting, target-addition recovery and stale-output guards.
-Source constant declarations remain outside this slice (constant targets are registered
-by the fixture). No native compiler rebuild is claimed.
+Those namespace fixtures retain registered-constant coverage. Source declarations
+have a separate focused runner:
+
+```bash
+python3 compiler/my-try/tests/source_constants.py --results /tmp/FRESH_CONSTANT_RESULTS
+```
+
+Checks the four scalar families, signs/exact bounds, forward and cross-file lookup,
+imports, switch/match labels, unused duplicates, cycles, no-op/equal-value edits,
+value/type changes, missing-name additions, namespace moves, deletion and failed-parse
+recovery. Includes CH08 non-admission probes for nested namespace source forms,
+include/require and multiple executable bodies. Runs focused PHP regressions and
+compiles/executes generated fixtures without PCH. No native compiler rebuild or
+portable-source conversion is claimed; the user deferred the compiler build until
+after the intended Chapter 09 pass.
 
 For the namespace identity/backend model checkpoint:
 

@@ -304,6 +304,10 @@ final class Parser_Run
 				$this->import_statement($imports);
 				continue;
 			}
+			if ($this->text() === 'const') {
+				$declarations->append($this->constant_declaration());
+				continue;
+			}
 			$node = $this->statement();
 			if ($node instanceof declaration_node) {
 				$declarations->append(object_cast($node, declaration_node::class));
@@ -783,6 +787,39 @@ final class Parser_Run
 		}
 		$this->finish_node($arm, $start);
 		return $arm;
+	}
+
+	/** Retain the declaration identity while replacing only changed initializer syntax. */
+	private function constant_declaration(): constant_declaration_node
+	{
+		$start = $this->expect('const');
+		if (!$this->identifier()) { throw new \RuntimeException($this->error_message('Expected constant name')); }
+		$name_index = $this->position++;
+		$name = $this->tokens->text_at($name_index);
+		$previous = $this->collector->previous_constant($this->source_scope, $name);
+		$constant /** constant_declaration_node */ = $previous ?? new constant_declaration_node();
+		if ($previous === null) { $constant->set_span($start, $start); }
+		$old_start = -1;
+		$old_end = -1;
+		if ($previous !== null) {
+			if ($previous->occurrence()->change_status !== change_state::deleted) {
+				$old_start = $previous->start_token();
+				$old_end = $previous->end_token();
+			}
+		}
+		$constant->name = $name;
+		$constant->collect($this->collector, $this->source_scope, $name_index);
+		$this->expect('=');
+		$saved_scope = $this->current_scope;
+		$this->current_scope = $this->source_scope;
+		$initializer = $this->expression();
+		$this->current_scope = $saved_scope;
+		$this->expect(';');
+		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
+		if ($same) { $this->retain_range($constant->initializer, $initializer->start_token()); }
+		else { $constant->initializer = $initializer; }
+		$this->finish_declaration($constant, $start, $same);
+		return $constant;
 	}
 
 	/** Register the record immediately, then reconcile fields within its retained member scope. */

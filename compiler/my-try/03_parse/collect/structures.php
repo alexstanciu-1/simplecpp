@@ -16,6 +16,7 @@ enum collected_name_kind
 	case function_reference;
 	case variable_reference;
 	case constant_reference;
+	case constant_declaration;
 	case type_reference;
 	case binding;
 }
@@ -110,7 +111,7 @@ abstract class collected_declaration extends collected_name
 	}
 }
 
-/** Functions and records are independently scheduled; members settle with their owner. */
+/** Published definitions are independently scheduled; members settle with their owner. */
 abstract class collected_definition extends collected_declaration implements preparation_lookup_candidate_i
 {
 	/** Stable source identity is separate from local lookup spelling and backend encoding. */
@@ -162,6 +163,18 @@ final class collected_function extends collected_definition implements callable_
 	{
 		return collected_name_kind::function_declaration;
 	}
+}
+
+final class collected_constant extends collected_definition implements constant_target_i
+{
+	public function __construct(collected_file $collection, private constant_declaration_node $syntax_node)
+	{
+		parent::__construct($collection);
+	}
+	public function syntax(): constant_declaration_node { return $this->syntax_node; }
+	public function kind(): collected_name_kind { return collected_name_kind::constant_declaration; }
+	public function constant_name(): string { return $this->name; }
+	public function value(): constant_value { return $this->syntax_node->require_preparation(); }
 }
 
 final class collected_struct extends collected_definition

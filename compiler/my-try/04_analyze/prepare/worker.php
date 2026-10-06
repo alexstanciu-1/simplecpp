@@ -212,6 +212,9 @@ final class Preparation_Worker
 			elseif ($node instanceof struct_node) {
 				$this->select_record(object_cast($node, struct_node::class));
 			}
+			elseif ($node instanceof constant_declaration_node) {
+				$this->select_owner($this->declaration_owner(object_cast($node->occurrence(), collected_constant::class)));
+			}
 			else { throw new \RuntimeException('Preparation is not supported for this declaration'); }
 		}
 	}
@@ -312,6 +315,10 @@ final class Preparation_Worker
 		}
 		if ($entry instanceof collected_struct) {
 			return $this->record_owner(object_cast($entry, collected_struct::class));
+		}
+		if ($entry instanceof collected_constant) {
+			if ($entry->preparation === null) { $entry->preparation = new constant_definition_work(object_cast($entry, collected_constant::class)); }
+			return $entry->preparation;
 		}
 		throw new \RuntimeException('Preparation work is not supported for this declaration');
 	}
@@ -461,6 +468,14 @@ final class Preparation_Worker
 		if ($owner instanceof record_definition_work) {
 			return $this->prepare_record_definition(object_cast($owner, record_definition_work::class), $context, $previous);
 		}
+		if ($owner instanceof constant_definition_work) {
+			$syntax = object_cast($owner, constant_definition_work::class)->constant_definition()->syntax();
+			$old = $syntax->preparation();
+			Constant_Preparation::declaration($syntax, $context);
+			$current = $syntax->require_preparation();
+			if ($old === null) { return true; }
+			return !$old->type->matches($current->type) || ($old->value_key() !== $current->value_key());
+		}
 		throw new \LogicException('Unsupported declaration work role');
 	}
 
@@ -471,6 +486,9 @@ final class Preparation_Worker
 		}
 		elseif ($owner instanceof record_definition_work) {
 			$this->settle_fields(object_cast($owner, record_definition_work::class)->record_definition());
+		}
+		elseif ($owner instanceof constant_definition_work) {
+			$owner->required_declaration()->change_status = change_state::unchanged;
 		}
 		else { throw new \LogicException('Unsupported declaration work role'); }
 	}

@@ -48,6 +48,27 @@ final class Symbol_Collector
 		return null;
 	}
 
+	public function previous_constant(scope $scope, string $name): ?constant_declaration_node
+	{
+		foreach ($scope->constants_named($name) as $target) {
+			if ($target instanceof collected_constant) {
+				$entry = object_cast($target, collected_constant::class);
+				if ($this->unseen($entry)) { return $entry->syntax(); }
+			}
+		}
+		return null;
+	}
+
+	public function collect_constant(constant_declaration_node $node, scope $scope, int $index): void
+	{
+		if ($this->reuse($node, $index)) { return; }
+		$entry = new collected_constant($this->collection, $node);
+		$entry->retained_symbol = true;
+		$this->append($entry, $scope, $node->name, $index);
+		$scope->register($entry);
+		$this->publish($entry, $scope);
+	}
+
 	/** Match the next unseen field identity in its owning scope. */
 	public function previous_field(scope $scope, string $name): ?field_node
 	{
@@ -214,7 +235,7 @@ final class Symbol_Collector
 		$entry->index_collection($this);
 	}
 
-	/** Only file-level functions and records enter shared indexes, under the existing task lock. */
+	/** Only source-body definitions enter shared indexes, under the existing task lock. */
 	private function publish(collected_definition $entry, scope $declaration_scope): void
 	{
 		if ($declaration_scope !== $this->source_scope) {

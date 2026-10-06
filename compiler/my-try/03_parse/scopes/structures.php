@@ -26,7 +26,7 @@ final class scope
 	/** Definitions owned here; published scopes retain the same definition objects. */
 	private Key_Storage_List $types /** Key_Storage_List<type_definition_i> */;
 	/** Constant namespace is independent of variables, functions and types. */
-	private Key_Storage_List $constants /** Key_Storage_List<constant_definition> */;
+	private Key_Storage_List $constants /** Key_Storage_List<constant_target_i> */;
 
 	public function __construct()
 	{
@@ -36,7 +36,7 @@ final class scope
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
 		$this->runtime_functions = new Key_Storage_List /** Key_Storage_List<registered_function> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition_i> */();
-		$this->constants = new Key_Storage_List /** Key_Storage_List<constant_definition> */();
+		$this->constants = new Key_Storage_List /** Key_Storage_List<constant_target_i> */();
 	}
 
 	/** A published namespace scope cannot be reassigned to another namespace. */
@@ -128,6 +128,9 @@ final class scope
 			$function = object_cast($entry, collected_function::class);
 			$functions->add($function->name, $function);
 		}
+		elseif ($entry instanceof collected_constant) {
+			$this->register_constant(object_cast($entry, collected_constant::class));
+		}
 		else {
 			$variables /** Key_Storage_List<collected_name> */ = $this->variables;
 			$variables->add($entry->name, $entry);
@@ -146,10 +149,10 @@ final class scope
 		$types->add($name, $definition);
 	}
 
-	public function register_constant(constant_definition $definition): void
+	public function register_constant(constant_target_i $definition): void
 	{
-		$constants /** Key_Storage_List<constant_definition> */ = $this->constants;
-		$constants->add($definition->name, $definition);
+		$constants /** Key_Storage_List<constant_target_i> */ = $this->constants;
+		$constants->add($definition->constant_name(), $definition);
 	}
 
 	/** Remove index membership by identity; same-name declarations from other owners survive. */
@@ -160,6 +163,10 @@ final class scope
 		$types /** Key_Storage_List<type_definition_i> */ = $this->types;
 		if ($entry instanceof collected_function) {
 			$functions->remove($entry->name, object_cast($entry, collected_function::class));
+		}
+		if ($entry instanceof collected_constant) {
+			$constants /** Key_Storage_List<constant_target_i> */ = $this->constants;
+			$constants->remove($entry->name, object_cast($entry, collected_constant::class));
 		}
 		$variables->remove($entry->name, $entry);
 		foreach ($types->named($entry->name) as $definition) {
@@ -234,9 +241,9 @@ final class scope
 	}
 
 	/** Constant lookup is exact and case-sensitive; callers select lexical precedence. */
-	public function constants_named(string $name): array /** vector<constant_definition> */
+	public function constants_named(string $name): array /** vector<constant_target_i> */
 	{
-		$items /** Key_Storage_List<constant_definition> */ = $this->constants;
+		$items /** Key_Storage_List<constant_target_i> */ = $this->constants;
 		return $items->named($name);
 	}
 
@@ -278,6 +285,10 @@ final class scope
 		}
 		foreach ($variables->items() as $variable) {
 			$result[] = $variable;
+		}
+		$constants /** Key_Storage_List<constant_target_i> */ = $this->constants;
+		foreach ($constants->items() as $constant) {
+			if ($constant instanceof collected_constant) { $result[] = object_cast($constant, collected_constant::class); }
 		}
 		return $result;
 	}

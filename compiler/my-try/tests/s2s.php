@@ -589,6 +589,8 @@ $ownership_parameters = [
 	'function_ownership_readonly_alias' => 'scpp::string_t, scpp::string_t&',
 ];
 $result_fixtures = require __DIR__ . '/fixtures/result_construction.php';
+$cases['source_constant_scalar'] = ['const VALUE = NEXT; const NEXT = 7; return VALUE;', 7];
+$cases['source_constant_signs'] = ['const VALUE = -7; const COPY = +VALUE; return 0 - COPY;', 7];
 $mixed_fixtures = array_merge(require __DIR__ . '/fixtures/mixed_boundaries.php',
 	require __DIR__ . '/fixtures/mixed_operations.php', require __DIR__ . '/fixtures/mixed_selections.php',
 	require __DIR__ . '/fixtures/mixed_wrapper_coalesce.php',
@@ -706,8 +708,8 @@ foreach ($cases as $name => [$source, $exit])
 		$assignment = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);
 		$constant = object_cast($assignment->value, constant_reference_node::class);
 		$facts = $constant->require_constant_reference_preparation();
-		$definition = object_cast($facts->definition, integer_constant_definition::class);
-		if (($definition !== Model::$language_scope->constants_named('PHP_INT_MAX')[0]) ||
+		$definition = object_cast($facts->value, integer_constant_value::class);
+		if ((weakref_get($facts->target) !== Model::$language_scope->constants_named('PHP_INT_MAX')[0]) ||
 			(!$facts->type->matches(Language_Types::integer(Model::$language_scope))) ||
 			($definition->decimal !== '9223372036854775807') || $facts->addressable() ||
 			!str_contains($text, 'auto local_a = static_cast<scpp::int_t<>>(9223372036854775807LL);') ||

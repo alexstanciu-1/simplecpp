@@ -54,6 +54,7 @@ enum node_kind
 	case interpolation_value;
 	case variable_reference;
 	case constant_reference;
+	case constant_declaration;
 	case cast_expression;
 	case conditional_expression;
 	case coalesce_expression;

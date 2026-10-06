@@ -113,6 +113,14 @@ they do not cache a second mutable copy of source-derived capabilities. The tran
 consumer dependency before reading them. Unknown/failed preparation is not a negative
 capability answer. Nested changes propagate even when canonical type IDs are stable.
 
+Constant lookup indexes share `constant_target_i` identities: registered targets are
+scope-owned, source targets are collected definitions. A constant declaration owns
+its initializer and settled value; initializer references weakly observe targets and
+share immutable value snapshots. Values have no source backlinks. Source constants
+use ordinary declaration-work edges and join-ordered retirement; no parallel graph
+or runtime-storage owner is introduced. Changed values replace facts, never mutate
+already published snapshots retained by consumers.
+
 Declaration work belongs to collected definitions; body work belongs to body nodes.
 Each body-work record weakly observes its exact executable body; its source-file
 link supplies provenance, not an implicit `root->body` selection. Parser replacement

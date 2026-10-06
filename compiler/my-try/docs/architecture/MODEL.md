@@ -397,12 +397,23 @@ only on successful preparation. The backend's read-only status guard rejects sav
 output after import-only edits. No import work is disguised as a function, no C++
 `using` declarations implement source semantics, and no alias is re-exported.
 
-Type definitions live under `compiler/types/`; constant definitions live under
-`compiler/constants/`. Built-ins are initialized into independent type and constant
-scope indexes at startup. Source records and prepared references retain canonical
-definition identity rather than copying semantic values. New runtime-library JSON
-intake, source constant declarations and broader constructed types remain future
-work. Reserved-name validation is deferred; ordinary parent lookup currently applies.
+Type definitions live under `compiler/types/`; constant identities and value records
+live under `compiler/constants/`. Built-ins use `registered_constant`; source constants
+use `collected_constant`. Both implement `constant_target_i`, exposing a source name
+and read-only settled-value query. The interface invokes no processing or backend.
+`constant_declaration_node` owns its initializer and attached `constant_value` facts.
+`constant_definition_work` reuses the existing declaration scheduler, dependency
+graph, failure/retry and retirement protocol. Analysis requires completion before
+consuming a source value, and propagates changes in type or exact value key.
+
+`Constant_Preparation` evaluates only the agreed scalar forms. Constant references
+weakly observe their named target and share its immutable value snapshot. Registered
+sentinels/no-error retain their special values; source declarations admit only the
+four scalar families. C++ substitutes values using the same scalar emission helpers
+as literals: no runtime global storage, initialization order or constant header.
+Source integer values feed existing switch/match label queries. Runtime-library JSON
+intake and broader constructed types remain future work. Reserved-name validation
+is deferred; ordinary parent lookup currently applies.
 
 Concrete nominal definitions share `abstract_nominal_type_definition`; the ordinary
 `nominal_type_definition` remains final. Final siblings `mixed_type_definition` and
@@ -453,7 +464,7 @@ the destination's current runtime kind, so it is not an ordinary source/target t
 conversion. Prefix/postfix mutations retain their selected operation and return an
 owned old/new snapshot, not an addressable reference into the target.
 The nominal runtime `error` is a storable value; its no-error state is a registered
-`no_error_constant_definition`, not a singleton type (the same type holds real errors).
+`no_error_constant_value`, not a singleton type (the same type holds real errors).
 Its qualified source name uses the existing constant lookup and prepared identity path.
 `coalesce_expression_node` owns left/fallback syntax and receives selected scalar
 or mixed result/conversion facts; it is distinct from truthiness-based conditional syntax.

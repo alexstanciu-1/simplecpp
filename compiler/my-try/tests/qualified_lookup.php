@@ -68,10 +68,10 @@ $types = Scope_Lookup::types($local, 'Sub\\Box');
 qualified_check(count($types) === 1 && $types[0]->name() === 'Client\\Sub\\Box', 'Relative type lost canonical identity');
 qualified_check(Scope_Lookup::types($local, '\\Client\\Sub\\Box') === $types, 'Rooted type lookup differs');
 
-$constant = new integer_constant_definition();
-$constant->name = 'LIMIT';
-$constant->type = Language_Types::integer(Model::$language_scope);
-$constant->decimal = '7';
+$value = new integer_constant_value();
+$value->type = Language_Types::integer(Model::$language_scope);
+$value->decimal = '7';
+$constant = new registered_constant('LIMIT', $value);
 $pool->register_constant($constant);
 $context = new preparation_context();
 $context->owner = $work;

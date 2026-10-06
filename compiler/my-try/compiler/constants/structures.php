@@ -1,27 +1,62 @@
 <?php
 
-/* Canonical language constants; source occurrences retain references, never copies of definitions. */
+/* Constant identities and settled values are independent of backend spelling. */
 namespace scpp\compiler;
 
-/** Scope-owned immutable semantic definition, independent of backend spelling. */
-abstract class constant_definition implements preparation_lookup_candidate_i
+interface constant_target_i extends preparation_lookup_candidate_i
 {
-	public string $name;
+	public function constant_name(): string;
+	/** Read settled facts only; analysis owns prerequisite completion. */
+	public function value(): constant_value;
+}
+
+final class registered_constant implements constant_target_i
+{
+	public function __construct(private string $source_name, private constant_value $stored_value) {}
+	public function constant_name(): string { return $this->source_name; }
+	public function value(): constant_value { return $this->stored_value; }
+}
+
+/** Values are immutable after publication and contain no syntax/definition backlinks. */
+abstract class constant_value
+{
 	public canonical_type_use $type;
+	abstract public function value_key(): string;
+}
+
+final class float_constant_value extends constant_value
+{
+	public string $decimal;
+	public function value_key(): string { return $this->decimal; }
+}
+
+final class boolean_constant_value extends constant_value
+{
+	public bool $value;
+	public function value_key(): string { return $this->value ? '1' : '0'; }
+}
+
+final class string_constant_value extends constant_value
+{
+	public string $value;
+	public function value_key(): string { return $this->value; }
 }
 
 /** Exact signed integer value retained as decimal text to avoid host-width conversion. */
-final class integer_constant_definition extends constant_definition
+final class integer_constant_value extends constant_value
 {
 	public string $decimal;
+	public function value_key(): string { return $this->decimal; }
 }
 
 /** A singleton runtime tag: its canonical type uniquely identifies its value. */
-final class sentinel_constant_definition extends constant_definition
+final class sentinel_constant_value extends constant_value
 {
+	public function value_key(): string { return ''; }
 }
 
 /** Immutable published no-error value; ordinary error locals remain assignable. */
-final class no_error_constant_definition extends constant_definition
+final class no_error_constant_value extends constant_value
 {
+	public function value_key(): string { return ''; }
 }

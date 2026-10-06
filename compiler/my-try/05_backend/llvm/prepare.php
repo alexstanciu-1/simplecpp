@@ -17,6 +17,12 @@ final class LLVM_Preparation {
 			if (q_count($source->root->namespace_bodies) !== 1) {
 				throw new \RuntimeException('Namespace bodies are not supported by the parked LLVM backend');
 			}
+			$nodes /** Storage<declaration_node> */ = $source->root->single_body()->declarations;
+			foreach ($nodes as $node) {
+				if ($node instanceof constant_declaration_node) {
+					throw new \RuntimeException('Source constants are not supported by the parked LLVM backend');
+				}
+			}
 			$identity = $source->root->single_body()->body_scope()->source_namespace();
 			if (!$source->root->single_body()->imports->is_empty()) {
 				throw new \RuntimeException('Imports are not supported by the parked LLVM backend');

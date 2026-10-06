@@ -29,7 +29,7 @@ broader invalidation matrix and build-phase timings are verified. Validation-ove
 optimization is deferred to [Chapter 15](15_blocking_debt.md#ch15-native-cache-perf-01--native-cache-validation-overhead).
 Namespace/import semantics are agreed in the [v0.2 contract](../../../../specs/namespaces_v0_2.md).
 The [identity/body ownership migration](../planning/namespace_identity_migration.md)
-is approved and in progress: canonical identity/backend consumers and explicit
+has completed its bounded implementation: canonical identity/backend consumers and explicit
 executable-body work links are implemented. Source-body inventory, preparation,
 entry selection, retirement and C++ consumers share the new model. Implicit global,
 semicolon/braced named bodies and retained reconciliation are implemented with
@@ -37,16 +37,17 @@ unqualified current-namespace lookup. Qualified references now share exact
 rooted/current-relative lookup and retained miss observations for supported calls,
 named types and registered constants. Body-local plain/function/constant imports,
 aliases and homogeneous groups are implemented. Plain imports expose each supported
-symbol kind independently, without namespace aliases or re-export. Source constant
-declarations, new class/static-member capabilities and qualified runtime aliases
-are not enabled by this slice.
+symbol kind independently, without namespace aliases or re-export. Scalar source
+constant declarations are implemented through the same lookup and declaration-work
+model. New class/static-member capabilities and qualified runtime aliases remain
+outside this bounded pass.
 Imported cards below are not implementation evidence; their obsolete import restrictions
 do not override the agreed contract or newer generator rules.
 
 ## Remaining-card reconciliation — 2026-10-06
 
-Review against the existing namespace/import fixtures and the agreed v0.2 contract;
-this is not a new execution checkpoint or a chapter closeout. Historical examples
+Review against the existing namespace/import fixtures and the agreed v0.2 contract,
+updated after the scalar-constant slice below. Historical examples
 and emitted C++ below remain unchanged. The progress table and this reconciliation
 supersede their old “Pending discussion” placeholders only within the stated bounds.
 
@@ -55,11 +56,9 @@ supersede their old “Pending discussion” placeholders only within the stated
   `tests/namespaces.php`, `tests/imports.php` and their `namespaces.py` execution
   harness provide the bounded evidence. An adapted fixture does not establish every
   operation in an imported example (for example, its exact `echo` or class call).
-- **Next genuine feature gap: source constants.** `NS-SYMBOL-PATH-001` and
-  `NOTE-025` include declarations such as `const LIMIT = 7;`. Constant lookup/imports
-  currently use registry-provided definitions; that does not implement authored
-  declarations, initializer preparation, cycles, or incremental constant edits.
-  Discuss a bounded scalar-constant slice before adding retained model/work owners.
+- **Source constants implemented:** `NS-SYMBOL-PATH-001` and `NOTE-025` now have
+  scalar declarations, initializer preparation, cycle checks and incremental edits.
+  Broader constant expressions remain explicit debt, not implicit runtime evaluation.
 - **Chapter 10 prerequisites:** all `CLASS-NS-*` and `CLASS-STATIC-NS-*` cards,
   plus the class portions of `NS-EXEC-003`, `NS-MULTI-BLOCK-001` and `RESOLVE-001`.
   Reuse namespace identities/imports; develop class and struct together as recorded
@@ -69,15 +68,16 @@ supersede their old “Pending discussion” placeholders only within the stated
   to name that namespace's X; relative `A\B\X` starts under the current namespace.
   Source include/require cards and `NOTE-019` do not define project composition:
   see the [project contract](../../../../specs/project_build_v1.md#project-dependencies).
-  A focused rejection/diagnostic proof remains to be recorded; do not claim that
-  old textual `.php` → `.hpp` lowering is implemented or needed in this pipeline.
-- **Still open for explicit scope discussion:** nested namespace declarations
+  `tests/source_constants.php` verifies non-admission of all four inclusion forms
+  and the exact semicolon multiple-execution case. Diagnostic wording may still be
+  improved; old textual `.php` → `.hpp` lowering is not adopted.
+- **Deferred extension requiring discussion:** nested namespace declarations
   (`NS-EXEC-005/006`), distinct from already supported multi-segment namespace paths.
   Persistent namespace-variable storage is not enabled; `NS-VAR-001` describes
   ordinary locals in the selected executable body, not shared namespace state.
 - **Split prose:** `NOTE-012` combines existing local-declaration rules and function
   duplicate rejection with deferred method rules. `NOTE-025` combines delivered
-  namespace/import resolution with missing source constants and deferred members.
+  namespace/import resolution with bounded source constants and deferred members.
   `NOTE-031`, `NOTE-051` and `NS-GLOBAL-EXPLICIT-001` describe old backend spelling;
   current artifact identities and `entry.cpp` own emission, not literal reproduction
   of `scpp::main`. `NOTE-051`'s interpolation discussion belongs to expression work,
@@ -86,7 +86,56 @@ supersede their old “Pending discussion” placeholders only within the stated
 Keep native-cache validation overhead and cleanup/IDE-observability performance
 with their existing Chapter 15 owners. The latest whole-native-compiler checkpoint
 predates Chapter 08; generated-program execution is not a native compiler rebuild.
-Chapter 08 remains open pending the remaining feature/scope decisions above.
+The bounded positive-pass conclusion below does not complete those deferred extensions.
+
+## Scalar source constants — 2026-10-06
+
+Agreed slice: `const NAME = initializer;` in global/named source bodies; inferred
+bool/int/float/string; literal/reference initializers and numeric signs; forward and
+cross-file references; early duplicate/missing/cycle/unsupported-initializer errors.
+Integer constants also feed switch/match labels. Class constants remain Chapter 10.
+The [language contract](../../../../specs/namespaces_v0_2.md#source-constants--bounded-v02-slice)
+records limits, including unchanged parameter-default admission.
+
+`constant_target_i` unifies registered/source lookup while `constant_value` carries
+settled immutable values. Source AST and collected identities use the existing
+declaration scheduler and cleanup protocol. Preparation owns evaluation and dependency
+tracking; parsing only retains syntax/identity. Backend scalar emission is shared
+with ordinary literals and substitutes prepared values without global storage,
+constant headers or runtime initialization order. Numeric text never passes through
+host PHP arithmetic; string values preserve decoded bytes.
+
+Proof: `tests/source_constants.py` checks PHP behavior and generated C++ programs,
+including exact integer bounds, string bytes, floating signs, body-local imports,
+transitive value/type edits, equal-value no-op propagation, missing-name addition,
+namespace move, deletion, cycle/parse recovery, token cleanup and syntax purity.
+Evidence: `/tmp/my-try-constants-final-20261006-1/summary.json` on `2fdeaf44` plus
+this slice. Compiler portability conversion and native compiler build are not claimed.
+
+## Positive-pass conclusion — 2026-10-06
+
+Chapter 08's bounded frontend + C++ S2S pass is concluded: multi-file artifacts,
+entry selection, publication/native-cache baseline, canonical namespace bodies,
+qualified lookup, local imports and scalar constants. Unsupported/deferred rows
+remain explicit and do not claim their imported class examples passed.
+
+Remaining debt and prerequisite owners:
+
+- **CH08-CONST-02:** broader constant expressions and initializer families, typed/
+  grouped/local declarations, and constant-valued parameter defaults. Discuss before
+  expanding the evaluator; do not silently delegate admission to C++.
+- **CH08-NESTED-01:** nested namespace declaration syntax (`NS-EXEC-005/006`),
+  including its execution implications, remains disabled pending discussion.
+- **CH08-DIAG-01:** improve dedicated diagnostics for disabled include/require and
+  nested forms; current early rejection is tested, exact messages are not promised.
+- Class/static-member cards and deferred persistent namespace storage retain their
+  later feature/discussion gates; class and struct work proceeds together in CH10.
+- Cache-validation and cleanup/IDE performance retain their Chapter 15 debt owners.
+
+User milestone: **no native compiler build for Chapter 08**. Proceed to Chapter 09
+discussion/implementation and aim to finish its bounded pass before requesting the
+combined native checkpoint. Existing generated-program execution does not certify
+the compiler's native portability. No new LLVM semantics are enabled.
 
 ## Progress
 
@@ -94,6 +143,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| CH08-CONST-01 | implemented-bounded | `const LIMIT = 7; const COPY = LIMIT;` | verified | verified | explicitly rejected | `tests/source_constants.py`: scalar values, imports, labels, incremental recovery and non-admission boundaries |
 | CH08-IMPORTS-01 | implemented-bounded | Plain/function/constant imports, aliases and homogeneous groups | verified | verified | explicitly rejected | `tests/imports.php`, `tests/namespaces.py`: kind preservation, body/file isolation, validation of unused imports, retargeting and recovery |
 | CH08-NS-LOOKUP-01 | implemented-bounded | Rooted/current-relative calls and qualified named types | verified | verified | deferred | `tests/namespaces.py`, `tests/qualified_lookup.php`: authored paths, kinds, misses, additions, moves, ambiguity and subscription cleanup |
 | CH08-PROGRAM-01 | implemented | Explicit entry + cross-file functions | verified | verified | deferred | `tests/project_cpp.py`: admission, retained edits/recovery, relocation, separate units with/without PCH |
@@ -106,24 +156,24 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH08-NS-PARSE-01 | implemented-bounded | `namespace A;` / `namespace A { ... }` / `namespace { ... }` | verified | verified | rejected for named/multiple bodies | `tests/namespaces.py`: reopening, same-namespace cross-file lookup, distinct qualified definitions, no-op/edit/move/recovery |
 | [CLASS-STATIC-NS-003](#class-static-ns-003) | deferred-prerequisite | `$x = new X(); return $x::make();` | unverified | unverified | deferred | CH10 class/struct and method work; namespace foundation is available |
 | [CLASS-STATIC-NS-002](#class-static-ns-002) | deferred-prerequisite | `namespace A; function f() { return \A\X::make(); }` | unverified | unverified | deferred | CH10 class/struct and method work; namespace foundation is available |
-| [NS-EXEC-006](#ns-exec-006) | deferred-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | Nested source declarations outside delivered scope; not the same as namespace A\B |
-| [NS-EXEC-005](#ns-exec-005) | deferred-discussion | `namespace A { compute(1); namespace B { class X {} } compute(3); }` | unverified | unverified | deferred | Nested source declarations outside delivered scope; not the same as namespace A\B |
+| [NS-EXEC-006](#ns-exec-006) | deferred-discussion | `namespace A { compute(1); namespace B { compute(2); } compute(3); }` | unverified | unverified | deferred | CH08-NESTED-01; early rejection tested; multi-segment paths remain supported |
+| [NS-EXEC-005](#ns-exec-005) | deferred-discussion | `namespace A { compute(1); namespace B { class X {} } compute(3); }` | unverified | unverified | deferred | CH08-NESTED-01; early rejection tested; multi-segment paths remain supported |
 | [NS-DECL-001](#ns-decl-001) | implemented-bounded | `namespace App;` | verified | verified | deferred | CH08-NS-PARSE-01; semicolon fixture |
 | [NS-DECL-002](#ns-decl-002) | implemented-bounded | `namespace App { function f() {} }` | verified | verified | deferred | CH08-NS-PARSE-01; braced fixture with typed function |
-| [NS-USE-001](#ns-use-001) | implemented-bounded | `namespace App; use function Lib\f;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
-| [NS-USE-002](#ns-use-002) | implemented-bounded | `namespace App; use const Lib\X;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
-| [NS-USE-003](#ns-use-003) | implemented-bounded | `namespace App; use Lib\X;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
-| [NS-USE-004](#ns-use-004) | implemented-bounded | `namespace App; use function Lib\f as g;` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
-| [NS-USE-005](#ns-use-005) | implemented-bounded | `namespace App; use function Lib\{f, g};` | verified | verified | deferred | CH08-IMPORTS-01; constant targets supplied by registry until source constant declarations arrive |
+| [NS-USE-001](#ns-use-001) | implemented-bounded | `namespace App; use function Lib\f;` | verified | verified | deferred | CH08-IMPORTS-01; registered targets covered here; source declarations covered by CH08-CONST-01 |
+| [NS-USE-002](#ns-use-002) | implemented-bounded | `namespace App; use const Lib\X;` | verified | verified | deferred | CH08-IMPORTS-01; registered targets covered here; source declarations covered by CH08-CONST-01 |
+| [NS-USE-003](#ns-use-003) | implemented-bounded | `namespace App; use Lib\X;` | verified | verified | deferred | CH08-IMPORTS-01; registered targets covered here; source declarations covered by CH08-CONST-01 |
+| [NS-USE-004](#ns-use-004) | implemented-bounded | `namespace App; use function Lib\f as g;` | verified | verified | deferred | CH08-IMPORTS-01; registered targets covered here; source declarations covered by CH08-CONST-01 |
+| [NS-USE-005](#ns-use-005) | implemented-bounded | `namespace App; use function Lib\{f, g};` | verified | verified | deferred | CH08-IMPORTS-01; registered targets covered here; source declarations covered by CH08-CONST-01 |
 | [NS-QUALIFIED-001](#ns-qualified-001) | implemented-bounded | `namespace App; return \Lib\value();` | verified | verified | deferred | `tests/namespaces.py`: rooted call and type paths |
 | [NS-QUALIFIED-002](#ns-qualified-002) | implemented-bounded | `namespace App; return Sub\value();` | verified | verified | deferred | `tests/namespaces.py`: selects App\Sub, not global Sub |
 | [NS-QUALIFIED-003](#ns-qualified-003) | implemented-bounded | `namespace App; function f() { g(); }` | verified | verified | deferred | Current-namespace calls; namespaces.php cross_file/reopened fixtures |
-| [NS-SYMBOL-PATH-001](#ns-symbol-path-001) | partial | `namespace A\B; const X = 1; class MyClass {} function my_function() {}` | verified-bounded | verified-bounded | deferred | Function/type paths covered; source constants unfinished; classes await CH10 |
+| [NS-SYMBOL-PATH-001](#ns-symbol-path-001) | partial | `namespace A\B; const X = 1; class MyClass {} function my_function() {}` | verified-bounded | verified-bounded | deferred | Function/type/scalar-constant paths covered; classes await CH10 |
 | [NS-VAR-001](#ns-var-001) | implemented-bounded | `namespace A\B; $x = 1; echo $x;` | verified | verified | deferred | Entry-body locals, not persistent namespace state; namespaces.php cross_file fixture (exact echo card not rerun) |
 | [NS-EXEC-001](#ns-exec-001) | implemented-bounded | `namespace A { compute(1); }` | verified-bounded | verified-bounded | deferred | Selected executable body; CH08-NS-PARSE-01; exact legacy fixture not rerun |
 | [NS-EXEC-002](#ns-exec-002) | implemented-bounded | `namespace A { compute(1); return 1; }` | verified-bounded | verified-bounded | deferred | Selected body and return; namespaces.php braced fixture |
 | [NS-EXEC-003](#ns-exec-003) | deferred-prerequisite | `namespace A { compute(1); class X {} compute(2); }` | partial | partial | deferred | Executable body/declaration separation covered; class declaration awaits CH10 |
-| [NS-EXEC-004](#ns-exec-004) | contract-rejected | `namespace A; compute(1); namespace B; compute(2);` | verified-bounded | not emitted | deferred | One executable body per entry file; braced equivalent rejection tested; exact semicolon fixture not rerun |
+| [NS-EXEC-004](#ns-exec-004) | contract-rejected | `namespace A; compute(1); namespace B; compute(2);` | verified-bounded | not emitted | deferred | One executable body per entry file; braced and semicolon rejection tested |
 | [NS-MULTI-BLOCK-001](#ns-multi-block-001) | deferred-prerequisite | `namespace A { class X {} } namespace B { class Y {} } namespace { \A\X::run(); }` | partial | partial | deferred | Multiple declaration-only bodies covered; classes/static methods await CH10 |
 | [RESOLVE-001](#resolve-001) | partial | `new A(); A\B\f();` | verified-bounded | verified-bounded | deferred | Qualified calls and existing struct construction covered; class construction awaits CH10 |
 | [CLASS-NS-001](#class-ns-001) | deferred-prerequisite | `namespace A; class X {}` | unverified | unverified | deferred | CH10 class/struct and method work; namespace foundation is available |
@@ -131,12 +181,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-NS-003](#class-ns-003) | deferred-prerequisite | `namespace A; function f() { return new \A\X(); }` | unverified | unverified | deferred | CH10 class/struct and method work; namespace foundation is available |
 | [CLASS-NS-004](#class-ns-004) | deferred-prerequisite | `namespace A\B; function f() { return new A\B\X(); }` | unverified | unverified | deferred | CH10; old ancestor-anchored expectation superseded by current-relative lookup |
 | [CLASS-STATIC-NS-001](#class-static-ns-001) | deferred-prerequisite | `namespace A; function f() { return X::make(); }` | unverified | unverified | deferred | CH10 class/struct and method work; namespace foundation is available |
-| [INC-REQUIRE-001](#inc-require-001) | contract-reconciled | `require 'x.php';` | unverified | unverified | deferred | Project composition owns discovery; legacy textual include path not adopted; focused diagnostics proof pending |
-| [INC-INCLUDE-001](#inc-include-001) | contract-reconciled | `include 'x.php';` | unverified | unverified | deferred | Project composition owns discovery; legacy textual include path not adopted; focused diagnostics proof pending |
-| [INC-ONCE-001](#inc-once-001) | contract-reconciled | `require_once "lib/util.php";` | unverified | unverified | deferred | Project composition owns discovery; legacy textual include path not adopted; focused diagnostics proof pending |
+| [INC-REQUIRE-001](#inc-require-001) | contract-rejected | `require 'x.php';` | verified rejection | not emitted | deferred | source_constants.php; project discovery owns composition; dedicated diagnostics remain debt |
+| [INC-INCLUDE-001](#inc-include-001) | contract-rejected | `include 'x.php';` | verified rejection | not emitted | deferred | source_constants.php; project discovery owns composition; dedicated diagnostics remain debt |
+| [INC-ONCE-001](#inc-once-001) | contract-rejected | `require_once "lib/util.php";` | verified rejection | not emitted | deferred | source_constants.php also covers include_once; no legacy textual include path |
 | [NS-GLOBAL-EXPLICIT-001](#ns-global-explicit-001) | implemented-bounded | — (example pending) | verified | verified | deferred | CH08-PROGRAM-01 and global_block fixture; entry.cpp owns native entry, not legacy exact spelling |
 | [NOTE-012](#note-012) | split-review | — (example pending) | partial | partial | deferred | See remaining-card reconciliation; imported prose spans multiple owners |
-| [NOTE-019](#note-019) | contract-reconciled | — (example pending) | unverified | unverified | deferred | Project composition owns discovery; legacy textual include path not adopted; focused diagnostics proof pending |
+| [NOTE-019](#note-019) | contract-reconciled | — (historical prologue rule) | verified rejection | not emitted | deferred | Include/require forms reject; project discovery replaces legacy textual composition |
 | [NOTE-025](#note-025) | split-review | — (example pending) | partial | partial | deferred | See remaining-card reconciliation; imported prose spans multiple owners |
 | [NOTE-031](#note-031) | split-review | — (example pending) | partial | partial | deferred | See remaining-card reconciliation; imported prose spans multiple owners |
 | [NOTE-051](#note-051) | split-review | — (example pending) | partial | partial | deferred | See remaining-card reconciliation; imported prose spans multiple owners |

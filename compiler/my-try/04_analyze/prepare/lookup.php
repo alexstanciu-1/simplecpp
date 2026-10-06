@@ -20,14 +20,14 @@ final class Observed_Lookup
 	}
 
 	/** Resolve the nearest exact constant pool in its independent namespace. */
-	public static function constants(scope $start, string $name, preparation_context $context): array /** vector<constant_definition> */
+	public static function constants(scope $start, string $name, preparation_context $context): array /** vector<constant_target_i> */
 	{
 		if (Source_Name_Path::separator($name) >= 0) {
 			$members = self::qualified_pool($start, $name, preparation_lookup_kind::constant, $context);
 			return $members->constants_named(Source_Name_Path::member($name));
 		}
 		$current_scope = $start;
-		$result /** vector<constant_definition> */ = [];
+		$result /** vector<constant_target_i> */ = [];
 		while (true)
 		{
 			if ($current_scope->has_import_environment()) {

@@ -216,10 +216,11 @@ final class prepared_variable_reference extends prepared_expression {
 	public collected_name $declaration /** weak<collected_name> */;
 }
 
-/** Resolved immutable definition; its concrete value remains owned by the language scope. */
+/** Resolved target identity and immutable value snapshot; no backend spelling. */
 final class prepared_constant_reference extends prepared_expression {
-	/** @reference.source model.language_scope */
-	public constant_definition $definition;
+	/** Target owner is a published scope or source collection, not the reference. */
+	public constant_target_i $target /** weak<constant_target_i> */;
+	public constant_value $value;
 }
 
 /** Admitted one-value query; distinct helper semantics are retained for emission. */

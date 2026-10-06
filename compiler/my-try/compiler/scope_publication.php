@@ -8,7 +8,7 @@ final class Scope_Publication
 	/** Collector invokes this under the task batch lock; local variables never enter this path. */
 	public static function register(scope $local_scope, scope $global, collected_name $entry): void
 	{
-		if ($entry instanceof collected_function) {
+		if (($entry instanceof collected_function) || ($entry instanceof collected_constant)) {
 			$global->register($entry);
 		}
 		elseif ($entry instanceof collected_struct)

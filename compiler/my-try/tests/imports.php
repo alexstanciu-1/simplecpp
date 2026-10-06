@@ -41,8 +41,9 @@ $outputs = [];
 foreach ($cases as $name => $text) {
 	$compiler = import_project(['main.phs' => $text, 'lib.phs' => $library]);
 	if ($name === 'constant') {
-		$constant = new integer_constant_definition(); $constant->name = 'LIMIT';
-		$constant->type = Language_Types::integer(Model::$language_scope); $constant->decimal = '7';
+		$value = new integer_constant_value();
+		$value->type = Language_Types::integer(Model::$language_scope); $value->decimal = '7';
+		$constant = new registered_constant('LIMIT', $value);
 		Model::$namespaces->register('Lib')->published_scope()->register_constant($constant);
 	}
 	$compiler->exec_cpp();

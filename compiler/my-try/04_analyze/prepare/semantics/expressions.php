@@ -365,8 +365,13 @@ final class Expression_Preparation
 		}
 
 		$facts = new prepared_constant_reference();
-		$facts->definition = $targets[0];
-		$facts->type = $targets[0]->type;
+		$target = $targets[0];
+		if ($target instanceof collected_constant) {
+			$context->worker->require_declaration($context->owner, object_cast($target, collected_constant::class));
+		}
+		$facts->target = $target;
+		$facts->value = $target->value();
+		$facts->type = $facts->value->type;
 		return $facts;
 	}
 

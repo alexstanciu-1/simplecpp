@@ -3,14 +3,15 @@ Doc Status: planning
 
 Recorded 2026-10-06 after the approved namespace/import discussion.
 Language rules are agreed in [the v0.2 contract](../../../../specs/namespaces_v0_2.md).
-Status: coordinated migration approved by the user; implementation in progress.
+Status: coordinated migration implemented within the agreed bounded scope.
 Canonical identity/backend, executable-work links and source-body inventory consumers
 are implemented below. Named namespace parsing/reconciliation and scope-retention
 integration are implemented with bare-name and dependency-observed qualified lookup.
 Qualified-reference parsing is integrated for supported calls, named types and
 registered constant references. Body-local plain/function/constant imports, aliases
-and homogeneous groups are integrated. Remaining Chapter 08 cards need reconciliation
-against these bounded proofs and their deferred prerequisites.
+and homogeneous groups are integrated. Scalar source constants are integrated and
+remaining cards are reconciled in [Chapter 08's conclusion](../catalog/08_project_symbols.md#positive-pass-conclusion--2026-10-06).
+The checkpoints below retain their historical next-step/proof boundaries.
 
 ## Why this is more than adding namespace parsing
 

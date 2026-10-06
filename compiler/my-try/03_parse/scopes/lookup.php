@@ -46,17 +46,17 @@ final class Source_Name_Path
 final class Scope_Lookup
 {
 	/** Resolve the nearest exact constant pool in its independent namespace. */
-	public static function constants(scope $start, string $name): array /** vector<constant_definition> */
+	public static function constants(scope $start, string $name): array /** vector<constant_target_i> */
 	{
 		if (Source_Name_Path::separator($name) >= 0) {
 			$identity = Model::$namespaces->find(Source_Name_Path::namespace_path($start, $name));
 			if ($identity === null) {
-				return /** vector<constant_definition> */ [];
+				return /** vector<constant_target_i> */ [];
 			}
 			return $identity->published_scope()->constants_named(Source_Name_Path::member($name));
 		}
 		$current_scope = $start;
-		$result /** vector<constant_definition> */ = [];
+		$result /** vector<constant_target_i> */ = [];
 		while (true)
 		{
 			foreach ($current_scope->imports_named($name) as $binding) {
