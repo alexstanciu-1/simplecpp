@@ -427,8 +427,41 @@ forwarding, supported containers/wrappers, observable updates through another mu
 alias, const-only signature invalidation, no-change failure retry, repair and
 cleanup/fresh-output agreement. FPM used CLI fallback. No native compiler rebuild.
 
-Next: reconcile remaining Chapter 07 catalog rows with these implemented slices,
-then discuss unresolved scope/debt before chapter closeout.
+Remaining rows are reconciled below; chapter closeout still needs the debt decision.
+
+## Catalog reconciliation — 2026-10-06
+
+This is a documentation audit against the existing ownership/reference tests and
+Chapter 04/06 contracts, not another implementation or native checkpoint.
+
+- Shared/unique empty locals, mutable string/vector parameters and typed local aliases
+  are already proved. Their imported cards now point to the owning checkpoints.
+- Unique allocation is proved for default source structs only. The imported
+  constructor-argument example is not implemented and remains separate object work.
+- Legacy `array` parameters are not a strict v0.2 synonym for `mixed`: the legacy
+  table-kind entry guard is a separate contract. Strict typed containers and explicit
+  mixed/dynamic reference parameters are covered, without claiming that old spelling.
+- Automatic heavy-value `const &` lowering is not the v0.2 parameter contract.
+  Chapter 04 already settled ordinary value snapshots and explicit reference passing;
+  explicit `const T&` now adds read-only borrowing, not a body-dependent ABI choice.
+- Old native-reference proxies remain excluded by native-reference safety. This is
+  not pending proxy implementation.
+- WARN-TYPE-PARAM-001/NOTE-056 remain performance guidance for value parameters, not
+  evidence of a delivered warning or a universal eager deep-copy cost. Types keep
+  their own value/COW/shared copy behavior.
+
+Remaining decisions before closeout:
+
+1. CH07-WARN-01: non-fatal reference-return advice still needs a diagnostics owner.
+2. CH07-OWN-EXEC-01 and bounded reference limitations: wider constructors/member
+   lifetimes, reference-return recursion/other origins, ownership selection/variadic
+   transfer and broader const forms remain outside the implemented slice.
+3. Native compiler validation has not been refreshed for Chapter 07. Generated-C++
+   program proofs are recorded separately; request a native checkpoint before claiming it.
+
+Recommendation for discussion: retain these explicit limits/debts and close the
+bounded positive pass after the requested validation, rather than implicitly enabling
+legacy syntax or building a new diagnostics/lifetime subsystem during reconciliation.
 
 ## Ownership-type validation debt from chapter 05
 
@@ -464,18 +497,18 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [REF-RETURN-002](#ref-return-002) | rejected | Reference return of an indexed element | rejects | no output | deferred | Whole-parameter return only; no native interior reference |
 | [REF-BIND-001](#ref-bind-001) | rejected | `$inner =& $arr["inner"];` | rejects | no output | deferred | No native container-interior alias |
 | [TYPE-VAR-003A](#type-var-003a) | supported-strict | `$w weak<int> = null;` | prepared | verified | deferred | `tests/ownership.php`; also explicit derivation/locking; legacy annotation alias not added |
-| [TYPE-VAR-003B](#type-var-003b) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-VAR-003C](#type-var-003c) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-PARAM-003](#type-param-003) | pending-discussion | `function f(string &$s, vector_t &$v): void {}` | unverified | unverified | deferred | — |
-| [TYPE-PARAM-003B](#type-param-003b) | pending-discussion | `function f(array &$a): void {}` | unverified | unverified | deferred | — |
+| [TYPE-VAR-003B](#type-var-003b) | supported-strict | `$s shared<int> = null;` | prepared | verified | deferred | `tests/ownership.php`; empty/reset, copies and bounded allocation |
+| [TYPE-VAR-003C](#type-var-003c) | supported-strict | `$u unique<int> = null;` | prepared | verified | deferred | `tests/ownership.php`; empty/reset and explicit transfer; copying rejects |
+| [TYPE-PARAM-003](#type-param-003) | supported-strict | `function f(string &$s, vector<int> &$v): void {}` | prepared | verified | deferred | `tests/references.php`, Chapter 04/06 reference proofs |
+| [TYPE-PARAM-003B](#type-param-003b) | deferred-legacy | `function f(array &$a): void {}` | not claimed | not claimed | deferred | Strict explicit mixed/dynamic/container references covered; legacy array guard not added |
 | [TYPE-PARAM-003F](#type-param-003f) | supported-bounded | `function first(const vector<int> &$v): int { return $v[0]; }` | prepared | verified | deferred | `tests/references.php`; stable exact arguments; broader const forms deferred |
-| [WARN-TYPE-PARAM-001](#warn-type-param-001) | pending-discussion | `function f(array $a): void { $a = []; }` | unverified | unverified | deferred | — |
-| [TYPE-VAR-007A](#type-var-007a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [WARN-TYPE-PARAM-001](#warn-type-param-001) | guidance-only | Strict by-value parameter reassignment | supported for admitted types | value semantics proved | deferred | No new emitted warning; legacy array spelling/guard not added |
+| [TYPE-VAR-007A](#type-var-007a) | supported-bounded | `$p unique<Point> = new Point();` | prepared | verified | deferred | `tests/ownership.php`; constructor arguments remain deferred |
 | [TYPE-VAR-008](#type-var-008) | supported-strict | `$r int =& $x;` | prepared | verified | deferred | Reduced local binding; legacy annotation spelling not added |
-| [NOTE-038](#note-038) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-056](#note-056) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-038](#note-038) | reconciled | Value snapshots versus explicit const-reference borrowing | prepared | verified | deferred | Chapter 04 value contract and const-reference checkpoint; no automatic const-ref ABI |
+| [NOTE-056](#note-056) | guidance-only | Composite value parameter reassignment | existing value contract | verified for admitted types | deferred | No body-dependent passing mode or universal deep-copy claim |
 | [NOTE-059](#note-059) | debt | Reference-return advice | warning delivery deferred | — | deferred | CH07-WARN-01 |
-| [NOTE-060](#note-060) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-060](#note-060) | reconciled-excluded | Legacy typed reference proxies | not admitted | not used | deferred | Native-reference safety; exact stable places only |
 ## FUNC-REF-001
 
 **v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
@@ -859,9 +892,9 @@ weak_p<A> x = null;
 
 ## TYPE-VAR-003B
 
-**Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
+**Strict-first scope:** The proved strict subset is recorded below; imported annotation syntax remains legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Exact shared storage, empty/reset and handle copying are proved by `tests/ownership.php`. No nested wrapper is introduced.
 
 ### Imported version 1
 
@@ -898,9 +931,9 @@ shared_p<A> x = null;
 
 ## TYPE-VAR-003C
 
-**Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
+**Strict-first scope:** The proved strict subset is recorded below; imported annotation syntax remains legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Exact unique storage, empty/reset and explicit transfers are proved by `tests/ownership.php`. Ordinary copying remains rejected.
 
 ### Imported version 1
 
@@ -937,7 +970,7 @@ unique_p<A> x = null;
 
 ## TYPE-PARAM-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit string and typed vector references reuse stable-place admission and emit `T&`; see `tests/references.php` and Chapter 04/06 proofs. No automatic const-reference normalization overrides explicit `&`.
 
 ### Imported version 1
 
@@ -974,7 +1007,7 @@ void_t f(string_t& s, vector_t& v) {}
 
 ## TYPE-PARAM-003B
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Legacy `array` syntax and its table-kind entry guard are not claimed by the strict pass. Explicit mixed/dynamic/container references use whole-storage admission without inheriting the legacy array restriction.
 
 ### Imported version 1
 
@@ -1051,7 +1084,7 @@ int_t f(const vector_t<int_t<>>& values) { return count(values); }
 
 ## WARN-TYPE-PARAM-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Retain performance guidance, not a claim of warning delivery. Admitted strict value parameters support reassignment under their existing copy semantics; no body-dependent const-reference ABI is introduced.
 
 ### Imported version 1
 
@@ -1088,9 +1121,9 @@ void_t f(mixed_t a) { expect_array_argument(a, false, "a"); a = table_(); }
 
 ## TYPE-VAR-007A
 
-**Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
+**Strict-first scope:** The proved strict subset is recorded below; imported annotation syntax remains legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Strict `$p unique<Point> = new Point();` default-struct construction is proved by `tests/ownership.php` and emits direct unique allocation. Constructor arguments in the imported example remain deferred.
 
 ### Imported version 1
 
@@ -1127,9 +1160,9 @@ unique_p<Point> p = ::scpp::unique<Point>(static_cast<int_t>(1), static_cast<int
 
 ## TYPE-VAR-008
 
-**Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
+**Strict-first scope:** The proved strict subset is recorded below; imported annotation syntax remains legacy reference only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Strict `$r int =& $x;` preserves original-place identity and emits `T&`, or `const T&` for an alias of read-only storage. No PHP rebinding or legacy annotation spelling is added.
 
 ### Imported version 1
 
@@ -1168,7 +1201,7 @@ int_t& r = x;
 
 **Source:** [generators/php/specs/rules.md:771](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Chapter 04 establishes ordinary value snapshots; Chapter 06 preserves each container's own copy semantics. Explicit mutable/const references borrow instead. The imported automatic type-based const-reference convention is not the current v0.2 ABI.
 
 > ## 9. Parameter passing rules
 >
@@ -1191,7 +1224,7 @@ int_t& r = x;
 
 **Source:** [generators/php/specs/rules.md:1249](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Retain advice to consider copy cost, not a universal eager deep-copy claim. Current value parameters retain their type's copy/COW/shared behavior regardless of body writes. Explicit const references provide intentional borrowing; no warning delivery is claimed.
 
 > ## Warning: reassignment of by-value composite params
 >
@@ -1205,7 +1238,7 @@ int_t& r = x;
 
 **Source:** [generators/php/specs/rules.md:1272](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Non-fatal advisory delivery remains CH07-WARN-01. Proved safety rejections and bounded reference returns do not satisfy that missing warning/reporting contract.
 
 > ## Return-by-reference warnings
 >
@@ -1216,7 +1249,7 @@ int_t& r = x;
 
 **Source:** [generators/php/specs/rules.md:1277](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** Reconciled with native-reference safety: exact stable places only, never typed normalization proxies or heap-backed interior references. Legacy proxy infrastructure is not a feature to restore.
 
 > ## Historical note â€” typed scalar by-reference proxy lowering
 >
