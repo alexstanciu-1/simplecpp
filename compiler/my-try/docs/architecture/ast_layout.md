@@ -16,8 +16,10 @@ retains the former `03_parse/proposal/` snapshots when historical comparison is 
 ordered `Storage<enum_case_node>`. Each case owns a name and optional value expression.
 No unit/int/fixed-width flag duplicates the syntax. Independent lazy inspection
 cursors and maintenance visit backing syntax before cases, and a case's value once.
-This is a model-only foundation; parser admission and preparation/emission remain
-the next slice. Cases are not namespace-level constant declarations.
+Parser collection registers the declaration before reading its body. Preparation
+attaches backing/storage/case facts to the enum. `static_member_reference_node` owns
+one named owner-type node plus a member name; preparation selects an enum case.
+Cases are not namespace-level constant declarations.
 
 `statement_body_node` is an abstract statement owning `Storage<statement_node>`
 and its source span. It shares construction, inspection and maintenance.

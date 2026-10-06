@@ -61,7 +61,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [Chapter 08 bounded pass concluded with explicit debt](catalog/08_project_symbols.md#positive-pass-conclusion--2026-10-06); [Chapter 09 enum model foundation](catalog/09_value_types.md#enum-model-foundation--2026-10-06) is implemented; enum declarations/case references and preparation/emission are next. User deferred the native compiler build until after the intended CH09 pass; [Chapter 15 debt](catalog/15_blocking_debt.md) remains |
+| Current handoff | [Chapter 08 bounded pass concluded with explicit debt](catalog/08_project_symbols.md#positive-pass-conclusion--2026-10-06); [Chapter 09 bounded enum execution](catalog/09_value_types.md#enum-execution--2026-10-06) is implemented; same-enum equality and switch/match are next for discussion. User deferred the native compiler build until after the intended CH09 pass; [Chapter 15 debt](catalog/15_blocking_debt.md) remains |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral

@@ -8,6 +8,16 @@ final class Integer_Literals
 	/** Preserve exact decimal magnitude; never round through host PHP int or float. */
 	public static function decimal(string $text): string
 	{
+		$decimal = self::magnitude($text);
+		if (!self::within_magnitude($decimal, '9223372036854775807')) {
+			throw new \RuntimeException('S2S integer literal exceeds signed 64-bit representation');
+		}
+		return $decimal;
+	}
+
+	/** Syntax normalization is independent of the consumer's signedness and width. */
+	public static function magnitude(string $text): string
+	{
 		if (!Source_Text::digits($text)) {
 			throw new \RuntimeException('S2S requires a decimal integer literal');
 		}
@@ -15,25 +25,47 @@ final class Integer_Literals
 		if (($length > 1) && (string_byte_at($text, 0) === 48)) {
 			throw new \RuntimeException('S2S leading-zero numeric spelling is not implemented yet');
 		}
-		$maximum = '9223372036854775807';
-		if ($length > string_byte_len($maximum)) {
-			throw new \RuntimeException('S2S integer literal exceeds signed 64-bit representation');
+		return $text;
+	}
+
+	/** Compare decimal bytes, including full uint64 and signed-minimum magnitudes. */
+	public static function fits(string $decimal, int $width, bool $signed): bool
+	{
+		$negative = string_byte_starts_with($decimal, '-');
+		if ($negative && !$signed) {
+			return false;
 		}
-		if ($length === string_byte_len($maximum))
-		{
-			for ($index = 0; $index < $length; $index++)
-			{
-				$byte = string_byte_at($text, $index);
-				$limit = string_byte_at($maximum, $index);
-				if ($byte > $limit) {
-					throw new \RuntimeException('S2S integer literal exceeds signed 64-bit representation');
-				}
-				if ($byte < $limit) {
-					break;
-				}
+		$magnitude = $negative ? string_byte_slice($decimal, 1, string_byte_len($decimal) - 1) : $decimal;
+		$limits /** hash<string, int> */ = [8 => '255', 16 => '65535', 32 => '4294967295', 64 => '18446744073709551615'];
+		if ($signed) {
+			$limits = [8 => '127', 16 => '32767', 32 => '2147483647', 64 => '9223372036854775807'];
+			if ($negative) {
+				$limits = [8 => '128', 16 => '32768', 32 => '2147483648', 64 => '9223372036854775808'];
 			}
 		}
-		return $text;
+		if (!isset($limits[$width])) {
+			throw new \RuntimeException('S2S integer storage width is not supported');
+		}
+		$maximum = $limits[$width];
+		return self::within_magnitude($magnitude, $maximum);
+	}
+
+	/** Both arguments are normalized unsigned decimal spellings. */
+	private static function within_magnitude(string $magnitude, string $maximum): bool
+	{
+		$length = string_byte_len($magnitude);
+		if ($length !== string_byte_len($maximum)) {
+			return $length < string_byte_len($maximum);
+		}
+		for ($index = 0; $index < $length; $index++)
+		{
+			$byte = string_byte_at($magnitude, $index);
+			$limit = string_byte_at($maximum, $index);
+			if ($byte !== $limit) {
+				return $byte < $limit;
+			}
+		}
+		return true;
 	}
 }
 

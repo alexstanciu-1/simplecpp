@@ -308,6 +308,10 @@ final class Parser_Run
 				$declarations->append($this->constant_declaration());
 				continue;
 			}
+			if ($this->text() === 'enum') {
+				$declarations->append($this->enum_declaration());
+				continue;
+			}
 			$node = $this->statement();
 			if ($node instanceof declaration_node) {
 				$declarations->append(object_cast($node, declaration_node::class));
@@ -820,6 +824,77 @@ final class Parser_Run
 		else { $constant->initializer = $initializer; }
 		$this->finish_declaration($constant, $start, $same);
 		return $constant;
+	}
+
+	/** Preserve enum identity and no-op syntax; source meaning belongs to preparation. */
+	private function enum_declaration(): enum_node
+	{
+		$start = $this->expect('enum');
+		if (!$this->identifier()) {
+			throw new \RuntimeException($this->error_message('Expected enum name'));
+		}
+		$name_index = $this->position++;
+		$name = $this->tokens->text_at($name_index);
+		$previous = $this->collector->previous_enum($this->source_scope, $name);
+		$node /** enum_node */ = $previous ?? new enum_node();
+		if ($previous === null) {
+			$node->set_span($start, $start);
+		}
+		$old_start = -1;
+		$old_end = -1;
+		if ($previous !== null) {
+			if ($previous->occurrence()->change_status !== change_state::deleted) {
+				$old_start = $node->start_token();
+				$old_end = $node->end_token();
+			}
+		}
+		$node->name = $name;
+		$node->collect($this->collector, $this->source_scope, $name_index);
+		$backing /** nullable<type_node> */ = null;
+		if ($this->text() === ':') {
+			$this->position++;
+			$backing = $this->type_syntax($this->source_scope);
+		}
+		$cases /** Storage<enum_case_node> */ = new Storage();
+		$this->expect('{');
+		$saved_scope = $this->current_scope;
+		$this->current_scope = $this->source_scope;
+		while ($this->text() !== '}') {
+			$case_start = $this->expect('case');
+			if (!$this->identifier()) {
+				throw new \RuntimeException($this->error_message('Expected enum case name'));
+			}
+			$case_node = new enum_case_node();
+			$case_node->name = $this->text();
+			$this->position++;
+			if ($this->text() === '=') {
+				$this->position++;
+				$case_node->value = $this->expression();
+			}
+			$this->expect(';');
+			$case_node->set_span($case_start, $this->position);
+			$cases->append($case_node);
+		}
+		$this->current_scope = $saved_scope;
+		$this->expect('}');
+		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
+		if ($same) {
+			// The declaration name was refreshed above; retain child ranges, not its new occurrence.
+			if ($node->backing_type !== null) {
+				$parsed_backing /** type_node */ = $backing;
+				$this->retain_range($node->backing_type, $parsed_backing->start_token());
+			}
+			$old_cases /** Storage<enum_case_node> */ = $node->cases;
+			foreach ($old_cases as $case_index => $old_case) {
+				$this->retain_range($old_case, $cases[$case_index]->start_token());
+			}
+		}
+		else {
+			$node->backing_type = $backing;
+			$node->cases = $cases;
+		}
+		$this->finish_declaration($node, $start, $same);
+		return $node;
 	}
 
 	/** Register the record immediately, then reconcile fields within its retained member scope. */
@@ -1515,13 +1590,26 @@ final class Parser_Run
 			return $this->data_construction($this->position, null);
 		}
 		if ($this->identifier() || ($this->text() === '\\')) {
-			if ($this->text_at_offset(1) === '::')
+			if ($this->text_at_offset($this->source_name_end(0)) === '::')
 			{
 				$start = $this->position;
-				$name = $this->text();
-				$this->position += 2;
+				$name = $this->source_name();
+				$owner_end = $this->position;
+				$this->expect('::');
 				if (!string_byte_starts_with($this->text(), '$')) {
-					throw new \RuntimeException($this->error_message('Expected a registered readonly static value'));
+					if (!$this->identifier()) {
+						throw new \RuntimeException($this->error_message('Expected static member name'));
+					}
+					$owner_type = new named_type_node();
+					$owner_type->name = $name;
+					$owner_type->set_span($start, $owner_end);
+					$owner_type->collect($this->collector, $this->current_scope, $start);
+					$member = new static_member_reference_node();
+					$member->owner_type = $owner_type;
+					$member->member_name = $this->text();
+					$this->position++;
+					$this->finish_node($member, $start);
+					return $member;
 				}
 				$constant = new constant_reference_node();
 				$constant->name = $name . '::' . $this->text();

@@ -1,12 +1,15 @@
 <?php
 
-/* Enum syntax owns ordered cases; preparation will select backing semantics and storage. */
+/* Enum syntax owns ordered cases; preparation selects backing semantics and storage. */
 namespace scpp\compiler;
 
 final class enum_node extends declaration_node
 {
 	use Node_Source_Span;
 	use Collected_Occurrence;
+	use Preparation_Facts;
+
+	private ?prepared_enum $prepared_facts = null;
 
 	public string $name;
 	/** Absence means a unit declaration, not an inferred integer backing type. */
@@ -22,6 +25,11 @@ final class enum_node extends declaration_node
 	public function kind(): node_kind
 	{
 		return node_kind::enum_declaration;
+	}
+
+	public function require_preparation(): prepared_enum
+	{
+		return $this->prepared_facts;
 	}
 
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
@@ -46,6 +54,43 @@ final class enum_node extends declaration_node
 		foreach ($cases as $case_node) {
 			$worker->edge($this, $case_node);
 		}
+	}
+}
+
+/** Syntax identifies an owner type and named member; preparation selects the member's role. */
+final class static_member_reference_node extends expression_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+
+	public named_type_node $owner_type;
+	public string $member_name;
+	private ?prepared_enum_case_reference $prepared_facts = null;
+
+	public function kind(): node_kind
+	{
+		return node_kind::static_member_reference;
+	}
+
+	public function require_preparation(): prepared_expression
+	{
+		return $this->prepared_facts;
+	}
+
+	public function enum_case_preparation(): prepared_enum_case_reference
+	{
+		return $this->prepared_facts;
+	}
+
+	public function children(): child_iterator_i
+	{
+		return new static_member_children_iterator($this);
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->owner_type);
 	}
 }
 

@@ -15,8 +15,8 @@ Collected identities are specialized records in [03_parse/collect/structures.php
 - `collected_declaration` adds reconciliation/publication state. Functions, constants
   and source types extend `collected_definition`, which owns a preparation-work slot.
   `collected_type_definition` groups structs and enums for the shared source-type
-  association, publication and retirement paths. Enum syntax/identity is model-only;
-  enum grammar and semantic work are not enabled yet.
+  association, publication and retirement paths. Enum declaration work resolves
+  backing, exact case values, storage and capabilities before case-reference use.
   Fields, parameters and explicit local variables have distinct concrete records;
   members are prepared with their enclosing definition and locals with their body.
 - `collected_reference` groups variable, function, field and type lookups without

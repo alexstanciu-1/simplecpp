@@ -14,6 +14,7 @@ enum node_kind
 	case struct_declaration;
 	case enum_declaration;
 	case enum_case;
+	case static_member_reference;
 	case field_declaration;
 	case field_expression;
 	case file;

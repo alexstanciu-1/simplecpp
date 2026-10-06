@@ -215,6 +215,9 @@ final class Preparation_Worker
 			elseif ($node instanceof constant_declaration_node) {
 				$this->select_owner($this->declaration_owner(object_cast($node->occurrence(), collected_constant::class)));
 			}
+			elseif ($node instanceof enum_node) {
+				$this->select_owner($this->declaration_owner(object_cast($node->occurrence(), collected_enum::class)));
+			}
 			else { throw new \RuntimeException('Preparation is not supported for this declaration'); }
 		}
 	}
@@ -318,6 +321,12 @@ final class Preparation_Worker
 		}
 		if ($entry instanceof collected_constant) {
 			if ($entry->preparation === null) { $entry->preparation = new constant_definition_work(object_cast($entry, collected_constant::class)); }
+			return $entry->preparation;
+		}
+		if ($entry instanceof collected_enum) {
+			if ($entry->preparation === null) {
+				$entry->preparation = new enum_definition_work(object_cast($entry, collected_enum::class));
+			}
 			return $entry->preparation;
 		}
 		throw new \RuntimeException('Preparation work is not supported for this declaration');
@@ -476,6 +485,16 @@ final class Preparation_Worker
 			if ($old === null) { return true; }
 			return !$old->type->matches($current->type) || ($old->value_key() !== $current->value_key());
 		}
+		if ($owner instanceof enum_definition_work) {
+			$enum_syntax = object_cast($owner, enum_definition_work::class)->enum_definition()->enum_syntax();
+			$old_enum = $enum_syntax->preparation();
+			$current_enum = Enum_Preparation::declaration($enum_syntax, $context);
+			$changed = !Enum_Preparation::same($old_enum, $current_enum);
+			if ($changed) {
+				$enum_syntax->set_preparation($current_enum);
+			}
+			return $changed;
+		}
 		throw new \LogicException('Unsupported declaration work role');
 	}
 
@@ -487,7 +506,7 @@ final class Preparation_Worker
 		elseif ($owner instanceof record_definition_work) {
 			$this->settle_fields(object_cast($owner, record_definition_work::class)->record_definition());
 		}
-		elseif ($owner instanceof constant_definition_work) {
+		elseif (($owner instanceof constant_definition_work) || ($owner instanceof enum_definition_work)) {
 			$owner->required_declaration()->change_status = change_state::unchanged;
 		}
 		else { throw new \LogicException('Unsupported declaration work role'); }

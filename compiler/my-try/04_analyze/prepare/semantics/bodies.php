@@ -203,6 +203,9 @@ final class Body_Preparation
 		Type_Preparation::require_value_type($binding->type);
 		if ($value === null)
 		{
+			if (Type_Queries::canonical($binding->type)->definition() instanceof enum_type_definition) {
+				throw new \RuntimeException('S2S enum storage requires an explicit initializer');
+			}
 			if (Result_Conversions::role($binding->type) !== null) {
 				throw new \RuntimeException('S2S Result construction requires an explicit initializer');
 			}

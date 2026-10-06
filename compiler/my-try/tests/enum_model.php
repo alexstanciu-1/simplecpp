@@ -1,6 +1,6 @@
 <?php
 
-/* Model-only proof: assembled enum syntax does not claim authored enum support. */
+/* Isolated model proof; authored enum behavior is covered by enums.php. */
 namespace scpp\compiler;
 
 require_once dirname(__DIR__) . '/boot.php';
@@ -152,20 +152,10 @@ $rejected_emission = false;
 try {
 	CPP_Types::representation($use);
 }
-catch (\LogicException $error) {
-	$rejected_emission = str_contains($error->getMessage(), 'not implemented for this source type');
-}
-enum_model_check($rejected_emission, 'Unimplemented enum silently emitted a record representation');
-
-// This model slice deliberately has no parser admission.
-$rejected_source = false;
-try {
-	$parsed = (new Parser($tokens))->parse();
-}
 catch (\RuntimeException $error) {
-	$rejected_source = true;
+	$rejected_emission = str_contains($error->getMessage(), 'requires completed preparation');
 }
-enum_model_check($rejected_source, 'Model-only work accidentally admitted authored enums');
+enum_model_check($rejected_emission, 'Unprepared enum silently emitted a record representation');
 
 // Frontend retirement removes only the exact declaration, not same-name peers or structs.
 $enum_entry->change_status = change_state::deleted;

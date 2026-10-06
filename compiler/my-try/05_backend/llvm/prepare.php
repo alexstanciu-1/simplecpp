@@ -19,6 +19,9 @@ final class LLVM_Preparation {
 			}
 			$nodes /** Storage<declaration_node> */ = $source->root->single_body()->declarations;
 			foreach ($nodes as $node) {
+				if ($node instanceof enum_node) {
+					throw new \RuntimeException('Enums are not supported by the parked LLVM backend');
+				}
 				if ($node instanceof constant_declaration_node) {
 					throw new \RuntimeException('Source constants are not supported by the parked LLVM backend');
 				}

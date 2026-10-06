@@ -107,6 +107,11 @@ final class CPP_Generator
 				$identity = 'type:' . $definition->qualified_name();
 				$text = $fragment->text;
 			}
+			elseif ($definition instanceof collected_enum) {
+				$path = CPP_Artifacts::type_header($definition->qualified_name());
+				$identity = 'type:' . $definition->qualified_name();
+				$text = $fragment->text;
+			}
 			else {
 				$path = CPP_Artifacts::callable_header($definition->qualified_name());
 				$identity = 'callable:' . $definition->qualified_name();
@@ -195,6 +200,9 @@ final class CPP_Generator
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;
 				$next->prototype_text = CPP_Declarations::signature($function_syntax, $context, true);
+			}
+			elseif ($entry instanceof collected_enum) {
+				$next->text = CPP_Enums::declaration(object_cast($entry, collected_enum::class)->enum_syntax(), $context);
 			}
 			else
 			{
@@ -417,7 +425,7 @@ final class CPP_Generator
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
 
-		return 'static_cast<' . $mapping->spelling . '>(' . $decimal . 'LL)';
+		return 'static_cast<' . $mapping->spelling . '>(' . CPP_Integer_Literals::constant($decimal) . ')';
 	}
 
 	/** Lower semantic constant values without preserving runtime- or host-specific names. */

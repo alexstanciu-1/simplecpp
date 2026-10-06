@@ -100,8 +100,11 @@ Enums own optional backing-type syntax and ordered case nodes; each case owns it
 optional value expression. Cases have no namespace constant occurrence or parent
 backlink. The enum's collected source-type identity shares the ordinary declaration
 inventory; the generalized semantic-definition association observes it weakly.
-No new scope, registry root, worker or prepared case inventory is introduced by the
-enum model slice.
+No new scope or registry root is introduced. Ordinary declaration work owns enum
+completion/dependencies. Published `prepared_enum` snapshots own ordered case facts
+without syntax backlinks; prepared case references share the selected immutable
+snapshot entry. Effective-equal edits preserve facts; changed inventories publish
+new snapshots and invalidate consumers through the existing work graph.
 
 Prepared facts retain canonical types and reference collected declarations.
 Calls weakly observe a `callable_target_i` owned by source collection or the runtime

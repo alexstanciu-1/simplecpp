@@ -11,12 +11,18 @@ final class Capability_Preparation implements type_capability_query
 
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
 	{
-		$record = Type_Queries::source_record($type_use);
-		if ($record === null) {
+		$declaration = Type_Queries::source_declaration($type_use);
+		if ($declaration === null) {
 			return Model::$type_catalog->registry()->has_capability($type_use, $capability);
 		}
-		$this->context->worker->require_declaration($this->context->owner, $record);
-		return $record->syntax()->require_preparation()->has_capability($capability);
+		$this->context->worker->require_declaration($this->context->owner, $declaration);
+		if ($declaration instanceof collected_struct) {
+			return object_cast($declaration, collected_struct::class)->syntax()->require_preparation()->has_capability($capability);
+		}
+		if ($declaration instanceof collected_enum) {
+			return object_cast($declaration, collected_enum::class)->enum_syntax()->require_preparation()->has_capability($capability);
+		}
+		throw new \RuntimeException('S2S source type capabilities are not implemented');
 	}
 
 	/** Ordinary values require copy capability; explicit temporary consumption is a separate boundary. */

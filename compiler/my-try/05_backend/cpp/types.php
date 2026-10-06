@@ -65,6 +65,20 @@ final class CPP_Types
 		}
 		if ($definition->origin() === type_definition_origin::source) {
 			$entry = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+			if ($entry instanceof collected_enum) {
+				$work = $entry->preparation_work_owner();
+				if ($work === null) {
+					throw new \RuntimeException('C++ enum representation requires completed preparation');
+				}
+				if (!Preparation_Status::complete($work)) {
+					throw new \RuntimeException('C++ enum representation requires completed preparation');
+				}
+				$result->spelling = CPP_Generator::source_name('enum', $entry->qualified_name());
+				// Exact backing is a prepared fact: include its small header at every type use for now.
+				self::add_header($result, CPP_Artifacts::type_header($entry->qualified_name()));
+				$result->literal = cpp_literal_kind::none;
+				return $result;
+			}
 			if (!($entry instanceof collected_struct)) {
 				throw new \LogicException('C++ representation is not implemented for this source type declaration');
 			}

@@ -23,8 +23,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-VAR-006](#type-var-006) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-006A](#type-var-006a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-007](#type-var-007) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [ENUM-001](#enum-001) | agreed | `enum Suit { case Hearts; case Spades; }` | model proved; grammar/preparation pending | pending | deferred | [Model checkpoint](#enum-model-foundation--2026-10-06) |
-| [ENUM-002](#enum-002) | agreed | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | shared model proved; backing validation pending | pending | deferred | Includes exact fixed-width backing; [model checkpoint](#enum-model-foundation--2026-10-06) |
+| [ENUM-001](#enum-001) | bounded pass | `enum Suit { case Hearts; case Spades; }` | proved | proved | deferred | [Execution checkpoint](#enum-execution--2026-10-06) |
+| [ENUM-002](#enum-002) | bounded pass | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | proved | proved | deferred | Includes exact fixed-width backing; [execution checkpoint](#enum-execution--2026-10-06) |
 | [ENUM-003](#enum-003) | pending-discussion | `Color::tryFrom('green')?->name ?? 'null'` | unverified | unverified | deferred | — |
 | [ENUM-004](#enum-004) | pending-discussion | `enum Status implements HasLabel { case Open; public function label(): string { return 'open'; } }` | unverified | unverified | deferred | — |
 
@@ -34,7 +34,7 @@ Agreed grouping: reconcile value-storage/construction cards against existing CH0
 support and CH10 prerequisites; implement core unit/integer/fixed-backed enums
 together; keep extended helpers, string backing, methods/interfaces separate.
 
-The first implemented slice is deliberately model-only:
+The first checkpoint (`57c34018`) was deliberately model-only:
 
 - One `enum_node` owns optional backing syntax and ordered `enum_case_node` entries;
   each case owns an optional value expression. No redundant flavor flag or namespace
@@ -48,7 +48,7 @@ The first implemented slice is deliberately model-only:
 - Backing resolution, exact case values, storage choice and source capabilities belong
   to subsequent preparation. No mutable derived facts or C++ spelling live in the registry.
 
-Next vertical slice: authored declarations/case references, typed boundaries and C++
+The subsequent vertical slice, now implemented below: authored declarations/case references, typed boundaries and C++
 `enum class` artifacts. Unit storage is smallest fitting unsigned; `int` backing uses
 the smallest fitting integer, signed when negatives require it; explicit fixed backing
 is exact width under [the normative contract](../../../../specs/compact_layout_types.md#3-enum-semantics).
@@ -76,6 +76,44 @@ Validation note: the older [model.php](../../tests/model.php) fails its hardcode
 built-in-count assertion before reaching source checks. Reproduced identically on
 unchanged `d12ab9db`; this is pre-existing test-maintenance debt, not an enum regression.
 Repair/reconcile that legacy suite before using it as a current whole-model proof.
+
+## Enum execution — 2026-10-06
+
+Source declarations and qualified/imported `Type::Case` references now use the normal
+source-type lookup, declaration scheduler and partitioned type-header artifacts.
+`prepared_enum` owns exact decimal case values, optional source backing and selected
+integer storage. Published snapshots are retained on effective-equal edits; case
+references share selected facts without syntax backlinks or a second case registry.
+
+The bounded pass supports explicit local initialization, same-enum copying and
+value/reference function boundaries. Unit ordinals use compact unsigned storage;
+`int` backing compacts with signedness chosen from values; fixed integer backing
+preserves exact width. Signed minimum and full `uint64` maximum are represented
+without host numeric conversion. Preparation rejects empty/duplicate cases,
+duplicate values, missing/forbidden initializers, noninteger backing, range failures
+and wrong-enum/integer boundaries.
+
+Current gates: decimal literals with one optional sign only (not arbitrary constant
+expressions); enum locals require an explicit initializer; enum-valued fields await
+field-initialization support. These gates do not establish a language-wide enum
+default policy. Equality, switch/match, helpers, string backing and methods/interfaces
+are not enabled by this slice. No implicit integer conversion, arithmetic or truthiness.
+
+Proof: `python3 compiler/my-try/tests/enums.py --results FRESH` passed **12 PHP suites
+and 6 generated C++ programs**. Coverage includes compact/exact native storage,
+cross-file imports, references, generation purity, no-op preservation, dependency
+invalidation, failed-parse/preparation recovery, deletion/reintroduction and token cleanup.
+Evidence: `/tmp/my-try-enums-final-20261006-1/commands.json` and its generated-program
+results. CLI fallback was used after sandbox FPM startup rejection. This is not a
+native compiler rebuild or a portability-conversion proof.
+
+Shared exact C++ integer spelling also passed the scalar-constant regression runner:
+**10 PHP suites and 10 generated programs**, including signed-minimum constants and
+labels (`/tmp/my-try-enum-scalar-regression-20261006-1`).
+
+Next discussion: same-enum equality and switch/match integration; settle defaults
+and helper scope separately. CH09 remains open, with the combined native compiler
+checkpoint still deferred by user request.
 
 ## TYPE-VAR-006
 
@@ -196,8 +234,8 @@ value_p<Point> p = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));
 
 ## ENUM-001
 
-**v0.2 decision / target C++:** Shared nominal enum model; prepared unit cases will
-lower to compact `enum class`. [Model-only checkpoint](#enum-model-foundation--2026-10-06).
+**v0.2 decision / target C++:** Shared nominal enum model; prepared unit cases
+lower to compact `enum class`. [Execution checkpoint](#enum-execution--2026-10-06).
 
 ### Imported version 1
 
@@ -232,9 +270,9 @@ generated native C++ scoped enum with compact underlying storage
 
 ## ENUM-002
 
-**v0.2 decision / target C++:** Same model as unit enums; preparation will distinguish
+**v0.2 decision / target C++:** Same model as unit enums; preparation distinguishes
 compact `int` backing from exact fixed-width backing through resolved type identity.
-[Model-only checkpoint](#enum-model-foundation--2026-10-06).
+[Execution checkpoint](#enum-execution--2026-10-06).
 
 ### Imported version 1
 

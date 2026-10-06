@@ -72,6 +72,9 @@ final class CPP_Syntax
 		if ($node instanceof constant_reference_node) {
 			return $this->generate_constant_reference(object_cast($node, constant_reference_node::class));
 		}
+		if ($node instanceof static_member_reference_node) {
+			return CPP_Enums::reference(object_cast($node, static_member_reference_node::class)->enum_case_preparation(), $this->context);
+		}
 		if ($node instanceof call_node) {
 			return $this->generate_call(object_cast($node, call_node::class));
 		}
@@ -267,7 +270,7 @@ final class CPP_Syntax
 	{
 		$value /** nullable<string> */ = $node->require_preparation()->decimal;
 		if ($value === null) { return "default:\n"; }
-		return 'case ' . self::integer_constant($value) . ":\n";
+		return 'case ' . CPP_Integer_Literals::constant($value) . ":\n";
 	}
 
 	/** Strict canonical-int selection consumes exact constants; fallback is always last. */
@@ -294,7 +297,7 @@ final class CPP_Syntax
 				if ($checks !== '') {
 					$checks .= ' || ';
 				}
-				$checks .= '(' . $temporary . ' == ' . self::integer_constant($decimal) . ')';
+				$checks .= '(' . $temporary . ' == ' . CPP_Integer_Literals::constant($decimal) . ')';
 			}
 			$text .= 'if (' . $checks . ') { return ' . $result . '; } ';
 		}
@@ -303,14 +306,6 @@ final class CPP_Syntax
 			$fallback = 'throw std::runtime_error("Unhandled match expression"); ';
 		}
 		return $text . $fallback . '}())';
-	}
-
-	private static function integer_constant(string $decimal): string
-	{
-		if ($decimal === '-9223372036854775808') {
-			return '(-9223372036854775807LL - 1LL)';
-		}
-		return $decimal . 'LL';
 	}
 
 	private function loop_body(loop_node $node): string

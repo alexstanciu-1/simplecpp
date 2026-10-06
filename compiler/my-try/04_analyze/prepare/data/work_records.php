@@ -98,6 +98,27 @@ final class constant_definition_work extends declaration_work
 	public function constant_definition(): collected_constant { return $this->definition; }
 }
 
+final class enum_definition_work extends declaration_work
+{
+	private collected_enum $definition;
+
+	public function __construct(collected_enum $definition)
+	{
+		parent::__construct($definition->collection);
+		$this->definition = $definition;
+	}
+
+	public function required_declaration(): collected_definition
+	{
+		return $this->definition;
+	}
+
+	public function enum_definition(): collected_enum
+	{
+		return $this->definition;
+	}
+}
+
 final class record_definition_work extends declaration_work
 {
 	private collected_struct $definition;

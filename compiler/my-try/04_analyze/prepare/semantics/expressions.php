@@ -65,6 +65,10 @@ final class Expression_Preparation
 			$variable = object_cast($node, variable_reference_node::class);
 			$variable->set_preparation(self::prepare_reference($variable, $context));
 		}
+		elseif ($node instanceof static_member_reference_node) {
+			$member = object_cast($node, static_member_reference_node::class);
+			$member->set_preparation(Enum_Preparation::reference($member, $context));
+		}
 		elseif ($node instanceof constant_reference_node) {
 			$constant = object_cast($node, constant_reference_node::class);
 			$constant->set_preparation(self::prepare_constant_reference($constant, $context));

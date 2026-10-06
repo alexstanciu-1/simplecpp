@@ -51,6 +51,19 @@ final class Symbol_Collector
 		return null;
 	}
 
+	/** Enum reconciliation never reuses another source type's syntax, even under the same spelling. */
+	public function previous_enum(scope $scope, string $name): ?enum_node
+	{
+		foreach ($scope->source_types_named($name) as $entry) {
+			if ($entry instanceof collected_enum) {
+				if ($this->unseen($entry)) {
+					return object_cast($entry, collected_enum::class)->enum_syntax();
+				}
+			}
+		}
+		return null;
+	}
+
 	public function previous_constant(scope $scope, string $name): ?constant_declaration_node
 	{
 		foreach ($scope->constants_named($name) as $target) {
@@ -127,7 +140,7 @@ final class Symbol_Collector
 		$this->register_source_type($entry, $scope, $node->name, $index);
 	}
 
-	/** Model entry point; source enum grammar and preparation remain a subsequent slice. */
+	/** Enum declarations share the source-type registration and retained-identity protocol. */
 	public function collect_enum(enum_node $node, scope $scope, int $index): void
 	{
 		if ($this->reuse($node, $index)) {

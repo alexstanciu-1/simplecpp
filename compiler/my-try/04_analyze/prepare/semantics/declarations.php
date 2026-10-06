@@ -98,6 +98,9 @@ final class Declaration_Preparation
 		$prepared = new prepared_field();
 		$prepared->declaration = $field->occurrence();
 		$prepared->type = Type_Preparation::type($field->type_syntax, $context);
+		if (Type_Queries::canonical($prepared->type)->definition() instanceof enum_type_definition) {
+			throw new \RuntimeException('S2S enum-valued fields await explicit field initialization');
+		}
 		$query = new Capability_Preparation($context);
 		if (!$query->has_capability($prepared->type,
 			generic_contract::value_storable)) {

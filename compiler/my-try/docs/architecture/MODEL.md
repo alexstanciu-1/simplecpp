@@ -428,16 +428,21 @@ value-dependent validation remain runtime-owned; backend bindings are independen
 `enum_type_definition` is another final nominal sibling with the `enumeration` kind.
 It reuses `nominal_type` interning and default value-storage normalization without
 becoming an integer or a record. The registry owns no case inventory, backing syntax,
-computed storage width or source-derived capabilities. These remain subsequent
-declaration-preparation work, not installed registry facts.
+computed storage width or source-derived capabilities. Declaration preparation owns
+these facts, not the registry.
 
 `collected_type_definition` is the common source-declaration role for structs and
 enums. `Source_Type_Declarations` weakly associates exact semantic IDs with that
 role; collection/publication/retirement share the existing paths. `Type_Queries::source_declaration`
 reads that general association, whereas `source_record` returns only a struct.
 Struct reconciliation and record-only backend consumers explicitly narrow the role.
-There is no parallel enum registry or new Model root. Enum source parsing, prepared
-facts and emission remain disabled in the model-only checkpoint.
+There is no parallel enum registry or new Model root. `enum_definition_work` uses
+the ordinary scheduler. `prepared_enum` retains canonical identity, optional source
+backing, selected integer storage and ordered exact-decimal case snapshots. Capability
+queries require completion and read these facts. `static_member_reference_node`
+owns named owner-type syntax; preparation selects an enum case and retains its
+snapshot. Cases are not namespace constants. C++ owns scoped-enum spelling and
+type-header artifacts; shared exact-integer validation never stores C++ strings.
 
 `ownership_type_definition` is another final template sibling implementing
 `ownership_semantics`, with an immutable shared/unique/weak kind and exact target

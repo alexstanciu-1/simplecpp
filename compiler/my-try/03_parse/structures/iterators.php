@@ -98,6 +98,24 @@ final class enum_children_iterator extends children_iterator
 	}
 }
 
+final class static_member_children_iterator extends children_iterator
+{
+	private bool $consumed = false;
+
+	public function __construct(private static_member_reference_node $source)
+	{
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) {
+			return null;
+		}
+		$this->consumed = true;
+		return $this->source->owner_type;
+	}
+}
+
 final class enum_case_children_iterator extends children_iterator
 {
 	private bool $consumed = false;
