@@ -29,7 +29,9 @@ final class namespace_identity
 	}
 }
 
-/** Model-owned namespace identities; registration callers hold the parser publication lock. */
+/** Model-owned namespace identities; parallel parser callers hold the publication lock.
+ * Sequential preparation may intern lookup-only pools after the whole parse join.
+ */
 final class Namespace_Registry
 {
 	private Keyed_Storage $identities /** Keyed_Storage<namespace_identity> */;

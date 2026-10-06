@@ -6,8 +6,9 @@ Language rules are agreed in [the v0.2 contract](../../../../specs/namespaces_v0
 Status: coordinated migration approved by the user; implementation in progress.
 Canonical identity/backend, executable-work links and source-body inventory consumers
 are implemented below. Named namespace parsing/reconciliation and scope-retention
-integration are implemented with bare-name lookup; qualified-reference parsing and
-dependency-observed qualified lookup remain unfinished. Imports follow those.
+integration are implemented with bare-name lookup. Dependency-observed qualified
+lookup has a model-level checkpoint; qualified-reference parsing remains unfinished.
+Imports follow source integration.
 
 ## Why this is more than adding namespace parsing
 
@@ -268,3 +269,36 @@ diagnostic rather than an assumed ambiguity message. No semantic rule was relaxe
 The portable-PHP skill guided nullable boundaries, weak observations and typed scope
 inventories. The native compiler was not rebuilt. Next: qualified-reference syntax
 and dependency-observed path lookup; then the agreed body-local import families.
+
+## Qualified lookup model checkpoint — 2026-10-06
+
+`Source_Name_Path` shares source-root/current-namespace path interpretation across
+plain and observed lookup. Functions, types and constants keep independent exact
+member pools. Qualified queries do not search parent namespaces, alternate tails or
+language pools; bare-name language availability is unchanged. This checkpoint targets
+qualified source members, not new qualified runtime aliases or member syntax.
+
+Plain lookup is read-only. Analysis may intern an empty namespace after the parse
+join and subscribe to its requested member using the existing observation records.
+Later declarations populate the same scope. The existing worker detects additions,
+moves, deletions and ambiguous membership without a second invalidation graph.
+These identities live until syntax reset; no new cleanup policy is introduced.
+Preparation is currently sequential; parallelization must synchronize this interning.
+
+The old `generators/php/src/Generator/NameRegistry.php` can search global candidates
+and ancestor-anchored tails. That historical lowering behavior is deliberately not
+copied: the v0.2 contract selects only the rooted or current-relative namespace.
+
+Proof on `eea4b237` plus this overlay:
+`/tmp/my-try-qualified-lookup-20261006-3/commands.json` records four passing PHP suites
+(`qualified_lookup`, `observed_lookup`, `namespaces`, `incremental_preparation`).
+The new fixture supplies a qualified name directly to the retained model and exercises
+ordinary preparation/retry/cleanup, including absent-namespace addition, target moves,
+duplicates and consumer removal. An initial cleanup assertion incorrectly expected
+the whole pool to lose subscriptions; the corrected proof checks removal of the
+specific consumer in both directions, preserving declaration consumers.
+
+The portable-PHP skill informed explicit scope ownership and nullable guards. No
+conversion, native compiler rebuild or generated-program execution is claimed for
+this model slice. **Qualified-reference source parsing remains next**, followed by
+body-local imports. The shared namespace runner includes the new model fixture.

@@ -367,6 +367,17 @@ Analysis-owned `Observed_Lookup` traverses those same memberships and registers 
 visited pool with preparation, including missing and ambiguous names. Plain lookup
 never accepts a preparation context or creates subscriptions.
 
+`Source_Name_Path` interprets rooted/current-relative qualified spelling independently
+of symbol kind and C++ naming. Qualified lookup selects exactly one namespace member
+pool; it does not perform lexical or tail-name fallback. Plain lookup only finds
+existing namespace identities. Sequential analysis, after the whole parse join, may
+intern an empty namespace for an observed miss. Later parser publication fills that
+same pool, so the existing per-name/per-kind subscriptions detect additions, removals
+and ambiguity without another dependency graph. These empty identities persist until
+syntax reset, like other interned namespaces. Bare-name language availability is
+unchanged. This is currently lookup-model support; qualified source-reference parsing
+and import bindings remain separate follow-ups.
+
 Type definitions live under `compiler/types/`; constant definitions live under
 `compiler/constants/`. Built-ins are initialized into independent type and constant
 scope indexes at startup. Source records and prepared references retain canonical

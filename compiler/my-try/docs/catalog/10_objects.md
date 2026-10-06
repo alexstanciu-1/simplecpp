@@ -7,6 +7,22 @@ Doc Status: planning
 
 Requires functions, type identities and ownership. Start with a plain class before methods and lifecycle combinations.
 
+## Class/struct parity — discussion required
+
+Agreed direction (2026-10-06): develop `struct` alongside `class` throughout this
+chapter. Every class slice (properties, construction, methods and lifecycle) must
+include its struct counterpart and corresponding proofs, not leave structs for a
+second implementation pass. Use the same AST node types, with an explicit
+class/struct flag identifying the declaration form; do not create parallel AST
+families or duplicate processing paths.
+
+Before implementation, discuss the shared model, migration of the existing struct
+nodes, and which semantic differences the flag selects under the authoritative
+language contracts. Shared syntax does not silently erase storage, ownership,
+visibility or other class/struct differences. Record any agreed exceptions or
+deferred capabilities explicitly. This note sets the Chapter 10 discussion agenda;
+it does not claim that class support or the AST unification is implemented today.
+
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
 ## Progress

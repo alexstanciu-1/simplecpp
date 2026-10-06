@@ -33,8 +33,10 @@ is approved and in progress: canonical identity/backend consumers and explicit
 executable-body work links are implemented. Source-body inventory, preparation,
 entry selection, retirement and C++ consumers share the new model. Implicit global,
 semicolon/braced named bodies and retained reconciliation are implemented with
-unqualified current-namespace lookup. Qualified-reference lookup and imports remain
-pending; namespace paths in declarations already accept multiple segments.
+unqualified current-namespace lookup. Qualified lookup now has a model-level
+foundation with exact rooted/current-relative pools and retained miss observations.
+Qualified-reference parsing and imports remain pending; namespace paths in
+declarations already accept multiple segments.
 Imported cards below are not implementation evidence; their obsolete import restrictions
 do not override the agreed contract or newer generator rules.
 
@@ -44,6 +46,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| CH08-NS-LOOKUP-01 | implemented-model | Rooted/current-relative reference names supplied to lookup | model verified | not yet source-admitted | deferred | `tests/qualified_lookup.php`: kinds, misses, additions, moves, ambiguity and subscription cleanup; parser admission next |
 | CH08-PROGRAM-01 | implemented | Explicit entry + cross-file functions | verified | verified | deferred | `tests/project_cpp.py`: admission, retained edits/recovery, relocation, separate units with/without PCH |
 | CH08-DEPS-01 | implemented-bounded | Record references, values, fields and inferred copies across files | unchanged | verified | deferred | `tests/project_cpp.py`: standalone headers, layout-edit isolation, clang transitive dependencies; template payloads conservatively complete |
 | CH08-PUBLISH-01 | implemented-bounded | CLI `--output` / optional coordinator publisher | unchanged | verified | deferred | `tests/output_publication.py`: preservation, ownership, recovery, locking and direct published-unit execution; native adapter/facade proved, whole native compiler not rebuilt |

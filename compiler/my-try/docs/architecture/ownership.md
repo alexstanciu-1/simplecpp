@@ -51,6 +51,11 @@ global namespace's member scope. Scope-to-namespace backlinks are weak. Lexical
 children inherit source identity through scope ancestry, whereas every namespace's
 published scope parents directly to language scope, not a parent namespace.
 The registry resets with syntax; global and named source bodies publish through it.
+Sequential analysis may intern empty lookup-only namespace pools after the parse
+join, retaining missing-target observations through the same member-scope owner.
+Plain lookup never interns them. Future parallel preparation must synchronize this
+registration; the current preparation worker is sequential. Parser registration
+continues under its existing publication lock.
 Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable

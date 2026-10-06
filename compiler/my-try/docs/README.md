@@ -61,7 +61,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [Chapter 08 namespace identity implemented; body/parser/lifecycle migration next](catalog/08_project_symbols.md), [approved migration](planning/namespace_identity_migration.md), [deferred Chapter 15 work, including cache overhead](catalog/15_blocking_debt.md) |
+| Current handoff | [Chapter 08 namespace bodies and qualified lookup model implemented; qualified-reference parsing next](catalog/08_project_symbols.md), [approved migration](planning/namespace_identity_migration.md), [deferred Chapter 15 work, including cache overhead](catalog/15_blocking_debt.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral

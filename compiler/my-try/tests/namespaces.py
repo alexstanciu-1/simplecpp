@@ -18,7 +18,7 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     programs = output / 'programs'
     programs.mkdir()
-    suites = ['namespaces', 'ast', 'incremental_preparation', 'lifecycle_handoff', 'token_cleanup']
+    suites = ['namespaces', 'qualified_lookup', 'ast', 'incremental_preparation', 'lifecycle_handoff', 'token_cleanup']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12,
                        journals=[output / 'commands.json']) as runner:
         def suite(name):
