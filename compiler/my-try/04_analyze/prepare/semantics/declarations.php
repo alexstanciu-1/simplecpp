@@ -51,6 +51,7 @@ final class Declaration_Preparation
 		$contract->type = Type_Preparation::type($node->type_syntax, $context);
 		Type_Preparation::require_value_type($contract->type);
 		$contract->mode = $node->mode;
+		$contract->access = $node->access;
 		if ($node->variadic) {
 			if (($node->mode !== passing_mode::value) || ($node->default_value !== null)) {
 				throw new \RuntimeException('S2S variadic parameters must be by value without an explicit default');

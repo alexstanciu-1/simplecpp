@@ -57,6 +57,41 @@ shared_p<Box> box;
 auto& box_ref = box;
 ```
 
+## v0.2 explicit read-only reference parameters — 2026-10-06
+
+`function read(const T &$value): R` borrows exact-type stable storage without
+copying it. This is a semantic read-only access contract, separate from both
+value/reference passing and any backend optimization of ordinary value parameters.
+Mutable storage and existing read-only borrows may both supply the argument.
+Temporary values, conversions and container-interior references remain rejected;
+`const` does not relax the existing native-reference eligibility rules.
+
+Reads, ordinary value copies (where the type is copyable), and forwarding to another
+read-only reference parameter are allowed. Local `=&` aliases inherit read-only
+access, including alias chains and direct stable field projections. Copying an
+ordinary value does not make the new local's storage read-only.
+
+Preparation rejects every supported write through that access path: assignment,
+compound updates, increments/decrements, reset/cleanup, indexed writes/appends and
+removal, explicit unique extraction, `take` outputs and reuse as a `foreach` output.
+Passing the place or its aliases/projections to a mutable-reference parameter also
+rejects. Runtime enforcement or a later C++ const error is not the validation owner.
+
+Read-only access is not global immutability or exclusive borrowing. Another mutable
+alias may change the same storage, and subsequent reads observe that change. Ordinary
+copies retain their existing value/COW/shared-identity semantics; this does not clone
+shared objects or introduce transitive read-only tracking through copied handles.
+In particular, `const shared<T>&` does not mean `shared<const T>`. Future pointee
+member/method operations must preserve the source access-path contract deliberately;
+the C++ handle qualifier alone is not sufficient.
+
+The bounded source slice admits fixed explicit reference parameters only. By-value
+`const T $value`, const-reference returns, parameter defaults, variadics, temporary
+binding, methods/closures and broader const type/local syntax remain deferred. The
+read-only flag is part of the callable contract; changing it invalidates dependent
+callers and the affected body. C++ signatures, borrowed argument temporaries and
+local native aliases preserve `const T&` without taking an owning snapshot.
+
 ## v0.2 whole-storage reset and aliases — 2026-10-06
 
 `unset($variable)` and `clean($variable)` are storage resets, never symbol deletion,

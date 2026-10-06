@@ -97,7 +97,8 @@ final class CPP_Declarations
 			$entry = object_cast(weakref_get($storage->declaration), collected_name::class);
 			$parameter = $storage->contract;
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
-			$parts .= $separator . self::type($parameter->type, $context) . $reference . ' ' . CPP_Generator::local_name($entry);
+			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
+			$parts .= $separator . $qualifier . self::type($parameter->type, $context) . $reference . ' ' . CPP_Generator::local_name($entry);
 			if ($include_defaults && ($parameter->default_value !== null)) {
 				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
 			}
@@ -223,7 +224,8 @@ final class CPP_Declarations
 					$value, $prepared_arguments[$index]->require_conversion(), $context);
 			}
 
-			$text .= "\t" . self::type($argument_type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
+			$text .= "\t" . $qualifier . self::type($argument_type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";
 			if ($boundary === value_boundary_operation::consume_value) {
 				$context->headers['utility'] = true;
 				$name = 'std::move(' . $name . ')';

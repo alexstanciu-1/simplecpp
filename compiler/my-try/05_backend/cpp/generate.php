@@ -240,7 +240,9 @@ final class CPP_Generator
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
 			if ($binding->alias_target !== null) {
-				$prefix = CPP_Declarations::type($binding->type, $context) . '& ';
+				$place /** prepared_place */ = $binding->alias_target;
+				$qualifier = $place->access() === storage_access::read_only ? 'const ' : '';
+				$prefix = $qualifier . CPP_Declarations::type($binding->type, $context) . '& ';
 			}
 		}
 		if ($binding->conversion !== null) {

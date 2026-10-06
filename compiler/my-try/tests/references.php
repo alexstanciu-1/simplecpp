@@ -26,6 +26,14 @@ function references_source(string $source): string
 }
 
 $cases = [
+	'const_noncopyable_record' => 'struct P { unique<int> $child; } function absent(const P &$p): bool { $a =& $p->child; return empty($a); } $p P; if (!absent($p)) { return 1; } return 0;',
+	'const_scalar' => 'function read(const int &$x): int { $a =& $x; $b int =& $a; $copy = $b; $copy += 1; return $copy; } $n = 4; $r = read($n); if ($r !== 5) { return 1; } if ($n !== 4) { return 2; } return 0;',
+	'const_forward' => 'function read(const int &$x): int { return $x; } function forward(const int &$x): int { $a =& $x; return read($a); } struct P { int $x; } function field(const P &$p): int { $a =& $p->x; return forward($a); } $p P; $p->x = 7; $a = field($p); $b = read($p->x); if ($a !== 7 || $b !== 7) { return 1; } return 0;',
+	'const_containers' => 'function first(const vector<int> &$v): int { $a =& $v; $copy = $a; $copy[0] = 9; return $a[0]; } function keyed(const hash<int> &$h): int { return $h["n"]; } function boxed(const mixed &$m): int { if (empty($m["n"])) { return 99; } return $m["n"]; } function dynamic_read(const dynamic &$d): int { if (!isset($d["n"])) { return 99; } return $d["n"]; } $v vector<int> = [1]; $h hash<int> = {n: 2}; $m mixed = {n: 3}; $d dynamic = {n: 4}; $a = first($v); $b = keyed($h); $c = boxed($m); $e = dynamic_read($d); if ($a !== 1 || $b !== 2 || $c !== 3 || $e !== 4) { return 1; } return 0;',
+	'const_iteration' => 'function sum(const vector<int> &$v): int { $total = 0; foreach ($v as $n) { $total += $n; } return $total; } $v vector<int> = [1, 2, 3]; $n = sum($v); if ($n !== 6) { return 1; } return 0;',
+	'const_live_alias' => 'function read(const int &$view, int &$writer): int { $writer += 1; return $view; } $n = 3; $r = read($n, $n); if ($r !== 4) { return 1; } if ($n !== 4) { return 2; } return 0;',
+	'const_ownership' => 'struct P { unique<int> $child; } function present(const unique<P> &$p): bool { $a =& $p; return isset($a); } function observe(const shared<P> &$s): weak<P> { return weak($s); } function acquire(const weak<P> &$w): shared<P> { return lock($w); } $u unique<P> = new P(); if (!present($u)) { return 1; } $s = new P(); $w = observe($s); $held = acquire($w); $s = null; if (!$held) { return 2; } $held = null; if (acquire($w)) { return 3; } return 0;',
+	'const_wrappers' => 'function read(const ?int &$n, const result<int> &$r, const string &$s): int { $v = 0; if (!take($v, $n)) { return 99; } $rv int = $r; return $v + $rv + (int)$s; } $n ?int = 1; $r result<int> = 2; $s = "3"; $v = read($n, $r, $s); if ($v !== 6) { return 1; } return 0;',
 	'forward_chain' => 'function &forward(int &$x): int { $a =& middle($x); return $a; } function &middle(int &$x): int { return identity($x); } function &identity(int &$x): int { return $x; } $n = 1; $a =& forward($n); $a = 7; $copy = forward($n); $a = 8; if ($n !== 8 || $copy !== 7) { return 1; } return 0;',
 	'forward_local_use' => 'function &forward(int &$x): int { $local = 1; $a =& identity($local); $a = 9; $x = $local; return identity($x); } function &identity(int &$x): int { return $x; } $n = 1; $a =& forward($n); if ($n !== 9) { return 1; } $a = 7; if ($n !== 7) { return 2; } return 0;',
 	'forward_vector' => 'function &forward(vector<int> &$x): vector<int> { return identity($x); } function &identity(vector<int> &$x): vector<int> { return $x; } $v vector<int> = [1]; $a =& forward($v); $a[] = 2; $copy = forward($v); $a[0] = 8; $n = $v[0]; $c = $copy[0]; if ($n !== 8 || $c !== 1) { return 1; } return 0;',
@@ -67,6 +75,29 @@ references_check($returned->reference_target->storage() === $function->require_p
 references_check($first->declaration !== $second->declaration && $returned->conversion === null, 'Alias declaration identity or no-copy return was lost');
 
 $rejections = [
+	['function bad(const int $x): void {}', 'fixed reference'],
+	['function bad(const int &$x = 1): void {}', 'reference parameter defaults'],
+	['function bad(const int &...$x): void {}', 'variadic parameters'],
+	['function &bad(const int &$x): int { return $x; }', 'const-reference returns'],
+	['function read(const int &$x): int { return $x; } $n = read(1);', 'stable storage'],
+	['function read(const float &$x): float { return $x; } $n = 1; $v = read($n);', 'exact parameter type'],
+	['function read(const int &$x): int { return $x; } $v vector<int> = [1]; $n = read($v[0]);', 'stable storage'],
+	['function bad(const int &$x): void { $x = 2; }', 'read-only'],
+	['function bad(const int &$x): void { $a =& $x; $b int =& $a; $b = 2; }', 'read-only'],
+	['function bad(const int &$x): void { $x++; }', 'read-only'],
+	['function bad(const int &$x): void { $x += 1; }', 'read-only'],
+	['function bad(const string &$x): void { $x .= "a"; }', 'read-only'],
+	['function bad(const int &$x): void { clean($x); }', 'read-only'],
+	['function bad(const ?int &$x): void { unset($x); }', 'read-only'],
+	['function bad(const unique<int> &$x): void { $v = move($x); }', 'read-only'],
+	['function bad(const int &$x): void { $n ?int = 1; take($x, $n); }', 'read-only'],
+	['function bad(const error &$e): void { $r result<int> = 1; $v = 0; take($v, $e, $r); }', 'read-only'],
+	['function bad(const int &$x): void { $v vector<int> = [1]; foreach ($v as $x) {} }', 'read-only'],
+	['function change(int &$x): void { $x = 1; } function bad(const int &$x): void { change($x); }', 'read-only'],
+	['function change(int &$x): void { $x = 1; } function bad(const int &$x): void { $a =& $x; change($a); }', 'read-only'],
+	['struct P { int $x; } function bad(const P &$p): void { $p->x = 1; }', 'read-only'],
+	['struct P { int $x; } function bad(const P &$p): void { $a =& $p->x; $a++; }', 'read-only'],
+	['struct P { int $x; } function change(int &$x): void {} function bad(const P &$p): void { change($p->x); }', 'read-only'],
 	['$x = 1; $a =& $x; $a =& $x;', 'new local'],
 	['$x = 1; $a = 2; $a =& $x;', 'new local'],
 	['$x = 1; $a float =& $x;', 'exact storage type'],
@@ -107,6 +138,14 @@ $rejections = [
 	['function &a(int &$x): int { $v = b($x); return $x; } function b(int &$x): int { return a($x); }', 'recursive reference-return cycles'],
 	['function &a(int &$x): int { if (false) { $v = a($x); } return $x; }', 'recursive reference-return cycles'],
 ];
+foreach (['vector<int>', 'hash<int>', 'mixed', 'dynamic'] as $family) {
+	$rejections[] = ['function bad(const ' . $family . ' &$x): void { $x[0] = 1; }', 'read-only'];
+	$rejections[] = ['function bad(const ' . $family . ' &$x): void { $a =& $x; $a[] = 1; }', 'read-only'];
+}
+foreach (['hash<int>', 'mixed', 'dynamic'] as $family) {
+	$rejections[] = ['function bad(const ' . $family . ' &$x): void { unset($x["n"]); }', 'read-only'];
+}
+$rejections[] = ['function bad(const dynamic &$x): void { $x["a"]["b"] = 1; }', 'read-only'];
 foreach ($rejections as [$source, $message])
 {
 	$failed = false;
@@ -168,6 +207,39 @@ try
 	$clean->init([$directory]);
 	$clean->exec_cpp();
 	references_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental reference output differs');
+
+	$const_source = 'function read(const int &$x): int { return $x; } function forward(const int &$x): int { $a =& $x; return read($a); } $n = 7; return forward($n);';
+	file_put_contents($path, $const_source);
+	$clean->update_cpp([$path]);
+	$const_output = Model::$cpp_files[0]->text;
+	$forward = Model::$global_scope->functions_named('forward')[0]->syntax();
+	$forward_contract = $forward->require_preparation()->parameters[0]->contract;
+	$forward_alias = $forward->body->statements[0]->expression->require_assignment_preparation()->binding;
+	references_check($forward_contract->mode === passing_mode::reference
+		&& $forward_contract->access === storage_access::read_only, 'Const changed passing mode rather than access');
+	references_check($forward_alias->alias_target->access() === storage_access::read_only, 'Const alias lost access');
+	$const_invalid = str_replace('function read(const int', 'function read(int', $const_source);
+	file_put_contents($path, $const_invalid);
+	foreach ([[$path], []] as $changes) {
+		$failed = false;
+		try { $clean->update_cpp($changes); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'read-only'); }
+		references_check($failed && Model::$cpp_files->is_empty(), 'Const-only callee change reused invalid argument facts');
+	}
+	file_put_contents($path, $const_source);
+	$clean->update_cpp([$path]);
+	references_check(Model::$cpp_files[0]->text === $const_output, 'Const repair changed output');
+	Compiler_Lifecycle::reset_preparation();
+	$clean->prepare();
+	$clean->cpp();
+	references_check(Model::$cpp_files[0]->text === $const_output, 'Const cleanup/reprepare changed output');
+	$mutable_source = str_replace('const int', 'int', $const_source);
+	file_put_contents($path, $mutable_source);
+	$clean->update_cpp([$path]);
+	$mutable_output = Model::$cpp_files[0]->text;
+	references_check($mutable_output !== $const_output, 'Const removal did not refresh output');
+	references_check($mutable_output === references_source($mutable_source), 'Const removal differs from fresh output');
+	references_check($const_output === references_source($const_source), 'Const output differs from fresh output');
 }
 finally {
 	unlink($path);

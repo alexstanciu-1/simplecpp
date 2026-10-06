@@ -78,6 +78,7 @@ final class Take_Preparation
 		$reference = object_cast($syntax, variable_reference_node::class);
 		$reference->set_preparation(Expression_Preparation::prepare_reference($reference, $context));
 		$facts = $reference->require_variable_reference_preparation();
+		Reference_Preparation::require_writable($facts->place);
 		if (!$facts->type->matches($expected)) {
 			throw new \RuntimeException('S2S take output requires the exact branch type');
 		}

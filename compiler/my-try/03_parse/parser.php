@@ -761,6 +761,11 @@ final class Parser_Run
 	private function parameter(scope $scope): parameter_node
 	{
 		$start = $this->position;
+		$access = storage_access::writable;
+		if ($this->text() === 'const') {
+			$access = storage_access::read_only;
+			$this->position++;
+		}
 		if ((!$this->identifier() && ($this->text() !== '?')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
 			throw new \RuntimeException($this->error_message('Expected parameter type'));
 		}
@@ -791,6 +796,7 @@ final class Parser_Run
 		$old_end = $parameter->end_token();
 		$parameter->type_syntax = $type;
 		$parameter->mode = $mode;
+		$parameter->access = $access;
 		$parameter->variadic = $variadic;
 		$parameter->default_value = null;
 		if ($this->text() === '=') {

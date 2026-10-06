@@ -195,6 +195,7 @@ final class Expression_Preparation
 		if (!$place->addressable()) {
 			throw new \RuntimeException('S2S assignment requires stable storage');
 		}
+		Reference_Preparation::require_writable($place->place);
 		$binding = new prepared_binding();
 		$binding->type = $place->type;
 		$binding->resolved_kind = binding_kind::assignment;

@@ -48,6 +48,7 @@ final class callable_parameter
 {
 	public canonical_type_use $type;
 	public passing_mode $mode;
+	public storage_access $access = storage_access::writable;
 	/** For a variadic parameter, type is vector storage and element_type is its input type. */
 	public ?canonical_type_use $element_type = null;
 	public ?prepared_parameter_default $default_value = null;

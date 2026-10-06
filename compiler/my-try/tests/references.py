@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused alias/reference-return preparation and generated-C++ execution proof."""
+"""Focused alias, const-reference and reference-return preparation/C++ execution proof."""
 import argparse
 import json
 from pathlib import Path
@@ -21,7 +21,8 @@ def main():
     programs = output / 'programs'
     programs.mkdir()
     suites = ['references', 'reference_forwarding', 'reference_model', 'container_calls', 'callables',
-              'incremental_cpp', 'preparation_recovery', 'mutations', 'indexing']
+              'incremental_cpp', 'preparation_recovery', 'mutations', 'indexing',
+              'ownership', 'cleanup', 'iteration']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
         def suite(name):
             command = ['php', APP / 'tests' / (name + '.php')]

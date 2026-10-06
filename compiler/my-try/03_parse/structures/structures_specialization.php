@@ -766,6 +766,7 @@ final class parameter_node extends ast_node
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
 	public passing_mode $mode = passing_mode::value;
+	public storage_access $access = storage_access::writable;
 	/** Optional declaration-owned expression; absence makes a fixed parameter required. */
 	public ?expression_node $default_value = null;
 	/** Independent of reference/value passing mode; type_syntax is the pack element type. */

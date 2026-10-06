@@ -114,6 +114,16 @@ final class prepared_place
 		return $this->base_place;
 	}
 
+	/** Aliases share this place; field projections preserve access from the original root. */
+	public function access(): storage_access
+	{
+		$root = $this->root_storage();
+		if ($root instanceof prepared_parameter) {
+			return object_cast($root, prepared_parameter::class)->contract->access;
+		}
+		return storage_access::writable;
+	}
+
 	/** Identity query only; escape and lifetime admission belong to analysis workers. */
 	public function root_storage(): prepared_storage
 	{

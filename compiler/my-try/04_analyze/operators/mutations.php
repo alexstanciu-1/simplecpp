@@ -43,6 +43,7 @@ final class Mutation_Preparation
 		if (!$target->addressable()) {
 			throw new \RuntimeException('S2S mutation requires writable storage');
 		}
+		Reference_Preparation::require_writable($target->place);
 		return $target;
 	}
 

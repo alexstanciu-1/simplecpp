@@ -27,6 +27,7 @@ final class Move_Preparation
 			throw new \RuntimeException('S2S move requires mutable source storage');
 		}
 		$place /** prepared_place */ = $value->place;
+		Reference_Preparation::require_writable($place);
 		self::require_whole_place($place);
 		$facts = new prepared_move();
 		$facts->type = $value->type;

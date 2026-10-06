@@ -69,6 +69,12 @@ final class Callable_Contracts
 		$variadic_seen = false;
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {
+			if ($parameter->access === storage_access::read_only) {
+				if (($parameter->mode !== passing_mode::reference) || ($parameter->element_type !== null)
+					|| ($parameter->default_value !== null)) {
+					throw new \RuntimeException('S2S const parameters require a fixed reference without a default');
+				}
+			}
 			if ($variadic_seen) {
 				throw new \RuntimeException('S2S variadic parameter must be last');
 			}
@@ -103,6 +109,9 @@ final class Callable_Contracts
 			throw new \RuntimeException('Reference return names an absent parameter');
 		}
 		$parameter = $parameters[$index];
+		if ($parameter->access === storage_access::read_only) {
+			throw new \RuntimeException('S2S const-reference returns are deferred');
+		}
 		if (($parameter->mode !== passing_mode::reference) || ($parameter->element_type !== null)) {
 			throw new \RuntimeException('Reference return requires a fixed reference parameter');
 		}

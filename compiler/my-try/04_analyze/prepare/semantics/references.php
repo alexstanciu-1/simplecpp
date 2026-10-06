@@ -5,6 +5,14 @@ namespace scpp\compiler;
 
 final class Reference_Preparation
 {
+	/** Addressability permits borrowing; mutation additionally requires writable access. */
+	public static function require_writable(prepared_place $place): void
+	{
+		if ($place->access() === storage_access::read_only) {
+			throw new \RuntimeException('S2S mutation or mutable borrowing through read-only storage is not allowed');
+		}
+	}
+
 	/** Alias names keep their own declaration identity but never acquire a new storage root. */
 	public static function storage_place(prepared_storage $storage): prepared_place
 	{

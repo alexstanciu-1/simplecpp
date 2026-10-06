@@ -103,6 +103,12 @@ enum passing_mode {
 	case reference;
 }
 
+/** Access through a binding is independent of how its value is passed. */
+enum storage_access {
+	case writable;
+	case read_only;
+}
+
 enum control_transfer_kind {
 	case break_construct;
 	case continue_loop;

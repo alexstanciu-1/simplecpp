@@ -194,6 +194,7 @@ final class Body_Preparation
 				throw new \RuntimeException('S2S needs one local assignment target');
 			}
 			$binding->resolved_kind = binding_kind::assignment;
+			Reference_Preparation::require_writable(Reference_Preparation::storage_place($previous[0]));
 			$binding->declaration = $previous[0]->declaration;
 			$binding->type = $previous[0]->storage_type();
 			if ($value !== null) {

@@ -55,6 +55,7 @@ final class Iteration_Preparation
 				throw new \RuntimeException('S2S foreach needs one value assignment target');
 			}
 			$binding->type = $existing[0]->storage_type();
+			Reference_Preparation::require_writable(Reference_Preparation::storage_place($existing[0]));
 			$binding->declaration = $existing[0]->declaration;
 			$binding->resolved_kind = binding_kind::assignment;
 		}

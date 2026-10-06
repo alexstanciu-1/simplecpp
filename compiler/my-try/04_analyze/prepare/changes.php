@@ -23,6 +23,9 @@ final class Preparation_Changes
 			$before = $previous[$index];
 			$before_contract = $before->contract;
 			$contract = $parameter->contract;
+			if ($before_contract->access !== $contract->access) {
+				return false;
+			}
 			if (($before_contract->element_type === null) !== ($contract->element_type === null)) {
 				return false;
 			}

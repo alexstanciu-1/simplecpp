@@ -26,6 +26,11 @@ must follow the existing declaration-fact identity and retirement protocol. Symb
 reference-return contracts retain only a parameter index, never caller storage. These
 records describe origin, not permission to escape or ownership of the runtime value.
 
+Place access is queried from the root parameter's read-only/writable contract;
+aliases and stable field projections preserve it. Addressability does not imply
+writability. This restricts an access path, not every other alias or copied handle
+to the same runtime object; it neither adds exclusive borrowing nor deep freezing.
+
 Alias declaration facts share the original place in `alias_target`, never the target
 expression or another syntax edge. Reference-return facts similarly share the verified
 place. Transient body contexts hold the expected reference parameter and sole permitted

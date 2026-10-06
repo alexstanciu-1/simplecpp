@@ -50,7 +50,10 @@ python3 compiler/my-try/tests/references.py --results /tmp/FRESH_REFERENCE_RESUL
 
 Runs focused preparation/model/recovery suites, including cross-file forwarding
 and cycle checks, and compiles/executes generated alias/reference-return programs
-with PCH. `--php-only` skips C++ execution.
+with PCH. Explicit const-reference coverage includes alias/field propagation,
+no-copy noncopyable records/unique handles, live aliases, read-only forwarding,
+write rejection and access-only signature-change recovery.
+`--php-only` skips C++ execution.
 Neither mode rebuilds the compiler itself natively.
 
 For the compiler's tagged-family boundaries and container-signature checkpoint:

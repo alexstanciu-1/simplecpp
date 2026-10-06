@@ -389,8 +389,46 @@ destruction. Signature edits fail on unchanged consumers and no-change retry; re
 cleanup and payload edits agree with fresh preparation. FPM used CLI fallback.
 The compiler itself was not rebuilt natively; no runtime implementation changed.
 
-Next discussion: remaining Chapter 07 scope and debt, including const-reference
-parameters. Broader constructors, pointee member access and inheritance remain separate work.
+Explicit const-reference parameters are completed in the next checkpoint.
+
+## Explicit read-only reference parameters — 2026-10-06
+
+`const T &$parameter` borrows stable exact-type storage without copying. Access
+is separate from passing mode and type identity. Existing read-only borrows can be
+forwarded to read-only parameters; mutable-reference boundaries reject them. Native
+local aliases and direct stable field projections inherit the original access.
+All supported writes share a preparation-owned writable-place check: assignment,
+compound/increment mutation, move, cleanup, index stores/appends/removal, take outputs
+and reuse as a foreach value. Reads, probes and value iteration remain supported.
+
+The [normative contract](../../../../specs/native_reference_safety.md#v02-explicit-read-only-reference-parameters--2026-10-06)
+does not promise global immutability: other mutable aliases may change storage, and
+ordinary copied handles retain shared identity. Temporary/converting/interior argument
+binding, by-value const parameters, const-reference returns and broader member const
+semantics remain deferred. No temporary lifetime extension or borrow checker is added.
+
+`storage_access` is carried by parameter syntax and callable contracts. Places query
+the root contract rather than duplicating access flags; analysis checks writes and
+signature equivalence includes access. C++ emits `const T&` for parameters, ordered
+argument references and inherited read-only aliases. The existing single-reference
+return contract cannot expose a read-only parameter as a mutable result.
+
+Legacy reconciliation: TYPE-PARAM-003F, `tests/tools/test_scpp_const_params.php` and
+the legacy STAN const-write diagnostic establish explicit source const semantics.
+This bounded slice does not import legacy automatic const-reference lowering for
+ordinary value parameters, nor its by-value const, method, closure/interface coverage.
+The new compiler rejects invalid writes during shared preparation, not in STAN or
+C++ emission. No runtime change or new C++ template machinery is required.
+
+Proof: `tests/references.py`, `/tmp/my-try-const-ref-20261006-checked`: 12 focused
+PHP suites, 74 reference rejection cases and 23 generated-C++ executions with PCH.
+Includes noncopyable record/unique borrowing, const alias chains and projections,
+forwarding, supported containers/wrappers, observable updates through another mutable
+alias, const-only signature invalidation, no-change failure retry, repair and
+cleanup/fresh-output agreement. FPM used CLI fallback. No native compiler rebuild.
+
+Next: reconcile remaining Chapter 07 catalog rows with these implemented slices,
+then discuss unresolved scope/debt before chapter closeout.
 
 ## Ownership-type validation debt from chapter 05
 
@@ -430,7 +468,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-VAR-003C](#type-var-003c) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-PARAM-003](#type-param-003) | pending-discussion | `function f(string &$s, vector_t &$v): void {}` | unverified | unverified | deferred | — |
 | [TYPE-PARAM-003B](#type-param-003b) | pending-discussion | `function f(array &$a): void {}` | unverified | unverified | deferred | — |
-| [TYPE-PARAM-003F](#type-param-003f) | pending-discussion | `function f(const vector<int> &$values): int { return count($values); }` | unverified | unverified | deferred | — |
+| [TYPE-PARAM-003F](#type-param-003f) | supported-bounded | `function first(const vector<int> &$v): int { return $v[0]; }` | prepared | verified | deferred | `tests/references.php`; stable exact arguments; broader const forms deferred |
 | [WARN-TYPE-PARAM-001](#warn-type-param-001) | pending-discussion | `function f(array $a): void { $a = []; }` | unverified | unverified | deferred | — |
 | [TYPE-VAR-007A](#type-var-007a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-008](#type-var-008) | supported-strict | `$r int =& $x;` | prepared | verified | deferred | Reduced local binding; legacy annotation spelling not added |
@@ -973,7 +1011,10 @@ void_t f(mixed_t& a) { ::scpp::php::expect_array_argument(a, false, "a"); }
 
 ## TYPE-PARAM-003F
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** See the [read-only reference checkpoint](#explicit-read-only-reference-parameters--2026-10-06).
+Explicit fixed `const T &$p` emits `const T&`; source writes and mutable borrowing
+reject during preparation. The imported example's `count` call is independent of
+this reference slice. By-value const, methods/closures and temporary binding remain deferred.
 
 ### Imported version 1
 

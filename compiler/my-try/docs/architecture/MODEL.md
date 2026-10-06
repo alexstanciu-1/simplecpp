@@ -80,6 +80,9 @@ admits exactly matching fixed, required, by-value parameter signatures; it is no
 general conversion ranking. JSON is the first installed free-function provider.
 
 `callable_signature` and `callable_parameter` have no source-storage links.
+Parameter `storage_access` is independent of `passing_mode` and canonical type
+identity. Syntax records explicit const access; declaration preparation publishes it
+in the shared parameter contract and signature equivalence observes changes.
 `prepared_function` owns the signature plus its source parameter facts;
 `prepared_parameter` links its collected storage identity to the same parameter
 contract (no duplicated type/mode/default state). `prepared_storage::storage_type()`
@@ -111,6 +114,15 @@ through direct stable struct fields. `root_storage()` preserves that identity;
 parameter facts distinguish value and reference origins. Values, indexed reads and
 temporary-derived fields have no place. Place queries do not decide whether a borrow
 may escape; that analysis belongs to workers. See [ownership](ownership.md).
+
+`prepared_place::access()` queries the root parameter contract, so native aliases
+and field projections preserve read-only access without a second const-type identity
+or cached mutability flag. Addressability remains independent. Analysis-owned
+`Reference_Preparation::require_writable` is used by assignments, mutations, indexed
+stores/removal, resets, moves, take outputs, iteration reuse and mutable-reference
+call boundaries. Read-only reference arguments use the same exact/stable-place
+admission but do not require writable access. C++ reads settled access for parameter,
+argument-reference and alias qualifiers; it never decides source mutation admission.
 
 `prepared_binding::alias_target` retains a shared original place for an alias
 declaration. Alias reads keep the alias's own collected identity for naming but

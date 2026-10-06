@@ -21,6 +21,7 @@ final class Cleanup_Preparation
 		if (!$value->addressable()) {
 			throw new \RuntimeException('S2S cleanup requires mutable storage');
 		}
+		Reference_Preparation::require_writable($value->place);
 		if ($syntax instanceof unset_node)
 		{
 			// Read the named binding, not the flattened place: aliases deliberately share their owner's place.

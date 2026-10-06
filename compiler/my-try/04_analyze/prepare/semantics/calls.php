@@ -135,7 +135,7 @@ final class Call_Preparation
 					$value->type, $argument_type, conversion_context::argument);
 			}
 			$prepared_argument->boundary = Value_Boundary_Preparation::decide(
-				$argument_type, $prepared_argument->conversion, $context, $value, $parameter->mode);
+				$argument_type, $prepared_argument->conversion, $context, $value, $parameter->mode, $parameter->access);
 			$prepared_arguments->append($prepared_argument);
 		}
 
