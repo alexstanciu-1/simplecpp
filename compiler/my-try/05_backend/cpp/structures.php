@@ -24,10 +24,33 @@ final class cpp_assignment_sequence
 	public string $value;
 }
 
-/** Final bytes own no references into preparation or source syntax. */
-final class cpp_module {
-	public string $file_name;
-	public string $text;
+enum cpp_artifact_kind {
+	case translation_unit;
+	case header;
+}
+
+/** One final artifact; its logical identity is independent of storage position. */
+final class cpp_artifact {
+	public readonly string $identity;
+	public readonly cpp_artifact_kind $artifact_kind;
+	public readonly string $file_name;
+	public readonly string $text;
+
+	public function __construct(string $identity, cpp_artifact_kind $artifact_kind, string $file_name, string $text)
+	{
+		if (($identity === '') || ($file_name === '')) {
+			throw new \InvalidArgumentException('C++ artifact identity and path must not be empty');
+		}
+		$this->identity = $identity;
+		$this->artifact_kind = $artifact_kind;
+		$this->file_name = $file_name;
+		$this->text = $text;
+	}
+
+	public function kind_name(): string
+	{
+		return $this->artifact_kind === cpp_artifact_kind::header ? 'header' : 'translation_unit';
+	}
 }
 
 /** Invocation-local progress for ordering complete by-value struct definitions. */

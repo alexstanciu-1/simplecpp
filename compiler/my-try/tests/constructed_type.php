@@ -122,7 +122,7 @@ PHS;
 		'Redundant nested modifier split the canonical application');
 
 	$compiler->cpp();
-	$text = Model::$cpp_files[0]->text;
+	$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 	constructed_check(str_contains($text, '#include "scpp/vector_t.hpp"')
 		&& str_contains($text, 'scpp::vector_t<scpp::int_t<>> local_first;')
 		&& str_contains($text, 'scpp::vector_t<scpp::int_t<>> local_second;')
@@ -154,14 +154,14 @@ PHS;
 	$compiler->update_cpp([$path]);
 	$plain_statement = object_cast(Model::syntax_files()[0]->root->body->statements[7], variable_declaration_node::class);
 	constructed_check(($plain_statement->type_syntax instanceof named_type_node)
-		&& (Model::$cpp_files[0]->text === $text)
+		&& (CPP_Output::single_unit(Model::$cpp_files)->text === $text)
 		&& (Model::$type_catalog->registry()->application_count() === $initial_applications + 8),
 		'Redundant modifier removal changed semantic identity or C++ output');
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
 	$explicit_statement = object_cast(Model::syntax_files()[0]->root->body->statements[7], variable_declaration_node::class);
 	constructed_check(($explicit_statement->type_syntax instanceof type_use_modifier_node)
-		&& (Model::$cpp_files[0]->text === $text)
+		&& (CPP_Output::single_unit(Model::$cpp_files)->text === $text)
 		&& (Model::$type_catalog->registry()->application_count() === $initial_applications + 8),
 		'Redundant modifier restoration lost AST spelling or canonical reuse');
 
@@ -194,7 +194,7 @@ PHS;
 	$compiler->exec_cpp();
 	$normalized = Model::syntax_files()[0]->root->body->statements[0]->type_syntax->require_preparation();
 	constructed_check($normalized->matches(Language_Types::integer(Model::$language_scope))
-		&& !str_contains(Model::$cpp_files[0]->text, 'value_p'),
+		&& !str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'value_p'),
 		'Redundant nested value modifiers stopped normalizing to int');
 
 	echo "Constructed type: runtime families, contracts, nesting, value modifiers, exact reuse and recursive C++ bindings passed\n";

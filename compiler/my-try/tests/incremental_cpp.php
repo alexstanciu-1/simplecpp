@@ -35,9 +35,9 @@ try
 	$body = Model::$cpp_output_program->fragments[$target_body];
 	$caller_fragment = Model::$cpp_output_program->fragments[$caller_body];
 	$entry = Model::$cpp_output_program->fragments[$source->root->body->work()];
-	$text = Model::$cpp_files[0]->text;
+	$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$compiler->exec_cpp();
-	cpp_check(Model::$cpp_files[0]->text === $text && Model::$cpp_output_program->fragments[$target_body] === $body, 'No-op generation rerendered body');
+	cpp_check(CPP_Output::single_unit(Model::$cpp_files)->text === $text && Model::$cpp_output_program->fragments[$target_body] === $body, 'No-op generation rerendered body');
 
 	// Changed body, unchanged signature and consumers; preparation hands off work without settling it.
 	file_put_contents($path, str_replace('return 1;', 'return 22;', $initial));
@@ -63,7 +63,7 @@ try
 	$standalone = $standalone_generator->generate($source->prepared);
 	$standalone_fragment = Model::$cpp_output_program->fragments[$target_body];
 	$again = $standalone_generator->generate($source->prepared);
-	cpp_check($standalone->text === $again->text && Model::$cpp_output_program->fragments[$target_body] === $standalone_fragment, 'Standalone no-op rerendered work');
+	cpp_check(CPP_Output::encode($standalone) === CPP_Output::encode($again) && Model::$cpp_output_program->fragments[$target_body] === $standalone_fragment, 'Standalone no-op rerendered work');
 	cpp_check($source->preparation_changes === $handoff && count($handoff) === $handoff_count && Model::$cpp_files->is_empty(), 'Standalone generation acknowledged or published shared output');
 
 	// A late assembly failure (after fragments settled) still withholds acknowledgment.
@@ -77,7 +77,7 @@ try
 	cpp_check($assembly_failed && Model::$cpp_files->is_empty() && $source->preparation_changes === $handoff && count($handoff) === $handoff_count, 'Assembly failure consumed handoff or published output');
 	$box_fragment->records = $box_records;
 	$compiler->cpp();
-	cpp_check(Model::$cpp_files[0]->text === $standalone->text, 'Coordinator publication changed standalone output');
+	cpp_check(CPP_Output::encode(Model::$cpp_files) === CPP_Output::encode($standalone), 'Coordinator publication changed standalone output');
 	cpp_check(count($source->preparation_changes) === 0, 'Successful generation did not consume handoff');
 	cpp_check(Model::$cpp_output_program->fragments[$target_body] !== $body, 'Changed body reused stale text');
 	cpp_check(Model::$cpp_output_program->fragments[$target_owner] === $signature && Model::$cpp_output_program->fragments[$caller_body] === $caller_fragment && Model::$cpp_output_program->fragments[$source->root->body->work()] === $entry, 'Body edit rerendered unchanged fragments');
@@ -87,11 +87,11 @@ try
 	file_put_contents($path, $changed);
 	$compiler->update_cpp([$path]);
 	cpp_check(Model::$cpp_output_program->fragments[$caller_body] === $caller_fragment && Model::$cpp_output_program->fragments[$target_owner] === $signature, 'Token movement invalidated stable fragments');
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	cpp_check(Model::$cpp_files[0]->text === $incremental, 'Fresh and incremental assembly differ');
+	cpp_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental, 'Fresh and incremental assembly differ');
 
 	// Dirty rendering failure retains pending work and withholds completed output until retry.
 	file_put_contents($path, str_replace('return 22;', 'return 33;', $changed));
@@ -124,7 +124,7 @@ try
 	$deleted_body = $deleted->body->work();
 	file_put_contents($path, str_replace('return 1;', 'return 33;', $initial));
 	$compiler->update_cpp([$path]);
-	cpp_check(!isset(Model::$cpp_output_program->fragments[$deleted_signature]) && !isset(Model::$cpp_output_program->fragments[$deleted_body]) && !str_contains(Model::$cpp_files[0]->text, 'function_before'), 'Deleted declaration retained C++ fragments');
+	cpp_check(!isset(Model::$cpp_output_program->fragments[$deleted_signature]) && !isset(Model::$cpp_output_program->fragments[$deleted_body]) && !str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'function_before'), 'Deleted declaration retained C++ fragments');
 
 	// Signature changes invalidate affected bodies without replacing unrelated record fragments.
 	$caller_owner = cpp_function('caller')->body->work();
@@ -143,20 +143,20 @@ try
 	$inner_definition = Model::$global_scope->source_types_named('Inner')[0];
 	$outer_fragment = Model::$cpp_output_program->fragments[$outer_definition->preparation];
 	cpp_check(count($outer_fragment->records) === 2 && $outer_fragment->records[0] === $inner_definition && $outer_fragment->records[1] === $inner_definition, 'Record snapshot lost identity or duplicate dependencies');
-	$inner_position = strpos(Model::$cpp_files[0]->text, 'struct record_Inner');
-	$outer_position = strpos(Model::$cpp_files[0]->text, 'struct record_Outer');
+	$inner_position = strpos(CPP_Output::single_unit(Model::$cpp_files)->text, 'struct record_Inner');
+	$outer_position = strpos(CPP_Output::single_unit(Model::$cpp_files)->text, 'struct record_Outer');
 	cpp_check($inner_position !== false && $outer_position !== false && $inner_position < $outer_position, 'Record dependencies were assembled after their consumer');
 	file_put_contents($path, 'struct Outer { int32 $first; int32 $second; } return 0;');
 	$compiler->update_cpp([$path]);
-	cpp_check(count(Model::$cpp_output_program->fragments[$outer_definition->preparation]->records) === 0 && !str_contains(Model::$cpp_files[0]->text, 'record_Inner'), 'Changed record retained a deleted dependency');
+	cpp_check(count(Model::$cpp_output_program->fragments[$outer_definition->preparation]->records) === 0 && !str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'record_Inner'), 'Changed record retained a deleted dependency');
 
 	// An included runtime header disappears once its last emitting fragment is removed.
 	file_put_contents($path, 'function floating(): float { return 1.5; } return 0;');
 	$compiler->update_cpp([$path]);
-	cpp_check(str_contains(Model::$cpp_files[0]->text, 'scpp/float_t.hpp'), 'Missing fragment include');
+	cpp_check(str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp/float_t.hpp'), 'Missing fragment include');
 	file_put_contents($path, 'return 0;');
 	$compiler->update_cpp([$path]);
-	cpp_check(!str_contains(Model::$cpp_files[0]->text, 'scpp/float_t.hpp'), 'Deleted fragment retained stale include');
+	cpp_check(!str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp/float_t.hpp'), 'Deleted fragment retained stale include');
 
 	// Defaults belong to signatures; callers depend on their presence and value.
 	$defaults = 'function value(int $x = 7): int { return $x; } function caller(): int { return value(); } return caller();';
@@ -177,14 +177,14 @@ try
 	$compiler->update_cpp([$path]);
 	cpp_check(cpp_function('value')->parameters[0] === $default_parameter, 'Default edit replaced parameter identity');
 	cpp_check(Model::$cpp_output_program->fragments[$default_owner] !== $default_fragment && Model::$cpp_output_program->fragments[$default_caller] !== $default_caller_fragment, 'Default edit left stale signature or caller');
-	$default_text = Model::$cpp_files[0]->text;
+	$default_text = CPP_Output::single_unit(Model::$cpp_files)->text;
 	file_put_contents($path, ' ' . str_replace('= 7', '= 9', $defaults));
 	$compiler->update_cpp([$path]);
-	cpp_check(Model::$cpp_files[0]->text === $default_text, 'Default token movement changed output');
+	cpp_check(CPP_Output::single_unit(Model::$cpp_files)->text === $default_text, 'Default token movement changed output');
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	cpp_check(Model::$cpp_files[0]->text === $default_text, 'Fresh and incremental default output differ');
+	cpp_check(CPP_Output::single_unit(Model::$cpp_files)->text === $default_text, 'Fresh and incremental default output differ');
 	foreach ([str_replace(' = 7', '', $defaults), str_replace('= 7', '= "bad"', $defaults)] as $invalid_default) {
 		file_put_contents($path, $invalid_default);
 		$failed_default = false;
@@ -211,7 +211,7 @@ try
 	cpp_check($pack_parameter->variadic && $pack_parameter->require_preparation()->contract->element_type !== null, 'Variadic element facts missing');
 	file_put_contents($path, str_replace('pack($items)', 'pack()', $variadic_source));
 	$compiler->update_cpp([$path]);
-	$pack_output = Model::$cpp_files[0]->text;
+	$pack_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$pack_owner = cpp_function('pack')->occurrence()->preparation;
 	$pack_fragment = Model::$cpp_output_program->fragments[$pack_owner];
 	$compiler->exec_cpp();
@@ -219,7 +219,7 @@ try
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	cpp_check(Model::$cpp_files[0]->text === $pack_output, 'Variadic repair differs from fresh output');
+	cpp_check(CPP_Output::single_unit(Model::$cpp_files)->text === $pack_output, 'Variadic repair differs from fresh output');
 
 	// Every scalar snapshot participates in signature equivalence, including signed floats.
 	foreach ([['string', '"7"', '"9"'], ['float', '-1.5', '-2.5'], ['bool', 'true', 'false']] as [$default_type, $old_default, $new_default]) {
@@ -231,11 +231,11 @@ try
 		file_put_contents($path, str_replace('= ' . $old_default, '= ' . $new_default, $scalar_source));
 		$compiler->update_cpp([$path]);
 		cpp_check(Model::$cpp_output_program->fragments[$scalar_owner] !== $scalar_fragment, 'Scalar default value edit kept stale signature');
-		$scalar_incremental = Model::$cpp_files[0]->text;
+		$scalar_incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 		Compiler_Lifecycle::reset();
 		$compiler->init([$directory]);
 		$compiler->exec_cpp();
-		cpp_check(Model::$cpp_files[0]->text === $scalar_incremental, 'Scalar default fresh output differs');
+		cpp_check(CPP_Output::single_unit(Model::$cpp_files)->text === $scalar_incremental, 'Scalar default fresh output differs');
 	}
 }
 finally {

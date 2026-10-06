@@ -131,7 +131,7 @@ $compiler->init([''' + php_literal(fixtures) + ''' . '/' . $value]);
 $compiler->exec_cpp();
 $compiler->prepare();
 $compiler->cpp();
-echo Model::$cpp_files[0]->text;
+echo CPP_Output::single_unit(Model::$cpp_files)->text;
 ''')
     references = {}
     rows = []

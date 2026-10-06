@@ -155,27 +155,27 @@ elseif (string_byte_starts_with($path, 's2s:'))
 	try
 	{
 		$compiler->exec_cpp();
-		$cpp_outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-		$first = $cpp_outputs[0];
+		$cpp_outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+		$first = CPP_Output::encode($cpp_outputs);
 		$compiler->prepare();
 		$compiler->cpp();
 		$cpp_outputs = Model::$cpp_files;
-		if (($cpp_outputs[0] === $first) || ($cpp_outputs[0]->text !== $first->text)) {
-			throw new \LogicException('Repeated S2S preparation changed output or reused artifacts');
+		if (CPP_Output::encode($cpp_outputs) !== $first) {
+			throw new \LogicException('Repeated S2S preparation changed artifacts');
 		}
-		echo $first->text;
+		echo $first;
 	}
 	catch (\Throwable $error)
 	{
 		$message = $error->getMessage();
-		$cpp_failed_outputs /** Storage<cpp_module> */ = Model::$cpp_files;
+		$cpp_failed_outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
 		if (!$cpp_failed_outputs->is_empty()) {
 			throw new \LogicException('Failed S2S compilation published output');
 		}
 		$recovery_paths /** vector<string> */ = [__RECOVERY_DIR__];
 		$compiler->init($recovery_paths);
 		$compiler->exec_cpp();
-		$cpp_recovered /** Storage<cpp_module> */ = Model::$cpp_files;
+		$cpp_recovered /** Storage<cpp_artifact> */ = Model::$cpp_files;
 		if (q_count($cpp_recovered) !== 1) {
 			throw new \LogicException('S2S recovery did not produce one module');
 		}

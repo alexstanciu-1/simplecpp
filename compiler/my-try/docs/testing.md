@@ -17,6 +17,19 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For the Chapter 08 artifact-delivery foundation:
+
+```bash
+python3 compiler/my-try/tests/cpp_artifacts.py --results /tmp/FRESH_ARTIFACT_RESULTS
+```
+
+Checks artifact identity/kinds, JSON transport, rejection without partial fixture
+publication, single-unit probe guards and retained generation. Compiles generated
+single-source output plus a handcrafted header/two-unit bundle as separate objects,
+with and without the run-local PCH. This is not multi-source lowering, persistent
+PCH caching or a native compiler rebuild. Existing source-instrumentation fixtures
+use a checked single-unit adapter until the partitioning slice adapts their probes.
+
 For ownership classification and direct type-composition admission:
 
 ```bash

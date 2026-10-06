@@ -2,7 +2,8 @@
 Doc Status: planning
 
 Recorded: 2026-10-06. Baseline: `480b2543` on `v0.2/develop`.
-Status: roadmap; implementation has not started. This is not a language spec.
+Status: artifact-delivery foundation implemented; partitioned generation and the
+remaining roadmap are pending. This is not a language spec.
 
 ## Direction and evidence
 
@@ -25,7 +26,7 @@ or application PCH should become a dependency of every unit.
 - Input discovery already owns modules and module-relative source identities.
 - Collection/preparation already handles multiple sources and resolved cross-file calls.
 - C++ retains declaration/body fragments, but `Compiler::cpp()` currently requires one
-  prepared source and publishes a single `main.cpp`.
+  prepared source and publishes a single `main.cpp` artifact through the common collection API.
 - `06_native/Native_Runner` currently executes LLVM output. It is not a C++ project
   builder. C++ fixture helpers have per-run PCH support, not a persistent build cache.
 
@@ -140,8 +141,8 @@ Do not promise comment-only no-ops when observable diagnostic data changes.
 Recommended coordinated migration: single-source and multi-source compilation use
 the same artifact-producing backend. Update the current C++ output API, CLI delivery
 and fixture/native consumers together; do not keep a second monolithic renderer.
-This crosses backend, coordinator and tooling ownership and needs explicit approval
-before code changes. The benefit is one generation contract; the risk is disrupting
+This crosses backend, coordinator and tooling ownership. The user approved this
+coordinated migration on 2026-10-06. The benefit is one generation contract; the risk is disrupting
 existing output consumers, requiring focused single-source and multi-source proofs.
 The smaller alternative is to keep the public interface temporarily single-source
 while landing internal artifact planning, then perform that same cutover in slice 2.
@@ -155,3 +156,39 @@ Not included now: class/method features lacking their later chapter model, new s
 include semantics, package ABI/export redesign, LLVM work, project-wide PCH, automatic
 profile tuning or general build-system replacement. Reuse existing build facilities
 where they meet this contract; the roadmap does not authorize changing legacy S2S.
+
+## Artifact-delivery foundation — 2026-10-06
+
+The generator now returns `Storage<cpp_artifact>` and the coordinator publishes the
+collection together before acknowledging preparation. Artifact records own immutable
+identity, kind, relative path and final bytes, without syntax/preparation references.
+The existing assembly currently produces the stable `entry` artifact at `main.cpp`.
+
+CLI and ordinary native-validation requests serialize the entire collection using
+`scpp-cpp-artifacts-v1`; they no longer return the first file. Existing tests which
+inspect/instrument one C++ unit use an explicit rejecting single-unit adapter. This
+is a temporary consumer boundary, not a second renderer or a flattening API. Those
+probes must be adapted to named artifact roles as partitioning lands.
+
+The fixture build helper validates a complete bundle, writes it to a fresh private
+directory, compiles each translation unit separately and links only those objects.
+This is not incremental disk publication or a production native build/cache layer.
+Its existing run-local PCH remains separate from the planned persistent runtime PCH.
+
+Focused proof: `tests/cpp_artifacts.py`, results
+`/tmp/my-try-ch08-artifacts-20261006-2/summary.json`: five PHP suites and four C++
+executions passed, covering generated single-source output and a handcrafted
+two-unit/header transport fixture, each with/without PCH. Malformed/duplicate/path
+inputs reject before fixture publication; failed CLI compilation emits no bundle.
+The native-validation driver was also exercised in PHP for successful transport and
+failure/recovery. This does not prove multi-source lowering or a rebuilt native compiler.
+
+Function regression: `/tmp/my-try-ch08-artifact-functions-20261006-2/summary.json`:
+12 PHP suites and 77 generated C++ executions passed. The first attempt exposed a
+stale unsupported-dispatch fixture using now-supported data construction; it now
+uses an intentionally unknown test-only expression, retaining the rejection/purity
+assertions. Both runners used their documented CLI fallback because this sandbox
+could not bind the FPM sockets.
+
+Next: explicit entry/source identity and cross-file function generation (slices 1–2),
+including replacement of the guarded single-unit instrumentation at that cutover.

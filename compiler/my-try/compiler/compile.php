@@ -283,7 +283,7 @@ final class Compiler
 		if (q_count($prepared) !== 1) {
 			throw new \RuntimeException('C++ emission requires one prepared source file; run prepare first');
 		}
-		$output /** cpp_module */;
+		$output /** Storage<cpp_artifact> */;
 		try {
 			$output = (new CPP_Generator(Model::$cpp_output_program))->generate($prepared[0]);
 		}
@@ -294,7 +294,7 @@ final class Compiler
 			Model::$rebuild_required = true;
 			throw $error;
 		}
-		Model::$cpp_files[] = $output;
+		Model::$cpp_files = $output;
 		// The single active consumer acknowledges only after successful output publication.
 		$source = $prepared[0]->source;
 		$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();

@@ -28,7 +28,7 @@ foreach ([conversion_operation::boxed_wrap, conversion_operation::identity,
 	dynamic_boundaries_check($nodes[$position]->require_preparation()->conversion->operation === $expected,
 		'Dynamic boundary bypassed shared boxed conversion');
 }
-dynamic_boundaries_check(str_contains(Model::$cpp_files[0]->text, 'scpp::required_cast<scpp::int_t<>>'),
+dynamic_boundaries_check(str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'scpp::required_cast<scpp::int_t<>>'),
 	'Required boundary lost checked extraction');
 $catalog = Model::$type_catalog;
 $dynamic_type = $catalog->registry()->use($catalog->canonical('dynamic')->type_id());
@@ -93,9 +93,9 @@ $changed = str_replace('source(): mixed', 'source(): dynamic', $valid);
 $record = Model::sources()[0];
 $record->file->content = $changed;
 $compiler->update_cpp(['/dynamic-boundaries/main.phs']);
-$incremental = Model::$cpp_files[0]->text;
+$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 dynamic_boundaries_source($changed);
-dynamic_boundaries_check(Model::$cpp_files[0]->text === $incremental, 'Dynamic boundary clean/incremental output differs');
+dynamic_boundaries_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental, 'Dynamic boundary clean/incremental output differs');
 
 // Conditions and selections consume the changed signature without stale mixed facts.
 foreach (['return source() ? 1 : 0;', 'return !source() ? 1 : 0;',
@@ -111,9 +111,9 @@ foreach (['return source() ? 1 : 0;', 'return !source() ? 1 : 0;',
 	$record = Model::sources()[0];
 	$record->file->content = $changed;
 	$compiler->update_cpp(['/dynamic-boundaries/main.phs']);
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	dynamic_boundaries_source($changed);
-	dynamic_boundaries_check(Model::$cpp_files[0]->text === $incremental,
+	dynamic_boundaries_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental,
 		'Dynamic selection clean/incremental output differs: ' . $consumer);
 }
 

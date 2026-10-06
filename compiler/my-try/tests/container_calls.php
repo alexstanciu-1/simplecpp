@@ -22,7 +22,7 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = Model::$cpp_files[0]->text;
+	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$function = Model::$global_scope->functions_named('run')[0]->syntax();
 	$body = $function->body;
 	$call = $body->statements[0]->expression;
@@ -45,12 +45,12 @@ try
 	container_call_check($function->body === $body, 'Unchanged caller body was replaced');
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	container_call_check(Model::$cpp_files[0]->text === $original, 'Indexed call recovery changed output');
+	container_call_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Indexed call recovery changed output');
 	Compiler_Lifecycle::reset();
 	$clean = new Compiler();
 	$clean->init([$directory]);
 	$clean->exec_cpp();
-	container_call_check(Model::$cpp_files[0]->text === $original, 'Clean and incremental indexed calls differ');
+	container_call_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean and incremental indexed calls differ');
 	foreach ([
 		'function f(int &$x): void {} $v vector<int> = [1]; f($v[0]);',
 		'function f(int &$x): void {} $h hash<int> = {x: 1}; f($h["x"]);',

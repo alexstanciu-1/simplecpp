@@ -458,11 +458,20 @@ default values appear only on prototypes, without rerendering syntax during asse
 Failures retain pending work and withhold completed output; unexpected failures
 request a full rebuild.
 
-Assembly preserves the current single-`main.cpp` layout and orders record dependencies.
+`CPP_Generator::generate` returns `Storage<cpp_artifact>` for one common output
+contract. Each final artifact owns immutable identity, kind, relative path and bytes,
+without semantic or worker references. The coordinator publishes the complete
+collection before acknowledging consumed work. `CPP_Output::encode` serializes all
+artifacts with duplicate identity/path rejection; it does not generate or write files.
+The CLI/native transport is versioned independently from semantic identity.
+
+Assembly currently preserves the single-`main.cpp` layout and orders record dependencies.
 It reconstructs includes from live fragments. Generated names use role prefixes and
 saved source names; temporary numbering is per body. Future namespaces, overloads
 and richer shadowing require a naming review. No disk writer or Ninja integration
-is implied. Partitioning is tracked in [debt](../planning/incremental_strategy.md).
+is implied. The [Chapter 08 roadmap](../planning/incremental_cpp_artifacts.md) owns
+the approved partitioning migration. Single-unit test adapters reject partitioned
+output rather than silently dropping files; they are not another renderer.
 
 ## Lifecycle and legacy boundary
 

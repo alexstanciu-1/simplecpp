@@ -120,6 +120,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/selection_results.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/matches.php';
 require_once __DIR__ . '/04_analyze/prepare/file.php';
 require_once __DIR__ . '/05_backend/cpp/structures.php';
+require_once __DIR__ . '/05_backend/cpp/output.php';
 require_once __DIR__ . '/05_backend/cpp/types.php';
 require_once __DIR__ . '/05_backend/cpp/declarations.php';
 require_once __DIR__ . '/05_backend/cpp/callable_bindings.php';

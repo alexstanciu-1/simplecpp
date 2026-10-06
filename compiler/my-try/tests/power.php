@@ -66,7 +66,7 @@ try
 	$expression = $function->body->statements[0]->expression;
 	if (($expression->require_binary_preparation()->decision->operation !== operator_operation::integer_power)
 		|| ($function->require_preparation() !== $signature)
-		|| !str_contains(Model::$cpp_files[0]->text, '#include "operators/arithmetic/power.hpp"')) {
+		|| !str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, '#include "operators/arithmetic/power.hpp"')) {
 		throw new \LogicException('Power edit lost operation, header or unchanged signature');
 	}
 	$body = $function->body;
@@ -78,11 +78,11 @@ try
 		|| (Model::tokens()[0]->text_at($expression->operator_token_index) !== '**')) {
 		throw new \LogicException('Compaction lost retained power syntax');
 	}
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (Model::$cpp_files[0]->text !== $incremental) {
+	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 		throw new \LogicException('Incremental power differs from fresh output');
 	}
 	file_put_contents($path, str_replace('**', '* *', $source));
@@ -98,12 +98,12 @@ try
 	}
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
-	if (Model::$cpp_files[0]->text !== $incremental) {
+	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 		throw new \LogicException('Power recovery did not restore fresh output');
 	}
 	file_put_contents($path, str_replace('**', '*', $source));
 	$compiler->update_cpp([$path]);
-	if (str_contains(Model::$cpp_files[0]->text, 'operators/arithmetic/power.hpp')) {
+	if (str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'operators/arithmetic/power.hpp')) {
 		throw new \LogicException('Removed power retained a stale runtime include');
 	}
 }

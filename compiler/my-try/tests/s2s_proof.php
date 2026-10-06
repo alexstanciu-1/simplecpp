@@ -22,8 +22,8 @@ final class S2S_Proof
 		$modules->add($input_module->name, $input_module);
 		$compiler = new Compiler();
 		$compiler->exec_cpp();
-		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-		$original = $outputs[0]->text;
+		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+		$original = CPP_Output::single_unit($outputs)->text;
 		$functions /** vector<collected_function> */ = Model::$global_scope->functions_named('choose');
 		$retained_body = $functions[0]->syntax()->body;
 		$stable_functions /** vector<collected_function> */ = Model::$global_scope->functions_named('stable');
@@ -34,7 +34,7 @@ final class S2S_Proof
 		$compiler->update_cpp($paths);
 		$functions = Model::$global_scope->functions_named('choose');
 		$outputs = Model::$cpp_files;
-		if (($functions[0]->syntax()->body !== $retained_body) || ($outputs[0]->text !== $original)) {
+		if (($functions[0]->syntax()->body !== $retained_body) || (CPP_Output::single_unit($outputs)->text !== $original)) {
 			throw new \LogicException('Native control-flow span move lost body identity or output');
 		}
 
@@ -60,7 +60,7 @@ final class S2S_Proof
 		$record->file->content = $valid;
 		$compiler->update_cpp($paths);
 		$outputs = Model::$cpp_files;
-		if ($outputs[0]->text !== $original) {
+		if (CPP_Output::single_unit($outputs)->text !== $original) {
 			throw new \LogicException('Native match repair changed generated output');
 		}
 		return $original;
@@ -169,8 +169,8 @@ final class S2S_Proof
 			throw new \LogicException('Capability rejection published a canonical application');
 		}
 
-		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-		$text = $outputs[0]->text;
+		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+		$text = CPP_Output::single_unit($outputs)->text;
 		if ((q_strpos($text, '#include "scpp/vector_t.hpp"') === false)
 			|| (q_strpos($text, '#include "scpp/hash_t.hpp"') === false)
 			|| (q_strpos($text, '#include "scpp/value_p.hpp"') !== false)
@@ -229,15 +229,15 @@ final class S2S_Proof
 		if ($first_data->kind() !== node_kind::assignment_expression) {
 			throw new \LogicException('Preparation mutated the parsed binding');
 		}
-		$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-		$old_output = $outputs[0];
+		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+		$old_output = CPP_Output::single_unit($outputs);
 		$expected = "#include \"scpp/int_t.hpp\"\n\nint main()\n{\n\tauto local_a = static_cast<scpp::int_t<>>(10LL);\n\tscpp::int_t<> local_b = local_a;\n\tlocal_a = static_cast<scpp::int_t<>>(12LL);\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
 		if ($old_output->text !== $expected) {
 			throw new \LogicException('Unexpected C++ integer lowering');
 		}
 		$compiler->cpp();
 		$outputs = Model::$cpp_files;
-		if (($outputs[0]->text !== $expected) || ($outputs[0] === $old_output)) {
+		if ((CPP_Output::single_unit($outputs)->text !== $expected) || (CPP_Output::single_unit($outputs) === $old_output)) {
 			throw new \LogicException('Repeated generation changed bytes or reused output records');
 		}
 		if ($first_data->require_assignment_preparation()->binding !== $first) {
@@ -261,7 +261,7 @@ final class S2S_Proof
 			throw new \LogicException('Incremental update replaced stable source membership');
 		}
 		$outputs = Model::$cpp_files;
-		if (($outputs[0]->text === $expected) || ($old_output->text !== $expected)) {
+		if ((CPP_Output::single_unit($outputs)->text === $expected) || ($old_output->text !== $expected)) {
 			throw new \LogicException('Update damaged old output or failed to regenerate');
 		}
 		// Detached body handles may retain old facts; only the current tree is eligible for generation.

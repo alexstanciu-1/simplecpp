@@ -133,11 +133,11 @@ try
 	file_put_contents($path, $changed);
 	$compiler->update_cpp([$path]);
 	grouping_check($function->body !== $body, 'Regrouping retained stale body syntax');
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	grouping_check(Model::$cpp_files[0]->text === $incremental, 'Regrouping differs between fresh and incremental generation');
+	grouping_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental, 'Regrouping differs between fresh and incremental generation');
 }
 finally {
 	unlink($path);

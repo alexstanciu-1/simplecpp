@@ -50,7 +50,7 @@ final class Model
 	/** Complete source preparation for C++ generation. @storage.owner */
 	public static Storage $prepared_files /** Storage<prepared_file> */;
 	/** Final C++ artifacts. @storage.owner */
-	public static Storage $cpp_files /** Storage<cpp_module> */;
+	public static Storage $cpp_files /** Storage<cpp_artifact> */;
 	/** Retained C++ fragments survive output invalidation, but not a full compilation reset. */
 	public static cpp_program $cpp_output_program;
 

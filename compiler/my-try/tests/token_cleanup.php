@@ -39,7 +39,7 @@ try
 	token_cleanup_check(($tokens->content === $initial . $changed) && ($tokens->content_offset === strlen($initial)), 'Source prefix or append offset lost');
 	token_cleanup_check(($function->body === $body) && ($body->start_token() === $first) && ($entry->token_index === $entry_index), 'Compilation relocated reused syntax or occurrences');
 	token_cleanup_check(($body->work() === $facts) && ($facts->version === $version), 'Unchanged body was prepared again');
-	$output = Model::$cpp_files[0]->text;
+	$output = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$first_row = $tokens->tokens[$tokens->first_token];
 	token_cleanup_check(substr($tokens->content, $first_row->offset, $first_row->length) === 'function', 'Appended token bytes are not addressable');
 
@@ -48,10 +48,10 @@ try
 	token_cleanup_check(($tokens->first_token === 0) && ($tokens->content_offset === 0) && ($tokens->content === $changed), 'Cleanup did not reclaim the old prefix');
 	token_cleanup_check(($body->start_token() > $first) && ($tokens->text_at($body->start_token()) === '{'), 'Cleanup did not remap retained body bounds');
 	token_cleanup_check($tokens->text_at($entry->token_index) === 'value', 'Cleanup did not remap a collected occurrence');
-	token_cleanup_check(($facts->version === $version) && (Model::$cpp_files[0]->text === $output), 'Cleanup altered facts or delivered output');
+	token_cleanup_check(($facts->version === $version) && (CPP_Output::single_unit(Model::$cpp_files)->text === $output), 'Cleanup altered facts or delivered output');
 	$compiler->prepare();
 	$compiler->cpp();
-	token_cleanup_check(Model::$cpp_files[0]->text === $output, 'Generating after cleanup changed output');
+	token_cleanup_check(CPP_Output::single_unit(Model::$cpp_files)->text === $output, 'Generating after cleanup changed output');
 
 	// Repeated updates without host cleanup use the synchronous fallback before the next scan.
 	for ($iteration = 0; $iteration < 3; $iteration++)
@@ -62,11 +62,11 @@ try
 		token_cleanup_check(($function->body === $body) && ($facts->version === $version), 'Immediate increment lost retained work');
 		token_cleanup_check(count($record->tokens->tokens) === 2 * $record->tokens->first_token, 'Immediate increments accumulated obsolete generations');
 	}
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	token_cleanup_check(Model::$cpp_files[0]->text === $incremental, 'Appended incremental output differs from a fresh build');
+	token_cleanup_check(CPP_Output::single_unit(Model::$cpp_files)->text === $incremental, 'Appended incremental output differs from a fresh build');
 
 	// Parser diagnostics use file-relative bytes despite the retained prefix.
 	file_put_contents($path, 'function bad(');

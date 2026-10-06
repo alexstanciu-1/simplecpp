@@ -23,7 +23,7 @@ try {
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = Model::$cpp_files[0]->text;
+	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$statements = Model::syntax_files()[0]->root->body->statements;
 	$a = $statements[0];
 	$b = $statements[1];
@@ -59,7 +59,7 @@ try {
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	nullable_check(Model::$cpp_files[0]->text === $original, 'Nullable repair changed output');
+	nullable_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Nullable repair changed output');
 	file_put_contents($path, str_replace('fallback(): int { return 7;', 'fallback(): float { return 7.5;', $valid));
 	foreach ([[$path], []] as $changed) {
 		$compiler->sync($changed);
@@ -71,7 +71,7 @@ try {
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	nullable_check(Model::$cpp_files[0]->text === $original, 'Coalesce repair changed output');
+	nullable_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Coalesce repair changed output');
 	file_put_contents($path, str_replace('option(): ?int { return 2;', 'option(): ?float { return 2.5;', $valid));
 	foreach ([[$path], []] as $changed) {
 		$compiler->sync($changed);
@@ -83,12 +83,12 @@ try {
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	nullable_check(Model::$cpp_files[0]->text === $original, 'Conditional repair changed output');
+	nullable_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Conditional repair changed output');
 	Compiler_Lifecycle::reset();
 	$clean = new Compiler();
 	$clean->init([$directory]);
 	$clean->exec_cpp();
-	nullable_check(Model::$cpp_files[0]->text === $original, 'Clean and incremental nullable output differ');
+	nullable_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean and incremental nullable output differ');
 	$root = Model::syntax_files()[0]->root;
 	$syntax = $root->body->statements[0];
 	$coalesce = $root->body->statements[2]->initializer;

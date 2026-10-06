@@ -66,7 +66,7 @@ if ($s2s)
 		$compiler = new Compiler();
 		$compiler->init([$source_directory]);
 		$compiler->exec_cpp();
-		echo Model::$cpp_files[0]->text;
+		echo CPP_Output::encode(Model::$cpp_files);
 	}
 	catch (\Throwable $error)
 	{

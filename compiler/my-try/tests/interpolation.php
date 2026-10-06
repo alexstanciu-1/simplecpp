@@ -105,11 +105,11 @@ try
 		|| (substr($token, $part->byte_offset, $part->byte_length) !== '{$x}')) {
 		throw new \LogicException('Compaction damaged interpolation ranges or collected identity');
 	}
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (Model::$cpp_files[0]->text !== $incremental) {
+	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 		throw new \LogicException('Incremental interpolation differs from fresh generation');
 	}
 	foreach (['{$missing}', '{$x + 1}'] as $invalid)
@@ -133,7 +133,7 @@ try
 		}
 		file_put_contents($path, $source);
 		$compiler->update_cpp([$path]);
-		if (Model::$cpp_files[0]->text !== $incremental) {
+		if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 			throw new \LogicException('Interpolation recovery did not restore fresh output');
 		}
 	}

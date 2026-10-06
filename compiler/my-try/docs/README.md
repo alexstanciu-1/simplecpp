@@ -91,7 +91,11 @@ php compiler/my-try/main.php --s2s SOURCE_DIRECTORY
 php compiler/my-try/tests/tokenizer.php
 ```
 
-The S2S mode prints C++ to stdout and reports failures on stderr. Without a mode,
+The S2S mode prints a `scpp-cpp-artifacts-v1` JSON bundle to stdout and reports
+failures on stderr. Its `artifacts` array contains `id`, `kind` (`translation_unit`
+or `header`), relative `path` and final `text` for every output. Do not compile the
+JSON as C++ or consume only its first artifact. Current assembly still emits one
+`main.cpp`; the shared delivery path also supports partitioned output. Without a mode,
 `main.php` runs the legacy sample/debug report, including native sample execution.
 The browser accepts `mode=s2s&source=SOURCE_DIRECTORY`; the local Apache template
 is [tools/apache/scpp-my-try.conf](../tools/apache/scpp-my-try.conf).

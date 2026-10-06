@@ -139,11 +139,11 @@ try
 	if (($function->body !== $body) || ($tokens->text_at($compound->operator_token_index) !== '*=')) {
 		throw new \LogicException('Token cleanup lost the retained compound operator');
 	}
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (Model::$cpp_files[0]->text !== $incremental) {
+	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 		throw new \LogicException('Incremental compound output differs from a fresh build');
 	}
 }

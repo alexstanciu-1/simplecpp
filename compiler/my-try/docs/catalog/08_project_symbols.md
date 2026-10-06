@@ -15,8 +15,9 @@ The [multi-file output and incremental-build roadmap](../planning/incremental_cp
 records the agreed direction, ownership boundaries, staged work and runtime-PCH
 requirements. Start with stable identities, explicit entry selection and cross-file
 functions; preserve narrow declarations and separate implementation units. Namespace
-and import groups follow on the same output architecture. Implementation has not
-started; the output-consumer migration gate is called out in the roadmap.
+and import groups follow on the same output architecture. The output-consumer
+migration is approved. The artifact-delivery foundation is implemented; actual
+multi-source lowering, entry selection and partitioning remain the next batch.
 
 ## Progress
 

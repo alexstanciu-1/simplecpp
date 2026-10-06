@@ -622,13 +622,13 @@ foreach ($cases as $name => [$source, $exit])
 	$compiler->prepare();
 	$compiler->cpp();
 	$path = $directory . '/' . $name . '.cpp';
-	file_put_contents($path, Model::$cpp_files[0]->text);
+	file_put_contents($path, CPP_Output::single_unit(Model::$cpp_files)->text);
 	$executions[] = ['path' => $path, 'exit_code' => $exit];
 	if (isset($value_fixtures[$name]))
 	{
 		$probe = "\tif (!(" . $value_fixtures[$name][1] . ")) { return 91; }\n";
 		$probe_path = $directory . '/' . $name . '_state.cpp';
-		$probe_text = str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text);
+		$probe_text = str_replace("\treturn 0;", $probe . "\treturn 0;", CPP_Output::single_unit(Model::$cpp_files)->text);
 		if (isset($read_fixtures[$name])) {
 			$probe_text = "#include \"scpp/data_initializer.hpp\"\n#include \"scpp/memory.hpp\"\n" . $probe_text;
 		}
@@ -642,21 +642,21 @@ foreach ($cases as $name => [$source, $exit])
 	if ($name === 'nullable_explicit_string') {
 		$probe_path = $directory . '/' . $name . '_value.cpp';
 		file_put_contents($probe_path, str_replace("\treturn static_cast<int>",
-			"\tif (!local_y.native_value().empty()) { return 91; }\n\treturn static_cast<int>", Model::$cpp_files[0]->text));
+			"\tif (!local_y.native_value().empty()) { return 91; }\n\treturn static_cast<int>", CPP_Output::single_unit(Model::$cpp_files)->text));
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 	if (isset($variadic_probes[$name])) {
 		$probe = "\tif (!(" . $variadic_probes[$name] . ")) { return 201; }\n";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
-		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", Model::$cpp_files[0]->text);
-		if ($probe_text === Model::$cpp_files[0]->text) { throw new \LogicException('Variadic value probe missed entry return'); }
+		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", CPP_Output::single_unit(Model::$cpp_files)->text);
+		if ($probe_text === CPP_Output::single_unit(Model::$cpp_files)->text) { throw new \LogicException('Variadic value probe missed entry return'); }
 		file_put_contents($probe_path, $probe_text);
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 	if (isset($ownership_parameters[$name])) {
 		$probe = 'static_assert(std::is_same_v<decltype(&function_value), scpp::string_t (*)(' . $ownership_parameters[$name] . ')>);';
 		$probe_path = $directory . '/' . $name . '_type.cpp';
-		file_put_contents($probe_path, "#include <type_traits>\n" . Model::$cpp_files[0]->text . "\n" . $probe . "\n");
+		file_put_contents($probe_path, "#include <type_traits>\n" . CPP_Output::single_unit(Model::$cpp_files)->text . "\n" . $probe . "\n");
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 	// Verify actual member representation, not merely that small integer values survive.
@@ -664,19 +664,19 @@ foreach ($cases as $name => [$source, $exit])
 		$alias = substr($name, strlen('field_'));
 		$native = $alias === 'byte' ? 'uint8' : $alias;
 		$probe = 'static_assert(std::is_same_v<decltype(record_Item{}.field_value), scpp::int_t<std::' . $native . '_t>>);';
-		file_put_contents($path, Model::$cpp_files[0]->text . "\n" . $probe . "\n");
+		file_put_contents($path, CPP_Output::single_unit(Model::$cpp_files)->text . "\n" . $probe . "\n");
 	}
 
 	if (($name === 'bool_true') || ($name === 'bool_false')) {
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::bool_t>);\n";
 		$probe_path = $directory . '/' . $name . '_type.cpp';
-		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", Model::$cpp_files[0]->text);
+		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", CPP_Output::single_unit(Model::$cpp_files)->text);
 		file_put_contents($probe_path, $probe_text);
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
 
 	if (in_array($name, ['string_single', 'string_double', 'string_empty_single', 'string_empty_double'], true)) {
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		$expected_value = str_contains($name, 'empty') ? '' : 'x';
 		if (!str_contains($text, 'auto local_a = scpp::string_t("' . $expected_value . '");')) {
 			throw new \LogicException('String literal did not use its canonical C++ representation');
@@ -696,12 +696,12 @@ foreach ($cases as $name => [$source, $exit])
 		}
 		$probe = '	if (local_a.native_value() != std::string("' . $escaped . '", '
 			. strlen($expected) . ')) { return 91; }' . "\n";
-		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text));
+		file_put_contents($path, str_replace("\treturn 0;", $probe . "\treturn 0;", CPP_Output::single_unit(Model::$cpp_files)->text));
 	}
 
 	if ($name === 'constant_int_max')
 	{
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		$assignment = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
 		$constant = object_cast($assignment->value, constant_reference_node::class);
 		$facts = $constant->require_constant_reference_preparation();
@@ -717,7 +717,7 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'chain')
 	{
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		$outer = object_cast($syntax->root->body->statements[0]->expression, assignment_expression_node::class);
 		$inner = object_cast($outer->value, assignment_expression_node::class);
 		$outer_binding = $outer->require_assignment_preparation()->binding;
@@ -735,7 +735,7 @@ foreach ($cases as $name => [$source, $exit])
 		$expected = "\tauto local_c = static_cast<scpp::int_t<>>(4LL);\n"
 			. "\tauto local_b = local_c;\n"
 			. "\tauto local_a = local_b;\n";
-		if (!str_contains(Model::$cpp_files[0]->text, $expected)) {
+		if (!str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, $expected)) {
 			throw new \LogicException('Deep assignment chain was not flattened from the innermost write');
 		}
 	}
@@ -746,7 +746,7 @@ foreach ($cases as $name => [$source, $exit])
 		$inner = object_cast($outer->value, assignment_expression_node::class);
 		$outer_binding = $outer->require_assignment_preparation()->binding;
 		$inner_binding = $inner->require_assignment_preparation()->binding;
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (($inner_binding->resolved_kind !== binding_kind::declaration) ||
 			($outer_binding->resolved_kind !== binding_kind::assignment) ||
 			(weakref_get($outer_binding->declaration) !== weakref_get($inner_binding->declaration)) ||
@@ -757,12 +757,12 @@ foreach ($cases as $name => [$source, $exit])
 	}
 
 	if (($name === 'chain_conversion') &&
-		(!str_contains(Model::$cpp_files[0]->text, 'local_b = static_cast<scpp::int_t<std::uint8_t>>((static_cast<scpp::int_t<>>(257LL)).native_value());') ||
-		 !str_contains(Model::$cpp_files[0]->text, 'auto local_a = local_b;'))) {
+		(!str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'local_b = static_cast<scpp::int_t<std::uint8_t>>((static_cast<scpp::int_t<>>(257LL)).native_value());') ||
+		 !str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, 'auto local_a = local_b;'))) {
 		throw new \LogicException('Assignment chain copied the unconverted RHS instead of the stored inner value');
 	}
 
-	if (($name === 'chain_call_once') && (substr_count(Model::$cpp_files[0]->text, 'return function_value();') !== 1)) {
+	if (($name === 'chain_call_once') && (substr_count(CPP_Output::single_unit(Model::$cpp_files)->text, 'return function_value();') !== 1)) {
 		throw new \LogicException('Assignment chain evaluated its call RHS more than once');
 	}
 
@@ -770,7 +770,7 @@ foreach ($cases as $name => [$source, $exit])
 	{
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 			. "\tauto local_b = local_a;\n";
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (!str_contains($text, $expected) || str_contains($text, 'auto local_b = static_cast')) {
 			throw new \LogicException('VAR-CHAIN-002 lost sequential declaration order or direct copy lowering');
 		}
@@ -792,7 +792,7 @@ foreach ($cases as $name => [$source, $exit])
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 			. "\tauto local_b = local_a;\n"
 			. "\tauto local_c = local_b;\n";
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (($first_facts->binding->resolved_kind !== binding_kind::declaration) ||
 			($second_facts->binding->resolved_kind !== binding_kind::declaration) ||
 			($third_facts->binding->resolved_kind !== binding_kind::declaration) ||
@@ -820,7 +820,7 @@ foreach ($cases as $name => [$source, $exit])
 		$integer_type = Language_Types::integer(Model::$language_scope);
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 			. "\tauto local_b = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (($binary_facts->decision->operation !== operator_operation::integer_addition)
 			|| (!$binary_facts->type->matches($integer_type)) ||
 			$binary_facts->addressable() || (!$left->require_preparation()->type->matches($integer_type)) ||
@@ -843,7 +843,7 @@ foreach ($cases as $name => [$source, $exit])
 		$declaration = weakref_get($first_facts->binding->declaration);
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 			. "\tlocal_a = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (($first_facts->binding->resolved_kind !== binding_kind::declaration) ||
 			($second_facts->binding->resolved_kind !== binding_kind::assignment) ||
 			(weakref_get($second_facts->binding->declaration) !== $declaration) ||
@@ -870,7 +870,7 @@ foreach ($cases as $name => [$source, $exit])
 		$declaration = weakref_get($first_facts->binding->declaration);
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 			. "\tlocal_a = (local_a + local_a);\n";
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (($first_facts->binding->resolved_kind !== binding_kind::declaration) ||
 			($second_facts->binding->resolved_kind !== binding_kind::assignment) ||
 			(weakref_get($second_facts->binding->declaration) !== $declaration) ||
@@ -899,7 +899,7 @@ foreach ($cases as $name => [$source, $exit])
 		$local_identity = weakref_get($assignment_facts->binding->declaration);
 		$signature = 'void function_f(scpp::int_t<> local_int)';
 		$definition = $signature . "\n{\n\tauto local_while = local_int;\n}";
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (($function->name !== 'f') || ($function->occurrence()->name !== 'f') ||
 			($parameter->name !== 'int') || ($parameter->occurrence()->name !== 'int') ||
 			($target->name !== 'while') || ($target->occurrence()->name !== 'while') ||
@@ -915,7 +915,7 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'ident_var_001_prefix_collision')
 	{
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		$signature = 'void function_f(scpp::int_t<> local_int, scpp::int_t<> local_localU_int)';
 		$body = "\tauto local_while = local_int;\n\tauto local_localU_while = local_localU_int;\n";
 		if ((substr_count($text, $signature) !== 2) || !str_contains($text, $body)) {
@@ -930,7 +930,7 @@ foreach ($cases as $name => [$source, $exit])
 		$target = object_cast($assignment->target, variable_reference_node::class);
 		$source = object_cast($assignment->value, variable_reference_node::class);
 		$call = object_cast(object_cast($syntax->root->body->statements[0], return_node::class)->expression, call_node::class);
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		$signature = 'scpp::int_t<> function_U_f(scpp::int_t<> local_U_x, scpp::int_t<> local_UUU_x, '
 			. 'scpp::int_t<> local_aU_U_b, scpp::int_t<> local_aUUU_UUU_b)';
 		if (($function->name !== '_f') || ($call->name !== '_f') ||
@@ -947,7 +947,7 @@ foreach ($cases as $name => [$source, $exit])
 
 	if ($name === 'ident_record_escaping')
 	{
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (!str_contains($text, "struct record_U_BoxU_U_UU\n") ||
 			(substr_count($text, 'record_U_BoxU_U_UU local_value') !== 1) ||
 			!str_contains($text, 'scpp::int_t<std::int32_t> field_U_fieldU_U_UU;') ||
@@ -966,7 +966,7 @@ foreach ($cases as $name => [$source, $exit])
 		$entry_binding = $entry_assignment->require_assignment_preparation()->binding;
 		$parameter_identity = weakref_get($parameter->declaration);
 		$entry_identity = weakref_get($entry_binding->declaration);
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		$signature = 'scpp::int_t<> function_own(scpp::int_t<> local_x)';
 		if (($entry_binding->resolved_kind !== binding_kind::declaration) ||
 			($function_binding->resolved_kind !== binding_kind::assignment) ||
@@ -986,7 +986,7 @@ foreach ($cases as $name => [$source, $exit])
 	if (isset($explicit_declarations[$name]))
 	{
 		[$cpp_type, $cpp_name] = $explicit_declarations[$name];
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (!str_contains($text, $cpp_type . ' ' . $cpp_name . ' = ') || str_contains($text, 'auto ' . $cpp_name . ' = ')) {
 			throw new \LogicException('Explicit local declaration lost its canonical C++ type');
 		}
@@ -995,7 +995,7 @@ foreach ($cases as $name => [$source, $exit])
 	if (str_starts_with($name, 'float_form_'))
 	{
 		$spelling = $float_forms[(int) substr($name, strlen('float_form_'))];
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		if (!str_contains($text, 'static_cast<scpp::float_t>(' . $spelling . ')')) {
 			throw new \LogicException('Float literal spelling was rounded or changed');
 		}
@@ -1011,7 +1011,7 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
 		$probe .= "\tif (local_a.native_value() != " . $magnitude . "LL) { return 91; }\n";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
-		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", Model::$cpp_files[0]->text);
+		$probe_text = str_replace("\treturn static_cast<int>", $probe . "\treturn static_cast<int>", CPP_Output::single_unit(Model::$cpp_files)->text);
 		file_put_contents($probe_path, $probe_text);
 		$executions[] = ['path' => $probe_path, 'exit_code' => $exit];
 	}
@@ -1034,7 +1034,7 @@ foreach ($cases as $name => [$source, $exit])
 	{
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::int_t<>>);\n";
 		$probe .= "\tif (local_a.native_value() != " . $arithmetic_values[$name] . ") { return 91; }\n";
-		$text = Model::$cpp_files[0]->text;
+		$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 		$site = (($name === 'sub_maximum') || ($name === 'mul_wide') || ($name === 'unary_minimum') || ($name === 'unary_complement_limit') || ($name === 'mutation_maximum') || ($name === 'mutation_minimum') || ($name === 'bits_sign_bit')
 			|| ($name === 'bits_negative_left_63') || ($name === 'bits_compound_sign_bit')) ? "\treturn 0;" : "\treturn static_cast<int>";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
@@ -1050,7 +1050,7 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tstatic_assert(std::is_same_v<decltype(local_a), scpp::string_t>);\n";
 		$probe .= '	if (local_a.native_value() != "' . $concatenation_values[$name] . '") { return 91; }' . "\n";
 		$probe_path = $directory . '/' . $name . '_value.cpp';
-		file_put_contents($probe_path, str_replace("\treturn 0;", $probe . "\treturn 0;", Model::$cpp_files[0]->text));
+		file_put_contents($probe_path, str_replace("\treturn 0;", $probe . "\treturn 0;", CPP_Output::single_unit(Model::$cpp_files)->text));
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 
@@ -1069,7 +1069,7 @@ foreach ($cases as $name => [$source, $exit])
 			. ' catch (const scpp::runtime_error& error) { return error.code() == "' . $error_code
 			. '" && target.native_value() == 7 ? 0 : 91; } return 92; }';
 		$probe_path = $directory . '/' . $name . '_throw.cpp';
-		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', Model::$cpp_files[0]->text) . $probe);
+		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', CPP_Output::single_unit(Model::$cpp_files)->text) . $probe);
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 
@@ -1092,7 +1092,7 @@ int main() { try { (void)function_fail(); } catch (const scpp::runtime_error& er
 			. ' return error.code() == "' . $error_code . '" ? 0 : 91; } return 92; }
 ';
 		$probe_path = $directory . '/' . $name . '_throw.cpp';
-		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', Model::$cpp_files[0]->text) . $probe);
+		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', CPP_Output::single_unit(Model::$cpp_files)->text) . $probe);
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 
@@ -1250,7 +1250,7 @@ if (($source_binding->resolved_kind !== binding_kind::declaration) ||
 	throw new \LogicException('Variable copy lost source order, declaration identity or canonical type');
 }
 $compiler->cpp();
-$copy_output = Model::$cpp_files[0]->text;
+$copy_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 if ((substr_count($copy_output, 'auto local_a = local_b;') !== 1) || str_contains($copy_output, 'auto local_a = static_cast')) {
 	throw new \LogicException('Variable copy added a conversion or lost direct inferred declaration lowering');
 }
@@ -1331,7 +1331,7 @@ if (($declaration_facts->binding->resolved_kind !== binding_kind::declaration) |
 	throw new \LogicException('Reassignment lost declaration identity, outcome or canonical type');
 }
 $compiler->cpp();
-$reassignment_output = Model::$cpp_files[0]->text;
+$reassignment_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 $reassignment_spelling = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
 	. "\tlocal_a = static_cast<scpp::int_t<>>(2LL);\n";
 if (!str_contains($reassignment_output, $reassignment_spelling) ||
@@ -1349,7 +1349,7 @@ $syntax = s2s_parse('$a uint8 = 1; $b = 2; $a = $b; return $a;');
 $compiler = new Compiler();
 $compiler->prepare();
 $compiler->cpp();
-if (!str_contains(Model::$cpp_files[0]->text,
+if (!str_contains(CPP_Output::single_unit(Model::$cpp_files)->text,
 	'local_a = static_cast<scpp::int_t<std::uint8_t>>((local_b).native_value());')) {
 	throw new \LogicException('Reassignment omitted a required compatible-integer conversion');
 }
@@ -1408,7 +1408,7 @@ if (($declaration_facts->resolved_kind !== binding_kind::declaration) ||
 	throw new \LogicException('Explicit string local lost its prepared type or declaration identity');
 }
 $compiler->cpp();
-$typed_output = Model::$cpp_files[0]->text;
+$typed_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 $typed_spelling = "\tscpp::string_t local_x = scpp::string_t(\"test\");\n\tlocal_x = scpp::string_t(\"next\");\n";
 if (!str_contains($typed_output, $typed_spelling)) {
 	throw new \LogicException('Explicit string local did not retain typed declaration and ordinary reassignment lowering');
@@ -1571,7 +1571,7 @@ foreach ($string_nodes as $index => $string_node)
 	}
 }
 $compiler->cpp();
-$string_output = Model::$cpp_files[0]->text;
+$string_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 foreach (['scpp::string_t("x")', 'scpp::string_t("can\'t")', 'scpp::string_t("slash\\\\path")',
 	'scpp::string_t("\\\\n")', 'scpp::string_t("")', 'scpp::string_t(std::string("\\x00" "", 1))'] as $expected_spelling) {
 	if (!str_contains($string_output, $expected_spelling)) {
@@ -1611,7 +1611,7 @@ foreach ($syntax->collection->entries as $entry) {
 }
 $compiler->cpp();
 $expected = "#include \"scpp/bool_t.hpp\"\n\nint main()\n{\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
-if (Model::$cpp_files[0]->text !== $expected) {
+if (CPP_Output::single_unit(Model::$cpp_files)->text !== $expected) {
 	throw new \LogicException('Unexpected boolean C++ representation or includes');
 }
 Compiler_Lifecycle::reset_cpp();
@@ -1666,7 +1666,7 @@ if (!Model::$cpp_files->is_empty()) {
 	throw new \LogicException('Preparation emitted C++ output');
 }
 $compiler->cpp();
-$output = Model::$cpp_files[0];
+$output = CPP_Output::single_unit(Model::$cpp_files);
 Compiler_Lifecycle::reset_cpp();
 if (($first_data->require_assignment_preparation() !== $binding_facts) || (Model::$prepared_files[0] !== $completion) || !Model::$cpp_files->is_empty()) {
 	throw new \LogicException('Output reset changed shared preparation');
@@ -1688,7 +1688,7 @@ if ((!$failed) || ($first_data->preparation() !== $binding_facts) || ($first_lit
 }
 $first_literal_data->require_integer_literal_preparation()->type = $valid_integer_type;
 $compiler->cpp();
-if (Model::$cpp_files[0]->text !== $output->text) {
+if (CPP_Output::single_unit(Model::$cpp_files)->text !== $output->text) {
 	throw new \LogicException('Emission retry changed output');
 }
 $compiler->prepare();

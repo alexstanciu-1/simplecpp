@@ -120,11 +120,11 @@ try
 		|| (Model::tokens()[0]->text_at($expression->operator_token_index) !== 'xor')) {
 		throw new \LogicException('Compaction lost retained logical syntax');
 	}
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	if (Model::$cpp_files[0]->text !== $incremental) {
+	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 		throw new \LogicException('Incremental logical output differs from fresh output');
 	}
 	file_put_contents($path, str_replace('($a = false)', '($missing = false)', $source));
@@ -140,7 +140,7 @@ try
 	}
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
-	if (Model::$cpp_files[0]->text !== $incremental) {
+	if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 		throw new \LogicException('Logical recovery did not restore fresh output');
 	}
 }

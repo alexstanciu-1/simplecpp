@@ -66,7 +66,7 @@ Source_Registry::add($input_module, $source);
 Model::$modules->add($input_module->name, $input_module);
 $compiler = new Compiler();
 $compiler->exec_cpp();
-$original_cpp = Model::$cpp_files[0]->text;
+$original_cpp = CPP_Output::single_unit(Model::$cpp_files)->text;
 $function = Model::$global_scope->functions_named('inspect')[0]->syntax();
 $body = $function->body;
 $parameters = $function->require_preparation()->parameters;
@@ -161,6 +161,6 @@ $new_parameter = $function->require_preparation()->parameters[0];
 reference_check($new_parameter !== $old_parameter
 	&& $old_selection->require_preparation()->place->root_storage() === $new_parameter,
 	'Re-preparation retained a retired storage origin');
-reference_check(Model::$cpp_files[0]->text === $original_cpp, 'Storage provenance changed value/reference lowering');
+reference_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original_cpp, 'Storage provenance changed value/reference lowering');
 
 echo "Reference model: stable places, root identity, contract validation, execution gate and cleanup passed\n";

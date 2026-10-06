@@ -141,7 +141,7 @@ $facts = $write->require_write_preparation();
 if (!($facts instanceof prepared_index_assignment) || $facts->addressable()
 	|| !$facts->destination_type()->matches(Language_Types::integer(Model::$language_scope))
 	|| $facts->decision->operation !== operator_operation::index_append
-	|| str_contains(Model::$cpp_files[0]->text, '([&]()')) {
+	|| str_contains(CPP_Output::single_unit(Model::$cpp_files)->text, '([&]()')) {
 	throw new \LogicException('Statement append lost operation facts or introduced an unused value lambda');
 }
 Preparation_Cleanup::tree($write);
@@ -204,7 +204,7 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$expected = Model::$cpp_files[0]->text;
+	$expected = CPP_Output::single_unit(Model::$cpp_files)->text;
 	foreach (['return $s[];', 'return $s[0];'] as $use)
 	{
 		file_put_contents($path, '$s = "abc"; ' . $use);
@@ -220,7 +220,7 @@ try
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		if (Model::$cpp_files[0]->text !== $expected) {
+		if (CPP_Output::single_unit(Model::$cpp_files)->text !== $expected) {
 			throw new \LogicException('Bracket failure recovery changed valid output');
 		}
 	}
@@ -244,12 +244,12 @@ try
 	}
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$fresh = new Compiler();
 	$fresh->init([$directory]);
 	$fresh->exec_cpp();
-	if ($incremental !== Model::$cpp_files[0]->text) {
+	if ($incremental !== CPP_Output::single_unit(Model::$cpp_files)->text) {
 		throw new \LogicException('Recovered read differs from fresh output');
 	}
 	$source = 'function put(vector<vector<int>> &$v): void { $v[0][] = 1; } return 0;';
@@ -272,12 +272,12 @@ try
 	}
 	file_put_contents($path, $source);
 	$fresh->update_cpp([$path]);
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Compiler_Lifecycle::reset();
 	$recovered = new Compiler();
 	$recovered->init([$directory]);
 	$recovered->exec_cpp();
-	if ($incremental !== Model::$cpp_files[0]->text) {
+	if ($incremental !== CPP_Output::single_unit(Model::$cpp_files)->text) {
 		throw new \LogicException('Recovered append differs from fresh output');
 	}
 }

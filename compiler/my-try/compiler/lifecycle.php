@@ -200,7 +200,7 @@ final class Compiler_Lifecycle
 		if (self::$syntax_initialized) {
 			CPP_Generator::discard_deleted(Model::$cpp_output_program);
 		}
-		Model::$cpp_files = new Storage /** Storage<cpp_module> */();
+		Model::$cpp_files = new Storage /** Storage<cpp_artifact> */();
 	}
 
 	public static function reset_llvm(): void

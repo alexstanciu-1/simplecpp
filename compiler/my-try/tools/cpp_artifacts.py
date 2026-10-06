@@ -1,0 +1,63 @@
+"""Versioned C++ artifact transport shared by host and native fixture consumers."""
+import json
+from pathlib import Path, PurePosixPath
+import re
+
+
+def decode_artifacts(payload):
+    """Validate the complete bundle before allowing any filesystem publication."""
+    bundle = json.loads(payload)
+    if not isinstance(bundle, dict) or bundle.get('format') != 'scpp-cpp-artifacts-v1':
+        raise ValueError('Unsupported C++ artifact format')
+    artifacts = bundle.get('artifacts')
+    if not isinstance(artifacts, list) or not artifacts:
+        raise ValueError('Expected nonempty C++ artifacts')
+    identities, paths = set(), set()
+    for artifact in artifacts:
+        if not isinstance(artifact, dict):
+            raise ValueError('Expected a C++ artifact record')
+        if any(not isinstance(artifact.get(key), str) for key in ('id', 'kind', 'path', 'text')):
+            raise ValueError('C++ artifact fields must be strings')
+        identity, path = artifact['id'], artifact['path']
+        parts = path.split('/')
+        if (not identity or identity in identities or path in paths
+                or any(part in ('', '.', '..') for part in parts)
+                or not re.fullmatch(r'[A-Za-z0-9_./-]+', path)):
+            raise ValueError('Duplicate identity/path or unsafe C++ artifact path')
+        if artifact['kind'] not in ('header', 'translation_unit'):
+            raise ValueError('Unsupported C++ artifact kind')
+        suffix = PurePosixPath(path).suffix
+        if suffix != ('.hpp' if artifact['kind'] == 'header' else '.cpp'):
+            raise ValueError('C++ artifact kind/path mismatch')
+        identities.add(identity)
+        paths.add(path)
+    # A file may not also be a parent directory of another file.
+    for path in paths:
+        if any(str(parent) in paths for parent in PurePosixPath(path).parents):
+            raise ValueError('Conflicting C++ artifact paths')
+    if not any(artifact['kind'] == 'translation_unit' for artifact in artifacts):
+        raise ValueError('C++ bundle has no translation units')
+    return artifacts
+
+
+def single_unit_text(payload):
+    """Guard legacy source-instrumentation probes; never silently discard files."""
+    artifacts = decode_artifacts(payload)
+    if len(artifacts) != 1 or artifacts[0]['kind'] != 'translation_unit':
+        raise ValueError('Single-unit probe cannot consume a partitioned C++ bundle')
+    return artifacts[0]['text']
+
+
+def materialize_artifacts(payload, directory):
+    """Write all artifacts into a fresh private fixture directory, not a project cache."""
+    artifacts = decode_artifacts(payload)
+    root = Path(directory).resolve()
+    root.mkdir(parents=True, exist_ok=False)
+    sources = []
+    for artifact in artifacts:
+        path = root / artifact['path']
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(artifact['text'].encode('utf-8'))
+        if artifact['kind'] == 'translation_unit':
+            sources.append(path)
+    return sources

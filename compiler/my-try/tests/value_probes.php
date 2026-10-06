@@ -20,7 +20,7 @@ try {
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = Model::$cpp_files[0]->text;
+	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$statements = Model::syntax_files()[0]->root->body->statements;
 	foreach ([0 => value_probe_kind::isset, 1 => value_probe_kind::empty] as $index => $kind) {
 		$probe = $statements[$index]->initializer;
@@ -42,12 +42,12 @@ try {
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	probe_check(Model::$cpp_files[0]->text === $original, 'Probe repair changed output');
+	probe_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Probe repair changed output');
 	Compiler_Lifecycle::reset();
 	$clean = new Compiler();
 	$clean->init([$directory]);
 	$clean->exec_cpp();
-	probe_check(Model::$cpp_files[0]->text === $original, 'Clean and incremental probe output differ');
+	probe_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean and incremental probe output differ');
 	$root = Model::syntax_files()[0]->root;
 	$probe = $root->body->statements[0]->initializer;
 	Preparation_Cleanup::tree($root);
@@ -86,7 +86,7 @@ try {
 	probe_check($failed && Model::$cpp_files->is_empty() && $removal->preparation() === null, 'Invalid unset target retained output/facts');
 	file_put_contents($path, $nested);
 	$compiler->update_cpp([$path]);
-	$incremental = Model::$cpp_files[0]->text;
+	$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 	Token_Cleanup::file(Model::syntax_files()[0]);
 	probe_check(Model::syntax_files()[0]->tokens->text_at($removal->start_token()) === 'unset', 'Unset span lost after compaction');
 	Preparation_Cleanup::tree($body);
@@ -96,7 +96,7 @@ try {
 	$clean = new Compiler();
 	$clean->init([$directory]);
 	$clean->exec_cpp();
-	probe_check($incremental === Model::$cpp_files[0]->text, 'Keyed clean/incremental recovery differs');
+	probe_check($incremental === CPP_Output::single_unit(Model::$cpp_files)->text, 'Keyed clean/incremental recovery differs');
 	foreach (['unset();', 'unset($v[0], $v[1]);'] as $bad) {
 		file_put_contents($path, '$v mixed = {}; ' . $bad);
 		Compiler_Lifecycle::reset();

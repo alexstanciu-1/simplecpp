@@ -14,7 +14,7 @@ final class CPP_Generator
 	}
 
 	/** Assemble output without acknowledging shared changes; publication belongs to the caller. */
-	public function generate(prepared_file $prepared): cpp_module
+	public function generate(prepared_file $prepared): Storage /** Storage<cpp_artifact> */
 	{
 		$source = $prepared->source;
 		$ordered /** Storage<preparation_owner> */ = new Storage();
@@ -100,9 +100,8 @@ final class CPP_Generator
 		}
 		$text .= $context->records . $context->prototypes . $context->functions;
 		$text .= "\nint main()\n{\n" . $entry_text . "\treturn 0;\n}\n";
-		$result = new cpp_module();
-		$result->file_name = 'main.cpp';
-		$result->text = $text;
+		$result /** Storage<cpp_artifact> */ = new Storage();
+		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'main.cpp', $text));
 		return $result;
 	}
 

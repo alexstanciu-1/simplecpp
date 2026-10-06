@@ -60,7 +60,7 @@ try
 		. 'function read(): bool { $v = 0; return take($v) = source(); } '
 		. 'function stable(): int { return 9; } $ok = read();';
 	$compiler = take_source($path, $valid);
-	$original = Model::$cpp_files[0]->text;
+	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
 	file_put_contents($path, str_replace('?int { return 3;', '?float { return 3.5;', $valid));
@@ -75,9 +75,9 @@ try
 	}
 	file_put_contents($path, $valid);
 	$compiler->update_cpp([$path]);
-	take_check(Model::$cpp_files[0]->text === $original, 'Take repair changed output');
+	take_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Take repair changed output');
 	take_source($path, $valid);
-	take_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental take differ');
+	take_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental take differ');
 	echo "take: PASS\n";
 }
 finally

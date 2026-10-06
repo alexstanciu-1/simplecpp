@@ -62,11 +62,11 @@ foreach ([['return 8 << 1;', 'return 8 >> 1;', 0],
 			|| (Model::tokens()[0]->operator_text_at($expression->operator_token_index) !== $expected)) {
 			throw new \LogicException('Compaction lost a retained shift spelling');
 		}
-		$incremental = Model::$cpp_files[0]->text;
+		$incremental = CPP_Output::single_unit(Model::$cpp_files)->text;
 		Compiler_Lifecycle::reset();
 		$compiler->init([$directory]);
 		$compiler->exec_cpp();
-		if (Model::$cpp_files[0]->text !== $incremental) {
+		if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 			throw new \LogicException('Incremental shift output differs from fresh output');
 		}
 		if ($slot === 0)
@@ -84,7 +84,7 @@ foreach ([['return 8 << 1;', 'return 8 >> 1;', 0],
 			}
 			file_put_contents($path, $changed);
 			$compiler->update_cpp([$path]);
-			if (Model::$cpp_files[0]->text !== $incremental) {
+			if (CPP_Output::single_unit(Model::$cpp_files)->text !== $incremental) {
 				throw new \LogicException('Shift recovery did not restore fresh output');
 			}
 		}

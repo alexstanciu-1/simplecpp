@@ -37,7 +37,7 @@ if (($identity_declaration === null) || ($identity_declaration->operation !== co
 	|| (!$integer_assignment->result_type->matches($integer_assignment->target_type))) {
 	throw new \LogicException('Assignment conversion decisions were not attached to their prepared consumers');
 }
-$text = Model::$cpp_files[0]->text;
+$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 if (!str_contains($text, 'scpp::int_t<std::uint8_t> local_b = static_cast<scpp::int_t<std::uint8_t>>')
 	|| !str_contains($text, "\tlocal_a = local_a;\n")
 	|| !str_contains($text, 'local_b = static_cast<scpp::int_t<std::uint8_t>>((local_a).native_value());')) {
@@ -81,7 +81,7 @@ if (($return_decision->context !== conversion_context::return_value)
 	|| ($argument_decision->operation !== conversion_operation::integer_value_cast)) {
 	throw new \LogicException('Call or return conversion did not retain its prepared context and operation');
 }
-$text = Model::$cpp_files[0]->text;
+$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 if (!str_contains($text, 'return static_cast<scpp::int_t<std::uint8_t>>((local_value).native_value());')
 	|| !str_contains($text, 'scpp::int_t<std::int32_t> argument_0 = static_cast<scpp::int_t<std::int32_t>>((local_source).native_value());')) {
 	throw new \LogicException('Call or return lowering did not consume its prepared conversion decision');
@@ -146,7 +146,7 @@ if ($fixed_cast->require_cast_preparation()->conversion->operation
 	throw new \LogicException('Registered fixed-width integer cast target was not resolved generically');
 }
 $runtime_casts++;
-$text = Model::$cpp_files[0]->text;
+$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 if (($runtime_casts !== 13) || (substr_count($text, 'scpp::cast<') !== $runtime_casts)
 	|| (substr_count($text, '#include "scpp/cast.hpp"') !== 1)) {
 	throw new \LogicException('Scalar cast emission did not match prepared identity/runtime decisions');
@@ -171,7 +171,7 @@ if (!($value_cast->operand instanceof call_node) || !($sum->left instanceof cast
 	|| ($inner_cast->require_cast_preparation()->conversion->operation !== conversion_operation::explicit_runtime_cast)) {
 	throw new \LogicException('Explicit cast operand, nesting or binary precedence changed');
 }
-$text = Model::$cpp_files[0]->text;
+$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 if ((substr_count($text, 'return function_source();') !== 1)
 	|| !str_contains($text, 'scpp::cast<scpp::string_t>(scpp::cast<scpp::float_t>(local_value))')
 	|| !str_contains($text, '(scpp::cast<scpp::int_t<>>(static_cast<scpp::float_t>(2.5)) + static_cast<scpp::int_t<>>(1LL))')) {
@@ -229,7 +229,7 @@ if (!($field_cast->operand instanceof field_access_node)
 		$alias_cast->require_cast_preparation()->conversion->target_type)) {
 	throw new \LogicException('Field operand or canonical alias identity lost its explicit-cast decision');
 }
-$text = Model::$cpp_files[0]->text;
+$text = CPP_Output::single_unit(Model::$cpp_files)->text;
 if (!str_contains($text, 'scpp::cast<scpp::int_t<>>((local_box).field_value)')
 	|| !str_contains($text, 'auto local_same = local_alias;')) {
 	throw new \LogicException('Field cast or alias identity did not retain decision-driven C++ emission');

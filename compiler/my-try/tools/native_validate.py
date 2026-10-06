@@ -14,6 +14,7 @@ import time
 
 from test_runner import CommandRunner, DEFAULT_JOBS, Task, positive_jobs, run_tasks
 from cpp_fixture import CppFixtureCompiler
+from cpp_artifacts import single_unit_text
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
@@ -237,7 +238,7 @@ def validate(args, target, results, logs, started, runner):
         native_output = run(name + '-s2s-native', [executable], cwd=folder)
         if native_output != host_output or native_output.startswith(b'ERROR\n'):
             raise RuntimeError(name + ': native S2S output differs from PHP or was rejected')
-        generated = native_output.decode()
+        generated = single_unit_text(native_output)
         if name.startswith('field_'):
             alias = name[len('field_'):]
             native_type = 'uint8' if alias == 'byte' else alias
@@ -290,7 +291,7 @@ def validate(args, target, results, logs, started, runner):
         (folder / 'request.txt').write_text('s2s:' + str(folder))
         host_output = run(name + '-host', ['php', '-r', php_code], cwd=folder)
         native_output = run(name + '-native', [executable], cwd=folder)
-        if native_output != host_output or native_output != Path(item['base_path']).read_bytes():
+        if native_output != host_output or single_unit_text(native_output).encode() != Path(item['base_path']).read_bytes():
             raise RuntimeError(name + ': native runtime-error probe base differs from PHP')
         validate_probe(item)
 

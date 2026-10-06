@@ -85,8 +85,8 @@ $modules /** Keyed_Storage<module> */ = Model::$modules;
 $modules->add($input_module->name, $input_module);
 $compiler = new Compiler();
 $compiler->exec_cpp();
-$outputs /** Storage<cpp_module> */ = Model::$cpp_files;
-$text = $outputs[0]->text;
+$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+$text = CPP_Output::single_unit($outputs)->text;
 dynamic_model_check(str_contains($text, 'scpp::mixed_t local_boxed;')
 	&& str_contains($text, 'scpp::dynamic_t<> local_objectU_table;'), 'Source declarations lost carrier bindings');
 if (isset($argv[1])) {

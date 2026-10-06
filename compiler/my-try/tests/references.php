@@ -22,7 +22,7 @@ function references_source(string $source): string
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
 	(new Compiler())->exec_cpp();
-	return Model::$cpp_files[0]->text;
+	return CPP_Output::single_unit(Model::$cpp_files)->text;
 }
 
 $cases = [
@@ -202,7 +202,7 @@ try
 	$compiler = new Compiler();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$original = Model::$cpp_files[0]->text;
+	$original = CPP_Output::single_unit(Model::$cpp_files)->text;
 	foreach ([str_replace('$a =& $x;', '$local = 2; $a =& $local;', $valid),
 		str_replace('return $x;', '', $valid),
 		str_replace('function &id', 'function id', $valid),
@@ -230,18 +230,18 @@ try
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);
-		references_check(Model::$cpp_files[0]->text === $original, 'Incremental reference recovery changed output');
+		references_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Incremental reference recovery changed output');
 	}
 	Compiler_Lifecycle::reset();
 	$clean = new Compiler();
 	$clean->init([$directory]);
 	$clean->exec_cpp();
-	references_check(Model::$cpp_files[0]->text === $original, 'Clean/incremental reference output differs');
+	references_check(CPP_Output::single_unit(Model::$cpp_files)->text === $original, 'Clean/incremental reference output differs');
 
 	$const_source = 'function read(const int &$x): int { return $x; } function forward(const int &$x): int { $a =& $x; return read($a); } $n = 7; return forward($n);';
 	file_put_contents($path, $const_source);
 	$clean->update_cpp([$path]);
-	$const_output = Model::$cpp_files[0]->text;
+	$const_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 	$forward = Model::$global_scope->functions_named('forward')[0]->syntax();
 	$forward_contract = $forward->require_preparation()->parameters[0]->contract;
 	$forward_alias = $forward->body->statements[0]->expression->require_assignment_preparation()->binding;
@@ -258,15 +258,15 @@ try
 	}
 	file_put_contents($path, $const_source);
 	$clean->update_cpp([$path]);
-	references_check(Model::$cpp_files[0]->text === $const_output, 'Const repair changed output');
+	references_check(CPP_Output::single_unit(Model::$cpp_files)->text === $const_output, 'Const repair changed output');
 	Compiler_Lifecycle::reset_preparation();
 	$clean->prepare();
 	$clean->cpp();
-	references_check(Model::$cpp_files[0]->text === $const_output, 'Const cleanup/reprepare changed output');
+	references_check(CPP_Output::single_unit(Model::$cpp_files)->text === $const_output, 'Const cleanup/reprepare changed output');
 	$mutable_source = str_replace('const int', 'int', $const_source);
 	file_put_contents($path, $mutable_source);
 	$clean->update_cpp([$path]);
-	$mutable_output = Model::$cpp_files[0]->text;
+	$mutable_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 	references_check($mutable_output !== $const_output, 'Const removal did not refresh output');
 	references_check($mutable_output === references_source($mutable_source), 'Const removal differs from fresh output');
 	references_check($const_output === references_source($const_source), 'Const output differs from fresh output');
@@ -278,7 +278,7 @@ try
 	$block_compiler = new Compiler();
 	$block_compiler->init([$directory]);
 	$block_compiler->exec_cpp();
-	$block_output = Model::$cpp_files[0]->text;
+	$block_output = CPP_Output::single_unit(Model::$cpp_files)->text;
 	foreach ([str_replace('$a =& $n', '$a =& 1', $block_source),
 		str_replace('return $n', 'return $a', $block_source)] as $invalid)
 	{
@@ -291,12 +291,12 @@ try
 		}
 		file_put_contents($path, $block_source);
 		$block_compiler->update_cpp([$path]);
-		references_check(Model::$cpp_files[0]->text === $block_output, 'Block alias recovery changed output');
+		references_check(CPP_Output::single_unit(Model::$cpp_files)->text === $block_output, 'Block alias recovery changed output');
 	}
 	Compiler_Lifecycle::reset_preparation();
 	$block_compiler->prepare();
 	$block_compiler->cpp();
-	references_check(Model::$cpp_files[0]->text === $block_output, 'Block alias cleanup changed output');
+	references_check(CPP_Output::single_unit(Model::$cpp_files)->text === $block_output, 'Block alias cleanup changed output');
 	references_check($block_output === references_source($block_source), 'Block alias incremental/fresh output differs');
 }
 finally {
