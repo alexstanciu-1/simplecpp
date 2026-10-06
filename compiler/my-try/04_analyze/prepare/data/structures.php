@@ -497,9 +497,8 @@ final class preparation_context
 	public bool $statement_assignment = false;
 	/** Body aliases use lexical scope; loop-header alias declarations remain gated. */
 	public bool $alias_declarations_allowed = true;
-	/** Transient reference-return obligation; neither field is retained on facts. */
+	/** Transient whole-parameter origin obligation shared by every return. */
 	public ?prepared_parameter $reference_return_parameter = null;
-	public ?return_node $reference_return_statement = null;
 	public canonical_type_use $integer;
 	public canonical_type_use $boolean;
 	public canonical_type_use $floating;

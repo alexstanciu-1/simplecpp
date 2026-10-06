@@ -33,8 +33,9 @@ to the same runtime object; it neither adds exclusive borrowing nor deep freezin
 
 Alias declaration facts share the original place in `alias_target`, never the target
 expression or another syntax edge. Reference-return facts similarly share the verified
-place. Transient body contexts hold the expected reference parameter and sole permitted
-return statement; neither is copied into callable contracts. Local aliases require
+place. Transient body contexts hold the expected reference parameter for every return;
+the statement-position gate is removed. Completion analysis independently rejects
+fallthrough. The parameter fact is not copied into callable contracts. Local aliases require
 earlier visible storage and cannot rebind or escape their lexical owner. Calls preserve
 the supplying argument's place, not a new lambda-local or callee-parameter lifetime.
 

@@ -100,7 +100,7 @@ final class Reference_Preparation
 		$signature->reference_return = new reference_return_contract($selected);
 	}
 
-	/** Every return is visited normally; only this final top-level statement may fulfil the obligation. */
+	/** Every return shares one declaration-owned origin; ordinary completion checks fallthrough. */
 	public static function begin_body(function_node $syntax, preparation_context $context): void
 	{
 		$facts = $syntax->require_preparation();
@@ -110,23 +110,11 @@ final class Reference_Preparation
 		$contract /** reference_return_contract */ = $facts->signature->reference_return;
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$context->reference_return_parameter = $parameters[$contract->parameter_index()];
-		$statements /** Storage<statement_node> */ = $syntax->body->statements;
-		if ($statements->is_empty()) {
-			throw new \RuntimeException('S2S reference return requires one final unconditional return');
-		}
-		$last = $statements[q_count($statements) - 1];
-		if (!($last instanceof return_node)) {
-			throw new \RuntimeException('S2S reference return requires one final unconditional return');
-		}
-		$context->reference_return_statement = object_cast($last, return_node::class);
 	}
 
 	/** Returning a local alias is safe only when its entire selected place is the borrowed parameter. */
 	public static function prepare_return(return_node $syntax, preparation_context $context): prepared_return
 	{
-		if ($syntax !== $context->reference_return_statement) {
-			throw new \RuntimeException('S2S reference return requires one final unconditional return');
-		}
 		if ($syntax->expression === null) {
 			throw new \RuntimeException('S2S reference return requires the whole reference parameter');
 		}

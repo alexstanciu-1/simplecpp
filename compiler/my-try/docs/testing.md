@@ -56,6 +56,9 @@ write rejection and access-only signature-change recovery.
 Block-local coverage includes branches, loop bodies, switch groups, typed shadowing,
 const propagation, scope-escape rejection and failed-edit/cleanup recovery. Ordinary
 foreach value-local aliases do not enable reference foreach.
+Same-origin return coverage includes early/exhaustive branches, loop/switch returns,
+forwarding, unreachable-return validation, missing-return rejection and incremental
+origin/completion failure recovery.
 `--php-only` skips C++ execution.
 Neither mode rebuilds the compiler itself natively.
 

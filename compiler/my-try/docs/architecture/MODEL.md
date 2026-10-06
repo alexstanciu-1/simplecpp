@@ -93,11 +93,12 @@ An optional `reference_return_contract` identifies a whole reference parameter b
 its immutable index; absence denotes a value return. Structural validation requires
 an exact-type fixed reference parameter. This is a symbolic contract, not a source
 body proof or a caller lifetime. Signature comparison includes it. Source signatures
-derive it from exactly one fixed reference parameter; body preparation verifies the
-whole-parameter return independently. Calls substitute the actual argument's place.
+derive it from exactly one fixed reference parameter; body preparation verifies each
+return against that whole parameter independently of statement position. Structured
+completion checks missing returns. Calls substitute the actual argument's place.
 Runtime reference-return execution remains gated; initialization factories require
 value returns. Nonrecursive forwarding reuses the same argument-place substitution
-and final whole-parameter return proof, including local aliases.
+and per-return whole-parameter proof, including local aliases.
 
 After all bodies settle, `Reference_Cycles` builds an invocation-local graph from
 current collected function/call indexes and prepared call targets. Its transient

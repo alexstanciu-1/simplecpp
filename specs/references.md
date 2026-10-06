@@ -88,7 +88,7 @@ function &get_inner(array &$arr): array {
 }
 ```
 
-### 7. By-reference returns with multiple return statements
+### 7. By-reference returns selecting different origins
 ```php
 function &pick(bool $cond, int &$a, int &$b): int {
     if ($cond) {
@@ -146,8 +146,10 @@ dynamic value that shares a container payload.
 
 Initial reference-returning functions require an explicit return type matching
 exactly one fixed reference parameter; other by-value parameters are permitted.
-Their only return statement must be the final unconditional statement of the
-function body. It must select that whole parameter, directly or through local aliases:
+Every return statement must select that same whole parameter, directly, through
+local aliases or supported forwarding. Multiple returns in branches, loops and
+switch groups are allowed; ordinary completion analysis rejects possible function
+fallthrough. Unreachable returns are validated too:
 
 ```php
 function &identity(int &$value): int {

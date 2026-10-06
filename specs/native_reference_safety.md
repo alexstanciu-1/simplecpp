@@ -72,9 +72,27 @@ the target's lifetime. Leaving a scope (including break/continue) ends the alias
 not the target's lifetime. Existing container-interior and escaping-reference
 rejections remain in force.
 
-Loop-header alias declarations, reference foreach and broader reference-return
-control flow remain outside this slice. An alias to an ordinary foreach value local
+Loop-header alias declarations and reference foreach remain outside this slice.
+An alias to an ordinary foreach value local
 aliases that copied local, not the source container element.
+
+## v0.2 same-origin reference returns — 2026-10-06
+
+A reference-returning function may contain multiple returns, including within
+conditional arms, loops and switch groups. It still requires exactly one fixed
+reference parameter of the declared return storage type. Every return must select
+that whole parameter, directly, through a stable local alias or through supported
+nonrecursive reference-return forwarding. An alias declared inside a branch may be
+returned when its storage origin is that parameter: the local alias name ends at
+the block boundary, but the caller-owned target remains alive.
+
+Ordinary structured completion analysis rejects possible fallthrough without a
+return; it does not prove arbitrary conditions or loop termination. All return
+expressions are checked, including unreachable ones. Locals, by-value parameters,
+temporary values and field/container interiors cannot supply an escaping reference.
+Different return origins, recursive reference returns and const-reference returns
+remain deferred. This changes neither reference-argument eligibility nor lifetime
+at the call site, and introduces no hidden copy or runtime lifetime check.
 
 ## v0.2 explicit read-only reference parameters — 2026-10-06
 

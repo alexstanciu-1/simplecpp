@@ -26,6 +26,12 @@ function references_source(string $source): string
 }
 
 $cases = [
+	'branch_returns' => 'function &adjust(int &$x, bool $inc): int { if ($inc) { $a =& $x; $a++; return $a; } return $x; } $n = 1; $a =& adjust($n, true); $a += 2; $b =& adjust($n, false); $b++; if ($n !== 5) { return 1; } return 0;',
+	'exhaustive_returns' => 'function &pick(int &$x, int $kind): int { if ($kind === 0) { return $x; } elseif ($kind === 1) { $a =& $x; return $a; } else { return $x; } } $n = 0; for ($i = 0; $i < 3; $i++) { $a =& pick($n, $i); $a++; } if ($n !== 3) { return 1; } return 0;',
+	'loop_returns' => 'function &find(int &$x, bool $run): int { while ($run) { $a =& $x; return $a; } return $x; } function &once(int &$x): int { do { return $x; } while (false); } $n = 1; $a =& find($n, true); $a++; $b =& find($n, false); $b++; $c =& once($n); $c++; if ($n !== 4) { return 1; } return 0;',
+	'switch_returns' => 'function &select(int &$x, int $kind): int { switch ($kind) { case 0: case 1: $a =& $x; return $a; default: return $x; } } $n = 0; for ($i = 0; $i < 3; $i++) { $a =& select($n, $i); $a++; } if ($n !== 3) { return 1; } return 0;',
+	'branch_forward_returns' => 'function &id(int &$x): int { return $x; } function &forward(int &$x, bool $first): int { if ($first) { $a =& id($x); return $a; } return id($x); } $n = 0; $a =& forward($n, true); $a++; $b =& forward($n, false); $b++; if ($n !== 2) { return 1; } return 0;',
+	'return_before_dead_code' => 'function &id(int &$x): int { return $x; $x = 99; } $n = 1; $a =& id($n); $a++; if ($n !== 2) { return 1; } return 0;',
 	'branch_alias' => '$x = 1; $y = 10; if (true) { $a int =& $x; $b =& $a; $b += 2; } elseif (false) { $a =& $y; $a = 99; } else { $a =& $y; $a = 100; } if (false) { $a =& $x; $a = 99; } elseif (true) { $a =& $y; $a += 3; } else { $a =& $x; $a = 100; } if (false) {} else { $local = 4; $a =& $local; $a++; $y += $a; } if ($x !== 3 || $y !== 18) { return 1; } return 0;',
 	'loop_alias' => '$n = 0; $i = 0; while ($i < 4) { $a =& $n; $i++; if ($i === 2) { continue; } $a += $i; if ($i === 3) { break; } } if ($n !== 4) { return 1; } do { $a =& $n; $a++; } while ($n < 6); for ($j = 0; $j < 3; $j++) { $a int =& $n; $local = $j; $b =& $local; $b++; $a += $b; } if ($n !== 12) { return 2; } return 0;',
 	'foreach_local_alias' => '$items vector<int> = [1, 2, 3]; $sum = 0; foreach ($items as $item) { $a =& $item; $a += 10; $total =& $sum; $total += $a; } $first = $items[0]; if ($sum !== 36 || $first !== 1) { return 1; } return 0;',
@@ -142,8 +148,15 @@ $rejections = [
 	['struct B { int $n; } function &bad(B &$x): B { return $x->n; }', 'cannot escape'],
 	['function &bad(vector<int> &$x): vector<int> { return $x[0]; }', 'whole reference parameter'],
 	['function &bad(int &$x): int { $y = 1; $a =& $y; return $a; }', 'cannot escape'],
-	['function &bad(int &$x): int { if (true) { return $x; } return $x; }', 'one final unconditional'],
-	['function &bad(int &$x): int { return $x; $x = 2; }', 'one final unconditional'],
+	['function &bad(int &$x, bool $c): int { if ($c) { return $x; } }', 'reach the end'],
+	['function &bad(int &$x): int {}', 'reach the end'],
+	['function &bad(int &$x): int { while (false) { return $x; } }', 'reach the end'],
+	['function &bad(int &$x): int { switch ($x) { case 1: return $x; } }', 'reach the end'],
+	['function &bad(int &$x): int { if (true) { $local = 1; return $local; } return $x; }', 'cannot escape'],
+	['function &bad(int &$x, int $y): int { if (true) { return $y; } return $x; }', 'cannot escape'],
+	['function &bad(int &$x): int { if (true) { return 1; } return $x; }', 'whole reference parameter'],
+	['function &bad(int &$x): int { if (true) { return; } return $x; }', 'whole reference parameter'],
+	['function &bad(int &$x): int { return $x; $local = 1; return $local; }', 'cannot escape'],
 	['function &bad(int &$x): int { return; }', 'whole reference parameter'],
 	['function &id(int &$x): int { return $x; } $a =& id(1);', 'stable storage'],
 	['function &id(int &$x): int { return $x; } function &bad(int &$x): int { $local = 1; return id($local); }', 'cannot escape'],
@@ -183,7 +196,7 @@ mkdir($directory);
 $path = $directory . '/main.phs';
 try
 {
-	$valid = 'function &id(int &$x): int { $a =& $x; return $a; } $n = 1; $a =& id($n); $a = 7; return $n;';
+	$valid = 'function &id(int &$x): int { if (true) { $a =& $x; return $a; } return $x; } $n = 1; $a =& id($n); $a = 7; return $n;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler();
@@ -191,6 +204,7 @@ try
 	$compiler->exec_cpp();
 	$original = Model::$cpp_files[0]->text;
 	foreach ([str_replace('$a =& $x;', '$local = 2; $a =& $local;', $valid),
+		str_replace('return $x;', '', $valid),
 		str_replace('function &id', 'function id', $valid),
 		str_replace('$a =& $x;', '$a =& id($x);', $valid)] as $invalid)
 	{

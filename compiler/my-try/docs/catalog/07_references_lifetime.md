@@ -100,8 +100,9 @@ Plain blocks follow existing lexical lifetime and shadowing rules.
 
 Reference-returning signatures require exactly one fixed reference parameter of
 the exact return type. Other by-value parameters remain possible. Declaration work
-publishes the origin without inspecting a body; body work independently requires
-one final unconditional return of that whole parameter, directly or through aliases.
+publishes the origin without inspecting a body. This initial checkpoint required
+one final unconditional return; the same-origin checkpoint below now checks each
+return independently against that whole parameter, directly or through aliases.
 Every statement is checked, including unreachable returns. Successful preparation
 of the whole compilation remains required before emission. Body-only unsafe edits
 therefore withhold output even when the published signature remains unchanged.
@@ -477,14 +478,37 @@ Parsing, retained model and C++ lowering need no new representation or special p
 Sibling scopes may use the same alias name; explicit typed shadowing follows the
 existing rule. No alias escapes its block or appears in a loop condition/update.
 Ordinary foreach value-local aliases mutate the copy, not a container slot.
-Loop-header aliases, reference foreach, interior references and multiple-return
-reference functions remain deferred; this does not change mutation policy.
+At this checkpoint loop-header aliases, reference foreach, interior references and
+multiple-return reference functions remained deferred; the following checkpoint
+enables same-origin multiple returns. Neither slice changes mutation policy.
 
 Proof: `/tmp/my-try-block-alias-20261006-1` passed 12 PHP suites and 30 generated
 C++ executions. The reference suite contains 83 preparation rejections. Added
 failed-edit/no-change retry, repair, cleanup and fresh-output equality coverage,
 checked by `/tmp/my-try-block-alias-20261006-recovery` (PHP-only focused rerun).
 The compiler itself was not rebuilt natively in this slice.
+
+## Same-origin reference returns — 2026-10-06
+
+Removed the single-final-return statement gate. Every reference return now uses
+the existing whole-parameter provenance check; ordinary structured completion owns
+missing-return rejection. The transient context retains only the expected parameter,
+not a designated return node. No new retained origin model, parser path, C++ lowering
+or runtime check is needed.
+
+Early and exhaustive branches, loop returns, switch groups and nonrecursive
+forwarding may return the same parameter, including through body-local aliases.
+Unreachable statements remain validated. Exactly one fixed reference parameter is
+still required; different origins, recursion, const-reference returns and interior
+or temporary escapes remain excluded. General condition/termination proofs are
+not introduced.
+
+Proof: `/tmp/my-try-multi-ref-return-20261006-1` passes 12 focused PHP suites and
+36 generated C++ executions; the reference suite contains 90 rejection cases.
+`/tmp/my-try-multi-ref-return-20261006-recovery` reruns the PHP suites after extending
+body-only origin/fallthrough edits, no-change retries and repair/fresh equivalence.
+This is not a native compiler rebuild. CH07-WARN-01 and the other closeout debts
+remain open.
 
 ## Ownership-type validation debt from chapter 05
 
@@ -512,7 +536,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [FUNC-REF-001](#func-ref-001) | supported | `function f(int &$a): void {}` | prepared | verified | deferred | Existing call path plus references proof |
 | [FUNC-REF-002](#func-ref-002) | rejected-bounded | `function &f(): int {}` | rejects | no output | deferred | Requires exactly one reference parameter |
-| [FUNC-REF-003](#func-ref-003) | supported-with-debt | `function &f(int &$a): int { return $a; }` | prepared | verified | deferred | Whole-parameter lifetime proof; CH07-WARN-01 |
+| [FUNC-REF-003](#func-ref-003) | supported-with-debt | `function &f(int &$a): int { return $a; }` | prepared | verified | deferred | Same-origin multiple returns and completion proof; CH07-WARN-01 |
 | [FUNC-REF-004](#func-ref-004) | rejected | `function &f($a) { return $a; }` | explicit types required | no output | deferred | Existing signature grammar |
 | [VAR-UNSET-001](#var-unset-001) | supported-bounded | `$a ?int = 1; unset($a);` | prepared | verified | deferred | `tests/cleanup.php`; nullable owner only, alias/reference rejection |
 | [VAR-CLEAN-001](#var-clean-001) | supported-bounded | `$a int = 1; clean($a);` | prepared | verified | deferred | `tests/cleanup.php`; defined scalar/container/boxed resets |
