@@ -1,5 +1,7 @@
 #pragma once
 
+#include "output_files.hpp"
+
 #include "scpp/bool_t.hpp"
 #include "scpp/error_t.hpp"
 #include "scpp/hash_t.hpp"

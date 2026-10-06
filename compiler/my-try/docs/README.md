@@ -24,6 +24,7 @@ experiment retained for regressions, not a second semantic development path.
 | v0.2 early rejection versus runtime guards | [Preparation diagnostic policy](../../../specs/v0_2_preparation_diagnostics.md) |
 | Mandatory performance task once operational | [PCH findings, incremental builds and LLVM/IR investigation](planning/compile_performance.md) |
 | Chapter 08 implementation roadmap | [Multi-file artifacts, staged migration, incremental native builds and runtime PCH](planning/incremental_cpp_artifacts.md) |
+| Persistent generated output | [Coordinator publication, ownership, locking and recovery](architecture/output_publication.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
 | Value storage modifier semantics | [Registry normalization and AST spelling](../../../specs/type_use_modifiers.md) |
 | Active type-model discussion | [Type model direction](planning/types.md) |
@@ -58,7 +59,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [Chapter 08 partitioning and bounded dependency precision](catalog/08_project_symbols.md), [next: incremental publication](planning/incremental_cpp_artifacts.md), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
+| Current handoff | [Chapter 08 partitioning, dependencies and disk publication](catalog/08_project_symbols.md), [next: native objects and persistent runtime PCH](planning/incremental_cpp_artifacts.md), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
@@ -89,6 +90,7 @@ From the repository root:
 ```bash
 php compiler/my-try/main.php --s2s SOURCE_DIRECTORY
 php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --entry main.phs
+php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --entry main.phs --output /absolute/output
 php compiler/my-try/tests/tokenizer.php
 ```
 
@@ -103,6 +105,10 @@ logical names and `select_entry(module, path)`. Without a mode,
 `main.php` runs the legacy sample/debug report, including native sample execution.
 The browser accepts `mode=s2s&source=SOURCE_DIRECTORY&entry=main.phs`; the local Apache template
 is [tools/apache/scpp-my-try.conf](../tools/apache/scpp-my-try.conf).
+
+Optional CLI `--output` publishes content-aware disk artifacts through the
+[locked ownership/recovery protocol](architecture/output_publication.md), while
+still returning the JSON bundle. This does not build native objects or an executable.
 
 Focused PHP tests are the default. Some fixtures require an existing temporary
 output directory; inspect their entry before invoking them. The full runner

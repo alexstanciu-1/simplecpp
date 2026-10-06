@@ -133,7 +133,8 @@ Prioritize reduced native recompilation through modular output, stable names and
 precise dependencies. Single-source and multi-source programs share partitioned
 output: callable/type headers, per-source implementation groups and `entry.cpp`.
 Bare-record declaration/layout requirements are backend-owned; template payloads remain
-conservatively complete. Persistent publication and native/PCH caching remain in the
+conservatively complete. Content-aware publication is coordinator-owned; see its
+[locking/recovery protocol](docs/architecture/output_publication.md). Native/PCH caching remains in the
 [Chapter 08 roadmap](docs/planning/incremental_cpp_artifacts.md).
 Do not benchmark every spelling or promise devirtualization/layout gains without
 measurement. Preserve semantics, lifetime and diagnostics during optimization.

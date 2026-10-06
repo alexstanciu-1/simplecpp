@@ -1,6 +1,13 @@
 <?php
 namespace scpp\compiler;
 
+/** Hashes authorized by the committed manifest or an interrupted publication journal. */
+final class output_file_ownership
+{
+	public string $before = '';
+	public string $after = '';
+}
+
 enum work_state {
 	case queued;
 	case running;

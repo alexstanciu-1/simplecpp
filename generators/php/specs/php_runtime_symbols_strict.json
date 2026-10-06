@@ -1,5 +1,10 @@
 {
     "php_runtime_symbol_targets": {
+        "scpp_output_root": "fs::output_root",
+        "scpp_output_read": "fs::output_read",
+        "scpp_output_write": "fs::output_write",
+        "scpp_output_remove": "fs::output_remove",
+        "scpp_output_sha256": "fs::output_sha256",
         "count": "php::count",
         "empty": "php::empty",
         "expect_array_argument": "php::expect_array_argument",

@@ -1,4 +1,29 @@
 // Filesystem facade: ordinary observation failures become false for caller-owned diagnostics.
+// Output errors must remain errors, never be confused with absent/unchanged files.
+function scpp_portability_output_root(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, scpp_output_root($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_read(string $root, string $relative): nullable<string> {
+    $value nullable<string>;
+    $failure error;
+    if (!take($value, $failure, scpp_output_read($root, $relative))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_write(string $root, string $relative, string $bytes): bool {
+    $value bool = false;
+    $failure error;
+    if (!take($value, $failure, scpp_output_write($root, $relative, $bytes))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_remove(string $root, string $relative, string $expected): bool {
+    $value bool = false;
+    $failure error;
+    if (!take($value, $failure, scpp_output_remove($root, $relative, $expected))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
 function scpp_portability_fs_scan(string $path): result_or_false<vector<string>> {
     $entries vector<string> = [];
     $failure error;

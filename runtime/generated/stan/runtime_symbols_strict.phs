@@ -117,6 +117,11 @@ function regex_replace_callback(string $pattern, string $subject): result_or_fal
 function regex_replace_callback_array(string $subject): result_or_false<string> {}
 function regex_split(string $pattern, string $subject): result_or_false<vector<string>> {}
 function rtrim(string $text): string {}
+function scpp_output_read(string $root, string $relative): result<nullable<string>> {}
+function scpp_output_remove(string $root, string $relative, string $expected): result<bool> {}
+function scpp_output_root(string $path): result<string> {}
+function scpp_output_sha256(string $bytes): string {}
+function scpp_output_write(string $root, string $relative, string $bytes): result<bool> {}
 function shell_exec(string $command): mixed {}
 function source_buffer_byte_at(source_buffer $buffer, int $offset): byte {}
 function source_buffer_byte_len(source_buffer $buffer): uint32 {}

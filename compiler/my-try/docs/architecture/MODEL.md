@@ -506,8 +506,11 @@ or preparation invalidation rules change with native include precision.
 and logical-module/relative-source unit paths. Current globally scoped declaration
 names are unique semantic keys; namespace support must extend them with qualification.
 Names never use object IDs, absolute checkout paths or traversal counters. Temporaries
-remain body-local. No persistent disk publisher or native object cache is implied.
-The [Chapter 08 roadmap](../planning/incremental_cpp_artifacts.md) owns those next slices.
+remain body-local. Optional disk publication belongs to the coordinator's invocation-local
+`Output_Publication`, not these records or the backend. Its scalar before/after
+inventory owns recovery authorization without retaining semantic objects or workers.
+See the [publication protocol](output_publication.md). Native object/PCH caching remains
+the next [Chapter 08 roadmap](../planning/incremental_cpp_artifacts.md) slice.
 Test-only `CPP_Probe` preserves artifact boundaries in editable text; its reader rebuilds
 separate files and compiles them separately rather than flattening into a unity unit.
 

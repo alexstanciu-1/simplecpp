@@ -14,26 +14,30 @@ if (PHP_SAPI !== 'cli') {
 	header('Content-Type: text/plain; charset=UTF-8');
 }
 
-// CLI: --s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH]. HTTP also accepts entry=RELATIVE_PATH.
+// CLI: --s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY].
+// HTTP also accepts entry=RELATIVE_PATH, but never selects an output directory.
 // No parameter retains the existing sample/debug report.
 $s2s = false;
 $source_directory = '';
 $entry_path = '';
+$output_directory = '';
 $usage_error = false;
 if (PHP_SAPI === 'cli')
 {
 	if ($argc !== 1)
 	{
-		if ((($argc !== 3) && ($argc !== 5)) || ($argv[1] !== '--s2s')) {
+		if (($argc < 3) || ($argv[1] !== '--s2s') || (($argc % 2) !== 1)) {
 			$usage_error = true;
 		}
 		else {
 			$s2s = true;
 			$source_directory = $argv[2];
 			$usage_error = $source_directory === '';
-			if ($argc === 5) {
-				$entry_path = $argv[4];
-				$usage_error = $usage_error || ($argv[3] !== '--entry') || ($entry_path === '');
+			for ($index = 3; $index < $argc; $index += 2) {
+				if (($argv[$index] === '--entry') && ($entry_path === '')) { $entry_path = $argv[$index + 1]; }
+				elseif (($argv[$index] === '--output') && ($output_directory === '')) { $output_directory = $argv[$index + 1]; }
+				else { $usage_error = true; }
+				if ($argv[$index + 1] === '') { $usage_error = true; }
 			}
 		}
 	}
@@ -57,7 +61,7 @@ else
 if ($usage_error)
 {
 	if (PHP_SAPI === 'cli') {
-		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH]]\n");
+		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY]]\n");
 	}
 	else {
 		http_response_code(400);
@@ -68,11 +72,14 @@ if ($usage_error)
 
 if ($s2s)
 {
+	$publication = null;
+	$failed = false;
 	try {
+		if ($output_directory !== '') { $publication = new Output_Publication($output_directory); }
 		$compiler = new Compiler();
 		$compiler->init([$source_directory]);
 		if ($entry_path !== '') { $compiler->select_entry('main', $entry_path); }
-		$compiler->exec_cpp();
+		$compiler->exec_cpp($publication);
 		echo CPP_Output::encode(Model::$cpp_files);
 	}
 	catch (\Throwable $error)
@@ -85,9 +92,12 @@ if ($s2s)
 			http_response_code(500);
 			echo $message;
 		}
-		exit(1);
+		$failed = true;
 	}
-	exit(0);
+	finally {
+		if ($publication !== null) { $publication->close(); }
+	}
+	exit($failed ? 1 : 0);
 }
 
 // Imported stage reports escape their output for an HTML preformatted block.

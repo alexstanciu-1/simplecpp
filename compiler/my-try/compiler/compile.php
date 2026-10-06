@@ -142,11 +142,11 @@ final class Compiler
 	}
 
 	/** Run the initial v0.2 C++ path without invoking LLVM preparation or emission. */
-	public function exec_cpp(): void
+	public function exec_cpp(?Output_Publication $publication = null): void
 	{
 		$this->sync_live();
 		$this->prepare(true);
-		$this->cpp();
+		$this->cpp($publication);
 	}
 
 	/** Apply file notifications, then rerun all existing resolution/preparation and generation. */
@@ -156,11 +156,11 @@ final class Compiler
 		$this->llvm();
 	}
 
-	public function update_cpp(array $paths /** vector<string> */): void
+	public function update_cpp(array $paths /** vector<string> */, ?Output_Publication $publication = null): void
 	{
 		$this->sync($paths);
 		$this->prepare(true);
-		$this->cpp();
+		$this->cpp($publication);
 	}
 
 	/** Combined entrypoint uses the same retained tokenization and parsing phases as direct callers. */
@@ -290,7 +290,7 @@ final class Compiler
 	}
 
 	/** Emit from completed shared preparation; failure discards only C++ artifacts. */
-	public function cpp(): void
+	public function cpp(?Output_Publication $publication = null): void
 	{
 		Compiler_Lifecycle::reset_cpp();
 		$prepared /** Storage<prepared_file> */ = Model::$prepared_files;
@@ -301,6 +301,9 @@ final class Compiler
 		try {
 			$entry /** prepared_file */ = Model::$prepared_entry;
 			$output = (new CPP_Generator(Model::$cpp_output_program))->generate_program($prepared, $entry);
+			if ($publication !== null) {
+				$publication->publish($output);
+			}
 		}
 		catch (\RuntimeException $error) {
 			throw $error;

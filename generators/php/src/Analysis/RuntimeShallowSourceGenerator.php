@@ -376,6 +376,11 @@ final class RuntimeShallowSourceGenerator
 				'curl_strerror' => ['return' => 'string', 'params' => [['name' => 'code', 'type' => 'int']]],
 			],
 			'strict' => [
+				'scpp_output_root' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'scpp_output_read' => ['return' => 'result<nullable<string>>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string']]],
+				'scpp_output_write' => ['return' => 'result<bool>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string'], ['name' => 'bytes', 'type' => 'string']]],
+				'scpp_output_remove' => ['return' => 'result<bool>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string'], ['name' => 'expected', 'type' => 'string']]],
+				'scpp_output_sha256' => ['return' => 'string', 'params' => [['name' => 'bytes', 'type' => 'string']]],
 				'fs_is_file' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_is_dir' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_is_link' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],

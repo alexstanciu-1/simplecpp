@@ -17,6 +17,20 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For persistent output publication and its shared filesystem adapter:
+
+```bash
+python3 compiler/my-try/tests/output_publication.py --results /tmp/FRESH_PUBLICATION_RESULTS
+```
+
+Checks PHP/native binary IO and SHA-256, unchanged bytes/inode/mtime, safe paths,
+ownership refusal, add/delete/interruption recovery, pending failures, coordinator
+handoff retry, CLI restart and shared/exclusive lock contention. Builds the actual
+published units under a shared lock. Also converts/builds a small portable facade
+against this checkout (`--no-stan`), without rebuilding the compiler. PHP fixtures
+under `tests/fixtures/` need runner-provided setup. No persistent native/PCH cache
+or power-loss recovery is claimed.
+
 For cross-file C++ generation and artifact isolation:
 
 ```bash

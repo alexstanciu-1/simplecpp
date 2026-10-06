@@ -2,6 +2,11 @@
 declare(strict_types=1);
 
 // Generated global facade. Owned by function_map.php; no per-file imports.
+function fs_output_root(string $path): string { return \scpp\fs_output_root($path); }
+function fs_output_read(string $root, string $relative): ?string { return \scpp\fs_output_read($root, $relative); }
+function fs_output_write(string $root, string $relative, string $bytes): bool { return \scpp\fs_output_write($root, $relative, $bytes); }
+function fs_output_remove(string $root, string $relative, string $expected): bool { return \scpp\fs_output_remove($root, $relative, $expected); }
+function content_sha256(string $bytes): string { return \scpp\content_sha256($bytes); }
 function task_synchronize(callable $callback): void { \scpp\task_synchronize($callback); }
 function task_run_publish_unordered(array $items, int $workers, callable $work, callable $publish): int { return \scpp\task_run_publish_unordered($items, $workers, $work, $publish); }
 function weakref_get(?object $value): ?object { return \scpp\weakref_get($value); }

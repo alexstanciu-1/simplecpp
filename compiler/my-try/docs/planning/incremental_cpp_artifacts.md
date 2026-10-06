@@ -3,8 +3,8 @@ Doc Status: planning
 
 Recorded: 2026-10-06. Baseline: `480b2543` on `v0.2/develop`.
 Status: entry selection, partitioned cross-file generation and bounded bare-record
-declaration-versus-definition dependencies implemented. Persistent publication and
-native caching remain pending. This is not a language spec.
+declaration-versus-definition dependencies and persistent publication implemented.
+Native caching remains pending. This is not a language spec.
 
 ## Direction and evidence
 
@@ -273,5 +273,44 @@ The implementation follows the portable-PHP authoring constraints; enum requirem
 use explicit typed entrypoints rather than introducing enum-valued parameter defaults.
 The compiler itself was not rebuilt natively in this slice.
 
-Next: slice 4, content-aware disk publication and a consistent owned-artifact manifest;
-then the native object/link/runtime-PCH cache. Namespaces/imports retain their later group.
+The following checkpoint completes slice 4. Native object/link/runtime-PCH caching
+is next; namespaces/imports retain their later group.
+
+## Content-aware disk publication — 2026-10-06
+
+Slice 4 adds optional coordinator-owned `Output_Publication` and CLI `--output`.
+One immutable artifact API serves memory-only and disk consumers. The
+[publication protocol](../architecture/output_publication.md) owns the manifest,
+stable lock, atomic pending recovery inventory, ready marker and reader obligations.
+Preparation changes are acknowledged only after successful disk publication.
+Unchanged artifacts/manifest preserve inode/mtime; edited/unowned files are refused,
+missing owned output restored, and obsolete owned artifacts retired.
+
+User-approved cross-owner expansion: shared portable output read/write/remove/root
+and SHA-256 primitives, with PHP/native implementations and PHS error bridges.
+Mechanism stays in the shared adapter; policy stays in the coordinator. The
+[adapter contract](../../../../specs/portability/output_files.md) is bounded to trusted
+Linux output trees and cooperative locking, not hostile-filesystem or power-loss
+protection. A recovery journal is embedded in the atomic status file, avoiding a
+failure gap between two metadata-file replacements.
+
+Evidence (candidate `3c52c1d0` plus this publication overlay; local temporary paths):
+
+- `/tmp/my-try-ch08-publish-20261006-8/summary.json`: PHP/native binary/empty IO and
+  SHA-256 parity; path/symlink/special-file refusal; preservation, ownership, retirement,
+  interruption before/after manifest replacement, corrupt-metadata refusal on retries,
+  coordinator handoffs, CLI restart/failure and shared/exclusive lock contention.
+  Actual published units compile/link/run without fixture rematerialization. A small
+  converted PHP facade also builds/runs against this checkout with `--no-stan`.
+- `/tmp/my-try-ch08-publish-project-20261006-1/summary.json`: five PHP suites,
+  26 separate-unit executions with/without run-local PCH, 30 standalone-header checks
+  and three clang transitive dependency checks passed.
+
+Early attempts corrected a native helper collision through filesystem ADL and
+test-harness issues: private sync entrypoint, free-function conversion and unqualified
+exception spelling. PHP publication passed before native facade stabilization.
+Runners used documented CLI fallback because sandbox FPM sockets were unavailable.
+The compiler/publisher itself was not rebuilt natively; that remains on request.
+
+Next: slice 5, incremental native objects/link membership and compatible persistent
+runtime-only PCH reuse. Filesystem publication alone is not a native build cache.

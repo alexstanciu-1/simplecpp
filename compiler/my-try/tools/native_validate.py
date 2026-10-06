@@ -116,7 +116,7 @@ def validate(args, target, results, logs, started, runner):
         checkout=str(target), files=target_hashes), indent=2) + '\n')
     project = results / 'phpp'
     run('convert', ['php', ROOT / 'tools/php_portability/convert.php', source, project], cli_reason='CLI build tool with process exit status')
-    run('framework', ['php', ROOT / 'tools/php_portability/install_native_runtime.php', project, '--filesystem'], cli_reason='CLI build tool with process exit status')
+    run('framework', ['php', ROOT / 'tools/php_portability/install_native_runtime.php', project, '--filesystem', '--os', '--json'], cli_reason='CLI build tool with process exit status')
     cli = target / 'bin/scpp.php'
     config_path = project / 'prism.json'
     if not config_path.exists():

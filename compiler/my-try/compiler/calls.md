@@ -17,6 +17,13 @@ Compiler::prepare(require_entry) -> same retirement protocol -> declarations/bod
 Compiler::cpp() -> dirty fragments -> render -> declaration headers/source units/entry -> publish all artifacts -> acknowledge all source changes
 ```
 
+Optional disk publication: construct `Output_Publication(directory)` before the
+attempt, pass it to `exec_cpp`, `update_cpp` or `cpp`, and close in `finally`.
+`cpp` publishes disk artifacts before Model output and acknowledgment. The worker
+owns a stable reservation and pending recovery state; Model never retains it.
+See [publication](../docs/architecture/output_publication.md). Memory-only callers
+retain the same complete artifact API without filesystem side effects.
+
 Standalone tokenize/parse/prepare entrypoints use these same phases. Parser calls
 collector directly; new global entries register under the task batch lock. The C++
 path retains unaffected prepared facts. LLVM name/template preparation remains

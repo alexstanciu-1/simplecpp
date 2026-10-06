@@ -512,3 +512,6 @@ Authority:
 
 Supporting portability stage: [project-manifest reading](portability/project_manifest_reading.md)
 (schema, bounded JSON facade, proof and timing evidence; not language authority).
+
+Compiler/tooling adapter contract: [checked output files](portability/output_files.md)
+(Linux path/byte/atomic-replacement primitives; publication policy stays caller-owned).

@@ -369,6 +369,11 @@ Keep OS handles and guaranteed cleanup in the framework/runtime owner. PHP canno
 model native no-follow/nonblocking open races; state those limits explicitly rather
 than treating ordinary stream reads as full native protocol parity.
 
+For compiler/tooling publication, use the [checked output-file adapter](output_files.md):
+exact bytes, atomic single-file replacement, no-op preservation, checked removal and
+stable digests. Callers own locking, manifests and readiness; this is not a generic
+PHP writing API. Native framework assembly requires `--filesystem`.
+
 For scalar schema values, [Json_View integer/boolean access](scalar_catalog.md) rejects wrong kinds, fractions/exponents and integer overflow; do not coerce provider metadata through strings or floating values.
 
 For nullable constructor containers, unwrap into a concrete typed vector with
