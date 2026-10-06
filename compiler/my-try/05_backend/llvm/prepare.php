@@ -27,7 +27,8 @@ final class LLVM_Preparation {
 				}
 			}
 			$identity = $source->root->single_body()->body_scope()->source_namespace();
-			if (!$source->root->single_body()->imports->is_empty()) {
+			$imports /** Storage<import_node> */ = $source->root->single_body()->imports;
+			if (!$imports->is_empty()) {
 				throw new \RuntimeException('Imports are not supported by the parked LLVM backend');
 			}
 			if ($identity !== null) {

@@ -452,6 +452,11 @@ Known semantic edge:
 - include minimization is not required for the generator
 
 ### Forward Declarations
+- `TypeMapper` owns atomic runtime declaration classification. After traversing
+  wrapper/container arguments, the header emitter consults that owner. Runtime
+  aliases (`file_lock_handle`, `process_handle`, `process_output`) must not receive
+  conflicting user-class forward declarations. This does not change their shared
+  handle representation, native reference parameters, or ordinary user forwards.
 - forward declarations may be used only in trivial obvious cases where a class type is referenced through `shared_p<T>` in declarations
 - the generator must not build a dependency solver for include optimization
 - if a case is not trivially safe for forward declaration, the generator may use the simpler include-based path instead

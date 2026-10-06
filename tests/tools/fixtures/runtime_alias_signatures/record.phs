@@ -1,0 +1,1 @@
+class UserRecord { public int $value = 42; }

@@ -93,7 +93,13 @@ final class function_signature_work extends declaration_work
 
 final class constant_definition_work extends declaration_work
 {
-	public function __construct(private collected_constant $definition) { parent::__construct($definition->collection); }
+	private collected_constant $definition;
+
+	public function __construct(collected_constant $definition)
+	{
+		parent::__construct($definition->collection);
+		$this->definition = $definition;
+	}
 	public function required_declaration(): collected_definition { return $this->definition; }
 	public function constant_definition(): collected_constant { return $this->definition; }
 }

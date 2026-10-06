@@ -1,5 +1,13 @@
 {
     "php_runtime_symbol_targets": {
+        "fs_lock_try": "fs::lock_try",
+        "fs_lock_release": "fs::lock_release",
+        "fs_lock_transfer": "fs::lock_transfer",
+        "process_start": "process::start",
+        "process_poll": "process::poll",
+        "process_result": "process::collect",
+        "process_stop": "process::stop",
+        "process_close": "process::close",
         "scpp_output_permissions": "fs::output_permissions",
         "scpp_input_digest": "fs::input_digest",
         "scpp_output_digest": "fs::output_digest",

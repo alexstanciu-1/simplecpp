@@ -1,4 +1,5 @@
 #pragma once
+#include "modules/filesystem/file_lock.hpp"
 
 #include "output_files.hpp"
 

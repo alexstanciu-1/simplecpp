@@ -3,6 +3,27 @@ Doc Status: planning
 
 ## Status
 
+### v0.2 integration — 2026-10-06
+
+The process/file-lock runtime subset from `2f0d667f` is now integrated into
+`v0.2/develop`, including strict signatures, runtime-owned alias declarations,
+optional process composition and Linux thread linkage. The imported APIs use
+typed handles, strings and Results; no old mixed/dynamic representation or
+cross-family conversion was restored. Collection-adapter changes from that
+candidate were not imported.
+
+Focused evidence on base `ebe91f39` plus this integration overlay: native
+`test_process` and `test_file_locks` pass under CTest in
+`/tmp/scpp-v02-process-lock-native-20261006/` (0.52 seconds execution, not build).
+Strict process, file-lock and multi-file runtime-alias build/run tests pass with
+normal STAN, as do runtime declaration and strict catalog checks. The PHP lifecycle
+suite passes with Xdebug disabled and local socket access; the sandboxed attempt
+was interrupted after its fork synchronization was denied. These are focused API
+proofs, not a new full compiler checkpoint or a rerun of the historical facade
+parity harness below.
+
+### Historical facade candidate
+
 Both PHP backends and native facades are implemented. The Linux PHP lifecycle
 suite passes, and the prepared matching PHP/native facade proof now passes on
 `2f0d667f38a35ff02ef77e813f409189cba2d032`. The earlier signature-alias blocker on

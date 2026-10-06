@@ -155,7 +155,8 @@ final class CPP_Declarations
 	/** Render only this layout; nested representations contribute header dependencies. */
 	public static function generate_struct(struct_node $syntax, cpp_generation_context $context): string
 	{
-		$key = $syntax->occurrence()->qualified_name();
+		$definition = object_cast($syntax->occurrence(), collected_struct::class);
+		$key = $definition->qualified_name();
 		if (isset($context->record_states[$key])) {
 			if ($context->record_states[$key] === cpp_record_state::visiting) {
 				throw new \RuntimeException('S2S recursive by-value struct layout is unsupported');

@@ -77,6 +77,9 @@ final class StanPhpRuntimeFunctionCatalog
 		if (str_starts_with($normalized, 'fs_') || str_starts_with($normalized, 'io_')) {
 			return 'filesystem';
 		}
+		if (str_starts_with($normalized, 'process_')) {
+			return 'process';
+		}
 		if (str_starts_with($normalized, 'json_')) {
 			return 'json';
 		}

@@ -24,6 +24,21 @@ target_link_libraries(test_sentinels PRIVATE scpp_runtime scpp_runtime_test_supp
 
 # Registers the executables with CTest for repeatable smoke execution.
 enable_testing()
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	# Exercise the lock implementation without unrelated filesystem/JSON linkage.
+	add_executable(test_file_locks test_file_locks.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include/modules/filesystem/file_lock.cpp)
+	target_include_directories(test_file_locks PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
+	target_compile_features(test_file_locks PRIVATE cxx_std_23)
+	add_test(NAME scpp_test_file_locks COMMAND test_file_locks)
+	set_tests_properties(scpp_test_file_locks PROPERTIES TIMEOUT 30)
+endif()
+if(SCPP_WITH_PROCESS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	add_executable(test_process test_process.cpp)
+	target_link_libraries(test_process PRIVATE scpp_process scpp_runtime_test_support)
+	add_test(NAME scpp_test_process COMMAND test_process)
+	set_tests_properties(scpp_test_process PROPERTIES TIMEOUT 30)
+endif()
 add_test(NAME scpp_test_core COMMAND test_core)
 add_test(NAME scpp_test_nullable COMMAND test_nullable)
 

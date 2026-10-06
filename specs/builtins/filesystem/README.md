@@ -41,4 +41,9 @@ See also: `specs/builtins/filesystem/first_pass.md`.
 
 ## Checked source reads
 
+Managed advisory locking is defined in [file_locks.md](file_locks.md), with
+[fs_lock_try](fs_lock_try.md), [fs_lock_release](fs_lock_release.md) and
+[fs_lock_transfer](fs_lock_transfer.md). These typed handles retain stable file
+identity across release and belong to the `filesystem` module.
+
 - [fs_read_snapshot](fs_read_snapshot.md) provides checked bounded source reads.

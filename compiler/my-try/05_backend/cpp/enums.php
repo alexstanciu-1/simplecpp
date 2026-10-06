@@ -12,7 +12,8 @@ final class CPP_Enums
 		$storage = $facts->storage;
 		$context->headers['cstdint'] = true;
 		$backing = 'std::' . ($storage->signed() ? 'int' : 'uint') . $storage->bit_width() . '_t';
-		$name = CPP_Generator::source_name('enum', $syntax->occurrence()->qualified_name());
+		$definition = object_cast($syntax->occurrence(), collected_enum::class);
+		$name = CPP_Generator::source_name('enum', $definition->qualified_name());
 		$text = 'enum class ' . $name . ' : ' . $backing . " {\n";
 		$cases /** Keyed_Storage<prepared_enum_case> */ = $facts->cases;
 		foreach ($cases as $case_value) {

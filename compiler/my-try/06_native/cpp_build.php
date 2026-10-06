@@ -57,8 +57,9 @@ final class Native_CPP_Build
 			if (q_count($units) === 0) { throw new \RuntimeException('No published translation units'); }
 			$runtime = fs_require_realpath($this->config->runtime_include);
 			$optimization = $this->config->optimization === 2 ? '-O2' : '-O0';
-			$this->flags = ['--driver-mode=g++', '-std=c++23', $optimization,
+			$flags /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
 				'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
+			$this->flags = $flags;
 			$version_arguments /** vector<string> */ = ['--version'];
 			$version = $this->invoke($version_arguments);
 			self::require_success($version);
@@ -205,8 +206,9 @@ final class Native_CPP_Build
 		fs_output_write($this->root, 'actions/' . $key . '.json', '{"format":"scpp-native-action-v1","state":"pending"}');
 		$stage = new \scpp\Output_Stage($this->root);
 		try {
-			$command[] = '-o'; $command[] = $stage->path();
-			$execution = $this->invoke($command);
+			$execution_command /** vector<string> */ = $command;
+			$execution_command[] = '-o'; $execution_command[] = $stage->path();
+			$execution = $this->invoke($execution_command);
 			self::require_success($execution);
 			$stage->promote($relative, $expected, $executable);
 			$digest = fs_output_digest($this->root, $relative);

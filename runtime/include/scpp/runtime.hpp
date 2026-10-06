@@ -48,6 +48,7 @@
 #include "scpp/curl.hpp"
 #include "scpp/datetime.hpp"
 #include "scpp/tasks.hpp"
+#include "scpp/process.hpp"
 #include "scpp/ui.hpp"
 #include "scpp/webview.hpp"
 #include "scpp/tokenizer.hpp"

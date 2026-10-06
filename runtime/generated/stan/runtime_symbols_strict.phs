@@ -54,6 +54,9 @@ function fs_get(string $path): result<string> {}
 function fs_is_dir(string $path): bool {}
 function fs_is_file(string $path): bool {}
 function fs_is_link(string $path): bool {}
+function fs_lock_release(file_lock_handle $handle): result<bool> {}
+function fs_lock_transfer(file_lock_handle $handle): result<file_lock_handle> {}
+function fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool> {}
 function fs_mkdir(string $path): bool {}
 function fs_mtime(string $path): result<int> {}
 function fs_put(string $path, string $data): result<int> {}
@@ -103,6 +106,11 @@ function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
 function phs_tokenize(string $source): token_buffer {}
 function phs_tokenize_buffer(string $source): token_buffer {}
+function process_close(process_handle $handle): result<bool> {}
+function process_poll(process_handle $handle): result<bool> {}
+function process_result(process_handle $handle): result<process_output> {}
+function process_start(string $executable, $args vector<string>, string $input, int $timeout_ms, string $cwd = ""): result<process_handle> {}
+function process_stop(process_handle $handle): result<bool> {}
 function regex_filter(string $pattern, $input vector<string>): vector<string> {}
 function regex_grep(string $pattern, $input vector<string>): vector<string> {}
 function regex_jit_available(): bool {}
@@ -266,6 +274,24 @@ class error
 }
 
 namespace scpp;
+
+class file_lock_handle
+{
+}
+
+class process_handle
+{
+}
+
+class process_output
+{
+	public string $stdout_text;
+	public string $stderr_text;
+	public int $exit_code;
+	public int $signal;
+	public bool $timed_out;
+	public bool $stopped;
+}
 
 class token_buffer
 {

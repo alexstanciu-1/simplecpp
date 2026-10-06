@@ -18,7 +18,8 @@ function token_check(bool $ok): void
 	}
 }
 
-$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}?:,&[]<>=+-*/%.!~|^';
+// Namespace separators are punctuation, including a rooted name's leading slash.
+$single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}?:,&[]<>=+-*/%.!~|^\\';
 for ($value = 0; $value < 256; $value++)
 {
 	$byte = chr($value);

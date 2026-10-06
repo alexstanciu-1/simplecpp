@@ -131,11 +131,12 @@ final class CPP_Generator
 				foreach ($nodes as $node) {
 					if (!($node instanceof function_node)) { continue; }
 					$function = object_cast($node, function_node::class);
-					$signature_owner = object_cast($function->occurrence()->preparation_work_owner(), preparation_owner::class);
+					$definition = object_cast($function->occurrence(), collected_function::class);
+					$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
 					$body_owner = object_cast($function->body->work(), preparation_owner::class);
 					$signature = $this->program->fragments[$signature_owner];
 					$body = $this->program->fragments[$body_owner];
-					$headers[CPP_Artifacts::callable_header($function->occurrence()->qualified_name())] = true;
+					$headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true;
 					foreach ($signature->definition_headers as $header => $used) {
 						$headers[$header] = true;
 					}

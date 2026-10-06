@@ -20,22 +20,49 @@ source-portability issues; it did not supply the missing runtime. The module set
 is restored and the harness now checks required process/file-lock headers up front.
 
 CH08 native build/publication uses the OS facades described in
-[os_helpers.md](../../../../specs/portability/os_helpers.md). Their native process
-and filesystem-lock implementations exist in candidate `2f0d667f`, but are absent
-from this v0.2 checkout (which does not contain that commit). Integrating/adapting
-those APIs requires coordinated runtime, registration and build-config work, with
-separate process/locking safety proofs. Do not silently switch targets, drop CH08
-from the native source set, or restore old mixed/dynamic semantics. User direction
-is required before that expansion.
+[os_helpers.md](../../../../specs/portability/os_helpers.md). Following user approval,
+the bounded process/file-lock APIs from `2f0d667f` are integrated with strict
+registration, alias declaration ownership and module/build composition. Focused
+native safety tests, normal-STAN strict source builds, multi-file handle signatures,
+PHP lifecycle tests and catalog checks pass. No old mixed/dynamic bridge or unrelated
+collection implementation was imported.
+
+Attempts 5–9 use base `ebe91f39` plus the recorded working-tree overlay. They pass
+conversion and progressively compile the source, finding more authored portability
+repairs: typed Storage receivers, leading base construction without promotion,
+checked narrowing of declaration occurrences, typed flag initialization and a local
+command copy before mutation. Attempt 9 reaches the framework and proof driver but
+fails because the **shape-preserving JSON document API is absent**: `json_document`,
+`json_parse_error`, `json_node` and `json_document_*`/`json_node_*` operations.
+The proof driver's old file-root accesses are also updated to namespace-body access.
+That final driver repair still needs native revalidation.
+
+The [JSON document requirement](../../../../specs/planning/compiler_migration/json_document_requirement.md)
+records candidate `9b4b33f35f053b487e018c94d6a4a7888d77c64a`, but its Git object
+and historical `/tmp/scpp-json-240-probe` checkout are not present locally. Ordinary
+mixed/dynamic decoding is not equivalent: schema consumers need exact object/list
+shape, missing-versus-null and checked integer/boolean access. Integrating this
+separate runtime/parser API and its registration/tests needs user approval; do not
+silently weaken the facade, change public JSON decode semantics, switch targets or
+drop CH08. The native harness now checks the required strict JSON symbols before
+conversion/build as well as the process/lock headers.
 
 Authored repairs use supported integer-to-text concatenation, a private enum-kind
 field with read-only accessor, explicit typed Storage receivers, explicit nullable
 lookup, a qualified type name hidden by an inherited field, and an unpromoted
 constructor field so the base constructor stays first. These follow the portable-PHP
-skill; latest repairs still require native revalidation after the prerequisite lands.
+skill; full native revalidation still requires the JSON prerequisite.
 The harness is extended to compare and execute partitioned namespace/constants/enum
 projects with independent enum assertions; that new native leg remains unexecuted.
-Existing stale tokenizer expectations may also require repair before the full sweep.
+The stale tokenizer byte expectation now includes the CH08 namespace separator;
+the complete tokenizer suite passes without dropping rejection assertions.
+
+After attempt 9 repairs, six focused PHP suites pass (tokenizer, namespace bodies,
+namespaces, source constants, enums, cleanup), under
+`/tmp/my-try-ch0809-final-php-20261006/`. The native-cache regression also passes in
+126.79 seconds under `/tmp/my-try-ch0809-cache-recheck-20261006/`, covering real
+generated-program builds and cache lifecycle from the PHP-hosted builder, not a
+native compiler execution. The combined native fixture sweep has not run.
 
 After these source repairs, the focused enum, namespace and constant runners pass:
 20/7/10 PHP suites respectively and 24/24/10 generated programs; namespace tokenizer

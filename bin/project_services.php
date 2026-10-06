@@ -12788,7 +12788,7 @@ function resolve_runtime_build_config(array $config): array
 	$tasks = is_array($runtime['tasks'] ?? null) ? $runtime['tasks'] : [];
 	$tasksDefaultWorkerPoolSize = normalize_runtime_tasks_default_worker_pool_size($tasks['default_worker_pool_size'] ?? null);
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'compiler', 'ui', 'webview'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'process', 'compiler', 'ui', 'webview'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -18089,6 +18089,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('curl', $modules, true)) {
 		$lines[] = '#include "modules/curl/curl.cpp"';
 	}
+	if (in_array('process', $modules, true)) {
+		$lines[] = '#include "modules/process/process.cpp"';
+	}
 	if (in_array('tasks', $modules, true)) {
 		$lines[] = '#include "modules/tasks/tasks.cpp"';
 	}
@@ -18162,6 +18165,8 @@ function render_shared_release_module_composition_source(array $runtimeConfig, s
 		}
 	} elseif ($moduleName === 'curl') {
 		$lines[] = '#include "modules/curl/curl.cpp"';
+	} elseif ($moduleName === 'process') {
+		$lines[] = '#include "modules/process/process.cpp"';
 	} elseif ($moduleName === 'tasks') {
 		$lines[] = '#include "modules/tasks/tasks.cpp"';
 	}
@@ -18190,7 +18195,7 @@ function default_runtime_modules(): array
 /** @return list<string> */
 function shared_optional_runtime_modules(): array
 {
-	return ['mysqli', 'regex', 'curl', 'tasks'];
+	return ['mysqli', 'regex', 'curl', 'tasks', 'process'];
 }
 
 function runtime_build_mode_is_shared_release_supported(string $buildMode): bool
@@ -18620,6 +18625,10 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'datetime'];
 	$extraCxxFlags = [];
 	$extraLinkFlags = [];
+	if (in_array('process', $modules, true) && PHP_OS_FAMILY === 'Linux') {
+		$extraCxxFlags[] = '-pthread';
+		$extraLinkFlags[] = '-pthread';
+	}
 	if (in_array('php', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'], true)) {
 		$extraCxxFlags[] = '-DSCPP_LANGUAGE_TARGET_PHP=1';
 	}
@@ -18765,6 +18774,10 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 	$sourcePath = normalize_config_path(relative_path($projectRoot, $compositionSource));
 	$extraCxxFlags = [];
 	$extraLinkFlags = [];
+	if ($moduleName === 'process' && PHP_OS_FAMILY === 'Linux') {
+		$extraCxxFlags[] = '-pthread';
+		$extraLinkFlags[] = '-pthread';
+	}
 	if (in_array('php', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'], true)) {
 		$extraCxxFlags[] = '-DSCPP_LANGUAGE_TARGET_PHP=1';
 	}

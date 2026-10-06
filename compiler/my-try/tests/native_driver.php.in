@@ -104,7 +104,8 @@ if ((!$scope_failed) || $scope_parsed->complete) {
 	throw new \LogicException('Scope ownership proof did not retain an incomplete parse');
 }
 // Inspect membership as well as references: PHP ordinary references mask native expiration.
-$scope_declarations /** Storage<declaration_node> */ = $scope_parsed->root->declarations;
+$scope_body = $scope_parsed->root->single_body();
+$scope_declarations /** Storage<declaration_node> */ = $scope_body->declarations;
 $scope_first = object_cast($scope_declarations[0], function_node::class);
 $scope_second = object_cast($scope_declarations[1], function_node::class);
 $scope_owned /** Storage<scope> */ = $scope_parsed->scopes;
@@ -119,7 +120,7 @@ foreach ($scope_owned as $scope_item)
 	if ($scope_item === $scope_second->body->local_scope()) {
 		$scope_second_owned = true;
 	}
-	if ($scope_item === $scope_parsed->root->body->local_scope()) {
+	if ($scope_item === $scope_body->body->local_scope()) {
 		$scope_file_owned = true;
 	}
 }

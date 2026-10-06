@@ -85,9 +85,16 @@ def validate(args, target, results, logs, started, runner):
     required_runtime = ['runtime/include/modules/process/process.hpp',
                         'runtime/include/modules/filesystem/file_lock.hpp']
     missing = [name for name in required_runtime if not (target / name).is_file()]
+    # The schema facade must preserve JSON object/list shape and checked scalars.
+    # Ordinary mixed/dynamic json_decode is not a substitute for this API.
+    symbols = json.loads((target / 'generators/php/specs/php_runtime_symbols_strict.json').read_text())['php_runtime_symbol_targets']
+    required_json = ['json_document_parse', 'json_document_root', 'json_node_kind',
+                     'json_node_size', 'json_node_has', 'json_node_key', 'json_node_string',
+                     'json_node_int', 'json_node_boolean', 'json_node_member', 'json_node_at']
+    missing.extend('strict runtime symbol ' + name for name in required_json if name not in symbols)
     if missing:
         raise RuntimeError('Native CH08 runtime prerequisites missing: ' + ', '.join(missing)
-                           + '; see specs/portability/os_helpers.md; select/integrate a compatible candidate')
+                           + '; see compiler/my-try/docs/portability/conversion_review.md; select/integrate a compatible candidate')
 
     source = results / 'source'
     source.mkdir(exist_ok=args.resume)

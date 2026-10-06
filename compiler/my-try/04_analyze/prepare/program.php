@@ -13,7 +13,8 @@ final class Program_Preparation
 		foreach ($bodies as $namespace_body)
 		{
 			$body = $namespace_body->body;
-			if ($body->statements->is_empty()) {
+			$statements /** Storage<statement_node> */ = $body->statements;
+			if ($statements->is_empty()) {
 				if ($empty_body === null) {
 					$empty_body = $body;
 				}
@@ -63,7 +64,8 @@ final class Program_Preparation
 		$entry /** prepared_file */ = $selected;
 		foreach ($files as $prepared) {
 			if ($prepared !== $entry) {
-				if (!$prepared->executable_body()->statements->is_empty()) {
+				$entry_statements /** Storage<statement_node> */ = $prepared->executable_body()->statements;
+				if (!$entry_statements->is_empty()) {
 					throw new \RuntimeException('Top-level executable statements are only allowed in the selected entry: '
 						. $prepared->source->source_file()->path);
 				}

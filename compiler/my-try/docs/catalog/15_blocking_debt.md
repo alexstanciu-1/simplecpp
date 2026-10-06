@@ -44,9 +44,20 @@ Constructor/nullable-object/shortcut cards belong to CH10; enum methods/interfac
 await CH10/11 shared models. Reconcile those owning chapters before final closure.
 
 Keep pre-existing test maintenance visible: `tests/model.php` hardcoded built-in
-counts and `tests/tokenizer.php` byte-contract expectations were independently
-reproduced before enum changes. Repair them before claiming the affected broad
-suites pass; do not suppress assertions to obtain native validation.
+counts still need repair before claiming that suite passes. The tokenizer byte
+expectation was repaired during native validation: CH08 namespace separators are
+accepted punctuation. Its complete byte-contract suite now passes.
+
+### Runtime CMake static/shared linkage
+
+The CH08/09 runtime-prerequisite integration exposed a link-order issue when an
+otherwise core-independent test links `scpp_runtime`: shared JSON/filesystem
+modules reference symbols in the preceding static core archive, which is not
+extracted when the executable itself has no core reference. Preserve this for
+build-system review; do not alter mixed/dynamic semantics to satisfy linkage.
+Focused process/lock safety targets depend only on their actual implementation;
+strict CLI composition/build/run is proved separately. Evidence:
+`/tmp/scpp-v02-process-lock-native-20261006/`, initial `test_process` link failure.
 
 ### CH15-CLEANUP-PERF-01 — compiler cleanup performance and IDE debug endpoint
 
