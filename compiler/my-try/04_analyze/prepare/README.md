@@ -98,7 +98,10 @@ fixed `callable_target_i` targets are source functions, installed runtime free
 functions or static factories. Language-owned compiler definitions instead select
 concrete signatures through `Compiler_Call_Preparation`, then reuse common argument
 admission. The enum-name specialization observes the enum declaration and retains
-its immutable snapshot, not backend spelling. Source record types reference structs.
+its immutable snapshot, not backend spelling. Numeric enum helpers share that family.
+Compile-time `Type::class` inputs resolve through type preparation; runtime argument
+facts map back to their original syntax positions, preserving common call admission
+without pretending the marker is a runtime value. Source record types reference structs.
 `Call_Preparation::require_signature` completes source declarations and registers
 consumer dependencies before reading the target's read-only `signature()` accessor.
 Installed runtime contracts need no source work. Direct access to absent source

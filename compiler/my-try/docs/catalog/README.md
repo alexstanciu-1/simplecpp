@@ -103,7 +103,8 @@ including artifacts/cache baseline, namespace/imports and scalar source constant
 Chapter 09's [bounded enum execution](09_value_types.md#enum-execution--2026-10-06)
 includes same-enum equality, switch/match and enum-valued ternary/match results;
 explicit enum parameter defaults and [compiler-provided `enum_name`](09_value_types.md#compiler-provided-callables-and-enum_name--2026-10-06)
-are implemented. Next discuss numeric enum helper contracts.
+are implemented, together with [checked numeric enum helpers](09_value_types.md#numeric-enum-helpers--2026-10-06).
+Next reconcile remaining value-type/reflection cards for bounded CH09 closeout.
 By user request there is no Chapter 08 native
 compiler build; aim to finish Chapter 09 before the combined native checkpoint.
 Duplicate function/parameter admission is checked; duplicate struct fields remain

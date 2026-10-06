@@ -30,7 +30,10 @@ results, copy independence, lazy results and unmatched failure. Enum parameter
 defaults and `enum_name` cover exact names, once-only argument evaluation,
 cross-file helper sharing, source/import shadowing, incremental metadata edits,
 cached generation, helper retirement and generation purity. This proves generated
-programs, not native portability of the compiler itself.
+programs, not native portability of the compiler itself. Numeric enum helpers add
+exact backing/ordinal results, checked cross-width conversion, signed/unsigned
+limits, invalid-case and truncation rejection, type-marker imports, shadowing,
+backing/value edits and unused-helper retirement.
 
 For source namespace-body ownership and entry/lifecycle integration:
 

@@ -457,6 +457,8 @@ final class prepared_call extends prepared_expression
 /** A reference argument has no conversion; a by-value argument requires one decision. */
 final class prepared_call_argument
 {
+	/** Runtime argument's position in the original syntax; compile-time inputs are omitted. */
+	public int $source_index;
 	public value_boundary_operation $boundary;
 	public ?conversion_decision $conversion = null;
 

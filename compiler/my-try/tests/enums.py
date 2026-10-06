@@ -21,8 +21,41 @@ def native_checks(name, bundle):
         'enum_names': 'const int check_names = [] { scpp::int_t<> calls{0LL}; if (function_first().native_value() != "First" || function_last().native_value() != "High" || function_once(calls).native_value() != "second_name" || calls.native_value() != 1) std::abort(); return 0; }();',
         'enum_names_cross_file': 'const int check_names = [] { if (function_first().native_value() != "B" || function_last().native_value() != "A") std::abort(); return 0; }();',
     }
+    checks['enum_numeric_values'] = '''
+static_assert(std::is_same_v<decltype(function_maximum()), scpp::int_t<std::uint64_t>>);
+const int check_numeric_values = [] {
+    if (function_maximum().native_value() != 18446744073709551615ULL) std::abort();
+    if (function_minimum().native_value() != (-9223372036854775807LL - 1)) std::abort();
+    bool threw = false;
+    try { (void)function_narrow(scpp::int_t<std::uint8_t>{255}); } catch (const std::runtime_error&) { threw = true; }
+    if (!threw) std::abort();
+    return 0;
+}();
+'''
     if name not in checks:
-        return bundle
+        if name != 'enum_numeric':
+            return bundle
+        checks[name] = '''
+static_assert(std::is_same_v<decltype(function_read(enum_E::case_Ten)), scpp::int_t<std::uint8_t>>);
+const int check_numeric = [] {
+    if (function_read(enum_E::case_Ten).native_value() != 10 || function_ordinal().native_value() != 1 || function_plain().native_value() != -2) std::abort();
+    if (function_decode(scpp::int_t<>{255LL}) != enum_E::case_Max) std::abort();
+    for (long long invalid : {266LL, -1LL, 11LL}) {
+        bool threw = false;
+        try { (void)function_decode(scpp::int_t<>{invalid}); } catch (const std::runtime_error&) { threw = true; }
+        if (!threw) std::abort();
+    }
+    auto maximum = scpp::int_t<std::uint64_t>{18446744073709551615ULL};
+    if (function_wide(maximum) != enum_Wide::case_Max) std::abort();
+    if (function_signed(scpp::int_t<std::int64_t>{(-9223372036854775807LL - 1)}) != enum_Signed::case_Min) std::abort();
+    bool threw = false;
+    try { (void)function_negative(maximum); } catch (const std::runtime_error&) { threw = true; }
+    if (!threw) std::abort();
+    scpp::int_t<> calls{0LL};
+    if (function_once(calls) != enum_E::case_Ten || calls.native_value() != 1) std::abort();
+    return 0;
+}();
+'''
     includes = '#include <type_traits>\n#include <cstdlib>\n' + ''.join('#include "' + a['path'] + '"\n' for a in bundle['artifacts'] if a['id'].startswith(('type:', 'callable:')))
     if name == 'fixed':
         checks[name] += 'static_assert(std::is_same_v<std::underlying_type_t<enum_UU16>, std::uint16_t>); static_assert(std::is_same_v<std::underlying_type_t<enum_I64>, std::int64_t>);'

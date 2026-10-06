@@ -144,6 +144,7 @@ final class Call_Preparation
 			$value /** prepared_expression */ = $arguments_prepared
 				? $argument->require_preparation() : Expression_Preparation::prepare_for_consumer($argument, $context, $argument_type, $consumer);
 			$prepared_argument = new prepared_call_argument();
+			$prepared_argument->source_index = $index;
 			if ($parameter->mode === passing_mode::value) {
 				$prepared_argument->conversion = Conversion_Preparation::decide(
 					$value->type, $argument_type, conversion_context::argument);

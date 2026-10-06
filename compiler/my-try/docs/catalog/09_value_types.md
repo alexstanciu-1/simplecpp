@@ -25,7 +25,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-VAR-007](#type-var-007) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [ENUM-001](#enum-001) | bounded pass | `enum Suit { case Hearts; case Spades; }` | proved | proved | deferred | [Execution checkpoint](#enum-execution--2026-10-06) |
 | [ENUM-002](#enum-002) | bounded pass | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | proved | proved | deferred | Includes exact fixed-width backing; [execution checkpoint](#enum-execution--2026-10-06) |
-| [ENUM-003](#enum-003) | partial; remainder pending-discussion | `Color::tryFrom('green')?->name ?? 'null'` | partial | partial | deferred | [enum_name proved](#compiler-provided-callables-and-enum_name--2026-10-06); imported reflection/string-backing form remains deferred |
+| [ENUM-003](#enum-003) | partial; remainder pending-discussion | `Color::tryFrom('green')?->name ?? 'null'` | partial | partial | deferred | enum_name and [numeric helpers proved](#numeric-enum-helpers--2026-10-06); imported reflection/string-backing form remains deferred |
 | [ENUM-004](#enum-004) | pending-discussion | `enum Status implements HasLabel { case Open; public function label(): string { return 'open'; } }` | unverified | unverified | deferred | — |
 
 ## Enum model foundation — 2026-10-06
@@ -213,11 +213,42 @@ cross-file sharing, shadowing/imports, cached generation, enum edits, last-use
 deletion, clean/incremental agreement and generation purity. FPM unavailable:
 shared runner used CLI fallback. This is not native compiler rebuild evidence.
 
-Next discussion: numeric enum helpers (`enum_value` and checked `enum_from_value`),
-especially integer exposure/backing contracts. PHP `cases/from/tryFrom` and wrapper
-payloads remain separate; this does not complete the whole imported reflection card.
+Numeric helpers were subsequently agreed and implemented below. PHP
+`cases/from/tryFrom` and wrapper payloads remain separate; this does not complete
+the whole imported reflection card.
 
 CH09 remains open; the combined native compiler checkpoint is deferred.
+
+### Numeric enum helpers — 2026-10-06
+
+`enum_value` exposes the declared fixed backing type, or ordinary `int` for unit
+ordinals/plain-int backing, not the compact storage type. `enum_from_value(E::class,
+integer)` returns E or throws for unmatched values. Different integer widths and
+signedness are admitted without narrowing before membership checks. Unit ordinals
+are zero-based and change on reordering; stable external formats need explicit values.
+The [normative contract](../../../../specs/compact_layout_types.md#35-v02-explicit-numeric-enum-helpers)
+records these rules and preparation-time type/arity rejection.
+
+Both operations reuse compiler-callable lookup and the shared `prepared_enum_call`
+family. Analysis resolves `Type::class` through existing static-member/type syntax,
+without enum-specific parsing or runtime reflection. Runtime argument facts record
+source positions, allowing common admission/emission to exclude compile-time inputs.
+The portable-PHP skill guided explicit typed projections and immutable facts.
+C++ emits shared helper artifacts, keyed additionally by integer input width/sign
+for reverse conversion. Exact signedness-safe membership comparisons establish both
+range and declared-case validity before returning the enum; no wrapping cast exists.
+
+Checkpoint: **20 PHP suites and 24 generated C++ programs passed** in
+`/tmp/my-try-enum-numeric-final-20261006-2`. Covers unit/plain-int/fixed results,
+full uint64 and signed minimum inputs, byte overflow (266 must not select 10),
+negative/unsigned mismatch, unmatched values, once-only evaluation, imports,
+shadowing, cached output, backing/value edits, helper retirement, generation purity
+and clean/incremental agreement. Shared runner used CLI fallback. No native compiler
+rebuild or portability conversion was performed.
+
+Next: reconcile the remaining CH09 cards against existing value-type support and
+deferred class/reflection prerequisites before agreeing the bounded closeout.
+The combined native compiler checkpoint remains after the intended CH09 pass.
 
 ## TYPE-VAR-006
 

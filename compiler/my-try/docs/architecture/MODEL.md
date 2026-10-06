@@ -110,12 +110,18 @@ Compiler definitions describe an immutable operation kind, not a preselected
 signature. `Compiler_Call_Preparation` selects argument-dependent contracts and
 uses common `Call_Preparation::admit`; `prepared_call` weakly references the
 definition and owns the concrete signature plus optional specialization facts.
-`prepared_enum_name_call` shares the settled enum snapshot after analysis registers
+`prepared_enum_call` shares the settled enum snapshot after analysis registers
 its declaration dependency. No new AST node, runtime registry entry per enum,
 general template cache or earlier-stage backend callback is required.
 C++ owns helper spelling/emission. Cached fragments retain read-only helper
 requests; assembly deduplicates requests from live fragments into separate helper
 headers/translation units, keeping string metadata out of enum type headers.
+The same facts describe name, numeric-value and checked reverse-conversion helpers.
+`Type::class` uses existing static-member syntax and is resolved as a compile-time
+input by analysis. Each admitted runtime argument records its original source
+position; the common emitter follows that projection and never emits type markers.
+Concrete call signatures describe runtime parameters only. No dummy string/value
+parameter or general reflection type is manufactured for compile-time inputs.
 
 `callable_signature` and `callable_parameter` have no source-storage links.
 Parameter `storage_access` is independent of `passing_mode` and canonical type

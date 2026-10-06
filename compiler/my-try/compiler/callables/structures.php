@@ -12,7 +12,7 @@ interface callable_target_i extends callable_definition_i
 	public function signature(): callable_signature;
 }
 
-enum compiler_function_kind { case enum_name; }
+enum compiler_function_kind { case enum_name; case enum_value; case enum_from_value; }
 
 /** Language-owned identity only; stage workers own selection and emission. */
 final class compiler_function_definition implements callable_definition_i

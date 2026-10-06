@@ -7,13 +7,16 @@ abstract class prepared_compiler_call
 	abstract public function kind(): compiler_function_kind;
 }
 
-final class prepared_enum_name_call extends prepared_compiler_call
+final class prepared_enum_call extends prepared_compiler_call
 {
 	public prepared_enum $enumeration;
 	public canonical_type_use $result_type;
+	public canonical_type_use $input_type;
+
+	public function __construct(private compiler_function_kind $operation) {}
 
 	public function kind(): compiler_function_kind
 	{
-		return compiler_function_kind::enum_name;
+		return $this->operation;
 	}
 }

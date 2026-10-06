@@ -300,6 +300,31 @@ native code throws at runtime rather than inventing a case name.
 This helper does not enable numeric conversion, PHP enum reflection methods,
 implicit enum defaults or user-defined generic functions.
 
+### 3.5 v0.2 explicit numeric enum helpers
+
+`enum_value(value)` accepts one enum value. For explicitly fixed-backed enums,
+the result has the declared backing type, including full-width `uint64`. For plain
+`int`-backed and unit enums it is `int`, independently of compact storage selection.
+Unit enum values are zero-based declaration ordinals; reordering cases changes
+those ordinals, so use explicit backing values for stable external encodings.
+
+`enum_from_value(Enum::class, value)` returns that exact enum type or throws if
+the integer does not identify a declared case. Its first argument is a compile-time
+type marker resolved through ordinary type lookup, including imports; it is not
+a runtime string or reflection object. The second argument may have any supported
+integer width/signedness. Comparison preserves the original mathematical value:
+out-of-range values must not truncate or wrap into a valid case. Checking exact
+membership before any narrowing also establishes representability.
+
+Both helpers evaluate their runtime argument once and follow ordinary callable
+lookup/shadowing, like `enum_name`. Wrong arity, non-enum targets, missing type
+markers and noninteger reverse-conversion inputs reject during preparation.
+Float, bool, string, mixed and dynamic inputs require an explicit prior integer
+boundary; these helpers do not introduce implicit coercion. Well-typed integer
+inputs without a matching case throw at runtime; this slice adds no constant-call
+evaluation. No nullable/Result alternative, general reflection or implicit
+enum/integer conversion is introduced.
+
 ## 4. Union Semantics
 
 Restricted payload unions lower as generated C++ `union` declarations.

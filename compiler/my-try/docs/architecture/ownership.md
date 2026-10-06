@@ -123,6 +123,9 @@ retirement membership. Call-owned specialization facts share immutable prepared 
 metadata; they never retain workers or syntax. C++ fragments may retain those same
 read-only helper requests across body reuse. Only live fragments contribute to
 artifact assembly, so unused helper artifacts disappear without a new semantic root.
+Runtime argument facts retain source positions, not syntax backlinks. Compiler-call
+preparation may consume type-marker syntax before admitting runtime arguments;
+the ordinary call owns the complete source argument list and its type occurrences.
 Derived source-record capabilities are owned by `prepared_record`, alongside its
 prepared fields. Registry definitions retain identity and registered contracts;
 they do not cache a second mutable copy of source-derived capabilities. The transient

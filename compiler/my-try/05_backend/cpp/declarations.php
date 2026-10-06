@@ -201,8 +201,9 @@ final class CPP_Declarations
 		$separator = '';
 		$packed_names = '';
 		$packed_separator = '';
-		foreach ($arguments as $index => $argument)
+		foreach ($prepared_arguments as $index => $prepared_argument)
 		{
+			$argument = $arguments[$prepared_argument->source_index];
 			$parameter_index /** int */ = $facts->fixed_count;
 			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
@@ -235,7 +236,7 @@ final class CPP_Declarations
 			}
 		}
 		// Semantic defaults do not depend on defaults being repeated in a runtime C++ declaration.
-		for ($index = q_count($arguments); $index < $facts->fixed_count; $index++) {
+		for ($index = q_count($prepared_arguments); $index < $facts->fixed_count; $index++) {
 			$default_value /** prepared_parameter_default */ = $parameters[$index]->default_value;
 			$names .= $separator . self::parameter_default($default_value, $context);
 			$separator = ', ';

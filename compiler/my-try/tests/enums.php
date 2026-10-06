@@ -58,6 +58,10 @@ $fixtures = [
 		'lib.phs' => 'namespace Lib; enum State: uint32 { case Ready = 1; case Busy = 2; }'],
 	'reference' => ['main.phs' => 'enum State { case A; case B; } function change(State &$v): void { $v = State::B; } function &ref(State &$v): State { return $v; } $v = State::A; $alias State =& $v; change($alias); $copy = ref($v); return 7;'],
 ];
+$fixtures['enum_numeric'] = ['main.phs' => 'enum E: byte { case Ten = 10; case Max = 255; } enum U { case A; case B; } enum I: int { case Negative = -2; } enum Wide: uint64 { case Max = 18446744073709551615; } enum Signed: int64 { case Min = -9223372036854775808; } function read(E $v): byte { return enum_value($v); } function ordinal(): int { return enum_value(U::B); } function plain(): int { return enum_value(I::Negative); } function decode(int $v): E { return enum_from_value(E::class, $v); } function wide(uint64 $v): Wide { return enum_from_value(Wide::class, $v); } function signed(int64 $v): Signed { return enum_from_value(Signed::class, $v); } function negative(uint64 $v): I { return enum_from_value(I::class, $v); } function pick(int &$calls): int { $calls += 1; return 10; } function once(int &$calls): E { return enum_from_value(E::class, pick($calls)); } $u = enum_from_value(U::class, 1); if ($u !== U::B) { return 1; } return 7;'];
+$fixtures['enum_numeric_import'] = ['main.phs' => 'use Lib\\E as Alias; function decode(int $v): Alias { return enum_from_value(Alias::class, $v); } function raw(Alias $v): uint16 { return enum_value($v); } $decoded = decode(20); if ($decoded !== Alias::Done) { return 1; } return 7;', 'lib.phs' => 'namespace Lib; enum E: uint16 { case Ready = 10; case Done = 20; }'];
+$fixtures['enum_numeric_shadow'] = ['main.phs' => 'function enum_value(int $v): int { return $v; } function enum_from_value(int $a, int $b): int { return $a + $b; } return enum_from_value(enum_value(3), 4);'];
+$fixtures['enum_numeric_values'] = ['main.phs' => 'enum U: uint64 { case Max = 18446744073709551615; } enum S: int64 { case Min = -9223372036854775808; } function maximum(): uint64 { return enum_value(U::Max); } function minimum(): int64 { return enum_value(S::Min); } function narrow(uint8 $v): U { return enum_from_value(U::class, $v); } return 7;'];
 $many = 'enum Many {';
 $fixtures['equality'] = ['main.phs' => 'enum E { case A; case B; } $a = E::A; $b = E::B; if ($a == E::A && $a === E::A && $a != $b && $a !== $b) { if ($a == $b || $a !== E::A) { return 1; } return 7; } return 2;'];
 $fixtures['selection'] = ['main.phs' => 'enum E { case A; case B; case C; } function select(int &$calls): E { $calls += 1; return E::B; } function result(int &$calls): int { $calls += 10; return 7; } $calls = 0; $value = match (select($calls)) { default => result($calls), E::A => result($calls), E::B, E::C => 7, E::B => result($calls), }; if ($calls !== 1) { return 1; } switch (select($calls)) { case E::A: return 2; case E::B: $calls += 1; case E::C: $calls += 1; break; default: return 3; } switch (E::A) { case E::B: return 4; } if ($calls !== 4) { return 5; } return $value;'];
@@ -173,6 +177,15 @@ foreach ([
 	'function f(E &$v = E::A): E { return $v; }' => 'reference parameter defaults',
 	'$v = enum_name(1);' => 'requires an enum argument',
 	'$v = enum_name();' => 'exactly one enum argument',
+	'$v = enum_value(1);' => 'requires an enum argument',
+	'$v = enum_value();' => 'exactly one enum argument',
+	'$v = enum_from_value(E::class);' => 'requires Type::class',
+	'$v = enum_from_value("E", 1);' => 'requires Type::class',
+	'$v = enum_from_value(E::A, 1);' => 'requires Type::class',
+	'$v = enum_from_value(int::class, 1);' => 'requires an enum argument or target',
+	'$v = enum_from_value(E::class, true);' => 'requires an integer value',
+	'$v = enum_from_value(E::class, 1.5);' => 'requires an integer value',
+	'$v = enum_from_value(E::class, "1");' => 'requires an integer value',
 	'$v = enum_name(E::A, E::B);' => 'exactly one enum argument',
 ] as $source => $diagnostic) {
 	$compiler = enum_project(['main.phs' => 'enum E { case A; case B; } enum F { case A; } ' . $source]);
@@ -322,6 +335,36 @@ enum_edit($compiler, $lib_source, $lib_text);
 $compiler->prepare(true);
 $compiler->cpp();
 enum_check(Model::$type_catalog->source_declarations()->count() === 1, 'Reintroduced enum was not registered');
+
+// Numeric specializations retain type-marker dependencies and discard stale signatures/helpers.
+$numeric_main = 'use Lib\\E; function decode(int $v): E { return enum_from_value(E::class, $v); } function raw(): int { return enum_value(E::A); } return 7;';
+$numeric_lib = 'namespace Lib; enum E: int { case A = 10; }';
+$compiler = enum_project(['main.phs' => $numeric_main, 'lib.phs' => $numeric_lib]);
+$compiler->exec_cpp();
+$numeric_before = CPP_Output::encode(Model::$cpp_files);
+$numeric_source = Model::sources()[1];
+enum_edit($compiler, $numeric_source, $numeric_lib . "\n");
+$compiler->prepare(true);
+$compiler->cpp();
+enum_check(CPP_Output::encode(Model::$cpp_files) === $numeric_before, 'Numeric helper cache changed output');
+$numeric_changed_lib = 'namespace Lib; enum E: uint16 { case A = 20; }';
+enum_edit($compiler, $numeric_source, $numeric_changed_lib);
+$compiler->prepare(true);
+$compiler->cpp();
+$numeric_changed = CPP_Output::encode(Model::$cpp_files);
+enum_check($numeric_changed !== $numeric_before, 'Numeric backing/value edit did not invalidate helpers');
+$numeric_root = serialize(Model::syntax_files()[0]->root);
+(new CPP_Generator())->generate_program(Model::$prepared_files, Model::$prepared_entry);
+enum_check(serialize(Model::syntax_files()[0]->root) === $numeric_root, 'Type-argument generation mutated syntax');
+enum_edit($compiler, Model::sources()[0], 'return 7;');
+$compiler->prepare(true);
+$compiler->cpp();
+foreach (Model::$cpp_files as $artifact) {
+	enum_check(!str_starts_with($artifact->identity, 'helper:'), 'Unused numeric helper survived retirement');
+}
+$clean = enum_project(['main.phs' => $numeric_main, 'lib.phs' => $numeric_changed_lib]);
+$clean->exec_cpp();
+enum_check(CPP_Output::encode(Model::$cpp_files) === $numeric_changed, 'Numeric incremental/clean output differs');
 
 // Early collection survives an incomplete declaration and gets reused on repair.
 $compiler = enum_project(['main.phs' => 'enum Broken: int { case A =']);
