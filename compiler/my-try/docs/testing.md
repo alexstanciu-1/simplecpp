@@ -53,6 +53,9 @@ and cycle checks, and compiles/executes generated alias/reference-return program
 with PCH. Explicit const-reference coverage includes alias/field propagation,
 no-copy noncopyable records/unique handles, live aliases, read-only forwarding,
 write rejection and access-only signature-change recovery.
+Block-local coverage includes branches, loop bodies, switch groups, typed shadowing,
+const propagation, scope-escape rejection and failed-edit/cleanup recovery. Ordinary
+foreach value-local aliases do not enable reference foreach.
 `--php-only` skips C++ execution.
 Neither mode rebuilds the compiler itself natively.
 

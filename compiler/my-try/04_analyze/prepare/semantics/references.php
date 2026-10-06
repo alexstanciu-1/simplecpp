@@ -30,7 +30,7 @@ final class Reference_Preparation
 		?expression_node $initializer, preparation_context $context): prepared_binding
 	{
 		if (!$context->alias_declarations_allowed) {
-			throw new \RuntimeException('S2S conditional or loop-scoped reference binding is not supported');
+			throw new \RuntimeException('S2S loop-header reference binding is deferred');
 		}
 		if ($initializer === null) {
 			throw new \RuntimeException('S2S reference binding requires an initializer');

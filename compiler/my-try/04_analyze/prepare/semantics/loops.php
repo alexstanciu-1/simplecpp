@@ -11,10 +11,14 @@ final class Loop_Preparation
 		$enclosing = $context->locals;
 		$outer_break /** nullable<breakable_node> */ = $context->break_target;
 		$outer_continue /** nullable<loop_node> */ = $context->continue_target;
+		$outer_alias_permission = $context->alias_declarations_allowed;
 		$context->locals = new local_environment($enclosing);
 		try
 		{
+			// Body aliases are lexical; loop-header alias declarations remain a separate slice.
+			$context->alias_declarations_allowed = false;
 			$facts = self::prepare_header($syntax, $context);
+			$context->alias_declarations_allowed = $outer_alias_permission;
 			$syntax->set_preparation($facts);
 			$context->break_target = $syntax;
 			$context->continue_target = $syntax;
@@ -26,6 +30,7 @@ final class Loop_Preparation
 				($facts->condition !== null) || ($facts->iteration !== null));
 		}
 		finally {
+			$context->alias_declarations_allowed = $outer_alias_permission;
 			$context->locals = $enclosing;
 			$context->break_target = $outer_break;
 			$context->continue_target = $outer_continue;

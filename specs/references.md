@@ -57,20 +57,15 @@ $x =& $a;
 $x =& $b;
 ```
 
-### 2. Conditional binding
+### 2. Escaping a conditional binding
 ```php
 if ($c) { $x =& $a; } else { $x =& $b; }
+return $x; // Neither arm declares an enclosing-scope alias.
 ```
 
-### 3. Conditional or loop-scoped reference binding
+### 3. Loop-header reference binding (deferred in v0.2)
 ```php
-if ($cond) {
-    $x =& $a;
-}
-
-while ($cond) {
-    $y =& $b;
-}
+for ($x int =& $a; $x < 10; $x++) {}
 ```
 
 ### 4. Array / vector / string slot binding
@@ -137,8 +132,10 @@ storage to an alias, and an alias cannot be rebound. Explicit types must designa
 the exact storage type (including the existing same-representation integer aliases);
 binding never inserts a conversion temporary. Ordinary lexical scope/shadowing rules
 apply, including rejecting a self-reference in an explicitly typed initializer.
-Plain nested blocks may contain bindings; conditional/loop/switch regions may not.
-An already established alias may be used and written within those regions.
+Plain blocks, conditional arms, loop bodies and switch case-group bodies may contain
+bindings. Each alias belongs to its declaring block; sibling arms/groups and code
+after that block cannot use it. Loop-header alias declarations remain deferred.
+An already established outer alias may also be used and written within those regions.
 
 The target must already exist and outlive the alias's lexical scope. Whole locals,
 parameters, direct stable struct fields and alias chains are supported. Interior
@@ -186,7 +183,7 @@ Recursive call components containing a reference-returning function are rejected
 during preparation, including self-calls and cycles through by-value helpers. This
 bounded restriction is structural: unused functions and calls in unreachable branches
 are included. Ordinary by-value recursion remains supported. Recursive reference
-returns, runtime-registered reference returns, const references and reference
+returns, runtime-registered reference returns, const-reference returns and reference
 foreach are separate work. The advisory warning policy below remains intended;
 my-try's missing retained warning delivery is tracked as CH07-WARN-01 in its catalog.
 

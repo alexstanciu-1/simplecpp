@@ -8,21 +8,6 @@ final class Body_Preparation
 	/** Analysis owns statement dispatch, fact attachment and completion composition. */
 	public static function prepare_statement(statement_node $node, preparation_context $context): statement_completion
 	{
-		$allowed = $context->alias_declarations_allowed;
-		if (($node instanceof if_node) || ($node instanceof loop_node) || ($node instanceof switch_node)) {
-			$context->alias_declarations_allowed = false;
-		}
-		try {
-			return self::prepare_statement_core($node, $context);
-		}
-		finally {
-			$context->alias_declarations_allowed = $allowed;
-		}
-	}
-
-	/** Dispatch within the lexical reference-binding policy selected by the enclosing statement. */
-	private static function prepare_statement_core(statement_node $node, preparation_context $context): statement_completion
-	{
 		if ($node instanceof cleanup_node) {
 			$removal = object_cast($node, cleanup_node::class);
 			$removal->set_preparation(Cleanup_Preparation::prepare($removal, $context));

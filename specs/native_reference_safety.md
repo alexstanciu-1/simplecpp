@@ -57,6 +57,25 @@ shared_p<Box> box;
 auto& box_ref = box;
 ```
 
+## v0.2 block-local aliases — 2026-10-06
+
+Native `=&` bindings may introduce locals inside conditional arms, loop bodies and
+switch case-group bodies. Existing lexical scope and typed-shadowing rules apply;
+there is no branch-merged alias or rebinding of an existing variable. Each loop-body
+entry creates its own local binding. Fallthrough does not expose a preceding switch
+group's alias. Body aliases are not visible in loop conditions or updates.
+
+Targets must be already established stable storage: an outer local, an earlier
+same-block local, a parameter, an eligible direct field or a supported reference-call
+result. Aliases preserve source provenance and read-only access, and never extend
+the target's lifetime. Leaving a scope (including break/continue) ends the alias,
+not the target's lifetime. Existing container-interior and escaping-reference
+rejections remain in force.
+
+Loop-header alias declarations, reference foreach and broader reference-return
+control flow remain outside this slice. An alias to an ordinary foreach value local
+aliases that copied local, not the source container element.
+
 ## v0.2 explicit read-only reference parameters — 2026-10-06
 
 `function read(const T &$value): R` borrows exact-type stable storage without

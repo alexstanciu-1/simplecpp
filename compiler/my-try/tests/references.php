@@ -26,6 +26,13 @@ function references_source(string $source): string
 }
 
 $cases = [
+	'branch_alias' => '$x = 1; $y = 10; if (true) { $a int =& $x; $b =& $a; $b += 2; } elseif (false) { $a =& $y; $a = 99; } else { $a =& $y; $a = 100; } if (false) { $a =& $x; $a = 99; } elseif (true) { $a =& $y; $a += 3; } else { $a =& $x; $a = 100; } if (false) {} else { $local = 4; $a =& $local; $a++; $y += $a; } if ($x !== 3 || $y !== 18) { return 1; } return 0;',
+	'loop_alias' => '$n = 0; $i = 0; while ($i < 4) { $a =& $n; $i++; if ($i === 2) { continue; } $a += $i; if ($i === 3) { break; } } if ($n !== 4) { return 1; } do { $a =& $n; $a++; } while ($n < 6); for ($j = 0; $j < 3; $j++) { $a int =& $n; $local = $j; $b =& $local; $b++; $a += $b; } if ($n !== 12) { return 2; } return 0;',
+	'foreach_local_alias' => '$items vector<int> = [1, 2, 3]; $sum = 0; foreach ($items as $item) { $a =& $item; $a += 10; $total =& $sum; $total += $a; } $first = $items[0]; if ($sum !== 36 || $first !== 1) { return 1; } return 0;',
+	'switch_group_alias' => '$x = 1; $y = 10; switch (1) { case 1: $a =& $x; $a++; case 2: $a =& $y; $a += 3; break; default: $a =& $x; $a = 99; } if ($x !== 2 || $y !== 13) { return 1; } return 0;',
+	'branch_const_alias' => 'struct P { int $n; } function read(const P &$p): int { $answer = 0; if (true) { $a =& $p->n; $b int =& $a; $answer = $b; } return $answer; } $p P; $p->n = 7; $r = read($p); if ($r !== 7) { return 1; } return 0;',
+	'branch_shadow_alias' => '$x = 1; $a = 2; if (true) { $a int =& $x; $a = 3; } if ($a !== 2 || $x !== 3) { return 1; } return 0;',
+	'branch_call_alias' => 'function &id(int &$x): int { $x += 1; return $x; } $x = 1; if (false) { $a =& id($x); $a = 99; } else { $a =& id($x); $a += 3; } if ($x !== 5) { return 1; } return 0;',
 	'const_noncopyable_record' => 'struct P { unique<int> $child; } function absent(const P &$p): bool { $a =& $p->child; return empty($a); } $p P; if (!absent($p)) { return 1; } return 0;',
 	'const_scalar' => 'function read(const int &$x): int { $a =& $x; $b int =& $a; $copy = $b; $copy += 1; return $copy; } $n = 4; $r = read($n); if ($r !== 5) { return 1; } if ($n !== 4) { return 2; } return 0;',
 	'const_forward' => 'function read(const int &$x): int { return $x; } function forward(const int &$x): int { $a =& $x; return read($a); } struct P { int $x; } function field(const P &$p): int { $a =& $p->x; return forward($a); } $p P; $p->x = 7; $a = field($p); $b = read($p->x); if ($a !== 7 || $b !== 7) { return 1; } return 0;',
@@ -104,11 +111,20 @@ $rejections = [
 	['$a =& 1;', 'stable storage'],
 	['$a =& $a;', 'initializer'],
 	['$x = 1; { $x int =& $x; }', 'initializer'],
-	['$x = 1; if (true) { $a =& $x; }', 'conditional or loop-scoped'],
-	['$x = 1; if (false) { $x = 2; } else { $a =& $x; }', 'conditional or loop-scoped'],
-	['$x = 1; while (false) { $a =& $x; }', 'conditional or loop-scoped'],
-	['$x = 1; for ($a int =& $x; false;) {}', 'conditional or loop-scoped'],
-	['$x = 1; switch ($x) { case 1: $a =& $x; }', 'conditional or loop-scoped'],
+	['$x = 1; if (true) { $a =& $x; } return $a;', 'established local'],
+	['$x = 1; if (true) { $a =& $x; } else { $a = 2; } return $a;', 'established local'],
+	['$x = 1; if (true) { $a =& $x; } elseif ($a) {}', 'established local'],
+	['$x = 1; while (false) { $a =& $x; } return $a;', 'established local'],
+	['$x = 1; for ($a int =& $x; false;) {}', 'loop-header'],
+	['$x = 1; for ($i = 0; $i < 1; $a++) { $a =& $x; }', 'established local'],
+	['$x = 1; do { $a =& $x; } while ($a);', 'established local'],
+	['$x = 1; switch ($x) { case 1: $a =& $x; case 2: $a++; }', 'established local'],
+	['$x = 1; $a = 2; if (true) { $a =& $x; }', 'new local'],
+	['$x = 1; while (false) { $a =& $x; $a =& $x; }', 'new local'],
+	['$x = 1; if (true) { $a =& $later; $later = 2; }', 'established local'],
+	['function bad(const int &$x): void { if (true) { $a =& $x; $a++; } }', 'read-only'],
+	['$v vector<int> = [1]; foreach ($v as $n) { $a =& $v[0]; }', 'stable storage'],
+	['function &bad(int &$x): int { if (true) { $a =& $x; } return $a; }', 'established local'],
 	['$x = 1; $y = 2; $z = ($a =& $x);', 'standalone local'],
 	['$x = 1; $y = ($a =& $x);', 'standalone local'],
 	['$x = 1; $a int = ($b =& $x);', 'standalone local'],
@@ -240,6 +256,34 @@ try
 	references_check($mutable_output !== $const_output, 'Const removal did not refresh output');
 	references_check($mutable_output === references_source($mutable_source), 'Const removal differs from fresh output');
 	references_check($const_output === references_source($const_source), 'Const output differs from fresh output');
+
+	// Failed body-local bindings must not leave scoped alias facts or header policy behind.
+	$block_source = '$n = 1; while ($n < 3) { if (true) { $a =& $n; $a++; } } return $n;';
+	file_put_contents($path, $block_source);
+	Compiler_Lifecycle::reset();
+	$block_compiler = new Compiler();
+	$block_compiler->init([$directory]);
+	$block_compiler->exec_cpp();
+	$block_output = Model::$cpp_files[0]->text;
+	foreach ([str_replace('$a =& $n', '$a =& 1', $block_source),
+		str_replace('return $n', 'return $a', $block_source)] as $invalid)
+	{
+		file_put_contents($path, $invalid);
+		foreach ([[$path], []] as $changes) {
+			$failed = false;
+			try { $block_compiler->update_cpp($changes); }
+			catch (\RuntimeException $error) { $failed = true; }
+			references_check($failed && Model::$cpp_files->is_empty(), 'Invalid block alias published incremental output');
+		}
+		file_put_contents($path, $block_source);
+		$block_compiler->update_cpp([$path]);
+		references_check(Model::$cpp_files[0]->text === $block_output, 'Block alias recovery changed output');
+	}
+	Compiler_Lifecycle::reset_preparation();
+	$block_compiler->prepare();
+	$block_compiler->cpp();
+	references_check(Model::$cpp_files[0]->text === $block_output, 'Block alias cleanup changed output');
+	references_check($block_output === references_source($block_source), 'Block alias incremental/fresh output differs');
 }
 finally {
 	unlink($path);

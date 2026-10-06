@@ -495,7 +495,7 @@ final class preparation_context
 	public ?canonical_type_use $return_type = null;
 	/** Only a statement-root assignment and its direct RHS chain may introduce locals. */
 	public bool $statement_assignment = false;
-	/** Structured conditional/loop regions prohibit new alias bindings. */
+	/** Body aliases use lexical scope; loop-header alias declarations remain gated. */
 	public bool $alias_declarations_allowed = true;
 	/** Transient reference-return obligation; neither field is retained on facts. */
 	public ?prepared_parameter $reference_return_parameter = null;

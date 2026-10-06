@@ -42,8 +42,9 @@ slice below establishes provenance; source aliases and reference returns remain 
 
 Agreed sequence: preserve the existing reduced alias restrictions, establish the
 model first, then enable local aliases and bounded reference returns separately.
-No PHP-style rebinding, conditional/loop alias declarations or container/dynamic
-interior borrows are added. Initial reference returns will select one explicit
+At this model checkpoint no PHP-style rebinding, conditional/loop alias declarations
+or container/dynamic interior borrows were added. Body-local aliases are now enabled
+by the later block-local checkpoint below. Initial reference returns select one explicit
 reference parameter, with an explicit exact return type and a single return.
 Locals, by-value parameters and temporaries cannot supply an escaping reference.
 Forwarding requires a proven origin, not merely an addressable result.
@@ -93,7 +94,8 @@ return obligations and body validation. Bindings retain an optional shared
 `alias_target` place; reads retain their own declaration/name but use that original
 place. Ordinary writes do not rebind it. No reference type is added to the registry.
 New alias roots reject, and no conversion/copy is performed at a binding boundary.
-Transient context flags prohibit new bindings within conditional/loop/switch regions.
+At this checkpoint transient context flags prohibited new bindings within
+conditional/loop/switch regions; the later block-local checkpoint removes that ban.
 Plain blocks follow existing lexical lifetime and shadowing rules.
 
 Reference-returning signatures require exactly one fixed reference parameter of
@@ -463,6 +465,27 @@ Recommendation for discussion: retain these explicit limits/debts and close the
 bounded positive pass after the requested validation, rather than implicitly enabling
 legacy syntax or building a new diagnostics/lifetime subsystem during reconciliation.
 
+## Block-local aliases — 2026-10-06
+
+Enabled inferred and explicitly typed aliases in if/elseif/else arms, loop bodies
+and switch case-group bodies. The existing child `local_environment` owns scope;
+`Reference_Preparation` retains stable-source, exact-type, provenance, no-rebinding
+and const-access checks. Removed the blanket structured-statement admission wrapper.
+Loop preparation gates only header declarations and restores policy on failure.
+Parsing, retained model and C++ lowering need no new representation or special path.
+
+Sibling scopes may use the same alias name; explicit typed shadowing follows the
+existing rule. No alias escapes its block or appears in a loop condition/update.
+Ordinary foreach value-local aliases mutate the copy, not a container slot.
+Loop-header aliases, reference foreach, interior references and multiple-return
+reference functions remain deferred; this does not change mutation policy.
+
+Proof: `/tmp/my-try-block-alias-20261006-1` passed 12 PHP suites and 30 generated
+C++ executions. The reference suite contains 83 preparation rejections. Added
+failed-edit/no-change retry, repair, cleanup and fresh-output equality coverage,
+checked by `/tmp/my-try-block-alias-20261006-recovery` (PHP-only focused rerun).
+The compiler itself was not rebuilt natively in this slice.
+
 ## Ownership-type validation debt from chapter 05
 
 **CH05-OWN-01 — resolved:** the model slice above supplies semantic ownership
@@ -504,7 +527,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-PARAM-003F](#type-param-003f) | supported-bounded | `function first(const vector<int> &$v): int { return $v[0]; }` | prepared | verified | deferred | `tests/references.php`; stable exact arguments; broader const forms deferred |
 | [WARN-TYPE-PARAM-001](#warn-type-param-001) | guidance-only | Strict by-value parameter reassignment | supported for admitted types | value semantics proved | deferred | No new emitted warning; legacy array spelling/guard not added |
 | [TYPE-VAR-007A](#type-var-007a) | supported-bounded | `$p unique<Point> = new Point();` | prepared | verified | deferred | `tests/ownership.php`; constructor arguments remain deferred |
-| [TYPE-VAR-008](#type-var-008) | supported-strict | `$r int =& $x;` | prepared | verified | deferred | Reduced local binding; legacy annotation spelling not added |
+| [TYPE-VAR-008](#type-var-008) | supported-strict | `$r int =& $x;` | prepared | verified | deferred | Reduced block-local binding, including control-flow bodies; legacy annotation spelling not added |
 | [NOTE-038](#note-038) | reconciled | Value snapshots versus explicit const-reference borrowing | prepared | verified | deferred | Chapter 04 value contract and const-reference checkpoint; no automatic const-ref ABI |
 | [NOTE-056](#note-056) | guidance-only | Composite value parameter reassignment | existing value contract | verified for admitted types | deferred | No body-dependent passing mode or universal deep-copy claim |
 | [NOTE-059](#note-059) | debt | Reference-return advice | warning delivery deferred | — | deferred | CH07-WARN-01 |
