@@ -461,8 +461,9 @@ publication. Standalone `CPP_Generator::generate` returns output without acknowl
 shared changes; repeated calls can reuse fragments while the handoff remains pending.
 `Preparation_Status` and `Type_Queries` provide read-only work guards and established
 type/source-association queries, separately from preparation workers.
-Function signature fragments retain separate prototype and definition spellings so
-default values appear only on prototypes, without rerendering syntax during assembly.
+Function signature fragments retain separate prototype and definition spellings and
+include requirements. Default values appear only on prototypes; definition-only
+layout includes do not leak into callable headers. Assembly does not rerender syntax.
 Failures retain pending work and withhold completed output; unexpected failures
 request a full rebuild.
 
@@ -477,8 +478,29 @@ The CLI/native transport is versioned independently from semantic identity.
 implementation groups, and `entry.cpp`. The single-file `generate` adapter delegates
 to that same path. Includes come from live fragment dependencies recorded while
 rendering resolved calls and type representations, including nested template arguments.
-There is no all-project declaration header or combined-output renderer. Source-type
-uses conservatively include complete definitions; declaration-only precision is next.
+There is no all-project declaration header or combined-output renderer.
+
+`cpp_type_requirement` describes backend use-site visibility, not semantic capability.
+Bare source records in callable declarations need only forward declarations. Reference
+parameters/returns, reference call temporaries and local aliases also only name their
+record. Value definitions, local copies/replacements (including inferred `auto`),
+embedded record fields and member access require layouts. These decisions belong to
+the existing typed emitters, using settled types; no second AST walk or lexical scan
+discovers dependencies. Member access explicitly records its base layout, including
+nested field expressions, even when its result is scalar.
+
+`cpp_type`, generation contexts and retained fragments carry name-only source
+requirements separately from include paths. These are scalar names, not additional
+semantic owners or worker references. The callable header supplies definition-signature
+forward declarations; `definition_headers` retains the extra complete includes for
+implementation units. Final preambles deduplicate names and omit a forward declaration
+when the same artifact directly includes that type's definition.
+
+Runtime/template bindings still include their registered headers and complete source
+payload definitions recursively. A template spelling alone is not a promise that its
+runtime implementation supports incomplete payloads. Per-binding relaxation and broader
+future inline/template dependency roles require their own proofs. No source semantics
+or preparation invalidation rules change with native include precision.
 
 `CPP_Artifacts` owns reversible filesystem-safe encodings, callable/type header paths
 and logical-module/relative-source unit paths. Current globally scoped declaration

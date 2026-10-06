@@ -132,8 +132,9 @@ Ownership tags document intent; only supported bindings implement native behavio
 Prioritize reduced native recompilation through modular output, stable names and
 precise dependencies. Single-source and multi-source programs share partitioned
 output: callable/type headers, per-source implementation groups and `entry.cpp`.
-Complete-type include precision, persistent publication and native/PCH caching remain
-in the [Chapter 08 roadmap](docs/planning/incremental_cpp_artifacts.md).
+Bare-record declaration/layout requirements are backend-owned; template payloads remain
+conservatively complete. Persistent publication and native/PCH caching remain in the
+[Chapter 08 roadmap](docs/planning/incremental_cpp_artifacts.md).
 Do not benchmark every spelling or promise devirtualization/layout gains without
 measurement. Preserve semantics, lifetime and diagnostics during optimization.
 

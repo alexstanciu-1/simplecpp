@@ -11,9 +11,16 @@ enum cpp_literal_kind {
 	case none;
 }
 
+/** Required visibility at a C++ use site, not a semantic type capability. */
+enum cpp_type_requirement {
+	case declaration;
+	case complete;
+}
+
 final class cpp_type {
 	public string $spelling;
 	public array $headers /** hash<bool> */ = [];
+	public array $forward_declarations /** hash<bool> */ = [];
 	public cpp_literal_kind $literal;
 }
 
@@ -65,7 +72,8 @@ final class cpp_generation_context
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;
 	public array $headers /** hash<bool> */ = [];
-	/** Scoped source names are stable across token movement in the current single-source grammar. */
+	public array $forward_declarations /** hash<bool> */ = [];
+	/** Scoped source names are stable across token movement. */
 	public array $record_states /** hash<cpp_record_state> */ = [];
 
 	/** Output sections are assembled after traversal so declarations precede all uses. */
@@ -87,6 +95,9 @@ final class cpp_fragment
 	/** Function declaration spelling, including defaults; text remains the definition signature. */
 	public string $prototype_text = '';
 	public array $headers /** hash<bool> */ = [];
+	public array $forward_declarations /** hash<bool> */ = [];
+	/** Definition signatures can need layouts that their public prototypes do not. */
+	public array $definition_headers /** hash<bool> */ = [];
 	/** Declaration dependencies needed before a value-record definition. */
 	public Storage $records /** Storage<collected_struct> */;
 

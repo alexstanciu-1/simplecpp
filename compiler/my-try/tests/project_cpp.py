@@ -9,7 +9,7 @@ APP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(APP / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
 from cpp_fixture import CppFixtureCompiler
-from cpp_artifacts import decode_artifacts, probe_bundle, probe_text
+from cpp_artifacts import decode_artifacts, materialize_artifacts, probe_bundle, probe_text
 
 
 def main():
@@ -49,6 +49,34 @@ def main():
                         lambda folder=folder, compiler=compiler, fixture=fixture: execute(folder, compiler, fixture))
                    for folder, compiler in compilers for fixture in manifest], jobs=12)
 
+        # Each generated header stands alone; PCH must not mask a missing dependency.
+        header_tasks = []
+        for fixture in manifest:
+            payload = Path(fixture['path']).read_bytes()
+            directory = output / 'headers' / Path(fixture['path']).stem
+            materialize_artifacts(payload, directory)
+            for index, artifact in enumerate(decode_artifacts(payload)):
+                if artifact['kind'] != 'header':
+                    continue
+                source = directory / ('header-check-' + str(index) + '.cpp')
+                source.write_text('#include "' + artifact['path'] + '"\n')
+                name = 'header-' + directory.name + '-' + str(index)
+                header_tasks.append(Task(name, lambda name=name, source=source, directory=directory:
+                    runner.run(name, [*compilers[0][1].flags, '-I', directory, '-fsyntax-only', source])))
+        run_tasks(header_tasks, jobs=12)
+
+        # Ask clang for actual transitive dependencies, not only emitted-text assertions.
+        directory = output / 'headers' / 'record_dependencies'
+        artifacts = decode_artifacts((programs / 'record_dependencies.json').read_bytes())
+        box_path = next(a['path'] for a in artifacts if a['id'] == 'type:Box')
+        for source_name, expects_layout in [('forward.phs', False), ('copy.phs', True), ('nested.phs', True)]:
+            encoded = 'n' + source_name.encode().hex() + '.cpp'
+            unit = next(a for a in artifacts if a['path'].endswith('/' + encoded))
+            dependencies = runner.run('dependencies-' + source_name,
+                [*compilers[0][1].flags, '-I', directory, '-MM', directory / unit['path']])
+            if (box_path.encode() in dependencies) != expects_layout:
+                raise RuntimeError('Incorrect transitive layout dependency for ' + source_name)
+
         # New processes and relocated checkout roots cannot enter artifact identities.
         baseline = None
         for index in range(2):
@@ -67,6 +95,7 @@ def main():
                 raise RuntimeError('Missing entry published partial output')
         (output / 'summary.json').write_text(json.dumps(dict(passed=True, php_suites=len(suites),
             generated_program_runs=2 * len(manifest), pch_and_no_pch=True,
+            standalone_header_checks=len(header_tasks), transitive_dependency_checks=3,
             native_compiler_rebuilt=False, incremental_native_cache=False), indent=2) + '\n')
 
 

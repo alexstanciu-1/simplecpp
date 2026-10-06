@@ -2,9 +2,9 @@
 Doc Status: planning
 
 Recorded: 2026-10-06. Baseline: `480b2543` on `v0.2/develop`.
-Status: entry selection and partitioned cross-file generation implemented. Precise
-declaration-versus-definition dependencies, persistent publication and native caching
-remain pending. This is not a language spec.
+Status: entry selection, partitioned cross-file generation and bounded bare-record
+declaration-versus-definition dependencies implemented. Persistent publication and
+native caching remain pending. This is not a language spec.
 
 ## Direction and evidence
 
@@ -231,5 +231,47 @@ the fixture now sequences the call explicitly. No language relaxation was made.
 Native compiler rebuilding, native incremental scheduling, persistent PCH reuse and
 filesystem mtime preservation are not proved or implemented by this checkpoint.
 
-Next: slice 3's dependency precision, followed by content-aware disk publication and
-the native object/link/runtime-PCH cache. Namespaces/imports retain their later group.
+At this checkpoint, slice 3's dependency precision was next; its completion is below.
+
+## Bounded type-dependency precision — 2026-10-06
+
+Slice 3 distinguishes declaration-only bare-record uses from complete-definition
+uses inside the C++ backend. Callable headers forward-declare bare records, including
+by-value prototype parameters/results. Implementation signatures require definitions
+for values, not references. Reference call temporaries, forwarding and aliases preserve
+name-only requirements; value materialization/replacement, embedded fields and member
+access explicitly record layouts. Inferred `auto` copies cannot lose their dependencies.
+Signature fragments retain separate prototype includes and definition-only includes;
+complete requirements dominate forward declarations within each artifact.
+
+This extends the existing type representation/fragment path. Parsing, collection,
+semantic facts and preparation scheduling do not learn C++ headers. No second symbol
+model, lexical dependency scanner, extra AST walk or project umbrella header is added.
+Compared with the old generator's spelling-based forward-name scan, settled canonical
+types decide which source definition is being named here.
+
+Boundary: runtime template/modifier headers and their source payload definitions remain
+conservatively included, even at declaration sites. A future per-binding incomplete-type
+contract needs actual runtime/template proofs, not an assumption based on pointer-like
+storage. Broader inline/template declaration roles follow their future language model.
+This is bounded native dependency precision, not minimized semantic invalidation or
+proof of incremental object/PCH reuse.
+
+Evidence (local temporary paths):
+
+- `/tmp/my-try-ch08-type-dependencies-20261006-3/summary.json`: five PHP suites,
+  26 separate-unit executions with/without PCH, 30 standalone-header checks without
+  PCH, and three clang transitive-dependency checks. Covers layout-only edits,
+  clean/incremental equality, name-only forwarding, inferred copies, whole-record
+  replacement, nested fields and conservative template payload dependencies.
+- `/tmp/my-try-ch08-type-functions-20261006-1/summary.json`: 12 PHP suites and
+  77 function executions without PCH passed. The first dependency-run attempt had a
+  Python bytes/text assertion mismatch after successful C++ checks; the harness was
+  corrected without changing language behavior. Runners used documented CLI fallback.
+
+The implementation follows the portable-PHP authoring constraints; enum requirements
+use explicit typed entrypoints rather than introducing enum-valued parameter defaults.
+The compiler itself was not rebuilt natively in this slice.
+
+Next: slice 4, content-aware disk publication and a consistent owned-artifact manifest;
+then the native object/link/runtime-PCH cache. Namespaces/imports retain their later group.

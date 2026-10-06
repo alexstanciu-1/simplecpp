@@ -5,11 +5,18 @@ namespace scpp\compiler;
 
 final class CPP_Declarations
 {
-	/** Type spelling also records the narrow runtime include needed by the output unit. */
+	/** Value/layout sites use complete definitions unless explicitly classified otherwise. */
 	public static function type(canonical_type_use $type, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($type);
-		CPP_Types::record_headers($mapping, $context);
+		return self::type_for($type, $context, cpp_type_requirement::complete);
+	}
+
+	/** Record use-site visibility together with the selected C++ spelling. */
+	public static function type_for(canonical_type_use $type, cpp_generation_context $context,
+		cpp_type_requirement $requirement): string
+	{
+		$mapping = CPP_Types::representation_for($type, $requirement);
+		CPP_Types::record_dependencies($mapping, $context);
 
 		return $mapping->spelling;
 	}
@@ -86,8 +93,8 @@ final class CPP_Declarations
 		throw new \LogicException('C++ truthiness operation is not implemented');
 	}
 
-	/** All signatures precede all bodies, including mutually recursive declarations. */
-	public static function signature(function_node $syntax, cpp_generation_context $context, bool $include_defaults): string
+	/** Prototypes only name records; value definitions need layouts, reference definitions do not. */
+	public static function signature(function_node $syntax, cpp_generation_context $context, bool $prototype): string
 	{
 		$facts = $syntax->require_preparation();
 		$parts = '';
@@ -98,11 +105,12 @@ final class CPP_Declarations
 			$parameter = $storage->contract;
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
-			$parts .= $separator . $qualifier . self::type($parameter->type, $context) . $reference . ' ' . CPP_Generator::local_name($entry);
-			if ($include_defaults && ($parameter->default_value !== null)) {
+			$requirement = self::signature_requirement($prototype, $parameter->mode === passing_mode::reference);
+			$parts .= $separator . $qualifier . self::type_for($parameter->type, $context, $requirement) . $reference . ' ' . CPP_Generator::local_name($entry);
+			if ($prototype && ($parameter->default_value !== null)) {
 				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
 			}
-			elseif ($include_defaults && ($parameter->element_type !== null)) {
+			elseif ($prototype && ($parameter->element_type !== null)) {
 				// An empty tail is implicit in source; this also permits preceding C++ defaults.
 				$parts .= ' = ' . self::type($parameter->type, $context) . '{}';
 			}
@@ -111,7 +119,13 @@ final class CPP_Declarations
 
 		$function_declaration = object_cast($syntax->occurrence(), collected_function::class);
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
-		return self::type($facts->signature->return_type, $context) . $return_reference . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';
+		$return_requirement = self::signature_requirement($prototype, $facts->signature->reference_return !== null);
+		return self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';
+	}
+
+	private static function signature_requirement(bool $prototype, bool $reference): cpp_type_requirement
+	{
+		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 	}
 
 	/** Consume normalized default facts; syntax and source tokens have no authority here. */
@@ -179,7 +193,8 @@ final class CPP_Declarations
 
 		// The immediately invoked lambda sequences arguments and contains their temporaries.
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
-		$text = '([&]() -> ' . self::type($facts->type, $context) . $return_reference . " {\n";
+		$return_requirement = self::signature_requirement(false, $facts->signature->reference_return !== null);
+		$text = '([&]() -> ' . self::type_for($facts->type, $context, $return_requirement) . $return_reference . " {\n";
 		$names = '';
 		$separator = '';
 		$packed_names = '';
@@ -202,7 +217,8 @@ final class CPP_Declarations
 			}
 
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
-			$text .= "\t" . $qualifier . self::type($argument_type, $context) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+			$argument_requirement = self::signature_requirement(false, $boundary === value_boundary_operation::bind_reference);
+			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
 			if ($boundary === value_boundary_operation::consume_value) {
 				$context->headers['utility'] = true;
 				$name = 'std::move(' . $name . ')';
@@ -236,6 +252,8 @@ final class CPP_Declarations
 	{
 		$entry = object_cast(weakref_get($syntax->require_field_access_preparation()->field->declaration), collected_name::class);
 		$base = $syntax->base;
+		// A reference declaration does not supply the layout needed by member access.
+		self::type($base->require_preparation()->type, $context);
 		return '(' . (new CPP_Syntax($context))->expression($base) . ').' . CPP_Generator::source_name('field', $entry->name);
 	}
 }

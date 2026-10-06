@@ -100,11 +100,12 @@ final class CPP_Generator
 				$text = $fragment->prototype_text . ";\n";
 			}
 			$result->append(new cpp_artifact($identity, cpp_artifact_kind::header, $path,
-				"#pragma once\n" . CPP_Artifacts::includes($fragment->headers, $path) . $text));
+				"#pragma once\n" . CPP_Artifacts::preamble($fragment->headers, $fragment->forward_declarations, $path) . $text));
 		}
 		foreach ($files as $prepared)
 		{
 			$headers /** hash<bool> */ = [];
+			$declarations /** hash<bool> */ = [];
 			$body_text = '';
 			$nodes /** Storage<declaration_node> */ = $prepared->source->root->declarations;
 			foreach ($nodes as $node) {
@@ -115,19 +116,25 @@ final class CPP_Generator
 				$signature = $this->program->fragments[$signature_owner];
 				$body = $this->program->fragments[$body_owner];
 				$headers[CPP_Artifacts::callable_header($function->occurrence()->name)] = true;
+				foreach ($signature->definition_headers as $header => $used) {
+					$headers[$header] = true;
+				}
 				foreach ($body->headers as $header => $used) { $headers[$header] = true; }
+				foreach ($body->forward_declarations as $name => $used) {
+					$declarations[$name] = true;
+				}
 				$body_text .= $signature->text . "\n{\n" . $body->text . "}\n\n";
 			}
 			if ($body_text !== '') {
 				$path = CPP_Artifacts::unit_path($prepared->source);
 				$result->append(new cpp_artifact('implementation:' . $path, cpp_artifact_kind::translation_unit,
-					$path, CPP_Artifacts::includes($headers, '') . $body_text));
+					$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text));
 			}
 		}
 		$entry_owner = object_cast($entry_file->source->root->body->work(), preparation_owner::class);
 		$entry_fragment = $this->program->fragments[$entry_owner];
 		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
-			CPP_Artifacts::includes($entry_fragment->headers, '') . "\nint main()\n{\n"
+			CPP_Artifacts::preamble($entry_fragment->headers, $entry_fragment->forward_declarations, '') . "\nint main()\n{\n"
 			. $entry_fragment->text . "\treturn 0;\n}\n"));
 		return $result;
 	}
@@ -168,7 +175,9 @@ final class CPP_Generator
 			}
 			elseif ($entry instanceof collected_function) {
 				$function_syntax = object_cast($entry, collected_function::class)->syntax();
-				$next->text = CPP_Declarations::signature($function_syntax, $context, false);
+				$definition_context = new cpp_generation_context();
+				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
+				$next->definition_headers = $definition_context->headers;
 				$next->prototype_text = CPP_Declarations::signature($function_syntax, $context, true);
 			}
 			else
@@ -188,6 +197,7 @@ final class CPP_Generator
 			}
 		}
 		$next->headers = $context->headers;
+		$next->forward_declarations = $context->forward_declarations;
 		$next->version = $owner->version;
 		$next->change_status = change_state::unchanged;
 		$this->program->fragments[$owner] = $next;
@@ -260,13 +270,16 @@ final class CPP_Generator
 	/** Render one declaration or assignment from an already evaluated value expression. */
 	public static function generate_storage_value(prepared_binding $binding, string $name, string $value, bool $explicit_type, cpp_generation_context $context): string
 	{
+		// Even an inferred `auto` copy or replacement needs its concrete value definition.
+		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+		$type_name = CPP_Declarations::type_for($binding->type, $context, $requirement);
 		$prefix = '';
 		if ($binding->resolved_kind === binding_kind::declaration) {
-			$prefix = $explicit_type ? CPP_Declarations::type($binding->type, $context) . ' ' : 'auto ';
+			$prefix = $explicit_type ? $type_name . ' ' : 'auto ';
 			if ($binding->alias_target !== null) {
 				$place /** prepared_place */ = $binding->alias_target;
 				$qualifier = $place->access() === storage_access::read_only ? 'const ' : '';
-				$prefix = $qualifier . CPP_Declarations::type($binding->type, $context) . '& ';
+				$prefix = $qualifier . $type_name . '& ';
 			}
 		}
 		if ($binding->conversion !== null) {
@@ -389,7 +402,7 @@ final class CPP_Generator
 	private static function generate_integer_value(canonical_type_use $type, string $decimal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($type);
-		CPP_Types::record_headers($mapping, $context);
+		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::signed_integer) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
@@ -729,7 +742,7 @@ final class CPP_Generator
 	public static function generate_float(prepared_float_literal $literal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($literal->type);
-		CPP_Types::record_headers($mapping, $context);
+		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::floating) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
@@ -741,7 +754,7 @@ final class CPP_Generator
 	public static function generate_boolean(prepared_boolean_literal $literal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($literal->type);
-		CPP_Types::record_headers($mapping, $context);
+		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::boolean) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
 		}
@@ -771,7 +784,7 @@ final class CPP_Generator
 	public static function generate_string(prepared_string_literal $literal, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($literal->type);
-		CPP_Types::record_headers($mapping, $context);
+		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::string_value) {
 			throw new \RuntimeException('C++ string literal emission requires the canonical string type');
 		}

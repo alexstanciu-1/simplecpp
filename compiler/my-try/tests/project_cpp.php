@@ -68,6 +68,29 @@ $cases = [
 		'type.phs' => 'struct Box { int $value; }',
 		'lib.phs' => 'function consume(unique<Box> $p): void { return; }',
 	], 7],
+	'record_dependencies' => [[
+		'main.phs' => '$box Box; $box->value = 17; $alias Box =& forward($box); $copy = copy_value($alias); $nested Nest; $nested->box = $copy; return nested_read($nested);',
+		'type.phs' => 'struct Box { int $value; } struct Nest { Box $box; }',
+		'identity.phs' => 'function &identity(Box &$box): Box { return $box; }',
+		'forward.phs' => 'function &forward(Box &$box): Box { $alias Box =& $box; return identity($alias); }',
+		'copy.phs' => 'function copy_value(Box $box): Box { return $box; }',
+		'nested.phs' => 'function nested_read(const Nest &$nest): int { return $nest->box->value; }',
+	], 17],
+	'inferred_copy' => [[
+		'main.phs' => '$box Box; $box->value = 19; return copy_unused($box);',
+		'type.phs' => 'struct Box { int $value; }',
+		'copy.phs' => 'function copy_unused(const Box &$box): int { $copy = $box; return 19; }',
+	], 19],
+	'record_replacement' => [[
+		'main.phs' => '$box Box; $other Box; $other->value = 29; replace($box, $other); return $box->value;',
+		'type.phs' => 'struct Box { int $value; }',
+		'lib.phs' => 'function replace(Box &$box, const Box &$other): void { $box = $other; }',
+	], 29],
+	'template_dependencies' => [[
+		'main.phs' => '$box Box; $box->value = 23; $items vector<Box> = [$box]; return first_box($items);',
+		'type.phs' => 'struct Box { int $value; }',
+		'lib.phs' => 'function first_box(const vector<Box> &$items): int { $copy = $items[0]; return $copy->value; }',
+	], 23],
 ];
 $manifest = [];
 foreach ($cases as $name => [$sources, $exit]) {
@@ -80,6 +103,40 @@ foreach ($cases as $name => [$sources, $exit]) {
 		file_put_contents($path, CPP_Output::encode(Model::$cpp_files));
 		$manifest[] = ['path' => $path, 'exit_code' => $exit];
 	}
+}
+
+// Header visibility is a backend concern: layout edits do not rewrite callable declarations.
+$sources = $cases['record_dependencies'][0];
+$compiler = project_input($sources);
+$compiler->exec_cpp();
+$before_layout = project_snapshot();
+$box_header = CPP_Artifacts::type_header('Box');
+foreach (['identity', 'forward', 'copy_value', 'nested_read'] as $name) {
+	$header_text = $before_layout['callable:' . $name][1];
+	project_check(!str_contains($header_text, '#include "types/'), 'Bare record signature included a layout');
+	project_check(str_contains($header_text, 'struct record_'), 'Record signature omitted forward declaration');
+}
+$module = Model::$modules['/project'];
+$forward_unit = 'implementation:' . CPP_Artifacts::unit_path($module->sources['forward.phs']->parsed->collection);
+$copy_unit = 'implementation:' . CPP_Artifacts::unit_path($module->sources['copy.phs']->parsed->collection);
+project_check(!str_contains($before_layout[$forward_unit][1], $box_header), 'Reference-only forwarding required a layout');
+project_check(str_contains($before_layout[$copy_unit][1], $box_header), 'By-value definition omitted a layout');
+project_check(str_contains($before_layout['type:Nest'][1], $box_header), 'Embedded value omitted its layout dependency');
+$type_source = $module->sources['type.phs'];
+$type_source->file->content = 'struct Box { int $value; string $label; } struct Nest { Box $box; }';
+$compiler->update_cpp(['/project/type.phs']);
+$after_layout = project_snapshot();
+foreach ($before_layout as $identity => $artifact) {
+	project_check(($after_layout[$identity] !== $artifact) === ($identity === 'type:Box'), 'Layout edit rewrote unrelated artifact: ' . $identity);
+}
+$sources['type.phs'] = $type_source->file->content;
+$compiler = project_input($sources);
+$compiler->exec_cpp();
+project_check(project_snapshot() === $after_layout, 'Layout edit differs from clean generation');
+if (isset($argv[1])) {
+	$path = $argv[1] . '/record_layout_edit.json';
+	file_put_contents($path, CPP_Output::encode(Model::$cpp_files));
+	$manifest[] = ['path' => $path, 'exit_code' => 17];
 }
 
 // Body edits preserve signatures, other implementation groups and entry bytes.

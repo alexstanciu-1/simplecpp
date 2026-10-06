@@ -8,7 +8,16 @@ final class CPP_Types
 	/** Resolve the semantic identity first; backend metadata never establishes type equality. */
 	public static function representation(canonical_type_use $type_use): cpp_type
 	{
-		$result = self::unmodified_representation($type_use);
+		return self::representation_for($type_use, cpp_type_requirement::complete);
+	}
+
+	/** Classify source visibility without assuming incomplete-type support in runtime templates. */
+	public static function representation_for(canonical_type_use $type_use,
+		cpp_type_requirement $requirement): cpp_type
+	{
+		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
+		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
+		$result = self::unmodified_representation($type_use, $payload_requirement);
 		if ($type_use->by_value()) {
 			$modifier = Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value);
 			$result->spelling = $modifier->name() . '<' . $result->spelling . '>';
@@ -19,15 +28,19 @@ final class CPP_Types
 	}
 
 	/** Add every representation dependency to one generation context exactly once. */
-	public static function record_headers(cpp_type $type, cpp_generation_context $context): void
+	public static function record_dependencies(cpp_type $type, cpp_generation_context $context): void
 	{
 		foreach ($type->headers as $header => $used) {
 			$context->headers[$header] = true;
 		}
+		foreach ($type->forward_declarations as $name => $used) {
+			$context->forward_declarations[$name] = true;
+		}
 	}
 
 	/** Resolve the canonical core; recursive arguments contribute their own direct headers. */
-	private static function unmodified_representation(canonical_type_use $type_use): cpp_type
+	private static function unmodified_representation(canonical_type_use $type_use,
+		cpp_type_requirement $requirement): cpp_type
 	{
 		$type = Type_Queries::canonical($type_use);
 		$definition = $type->definition();
@@ -40,6 +53,7 @@ final class CPP_Types
 				if ($position !== 0) {
 					$arguments .= ', ';
 				}
+				// Template bindings do not yet promise incomplete-payload support.
 				$argument_type = self::representation($argument);
 				$arguments .= $argument_type->spelling;
 				self::merge_headers($result, $argument_type);
@@ -52,7 +66,12 @@ final class CPP_Types
 		if ($definition->origin() === type_definition_origin::source) {
 			$entry = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			$result->spelling = CPP_Generator::source_name('record', $entry->name);
-			self::add_header($result, CPP_Artifacts::type_header($entry->name));
+			if ($requirement === cpp_type_requirement::complete) {
+				self::add_header($result, CPP_Artifacts::type_header($entry->name));
+			}
+			else {
+				$result->forward_declarations[$entry->name] = true;
+			}
 			$result->literal = cpp_literal_kind::none;
 			return $result;
 		}
@@ -75,6 +94,9 @@ final class CPP_Types
 	{
 		foreach ($source->headers as $header => $used) {
 			$destination->headers[$header] = true;
+		}
+		foreach ($source->forward_declarations as $name => $used) {
+			$destination->forward_declarations[$name] = true;
 		}
 	}
 

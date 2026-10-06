@@ -39,4 +39,19 @@ final class CPP_Artifacts
 		}
 		return $text;
 	}
+
+	/** Complete includes dominate name-only requirements within the same artifact. */
+	public static function preamble(array $headers /** hash<bool> */,
+		array $declarations /** hash<bool> */, string $self_header): string
+	{
+		$text = self::includes($headers, $self_header);
+		foreach ($declarations as $name => $used)
+		{
+			$path = self::type_header($name);
+			if (($path !== $self_header) && !isset($headers[$path])) {
+				$text .= 'struct ' . CPP_Generator::source_name('record', $name) . ";\n";
+			}
+		}
+		return $text;
+	}
 }

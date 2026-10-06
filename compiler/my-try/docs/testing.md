@@ -28,6 +28,10 @@ artifact isolation, defaults, references, source records, containers, ownership,
 insertion/deletion, signature changes, recovery and relocation. Programs compile as
 separate translation units with and without the run-local PCH. Persistent native
 caching and rebuilding the compiler itself remain separate milestones.
+Also checks bare-record forward declarations, reference-only forwarding, value/field
+layout dependencies, inferred copies and template payloads. Generated headers compile
+individually without PCH; clang-reported transitive dependencies distinguish forwarding
+from layout consumers. Layout edits preserve unrelated final artifact bytes.
 
 `tests/cpp_probe.php` supplies an editable artifact-section transport for existing
 native assertions. The shared fixture compiler preserves each section's file and
