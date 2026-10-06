@@ -59,6 +59,11 @@ $fixtures = [
 	'reference' => ['main.phs' => 'enum State { case A; case B; } function change(State &$v): void { $v = State::B; } function &ref(State &$v): State { return $v; } $v = State::A; $alias State =& $v; change($alias); $copy = ref($v); return 7;'],
 ];
 $many = 'enum Many {';
+$fixtures['equality'] = ['main.phs' => 'enum E { case A; case B; } $a = E::A; $b = E::B; if ($a == E::A && $a === E::A && $a != $b && $a !== $b) { if ($a == $b || $a !== E::A) { return 1; } return 7; } return 2;'];
+$fixtures['selection'] = ['main.phs' => 'enum E { case A; case B; case C; } function select(int &$calls): E { $calls += 1; return E::B; } function result(int &$calls): int { $calls += 10; return 7; } $calls = 0; $value = match (select($calls)) { default => result($calls), E::A => result($calls), E::B, E::C => 7, E::B => result($calls), }; if ($calls !== 1) { return 1; } switch (select($calls)) { case E::A: return 2; case E::B: $calls += 1; case E::C: $calls += 1; break; default: return 3; } switch (E::A) { case E::B: return 4; } if ($calls !== 4) { return 5; } return $value;'];
+$fixtures['enum_extremes'] = ['main.phs' => 'enum U: uint64 { case Max = 18446744073709551615; case Zero = 0; } enum S: int64 { case Min = -9223372036854775808; case Zero = 0; } $u = U::Max; $s = S::Min; if ($u !== U::Max || $s != S::Min) { return 1; } switch ($u) { case U::Zero: return 2; case U::Max: break; } return match ($s) { S::Min => 7, S::Zero => 3 };'];
+$fixtures['enum_import_selection'] = ['main.phs' => 'namespace App; use Lib\E as Alias; $v = Alias::A; if ($v !== \Lib\E::A) { return 1; } switch ($v) { case \Lib\E::A: break; default: return 2; } return match ($v) { Alias::A => 7 };', 'lib.phs' => 'namespace Lib; enum E { case A; }'];
+$fixtures['enum_unhandled'] = ['main.phs' => 'enum E { case A; case B; } return match (E::B) { E::A => 7 };'];
 for ($index = 0; $index < 257; $index++) {
 	$many .= 'case C' . $index . ';';
 }
@@ -68,6 +73,27 @@ foreach ($fixtures as $name => $sources) {
 	$compiler = enum_project($sources);
 	$compiler->exec_cpp();
 	$outputs[$name] = CPP_Output::encode(Model::$cpp_files);
+}
+
+foreach ([
+	'$v = E::A == F::A;' => 'same enum type',
+	'$v = E::A === 0;' => 'same enum type',
+	'$v = 0 != E::A;' => 'same enum type',
+	'$v = E::A < E::B;' => 'only equality',
+	'$v = E::A + E::B;' => 'only equality',
+	'switch (E::A) { case 0: break; }' => 'selector enum type',
+	'switch (E::A) { case F::A: break; }' => 'selector enum type',
+	'switch (0) { case E::A: break; }' => 'requires canonical int',
+	'switch (E::A) { case E::A: break; case E::A: break; }' => 'duplicate case value',
+	'$a = E::A; switch ($a) { case $a: break; }' => 'constant enum case',
+	'return match (E::A) { F::A => 7 };' => 'selector enum type',
+	'$a = E::A; return match ($a) { $a => 7 };' => 'constant enum case',
+	'return match (E::A) { E::A => E::B };' => 'scalar',
+] as $source => $diagnostic) {
+	$compiler = enum_project(['main.phs' => 'enum E { case A; case B; } enum F { case A; } ' . $source]);
+	$compiler->tokenize();
+	$compiler->parse();
+	enum_failure($compiler, $diagnostic);
 }
 
 // Known expected widths/values are independent of the storage selector under test.
@@ -123,7 +149,7 @@ foreach ([
 }
 
 // Retained consumers depend on the enum declaration, not on namespace case constants.
-$main_text = 'namespace App; use Lib\E; function get(): E { return E::A; } $v = get(); return 7;';
+$main_text = 'namespace App; use Lib\E; function get(): E { switch (E::A) { case E::A: return E::A; default: return E::B; } } $v = get(); if ($v !== E::A) { return 1; } return match ($v) { E::A => 7, default => 2 };';
 $lib_text = 'namespace Lib; enum E: int { case A = 1; case B = 2; }';
 $compiler = enum_project(['main.phs' => $main_text, 'lib.phs' => $lib_text]);
 $compiler->exec_cpp();

@@ -444,6 +444,14 @@ owns named owner-type syntax; preparation selects an enum case and retains its
 snapshot. Cases are not namespace constants. C++ owns scoped-enum spelling and
 type-header artifacts; shared exact-integer validation never stores C++ strings.
 
+`prepared_selection_constant` is the common switch/match label role, specialized
+as exact integer or enum-case facts. Enum labels retain canonical enum type and a
+shared case snapshot, not an integer coercion or syntax backlink. `Selection_Preparation`
+owns selector and label admission; the existing switch/match workers still own
+duplicate/fallback policy, traversal and completion. C++ owns native selector and
+label spelling. `Enum_Operators` selects same-enum equality/inequality through the
+ordinary operator-decision path, producing a language bool.
+
 `ownership_type_definition` is another final template sibling implementing
 `ownership_semantics`, with an immutable shared/unique/weak kind and exact target
 query. Its fixed handle-copy capabilities do not depend on pointee copyability.

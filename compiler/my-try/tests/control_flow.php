@@ -354,7 +354,7 @@ try
 	control_check($default_arm->labels->is_empty(), 'Default owns labels');
 	control_check(iterator_to_array($default_arm->children()) === [$default_arm->result], 'Default result edge');
 	control_check(iterator_to_array($grouped_arm->children()) === [$grouped_arm->labels[0], $grouped_arm->labels[1], $grouped_arm->result], 'Match grouped edges');
-	control_check($grouped_arm->require_preparation()->decimals === ['1', '2'], 'Match exact label facts');
+	control_check(array_map(fn($label) => $label->value_key(), $grouped_arm->require_preparation()->labels) === ['integer:1', 'integer:2'], 'Match exact label facts');
 	control_check($grouped_arm->require_preparation()->conversion->context === conversion_context::conditional_branch, 'Missing match result conversion');
 	control_check(!$selection->require_preparation()->addressable(), 'Match result is addressable');
 	$compiler->cpp();
@@ -454,8 +454,8 @@ try
 	control_check($first_group->body instanceof block_node, 'Switch group replaced the shared statement body');
 	control_check(weakref_get($first_group->body->statements[0]->require_preparation()->target) === $selection, 'Switch break targets the loop');
 	control_check(weakref_get($default_group->body->statements[0]->require_preparation()->target) === $enclosing_loop, 'Switch intercepted loop continue');
-	control_check($first_group->labels[1]->require_preparation()->decimal === '1', 'Case sign was not normalized');
-	control_check($default_group->labels[0]->require_preparation()->decimal === null, 'Default has a fabricated value');
+	control_check($first_group->labels[1]->require_preparation()->value->value_key() === 'integer:1', 'Case sign was not normalized');
+	control_check($default_group->labels[0]->require_preparation()->value === null, 'Default has a fabricated value');
 	control_check(iterator_to_array($selection->children()) === [$selection->selector, $first_group, $default_group], 'Switch inspection order');
 	control_check(iterator_to_array($first_group->children()) === [$first_group->labels[0], $first_group->labels[1], $first_group->body], 'Case group inspection order');
 	control_check(iterator_to_array($first_group->labels[0]->children()) === [$first_group->labels[0]->value], 'Case value inspection');

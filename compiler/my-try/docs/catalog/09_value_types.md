@@ -96,8 +96,9 @@ and wrong-enum/integer boundaries.
 Current gates: decimal literals with one optional sign only (not arbitrary constant
 expressions); enum locals require an explicit initializer; enum-valued fields await
 field-initialization support. These gates do not establish a language-wide enum
-default policy. Equality, switch/match, helpers, string backing and methods/interfaces
-are not enabled by this slice. No implicit integer conversion, arithmetic or truthiness.
+default policy. Equality and switch/match were added in the subsequent slice below;
+helpers, string backing and methods/interfaces remain deferred. No implicit integer
+conversion, arithmetic or truthiness.
 
 Proof: `python3 compiler/my-try/tests/enums.py --results FRESH` passed **12 PHP suites
 and 6 generated C++ programs**. Coverage includes compact/exact native storage,
@@ -111,9 +112,38 @@ Shared exact C++ integer spelling also passed the scalar-constant regression run
 **10 PHP suites and 10 generated programs**, including signed-minimum constants and
 labels (`/tmp/my-try-enum-scalar-regression-20261006-1`).
 
-Next discussion: same-enum equality and switch/match integration; settle defaults
-and helper scope separately. CH09 remains open, with the combined native compiler
-checkpoint still deferred by user request.
+### Enum equality and selection — 2026-10-06
+
+Same-enum `==`, `!=`, `===`, `!==` and enum selectors in switch/match are implemented
+under the [v0.2 contract](../../../../specs/compact_layout_types.md#31-v02-equality-and-selection).
+Typed selection constants replace integer-only label strings through one shared
+preparation/C++ path; parsing and control-flow AST shapes are unchanged. Enum case
+snapshots preserve type identity and ordinary declaration dependencies.
+
+Switch duplicate rejection, fallthrough, group scope and transfer rules remain;
+match keeps first-label wins, lazy result execution and fallback considered last.
+Default is optional. No exhaustiveness inference or new result joins are enabled.
+Wrong enum/integer labels and runtime-valued labels reject during preparation.
+Portable-PHP guidance informed typed collections, explicit narrowing and shared
+snapshot ownership rather than backend-aware syntax or a second selection pipeline.
+
+Focused proof: **14 PHP suites and 11 generated programs passed** in
+`/tmp/my-try-enum-selection-20261006-3`. Checks include all equality spellings,
+cross-file aliases, exact signed/unsigned extremes, selector-once behavior, lazy
+results, duplicate policy, unmatched exceptions, incremental recovery and rejection
+boundaries. Existing order-independent operand restrictions still apply to eager
+comparisons; this slice does not introduce general effect sequencing. Generated
+programs are not a native compiler rebuild.
+
+Control-flow regression note: `tests/tokenizer.php` fails its byte-contract assertion
+identically on unchanged `0bcb93f3` (isolated archive proof). This pre-existing test
+debt stops the full control-flow runner before compilation; keep it separate from
+enum support. The remaining 11 PHP suites passed. All **132 generated fixtures passed**
+separately through the shared runner; evidence lives in
+`/tmp/my-try-enum-control-regression-20261006-1/program-commands.json`.
+
+Next discussion: enum-valued result joins, followed by default-initialization and
+helper scope. CH09 remains open; the combined native compiler checkpoint is deferred.
 
 ## TYPE-VAR-006
 

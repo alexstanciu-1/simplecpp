@@ -123,6 +123,11 @@ final class Operator_Preparation
 			return self::decide_logical($source_operator, $operands, $context);
 		}
 		foreach ($operands as $operand) {
+			if (Type_Queries::is_enum($operand)) {
+				return Enum_Operators::decide($source_operator, $operands, $context);
+			}
+		}
+		foreach ($operands as $operand) {
 			if (Boxed_Conversions::is_boxed($operand)) {
 				return Boxed_Operators::decide($source_operator, $operands);
 			}
@@ -407,7 +412,8 @@ final class Operator_Preparation
 		}
 		if (($node instanceof null_literal_node) || ($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
 			($node instanceof boolean_literal_node) || ($node instanceof string_literal_node) ||
-			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node)) {
+			($node instanceof variable_reference_node) || ($node instanceof constant_reference_node)
+			|| ($node instanceof static_member_reference_node)) {
 			return;
 		}
 		throw new \RuntimeException('S2S binary operation requires order-independent operands');

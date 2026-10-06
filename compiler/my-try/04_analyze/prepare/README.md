@@ -27,6 +27,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/data_construction.php` | Contextual literal targets, input-shape selection and ordered entry conversion facts through common bindings |
 | `semantics/selection_results.php` | Shared matching-scalar value-result admission and conversions |
 | `semantics/matches.php` | Strict constant-label match preparation and per-arm facts |
+| `semantics/selection.php`, `data/selection.php` | Shared canonical-int/enum selector admission and typed constant labels for switch/match |
 | `semantics/capabilities.php` | Dependency-aware capability queries and owned-copy admission |
 | `semantics/types.php`, `literals.php` | Canonical type resolution, storage identity checks and exact literal facts |
 | `data/structures.php` | Facts, invocation contexts and lookup observations |

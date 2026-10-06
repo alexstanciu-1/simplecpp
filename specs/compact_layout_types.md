@@ -230,6 +230,30 @@ Generated C++ enum storage must match the source backing exactly. For example,
 
 Unit enums and existing int-backed behavior continue under their current rules.
 
+### 3.1 v0.2 equality and selection
+
+Enum equality (`==`, `===`) and inequality (`!=`, `!==`) require operands of the
+same nominal enum type. Both equality spellings compare case identity; inequality
+negates it. Comparing an enum with an integer or another enum type is a preparation
+error, even if their backing values agree. Ordering and arithmetic are not admitted.
+
+`switch` and `match` accept enum selectors with constant case references from that
+same enum, including qualified/imported references. The selector is evaluated once.
+Backing storage does not introduce an implicit integer conversion or permit integer
+labels. This bounded slice does not admit runtime-valued labels.
+
+`switch` preserves fallthrough and break behavior, rejects duplicate case labels,
+and may omit default (an unmatched selector continues after the switch). `match`
+selects the first matching label and evaluates only that result; repeated labels
+preserve first-match behavior. Its optional default is considered after all labels,
+regardless of source position. Without a matching label or default, it throws an
+unhandled-match exception. Multiple defaults reject in either construct.
+
+Exhaustiveness analysis is deferred; covering every enum case does not establish
+total return coverage for a default-less switch in the current bounded compiler.
+This selection extension does not expand supported match result types or define
+enum default initialization, metadata helpers or conversion helpers.
+
 ## 4. Union Semantics
 
 Restricted payload unions lower as generated C++ `union` declarations.

@@ -50,6 +50,8 @@ enum operator_kind {
 }
 
 enum operator_operation {
+	case enum_equal;
+	case enum_not_equal;
 	case index_checked_read;
 	case index_null_read;
 	case index_store;

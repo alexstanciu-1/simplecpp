@@ -247,7 +247,8 @@ final class CPP_Syntax
 	/** Native switch preserves single selection, source-order fallthrough and loop continue. */
 	public function generate_switch(switch_node $node): string
 	{
-		$text = 'switch ((' . $this->expression($node->selector) . ").native_value()) {\n";
+		$subject = CPP_Selection::subject($this->expression($node->selector), $node->selector->require_preparation()->type);
+		$text = 'switch (' . $subject . ") {\n";
 		$outer_break /** nullable<breakable_node> */ = $this->context->break_target;
 		$this->context->break_target = $node;
 		try {
@@ -268,12 +269,12 @@ final class CPP_Syntax
 
 	public function generate_switch_label(switch_label $node): string
 	{
-		$value /** nullable<string> */ = $node->require_preparation()->decimal;
+		$value /** nullable<prepared_selection_constant> */ = $node->require_preparation()->value;
 		if ($value === null) { return "default:\n"; }
-		return 'case ' . CPP_Integer_Literals::constant($value) . ":\n";
+		return 'case ' . CPP_Selection::constant($value, $this->context) . ":\n";
 	}
 
-	/** Strict canonical-int selection consumes exact constants; fallback is always last. */
+	/** Strict typed selection consumes exact constants; fallback is always last. */
 	public function generate_match_expression(match_expression_node $node): string
 	{
 		$result_type = CPP_Declarations::type($node->require_preparation()->type, $this->context);
@@ -281,23 +282,23 @@ final class CPP_Syntax
 		$temporary = 'match_subject_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$text = '([&]() -> ' . $result_type . ' { const auto ' . $temporary
-			. ' = (' . $selector . ').native_value(); ';
+			. ' = ' . CPP_Selection::subject($selector, $node->selector->require_preparation()->type) . '; ';
 		$fallback = '';
 		$arms /** Storage<match_arm_node> */ = $node->arms;
 		foreach ($arms as $arm)
 		{
 			$facts = $arm->require_preparation();
 			$result = CPP_Declarations::conversion($this->expression($arm->result), $facts->conversion, $this->context);
-			if (q_count($facts->decimals) === 0) {
+			if (q_count($facts->labels) === 0) {
 				$fallback = 'return ' . $result . '; ';
 				continue;
 			}
 			$checks = '';
-			foreach ($facts->decimals as $decimal) {
+			foreach ($facts->labels as $label) {
 				if ($checks !== '') {
 					$checks .= ' || ';
 				}
-				$checks .= '(' . $temporary . ' == ' . CPP_Integer_Literals::constant($decimal) . ')';
+				$checks .= '(' . $temporary . ' == ' . CPP_Selection::constant($label, $this->context) . ')';
 			}
 			$text .= 'if (' . $checks . ') { return ' . $result . '; } ';
 		}

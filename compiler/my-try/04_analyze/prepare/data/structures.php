@@ -314,7 +314,7 @@ final class prepared_match_expression extends prepared_expression
 
 final class prepared_match_arm
 {
-	public array $decimals /** vector<string> */ = [];
+	public array $labels /** vector<prepared_selection_constant> */ = [];
 	public conversion_decision $conversion;
 }
 
@@ -550,10 +550,10 @@ final class prepared_iteration
 	public prepared_binding $value;
 }
 
-/** Default has no value; every case retains its normalized exact signed decimal. */
+/** Default has no value; every case retains one typed selection constant. */
 final class prepared_switch_label
 {
-	public ?string $decimal = null;
+	public ?prepared_selection_constant $value = null;
 }
 
 /** Semantic transfer identity; the enclosing syntax tree owns its target. */

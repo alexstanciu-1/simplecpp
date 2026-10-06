@@ -13,9 +13,7 @@ final class Match_Preparation
 		try
 		{
 			$selector = Expression_Preparation::prepare($syntax->selector, $context);
-			if (!$selector->type->matches($context->integer)) {
-				throw new \RuntimeException('S2S match selector requires canonical int');
-			}
+			Selection_Preparation::require_selector($selector->type, $context, 'match');
 			$arms /** Storage<match_arm_node> */ = $syntax->arms;
 			if ($arms->is_empty()) {
 				throw new \RuntimeException('S2S match requires at least one result arm');
@@ -34,7 +32,7 @@ final class Match_Preparation
 					$has_default = true;
 				}
 				foreach ($labels as $label) {
-					$arm_facts->decimals[] = Integer_Constants::label($label, $context, 'match label');
+					$arm_facts->labels[] = Selection_Preparation::label($label, $selector->type, $context, 'match label');
 				}
 				$result = Expression_Preparation::prepare($arm->result, $context);
 				if (!$has_result) {

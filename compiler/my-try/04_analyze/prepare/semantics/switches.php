@@ -9,9 +9,7 @@ final class Switch_Preparation
 	public static function prepare(switch_node $syntax, preparation_context $context): statement_completion
 	{
 		$selector = Expression_Preparation::prepare($syntax->selector, $context);
-		if (!$selector->type->matches($context->integer)) {
-			throw new \RuntimeException('S2S switch selector requires canonical int');
-		}
+		Selection_Preparation::require_selector($selector->type, $context, 'switch');
 		$outer_break /** nullable<breakable_node> */ = $context->break_target;
 		$context->break_target = $syntax;
 		$has_default = false;
@@ -25,15 +23,15 @@ final class Switch_Preparation
 				$labels /** Storage<switch_label> */ = $group->labels;
 				foreach ($labels as $label)
 				{
-					$label->set_preparation(self::label($label, $context));
-					$decimal /** nullable<string> */ = $label->require_preparation()->decimal;
-					if ($decimal === null) {
+					$label->set_preparation(self::label($label, $selector->type, $context));
+					$value /** nullable<prepared_selection_constant> */ = $label->require_preparation()->value;
+					if ($value === null) {
 						if ($has_default) { throw new \RuntimeException('S2S switch has duplicate default labels'); }
 						$has_default = true;
 					}
 					else {
-						$key = 'integer:' . $decimal;
-						if (isset($values[$key])) { throw new \RuntimeException('S2S switch has duplicate case value ' . $decimal); }
+						$key = $value->value_key();
+						if (isset($values[$key])) { throw new \RuntimeException('S2S switch has duplicate case value ' . $key); }
 						$values[$key] = true;
 					}
 				}
@@ -46,7 +44,7 @@ final class Switch_Preparation
 		finally { $context->break_target = $outer_break; }
 	}
 
-	public static function label(switch_label $syntax, preparation_context $context): prepared_switch_label
+	public static function label(switch_label $syntax, canonical_type_use $selector, preparation_context $context): prepared_switch_label
 	{
 		$facts = new prepared_switch_label();
 		if ($syntax->label_kind === switch_label_kind::fallback) {
@@ -54,7 +52,7 @@ final class Switch_Preparation
 			return $facts;
 		}
 		$value /** expression_node */ = $syntax->value;
-		$facts->decimal = Integer_Constants::label($value, $context, 'switch case');
+		$facts->value = Selection_Preparation::label($value, $selector, $context, 'switch case');
 		return $facts;
 	}
 }

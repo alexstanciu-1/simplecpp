@@ -23,9 +23,10 @@ For source enums, exact backing/storage and incremental case references:
 python3 compiler/my-try/tests/enums.py --results /tmp/FRESH_ENUM_RESULTS
 ```
 
-Runs focused PHP suites, then compiles/runs six partitioned generated programs
+Runs focused PHP suites, then compiles/runs partitioned generated programs
 without PCH. Independent native assertions verify exact enum widths and values.
-This proves generated programs, not native portability of the compiler itself.
+Also covers enum equality, typed switch/match selection, lazy results and unmatched
+failure. This proves generated programs, not native portability of the compiler itself.
 
 For source namespace-body ownership and entry/lifecycle integration:
 

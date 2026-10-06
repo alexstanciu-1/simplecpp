@@ -648,10 +648,12 @@ final class CPP_Generator
 			$spelling = '>>';
 		}
 		elseif (($decision->operation === operator_operation::integer_equal)
+			|| ($decision->operation === operator_operation::enum_equal)
 			|| ($decision->operation === operator_operation::boxed_equal)) {
 			$spelling = '==';
 		}
 		elseif (($decision->operation === operator_operation::integer_not_equal)
+			|| ($decision->operation === operator_operation::enum_not_equal)
 			|| ($decision->operation === operator_operation::boxed_not_equal)) {
 			$spelling = '!=';
 		}
@@ -730,6 +732,11 @@ final class CPP_Generator
 			|| ($decision->operation === operator_operation::boxed_not_identical)) {
 			$context->headers['lang/php/operators/identity/strict_identity.hpp'] = true;
 			return $spelling . '(' . $left . ', ' . $right . ')';
+		}
+		if (($decision->operation === operator_operation::enum_equal)
+			|| ($decision->operation === operator_operation::enum_not_equal)) {
+			$context->headers['scpp/bool_t.hpp'] = true;
+			return 'scpp::bool_t(' . $left . ' ' . $spelling . ' ' . $right . ')';
 		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $left . ' ' . $spelling . ' ' . $right . ')';

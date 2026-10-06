@@ -39,7 +39,7 @@ when reopening one. None blocks Chapter 04.
 | --- | --- | --- |
 | CF-01 | Unbraced/alternative statement syntax; numbered break/continue | Chapter 03 parser and transfer preparation; agree the additional syntax first |
 | CF-02 | Ternary grammar limits, including required parentheses around fallback assignments | Chapter 03 expression parser; preserve the documented precedence and nesting contract |
-| CF-03 | Broader switch/match selector types, runtime labels and general constant folding | Selection and constant preparation; agree each new type/label domain |
+| CF-03 | Selector types beyond canonical int/enums, runtime labels and general constant folding | Enum-case selection added in [CH09](09_value_types.md#enum-equality-and-selection--2026-10-06); agree further domains separately |
 | CF-04 | Broader ternary/Elvis/match result joins beyond matching scalars | Shared result preparation; coordinate wrapper/mixed work with Chapter 05 and object types with later chapters |
 | CF-05 | Empty match and completion rules for exceptions/non-returning calls | Expression typing and completion preparation; coordinate with Chapter 13 |
 | CF-06 | Constant reachability, definite assignment/branch merging and general effect analysis | Shared semantic preparation; conservative current checks remain in force; no CFG work is authorized |

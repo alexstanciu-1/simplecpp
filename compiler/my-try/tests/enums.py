@@ -36,7 +36,8 @@ def main():
     programs = output / 'programs'
     programs.mkdir()
     suites = ['enums', 'enum_model', 'type_catalog', 'parse_collection', 'incremental_preparation',
-              'incremental_cpp', 'capabilities', 'ast', 'token_cleanup', 'namespaces', 'imports', 'source_constants']
+              'incremental_cpp', 'capabilities', 'ast', 'token_cleanup', 'namespaces', 'imports', 'source_constants',
+              'control_flow', 'operators']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12, journals=[output / 'commands.json']) as runner:
         def suite(name):
             command = ['php', APP / 'tests' / (name + '.php')]
@@ -49,7 +50,9 @@ def main():
             executable = output / source.stem
             bundle = native_checks(source.stem, json.loads(source.read_bytes()))
             compiler.compile_artifacts(source.stem + '-compile', json.dumps(bundle).encode(), executable)
-            runner.run(source.stem + '-execute', [executable], expected=7)
+            runner.run(source.stem + '-execute', [executable], expected=-6 if source.stem == 'enum_unhandled' else 7)
+            if source.stem == 'enum_unhandled':
+                assert b'Unhandled match expression' in (output / 'logs' / 'enum_unhandled-execute.stderr').read_bytes()
         fixtures = sorted(programs.glob('*.json'))
         run_tasks([Task(p.stem, lambda p=p: execute(p)) for p in fixtures], jobs=12)
     (output / 'summary.json').write_text(json.dumps(dict(passed=True, php_suites=len(suites),

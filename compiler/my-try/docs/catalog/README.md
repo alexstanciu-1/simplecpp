@@ -101,7 +101,7 @@ warning work remains tracked in Chapter 15; constructor/member work keeps its ob
 chapter owners. Chapter 08 has completed its [bounded positive pass with debt](08_project_symbols.md#positive-pass-conclusion--2026-10-06),
 including artifacts/cache baseline, namespace/imports and scalar source constants.
 Chapter 09's [bounded enum execution](09_value_types.md#enum-execution--2026-10-06)
-is implemented; same-enum equality and switch/match are the next discussion. By user request there is no Chapter 08 native
+includes same-enum equality and switch/match; enum-valued result joins are next for discussion. By user request there is no Chapter 08 native
 compiler build; aim to finish Chapter 09 before the combined native checkpoint.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
