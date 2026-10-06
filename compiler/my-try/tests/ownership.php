@@ -151,7 +151,8 @@ foreach ($cases as $name => $source) {
 }
 
 // Native instrumentation consumes unmodified generated transfer code; weak markers expose destruction.
-$lifetime_source = ownership_source('struct P { shared<int> $marker; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } function relay(unique<P> $p): unique<P> { return move($p); } function call_relay(unique<P> &$p): unique<P> { return relay(move($p)); } function fail(): int { $n ?int = null; return $n; } function sink(unique<P> $p, int $n, int &$entered): void { $entered += 1; } function fail_after(unique<P> &$p, int &$entered): void { sink(move($p), fail(), $entered); } return 0;');
+$lifetime_input = 'struct P { shared<int> $marker; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } function relay(unique<P> $p): unique<P> { return move($p); } function call_relay(unique<P> &$p): unique<P> { return relay(move($p)); } function fail(): int { $n ?int = null; return $n; } function sink(unique<P> $p, int $n, int &$entered): void { $entered += 1; } function fail_after(unique<P> &$p, int &$entered): void { sink(move($p), fail(), $entered); } return 0;';
+$lifetime_source = ownership_source($lifetime_input);
 $lifetime_harness = <<<'CPP'
 #undef main
 #include "scpp/memory.hpp"
@@ -200,7 +201,8 @@ file_put_contents($lifetime_path, "#define main generated_program_main\n" . $lif
 $executions[] = ['path' => $lifetime_path, 'exit_code' => 0];
 
 // Native identity and destruction checks call the generated observation functions unchanged.
-$observation_native_source = ownership_source('struct P { shared<int> $marker; unique<int> $noncopyable; } function observe(shared<P> &$p): weak<P> { return weak($p); } function acquire(weak<P> &$w): shared<P> { return lock($w); } return 0;');
+$observation_input = 'struct P { shared<int> $marker; unique<int> $noncopyable; } function observe(shared<P> &$p): weak<P> { return weak($p); } function acquire(weak<P> &$w): shared<P> { return lock($w); } return 0;';
+$observation_native_source = ownership_source($observation_input);
 $observation_harness = <<<'CPP'
 #undef main
 #include "scpp/memory.hpp"
@@ -436,4 +438,19 @@ finally {
 	rmdir($directory);
 }
 file_put_contents($output . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
+$lifetime_base = $output . '/move_lifetime_base.cpp';
+$observation_base = $output . '/weak_identity_base.cpp';
+file_put_contents($lifetime_base, $lifetime_source);
+file_put_contents($observation_base, $observation_native_source);
+$programs = ['valid' => [], 'rejected' => [], 'probes' => [
+	['name' => 'move-lifetime', 'source' => $lifetime_input, 'base_path' => $lifetime_base, 'path' => $lifetime_path, 'exit_code' => 0],
+	['name' => 'weak-identity', 'source' => $observation_input, 'base_path' => $observation_base, 'path' => $observation_path, 'exit_code' => 0],
+]];
+foreach ($cases as $name => $source) {
+	$programs['valid'][$name] = [$source, 0];
+}
+foreach ($rejections as [$source, $message]) {
+	$programs['rejected'][] = $source;
+}
+file_put_contents($output . '/programs.json', json_encode($programs, JSON_PRETTY_PRINT));
 echo 'Ownership source: ' . count($executions) . ' programs, ' . count($rejections) . " rejections and recovery passed\n";

@@ -77,7 +77,7 @@ final class prepared_place
 	/** @reference.source declaration/parameter/field preparation facts */
 	private prepared_storage $selected_storage /** weak<prepared_storage> */;
 	/** A field projection shares its base place, never syntax or a transient environment. */
-	private ?prepared_place $base_place;
+	private ?prepared_place $base_place = null;
 
 	/** Whole roots are declarations/parameters; only direct fields may project from a base. */
 	public function __construct(prepared_storage $storage, ?prepared_place $base = null)
@@ -470,13 +470,15 @@ final class reference_cycle_vertex
 {
 	public collected_function $definition;
 	public array $calls /** vector<int> */ = [];
-	public int $visit_index = -1;
-	public int $low_link = -1;
+	public int $visit_index;
+	public int $low_link;
 	public bool $on_stack = false;
 
 	public function __construct(collected_function $definition)
 	{
 		$this->definition = $definition;
+		$this->visit_index = -1;
+		$this->low_link = -1;
 	}
 }
 

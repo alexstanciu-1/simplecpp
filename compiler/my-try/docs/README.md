@@ -57,7 +57,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [Chapter 06 bounded closeout and remaining scope](catalog/06_containers.md#positive-pass-conclusion--2026-10-05), [Chapter 07 same-origin reference returns](catalog/07_references_lifetime.md#same-origin-reference-returns--2026-10-06), [Chapter 07 closeout decisions](catalog/07_references_lifetime.md#catalog-reconciliation--2026-10-06), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
+| Current handoff | [Chapter 07 bounded closeout](catalog/07_references_lifetime.md#positive-pass-conclusion--2026-10-06), [next: Chapter 08 discussion](catalog/08_project_symbols.md), [deferred Chapter 15 work](catalog/15_blocking_debt.md) |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
@@ -103,6 +103,6 @@ slots; use `--jobs N` to override. See [test runners](testing.md) for isolation 
 evidence details. Running the compiler in PHP and compiling its output is
 not proof that the compiler itself builds natively; see the portability review.
 
-The latest requested [native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
-covers the bounded Chapter 05/06 implementation through JSON registration. Deferred
+The latest requested [native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-06-chapter-07)
+covers the bounded Chapter 05/06/07 implementation through references and ownership. Deferred
 Chapter 15 capabilities remain outside that proof.

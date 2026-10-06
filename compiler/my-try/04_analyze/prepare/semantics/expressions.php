@@ -5,10 +5,16 @@ namespace scpp\compiler;
 
 final class Expression_Preparation
 {
-	/** Analysis owns family dispatch and attaches the typed result before returning it. */
+	/** Ordinary expressions use the value consumer; consuming boundaries select explicitly. */
 	public static function prepare(expression_node $node, preparation_context $context,
-		?canonical_type_use $expected_type = null,
-		expression_consumer $consumer = expression_consumer::value): prepared_expression
+		?canonical_type_use $expected_type = null): prepared_expression
+	{
+		return self::prepare_for_consumer($node, $context, $expected_type, expression_consumer::value);
+	}
+
+	/** Analysis owns family dispatch and attaches the typed result before returning it. */
+	public static function prepare_for_consumer(expression_node $node, preparation_context $context,
+		?canonical_type_use $expected_type, expression_consumer $consumer): prepared_expression
 	{
 		if ($node instanceof ownership_observation_node) {
 			$observation = object_cast($node, ownership_observation_node::class);
@@ -207,7 +213,7 @@ final class Expression_Preparation
 		if ($value->value_origin === expression_value_origin::owned_call_result) {
 			throw new \RuntimeException('S2S consuming ownership into fields is deferred');
 		}
-		$binding->boundary = Value_Boundary_Preparation::decide($binding->type, $binding->conversion, $context, $value);
+		$binding->boundary = Value_Boundary_Preparation::decide_value($binding->type, $binding->conversion, $context, $value);
 		Type_Preparation::require_value_type($binding->type);
 		return $binding;
 	}

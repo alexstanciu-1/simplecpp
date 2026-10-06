@@ -430,7 +430,7 @@ forwarding, supported containers/wrappers, observable updates through another mu
 alias, const-only signature invalidation, no-change failure retry, repair and
 cleanup/fresh-output agreement. FPM used CLI fallback. No native compiler rebuild.
 
-Remaining rows are reconciled below; chapter closeout still needs the debt decision.
+The reconciliation and subsequent closeout below record the remaining debt decisions.
 
 ## Catalog reconciliation — 2026-10-06
 
@@ -453,18 +453,22 @@ Chapter 04/06 contracts, not another implementation or native checkpoint.
   evidence of a delivered warning or a universal eager deep-copy cost. Types keep
   their own value/COW/shared copy behavior.
 
-Remaining decisions before closeout:
+Closeout decisions approved on 2026-10-06:
 
-1. CH07-WARN-01: non-fatal reference-return advice still needs a diagnostics owner.
+1. CH07-WARN-01: non-fatal reference-return advice still needs a diagnostics owner;
+   transferred to Chapter 15 review with Chapter 14 as its diagnostics owner.
 2. CH07-OWN-EXEC-01 and bounded reference limitations: wider constructors/member
    lifetimes, reference-return recursion/other origins, ownership selection/variadic
-   transfer and broader const forms remain outside the implemented slice.
-3. Native compiler validation has not been refreshed for Chapter 07. Generated-C++
-   program proofs are recorded separately; request a native checkpoint before claiming it.
+   transfer and broader const forms remain outside the implemented slice. Track
+   CH07-OWN-EXEC-01 and CH07-REF-EXT-01 in Chapter 15; constructor/member work stays
+   with the value/object chapters. Same-origin multiple returns are now implemented.
+3. Native compiler validation passed; see the positive-pass conclusion below and
+   the portability guide for the tested overlay and precise proof boundary.
 
-Recommendation for discussion: retain these explicit limits/debts and close the
-bounded positive pass after the requested validation, rather than implicitly enabling
-legacy syntax or building a new diagnostics/lifetime subsystem during reconciliation.
+Retain these explicit limits/debts and close the bounded positive pass after the
+requested validation. The [Chapter 15 register](15_blocking_debt.md#chapter-07-closeout-debt--2026-10-06)
+owns their final-review milestone, not permission to enable legacy syntax or widen
+the lifetime contract.
 
 ## Block-local aliases — 2026-10-06
 
@@ -509,6 +513,25 @@ Proof: `/tmp/my-try-multi-ref-return-20261006-1` passes 12 focused PHP suites an
 body-only origin/fallthrough edits, no-change retries and repair/fresh equivalence.
 This is not a native compiler rebuild. CH07-WARN-01 and the other closeout debts
 remain open.
+
+## Positive-pass conclusion — 2026-10-06
+
+Chapter 07's bounded pass is complete. Stable whole-storage calls, lexical aliases,
+same-origin reference returns/forwarding, explicit const borrowing, reset behavior
+and shared/unique/weak construction/transfer/observation have focused proofs and a
+[native compiler checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-06-chapter-07).
+
+The checkpoint passes 1,109 source executions (60 Chapter 07 cases), 526 supplementary
+probes, two control-flow error probes, two ownership lifetime probes and 376
+rejection/recovery cases (178 Chapter 07 cases), plus 23 host suites and the final
+incremental native build. It covers the recorded source overlay; it is not proof of
+parked LLVM, warning-clean compilation or all deferred lifetime behavior.
+
+CH07-WARN-01, CH07-OWN-EXEC-01 and CH07-REF-EXT-01 remain in the Chapter 15 final
+review register. Constructor/member prerequisites keep their object-chapter owners.
+Reference foreach, mutation policy and native interior-reference restrictions are
+unchanged. Proceed to Chapter 08 discussion, starting from existing file/module,
+scope and name-resolution structures rather than adding another symbol model.
 
 ## Ownership-type validation debt from chapter 05
 

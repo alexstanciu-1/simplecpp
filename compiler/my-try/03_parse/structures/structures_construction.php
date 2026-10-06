@@ -51,10 +51,11 @@ final class object_construction_node extends expression_node
 
 final class object_construction_children_iterator extends children_iterator
 {
-	private int $next_argument = -1;
+	private int $next_argument;
 
 	public function __construct(private object_construction_node $source)
 	{
+		$this->next_argument = -1;
 	}
 
 	/** Inspect the type and then arguments without materializing another child list. */

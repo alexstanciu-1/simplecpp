@@ -5,11 +5,17 @@ namespace scpp\compiler;
 
 final class Value_Boundary_Preparation
 {
+	/** Local and return value boundaries have no reference-parameter access contract. */
+	public static function decide_value(canonical_type_use $target, ?conversion_decision $conversion,
+		preparation_context $context, prepared_expression $value): value_boundary_operation
+	{
+		return self::decide($target, $conversion, $context, $value, passing_mode::value, storage_access::writable);
+	}
+
 	/** Select the operation once; emitters must not rediscover ownership from type spellings. */
 	public static function decide(canonical_type_use $target, ?conversion_decision $conversion,
 		preparation_context $context, prepared_expression $value,
-		passing_mode $mode = passing_mode::value,
-		storage_access $access = storage_access::writable): value_boundary_operation
+		passing_mode $mode, storage_access $access): value_boundary_operation
 	{
 		if ($mode === passing_mode::reference)
 		{

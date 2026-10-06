@@ -133,7 +133,8 @@ def validate(args, target, results, logs, started, runner):
         host_suites += ['type_catalog', 'constructed_type', 'callables', 'initialization',
                        'data_preparation', 'indexing', 'iteration', 'value_probes',
                        'container_calls', 'mixed', 'dynamic_model', 'conversions',
-                       'results', 'take', 'incremental_cpp', 'preparation_recovery']
+                       'results', 'take', 'incremental_cpp', 'preparation_recovery',
+                       'reference_model', 'reference_forwarding', 'ownership_model', 'cleanup']
     else:
         host_suites += ['model', 'llvm_text']
     run_tasks([Task('php-' + suite, lambda suite=suite:
@@ -205,6 +206,15 @@ def validate(args, target, results, logs, started, runner):
     run('php-json-suite', ['php', APP / 'tests/json.php', json_fixtures])
     json_programs = json.loads((json_fixtures / 'programs.json').read_text())
     valid_cases += [(name, text, code) for name, (text, code) in json_programs['valid'].items()]
+    chapter07_programs = {}
+    for suite in ['references', 'ownership']:
+        folder = results / (suite + '-fixtures')
+        folder.mkdir(exist_ok=args.resume)
+        run('php-' + suite + '-suite', ['php', APP / 'tests' / (suite + '.php'), folder])
+        manifest = json.loads((folder / 'programs.json').read_text())
+        chapter07_programs[suite] = manifest
+        valid_cases += [(suite + '-' + name, text, code)
+                        for name, (text, code) in manifest['valid'].items()]
     declaration_case_count = sum(name.startswith(('function_', 'struct_', 'integer_', 'field_'))
                                  for name, _, _ in valid_cases)
     # Each resumed attempt gets a fresh matching PCH/runtime; compiler objects may be reused.
@@ -271,7 +281,7 @@ def validate(args, target, results, logs, started, runner):
     run_tasks([Task('probe-' + Path(item['path']).stem, lambda item=item: validate_probe(item))
                for item in probe_cases], args.jobs)
     probe_executions = len(probe_cases)
-    # Runtime-error probes must first prove parity of their uninstrumented source.
+    # Instrumented probes must first prove parity of their uninstrumented source.
     def validate_control_probe(item):
         name = 'control-' + item['name']
         folder = results / 'control-probes' / name
@@ -286,6 +296,10 @@ def validate(args, target, results, logs, started, runner):
 
     run_tasks([Task('control-probe-' + item['name'], lambda item=item: validate_control_probe(item))
                for item in control_programs['probes']], args.jobs)
+    chapter07_probes = [item for manifest in chapter07_programs.values()
+                       for item in manifest.get('probes', [])]
+    run_tasks([Task('chapter07-probe-' + item['name'], lambda item=item: validate_control_probe(item))
+               for item in chapter07_probes], args.jobs)
     print(f'{probe_executions} supplementary instrumented programs passed', flush=True)
     rejection_cases = programs['rejected'] + control_programs['rejected'] + [
         'struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }',
@@ -301,6 +315,8 @@ def validate(args, target, results, logs, started, runner):
         native_output = run(name + '-native', [executable], cwd=folder)
         if native_output != host_output or not native_output.startswith(b'ERROR\n'):
             raise RuntimeError(name + ': native rejection/recovery differs from PHP')
+    for manifest in chapter07_programs.values():
+        rejection_cases += manifest['rejected']
     run_tasks([Task('rejected-' + str(index), lambda index=index, text=text:
                     validate_rejection(index, text))
                for index, text in enumerate(rejection_cases)], args.jobs)
@@ -345,6 +361,11 @@ def validate(args, target, results, logs, started, runner):
                    portable_type_proof=True,
                    control_flow_incremental_proof=True,
                    json_valid_executions=len(json_programs['valid']),
+                   chapter07_valid_executions={suite: len(manifest['valid'])
+                                               for suite, manifest in chapter07_programs.items()},
+                   chapter07_rejections={suite: len(manifest['rejected'])
+                                         for suite, manifest in chapter07_programs.items()},
+                   chapter07_lifetime_probes=len(chapter07_probes),
                    cpp_pch=not args.no_pch, host_php_suites=len(host_suites),
                    s2s_valid_executions=len(valid_cases), s2s_float_spelling_assertions=float_spelling_assertions,
                    s2s_supplementary_probe_executions=probe_executions,

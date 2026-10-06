@@ -304,4 +304,12 @@ finally {
 	rmdir($directory);
 }
 file_put_contents($output . '/executions.json', json_encode($executions, JSON_PRETTY_PRINT));
+$programs = ['valid' => [], 'rejected' => []];
+foreach ($cases as $name => $source) {
+	$programs['valid'][$name] = [$source, 0];
+}
+foreach ($rejections as [$source, $message]) {
+	$programs['rejected'][] = $source;
+}
+file_put_contents($output . '/programs.json', json_encode($programs, JSON_PRETTY_PRINT));
 echo 'References: ' . count($cases) . ' programs, ' . count($rejections) . " rejections, provenance and incremental recovery passed\n";

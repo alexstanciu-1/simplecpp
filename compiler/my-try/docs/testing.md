@@ -297,10 +297,12 @@ python3 compiler/my-try/tools/native_validate.py \
 ```
 
 `--types-only` skips parked LLVM validation. Its default fixture pool covers PHP/native
-source comparison plus C++ compilation/execution for `s2s.php`, `control_flow.php`
-and `json.php`, supplementary probes and rejection/recovery cases. The suites
+source comparison plus C++ compilation/execution for `s2s.php`, `control_flow.php`,
+`json.php`, `references.php` and `ownership.php`, supplementary probes and
+rejection/recovery cases. Chapter 07 also exports ownership destruction/identity
+probes whose unmodified base output must match the native compiler first. The suites
 export their authored source cases so native coverage cannot silently omit the new
-control-flow chapter. Runtime-error probes first compare uninstrumented PHP/native
+control-flow and reference/ownership chapters. Runtime-error probes first compare uninstrumented PHP/native
 output, then compile/run the instrumented program. `S2S_Proof::control_flow()` adds a
 shared portable span-move identity and unselected-arm dependency failure/retry/repair
 proof, invoked separately through the native driver. The optional LLVM comparison

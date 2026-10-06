@@ -47,7 +47,7 @@ final class Call_Preparation
 
 		// Prepare once without a candidate's contextual type; ambiguous literals need explicit targets.
 		foreach ($arguments as $argument) {
-			Expression_Preparation::prepare($argument, $context, null, expression_consumer::consuming_argument);
+			Expression_Preparation::prepare_for_consumer($argument, $context, null, expression_consumer::consuming_argument);
 		}
 		$matches /** vector<callable_target_i> */ = [];
 		foreach ($targets as $candidate)
@@ -128,7 +128,7 @@ final class Call_Preparation
 				$consumer = expression_consumer::consuming_argument;
 			}
 			$value /** prepared_expression */ = $arguments_prepared
-				? $argument->require_preparation() : Expression_Preparation::prepare($argument, $context, $argument_type, $consumer);
+				? $argument->require_preparation() : Expression_Preparation::prepare_for_consumer($argument, $context, $argument_type, $consumer);
 			$prepared_argument = new prepared_call_argument();
 			if ($parameter->mode === passing_mode::value) {
 				$prepared_argument->conversion = Conversion_Preparation::decide(

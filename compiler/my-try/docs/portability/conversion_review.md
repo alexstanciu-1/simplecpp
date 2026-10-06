@@ -3,13 +3,56 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers the implemented Chapter 05/06 slices through registered
-JSON functions, including the separated mixed/dynamic families and container paths.
-The [Chapter 06 closeout](../catalog/06_containers.md) and Chapter 15 deferrals still
+The latest checkpoint covers the implemented Chapter 05/06/07 slices, including
+registered JSON, separated mixed/dynamic families, references and ownership.
+The [Chapter 07 closeout](../catalog/07_references_lifetime.md) and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## Latest native checkpoint — 2026-10-05 Chapter 06
+## Latest native checkpoint — 2026-10-06 Chapter 07
+
+The worktree based on `0aab4b9f6f1ea99869c335dc0de0fbc4cb281686`, with the authored
+portability and harness adaptations below, passes native compiler construction,
+PHP/native C++ byte parity, generated-program execution and rejection/recovery.
+The source and harness manifests identify the tested overlay, not the base alone:
+143 authored compiler/proof files (excluding the generated driver), 98 harness files.
+
+The **12-job, PCH-enabled** run passes:
+
+- 1,109 source comparisons/executions, including 36 reference and 24 ownership cases.
+- 526 supplementary value/error/state probes, two control-flow error probes and two
+  ownership identity/destruction probes with PHP/native base-output parity.
+- 376 rejection/recovery cases, including 90 reference and 88 ownership cases;
+  all 15 floating-spelling assertions.
+- 23 focused host PHP suites, separate emission/type and control-flow incremental
+  proofs, repeated compilation/recovery and the final incremental native rebuild.
+
+Portable adaptations preserve existing contracts: initialize nullable fields to
+null and negative sentinels in constructors; select enum defaults through named
+entry methods delegating to one shared worker; compute ownership capabilities in
+a typed helper so the base-constructor call stays first. The cycle checker's dense
+scratch stack now appends new slots and replaces only existing slots, rather than
+depending on PHP indexed-array growth. No runtime or legacy generator patch was
+needed. The harness now exports Chapter 07 source/rejection cases and lifetime probes.
+
+Attempts 1–4 stopped during conversion; attempt 5 exposed the base-initializer issue.
+Attempt 6 built the compiler, then found 17 reference-related native failures from
+the scratch-stack write. After repair, a focused 37-case native output comparison
+passed, followed by the full attempt 7 in **818.924 seconds**, reusing build objects.
+This is an observed run, not a clean-build benchmark. A separate 12-suite PHP check
+also passed after the initial portable adaptations.
+
+Evidence: `/tmp/my-try-ch07-native-20261006/summary.json`, `source_hashes.json`,
+`harness_hashes.json`, `candidate.json`, journals and `logs` through `logs-7`;
+focused checks under `/tmp/my-try-ch07-reference-repair-20261006/` and
+`/tmp/my-try-ch07-portable-20261006/`. Reproduce with the standard native command
+and `--no-stan --types-only --jobs 12`; `--resume` reuses that proof workspace.
+CLI fallback was used after sandbox FPM socket denial. Existing compiler warnings
+remain; LLVM and legacy STAN were skipped. Chapter-specific incremental edit proofs
+remain host PHP evidence except for the explicitly named portable control-flow
+and generic repeated-compilation/recovery checks. Chapter 15 features remain deferred.
+
+## Earlier native checkpoint — 2026-10-05 Chapter 06
 
 The worktree based on `6553e6aedfcdf178f5e616ba7c2d46b28808f46c`, with the authored
 source, target-tooling and proof repairs below, passes conversion, native compiler
@@ -416,6 +459,17 @@ remains separate from this native pass; style/full PHP suites remain on demand.
   Scope locals correctly, preserve one meaning/type per name, and avoid type/member collisions.
 - Keep explicit Storage element types and typed nested receivers; value containers
   are not aliases simply because PHP records share identity.
+- Dense vector scratch stacks append when creating a new slot and use indexed
+  assignment only to replace an existing slot. PHP indexed array growth is not a
+  native vector contract; the reference-cycle checker keeps its active length
+  separate from allocated scratch entries.
+- Keep base-constructor calls first; compute their arguments through typed helpers
+  when setup would otherwise precede the call. Negative integer field sentinels
+  use explicit constructor assignments; nullable optional fields initialize to null.
+- Enum-valued method defaults remain outside the converter subset. Use named entry
+  methods that select the default and delegate to one explicitly parameterized worker
+  (`prepare_for_consumer`, `decide_value`); do not make required enum contracts nullable
+  solely to bypass the conversion limit.
 - Acquire actual weak fields through their supported binding; documentary annotations
   alone do not implement expiration. Required staged fields remain required.
 - Required nullable extraction and shared derived/base upcasts are supported native

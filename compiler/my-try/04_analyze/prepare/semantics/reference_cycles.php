@@ -95,7 +95,13 @@ final class Reference_Cycles
 		$vertex->visit_index = $this->next_index;
 		$vertex->low_link = $this->next_index;
 		$this->next_index++;
-		$this->stack[$this->stack_size] = $index;
+		// Native vectors require append for new slots; popped slots may be reused.
+		if ($this->stack_size === q_count($this->stack)) {
+			$this->stack[] = $index;
+		}
+		else {
+			$this->stack[$this->stack_size] = $index;
+		}
 		$this->stack_size++;
 		$vertex->on_stack = true;
 		$self_call = false;

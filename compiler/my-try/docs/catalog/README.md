@@ -93,14 +93,12 @@ is complete. Chapters 03 and 04 have completed their bounded positive passes and
 native checkpoints. Chapter 05 has completed its [bounded positive pass with debt](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04);
 Chapter 06 has completed its [bounded positive pass with explicit debt](06_containers.md#positive-pass-conclusion--2026-10-05),
 including separated mixed/dynamic integration and registered JSON APIs. The requested
-[native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
-covers these Chapter 05/06 slices. Chapter 07 now supports
-[local aliases, bounded reference returns and nonrecursive forwarding](07_references_lifetime.md#nonrecursive-reference-forwarding--2026-10-06)
-with PHP and generated-C++ proofs, followed by
-[whole-storage unset/clean](07_references_lifetime.md#whole-storage-resets--2026-10-06).
-The [ownership model](07_references_lifetime.md#ownership-model-and-direct-nesting--2026-10-06)
-now classifies shared/unique/weak and rejects direct nesting/value wrapping.
-Recursion, ownership execution and warning delivery remain separate work.
+[native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-06-chapter-07)
+covers these slices and Chapter 07's [completed bounded pass](07_references_lifetime.md#positive-pass-conclusion--2026-10-06):
+local aliases, same-origin reference returns/forwarding, explicit const borrowing,
+whole-storage resets and bounded shared/unique/weak execution. Broader lifetime and
+warning work remains tracked in Chapter 15; constructor/member work keeps its object
+chapter owners. Chapter 08 is next for discussion.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

@@ -102,6 +102,32 @@ is now resolved; see Chapter 06's positive-pass conclusion.
 These items require review, not automatic implementation or an implicit promotion
 to blocking feature debt. Preserve the distinction from the blocking inventory above.
 
+### Chapter 07 closeout debt — 2026-10-06
+
+Transferred for final review by user approval; these do not require expanding the
+bounded Chapter 07 implementation before Chapter 08. Existing restrictions remain
+enforced until their respective contracts and proofs are agreed.
+
+- **CH07-WARN-01 — advisory delivery:** establish a retained, non-fatal diagnostics
+  owner and publication/retraction behavior for reference-return advice and relevant
+  performance guidance. Coordinate with Chapter 14. Do not equate hard safety errors
+  with delivered warnings or add emitter-only reporting as a substitute.
+- **CH07-OWN-EXEC-01 — broader ownership operations:** review ownership selection and
+  variadic transfers, broader const forms and precise additional target constraints.
+  Constructor arguments remain with Chapter 10; member lifetime work belongs with
+  Chapters 09/10 and their established type models. This entry tracks final review,
+  not a competing implementation owner. Low-level pointer escapes, specialized
+  deleters and intentional direct ownership nesting restrictions are not enabled.
+- **CH07-REF-EXT-01 — broader reference returns:** review different origins, recursive
+  reference returns, registered runtime reference returns and loop-header aliases.
+  Same-origin multiple returns and control-flow body aliases are already implemented,
+  not outstanding work. Require a truthful lifetime contract before widening origin
+  admission; container-interior safety and disabled reference foreach remain unchanged.
+
+Close each item by an explicit supported/deferred/excluded disposition, updated
+owning contracts where needed and focused behavioral/lifetime/recovery evidence.
+The inherited-limit review below should link these items rather than duplicate them.
+
 ### CH15-S2S-LIMITS-01 — review inherited S2S limitations
 
 Requested on 2026-10-06: review all old S2S limitations against the capabilities of

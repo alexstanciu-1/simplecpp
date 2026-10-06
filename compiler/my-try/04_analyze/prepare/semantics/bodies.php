@@ -155,7 +155,7 @@ final class Body_Preparation
 				if ($type_syntax !== null) {
 					$consumer = expression_consumer::typed_local_initialization;
 				}
-				$value = Expression_Preparation::prepare($value_node, $context, $expected_type, $consumer);
+				$value = Expression_Preparation::prepare_for_consumer($value_node, $context, $expected_type, $consumer);
 			}
 		}
 		finally {
@@ -208,7 +208,7 @@ final class Body_Preparation
 			}
 		}
 		if ($value !== null) {
-			$binding->boundary = Value_Boundary_Preparation::decide($binding->type, $binding->conversion, $context, $value);
+			$binding->boundary = Value_Boundary_Preparation::decide_value($binding->type, $binding->conversion, $context, $value);
 		}
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$locals->add($entry->name, $binding);
@@ -247,14 +247,14 @@ final class Body_Preparation
 		}
 
 		$expression /** expression_node */ = $syntax->expression;
-		$value = Expression_Preparation::prepare($expression, $context, $context->return_type,
+		$value = Expression_Preparation::prepare_for_consumer($expression, $context, $context->return_type,
 			expression_consumer::consuming_return);
 		if ($context->return_type !== null) {
 			$type /** canonical_type_use */ = $context->return_type;
 			$facts->conversion = Conversion_Preparation::decide(
 				$value->type, $type, conversion_context::return_value);
 			if (Type_Queries::canonical($type)->family() !== type_family::no_value) {
-				$facts->boundary = Value_Boundary_Preparation::decide($type, $facts->conversion, $context, $value);
+				$facts->boundary = Value_Boundary_Preparation::decide_value($type, $facts->conversion, $context, $value);
 			}
 		}
 		elseif (!Type_Preparation::entry_return_type($value->type)) {

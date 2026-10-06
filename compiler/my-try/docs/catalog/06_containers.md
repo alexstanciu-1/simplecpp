@@ -66,7 +66,7 @@ Subsequent requested native checkpoint: the compiler was rebuilt and passed 1,04
 PHP/native source comparisons and generated-program executions, 526 supplementary
 probes, two control-flow error probes, 198 rejection/recovery cases and 19 host PHP
 suites. This includes the registered JSON cases. See the
-[2026-10-05 native evidence](../portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
+[2026-10-05 native evidence](../portability/conversion_review.md#earlier-native-checkpoint--2026-10-05-chapter-06)
 for the tested overlay, portability repairs, retained warnings and skipped LLVM/STAN.
 
 Next: [Chapter 07](07_references_lifetime.md#handoff-from-chapter-06--2026-10-05),

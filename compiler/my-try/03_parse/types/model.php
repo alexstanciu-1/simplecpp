@@ -597,11 +597,8 @@ final class ownership_type_definition extends abstract_template_type_definition 
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
 		array $parameters /** vector<template_type_parameter> */, ownership_kind $family_kind)
 	{
-		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable];
-		if ($family_kind !== ownership_kind::unique) {
-			$capabilities = [generic_contract::copyable_value, generic_contract::value_storable];
-		}
-		parent::__construct($identity, $source_name, $origin, nominal_type_kind::class_type, $parameters, $capabilities);
+		parent::__construct($identity, $source_name, $origin, nominal_type_kind::class_type,
+			$parameters, self::handle_capabilities($family_kind));
 		if (($this->arity() !== 1) || ($this->required_arity() !== 1)) {
 			throw new \InvalidArgumentException('Ownership definition requires exactly one required target parameter');
 		}
@@ -611,6 +608,16 @@ final class ownership_type_definition extends abstract_template_type_definition 
 	public function ownership_family(): ownership_kind
 	{
 		return $this->family_kind;
+	}
+
+	/** Compute base-construction data without statements preceding the native base initializer. */
+	private static function handle_capabilities(ownership_kind $family_kind): array /** vector<generic_contract> */
+	{
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable];
+		if ($family_kind !== ownership_kind::unique) {
+			$capabilities = [generic_contract::copyable_value, generic_contract::value_storable];
+		}
+		return $capabilities;
 	}
 
 	/** Target queries cannot cross distinct family or provider definition identities. */
