@@ -7,16 +7,23 @@ final class Symbol_Collector
 {
 	private collected_file $collection;
 	private ?scope $global = null;
-	private scope $file_scope;
+	private scope $source_scope;
 
 	/** Retain symbol rows and occurrences until the parser selects reused or replaced bodies. */
-	public function __construct(collected_file $collection, token_list $tokens, scope $file_scope, ?scope $global, int $revision)
+	public function __construct(collected_file $collection, token_list $tokens, scope $source_scope, ?scope $global, int $revision)
 	{
 		$this->collection = $collection;
-		$this->file_scope = $file_scope;
+		$this->source_scope = $source_scope;
 		$this->global = $global;
 		$collection->set_tokens($tokens);
 		$collection->revision = $revision;
+	}
+
+	/** The parser selects each source occurrence's declaration publication environment. */
+	public function select_source_scope(scope $local_scope, ?scope $published): void
+	{
+		$this->source_scope = $local_scope;
+		$this->global = $published;
 	}
 
 	/** Match the next unseen function identity in its owning scope. */
@@ -210,7 +217,7 @@ final class Symbol_Collector
 	/** Only file-level functions and records enter shared indexes, under the existing task lock. */
 	private function publish(collected_definition $entry, scope $declaration_scope): void
 	{
-		if ($declaration_scope !== $this->file_scope) {
+		if ($declaration_scope !== $this->source_scope) {
 			return;
 		}
 		if ($this->global === null) {

@@ -5,8 +5,9 @@ Recorded 2026-10-06 after the approved namespace/import discussion.
 Language rules are agreed in [the v0.2 contract](../../../../specs/namespaces_v0_2.md).
 Status: coordinated migration approved by the user; implementation in progress.
 Canonical identity/backend, executable-work links and source-body inventory consumers
-are implemented below. Named namespace parsing/reconciliation, its scope-retention
-integration and qualified-path lookup remain unfinished.
+are implemented below. Named namespace parsing/reconciliation and scope-retention
+integration are implemented with bare-name lookup; qualified-reference parsing and
+dependency-observed qualified lookup remain unfinished. Imports follow those.
 
 ## Why this is more than adding namespace parsing
 
@@ -218,3 +219,52 @@ Evidence on `b178859c` plus this checkpoint overlay:
 The portable-PHP skill informed weak scope/entry links and explicit typed body
 inventories. No native compiler rebuild or full-backend conversion is claimed;
 the previously recorded readonly enum-field conversion limitation remains separate.
+
+## Authored namespace-body checkpoint — 2026-10-06
+
+The tokenizer admits namespace separators. The parser accepts semicolon and braced
+named namespaces (including multi-segment declaration paths), reopened occurrences
+and braced global bodies. One source-body parser handles those and implicit global
+source. Nested namespace declarations remain outside this slice. Body reconciliation
+uses canonical path plus occurrence order; a namespace move creates a new declaration
+environment and retires the old contributions instead of relabeling definitions.
+
+Each selected occurrence configures the collector's source/publication scopes.
+Production namespace interning and publication hold the existing parser task lock;
+the standalone parser remains a sequential adapter. Standalone publication now visits
+each body and selects its namespace destination. Bare-name lookup sees same-namespace
+cross-file declarations and registered language names, without parent/global user
+fallback. **Qualified reference syntax and imports are still not implemented.**
+
+Before an update, prior lexical scopes enter `collected_file.retired_scopes`. They
+remain strong owners while old collected records and partial syntax can observe them,
+including across failed joins. Analysis retires work first; frontend disposal removes
+old memberships before releasing those scopes. The syntax-purity proof excludes this
+explicit retirement bookkeeping, not active syntax or scope contents. Scope-retention
+cost and cleanup observability belong to the user's non-blocking
+[CH15-CLEANUP-PERF-01](../catalog/15_blocking_debt.md#ch15-cleanup-perf-01--compiler-cleanup-performance-and-ide-debug-endpoint).
+
+Proof on `84f80a53` plus this checkpoint overlay:
+
+- `tests/namespaces.py` covers both namespace spellings, reopening, cross-file typed
+  declarations, duplicate rejection, no fallback, no-op/body edits, namespace moves,
+  failed partial parsing/repair, return to implicit global source and standalone scope
+  retention. Generated fixtures compile as separate units without PCH. Tokenizer and
+  parser source convert; this does not prove native concurrency or compiler execution.
+  Evidence: `/tmp/my-try-namespaces-final-20261006-3/summary.json` (five PHP suites,
+  nine generated programs). Final scope-lifetime and empty-body rechecks, including
+  parser conversion: `/tmp/my-try-namespaces-final-check-20261006-2/commands.json`.
+- `/tmp/my-try-namespaces-project-20261006-1/summary.json`: existing project checks,
+  26 generated executions with/without PCH, 30 standalone headers and three transitive
+  dependency checks pass.
+- `/tmp/my-try-namespaces-regression-20261006-1/commands.json`: S2S syntax-purity,
+  parked global LLVM, namespace identity/body, collection and observed-lookup suites
+  pass. LLVM now explicitly rejects named/multiple namespace bodies rather than
+  accidentally applying its flat-name behavior; its semantics are not expanded.
+
+Initial checks caught a missing backslash token and duplicate temporary scope retention;
+both were corrected. A duplicate-name fixture now checks the existing duplicate
+diagnostic rather than an assumed ambiguity message. No semantic rule was relaxed.
+The portable-PHP skill guided nullable boundaries, weak observations and typed scope
+inventories. The native compiler was not rebuilt. Next: qualified-reference syntax
+and dependency-observed path lookup; then the agreed body-local import families.

@@ -47,6 +47,9 @@ final class Collection_Retirement
 		if (!$source->root->retired_namespace_bodies->is_empty()) {
 			$source->root->retired_namespace_bodies = new Storage /** Storage<namespace_body_node> */();
 		}
+		if (!$source->retired_scopes->is_empty()) {
+			$source->retired_scopes = new Storage /** Storage<scope> */();
+		}
 		if ($source->deleted)
 		{
 			$source->parse_complete = false;

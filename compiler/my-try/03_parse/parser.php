@@ -53,10 +53,13 @@ final class Parser_Run
 	private bool $reuse_previous = false;
 	private Storage $scopes /** Storage<scope> */;
 	private scope $current_scope;
-	private scope $file_scope;
+	private scope $source_scope;
 	private Symbol_Collector $collector;
 	private parsed_file $parsed;
 	private int $position = 0;
+	private bool $shared_publication = false;
+	private Storage $selected_bodies /** Storage<namespace_body_node> */;
+	private \SplObjectStorage $claimed_bodies /** hash<bool, shared<namespace_body_node>> */;
 
 	/** Establish the retained file and symbol inventory before any declaration can be registered. */
 	public function __construct(token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
@@ -71,10 +74,30 @@ final class Parser_Run
 		$this->tokens = $tokens;
 		$this->position = $tokens->first_token;
 		$this->scopes = new Storage /** Storage<scope> */();
+		$this->shared_publication = $global !== null;
+		$this->selected_bodies = new Storage /** Storage<namespace_body_node> */();
+		$this->claimed_bodies = new \SplObjectStorage /** hash<bool, shared<namespace_body_node>> */();
 		$selected_scope /** nullable<scope> */ = $target_scope;
 		if ($previous !== null) {
-			if (!$previous->root->namespace_bodies->is_empty()) {
-				$selected_scope = $previous->root_scope();
+			if (q_count($previous->root->namespace_bodies) === 1) {
+				$prior_scope = $previous->root_scope();
+				$identity = $prior_scope->source_namespace();
+				if ($identity === null) {
+					$selected_scope = $prior_scope;
+				}
+				elseif ($identity->path() === '') {
+					$selected_scope = $prior_scope;
+				}
+				elseif ($global === null) {
+					// Standalone callers may supply an implicit namespace environment explicitly.
+					$prior_body = $previous->root->single_body();
+					if ($prior_body->start_token() === $prior_body->end_token()) {
+						$selected_scope = $prior_scope;
+					}
+					elseif ($previous->tokens->text_at($prior_body->start_token()) !== 'namespace') {
+						$selected_scope = $prior_scope;
+					}
+				}
 			}
 		}
 		$file_scope /** scope */ = $selected_scope ?? new scope();
@@ -97,19 +120,22 @@ final class Parser_Run
 		else
 		{
 			$this->parsed = $previous;
+			$retired_scopes /** Storage<scope> */ = $previous->collection->retired_scopes;
+			$prior_scopes /** Storage<scope> */ = $previous->scopes;
+			foreach ($prior_scopes as $prior_scope) {
+				$retired_scopes->append($prior_scope);
+			}
 			if ($previous->complete && $previous->collection->parse_complete) {
 				$this->reuse_previous = true;
 			}
 		}
-		$this->file_scope = $file_scope;
+		$this->source_scope = $file_scope;
 		if ($global !== null) {
 			$file_scope->set_parent($global);
 			$file_scope->set_publication($global);
 		}
-		$this->current_scope = new scope();
-		$this->current_scope->set_parent($file_scope);
-		$this->retain_scope($file_scope);
-		$this->retain_scope($this->current_scope);
+		$owned_scopes /** Storage<scope> */ = $this->parsed->scopes;
+		$owned_scopes->append($file_scope);
 		$this->parsed->complete = false;
 		$this->parsed->collection->parse_complete = false;
 
@@ -140,11 +166,122 @@ final class Parser_Run
 		return $this->parsed;
 	}
 
-	/** Compare executable statements in order while pulling retained declarations into the new tree. */
+	/** Namespace occurrences share one body parser and retain identities by path and occurrence order. */
 	public function parse(): parsed_file
 	{
 		$root = $this->parsed->root;
-		$old_body = $root->single_body()->body;
+		if ($this->text() !== 'namespace') {
+			$implicit = $this->select_namespace_body('', $this->source_scope);
+			$this->parse_source_body($implicit, false, $this->position);
+		}
+		while ($this->position < $this->tokens->end_token)
+		{
+			$start = $this->position;
+			$this->expect('namespace');
+			$path = '';
+			if ($this->text() !== '{') {
+				if (!$this->identifier()) {
+					throw new \RuntimeException($this->error_message('Expected namespace path'));
+				}
+				$path = $this->text();
+				$this->position++;
+				while ($this->text() === '\\') {
+					$this->position++;
+					if (!$this->identifier()) {
+						throw new \RuntimeException($this->error_message('Expected namespace path segment'));
+					}
+					$path .= '\\' . $this->text();
+					$this->position++;
+				}
+			}
+			$braced = $this->text() === '{';
+			$this->expect($braced ? '{' : ';');
+			$namespace_body = $this->select_namespace_body($path, null);
+			$this->parse_source_body($namespace_body, $braced, $start);
+		}
+		$previous_bodies /** Storage<namespace_body_node> */ = $root->namespace_bodies;
+		$retired /** Storage<namespace_body_node> */ = $root->retired_namespace_bodies;
+		$retired_scopes /** Storage<scope> */ = $this->parsed->collection->retired_scopes;
+		foreach ($previous_bodies as $previous_body) {
+			if (!isset($this->claimed_bodies[$previous_body])) {
+				$retired->append($previous_body);
+				// Includes a first parse's unused implicit placeholder, not only prior parses.
+				$retired_scopes->append($previous_body->body_scope());
+				$retired_scopes->append($previous_body->body->local_scope());
+			}
+		}
+		$root->namespace_bodies = $this->selected_bodies;
+		$root->set_span($this->tokens->first_token, $this->position);
+		$this->collector->finish($root);
+		$this->parsed->scopes = $this->scopes;
+		$this->parsed->complete = true;
+		$this->parsed->collection->parse_complete = true;
+		return $this->parsed;
+	}
+
+	/** New occurrences remain owned even on failure; never move a definition between namespaces. */
+	private function select_namespace_body(string $path, ?scope $implicit_scope): namespace_body_node
+	{
+		$selected /** nullable<namespace_body_node> */ = null;
+		$bodies /** Storage<namespace_body_node> */ = $this->parsed->root->namespace_bodies;
+		foreach ($bodies as $candidate)
+		{
+			if (isset($this->claimed_bodies[$candidate])) {
+				continue;
+			}
+			$identity = $candidate->body_scope()->source_namespace();
+			$candidate_path = $identity === null ? '' : $identity->path();
+			if ($implicit_scope !== null) {
+				if ($candidate->body_scope() !== $implicit_scope) {
+					continue;
+				}
+			}
+			elseif ($candidate_path !== $path) {
+				continue;
+			}
+			$selected = $candidate;
+			break;
+		}
+		if ($selected === null) {
+			$local_scope = $implicit_scope ?? new scope();
+			if ($implicit_scope === null) {
+				if ($this->shared_publication) {
+					task_synchronize(function () use ($local_scope, $path): void {
+						$identity = Model::$namespaces->register($path);
+						$local_scope->set_parent($identity->published_scope());
+						$local_scope->set_publication($identity->published_scope());
+					});
+				}
+				else {
+					$identity = Model::$namespaces->register($path);
+					$local_scope->set_parent($identity->published_scope());
+				}
+			}
+			$selected = new namespace_body_node($local_scope);
+			$bodies->append($selected);
+		}
+		$body /** namespace_body_node */ = $selected;
+		$this->claimed_bodies[$body] = true;
+		$next /** Storage<namespace_body_node> */ = $this->selected_bodies;
+		$next->append($body);
+		return $body;
+	}
+
+	/** Compare executable statements within this occurrence, independently of its declarations. */
+	private function parse_source_body(namespace_body_node $namespace_body, bool $braced, int $source_start): void
+	{
+		$this->source_scope = $namespace_body->body_scope();
+		$this->retain_scope($this->source_scope);
+		$this->current_scope = new scope();
+		$this->current_scope->set_parent($this->source_scope);
+		$this->retain_scope($this->current_scope);
+		$published /** nullable<scope> */ = null;
+		if ($this->shared_publication) {
+			$published = $this->source_scope->published_scope();
+		}
+		$this->collector->select_source_scope($this->source_scope, $published);
+		$body_start = $this->position;
+		$old_body = $namespace_body->body;
 		$old_statements /** Storage<statement_node> */ = $old_body->statements;
 		$body = new function_body_node($this->current_scope);
 		$statements /** Storage<statement_node> */ = $body->statements;
@@ -153,6 +290,14 @@ final class Parser_Run
 		$index = 0;
 		while ($this->position < $this->tokens->end_token)
 		{
+			if ($braced) {
+				if ($this->text() === '}') {
+					break;
+				}
+			}
+			elseif ($this->text() === 'namespace') {
+				break;
+			}
 			$start = $this->position;
 			$node = $this->statement();
 			if ($node instanceof declaration_node) {
@@ -187,17 +332,13 @@ final class Parser_Run
 			$this->transfer_body_work($old_body, $body);
 		}
 		$body->syntax_changed = $body->syntax_changed || $body_changed;
-		$body->set_span($this->tokens->first_token, $this->position);
-		$root->single_body()->body = $body;
-		$root->single_body()->declarations = $declarations;
-		$root->single_body()->set_span($this->tokens->first_token, $this->position);
-		$root->set_span($this->tokens->first_token, $this->position);
-		$this->collector->finish($root);
-		// Release obsolete scopes only after all selected syntax and collection links are published.
-		$this->parsed->scopes = $this->scopes;
-		$this->parsed->complete = true;
-		$this->parsed->collection->parse_complete = true;
-		return $this->parsed;
+		$body->set_span($body_start, $this->position);
+		$namespace_body->body = $body;
+		$namespace_body->declarations = $declarations;
+		if ($braced) {
+			$this->expect('}');
+		}
+		$namespace_body->set_span($source_start, $this->position);
 	}
 
 	/** Match braces only to delimit comparison; changed bodies still go through normal parsing. */
@@ -566,7 +707,7 @@ final class Parser_Run
 		}
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
-		$previous = $this->collector->previous_struct($this->file_scope, $name);
+		$previous = $this->collector->previous_struct($this->source_scope, $name);
 		$record /** struct_node */ = $previous ?? new struct_node();
 		if ($previous === null) {
 			$record->set_span($start, $start);
@@ -579,8 +720,8 @@ final class Parser_Run
 		}
 		$old_end = $record->end_token();
 		$record->name = $name;
-		$record->collect($this->collector, $this->file_scope, $name_index);
-		$record->member_scope()->set_parent($this->file_scope);
+		$record->collect($this->collector, $this->source_scope, $name_index);
+		$record->member_scope()->set_parent($this->source_scope);
 		$fields /** Storage<field_node> */ = new Storage();
 		$this->expect('{');
 		while ($this->text() !== '}') {
@@ -687,7 +828,7 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Template parameter conflicts with function name'));
 		}
 
-		$previous = $this->collector->previous_function($this->file_scope, $function_name);
+		$previous = $this->collector->previous_function($this->source_scope, $function_name);
 		$function /** function_node */ = $previous ?? new function_node();
 		if ($previous === null) {
 			$function->set_span($start, $start);
@@ -707,9 +848,9 @@ final class Parser_Run
 			}
 		}
 		$function->name = $function_name;
-		$function->collect($this->collector, $this->file_scope, $name_token_index);
+		$function->collect($this->collector, $this->source_scope, $name_token_index);
 		$local_scope = $function->signature_scope();
-		$local_scope->set_parent($this->file_scope);
+		$local_scope->set_parent($this->source_scope);
 		$slots /** hash<int> */ = [];
 		$slot = 0;
 		foreach ($formals as $name => $token_index) {

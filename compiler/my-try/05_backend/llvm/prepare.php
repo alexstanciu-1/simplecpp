@@ -12,6 +12,18 @@ final class LLVM_Preparation {
 	/** A fresh registry isolates every rebuild, including after a failed run. */
 	public function prepare_program(Storage $sources /** Storage<collected_file> */, llvm_policy $policy): Storage /** Storage<llvm_prepared_file> */
 	{
+		foreach ($sources as $source) {
+			if ($source->deleted) { continue; }
+			if (q_count($source->root->namespace_bodies) !== 1) {
+				throw new \RuntimeException('Namespace bodies are not supported by the parked LLVM backend');
+			}
+			$identity = $source->root->single_body()->body_scope()->source_namespace();
+			if ($identity !== null) {
+				if ($identity->path() !== '') {
+					throw new \RuntimeException('Namespaces are not supported by the parked LLVM backend');
+				}
+			}
+		}
 		return (new LLVM_Preparation_Run($sources, $policy))->prepare_program($sources);
 	}
 }

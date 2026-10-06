@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-body inventory, lifecycle and generated entry proof (namespace grammar pending)."""
+"""Source-body inventory, lifecycle and generated entry proof; syntax has its own suite."""
 import argparse
 import json
 from pathlib import Path

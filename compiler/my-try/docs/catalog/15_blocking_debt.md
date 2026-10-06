@@ -15,6 +15,9 @@ debts. Other chapter blockers remain in place unless explicitly transferred.
 
 ## Blocking inventory
 
+Non-blocking follow-ups are recorded separately below; their presence in this
+chapter does not make them v0.2 release gates.
+
 | Debt | Origin | Status | Final completion requirement |
 | --- | --- | --- | --- |
 | CH06-ITER-01 — mutation/replacement during iteration | [Chapter 06](06_containers.md#ch06-iter-01--mutation-during-iteration) | Open; blocks final catalog completion, not Chapter 06 design closeout | Agree the long-term policy, reconcile contracts, implement required changes and prove behavior/safety |
@@ -26,6 +29,26 @@ User confirmation on 2026-10-05: library redesign, reference foreach and dynamic
 `->` belong to this final chapter, not the remaining Chapter 06 implementation
 queue. Reference foreach remains disabled until CH06-REF-01 is resolved. This
 deferral does not change ordinary typed-object member access or existing contracts.
+
+## Non-blocking follow-ups
+
+### CH15-CLEANUP-PERF-01 — compiler cleanup performance and IDE debug endpoint
+
+Recorded by user request on 2026-10-06. **Not a blocker for v0.2.** Review compiler
+cleanup/retirement and normalization performance, including repeated edits, removed
+sources/bodies, failed-parse recovery and long-lived IDE sessions. Measure work
+visited, retained/released state, allocation cost and latency before optimizing;
+preserve identity, dependency invalidation and join-ordered lifetime guarantees.
+Include retained-scope handoff costs and repeated handle membership across failed
+parse retries; the namespace parser currently prioritizes keeping every required
+scope alive until retirement over minimizing that inventory.
+
+Also design cleanup observability as an IDE **debug endpoint**: make it possible
+to inspect what cleanup would visit, what remains retained and why, and the measured
+cost of an actual cleanup. Agree the endpoint's scope and read-only versus explicitly
+requested cleanup behavior before implementation. Reuse the owning cleanup processes;
+do not introduce an IDE-only second cleanup algorithm or run cleanup implicitly as
+a side effect of inspection. This records the requirement, not an implemented API.
 
 ## CH06-ITER-01 — mutation policy
 

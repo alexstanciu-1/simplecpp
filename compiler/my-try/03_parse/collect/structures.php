@@ -418,6 +418,8 @@ final class collected_variable_write extends collected_name
 /** Mutable file inventory: persistent declarations and the current parse's unresolved occurrences. */
 final class collected_file
 {
+	/** Prior lexical owners survive parsing until semantic retirement and frontend disposal join. */
+	public Storage $retired_scopes /** Storage<scope> */;
 	public bool $parse_complete = false;
 	public bool $deleted = false;
 	public ?prepared_file $prepared = null;
@@ -480,6 +482,7 @@ final class collected_file
 	public function __construct(token_list $tokens)
 	{
 		$this->tokens = $tokens;
+		$this->retired_scopes = new Storage /** Storage<scope> */();
 		$this->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		$this->entries = new Storage /** Storage<collected_name> */();
 	}

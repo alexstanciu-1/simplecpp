@@ -50,8 +50,7 @@ own published member scopes; Model's global_scope is a convenience alias to the
 global namespace's member scope. Scope-to-namespace backlinks are weak. Lexical
 children inherit source identity through scope ancestry, whereas every namespace's
 published scope parents directly to language scope, not a parent namespace.
-The registry resets with syntax and currently integrates global production parsing;
-named namespace bodies and their parser/lifecycle integration remain in progress.
+The registry resets with syntax; global and named source bodies publish through it.
 Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable
@@ -60,8 +59,10 @@ is reused inside each source `namespace_body_node`. A file owns the active names
 body inventory; a separate retirement inventory keeps removed occurrences alive
 until analysis unlinks their work and frontend disposal releases them. Retired bodies
 are not active inspection children. Token normalization waits while that retirement
-inventory is nonempty. Parser integration for named-body selection and its retained
-scope inventory remains pending; global parsing already uses the same body node.
+inventory is nonempty. Prior lexical scopes stay strongly owned by
+`collected_file.retired_scopes` until join-ordered frontend disposal, even when a
+successful parse selects a smaller current scope inventory. Failed parsing preserves
+old and partial occurrences for retry. Global and named parsing share this protocol.
 The abstract statement body
 owns its ordered statements. Conditional arms own their block and successor arm;
 there is no payload or generic parent/sibling graph. Loops own their block body and

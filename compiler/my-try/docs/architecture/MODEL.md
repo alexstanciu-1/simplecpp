@@ -51,12 +51,18 @@ entrypoints use `prepare(true)`. C++ never invokes preparation or selects an ent
 The parser reuses matching declaration nodes and their canonical collected identities.
 Files own namespace-body occurrences, not flattened declarations or a second entry
 body. Each occurrence owns its declarations and executable body. Current source
-parsing constructs the implicit global occurrence; named-body grammar is pending.
+parsing constructs implicit global, semicolon and braced namespace occurrences.
+Reconciliation matches namespace path and occurrence order, never moving a collected
+definition into a different namespace. Reopened bodies keep distinct environments.
 The guarded `single_body()` query supports explicitly single-body clients and parked
 LLVM; general analysis and C++ generation traverse the body inventory. Analysis
 publishes the sole executable body (or the first empty body for declaration-only
 files) in `prepared_file`. More than one nonempty body rejects before emission.
 Failed preparation clears that selection so a saved result cannot bypass admission.
+Previous lexical scopes remain in the collection's retirement inventory until the
+successful whole-parse join has retired semantic work and removed frontend entries.
+Failed parsing retains old and partial body/scope identities for retry. Namespace
+interning and declaration publication use the existing synchronized parser protocol.
 
 Only applicable name-bearing syntax has an occurrence backlink. Retained names are
 independent of token indexes. Duplicate names remain distinct candidates. The

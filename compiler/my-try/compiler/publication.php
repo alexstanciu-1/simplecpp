@@ -21,7 +21,13 @@ final class Source_Publication
 	/** Caller serializes publication; scope export and completed stages share one destination. */
 	public static function publish_parsed(source_record $record, parsed_file $parsed): void
 	{
-		Scope_Publication::publish($parsed->root_scope(), Model::$global_scope);
+		$bodies /** Storage<namespace_body_node> */ = $parsed->root->namespace_bodies;
+		foreach ($bodies as $body) {
+			$local_scope = $body->body_scope();
+			$identity = $local_scope->source_namespace();
+			$published = $identity === null ? Model::$global_scope : $identity->published_scope();
+			Scope_Publication::publish($local_scope, $published);
+		}
 		$record->file = $parsed->source_file();
 		$record->changes = change_state::unchanged;
 		$record->tokens = $parsed->tokens;

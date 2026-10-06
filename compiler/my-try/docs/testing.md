@@ -26,8 +26,18 @@ python3 compiler/my-try/tests/namespace_bodies.py --results /tmp/FRESH_NAMESPACE
 Checks the implicit global parser path and explicitly assembled multi-body inventories,
 one-body entry admission, failed-preparation output guards and join-ordered retirement.
 Compiles the selected/empty entries without PCH and converts parser/preparation source.
-Named namespace syntax and retained named-body reconciliation remain pending; this
-does not rebuild the compiler itself.
+This is a model-focused proof, not a native compiler rebuild. Authored namespace
+syntax has its own runner:
+
+```bash
+python3 compiler/my-try/tests/namespaces.py --results /tmp/FRESH_NAMESPACE_RESULTS
+```
+
+Checks semicolon/braced namespaces, reopened bodies, same-namespace cross-file
+functions/structs, duplicate rejection, absent global/parent fallback, unchanged
+identity, edits, namespace moves and failed-parse recovery. Compiles the resulting
+units without PCH and converts tokenizer/parser source. Qualified-reference syntax
+and imports remain outside this slice; no native compiler rebuild is claimed.
 
 For the namespace identity/backend model checkpoint:
 
