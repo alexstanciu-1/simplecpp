@@ -128,18 +128,20 @@ final class Type_Definition_Registration
 			self::install_template($source, $providers, $result_definition, $name);
 		}
 
-		$ownership_names /** vector<string> */ = ['shared', 'weak', 'unique'];
-		foreach ($ownership_names as $name)
+		$ownership_families /** hash<ownership_kind> */ = [
+			'shared' => ownership_kind::shared,
+			'weak' => ownership_kind::weak,
+			'unique' => ownership_kind::unique,
+		];
+		foreach ($ownership_families as $name => $ownership_family)
 		{
-			$result_capabilities = $name === 'unique' ? $value_storable : $copyable_storage;
 			$target_contracts /** vector<generic_contract> */ = [];
 			$target_parameters /** vector<template_type_parameter> */ = [
 				new template_type_parameter('Target', $target_contracts),
 			];
-			$definition = $registry->define_template($name, type_definition_origin::runtime,
-				nominal_type_kind::class_type, $target_parameters,
-				$result_capabilities);
-			self::install_template($source, $providers, $definition, $name);
+			$ownership_definition = $registry->define_ownership($name, type_definition_origin::runtime,
+				$target_parameters, $ownership_family);
+			self::install_template($source, $providers, $ownership_definition, $name);
 		}
 	}
 

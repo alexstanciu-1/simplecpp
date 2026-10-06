@@ -194,7 +194,7 @@ not claimed without measurements. This supersedes the imported `php::clean` spel
 for this compiler. Legacy runtime scalar `unset` overloads remain implementation
 evidence, not permission to bypass the narrower source contract.
 
-Non-goals/debt: ownership-pointer resets (CH05-OWN-01), arbitrary structs/Result
+Non-goals/debt: ownership-pointer resets (CH07-OWN-EXEC-01), arbitrary structs/Result
 cleanup, direct property resets, indexed `clean`, variadic/value-producing forms,
 PHP-style symbol removal and reference detachment. Legacy runtime overload cleanup
 is separate from this compiler admission slice; no runtime behavior was broadened.
@@ -214,15 +214,53 @@ verification. `/tmp/my-try-cleanup-keyed-20261006` passes five PHP suites and
 seven focused PHP suites after final source consolidation. The runner used its documented CLI fallback because
 the sandbox denied FPM socket creation.
 
+## Ownership model and direct nesting — 2026-10-06
+
+Implemented model slice: one final `ownership_type_definition` extends the template
+abstract and implements `ownership_semantics`; its immutable `ownership_kind`
+distinguishes shared, unique and weak. Definitions/application identities and C++
+bindings remain separate. The role exposes the exact target type; no parser names,
+backend spellings or new top-level type family identify ownership.
+
+The registry owns direct type-composition invariants: reject an immediate ownership
+target in all nine combinations, and reject `value<ownership-wrapper>` before
+publishing a type use. Source preparation reports these as ordinary diagnostics.
+Shared/weak handles are copyable independently of target copyability; unique handles
+remain noncopyable. No recursive ban on ordinary containers or named holders is added.
+
+The [runtime contract](../../../../runtime/specs/spec.md#v02-ownership-boundary--2026-10-06)
+records C++ ownership parity, checked empty access, explicit weak locking, deferred
+raw-pointer APIs and the deliberate no-direct-nesting language restriction.
+Non-goals: allocation, source move syntax/transfer analysis, weak lock execution,
+truthiness, pointer reset integration and class/member lifetime rules. Existing
+default handle declarations/backend spellings remain unchanged; model formation
+does not certify every operation on an otherwise valid composed type.
+
+Proof: `tests/ownership_model.php` covers all nine nesting combinations, role and
+target identity, renamed/aliased definitions, an unrelated same-spelling template,
+fixed handle capabilities, arity and modifier rejection before publication.
+`tests/ownership.php` adds source rejection, failed-update/no-change retry, recovery
+and four generated C++ programs preserving empty-handle declarations, handle copies,
+named holders, containers and whole-handle reference returns. It does not claim
+allocation, move or weak-lock execution.
+
+Evidence: `/tmp/my-try-ownership-final-20261006` passed nine focused PHP suites,
+17 source rejection cases and four generated C++ executions without PCH. The
+runner used its documented CLI fallback because FPM socket creation was denied.
+No native compiler rebuild, runtime wrapper change or performance claim is included.
+
 ## Ownership-type validation debt from chapter 05
 
-**CH05-OWN-01:** ownership templates currently register as ordinary template
-definitions. Complete the semantic ownership classification before enforcing nested
-`shared`/`unique`/`weak` and effective `value` restrictions. Registration, template
-argument validation and modifier validation need one truthful policy, not source-name
-checks or a generic ban on nested templates. Known gaps include `shared<shared<int>>`
-and `value<shared<int>>`; type formation/emission must not be advertised as approved
-ownership behavior. Agree the model before implementing this extension.
+**CH05-OWN-01 — resolved:** the model slice above supplies semantic ownership
+classification and rejects direct nesting/value wrapping by definition role.
+Direct nesting is deliberately excluded from v0.2, not pending automatic enablement.
+
+**CH07-OWN-EXEC-01 — remaining ownership operations:** source allocation, explicit
+move spelling and transfer/return analysis, weak locking, empty-state/null/reset
+integration, class/member lifetime rules and precise additional target constraints
+remain separate work. Current formation of a type does not certify those operations.
+Low-level pointer escapes and specialized deleters remain deferred. Do not revive
+source weak truthiness from the runtime's expiration-only bool convenience.
 
 The normative [v0.2 modifier contract](../../../../specs/type_use_modifiers.md)
 allows redundant `value<value<int>>` to normalize to int; repeated effective class-like

@@ -66,7 +66,7 @@ type_catalog_check($bindings->definition($shared->definition_id())->name() === '
 
 $vector = object_cast($catalog->definition('vector'), template_type_definition::class);
 $hash = object_cast($catalog->definition('hash'), template_type_definition::class);
-$unique = object_cast($catalog->definition('unique'), template_type_definition::class);
+$unique = object_cast($catalog->definition('unique'), ownership_type_definition::class);
 type_catalog_check((new template_type_parameter('T'))->contracts() === [generic_contract::copyable_value],
 	'Bare source type parameter lost its copyable_value default');
 type_catalog_check($vector->parameter(0)->contracts() === [generic_contract::value_storable],

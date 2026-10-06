@@ -46,3 +46,21 @@ C++ emission consumes the normalized type use. Thus `value<int>` lowers to
 `scpp::int_t<>`, without an extra `value_p` wrapper or header. Ordinary scalar
 conversions and the existing native program-exit adaptation still apply when their
 destination requires them. Source syntax alone never suppresses a required conversion.
+
+## v0.2 ownership composition — 2026-10-06
+
+Ownership roles are semantic definition facts, not spelling or storage modifiers.
+`shared<T>`, `unique<T>` and `weak<T>` preserve their C++ ownership meanings, with
+the safety/subset decisions in the [ownership contract](../runtime/specs/spec.md#v02-ownership-boundary--2026-10-06).
+
+An ownership wrapper's immediate resolved target must not itself be an ownership
+wrapper. All nine shared/unique/weak combinations reject during preparation; none
+is flattened. `value<shared<T>>`, `value<unique<T>>` and `value<weak<T>>` also reject.
+Registered aliases preserve the same role and restrictions. An unrelated definition
+does not acquire ownership merely because it has a matching name.
+
+This is not a recursive ban on containers of handles, named holders with ownership
+fields, or all nullable/Result compositions. Those retain their separate formation
+and operation rules. Rare shared-replaceable-handle use cases should use named
+library-owned holder types/functions, optionally implemented in native C++, rather
+than compiler-supported direct nesting. No extra nested-wrapper support is promised.

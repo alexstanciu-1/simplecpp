@@ -17,6 +17,16 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For ownership classification and direct type-composition admission:
+
+```bash
+python3 compiler/my-try/tests/ownership.py --results /tmp/FRESH_OWNERSHIP_RESULTS
+```
+
+Runs model, registration, capability and source recovery checks, then compiles four
+empty-handle/holder/container/reference programs without PCH. This proves neither
+new allocation/move/weak-lock operations nor a native compiler rebuild.
+
 For whole-storage unset/clean and their alias effects:
 
 ```bash

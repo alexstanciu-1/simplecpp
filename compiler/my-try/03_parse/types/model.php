@@ -574,6 +574,59 @@ final class result_type_definition extends abstract_template_type_definition imp
 	}
 }
 
+/** Ownership describes the handle, not the runtime pointee or its copy capability. */
+enum ownership_kind
+{
+	case shared;
+	case unique;
+	case weak;
+}
+
+interface ownership_semantics
+{
+	public function ownership_family(): ownership_kind;
+	public function target_type(applied_template_type $application): canonical_type_use;
+}
+
+/** Fixed family capabilities cannot accidentally make unique handles copyable. */
+final class ownership_type_definition extends abstract_template_type_definition implements ownership_semantics
+{
+	private ownership_kind $family_kind;
+
+	/** Copying a handle does not require copying its target; operation workers own access/transfer. */
+	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
+		array $parameters /** vector<template_type_parameter> */, ownership_kind $family_kind)
+	{
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable];
+		if ($family_kind !== ownership_kind::unique) {
+			$capabilities = [generic_contract::copyable_value, generic_contract::value_storable];
+		}
+		parent::__construct($identity, $source_name, $origin, nominal_type_kind::class_type, $parameters, $capabilities);
+		if (($this->arity() !== 1) || ($this->required_arity() !== 1)) {
+			throw new \InvalidArgumentException('Ownership definition requires exactly one required target parameter');
+		}
+		$this->family_kind = $family_kind;
+	}
+
+	public function ownership_family(): ownership_kind
+	{
+		return $this->family_kind;
+	}
+
+	/** Target queries cannot cross distinct family or provider definition identities. */
+	public function target_type(applied_template_type $application): canonical_type_use
+	{
+		if ($application->template_definition() !== $this) {
+			throw new \InvalidArgumentException('Ownership target requires an application of this definition');
+		}
+		$arguments /** vector<canonical_type_use> */ = $application->arguments();
+		if (q_count($arguments) !== 1) {
+			throw new \InvalidArgumentException('Ownership application requires one target type');
+		}
+		return $arguments[0];
+	}
+}
+
 /** Internal literal identity, never a source storage type or optional payload. */
 final class null_type_definition extends semantic_type_definition implements concrete_type_definition_i
 {
@@ -988,6 +1041,16 @@ final class Type_Registry implements type_capability_query
 		return $definition;
 	}
 
+	/** Install semantic ownership independently of source exposure and backend binding. */
+	public function define_ownership(string $name, type_definition_origin $origin,
+		array $parameters /** vector<template_type_parameter> */, ownership_kind $family_kind): ownership_type_definition
+	{
+		$definition = new ownership_type_definition($this->allocate_definition_id(), $name, $origin,
+			$parameters, $family_kind);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
 	/** Reuse the sole concrete type belonging to a non-template definition. */
 	public function canonical(concrete_type_definition_i $definition): canonical_type_i
 	{
@@ -1047,6 +1110,11 @@ final class Type_Registry implements type_capability_query
 	public function use(int $type_id, bool $by_value = false): canonical_type_use
 	{
 		$type = $this->type($type_id);
+		if ($by_value) {
+			if ($type->definition() instanceof ownership_semantics) {
+				throw new \InvalidArgumentException('Value modifier cannot wrap an ownership type');
+			}
+		}
 		if ($by_value && $this->is_value_type($type_id)) {
 			$by_value = false;
 		}
@@ -1162,6 +1230,11 @@ final class Type_Registry implements type_capability_query
 		array $arguments /** vector<canonical_type_use> */, ?type_capability_query $capabilities = null): array /** vector<canonical_type_use> */
 	{
 		$complete = $this->complete_application_arguments($definition, $arguments);
+		if ($definition instanceof ownership_semantics) {
+			if ($this->type($complete[0]->type_id())->definition() instanceof ownership_semantics) {
+				throw new \InvalidArgumentException('Direct ownership wrapper nesting is not supported in v0.2');
+			}
+		}
 		foreach ($complete as $position => $argument)
 		{
 			foreach ($definition->parameter($position)->contracts() as $required) {

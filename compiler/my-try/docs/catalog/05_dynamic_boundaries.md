@@ -52,7 +52,7 @@ Existing type preparation, registry contracts and conversion workers own these r
 | Cards | Current disposition | Proof / remaining owner |
 | --- | --- | --- |
 | TYPE-VAR-006B | Strict explicit intent: `$p weird<int>;` rejects | `tests/constructed_type.php`; legacy annotations remain separate |
-| NOTE-005, NOTE-052 nesting | Split: redundant value modifiers normalize; effective repeats reject; ownership nesting is debt | `specs/type_use_modifiers.md`, type/constructed tests; CH05-OWN-01 below |
+| NOTE-005, NOTE-052 nesting | Split: redundant value modifiers normalize; effective repeats reject; direct ownership nesting rejects | `specs/type_use_modifiers.md`, type/constructed tests; CH05-OWN-01 resolved in chapter 07 |
 | NOTE-010, NOTE-037 | Scalar mappings, typed signatures and canonical runtime-template formation covered | Chapters 01/04 and type tests; object handles, closures, references and container operations belong to 06/07/10/12 |
 | NOTE-015 | Scalar explicit casts use prepared conversion decisions | `tests/conversions.php`; no constructor fallback; `(object)` dependency below |
 | NOTE-036 | Typed predeclarations, nullable spelling, null returns and untyped-null rejection covered | `tests/nullable.php`, constructed types; callable locals/default expansion deferred |
@@ -63,15 +63,11 @@ Existing type preparation, registry contracts and conversion workers own these r
 
 ### Consolidated remaining debt
 
-- **CH05-OWN-01 — ownership classification and nesting (chapter 07).** `shared`,
-  `weak` and `unique` are ordinary registered templates with no semantic ownership
-  role. Nested ownership applications and `value<shared<T>>` are not comprehensively
-  rejected in preparation. Before adding those checks, agree a definition-identity/
-  semantic-role-based policy across template arguments and effective modifiers;
-  do not patch source-name tests into the registry or emitter. This is an open
-  validation gap, not supported ownership behavior. `value<value<int>>` is valid
-  normalization under the newer v0.2 contract; `value<value<string>>` still rejects.
-  Nullable/Result template formation must not acquire a blanket nesting ban.
+- **CH05-OWN-01 — resolved in chapter 07.** The [ownership model](07_references_lifetime.md#ownership-model-and-direct-nesting--2026-10-06)
+  classifies all three families and rejects immediate ownership nesting and
+  `value<ownership-wrapper>` by semantic role. Named holders and container composition
+  retain their independent rules. Remaining ownership execution is CH07-OWN-EXEC-01.
+  Redundant value normalization and nullable/Result formation are unchanged.
 - **CH05-VAL-01 — broader value boundaries.** Nullable defaults; cross-payload
   conversions; non-scalar/nested wrapper operations and conditional template
   capabilities; remaining wrapper/mixed joins, bare-null branches and wrapper
@@ -1703,8 +1699,8 @@ return and field types reject during preparation. Legacy annotations below are r
 
 **v0.2 decision / target C++:** Explicit intent either resolves through the canonical
 type model or rejects without output; it never degrades to mixed/auto. Proved by
-`tests/constructed_type.php`. Ownership nesting remains CH05-OWN-01, not covered by
-this unknown-type rejection.
+`tests/constructed_type.php`. Ownership nesting is separately covered by the
+chapter 07 model proof (CH05-OWN-01), not by this unknown-type rejection.
 
 ### Imported version 1
 
@@ -1743,7 +1739,7 @@ generator diagnostic
 
 **v0.2 decision / examples:** Split under CH05-OWN-01. Redundant `value<value<int>>`
 normalizes per `specs/type_use_modifiers.md`; repeated effective modifiers reject.
-Ownership nesting needs semantic classification in chapter 07. Imported blanket
+Chapter 07 now rejects direct ownership nesting by semantic role. Imported blanket
 wording below does not override the newer v0.2 modifier contract.
 
 > ## Wrapper nesting constraints

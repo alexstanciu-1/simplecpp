@@ -68,7 +68,12 @@ final class Type_Preparation
 		if ($type->by_value()) {
 			throw new \RuntimeException('S2S value type modifier cannot be repeated');
 		}
-		$node->set_preparation(Model::$type_catalog->registry()->use($type->type_id(), true));
+		try {
+			$node->set_preparation(Model::$type_catalog->registry()->use($type->type_id(), true));
+		}
+		catch (\InvalidArgumentException $error) {
+			throw new \RuntimeException($error->getMessage());
+		}
 	}
 
 	/** Resolve, validate and intern one source template application without eager combinations. */

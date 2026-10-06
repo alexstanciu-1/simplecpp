@@ -299,6 +299,16 @@ operation capability. Registered copy/storage contracts do not claim deep copyin
 hashability, comparison, iteration or member dispatch. Runtime payload tags and
 value-dependent validation remain runtime-owned; backend bindings are independent.
 
+`ownership_type_definition` is another final template sibling implementing
+`ownership_semantics`, with an immutable shared/unique/weak kind and exact target
+query. Its fixed handle-copy capabilities do not depend on pointee copyability.
+The registry validates immediate ownership nesting and disallowed value modifiers
+before publication; ordinary source preparation reports these contract failures.
+These are type-composition invariants, not lifetime algorithms or implicit permission
+for allocation/moves/weak access. Backend bindings and existing class-like storage
+classification remain unchanged. Named holders/container composition are not
+recursively prohibited; no worker or source-derived capability cache is added.
+
 Template definitions share `abstract_template_type_definition` for ordered parameters,
 arity/defaults and result kind. The ordinary `template_type_definition` remains final;
 its final sibling `nullable_type_definition` implements `nullable_semantics` with

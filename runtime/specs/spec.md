@@ -325,6 +325,36 @@ This operation does not alter ordinary arithmetic or add dynamic/wrapper delegat
   API; id `0` remains the conventional invalid/null id in that pattern
 
 ### 6.6 `shared_p<T>`, `unique_p<T>`, `weak_p<T>`
+
+#### v0.2 ownership boundary — 2026-10-06
+
+The source families `shared<T>`, `unique<T>` and `weak<T>` preserve C++ ownership:
+shared handles copy ownership without copying T; unique handles are move-only;
+weak handles observe without keeping T alive. Weak access requires one explicit
+lock and use of the resulting strong handle; failure produces an empty shared
+handle, not an extra nullable wrapper. Source weak truthiness is not admitted:
+the runtime's legacy expiration-based bool observer does not acquire ownership.
+Existing checked empty shared/unique access is retained as a deliberate safety
+difference. Raw-pointer escape/adoption, custom deleters and aliasing constructors
+are deferred, not implicitly imported from the STL surface.
+
+Direct ownership nesting is rejected in v0.2: an ownership wrapper's immediate
+resolved target cannot itself be shared, unique or weak, in any combination.
+Never flatten or reinterpret these types. This does not recursively prohibit
+ownership fields in named holder types or containers of handles; their operations
+still require their independent capabilities. Specialized shared replaceable slots
+should use named library-owned holders/functions, with native implementations when
+needed. Revisit compiler-supported direct nesting only for a concrete unmet use.
+
+The existing prohibition on `value<ownership-wrapper>` remains. Ownership category,
+copy capability and pointee copyability are distinct: shared/weak handle copying
+must not require a copyable pointee. Named unique transfers must be explicit rather
+than silently stealing on ordinary assignment; source move syntax, temporary/return
+transfer rules, allocation and broader member operations remain separate slices.
+This model decision does not claim those operations are already implemented.
+
+#### Runtime API baseline
+
 - these wrappers have the same role as `std::shared_ptr`, `std::unique_ptr`, and `std::weak_ptr`, but remain part of the project semantic API rather than raw STL leakage
 - ownership semantics must be explicit and predictable
 - `shared_p<T>` is the shared-owning handle family
