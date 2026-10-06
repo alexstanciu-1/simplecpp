@@ -37,6 +37,7 @@ enum node_kind
 	case comment;
 	case array_type;
 	case data_construction;
+	case object_construction;
 	case data_entry;
 	case index_expression;
 	case integer_literal;

@@ -6,11 +6,24 @@
  */
 namespace scpp\compiler;
 
+enum expression_value_origin
+{
+	case ordinary;
+	case fresh_construction;
+}
+
 /** Common backend-neutral result of preparing an expression. */
 abstract class prepared_expression {
 	public canonical_type_use $type;
+	public expression_value_origin $value_origin = expression_value_origin::ordinary;
 	/** Absent for values; present only for whole storage or stable direct struct fields. */
 	public ?prepared_place $place = null;
+
+	/** Fresh construction can initialize exact storage without copying an existing object. */
+	public function is_fresh_value(): bool
+	{
+		return $this->value_origin === expression_value_origin::fresh_construction;
+	}
 
 	public function addressable(): bool
 	{
@@ -76,6 +89,13 @@ final class prepared_place
 final class prepared_index_expression extends prepared_expression
 {
 	public operator_decision $decision;
+}
+
+/** Settled default allocation: constructed object identity and independently selected handle type. */
+final class prepared_object_construction extends prepared_expression
+{
+	public canonical_type_use $constructed_type;
+	public ownership_kind $ownership;
 }
 
 /** Syntax owns entry order; the binding owns the selected factory contract. */

@@ -64,3 +64,27 @@ fields, or all nullable/Result compositions. Those retain their separate formati
 and operation rules. Rare shared-replaceable-handle use cases should use named
 library-owned holder types/functions, optionally implemented in native C++, rather
 than compiler-supported direct nesting. No extra nested-wrapper support is promised.
+
+## v0.2 bounded owned construction — 2026-10-06
+
+For currently supported source structs, `new T()` constructs one default-initialized
+object with shared ownership. A direct explicitly typed local initializer can select
+ownership: `$s shared<T> = new T();` or `$u unique<T> = new T();`. The constructed
+type must exactly match the handle target. The unique form constructs directly as
+unique; it never creates an intermediate shared handle. Parentheses around the
+initializer do not change that rule. Weak handles cannot allocate.
+
+Fresh construction can initialize exact storage without copying an existing handle.
+It does not make unique handles copyable or authorize implicit moves from named
+variables. Contextual unique construction on later assignment, arguments, returns,
+fields and container entries remains deferred. In those contexts `new T()` retains
+its default shared result, which must satisfy ordinary boundary rules.
+
+The initial implementation admits no constructor arguments and requires a proven
+default initialization for every field, recursively through nested value structs.
+Its admitted field defaults are scalar, mixed/dynamic, error, empty ownership or
+nullable handles, empty vector/hash containers and recursively admitted structs.
+Result fields and unrecognized runtime construction contracts reject in preparation.
+Runtime value-type construction, user constructor/destructor bodies, inheritance,
+pointee member access and explicit allocation-helper source spellings are separate
+slices; `new` does not turn those existing value types into heap objects implicitly.

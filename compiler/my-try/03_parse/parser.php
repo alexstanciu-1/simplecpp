@@ -1119,6 +1119,9 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->text() === 'new') {
+			return $this->object_construction();
+		}
 		if ($this->data_construction_ahead())
 		{
 			$start = $this->position;
@@ -1603,6 +1606,30 @@ final class Parser_Run
 		$this->finish_node($call, $start);
 		$call->collect($this->collector, $this->current_scope, $start);
 		return $call;
+	}
+
+	/** Ownership and constructor validity belong to preparation, not syntax recognition. */
+	private function object_construction(): object_construction_node
+	{
+		$start = $this->position++;
+		$node = new object_construction_node();
+		$node->target_type = $this->type_syntax($this->current_scope);
+		$this->expect('(');
+		$arguments /** Storage<expression_node> */ = $node->arguments;
+		if ($this->text() !== ')')
+		{
+			do {
+				$arguments->append($this->expression());
+				if ($this->text() !== ',') {
+					break;
+				}
+				$this->position++;
+			}
+			while ($this->text() !== ')');
+		}
+		$this->expect(')');
+		$this->finish_node($node, $start);
+		return $node;
 	}
 
 	/** Complete source provenance without erasing concrete types. */

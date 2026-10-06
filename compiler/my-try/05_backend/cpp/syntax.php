@@ -15,6 +15,12 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		if ($node instanceof object_construction_node) {
+			$construction = object_cast($node, object_construction_node::class)->require_construction_preparation();
+			$this->context->headers['scpp/memory.hpp'] = true;
+			$helper = $construction->ownership === ownership_kind::unique ? 'unique' : 'shared';
+			return '::scpp::' . $helper . '<' . CPP_Declarations::type($construction->constructed_type, $this->context) . '>()';
+		}
 		if ($node instanceof index_node) {
 			return $this->generate_index(object_cast($node, index_node::class));
 		}

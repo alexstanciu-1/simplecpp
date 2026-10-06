@@ -19,10 +19,15 @@ final class Capability_Preparation implements type_capability_query
 		return $record->syntax()->require_preparation()->has_capability($capability);
 	}
 
-	/** Constructing an empty handle does not read/copy an existing handle, including unique. */
+	/** Exact fresh construction and empty-handle conversion do not copy existing storage. */
 	public static function require_initialization(canonical_type_use $type_use,
-		?conversion_decision $conversion, preparation_context $context): void
+		?conversion_decision $conversion, preparation_context $context, ?prepared_expression $value = null): void
 	{
+		if ($value !== null) {
+			if ($value->is_fresh_value() && $value->type->matches($type_use)) {
+				return;
+			}
+		}
 		if ($conversion !== null) {
 			if ($conversion->operation === conversion_operation::ownership_empty) {
 				return;

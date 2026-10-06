@@ -23,9 +23,10 @@ For ownership classification and direct type-composition admission:
 python3 compiler/my-try/tests/ownership.py --results /tmp/FRESH_OWNERSHIP_RESULTS
 ```
 
-Runs model, registration, capability, empty/reset/presence and source recovery checks,
-then compiles generated handle/holder/container/reference programs without PCH. This proves neither
-new allocation/move/weak-lock operations nor a native compiler rebuild.
+Runs model, registration, capability, allocation, empty/reset/presence and source
+recovery checks, then compiles generated handle/holder/container/reference programs
+without PCH. Allocation is bounded to default source structs. Explicit moves,
+weak locking, user-defined destructors and a native compiler rebuild are not proved.
 
 For whole-storage unset/clean and their alias effects:
 

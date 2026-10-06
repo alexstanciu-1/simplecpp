@@ -1,6 +1,6 @@
 <?php
 
-/* Source admission/recovery for the ownership model; no allocation or move execution is claimed. */
+/* Ownership admission, default allocation and recovery; explicit moves/locking remain deferred. */
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 
@@ -25,7 +25,47 @@ function ownership_source(string $source): string
 	return Model::$cpp_files[0]->text;
 }
 
+/** Inspect the retained construction contract independently of C++ execution. */
+final class Ownership_Construction_Probe implements node_maintenance_worker_i
+{
+	public int $count = 0;
+
+	public function enter(ast_node $node): void
+	{
+		if (!($node instanceof object_construction_node)) {
+			return;
+		}
+		$construction = object_cast($node, object_construction_node::class);
+		$facts = $construction->require_construction_preparation();
+		ownership_source_check($facts->is_fresh_value() && !$facts->addressable(), 'Construction must be a fresh non-addressable value');
+		$role = Ownership_Conversions::role($facts->type);
+		ownership_source_check($role->ownership_family() === $facts->ownership, 'Construction ownership disagrees with result');
+		$application = object_cast(Type_Queries::canonical($facts->type), applied_template_type::class);
+		ownership_source_check($role->target_type($application)->matches($facts->constructed_type), 'Construction target disagrees with result');
+		$children = [];
+		foreach ($construction->children() as $child) {
+			$children[] = $child;
+		}
+		ownership_source_check(count($children) === 1 && $children[0] === $construction->target_type, 'Construction inspection lost its type edge');
+		$this->count++;
+	}
+
+	public function edge(ast_node $parent, ast_node $child): void
+	{
+		$child->maintain($this);
+	}
+
+	public function token_index(int $index): int
+	{
+		return $index;
+	}
+}
+
 $cases = [
+	'allocated_shared' => 'struct Point { int $x; } $p = new Point(); $copy = $p; if (!$p) { return 1; } if (empty($copy)) { return 2; } unset($p); if ($p !== null) { return 3; } if (!isset($copy)) { return 4; } $q shared<Point> = new Point(); if (null === $q) { return 5; } return 0;',
+	'allocated_unique' => 'struct Point { int $x; } function reset(unique<Point> &$p): void { $p = null; } $p unique<Point> = new Point(); $a =& $p; if (!$a) { return 1; } reset($p); if (isset($a)) { return 2; } $q unique<Point> = new Point(); unset($q); if (!empty($q)) { return 3; } return 0;',
+	'allocated_noncopyable' => 'struct Item { unique<int> $child; } struct Box { Item $item; vector<int> $values; ?string $note; dynamic $data; } $s = new Box(); $copy = $s; $u unique<Box> = new Box(); if (!$u) { return 1; } if (!$copy) { return 2; } return 0;',
+	'allocated_expression' => 'struct Point { int $x; } function make(): shared<Point> { return new Point(); } function present(shared<Point> $p): bool { return isset($p); } if (!present(new Point())) { return 1; } if (empty(make())) { return 2; } return 0;',
 	'empty_reset' => 'function reset_unique(unique<int> &$u): void { $u = null; } $s shared<int> = null; $u unique<int> = null; $w weak<int> = null; $a =& $u; $a = null; reset_unique($u); $s = null; $w = null; unset($s); unset($u); unset($w); if (isset($u)) { return 1; } if (!empty($s)) { return 2; } return 0;',
 	'presence' => '$s shared<int>; $u unique<int>; if ($s) { return 1; } elseif ($u) { return 2; } while ($u) { return 3; } for (; $s;) { return 4; } do { if (!$u) { break; } return 5; } while ($s); $n = $u ? 1 : 0; if ($s !== null) { return 6; } if (null !== $u) { return 7; } if (!($s === null)) { return 8; } if (!(null === $u)) { return 9; } return $n;',
 	'observe_once' => 'function observe(shared<int> $s, int &$calls): shared<int> { $calls += 1; return $s; } $s shared<int>; $calls = 0; if (observe($s, $calls)) { return 1; } $p = observe($s, $calls) === null; $q = isset(observe($s, $calls)); $r = empty(observe($s, $calls)); if ($calls !== 4) { return 2; } if (!$p) { return 3; } if ($q) { return 4; } if (!$r) { return 5; } return 0;',
@@ -42,9 +82,20 @@ $executions = [];
 foreach ($cases as $name => $source) {
 	$path = $output . '/' . $name . '.cpp';
 	file_put_contents($path, ownership_source($source));
+	$probe = new Ownership_Construction_Probe();
+	Model::syntax_files()[0]->root->maintain($probe);
+	ownership_source_check($probe->count === substr_count($source, 'new '), 'Construction syntax count differs');
 	$executions[] = ['path' => $path, 'exit_code' => 0];
 }
 $rejections = [];
+$rejections[] = ['struct P { int $x; } $p = new P(1);', 'constructor arguments'];
+$rejections[] = ['struct P { int $x; } $p weak<P> = new P();', 'cannot allocate'];
+$rejections[] = ['struct P { int $x; } struct Q { int $x; } $p unique<P> = new Q();', 'exactly match'];
+$rejections[] = ['struct P { result<int> $x; } $p = new P();', 'default-constructible'];
+$rejections[] = ['$p = new int();', 'source struct'];
+$rejections[] = ['struct P { int $x; } $p unique<P> = new P(); $copy = $p;', 'copyable'];
+$rejections[] = ['struct P { int $x; } $p unique<P>; $p = new P();', 'ownership boundary'];
+$rejections[] = ['struct P { int $x; } function make(): unique<P> { return new P(); }', 'ownership boundary'];
 foreach (['shared', 'unique', 'weak'] as $outer) {
 	foreach (['shared', 'unique', 'weak'] as $inner) {
 		$rejections[] = ['$v ' . $outer . '<' . $inner . '<int>>;', 'Direct ownership wrapper nesting'];
@@ -114,6 +165,27 @@ try
 	$compiler->prepare();
 	$compiler->cpp();
 	ownership_source_check(Model::$cpp_files[0]->text === $original, 'Ownership cleanup/reprepare changed output');
+
+	$construction_source = 'struct Field { int $n; } struct Box { Field $field; } function build(): shared<Box> { return new Box(); } $u unique<Box> = new Box(); return 0;';
+	file_put_contents($path, $construction_source);
+	$compiler->update_cpp([$path]);
+	$construction_output = Model::$cpp_files[0]->text;
+	file_put_contents($path, str_replace('int $n', 'result<int> $n', $construction_source));
+	foreach ([[$path], []] as $changes) {
+		$failed = false;
+		try { $compiler->update_cpp($changes); }
+		catch (\RuntimeException $error) {
+			$failed = str_contains($error->getMessage(), 'default-constructible');
+		}
+		ownership_source_check($failed && Model::$cpp_files->is_empty(), 'Nested default-construction edit was not rejected');
+	}
+	file_put_contents($path, $construction_source);
+	$compiler->update_cpp([$path]);
+	ownership_source_check(Model::$cpp_files[0]->text === $construction_output, 'Construction repair changed output');
+	Compiler_Lifecycle::reset_preparation();
+	$compiler->prepare();
+	$compiler->cpp();
+	ownership_source_check(Model::$cpp_files[0]->text === $construction_output, 'Construction cleanup changed output');
 }
 finally {
 	unlink($path);

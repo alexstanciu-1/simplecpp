@@ -363,6 +363,9 @@ inspect handle presence, never the pointee's truthiness. Weak implicit presence
 forms reject during preparation; use explicit locking once available.
 The initial source slice does not add null argument/return conversions, handle-valued
 selection joins, explicit bool casts or direct handle logical binary operations.
+Default source-struct allocation is now admitted by the
+[bounded owned-construction contract](../../specs/type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06):
+default shared or direct-local explicit unique/shared, without constructor arguments.
 
 #### Runtime API baseline
 

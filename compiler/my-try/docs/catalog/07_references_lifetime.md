@@ -276,13 +276,40 @@ PCH. Recovery includes changing a shared signature to weak while retaining its
 presence-using body, no-change retry, repair and cleanup/re-preparation. FPM socket
 restrictions required CLI fallback. The compiler itself was not rebuilt natively.
 
+## Default owned construction — 2026-10-06
+
+Implemented one `new T(args...)` syntax node with owning type/argument edges and
+ordinary inspection, cleanup and token relocation. Preparation currently admits
+only zero-argument construction of source structs whose fields have proven defaults.
+Default `new T()` yields shared ownership; an explicitly typed direct local initializer
+can select exact shared/unique ownership. Weak allocation and mismatched targets reject.
+See the [normative bounded construction contract](../../../../specs/type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06).
+
+`Object_Construction_Preparation` owns selection and the bounded default proof,
+observing nested record declarations through the existing dependency protocol.
+Fresh-value initialization is separate from copying in `Capability_Preparation`;
+unique remains noncopyable. C++ calls `scpp::shared<T>()` or `scpp::unique<T>()`
+directly. No intermediate shared allocation, raw-pointer adoption or new runtime
+wrapper implementation is added.
+
+Focused evidence: `/tmp/my-try-owned-construction-20261006-verified`, using
+`tests/ownership.py`: 12 PHP suites, 42 source rejections and 11 generated C++
+executions without PCH. Includes real allocation, retained shared copies after reset,
+unique reference reset, noncopyable pointees and nested-default incremental failure,
+no-change retry, repair and cleanup/re-preparation. FPM used CLI fallback. No native
+compiler rebuild, allocation benchmark or user-destructor execution proof is claimed.
+
+Remaining: user constructors/destructors, runtime value construction, pointee access,
+unique reassignment/argument/return transfer and explicit moves; weak derivation/locking
+is a separate slice. New syntax alone does not enable those paths.
+
 ## Ownership-type validation debt from chapter 05
 
 **CH05-OWN-01 — resolved:** the model slice above supplies semantic ownership
 classification and rejects direct nesting/value wrapping by definition role.
 Direct nesting is deliberately excluded from v0.2, not pending automatic enablement.
 
-**CH07-OWN-EXEC-01 — remaining ownership operations:** source allocation, explicit
+**CH07-OWN-EXEC-01 — remaining ownership operations:** broader construction, explicit
 move spelling and transfer/return analysis, weak locking,
 class/member lifetime rules and precise additional target constraints
 remain separate work. Current formation of a type does not certify those operations.

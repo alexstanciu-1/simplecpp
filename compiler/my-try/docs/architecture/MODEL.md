@@ -176,6 +176,19 @@ operations remain gated.
 
 ## AST and scopes
 
+`object_construction_node` owns the constructed type syntax and ordered arguments.
+Parsing records those edges without ownership decisions. `Object_Construction_Preparation`
+resolves the type, proves the bounded field-default contract with declaration dependencies,
+and selects a default shared or direct-local contextual unique/shared result.
+`prepared_object_construction` retains the constructed type, result handle type and
+ownership selection. The shared `expression_value_origin` fact marks proven fresh
+construction separately from ordinary values; its query does not rely on subtype dispatch.
+This distinguishes new construction from copying;
+the shared initialization capability check uses that query only for matching storage.
+It does not admit moves, unique argument/return transfers or new type capabilities.
+The backend chooses the runtime allocation helper from the prepared ownership decision.
+Constructor overloads/bodies and runtime value construction are not implemented here.
+
 `index_node` retains `prepared_index_expression` with a normal `operator_decision`
 and inherited non-addressable value result. `Indexing_Contracts` supplies exact
 receiver-definition signatures; `Indexing_Preparation` resolves key/result types,

@@ -166,7 +166,7 @@ final class Body_Preparation
 		try {
 			if ($initializer !== null) {
 				$value_node /** expression_node */ = $initializer;
-				$value = Expression_Preparation::prepare($value_node, $context, $expected_type);
+				$value = Expression_Preparation::prepare($value_node, $context, $expected_type, $type_syntax !== null);
 			}
 		}
 		finally {
@@ -212,7 +212,7 @@ final class Body_Preparation
 			}
 		}
 		if ($value !== null) {
-			Capability_Preparation::require_initialization($binding->type, $binding->conversion, $context);
+			Capability_Preparation::require_initialization($binding->type, $binding->conversion, $context, $value);
 		}
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$locals->add($entry->name, $binding);

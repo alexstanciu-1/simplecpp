@@ -7,9 +7,18 @@ final class Expression_Preparation
 {
 	/** Analysis owns family dispatch and attaches the typed result before returning it. */
 	public static function prepare(expression_node $node, preparation_context $context,
-		?canonical_type_use $expected_type = null): prepared_expression
+		?canonical_type_use $expected_type = null, bool $direct_initialization = false): prepared_expression
 	{
-		if ($node instanceof data_construction_node) {
+		if ($node instanceof object_construction_node)
+		{
+			$object_construction = object_cast($node, object_construction_node::class);
+			$destination /** nullable<canonical_type_use> */ = null;
+			if ($direct_initialization) {
+				$destination = $expected_type;
+			}
+			$object_construction->set_preparation(Object_Construction_Preparation::prepare($object_construction, $context, $destination));
+		}
+		elseif ($node instanceof data_construction_node) {
 			$construction = object_cast($node, data_construction_node::class);
 			$construction->set_preparation(Data_Construction_Preparation::prepare($construction, $context, $expected_type));
 		}
