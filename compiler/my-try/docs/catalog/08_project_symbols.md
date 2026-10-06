@@ -27,7 +27,11 @@ and persistent runtime-only PCH reuse have a bounded implementation; see
 [native build ownership and limits](../architecture/native_cpp_build.md). The bounded
 broader invalidation matrix and build-phase timings are verified. Validation-overhead
 optimization is deferred to [Chapter 15](15_blocking_debt.md#ch15-native-cache-perf-01--native-cache-validation-overhead).
-Namespace/import groups are next for discussion.
+Namespace/import semantics are agreed in the [v0.2 contract](../../../../specs/namespaces_v0_2.md).
+Implementation awaits approval of the [identity/body ownership prerequisite](../planning/namespace_identity_migration.md),
+which spans collection, preparation/lifecycle and backend identity consumers.
+Imported cards below are not implementation evidence; their obsolete import restrictions
+do not override the agreed contract or newer generator rules.
 
 ## Progress
 

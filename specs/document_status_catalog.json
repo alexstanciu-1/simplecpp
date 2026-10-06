@@ -4,6 +4,16 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "specs/namespaces_v0_2.md",
+                        "kind": "markdown",
+                        "doc_status": "normative"
+                    },
+                    {
+                        "path": "compiler/my-try/docs/planning/namespace_identity_migration.md",
+                        "kind": "markdown",
+                        "doc_status": "planning"
+                    },
+                    {
                         "path": "specs/data_initialization.md",
                         "kind": "markdown",
                         "doc_status": "normative"

@@ -72,6 +72,7 @@ The authority stack for the current project is:
    - `specs/dynamic_types.md`
    - `specs/array_semantics.md`
    - `specs/data_initialization.md` (v0.2 notation and recognized initialization interfaces)
+   - `specs/namespaces_v0_2.md` (namespace identity, body-local imports and qualified lookup)
    - `specs/compact_layout_types.md`
    - `specs/metaprogramming_contract.md`
    - `specs/count_empty_isset_contract.md`
