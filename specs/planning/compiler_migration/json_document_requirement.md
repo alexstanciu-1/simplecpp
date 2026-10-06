@@ -9,6 +9,13 @@ document API. The first rewrite stage adopts a bounded PHP/native schema-view
 facade; see [manifest reading](../../portability/project_manifest_reading.md).
 Full raw-number/error/roundtrip parity remains outside this facade.
 
+v0.2 amendment, 2026-10-06: the user requires unique decoded object names in all
+JSON parsing, not only schema validation. The
+[normative unique-name rule](../../builtins/json/json_decode.md#unique-object-names--2026-10-06)
+supersedes the candidate's earlier last-value-wins requirement. The candidate must
+be adapted and proved before native integration; its historical pass is not proof
+of this newer contract. The PHP schema view already enforces rejection.
+
 ## Concrete compiler need
 
 Manifest validation must reject an object where a list is required, including an
@@ -34,9 +41,10 @@ existing decode/encode behavior globally is not required by this migration.
 - Preserve enough numeric information for explicit schema conversions without
   silently accepting fractional/out-of-range values as integers. A raw number
   spelling plus checked conversions is one possible design.
-- Make duplicate-key behavior explicit. The adapter must be able to reproduce
-  PHP's last-value-wins lookup and first-insertion key order where existing schemas
-  rely on them; this need not dictate the document's internal representation.
+- Reject duplicate decoded keys within each object, identifying the repeated key
+  and its opening-quote byte position. Do not publish a partially parsed document.
+  Compare names case-sensitively without Unicode normalization; nested and sibling
+  objects have separate name sets. PHP's silent overwriting is not the contract.
 - Expose parse failure category and byte position. The portability adapter needs
   to distinguish malformed syntax, malformed string encoding, invalid surrogate
   escapes and depth limits. Exact target/PHP message mapping requires a separate

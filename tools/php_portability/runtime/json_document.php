@@ -7,8 +7,10 @@ final class Json_View {
     private function __construct(private readonly mixed $value) {}
 
     public static function read(string $text): self {
-        try { return new self(\json_decode($text, false, 129, JSON_THROW_ON_ERROR)); }
+        try { $value = \json_decode($text, false, 129, JSON_THROW_ON_ERROR); }
         catch (\JsonException $error) { throw new \JsonException('Invalid JSON', 0, $error); }
+        Json_Unique_Keys::validate($text);
+        return new self($value);
     }
     public function kind(): string {
         return match (true) {
@@ -57,6 +59,43 @@ final class Json_View {
     }
     private function require_object(): void {
         if (!$this->value instanceof \stdClass) { throw new \RuntimeException('JSON node is not an object'); }
+    }
+}
+
+/** Host-only policy check on already-valid JSON; PHP's decoder owns the grammar.
+ * Scan original tokens because decoded objects have already lost duplicate names.
+ */
+final class Json_Unique_Keys {
+    public static function validate(string $text): void {
+        $scopes = [];
+        $length = \strlen($text);
+        for ($position = 0; $position < $length; $position++) {
+            $byte = $text[$position];
+            if ($byte === '{' || $byte === '[') {
+                $scopes[] = [];
+            } elseif ($byte === '}' || $byte === ']') {
+                \array_pop($scopes);
+            } elseif ($byte === '"') {
+                $start = $position++;
+                while ($text[$position] !== '"') {
+                    if ($text[$position] === '\\') { $position++; }
+                    $position++;
+                }
+                $after = $position + 1;
+                while ($after < $length && \str_contains(" \t\r\n", $text[$after])) { $after++; }
+                if ($after < $length && $text[$after] === ':') {
+                    $token = \substr($text, $start, $position - $start + 1);
+                    $name = \json_decode($token, false, 512, JSON_THROW_ON_ERROR);
+                    // Prefix prevents PHP's numeric-string array-key conversion.
+                    $identity = ':' . $name;
+                    $scope = \count($scopes) - 1;
+                    if (isset($scopes[$scope][$identity])) {
+                        throw new \JsonException('json error at byte ' . $start . ': duplicate object key ' . $token);
+                    }
+                    $scopes[$scope][$identity] = true;
+                }
+            }
+        }
     }
 }
 function json_read(string $text): Json_View { return Json_View::read($text); }

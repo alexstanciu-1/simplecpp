@@ -5,6 +5,8 @@
 #include "scpp/lang/php.hpp"
 
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <string>
 
 namespace {
@@ -295,9 +297,44 @@ static void test_direct_typed_writer() {
 	require(scpp::json::encode(root).has_value().native_value());
 }
 
+static void test_json_unique_keys() {
+	std::ifstream corpus(std::filesystem::path(__FILE__).parent_path() / "../../portability/json_unique_keys.tsv");
+	require(corpus.is_open());
+	std::string row;
+	int count = 0;
+	while (std::getline(corpus, row)) {
+		const auto separator = row.find('\t');
+		require(separator != std::string::npos);
+		const int position = std::stoi(row.substr(0, separator));
+		const scpp::string_t input(row.substr(separator + 1));
+		const auto dynamic = scpp::json::decode(input);
+		const auto mixed = scpp::json::decode_mixed(input);
+		if (position < 0) {
+			require(dynamic.has_value().native_value() && mixed.has_value().native_value());
+		} else {
+			const auto prefix = "json error at byte " + std::to_string(position) + ": duplicate object key ";
+			scpp::dynamic_t<> dynamic_out(scpp::string_t("unchanged"));
+			scpp::mixed_t mixed_out(scpp::string_t("unchanged"));
+			scpp::error_t error;
+			require(!scpp::php::take(dynamic_out, error, dynamic).native_value());
+			require(error.get_message().native_value().starts_with(prefix));
+			require(dynamic_out.get_string().native_value() == "unchanged");
+			require(!scpp::php::take(mixed_out, error, mixed).native_value());
+			require(error.get_message().native_value().starts_with(prefix));
+			require(mixed_out.get_string().native_value() == "unchanged");
+			require(scpp::php::json_decode(input).has_error().native_value());
+		}
+		++count;
+	}
+	require(count == 23);
+	require(scpp::json::decode(scpp::string_t("{\"a\":1}")).has_value().native_value());
+	require(scpp::json::decode_mixed(scpp::string_t("{\"a\":1}")).has_value().native_value());
+}
+
 } // namespace
 
 int main() {
+	test_json_unique_keys();
 	test_json_decode_scalar_values();
 	test_json_decode_array_and_object_shapes();
 	test_json_decode_nested_shared_model();

@@ -20,11 +20,11 @@ namespace {
 // Private parser unwind signal. Only this failure is converted to an in-band error;
 // allocation failures and unrelated runtime exceptions retain their own contracts.
 struct json_parse_failure final {
-	const char *message;
+	std::string message;
 	std::size_t position;
 };
 
-[[noreturn]] void fail_json_parse(const char *message, const std::size_t position) {
+[[noreturn]] void fail_json_parse(std::string message, const std::size_t position) {
 	throw json_parse_failure{message, position};
 }
 
@@ -294,6 +294,8 @@ private:
 			fail_json_parse("expected '{'", pos_);
 		}
 		auto out = json_family<Value>::container();
+		// Compare decoded JSON names, before any family-specific key normalization.
+		std::unordered_set<std::string> names;
 		skip_whitespace();
 		if (!at_end() && peek() == '}') {
 			++pos_;
@@ -304,7 +306,11 @@ private:
 			if (peek() != '"') {
 				fail_json_parse("expected string key", pos_);
 			}
+			const auto key_start = pos_;
 			const auto key = parse_string();
+			if (!names.insert(key.native_value()).second) {
+				fail_json_parse("duplicate object key " + std::string(input_.substr(key_start, pos_ - key_start)), key_start);
+			}
 			skip_whitespace();
 			if (get() != ':') {
 				fail_json_parse("expected ':'", pos_ - 1);

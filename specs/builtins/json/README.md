@@ -4,6 +4,9 @@ This folder contains one contract file per JSON builtin in the first-pass Prism+
 
 ## Current first-pass coverage
 
+The [v0.2 unique-name rule](json_decode.md#unique-object-names--2026-10-06) applies
+to all JSON parsing, not only compiler metadata: duplicate object names reject.
+
 - `json_decode`
 - `json_encode`
 

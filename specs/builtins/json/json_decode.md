@@ -2,6 +2,28 @@
 Doc Status: normative
 ## v0.2 family-specific decoding — 2026-10-05
 
+### Unique object names — 2026-10-06
+
+All Simple C++ JSON parsing requires unique member names within each object.
+This includes default dynamic decoding, explicit mixed decoding, language adapters,
+and the JSON document API when integrated. There is no last-value-wins option.
+This is an intentional restriction beyond JSON syntax, not a claim that the JSON
+standard forbids duplicates. It supersedes earlier duplicate-accepting contracts.
+
+- Compare decoded key strings exactly, case-sensitively, without Unicode normalization.
+  `"name"` and `"\u006eame"` are duplicates; `"Name"` and `"name"` are distinct.
+- Check before runtime table-key normalization. `"0"` and `"00"` remain distinct
+  JSON names. The same name in different nested/sibling objects is allowed.
+- A duplicate is a checked parse failure, with the repeated key identified and
+  a zero-based byte offset at its opening quote. Return no partial document/value;
+  failed `take` leaves the destination unchanged. Repair and retry remain supported.
+- The PHP portability schema adapter throws its existing JSON exception before
+  publishing a view; it must not inherit PHP's silent overwrite behavior.
+
+Implemented for both runtime value decoders and the PHP schema adapter. The native
+document API remains a separate integration prerequisite; its historical candidate
+must be adapted and revalidated against this rule before adoption.
+
 The approved v0.2 surface replaces the v0.1 contract below:
 
 - `json_decode(string $json) -> result<dynamic>` is the default, including scalar roots.

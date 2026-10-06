@@ -37,7 +37,9 @@ final class Probe {
         echo '{"retained":', json_quote($first->entry), "}\n";
     }
     public static function json_view(): void {
-        $root = json_read('{"0":null,"01":false,"text":"old","0":true}');
+        try { $duplicate = json_read('{"0":null,"01":false,"text":"old","0":true}'); }
+        catch (\JsonException $error) { echo "{\"adapter_error\":\"duplicate\"}\n"; }
+        $root = json_read('{"0":true,"01":false,"text":"old"}');
         $retained = $root->member('text');
         echo '{"key":', json_quote($root->key(0)), ',"key2":', json_quote($root->key(1));
         echo ',"kind":', json_quote($root->member('0')->kind()), ',"count":', $root->size();

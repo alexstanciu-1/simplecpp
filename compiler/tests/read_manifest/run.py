@@ -50,7 +50,7 @@ def main():
     for name,value,valid in cases:add(name,json.dumps(value,ensure_ascii=False).encode(),value if valid else None)
     for name,data in [('syntax',b'{'),('trailing',b'{} garbage'),('utf8',b'{"entry":"\xff"}'),('surrogate',b'{"entry":"\\ud800"}')]:add(name,data,None)
     value={'source_folders':['src'],'entry':'last.phs'}
-    add('duplicate_key',b'{"source_folders":[],"source_folders":["src"],"entry":"first","entry":"last.phs"}',value)
+    add('duplicate_key',b'{"source_folders":[],"source_folders":["src"],"entry":"first","entry":"last.phs"}',None)
     add('whitespace',b' { "source_folders" : ["src"], "entry": "last.phs" }\n ',value)
     file=inputs/'single.phs';file.write_text('not parsed by manifest reading')
     calls.append('\\manifest_test\\Probe::read('+json.dumps(str(file))+');')
@@ -66,7 +66,8 @@ def main():
     # Valid input after errors in the same process, plus independent result publication.
     path=inputs/'valid.json';calls.append('\\manifest_test\\Probe::retention('+json.dumps(str(path))+');');expected.append({'retained':'src/main.phs'})
     calls.append('\\manifest_test\\Probe::json_view();')
-    expected.extend([{'key':'0','key2':'01','kind':'boolean','count':3,'missing':True,'retained':'old'},
+    expected.extend([{'adapter_error':'duplicate'},
+                     {'key':'0','key2':'01','kind':'boolean','count':3,'missing':True,'retained':'old'},
                      {'adapter_error':'index'},{'adapter_error':'kind'},{'adapter_error':'missing'}])
     for relative in FILES:
         dest=source/relative;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/'compiler'/relative,dest)

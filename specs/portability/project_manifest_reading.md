@@ -13,7 +13,8 @@ A JSON project requires exactly `source_folders` and `entry`. Folders must be a
 nonempty array of distinct, nonempty strings; entry must be a nonempty string.
 Paths cannot contain NUL. Unknown fields, wrong JSON shapes and malformed JSON are
 rejected. Paths retain their spelling and order. An object such as `{"0":"src"}`
-is not a source-folder list. Duplicate JSON fields use the last value, as PHP does.
+is not a source-folder list. Duplicate JSON fields reject under the
+[v0.2 JSON unique-name contract](../builtins/json/json_decode.md#unique-object-names--2026-10-06).
 
 The result owns original input path/content, canonical containing directory,
 source-folder and source-file vectors, entry, and an explicit single-source flag.
@@ -31,9 +32,14 @@ reading is a later owner. It does not claim atomic path/read consistency.
 `scpp\json_read` returns an immutable `scpp\Json_View` schema view. Available methods:
 `kind`, `size`, `has`, `key`, `member`, `at`, `text`; [scalar catalog adoption](scalar_catalog.md) adds strict `integer` and `boolean` accessors. Missing members, invalid indices
 and wrong-kind access throw. Null presence, object/list identity, numeric-looking
-keys, duplicate-key ordering and retained child handles are explicit behavior.
+keys, duplicate-key rejection and retained child handles are explicit behavior.
 PHP uses object-mode `json_decode` with exceptions; native wraps the checked #240
 JSON document/node API. The converter adds no type resolution or JSON syntax rules.
+The PHP adapter additionally scans original key tokens after grammar validation,
+before publishing a view, because PHP's decoded objects have lost duplicates.
+This host-only check is not a second JSON grammar implementation. Native value
+decoders enforce the rule while parsing; the separate #240 document candidate
+still needs its equivalent adaptation before adoption on v0.2.
 Install native support with `--json --filesystem` and enable those modules.
 
 This is a bounded schema adapter, not full lossless JSON interoperability. It exposes
@@ -50,6 +56,20 @@ it into a scalar record would not suit its data. Compact layout remains relevant
 future high-volume compiler records.
 
 ## Validation and timing
+
+The historical proof below predates duplicate rejection. The updated manifest
+fixture now rejects repeated fields and checks the adapter's rejection separately
+from key ordering and retained-child behavior. Its v0.2 PHP/conversion recheck does
+not establish a new native document-API pass.
+
+On 2026-10-06, the updated runner passes 36 PHP outcomes and conversion/reuse
+checks (`/tmp/scpp-json-unique-manifest-20261006-2/`). The shared 23-case corpus
+in `tests/portability/json_unique_keys.tsv` passes through the PHP schema adapter
+and both native value-decoder families (`test_json`, CTest under
+`/tmp/scpp-v02-process-lock-native-20261006/`). It covers decoded escape equality,
+Unicode, embedded NUL, empty keys, per-object scope, exact duplicate byte offsets,
+and distinct case/numeric-looking/non-normalized names. Native tests also prove
+unchanged destinations on failure and successful subsequent parsing.
 
 The registered stage proof specifies 35 structured outcomes independently of the
 implementation: valid/invalid schemas, object/list separation, original content,

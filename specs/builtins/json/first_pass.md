@@ -6,6 +6,8 @@ For v0.2, the family-specific amendments in [json_decode](json_decode.md) and
 [json_encode](json_encode.md) supersede the mixed-with-dynamic-box mapping below:
 default decoding is dynamic, explicit `json_decode_mixed` produces mixed trees,
 and encoding accepts either family. See those contracts for the staged migration status.
+All v0.2 JSON parsers reject duplicate decoded names within an object, under the
+[unique-name contract](json_decode.md#unique-object-names--2026-10-06).
 
 See also:
 - `specs/builtins/json/README.md`
