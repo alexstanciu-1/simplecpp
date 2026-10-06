@@ -349,8 +349,10 @@ wrapper operation; preparation validates existing output places and copy capabil
 Its named edges participate in normal cleanup, traversal and incremental maintenance.
 The runtime helper owns selected-output behavior, including clearing error on success.
 Match expressions own a selector and ordered arms; each arm owns expression labels
-and one result. Empty arm labels mean default. Arm facts retain exact integer labels
-and a result conversion. Match retains scalar-only admission; conditional preparation
+and one result. Empty arm labels mean default. Arm facts retain typed constant labels
+and a result conversion. Match and plain ternary share exact scalar/same-enum value
+result admission through `Selection_Result_Preparation`; results are non-addressable
+copies and do not grant enum truthiness or coalescing. Conditional preparation also
 owns symmetric scalar/nullable-scalar and matching Result/scalar joins and records
 both branch conversions. Result joins preserve a single exact wrapper identity;
 they neither extract a selected payload nor merge wrapper families.
@@ -498,7 +500,7 @@ or mixed result/conversion facts; it is distinct from truthiness-based condition
 Prepared `coalesce_presence` separates always-present values, wrapper value states
 and mixed non-null testing from conversion identity. Direct mixed/scalar selections
 share bounded join admission, preserve the mixed carrier and copy the selected value;
-they do not alter scalar-only match. Coalescing facts separate `left_extraction`
+they do not admit wrappers into match's scalar/enum results. Coalescing facts separate `left_extraction`
 (source to selected payload, identity for direct values) from `left_conversion`
 (selected value to result). Approved wrapper-left/mixed-fallback joins compose
 existing extraction and boxing decisions, without a general conversion chain model

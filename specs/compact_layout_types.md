@@ -254,6 +254,21 @@ total return coverage for a default-less switch in the current bounded compiler.
 This selection extension does not expand supported match result types or define
 enum default initialization, metadata helpers or conversion helpers.
 
+### 3.2 v0.2 enum-valued selection results
+
+Full ternary (`condition ? left : right`) and `match` may produce an enum value
+when every result alternative has the same nominal enum type. Different enums,
+enum/integer combinations and bare-null alternatives do not establish this result
+type. All alternatives are checked during preparation, including unselected ones.
+
+The result is an owned value copy, not a reference to branch storage. Only the
+selected result expression executes. Ordinary typed value arguments and returns
+accept that result; it cannot initialize a storage reference.
+
+Result admission is independent of condition truthiness and selector admission.
+This extension does not admit enum conditions, enum Elvis operands, enum `??`
+results or enum payloads in nullable/Result wrappers. Those remain separate slices.
+
 ## 4. Union Semantics
 
 Restricted payload unions lower as generated C++ `union` declarations.

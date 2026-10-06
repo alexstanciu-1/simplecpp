@@ -25,7 +25,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/ownership_observation.php` | Exact-payload weak derivation and explicit strong acquisition |
 | `semantics/initialization.php` | Shared initialization-interface selection/substitution and factory/input validation; model query only, not literal execution |
 | `semantics/data_construction.php` | Contextual literal targets, input-shape selection and ordered entry conversion facts through common bindings |
-| `semantics/selection_results.php` | Shared matching-scalar value-result admission and conversions |
+| `semantics/selection_results.php` | Shared exact scalar/enum value-result admission and conversions; separate boxed join |
 | `semantics/matches.php` | Strict constant-label match preparation and per-arm facts |
 | `semantics/selection.php`, `data/selection.php` | Shared canonical-int/enum selector admission and typed constant labels for switch/match |
 | `semantics/capabilities.php` | Dependency-aware capability queries and owned-copy admission |
@@ -188,16 +188,19 @@ and a single saved left value of the original condition type for shorthand. Bare
 branches and cross-payload nullable joins remain deferred. Same-family boxed pairs and
 boxed/scalar joins in either order preserve the boxed family and box only the selected
 scalar. `Selection_Result_Preparation::boxed_join` supplies this bounded domain for
-conditional and coalesce workers without widening scalar-only match. Result-led joins preserve
+conditional and coalesce workers without widening match to wrappers/boxed values. Result-led joins preserve
 one exact Result identity: same-wrapper pairs copy the selected state, and exact
 scalar or boxed payload alternatives wrap as value payloads. Nullable/Result and cross-family pairs
 reject. Both branch conversions and copy capabilities are prepared before emission;
 the existing lazy emitter and saved Elvis left value are reused unchanged.
 
-`Match_Preparation` retains scalar-only `Selection_Result_Preparation` and strict integer label
-selection rather than truthiness. `Integer_Constants::label` serves both switch and
-match. Every arm is prepared, including unselected results, preserving dependency
-tracking and diagnostics. Arm facts own normalized decimal labels and result
+`Match_Preparation` uses `Selection_Result_Preparation` for matching scalar or exact
+same-enum results. Plain conditional joins reuse that admission via `exact_join`;
+nullable, Result and boxed joins keep their own boundaries. Coalescing retains an
+explicit scalar-only gate on its non-boxed results. None grants enum truthiness.
+`Selection_Preparation` serves switch and match with canonical-int or enum-case
+labels, independently of result type. Every arm is prepared, including unselected
+results, preserving dependency tracking and diagnostics. Arm facts own typed labels and result
 conversions. Repeated labels select the first result; duplicate defaults reject.
 An omitted default is valid and unmatched runtime selection throws. Empty match is
 deferred until non-returning expression typing exists. Match does not modify scope or

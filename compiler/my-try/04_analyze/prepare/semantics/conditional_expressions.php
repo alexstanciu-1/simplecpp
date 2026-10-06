@@ -43,6 +43,9 @@ final class Conditional_Expression_Preparation
 		if (Boxed_Conversions::is_boxed($selected) || Boxed_Conversions::is_boxed($fallback)) {
 			return Selection_Result_Preparation::boxed_join($selected, $fallback, $context);
 		}
+		if ((Nullable_Conversions::payload($selected) === null) && (Nullable_Conversions::payload($fallback) === null)) {
+			return Selection_Result_Preparation::exact_join($selected, $fallback, $context, 'conditional');
+		}
 		$selected_domain = self::scalar_domain($selected);
 		$fallback_domain = self::scalar_domain($fallback);
 		if (!$selected_domain->matches($fallback_domain)) {

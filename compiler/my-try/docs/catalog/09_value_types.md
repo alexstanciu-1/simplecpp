@@ -142,8 +142,32 @@ enum support. The remaining 11 PHP suites passed. All **132 generated fixtures p
 separately through the shared runner; evidence lives in
 `/tmp/my-try-enum-control-regression-20261006-1/program-commands.json`.
 
-Next discussion: enum-valued result joins, followed by default-initialization and
-helper scope. CH09 remains open; the combined native compiler checkpoint is deferred.
+### Enum-valued results — 2026-10-06
+
+Full ternary and match now return owned same-enum values, under the
+[agreed result contract](../../../../specs/compact_layout_types.md#32-v02-enum-valued-selection-results).
+`Selection_Result_Preparation` owns direct scalar/enum result admission and exact
+branch agreement; plain ternary reuses it alongside match. Existing typed lazy C++
+returns need no enum-specific backend or AST path. Enum identity is never replaced
+by its integer backing. Coalescing keeps an explicit scalar result gate so extending
+the shared helper does not expand `??` accidentally.
+
+Proof covers both ternary paths, scalar/enum match selectors, nested joins,
+cross-file aliases, fixed uint64 backing, function boundaries, copy independence,
+lazy selected effects, incremental invalidation/recovery and non-addressable results.
+Wrong enum/integer combinations, bare null, enum conditions, Elvis and coalescing
+remain rejected. Nullable/Result enum payloads and defaults remain separate work.
+The portable-PHP skill guided reuse of existing typed facts rather than new retained
+structures or a separate enum expression path.
+
+Checkpoint: **17 PHP suites and 14 generated C++ programs passed** with
+`python3 compiler/my-try/tests/enums.py --results /tmp/my-try-enum-joins-20261006-2`.
+The PHP suites include scalar control flow and nullable/Result/mixed regression
+checks. FPM was unavailable in the sandbox, so the shared runner used CLI fallback.
+No portability conversion or native compiler rebuild was performed.
+
+Next discussion: enum default initialization and helper scope. CH09 remains open;
+the combined native compiler checkpoint is deferred.
 
 ## TYPE-VAR-006
 

@@ -35,6 +35,10 @@ final class Coalesce_Expression_Preparation
 				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
 			}
 			else {
+				// Coalescing has not admitted enum payloads/results; shared direct joins have.
+				if (!Conversion_Preparation::is_scalar($selected_type) || !Conversion_Preparation::is_scalar($fallback->type)) {
+					throw new \RuntimeException('S2S coalesce branches require supported scalar value types');
+				}
 				$facts->type = Selection_Result_Preparation::begin($selected_type, $context, 'coalesce');
 				$facts->fallback_conversion = Selection_Result_Preparation::branch($fallback->type, $facts->type, 'coalesce');
 			}

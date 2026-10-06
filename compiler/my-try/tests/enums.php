@@ -64,6 +64,9 @@ $fixtures['selection'] = ['main.phs' => 'enum E { case A; case B; case C; } func
 $fixtures['enum_extremes'] = ['main.phs' => 'enum U: uint64 { case Max = 18446744073709551615; case Zero = 0; } enum S: int64 { case Min = -9223372036854775808; case Zero = 0; } $u = U::Max; $s = S::Min; if ($u !== U::Max || $s != S::Min) { return 1; } switch ($u) { case U::Zero: return 2; case U::Max: break; } return match ($s) { S::Min => 7, S::Zero => 3 };'];
 $fixtures['enum_import_selection'] = ['main.phs' => 'namespace App; use Lib\E as Alias; $v = Alias::A; if ($v !== \Lib\E::A) { return 1; } switch ($v) { case \Lib\E::A: break; default: return 2; } return match ($v) { Alias::A => 7 };', 'lib.phs' => 'namespace Lib; enum E { case A; }'];
 $fixtures['enum_unhandled'] = ['main.phs' => 'enum E { case A; case B; } return match (E::B) { E::A => 7 };'];
+$fixtures['enum_joins'] = ['main.phs' => 'enum E { case A; case B; } function choose(bool $b, E $a, E $z): E { return $b ? $a : $z; } function accept(E $v): int { if ($v === E::B) { return 7; } return 1; } $a = E::A; $b = E::B; $copy = true ? $a : $b; $a = E::B; if ($copy !== E::A) { return 2; } $m = match ($a) { E::A => $a, E::B => $b }; $b = E::A; if ($m !== E::B) { return 3; } return accept(choose(false, $b, match (1) { 1 => E::B, default => E::A }));'];
+$fixtures['enum_join_lazy'] = ['main.phs' => 'enum E { case A; case B; } function condition(int &$n): bool { $n += 1; return false; } function branch(int &$n, E $v): E { $n += 10; return $v; } $n = 0; $v = condition($n) ? branch($n, E::A) : branch($n, E::B); if ($n !== 11 || $v !== E::B) { return 1; } $m = match ($v) { default => branch($n, E::A), E::B => branch($n, E::B), E::B => branch($n, E::A) }; if ($n !== 21 || $m !== E::B) { return 2; } $z = match (0) { 1 => E::A, default => (true ? E::B : E::A) }; if ($z !== E::B) { return 3; } return 7;'];
+$fixtures['enum_join_import'] = ['main.phs' => 'namespace App; use Lib\E as Alias; function choose(bool $b): Alias { return $b ? Alias::A : \Lib\E::B; } $v value<Alias> = match (0) { 0 => choose(false), default => Alias::A }; if ($v !== Alias::B) { return 1; } return 7;', 'lib.phs' => 'namespace Lib; enum E: uint64 { case A = 0; case B = 18446744073709551615; }'];
 for ($index = 0; $index < 257; $index++) {
 	$many .= 'case C' . $index . ';';
 }
@@ -88,7 +91,18 @@ foreach ([
 	'$a = E::A; switch ($a) { case $a: break; }' => 'constant enum case',
 	'return match (E::A) { F::A => 7 };' => 'selector enum type',
 	'$a = E::A; return match ($a) { $a => 7 };' => 'constant enum case',
-	'return match (E::A) { E::A => E::B };' => 'scalar',
+	'$v = true ? E::A : F::A;' => 'matching scalar types or the same enum',
+	'$v = false ? E::A : 0;' => 'matching scalar types or the same enum',
+	'$v = true ? 0 : E::A;' => 'matching scalar types or the same enum',
+	'$v = match (0) { 0 => E::A, default => F::A };' => 'matching scalar types or the same enum',
+	'$v = match (0) { 0 => E::A, default => 0 };' => 'matching scalar types or the same enum',
+	'$v = match (0) { 0 => 0, default => E::A };' => 'matching scalar types or the same enum',
+	'$v = true ? E::A : null;' => 'supported scalar value types',
+	'$v = E::A ?: E::B;' => 'condition truthiness',
+	'if (E::A) {}' => 'condition truthiness',
+	'$v = E::A ?? E::B;' => 'coalesce',
+	'$a = E::A; $b = E::B; $ref E =& (true ? $a : $b);' => 'stable storage',
+	'$a = E::A; $ref E =& match (0) { 0 => $a };' => 'stable storage',
 ] as $source => $diagnostic) {
 	$compiler = enum_project(['main.phs' => 'enum E { case A; case B; } enum F { case A; } ' . $source]);
 	$compiler->tokenize();
@@ -149,7 +163,7 @@ foreach ([
 }
 
 // Retained consumers depend on the enum declaration, not on namespace case constants.
-$main_text = 'namespace App; use Lib\E; function get(): E { switch (E::A) { case E::A: return E::A; default: return E::B; } } $v = get(); if ($v !== E::A) { return 1; } return match ($v) { E::A => 7, default => 2 };';
+$main_text = 'namespace App; use Lib\E; function get(): E { switch (E::A) { case E::A: return true ? E::A : E::B; default: return match (0) { 0 => E::B }; } } $v = get(); if ($v !== E::A) { return 1; } return match ($v) { E::A => 7, default => 2 };';
 $lib_text = 'namespace Lib; enum E: int { case A = 1; case B = 2; }';
 $compiler = enum_project(['main.phs' => $main_text, 'lib.phs' => $lib_text]);
 $compiler->exec_cpp();

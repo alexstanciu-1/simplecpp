@@ -5,7 +5,7 @@ namespace scpp\compiler;
 
 final class Selection_Result_Preparation
 {
-	/** Boxed-led selections retain their family; match keeps its scalar-only domain. */
+	/** Boxed-led selections retain their family; match keeps its direct-value domain. */
 	public static function boxed_join(canonical_type_use $left, canonical_type_use $right,
 		preparation_context $context): canonical_type_use
 	{
@@ -19,10 +19,19 @@ final class Selection_Result_Preparation
 		return $result;
 	}
 
-	/** Establish an owned scalar result, without inventing a cross-type promotion. */
+	/** Direct-value joins reuse match's result admission and exact branch agreement. */
+	public static function exact_join(canonical_type_use $left, canonical_type_use $right,
+		preparation_context $context, string $selection): canonical_type_use
+	{
+		$result = self::begin($left, $context, $selection);
+		self::branch($right, $result, $selection);
+		return $result;
+	}
+
+	/** Establish an owned scalar or enum result, without cross-type promotion. */
 	public static function begin(canonical_type_use $type, preparation_context $context, string $selection): canonical_type_use
 	{
-		self::require_scalar($type, $selection);
+		self::require_direct_value($type, $selection);
 		Capability_Preparation::require_copy($type, $context);
 		return $type;
 	}
@@ -30,17 +39,17 @@ final class Selection_Result_Preparation
 	/** Every alternative must agree with the selected result domain before emission. */
 	public static function branch(canonical_type_use $source, canonical_type_use $result, string $selection): conversion_decision
 	{
-		self::require_scalar($source, $selection);
+		self::require_direct_value($source, $selection);
 		if (!$source->matches($result)) {
-			throw new \RuntimeException('S2S ' . $selection . ' branches require matching scalar types');
+			throw new \RuntimeException('S2S ' . $selection . ' branches require matching scalar types or the same enum type');
 		}
 		return Conversion_Preparation::decide($source, $result, conversion_context::conditional_branch);
 	}
 
-	private static function require_scalar(canonical_type_use $type, string $selection): void
+	private static function require_direct_value(canonical_type_use $type, string $selection): void
 	{
-		if (!Conversion_Preparation::is_scalar($type)) {
-			throw new \RuntimeException('S2S ' . $selection . ' branches require supported scalar value types');
+		if (!Conversion_Preparation::is_scalar($type) && !Type_Queries::is_enum($type)) {
+			throw new \RuntimeException('S2S ' . $selection . ' branches require supported scalar value types or enums');
 		}
 	}
 }

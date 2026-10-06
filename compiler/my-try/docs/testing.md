@@ -25,7 +25,8 @@ python3 compiler/my-try/tests/enums.py --results /tmp/FRESH_ENUM_RESULTS
 
 Runs focused PHP suites, then compiles/runs partitioned generated programs
 without PCH. Independent native assertions verify exact enum widths and values.
-Also covers enum equality, typed switch/match selection, lazy results and unmatched
+Also covers enum equality, typed switch/match selection, same-enum ternary/match
+results, copy independence, lazy results and unmatched
 failure. This proves generated programs, not native portability of the compiler itself.
 
 For source namespace-body ownership and entry/lifecycle integration:

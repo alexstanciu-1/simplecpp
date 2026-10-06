@@ -1,6 +1,6 @@
 <?php
 
-/* Ordered strict constant selection and matching scalar value results. */
+/* Ordered strict constant selection and matching direct-value results. */
 namespace scpp\compiler;
 
 final class Match_Preparation
