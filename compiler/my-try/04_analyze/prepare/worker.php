@@ -61,6 +61,13 @@ final class Preparation_Worker
 		}
 
 		$this->require_success();
+		// Only settled call facts participate; failure uses ordinary retained retry/publication guards.
+		$cyclic = (new Reference_Cycles())->find($sources);
+		foreach ($cyclic as $definition) {
+			$body_owner /** body_work */ = $definition->syntax()->body->work();
+			$this->failure($body_owner, 'S2S recursive reference-return cycles are deferred: ' . $definition->name);
+		}
+		$this->require_success();
 
 		$result /** Storage<prepared_file> */ = new Storage();
 		foreach ($sources as $source)

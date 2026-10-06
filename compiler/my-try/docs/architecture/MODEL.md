@@ -93,8 +93,17 @@ body proof or a caller lifetime. Signature comparison includes it. Source signat
 derive it from exactly one fixed reference parameter; body preparation verifies the
 whole-parameter return independently. Calls substitute the actual argument's place.
 Runtime reference-return execution remains gated; initialization factories require
-value returns. Reference-returning calls within reference-returning bodies remain
-outside this first integration.
+value returns. Nonrecursive forwarding reuses the same argument-place substitution
+and final whole-parameter return proof, including local aliases.
+
+After all bodies settle, `Reference_Cycles` builds an invocation-local graph from
+current collected function/call indexes and prepared call targets. Its transient
+`reference_cycle_vertex` records use integer edges, not mutually owning handles.
+Strongly connected components containing reference-returning functions reject through
+the worker's normal failure/retry protocol before prepared-file publication. By-value
+recursive components remain allowed. This linear check includes unchanged bodies and
+is rerun for incremental updates; it does not re-prepare bodies, retain a second graph,
+or turn body relationships into declaration dependencies.
 
 Expression facts carry optional `prepared_place`, with `addressable()` derived from
 presence. Places select original local declarations or parameters and may project

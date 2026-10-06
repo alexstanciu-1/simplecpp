@@ -168,9 +168,25 @@ reference-returning call does not extend its argument's lifetime. Capturing with
 `=&` preserves the alias, whereas normal assignment copies according to the type's
 ordinary copy contract. No implicit move or copyability exemption is introduced.
 
-For this initial implementation, reference-returning calls inside a reference-returning
-function are gated pending forwarding integration, even when a narrower case could
-be proven safe. Runtime-registered reference returns, const references and reference
+Nonrecursive reference-return forwarding is supported, directly or through aliases:
+
+```php
+function &forward(int &$value): int {
+    return identity($value);
+}
+```
+
+Each call substitutes its supplying argument's storage origin. The final returned
+place must still be the enclosing function's whole reference parameter. A local may
+be borrowed through a call for local use, but neither it nor an alias rooted in it
+may escape through the return. Forward declarations and multi-hop chains follow the
+same rule; no new lifetime is created by an intermediate call.
+
+Recursive call components containing a reference-returning function are rejected
+during preparation, including self-calls and cycles through by-value helpers. This
+bounded restriction is structural: unused functions and calls in unreachable branches
+are included. Ordinary by-value recursion remains supported. Recursive reference
+returns, runtime-registered reference returns, const references and reference
 foreach are separate work. The advisory warning policy below remains intended;
 my-try's missing retained warning delivery is tracked as CH07-WARN-01 in its catalog.
 

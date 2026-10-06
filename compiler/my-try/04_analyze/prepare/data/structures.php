@@ -364,6 +364,21 @@ final class prepared_file {
 	public collected_file $source;
 }
 
+/** Invocation-local call-cycle vertex; integer edges do not retain other vertices. */
+final class reference_cycle_vertex
+{
+	public collected_function $definition;
+	public array $calls /** vector<int> */ = [];
+	public int $visit_index = -1;
+	public int $low_link = -1;
+	public bool $on_stack = false;
+
+	public function __construct(collected_function $definition)
+	{
+		$this->definition = $definition;
+	}
+}
+
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {

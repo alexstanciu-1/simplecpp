@@ -79,8 +79,12 @@ Copied/indexed values and temporary-derived fields remain placeless. `Reference_
 owns alias declaration admission and original-place selection. Its bounded source
 reference-return path publishes a whole-parameter contract at declaration time and
 verifies the sole final return during body work. Calls substitute the actual argument's
-place; returned facts bypass value conversion. Runtime reference returns and forwarding
-within reference-returning bodies remain gated. Alias/return syntax carries explicit
+place; returned facts bypass value conversion. Forwarding through calls and aliases
+uses those same checks. Runtime reference returns remain gated. Before publishing
+prepared files, a transient call-index/SCC audit rejects recursive components that
+contain reference-returning functions, using ordinary work failure/retry state.
+It includes unchanged bodies without re-preparing them; ordinary value recursion
+remains allowed. Alias/return syntax carries explicit
 markers but makes no lifetime decisions; C++ emission only consumes completed facts.
 
 Facts identify exact roles where known: calls reference `callable_target_i` (source

@@ -110,8 +110,8 @@ copy, and verified returns bypass value conversion. Direct stable struct fields 
 be call arguments, but projecting a field within the reference-returning body is
 outside its whole-parameter contract. No owner lifetime is extended.
 
-Limits: source reference-returning calls inside reference-returning functions remain
-gated pending forwarding integration, including their indirect use through aliases.
+Limits at this checkpoint: source reference-returning calls inside reference-returning
+functions were gated pending the forwarding integration below.
 Installed runtime reference returns, const semantics, reset/removal and ownership
 classification are not added. Reference foreach stays in Chapter 15.
 
@@ -134,6 +134,40 @@ retained suites pass under `/tmp/my-try-references-regression-20261006` and
 `/tmp/my-try-references-calls-20261006` (the calls suite was rerun with its required
 output-directory argument). No native compiler rebuild was performed. The two
 pre-existing operator-suite failures from the model checkpoint remain separate debt.
+
+## Nonrecursive reference forwarding — 2026-10-06
+
+Implemented direct forwarding and forwarding through local aliases while preserving
+the single-reference-parameter, exact-type, sole-final-return contract. Calls already
+substitute their actual argument's place; the final return must still select the
+enclosing function's whole reference parameter. Local borrows through calls are valid
+for local use, but returning them rejects. No parser or C++ lowering changes were
+needed: the existing call sequencing already preserves `T&`.
+
+The blanket ban on reference-returning calls inside reference-returning bodies is
+replaced by a post-settlement cycle check. `Reference_Cycles` consumes current
+collected function/call indexes and prepared call targets, including unchanged bodies.
+Its transient integer-edge graph uses strongly connected components to reject cycles
+containing reference-returning functions, even through by-value helpers. Ordinary
+by-value recursion remains permitted. The structural check includes unreachable calls
+and unused functions; it does not attempt termination analysis.
+
+The preparation worker marks cyclic reference-return bodies failed using its normal
+retry/publication protocol. Body-only edits, no-change retries, recovery, and removal
+of previously cyclic declarations are covered. No retained graph, body dependency
+protocol, runtime borrowing mechanism or new backend operation is introduced.
+
+Proof: the shared references runner now exports 15 generated programs and checks 39
+source rejections. `tests/reference_forwarding.php` adds cross-file preparation and
+incremental cycle/lifetime recovery. Cross-file execution is not claimed: current C++
+assembly still accepts one prepared source file. Runtime-registered reference returns,
+recursive reference returns, const/ownership extensions and CH07-WARN-01 remain debt.
+
+Evidence: `/tmp/my-try-forward-proof-20261006` passes 9 focused PHP suites and all
+15 generated-C++ executions. `/tmp/my-try-forward-final-php-20261006` repeats those
+PHP checks after adding the single-file failed-emission guard, and
+`/tmp/my-try-forward-regression-20261006` passes four additional retained suites.
+The compiler itself was not rebuilt natively for this slice.
 
 ## Ownership-type validation debt from chapter 05
 
@@ -162,7 +196,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [FUNC-REF-004](#func-ref-004) | rejected | `function &f($a) { return $a; }` | explicit types required | no output | deferred | Existing signature grammar |
 | [VAR-UNSET-001](#var-unset-001) | pending-discussion | `unset($a);` | unverified | unverified | deferred | — |
 | [VAR-CLEAN-001](#var-clean-001) | pending-discussion | `clean($a);` | unverified | unverified | deferred | — |
-| [REF-RETURN-001](#ref-return-001) | deferred-gated | `function &bounce(int &$a): int { return id($a); }` | rejects | no output | deferred | Forwarding integration remains next |
+| [REF-RETURN-001](#ref-return-001) | supported-bounded | `function &bounce(int &$a): int { return id($a); }` | origin checked | verified | deferred | Nonrecursive whole-parameter forwarding; unsafe origins reject |
 | [REF-RETURN-002](#ref-return-002) | rejected | Reference return of an indexed element | rejects | no output | deferred | Whole-parameter return only; no native interior reference |
 | [REF-BIND-001](#ref-bind-001) | rejected | `$inner =& $arr["inner"];` | rejects | no output | deferred | No native container-interior alias |
 | [TYPE-VAR-003A](#type-var-003a) | pending-discussion | Strict example to define (legacy spelling retained below) | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |

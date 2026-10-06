@@ -20,7 +20,7 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     programs = output / 'programs'
     programs.mkdir()
-    suites = ['references', 'reference_model', 'container_calls', 'callables',
+    suites = ['references', 'reference_forwarding', 'reference_model', 'container_calls', 'callables',
               'incremental_cpp', 'preparation_recovery', 'mutations', 'indexing']
     with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
         def suite(name):

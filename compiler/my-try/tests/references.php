@@ -26,6 +26,10 @@ function references_source(string $source): string
 }
 
 $cases = [
+	'forward_chain' => 'function &forward(int &$x): int { $a =& middle($x); return $a; } function &middle(int &$x): int { return identity($x); } function &identity(int &$x): int { return $x; } $n = 1; $a =& forward($n); $a = 7; $copy = forward($n); $a = 8; if ($n !== 8 || $copy !== 7) { return 1; } return 0;',
+	'forward_local_use' => 'function &forward(int &$x): int { $local = 1; $a =& identity($local); $a = 9; $x = $local; return identity($x); } function &identity(int &$x): int { return $x; } $n = 1; $a =& forward($n); if ($n !== 9) { return 1; } $a = 7; if ($n !== 7) { return 2; } return 0;',
+	'forward_vector' => 'function &forward(vector<int> &$x): vector<int> { return identity($x); } function &identity(vector<int> &$x): vector<int> { return $x; } $v vector<int> = [1]; $a =& forward($v); $a[] = 2; $copy = forward($v); $a[0] = 8; $n = $v[0]; $c = $copy[0]; if ($n !== 8 || $c !== 1) { return 1; } return 0;',
+	'value_recursion' => 'function sum(int $n): int { if ($n === 0) { return 0; } $v = sum($n - 1); return $n + $v; } function &identity(int &$x): int { $v = sum(3); $x = $v; return $x; } $n = 0; $a =& identity($n); if ($a !== 6) { return 1; } return 0;',
 	'local_chain' => '$x int = 10; $a =& $x; $b int =& $a; $b = 20; $copy = $a; $a++; if ($x !== 21 || $copy !== 20) { return 1; } return 0;',
 	'parameter_alias' => 'function change(int &$x): void { $a =& $x; $a += 2; } function copy(int $x): int { $a =& $x; $a = 8; return $x; } $n = 3; change($n); $v = copy($n); if ($n !== 5 || $v !== 8) { return 1; } return 0;',
 	'field_alias' => 'struct Inner { int $n; } struct Box { Inner $inner; } $box Box; $a =& $box->inner->n; $a = 7; $n = $box->inner->n; if ($n !== 7) { return 1; } return 0;',
@@ -95,8 +99,13 @@ $rejections = [
 	['function &bad(int &$x): int { return $x; $x = 2; }', 'one final unconditional'],
 	['function &bad(int &$x): int { return; }', 'whole reference parameter'],
 	['function &id(int &$x): int { return $x; } $a =& id(1);', 'stable storage'],
-	['function &id(int &$x): int { return $x; } function &bad(int &$x): int { return id($x); }', 'forwarding is deferred'],
-	['function &id(int &$x): int { return $x; } function &bad(int &$x): int { $a =& id($x); return $a; }', 'forwarding is deferred'],
+	['function &id(int &$x): int { return $x; } function &bad(int &$x): int { $local = 1; return id($local); }', 'cannot escape'],
+	['function &id(int &$x): int { return $x; } function &bad(int &$x): int { $local = 1; $a =& id($local); return $a; }', 'cannot escape'],
+	['function &id(int &$x): int { return $x; } function &bad(int &$x, int $copy): int { return id($copy); }', 'cannot escape'],
+	['function &bad(int &$x): int { return bad($x); }', 'recursive reference-return cycles'],
+	['function &a(int &$x): int { return b($x); } function &b(int &$x): int { return a($x); }', 'recursive reference-return cycles'],
+	['function &a(int &$x): int { $v = b($x); return $x; } function b(int &$x): int { return a($x); }', 'recursive reference-return cycles'],
+	['function &a(int &$x): int { if (false) { $v = a($x); } return $x; }', 'recursive reference-return cycles'],
 ];
 foreach ($rejections as [$source, $message])
 {
@@ -126,7 +135,9 @@ try
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = Model::$cpp_files[0]->text;
-	foreach ([str_replace('$a =& $x;', '$local = 2; $a =& $local;', $valid), str_replace('function &id', 'function id', $valid)] as $invalid)
+	foreach ([str_replace('$a =& $x;', '$local = 2; $a =& $local;', $valid),
+		str_replace('function &id', 'function id', $valid),
+		str_replace('$a =& $x;', '$a =& id($x);', $valid)] as $invalid)
 	{
 		file_put_contents($path, $invalid);
 		foreach ([[$path], []] as $changes) {
@@ -139,6 +150,14 @@ try
 				$failed = true;
 			}
 			references_check($failed && Model::$cpp_files->is_empty(), 'Incremental lifetime/contract change published output');
+			$blocked = false;
+			try {
+				$compiler->cpp();
+			}
+			catch (\RuntimeException $error) {
+				$blocked = true;
+			}
+			references_check($blocked && Model::$cpp_files->is_empty(), 'Emission bypassed failed reference preparation');
 		}
 		file_put_contents($path, $valid);
 		$compiler->update_cpp([$path]);

@@ -95,8 +95,8 @@ Chapter 06 has completed its [bounded positive pass with explicit debt](06_conta
 including separated mixed/dynamic integration and registered JSON APIs. The requested
 [native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
 covers these Chapter 05/06 slices. Chapter 07 now supports
-[local aliases and bounded reference returns](07_references_lifetime.md#local-aliases-and-bounded-reference-returns--2026-10-06)
-with PHP and generated-C++ proofs; forwarding and warning delivery remain separate work.
+[local aliases, bounded reference returns and nonrecursive forwarding](07_references_lifetime.md#nonrecursive-reference-forwarding--2026-10-06)
+with PHP and generated-C++ proofs; recursion and warning delivery remain separate work.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

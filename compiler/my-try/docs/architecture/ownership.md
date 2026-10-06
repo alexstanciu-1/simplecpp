@@ -33,6 +33,12 @@ return statement; neither is copied into callable contracts. Local aliases requi
 earlier visible storage and cannot rebind or escape their lexical owner. Calls preserve
 the supplying argument's place, not a new lambda-local or callee-parameter lifetime.
 
+The post-preparation reference-cycle audit owns transient vertices and integer call
+edges. It observes live collected definitions and settled call targets; no vertex or
+worker is retained afterward and edges cannot create shared-handle cycles. Preparation
+failure marks affected reference-return body work dirty through the existing scheduler,
+so a cycle cannot leave a reusable ready fragment behind.
+
 Model owns modules and global/language scopes. Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable

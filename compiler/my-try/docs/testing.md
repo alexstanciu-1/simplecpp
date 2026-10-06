@@ -23,8 +23,9 @@ For local aliases and bounded reference returns:
 python3 compiler/my-try/tests/references.py --results /tmp/FRESH_REFERENCE_RESULTS
 ```
 
-Runs focused preparation/model/recovery suites and compiles/executes generated
-alias and reference-return programs with PCH. `--php-only` skips C++ execution.
+Runs focused preparation/model/recovery suites, including cross-file forwarding
+and cycle checks, and compiles/executes generated alias/reference-return programs
+with PCH. `--php-only` skips C++ execution.
 Neither mode rebuilds the compiler itself natively.
 
 For the compiler's tagged-family boundaries and container-signature checkpoint:
