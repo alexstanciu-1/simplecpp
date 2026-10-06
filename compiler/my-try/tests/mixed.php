@@ -87,7 +87,7 @@ try
 	$negative_node = $arithmetic_root->body->statements[2]->initializer;
 	mixed_check($sum_node->require_binary_preparation()->decision->operation === operator_operation::boxed_addition
 		&& Boxed_Conversions::is_mixed($sum_node->require_preparation()->type)
-		&& !$sum_node->require_preparation()->addressable, 'Mixed arithmetic lost its owned result');
+		&& !$sum_node->require_preparation()->addressable(), 'Mixed arithmetic lost its owned result');
 	mixed_check($negative_node->require_unary_preparation()->decision->operation === operator_operation::boxed_negative,
 		'Mixed unary operation lost its runtime dispatch');
 	mixed_check($arithmetic_root->body->statements[3]->require_preparation()->conversion->operation
@@ -101,7 +101,7 @@ try
 	$logical_facts = $logical_node->require_binary_preparation();
 	mixed_check($logical_facts->decision->operation === operator_operation::condition_or
 		&& count($logical_facts->decision->operand_truthiness) === 2
-		&& count($logical_facts->decision->operands) === 0 && !$logical_facts->addressable,
+		&& count($logical_facts->decision->operands) === 0 && !$logical_facts->addressable(),
 		'Logical facts lost truthiness or added boolean conversions');
 	Preparation_Cleanup::tree($logical_root);
 	mixed_check($logical_node->preparation() === null, 'Logical operand facts survived cleanup');
@@ -111,7 +111,7 @@ try
 	$text_facts = $text_node->require_binary_preparation();
 	mixed_check($text_facts->decision->operation === operator_operation::string_concatenation
 		&& $text_facts->decision->operands[1]->operation === conversion_operation::text_conversion
-		&& String_Conversions::is_string($text_facts->type) && !$text_facts->addressable,
+		&& String_Conversions::is_string($text_facts->type) && !$text_facts->addressable(),
 		'Concatenation lost its text conversion or owned string result');
 	mixed_check($text_root->body->statements[2]->require_preparation()->conversion->operation
 		=== conversion_operation::boxed_wrap, 'Mixed destination changed concatenation result type');
@@ -126,7 +126,7 @@ try
 		mixed_check($append_facts->write_back_mode === compound_write_back::converted_assignment
 			&& $append_facts->write_back->operation === $write_back
 			&& String_Conversions::is_string($append_facts->decision->result_type)
-			&& !$append_facts->addressable, 'Text update lost replacement semantics or owned snapshot');
+			&& !$append_facts->addressable(), 'Text update lost replacement semantics or owned snapshot');
 	}
 	Preparation_Cleanup::tree($append_root);
 	mixed_check($append_root->body->statements[1]->initializer->preparation() === null,
@@ -139,9 +139,9 @@ try
 	mixed_check($update_facts->write_back_mode === compound_write_back::boxed_stored_kind
 		&& $update_facts->decision->operation === operator_operation::boxed_addition
 		&& $update_facts->write_back->operation === conversion_operation::identity
-		&& !$update_facts->addressable, 'Mixed update lost its guarded storage write-back or owned snapshot');
+		&& !$update_facts->addressable(), 'Mixed update lost its guarded storage write-back or owned snapshot');
 	mixed_check($mutation_node->require_mutation_preparation()->decision->operation === operator_operation::boxed_post_increment
-		&& !$mutation_node->require_preparation()->addressable, 'Mixed postfix mutation lost its old-value snapshot');
+		&& !$mutation_node->require_preparation()->addressable(), 'Mixed postfix mutation lost its old-value snapshot');
 	mixed_check(str_contains(Model::$cpp_files[0]->text, 'scpp::detail::assign_numeric_result('),
 		'Mixed compound emission bypassed stored-kind validation');
 	Preparation_Cleanup::tree($update_root);
@@ -155,7 +155,7 @@ try
 		$comparison_node = $comparison_root->body->statements[$position]->initializer;
 		$decision = $comparison_node->require_binary_preparation()->decision;
 		mixed_check($decision->result_type->matches(Language_Types::boolean(Model::$language_scope))
-			&& !$comparison_node->require_preparation()->addressable, 'Comparison lost its owned bool result');
+			&& !$comparison_node->require_preparation()->addressable(), 'Comparison lost its owned bool result');
 		if ($position < 3) {
 			$null_operand = $decision->operands[$position === 1 ? 1 : 0];
 			mixed_check($null_operand->operation === conversion_operation::identity
@@ -366,7 +366,7 @@ try
 	{
 		$selection_node = $selection_root->body->statements[$position]->initializer;
 		$facts = $selection_node->require_preparation();
-		mixed_check(Boxed_Conversions::is_mixed($facts->type) && !$facts->addressable,
+		mixed_check(Boxed_Conversions::is_mixed($facts->type) && !$facts->addressable(),
 			'Selection lost its owned mixed result');
 		if ($position < 3) {
 			mixed_check($facts->true_conversion->operation === conversion_operation::identity
@@ -394,7 +394,7 @@ try
 			&& $facts->fallback_conversion->operation === conversion_operation::identity,
 			'Wrapper coalescing did not separate extraction from normalization');
 		mixed_check($facts->left_extraction->target_type->matches($facts->left_conversion->source_type)
-			&& Boxed_Conversions::is_mixed($facts->type) && !$facts->addressable, 'Invalid selected-value composition');
+			&& Boxed_Conversions::is_mixed($facts->type) && !$facts->addressable(), 'Invalid selected-value composition');
 		Preparation_Cleanup::tree($wrapper_root);
 		mixed_check($coalesce->preparation() === null && $coalesce->left->preparation() === null
 			&& $coalesce->fallback->preparation() === null, 'Wrapper coalesce facts survived cleanup');

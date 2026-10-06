@@ -34,12 +34,12 @@ foreach ([['++$x', operator_operation::integer_pre_increment, false],
 	$integer = Language_Types::integer(Model::$language_scope);
 	if (($mutation->kind() !== node_kind::mutation_expression) || ($mutation->postfix !== $postfix)
 		|| ($decision->operation !== $operation) || !$decision->result_type->matches($integer)
-		|| (count($decision->operands) !== 1) || $mutation->require_preparation()->addressable
+		|| (count($decision->operands) !== 1) || $mutation->require_preparation()->addressable()
 		|| ($decision->operands[0]->operation !== conversion_operation::identity)
 		|| ($decision->operands[0]->context !== conversion_context::operator_operand)) {
 		throw new \LogicException('Mutation lost its operation, conversion or snapshot contract');
 	}
-	if (!$mutation->target->require_preparation()->addressable
+	if (!$mutation->target->require_preparation()->addressable()
 		|| (iterator_to_array($mutation->children()) !== [$mutation->target])) {
 		throw new \LogicException('Mutation lost its single resolved storage target');
 	}

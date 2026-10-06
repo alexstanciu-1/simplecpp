@@ -162,7 +162,7 @@ final class Indexing_Preparation
 		}
 		$root = object_cast($syntax, variable_reference_node::class);
 		$prepared = Expression_Preparation::prepare($root, $context);
-		if (!$prepared->addressable) {
+		if (!$prepared->addressable()) {
 			throw new \RuntimeException('S2S indexed assignment requires stable receiver storage');
 		}
 		$facts->root = $root;

@@ -81,6 +81,9 @@ final class Call_Preparation
 		$facts = new prepared_call();
 		$facts->target = $target;
 		$facts->signature = self::require_signature($target, $context);
+		if ($facts->signature->reference_return !== null) {
+			throw new \RuntimeException('S2S reference-return calls await lifetime integration');
+		}
 		$facts->type = $facts->signature->return_type;
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
@@ -113,7 +116,7 @@ final class Call_Preparation
 				? $argument->require_preparation() : Expression_Preparation::prepare($argument, $context, $argument_type);
 			$prepared_argument = new prepared_call_argument();
 			if ($parameter->mode === passing_mode::reference) {
-				if ((!$value->addressable) || !Type_Preparation::same_storage_type($value->type, $parameter->type)) {
+				if ((!$value->addressable()) || !Type_Preparation::same_storage_type($value->type, $parameter->type)) {
 					throw new \RuntimeException('S2S reference arguments require stable storage of the exact parameter type');
 				}
 			}

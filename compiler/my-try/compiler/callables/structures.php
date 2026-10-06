@@ -57,11 +57,32 @@ final class callable_parameter
 final class callable_signature
 {
 	public canonical_type_use $return_type;
+	/** Null means an ordinary value return. Reference execution is still gated. */
+	public ?reference_return_contract $reference_return = null;
 	public Storage $parameters /** Storage<callable_parameter> */;
 
 	public function __construct()
 	{
 		$this->parameters = new Storage /** Storage<callable_parameter> */();
+	}
+}
+
+/** Symbolic whole-parameter origin; never retains a particular caller or source AST. */
+final class reference_return_contract
+{
+	private int $source_parameter;
+
+	public function __construct(int $parameter_index)
+	{
+		if ($parameter_index < 0) {
+			throw new \InvalidArgumentException('Reference return parameter index must be nonnegative');
+		}
+		$this->source_parameter = $parameter_index;
+	}
+
+	public function parameter_index(): int
+	{
+		return $this->source_parameter;
 	}
 }
 
@@ -79,6 +100,9 @@ final class registered_static_factory implements callable_target_i
 		}
 		if (!$owner->matches($signature->return_type)) {
 			throw new \InvalidArgumentException('Static factory must return its exact owner type');
+		}
+		if ($signature->reference_return !== null) {
+			throw new \InvalidArgumentException('Static factory must return an owned value');
 		}
 		$this->registration_key = $key;
 		$this->owner_type = $owner;

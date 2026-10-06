@@ -9,8 +9,64 @@ namespace scpp\compiler;
 /** Common backend-neutral result of preparing an expression. */
 abstract class prepared_expression {
 	public canonical_type_use $type;
-	/** True only for stable local/parameter storage and direct struct-field paths. */
-	public bool $addressable = false;
+	/** Absent for values; present only for whole storage or stable direct struct fields. */
+	public ?prepared_place $place = null;
+
+	public function addressable(): bool
+	{
+		return $this->place !== null;
+	}
+}
+
+/** A storage selection, not an owning payload or a certificate that a borrow may escape. */
+final class prepared_place
+{
+	/** @reference.source declaration/parameter/field preparation facts */
+	private prepared_storage $selected_storage /** weak<prepared_storage> */;
+	/** A field projection shares its base place, never syntax or a transient environment. */
+	private ?prepared_place $base_place;
+
+	/** Whole roots are declarations/parameters; only direct fields may project from a base. */
+	public function __construct(prepared_storage $storage, ?prepared_place $base = null)
+	{
+		if ($base === null)
+		{
+			if ($storage instanceof prepared_binding) {
+				$binding = object_cast($storage, prepared_binding::class);
+				if ($binding->resolved_kind !== binding_kind::declaration) {
+					throw new \LogicException('A storage root must be a declaration, not a write');
+				}
+			}
+			elseif (!($storage instanceof prepared_parameter)) {
+				throw new \LogicException('A storage root requires a local or parameter');
+			}
+		}
+		elseif (!($storage instanceof prepared_field)) {
+			throw new \LogicException('A storage projection requires a direct struct field');
+		}
+		$this->selected_storage = $storage;
+		$this->base_place = $base;
+	}
+
+	public function storage(): prepared_storage
+	{
+		return weakref_get($this->selected_storage);
+	}
+
+	public function base(): ?prepared_place
+	{
+		return $this->base_place;
+	}
+
+	/** Identity query only; escape and lifetime admission belong to analysis workers. */
+	public function root_storage(): prepared_storage
+	{
+		if ($this->base_place !== null) {
+			$base /** prepared_place */ = $this->base_place;
+			return $base->root_storage();
+		}
+		return $this->storage();
+	}
 }
 
 /** A selected bracket read is a copied value, never an interior storage location. */

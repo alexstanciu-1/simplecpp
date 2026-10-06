@@ -157,7 +157,7 @@ final class Expression_Preparation
 			$context->statement_assignment = $statement_assignment;
 		}
 		$place = $target->require_field_access_preparation();
-		if (!$place->addressable) {
+		if (!$place->addressable()) {
 			throw new \RuntimeException('S2S assignment requires stable storage');
 		}
 		$binding = new prepared_binding();
@@ -304,7 +304,7 @@ final class Expression_Preparation
 		$reference = new prepared_variable_reference();
 		$reference->declaration = $targets[0]->declaration;
 		$reference->type = $targets[0]->storage_type();
-		$reference->addressable = true;
+		$reference->place = new prepared_place($targets[0]);
 		return $reference;
 	}
 
@@ -364,7 +364,10 @@ final class Expression_Preparation
 		$facts = new prepared_field_access();
 		$facts->field = $matches[0];
 		$facts->type = $matches[0]->type;
-		$facts->addressable = $value->addressable;
+		if ($value->place !== null) {
+			$base_place /** prepared_place */ = $value->place;
+			$facts->place = new prepared_place($matches[0], $base_place);
+		}
 
 		return $facts;
 	}

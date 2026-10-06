@@ -30,7 +30,7 @@ foreach (['and' => operator_kind::logical_and, 'or' => operator_kind::logical_or
 	if (!($expression instanceof binary_expression_node)
 		|| !($expression->left instanceof assignment_expression_node)
 		|| ($expression->require_binary_preparation()->decision->source_operator !== $kind)
-		|| $expression->left->require_assignment_preparation()->addressable) {
+		|| $expression->left->require_assignment_preparation()->addressable()) {
 		throw new \LogicException('Keyword precedence or assignment value facts were lost');
 	}
 }

@@ -355,7 +355,7 @@ try
 	control_check(iterator_to_array($grouped_arm->children()) === [$grouped_arm->labels[0], $grouped_arm->labels[1], $grouped_arm->result], 'Match grouped edges');
 	control_check($grouped_arm->require_preparation()->decimals === ['1', '2'], 'Match exact label facts');
 	control_check($grouped_arm->require_preparation()->conversion->context === conversion_context::conditional_branch, 'Missing match result conversion');
-	control_check(!$selection->require_preparation()->addressable, 'Match result is addressable');
+	control_check(!$selection->require_preparation()->addressable(), 'Match result is addressable');
 	$compiler->cpp();
 	$match_original = Model::$cpp_files[0]->text;
 	file_put_contents($path, "\n\n" . $match_source);
@@ -403,7 +403,7 @@ try
 	control_check($full->true_branch !== null && $short->true_branch === null, 'Conditional shorthand shape is wrong');
 	control_check(iterator_to_array($full->children()) === [$full->condition, $full->true_branch, $full->fallback], 'Full conditional inspection order');
 	control_check(iterator_to_array($short->children()) === [$short->condition, $short->fallback], 'Shorthand duplicated its condition edge');
-	control_check(!$full->require_preparation()->addressable && !$short->require_preparation()->addressable, 'Conditional result became an lvalue');
+	control_check(!$full->require_preparation()->addressable() && !$short->require_preparation()->addressable(), 'Conditional result became an lvalue');
 	control_check($full->require_conditional_preparation()->true_conversion->context === conversion_context::conditional_branch, 'Missing conditional join decision');
 	$compiler->cpp();
 	$conditional_original = Model::$cpp_files[0]->text;

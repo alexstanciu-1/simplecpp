@@ -89,7 +89,7 @@ try {
 		data_preparation_check(count($nodes) > 0, 'Fixture has no construction');
 		foreach ($nodes as $node) {
 			$facts = $node->require_data_preparation();
-			data_preparation_check(!$facts->addressable && $facts->type->matches($facts->binding->target()), 'Wrong construction result identity');
+			data_preparation_check(!$facts->addressable() && $facts->type->matches($facts->binding->target()), 'Wrong construction result identity');
 			foreach ($node->entries as $entry) {
 				$entry_facts = $entry->require_preparation();
 				data_preparation_check(($entry_facts->key_conversion !== null) === ($entry->key !== null), 'Key absence changed');

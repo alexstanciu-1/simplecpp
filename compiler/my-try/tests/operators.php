@@ -230,7 +230,7 @@ foreach ([['+', '3', operator_operation::integer_positive],
 	$decision = $unary->require_unary_preparation()->decision;
 	$expected = $symbol === '!' ? Language_Types::boolean(Model::$language_scope) : Language_Types::integer(Model::$language_scope);
 	if (($decision->operation !== $operation) || (count($decision->operands) !== 1)
-		|| !$decision->result_type->matches($expected) || $unary->require_preparation()->addressable
+		|| !$decision->result_type->matches($expected) || $unary->require_preparation()->addressable()
 		|| ($decision->operands[0]->operation !== conversion_operation::identity)
 		|| ($decision->operands[0]->context !== conversion_context::operator_operand)) {
 		throw new \LogicException('Unary operation lost its value/conversion contract');

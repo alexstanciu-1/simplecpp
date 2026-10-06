@@ -225,7 +225,7 @@ try
 	foreach ([1, 2, 3] as $index) {
 		$join_node = $join_root->body->statements[$index]->initializer;
 		$join_facts = $join_node->require_conditional_preparation();
-		result_check(!$join_facts->addressable, 'Conditional wrapper became an alias');
+		result_check(!$join_facts->addressable(), 'Conditional wrapper became an alias');
 		result_check($join_facts->true_conversion->operation === ($index === 2
 			? conversion_operation::result_wrap : conversion_operation::identity), 'Wrong true branch conversion');
 		result_check($join_facts->fallback_conversion->operation === ($index === 2
@@ -263,7 +263,7 @@ try
 		&& $coalesce_facts->left_conversion->operation === conversion_operation::identity,
 		'Coalesce lost its selected extraction context');
 	result_check($coalesce_facts->type->matches(Language_Types::integer(Model::$language_scope))
-		&& !$coalesce_facts->addressable, 'Coalesce did not produce an owned payload');
+		&& !$coalesce_facts->addressable(), 'Coalesce did not produce an owned payload');
 	Preparation_Cleanup::tree($coalesce_root);
 	result_check($coalesce_node->preparation() === null && $coalesce_node->left->preparation() === null
 		&& $coalesce_node->fallback->preparation() === null, 'Coalesce retained stale facts');

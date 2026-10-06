@@ -124,7 +124,7 @@ dynamic_boundaries_check($root->body->statements[1]->require_preparation()->trut
 $elvis = $root->body->statements[2]->initializer;
 $coalesce = $root->body->statements[3]->initializer;
 dynamic_boundaries_check(Boxed_Conversions::is_dynamic($elvis->require_preparation()->type)
-	&& !$elvis->require_preparation()->addressable, 'Dynamic join lost its owned family');
+	&& !$elvis->require_preparation()->addressable(), 'Dynamic join lost its owned family');
 dynamic_boundaries_check($coalesce->require_coalesce_preparation()->presence === coalesce_presence::boxed_nonnull,
 	'Dynamic coalescing used truthiness instead of null presence');
 Preparation_Cleanup::tree($root);

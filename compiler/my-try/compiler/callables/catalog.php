@@ -64,6 +64,7 @@ final class Callable_Contracts
 {
 	public static function validate(callable_signature $signature): void
 	{
+		self::validate_reference_return($signature);
 		$optional_seen = false;
 		$variadic_seen = false;
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
@@ -86,6 +87,27 @@ final class Callable_Contracts
 			elseif ($optional_seen && !$variadic_seen) {
 				throw new \RuntimeException('S2S required parameter cannot follow an optional parameter');
 			}
+		}
+	}
+
+	/** Structural contract only; proving a source body's return origin is analysis work. */
+	private static function validate_reference_return(callable_signature $signature): void
+	{
+		if ($signature->reference_return === null) {
+			return;
+		}
+		$return_contract /** reference_return_contract */ = $signature->reference_return;
+		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
+		$index = $return_contract->parameter_index();
+		if ($index >= q_count($parameters)) {
+			throw new \RuntimeException('Reference return names an absent parameter');
+		}
+		$parameter = $parameters[$index];
+		if (($parameter->mode !== passing_mode::reference) || ($parameter->element_type !== null)) {
+			throw new \RuntimeException('Reference return requires a fixed reference parameter');
+		}
+		if (!$parameter->type->matches($signature->return_type)) {
+			throw new \RuntimeException('Reference return requires the exact parameter storage type');
 		}
 	}
 }

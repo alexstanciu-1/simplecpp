@@ -32,7 +32,7 @@ if (!($unary instanceof unary_expression_node) || !($unary->operand instanceof b
 $facts = $unary->operand->require_binary_preparation();
 if (($facts->decision->source_operator !== operator_kind::power)
 	|| ($facts->decision->operation !== operator_operation::integer_power)
-	|| (count($facts->decision->operands) !== 2) || $facts->addressable
+	|| (count($facts->decision->operands) !== 2) || $facts->addressable()
 	|| !$facts->type->matches(Language_Types::integer(Model::$language_scope))) {
 	throw new \LogicException('Power lost its canonical decision or value facts');
 }

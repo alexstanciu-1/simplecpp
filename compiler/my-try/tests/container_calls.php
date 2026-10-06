@@ -27,7 +27,7 @@ try
 	$body = $function->body;
 	$call = $body->statements[0]->expression;
 	$index = $call->arguments[0];
-	container_call_check($index instanceof index_node && !$index->require_preparation()->addressable, 'Argument indexing exposed an interior reference');
+	container_call_check($index instanceof index_node && !$index->require_preparation()->addressable(), 'Argument indexing exposed an interior reference');
 	container_call_check($call->require_call_preparation()->arguments[0]->require_conversion()->operation === conversion_operation::identity, 'Typed index bypassed ordinary call conversion');
 	file_put_contents($path, str_replace('consume(int $v)', 'consume(int &$v)', $valid));
 	foreach ([[$path], []] as $changed)

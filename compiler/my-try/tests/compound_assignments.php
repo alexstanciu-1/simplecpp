@@ -42,7 +42,7 @@ foreach ([['&=', '7', '3', operator_operation::integer_bitwise_and],
 	$expected = $symbol === '.=' ? Language_Types::string_type(Model::$language_scope) : Language_Types::integer(Model::$language_scope);
 	if (($compound->kind() !== node_kind::compound_assignment_expression)
 		|| ($facts->decision->operation !== $operation) || !$facts->type->matches($expected)
-		|| $facts->addressable || (count($facts->decision->operands) !== 2)
+		|| $facts->addressable() || (count($facts->decision->operands) !== 2)
 		|| ($facts->write_back->context !== conversion_context::assignment)
 		|| ($facts->write_back->operation !== conversion_operation::identity)
 		|| ($facts->write_back_mode !== compound_write_back::converted_assignment)

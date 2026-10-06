@@ -26,7 +26,7 @@ function interpolation_test_source(string $text): parsed_file
 $syntax = interpolation_test_source('$name = "A"; $n = 2; $a = "Hi $name:{$n}";');
 $node = $syntax->root->body->statements[2]->expression->value;
 if (!($node instanceof interpolated_string_node) || count($node->parts) !== 4
-	|| count(iterator_to_array($node->children())) !== 4 || $node->require_preparation()->addressable) {
+	|| count(iterator_to_array($node->children())) !== 4 || $node->require_preparation()->addressable()) {
 	throw new \LogicException('Interpolation lost its ordered parts or value facts');
 }
 $first = $node->parts[1];

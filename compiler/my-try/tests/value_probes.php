@@ -27,7 +27,7 @@ try {
 		probe_check($probe instanceof value_probe_node && $probe->probe_kind === $kind, 'Wrong probe syntax');
 		probe_check(iterator_to_array($probe->children()) === [$probe->operand], 'Probe inspection lost operand');
 		probe_check($probe->require_probe_preparation()->operation === $kind, 'Wrong prepared probe');
-		probe_check(!$probe->require_preparation()->addressable, 'Probe result is addressable');
+		probe_check(!$probe->require_preparation()->addressable(), 'Probe result is addressable');
 	}
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;

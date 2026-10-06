@@ -72,6 +72,14 @@ Expression `require_preparation()` overrides all return `prepared_expression`.
 Concrete callers use named accessors such as `require_call_preparation()` for
 specialized facts; both views return the same attached object.
 
+Expression `place` is optional storage provenance, not an independent addressability
+flag; consumers query `addressable()`. Reference preparation creates whole-declaration
+or parameter roots; stable direct struct-field preparation extends that place.
+Copied/indexed values and temporary-derived fields remain placeless. Escape checks
+belong to analysis, not place records. Callable signatures can describe a symbolic
+whole-reference-parameter return, but calls using it still reject until lifetime
+integration. No reference-return source behavior is enabled by this model alone.
+
 Facts identify exact roles where known: calls reference `callable_target_i` (source
 functions, installed runtime free functions or static factories); source record types reference structs.
 `Call_Preparation::require_signature` completes source declarations and registers

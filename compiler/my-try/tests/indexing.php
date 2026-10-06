@@ -126,7 +126,7 @@ foreach ([
 
 indexing_prepare('$v vector<int> = [1]; $x = $v[0]; return 0;');
 $read = Model::syntax_files()[0]->root->body->statements[1]->expression->value;
-if (!($read instanceof index_node) || $read->require_preparation()->addressable
+if (!($read instanceof index_node) || $read->require_preparation()->addressable()
 	|| !$read->require_preparation()->type->matches(Language_Types::integer(Model::$language_scope))) {
 	throw new \LogicException('Read did not retain its exact value-only result type');
 }
@@ -138,7 +138,7 @@ if ($read->preparation() !== null || $read->base->preparation() !== null || $rea
 indexing_prepare('function put(vector<int> &$v): void { $v[] = 1; }');
 $write = Model::$global_scope->functions_named('put')[0]->syntax()->body->statements[0]->expression;
 $facts = $write->require_write_preparation();
-if (!($facts instanceof prepared_index_assignment) || $facts->addressable
+if (!($facts instanceof prepared_index_assignment) || $facts->addressable()
 	|| !$facts->destination_type()->matches(Language_Types::integer(Model::$language_scope))
 	|| $facts->decision->operation !== operator_operation::index_append
 	|| str_contains(Model::$cpp_files[0]->text, '([&]()')) {

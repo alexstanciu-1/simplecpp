@@ -45,7 +45,7 @@ try {
 	foreach ([3, 4] as $position) {
 		$join = $statements[$position]->initializer->require_preparation();
 		nullable_check($join->type->matches($a->type_syntax->require_preparation()), 'Conditional join depends on branch order');
-		nullable_check(!$join->addressable, 'Conditional join exposed a borrowed result');
+		nullable_check(!$join->addressable(), 'Conditional join exposed a borrowed result');
 	}
 	$invalid = str_replace('source(): ?int { return 3;', 'source(): ?float { return 3.5;', $valid);
 	file_put_contents($path, $invalid);

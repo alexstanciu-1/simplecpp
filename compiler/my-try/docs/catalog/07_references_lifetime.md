@@ -35,8 +35,53 @@ Proposed discussion groups (not yet implementation approval):
 4. Reference returns and retained aliases: provenance, escape and owner lifetime
    first; container interiors additionally require COW/storage-stability rules.
 
-No new retained model, reference return, alias or ownership behavior is approved by
-this handoff. Keep legacy spellings separate and retain immediate safety gates.
+The initial handoff did not approve new behavior. The subsequently agreed model
+slice below establishes provenance; source aliases and reference returns remain gated.
+
+## Storage provenance and reference-return model — 2026-10-06
+
+Agreed sequence: preserve the existing reduced alias restrictions, establish the
+model first, then enable local aliases and bounded reference returns separately.
+No PHP-style rebinding, conditional/loop alias declarations or container/dynamic
+interior borrows are added. Initial reference returns will select one explicit
+reference parameter, with an explicit exact return type and a single return.
+Locals, by-value parameters and temporaries cannot supply an escaping reference.
+Forwarding requires a proven origin, not merely an addressable result.
+
+Implemented model-only foundation:
+
+- `prepared_expression::place` replaces the independent addressability flag.
+  `addressable()` derives from its presence. A `prepared_place` identifies an
+  original local declaration or parameter, optionally projected through direct
+  stable struct fields. Index reads and temporary-derived fields have no place.
+- Place records observe storage facts weakly and share their base place. They do
+  not retain syntax, local environments or workers, and do not certify escape safety.
+- Optional `callable_signature::reference_return` holds an immutable symbolic
+  parameter index. Structural validation requires a fixed reference parameter and
+  the exact return/storage type. Value returns use absence, not a second kind flag.
+- Signature comparison observes result mode and origin. Static initialization
+  factories remain value-returning; reference-return calls reject during preparation
+  until source-body lifetime validation and call-site origin substitution exist.
+
+Existing whole-storage reference calls and direct stable struct-field arguments
+continue unchanged, including by-value versus by-reference dynamic binding behavior.
+The compiler does not yet implement source reference returns or local alias syntax.
+Ownership-template classification, const semantics and escaping initialization views
+remain separate work; reference foreach stays disabled under Chapter 15.
+
+Proof: `tests/reference_model.php` covers root/field identity, lexical shadowing,
+value-versus-reference parameter origins, invalid contracts, the execution gate,
+signature comparison and cleanup/re-preparation with unchanged C++ output. The
+2026-10-06 focused run passed 19 suites. Two additional older suites (`interpolation`
+and `logical`) stop at stale rejection expectations; both failures reproduce on
+unmodified `07ddd9a0`. Reconcile these in their operator-owning slice, not as reference
+semantics. Evidence: `/tmp/my-try-ch07-model-20261006`,
+`/tmp/my-try-ch07-model-remaining-20261006`, and
+`/tmp/my-try-ch07-baseline-proof-20261006`; the final model recheck is under
+`/tmp/my-try-ch07-model-final-20261006`. No native compiler rebuild for this slice.
+
+Next: integrate reduced local alias bindings, then the single-reference-parameter
+return case with body validation, call-site provenance and C++ reference lowering.
 
 ## Ownership-type validation debt from chapter 05
 

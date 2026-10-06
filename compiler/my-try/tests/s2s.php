@@ -708,7 +708,7 @@ foreach ($cases as $name => [$source, $exit])
 		$definition = object_cast($facts->definition, integer_constant_definition::class);
 		if (($definition !== Model::$language_scope->constants_named('PHP_INT_MAX')[0]) ||
 			(!$facts->type->matches(Language_Types::integer(Model::$language_scope))) ||
-			($definition->decimal !== '9223372036854775807') || $facts->addressable ||
+			($definition->decimal !== '9223372036854775807') || $facts->addressable() ||
 			!str_contains($text, 'auto local_a = static_cast<scpp::int_t<>>(9223372036854775807LL);') ||
 			!str_contains($text, '#include "scpp/int_t.hpp"') || str_contains($text, 'string_support.hpp')) {
 			throw new \LogicException('Constant reference lost its definition, type, immutability or canonical lowering');
@@ -823,7 +823,7 @@ foreach ($cases as $name => [$source, $exit])
 		$text = Model::$cpp_files[0]->text;
 		if (($binary_facts->decision->operation !== operator_operation::integer_addition)
 			|| (!$binary_facts->type->matches($integer_type)) ||
-			$binary_facts->addressable || (!$left->require_preparation()->type->matches($integer_type)) ||
+			$binary_facts->addressable() || (!$left->require_preparation()->type->matches($integer_type)) ||
 			(!$right->require_preparation()->type->matches($integer_type)) || (!$second_facts->type->matches($integer_type)) ||
 			(weakref_get($left->require_variable_reference_preparation()->declaration) !== weakref_get($first_facts->binding->declaration)) ||
 			!str_contains($text, $expected) || !str_contains($text, '#include "scpp/generated/operators.hpp"')) {

@@ -91,11 +91,12 @@ features and hardening remain explicit and reopen when an agreed feature needs t
 The [2026-10-02 preparation/emission audit](../planning/preparation_emission_audit.md)
 is complete. Chapters 03 and 04 have completed their bounded positive passes and
 native checkpoints. Chapter 05 has completed its [bounded positive pass with debt](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04);
-its latest mixed slices have generated-program proofs, not a new native compiler checkpoint.
 Chapter 06 has completed its [bounded positive pass with explicit debt](06_containers.md#positive-pass-conclusion--2026-10-05),
-including separated mixed/dynamic integration and registered JSON APIs. Its evidence
-is PHP plus generated-program execution, not a fresh native compiler checkpoint.
-Next is [Chapter 07 reference/ownership reconciliation and discussion](07_references_lifetime.md#handoff-from-chapter-06--2026-10-05).
+including separated mixed/dynamic integration and registered JSON APIs. The requested
+[native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-05-chapter-06)
+covers these Chapter 05/06 slices. Chapter 07 now has its PHP-tested
+[storage provenance and reference-return model](07_references_lifetime.md#storage-provenance-and-reference-return-model--2026-10-06);
+local alias and bounded reference-return execution are next, not yet enabled.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

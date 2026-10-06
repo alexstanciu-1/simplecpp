@@ -40,7 +40,7 @@ final class Mutation_Preparation
 			throw new \RuntimeException('S2S mutation requires an existing local or parameter target');
 		}
 		$target = Expression_Preparation::prepare($syntax, $context);
-		if (!$target->addressable) {
+		if (!$target->addressable()) {
 			throw new \RuntimeException('S2S mutation requires writable storage');
 		}
 		return $target;

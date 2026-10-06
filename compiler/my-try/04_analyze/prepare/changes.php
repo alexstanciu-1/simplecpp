@@ -11,6 +11,9 @@ final class Preparation_Changes
 		if ($old === null) {
 			return false;
 		}
+		if (!self::same_reference_return($old->signature->reference_return, $current->signature->reference_return)) {
+			return false;
+		}
 		$previous /** Storage<prepared_parameter> */ = $old->parameters;
 		$parameters /** Storage<prepared_parameter> */ = $current->parameters;
 		if ((!$old->signature->return_type->matches($current->signature->return_type)) || (q_count($previous) !== q_count($parameters))) {
@@ -31,6 +34,16 @@ final class Preparation_Changes
 			}
 		}
 		return true;
+	}
+
+	/** Result mode and symbolic origin are observable parts of a callable contract. */
+	private static function same_reference_return(?reference_return_contract $before,
+		?reference_return_contract $after): bool
+	{
+		if (($before === null) || ($after === null)) {
+			return $before === $after;
+		}
+		return $before->parameter_index() === $after->parameter_index();
 	}
 
 	/** Field order, identity and type define the current compact record facts. */

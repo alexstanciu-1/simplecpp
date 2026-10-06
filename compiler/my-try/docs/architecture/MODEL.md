@@ -86,6 +86,20 @@ contract (no duplicated type/mode/default state). `prepared_storage::storage_typ
 provides the common local/field/parameter storage query. Contracts are populated
 before publication and treated as immutable afterward, like other prepared facts.
 
+An optional `reference_return_contract` identifies a whole reference parameter by
+its immutable index; absence denotes a value return. Structural validation requires
+an exact-type fixed reference parameter. This is a symbolic contract, not a source
+body proof or a caller lifetime. Signature comparison includes it. Reference-return
+execution remains gated during preparation until lifetime integration; initialization
+factories require value returns.
+
+Expression facts carry optional `prepared_place`, with `addressable()` derived from
+presence. Places select original local declarations or parameters and may project
+through direct stable struct fields. `root_storage()` preserves that identity;
+parameter facts distinguish value and reference origins. Values, indexed reads and
+temporary-derived fields have no place. Place queries do not decide whether a borrow
+may escape; that analysis belongs to workers. See [ownership](ownership.md).
+
 `prepared_call` weakly references the selected target and shares its completed
 signature. `Call_Preparation` admits arguments independently of target selection;
 `CPP_Declarations::selected_call` sequences their lowering. `CPP_Callables::reference`

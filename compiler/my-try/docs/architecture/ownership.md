@@ -17,6 +17,15 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+Prepared expressions own their optional storage-place record. A place weakly observes
+the selected `prepared_storage` fact and, for direct struct-field projection, shares
+the base place. Whole-storage roots identify the original declaration/parameter, not
+an assignment fact. This graph retains neither syntax nor transient local environments
+or workers. Ordinary preparation cleanup removes attached place-bearing facts; reuse
+must follow the existing declaration-fact identity and retirement protocol. Symbolic
+reference-return contracts retain only a parameter index, never caller storage. These
+records describe origin, not permission to escape or ownership of the runtime value.
+
 Model owns modules and global/language scopes. Modules own source records; sources
 own file/token/parse state and observe their module. Tokens own captured text and
 token records. Parsed files own typed AST roots, collected records and applicable

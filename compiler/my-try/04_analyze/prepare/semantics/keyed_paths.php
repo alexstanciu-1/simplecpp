@@ -19,7 +19,7 @@ final class Keyed_Path_Preparation
 				if (!($path->root instanceof variable_reference_node)) {
 					throw new \RuntimeException('S2S unset requires a local or parameter root');
 				}
-				if (!$path->root->require_preparation()->addressable) {
+				if (!$path->root->require_preparation()->addressable()) {
 					throw new \RuntimeException('S2S unset requires stable storage');
 				}
 			}
