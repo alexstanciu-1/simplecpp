@@ -7,6 +7,9 @@ Doc Status: planning
 
 Requires functions, type identities and ownership. Start with a plain class before methods and lifecycle combinations.
 
+Chapter closeout must include the [test-duration review](#ch10-perf-01--test-duration-review-before-native-build)
+before starting the chapter's native compiler build.
+
 ## Class/struct parity — discussion required
 
 Agreed direction (2026-10-06): develop `struct` alongside `class` throughout this
@@ -3324,3 +3327,30 @@ class B; class A { protected: nullable<string_t> x; shared_p<B> b; };
 > - `$x::make()` â†’ `::scpp::class_t<decltype(x)>::make()`
 > - `$x::$prop` â†’ `::scpp::class_t<decltype(x)>::prop`
 > - the generator must not attempt to validate whether the generated C++ member access is semantically valid
+
+## Chapter-end debt
+
+### CH10-PERF-01 — Test-duration review before native build
+
+Status: pending; required review at the end of CH10, before starting its native
+compiler build/validation. Requested 2026-10-07. This does not block CH10 feature
+discussion or focused implementation checks.
+
+Investigate why the tests now take so long. The successful CH08/09 cumulative
+attempt took 1,589.296 seconds with 12 jobs, fixture PCH and reused native build
+objects; its evidence is recorded in the [native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809).
+That elapsed time is not a clean compiler-build benchmark or an established cause.
+
+Review phase timings separately: host startup/compilation, native compiler build,
+fixture export and parity, generated translation-unit compilation, linking,
+execution and runner overhead. Compare representative fixtures on equivalent
+settings, including PCH use, header dependencies, separate-unit process counts,
+worker contention and the PHP-FPM/CLI fallback. Inspect fixture deduplication and
+the supplementary-probe increase from the earlier 526 to 997; establish whether
+that reflects new coverage, repeated work or transport/identity differences.
+
+Deliver measured causes and a bounded improvement proposal before proceeding to
+the native build. Do not silently reduce coverage, combine production translation
+units, or infer a compiler/runtime slowdown from total suite duration alone.
+Coordinate with CH15's existing native-cache/PCH overhead debt, while retaining
+this chapter-local pre-build review gate.
