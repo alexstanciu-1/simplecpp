@@ -24,11 +24,29 @@ chapter does not make them v0.2 release gates.
 | CH06-REF-01 — reference foreach safety foundation | [CTRL-FOREACH-003/004](06_containers.md#ctrl-foreach-003) | Open; reference foreach stays disabled; final-catalog blocker | Establish runtime guards and binding lifetime/COW guarantees before compiler integration |
 | CH15-LIB-DYN-01 — library redesign and mixed/dynamic migration | [Chapter 06](06_containers.md) | Deferred by user; does not block core type migration | Review library-owned models, adapt affected APIs and prove enabled/disabled paths |
 | CH15-DYNAMIC-PROP-01 — dynamic `->` | [Chapters 05/06](06_containers.md) | Deferred by user; not part of core family/JSON integration | Agree property semantics and implement shared prepared access with runtime checks and proofs |
+| CH15-NAMED-ARGS-01 — named arguments/parameters | Chapters 04/10 and callable/lambda support | Deferred to final chapter; lambda support explicitly non-blocking | Agree and implement the shared function/method contract; review lambda extension separately |
 
 User confirmation on 2026-10-05: library redesign, reference foreach and dynamic
 `->` belong to this final chapter, not the remaining Chapter 06 implementation
 queue. Reference foreach remains disabled until CH06-REF-01 is resolved. This
 deferral does not change ordinary typed-object member access or existing contracts.
+
+### CH15-NAMED-ARGS-01 — named arguments across source callables
+
+Recorded by user request on 2026-10-07. Cover named arguments and their parameter-name
+contracts for functions and methods, including constructors. Include lambdas in the
+design, but **lambda support is non-blocking**. This is deferred work, not an
+authorization to enable new call syntax during the current constructor slice.
+
+Use the shared callable signature/argument-binding foundation, not separate
+function, method and lambda implementations. Discuss syntax, parameter-name identity
+and compatibility, positional/named mixing, defaults, duplicate/unknown/missing names,
+variadics, reference/ownership boundaries and source-order argument evaluation.
+For callable values/lambdas, establish whether parameter names survive in the callable
+type/signature and how invocation works when names are unavailable. Coordinate with
+keyed `data` constructor inputs without conflating data notation with ordinary calls.
+Reconcile authoritative contracts before implementation; prove binding diagnostics,
+evaluation order and incremental signature-name invalidation.
 
 ## Non-blocking follow-ups
 

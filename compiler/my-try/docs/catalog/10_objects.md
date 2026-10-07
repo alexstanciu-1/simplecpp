@@ -3522,6 +3522,14 @@ Status: pending; required review at the end of CH10, before starting its native
 compiler build/validation. Requested 2026-10-07. This does not block CH10 feature
 discussion or focused implementation checks.
 
+User decision, 2026-10-07: current focused-test cost is acceptable. Revisit test
+performance when testing exceeds 30% of the overall work time for a slice. Compare
+elapsed test wall time (accounting for parallel/overlapping runs), not summed child
+process durations, against elapsed slice time. The constructor slice's saved logs
+indicate approximately four minutes across its test runs; the complete development
+time was not instrumented. This acceptance does not claim a measured total-time
+percentage or remove the chapter-end native-test review below.
+
 Investigate why the tests now take so long. The successful CH08/09 cumulative
 attempt took 1,589.296 seconds with 12 jobs, fixture PCH and reused native build
 objects; its evidence is recorded in the [native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809).
