@@ -10,9 +10,12 @@ No separate resolution pass precedes it. LLVM preparation remains
 ## Ownership
 
 Member access uses a common declaring-type owner and `member_visibility`, separately
-from instance receiver facts. Interface identity is registered without record layout;
-interface preparation and protected access remain gated until relationship preparation
-is implemented. Declared member inventories must not become inherited lookup caches.
+from instance receiver facts. `type_relationship_work` settles direct ancestry without
+record layout or signatures, using the same scheduler and lifecycle. The analysis-only
+`prepare_relationships` checkpoint returns completed relationship work, not executable
+files. `Inherited_Lookup` observes member pools and returns original declarations.
+Interface execution and protected access remain gated; declared inventories never
+become inherited lookup caches.
 
 | File | Responsibility |
 | --- | --- |

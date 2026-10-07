@@ -64,7 +64,38 @@ rebuild is implied by this plan.
 The implemented prerequisite adds `collected_member_owner`, distinct
 `collected_record`/`collected_interface` identities and `declaring_type()` backlinks.
 Interface registration uses the existing source-type index, without record layout
-or operation capabilities. Interface source parsing/preparation remains gated.
+or operation capabilities. At that checkpoint interface source parsing/preparation remained gated.
 Prepared fields, callables and constants now use `member_visibility`; protected
-source admission/access remains gated until ancestry facts exist. Inherited lookup
-described above is the next slice, not part of this checkpoint.
+source admission/access remained gated. Inherited lookup
+described above follows in the checkpoint below.
+
+## Relationship lifecycle and lookup — implemented 2026-10-07
+
+The user approved independent relationship preparation within the existing scheduler.
+`type_relationship_work` is attached separately to `collected_member_owner` and owns
+`prepared_type_relationships`: an optional record base, direct interface identities
+and finality. It shares declaration dependency, failure/retry and retirement machinery.
+It does not own record layout or a flattened member inventory. Record work requires
+relationship completion; relationship work never requires layout or method bodies.
+
+Relationship work acknowledges the collected occurrence's parse revision separately
+from the record declaration's dirty flag. A later layout settlement cannot consume
+its pending source changes, and relationship completion cannot mark layout ready.
+Equivalent facts retain their identity/version after no-op or body-only parsing.
+Reset/deletion clears relationship facts and retirement severs dependency edges.
+
+The existing parser now records named extends/implements headers, interfaces and
+bodyless interface methods through the common declaration/callable syntax. Analysis
+resolves source identities and rejects wrong kinds, cycles, final bases and duplicate
+direct interfaces. This is not complete interface signature/override validation.
+
+`Inherited_Lookup` observes every consulted property/method/constant pool, including
+misses, and returns original declarations with their declaring owner. Local matches
+hide inherited lookup candidates. Interface diamonds deduplicate the same declaration;
+distinct inherited declarations remain separate candidates for later contract checking.
+Record implements edges supply obligations, not concrete implementations.
+
+`Preparation_Worker::prepare_relationships` exposes the analysis-only checkpoint;
+ordinary preparation uses the same work. It publishes no executable prepared files.
+Full record/interface execution and C++ emission remain gated. Next: access/override
+contracts and bounded inherited execution, including layout and construction rules.

@@ -27,11 +27,7 @@ final class Preparation_Worker
 	/** After coordinator-ordered retirement, fresh/update runs share selection and execution. */
 	public function prepare(Storage $sources /** Storage<collected_file> */): Storage /** Storage<prepared_file> */
 	{
-		foreach ($sources as $source) {
-			if (!$source->deleted && !$source->parse_complete) {
-				throw new \RuntimeException('Preparation requires a successful parsing/collection join');
-			}
-		}
+		$this->prepare_relationships($sources);
 		foreach ($sources as $source) {
 			if (!$source->deleted) {
 				if ($source->prepared !== null) {
@@ -41,7 +37,6 @@ final class Preparation_Worker
 			}
 		}
 		$this->changed_lookups();
-		Import_Preparation::validate($sources);
 
 		// Declaration processing may schedule more declarations; identity sets coalesce notifications.
 		while (q_count($this->declarations) !== 0)
@@ -92,6 +87,41 @@ final class Preparation_Worker
 			foreach ($bodies as $body) { $body->imports_changed = false; }
 		}
 		return $result;
+	}
+
+	/** Analysis-only checkpoint; the same scheduler settles relations without claiming layout readiness. */
+	public function prepare_relationships(Storage $sources /** Storage<collected_file> */): Storage /** Storage<type_relationship_work> */
+	{
+		$selected /** Storage<type_relationship_work> */ = new Storage();
+		foreach ($sources as $source) {
+			if (!$source->deleted && !$source->parse_complete) {
+				throw new \RuntimeException('Relationships require a successful parsing/collection join');
+			}
+		}
+		foreach ($sources as $source) {
+			if ($source->deleted) { continue; }
+			$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+			foreach ($bodies as $body) {
+				$declarations /** Storage<declaration_node> */ = $body->declarations;
+				foreach ($declarations as $node) {
+					if ($node instanceof type_declaration_node) {
+						$entry = object_cast($node->occurrence(), collected_member_owner::class);
+						$work = $this->relationship_owner($entry);
+						$this->select_owner($work);
+						$selected->append($work);
+					}
+				}
+			}
+		}
+		$this->changed_lookups();
+		Import_Preparation::validate($sources);
+		$error = '';
+		foreach ($selected as $work) {
+			try { $this->declaration($work); }
+			catch (\RuntimeException $failure) { $error .= $failure->getMessage() . "\n"; }
+		}
+		if ($error !== '') { throw new \RuntimeException($error); }
+		return $selected;
 	}
 
 	/** Semantic retirement precedes frontend disposal, ordered by the coordinator. */
@@ -147,6 +177,10 @@ final class Preparation_Worker
 				}
 				if ($entry->preparation_work_owner() !== null) {
 					$result[$entry->preparation_work_owner()] = true;
+				}
+				if ($entry instanceof collected_member_owner) {
+					$relationships = object_cast($entry, collected_member_owner::class)->relationship_work;
+					if ($relationships !== null) { $result[$relationships] = true; }
 				}
 				if ($entry instanceof collected_source_callable) {
 					$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
@@ -300,7 +334,7 @@ final class Preparation_Worker
 	private function enqueue_declaration(declaration_work $owner): void
 	{
 		$entry = $owner->required_declaration();
-		if ($entry->change_status !== change_state::added) {
+		if (!($owner instanceof type_relationship_work) && ($entry->change_status !== change_state::added)) {
 			$entry->change_status = change_state::changed;
 		}
 		if ($this->queue_ready($owner)) {
@@ -349,6 +383,25 @@ final class Preparation_Worker
 			$entry->preparation = new source_callable_signature_work($entry);
 		}
 		return $entry->preparation;
+	}
+
+	public function relationship_owner(collected_member_owner $entry): type_relationship_work
+	{
+		if ($entry->relationship_work === null) {
+			$entry->relationship_work = new type_relationship_work($entry);
+		}
+		return $entry->relationship_work;
+	}
+
+	/** Demand only ancestry; record layout and callable signatures remain independent work. */
+	public function require_relationships(collected_member_owner $entry, preparation_context $context): prepared_type_relationships
+	{
+		$target = $this->relationship_owner($entry);
+		$context->owner->dependencies[$target] = $target->version;
+		$target->dependents[$context->owner] = true;
+		$this->declaration($target);
+		$context->owner->dependencies[$target] = $target->version;
+		return $target->require_facts();
 	}
 
 	public function record_owner(collected_record $entry): declaration_work
@@ -412,6 +465,9 @@ final class Preparation_Worker
 			$this->schedule($owner);
 		}
 		if ($owner->state === preparation_state::processing) {
+			if ($owner instanceof type_relationship_work) {
+				throw new \RuntimeException('Cyclic type relationship');
+			}
 			throw new \RuntimeException('Cyclic by-value declaration dependency');
 		}
 		unset($this->declarations[$owner]);
@@ -482,6 +538,14 @@ final class Preparation_Worker
 	/** Dispatch by retained work role; records carry identities, not processing hooks. */
 	private function rebuild_declaration(declaration_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
 	{
+		if ($owner instanceof type_relationship_work) {
+			$relationships = object_cast($owner, type_relationship_work::class);
+			$current = Relationship_Preparation::prepare($relationships->member_definition(), $context);
+			$changed = !Relationship_Preparation::same($relationships->facts, $current);
+			if ($changed) { $relationships->facts = $current; }
+			$relationships->source_revision = (int)$relationships->member_definition()->revision;
+			return $changed;
+		}
 		if ($owner instanceof source_callable_signature_work) {
 			return $this->prepare_callable_signature(object_cast($owner, source_callable_signature_work::class), $context);
 		}
@@ -512,6 +576,7 @@ final class Preparation_Worker
 
 	private function settle_members(declaration_work $owner): void
 	{
+		if ($owner instanceof type_relationship_work) { return; }
 		if ($owner instanceof source_callable_signature_work) {
 			$this->settle_parameters(object_cast($owner, source_callable_signature_work::class)->callable_definition());
 		}
@@ -562,6 +627,7 @@ final class Preparation_Worker
 	/** Nested layout versions matter even if this record retains the same field type identities. */
 	private function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
 	{
+		$this->require_relationships($owner->record_definition(), $context);
 		$syntax = $owner->record_definition()->syntax();
 		$old = $syntax->preparation();
 		Declaration_Preparation::prepare_record($syntax, $context);
@@ -705,7 +771,15 @@ final class Preparation_Worker
 	private function candidates(preparation_lookup $lookup): array /** vector<preparation_lookup_candidate_i> */
 	{
 		$result /** vector<preparation_lookup_candidate_i> */ = [];
-		if ($lookup->kind === preparation_lookup_kind::import_name) {
+		if ($lookup->kind === preparation_lookup_kind::property_name) {
+			foreach ($lookup->lookup_scope->variables_named($lookup->name) as $property) {
+				if ($property instanceof collected_field) { $result[] = object_cast($property, collected_field::class); }
+			}
+		}
+		elseif ($lookup->kind === preparation_lookup_kind::method_name) {
+			foreach ($lookup->lookup_scope->methods_named($lookup->name) as $method) { $result[] = $method; }
+		}
+		elseif ($lookup->kind === preparation_lookup_kind::import_name) {
 			foreach ($lookup->lookup_scope->imports_named($lookup->name) as $binding) { $result[] = $binding; }
 		}
 		elseif ($lookup->kind === preparation_lookup_kind::type) {
@@ -768,6 +842,9 @@ final class Preparation_Worker
 			if ($entry->preparation_work_owner() !== null) {
 				object_cast($entry, collected_definition::class)->preparation = null;
 			}
+			if ($entry instanceof collected_member_owner) {
+				object_cast($entry, collected_member_owner::class)->relationship_work = null;
+			}
 			if ($entry instanceof collected_source_callable) {
 				$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
 				if ($function->has_parsed_body()) {
@@ -815,6 +892,9 @@ final class Preparation_Worker
 	/** Explicitly sever both directions; strong-reference storage must not keep retired owners alive. */
 	private function retire(preparation_owner $owner): void
 	{
+		if ($owner instanceof type_relationship_work) {
+			object_cast($owner, type_relationship_work::class)->facts = null;
+		}
 		$owner->change_status = change_state::deleted;
 		$owner->source->preparation_changes[$owner] = true;
 		if ($owner instanceof declaration_work) {

@@ -567,8 +567,9 @@ final class Parser_Run
 		if ($this->text() === '{') {
 			return $this->statement_block();
 		}
-		if (($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data')) {
-			return $this->record_declaration();
+		if (($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data')
+			|| ($this->text() === 'interface') || ($this->text() === 'final') || ($this->text() === 'abstract')) {
+			return $this->type_declaration();
 		}
 		if ((($this->text() === 'function') || ($this->text() === 'template'))) {
 			return $this->function_declaration();
@@ -908,22 +909,25 @@ final class Parser_Run
 		return $node;
 	}
 
-	/** Register the record immediately, then reconcile fields within its retained member scope. */
-	private function record_declaration(): type_declaration_node
+	/** Register the common type identity, then reconcile its declared member categories. */
+	private function type_declaration(): type_declaration_node
 	{
 		if ($this->current_scope->is_function()) {
 			throw new \RuntimeException($this->error_message('Local record declarations are not supported yet'));
 		}
 		$start = $this->position;
 		$modifiers /** vector<declaration_modifier> */ = [];
-		if ($this->text() === 'data') {
-			$modifiers[] = declaration_modifier::data_initializable;
+		while (($this->text() === 'data') || ($this->text() === 'final') || ($this->text() === 'abstract')) {
+			if ($this->text() === 'data') { $modifiers[] = declaration_modifier::data_initializable; }
+			elseif ($this->text() === 'final') { $modifiers[] = declaration_modifier::final_declaration; }
+			else { $modifiers[] = declaration_modifier::abstract_declaration; }
 			$this->position++;
 		}
-		if (($this->text() !== 'class') && ($this->text() !== 'struct')) {
-			throw new \RuntimeException($this->error_message('Expected class or struct after data'));
+		if (($this->text() !== 'class') && ($this->text() !== 'struct') && ($this->text() !== 'interface')) {
+			throw new \RuntimeException($this->error_message('Expected class, struct or interface declaration'));
 		}
 		$kind = $this->text() === 'class' ? type_declaration_kind::class_type : type_declaration_kind::struct_type;
+		if ($this->text() === 'interface') { $kind = type_declaration_kind::interface_type; }
 		$this->position++;
 		if (!$this->identifier()) {
 			throw new \RuntimeException($this->error_message('Expected record name'));
@@ -944,6 +948,27 @@ final class Parser_Run
 		$record->modifiers = $modifiers;
 		$record->collect($this->collector, $this->source_scope, $name_index);
 		$record->member_scope()->set_parent($this->source_scope);
+		$old_relationship_text = '';
+		if ($previous !== null) {
+			// Original syntax owns the old header; compare spellings below through retained names.
+			$old_relationship_text = $this->relationship_key($record);
+		}
+		$record->base_class = null;
+		$record->extended_interfaces = new Storage /** Storage<named_type_node> */();
+		$record->implemented_interfaces = new Storage /** Storage<named_type_node> */();
+		if ($this->text() === 'extends') {
+			$this->position++;
+			if ($kind === type_declaration_kind::interface_type) {
+				$record->extended_interfaces = $this->relationship_names();
+			}
+			else {
+				$record->base_class = $this->relationship_name();
+			}
+		}
+		if ($this->text() === 'implements') {
+			$this->position++;
+			$record->implemented_interfaces = $this->relationship_names();
+		}
 		$fields /** Storage<property_node> */ = new Storage();
 		$methods /** Storage<method_node> */ = new Storage();
 		$constants /** Storage<member_constant_node> */ = new Storage();
@@ -952,10 +977,10 @@ final class Parser_Run
 			$member_start = $this->position;
 			$member_modifiers = $this->member_modifiers();
 			if ($this->text() === 'function') {
-				$methods->append(object_cast($this->callable_declaration(object_cast($record->occurrence(), collected_record::class), $member_modifiers, $member_start), method_node::class));
+				$methods->append(object_cast($this->callable_declaration(object_cast($record->occurrence(), collected_member_owner::class), $member_modifiers, $member_start), method_node::class));
 			}
 			elseif ($this->text() === 'const') {
-				$constants->append(object_cast($this->constant_declaration(object_cast($record->occurrence(), collected_record::class), $member_modifiers, $member_start), member_constant_node::class));
+				$constants->append(object_cast($this->constant_declaration(object_cast($record->occurrence(), collected_member_owner::class), $member_modifiers, $member_start), member_constant_node::class));
 			}
 			else {
 				$this->position = $member_start;
@@ -967,6 +992,7 @@ final class Parser_Run
 		$record->methods = $methods;
 		$record->constants = $constants;
 		$same = $previous !== null;
+		if ($old_relationship_text !== $this->relationship_key($record)) { $same = false; }
 		if (q_count($old_constants) !== q_count($constants)) { $same = false; }
 		else {
 			foreach ($constants as $index => $constant) {
@@ -991,6 +1017,40 @@ final class Parser_Run
 		}
 		$this->finish_declaration($record, $start, $same);
 		return $record;
+	}
+
+	/** Header syntax only: semantic target kind, uniqueness and cycles belong to analysis. */
+	private function relationship_names(): Storage /** Storage<named_type_node> */
+	{
+		$result /** Storage<named_type_node> */ = new Storage();
+		while (true) {
+			$result->append($this->relationship_name());
+			if ($this->text() !== ',') { break; }
+			$this->position++;
+		}
+		return $result;
+	}
+
+	/** This grammar admits a named declaration, not a value-storage modifier or template use. */
+	private function relationship_name(): named_type_node
+	{
+		$syntax = $this->type_syntax($this->source_scope);
+		if (!($syntax instanceof named_type_node)) {
+			throw new \RuntimeException($this->error_message('Relationship requires a named type'));
+		}
+		return object_cast($syntax, named_type_node::class);
+	}
+
+	/** Compare retained source names without introducing semantic ancestry into parsing. */
+	private function relationship_key(type_declaration_node $node): string
+	{
+		$key = '';
+		if ($node->base_class !== null) { $key .= 'base:' . $node->base_class->name; }
+		$extended /** Storage<named_type_node> */ = $node->extended_interfaces;
+		foreach ($extended as $type_name) { $key .= ';extends:' . $type_name->name; }
+		$implemented /** Storage<named_type_node> */ = $node->implemented_interfaces;
+		foreach ($implemented as $type_name) { $key .= ';implements:' . $type_name->name; }
+		return $key;
 	}
 
 	/** Fields match by their own spelling inside the structure, never by a project-wide name. */
@@ -1159,7 +1219,7 @@ final class Parser_Run
 		$old_body_start = $old_start;
 		$old_body_end = $old_start;
 		if ($previous !== null) {
-			if (($this->reuse_previous) && ($old_start >= 0)) {
+			if (($this->reuse_previous) && ($old_start >= 0) && $function->has_parsed_body()) {
 				$old_body_start = $function->require_body()->start_token();
 				$old_body_end = $function->require_body()->end_token();
 			}
@@ -1207,6 +1267,18 @@ final class Parser_Run
 			$return_type = $this->type_syntax($local_scope);
 		}
 
+		if ($record instanceof collected_interface) {
+			if ($this->text() === ';') {
+				$this->position++;
+				$function->return_type = $return_type;
+				$function->returns_reference = $returns_reference;
+				$function->parameters = $parameters;
+				$function->template_parameters = $formals;
+				$function->set_bodyless_declaration();
+				$this->finish_declaration($function, $start, false);
+				return $function;
+			}
+		}
 		$body_start = $this->position;
 		$body_end = $this->body_end();
 		$body_changed = !$this->same_body_text($old_body_start, $old_body_end, $body_start, $body_end);

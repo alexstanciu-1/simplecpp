@@ -37,6 +37,17 @@ final class CPP_Generator
 				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
 				foreach ($nodes as $node) {
 					$definition = $node->occurrence();
+					if ($definition instanceof collected_member_owner) {
+						$type_owner = object_cast($definition, collected_member_owner::class);
+						$relationships = $type_owner->relationship_work;
+						if ($relationships === null) { throw new \RuntimeException('C++ generation requires completed relationships'); }
+						if (!Preparation_Status::complete($relationships)) { throw new \RuntimeException('C++ generation requires completed relationships'); }
+						$ancestry = $relationships->require_facts();
+						if (($definition instanceof collected_interface) || (weakref_get($ancestry->base) !== null)
+							|| (q_count($ancestry->interfaces) !== 0)) {
+							throw new \RuntimeException('Inherited/interface execution is not enabled by relationship preparation');
+						}
+					}
 					if ($node instanceof namespace_constant_node) {
 						if (!Preparation_Status::complete(object_cast($definition->preparation_work_owner(), preparation_owner::class))) {
 							throw new \RuntimeException('C++ generation requires completed constant preparation');

@@ -16,7 +16,7 @@ def main():
     args = parser.parse_args()
     output = args.results.resolve()
     output.mkdir(parents=True, exist_ok=False)
-    suites = ['declaration_model', 'member_owners', 'ast', 'ast_invariants', 'parse_collection',
+    suites = ['declaration_model', 'member_owners', 'relationships', 'ast', 'ast_invariants', 'parse_collection',
               'collected_roles', 'preparation_work', 'preparation_recovery',
               'incremental_cpp', 'source_constants', 'enum_model', 'reference_model',
               'token_cleanup', 'project_cpp', 'specialization_dispatch', 's2s']

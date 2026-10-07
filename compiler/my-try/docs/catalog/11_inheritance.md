@@ -10,7 +10,8 @@ Requires classes and methods. Resolve relationships before advanced dispatch cas
 The user approved same-kind class/struct inheritance and preservation of existing
 non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_foundation.md)
 records those boundaries and the approved shared member-owner prerequisite.
-That model migration is complete; CH11 execution is not enabled yet.
+That model migration and relationship/lookup foundation are complete; CH11 execution
+is not enabled yet.
 
 ## Member-owner foundation — 2026-10-07
 
@@ -26,6 +27,29 @@ Proof: 16 PHP-host model/regression suites, 35 generated static-member programs 
 inherited lookup, without flattening declared-member inventories.
 
 ## Qualified-member prerequisites transferred from CH10
+
+### Relationship preparation and inherited lookup — 2026-10-07
+
+Independent relationship work shares the existing scheduler, dependency graph,
+failure/retry and retirement paths. It is separate from record layout and grants no
+construction or dispatch capability. The shared parser now records extends/implements
+and interface declarations, including bodyless interface methods.
+
+Analysis checks same-kind record bases, interface targets, duplicate direct interfaces,
+cycles and final-base rejection. Observed lookup searches separate member categories,
+returns original declarations/owners and tracks misses. Interface diamonds deduplicate
+identical declarations; implements does not manufacture method implementations.
+
+Focused proof covers cross-file edits, failure/retry, adding/removing targets and
+members, fresh/incremental agreement, reset and retirement. The existing model runner
+includes `relationships.php`: 17 PHP-host suites and 35 generated CH10 static-member
+programs passed on 2026-10-07.
+No native compiler rebuild was performed. Inherited execution, protected access,
+override compatibility, constructors, conversions and dispatch remain disabled.
+
+Next: discuss access/override admission and the first bounded inherited execution slice.
+
+### Remaining execution order
 
 CH10 implements fixed declaring-type/self static methods, constants and properties.
 Continue on those same member categories, in this order:

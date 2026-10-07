@@ -79,6 +79,17 @@ mutate preparation-work state: declaration change flags and body `syntax_changed
 persist until analysis successfully consumes them. Repeated parsing cannot clear
 pending source changes. Read-only source-change queries also guard saved prepared
 results against premature emission.
+
+Member-owning types additionally retain `type_relationship_work`, independently of
+their ordinary declaration/layout work. It owns direct ancestry facts and shares the
+existing scheduler, dependency versions, failures and retirement. Its acknowledged
+parse revision is independent of the declaration dirty flag: settling relationships
+never settles layout. Equivalent facts preserve their version. Record preparation
+requires relationships; ancestry queries never require record layout or method bodies.
+The analysis-only relationship checkpoint does not publish executable prepared files.
+Inherited lookup observes each consulted category/name pool and returns original
+declarations plus their owner, without an effective-member cache. Implements edges
+are contracts, not fallback implementations. Execution remains separately gated.
 Parameters own optional default expressions; normalized scalar/enum default snapshots
 belong to their callable contracts and participate in signature equivalence. Calls
 retain only explicit arguments; emission supplies omitted defaults from the signature.
@@ -90,7 +101,7 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members
-observe their declaring record and are indexed separately from free functions and
+observe their declaring type and are indexed separately from free functions and
 properties. Common signature/body work and `prepared_source_callable` use the
 shared callable syntax accessor. The common AST owns attached signature facts.
 Selection, reset and retirement cover both roles without a second member lifecycle.

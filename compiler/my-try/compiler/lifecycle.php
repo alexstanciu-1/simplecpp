@@ -160,6 +160,14 @@ final class Compiler_Lifecycle
 				$entries /** Storage<collected_name> */ = $source->entries;
 				foreach ($entries as $entry)
 				{
+					if ($entry instanceof collected_member_owner) {
+						$relationships = object_cast($entry, collected_member_owner::class)->relationship_work;
+						if ($relationships !== null) {
+							$relationships->state = preparation_state::pending;
+							$relationships->change_status = change_state::changed;
+							$relationships->facts = null;
+						}
+					}
 					$work = $entry->preparation_work_owner();
 					if ($work !== null) {
 						$work->state = preparation_state::pending;
@@ -167,6 +175,7 @@ final class Compiler_Lifecycle
 					}
 					if ($entry instanceof collected_source_callable) {
 						$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
+						if (!$function->has_parsed_body()) { continue; }
 						if ($function->require_body()->work() !== null) {
 							$function->require_body()->work()->state = preparation_state::pending;
 							$function->require_body()->work()->change_status = change_state::changed;

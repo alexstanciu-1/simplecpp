@@ -24,6 +24,13 @@ syntax remain the original owners; inherited lookup must not copy declarations
 into a second retained member inventory. Transient `preparation_context::member_owner`
 tracks access context separately from an actual instance receiver.
 
+The same collected owner has separate `relationship_work`. That analysis work owns
+direct ancestry facts; the optional record base is weak, and the interface vector
+observes original collected identities without copying members. Only acyclic resolved
+facts publish. Retirement clears facts and both directions of scheduler dependencies;
+reset clears facts and marks the work pending. Inherited lookup results are transient
+identity/declaring-owner pairs, not another retained inventory or layout owner.
+
 Prepared expressions own their optional storage-place record. A place weakly observes
 the selected `prepared_storage` fact and, for direct struct-field projection, shares
 the base place. Whole-storage roots identify the original declaration/parameter, not

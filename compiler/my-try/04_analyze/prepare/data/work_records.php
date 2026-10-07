@@ -17,6 +17,8 @@ enum preparation_state {
 }
 
 enum preparation_lookup_kind {
+	case property_name;
+	case method_name;
 	case import_name;
 	case type;
 	case function_name;
@@ -122,6 +124,35 @@ final class enum_definition_work extends declaration_work
 	public function enum_definition(): collected_enum
 	{
 		return $this->definition;
+	}
+}
+
+/** Relationship facts have their own completion, dependency and retirement identity. */
+final class type_relationship_work extends declaration_work
+{
+	public ?prepared_type_relationships $facts = null;
+	public int $source_revision = -1;
+	private collected_member_owner $definition;
+
+	public function __construct(collected_member_owner $definition)
+	{
+		parent::__construct($definition->collection);
+		$this->definition = $definition;
+	}
+
+	public function required_declaration(): collected_definition
+	{
+		return $this->definition;
+	}
+
+	public function member_definition(): collected_member_owner
+	{
+		return $this->definition;
+	}
+
+	public function require_facts(): prepared_type_relationships
+	{
+		return $this->facts;
 	}
 }
 

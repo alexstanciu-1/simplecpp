@@ -255,6 +255,8 @@ final class collected_enum extends collected_type_definition
 /** Shared member ownership does not imply instance layout, storage or construction. */
 abstract class collected_member_owner extends collected_type_definition
 {
+	/** Independent analysis work; completing relationships never completes layout. */
+	public ?type_relationship_work $relationship_work = null;
 	/** @reference.source parsed_file.root (syntax graph) */
 	private type_declaration_node $syntax_node;
 
@@ -287,7 +289,7 @@ final class collected_interface extends collected_member_owner
 	}
 }
 
-final class collected_field extends collected_declaration
+final class collected_field extends collected_declaration implements preparation_lookup_candidate_i
 {
 	/** @reference.source parsed_file.root (syntax graph) */
 	private property_node $syntax_node;
