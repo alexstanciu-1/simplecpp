@@ -32,6 +32,41 @@ deferral does not change ordinary typed-object member access or existing contrac
 
 ## Non-blocking follow-ups
 
+### CH15-CTOR-SYNTAX-01 — property-backed constructor inputs
+
+Recorded by user request on 2026-10-07. **Non-blocking for Chapter 10 and v0.2.**
+Explore an alternative to constructor property promotion that keeps all property
+declarations together in the class/struct layout. The user's proposed direction is
+`__construct(use $name $age, ...)`, referring to previously declared properties.
+
+Candidate for discussion, not approved syntax:
+
+```php
+data class User {
+    public string $name;
+    private int $age = 18;
+
+    public function __construct(use $name, use $age) {
+    }
+}
+```
+
+Prefer considering `use` per comma-separated parameter so property-backed and ordinary
+typed inputs can coexist without an ambiguous group boundary. A proposed meaning is:
+resolve an existing instance property, obtain its type and explicit default, and
+initialize that property directly before the constructor body. This would not declare
+a second property, capture a closure variable, borrow by reference or change visibility.
+An explicit property default could make its input optional; absence of an explicit
+default would leave the constructor input required, even if the type has a default.
+A public constructor may explicitly expose an input initializing a private property.
+
+Before adoption, settle parameter-local visibility, duplicate/missing/static property
+references, parameter ordering/default overrides, initialization ordering, inheritance
+and interaction with conventional promotion. Assess implementing this spelling in the
+first authored-constructor slice versus deferring it. Reuse the same prepared constructor
+input/member-initialization contract for all spellings; do not create another execution
+path. Recording this proposal does not enable syntax or change the authoritative contract.
+
 ### CH15-DATA-REF-01 — initialization with references into the input data set
 
 Recorded by user request on 2026-10-07. **Non-blocking for Chapter 10 and v0.2.**
