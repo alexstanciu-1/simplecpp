@@ -44,7 +44,7 @@ Weak references observe shared allocations and must be locked before member acce
 
 Heap-backed properties are writable through stable receiver paths, but native
 aliases/reference arguments to them reject; nested inline projections preserve this
-restriction. Inline properties retain existing stable-borrow rules. Property defaults,
+restriction. Inline properties retain existing stable-borrow rules. At that checkpoint property defaults,
 non-public/static members, methods, inheritance and constructor arguments remain gated.
 
 Focused evidence: `/tmp/ch10-records-final/` (16 generated programs plus rejection and
@@ -52,6 +52,41 @@ incremental checks), `/tmp/ch10-records-ownership-02/` (14 PHP suites and 26 gen
 programs), `/tmp/ch10-records-regress-final/` (15 focused PHP suites). These are PHP-host
 compiler / generated-program proofs, not a rebuilt-native-compiler checkpoint.
 The chapter-end performance review still precedes any native compiler build.
+
+## Property defaults and data-construction agreement — 2026-10-07
+
+The authoritative [data-record amendment](../../../../specs/data_initialization.md#31a-explicit-data-classes-and-structs--2026-10-07)
+records approved `data class` / `data struct` opt-in. Authored constructors consume
+literal keys by parameter name and retain their body/invariants. Without a constructor,
+preparation synthesizes typed public-property inputs; lowering emits the constructor.
+The input contract is heterogeneous and must not be disguised as a mixed-valued
+collection factory. Ordinary property defaults are independent of `data` opt-in.
+
+First implemented checkpoint: public explicitly typed property defaults for both
+classes and structs. Scalar literals, numeric signs, scalar source/imported constants,
+permitted null and exact enum cases use shared constant evaluation/conversion and
+immutable declaration-owned snapshots. Defaults emit as C++ member initializers and
+participate in declaration equivalence/dependency invalidation. A field with an explicit
+default satisfies construction without requiring an implicit type default.
+
+Focused proof: `/tmp/ch10-property-defaults-final/` (17 generated programs, unused
+invalid declaration rejection, cross-file constant edits, failure/retry/repair,
+default replacement/removal, fresh/incremental and cleanup agreement).
+`/tmp/ch10-property-defaults-regress-03/` covers the 15 focused PHP regression suites.
+Tests used the runner's CLI fallback because sandbox socket binding prevented FPM.
+No conversion/native compiler rebuild is claimed.
+
+Next bounded slices, not enabled by this checkpoint:
+
+1. Typed container/nested-record default construction, preserving per-instance behavior.
+2. `data` syntax and prepared typed construction contracts; synthesized keyed record
+   execution, literal-key diagnostics and source-order evaluation without mandatory boxing.
+3. Authored constructors/promotion and ordinary method support; keyed inputs reuse
+   constructor contracts rather than bypassing their bodies.
+
+Arbitrary calls, `$this`/sibling defaults, computed record keys, positional record
+notation, inheritance/traits/non-public members and competing explicit keyed factories
+remain gated. Do not mark `data` construction implemented from the spec agreement.
 
 ## Chapter 09 carryovers
 
@@ -74,7 +109,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLASS-DECL-001](#class-decl-001) | supported-bounded | `class A {}` | prepared | verified | deferred | Plain class/struct records; `tests/records.py` |
 | [CLASS-PROP-001](#class-prop-001) | pending-discussion | `class A { int $x; }` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLASS-PROP-002](#class-prop-002) | pending-discussion | `class A { int $x = 1; }` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-PROP-002](#class-prop-002) | supported-bounded | `class A { int $x = 1; }` | prepared | verified | deferred | Class/struct typed constant defaults; `records.py --suite property_defaults`; container defaults follow |
 | [CLASS-PROP-003](#class-prop-003) | supported-bounded | `class A { int $x; }` | prepared | verified | deferred | Public typed instance property; no initializer |
 | [CLASS-PROP-004](#class-prop-004) | pending-discussion | `$this->x = 1;` | unverified | unverified | deferred | — |
 | [CLASS-PROP-005](#class-prop-005) | supported-bounded | `$a->x = 1;` | prepared | verified | deferred | Stable receiver; heap interiors not borrowable |

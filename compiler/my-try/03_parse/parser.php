@@ -976,8 +976,20 @@ final class Parser_Run
 		$field->modifiers = $modifiers;
 		$field->name = $name;
 		$field->collect($this->collector, $scope, $name_index);
+		$initializer /** nullable<expression_node> */ = null;
+		if ($this->text() === '=') {
+			$this->position++;
+			$initializer = $this->expression();
+		}
 		$this->expect(';');
-		$this->finish_declaration($field, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
+		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
+		if ($same && ($field->initializer !== null) && ($initializer !== null)) {
+			$this->retain_range($field->initializer, $initializer->start_token());
+		}
+		else {
+			$field->initializer = $initializer;
+		}
+		$this->finish_declaration($field, $start, $same);
 		return $field;
 	}
 

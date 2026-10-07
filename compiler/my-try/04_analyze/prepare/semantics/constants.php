@@ -18,7 +18,7 @@ final class Constant_Preparation
 		$value = Constant_Expression_Preparation::evaluate($syntax->initializer, $context);
 		if (!$value->type->matches($context->integer) && !$value->type->matches($context->floating)
 			&& !$value->type->matches($context->boolean) && !$value->type->matches($context->string_type)) {
-			throw new \RuntimeException('S2S source constants require bool, int, float or string');
+			throw new \RuntimeException('S2S source constants require bool, int, float or string in a constant initializer');
 		}
 		$syntax->set_preparation($value);
 	}
@@ -30,6 +30,22 @@ final class Constant_Expression_Preparation
 {
 	public static function evaluate(expression_node $syntax, preparation_context $context): constant_value
 	{
+		if ($syntax instanceof null_literal_node) {
+			$null_value = new sentinel_constant_value();
+			$null_value->type = Expression_Preparation::prepare($syntax, $context)->type;
+			return $null_value;
+		}
+		if ($syntax instanceof static_member_reference_node) {
+			$static_value = Expression_Preparation::prepare($syntax, $context);
+			if ($static_value instanceof prepared_enum_case_reference) {
+				$enum_reference = object_cast($static_value, prepared_enum_case_reference::class);
+				$enum_value = new enum_constant_value();
+				$enum_value->type = $enum_reference->type;
+				$enum_value->selected_case = $enum_reference->selected_case;
+				return $enum_value;
+			}
+			throw new \RuntimeException('S2S constant initializer requires a supported constant value');
+		}
 		if ($syntax instanceof unary_expression_node) {
 			return self::signed_value(object_cast($syntax, unary_expression_node::class), $context);
 		}

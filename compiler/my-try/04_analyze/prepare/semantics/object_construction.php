@@ -69,6 +69,9 @@ final class Object_Construction_Preparation
 		$context->worker->require_declaration($context->owner, $record);
 		$fields /** Key_Storage_List<prepared_field> */ = $record->syntax()->require_preparation()->fields;
 		foreach ($fields->items() as $field) {
+			if ($field->default_value !== null) {
+				continue;
+			}
 			if (!self::supports_default($field->type, $context)) {
 				return false;
 			}

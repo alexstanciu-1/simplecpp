@@ -110,7 +110,8 @@ The requested combined CH08/09 compiler passes [complete cumulative native valid
 including all 44 partitioned projects, supplementary probes and rejection/recovery.
 No separate CH08 native build was performed. CH10's [shared declaration model](../planning/type_declarations.md)
 and [plain record storage/property slice](10_objects.md#plain-records-and-storage--2026-10-07)
-are implemented. Property defaults and methods remain follow-ups; the chapter-end
+are implemented, along with [bounded constant property defaults](10_objects.md#property-defaults-and-data-construction-agreement--2026-10-07).
+Container defaults, the approved `data` construction contract and methods remain follow-ups; the chapter-end
 test-duration review precedes the next native build. Duplicate function/parameter
 and plain class/struct property admission is checked; the field portion of PE-03/FN-08
 is resolved by this slice. Non-void fallthrough rejects during preparation using the supported

@@ -1,0 +1,141 @@
+<?php
+
+/* Shared class/struct defaults: runtime results, declaration dependencies and recovery. */
+namespace scpp\compiler;
+require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
+
+/** Compile through the actual stage/publication pipeline, preserving artifact boundaries. */
+function property_defaults_source(string $source): string
+{
+	Compiler_Lifecycle::reset();
+	$input_module = new module('/property-defaults', '/property-defaults', '/property-defaults');
+	$input = new file();
+	$input->path = 'main.phs';
+	$input->content = $source;
+	Source_Registry::add($input_module, $input);
+	Model::$modules->add($input_module->name, $input_module);
+	(new Compiler())->exec_cpp();
+	return CPP_Probe::text(Model::$cpp_files);
+}
+
+$results = [];
+foreach (['class', 'struct'] as $kind) {
+	$cases = [
+		'scalar' => ['const N = 7; ' . $kind . ' C { int $n = -(-N); float $f = 2.5; bool $b = true; string $s = "7"; } $c = new C(); $f = (int) $c->f; $b = $c->b; $s = (int) $c->s; if ($b && $f === 2 && $s === 7) { return $c->n; } return 1;', 7],
+		'nullable' => [$kind . ' C { ?int $a = null; ?int $b = 8; } $c = new C(); $a = $c->a; $b = $c->b; if ($a === null) { return $b ?? 1; } return 2;', 8],
+		'enum' => ['enum E { case First; case Second; } ' . $kind . ' C { E $e = E::Second; } $c = new C(); $e = $c->e; return $e === E::Second ? 9 : 1;', 9],
+		'boxed' => [$kind . ' C { mixed $m = 7; dynamic $d = 8; } $c = new C(); $n int = $c->m; $d int = $c->d; return $n + $d;', 15],
+		'owned' => [$kind . ' C { int $n = 9; } $c unique<C> = new C(); return $c->n;', 9],
+		'per_instance' => [$kind . ' C { int $n = 7; string $s = "7"; } $a = new C(); $a->n = 9; $a->s = "9"; $b = new C(); $s = (int) $b->s; return $s === 7 ? $b->n : 1;', 7],
+		'nested' => ['struct Inner { int $n = 9; } ' . $kind . ' C { Inner $inner; } $c = new C(); return $c->inner->n;', 9],
+	];
+	foreach ($cases as $name => [$source, $expected]) {
+		$output = property_defaults_source($source);
+		if (isset($argv[1])) {
+			$path = $argv[1] . '/' . $kind . '_' . $name . '.cpp';
+			file_put_contents($path, $output);
+			$results[] = ['path' => $path, 'exit_code' => $expected];
+		}
+	}
+	$storage = $kind === 'class' ? 'value<C>' : 'shared<C>';
+	$output = property_defaults_source($kind . ' C { int $n = 9; } $c ' . $storage . ' = new C(); return $c->n;');
+	if (isset($argv[1])) {
+		$path = $argv[1] . '/' . $kind . '_storage_override.cpp';
+		file_put_contents($path, $output);
+		$results[] = ['path' => $path, 'exit_code' => 9];
+	}
+	foreach ([
+		'int $n = missing;',
+		'int $n = "wrong";',
+		'int $n = null;',
+		'int $n = calculate();',
+		'int $n = $this->other;',
+		'vector<int> $n = [1, 2];',
+		'E $n = F::First;',
+	] as $property) {
+		try {
+			property_defaults_source('enum E { case First; } enum F { case First; } ' . $kind . ' C { ' . $property . ' }');
+			throw new \LogicException('Unexpected default acceptance: ' . $property);
+		}
+		catch (\RuntimeException $error) {
+			// Unused declarations must reject before output, without relying on a C++ failure.
+		}
+	}
+}
+
+// A default reads its declaration namespace/import environment, not the caller's locals.
+$directory = sys_get_temp_dir() . '/property-defaults-' . bin2hex(random_bytes(6));
+mkdir($directory);
+$constants_path = $directory . '/constants.phs';
+$types_path = $directory . '/types.phs';
+$main_path = $directory . '/main.phs';
+try {
+	file_put_contents($constants_path, 'namespace Defaults; const N = 7;');
+	file_put_contents($types_path, 'namespace Types; use const Defaults\N as LIMIT; class C { int $n = LIMIT; }');
+	file_put_contents($main_path, 'use Types\C; $c = new C(); return $c->n;');
+	Compiler_Lifecycle::reset();
+	$compiler = new Compiler();
+	$compiler->init([$directory]);
+	$compiler->select_entry('main', 'main.phs');
+	$compiler->exec_cpp();
+	$original = CPP_Output::encode(Model::$cpp_files);
+	$compiler->update_cpp([]);
+	if (CPP_Output::encode(Model::$cpp_files) !== $original) {
+		throw new \LogicException('No-op changed defaults output');
+	}
+	file_put_contents($constants_path, 'namespace Defaults; const N = 9;');
+	$compiler->update_cpp([$constants_path]);
+	$changed = CPP_Output::encode(Model::$cpp_files);
+	if ($changed === $original) {
+		throw new \LogicException('Changed constant did not invalidate property default');
+	}
+	file_put_contents($constants_path, 'namespace Defaults; const N = "wrong";');
+	foreach ([[$constants_path], []] as $changes) {
+		try {
+			$compiler->update_cpp($changes);
+			throw new \LogicException('Invalid default survived dependency edit/retry');
+		}
+		catch (\RuntimeException $error) {
+		}
+	}
+	file_put_contents($constants_path, 'namespace Defaults; const N = 9;');
+	$compiler->update_cpp([$constants_path]);
+	if (CPP_Output::encode(Model::$cpp_files) !== $changed) {
+		throw new \LogicException('Repair retained stale defaults');
+	}
+	foreach (['int $n = 4;', 'int $n;', 'int $n = LIMIT;'] as $property) {
+		file_put_contents($types_path, 'namespace Types; use const Defaults\N as LIMIT; class C { ' . $property . ' }');
+		$compiler->update_cpp([$types_path]);
+	}
+	$incremental = CPP_Output::encode(Model::$cpp_files);
+	Compiler_Lifecycle::reset();
+	$fresh = new Compiler();
+	$fresh->init([$directory]);
+	$fresh->select_entry('main', 'main.phs');
+	$fresh->exec_cpp();
+	if (CPP_Output::encode(Model::$cpp_files) !== $incremental) {
+		throw new \LogicException('Incremental defaults differ from fresh compilation');
+	}
+	Compiler_Lifecycle::reset_preparation();
+	$fresh->prepare();
+	$fresh->cpp();
+	if (CPP_Output::encode(Model::$cpp_files) !== $incremental) {
+		throw new \LogicException('Cleanup changed defaults');
+	}
+	if (isset($argv[1])) {
+		$path = $argv[1] . '/imported_default.cpp';
+		file_put_contents($path, CPP_Probe::text(Model::$cpp_files));
+		$results[] = ['path' => $path, 'exit_code' => 9];
+	}
+}
+finally {
+	unlink($constants_path);
+	unlink($types_path);
+	unlink($main_path);
+	rmdir($directory);
+}
+if (isset($argv[1])) {
+	file_put_contents($argv[1] . '/executions.json', json_encode($results));
+}
+echo "property defaults pass\n";

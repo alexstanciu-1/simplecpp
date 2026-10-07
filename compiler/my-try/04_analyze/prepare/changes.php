@@ -72,6 +72,9 @@ final class Preparation_Changes
 		}
 		foreach ($fields as $index => $field) {
 			$before = $previous[$index];
+			if (!Property_Defaults::same($before->default_value, $field->default_value)) {
+				return false;
+			}
 			if ((!$before->type->matches($field->type)) || (weakref_get($before->declaration) !== weakref_get($field->declaration))) {
 				return false;
 			}

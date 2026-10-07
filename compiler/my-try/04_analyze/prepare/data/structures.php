@@ -413,7 +413,15 @@ final class prepared_function
 /** Field identity is scoped by its owning prepared record. */
 final class prepared_field extends prepared_storage {
 	public canonical_type_use $type;
+	public ?prepared_property_default $default_value = null;
 	public function storage_type(): canonical_type_use { return $this->type; }
+}
+
+/** Declaration-owned immutable default snapshot; no syntax or processing owner. */
+final class prepared_property_default
+{
+	public constant_value $value;
+	public conversion_decision $conversion;
 }
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */

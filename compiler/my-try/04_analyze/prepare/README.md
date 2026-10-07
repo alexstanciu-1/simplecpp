@@ -17,7 +17,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/enums.php`, `data/enums.php` | Enum backing/ranges, compact storage, immutable case snapshots and selected references |
-| `semantics/defaults.php` | Scalar-literal and exact enum-case parameter defaults, normalization and value equivalence |
+| `semantics/defaults.php` | Parameter defaults and declaration-owned property constant defaults, conversions and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
 | `semantics/cleanup.php` | Whole-storage unset/clean admission and routing to independent keyed removal |
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |

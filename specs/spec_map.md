@@ -309,7 +309,7 @@ Authority:
 
 ### `specs/data_initialization.md`
 Role:
-- v0.2 data notation, compile-time construction-target resolution and runtime initialization interfaces
+- v0.2 data notation, compile-time construction-target resolution, runtime initialization interfaces and explicit `data` class/struct construction contracts
 - supersedes older implicit literal defaults for v0.2, without claiming implementation availability
 
 Authority:

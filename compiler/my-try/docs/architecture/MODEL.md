@@ -196,6 +196,15 @@ configuration changes require a full compilation reset.
 
 ### Initialization contracts
 
+Public class/struct property defaults retain `prepared_property_default` on the
+prepared field: an immutable `constant_value` snapshot and its conversion. Shared
+constant evaluation supplies scalar/imported constants, null and enum cases; no
+new expression evaluator or syntax backlink is introduced. Record declaration work
+owns dependencies and compares defaults as part of effective record equivalence.
+C++ emits the snapshots as member initializers. Container/default constructions and
+the approved heterogeneous `data` contract remain subsequent slices; these facts do
+not enable source factory invocation or constructor bodies.
+
 `contract_type_reference` under `compiler/types/` represents target, template-argument
 or concrete-type references for both initialization and index signatures.
 `Contract_Type_Substitution` owns the shared analysis-time substitution; this is not

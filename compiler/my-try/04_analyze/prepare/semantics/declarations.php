@@ -113,8 +113,8 @@ final class Declaration_Preparation
 	/** Field eligibility uses the common declared storage capability path. */
 	public static function prepare_field(property_node $field, preparation_context $context): void
 	{
-		if (($field->type_syntax === null) || ($field->initializer !== null)) {
-			throw new \RuntimeException('Property inference and initializers are not supported by this plain-record slice');
+		if ($field->type_syntax === null) {
+			throw new \RuntimeException('Property type inference is not supported by this plain-record slice');
 		}
 		foreach ($field->modifiers as $modifier) {
 			if ($modifier !== declaration_modifier::public_access) {
@@ -124,7 +124,10 @@ final class Declaration_Preparation
 		$prepared = new prepared_field();
 		$prepared->declaration = $field->occurrence();
 		$prepared->type = Type_Preparation::type($field->require_type_syntax(), $context);
-		if (Type_Queries::canonical($prepared->type)->definition() instanceof enum_type_definition) {
+		if ($field->initializer !== null) {
+			$prepared->default_value = Property_Defaults::prepare($field->initializer, $prepared->type, $context);
+		}
+		elseif (Type_Queries::canonical($prepared->type)->definition() instanceof enum_type_definition) {
 			throw new \RuntimeException('S2S enum-valued fields await explicit field initialization');
 		}
 		$query = new Capability_Preparation($context);

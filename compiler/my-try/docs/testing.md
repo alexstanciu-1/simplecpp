@@ -4,6 +4,10 @@ Doc Status: supporting
 CH10 plain-record checks: `python3 compiler/my-try/tests/records.py --results FRESH`.
 Uses the shared runner and fixture PCH for class/struct storage, copy/weak behavior,
 rejections and incremental recovery. This compiles generated programs, not the compiler.
+Use `--suite property_defaults` with the same runner for class/struct constant, enum,
+nullable and boxed defaults, storage overrides, independent instances and cross-file
+default dependency edits/recovery. Container defaults and `data` construction are not
+claimed by that proof.
 
 Both `tests/run.py` and `tools/native_validate.py` use the reusable
 [`tools/test_runner.py`](../tools/test_runner.py) worker pool. The default is **12

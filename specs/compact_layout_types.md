@@ -197,7 +197,11 @@ object ownership.
 Only no-argument struct construction is supported. Positional arguments, named
 arguments, and argument unpacking must produce a source diagnostic, rather than
 selecting aggregate positional initialization or class construction. Custom
-constructors are not introduced. The v0.2
+constructors are not introduced by that original slice. The approved
+[data-record contract](data_initialization.md#31a-explicit-data-classes-and-structs--2026-10-07)
+extends the language contract to authored/synthesized struct construction in parity
+with classes; its compiler implementation remains separately tracked in Chapter 10.
+The v0.2
 [record-storage amendment](type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06)
 additionally admits explicit shared/unique allocation at direct typed local
 initializers and weak observation of shared struct allocations. Bare `new Struct()`

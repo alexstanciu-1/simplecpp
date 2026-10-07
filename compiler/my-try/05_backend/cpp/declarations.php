@@ -177,7 +177,13 @@ final class CPP_Declarations
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 			$representation = CPP_Types::representation_for($type, $requirement);
 			CPP_Types::record_dependencies($representation, $context);
-			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name) . ";\n";
+			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
+			$default_value = $field->default_value;
+			if ($default_value !== null) {
+				$value = CPP_Generator::generate_constant_value($default_value->value, $context);
+				$text .= ' = ' . self::conversion($value, $default_value->conversion, $context);
+			}
+			$text .= ";\n";
 		}
 
 		$context->records .= $text . "};\n\n";

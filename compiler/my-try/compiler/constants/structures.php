@@ -60,3 +60,13 @@ final class no_error_constant_value extends constant_value
 {
 	public function value_key(): string { return ''; }
 }
+
+/** Enum identity and an immutable case value, without a source syntax backlink. */
+final class enum_constant_value extends constant_value
+{
+	public prepared_enum_case $selected_case;
+	public function value_key(): string
+	{
+		return $this->selected_case->name . ':' . $this->selected_case->decimal;
+	}
+}

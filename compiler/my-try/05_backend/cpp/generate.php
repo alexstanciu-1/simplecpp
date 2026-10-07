@@ -443,7 +443,17 @@ final class CPP_Generator
 	/** Lower semantic constant values without preserving runtime- or host-specific names. */
 	public static function generate_constant(prepared_constant_reference $reference, cpp_generation_context $context): string
 	{
-		$value = $reference->value;
+		return self::generate_constant_value($reference->value, $context);
+	}
+
+	/** References and declaration defaults share the same immutable value lowering. */
+	public static function generate_constant_value(constant_value $value, cpp_generation_context $context): string
+	{
+		if ($value instanceof enum_constant_value) {
+			$enum_value = object_cast($value, enum_constant_value::class);
+			return CPP_Declarations::type($enum_value->type, $context) . '::'
+				. self::source_name('case', $enum_value->selected_case->name);
+		}
 		if ($value instanceof no_error_constant_value) {
 			return CPP_Declarations::type($value->type, $context) . '::no_error';
 		}

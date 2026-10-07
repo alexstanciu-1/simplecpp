@@ -3,6 +3,35 @@
 /* Declaration-owned constant defaults; bounded admission, not expression folding. */
 namespace scpp\compiler;
 
+/** Property defaults reuse constant evaluation and ordinary initialization conversions. */
+final class Property_Defaults
+{
+	/** Evaluate only the admitted constant subset, then validate its typed boundary. */
+	public static function prepare(expression_node $syntax, canonical_type_use $type,
+		preparation_context $context): prepared_property_default
+	{
+		Preparation_Cleanup::tree($syntax);
+		$facts = new prepared_property_default();
+		$facts->value = Constant_Expression_Preparation::evaluate($syntax, $context);
+		$facts->conversion = Conversion_Preparation::decide(
+			$facts->value->type, $type, conversion_context::assignment);
+		return $facts;
+	}
+
+	/** Defaults affect construction even when field identity and layout are unchanged. */
+	public static function same(?prepared_property_default $before, ?prepared_property_default $after): bool
+	{
+		if ($before === null) {
+			return $after === null;
+		}
+		if ($after === null) {
+			return false;
+		}
+		return $before->value->type->matches($after->value->type)
+			&& ($before->value->value_key() === $after->value->value_key());
+	}
+}
+
 final class Parameter_Defaults
 {
 	public static function prepare(expression_node $syntax, callable_parameter $parameter,

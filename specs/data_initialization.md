@@ -1,7 +1,8 @@
 # Data notation and initialization interfaces
 Doc Status: normative
 
-Status: Notation and initialization-interface standards complete, 2026-10-05.
+Status: Notation and initialization-interface standards complete, 2026-10-05;
+explicit data-record construction amendment approved 2026-10-07.
 The compiler catalog tracks partial implementation; source-defined factories remain gated.
 
 ## Authority and version boundary
@@ -99,7 +100,7 @@ conversion. A known type must also support the selected input shape.
 
 A resolved property's declared type may supply the construction target, just like
 a typed local, provided it identifies one concrete type with the applicable
-recognized initialization interface. Property existence or a matching set of fields
+recognized initialization interface or explicit `data` record contract. Property existence or a matching set of fields
 does not grant initialization support.
 
 An interface-typed or otherwise non-concrete destination does not select an
@@ -119,9 +120,10 @@ the resulting value must separately satisfy the property's assignment contract.
 This restriction concerns choosing a construction target, not assigning an existing
 value of a compatible concrete type to an interface-typed destination.
 
-Property-driven object initialization remains deferred until its compiler model is
-available. In particular, this rule does not map a key in an outer construction to
-an object property automatically. A factory accepting mixed values supplies no
+Property-driven object initialization remains gated until its compiler model is
+available. The explicit `data` contract below establishes typed construction inputs;
+ordinary homogeneous factories do not map keys to properties automatically.
+A factory accepting mixed values supplies no
 per-property target information merely because a property with that name exists.
 The examples describe that future contract, not current property/interface support.
 
@@ -206,8 +208,91 @@ class User implements key_value_initializable<User, mixed> {
 The factory returns the completed target under its ordinary representation rules
 (a class handle or a struct value as appropriate), not an implicit `result<TSelf>`
 or nullable wrapper. Factory validation failures throw. The example body above is
-schematic, not a complete executable function. This standard does not supply an
-automatic constructor or map entry keys to fields.
+schematic, not a complete executable function. These homogeneous sequence interfaces
+do not supply automatic constructors or map keys to fields. The explicit `data`
+record contract below is a separate opt-in, not implicit interface detection.
+
+### 3.1A Explicit data classes and structs — 2026-10-07
+
+`data class` and `data struct` opt into keyed construction through a typed
+construction contract:
+
+```php
+data struct Settings {
+    string $title = "Untitled";
+    int $retries = 3;
+    vector<string> $tags;
+}
+$settings Settings = {retries: 5};
+```
+
+`data` grants data construction only: not serialization, equality, immutability,
+reflection, positional construction or different storage/copy semantics. Class
+handles and struct values retain their ordinary representation. The modifier belongs
+to the common type-declaration syntax, not a separate class/struct AST family.
+
+With an authored constructor, keys name its parameters, not its properties. Parameter
+names are consequently part of the data-construction API. For example:
+
+```php
+data class User {
+    string $name;
+    public function __construct(string $first, string $last) {
+        $this->name = $first . " " . $last;
+    }
+}
+$user User = {first: "Alex", last: "Smith"};
+// {name: "Alex Smith"} is invalid: there is no parameter named name.
+```
+
+Construction invokes that constructor, including its validation and assignments;
+it must not bypass its body by assigning properties afterward. Constructor property
+promotion is compatible with this rule but is not required. Ordinary required
+parameters remain required even when their types have defaults; optional parameters
+use their declared defaults. Property defaults and parameter defaults are distinct:
+property initialization precedes an authored constructor body, while parameter
+defaults supply omitted arguments. This contract applies to both classes and structs;
+it amends the earlier no-authored-struct-constructor restriction, without claiming
+that constructor parsing/execution is already implemented.
+
+Without an authored constructor, the compiler synthesizes typed construction inputs
+from public instance properties in declaration order. Each supplied entry initializes
+its corresponding property. For an omitted property, use its explicit default first,
+then its established type default, otherwise require the input. An absent class handle
+does not allocate a pointee. No implicit enum case or other invented default is allowed.
+Non-public/static members, inheritance and trait composition are outside the first
+synthesized-record slice; their presence must not authorize bypassing invariants.
+
+The initial supported key contract is literal string names, in either `{name: value}`
+or `["name" => value]` notation. Computed keys and positional record construction are
+deferred. Reject unknown/duplicate keys, missing required inputs, incompatible types
+and ambiguous nested targets during preparation. Each input has its own expected type;
+concrete property/parameter types supply nested construction targets. This is not a
+`key_value_initializable<Self, mixed>` bag and does not require boxing record inputs.
+
+Evaluate supplied expressions once in source order, even when keys differ from
+constructor/property declaration order. For synthesized construction, then initialize
+omitted defaults in property declaration order. A supplied property value replaces
+its default directly; do not first construct and discard the default. Defaults are
+per-instance: value containers are independent under their normal value/COW behavior,
+and mutable default objects must not become shared global singleton instances.
+Publish no partially initialized instance on failure; already executed source effects
+are not rolled back.
+
+Property defaults use ordinary typed expression/conversion rules. The agreed bounded
+scope is scalar literals, supported constant expressions, permitted null values and
+typed data notation for containers/eligible nested records. Arbitrary calls, `$this`
+and sibling-property references in default expressions remain deferred. These default
+rules also apply to ordinary class/struct construction, independently of `data` opt-in.
+
+Preparation owns the authored or synthesized semantic construction contract, including
+input names, types, defaults and dependencies. Lowering emits its concrete constructor
+and calls from those facts; it must not discover the contract or perform source
+validation. Parsing and collection remain generic. Reuse the existing construction
+syntax and sequencing machinery with distinct homogeneous-sequence and typed-record
+contracts. Source-derived contracts belong to completed declarations, not registry
+caches. Combining `data` with an explicit keyed factory remains gated until selection
+precedence is specified; do not silently select a competing construction path.
 
 ### 3.2 Input sequence and entry API
 
@@ -285,7 +370,8 @@ families. List construction of an integer-keyed hash, mixed table or dynamic obj
 assigns consecutive integer keys starting at zero. Dynamic list construction is
 integer-keyed shared object storage, not conversion to a vector.
 
-Selection rules:
+Selection rules for homogeneous sequence interfaces (the `data` record contract
+above separately admits keyed record inputs):
 
 - Nonempty positional input requires the list interface.
 - Nonempty arrow-keyed input and all named-brace input require the keyed interface.
@@ -363,6 +449,9 @@ The runtime executes the factory and validates its data-dependent requirements.
 Do not execute user factories at compile time or add content-based class inference,
 schema validation or literal-data precomputation in this slice. Typed input boundaries
 retain ordinary checked conversion rules, including runtime checks for mixed kinds.
+For explicit `data` records, checking literal keys against a prepared constructor
+signature is ordinary static call validation, not execution of a user schema/factory.
+Their duplicate/unknown/missing-input diagnostics therefore occur during preparation.
 
 Evaluate entries exactly once in source order, including key before value for a
 keyed entry. Complete nested construction before supplying that value to its parent.
@@ -399,17 +488,18 @@ the start. Cover those families together per operation, with runtime kind checks
 where mixed leaves the actual container kind unknown. Not every mixed value is a
 container. Construction support alone does not implement iteration or access.
 
-The standard includes explicit user-defined class/struct opt-in. Connecting those
-types to the protocol waits for their compiler interface/method support. Automatic
-field matching and synthesized member initialization remain deferred, independently
-of explicit factories. Dynamic `->` and reference iteration remain separate work.
+The standard includes explicit user-defined class/struct interface opt-in and the
+approved `data` record contract above. Source factories wait for interface/method and
+input-view lifetime support; synthesized record construction has its own Chapter 10
+implementation checkpoint. Neither is implied implemented by this standard.
+Dynamic `->` and reference iteration remain separate work.
 
 The notation and interface documentation steps are complete. Concrete compiler
 records, registration/binding implementation, bounded lifetime enforcement, runtime
 adapters and C++ lowering remain implementation work, not unresolved source API.
 Before enabling factories, prove ordering, conversions, duplicate handling, empty
 states, failure cleanup, nested construction, non-escape rejection and incremental
-contract invalidation. Moving/consuming input, function-valued entries, mixed-shape
-bracket literals and automatic member initialization remain explicit deferred work.
+contract invalidation. Moving/consuming sequence input, function-valued entries and
+mixed-shape bracket literals remain explicit deferred work.
 The [compiler implementation note](../compiler/my-try/docs/planning/data_initialization.md)
 records the hybrid lowering approach and performance proof boundaries.
