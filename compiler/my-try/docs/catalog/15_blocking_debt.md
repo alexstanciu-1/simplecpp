@@ -50,6 +50,16 @@ evaluation order and incremental signature-name invalidation.
 
 ## Non-blocking follow-ups
 
+### CH15-TEST-FIXTURES-01 — transport-aware fixture deduplication
+
+The [CH10 timing review](../testing_ch10_review.md) identifies 471 duplicate
+supplementary executions caused solely by artifact source-path identity. Normalize
+test transport identity for deduplication while preserving source text, unit boundaries,
+include graphs, assertions, expected outcomes and host/native parity. Add negative
+deduplication proofs before changing the runner. Also consider compatible runtime-object
+reuse and phase interval timestamps alongside the existing cache/PCH work.
+Non-blocking optimization; no coverage reduction is approved.
+
 ### CH15-MISSING-01 — optional absence spelling
 
 Agreed 2026-10-07: consider a `missing` operation/name after the collection-only

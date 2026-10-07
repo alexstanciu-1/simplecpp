@@ -75,7 +75,9 @@ The [nullable selection checkpoint](catalog/10_objects.md#nullable-record-select
 adds exact copyable-payload ternary/Elvis/coalescing joins. Property compound and
 prefix/postfix updates now reuse the common mutation worker and existing property
 places. Default-based property inference now shares declaration/default preparation,
-including inferred-type dependency invalidation. Next discussion: ownership construction shortcuts.
+including inferred-type dependency invalidation. Direct-local ownership shortcuts
+now reuse typed construction. The [CH10 timing review](catalog/10_objects.md#ch10-perf-01--test-duration-review-before-native-build)
+is complete; native compiler validation remains a separate requested checkpoint.
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are

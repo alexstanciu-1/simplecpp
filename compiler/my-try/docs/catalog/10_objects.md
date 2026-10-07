@@ -556,16 +556,32 @@ agreement, failed null inference/retry and repair.
 `/tmp/ch10-property-inference-regression/` passes six focused PHP suites.
 No native compiler rebuild or conversion was performed.
 
-Next discussion: ownership construction shortcuts.
+## Direct local ownership shortcuts — 2026-10-07
+
+Bare `value`, `shared` and `unique` local declarations with direct `new` initializers
+now resolve to complete storage types in shared preparation. Parentheses normalize
+normally; registered ownership identities and the existing storage policy govern
+admission. No AST/backend alternative or intermediate construction is added.
+Factories, existing variables, weak allocation and nonlocal incomplete types remain
+rejected. Redundant class/shared and struct/value requests remain errors.
+
+Evidence: `/tmp/ch10-shortcuts-2/` passes 51 generated constructor programs with PCH;
+`/tmp/ch10-shortcuts-final-php/` adds declaration-kind invalidation/retry/repair and
+preparation-reset proof. Five other PHP suites passed in
+`/tmp/ch10-shortcuts-regression/`; its constructor fixture initially needed its
+entry restored before the older re-add check, corrected in the final PHP run.
+`/tmp/ch10-shortcuts-equivalence/` also proves identical emitted artifacts for
+shortcut and explicit storage spellings across all four supported class/struct pairs.
+No native compiler rebuild. The timing review below is now complete.
 
 ## Chapter 09 carryovers
 
 CH09's approved bounded closeout transfers constructor integration for explicit
 `value<T>` (TYPE-VAR-006), nullable inline records (TYPE-VAR-006A), and discussion of
-bare `value`/`shared`/`unique` constructor shortcuts (TYPE-VAR-007) here. Preserve
+bare `value`/`shared`/`unique` constructor shortcuts (TYPE-VAR-007) here (now bounded complete). Preserve
 existing struct value/copy behavior; do not mark argument-bearing construction or
 nullable record operations complete from those earlier proofs. Explicit types remain
-the current boundary until shortcuts are agreed. Include both class and struct forms.
+the boundary outside the approved direct-local shortcuts. Include both class and struct forms.
 Enum methods/interfaces (ENUM-004) must revisit the shared CH10/11 foundations,
 not establish a parallel enum-only method system in CH09.
 
@@ -610,18 +626,19 @@ a native compiler rebuild. Existing checkpoint suites supply behavioral evidence
    compound assignment and prefix/postfix mutation share existing property places.
    Static-property native-reference escapes and nested plain assignment expressions
    remain gated; property probes retain their separate admission boundary.
-3. **Construction conveniences.** Explicit and default-inferred
-   fields are covered. CH09's bare
-   value/shared/unique construction shortcuts remain unagreed; explicit storage
-   forms and argument-bearing class/struct construction are already covered.
+3. **Construction conveniences — bounded complete.** Explicit/default-inferred
+   fields and direct-local value/shared/unique shortcuts are covered. Complete
+   storage types remain required outside the approved direct-new declaration form.
 4. **Existing later owners, not new CH10 blockers.** Interface/abstract/protected,
    inherited lookup and virtual/late-static dispatch belong to CH11. Method receiver
    lifetime extensions are already CH15-METHOD-LIFETIME-01. Broader reference returns
    retain CH07/CH15 debt and current same-origin restrictions. Bound method callable
    values await the CH12 callable/lifetime foundation; this reconciliation does not
    approve that feature or reinterpret a plain two-element list as a callable.
-5. **Closeout.** Reconcile any remaining decisions/proofs, perform CH10-PERF-01's
-   test-duration review, then the requested chapter native compiler validation.
+5. **Closeout.** The grouped feature work and CH10-PERF-01 review are complete.
+   Native compiler validation remains; include the dedicated CH10 suites, not only
+   the older CH08/09 native acceptance set. Property probes, nested plain property
+   assignments and static reference escapes remain explicitly gated, not silently enabled.
    CH10 is not closed by replacing stale pending labels.
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -639,7 +656,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-006A](#class-prop-006a) | supported-bounded | `self::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-006B](#class-prop-006b) | deferred-CH11 | `parent::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-006C](#class-prop-006c) | deferred-CH11 | `static::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
-| [CLASS-PROP-007](#class-prop-007) | supported-bounded | `$a::$x = 2;` | shared static member | qualifier before RHS | deferred | Plain writes/read/constant checkpoint; no compound/reference forms |
+| [CLASS-PROP-007](#class-prop-007) | supported-bounded | `$a::$x = 2;` | shared static member | qualifier before RHS | deferred | Reads, plain/compound writes and updates; reference escapes gated |
 | [CLASS-PROP-008](#class-prop-008) | deferred-CH11 | `class B extends A { function f(): void { $this->x = 1; } }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-009](#class-prop-009) | rejected | `$this->y = 1;` where `y` is undeclared | rejected | not emitted | deferred | Unknown property; preparation rejection verified in records.php and audit |
 | [CLASS-PROP-010](#class-prop-010) | rejected | `$this->$name = 1;` | rejected | not emitted | deferred | Computed property names reject in parsing; dynamic-family -> stays CH15 |
@@ -707,7 +724,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-PROP-001B](#type-prop-001b) | supported-bounded | `class A { public int $x; }` | prepared (bounded) | see proof | deferred | Strict public typed field; records.php; legacy spelling separate |
 | [TYPE-PROP-002](#type-prop-002) | partial-split | `class A { protected ?string $x; protected ?B $b; }` | bounded nullable fields | proved bounded | deferred | nullable_records.php; protected access CH11 |
 | [NOTE-029](#note-029) | reconciled-bounded | — (example pending) | see reconciliation | see reconciliation | deferred | Construction/static slices supersede imported struct-argument and unevaluated-qualifier restrictions |
-| [NOTE-050](#note-050) | partial-split | — (example pending) | see reconciliation | see reconciliation | deferred | See reconciliation: layout/members/lifecycle supported; inference/updates/shortcuts and CH11 remain |
+| [NOTE-050](#note-050) | partial-split | — (example pending) | see reconciliation | see reconciliation | deferred | Layout/members/lifecycle, inference, updates and shortcuts supported; relationships/dispatch CH11 |
 
 ### Deferred legacy syntax
 
@@ -3922,8 +3939,8 @@ The incompatible v0.1 restrictions below are superseded, not outstanding tasks.
 **v0.2 decision / examples:** partial-split. Partitioned output, typed fields,
 public/private members, methods, constructors/destructors and qualified static access
 are covered above, along with default-based property inference and compound updates.
-Relationships/dispatch belong to CH11. Bare ownership construction shortcuts
-remain unagreed; legacy annotation forms remain deferred. Explicit
+Relationships/dispatch belong to CH11. Direct-local ownership shortcuts are covered;
+legacy annotation forms remain deferred. Explicit
 source types and current preparation diagnostics supersede the v0.1 type-blind rules.
 
 > ## 16. Classes, Inheritance, and Members
@@ -4004,9 +4021,9 @@ source types and current preparation diagnostics supersede the v0.1 type-blind r
 
 ### CH10-PERF-01 — Test-duration review before native build
 
-Status: pending; required review at the end of CH10, before starting its native
-compiler build/validation. Requested 2026-10-07. This does not block CH10 feature
-discussion or focused implementation checks.
+Status: reviewed 2026-10-07. See the [measured review](../testing_ch10_review.md).
+The pre-build investigation gate is satisfied; optimization is proposed, not applied.
+Native compiler validation has not been run for CH10.
 
 User decision, 2026-10-07: current focused-test cost is acceptable. Revisit test
 performance when testing exceeds 30% of the overall work time for a slice. Compare

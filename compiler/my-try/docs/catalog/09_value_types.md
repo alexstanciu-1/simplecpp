@@ -22,7 +22,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [TYPE-VAR-006](#type-var-006) | partial; constructor integration CH10 | `$b value<Point> = $a;` | bounded support | bounded proof | deferred | Value storage/copy already covered; argument-bearing construction deferred |
 | [TYPE-VAR-006A](#type-var-006a) | deferred CH10 | Nullable inline object construction | not claimed | not claimed | deferred | Nullable record operations/construction must be integrated together |
-| [TYPE-VAR-007](#type-var-007) | deferred CH10 discussion | Bare ownership constructor shortcut | not claimed | not claimed | deferred | Explicit types remain current; no shortcut added |
+| [TYPE-VAR-007](#type-var-007) | supported-bounded CH10 | Bare ownership constructor shortcut | prepared | verified | deferred | Direct local new only; constructors.php |
 | [ENUM-001](#enum-001) | bounded pass | `enum Suit { case Hearts; case Spades; }` | proved | proved | deferred | [Execution checkpoint](#enum-execution--2026-10-06) |
 | [ENUM-002](#enum-002) | bounded pass | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | proved | proved | deferred | Includes exact fixed-width backing; [execution checkpoint](#enum-execution--2026-10-06) |
 | [ENUM-003](#enum-003) | bounded helpers; remainder CH15 | `Color::tryFrom('green')?->name ?? 'null'` | partial | partial | deferred | Explicit name/numeric helpers proved; reflection/string backing deferred |
@@ -353,8 +353,9 @@ nullable<Point> p{Point(static_cast<int_t>(1), static_cast<int_t>(2))};
 
 **Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
 
-**v0.2 decision / target C++:** Bare constructor shortcuts carry to CH10 discussion;
-explicit type spellings remain current.
+**v0.2 decision / target C++:** Supported for direct local `new` declarations in
+CH10: bare `value`, `shared`, `unique` normalize during preparation. Redundant
+storage still rejects; weak/factory/property/parameter shortcuts are not admitted.
 
 ### Imported version 1
 

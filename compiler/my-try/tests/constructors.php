@@ -20,8 +20,17 @@ function constructors_source(string $source): string
 }
 
 $results = [];
+foreach ([['class', 'value'], ['struct', 'shared'], ['class', 'unique'], ['struct', 'unique']] as [$record_kind, $storage_kind]) {
+	$prefix = $record_kind . ' C { public int $n = 9; } ';
+	$explicit = constructors_source($prefix . '$c ' . $storage_kind . '<C> = new C(); return $c->n;');
+	$short = constructors_source($prefix . '$c ' . $storage_kind . ' = new C(); return $c->n;');
+	if ($short !== $explicit) { throw new \LogicException('Storage shortcut differs from explicit construction'); }
+}
 foreach (['class', 'struct'] as $kind) {
 	$cases = [
+		'shortcut' => ['public $n = 9; public function __construct(set:$n) {}', '$c ' . ($kind === 'class' ? 'value' : 'shared') . ' = (new C()); return $c->n;', 9],
+		'shortcut_unique' => ['public int $n; public function __construct(set:$n) {}', '$c unique = new C(9); return $c->n;', 9],
+		'shortcut_order' => ['public int $n; public function __construct(int $a, int $b) { $this->n = $a * 10 + $b; }', 'function bump(int &$n): int { $n++; return $n; } $n = 0; $c unique = new C(bump($n), bump($n)); return $c->n;', 12],
 		'positional' => ['public int $n; public function __construct(int $input) { $this->n = $input; }', '$c = new C(9); return $c->n;', 9],
 		'set' => ['public int $n; public function __construct(set:$n) { $n = 3; }', '$c = new C(9); return $c->n;', 9],
 		'body' => ['public int $n; public function __construct(set:$n) { $this->n = $n + 2; }', '$c = new C(7); return $c->n;', 9],
@@ -70,6 +79,14 @@ foreach ([
 
 foreach ([
 	['class C { int $n; function __construct(set:$n) {} } $c = new C();', 'missing a required argument'],
+	['class C {} $c shared = new C();', 'repeats'],
+	['struct C {} $c value = new C();', 'repeats'],
+	['class C {} $c unique;', 'direct new'],
+	['class C {} function make(): C { return new C(); } $c value = make();', 'direct new'],
+	['class C {} $a = new C(); $c unique = $a;', 'direct new'],
+	['class C {} $c weak = new C();', 'explicit arguments'],
+	['class C { value $v; }', 'resolved type'],
+	['function f(unique $v): void {}', 'explicit arguments'],
 	['data class C { int $n; function __construct(set:$n) {} } $c C = {};', 'missing required'],
 	['data class C { int $n; function __construct(int $input) {} } $c C = {n: 1};', 'unknown record'],
 	['class C { function __construct(set:$n) {} }', 'existing instance property'],
@@ -167,6 +184,23 @@ try {
 		file_put_contents($path, CPP_Probe::text(Model::$cpp_files));
 		$results[] = ['path' => $path, 'exit_code' => 11];
 	}
+	file_put_contents($entry_path, 'use Types\\C; $c value = new C(); return $c->n;');
+	$fresh->update_cpp([$entry_path]);
+	$shortcut = CPP_Output::encode(Model::$cpp_files);
+	file_put_contents($type_path, str_replace('data class C', 'data struct C', str_replace('set:$n = 7', 'set:$n = 9', $declaration)));
+	foreach ([[$type_path], []] as $changes) {
+		try { $fresh->update_cpp($changes); throw new \LogicException('Shortcut retained redundant storage after declaration-kind edit'); }
+		catch (\RuntimeException $expected) {}
+	}
+	file_put_contents($type_path, str_replace('set:$n = 7', 'set:$n = 9', $declaration));
+	$fresh->update_cpp([$type_path]);
+	if (CPP_Output::encode(Model::$cpp_files) !== $shortcut) { throw new \LogicException('Shortcut repair changed output'); }
+	Compiler_Lifecycle::reset_preparation();
+	$fresh->prepare();
+	$fresh->cpp();
+	if (CPP_Output::encode(Model::$cpp_files) !== $shortcut) { throw new \LogicException('Shortcut preparation reset changed output'); }
+	file_put_contents($entry_path, 'use Types\\C; $c C = {}; return $c->n;');
+	$fresh->update_cpp([$entry_path]);
 	$current_record = object_cast(Model::$namespaces->find('Types')->published_scope()->source_types_named('C')[0], collected_record::class);
 	$removed_method = $current_record->syntax()->methods[0];
 	$removed_signature = $removed_method->occurrence()->preparation_work_owner();

@@ -134,7 +134,7 @@ final class Body_Preparation
 		$expected_type /** nullable<canonical_type_use> */ = null;
 		if ($type_syntax !== null) {
 			$type /** type_node */ = $type_syntax;
-			$binding->type = Type_Preparation::type($type, $context);
+			$binding->type = Type_Preparation::local_type($type, $initializer, $context);
 			$expected_type = $binding->type;
 		}
 		else {

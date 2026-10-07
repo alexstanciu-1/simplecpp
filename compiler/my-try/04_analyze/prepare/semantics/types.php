@@ -5,6 +5,53 @@ namespace scpp\compiler;
 
 final class Type_Preparation
 {
+	/** Only direct local construction may complete a bare storage request. */
+	public static function local_type(type_node $syntax, ?expression_node $initializer,
+		preparation_context $context): canonical_type_use
+	{
+		if (!($syntax instanceof named_type_node)) { return self::type($syntax, $context); }
+		$named = object_cast($syntax, named_type_node::class);
+		$entry = $named->occurrence();
+		$modifier = Model::$type_catalog->source()->modifier_or_null($entry->name);
+		if ($modifier !== null) {
+			if ($modifier->kind() !== type_use_modifier_kind::by_value) { return self::type($syntax, $context); }
+		}
+		$definition /** nullable<abstract_template_type_definition> */ = null;
+		if ($modifier === null) {
+			$scope = object_cast(weakref_get($entry->scope), scope::class);
+			$matches = Observed_Lookup::types($scope, $entry->name, $context);
+			if (q_count($matches) !== 1) { return self::type($syntax, $context); }
+			$selected = $matches[0];
+			if (($selected !== Model::$type_catalog->definition('shared'))
+				&& ($selected !== Model::$type_catalog->definition('unique'))) {
+				return self::type($syntax, $context);
+			}
+			$definition = object_cast($selected, abstract_template_type_definition::class);
+		}
+		if (!($initializer instanceof object_construction_node)) {
+			throw new \RuntimeException('Bare storage modifier requires a direct new initializer');
+		}
+		$construction = object_cast($initializer, object_construction_node::class);
+		$payload = self::type($construction->target_type, $context);
+		if ($payload->by_value() || (Type_Queries::source_record($payload) === null)) {
+			throw new \RuntimeException('Bare storage modifier requires a concrete class or struct constructor');
+		}
+		try {
+			$result /** canonical_type_use */;
+			if ($modifier !== null) {
+				$result = Model::$type_catalog->registry()->use($payload->type_id(), true);
+			}
+			else {
+				$template /** abstract_template_type_definition */ = $definition;
+				$arguments /** vector<canonical_type_use> */ = [$payload];
+				$result = self::application($template, $arguments, $context);
+			}
+			$named->set_preparation($result);
+			return $result;
+		}
+		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }
+	}
+
 	/** Implicit packs use the canonical runtime vector, independently of source shadowing. */
 	public static function vector_of(canonical_type_use $element, preparation_context $context): canonical_type_use
 	{

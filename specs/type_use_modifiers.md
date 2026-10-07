@@ -147,6 +147,22 @@ not allocate an intermediate object. Weak never allocates: derive from an existi
 shared owner, then lock before accessing. `lock(weak<Class>)` returns bare `Class`,
 not the rejected spelling `shared<Class>`. Parentheses preserve these rules.
 
+### Direct local construction shortcuts — v0.2, 2026-10-07
+
+`$v value = new Class();`, `$s shared = new Struct();` and
+`$u unique = new T(args);` infer the exact constructor payload and normalize to
+their fully specified storage types during preparation. Parentheses around `new`
+are permitted. The ordinary constructor, argument, storage and lifetime rules apply;
+no intermediate allocation or handle-to-value copy is introduced.
+
+These are local declaration shortcuts only. Factories, existing variables,
+conditionals, data literals and declarations without an initializer cannot supply
+the omitted payload. Parameters, returns and properties still require complete
+storage types. Bare weak construction is not supported. Redundant modifiers remain
+errors: `shared = new Class()` and `value = new Struct()` reject just like their
+explicit counterparts. Registered ownership definition identity, not merely a
+user type's spelling, determines whether a named type is a shortcut.
+
 Ownership wrappers take an unmodified payload; `unique<value<Class>>` and similar
 stacked storage requests reject alongside the existing direct ownership nesting.
 Inline record copies require memberwise copyability. Shared/weak copies do not
