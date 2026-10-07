@@ -35,7 +35,7 @@ deferral does not change ordinary typed-object member access or existing contrac
 ### CH15-CTOR-SYNTAX-01 — deferred constructor property promotion
 
 Recorded by user request on 2026-10-07. **Non-blocking for Chapter 10 and v0.2.**
-Decision updated on the same date: property-backed `use $property` parameters are
+Decision updated on the same date: property-backed `set:$property` parameters are
 adopted for the first authored-constructor slice in Chapter 10. They are no longer
 deferred syntax-design debt. Their [authoritative contract](../../../../specs/data_initialization.md#property-backed-constructor-parameters)
 keeps properties declared separately and reuses their types and explicit defaults.
@@ -54,7 +54,7 @@ Later assess whether promotion adds enough value alongside property-backed input
 including compatibility needs, layout readability, duplicate declarations, defaults
 and visibility. If admitted, normalize it to the same constructor input/member-
 initialization model; do not add a competing execution path. Deferring promotion does
-not defer ordinary typed constructor parameters or Chapter 10's adopted `use` syntax.
+not defer ordinary typed constructor parameters or Chapter 10's adopted `set:` syntax.
 
 ### CH15-DATA-REF-01 — initialization with references into the input data set
 

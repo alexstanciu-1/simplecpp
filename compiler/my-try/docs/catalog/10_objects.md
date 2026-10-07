@@ -129,9 +129,12 @@ chapter's native compiler build. Reference tags/data-set references remain non-b
 
 ### First authored-constructor slice: adopted input spelling
 
-User decision, 2026-10-07: implement `__construct(use $name, use $age)` from the
+User decision, 2026-10-07: implement `__construct(set:$name, set:$age)` from the
 first constructor slice, resolving separately declared instance properties and their
-types/explicit defaults. Ordinary typed parameters can coexist with these inputs.
+types/explicit defaults. `set` is contextual, not a reserved type name. Explicit
+parameter defaults override property defaults: `set:$age = 21`. Without either
+explicit default, the input is required. This replaces the earlier `use` proposal,
+not an additional syntax alias. Ordinary typed parameters can coexist with these inputs.
 Use the [authoritative contract](../../../../specs/data_initialization.md#property-backed-constructor-parameters).
 Public constructor inputs may initialize private properties without exposing those
 properties for external access; basic visibility enforcement is a prerequisite.

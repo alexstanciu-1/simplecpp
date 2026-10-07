@@ -268,19 +268,27 @@ data class User {
     public string $name;
     private int $age = 18;
 
-    public function __construct(use $name, use $age) {
+    public function __construct(set:$name, set:$age = 21) {
     }
 }
 $user User = {name: "Alex", age: 30};
 ```
 
-Each comma-separated `use $property` denotes a constructor parameter backed by an
-already declared instance property. It obtains that property's type and explicit
-default and initializes the property directly before the constructor body, without
+Each comma-separated `set:$property` denotes a constructor parameter backed by an
+already declared instance property. `set` is contextual in this parameter prefix,
+not a globally reserved keyword; an ordinary parameter whose type is named `set`
+remains distinguishable by the absence of `:`. This spelling replaces the earlier
+`use $property` proposal; the two are not alternative accepted spellings.
+
+The parameter obtains the property's type and initializes it directly before the constructor body, without
 first initializing and overwriting its default. It does not declare a new property,
 capture a closure variable, establish a reference/alias or change property visibility.
-The parameter is required when the property has no explicit default, even if its type
-has an implicit default. In the example, `name` is required and `age` is optional.
+Default precedence is: an explicit parameter default, otherwise the property's
+explicit default, otherwise a required argument. The type's implicit default does
+not make the parameter optional. In the example, `name` is required and omitted
+`age` uses `21`; spelling only `set:$age` would inherit `18`. A parameter-side
+default override does not change the property's declaration default. Defaults must
+satisfy the resolved property type and the supported constructor-default subset.
 
 Property-backed parameters may coexist with ordinary typed parameters. Inside the
 body, `$name` denotes the parameter and `$this->name` the initialized property; they
@@ -298,8 +306,8 @@ The first authored-constructor slice adopts this spelling, not PHP-style promoti
 such as `__construct(public string $name)`. See the
 [non-blocking promotion debt](../compiler/my-try/docs/catalog/15_blocking_debt.md#ch15-ctor-syntax-01--deferred-constructor-property-promotion).
 Parameter ordering, validity and initialization use the common constructor model;
-inheritance and parameter-side overrides of property types/defaults are not introduced
-by this agreement. Implementation availability remains tracked in Chapter 10.
+inheritance and parameter-side overrides of property types are not introduced by this
+agreement. Implementation availability remains tracked in Chapter 10.
 
 Without an authored constructor, the compiler synthesizes typed construction inputs
 from public instance properties in declaration order. Each supplied entry initializes
