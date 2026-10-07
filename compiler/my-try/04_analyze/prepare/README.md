@@ -341,7 +341,9 @@ peers, with no extraction. `%` rejects statically known float
 peers; unknown boxed payloads are checked by runtime dispatch. Results retain their family,
 so typed consumers still apply their independent boundary checks. Mutation preparation
 admits numeric boxed compound updates and prefix/postfix increment/decrement on
-existing locals/parameters. `compound_write_back` separates converted native stores
+existing locals/parameters and stable instance/static property places. Target
+preparation reuses addressability, visibility and writability facts; property storage
+does not grant new operators or relaxed RHS effect rules. `compound_write_back` separates converted native stores
 from runtime stored-kind validation. Both direct runtime operators and generated
 compound updates share `detail::assign_numeric_result` after computing the value.
 Its common policy validates numeric stored-kind preservation before replacing the

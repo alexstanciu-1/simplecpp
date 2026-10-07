@@ -56,7 +56,6 @@ foreach ([
 	['class C { public private static int $n; }', 'visibility'],
 	['class C { static static function f(): void {} }', 'Duplicate static'],
 	['class C { public public function __construct() {} }', 'visibility'],
-	['class C { static int $n; } C::$n++;', 'mutation requires'],
 	['class C { static int $n; } $a =& C::$n;', 'borrow'],
 	['class C { static vector<int> $n = [1]; }', 'Static properties require'],
 	['class C { const N = 9; } C::N = 1;', 'not a constant'],

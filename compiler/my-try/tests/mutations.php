@@ -78,7 +78,6 @@ $rejections = [
 	['$x = 1; ($x + 1)++;', 'existing local or parameter'],
 	['$x = 1; ++$x++;', 'existing local or parameter'],
 	['$x = 1; $x++++;', 'existing local or parameter'],
-	['struct Box { int $value; } $box Box; ++$box->value;', 'existing local or parameter'],
 	['$x = 1; ++$x[0];', 'operator[] with 1 argument(s) overload resolution is deferred'],
 	['$x = 1; return $x++ + $x;', 'order-independent operands'],
 	['$x = 1; return 1 + (int)$x++;', 'order-independent operands'],

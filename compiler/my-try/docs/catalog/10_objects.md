@@ -515,7 +515,28 @@ retry and repair. `/tmp/ch10-nullable-joins-final-php/` verifies wrapper result
 spelling and incremental join invalidation; `/tmp/ch10-nullable-joins-regression/`
 passes five focused PHP suites. No native compiler rebuild or conversion was performed.
 
-Next discussion: property operation completeness.
+The following checkpoint covers bounded property updates.
+
+## Property mutation integration — 2026-10-07
+
+Instance/static properties now join locals/parameters in the existing mutation
+target admission. Prepared property places already carry stable storage and
+writability; existing operator selection, conversions and C++ lowering implement
+compound and prefix/postfix updates without parallel member implementations.
+Class/struct and expression-qualified static forms share this path. RHS effect
+restrictions, instance receiver lifetime gates and nonescaping result values remain.
+The [authoritative contract](../../../../specs/static_members_v0_2.md#property-updates--2026-10-07)
+records ordering and failed-write-back behavior. No AST or retained-model changes.
+
+Focused suite: `tests/property_mutations.php`, run through `tests/records.py`.
+`/tmp/ch10-property-mutations-final/` passes 12 generated programs without PCH:
+instance/static updates, boxed payloads, expression-qualifier single evaluation,
+read-only static qualification and failed write-back. Preparation rejects constants,
+private/read-only instance targets, weak/temporary receivers and effectful RHS.
+`/tmp/ch10-property-mutations-regression/` passes five focused PHP suites.
+No native compiler rebuild or conversion was performed.
+
+Next discussion: property type inference and construction conveniences.
 
 ## Chapter 09 carryovers
 
@@ -565,10 +586,10 @@ a native compiler rebuild. Existing checkpoint suites supply behavioral evidence
    payload-dependent copy capability, checked extraction, presence and condition
    admission and exact copyable-payload selection joins. Bare handles
    retain their own absence state; inline records require a real nullable wrapper.
-2. **Property operation completeness.** Plain reads/writes are covered. Compound
-   assignment and prefix/postfix mutation on instance/static properties remain
-   gated, as do static-property native-reference escapes. Discuss the bounded
-   common property-place operation rather than duplicating each spelling.
+2. **Property operation completeness — bounded updates complete.** Plain reads/writes,
+   compound assignment and prefix/postfix mutation share existing property places.
+   Static-property native-reference escapes and nested plain assignment expressions
+   remain gated; property probes retain their separate admission boundary.
 3. **Property type inference and construction conveniences.** Explicitly typed
    fields are covered; NOTE-050's inference from defaults is not. CH09's bare
    value/shared/unique construction shortcuts remain unagreed; explicit storage

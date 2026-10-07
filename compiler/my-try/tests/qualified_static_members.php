@@ -72,8 +72,6 @@ foreach ([
 	'class C { private static int $n; } $c C; $c::$n = 1;',
 	'class C { private const LIMIT = 5; } $c C; return $c::LIMIT;',
 	'class C { static int $n; } $c C; $a =& $c::$n;',
-	'class C { static int $n; } $c C; $c::$n++;',
-	'class C { static int $n; } $c C; $c::$n += 1;',
 	'$c dynamic = {}; return $c::LIMIT;',
 	'$c mixed = []; return $c::$n;',
 ] as $source) {

@@ -36,8 +36,10 @@ final class Mutation_Preparation
 		if ($syntax instanceof index_node) {
 			Expression_Preparation::prepare($syntax, $context);
 		}
-		if (!($syntax instanceof variable_reference_node)) {
-			throw new \RuntimeException('S2S mutation requires an existing local or parameter target');
+		if (!($syntax instanceof variable_reference_node)
+			&& !($syntax instanceof field_access_node)
+			&& !($syntax instanceof static_member_reference_node)) {
+			throw new \RuntimeException('S2S mutation requires an existing local or parameter target, or stable property storage');
 		}
 		$target = Expression_Preparation::prepare($syntax, $context);
 		if (!$target->addressable()) {

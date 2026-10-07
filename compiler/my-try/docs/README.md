@@ -72,8 +72,9 @@ adds construction, payload-aware copying, checked extraction and null comparison
 The [record observations/collection-only emptiness checkpoint](catalog/10_objects.md#record-observation-and-collection-only-empty--2026-10-07)
 adds noncopying `isset`/conditions and replaces absence-style `empty` consistently.
 The [nullable selection checkpoint](catalog/10_objects.md#nullable-record-selection-joins--2026-10-07)
-adds exact copyable-payload ternary/Elvis/coalescing joins. Next discussion: property
-operation completeness through a common property-place path.
+adds exact copyable-payload ternary/Elvis/coalescing joins. Property compound and
+prefix/postfix updates now reuse the common mutation worker and existing property
+places. Next discussion: property type inference and construction conveniences.
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are

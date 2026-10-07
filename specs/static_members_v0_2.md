@@ -61,7 +61,7 @@ are valid as with static calls; evaluating the qualifier can still fail normally
 Expression-qualified constants are runtime expressions, not constant expressions.
 Reject them in constant declarations, constant-only defaults and switch/match labels;
 never discard qualifier effects during folding. Constants cannot be assigned.
-Dynamic names, compound updates, increment/decrement, reference escapes and nested
+Dynamic names, reference escapes and nested
 value-producing property assignments are not enabled by this slice. Interface and
 inherited qualification remain subject to CH11's pending contracts.
 
@@ -94,8 +94,26 @@ may be substituted from their prepared immutable values; no runtime storage is r
 
 ## Explicit boundaries
 
-Native-reference escape from static properties, compound updates and increment/
-decrement remain gated. Inherited lookup/access, `parent::`, late-bound
+Native-reference escape from static properties remains gated. Inherited lookup/access, `parent::`, late-bound
 `static::`, protected/override/abstract/final semantics and inherited construction
 belong in CH11 after relationship and dispatch prerequisites. These gates do not
 claim permanent language prohibitions.
+
+## Property updates — 2026-10-07
+
+Instance and static properties of classes/structs accept the same compound
+assignments and prefix/postfix increment/decrement as existing local storage,
+subject to the property's type, visibility and writability. No new operators or
+implicit conversions are conferred by property storage. Constants reject updates.
+
+Resolve the target once. Expression-qualified static updates evaluate/discard the
+qualifier once before accessing type-owned storage, including absent or read-only
+qualifiers. Instance updates require existing stable receiver storage and respect
+read-only access and explicit weak locking. Temporary receiver support is unchanged.
+
+Compound RHS expressions retain the current order-independent-operand restriction.
+Computation and conversion precede write-back: failure does not perform the final
+assignment, but earlier evaluation effects are not rolled back. Compound and prefix
+updates yield the new value; postfix yields the old value. These are value results,
+not escaping references. Indexed updates, static-property reference escapes and
+nested plain-property assignment expressions remain outside this slice.
