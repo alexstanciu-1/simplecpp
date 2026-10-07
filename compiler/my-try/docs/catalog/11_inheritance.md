@@ -20,6 +20,9 @@ Continue on those same member categories, in this order:
 
 CH10 cards CLASS-PROP-006B/006C/008/002C/002D, CLASS-CALL-005/005A/008A,
 CLASS-CONST-004/005 and inheritance-dependent member modifiers track this transfer.
+The CH10 reconciliation also maps CLASS-CALL-007 and CLASS-MEMBER-013 here; the
+interface/abstract part of TYPE-PARAM-004 and protected parts of TYPE-PROP-001/002
+share these prerequisites. Their concrete/public counterparts do not await CH11.
 Concrete-type `$object::method()` is owned by CH10; its inheritance-dependent
 extensions are recorded below.
 

@@ -420,16 +420,66 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Progress
 
+### Reconciliation — 2026-10-07
+
+Reconciled the working rows and individual card decisions against the dated CH10
+proofs, current preparation/emission and authoritative amendments. Original imported
+examples remain intact as historical evidence, not additional implementation work.
+Counts include one synthetic data row and two prose rows; they are not code coverage:
+49 supported-bounded, 17 deferred-CH11, 5 deliberate rejections, 3 gated,
+1 pending-discussion, 4 partial-split, 1 reconciled-bounded and 1 deferred-legacy
+(81 rows including the separate legacy table).
+
+`partial-split` means the imported example combines supported concrete-record work
+with a still-unimplemented qualifier such as nullable records or protected/interface
+access. `gated` records an intentional current rejection, not a promise that its
+broader lifetime/callable model has been implemented. No new language behavior was
+enabled by this reconciliation.
+
+Focused PHP-host audit `/tmp/ch10-reconciliation/` confirms emitted qualified
+construction and vector-valued method parameters; preparation rejects unknown fields
+and overloads, parsing rejects dynamic member names/callable-variable invocation,
+and `?Class`/`?Struct` initialization still hits the scalar-only nullable-operation
+gate. These nine diagnostic/emission probes are not generated-program execution or
+a native compiler rebuild. Existing checkpoint suites supply behavioral evidence.
+
+### Actual remaining work and owners
+
+1. **Nullable records and handle spelling — recommended next discussion.**
+   TYPE-VAR-004, nullable portions of TYPE-PARAM-004/TYPE-PROP-002 and the CH09
+   nullable-inline-record carryover need one contract. Bare class/shared handles
+   already allow absence; current `?T` syntax builds the nullable family, but its
+   operations remain scalar-only. Do not silently inherit the v0.1 claim that `A`
+   and `?A` always lower identically. Settle record values versus nullable handles,
+   construction, copying/extraction and member-access boundaries before implementation.
+2. **Property operation completeness.** Plain reads/writes are covered. Compound
+   assignment and prefix/postfix mutation on instance/static properties remain
+   gated, as do static-property native-reference escapes. Discuss the bounded
+   common property-place operation rather than duplicating each spelling.
+3. **Property type inference and construction conveniences.** Explicitly typed
+   fields are covered; NOTE-050's inference from defaults is not. CH09's bare
+   value/shared/unique construction shortcuts remain unagreed; explicit storage
+   forms and argument-bearing class/struct construction are already covered.
+4. **Existing later owners, not new CH10 blockers.** Interface/abstract/protected,
+   inherited lookup and virtual/late-static dispatch belong to CH11. Method receiver
+   lifetime extensions are already CH15-METHOD-LIFETIME-01. Broader reference returns
+   retain CH07/CH15 debt and current same-origin restrictions. Bound method callable
+   values await the CH12 callable/lifetime foundation; this reconciliation does not
+   approve that feature or reinterpret a plain two-element list as a callable.
+5. **Closeout.** Reconcile any remaining decisions/proofs, perform CH10-PERF-01's
+   test-duration review, then the requested chapter native compiler validation.
+   CH10 is not closed by replacing stale pending labels.
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [CH10-DATA-001](#authored-constructors--2026-10-07) | supported-bounded | `data struct A { int $x; } $a A = {x: 1};` | prepared | verified | deferred | Shared synthesized/authored typed inputs; `records.py --suite constructors` |
 | [CLASS-DECL-001](#class-decl-001) | supported-bounded | `class A {}` | prepared | verified | deferred | Plain class/struct records; `tests/records.py` |
-| [CLASS-PROP-001](#class-prop-001) | pending-discussion | `class A { int $x; }` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-PROP-001](#class-prop-001) | supported-bounded | `class A { int $x; }` | prepared (bounded) | see proof | deferred | Typed public/private fields; protected access CH11 |
 | [CLASS-PROP-002](#class-prop-002) | supported-bounded | `class A { int $x = 1; }` | prepared | verified | deferred | Class/struct constant and data-construction defaults; `records.py --suite property_defaults` |
 | [CLASS-PROP-003](#class-prop-003) | supported-bounded | `class A { int $x; }` | prepared | verified | deferred | Public typed instance property; no initializer |
-| [CLASS-PROP-004](#class-prop-004) | supported-bounded | `$this->x = 1;` | prepared | verified | deferred | Constructor bodies; general method execution deferred |
+| [CLASS-PROP-004](#class-prop-004) | supported-bounded | `$this->x = 1;` | prepared | verified | deferred | Constructors, methods and destructors; declared writable fields |
 | [CLASS-PROP-005](#class-prop-005) | supported-bounded | `$a->x = 1;` | prepared | verified | deferred | Stable receiver; heap interiors not borrowable |
 | [CLASS-PROP-006](#class-prop-006) | supported-bounded | `A::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-006A](#class-prop-006a) | supported-bounded | `self::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
@@ -437,8 +487,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-006C](#class-prop-006c) | deferred-CH11 | `static::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-007](#class-prop-007) | supported-bounded | `$a::$x = 2;` | shared static member | qualifier before RHS | deferred | Plain writes/read/constant checkpoint; no compound/reference forms |
 | [CLASS-PROP-008](#class-prop-008) | deferred-CH11 | `class B extends A { function f(): void { $this->x = 1; } }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
-| [CLASS-PROP-009](#class-prop-009) | pending-discussion | `$this->y = 1;` where `y` is undeclared | unverified | unverified | deferred | — |
-| [CLASS-PROP-010](#class-prop-010) | pending-discussion | `$this->$name = 1;` | unverified | unverified | deferred | — |
+| [CLASS-PROP-009](#class-prop-009) | rejected | `$this->y = 1;` where `y` is undeclared | rejected | not emitted | deferred | Unknown property; preparation rejection verified in records.php and audit |
+| [CLASS-PROP-010](#class-prop-010) | rejected | `$this->$name = 1;` | rejected | not emitted | deferred | Computed property names reject in parsing; dynamic-family -> stays CH15 |
 | [CLASS-PROP-011](#class-prop-011) | supported-bounded | `class A { public int $x = 1; public static int $s = 2; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CALL-001](#class-call-001) | supported-bounded | `$a->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-CALL-002](#class-call-002) | supported-bounded | `A::f(1);` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
@@ -446,12 +496,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-CALL-004](#class-call-004) | supported-bounded | `$this->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-CALL-005](#class-call-005) | deferred-CH11 | `parent::f(1);` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-CALL-005A](#class-call-005a) | deferred-CH11 | `static::f(1);`<br>`static::f(1)` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
-| [CLASS-CALL-006](#class-call-006) | pending-discussion | `function f(): int { return 1; }` | unverified | unverified | deferred | — |
-| [CLASS-CALL-007](#class-call-007) | pending-discussion | `$i->f(1);` | unverified | unverified | deferred | — |
+| [CLASS-CALL-006](#class-call-006) | supported-bounded | `function f(): int { return 1; }` | prepared (bounded) | see proof | deferred | Ordinary methods are nonvirtual; methods.php; inheritance CH11 |
+| [CLASS-CALL-007](#class-call-007) | deferred-CH11 | `$i->f(1);` | see reconciliation | see reconciliation | deferred | Interface relationships and dispatch |
 | [CLASS-CALL-008](#class-call-008) | supported-bounded | `new A(1)` | prepared | verified | deferred | Fixed public constructor; class/struct and storage variants |
 | [CLASS-CALL-008A](#class-call-008a) | deferred-CH11 | `new static(1)` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
-| [CLASS-CALL-009](#class-call-009) | pending-discussion | `$a->$name();` | unverified | unverified | deferred | — |
-| [CLASS-CALL-010](#class-call-010) | pending-discussion | `[$a, 'f']` | unverified | unverified | deferred | — |
+| [CLASS-CALL-009](#class-call-009) | rejected | `$a->$name();` | rejected | not emitted | deferred | Computed method names reject in parsing; existing contract |
+| [CLASS-CALL-010](#class-call-010) | gated | `[$a, 'f']` | see reconciliation | see reconciliation | deferred | Bound callable invocation needs a callable-value contract; plain list data is not forbidden |
 | [CLASS-CALL-011](#class-call-011) | rejected | explicit destructor invocation pattern | preparation rejection | not emitted | deferred | Automatic ownership-driven cleanup only |
 | [CLASS-CALL-012](#class-call-012) | supported-bounded | `static function g(int $x): int { return $x; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CONST-001](#class-const-001) | supported-bounded | `class A { public const X = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
@@ -460,11 +510,11 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-CONST-004](#class-const-004) | deferred-CH11 | `parent::X` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-CONST-005](#class-const-005) | deferred-CH11 | `static::X` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-001](#class-member-001) | supported-bounded | `function f(int $a): int { return $a; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-MEMBER-001B](#class-member-001b) | pending-discussion | `function f(vector<int> $a): int { return 1; }` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [CLASS-MEMBER-002](#class-member-002) | pending-discussion | `function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-003](#class-member-003) | pending-discussion | `function f(int $value): int { return $value; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-001B](#class-member-001b) | supported-bounded | `function f(vector<int> $a): int { return 1; }` | prepared (bounded) | see proof | deferred | Strict vector<T> parameters; method_parameters.php; PHPDoc spelling remains legacy |
+| [CLASS-MEMBER-002](#class-member-002) | supported-bounded | `function f(int $a): int { return $a; }` | prepared (bounded) | see proof | deferred | Explicit ordinary return types; constructor/destructor exceptions |
+| [CLASS-MEMBER-003](#class-member-003) | supported-bounded | `function f(int $value): int { return $value; }` | prepared (bounded) | see proof | deferred | Parameter identity and normalized names preserved; shared callable tests |
 | [CLASS-MEMBER-004](#class-member-004) | supported-bounded | `static function f(int $a): int { return $a; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
-| [CLASS-MEMBER-005](#class-member-005) | pending-discussion | `function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-005](#class-member-005) | supported-bounded | `function f(int $a): int { return $a; }` | prepared (bounded) | see proof | deferred | Implicit instance context; methods.php |
 | [CLASS-MEMBER-006](#class-member-006) | deferred-CH11 | `abstract function f(int $a): int;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-007](#class-member-007) | deferred-CH11 | `#[\Override] function f(int $a): int { return $a; }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-008](#class-member-008) | deferred-CH11 | `final function f(int $a): int { return $a; }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
@@ -472,16 +522,16 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-010](#class-member-010) | deferred-CH11 | `#[\Override] static function f(): int { return 1; }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-011](#class-member-011) | supported-bounded | `function __construct(int $x) { $this->x = $x; }` | prepared | verified | deferred | Shared callable lifecycle and out-of-line body; also `set:` |
 | [CLASS-MEMBER-012](#class-member-012) | supported-bounded | `function __destruct() {}` | shared callable | out-of-line noexcept | deferred | Public, zero inputs; storage-driven cleanup |
-| [CLASS-MEMBER-013](#class-member-013) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-013](#class-member-013) | deferred-CH11 | `interface I { function f(int $a): int; }` | see reconciliation | see reconciliation | deferred | Interface contracts and dispatch |
 | [CLASS-MEMBER-014](#class-member-014) | supported-bounded | `private function f(): int { return 1; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-MEMBER-015](#class-member-015) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-015](#class-member-015) | rejected | `function f(int $a): int {} function f(string $a): int {}` | rejected | not emitted | deferred | Duplicate method names reject during preparation; no overloading |
 | [CLASS-MEMBER-016](#class-member-016) | supported-bounded | `function f(int $a = 1): int { return $a; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-017](#class-member-017) | supported-bounded | `function f(int ...$a): int { return 1; }` | prepared | verified | deferred | Shared method parameters; records.py --suite method_parameters |
 | [CLASS-MEMBER-018A](#class-member-018a) | supported-bounded | `function f(int &$a): void {}` | prepared | verified | deferred | Shared method parameters; records.py --suite method_parameters |
-| [CLASS-MEMBER-018B](#class-member-018b) | pending-discussion | `function &f(): int {}` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-018C](#class-member-018c) | supported-bounded | `function &f(int &$a): int {}` | shared callable | same-origin checked | generated execution | Complete body required; same-origin method return checkpoint |
-| [CLASS-MEMBER-018D](#class-member-018d) | supported-bounded | explicit PHP reference syntax on method/member signature | shared callable | exact stable storage | generated execution | Fixed references and same-origin returns only |
-| [CLASS-MEMBER-018E](#class-member-018e) | pending-discussion | `function &f() { return $this->x; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-018B](#class-member-018b) | gated | `function &f(): int {}` | see reconciliation | see reconciliation | deferred | No-origin reference return rejected; exactly one writable reference parameter required |
+| [CLASS-MEMBER-018C](#class-member-018c) | supported-bounded | `function &f(int &$a): int {}` | shared callable | same-origin checked | deferred | Complete body required; same-origin method return checkpoint |
+| [CLASS-MEMBER-018D](#class-member-018d) | supported-bounded | explicit PHP reference syntax on method/member signature | shared callable | exact stable storage | deferred | Fixed references and same-origin returns only |
+| [CLASS-MEMBER-018E](#class-member-018e) | gated | `function &f() { return $this->x; }` | see reconciliation | see reconciliation | deferred | Receiver/property reference escape not enabled; method_returns.php |
 | [CLASS-PROP-002A](#class-prop-002a) | supported-bounded | `class A { static int $x = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-002B](#class-prop-002b) | supported-bounded | `self::$x` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-002C](#class-prop-002c) | deferred-CH11 | `parent::$x` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
@@ -489,21 +539,21 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-METHOD-001](#class-method-001) | supported-bounded | `class A { function f(): int { return 1; } }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-METHOD-002](#class-method-002) | supported-bounded | `class A { static function f(int $a): int { return $a; } }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-THIS-001](#class-this-001) | supported-bounded | `class A { int $x; function f(): int { return $this->x; } }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-NEW-001](#class-new-001) | pending-discussion | `$a = new A();` | unverified | unverified | deferred | — |
-| [CLASS-NEW-002](#class-new-002) | pending-discussion | `$a = new \A\B();` | unverified | unverified | deferred | — |
+| [CLASS-NEW-001](#class-new-001) | supported-bounded | `$a = new A();` | prepared (bounded) | see proof | deferred | Class/struct storage matrix; records.php and constructors.php |
+| [CLASS-NEW-002](#class-new-002) | supported-bounded | `$a = new \A\B();` | prepared (bounded) | see proof | deferred | Qualified construction accepted/emitted in audit; no new generated execution proof |
 | [CLASS-CONSTRUCT-001](#class-construct-001) | supported-bounded | `class A { function __construct(int $x) { $this->x = $x; } }` | prepared | verified | deferred | Public constructor, declared properties, out-of-line body; no return type |
-| [OBJ-PROP-READ-001](#obj-prop-read-001) | pending-discussion | `$a = $obj->x;` | unverified | unverified | deferred | — |
-| [OBJ-PROP-WRITE-001](#obj-prop-write-001) | pending-discussion | `$obj->x = 1;` | unverified | unverified | deferred | — |
+| [OBJ-PROP-READ-001](#obj-prop-read-001) | supported-bounded | `$a = $obj->x;` | prepared (bounded) | see proof | deferred | Fixed record properties; records.php; dynamic-family -> CH15 |
+| [OBJ-PROP-WRITE-001](#obj-prop-write-001) | supported-bounded | `$obj->x = 1;` | prepared (bounded) | see proof | deferred | Plain fixed property writes; records.php; compound/receiver extensions separate |
 | [OBJ-METHOD-CALL-001](#obj-method-call-001) | supported-bounded | `$a = $obj->f();` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [OBJ-METHOD-CALL-002](#obj-method-call-002) | supported-bounded | `$a = $obj->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [TYPE-VAR-003](#type-var-003) | pending-discussion | `$x A = new A();` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [TYPE-VAR-003](#type-var-003) | supported-bounded | `$x A = new A();` | prepared (bounded) | see proof | deferred | Explicit record storage construction; records.php and constructors.php |
 | [TYPE-VAR-004](#type-var-004) | pending-discussion | `$x ?A = null;` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-PARAM-004](#type-param-004) | pending-discussion | `function f(A $a, ?B $b, I $i): A { return $a; }` | unverified | unverified | deferred | — |
-| [TYPE-PROP-001](#type-prop-001) | pending-discussion | `class A { protected string $s; protected B $b; }` | unverified | unverified | deferred | — |
-| [TYPE-PROP-001B](#type-prop-001b) | pending-discussion | `class A { public int $x; }` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
-| [TYPE-PROP-002](#type-prop-002) | pending-discussion | `class A { protected ?string $x; protected ?B $b; }` | unverified | unverified | deferred | — |
-| [NOTE-029](#note-029) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-050](#note-050) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [TYPE-PARAM-004](#type-param-004) | partial-split | `function f(A $a, ?B $b, I $i): A { return $a; }` | see reconciliation | see reconciliation | deferred | Concrete record boundaries supported; nullable records pending CH10; interfaces/abstract types CH11 |
+| [TYPE-PROP-001](#type-prop-001) | partial-split | `class A { protected string $s; protected B $b; }` | see reconciliation | see reconciliation | deferred | Public/private typed fields supported; protected access CH11 |
+| [TYPE-PROP-001B](#type-prop-001b) | supported-bounded | `class A { public int $x; }` | prepared (bounded) | see proof | deferred | Strict public typed field; records.php; legacy spelling separate |
+| [TYPE-PROP-002](#type-prop-002) | partial-split | `class A { protected ?string $x; protected ?B $b; }` | see reconciliation | see reconciliation | deferred | Nullable scalar fields supported; nullable records pending CH10; protected access CH11 |
+| [NOTE-029](#note-029) | reconciled-bounded | — (example pending) | see reconciliation | see reconciliation | deferred | Construction/static slices supersede imported struct-argument and unevaluated-qualifier restrictions |
+| [NOTE-050](#note-050) | partial-split | — (example pending) | see reconciliation | see reconciliation | deferred | See reconciliation: layout/members/lifecycle supported; inference/updates/shortcuts and CH11 remain |
 
 ### Deferred legacy syntax
 
@@ -514,7 +564,8 @@ These syntax-specific entries are retained for traceability, not scheduled befor
 | [CLASS-PROP-001B](#class-prop-001b) | deferred-legacy | `class A { public /** int */ int $x; }` | unverified | unverified | deferred | Legacy annotation syntax only; outside strict-first work |
 ## CLASS-DECL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Plain class/struct records; `tests/records.py`.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -551,9 +602,10 @@ class A { public: };
 
 ## CLASS-PROP-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Typed public/private fields; protected access CH11.
+See the progress table and dated checkpoints; imported text below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
 
 ### Imported version 1
 
@@ -624,7 +676,7 @@ class A { public: int_t x; };
 
 **Scope:** Legacy annotation syntax; deferred. This is not a strict-mode implementation prerequisite.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-legacy. Strict typed properties are covered separately.
 
 ### Imported version 1
 
@@ -661,9 +713,10 @@ ERROR
 
 ## CLASS-PROP-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Class/struct constant and data-construction defaults; `records.py --suite property_defaults`.
+See the progress table and dated checkpoints; imported text below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
 
 ### Imported version 1
 
@@ -732,7 +785,8 @@ class A { public: int_t x = static_cast<int_t>(1); };
 
 ## CLASS-PROP-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Public typed instance property; no initializer.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -767,7 +821,8 @@ property declaration appears only in header
 
 ## CLASS-PROP-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Constructor bodies; general method execution deferred.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -804,7 +859,8 @@ this->x = static_cast<int_t>(1);
 
 ## CLASS-PROP-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Stable receiver; heap interiors not borrowable.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -841,7 +897,8 @@ a->x = static_cast<int_t>(1);
 
 ## CLASS-PROP-006
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -878,7 +935,8 @@ A::x = static_cast<int_t>(1);
 
 ## CLASS-PROP-006A
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -915,7 +973,8 @@ CurrentClass::x = static_cast<int_t>(1);
 
 ## CLASS-PROP-006B
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -952,7 +1011,8 @@ ParentClass::x = static_cast<int_t>(1);
 
 ## CLASS-PROP-006C
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1026,7 +1086,8 @@ $a::$x = 2;
 
 ## CLASS-PROP-008
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1063,7 +1124,8 @@ this->x = static_cast<int_t>(1);
 
 ## CLASS-PROP-009
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** rejected. Unknown property; preparation rejection verified in records.php and audit.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1098,7 +1160,8 @@ ERROR
 
 ## CLASS-PROP-010
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** rejected. Computed property names reject in parsing; dynamic-family -> stays CH15.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1133,7 +1196,8 @@ ERROR
 
 ## CLASS-PROP-011
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1168,7 +1232,8 @@ class A { public int $x = 1; public static int $s = 2; }
 
 ## CLASS-CALL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1205,7 +1270,8 @@ a->f(static_cast<int_t>(1));
 
 ## CLASS-CALL-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1316,7 +1382,8 @@ $a::f(1);
 
 ## CLASS-CALL-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1353,7 +1420,8 @@ this->f(static_cast<int_t>(1));
 
 ## CLASS-CALL-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1390,9 +1458,10 @@ base::f(static_cast<int_t>(1));
 
 ## CLASS-CALL-005A
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
 
 ### Imported version 1
 
@@ -1457,7 +1526,8 @@ file-local late-static lowering helper path
 
 ## CLASS-CALL-006
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Ordinary methods are nonvirtual; methods.php; inheritance CH11.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1492,7 +1562,8 @@ ordinary non-virtual declaration unless another explicit rule applies
 
 ## CLASS-CALL-007
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. Interface relationships and dispatch.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1529,9 +1600,10 @@ i->f(static_cast<int_t>(1));
 
 ## CLASS-CALL-008
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed public constructor; class/struct and storage variants.
+See the progress table and dated checkpoints; imported text below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
 
 ### Imported version 1
 
@@ -1600,7 +1672,8 @@ create<A>(static_cast<int_t>(1))
 
 ## CLASS-CALL-008A
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1635,7 +1708,8 @@ file-local late-static lowering helper path
 
 ## CLASS-CALL-009
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** rejected. Computed method names reject in parsing; existing contract.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1670,7 +1744,8 @@ ERROR
 
 ## CLASS-CALL-010
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** gated. Bound callable invocation needs a callable-value contract; plain list data is not forbidden.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1738,7 +1813,8 @@ ERROR
 
 ## CLASS-CALL-012
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1773,9 +1849,10 @@ header contains qualifiers; source contains plain out-of-line definition
 
 ## CLASS-CONST-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
 
 ### Imported version 1
 
@@ -1844,7 +1921,8 @@ class A { public: static constexpr auto X = static_cast<int_t>(1); };
 
 ## CLASS-CONST-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1881,7 +1959,8 @@ A::X
 
 ## CLASS-CONST-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1918,7 +1997,8 @@ CurrentClass::X
 
 ## CLASS-CONST-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1955,7 +2035,8 @@ ParentClass::X
 
 ## CLASS-CONST-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -1990,9 +2071,10 @@ file-local late-static lowering helper path
 
 ## CLASS-MEMBER-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
 
 ### Imported version 1
 
@@ -2063,9 +2145,10 @@ int_t f(int_t a);
 
 **Strict-mode PHP input example:** `function f(vector<int> $a): int { return 1; }`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This strict spelling is supported by the shared method parameter contract. The
+imported PHPDoc annotation remains legacy-only.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. See method_parameters.php and the reconciliation probe.
 
 ### Imported version 1
 
@@ -2102,7 +2185,8 @@ int_t f(const vector_t<int_t>& a);
 
 ## CLASS-MEMBER-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Explicit ordinary return types; constructor/destructor exceptions.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2139,7 +2223,8 @@ int_t f(int_t a);
 
 ## CLASS-MEMBER-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Parameter identity and normalized names preserved; shared callable tests.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2176,7 +2261,8 @@ int_t f(int_t value);
 
 ## CLASS-MEMBER-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2211,7 +2297,8 @@ static function f(int $a): int { return $a; }
 
 ## CLASS-MEMBER-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Implicit instance context; methods.php.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2248,7 +2335,8 @@ int_t f(int_t a);
 
 ## CLASS-MEMBER-006
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2285,7 +2373,8 @@ virtual int_t f(int_t a) = 0;
 
 ## CLASS-MEMBER-007
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2322,7 +2411,8 @@ int_t f(int_t a) override;
 
 ## CLASS-MEMBER-008
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2359,7 +2449,8 @@ int_t f(int_t a) final;
 
 ## CLASS-MEMBER-009
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2394,7 +2485,8 @@ ERROR
 
 ## CLASS-MEMBER-010
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2429,7 +2521,8 @@ ERROR
 
 ## CLASS-MEMBER-011
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Shared callable lifecycle and out-of-line body; also `set:`.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2500,7 +2593,8 @@ function __destruct() {}
 
 ## CLASS-MEMBER-013
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. Interface contracts and dispatch.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2537,9 +2631,10 @@ virtual int_t f(int_t a) = 0;
 
 ## CLASS-MEMBER-014
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
 
 ### Imported version 1
 
@@ -2604,7 +2699,8 @@ declaration emitted under `private:` section
 
 ## CLASS-MEMBER-015
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** rejected. Duplicate method names reject during preparation; no overloading.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2641,7 +2737,8 @@ ERROR
 
 ## CLASS-MEMBER-016
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2676,7 +2773,8 @@ function f(int $a = 1): int { return $a; }
 
 ## CLASS-MEMBER-017
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Shared method parameters; records.py --suite method_parameters.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2713,7 +2811,8 @@ int_t f(const vector_t<int_t>& a) { return static_cast<int_t>(1); }
 
 ## CLASS-MEMBER-018A
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Shared method parameters; records.py --suite method_parameters.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2750,7 +2849,8 @@ void_t f(int_t& a);
 
 ## CLASS-MEMBER-018B
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** gated. No-origin reference return rejected; exactly one writable reference parameter required.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2859,7 +2959,8 @@ literal reference-preserving C++ signature
 
 ## CLASS-MEMBER-018E
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** gated. Receiver/property reference escape not enabled; method_returns.php.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2896,7 +2997,8 @@ ERROR
 
 ## CLASS-PROP-002A
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2931,7 +3033,8 @@ class A { static int $x = 1; }
 
 ## CLASS-PROP-002B
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -2968,7 +3071,8 @@ CurrentClass::x
 
 ## CLASS-PROP-002C
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3005,7 +3109,8 @@ ParentClass::x
 
 ## CLASS-PROP-002D
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3040,7 +3145,8 @@ file-local late-static lowering helper path
 
 ## CLASS-METHOD-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3075,7 +3181,8 @@ header declaration + out-of-line source definition
 
 ## CLASS-METHOD-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Static member slice; records.py --suite static_members.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3110,7 +3217,8 @@ class A { static function f(int $a): int { return $a; } }
 
 ## CLASS-THIS-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3147,7 +3255,8 @@ int_t A::f() { return this->x; }
 
 ## CLASS-NEW-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Class/struct storage matrix; records.php and constructors.php.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3184,7 +3293,8 @@ auto a = create<A>();
 
 ## CLASS-NEW-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Qualified construction accepted/emitted in audit; no new generated execution proof.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3221,7 +3331,8 @@ auto a = create<::scpp::A::B>();
 
 ## CLASS-CONSTRUCT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Public constructor, declared properties, out-of-line body; no return type.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3256,7 +3367,8 @@ class A { function __construct(int $x) { $this->x = $x; } }
 
 ## OBJ-PROP-READ-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed record properties; records.php; dynamic-family -> CH15.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3281,7 +3393,8 @@ _Not supplied in source._
 
 ## OBJ-PROP-WRITE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Plain fixed property writes; records.php; compound/receiver extensions separate.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3306,7 +3419,8 @@ _Not supplied in source._
 
 ## OBJ-METHOD-CALL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3331,7 +3445,8 @@ _Not supplied in source._
 
 ## OBJ-METHOD-CALL-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. Fixed instance slice; receiver lifetime gates apply.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3358,9 +3473,9 @@ _Not supplied in source._
 
 **Strict-mode PHP input example:** `$x A = new A();`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This strict spelling uses the existing record construction and storage boundary.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. See records.php and constructors.php.
 
 ### Imported version 1
 
@@ -3438,7 +3553,8 @@ shared_p<A> x = null;
 
 ## TYPE-PARAM-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** partial-split. Concrete record boundaries supported; nullable records pending CH10; interfaces/abstract types CH11.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3475,7 +3591,8 @@ shared_p<A> f(shared_p<A> a, shared_p<B> b, shared_p<I> i) { return a; }
 
 ## TYPE-PROP-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** partial-split. Public/private typed fields supported; protected access CH11.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3514,9 +3631,10 @@ class B; class A { protected: string_t s; shared_p<B> b; };
 
 **Strict-mode PHP input example:** `class A { public int $x; }`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This strict spelling uses the shared typed property model. Imported PHPDoc spelling
+is not newly enabled.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded. See records.php.
 
 ### Imported version 1
 
@@ -3553,7 +3671,8 @@ class A { public: int_t x; };
 
 ## TYPE-PROP-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** partial-split. Nullable scalar fields supported; nullable records pending CH10; protected access CH11.
+See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
 
@@ -3592,7 +3711,11 @@ class B; class A { protected: nullable<string_t> x; shared_p<B> b; };
 
 **Source:** [generators/php/specs/rules.md:520](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** reconciled-bounded. Record construction, rooted/imported
+lookup and static access have dated checkpoints above. v0.2 now supports constructor
+arguments for structs and explicit storage overrides; expression qualifiers execute
+once rather than using unevaluated `decltype`. Preparation diagnoses invalid targets.
+The incompatible v0.1 restrictions below are superseded, not outstanding tasks.
 
 > ## 15. Class Construction and Static Access
 >
@@ -3640,7 +3763,12 @@ class B; class A { protected: nullable<string_t> x; shared_p<B> b; };
 
 **Source:** [generators/php/specs/rules.md:1102](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision / examples:** partial-split. Partitioned output, typed fields,
+public/private members, methods, constructors/destructors and qualified static access
+are covered above. Relationships/dispatch belong to CH11. Default-based property
+type inference, compound property updates and bare ownership construction shortcuts
+are still unimplemented/unagreed; legacy annotation forms remain deferred. Explicit
+source types and current preparation diagnostics supersede the v0.1 type-blind rules.
 
 > ## 16. Classes, Inheritance, and Members
 >

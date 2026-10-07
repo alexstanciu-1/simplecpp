@@ -64,6 +64,11 @@ experiment retained for regressions, not a second semantic development path.
 | Current handoff | CH08/09 [cumulative native validation passed](portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809). CH10's records, defaults, `data` construction, constructors, instance/static methods, shared reference/variadic parameters, same-origin method returns, expression-qualified static members and [destructors](catalog/10_objects.md#destructors-and-automatic-cleanup--2026-10-07) pass focused PHP-host/generated-program checks. [CH10 checkpoints](catalog/10_objects.md) retain detailed proof boundaries. Inheritance-dependent behavior is ordered in CH11; CH10 remains open. The [test-duration review](catalog/10_objects.md#ch10-perf-01--test-duration-review-before-native-build) precedes CH10 native validation. [Chapter 15 debt](catalog/15_blocking_debt.md) remains |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
+CH10's [reconciled inventory](catalog/10_objects.md#reconciliation--2026-10-07)
+distinguishes completed duplicate cards, intentional gates and later chapter owners.
+Recommended next discussion: nullable record values versus already-nullable class
+handles; no new implementation is authorized by that inventory.
+
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are
 historical, including statements of what was “current” at their recorded checkpoint.
