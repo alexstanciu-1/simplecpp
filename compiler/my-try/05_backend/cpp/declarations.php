@@ -5,6 +5,18 @@ namespace scpp\compiler;
 
 final class CPP_Declarations
 {
+	/** Render settled access without interpreting source modifiers or ancestry. */
+	public static function visibility(member_visibility $visibility): string
+	{
+		if ($visibility === member_visibility::public_access) {
+			return "public:\n";
+		}
+		if ($visibility === member_visibility::protected_access) {
+			return "protected:\n";
+		}
+		return "private:\n";
+	}
+
 	/** Value/layout sites use complete definitions unless explicitly classified otherwise. */
 	public static function type(canonical_type_use $type, cpp_generation_context $context): string
 	{
@@ -126,7 +138,7 @@ final class CPP_Declarations
 		$return_prefix = self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ';
 		if ($function_declaration instanceof collected_method) {
 			$method = object_cast($function_declaration, collected_method::class);
-			$record_name = CPP_Generator::source_name('record', $method->declaring_record()->qualified_name());
+			$record_name = CPP_Generator::source_name('record', $method->declaring_type()->qualified_name());
 			$name = $syntax->name === '__construct' ? $record_name : CPP_Generator::source_name('method', $syntax->name);
 			$destructor = $syntax->name === '__destruct';
 			if ($destructor) { $name = '~' . $record_name; }
@@ -155,7 +167,8 @@ final class CPP_Declarations
 				$by_property[$field->name] = CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
 			}
 		}
-		$fields /** Key_Storage_List<prepared_field> */ = $method->declaring_record()->syntax()->require_preparation()->fields;
+		$record = object_cast($method->declaring_type(), collected_record::class);
+		$fields /** Key_Storage_List<prepared_field> */ = $record->syntax()->require_preparation()->fields;
 		foreach ($fields->items() as $field) {
 			$name = object_cast(weakref_get($field->declaration), collected_name::class)->name;
 			if (isset($by_property[$name])) {
@@ -221,7 +234,7 @@ final class CPP_Declarations
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 			$representation = CPP_Types::representation_for($type, $requirement);
 			CPP_Types::record_dependencies($representation, $context);
-			$text .= ($field->public_access ? "public:\n" : "private:\n");
+			$text .= self::visibility($field->visibility);
 			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
 			$default_value = $field->default_value;
 			if ($default_value !== null) {
@@ -234,7 +247,7 @@ final class CPP_Declarations
 		$static_fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->static_fields;
 		foreach ($static_fields->items() as $field) {
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
-			$text .= ($field->public_access ? "public:\n" : "private:\n") . "\tstatic "
+			$text .= self::visibility($field->visibility) . "\tstatic "
 				. self::type_for($field->type, $context, cpp_type_requirement::declaration) . ' '
 				. CPP_Generator::source_name('field', $entry->name) . ";\n";
 		}

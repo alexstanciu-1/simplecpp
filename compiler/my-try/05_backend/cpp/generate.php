@@ -121,7 +121,7 @@ final class CPP_Generator
 				foreach ($methods as $method) {
 					$member_owner /** preparation_owner */ = $method->occurrence()->preparation_work_owner();
 					$member_fragment = $this->program->fragments[$member_owner];
-					$text .= ($method->require_preparation()->public_access ? "public:\n" : "private:\n")
+					$text .= CPP_Declarations::visibility($method->require_preparation()->visibility)
 						. "\t" . $member_fragment->prototype_text . ";\n";
 					foreach ($member_fragment->headers as $header => $used) { $artifact_headers[$header] = true; }
 					foreach ($member_fragment->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
@@ -164,7 +164,7 @@ final class CPP_Generator
 				$signature = $this->program->fragments[$signature_owner];
 				$body = $this->program->fragments[$body_owner];
 				if ($definition instanceof collected_method) {
-					$headers[CPP_Artifacts::type_header(object_cast($definition, collected_method::class)->declaring_record()->qualified_name())] = true;
+					$headers[CPP_Artifacts::type_header(object_cast($definition, collected_method::class)->declaring_type()->qualified_name())] = true;
 				}
 				else { $headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true; }
 				foreach ($signature->definition_headers as $header => $used) {

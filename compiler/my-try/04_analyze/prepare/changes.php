@@ -11,7 +11,7 @@ final class Preparation_Changes
 		if ($old === null) {
 			return false;
 		}
-		if ($old->public_access !== $current->public_access) { return false; }
+		if ($old->visibility !== $current->visibility) { return false; }
 		if ($old->static_member !== $current->static_member) { return false; }
 		if (!self::same_reference_return($old->signature->reference_return, $current->signature->reference_return)) {
 			return false;
@@ -92,7 +92,7 @@ final class Preparation_Changes
 		}
 		foreach ($fields as $index => $field) {
 			$before = $previous[$index];
-			if ($before->public_access !== $field->public_access) { return false; }
+			if ($before->visibility !== $field->visibility) { return false; }
 			if ($before->static_member !== $field->static_member) { return false; }
 			if (!Property_Defaults::same($before->default_value, $field->default_value)) {
 				return false;

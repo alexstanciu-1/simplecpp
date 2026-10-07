@@ -17,6 +17,13 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+`collected_method` weakly observes its `collected_member_owner` through
+`declaring_type()`; member constants use the same optional weak owner role.
+Records and interfaces share that identity contract, not layout. Member scopes and
+syntax remain the original owners; inherited lookup must not copy declarations
+into a second retained member inventory. Transient `preparation_context::member_owner`
+tracks access context separately from an actual instance receiver.
+
 Prepared expressions own their optional storage-place record. A place weakly observes
 the selected `prepared_storage` fact and, for direct struct-field projection, shares
 the base place. Whole-storage roots identify the original declaration/parameter, not

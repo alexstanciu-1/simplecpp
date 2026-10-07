@@ -236,6 +236,9 @@ final class Preparation_Worker
 
 	public function select_record(type_declaration_node $node): void
 	{
+		if (!($node->occurrence() instanceof collected_record)) {
+			throw new \RuntimeException('Interface preparation is not enabled by member-owner registration');
+		}
 		$entry = object_cast($node->occurrence(), collected_record::class);
 		$this->select_owner($this->record_owner($entry));
 		$constants /** Storage<member_constant_node> */ = $node->constants;
@@ -491,7 +494,7 @@ final class Preparation_Worker
 			Constant_Preparation::declaration($syntax, $context);
 			$current = $syntax->require_preparation();
 			if ($old === null) { return true; }
-			return ($old->public_access !== $current->public_access) || !$old->value->type->matches($current->value->type)
+			return ($old->visibility !== $current->visibility) || !$old->value->type->matches($current->value->type)
 				|| ($old->value->value_key() !== $current->value->value_key());
 		}
 		if ($owner instanceof enum_definition_work) {

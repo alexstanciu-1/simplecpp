@@ -799,7 +799,7 @@ final class Parser_Run
 	}
 
 	/** Retain the declaration identity while replacing only changed initializer syntax. */
-	private function constant_declaration(?collected_record $record, array $modifiers /** vector<declaration_modifier> */, int $member_start): constant_declaration_node
+	private function constant_declaration(?collected_member_owner $record, array $modifiers /** vector<declaration_modifier> */, int $member_start): constant_declaration_node
 	{
 		$start = $this->expect('const');
 		if ($member_start >= 0) { $start = $member_start; }
@@ -930,7 +930,7 @@ final class Parser_Run
 		}
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
-		$previous = $this->collector->previous_record($this->source_scope, $name, $kind);
+		$previous = $this->collector->previous_member_owner($this->source_scope, $name, $kind);
 		$record /** type_declaration_node */ = $previous ?? new type_declaration_node();
 		if ($previous === null) {
 			$record->set_span($start, $start);
@@ -1085,7 +1085,7 @@ final class Parser_Run
 	}
 
 	/** Reconcile callable signatures and bodies identically for namespace functions and members. */
-	private function callable_declaration(?collected_record $record, array $modifiers /** vector<declaration_modifier> */, int $source_start): callable_declaration_node
+	private function callable_declaration(?collected_member_owner $record, array $modifiers /** vector<declaration_modifier> */, int $source_start): callable_declaration_node
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
 		if ($this->current_scope->is_function()) {

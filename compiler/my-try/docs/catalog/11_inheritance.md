@@ -7,12 +7,30 @@ Doc Status: planning
 
 Requires classes and methods. Resolve relationships before advanced dispatch cases.
 
+The user approved same-kind class/struct inheritance and preservation of existing
+non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_foundation.md)
+records those boundaries and the approved shared member-owner prerequisite.
+That model migration is complete; CH11 execution is not enabled yet.
+
+## Member-owner foundation — 2026-10-07
+
+Records and interfaces share `collected_member_owner`, while retaining distinct
+identities. Methods/constants reference their original declaring owner; interface
+registration grants neither record layout nor construction capabilities. Prepared
+members use public/protected/private `member_visibility` instead of a boolean.
+Declared inventories remain local. Interface source execution, protected access,
+relationships and inherited lookup remain gated.
+
+Proof: 16 PHP-host model/regression suites, 35 generated static-member programs and
+51 generated constructor programs passed. No native compiler rebuild. Next: prepared relationships and observed
+inherited lookup, without flattening declared-member inventories.
+
 ## Qualified-member prerequisites transferred from CH10
 
 CH10 implements fixed declaring-type/self static methods, constants and properties.
 Continue on those same member categories, in this order:
 
-1. Establish base/interface/trait relationships and inherited member inventories.
+1. Establish base/interface/trait relationships and inherited member lookup.
 2. Resolve inherited lookup and public/protected/private access, then `parent::`
    method/constant/property access and inherited constructor behavior.
 3. Validate abstract/final/override contracts and dispatch.

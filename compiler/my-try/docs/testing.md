@@ -105,7 +105,8 @@ Use `--suite collection_probes` for collection/string-only `empty`, static rejec
 of scalars/records/wrappers, runtime mixed/dynamic kind/path errors, lazy key stopping,
 and noncopying inline/nullable record presence and truthiness.
 
-For the CH10 shared declaration model migration:
+For the CH10 shared declaration model and CH11 member-owner/visibility migration
+(including interface identity and execution-gate proofs):
 
 ```bash
 python3 compiler/my-try/tests/declaration_model.py --results /tmp/FRESH_DECLARATION_MODEL_RESULTS

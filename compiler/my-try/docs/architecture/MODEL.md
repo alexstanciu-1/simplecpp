@@ -287,8 +287,15 @@ operations remain gated.
 Shared declaration syntax is defined in `structures_declarations.php`: one concrete
 type-declaration shape and separate typed member owners; common callable and constant
 abstracts supply reusable syntax. Existing struct/function/namespace-constant semantic
-paths share `collected_record` for plain classes/structs. Other declaration kinds
-do not acquire record capabilities or method execution from the common AST.
+paths share `collected_record` for plain classes/structs. `collected_member_owner`
+is the common abstract for records and distinct `collected_interface` identities.
+Methods expose their original `declaring_type()`; constants have an optional weak
+`member_owner`. Interface registration uses the existing nominal source index,
+without record layout/capabilities or source execution. Declared inventories remain
+local; future inherited lookup must return original declarations, not copied members.
+Prepared fields/callables/constants use `member_visibility` (public/protected/private).
+Analysis owns access decisions; protected execution remains gated until ancestry
+facts exist. Backend spelling reads the enum without resolving relationships.
 See [declaration model](../planning/type_declarations.md#plain-record-execution--2026-10-07).
 
 `object_construction_node` owns the constructed type syntax and ordered arguments.

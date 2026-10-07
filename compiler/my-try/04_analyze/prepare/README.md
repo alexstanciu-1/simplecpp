@@ -9,6 +9,11 @@ No separate resolution pass precedes it. LLVM preparation remains
 
 ## Ownership
 
+Member access uses a common declaring-type owner and `member_visibility`, separately
+from instance receiver facts. Interface identity is registered without record layout;
+interface preparation and protected access remain gated until relationship preparation
+is implemented. Declared member inventories must not become inherited lookup caches.
+
 | File | Responsibility |
 | --- | --- |
 | `../conversions/` | Backend-neutral conversion decisions, central routing and target-family policies |

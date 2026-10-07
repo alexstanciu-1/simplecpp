@@ -234,7 +234,7 @@ final class type_declaration_node extends declaration_node
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
 	{
-		$collector->collect_record($this, $scope, $index);
+		$collector->collect_member_owner($this, $scope, $index);
 	}
 
 	public function kind(): node_kind

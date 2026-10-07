@@ -112,8 +112,8 @@ $namespace_constant->initializer = new integer_literal_node();
 declaration_model_check(($constant instanceof constant_declaration_node) && ($namespace_constant instanceof constant_declaration_node), 'Constants lost their common syntax');
 $value = new integer_constant_value();
 $value->decimal = '7';
-$constant->set_preparation(new prepared_source_constant($value));
-$namespace_constant->set_preparation(new prepared_source_constant($value));
+$constant->set_preparation(new prepared_source_constant($value, member_visibility::public_access));
+$namespace_constant->set_preparation(new prepared_source_constant($value, member_visibility::public_access));
 $constant->clear_preparation();
 declaration_model_check($namespace_constant->require_preparation()->value === $value, 'Constant cleanup mutated shared value facts');
 

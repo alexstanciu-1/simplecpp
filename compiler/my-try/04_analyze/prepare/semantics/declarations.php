@@ -95,7 +95,7 @@ final class Declaration_Preparation
 			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
 		}
 		$facts = new prepared_record();
-		$context->receiver_record = object_cast($syntax->occurrence(), collected_record::class);
+		$context->member_owner = object_cast($syntax->occurrence(), collected_record::class);
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		foreach ($syntax->modifiers as $modifier) {
 			if ($modifier !== declaration_modifier::data_initializable) {
@@ -152,7 +152,7 @@ final class Declaration_Preparation
 	{
 		Member_Preparation::validate_modifiers($field->modifiers, true);
 		$prepared = new prepared_field();
-		$prepared->public_access = Member_Preparation::is_public($field->modifiers);
+		$prepared->visibility = Member_Preparation::visibility($field->modifiers);
 		$prepared->static_member = Member_Preparation::is_static($field->modifiers);
 		if ($prepared->static_member) { $allows_required = false; }
 		$prepared->declaration = $field->occurrence();

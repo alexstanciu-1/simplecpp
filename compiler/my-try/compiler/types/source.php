@@ -8,6 +8,11 @@ final class Source_Types
 	/** Preserve declaration provenance while constructing one shared type identity. */
 	public static function definition(collected_type_definition $entry): abstract_nominal_type_definition
 	{
+		if ($entry instanceof collected_interface) {
+			$type = Model::$type_catalog->define_source_interface($entry->qualified_name(),
+				object_cast($entry, collected_interface::class));
+			return $type->nominal_definition();
+		}
 		if ($entry instanceof collected_record) {
 			$type = Model::$type_catalog->define_source_record($entry->qualified_name(),
 				object_cast($entry, collected_record::class));

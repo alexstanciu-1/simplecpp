@@ -389,6 +389,16 @@ final class registered_type_catalog
 		return object_cast($type, nominal_type::class);
 	}
 
+	/** Interface identity alone confers no record layout, construction or value capabilities. */
+	public function define_source_interface(string $name, collected_interface $declaration): nominal_type
+	{
+		$capabilities /** vector<generic_contract> */ = [];
+		$definition = $this->type_registry->define_nominal($name, type_definition_origin::source,
+			nominal_type_kind::interface_type, $capabilities);
+		$this->source_declaration_index->register($definition, $declaration);
+		return object_cast($this->type_registry->canonical($definition), nominal_type::class);
+	}
+
 	/** No case-derived capabilities or backing representation are published before preparation. */
 	public function define_source_enum(string $name, collected_enum $declaration): nominal_type
 	{

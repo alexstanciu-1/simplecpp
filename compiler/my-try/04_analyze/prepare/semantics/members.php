@@ -22,10 +22,18 @@ final class Member_Preparation
 		}
 	}
 
-	public static function is_public(array $modifiers /** vector<declaration_modifier> */): bool
+	public static function visibility(array $modifiers /** vector<declaration_modifier> */): member_visibility
 	{
-		foreach ($modifiers as $modifier) { if ($modifier === declaration_modifier::private_access) { return false; } }
-		return true;
+		foreach ($modifiers as $modifier)
+		{
+			if ($modifier === declaration_modifier::private_access) {
+				return member_visibility::private_access;
+			}
+			if ($modifier === declaration_modifier::protected_access) {
+				return member_visibility::protected_access;
+			}
+		}
+		return member_visibility::public_access;
 	}
 
 	public static function is_static(array $modifiers /** vector<declaration_modifier> */): bool
@@ -41,7 +49,7 @@ final class Member_Preparation
 			throw new \RuntimeException('Inheritance-dependent qualification is deferred to CH11');
 		}
 		if ($syntax->name === 'self') {
-			$record = $context->receiver_record;
+			$record = $context->member_owner;
 			if ($record === null) { throw new \RuntimeException('self requires a declaring type context'); }
 			$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
 			$syntax->set_preparation(Model::$type_catalog->registry()->use($type->type_id()));
@@ -50,9 +58,20 @@ final class Member_Preparation
 		return $syntax->require_preparation();
 	}
 
-	public static function require_access(bool $public_access, collected_record $record, preparation_context $context): void
+	/** Protected access cannot be answered from a record-only context without ancestry facts. */
+	public static function accessible(member_visibility $visibility, collected_member_owner $owner, preparation_context $context): bool
 	{
-		if (!$public_access && ($context->receiver_record !== $record)) { throw new \RuntimeException('Private member is not accessible here'); }
+		if ($visibility === member_visibility::protected_access) {
+			throw new \RuntimeException('Protected access requires prepared inheritance relationships');
+		}
+		return ($visibility === member_visibility::public_access) || ($context->member_owner === $owner);
+	}
+
+	public static function require_access(member_visibility $visibility, collected_member_owner $owner, preparation_context $context): void
+	{
+		if (!self::accessible($visibility, $owner, $context)) {
+			throw new \RuntimeException('Private member is not accessible here');
+		}
 	}
 
 	public static function reference(static_member_reference_node $syntax, preparation_context $context): prepared_expression
@@ -83,9 +102,9 @@ final class Member_Preparation
 			$target = $targets[0];
 			if (!($target instanceof collected_constant)) { throw new \RuntimeException('Unknown member constant'); }
 			$constant = object_cast($target, collected_constant::class);
-			if (weakref_get($constant->record_owner) !== $record) { throw new \RuntimeException('Unknown member constant'); }
+			if (weakref_get($constant->member_owner) !== $record) { throw new \RuntimeException('Unknown member constant'); }
 			$context->worker->require_declaration($context->owner, $constant);
-			self::require_access($constant->syntax()->require_preparation()->public_access, $record, $context);
+			self::require_access($constant->syntax()->require_preparation()->visibility, $record, $context);
 			return self::constant_reference($constant);
 		}
 		$context->worker->require_declaration($context->owner, $record);
@@ -94,7 +113,7 @@ final class Member_Preparation
 		$matches /** vector<prepared_field> */ = $fields->named($name);
 		if (q_count($matches) !== 1) { throw new \RuntimeException('Qualified property access requires one static property'); }
 		$field = $matches[0];
-		self::require_access($field->public_access, $record, $context);
+		self::require_access($field->visibility, $record, $context);
 		$facts = new prepared_static_property();
 		$facts->field = $field;
 		$facts->record_type = $type;

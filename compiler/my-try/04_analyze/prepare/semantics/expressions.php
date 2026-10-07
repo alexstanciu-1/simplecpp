@@ -367,8 +367,8 @@ final class Expression_Preparation
 		$entry = $node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
 		// Bare constants retain namespace/import lookup; member constants require qualification.
-		if ($context->receiver_record !== null) {
-			$lexical_scope = $context->receiver_record->syntax()->member_scope()->parent_scope();
+		if ($context->member_owner !== null) {
+			$lexical_scope = $context->member_owner->syntax()->member_scope()->parent_scope();
 		}
 		$targets = Observed_Lookup::constants($lexical_scope, $entry->name, $context);
 		if (q_count($targets) !== 1) {
@@ -429,7 +429,7 @@ final class Expression_Preparation
 		if (q_count($matches) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved record property');
 		}
-		if (!$matches[0]->public_access && ($context->receiver_record !== $record_entry)) {
+		if (!Member_Preparation::accessible($matches[0]->visibility, $record_entry, $context)) {
 			throw new \RuntimeException('S2S private property is not accessible here: ' . $syntax->name);
 		}
 

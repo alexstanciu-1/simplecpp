@@ -7,9 +7,10 @@ final class Method_Preparation
 {
 	public static function receiver(collected_method $method): prepared_receiver
 	{
+		$record = object_cast($method->declaring_type(), collected_record::class);
 		$receiver = new prepared_receiver();
 		$receiver->declaration = $method;
-		$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($method->declaring_record()));
+		$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
 		$receiver->type = Model::$type_catalog->registry()->use($type->type_id());
 		if (Type_Queries::is_class_handle($receiver->type)) {
 			$receiver->type = Model::$type_catalog->registry()->use($type->type_id(), true);
@@ -25,12 +26,12 @@ final class Method_Preparation
 			throw new \RuntimeException('Special methods are deferred');
 		}
 		Member_Preparation::validate_modifiers($syntax->modifiers, true);
-		$facts->public_access = Member_Preparation::is_public($syntax->modifiers);
+		$facts->visibility = Member_Preparation::visibility($syntax->modifiers);
 		$facts->static_member = Member_Preparation::is_static($syntax->modifiers);
 		$parameters /** Storage<parameter_node> */ = $syntax->parameters;
 		if ($destructor) {
 			if (!$parameters->is_empty() || ($syntax->return_type !== null) || $syntax->returns_reference
-				|| $facts->static_member || !$facts->public_access) {
+				|| $facts->static_member || ($facts->visibility !== member_visibility::public_access)) {
 				throw new \RuntimeException('Destructor requires public instance access, no parameters and no declared return type/reference');
 			}
 		}
@@ -41,8 +42,8 @@ final class Method_Preparation
 			}
 		}
 		$method = object_cast($syntax->occurrence(), collected_method::class);
-		$context->receiver_record = $method->declaring_record();
-		$context->worker->require_declaration($context->owner, $method->declaring_record());
+		$context->member_owner = $method->declaring_type();
+		$context->worker->require_declaration($context->owner, $method->declaring_type());
 		if (!$facts->static_member) { $facts->receiver = self::receiver($method); }
 	}
 
@@ -122,7 +123,7 @@ final class Method_Preparation
 		if ($method->callable_syntax()->require_preparation()->static_member !== $static_call) {
 			throw new \RuntimeException('Static methods require :: and instance methods require ->');
 		}
-		if (!$method->callable_syntax()->require_preparation()->public_access && ($context->receiver_record !== $record)) {
+		if (!Member_Preparation::accessible($method->callable_syntax()->require_preparation()->visibility, $method->declaring_type(), $context)) {
 			throw new \RuntimeException('Private method is not accessible here: ' . $syntax->name);
 		}
 		$facts = Call_Preparation::prepare($method, $syntax->arguments, $context);

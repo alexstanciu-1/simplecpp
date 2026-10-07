@@ -18,8 +18,8 @@ final class Constructor_Preparation
 			}
 		}
 		$entry = object_cast($syntax->occurrence(), collected_method::class);
-		$record = $entry->declaring_record();
-		$context->receiver_record = $record;
+		$record = object_cast($entry->declaring_type(), collected_record::class);
+		$context->member_owner = $record;
 		$context->worker->require_declaration($context->owner, $record);
 		$layout = $record->syntax()->require_preparation();
 		$facts = new prepared_source_callable();
@@ -100,7 +100,7 @@ final class Constructor_Preparation
 			elseif (Object_Construction_Preparation::supports_default($field->type, $context)) {
 				$parameter->default_value = new prepared_type_parameter_default($field->type);
 			}
-			if ($field->public_access) {
+			if ($field->visibility === member_visibility::public_access) {
 				$inputs->add($name, new record_initialization_input($name, $parameter, $field));
 			}
 			elseif ($parameter->default_value === null) {

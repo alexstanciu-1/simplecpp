@@ -280,7 +280,7 @@ final class Body_Preparation
 		$signature = $syntax->require_preparation();
 		if ($syntax instanceof method_node) {
 			$method = object_cast($syntax->occurrence(), collected_method::class);
-			$context->receiver_record = $method->declaring_record();
+			$context->member_owner = $method->declaring_type();
 			$context->receiver = $signature->receiver;
 		}
 		$context->return_type = $signature->signature->return_type;

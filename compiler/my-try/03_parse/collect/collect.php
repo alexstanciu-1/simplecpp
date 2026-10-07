@@ -49,14 +49,14 @@ final class Symbol_Collector
 	}
 
 	/** Reuse the same declaration kind; a kind edit replaces its nominal identity. */
-	public function previous_record(scope $scope, string $name, type_declaration_kind $kind): ?type_declaration_node
+	public function previous_member_owner(scope $scope, string $name, type_declaration_kind $kind): ?type_declaration_node
 	{
 		foreach ($scope->source_types_named($name) as $entry) {
-			if (!($entry instanceof collected_record)) {
+			if (!($entry instanceof collected_member_owner)) {
 				continue;
 			}
 			if ($this->unseen($entry)) {
-				$syntax = object_cast($entry, collected_record::class)->syntax();
+				$syntax = object_cast($entry, collected_member_owner::class)->syntax();
 				if ($syntax->declaration_kind === $kind) {
 					return $syntax;
 				}
@@ -89,13 +89,13 @@ final class Symbol_Collector
 		return null;
 	}
 
-	public function collect_constant(constant_declaration_node $node, scope $scope, int $index, ?collected_record $record = null): void
+	public function collect_constant(constant_declaration_node $node, scope $scope, int $index, ?collected_member_owner $record = null): void
 	{
 		if ($this->reuse($node, $index)) { return; }
 		$entry = new collected_constant($this->collection, $node);
 		if ($record !== null) {
-			$owner /** collected_record */ = $record;
-			$entry->record_owner = $owner;
+			$owner /** collected_member_owner */ = $record;
+			$entry->member_owner = $owner;
 		}
 		$entry->retained_symbol = true;
 		$this->append($entry, $scope, $node->name, $index);
@@ -149,7 +149,7 @@ final class Symbol_Collector
 	}
 
 	/** Member registration shares retained identities but never namespace publication. */
-	public function collect_method(method_node $node, collected_record $record, int $index): void
+	public function collect_method(method_node $node, collected_member_owner $record, int $index): void
 	{
 		if ($this->reuse($node, $index)) { return; }
 		$entry = new collected_method($this->collection, $node, $record);
@@ -160,16 +160,23 @@ final class Symbol_Collector
 	}
 
 	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
-	public function collect_record(type_declaration_node $node, scope $scope, int $index): void
+	public function collect_member_owner(type_declaration_node $node, scope $scope, int $index): void
 	{
 		if (($node->declaration_kind !== type_declaration_kind::struct_type)
-			&& ($node->declaration_kind !== type_declaration_kind::class_type)) {
-			throw new \RuntimeException('Only class and struct records have registration in this slice');
+			&& ($node->declaration_kind !== type_declaration_kind::class_type)
+			&& ($node->declaration_kind !== type_declaration_kind::interface_type)) {
+			throw new \RuntimeException('Trait registration awaits composition semantics');
 		}
 		if ($this->reuse($node, $index)) {
 			return;
 		}
-		$entry = new collected_record($this->collection, $node);
+		$entry /** collected_member_owner */;
+		if ($node->declaration_kind === type_declaration_kind::interface_type) {
+			$entry = new collected_interface($this->collection, $node);
+		}
+		else {
+			$entry = new collected_record($this->collection, $node);
+		}
 		$this->register_source_type($entry, $scope, $node->name, $index);
 	}
 

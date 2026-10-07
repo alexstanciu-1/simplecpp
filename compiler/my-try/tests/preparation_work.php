@@ -124,7 +124,7 @@ work_check($member_signature instanceof source_callable_signature_work, 'Member 
 work_check($member_body instanceof source_callable_body_work, 'Member acquired a separate body work family');
 work_check($member_signature->callable_definition() === $member_body->callable_definition(), 'Member work lost shared declaration identity');
 work_check($member_signature !== $member_body, 'Member signature and body work collapsed');
-work_check($method->occurrence()->declaring_record() === $record->occurrence(), 'Member lost its declaring type');
+work_check($method->occurrence()->declaring_type() === $record->occurrence(), 'Member lost its declaring type');
 work_check($method->occurrence()->qualified_name() === 'Box::value', 'Member qualified identity omitted its type');
 work_check(count($record->member_scope()->methods_named('value')) === 1, 'Member was not indexed');
 work_check(count($record->member_scope()->functions_named('value')) === 0, 'Member leaked into free-function lookup');

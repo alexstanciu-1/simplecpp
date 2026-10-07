@@ -155,7 +155,7 @@ final class CPP_Callables
 	{
 		if ($target instanceof collected_method) {
 			$method = object_cast($target, collected_method::class);
-			$record = $method->declaring_record();
+			$record = $method->declaring_type();
 			$context->headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
 			return CPP_Generator::source_name('record', $record->qualified_name()) . '::' . CPP_Generator::source_name('method', $method->name);
 		}

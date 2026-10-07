@@ -455,17 +455,25 @@ final class prepared_type_parameter_default extends prepared_parameter_default {
 	public function result_type(): canonical_type_use { return $this->type; }
 }
 
+/** Settled access is independent of syntax modifiers and of C++ spelling. */
+enum member_visibility
+{
+	case public_access;
+	case protected_access;
+	case private_access;
+}
+
 /** Constant visibility participates in dependency equivalence alongside its value. */
 final class prepared_source_constant
 {
-	public function __construct(public constant_value $value, public bool $public_access = true) {}
+	public function __construct(public constant_value $value, public member_visibility $visibility) {}
 }
 
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
 final class prepared_source_callable
 {
 	public bool $static_member = false;
-	public bool $public_access = true;
+	public member_visibility $visibility = member_visibility::public_access;
 	public callable_signature $signature;
 	public ?prepared_receiver $receiver = null;
 	public ?record_initialization_contract $initialization = null;
@@ -483,7 +491,7 @@ final class prepared_source_callable
 final class prepared_field extends prepared_storage {
 	public bool $static_member = false;
 	public canonical_type_use $type;
-	public bool $public_access = true;
+	public member_visibility $visibility = member_visibility::public_access;
 	public ?prepared_property_default $default_value = null;
 	public function storage_type(): canonical_type_use { return $this->type; }
 }
@@ -647,7 +655,7 @@ final class reference_cycle_vertex
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {
-	public ?collected_record $receiver_record = null;
+	public ?collected_member_owner $member_owner = null;
 	public ?prepared_receiver $receiver = null;
 	public Preparation_Worker $worker;
 	public preparation_owner $owner;

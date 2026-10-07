@@ -9,6 +9,7 @@ namespace scpp\compiler;
 enum collected_name_kind
 {
 	case record_declaration;
+	case interface_declaration;
 	case enum_declaration;
 	case field_declaration;
 	case field_reference;
@@ -180,22 +181,22 @@ final class collected_function extends collected_source_callable
 final class collected_method extends collected_source_callable
 {
 	/** @reference.source type_declaration_node occurrence; no additional owner */
-	private collected_record $record_owner /** weak<collected_record> */;
+	private collected_member_owner $type_owner /** weak<collected_member_owner> */;
 
-	public function __construct(collected_file $collection, method_node $node, collected_record $record)
+	public function __construct(collected_file $collection, method_node $node, collected_member_owner $owner)
 	{
 		parent::__construct($collection, $node);
-		$this->record_owner = $record;
+		$this->type_owner = $owner;
 	}
 
-	public function declaring_record(): collected_record
+	public function declaring_type(): collected_member_owner
 	{
-		return weakref_get($this->record_owner);
+		return weakref_get($this->type_owner);
 	}
 
 	public function qualified_name(): string
 	{
-		return $this->declaring_record()->qualified_name() . '::' . $this->name;
+		return $this->declaring_type()->qualified_name() . '::' . $this->name;
 	}
 
 	public function kind(): collected_name_kind
@@ -206,7 +207,7 @@ final class collected_method extends collected_source_callable
 
 final class collected_constant extends collected_definition implements constant_target_i
 {
-	public ?collected_record $record_owner /** weak<collected_record> */ = null;
+	public ?collected_member_owner $member_owner /** weak<collected_member_owner> */ = null;
 	private constant_declaration_node $syntax_node;
 	public function __construct(collected_file $collection, constant_declaration_node $node)
 	{
@@ -251,7 +252,8 @@ final class collected_enum extends collected_type_definition
 	}
 }
 
-final class collected_record extends collected_type_definition
+/** Shared member ownership does not imply instance layout, storage or construction. */
+abstract class collected_member_owner extends collected_type_definition
 {
 	/** @reference.source parsed_file.root (syntax graph) */
 	private type_declaration_node $syntax_node;
@@ -266,10 +268,22 @@ final class collected_record extends collected_type_definition
 	{
 		return $this->syntax_node;
 	}
+}
 
+final class collected_record extends collected_member_owner
+{
 	public function kind(): collected_name_kind
 	{
 		return collected_name_kind::record_declaration;
+	}
+}
+
+/** Interface identity shares method ownership, not record capabilities. Execution remains gated. */
+final class collected_interface extends collected_member_owner
+{
+	public function kind(): collected_name_kind
+	{
+		return collected_name_kind::interface_declaration;
 	}
 }
 
