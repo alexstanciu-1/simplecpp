@@ -17,9 +17,9 @@ final class Preparation_Status
 	/** Source changes remain independent of work state until analysis consumes them. */
 	public static function source_changed(preparation_owner $owner): bool
 	{
-		if ($owner instanceof type_relationship_work) {
-			$relationships = object_cast($owner, type_relationship_work::class);
-			return $relationships->source_revision !== (int)$relationships->member_definition()->revision;
+		if ($owner instanceof type_semantic_work) {
+			$type_work = object_cast($owner, type_semantic_work::class);
+			return $type_work->source_revision !== (int)$type_work->member_definition()->revision;
 		}
 		if ($owner instanceof declaration_work) {
 			return object_cast($owner, declaration_work::class)->required_declaration()->change_status !== change_state::unchanged;

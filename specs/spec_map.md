@@ -73,7 +73,7 @@ The authority stack for the current project is:
    - `specs/array_semantics.md`
    - `specs/data_initialization.md` (v0.2 notation and recognized initialization interfaces)
    - `specs/instance_methods_v0_2.md` (bounded instance calls, visibility and receiver lifetime)
-   - `specs/inheritance_v0_2.md` (concrete bases, inherited members and protected receiver restrictions)
+   - `specs/inheritance_v0_2.md` (bases, inherited members, protected access, abstract/override contracts and virtual dispatch)
    - `specs/static_members_v0_2.md` (qualified methods/constants and type-owned property storage)
    - `specs/destructors_v0_2.md` (automatic cleanup, nonthrowing destructors and copy/move preservation)
    - `specs/namespaces_v0_2.md` (namespace identity, body-local imports and qualified lookup)

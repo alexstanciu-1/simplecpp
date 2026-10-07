@@ -19,7 +19,7 @@ final class Inheritance_Preparation
 		}
 		$facts->base_type = $base_type;
 		if (weakref_get($base->syntax()->require_preparation()->constructor) === null) {
-			if (!Object_Construction_Preparation::supports_default($base_type, $context)) {
+			if (!Object_Construction_Preparation::supports_default($base_type, $context, true)) {
 				throw new \RuntimeException('Inheritance requires a default-constructible base');
 			}
 		}
@@ -52,11 +52,7 @@ final class Inheritance_Preparation
 		foreach ($properties as $property) {
 			self::require_new_name($base, $property->name, preparation_lookup_kind::property_name, $context);
 		}
-		$methods /** Storage<method_node> */ = $syntax->methods;
-		foreach ($methods as $method) {
-			if (($method->name === '__construct') || ($method->name === '__destruct')) { continue; }
-			self::require_new_name($base, $method->name, preparation_lookup_kind::method_name, $context);
-		}
+		// Method redeclarations require completed contracts, not layout-time signature cycles.
 		$constants /** Storage<member_constant_node> */ = $syntax->constants;
 		foreach ($constants as $constant) {
 			self::require_new_name($base, $constant->name, preparation_lookup_kind::constant, $context);

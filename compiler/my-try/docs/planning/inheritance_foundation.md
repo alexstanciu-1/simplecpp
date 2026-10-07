@@ -111,5 +111,15 @@ The following parent/constructor checkpoint enables public constructor forwardin
 source defaults and explicit parent member access. Base initialization is body-owned,
 with a weak source-call observer and common call admission. C++ stores initializer
 text in the body fragment; braced initialization sequences values without a base copy.
-Inherited data inputs, overrides, non-public/abstract constructors and late static
-dispatch remain follow-ups. See the current CH11 handoff rather than earlier gates.
+Inherited data inputs, non-public/abstract constructors and late static dispatch
+remain follow-ups. See the current CH11 handoff rather than earlier gates.
+
+## Approved abstract-contract prerequisite — 2026-10-07
+
+Independent type-contract work shares the existing scheduler after layout and callable
+signatures. Earlier owners never depend back on it; no flattened member inventory is
+introduced. The user approved including this prerequisite with abstract/final/override
+validation and virtual dispatch. Bodyless declarations retain signatures without body
+work; transitions use semantic retirement before frontend disposal. This foundation
+and its bounded class/struct execution are implemented; interface execution remains
+the next discussion, not implicitly enabled by the new contract owner.

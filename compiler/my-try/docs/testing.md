@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite abstract_dispatch --results FRESH`
+covers abstract class/struct contracts, exact overrides/finality, virtual calls/cleanup,
+reference returns, bodyless transitions, cross-file invalidation and fresh/incremental
+agreement. It compiles generated programs and checks move/copy traits; it does not
+rebuild the compiler natively.
+
 `python3 compiler/my-try/tests/records.py --suite inheritance --results FRESH`
 also covers explicit parent access, inherited public constructors/defaults, leading
 base initialization, argument ordering, noncopyable payloads, cross-file body/default

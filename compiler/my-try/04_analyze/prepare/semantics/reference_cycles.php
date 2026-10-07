@@ -40,7 +40,9 @@ final class Reference_Cycles
 					$definition = object_cast($entry, collected_source_callable::class);
 					$index = q_count($vertices);
 					$by_definition[$definition] = $index;
-					$by_scope[$definition->callable_syntax()->require_body()->local_scope()] = $index;
+					if ($definition->callable_syntax()->has_parsed_body()) {
+						$by_scope[$definition->callable_syntax()->require_body()->local_scope()] = $index;
+					}
 					$vertices->append(new reference_cycle_vertex($definition));
 					$has_reference_return = $has_reference_return || ($definition->signature()->reference_return !== null);
 				}
@@ -67,11 +69,17 @@ final class Reference_Cycles
 				{
 					$current_scope /** scope */ = $lexical_scope;
 					if (isset($by_scope[$current_scope])) {
-						$target = weakref_get($call->syntax()->require_call_preparation()->target);
+						$facts = $call->syntax()->require_call_preparation();
+						$target = weakref_get($facts->target);
 						if ($target instanceof collected_source_callable) {
 							$callee = object_cast($target, collected_source_callable::class);
 							$vertex = $vertices[$by_scope[$current_scope]];
 							$vertex->calls[] = $by_definition[$callee];
+							if ($facts->receiver !== null) {
+								if ($facts->receiver->dispatch_type === null) {
+									$this->virtual_targets($vertex, $callee);
+								}
+							}
 						}
 						break;
 					}
@@ -85,6 +93,23 @@ final class Reference_Cycles
 			}
 		}
 		return $this->cyclic;
+	}
+
+	/** Virtual alternatives belong to the call site; explicit parent calls stay exact. */
+	private function virtual_targets(reference_cycle_vertex $caller, collected_source_callable $target): void
+	{
+		if (!($target instanceof collected_method)) { return; }
+		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
+		foreach ($vertices as $index => $vertex) {
+			if (!($vertex->definition instanceof collected_method)) { continue; }
+			$method /** nullable<collected_method> */ = object_cast($vertex->definition, collected_method::class);
+			while ($method !== null) {
+				$contracts = $method->declaring_type()->contract_work->require_facts();
+				$methods /** Keyed_Storage<prepared_method_contract> */ = $contracts->methods;
+				$method = weakref_get($methods[$method->name]->overridden);
+				if ($method === $target) { $caller->calls[] = $index; break; }
+			}
+		}
 	}
 
 	/** Tarjan components cover cycles through value-returning helpers as well as direct forwarding. */

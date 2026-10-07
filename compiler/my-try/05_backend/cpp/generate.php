@@ -46,6 +46,9 @@ final class CPP_Generator
 						if (($definition instanceof collected_interface) || (q_count($ancestry->interfaces) !== 0)) {
 							throw new \RuntimeException('Inherited/interface execution is not enabled by relationship preparation');
 						}
+						$contracts = $type_owner->contract_work;
+						if ($contracts === null) { throw new \RuntimeException('C++ generation requires completed type contracts'); }
+						if (!Preparation_Status::complete($contracts)) { throw new \RuntimeException('C++ generation requires completed type contracts'); }
 					}
 					if ($node instanceof namespace_constant_node) {
 						if (!Preparation_Status::complete(object_cast($definition->preparation_work_owner(), preparation_owner::class))) {
@@ -62,7 +65,7 @@ final class CPP_Generator
 						$methods /** Storage<method_node> */ = object_cast($node, type_declaration_node::class)->methods;
 						foreach ($methods as $method) {
 							$ordered->append(object_cast($method->occurrence()->preparation_work_owner(), preparation_owner::class));
-							$ordered->append(object_cast($method->require_body()->work(), preparation_owner::class));
+							if ($method->has_parsed_body()) { $ordered->append(object_cast($method->require_body()->work(), preparation_owner::class)); }
 						}
 					}
 				}
@@ -127,16 +130,25 @@ final class CPP_Generator
 				$identity = 'type:' . $definition->qualified_name();
 				$text = $fragment->text;
 				$record = object_cast($definition, collected_record::class);
+				$contract = $record->contract_work->require_facts();
+				$dispatch /** Keyed_Storage<prepared_method_contract> */ = $contract->methods;
 				$methods /** Storage<method_node> */ = $record->syntax()->methods;
 				foreach ($methods as $method) {
 					$member_owner /** preparation_owner */ = $method->occurrence()->preparation_work_owner();
 					$member_fragment = $this->program->fragments[$member_owner];
+					$decision = $dispatch[$method->name];
+					$virtual_method = $decision->virtual_method || (($method->name === '__destruct') && $contract->polymorphic);
+					$suffix = '';
+					if ($method->require_preparation()->override_assertion) { $suffix .= ' override'; }
+					if ($virtual_method && $decision->final_method) { $suffix .= ' final'; }
+					if ($decision->abstract_method) { $suffix .= ' = 0'; }
 					$text .= CPP_Declarations::visibility($method->require_preparation()->visibility)
-						. "\t" . $member_fragment->prototype_text . ";\n";
+						. "\t" . ($virtual_method ? 'virtual ' : '') . $member_fragment->prototype_text . $suffix . ";\n";
 					foreach ($member_fragment->headers as $header => $used) { $artifact_headers[$header] = true; }
 					foreach ($member_fragment->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
 				}
-				if (!$methods->is_empty()) { $text .= "};\n\n"; }
+				$text .= CPP_Declarations::lifecycle_special_members($record, $contract);
+				$text .= "};\n\n";
 			}
 			elseif ($definition instanceof collected_enum) {
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
@@ -169,6 +181,7 @@ final class CPP_Generator
 				if (!($callable_owner instanceof source_callable_signature_work) || ($callable_owner->source !== $prepared->source)) { continue; }
 				$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
 				$function = $definition->callable_syntax();
+				if (!$function->has_parsed_body()) { continue; }
 				$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
 				$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
 				$signature = $this->program->fragments[$signature_owner];

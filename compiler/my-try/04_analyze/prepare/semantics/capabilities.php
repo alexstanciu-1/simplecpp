@@ -38,9 +38,21 @@ final class Capability_Preparation implements type_capability_query
 	/** Ordinary values require copy capability; explicit temporary consumption is a separate boundary. */
 	public static function require_copy(canonical_type_use $type_use, preparation_context $context): void
 	{
+		self::require_concrete_value($type_use, $context);
 		$query = new Capability_Preparation($context);
 		if (!$query->has_capability($type_use, generic_contract::copyable_value)) {
 			throw new \RuntimeException('S2S value copy requires copyable_value');
+		}
+	}
+
+	/** Abstract subobjects may be copied, but cannot be materialized as complete inline values. */
+	public static function require_concrete_value(canonical_type_use $type_use, preparation_context $context): void
+	{
+		if (Type_Queries::is_class_handle($type_use)) { return; }
+		$record = Type_Queries::source_record($type_use);
+		if ($record === null) { return; }
+		if ($context->worker->require_relationships($record, $context)->abstract_type) {
+			throw new \RuntimeException('Abstract type cannot be stored or returned as an inline value');
 		}
 	}
 }

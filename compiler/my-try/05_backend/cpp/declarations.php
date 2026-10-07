@@ -318,22 +318,44 @@ final class CPP_Declarations
 			$text .= CPP_Data_Construction::constructor(CPP_Generator::source_name('record', $key), $initialization, $context);
 		}
 		$context->records .= $text;
-		$methods /** Key_Storage_List<collected_method> */ = $syntax->require_preparation()->methods;
-		if (q_count($methods->named('__destruct')) !== 0) {
-			// A user destructor suppresses implicit C++ moves. Restore ordinary memberwise
-			// operations explicitly; defaulted copies remain deleted for noncopyable fields.
-			$name = CPP_Generator::source_name('record', $key);
-			if (($initialization === null) && (weakref_get($syntax->require_preparation()->constructor) === null)) {
-				$context->records .= "\t" . $name . "() = default;\n";
-			}
-			$context->records .= "\t" . $name . '(const ' . $name . "&) = default;\n"
-				. "\t" . $name . '(' . $name . "&&) = default;\n"
-				. "\t" . $name . '& operator=(const ' . $name . "&) = default;\n"
-				. "\t" . $name . '& operator=(' . $name . "&&) = default;\n";
-		}
-		if (q_count($methods->items()) === 0) { $context->records .= "};\n\n"; }
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
+	}
+
+	/** Contract-owned virtual cleanup must preserve the ordinary copy/move/default operations. */
+	public static function lifecycle_special_members(collected_record $record, prepared_type_contract $contract): string
+	{
+		$layout = $record->syntax()->require_preparation();
+		$methods /** Key_Storage_List<collected_method> */ = $layout->methods;
+		$authored_destructor = q_count($methods->named('__destruct')) !== 0;
+		if (!$contract->polymorphic && !$authored_destructor) { return ''; }
+		$name = CPP_Generator::source_name('record', $record->qualified_name());
+		$text = "public:\n";
+		if (!$authored_destructor) { $text .= "\tvirtual ~" . $name . "() noexcept = default;\n"; }
+		return $text . self::defaulted_special_members($record);
+	}
+
+	/** Any declared destructor suppresses implicit moves; restore the shared lifecycle policy. */
+	private static function defaulted_special_members(collected_record $record): string
+	{
+		$layout = $record->syntax()->require_preparation();
+		$name = CPP_Generator::source_name('record', $record->qualified_name());
+		$text = '';
+		$constructor = weakref_get($layout->constructor);
+		$default_constructor = ($constructor === null) && ($layout->initialization === null);
+		if ($constructor !== null) {
+			if ($constructor->declaring_type() !== $record) {
+				$parameters /** Storage<callable_parameter> */ = $constructor->signature()->parameters;
+				$default_constructor = $parameters->is_empty();
+			}
+		}
+		if ($default_constructor) {
+			$text .= "\t" . $name . "() = default;\n";
+		}
+		return $text . "\t" . $name . '(const ' . $name . "&) = default;\n"
+			. "\t" . $name . '(' . $name . "&&) = default;\n"
+			. "\t" . $name . '& operator=(const ' . $name . "&) = default;\n"
+			. "\t" . $name . '& operator=(' . $name . "&&) = default;\n";
 	}
 
 	public static function static_definitions(collected_record $record, cpp_generation_context $context): string

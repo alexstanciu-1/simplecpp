@@ -9,6 +9,26 @@ final class prepared_type_relationships
 	/** Original interface identities; no copied member inventory. */
 	public array $interfaces /** vector<collected_interface> */ = [];
 	public bool $final_type = false;
+	public bool $abstract_type = false;
+}
+
+/** Local dispatch decisions and unresolved obligations, not a flattened member inventory. */
+final class prepared_type_contract
+{
+	public bool $abstract_type = false;
+	public bool $polymorphic = false;
+	public Keyed_Storage $methods /** Keyed_Storage<prepared_method_contract> */;
+	public array $obligations /** vector<collected_method> */ = [];
+	public function __construct() { $this->methods = new Keyed_Storage /** Keyed_Storage<prepared_method_contract> */(); }
+}
+
+final class prepared_method_contract
+{
+	public collected_method $method /** weak<collected_method> */;
+	public ?collected_method $overridden /** weak<collected_method> */ = null;
+	public bool $virtual_method = false;
+	public bool $abstract_method = false;
+	public bool $final_method = false;
 }
 
 /** Lookup selects syntax identity only; access and signature compatibility follow separately. */

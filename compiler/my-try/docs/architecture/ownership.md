@@ -31,6 +31,13 @@ facts publish. Retirement clears facts and both directions of scheduler dependen
 reset clears facts and marks the work pending. Inherited lookup results are transient
 identity/declaring-owner pairs, not another retained inventory or layout owner.
 
+The parallel `contract_work` owns post-layout virtual decisions and unresolved
+abstract obligations. Decisions weakly observe original local/overridden methods;
+the obligation vector references original declarations, never copies their schemas.
+It follows the same dependency/reset/retirement protocol. Callable `retired_bodies`
+temporarily owns detached executable syntax through the coordinator's semantic
+retirement/frontend disposal boundary. Body work never substitutes signature identity.
+
 Prepared expressions own their optional storage-place record. A place weakly observes
 the selected `prepared_storage` fact and, for direct struct-field projection, shares
 the base place. Whole-storage roots identify the original declaration/parameter, not

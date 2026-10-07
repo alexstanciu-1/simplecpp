@@ -87,6 +87,16 @@ parse revision is independent of the declaration dirty flag: settling relationsh
 never settles layout. Equivalent facts preserve their version. Record preparation
 requires relationships; ancestry queries never require record layout or method bodies.
 The analysis-only relationship checkpoint does not publish executable prepared files.
+
+`type_contract_work` shares the independent `type_semantic_work` revision/lifecycle
+base. It depends on record layout, local/inherited signatures and base contracts;
+none of those earlier facts depend back on it. `prepared_type_contract` holds local
+method dispatch decisions and outstanding original abstract declarations, not copied
+inherited inventories. Backend assembly reads complete contracts alongside cached
+layout/signature fragments. Bodyless methods have signature work only. A transition
+to bodyless syntax retains the old body in `retired_bodies` until analysis retires its
+work and clears facts, then frontend disposal releases it. Parsing does not schedule
+analysis or manufacture replacement bodies.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges
 are contracts, not fallback implementations. Concrete records may retain one

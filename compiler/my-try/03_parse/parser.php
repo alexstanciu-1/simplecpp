@@ -1113,6 +1113,14 @@ final class Parser_Run
 		while (true) {
 			$modifier /** nullable<declaration_modifier> */ = null;
 			$text = $this->text();
+			if ($text === '#[') {
+				$this->position++;
+				if ($this->text() === '\\') { $this->position++; }
+				$this->expect('Override');
+				$this->expect(']');
+				$result[] = declaration_modifier::override_declaration;
+				continue;
+			}
 			if ($text === 'public') { $modifier = declaration_modifier::public_access; }
 			elseif ($text === 'private') { $modifier = declaration_modifier::private_access; }
 			elseif ($text === 'protected') { $modifier = declaration_modifier::protected_access; }
@@ -1267,7 +1275,7 @@ final class Parser_Run
 			$return_type = $this->type_syntax($local_scope);
 		}
 
-		if ($record instanceof collected_interface) {
+		if ($record !== null) {
 			if ($this->text() === ';') {
 				$this->position++;
 				$function->return_type = $return_type;

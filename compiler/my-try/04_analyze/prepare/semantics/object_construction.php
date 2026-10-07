@@ -23,6 +23,9 @@ final class Object_Construction_Preparation
 			throw new \RuntimeException('S2S new requires a source struct or class');
 		}
 		$record /** collected_record */ = Type_Queries::source_record($target);
+		if ($context->worker->require_relationships($record, $context)->abstract_type) {
+			throw new \RuntimeException('Cannot construct an abstract type');
+		}
 		$context->worker->require_declaration($context->owner, $record);
 		$constructor = weakref_get($record->syntax()->require_preparation()->constructor);
 		$call /** nullable<prepared_call> */ = null;
@@ -56,7 +59,7 @@ final class Object_Construction_Preparation
 	}
 
 	/** Bounded default-construction proof; record dependencies include nested value fields. */
-	public static function supports_default(canonical_type_use $type, preparation_context $context): bool
+	public static function supports_default(canonical_type_use $type, preparation_context $context, bool $base_subobject = false): bool
 	{
 		if (Type_Queries::is_class_handle($type)) { return true; }
 		if (Ownership_Conversions::role($type) !== null) {
@@ -64,6 +67,9 @@ final class Object_Construction_Preparation
 		}
 		$record = Type_Queries::source_record($type);
 		if ($record !== null) {
+			if (!$base_subobject) {
+				if ($context->worker->require_relationships($record, $context)->abstract_type) { return false; }
+			}
 			$context->worker->require_declaration($context->owner, $record);
 			$constructor = weakref_get($record->syntax()->require_preparation()->constructor);
 			if ($constructor !== null) {

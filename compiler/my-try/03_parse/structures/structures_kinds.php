@@ -98,6 +98,7 @@ enum declaration_modifier
 	case private_access;
 	case static_member;
 	case abstract_declaration;
+	case override_declaration;
 	case final_declaration;
 	case readonly_declaration;
 }

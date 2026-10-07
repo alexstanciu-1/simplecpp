@@ -172,6 +172,12 @@ final class Preparation_Worker
 			$entries /** Storage<collected_name> */ = $source->entries;
 			foreach ($entries as $entry)
 			{
+				if ($entry instanceof collected_source_callable) {
+					$retired_bodies /** Storage<function_body_node> */ = object_cast($entry, collected_source_callable::class)->callable_syntax()->retired_bodies;
+					foreach ($retired_bodies as $retired_body) {
+						if ($retired_body->work() !== null) { $result[$retired_body->work()] = true; }
+					}
+				}
 				if ((!$all) && (!$source->deleted) && ($entry->change_status !== change_state::deleted)) {
 					continue;
 				}
@@ -181,6 +187,8 @@ final class Preparation_Worker
 				if ($entry instanceof collected_member_owner) {
 					$relationships = object_cast($entry, collected_member_owner::class)->relationship_work;
 					if ($relationships !== null) { $result[$relationships] = true; }
+					$contracts = object_cast($entry, collected_member_owner::class)->contract_work;
+					if ($contracts !== null) { $result[$contracts] = true; }
 				}
 				if ($entry instanceof collected_source_callable) {
 					$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
@@ -261,6 +269,7 @@ final class Preparation_Worker
 	{
 		$entry = object_cast($node->occurrence(), collected_source_callable::class);
 		$this->select_owner($this->callable_owner($entry));
+		if (!$node->has_parsed_body()) { return; }
 		if ($node->require_body()->work() === null) {
 			$node->require_body()->attach_work(new source_callable_body_work($entry));
 		}
@@ -275,6 +284,7 @@ final class Preparation_Worker
 		}
 		$entry = object_cast($node->occurrence(), collected_record::class);
 		$this->select_owner($this->record_owner($entry));
+		$this->select_owner($this->contract_owner($entry));
 		$constants /** Storage<member_constant_node> */ = $node->constants;
 		foreach ($constants as $constant) {
 			$this->select_owner($this->declaration_owner(object_cast($constant->occurrence(), collected_constant::class)));
@@ -334,7 +344,7 @@ final class Preparation_Worker
 	private function enqueue_declaration(declaration_work $owner): void
 	{
 		$entry = $owner->required_declaration();
-		if (!($owner instanceof type_relationship_work) && ($entry->change_status !== change_state::added)) {
+		if (!($owner instanceof type_semantic_work) && ($entry->change_status !== change_state::added)) {
 			$entry->change_status = change_state::changed;
 		}
 		if ($this->queue_ready($owner)) {
@@ -391,6 +401,22 @@ final class Preparation_Worker
 			$entry->relationship_work = new type_relationship_work($entry);
 		}
 		return $entry->relationship_work;
+	}
+
+	public function contract_owner(collected_member_owner $entry): type_contract_work
+	{
+		if ($entry->contract_work === null) { $entry->contract_work = new type_contract_work($entry); }
+		return $entry->contract_work;
+	}
+
+	public function require_type_contract(collected_member_owner $entry, preparation_context $context): prepared_type_contract
+	{
+		$target = $this->contract_owner($entry);
+		$context->owner->dependencies[$target] = $target->version;
+		$target->dependents[$context->owner] = true;
+		$this->declaration($target);
+		$context->owner->dependencies[$target] = $target->version;
+		return $target->require_facts();
 	}
 
 	/** Demand only ancestry; record layout and callable signatures remain independent work. */
@@ -538,6 +564,14 @@ final class Preparation_Worker
 	/** Dispatch by retained work role; records carry identities, not processing hooks. */
 	private function rebuild_declaration(declaration_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
 	{
+		if ($owner instanceof type_contract_work) {
+			$contracts = object_cast($owner, type_contract_work::class);
+			$current = Type_Contract_Preparation::prepare(object_cast($contracts->member_definition(), collected_record::class), $context);
+			$changed = !Type_Contract_Preparation::same($contracts->facts, $current);
+			if ($changed) { $contracts->facts = $current; }
+			$contracts->source_revision = (int)$contracts->member_definition()->revision;
+			return $changed;
+		}
 		if ($owner instanceof type_relationship_work) {
 			$relationships = object_cast($owner, type_relationship_work::class);
 			$current = Relationship_Preparation::prepare($relationships->member_definition(), $context);
@@ -576,7 +610,7 @@ final class Preparation_Worker
 
 	private function settle_members(declaration_work $owner): void
 	{
-		if ($owner instanceof type_relationship_work) { return; }
+		if ($owner instanceof type_semantic_work) { return; }
 		if ($owner instanceof source_callable_signature_work) {
 			$this->settle_parameters(object_cast($owner, source_callable_signature_work::class)->callable_definition());
 		}
@@ -836,6 +870,13 @@ final class Preparation_Worker
 	{
 		$entries /** Storage<collected_name> */ = $source->entries;
 		foreach ($entries as $entry) {
+			if ($entry instanceof collected_source_callable) {
+				$retired_bodies /** Storage<function_body_node> */ = object_cast($entry, collected_source_callable::class)->callable_syntax()->retired_bodies;
+				foreach ($retired_bodies as $retired_body) {
+					Preparation_Cleanup::tree($retired_body);
+					$retired_body->detach_work();
+				}
+			}
 			if (!$source->deleted && ($entry->change_status !== change_state::deleted)) {
 				continue;
 			}
@@ -844,6 +885,7 @@ final class Preparation_Worker
 			}
 			if ($entry instanceof collected_member_owner) {
 				object_cast($entry, collected_member_owner::class)->relationship_work = null;
+				object_cast($entry, collected_member_owner::class)->contract_work = null;
 			}
 			if ($entry instanceof collected_source_callable) {
 				$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
@@ -892,6 +934,7 @@ final class Preparation_Worker
 	/** Explicitly sever both directions; strong-reference storage must not keep retired owners alive. */
 	private function retire(preparation_owner $owner): void
 	{
+		if ($owner instanceof type_contract_work) { object_cast($owner, type_contract_work::class)->facts = null; }
 		if ($owner instanceof type_relationship_work) {
 			object_cast($owner, type_relationship_work::class)->facts = null;
 		}

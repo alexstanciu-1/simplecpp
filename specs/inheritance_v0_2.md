@@ -1,8 +1,8 @@
-# v0.2 concrete inheritance
+# v0.2 inheritance and virtual contracts
 Doc Status: normative
 
 This bounded contract covers class-to-class and struct-to-struct single inheritance.
-It extends the CH10 member contracts; interface execution, virtual overrides and
+It extends the CH10 member contracts; interface execution and
 source-level derived/base conversions remain deferred. Availability and evidence
 are tracked in [CH11](../compiler/my-try/docs/catalog/11_inheritance.md).
 
@@ -13,9 +13,10 @@ inline storage. Construct it before the child's declared properties. Do not copy
 inherited declarations into the child's member inventories. Resolve properties,
 methods and constants in separate categories, retaining the original declaring type.
 An inherited static property has one storage location owned by that declaring type.
-Ordinary methods retain fixed, non-virtual dispatch.
+Ordinary methods retain fixed, non-virtual dispatch unless implementing an inherited
+virtual contract established by an abstract method.
 
-Same-category redeclaration of any inherited property, ordinary method or constant
+Same-category redeclaration of any inherited property, nonvirtual method or constant
 is rejected in this first slice, including private inherited names. Cross-category
 names remain independent. Constructors/destructors are lifecycle declarations,
 not ordinary inherited members subject to this collision rule.
@@ -40,7 +41,7 @@ Potential broader protected access is [non-blocking discussion debt](../compiler
 
 Without an authored constructor, a child inherits the supported public constructor
 contract of its base, including parameter defaults, through concrete intermediate
-bases. The original declaration owns that contract; it is not copied into the child's
+bases, including abstract ones. The original declaration owns that contract; it is not copied into the child's
 method inventory. Child properties must support their own defaults. The existing
 fixed by-value constructor boundary remains; reference/variadic constructors are not
 introduced here. Implicit inline-payload default construction does not acquire source
@@ -75,8 +76,45 @@ Copying an inline base subobject does not invoke its default constructor again.
 
 Cleanup follows subobject order: child destructor body, child members in reverse
 declaration order, then the base subobject. Existing nonthrowing destructor rules
-remain. This slice does not enable polymorphic deletion or base-handle conversions;
-no virtual destructor policy is inferred.
+remain. Hierarchies with virtual method contracts have virtual destruction, including
+an implicit public nonthrowing virtual destructor when none is authored. Preserve
+ordinary memberwise copy/move availability; a generated destructor must not silently
+suppress moves. Ordinary nonpolymorphic hierarchies do not acquire virtual destruction.
+Source base-handle conversions remain deferred.
+
+## Abstract types and overriding
+
+Classes and structs may be explicitly `abstract`, with properties, constructors and
+concrete methods. They cannot be instantiated, even without abstract methods.
+Abstract inline values cannot be stored, copied as complete values or passed/returned
+by value. An abstract base subobject remains constructible/copyable as part of a
+concrete descendant, subject to its fields. Absent ownership handles remain valid.
+
+An abstract method is a bodyless, public/protected, nonstatic, non-final declaration
+inside an explicitly abstract type. It establishes a virtual contract. Every concrete
+descendant must implement all inherited abstract obligations. An abstract intermediate
+may leave obligations unimplemented or redeclare a virtual method abstract.
+
+An implementation of an inherited virtual method remains virtual automatically.
+Optional `#[\Override]` asserts that such a target exists; reject it otherwise.
+The bounded contract requires exact parameter types, passing/reference modes,
+read-only qualification, variadic shape, optional-parameter positions, return type
+and reference-return origin. Parameter names and default values need not match;
+defaults are selected from the statically resolved callable contract. Visibility
+may widen from protected to public, never narrow. Covariance/contravariance remain
+deferred. A final implementation cannot be overridden; a final type cannot be extended.
+`abstract final` types/methods are invalid. Nonvirtual hiding remains rejected.
+
+Ordinary instance calls use virtual dispatch where the selected method has a virtual
+contract. Explicit `parent::` calls select the ancestor implementation without virtual
+redispatch; directly calling a bodyless abstract ancestor method is invalid.
+Construction/destruction follow C++ dispatch rules: no dispatch into a more-derived
+part before its construction or after its destruction. Reference-return safety keeps
+the existing whole-parameter origin and conservative recursion restrictions, including
+possible virtual targets; explicit parent calls retain their exact target.
+
+Constructor contracts remain concrete; abstract/final/override destructor modifiers
+and abstract constructors are not introduced by this slice.
 
 ## Explicit parent member access
 
@@ -92,7 +130,7 @@ or without a concrete base is rejected. This is not late-bound `static::` dispat
 ## Remaining gates
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
-final type may be instantiated. Abstract/interface contracts, method overriding,
-member hiding, inherited data inputs, late-bound `static::`, derived/base
+final type may be instantiated. Interface contracts, nonvirtual member hiding,
+inherited data inputs, late-bound `static::`, derived/base
 assignment/argument/return conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.

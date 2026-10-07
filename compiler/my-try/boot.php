@@ -50,6 +50,7 @@ require_once __DIR__ . '/04_analyze/prepare/data/structures.php';
 require_once __DIR__ . '/04_analyze/prepare/data/relationships.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/relationships.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/inheritance.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/type_contracts.php';
 require_once __DIR__ . '/04_analyze/prepare/inherited_lookup.php';
 require_once __DIR__ . '/04_analyze/prepare/data/enums.php';
 require_once __DIR__ . '/04_analyze/prepare/data/compiler_calls.php';

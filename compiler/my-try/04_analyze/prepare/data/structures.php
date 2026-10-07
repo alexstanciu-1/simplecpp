@@ -472,6 +472,9 @@ final class prepared_source_constant
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
 final class prepared_source_callable
 {
+	public bool $abstract_method = false;
+	public bool $final_method = false;
+	public bool $override_assertion = false;
 	public bool $static_member = false;
 	public member_visibility $visibility = member_visibility::public_access;
 	public callable_signature $signature;

@@ -23,7 +23,9 @@ final class Relationship_Preparation
 		$facts = new prepared_type_relationships();
 		foreach ($syntax->modifiers as $modifier) {
 			if ($modifier === declaration_modifier::final_declaration) { $facts->final_type = true; }
+			if ($modifier === declaration_modifier::abstract_declaration) { $facts->abstract_type = true; }
 		}
+		if ($facts->final_type && $facts->abstract_type) { throw new \RuntimeException('A type cannot be both abstract and final'); }
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
 		$implemented /** Storage<named_type_node> */ = $syntax->implemented_interfaces;
 		$interfaces /** Storage<named_type_node> */ = $implemented;
@@ -66,7 +68,7 @@ final class Relationship_Preparation
 	public static function same(?prepared_type_relationships $old, prepared_type_relationships $current): bool
 	{
 		if ($old === null) { return false; }
-		if ((weakref_get($old->base) !== weakref_get($current->base)) || ($old->final_type !== $current->final_type)
+		if ((weakref_get($old->base) !== weakref_get($current->base)) || ($old->final_type !== $current->final_type) || ($old->abstract_type !== $current->abstract_type)
 			|| (q_count($old->interfaces) !== q_count($current->interfaces))) { return false; }
 		foreach ($old->interfaces as $index => $target) {
 			if ($target !== $current->interfaces[$index]) { return false; }

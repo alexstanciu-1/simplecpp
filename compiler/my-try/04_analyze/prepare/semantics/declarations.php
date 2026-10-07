@@ -33,6 +33,9 @@ final class Declaration_Preparation
 			$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
 		}
 		else { $facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context); }
+		if (!$syntax->returns_reference) {
+			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
+		}
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$contracts /** Storage<callable_parameter> */ = $facts->signature->parameters;
@@ -64,6 +67,9 @@ final class Declaration_Preparation
 		Type_Preparation::require_value_type($contract->type);
 		$contract->mode = $node->mode;
 		$contract->access = $node->access;
+		if ($node->mode === passing_mode::value) {
+			Capability_Preparation::require_concrete_value($contract->type, $context);
+		}
 		if ($node->variadic) {
 			if (($node->mode !== passing_mode::value) || ($node->default_value !== null)) {
 				throw new \RuntimeException('S2S variadic parameters must be by value without an explicit default');
@@ -98,7 +104,7 @@ final class Declaration_Preparation
 		Inheritance_Preparation::base(object_cast($syntax->occurrence(), collected_record::class), $facts, $context);
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		foreach ($syntax->modifiers as $modifier) {
-			if ($modifier === declaration_modifier::final_declaration) { continue; }
+			if (($modifier === declaration_modifier::final_declaration) || ($modifier === declaration_modifier::abstract_declaration)) { continue; }
 			if ($modifier !== declaration_modifier::data_initializable) {
 				throw new \RuntimeException('Type modifier is not supported by this record slice');
 			}
@@ -142,7 +148,10 @@ final class Declaration_Preparation
 				$copyable = false;
 			}
 		}
-		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable];
+		$capabilities /** vector<generic_contract> */ = [];
+		if (!$context->worker->require_relationships($context->member_owner, $context)->abstract_type) {
+			$capabilities[] = generic_contract::value_storable;
+		}
 		if ($copyable) {
 			$capabilities[] = generic_contract::copyable_value;
 		}

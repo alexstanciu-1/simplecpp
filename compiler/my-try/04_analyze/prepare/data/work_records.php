@@ -127,10 +127,9 @@ final class enum_definition_work extends declaration_work
 	}
 }
 
-/** Relationship facts have their own completion, dependency and retirement identity. */
-final class type_relationship_work extends declaration_work
+/** Independent type facts never acknowledge the record layout's source flag. */
+abstract class type_semantic_work extends declaration_work
 {
-	public ?prepared_type_relationships $facts = null;
 	public int $source_revision = -1;
 	private collected_member_owner $definition;
 
@@ -149,11 +148,21 @@ final class type_relationship_work extends declaration_work
 	{
 		return $this->definition;
 	}
+}
 
+final class type_relationship_work extends type_semantic_work
+{
+	public ?prepared_type_relationships $facts = null;
 	public function require_facts(): prepared_type_relationships
 	{
 		return $this->facts;
 	}
+}
+
+final class type_contract_work extends type_semantic_work
+{
+	public ?prepared_type_contract $facts = null;
+	public function require_facts(): prepared_type_contract { return $this->facts; }
 }
 
 final class record_definition_work extends declaration_work

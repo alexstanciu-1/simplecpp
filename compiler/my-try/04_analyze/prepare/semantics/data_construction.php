@@ -84,6 +84,9 @@ final class Record_Construction_Preparation
 	{
 		$payload = Type_Queries::record_payload($target);
 		$record /** collected_record */ = Type_Queries::source_record($payload);
+		if ($context->worker->require_relationships($record, $context)->abstract_type) {
+			throw new \RuntimeException('Cannot construct an abstract type');
+		}
 		$context->worker->require_declaration($context->owner, $record);
 		if (!$record->syntax()->require_preparation()->data_initializable) {
 			throw new \RuntimeException('S2S record data construction requires explicit data opt-in');

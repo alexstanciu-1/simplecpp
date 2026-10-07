@@ -23,6 +23,8 @@ abstract class callable_declaration_node extends declaration_node
 	/** Explicit source marker; its lifetime contract is established by preparation. */
 	public bool $returns_reference = false;
 	public ?function_body_node $body = null;
+	/** Preserve replaced executable ownership until join-ordered semantic retirement. */
+	public Storage $retired_bodies /** Storage<function_body_node> */;
 	/** A failed later parse may retain an earlier body; this is not current-file completion. */
 	private bool $parsed_definition = false;
 	/**
@@ -36,6 +38,7 @@ abstract class callable_declaration_node extends declaration_node
 	/** Allocate only the concrete node's ordered syntax collections. */
 	public function __construct()
 	{
+		$this->retired_bodies = new Storage /** Storage<function_body_node> */();
 		$this->owned_signature_scope = new scope();
 		$this->owned_signature_scope->mark_function();
 		$this->parameters = new Storage /** Storage<parameter_node> */();
@@ -57,6 +60,10 @@ abstract class callable_declaration_node extends declaration_node
 	/** A completed semicolon declaration is different from an unfinished parse. */
 	public function set_bodyless_declaration(): void
 	{
+		if ($this->body !== null) {
+			$retired /** Storage<function_body_node> */ = $this->retired_bodies;
+			$retired->append($this->body);
+		}
 		$this->body = null;
 		$this->parsed_definition = true;
 	}

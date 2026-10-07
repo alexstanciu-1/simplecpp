@@ -11,7 +11,38 @@ The user approved same-kind class/struct inheritance and preservation of existin
 non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_foundation.md)
 records those boundaries and the approved shared member-owner prerequisite.
 That model migration and relationship/lookup foundation are complete. Bounded
-concrete inheritance now executes; interfaces, overrides and conversions remain gated.
+concrete inheritance and bounded abstract/override dispatch now execute; interfaces
+and derived/base conversions remain gated.
+
+## Abstract contracts and virtual dispatch — 2026-10-07
+
+Implemented for classes and structs: abstract types/methods, inherited obligations,
+exact override signatures, optional checked `#[\Override]`, final methods/types,
+virtual calls and virtual destruction. Ordinary methods remain nonvirtual; explicit
+parent calls select a concrete ancestor implementation. Abstract complete inline
+values and abstract construction reject during preparation, independently of whether
+C++ would consider the emitted declaration abstract. Base-subobject copying remains
+available. See the [normative contract](../../../../specs/inheritance_v0_2.md).
+
+The approved prerequisite is independent `type_contract_work` in the existing
+scheduler, after relationship/layout/signature work. It owns local dispatch decisions
+and unresolved original abstract declarations, not flattened inherited inventories.
+Bodyless methods have signature work only. Concrete-to-abstract edits retire old body
+work before frontend disposal; abstract-to-concrete edits create new body work while
+preserving signature identity. C++ assembly consumes completed contracts and preserves
+ordinary copy/move operations when virtual cleanup is generated.
+
+Proof: `abstract_dispatch.php` covers class/struct execution, signature/finality edits,
+failure/retry/repair, body retirement, reset and fresh/incremental agreement. Generated
+programs also check C++ virtual cleanup and noncopyable payload move traits. Passed:
+32 generated abstract-dispatch programs, 51 inheritance regressions, 25 destructor
+regressions and 17 PHP-host model suites. No native compiler rebuild. Final evidence:
+`/tmp/abstract-dispatch-20261007-7`, `/tmp/abstract-inheritance-20261007-1`,
+`/tmp/abstract-destructors-20261007-2`, `/tmp/abstract-model-20261007-3`.
+
+Next discussion: interface contracts/implementation and their dispatch representation.
+Conversions, trait composition, inherited data inputs, late static binding and
+non-public/abstract constructors remain separate groups.
 
 ## Parent access and constructor forwarding — 2026-10-07
 
@@ -34,7 +65,7 @@ failure/retry/repair, removal and fresh/incremental agreement. No native compile
 The inherited signature may name a descendant without forcing a layout/signature cycle;
 previously supported implicit derived zero-parameter construction remains valid.
 
-Next discussion: abstract/final/override contracts and dispatch. Inherited `data`
+The subsequent abstract-contract checkpoint above extends this slice. Inherited `data`
 inputs, non-public/abstract constructor contracts, late `static::` and source upcasts
 remain outside this slice.
 
@@ -188,20 +219,20 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-004](#class-inh-004) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
 | [CLASS-INH-006](#class-inh-006) | pending-discussion | `$a = new A(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-007](#class-inh-007) | pending-discussion | `A a(1);` | unverified | unverified | deferred | — |
-| [CLASS-INH-008](#class-inh-008) | implemented-bounded | `$this->f();` | verified | verified | deferred | Fixed inherited methods; override/virtual contracts deferred |
+| [CLASS-INH-008](#class-inh-008) | implemented-bounded | `$this->f();` | verified | verified | deferred | Ordinary fixed methods; abstract contracts dispatch virtually |
 | [CLASS-INH-009](#class-inh-009) | implemented-bounded | `parent::f(1);` | verified | verified | deferred | Fixed original-owner dispatch; current instance required for instance methods |
 | [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; public fixed-value constructors |
-| CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits the original public constructor contract and source defaults; concrete ancestors only |
-| [CLASS-INH-011](#class-inh-011) | pending-discussion | `#[\Override] function f(): int { return 1; }` | unverified | unverified | deferred | — |
+| CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original public concrete constructor contract/defaults through abstract or concrete ancestors |
+| [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |
 | [CLASS-INH-012](#class-inh-012) | pending-discussion | `class B extends A {}` | unverified | unverified | deferred | — |
 | [CLASS-ABS-001](#class-abs-001) | pending-discussion | `function __destruct() { $this->cleanup(); }` | unverified | unverified | deferred | — |
 | [CLASS-ABS-002](#class-abs-002) | pending-discussion | `function __destruct() {}` | unverified | unverified | deferred | — |
 | [CLASS-ABS-003](#class-abs-003) | pending-discussion | `function __destruct() { return $this->x; }`<br>`function __destruct() { $this->x; }` | unverified | unverified | deferred | Source variants need reconciliation |
 | [CLASS-ABS-004](#class-abs-004) | pending-discussion | `static function __destruct() {}` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLASS-ABS-005](#class-abs-005) | pending-discussion | `abstract class A {}` | unverified | unverified | deferred | — |
-| [CLASS-ABS-006](#class-abs-006) | pending-discussion | `abstract function f(int $x): int;` | unverified | unverified | deferred | — |
-| [CLASS-ABS-007](#class-abs-007) | pending-discussion | `abstract function f(): int;` | unverified | unverified | deferred | — |
-| [CLASS-ABS-008](#class-abs-008) | pending-discussion | `abstract class A { int $x; function f(): int { return $this->x; } }` | unverified | unverified | deferred | — |
+| [CLASS-ABS-005](#class-abs-005) | implemented-bounded | `abstract class A {}` | verified | verified | deferred | Cannot instantiate even without abstract members; class and struct |
+| [CLASS-ABS-006](#class-abs-006) | implemented-bounded | `abstract function f(int $x): int;` | verified | verified | deferred | Bodyless public/protected instance contract; concrete descendants must implement |
+| [CLASS-ABS-007](#class-abs-007) | implemented-bounded | `abstract function f(): int;` | verified | verified | deferred | Pure virtual declaration; no executable body work |
+| [CLASS-ABS-008](#class-abs-008) | implemented-bounded | `abstract class A { int $x; function f(): int { return $this->x; } }` | verified | verified | deferred | Concrete members/constructors remain available to descendants |
 | [CLASS-ABS-009](#class-abs-009) | pending-discussion | `interface I { function f(): int; }` | unverified | unverified | deferred | — |
 | [CLASS-ABS-010](#class-abs-010) | pending-discussion | `class A extends B implements I {}` | unverified | unverified | deferred | — |
 | [TYPE-PARAM-003G](#type-param-003g) | pending-discussion | `interface I { public function f(const string &$s): int; } class C implements I { public function f(string $s): int { return 1; } }` | unverified | unverified | deferred | — |

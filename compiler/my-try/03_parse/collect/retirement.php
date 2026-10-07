@@ -19,6 +19,11 @@ final class Collection_Retirement
 		$removed /** vector<int> */ = [];
 		foreach ($entries as $entry)
 		{
+			if ($entry instanceof collected_source_callable) {
+				$syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
+				$retired /** Storage<function_body_node> */ = $syntax->retired_bodies;
+				if (!$retired->is_empty()) { $syntax->retired_bodies = new Storage /** Storage<function_body_node> */(); }
+			}
 			if (!$source->deleted && ($entry->change_status !== change_state::deleted)) {
 				continue;
 			}

@@ -25,9 +25,25 @@ final class Method_Preparation
 		if (string_byte_starts_with($syntax->name, '__') && !$destructor) {
 			throw new \RuntimeException('Special methods are deferred');
 		}
-		Member_Preparation::validate_modifiers($syntax->modifiers, true);
+		$ordinary /** vector<declaration_modifier> */ = [];
+		foreach ($syntax->modifiers as $modifier) {
+			if ($modifier === declaration_modifier::abstract_declaration) { $facts->abstract_method = true; }
+			elseif ($modifier === declaration_modifier::final_declaration) { $facts->final_method = true; }
+			elseif ($modifier === declaration_modifier::override_declaration) { $facts->override_assertion = true; }
+			else { $ordinary[] = $modifier; }
+		}
+		Member_Preparation::validate_modifiers($ordinary, true);
 		$facts->visibility = Member_Preparation::visibility($syntax->modifiers);
 		$facts->static_member = Member_Preparation::is_static($syntax->modifiers);
+		if ($facts->abstract_method === $syntax->has_parsed_body()) {
+			throw new \RuntimeException('Abstract methods require no body; concrete methods require a body');
+		}
+		if ($facts->abstract_method && ($facts->static_member || $facts->final_method || ($facts->visibility === member_visibility::private_access))) {
+			throw new \RuntimeException('Abstract methods must be non-final public/protected instance methods');
+		}
+		if ($destructor && ($facts->abstract_method || $facts->final_method || $facts->override_assertion)) {
+			throw new \RuntimeException('Destructor abstract/final/override modifiers are deferred');
+		}
 		$parameters /** Storage<parameter_node> */ = $syntax->parameters;
 		if ($destructor) {
 			if (!$parameters->is_empty() || ($syntax->return_type !== null) || $syntax->returns_reference
@@ -123,6 +139,9 @@ final class Method_Preparation
 		}
 		$method = object_cast($matches[0]->member, collected_method::class);
 		Call_Preparation::require_signature($method, $context);
+		if ($parent_call && $method->callable_syntax()->require_preparation()->abstract_method) {
+			throw new \RuntimeException('Cannot explicitly call an abstract parent method');
+		}
 		if ($parent_call) { $static_call = $method->callable_syntax()->require_preparation()->static_member; }
 		if ($method->callable_syntax()->require_preparation()->static_member !== $static_call) {
 			throw new \RuntimeException('Static methods require :: and instance methods require ->');

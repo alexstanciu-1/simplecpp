@@ -257,6 +257,7 @@ abstract class collected_member_owner extends collected_type_definition
 {
 	/** Independent analysis work; completing relationships never completes layout. */
 	public ?type_relationship_work $relationship_work = null;
+	public ?type_contract_work $contract_work = null;
 	/** @reference.source parsed_file.root (syntax graph) */
 	private type_declaration_node $syntax_node;
 

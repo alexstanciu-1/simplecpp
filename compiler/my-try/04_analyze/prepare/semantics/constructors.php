@@ -55,6 +55,7 @@ final class Constructor_Preparation
 	/** Resolve public by-value constructor inputs after the declaring layout has settled. */
 	public static function signature(method_node $syntax, preparation_context $context): void
 	{
+		if (!$syntax->has_parsed_body()) { throw new \RuntimeException('Constructor requires a concrete body'); }
 		if (($syntax->name !== '__construct') || ($syntax->return_type !== null) || $syntax->returns_reference) {
 			throw new \RuntimeException('Only __construct without a return type or reference return is supported');
 		}

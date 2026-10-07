@@ -21,7 +21,12 @@ before making `$this` available and retains `prepared_base_initialization` on th
 body. Its call/default dependencies and cleanup follow ordinary body work. Parent
 ordinary calls use the same method selection/access and argument boundary paths.
 `Inheritance_Preparation` admits the inline base layout/default-construction contract
-and rejects ordinary member redeclarations. `Member_Preparation` checks declaring
+and rejects property/constant redeclarations. Independent `type_contract_work` uses
+the same scheduler after layout/signatures; `Type_Contract_Preparation` validates
+method overriding, finality and abstract obligations. Layouts and signatures never
+depend back on this work. It retains local dispatch decisions and outstanding original
+abstract declarations, not a flattened member inventory. C++ consumes those facts.
+`Member_Preparation` checks declaring
 context and protected instance-receiver restrictions; declared inventories never
 become inherited lookup caches.
 
@@ -32,6 +37,7 @@ become inherited lookup caches.
 | `lookup.php` | Analysis-owned observed lexical lookup across independent type/function/constant pools |
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
+| `semantics/type_contracts.php` | Post-layout abstract obligations, exact overrides, finality and local virtual-dispatch facts |
 | `semantics/constructors.php` | Public constructor contracts, property-backed parameters, receivers and shared named construction inputs |
 | `semantics/methods.php` | Shared instance context, ordinary method admission/selection, visibility and receiver lifetime decisions |
 | `semantics/enums.php`, `data/enums.php` | Enum backing/ranges, compact storage, immutable case snapshots and selected references |
