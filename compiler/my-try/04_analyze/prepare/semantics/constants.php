@@ -6,9 +6,16 @@ namespace scpp\compiler;
 /** Bounded compile-time scalar evaluation. Never evaluates host PHP or runtime calls. */
 final class Constant_Preparation
 {
-	public static function declaration(namespace_constant_node $syntax, preparation_context $context): void
+	public static function declaration(constant_declaration_node $syntax, preparation_context $context): void
 	{
 		$entry = object_cast($syntax->occurrence(), collected_constant::class);
+		$public = true;
+		if ($syntax instanceof member_constant_node) {
+			$modifiers = object_cast($syntax, member_constant_node::class)->modifiers;
+			Member_Preparation::validate_modifiers($modifiers, false);
+			$public = Member_Preparation::is_public($modifiers);
+			$context->receiver_record = weakref_get($entry->record_owner);
+		}
 		$declaring_scope = object_cast(weakref_get($entry->scope), scope::class);
 		$candidates = Observed_Lookup::constants($declaring_scope, $entry->name, $context);
 		if (q_count($candidates) !== 1) {
@@ -20,7 +27,7 @@ final class Constant_Preparation
 			&& !$value->type->matches($context->boolean) && !$value->type->matches($context->string_type)) {
 			throw new \RuntimeException('S2S source constants require bool, int, float or string in a constant initializer');
 		}
-		$syntax->set_preparation($value);
+		$syntax->set_preparation(new prepared_source_constant($value, $public));
 	}
 
 }
@@ -37,6 +44,7 @@ final class Constant_Expression_Preparation
 		}
 		if ($syntax instanceof static_member_reference_node) {
 			$static_value = Expression_Preparation::prepare($syntax, $context);
+			if ($static_value instanceof prepared_constant_reference) { return object_cast($static_value, prepared_constant_reference::class)->value; }
 			if ($static_value instanceof prepared_enum_case_reference) {
 				$enum_reference = object_cast($static_value, prepared_enum_case_reference::class);
 				$enum_value = new enum_constant_value();
@@ -142,6 +150,9 @@ final class Integer_Constants
 	/** Read already-prepared constant forms; never traverse arbitrary expressions. */
 	public static function value(expression_node $syntax): string
 	{
+		if ($syntax instanceof static_member_reference_node) {
+			return self::reference(object_cast($syntax->require_preparation(), prepared_constant_reference::class));
+		}
 		if ($syntax instanceof integer_literal_node) {
 			return object_cast($syntax, integer_literal_node::class)->require_integer_literal_preparation()->decimal;
 		}

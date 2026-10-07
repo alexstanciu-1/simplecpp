@@ -688,6 +688,8 @@ final class call_node extends expression_node
 	public string $name;
 	/** Absent for free calls; fixed instance calls own their receiver syntax. */
 	public ?expression_node $receiver = null;
+	/** Qualified calls own a type spelling instead of an instance receiver. */
+	public ?named_type_node $owner_type = null;
 	/** Current frontend accepts only named explicit template type arguments. */
 	public Storage $template_arguments /** Storage<named_type_node> */;
 	public Storage $arguments /** Storage<expression_node> */;
@@ -732,6 +734,7 @@ final class call_node extends expression_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
+		if ($this->owner_type !== null) { $worker->edge($this, $this->owner_type); }
 		if ($this->receiver !== null) { $worker->edge($this, $this->receiver); }
 		$template_arguments /** Storage<named_type_node> */ = $this->template_arguments;
 		foreach ($template_arguments as $template_argument) {

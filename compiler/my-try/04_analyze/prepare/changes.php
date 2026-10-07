@@ -12,6 +12,7 @@ final class Preparation_Changes
 			return false;
 		}
 		if ($old->public_access !== $current->public_access) { return false; }
+		if ($old->static_member !== $current->static_member) { return false; }
 		if (!self::same_reference_return($old->signature->reference_return, $current->signature->reference_return)) {
 			return false;
 		}
@@ -78,8 +79,12 @@ final class Preparation_Changes
 		if (q_count($old->capabilities) !== q_count($current->capabilities)) {
 			return false;
 		}
-		$old_fields /** Key_Storage_List<prepared_field> */ = $old->fields;
-		$new_fields /** Key_Storage_List<prepared_field> */ = $current->fields;
+		return self::same_fields($old->fields, $current->fields) && self::same_fields($old->static_fields, $current->static_fields);
+	}
+
+	private static function same_fields(Key_Storage_List $old_fields /** Key_Storage_List<prepared_field> */,
+		Key_Storage_List $new_fields /** Key_Storage_List<prepared_field> */): bool
+	{
 		$previous /** vector<prepared_field> */ = $old_fields->items();
 		$fields /** vector<prepared_field> */ = $new_fields->items();
 		if (q_count($previous) !== q_count($fields)) {
@@ -88,6 +93,7 @@ final class Preparation_Changes
 		foreach ($fields as $index => $field) {
 			$before = $previous[$index];
 			if ($before->public_access !== $field->public_access) { return false; }
+			if ($before->static_member !== $field->static_member) { return false; }
 			if (!Property_Defaults::same($before->default_value, $field->default_value)) {
 				return false;
 			}
@@ -113,9 +119,11 @@ final class Preparation_Changes
 	{
 		$nodes /** Storage<property_node> */ = $syntax->properties;
 		$store /** Key_Storage_List<prepared_field> */ = $facts->fields;
-		$fields /** vector<prepared_field> */ = $store->items();
-		foreach ($nodes as $index => $node) {
-			$node->set_preparation($fields[$index]);
+		$static_store /** Key_Storage_List<prepared_field> */ = $facts->static_fields;
+		foreach ($nodes as $node) {
+			$fields /** vector<prepared_field> */ = Member_Preparation::is_static($node->modifiers)
+				? $static_store->named($node->name) : $store->named($node->name);
+			$node->set_preparation($fields[0]);
 		}
 	}
 }

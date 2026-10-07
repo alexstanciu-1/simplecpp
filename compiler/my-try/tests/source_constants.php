@@ -98,7 +98,7 @@ try { $compiler->cpp(); } catch (\RuntimeException $error) { $failed = true; }
 constant_check($failed, 'Stale constant output accepted');
 $compiler->prepare(true); $compiler->cpp();
 constant_check($definition->occurrence() === $identity && $identity->preparation === $work, 'Edit replaced constant identity');
-constant_check(object_cast($alias->require_preparation(), integer_constant_value::class)->decimal === '9', 'Transitive consumer retained old value');
+constant_check(object_cast($alias->require_preparation()->value, integer_constant_value::class)->decimal === '9', 'Transitive consumer retained old value');
 constant_check(CPP_Output::encode(Model::$cpp_files) !== $original, 'Value edit left stale output');
 
 // A type edit invalidates the unchanged signature/body consumer, then recovers cleanly.

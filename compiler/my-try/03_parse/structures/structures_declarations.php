@@ -143,11 +143,11 @@ abstract class constant_declaration_node extends declaration_node
 	use Node_Source_Span;
 	use Collected_Occurrence;
 	use Preparation_Facts;
-	private ?constant_value $prepared_facts = null;
+	private ?prepared_source_constant $prepared_facts = null;
 	public string $name;
 	public expression_node $initializer;
 
-	public function require_preparation(): constant_value
+	public function require_preparation(): prepared_source_constant
 	{
 		return $this->prepared_facts;
 	}

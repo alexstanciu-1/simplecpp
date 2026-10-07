@@ -206,16 +206,17 @@ final class collected_method extends collected_source_callable
 
 final class collected_constant extends collected_definition implements constant_target_i
 {
-	private namespace_constant_node $syntax_node;
-	public function __construct(collected_file $collection, namespace_constant_node $node)
+	public ?collected_record $record_owner /** weak<collected_record> */ = null;
+	private constant_declaration_node $syntax_node;
+	public function __construct(collected_file $collection, constant_declaration_node $node)
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
 	}
-	public function syntax(): namespace_constant_node { return $this->syntax_node; }
+	public function syntax(): constant_declaration_node { return $this->syntax_node; }
 	public function kind(): collected_name_kind { return collected_name_kind::constant_declaration; }
 	public function constant_name(): string { return $this->name; }
-	public function value(): constant_value { return $this->syntax_node->require_preparation(); }
+	public function value(): constant_value { return $this->syntax_node->require_preparation()->value; }
 }
 
 /** Shared source-type identity; record-only consumers must explicitly narrow to collected_record. */

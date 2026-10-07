@@ -83,16 +83,16 @@ final class Declaration_Preparation
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
 		$implemented /** Storage<named_type_node> */ = $syntax->implemented_interfaces;
 		$methods /** Storage<method_node> */ = $syntax->methods;
-		$constants /** Storage<member_constant_node> */ = $syntax->constants;
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		if ((($syntax->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
 			|| ($syntax->base_class !== null)
 			|| !$extended->is_empty() || !$implemented->is_empty()
-			|| !$constants->is_empty() || !$uses->is_empty()) {
+			|| !$uses->is_empty()) {
 			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
 		}
 		$facts = new prepared_record();
+		$context->receiver_record = object_cast($syntax->occurrence(), collected_record::class);
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		foreach ($syntax->modifiers as $modifier) {
 			if ($modifier !== declaration_modifier::data_initializable) {
@@ -122,6 +122,11 @@ final class Declaration_Preparation
 			$names[$field->name] = true;
 			self::prepare_field($field, $context, $facts->data_initializable || ($facts->constructor !== null));
 			$field_facts = $field->require_preparation();
+			if ($field_facts->static_member) {
+				$static_fields /** Key_Storage_List<prepared_field> */ = $facts->static_fields;
+				$static_fields->add($field->name, $field_facts);
+				continue;
+			}
 			$fields->add($field->name, $field_facts);
 			if (!$query->has_capability($field_facts->type, generic_contract::copyable_value)) {
 				$copyable = false;
@@ -145,18 +150,17 @@ final class Declaration_Preparation
 		if ($field->type_syntax === null) {
 			throw new \RuntimeException('Property type inference is not supported by this plain-record slice');
 		}
-		foreach ($field->modifiers as $modifier) {
-			if (($modifier !== declaration_modifier::public_access) && ($modifier !== declaration_modifier::private_access)) {
-				throw new \RuntimeException('Property modifier is not supported by this plain-record slice');
-			}
-		}
+		Member_Preparation::validate_modifiers($field->modifiers, true);
 		$prepared = new prepared_field();
-		foreach ($field->modifiers as $modifier) {
-			if ($modifier === declaration_modifier::private_access) { $prepared->public_access = false; }
-		}
+		$prepared->public_access = Member_Preparation::is_public($field->modifiers);
+		$prepared->static_member = Member_Preparation::is_static($field->modifiers);
+		if ($prepared->static_member) { $allows_required = false; }
 		$prepared->declaration = $field->occurrence();
 		$prepared->type = Type_Preparation::type($field->require_type_syntax(), $context);
 		if ($field->initializer !== null) {
+			if ($prepared->static_member && ($field->initializer instanceof data_construction_node)) {
+				throw new \RuntimeException('Static properties require type defaults or constant expressions');
+			}
 			$prepared->default_value = Property_Defaults::prepare($field->initializer, $prepared->type, $context);
 		}
 		elseif (Type_Queries::canonical($prepared->type)->definition() instanceof enum_type_definition) {

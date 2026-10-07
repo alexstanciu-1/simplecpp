@@ -58,14 +58,15 @@ final class enum_node extends declaration_node
 }
 
 /** Syntax identifies an owner type and named member; preparation selects the member's role. */
-final class static_member_reference_node extends expression_node
+final class static_member_reference_node extends assignable_expression_node
 {
 	use Node_Source_Span;
 	use Preparation_Facts;
 
 	public named_type_node $owner_type;
+	/** Includes the source $ prefix for a property; constants/cases have no prefix. */
 	public string $member_name;
-	private ?prepared_enum_case_reference $prepared_facts = null;
+	private ?prepared_expression $prepared_facts = null;
 
 	public function kind(): node_kind
 	{
@@ -79,7 +80,7 @@ final class static_member_reference_node extends expression_node
 
 	public function enum_case_preparation(): prepared_enum_case_reference
 	{
-		return $this->prepared_facts;
+		return object_cast($this->prepared_facts, prepared_enum_case_reference::class);
 	}
 
 	public function children(): child_iterator_i

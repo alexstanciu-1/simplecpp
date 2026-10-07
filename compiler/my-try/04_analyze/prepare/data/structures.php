@@ -79,9 +79,9 @@ final class prepared_place
 	/** A field projection shares its base place, never syntax or a transient environment. */
 	private ?prepared_place $base_place = null;
 
-	/** Whole roots are declarations/parameters; only direct fields may project from a base. */
+	/** Whole roots include type-owned fields; instance fields require a base. */
 	public function __construct(prepared_storage $storage, ?prepared_place $base = null,
-		private bool $heap_projection = false)
+		private bool $borrow_restricted = false)
 	{
 		if ($base === null)
 		{
@@ -94,6 +94,9 @@ final class prepared_place
 					throw new \LogicException('An alias must reuse its original storage place');
 				}
 			}
+			elseif ($storage instanceof prepared_field) {
+				if (!object_cast($storage, prepared_field::class)->static_member) { throw new \LogicException('A field storage root requires type-owned storage'); }
+			}
 			elseif (!($storage instanceof prepared_parameter) && !($storage instanceof prepared_receiver)) {
 				throw new \LogicException('A storage root requires a local or parameter');
 			}
@@ -105,10 +108,10 @@ final class prepared_place
 		$this->base_place = $base;
 	}
 
-	/** Writable heap projections must never escape as native aliases or reference arguments. */
+	/** Heap projections and currently gated roots cannot escape as native borrows. */
 	public function borrowable(): bool
 	{
-		if ($this->heap_projection) {
+		if ($this->borrow_restricted) {
 			return false;
 		}
 		if ($this->base_place !== null) {
@@ -446,9 +449,16 @@ final class prepared_type_parameter_default extends prepared_parameter_default {
 	public function __construct(public canonical_type_use $type) {}
 }
 
+/** Constant visibility participates in dependency equivalence alongside its value. */
+final class prepared_source_constant
+{
+	public function __construct(public constant_value $value, public bool $public_access = true) {}
+}
+
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
 final class prepared_source_callable
 {
+	public bool $static_member = false;
 	public bool $public_access = true;
 	public callable_signature $signature;
 	public ?prepared_receiver $receiver = null;
@@ -465,6 +475,7 @@ final class prepared_source_callable
 
 /** Field identity is scoped by its owning prepared record. */
 final class prepared_field extends prepared_storage {
+	public bool $static_member = false;
 	public canonical_type_use $type;
 	public bool $public_access = true;
 	public ?prepared_property_default $default_value = null;
@@ -494,6 +505,8 @@ final class prepared_construction_property_default extends prepared_property_def
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
 final class prepared_record {
+	/** Same property facts, separate storage inventories for layout and type-owned definitions. */
+	public Key_Storage_List $static_fields /** Key_Storage_List<prepared_field> */;
 	/** Non-owning member index; collection owns identities, signatures own contracts. */
 	public Key_Storage_List $methods /** Key_Storage_List<collected_method> */;
 	public bool $data_initializable = false;
@@ -508,6 +521,7 @@ final class prepared_record {
 	public function __construct()
 	{
 		$this->fields = new Key_Storage_List /** Key_Storage_List<prepared_field> */();
+		$this->static_fields = new Key_Storage_List /** Key_Storage_List<prepared_field> */();
 		$this->methods = new Key_Storage_List /** Key_Storage_List<collected_method> */();
 	}
 	public function has_capability(generic_contract $capability): bool
@@ -528,6 +542,12 @@ final class prepared_field_access extends prepared_expression {
 	public prepared_field $field;
 	public canonical_type_use $record_type;
 	public record_storage_kind $receiver_storage;
+}
+
+final class prepared_static_property extends prepared_expression
+{
+	public prepared_field $field;
+	public canonical_type_use $record_type;
 }
 
 /** Resolved call target and signature; evaluation order remains with the process workers. */

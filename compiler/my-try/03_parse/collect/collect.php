@@ -78,7 +78,7 @@ final class Symbol_Collector
 		return null;
 	}
 
-	public function previous_constant(scope $scope, string $name): ?namespace_constant_node
+	public function previous_constant(scope $scope, string $name): ?constant_declaration_node
 	{
 		foreach ($scope->constants_named($name) as $target) {
 			if ($target instanceof collected_constant) {
@@ -89,14 +89,15 @@ final class Symbol_Collector
 		return null;
 	}
 
-	public function collect_constant(namespace_constant_node $node, scope $scope, int $index): void
+	public function collect_constant(constant_declaration_node $node, scope $scope, int $index, ?collected_record $record = null): void
 	{
 		if ($this->reuse($node, $index)) { return; }
 		$entry = new collected_constant($this->collection, $node);
+		$entry->record_owner = $record;
 		$entry->retained_symbol = true;
 		$this->append($entry, $scope, $node->name, $index);
 		$scope->register($entry);
-		$this->publish($entry, $scope);
+		if ($record === null) { $this->publish($entry, $scope); }
 	}
 
 	/** Match the next unseen field identity in its owning scope. */

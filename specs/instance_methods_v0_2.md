@@ -10,7 +10,7 @@ storage/copy differences remain unchanged. Availability is tracked in the
 
 `$object->method(arguments)` and `$this->method(arguments)` select a fixed method
 name on the receiver's declared record type. Public methods are externally callable;
-private methods are callable only from the declaring record's instance context,
+private methods are callable only from the declaring record's context,
 including calls on another instance of that same record. Omitted visibility is public.
 Property and method names occupy separate lookup categories and may coincide.
 
@@ -20,7 +20,8 @@ mechanism. Constructor-specific `set:` inputs remain constructor-only. The bound
 implementation admits fixed by-value parameters and value/void returns. Static calls,
 overloads, variadics, reference parameters/returns, inheritance/virtual dispatch and
 bound callable values remain separate slices, not implicit support from this contract.
-Named arguments are deferred to CH15.
+Named arguments are deferred to CH15. Static calls now have their own bounded
+[contract](static_members_v0_2.md) on the same method/callable foundation.
 
 ## Receiver evaluation, access and lifetime
 

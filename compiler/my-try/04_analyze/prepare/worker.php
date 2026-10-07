@@ -238,6 +238,10 @@ final class Preparation_Worker
 	{
 		$entry = object_cast($node->occurrence(), collected_record::class);
 		$this->select_owner($this->record_owner($entry));
+		$constants /** Storage<member_constant_node> */ = $node->constants;
+		foreach ($constants as $constant) {
+			$this->select_owner($this->declaration_owner(object_cast($constant->occurrence(), collected_constant::class)));
+		}
 		$methods /** Storage<method_node> */ = $node->methods;
 		foreach ($methods as $method) {
 			$this->select_callable($method);
@@ -487,7 +491,8 @@ final class Preparation_Worker
 			Constant_Preparation::declaration($syntax, $context);
 			$current = $syntax->require_preparation();
 			if ($old === null) { return true; }
-			return !$old->type->matches($current->type) || ($old->value_key() !== $current->value_key());
+			return ($old->public_access !== $current->public_access) || !$old->value->type->matches($current->value->type)
+				|| ($old->value->value_key() !== $current->value->value_key());
 		}
 		if ($owner instanceof enum_definition_work) {
 			$enum_syntax = object_cast($owner, enum_definition_work::class)->enum_definition()->enum_syntax();

@@ -47,6 +47,11 @@ signature/body invalidation, retry/repair and retirement. The absent-receiver fi
 adds a test-only native exception boundary to prove checked failure, not a crash code.
 `--no-pch` verifies emitted headers without implicit fixture includes.
 
+Use `--suite static_members` for class/struct static calls, member constants,
+type-owned property reads/plain writes, defaults, visibility, disjoint member names,
+data/constructor exclusion and cross-file invalidation, retry, reset and retirement.
+It uses the same runner; `--no-pch` checks actual emitted header dependencies.
+
 For the CH10 shared declaration model migration:
 
 ```bash

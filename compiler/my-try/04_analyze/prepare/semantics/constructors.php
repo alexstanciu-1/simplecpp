@@ -11,6 +11,7 @@ final class Constructor_Preparation
 		if (($syntax->name !== '__construct') || ($syntax->return_type !== null) || $syntax->returns_reference) {
 			throw new \RuntimeException('Only __construct without a return type or reference return is supported');
 		}
+		Member_Preparation::validate_modifiers($syntax->modifiers, false);
 		foreach ($syntax->modifiers as $modifier) {
 			if ($modifier !== declaration_modifier::public_access) {
 				throw new \RuntimeException('The first constructor slice requires public constructors');
@@ -18,6 +19,7 @@ final class Constructor_Preparation
 		}
 		$entry = object_cast($syntax->occurrence(), collected_method::class);
 		$record = $entry->declaring_record();
+		$context->receiver_record = $record;
 		$context->worker->require_declaration($context->owner, $record);
 		$layout = $record->syntax()->require_preparation();
 		$facts = new prepared_source_callable();

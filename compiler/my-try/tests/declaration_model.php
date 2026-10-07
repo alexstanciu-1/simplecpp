@@ -112,10 +112,10 @@ $namespace_constant->initializer = new integer_literal_node();
 declaration_model_check(($constant instanceof constant_declaration_node) && ($namespace_constant instanceof constant_declaration_node), 'Constants lost their common syntax');
 $value = new integer_constant_value();
 $value->decimal = '7';
-$constant->set_preparation($value);
-$namespace_constant->set_preparation($value);
+$constant->set_preparation(new prepared_source_constant($value));
+$namespace_constant->set_preparation(new prepared_source_constant($value));
 $constant->clear_preparation();
-declaration_model_check($namespace_constant->require_preparation() === $value, 'Constant cleanup mutated shared value facts');
+declaration_model_check($namespace_constant->require_preparation()->value === $value, 'Constant cleanup mutated shared value facts');
 
 // Exercise the migrated syntax through real collection, preparation and incremental emission.
 $module = new module('/declaration-model', '/declaration-model', '/declaration-model');

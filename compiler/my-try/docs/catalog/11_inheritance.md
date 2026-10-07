@@ -7,6 +7,21 @@ Doc Status: planning
 
 Requires classes and methods. Resolve relationships before advanced dispatch cases.
 
+## Qualified-member prerequisites transferred from CH10
+
+CH10 implements fixed declaring-type/self static methods, constants and properties.
+Continue on those same member categories, in this order:
+
+1. Establish base/interface/trait relationships and inherited member inventories.
+2. Resolve inherited lookup and public/protected/private access, then `parent::`
+   method/constant/property access and inherited constructor behavior.
+3. Validate abstract/final/override contracts and dispatch.
+4. Define late-bound `static::` calls/constants/properties and `new static(...)`.
+
+CH10 cards CLASS-PROP-006B/006C/008/002C/002D, CLASS-CALL-005/005A/008A,
+CLASS-CONST-004/005 and inheritance-dependent member modifiers track this transfer.
+`$object::method()` is not inheritance-dependent and remains a CH10 follow-up.
+
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
 ## v0.2 contract review debt

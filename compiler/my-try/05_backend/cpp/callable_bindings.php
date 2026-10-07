@@ -153,6 +153,12 @@ final class CPP_Callables
 	/** Backend-owned dispatch keeps callable identities independent of any output target. */
 	public static function reference(callable_target_i $target, cpp_generation_context $context): string
 	{
+		if ($target instanceof collected_method) {
+			$method = object_cast($target, collected_method::class);
+			$record = $method->declaring_record();
+			$context->headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
+			return CPP_Generator::source_name('record', $record->qualified_name()) . '::' . CPP_Generator::source_name('method', $method->name);
+		}
 		if ($target instanceof collected_function) {
 			$function = object_cast($target, collected_function::class);
 			$context->headers[CPP_Artifacts::callable_header($function->qualified_name())] = true;

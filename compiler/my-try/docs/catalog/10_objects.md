@@ -30,7 +30,7 @@ constants use the new structures. The focused
 15-suite PHP-host proof passes under `/tmp/my-try-ch10-model-final-20261007/`, including
 incremental identity, traversal, unsupported-member rejection and C++ emission checks.
 This model proof is not a conversion, generated-C++ execution or native compiler proof.
-Interface/trait execution and method/constant lookup remain follow-ups.
+Interface/trait execution remains a follow-up; method/constant lookup is covered below.
 
 ## Plain records and storage — 2026-10-07
 
@@ -244,9 +244,38 @@ method-mediated reference-return cycle rejection. Constructor regression
 (`/tmp/ch10-methods-constructors`) passes 45 generated programs. These prove PHP-host compilation
 and generated execution, not a native compiler rebuild.
 
-Remaining groups: static methods and member constants, further method parameter and
-reference-return support, then separately agreed inheritance/interface/trait behavior.
+Remaining groups: further method parameter and reference-return support and
+instance-qualified static calls. Inheritance/interface/trait behavior belongs to CH11.
 CH10-PERF-01 still precedes the chapter's native build.
+
+## Static members — 2026-10-07
+
+Implemented the [bounded static-member contract](../../../../specs/static_members_v0_2.md)
+for both classes and structs: fixed type/self method calls, scalar member constants,
+and type/self property reads and plain writes. Shared modifier/access validation feeds
+existing method, constant and property preparation. Static is a flag, not a new AST
+family. Type-owned fields are excluded from instance layout/copy capability and all
+constructor/data inputs. C++ headers declare storage; the declaring source unit owns
+its single definition. Constants reuse the existing bounded evaluator (general
+arithmetic folding is not newly enabled).
+
+Qualified lookup first resolves nominal identity, without requiring instance layout;
+this allows self constants in defaults without artificial declaration cycles. Member
+constants retain their own declaration work, dependency observations and visibility
+equivalence. Static signatures still use the common source-callable lifecycle.
+
+Focused proof: `/tmp/ch10-static-final-02/` contains 35 generated programs compiled without
+PCH, plus rejection, cross-file visibility/storage-kind invalidation, retry/repair,
+fresh/reset and retirement/readdition checks. `/tmp/ch10-static-model-02/` passes
+15 focused PHP suites. `/tmp/ch10-static-methods/` passes 26 existing instance-method
+programs; `/tmp/ch10-static-constructors/` passes 45 constructor programs.
+`/tmp/ch10-static-php-final/` passes 11 final focused PHP checks, including Result/take
+and installed readonly constants. These are not a native compiler rebuild.
+
+Still gated: static-property reference escapes, compound updates, executable static
+initializers, and `$object::method()` (separate CH10 follow-up). Inherited lookup,
+`parent::`, protected/abstract/final/override semantics, late-bound `static::` and
+inherited construction transfer to the [ordered CH11 prerequisites](11_inheritance.md#qualified-member-prerequisites-transferred-from-ch10).
 
 ## Chapter 09 carryovers
 
@@ -274,45 +303,45 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-003](#class-prop-003) | supported-bounded | `class A { int $x; }` | prepared | verified | deferred | Public typed instance property; no initializer |
 | [CLASS-PROP-004](#class-prop-004) | supported-bounded | `$this->x = 1;` | prepared | verified | deferred | Constructor bodies; general method execution deferred |
 | [CLASS-PROP-005](#class-prop-005) | supported-bounded | `$a->x = 1;` | prepared | verified | deferred | Stable receiver; heap interiors not borrowable |
-| [CLASS-PROP-006](#class-prop-006) | pending-discussion | `A::$x = 1;` | unverified | unverified | deferred | — |
-| [CLASS-PROP-006A](#class-prop-006a) | pending-discussion | `self::$x = 1;` | unverified | unverified | deferred | — |
-| [CLASS-PROP-006B](#class-prop-006b) | pending-discussion | `parent::$x = 1;` | unverified | unverified | deferred | — |
-| [CLASS-PROP-006C](#class-prop-006c) | pending-discussion | `static::$x = 1;` | unverified | unverified | deferred | — |
+| [CLASS-PROP-006](#class-prop-006) | supported-bounded | `A::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-PROP-006A](#class-prop-006a) | supported-bounded | `self::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-PROP-006B](#class-prop-006b) | deferred-CH11 | `parent::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-PROP-006C](#class-prop-006c) | deferred-CH11 | `static::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-007](#class-prop-007) | pending-discussion | `$a::$x = 2;` | unverified | unverified | deferred | — |
-| [CLASS-PROP-008](#class-prop-008) | pending-discussion | `class B extends A { function f(): void { $this->x = 1; } }` | unverified | unverified | deferred | — |
+| [CLASS-PROP-008](#class-prop-008) | deferred-CH11 | `class B extends A { function f(): void { $this->x = 1; } }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-009](#class-prop-009) | pending-discussion | `$this->y = 1;` where `y` is undeclared | unverified | unverified | deferred | — |
 | [CLASS-PROP-010](#class-prop-010) | pending-discussion | `$this->$name = 1;` | unverified | unverified | deferred | — |
-| [CLASS-PROP-011](#class-prop-011) | pending-discussion | `class A { public int $x = 1; public static int $s = 2; }` | unverified | unverified | deferred | — |
+| [CLASS-PROP-011](#class-prop-011) | supported-bounded | `class A { public int $x = 1; public static int $s = 2; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CALL-001](#class-call-001) | supported-bounded | `$a->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-CALL-002](#class-call-002) | pending-discussion | `A::f(1);` | unverified | unverified | deferred | — |
+| [CLASS-CALL-002](#class-call-002) | supported-bounded | `A::f(1);` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CALL-003](#class-call-003) | pending-discussion | `$a::f(1);` | unverified | unverified | deferred | Source variants need reconciliation |
 | [CLASS-CALL-004](#class-call-004) | supported-bounded | `$this->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-CALL-005](#class-call-005) | pending-discussion | `parent::f(1);` | unverified | unverified | deferred | — |
-| [CLASS-CALL-005A](#class-call-005a) | pending-discussion | `static::f(1);`<br>`static::f(1)` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-CALL-005](#class-call-005) | deferred-CH11 | `parent::f(1);` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-CALL-005A](#class-call-005a) | deferred-CH11 | `static::f(1);`<br>`static::f(1)` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-CALL-006](#class-call-006) | pending-discussion | `function f(): int { return 1; }` | unverified | unverified | deferred | — |
 | [CLASS-CALL-007](#class-call-007) | pending-discussion | `$i->f(1);` | unverified | unverified | deferred | — |
 | [CLASS-CALL-008](#class-call-008) | supported-bounded | `new A(1)` | prepared | verified | deferred | Fixed public constructor; class/struct and storage variants |
-| [CLASS-CALL-008A](#class-call-008a) | pending-discussion | `new static(1)` | unverified | unverified | deferred | — |
+| [CLASS-CALL-008A](#class-call-008a) | deferred-CH11 | `new static(1)` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-CALL-009](#class-call-009) | pending-discussion | `$a->$name();` | unverified | unverified | deferred | — |
 | [CLASS-CALL-010](#class-call-010) | pending-discussion | `[$a, 'f']` | unverified | unverified | deferred | — |
 | [CLASS-CALL-011](#class-call-011) | pending-discussion | explicit destructor invocation pattern | unverified | unverified | deferred | — |
-| [CLASS-CALL-012](#class-call-012) | pending-discussion | `static function g(int $x): int { return $x; }` | unverified | unverified | deferred | — |
-| [CLASS-CONST-001](#class-const-001) | pending-discussion | `class A { public const X = 1; }` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLASS-CONST-002](#class-const-002) | pending-discussion | `A::X` | unverified | unverified | deferred | — |
-| [CLASS-CONST-003](#class-const-003) | pending-discussion | `self::X` | unverified | unverified | deferred | — |
-| [CLASS-CONST-004](#class-const-004) | pending-discussion | `parent::X` | unverified | unverified | deferred | — |
-| [CLASS-CONST-005](#class-const-005) | pending-discussion | `static::X` | unverified | unverified | deferred | — |
+| [CLASS-CALL-012](#class-call-012) | supported-bounded | `static function g(int $x): int { return $x; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-CONST-001](#class-const-001) | supported-bounded | `class A { public const X = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-CONST-002](#class-const-002) | supported-bounded | `A::X` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-CONST-003](#class-const-003) | supported-bounded | `self::X` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-CONST-004](#class-const-004) | deferred-CH11 | `parent::X` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-CONST-005](#class-const-005) | deferred-CH11 | `static::X` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-001](#class-member-001) | supported-bounded | `function f(int $a): int { return $a; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-001B](#class-member-001b) | pending-discussion | `function f(vector<int> $a): int { return 1; }` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [CLASS-MEMBER-002](#class-member-002) | pending-discussion | `function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-003](#class-member-003) | pending-discussion | `function f(int $value): int { return $value; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-004](#class-member-004) | pending-discussion | `static function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-004](#class-member-004) | supported-bounded | `static function f(int $a): int { return $a; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-MEMBER-005](#class-member-005) | pending-discussion | `function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-006](#class-member-006) | pending-discussion | `abstract function f(int $a): int;` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-007](#class-member-007) | pending-discussion | `#[\Override] function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-008](#class-member-008) | pending-discussion | `final function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-009](#class-member-009) | pending-discussion | `abstract static function f(): int;` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-010](#class-member-010) | pending-discussion | `#[\Override] static function f(): int { return 1; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-006](#class-member-006) | deferred-CH11 | `abstract function f(int $a): int;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-MEMBER-007](#class-member-007) | deferred-CH11 | `#[\Override] function f(int $a): int { return $a; }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-MEMBER-008](#class-member-008) | deferred-CH11 | `final function f(int $a): int { return $a; }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-MEMBER-009](#class-member-009) | deferred-CH11 | `abstract static function f(): int;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-MEMBER-010](#class-member-010) | deferred-CH11 | `#[\Override] static function f(): int { return 1; }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-011](#class-member-011) | supported-bounded | `function __construct(int $x) { $this->x = $x; }` | prepared | verified | deferred | Shared callable lifecycle and out-of-line body; also `set:` |
 | [CLASS-MEMBER-012](#class-member-012) | pending-discussion | `function __destruct() {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-013](#class-member-013) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
@@ -325,12 +354,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-018C](#class-member-018c) | pending-discussion | `function &f(int &$a): int {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-018D](#class-member-018d) | pending-discussion | explicit PHP reference syntax on method/member signature | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-018E](#class-member-018e) | pending-discussion | `function &f() { return $this->x; }` | unverified | unverified | deferred | — |
-| [CLASS-PROP-002A](#class-prop-002a) | pending-discussion | `class A { static int $x = 1; }` | unverified | unverified | deferred | — |
-| [CLASS-PROP-002B](#class-prop-002b) | pending-discussion | `self::$x` | unverified | unverified | deferred | — |
-| [CLASS-PROP-002C](#class-prop-002c) | pending-discussion | `parent::$x` | unverified | unverified | deferred | — |
-| [CLASS-PROP-002D](#class-prop-002d) | pending-discussion | `static::$x` | unverified | unverified | deferred | — |
+| [CLASS-PROP-002A](#class-prop-002a) | supported-bounded | `class A { static int $x = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-PROP-002B](#class-prop-002b) | supported-bounded | `self::$x` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
+| [CLASS-PROP-002C](#class-prop-002c) | deferred-CH11 | `parent::$x` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-PROP-002D](#class-prop-002d) | deferred-CH11 | `static::$x` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-METHOD-001](#class-method-001) | supported-bounded | `class A { function f(): int { return 1; } }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-METHOD-002](#class-method-002) | pending-discussion | `class A { static function f(int $a): int { return $a; } }` | unverified | unverified | deferred | — |
+| [CLASS-METHOD-002](#class-method-002) | supported-bounded | `class A { static function f(int $a): int { return $a; } }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-THIS-001](#class-this-001) | supported-bounded | `class A { int $x; function f(): int { return $this->x; } }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-NEW-001](#class-new-001) | pending-discussion | `$a = new A();` | unverified | unverified | deferred | — |
 | [CLASS-NEW-002](#class-new-002) | pending-discussion | `$a = new \A\B();` | unverified | unverified | deferred | — |

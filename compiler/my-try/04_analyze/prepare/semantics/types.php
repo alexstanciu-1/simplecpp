@@ -112,7 +112,7 @@ final class Type_Preparation
 	}
 
 	/** Named types resolve against the collected lexical scope and record dependencies. */
-	public static function prepare_named_type(named_type_node $node, preparation_context $context): void
+	public static function prepare_named_type(named_type_node $node, preparation_context $context, bool $complete = true): void
 	{
 		$entry = $node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
@@ -128,7 +128,7 @@ final class Type_Preparation
 		$concrete = object_cast($definition, concrete_type_definition_i::class);
 		$type = Model::$type_catalog->registry()->canonical($concrete);
 		$type_use = Model::$type_catalog->registry()->use($type->type_id());
-		if (($definition->origin() === type_definition_origin::source) && !Type_Queries::is_class_handle($type_use)) {
+		if ($complete && ($definition->origin() === type_definition_origin::source) && !Type_Queries::is_class_handle($type_use)) {
 			$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			$context->worker->require_declaration($context->owner, $declaration);
 		}

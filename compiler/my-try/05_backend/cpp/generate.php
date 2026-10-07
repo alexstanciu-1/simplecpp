@@ -147,6 +147,15 @@ final class CPP_Generator
 			$declarations /** hash<bool> */ = [];
 			$body_text = '';
 			foreach ($ordered as $callable_owner) {
+				if (($callable_owner instanceof record_definition_work) && ($callable_owner->source === $prepared->source)) {
+					$layout = $this->program->fragments[$callable_owner];
+					if ($layout->storage_text !== '') {
+						$record = object_cast($callable_owner, record_definition_work::class)->record_definition();
+						$headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
+						foreach ($layout->definition_headers as $header => $used) { $headers[$header] = true; }
+						$body_text .= $layout->storage_text;
+					}
+				}
 				if (!($callable_owner instanceof source_callable_signature_work) || ($callable_owner->source !== $prepared->source)) { continue; }
 				$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
 				$function = $definition->callable_syntax();
@@ -240,6 +249,9 @@ final class CPP_Generator
 				$syntax = object_cast($entry, collected_record::class)->syntax();
 				CPP_Declarations::generate_record($syntax, $context);
 				$next->text = $context->records;
+				$definition_context = new cpp_generation_context();
+				$next->storage_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
+				$next->definition_headers = $definition_context->headers;
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 				$records /** Storage<collected_record> */ = $next->records;
 				foreach ($fields->items() as $field) {

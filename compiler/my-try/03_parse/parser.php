@@ -799,14 +799,20 @@ final class Parser_Run
 	}
 
 	/** Retain the declaration identity while replacing only changed initializer syntax. */
-	private function constant_declaration(): namespace_constant_node
+	private function constant_declaration(?collected_record $record = null, array $modifiers /** vector<declaration_modifier> */ = [], int $member_start = -1): constant_declaration_node
 	{
 		$start = $this->expect('const');
+		if ($member_start >= 0) { $start = $member_start; }
+		$declaration_scope = $record === null ? $this->source_scope : $record->syntax()->member_scope();
 		if (!$this->identifier()) { throw new \RuntimeException($this->error_message('Expected constant name')); }
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
-		$previous = $this->collector->previous_constant($this->source_scope, $name);
-		$constant /** namespace_constant_node */ = $previous ?? new namespace_constant_node();
+		$previous = $this->collector->previous_constant($declaration_scope, $name);
+		$constant /** constant_declaration_node */;
+		if ($previous !== null) { $constant = $previous; }
+		elseif ($record === null) { $constant = new namespace_constant_node(); }
+		else { $constant = new member_constant_node(); }
+		if ($constant instanceof member_constant_node) { object_cast($constant, member_constant_node::class)->modifiers = $modifiers; }
 		if ($previous === null) { $constant->set_span($start, $start); }
 		$old_start = -1;
 		$old_end = -1;
@@ -817,10 +823,10 @@ final class Parser_Run
 			}
 		}
 		$constant->name = $name;
-		$constant->collect($this->collector, $this->source_scope, $name_index);
+		$this->collector->collect_constant($constant, $declaration_scope, $name_index, $record);
 		$this->expect('=');
 		$saved_scope = $this->current_scope;
-		$this->current_scope = $this->source_scope;
+		$this->current_scope = $declaration_scope;
 		$initializer = $this->expression();
 		$this->current_scope = $saved_scope;
 		$this->expect(';');
@@ -931,6 +937,7 @@ final class Parser_Run
 		}
 		$old_fields /** Storage<property_node> */ = $record->properties;
 		$old_methods /** Storage<method_node> */ = $record->methods;
+		$old_constants /** Storage<member_constant_node> */ = $record->constants;
 		$old_modifiers /** vector<declaration_modifier> */ = $record->modifiers;
 		$record->name = $name;
 		$record->declaration_kind = $kind;
@@ -939,16 +946,16 @@ final class Parser_Run
 		$record->member_scope()->set_parent($this->source_scope);
 		$fields /** Storage<property_node> */ = new Storage();
 		$methods /** Storage<method_node> */ = new Storage();
+		$constants /** Storage<member_constant_node> */ = new Storage();
 		$this->expect('{');
 		while ($this->text() !== '}') {
 			$member_start = $this->position;
-			$member_modifiers /** vector<declaration_modifier> */ = [];
-			if (($this->text() === 'public') || ($this->text() === 'private')) {
-				$member_modifiers[] = $this->text() === 'public' ? declaration_modifier::public_access : declaration_modifier::private_access;
-				$this->position++;
-			}
+			$member_modifiers = $this->member_modifiers();
 			if ($this->text() === 'function') {
 				$methods->append(object_cast($this->callable_declaration(object_cast($record->occurrence(), collected_record::class), $member_modifiers, $member_start), method_node::class));
+			}
+			elseif ($this->text() === 'const') {
+				$constants->append(object_cast($this->constant_declaration(object_cast($record->occurrence(), collected_record::class), $member_modifiers, $member_start), member_constant_node::class));
 			}
 			else {
 				$this->position = $member_start;
@@ -958,7 +965,14 @@ final class Parser_Run
 		$this->expect('}');
 		$record->properties = $fields;
 		$record->methods = $methods;
+		$record->constants = $constants;
 		$same = $previous !== null;
+		if (q_count($old_constants) !== q_count($constants)) { $same = false; }
+		else {
+			foreach ($constants as $index => $constant) {
+				if ($old_constants[$index] !== $constant) { $same = false; }
+			}
+		}
 		if (q_count($old_modifiers) !== q_count($modifiers)) { $same = false; }
 		else {
 			foreach ($modifiers as $index => $modifier) {
@@ -983,11 +997,7 @@ final class Parser_Run
 	private function field_declaration(scope $scope): property_node
 	{
 		$start = $this->position;
-		$modifiers /** vector<declaration_modifier> */ = [];
-		if (($this->text() === 'public') || ($this->text() === 'private')) {
-			$modifiers[] = $this->text() === 'public' ? declaration_modifier::public_access : declaration_modifier::private_access;
-			$this->position++;
-		}
+		$modifiers = $this->member_modifiers();
 		if (!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) {
 			throw new \RuntimeException($this->error_message('Expected field type'));
 		}
@@ -1016,7 +1026,10 @@ final class Parser_Run
 		$initializer /** nullable<expression_node> */ = null;
 		if ($this->text() === '=') {
 			$this->position++;
+			$saved_scope = $this->current_scope;
+			$this->current_scope = $scope;
 			$initializer = $this->expression();
+			$this->current_scope = $saved_scope;
 		}
 		$this->expect(';');
 		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
@@ -1028,6 +1041,28 @@ final class Parser_Run
 		}
 		$this->finish_declaration($field, $start, $same);
 		return $field;
+	}
+
+	/** Syntax retains modifiers; preparation owns duplicates and supported combinations. */
+	private function member_modifiers(): array /** vector<declaration_modifier> */
+	{
+		$result /** vector<declaration_modifier> */ = [];
+		while (true) {
+			$modifier /** nullable<declaration_modifier> */ = match ($this->text()) {
+				'public' => declaration_modifier::public_access,
+				'private' => declaration_modifier::private_access,
+				'protected' => declaration_modifier::protected_access,
+				'static' => declaration_modifier::static_member,
+				'final' => declaration_modifier::final_declaration,
+				'abstract' => declaration_modifier::abstract_declaration,
+				'readonly' => declaration_modifier::readonly_declaration,
+				default => null,
+			};
+			if ($modifier === null) { break; }
+			$result[] = $modifier;
+			$this->position++;
+		}
+		return $result;
 	}
 
 	/** A statement owns its semicolon; its value expression keeps its existing syntax shape. */
@@ -1696,27 +1731,25 @@ final class Parser_Run
 				$name = $this->source_name();
 				$owner_end = $this->position;
 				$this->expect('::');
-				if (!string_byte_starts_with($this->text(), '$')) {
-					if (!$this->identifier()) {
-						throw new \RuntimeException($this->error_message('Expected static member name'));
-					}
-					$owner_type = new named_type_node();
-					$owner_type->name = $name;
-					$owner_type->set_span($start, $owner_end);
-					$owner_type->collect($this->collector, $this->current_scope, $start);
-					$member = new static_member_reference_node();
-					$member->owner_type = $owner_type;
-					$member->member_name = $this->text();
-					$this->position++;
-					$this->finish_node($member, $start);
-					return $member;
+				if (!$this->identifier() && !string_byte_starts_with($this->text(), '$')) {
+					throw new \RuntimeException($this->error_message('Expected static member name'));
 				}
-				$constant = new constant_reference_node();
-				$constant->name = $name . '::' . $this->text();
+				$owner_type = new named_type_node();
+				$owner_type->name = $name;
+				$owner_type->set_span($start, $owner_end);
+				$owner_type->collect($this->collector, $this->current_scope, $start);
+				if ($this->identifier() && ($this->text_at_offset(1) === '(')) {
+					$call = $this->call_expression();
+					$call->owner_type = $owner_type;
+					$this->finish_node($call, $start);
+					return $call;
+				}
+				$member = new static_member_reference_node();
+				$member->owner_type = $owner_type;
+				$member->member_name = $this->text();
 				$this->position++;
-				$this->finish_node($constant, $start);
-				$constant->collect($this->collector, $this->current_scope, $start);
-				return $constant;
+				$this->finish_node($member, $start);
+				return $member;
 			}
 			if ($this->call_ahead()) {
 				return $this->call_expression();

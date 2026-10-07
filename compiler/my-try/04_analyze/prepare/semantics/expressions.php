@@ -67,7 +67,7 @@ final class Expression_Preparation
 		}
 		elseif ($node instanceof static_member_reference_node) {
 			$member = object_cast($node, static_member_reference_node::class);
-			$member->set_preparation(Enum_Preparation::reference($member, $context));
+			$member->set_preparation(Member_Preparation::reference($member, $context));
 		}
 		elseif ($node instanceof constant_reference_node) {
 			$constant = object_cast($node, constant_reference_node::class);
@@ -172,9 +172,8 @@ final class Expression_Preparation
 				}
 				$facts->binding = Body_Preparation::prepare_local_storage($variable->occurrence(), null, $node->value, $context);
 			}
-			elseif ($statement_assignment && ($target instanceof field_access_node)) {
-				$field = object_cast($target, field_access_node::class);
-				$facts->binding = self::prepare_field_write($field, $node->value, $context);
+			elseif ($statement_assignment && (($target instanceof field_access_node) || ($target instanceof static_member_reference_node))) {
+				$facts->binding = self::prepare_field_write($target, $node->value, $context);
 			}
 			else {
 				throw new \RuntimeException('S2S assignment target is not supported in this context');
@@ -191,7 +190,7 @@ final class Expression_Preparation
 	}
 
 	/** Member assignment requires an addressable prepared field and never introduces a local. */
-	private static function prepare_field_write(field_access_node $target, expression_node $initializer, preparation_context $context): prepared_binding
+	private static function prepare_field_write(expression_node $target, expression_node $initializer, preparation_context $context): prepared_binding
 	{
 		$statement_assignment = $context->statement_assignment;
 		$context->statement_assignment = false;
@@ -201,7 +200,11 @@ final class Expression_Preparation
 		finally {
 			$context->statement_assignment = $statement_assignment;
 		}
-		$place = $target->require_field_access_preparation();
+		$place = $target->require_preparation();
+		$field /** prepared_field */;
+		if ($place instanceof prepared_field_access) { $field = object_cast($place, prepared_field_access::class)->field; }
+		elseif ($place instanceof prepared_static_property) { $field = object_cast($place, prepared_static_property::class)->field; }
+		else { throw new \RuntimeException('Assignment requires mutable property storage, not a constant'); }
 		if (!$place->addressable()) {
 			throw new \RuntimeException('S2S assignment requires stable storage');
 		}
@@ -209,7 +212,7 @@ final class Expression_Preparation
 		$binding = new prepared_binding();
 		$binding->type = $place->type;
 		$binding->resolved_kind = binding_kind::assignment;
-		$binding->declaration = $place->field->declaration;
+		$binding->declaration = $field->declaration;
 		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment);
@@ -363,6 +366,10 @@ final class Expression_Preparation
 	{
 		$entry = $node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
+		// Bare constants retain namespace/import lookup; member constants require qualification.
+		if ($context->receiver_record !== null) {
+			$lexical_scope = $context->receiver_record->syntax()->member_scope()->parent_scope();
+		}
 		$targets = Observed_Lookup::constants($lexical_scope, $entry->name, $context);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved constant for ' . $entry->name);
@@ -371,7 +378,8 @@ final class Expression_Preparation
 		$facts = new prepared_constant_reference();
 		$target = $targets[0];
 		if ($target instanceof collected_constant) {
-			$context->worker->require_declaration($context->owner, object_cast($target, collected_constant::class));
+			$constant = object_cast($target, collected_constant::class);
+			$context->worker->require_declaration($context->owner, $constant);
 		}
 		$facts->target = $target;
 		$facts->value = $target->value();
@@ -382,7 +390,7 @@ final class Expression_Preparation
 	/** Resolve one named callable and establish reference/value argument boundaries. */
 	public static function prepare_call(call_node $syntax, preparation_context $context): prepared_call
 	{
-		if ($syntax->receiver !== null) { return Method_Preparation::call($syntax, $context); }
+		if (($syntax->receiver !== null) || ($syntax->owner_type !== null)) { return Method_Preparation::call($syntax, $context); }
 		$templates /** Storage<named_type_node> */ = $syntax->template_arguments;
 		if (!$templates->is_empty()) {
 			throw new \RuntimeException('S2S template calls are deferred');

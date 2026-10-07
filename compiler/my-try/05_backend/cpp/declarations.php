@@ -125,6 +125,7 @@ final class CPP_Declarations
 			if (!$prototype) { $name = $record_name . '::' . $name; }
 			$prefix = $syntax->name === '__construct' ? '' : self::type_for($facts->signature->return_type,
 				$context, self::signature_requirement($prototype, false)) . ' ';
+			if ($prototype && $facts->static_member) { $prefix = 'static ' . $prefix; }
 			return $prefix . $name . '(' . $parts . ')';
 		}
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
@@ -225,6 +226,13 @@ final class CPP_Declarations
 		}
 
 		$initialization = $syntax->require_preparation()->initialization;
+		$static_fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->static_fields;
+		foreach ($static_fields->items() as $field) {
+			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
+			$text .= ($field->public_access ? "public:\n" : "private:\n") . "\tstatic "
+				. self::type_for($field->type, $context, cpp_type_requirement::declaration) . ' '
+				. CPP_Generator::source_name('field', $entry->name) . ";\n";
+		}
 		$text .= "public:\n";
 		if (($initialization !== null) && (weakref_get($syntax->require_preparation()->constructor) === null)) {
 			$text .= CPP_Data_Construction::constructor(CPP_Generator::source_name('record', $key), $initialization, $context);
@@ -234,6 +242,29 @@ final class CPP_Declarations
 		if (q_count($methods->items()) === 0) { $context->records .= "};\n\n"; }
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
+	}
+
+	public static function static_definitions(collected_record $record, cpp_generation_context $context): string
+	{
+		$text = '';
+		$fields /** Key_Storage_List<prepared_field> */ = $record->syntax()->require_preparation()->static_fields;
+		foreach ($fields->items() as $field) {
+			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
+			$text .= self::type($field->type, $context) . ' ' . CPP_Generator::source_name('record', $record->qualified_name())
+				. '::' . CPP_Generator::source_name('field', $entry->name);
+			if ($field->default_value !== null) { $text .= ' = ' . self::property_default($field->default_value, $context); }
+			else { $text .= '{}'; }
+			$text .= ";\n";
+		}
+		return $text;
+	}
+
+	public static function static_property(prepared_static_property $facts, cpp_generation_context $context): string
+	{
+		$record = Type_Queries::source_record($facts->record_type);
+		$context->headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
+		$entry = object_cast(weakref_get($facts->field->declaration), collected_name::class);
+		return CPP_Generator::source_name('record', $record->qualified_name()) . '::' . CPP_Generator::source_name('field', $entry->name);
 	}
 
 	/** Constant snapshots and runtime constructions share the same typed default boundary. */

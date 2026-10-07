@@ -23,24 +23,21 @@ final class Method_Preparation
 		if (string_byte_starts_with($syntax->name, '__') || $syntax->returns_reference) {
 			throw new \RuntimeException('Special methods and reference-return methods are deferred');
 		}
-		foreach ($syntax->modifiers as $modifier)
-		{
-			if (($modifier !== declaration_modifier::public_access) && ($modifier !== declaration_modifier::private_access)) {
-				throw new \RuntimeException('Instance methods require public or private visibility');
-			}
-			if ($modifier === declaration_modifier::private_access) { $facts->public_access = false; }
-		}
+		Member_Preparation::validate_modifiers($syntax->modifiers, true);
+		$facts->public_access = Member_Preparation::is_public($syntax->modifiers);
+		$facts->static_member = Member_Preparation::is_static($syntax->modifiers);
 		$parameters /** Storage<parameter_node> */ = $syntax->parameters;
 		foreach ($parameters as $parameter)
 		{
 			if ($parameter->property_backed || $parameter->variadic || ($parameter->mode !== passing_mode::value)
 				|| ($parameter->name === 'this')) {
-				throw new \RuntimeException('Instance methods require ordinary fixed by-value parameters, not set: or $this');
+				throw new \RuntimeException('Methods require ordinary fixed by-value parameters, not set: or $this');
 			}
 		}
 		$method = object_cast($syntax->occurrence(), collected_method::class);
+		$context->receiver_record = $method->declaring_record();
 		$context->worker->require_declaration($context->owner, $method->declaring_record());
-		$facts->receiver = self::receiver($method);
+		if (!$facts->static_member) { $facts->receiver = self::receiver($method); }
 	}
 
 	/** $this is usable only as a fixed member receiver, never as an escaping ordinary value. */
@@ -66,6 +63,12 @@ final class Method_Preparation
 
 	public static function call(call_node $syntax, preparation_context $context): prepared_call
 	{
+		if ($syntax->owner_type !== null) {
+			$type = Member_Preparation::owner($syntax->owner_type, $context);
+			$static_record = Type_Queries::source_record($type);
+			if ($static_record === null) { throw new \RuntimeException('Static call requires a source class or struct'); }
+			return self::select($syntax, $static_record, true, $context);
+		}
 		$base /** expression_node */ = $syntax->receiver;
 		$value = self::base($base, $context);
 		$storage = Type_Queries::record_storage($value->type);
@@ -90,19 +93,28 @@ final class Method_Preparation
 				$lifetime = method_receiver_lifetime::borrow_inline;
 			}
 		}
+		$facts = self::select($syntax, $record, false, $context);
+		$facts->receiver = new prepared_method_receiver($payload, $lifetime);
+		return $facts;
+	}
+
+	private static function select(call_node $syntax, collected_record $record, bool $static_call, preparation_context $context): prepared_call
+	{
 		$context->worker->require_declaration($context->owner, $record);
 		$methods /** Key_Storage_List<collected_method> */ = $record->syntax()->require_preparation()->methods;
 		$matches /** vector<collected_method> */ = $methods->named($syntax->name);
 		if ((q_count($matches) !== 1) || ($syntax->name === '__construct')) {
-			throw new \RuntimeException('Instance call requires one ordinary method: ' . $syntax->name);
+			throw new \RuntimeException('Member call requires one ordinary method: ' . $syntax->name);
 		}
 		$method = $matches[0];
 		Call_Preparation::require_signature($method, $context);
+		if ($method->callable_syntax()->require_preparation()->static_member !== $static_call) {
+			throw new \RuntimeException('Static methods require :: and instance methods require ->');
+		}
 		if (!$method->callable_syntax()->require_preparation()->public_access && ($context->receiver_record !== $record)) {
 			throw new \RuntimeException('Private method is not accessible here: ' . $syntax->name);
 		}
 		$facts = Call_Preparation::prepare($method, $syntax->arguments, $context);
-		$facts->receiver = new prepared_method_receiver($payload, $lifetime);
 		return $facts;
 	}
 }

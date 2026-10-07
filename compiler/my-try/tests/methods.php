@@ -74,7 +74,6 @@ foreach ([
 	['class C { function get(): int { return 1; } } $c = new C(); return $c->missing();', 'one ordinary method'],
 	['class C { function get(int $n): int { return $n; } } $c = new C(); return $c->get();', 'missing a required'],
 	['class C { function get(): int { return 1; } function get(): int { return 2; } }', 'Duplicate method'],
-	['class C { static function get(): int { return 1; } }', 'Expected field'],
 	['class C { function get(int &$n): int { return $n; } }', 'fixed by-value'],
 	['class C { int $n; function get(set:$n): int { return $n; } }', 'fixed by-value'],
 	['class C { function get(): int {} }', 'without returning'],
