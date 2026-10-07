@@ -71,10 +71,7 @@ final class CPP_Syntax
 			return $this->generate_constant_reference(object_cast($node, constant_reference_node::class));
 		}
 		if ($node instanceof static_member_reference_node) {
-			$facts = $node->require_preparation();
-			if ($facts instanceof prepared_constant_reference) { return CPP_Generator::generate_constant(object_cast($facts, prepared_constant_reference::class), $this->context); }
-			if ($facts instanceof prepared_static_property) { return CPP_Declarations::static_property(object_cast($facts, prepared_static_property::class), $this->context); }
-			return CPP_Enums::reference(object_cast($node, static_member_reference_node::class)->enum_case_preparation(), $this->context);
+			return CPP_Declarations::member_reference(object_cast($node, static_member_reference_node::class), $this->context);
 		}
 		if ($node instanceof call_node) {
 			return $this->generate_call(object_cast($node, call_node::class));

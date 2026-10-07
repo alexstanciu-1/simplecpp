@@ -10,7 +10,7 @@ final class Compiler_Call_Preparation
 		if ($syntax instanceof static_member_reference_node) {
 			$marker = object_cast($syntax, static_member_reference_node::class);
 			if ($marker->member_name === 'class') {
-				return Type_Preparation::type($marker->owner_type, $context);
+				return Type_Preparation::type($marker->require_type_owner(), $context);
 			}
 		}
 		throw new \RuntimeException('S2S compiler type argument requires Type::class');

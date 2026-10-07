@@ -447,8 +447,17 @@ final class CPP_Generator
 		if ($target instanceof variable_reference_node) {
 			$target = null;
 		}
-		$name = self::storage_name($binding, $target, $context);
-		$statements = $source->statements;
+		$name = '';
+		$statements = '';
+		if ($target instanceof static_member_reference_node) {
+			$member = object_cast($target, static_member_reference_node::class);
+			if ($member->qualifier !== null) {
+				$statements = CPP_Declarations::qualifier_evaluation($member->qualifier, $context);
+			}
+			$name = CPP_Declarations::static_property(object_cast($member->require_preparation(), prepared_static_property::class), $context);
+		}
+		else { $name = self::storage_name($binding, $target, $context); }
+		$statements .= $source->statements;
 		$statements .= "\t" . self::generate_storage_value($binding, $name, $source->value, false, $context) . ";\n";
 
 		$result = new cpp_assignment_sequence();

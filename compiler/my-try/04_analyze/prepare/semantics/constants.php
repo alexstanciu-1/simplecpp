@@ -43,6 +43,7 @@ final class Constant_Expression_Preparation
 			return $null_value;
 		}
 		if ($syntax instanceof static_member_reference_node) {
+			object_cast($syntax, static_member_reference_node::class)->require_type_owner();
 			$static_value = Expression_Preparation::prepare($syntax, $context);
 			if ($static_value instanceof prepared_constant_reference) { return object_cast($static_value, prepared_constant_reference::class)->value; }
 			if ($static_value instanceof prepared_enum_case_reference) {
@@ -151,6 +152,7 @@ final class Integer_Constants
 	public static function value(expression_node $syntax): string
 	{
 		if ($syntax instanceof static_member_reference_node) {
+			object_cast($syntax, static_member_reference_node::class)->require_type_owner();
 			return self::reference(object_cast($syntax->require_preparation(), prepared_constant_reference::class));
 		}
 		if ($syntax instanceof integer_literal_node) {

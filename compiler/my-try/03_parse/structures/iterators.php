@@ -169,7 +169,8 @@ final class static_member_children_iterator extends children_iterator
 			return null;
 		}
 		$this->consumed = true;
-		return $this->source->owner_type;
+		if ($this->source->owner_type !== null) { return $this->source->owner_type; }
+		return $this->source->qualifier;
 	}
 }
 

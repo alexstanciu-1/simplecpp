@@ -124,7 +124,7 @@ final class Enum_Preparation
 	/** Type preparation already observes name lookup and requires the source declaration. */
 	public static function reference(static_member_reference_node $syntax, preparation_context $context): prepared_enum_case_reference
 	{
-		$type = Type_Preparation::type($syntax->owner_type, $context);
+		$type = Type_Preparation::type($syntax->require_type_owner(), $context);
 		$entry = Type_Queries::source_declaration($type);
 		if (!($entry instanceof collected_enum)) {
 			throw new \RuntimeException('S2S named static member requires an enum owner');

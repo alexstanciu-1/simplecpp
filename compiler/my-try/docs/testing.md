@@ -68,6 +68,11 @@ class/struct storage variants, absent/read-only qualifiers, effect ordering,
 projections, shared parameter/return handling, visibility and incremental recovery.
 These are generated-program proofs, not a native compiler rebuild.
 
+Use `--suite qualified_static_members` for expression-qualified property reads/plain
+writes and constant reads. Includes effect preservation, lazy reads, write sequencing,
+failure/no-assignment probes, constant-context rejection, storage variants, access and
+incremental constant/visibility/storage-kind invalidation with repair/reset checks.
+
 For the CH10 shared declaration model migration:
 
 ```bash

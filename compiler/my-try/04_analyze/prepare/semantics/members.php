@@ -57,14 +57,23 @@ final class Member_Preparation
 
 	public static function reference(static_member_reference_node $syntax, preparation_context $context): prepared_expression
 	{
-		$type = self::owner($syntax->owner_type, $context);
+		$type /** canonical_type_use */;
+		if ($syntax->qualifier !== null) {
+			$value = Method_Preparation::base($syntax->qualifier, $context);
+			$type = Type_Queries::record_payload($value->type);
+			if (Type_Queries::source_record($type) === null) {
+				throw new \RuntimeException('Expression qualification requires a concrete class or struct');
+			}
+		}
+		else { $type = self::owner($syntax->require_type_owner(), $context); }
 		$record = Type_Queries::source_record($type);
 		$property = string_byte_starts_with($syntax->member_name, '$');
 		if ($record === null) {
 			if (!$property) { return Enum_Preparation::reference($syntax, $context); }
 			// Installed readonly constants such as error::$no_error keep their registered contract.
-			$scope = object_cast(weakref_get($syntax->owner_type->occurrence()->scope), scope::class);
-			$installed = Observed_Lookup::constants($scope, $syntax->owner_type->name . '::' . $syntax->member_name, $context);
+			$owner = $syntax->require_type_owner();
+			$scope = object_cast(weakref_get($owner->occurrence()->scope), scope::class);
+			$installed = Observed_Lookup::constants($scope, $owner->name . '::' . $syntax->member_name, $context);
 			if (q_count($installed) !== 1) { throw new \RuntimeException('Unknown installed static member'); }
 			return self::constant_reference($installed[0]);
 		}

@@ -40,8 +40,30 @@ rules. No `$this` is supplied to the static method. Non-static targets, unknown
 members, inaccessible methods, dynamic member names and qualifiers without a known
 concrete record target reject before C++ generation. Interface-based implementation
 selection and inherited/late-bound dispatch await CH11; a static interface signature
-alone does not identify an implementation. Instance-qualified properties/constants
-remain outside this slice.
+alone does not identify an implementation.
+
+### Expression-qualified properties and constants — 2026-10-07
+
+The same declared-type qualification supports `$object::$property` reads/plain
+statement writes and `$object::CONSTANT` reads, including expression qualifiers
+such as `produce()::$property`. Reuse the normal property/constant name categories,
+visibility, storage and assignment-conversion rules. Qualification does not create
+per-instance static storage.
+
+Evaluate and discard the qualifier once before reading the selected member, including
+when a constant's value is substituted into generated code. For a plain write,
+evaluate/discard the qualifier first, then evaluate and convert the RHS, then assign.
+If either evaluation or conversion fails, that assignment does not occur; earlier
+effects are not rolled back. A read-only qualifier can write a mutable static property:
+it identifies the type, not the instance storage being modified. Absent typed handles
+are valid as with static calls; evaluating the qualifier can still fail normally.
+
+Expression-qualified constants are runtime expressions, not constant expressions.
+Reject them in constant declarations, constant-only defaults and switch/match labels;
+never discard qualifier effects during folding. Constants cannot be assigned.
+Dynamic names, compound updates, increment/decrement, reference escapes and nested
+value-producing property assignments are not enabled by this slice. Interface and
+inherited qualification remain subject to CH11's pending contracts.
 
 `Type::NAME` and `self::NAME` select member constants. Constants reuse source
 constant evaluation: bool/int/float/string literals, constant references and
@@ -73,8 +95,7 @@ may be substituted from their prepared immutable values; no runtime storage is r
 ## Explicit boundaries
 
 Native-reference escape from static properties, compound updates and increment/
-decrement remain gated. Instance-qualified properties/constants remain CH10
-follow-ups. Inherited lookup/access, `parent::`, late-bound
+decrement remain gated. Inherited lookup/access, `parent::`, late-bound
 `static::`, protected/override/abstract/final semantics and inherited construction
 belong in CH11 after relationship and dispatch prerequisites. These gates do not
 claim permanent language prohibitions.

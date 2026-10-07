@@ -273,8 +273,8 @@ programs; `/tmp/ch10-static-constructors/` passes 45 constructor programs.
 and installed readonly constants. These are not a native compiler rebuild.
 
 Still gated: static-property reference escapes, compound updates, executable static
-initializers, and expression-qualified properties/constants. Expression-qualified
-static methods are covered below. Inherited lookup,
+initializers. Expression-qualified static methods, properties and constants are
+covered below. Inherited lookup,
 `parent::`, protected/abstract/final/override semantics, late-bound `static::` and
 inherited construction transfer to the [ordered CH11 prerequisites](11_inheritance.md#qualified-member-prerequisites-transferred-from-ch10).
 
@@ -344,8 +344,8 @@ result before argument evaluation. This replaces v0.1's unevaluated `decltype`.
 Qualification requires no copying, dereference, lock or presence check, including
 read-only and shared/unique/weak/inline record storage. Ordinary effects/checks
 inside the qualifier still execute. Fixed static target and visibility checks stay
-in preparation. Dynamic names, fat-value qualifiers and instance-qualified static
-properties/constants remain gated. Interface/inherited/late-bound selection is
+in preparation. Dynamic names and fat-value qualifiers remain gated. Expression-qualified
+properties/constants are covered below. Interface/inherited/late-bound selection is
 tracked in [CH11](11_inheritance.md#expression-qualified-static-dispatch--ch10-follow-up-debt-2026-10-07).
 
 Focused runner: `records.py --suite qualified_static_calls --no-pch`, covering
@@ -357,6 +357,30 @@ Evidence: `/tmp/ch10-qualified-static-final/` passes 25 generated programs witho
 PCH; `/tmp/ch10-qualified-static-regression/` passes 11 focused PHP suites. The
 shared runner used CLI fallback because sandbox socket binding prevented FPM startup.
 No native compiler rebuild or conversion was performed.
+
+## Expression-qualified static properties and constants — 2026-10-07
+
+The shared static-member AST now owns either a type spelling or an expression
+qualifier, with both forms participating in inspection and lifecycle maintenance.
+Preparation uses the same constant/property lookup, visibility and assignment paths.
+Compile-time-only consumers explicitly require type qualification, preventing loss
+of expression effects in defaults, constant declarations and switch/match labels.
+
+Reads evaluate/discard the qualifier before selecting the member, without forcing
+a copy or exposing a new source reference capability. Plain writes emit the qualifier
+before RHS evaluation/conversion and commit to the existing static storage only on
+success. The [normative contract](../../../../specs/static_members_v0_2.md#expression-qualified-properties-and-constants--2026-10-07)
+includes absent handles, read-only qualifiers, no rollback of prior effects and
+the continued compound/reference/dynamic-name gates. No new runtime member family
+or alternate static storage implementation was introduced.
+
+Focused runner: `records.py --suite qualified_static_members --no-pch`. Inherited
+and interface-qualified selection remains CH11 work; this does not close CH10.
+
+Evidence: `/tmp/ch10-qualified-members-final/` passes 27 generated programs without
+PCH, including native exception-boundary assertions that qualifier/RHS failure
+preserves the static value and earlier effects. `/tmp/ch10-qualified-members-regression/`
+passes 12 focused PHP suites. No native compiler rebuild or conversion was performed.
 
 ## Chapter 09 carryovers
 
@@ -388,7 +412,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-006A](#class-prop-006a) | supported-bounded | `self::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-006B](#class-prop-006b) | deferred-CH11 | `parent::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-006C](#class-prop-006c) | deferred-CH11 | `static::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
-| [CLASS-PROP-007](#class-prop-007) | pending-discussion | `$a::$x = 2;` | unverified | unverified | deferred | — |
+| [CLASS-PROP-007](#class-prop-007) | supported-bounded | `$a::$x = 2;` | shared static member | qualifier before RHS | deferred | Plain writes/read/constant checkpoint; no compound/reference forms |
 | [CLASS-PROP-008](#class-prop-008) | deferred-CH11 | `class B extends A { function f(): void { $this->x = 1; } }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-009](#class-prop-009) | pending-discussion | `$this->y = 1;` where `y` is undeclared | unverified | unverified | deferred | — |
 | [CLASS-PROP-010](#class-prop-010) | pending-discussion | `$this->$name = 1;` | unverified | unverified | deferred | — |
@@ -940,7 +964,9 @@ file-local late-static lowering helper path
 
 ## CLASS-PROP-007
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared static storage; evaluate/discard the qualifier
+before RHS evaluation/conversion. Reads and constants follow the same qualifier rule.
+The imported unevaluated `decltype` spelling is intentionally superseded.
 
 ### Imported version 1
 

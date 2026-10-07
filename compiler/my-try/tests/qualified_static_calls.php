@@ -63,7 +63,6 @@ foreach ([
 	'$c mixed = []; return $c::f();',
 	'$c = 1; return $c::f();',
 	'interface I { static function f(): int; } function produce(): I { } return produce()::f();',
-	'class C { static int $n; } $c = new C(); return $c::$n;',
 ] as $source) {
 	$failed = false;
 	try { qualified_static_source($source); }

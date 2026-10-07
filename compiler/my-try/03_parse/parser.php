@@ -2100,7 +2100,16 @@ final class Parser_Run
 			if ($this->text() === '::') {
 				$this->position++;
 				if (!$this->identifier() || ($this->text_at_offset(1) !== '(')) {
-					throw new \RuntimeException($this->error_message('Expression qualification requires a fixed method call'));
+					if (!$this->identifier() && !string_byte_starts_with($this->text(), '$')) {
+						throw new \RuntimeException($this->error_message('Expression qualification requires a fixed member name'));
+					}
+					$qualified_member = new static_member_reference_node();
+					$qualified_member->qualifier = $base;
+					$qualified_member->member_name = $this->text();
+					$this->position++;
+					$this->finish_node($qualified_member, $start);
+					$base = $qualified_member;
+					continue;
 				}
 				$qualified_call = $this->call_expression();
 				$qualified_call->receiver = $base;

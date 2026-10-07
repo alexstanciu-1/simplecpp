@@ -63,7 +63,8 @@ final class static_member_reference_node extends assignable_expression_node
 	use Node_Source_Span;
 	use Preparation_Facts;
 
-	public named_type_node $owner_type;
+	public ?named_type_node $owner_type = null;
+	public ?expression_node $qualifier = null;
 	/** Includes the source $ prefix for a property; constants/cases have no prefix. */
 	public string $member_name;
 	private ?prepared_expression $prepared_facts = null;
@@ -83,6 +84,13 @@ final class static_member_reference_node extends assignable_expression_node
 		return object_cast($this->prepared_facts, prepared_enum_case_reference::class);
 	}
 
+	/** Compile-time type consumers must not discard an expression qualifier's effects. */
+	public function require_type_owner(): named_type_node
+	{
+		if ($this->owner_type === null) { throw new \RuntimeException('Expression-qualified member is not a compile-time type or constant expression'); }
+		return $this->owner_type;
+	}
+
 	public function children(): child_iterator_i
 	{
 		return new static_member_children_iterator($this);
@@ -91,7 +99,8 @@ final class static_member_reference_node extends assignable_expression_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$worker->edge($this, $this->owner_type);
+		if ($this->owner_type !== null) { $worker->edge($this, $this->owner_type); }
+		if ($this->qualifier !== null) { $worker->edge($this, $this->qualifier); }
 	}
 }
 
