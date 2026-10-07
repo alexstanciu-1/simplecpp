@@ -25,11 +25,26 @@ wrapping a noncopyable record must not make it copyable. Nullable truthiness ret
 the existing rule (absent is false; present delegates to the payload's admitted
 condition contract), not an invented unconditional presence rule for all records.
 
-Implementation checkpoints are tracked in CH10. The first checkpoint implements
-handle normalization in shared type preparation for both spellings; inline-record
-construction, copying/extraction, probes and truthiness admission remain gated until
-their shared operation/capability paths are extended. Joins/coalescing are a later
-slice. The runtime's general C++ template is not rewritten by source normalization.
+Inline nullable value boundaries use exact payload types. Default construction and
+`null` produce absence without constructing or copying a payload. A concrete payload
+can be copied into its nullable wrapper; same-payload wrapper copying preserves
+absence/presence. Checked required-value extraction copies the contained value and
+leaves the source unchanged, or throws `invalid_nullable_unwrap_empty` on absence.
+These rules apply to locals, plain assignments, by-value arguments and returns.
+They preserve the payload's ordinary field-copy semantics, not a recursive deep copy.
+
+`nullable<T>` is copyable only when `T` is copyable, even when a particular source
+value happens to be absent. Invalid copies reject during preparation. Constructing
+absence, resetting to `null`, and exact reference binding do not require copying.
+Reset destroys any present payload. `=== null` / `!== null` inspect presence without
+extracting or copying the payload. An inline class payload still carries its explicit
+`value<Class>` storage identity; no handle/inline conversion is implied.
+
+Implementation checkpoints are tracked in CH10. Handle normalization and the bounded
+inline-record value operations above are enabled through shared preparation and
+existing runtime lowering. Explicit payload transfer into/out of a nullable,
+contextual nullable data literals, probes/truthiness and joins/coalescing remain later
+slices. The runtime's general C++ template is not rewritten by source normalization.
 
 Agreed 2026-10-02 for the my-try v0.2 frontend.
 

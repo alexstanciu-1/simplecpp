@@ -34,7 +34,8 @@ final class Value_Boundary_Preparation
 			return value_boundary_operation::consume_value;
 		}
 		if ($conversion !== null) {
-			if ($conversion->operation === conversion_operation::ownership_empty) {
+			if (($conversion->operation === conversion_operation::ownership_empty)
+				|| ($conversion->operation === conversion_operation::nullable_empty)) {
 				return value_boundary_operation::construct_empty;
 			}
 		}

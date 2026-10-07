@@ -67,8 +67,9 @@ experiment retained for regressions, not a second semantic development path.
 CH10's [reconciled inventory](catalog/10_objects.md#reconciliation--2026-10-07)
 distinguishes completed duplicate cards, intentional gates and later chapter owners.
 The [nullable normalization checkpoint](catalog/10_objects.md#nullable-handle-normalization--2026-10-07)
-implements the agreed no-double-absence handle model. Next: nullable inline-record
-value boundaries and payload-dependent capabilities; their operations remain gated.
+implements the agreed no-double-absence handle model. The [inline-record checkpoint](catalog/10_objects.md#nullable-inline-record-boundaries--2026-10-07)
+adds construction, payload-aware copying, checked extraction and null comparisons.
+Next: nullable-record probes/truthiness, then selection joins; those remain gated.
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are

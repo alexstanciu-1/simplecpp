@@ -59,7 +59,6 @@ foreach ([
 	'class C {} $a ?shared<C>;',
 	'class C {} $a ?weak<C>; if ($a) {}',
 	'class C {} $a nullable<C, int>;',
-	'struct S { int $n; } $a ?S = null;',
 ] as $source) {
 	try { nullable_handles_source($source); throw new \LogicException('Normalization bypassed existing boundary'); }
 	catch (\RuntimeException $expected) {}

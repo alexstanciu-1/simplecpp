@@ -11,6 +11,11 @@ final class Capability_Preparation implements type_capability_query
 
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
 	{
+		// Wrapper identity is registered independently of the payload's completed copy contract.
+		$payload = Nullable_Conversions::payload($type_use);
+		if (($payload !== null) && ($capability === generic_contract::copyable_value)) {
+			return $this->has_capability($payload, $capability);
+		}
 		// Handle copying/storage is independent of the pointee's fields or completeness.
 		if (Type_Queries::is_class_handle($type_use)) {
 			return ($capability === generic_contract::copyable_value)

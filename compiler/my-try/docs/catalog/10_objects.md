@@ -417,8 +417,8 @@ registry capability cache or change to the runtime nullable template was introdu
 Bare class, explicit shared struct, unique and weak handles preserve their existing
 construction/copy/move/reference/presence rules. Redundant storage overrides still
 reject; nullable spelling does not grant weak presence tests without locking.
-`?Struct` and `?value<Class>` retain nullable model identity. Their value operations
-remain gated pending payload-dependent copy capability and shared boundary admission;
+`?Struct` and `?value<Class>` retain nullable model identity. At this checkpoint their value operations
+were gated pending payload-dependent copy capability and shared boundary admission;
 removing the scalar-only guard alone would wrongly advertise noncopyable payloads
 as copyable. Record payload truthiness also needs an admitted payload condition path,
 not a substitution of presence for the established delegation rule.
@@ -429,7 +429,41 @@ PCH, including exact-reference compatibility, unique movement, weak locking, fie
 and preserved inline-wrapper identity. `/tmp/ch10-nullable-handles-regression-final/`
 passes 8 focused PHP suites after refreshing the older nested-field rejection
 diagnostic expectation. No native compiler rebuild or conversion was performed.
-Next: nullable inline-record boundaries/capabilities, then probes/truthiness and joins.
+The following checkpoint enables the bounded value operations; probes/truthiness
+and joins remain separate.
+
+## Nullable inline-record boundaries — 2026-10-07
+
+Agreed source contract: `?Struct` / `?value<Class>` support default/null absence,
+exact-payload wrapping, same-type copying and checked copying extraction at existing
+value boundaries. Extraction leaves the source unchanged and throws on absence.
+Null comparisons inspect presence without copying. Empty construction/reset does
+not require a copyable or default-constructible payload; actual copying does,
+even for an absent source. Contextual data literals, payload moves, interior borrows,
+probes/truthiness and selection joins are not enabled by this checkpoint.
+
+Preparation owns admission in `Nullable_Conversions`, payload-derived capability
+queries in `Capability_Preparation`, and noncopying empty construction in the shared
+value-boundary worker. Concrete `new` constructs its payload before ordinary nullable
+wrapping. No new AST/facts, registry capability cache or class/struct-specific lowering
+was needed. Existing C++ `nullable<T>{value}` and `T(optional.require_value(...))`
+provide the implementation; only runtime/header uses already required by those types
+are emitted. No new runtime helper or extra translation unit is introduced.
+
+Legacy review: `TypeMapper` already distinguishes nullable inline values from handles;
+`wrapExprForExpectedType` uses runtime construction and cast bridges at recognized
+boundaries. The semantic compiler instead checks exact payload identity and copy
+permission before emission, retaining runtime checks for actual absence.
+
+Focused proof: `records.py --suite nullable_records --no-pch`, with checks in
+`tests/nullable_records.php`. Evidence: `/tmp/ch10-nullable-records-final/` (16 generated
+programs, no PCH) and `/tmp/ch10-nullable-records-regression/` (9 focused PHP suites).
+Includes class/struct copy independence, null checks, calls/returns/properties,
+empty access error code, noncopyable empty/reset, destructor cleanup and cross-file
+copy-capability invalidation/retry/repair. No native compiler rebuild or conversion.
+
+Next discussion: nullable-record probes/truthiness, without conflating presence with
+the existing payload-delegating condition contract; selection joins follow.
 
 ## Chapter 09 carryovers
 
@@ -457,7 +491,7 @@ Counts include one synthetic data row and two prose rows; they are not code cove
 (81 rows including the separate legacy table).
 
 `partial-split` means the imported example combines supported concrete-record work
-with a still-unimplemented qualifier such as nullable records or protected/interface
+with a still-unimplemented qualifier such as protected/interface
 access. `gated` records an intentional current rejection, not a promise that its
 broader lifetime/callable model has been implemented. No new language behavior was
 enabled by this reconciliation.
@@ -465,17 +499,19 @@ enabled by this reconciliation.
 Focused PHP-host audit `/tmp/ch10-reconciliation/` confirms emitted qualified
 construction and vector-valued method parameters; preparation rejects unknown fields
 and overloads, parsing rejects dynamic member names/callable-variable invocation,
-and `?Class`/`?Struct` initialization still hits the scalar-only nullable-operation
-gate. These nine diagnostic/emission probes are not generated-program execution or
+and at the audit revision `?Class`/`?Struct` initialization hit the scalar-only
+nullable-operation gate (superseded by the nullable checkpoints above).
+These nine diagnostic/emission probes are not generated-program execution or
 a native compiler rebuild. Existing checkpoint suites supply behavioral evidence.
 
 ### Actual remaining work and owners
 
-1. **Nullable inline-record operations — next bounded implementation.**
+1. **Nullable inline-record probes/conditions and joins — next discussion.**
    The normalization checkpoint above settles TYPE-VAR-004 for class handles and
    updates the earlier audit result. Nullable inline portions of TYPE-PARAM-004/
-   TYPE-PROP-002 and the CH09 carryover remain: construction, payload-dependent copy
-   capability, checked extraction, probes and condition admission. Bare handles
+   TYPE-PROP-002 and the CH09 carryover now have bounded construction,
+   payload-dependent copy capability and checked extraction. Probes, condition
+   admission and joins remain. Bare handles
    retain their own absence state; inline records require a real nullable wrapper.
 2. **Property operation completeness.** Plain reads/writes are covered. Compound
    assignment and prefix/postfix mutation on instance/static properties remain
@@ -573,10 +609,10 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [OBJ-METHOD-CALL-002](#obj-method-call-002) | supported-bounded | `$a = $obj->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [TYPE-VAR-003](#type-var-003) | supported-bounded | `$x A = new A();` | prepared (bounded) | see proof | deferred | Explicit record storage construction; records.php and constructors.php |
 | [TYPE-VAR-004](#type-var-004) | supported-bounded | `$x ?A = null;` | normalized class handle | shared existing handle path | deferred | nullable_handles.php; inline record operations remain separate |
-| [TYPE-PARAM-004](#type-param-004) | partial-split | `function f(A $a, ?B $b, I $i): A { return $a; }` | see reconciliation | see reconciliation | deferred | Concrete record boundaries supported; nullable records pending CH10; interfaces/abstract types CH11 |
+| [TYPE-PARAM-004](#type-param-004) | partial-split | `function f(A $a, ?B $b, I $i): A { return $a; }` | bounded concrete/nullable boundaries | proved bounded | deferred | nullable_records.php; interfaces/abstract types CH11 |
 | [TYPE-PROP-001](#type-prop-001) | partial-split | `class A { protected string $s; protected B $b; }` | see reconciliation | see reconciliation | deferred | Public/private typed fields supported; protected access CH11 |
 | [TYPE-PROP-001B](#type-prop-001b) | supported-bounded | `class A { public int $x; }` | prepared (bounded) | see proof | deferred | Strict public typed field; records.php; legacy spelling separate |
-| [TYPE-PROP-002](#type-prop-002) | partial-split | `class A { protected ?string $x; protected ?B $b; }` | see reconciliation | see reconciliation | deferred | Nullable scalar fields supported; nullable records pending CH10; protected access CH11 |
+| [TYPE-PROP-002](#type-prop-002) | partial-split | `class A { protected ?string $x; protected ?B $b; }` | bounded nullable fields | proved bounded | deferred | nullable_records.php; protected access CH11 |
 | [NOTE-029](#note-029) | reconciled-bounded | — (example pending) | see reconciliation | see reconciliation | deferred | Construction/static slices supersede imported struct-argument and unevaluated-qualifier restrictions |
 | [NOTE-050](#note-050) | partial-split | — (example pending) | see reconciliation | see reconciliation | deferred | See reconciliation: layout/members/lifecycle supported; inference/updates/shortcuts and CH11 remain |
 
@@ -3580,7 +3616,7 @@ shared_p<A> x = null;
 
 ## TYPE-PARAM-004
 
-**v0.2 decision / target C++:** partial-split. Concrete record boundaries supported; nullable records pending CH10; interfaces/abstract types CH11.
+**v0.2 decision / target C++:** partial-split. Concrete and nullable-record value boundaries supported; interfaces/abstract types CH11. See nullable_records.php.
 See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1
@@ -3698,7 +3734,7 @@ class A { public: int_t x; };
 
 ## TYPE-PROP-002
 
-**v0.2 decision / target C++:** partial-split. Nullable scalar fields supported; nullable records pending CH10; protected access CH11.
+**v0.2 decision / target C++:** partial-split. Nullable scalar and inline-record fields supported; protected access CH11. See nullable_records.php.
 See the progress table and dated checkpoints; imported text below is historical.
 
 ### Imported version 1

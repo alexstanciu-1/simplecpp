@@ -22,7 +22,7 @@ final class Presence_Operators
 			if (($payload === null) || $type->by_value()) {
 				throw new \RuntimeException('S2S null comparison requires a nullable value or owning handle');
 			}
-			Nullable_Conversions::require_scalar_payload($payload);
+			Nullable_Conversions::require_value_payload($payload);
 		}
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;

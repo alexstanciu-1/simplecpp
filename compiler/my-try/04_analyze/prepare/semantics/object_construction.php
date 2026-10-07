@@ -9,6 +9,14 @@ final class Object_Construction_Preparation
 	public static function prepare(object_construction_node $node, preparation_context $context,
 		?canonical_type_use $destination): prepared_object_construction
 	{
+		// Construct the concrete payload; the enclosing value boundary owns optional wrapping.
+		if ($destination !== null) {
+			$nullable_payload = Nullable_Conversions::payload($destination);
+			if ($nullable_payload !== null) {
+				Nullable_Conversions::require_value_payload($nullable_payload);
+				$destination = $nullable_payload;
+			}
+		}
 		$target = Type_Preparation::type($node->target_type, $context);
 		$source_arguments /** Storage<expression_node> */ = $node->arguments;
 		if ($target->by_value() || (Type_Queries::source_record($target) === null)) {

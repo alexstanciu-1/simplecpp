@@ -396,8 +396,12 @@ uses separate runtime probe helpers, not condition truthiness: `empty("0")` is f
 Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
 is introduced, and probes cannot establish new locals through nested assignment.
 
-Nullable scalar boundaries use `conversions/nullable.php`: typed null construction,
-exact-payload wrapping/copying and checked required-value extraction. Explicit casts
+Nullable scalar and inline-record boundaries use `conversions/nullable.php`: typed null
+construction, exact-payload wrapping/copying and checked required-value extraction.
+`Capability_Preparation` recursively queries nullable payload copy permission through
+completed declarations and their dependencies. Empty construction/reset does not copy;
+ordinary extraction does. Inline-record probe/condition and join admission remains
+separate from this value-boundary permission. Explicit casts
 remain distinct (notably the empty nullable-string exception). `operators/presence.php`
 selects strict null presence comparisons. Null literals carry a non-storable sentinel;
 `?T` resolves to the registered nullable semantic definition and shared application

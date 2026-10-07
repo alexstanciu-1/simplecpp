@@ -82,6 +82,11 @@ Use `--suite nullable_handles` for `?Handle`/`nullable<Handle>` normalization, e
 reference compatibility, shared/unique/weak behavior and preserved inline-wrapper
 identity. It deliberately does not claim nullable inline-record value operations.
 
+Use `--suite nullable_records` for struct/inline-class optional construction,
+copy independence, checked extraction, fields/calls/returns, null comparisons and
+noncopyable-payload rejection. Also covers reset cleanup, empty noncopyable values,
+cross-file capability edits, failed retries, repair and fresh/reset agreement.
+
 For the CH10 shared declaration model migration:
 
 ```bash

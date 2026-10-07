@@ -26,18 +26,31 @@ final class Nullable_Conversions
 		}
 	}
 
+	/** Value boundaries and presence do not require a payload truthiness contract. */
+	public static function require_value_payload(canonical_type_use $payload): void
+	{
+		if ((Type_Queries::source_record($payload) !== null)
+			&& (Type_Queries::record_storage($payload) === record_storage_kind::inline_value)) {
+			return;
+		}
+		if ($payload->by_value() || !Conversion_Preparation::is_scalar($payload)) {
+			throw new \RuntimeException('S2S nullable value boundary requires a scalar or inline record payload');
+		}
+	}
+
 	/** Only exact payload boundaries; cross-payload lifting remains a separate slice. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision
 	{
 		$source_payload = self::payload($source);
 		$target_payload = self::payload($target);
-		if ($source->by_value() || $target->by_value()) {
+		if ((($source_payload !== null) && $source->by_value())
+			|| (($target_payload !== null) && $target->by_value())) {
 			throw new \RuntimeException('S2S nullable boundaries do not support storage modifiers');
 		}
-		if ($source_payload !== null) { self::require_scalar_payload($source_payload); }
+		if ($source_payload !== null) { self::require_value_payload($source_payload); }
 		if ($target_payload !== null) {
-			self::require_scalar_payload($target_payload);
+			self::require_value_payload($target_payload);
 			if (self::is_null($source)) {
 				return Conversion_Preparation::operation($source, $target, $context, conversion_operation::nullable_empty);
 			}
