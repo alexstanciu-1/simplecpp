@@ -20,13 +20,20 @@ final class Method_Preparation
 	/** Ordinary parameter/return preparation remains owned by Declaration_Preparation. */
 	public static function signature(method_node $syntax, prepared_source_callable $facts, preparation_context $context): void
 	{
-		if (string_byte_starts_with($syntax->name, '__')) {
+		$destructor = $syntax->name === '__destruct';
+		if (string_byte_starts_with($syntax->name, '__') && !$destructor) {
 			throw new \RuntimeException('Special methods are deferred');
 		}
 		Member_Preparation::validate_modifiers($syntax->modifiers, true);
 		$facts->public_access = Member_Preparation::is_public($syntax->modifiers);
 		$facts->static_member = Member_Preparation::is_static($syntax->modifiers);
 		$parameters /** Storage<parameter_node> */ = $syntax->parameters;
+		if ($destructor) {
+			if (!$parameters->is_empty() || ($syntax->return_type !== null) || $syntax->returns_reference
+				|| $facts->static_member || !$facts->public_access) {
+				throw new \RuntimeException('Destructor requires public instance access, no parameters and no declared return type/reference');
+			}
+		}
 		foreach ($parameters as $parameter)
 		{
 			if ($parameter->property_backed || ($parameter->name === 'this')) {
@@ -107,7 +114,7 @@ final class Method_Preparation
 		$context->worker->require_declaration($context->owner, $record);
 		$methods /** Key_Storage_List<collected_method> */ = $record->syntax()->require_preparation()->methods;
 		$matches /** vector<collected_method> */ = $methods->named($syntax->name);
-		if ((q_count($matches) !== 1) || ($syntax->name === '__construct')) {
+		if ((q_count($matches) !== 1) || ($syntax->name === '__construct') || ($syntax->name === '__destruct')) {
 			throw new \RuntimeException('Member call requires one ordinary method: ' . $syntax->name);
 		}
 		$method = $matches[0];

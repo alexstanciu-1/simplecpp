@@ -125,10 +125,12 @@ final class CPP_Declarations
 			$method = object_cast($function_declaration, collected_method::class);
 			$record_name = CPP_Generator::source_name('record', $method->declaring_record()->qualified_name());
 			$name = $syntax->name === '__construct' ? $record_name : CPP_Generator::source_name('method', $syntax->name);
+			$destructor = $syntax->name === '__destruct';
+			if ($destructor) { $name = '~' . $record_name; }
 			if (!$prototype) { $name = $record_name . '::' . $name; }
-			$prefix = $syntax->name === '__construct' ? '' : $return_prefix;
+			$prefix = (($syntax->name === '__construct') || $destructor) ? '' : $return_prefix;
 			if ($prototype && $facts->static_member) { $prefix = 'static ' . $prefix; }
-			return $prefix . $name . '(' . $parts . ')';
+			return $prefix . $name . '(' . $parts . ')' . ($destructor ? ' noexcept' : '');
 		}
 		return $return_prefix . CPP_Callables::source_reference(object_cast($function_declaration, collected_function::class)) . '(' . $parts . ')';
 	}
@@ -239,6 +241,18 @@ final class CPP_Declarations
 		}
 		$context->records .= $text;
 		$methods /** Key_Storage_List<collected_method> */ = $syntax->require_preparation()->methods;
+		if (q_count($methods->named('__destruct')) !== 0) {
+			// A user destructor suppresses implicit C++ moves. Restore ordinary memberwise
+			// operations explicitly; defaulted copies remain deleted for noncopyable fields.
+			$name = CPP_Generator::source_name('record', $key);
+			if (($initialization === null) && (weakref_get($syntax->require_preparation()->constructor) === null)) {
+				$context->records .= "\t" . $name . "() = default;\n";
+			}
+			$context->records .= "\t" . $name . '(const ' . $name . "&) = default;\n"
+				. "\t" . $name . '(' . $name . "&&) = default;\n"
+				. "\t" . $name . '& operator=(const ' . $name . "&) = default;\n"
+				. "\t" . $name . '& operator=(' . $name . "&&) = default;\n";
+		}
 		if (q_count($methods->items()) === 0) { $context->records .= "};\n\n"; }
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';

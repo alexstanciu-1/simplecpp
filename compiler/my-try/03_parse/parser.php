@@ -1191,12 +1191,12 @@ final class Parser_Run
 			while (true);
 		}
 		$this->expect(')');
-		$constructor = ($record !== null) && ($function_name === '__construct');
+		$lifecycle_method = ($record !== null) && (($function_name === '__construct') || ($function_name === '__destruct'));
 		$return_type /** nullable<type_node> */ = null;
-		if (!$constructor && ($this->text() !== ':')) {
+		if (!$lifecycle_method && ($this->text() !== ':')) {
 			throw new \RuntimeException($this->error_message('Function requires an explicit return type, including void'));
 		}
-		if (!$constructor || ($this->text() === ':')) {
+		if (!$lifecycle_method || ($this->text() === ':')) {
 			$this->expect(':');
 			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
 				throw new \RuntimeException($this->error_message('Expected return type name'));

@@ -29,7 +29,10 @@ final class Declaration_Preparation
 			throw new \RuntimeException('S2S function templates are deferred');
 		}
 
-		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
+		if (($syntax instanceof method_node) && ($syntax->name === '__destruct')) {
+			$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
+		}
+		else { $facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context); }
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$contracts /** Storage<callable_parameter> */ = $facts->signature->parameters;

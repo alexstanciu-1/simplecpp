@@ -51,6 +51,14 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## v0.2 contract review debt
 
+CH10 now owns the [bounded destructor implementation](10_objects.md#destructors-and-automatic-cleanup--2026-10-07)
+and [nonthrowing lifecycle contract](../../../../specs/destructors_v0_2.md).
+The imported CLASS-ABS-001/002/003/004 examples overlap that completed base slice.
+CH11 must still settle base/member destruction order with inheritance, virtual
+destructor policy, abstract/interface ownership and non-public destructor access;
+do not create a separate destructor AST/body path or infer polymorphic deletion from
+CH10's non-inheriting records.
+
 Review the Simple C++ inheritance contracts before implementing this chapter:
 
 - Concrete versus abstract bases, `final`, interfaces and supported inheritance relationships.

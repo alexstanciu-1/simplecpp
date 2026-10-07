@@ -73,6 +73,11 @@ writes and constant reads. Includes effect preservation, lazy reads, write seque
 failure/no-assignment probes, constant-context rejection, storage variants, access and
 incremental constant/visibility/storage-kind invalidation with repair/reset checks.
 
+Use `--suite destructors` for automatic cleanup across class/struct storage variants,
+last-owner/weak behavior, inline copies/aliases, early exits, member order, data and
+authored construction, native move/copy traits, unwinding and termination boundaries.
+Includes cross-file body edits, invalid-signature retry, removal/readdition and resets.
+
 For the CH10 shared declaration model migration:
 
 ```bash

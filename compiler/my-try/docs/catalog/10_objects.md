@@ -382,6 +382,29 @@ PCH, including native exception-boundary assertions that qualifier/RHS failure
 preserves the static value and earlier effects. `/tmp/ch10-qualified-members-regression/`
 passes 12 focused PHP suites. No native compiler rebuild or conversion was performed.
 
+## Destructors and automatic cleanup — 2026-10-07
+
+Public instance `__destruct()` on classes/structs uses the existing method declaration
+and body lifecycle. Shared preparation admits no parameters, return annotation,
+reference marker or explicit source invocation. C++ emits out-of-line `noexcept`
+destructors. Ownership determines cleanup; the body runs before reverse-order member
+destruction. Memberwise copy/move declarations preserve existing storage capabilities
+despite C++ implicit-move suppression by a user destructor; noncopyable copies remain
+rejected. No separate AST/body family or runtime destructor dispatch was introduced.
+
+The [normative contract](../../../../specs/destructors_v0_2.md) records nonthrowing
+termination, moved-from objects, assignment versus destruction, construction failure,
+and deferred non-public/inherited destruction policies. Focused proof owner:
+`records.py --suite destructors --no-pch`. This is generated-program validation,
+not a native compiler rebuild.
+
+Evidence: `/tmp/ch10-destructors-2/` passes 25 generated programs without PCH,
+including noncopyable move traits, reverse member order, unwinding cleanup and a
+test-only termination handler proving the nonthrowing boundary. Cross-file edits,
+failed retries, destructor removal/readdition and fresh/reset agreement pass.
+`/tmp/ch10-destructors-regression/` passes 12 focused PHP suites. No compiler native
+rebuild or conversion was performed.
+
 ## Chapter 09 carryovers
 
 CH09's approved bounded closeout transfers constructor integration for explicit
@@ -429,7 +452,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-CALL-008A](#class-call-008a) | deferred-CH11 | `new static(1)` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-CALL-009](#class-call-009) | pending-discussion | `$a->$name();` | unverified | unverified | deferred | — |
 | [CLASS-CALL-010](#class-call-010) | pending-discussion | `[$a, 'f']` | unverified | unverified | deferred | — |
-| [CLASS-CALL-011](#class-call-011) | pending-discussion | explicit destructor invocation pattern | unverified | unverified | deferred | — |
+| [CLASS-CALL-011](#class-call-011) | rejected | explicit destructor invocation pattern | preparation rejection | not emitted | deferred | Automatic ownership-driven cleanup only |
 | [CLASS-CALL-012](#class-call-012) | supported-bounded | `static function g(int $x): int { return $x; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CONST-001](#class-const-001) | supported-bounded | `class A { public const X = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CONST-002](#class-const-002) | supported-bounded | `A::X` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
@@ -448,7 +471,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-009](#class-member-009) | deferred-CH11 | `abstract static function f(): int;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-010](#class-member-010) | deferred-CH11 | `#[\Override] static function f(): int { return 1; }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-011](#class-member-011) | supported-bounded | `function __construct(int $x) { $this->x = $x; }` | prepared | verified | deferred | Shared callable lifecycle and out-of-line body; also `set:` |
-| [CLASS-MEMBER-012](#class-member-012) | pending-discussion | `function __destruct() {}` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-012](#class-member-012) | supported-bounded | `function __destruct() {}` | shared callable | out-of-line noexcept | deferred | Public, zero inputs; storage-driven cleanup |
 | [CLASS-MEMBER-013](#class-member-013) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-014](#class-member-014) | supported-bounded | `private function f(): int { return 1; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-015](#class-member-015) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
@@ -1682,7 +1705,7 @@ ERROR
 
 ## CLASS-CALL-011
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Rejected during preparation. Destruction follows ownership.
 
 ### Imported version 1
 
@@ -2441,7 +2464,8 @@ function __construct(int $x) { $this->x = $x; }
 
 ## CLASS-MEMBER-012
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Public instance destructor with no inputs/return
+annotation; out-of-line nonthrowing body on the shared method lifecycle.
 
 ### Imported version 1
 
