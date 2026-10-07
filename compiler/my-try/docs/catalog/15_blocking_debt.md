@@ -49,6 +49,31 @@ failure cleanup and rejection/runtime checks before enabling the feature. Preser
 existing reference restrictions and non-escaping initialization-input lifetimes until
 a safe contract and focused behavioral/lifetime proofs replace them.
 
+Proposed notation (user suggestion, 2026-10-07; not approved syntax): an entry value
+can be tagged with `(#tag)` and referenced elsewhere in the same data set as `#tag`:
+
+```php
+{
+    customers: [
+        {id: 1, name: "Alice"},
+        (#12){id: 2, name: "Alex"},
+        (#vipA){id: 3, name: "Bob"},
+    ],
+    best_customer: #12,
+    alternate_customer: #vipA,
+}
+```
+
+Tags are arbitrary identifiers, not array positions or object property values.
+They may be numeric or alphanumeric; each tag must be unique across the data set,
+including nested constructions. Repeated uses of a tag reference the same tagged
+element; they do not declare it again. The proposed spelling must be evaluated for
+both PHP-array-like and JS-like notation through the shared parser. Exact tag grammar,
+case sensitivity, data-set scope boundaries, forward references, missing/duplicate
+tag diagnostics and reference-versus-copy behavior remain design questions under
+this debt. In particular, the notation alone does not override value/COW semantics,
+authorize escaping input views or establish cycle ownership.
+
 ### Chapter 09 closeout follow-ups
 
 Approved on 2026-10-06; these do not block the bounded CH09 feature closeout.
