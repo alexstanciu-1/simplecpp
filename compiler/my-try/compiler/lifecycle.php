@@ -167,9 +167,9 @@ final class Compiler_Lifecycle
 					}
 					if ($entry instanceof collected_function) {
 						$function = object_cast($entry, collected_function::class)->syntax();
-						if ($function->body->work() !== null) {
-							$function->body->work()->state = preparation_state::pending;
-							$function->body->work()->change_status = change_state::changed;
+						if ($function->require_body()->work() !== null) {
+							$function->require_body()->work()->state = preparation_state::pending;
+							$function->require_body()->work()->change_status = change_state::changed;
 						}
 					}
 				}

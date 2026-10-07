@@ -25,16 +25,16 @@ final class S2S_Proof
 		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
 		$original = CPP_Probe::text($outputs);
 		$functions /** vector<collected_function> */ = Model::$global_scope->functions_named('choose');
-		$retained_body = $functions[0]->syntax()->body;
+		$retained_body = $functions[0]->syntax()->require_body();
 		$stable_functions /** vector<collected_function> */ = Model::$global_scope->functions_named('stable');
-		$stable_work = $stable_functions[0]->syntax()->body->work();
+		$stable_work = $stable_functions[0]->syntax()->require_body()->work();
 		$stable_version = $stable_work->version;
 		$paths /** vector<string> */ = ['/control-proof/main.phs'];
 		$record->file->content = "\n\n" . $valid;
 		$compiler->update_cpp($paths);
 		$functions = Model::$global_scope->functions_named('choose');
 		$outputs = Model::$cpp_files;
-		if (($functions[0]->syntax()->body !== $retained_body) || (CPP_Probe::text($outputs) !== $original)) {
+		if (($functions[0]->syntax()->require_body() !== $retained_body) || (CPP_Probe::text($outputs) !== $original)) {
 			throw new \LogicException('Native control-flow span move lost body identity or output');
 		}
 

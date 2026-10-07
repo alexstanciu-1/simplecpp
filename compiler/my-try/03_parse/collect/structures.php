@@ -168,13 +168,13 @@ final class collected_function extends collected_definition implements callable_
 
 final class collected_constant extends collected_definition implements constant_target_i
 {
-	private constant_declaration_node $syntax_node;
-	public function __construct(collected_file $collection, constant_declaration_node $node)
+	private namespace_constant_node $syntax_node;
+	public function __construct(collected_file $collection, namespace_constant_node $node)
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
 	}
-	public function syntax(): constant_declaration_node { return $this->syntax_node; }
+	public function syntax(): namespace_constant_node { return $this->syntax_node; }
 	public function kind(): collected_name_kind { return collected_name_kind::constant_declaration; }
 	public function constant_name(): string { return $this->name; }
 	public function value(): constant_value { return $this->syntax_node->require_preparation(); }
@@ -215,15 +215,15 @@ final class collected_enum extends collected_type_definition
 final class collected_struct extends collected_type_definition
 {
 	/** @reference.source parsed_file.root (syntax graph) */
-	private struct_node $syntax_node;
+	private type_declaration_node $syntax_node;
 
-	public function __construct(collected_file $collection, struct_node $node)
+	public function __construct(collected_file $collection, type_declaration_node $node)
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
 	}
 
-	public function syntax(): struct_node
+	public function syntax(): type_declaration_node
 	{
 		return $this->syntax_node;
 	}
@@ -237,15 +237,15 @@ final class collected_struct extends collected_type_definition
 final class collected_field extends collected_declaration
 {
 	/** @reference.source parsed_file.root (syntax graph) */
-	private field_node $syntax_node;
+	private property_node $syntax_node;
 
-	public function __construct(collected_file $collection, field_node $node)
+	public function __construct(collected_file $collection, property_node $node)
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
 	}
 
-	public function syntax(): field_node
+	public function syntax(): property_node
 	{
 		return $this->syntax_node;
 	}

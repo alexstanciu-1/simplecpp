@@ -176,7 +176,7 @@ final class function_body_work extends body_work
 
 	public function __construct(collected_function $definition)
 	{
-		parent::__construct($definition->collection, $definition->syntax()->body);
+		parent::__construct($definition->collection, $definition->syntax()->require_body());
 		$this->definition = $definition;
 	}
 

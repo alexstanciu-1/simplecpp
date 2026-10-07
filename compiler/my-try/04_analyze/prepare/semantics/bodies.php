@@ -279,7 +279,7 @@ final class Body_Preparation
 			$locals->add($entry->name, $parameter);
 		}
 
-		$completion = self::prepare_statements($syntax->body, $context);
+		$completion = self::prepare_statements($syntax->require_body(), $context);
 		if ($completion->can_fall_through && (Type_Queries::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
 			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
 		}

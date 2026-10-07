@@ -68,7 +68,7 @@ final class Preparation_Worker
 		// Only settled call facts participate; failure uses ordinary retained retry/publication guards.
 		$cyclic = (new Reference_Cycles())->find($sources);
 		foreach ($cyclic as $definition) {
-			$body_owner /** body_work */ = $definition->syntax()->body->work();
+			$body_owner /** body_work */ = $definition->syntax()->require_body()->work();
 			$this->failure($body_owner, 'S2S recursive reference-return cycles are deferred: ' . $definition->name);
 		}
 		$this->require_success();
@@ -151,8 +151,8 @@ final class Preparation_Worker
 				if ($entry instanceof collected_function) {
 					$function = object_cast($entry, collected_function::class)->syntax();
 					if ($function->has_parsed_body()) {
-						if ($function->body->work() !== null) {
-							$result[$function->body->work()] = true;
+						if ($function->require_body()->work() !== null) {
+							$result[$function->require_body()->work()] = true;
 						}
 					}
 				}
@@ -209,10 +209,10 @@ final class Preparation_Worker
 			if ($node instanceof function_node) {
 				$this->select_function(object_cast($node, function_node::class));
 			}
-			elseif ($node instanceof struct_node) {
-				$this->select_record(object_cast($node, struct_node::class));
+			elseif ($node instanceof type_declaration_node) {
+				$this->select_record(object_cast($node, type_declaration_node::class));
 			}
-			elseif ($node instanceof constant_declaration_node) {
+			elseif ($node instanceof namespace_constant_node) {
 				$this->select_owner($this->declaration_owner(object_cast($node->occurrence(), collected_constant::class)));
 			}
 			elseif ($node instanceof enum_node) {
@@ -227,14 +227,14 @@ final class Preparation_Worker
 	{
 		$entry = object_cast($node->occurrence(), collected_function::class);
 		$this->select_owner($this->function_owner($entry));
-		if ($node->body->work() === null) {
-			$node->body->attach_work(new function_body_work($entry));
+		if ($node->require_body()->work() === null) {
+			$node->require_body()->attach_work(new function_body_work($entry));
 		}
-		$body /** body_work */ = $node->body->work();
+		$body /** body_work */ = $node->require_body()->work();
 		$this->select_owner($body);
 	}
 
-	public function select_record(struct_node $node): void
+	public function select_record(type_declaration_node $node): void
 	{
 		$entry = object_cast($node->occurrence(), collected_struct::class);
 		$this->select_owner($this->record_owner($entry));
@@ -573,9 +573,9 @@ final class Preparation_Worker
 		$entry = $owner->function_definition();
 		$syntax = $entry->syntax();
 		$this->require_declaration($owner, $entry);
-		Preparation_Cleanup::tree($syntax->body);
+		Preparation_Cleanup::tree($syntax->require_body());
 		Body_Preparation::prepare_body($syntax, $context);
-		$syntax->body->syntax_changed = false;
+		$syntax->require_body()->syntax_changed = false;
 	}
 
 	private function prepare_file_body(file_body_work $owner, preparation_context $context): void
@@ -600,7 +600,7 @@ final class Preparation_Worker
 	private function settle_fields(collected_struct $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
-		$fields /** Storage<field_node> */ = $entry->syntax()->fields;
+		$fields /** Storage<property_node> */ = $entry->syntax()->properties;
 		foreach ($fields as $field) {
 			$field->occurrence()->change_status = change_state::unchanged;
 		}
@@ -759,7 +759,7 @@ final class Preparation_Worker
 			if ($entry instanceof collected_function) {
 				$function = object_cast($entry, collected_function::class)->syntax();
 				if ($function->has_parsed_body()) {
-					$function->body->detach_work();
+					$function->require_body()->detach_work();
 				}
 			}
 		}

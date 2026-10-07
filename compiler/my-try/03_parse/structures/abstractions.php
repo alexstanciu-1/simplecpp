@@ -164,7 +164,7 @@ abstract class control_transfer_node extends statement_node
 	}
 }
 
-/** Source namespace-body declarations, distinct from executable statements. */
+/** Named source declarations, whether namespace-owned or type-owned. */
 abstract class declaration_node extends ast_node
 {
 }

@@ -408,7 +408,7 @@ final class prepared_record {
 	/** Derived only after every field has completed preparation. */
 	public array $capabilities /** vector<generic_contract> */ = [];
 
-	/** Ordered aliases of facts owned by field specializations. @storage.reference field_node.prepared_facts */
+	/** Ordered aliases of facts owned by field specializations. @storage.reference property_node.prepared_facts */
 	public Key_Storage_List $fields /** Key_Storage_List<prepared_field> */;
 
 	public function __construct()
@@ -429,7 +429,7 @@ final class prepared_record {
 
 /** Member access references the declaration facts without copying its field schema. */
 final class prepared_field_access extends prepared_expression {
-	/** @reference.source field_node.prepared_facts */
+	/** @reference.source property_node.prepared_facts */
 	public prepared_field $field;
 }
 

@@ -799,14 +799,14 @@ final class Parser_Run
 	}
 
 	/** Retain the declaration identity while replacing only changed initializer syntax. */
-	private function constant_declaration(): constant_declaration_node
+	private function constant_declaration(): namespace_constant_node
 	{
 		$start = $this->expect('const');
 		if (!$this->identifier()) { throw new \RuntimeException($this->error_message('Expected constant name')); }
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
 		$previous = $this->collector->previous_constant($this->source_scope, $name);
-		$constant /** constant_declaration_node */ = $previous ?? new constant_declaration_node();
+		$constant /** namespace_constant_node */ = $previous ?? new namespace_constant_node();
 		if ($previous === null) { $constant->set_span($start, $start); }
 		$old_start = -1;
 		$old_end = -1;
@@ -903,7 +903,7 @@ final class Parser_Run
 	}
 
 	/** Register the record immediately, then reconcile fields within its retained member scope. */
-	private function struct_declaration(): struct_node
+	private function struct_declaration(): type_declaration_node
 	{
 		if ($this->current_scope->is_function()) {
 			throw new \RuntimeException($this->error_message('Local struct declarations are not supported yet'));
@@ -915,7 +915,7 @@ final class Parser_Run
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
 		$previous = $this->collector->previous_struct($this->source_scope, $name);
-		$record /** struct_node */ = $previous ?? new struct_node();
+		$record /** type_declaration_node */ = $previous ?? new type_declaration_node();
 		if ($previous === null) {
 			$record->set_span($start, $start);
 		}
@@ -929,22 +929,24 @@ final class Parser_Run
 		$record->name = $name;
 		$record->collect($this->collector, $this->source_scope, $name_index);
 		$record->member_scope()->set_parent($this->source_scope);
-		$fields /** Storage<field_node> */ = new Storage();
+		$fields /** Storage<property_node> */ = new Storage();
 		$this->expect('{');
 		while ($this->text() !== '}') {
 			$fields->append($this->field_declaration($record->member_scope()));
 		}
 		$this->expect('}');
-		$record->fields = $fields;
+		$record->properties = $fields;
 		$this->finish_declaration($record, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
 		return $record;
 	}
 
 	/** Fields match by their own spelling inside the structure, never by a project-wide name. */
-	private function field_declaration(scope $scope): field_node
+	private function field_declaration(scope $scope): property_node
 	{
 		$start = $this->position;
+		$modifiers /** vector<declaration_modifier> */ = [];
 		if ($this->text() === 'public') {
+			$modifiers[] = declaration_modifier::public_access;
 			$this->position++;
 		}
 		if (!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) {
@@ -957,7 +959,7 @@ final class Parser_Run
 		$name_index = $this->position++;
 		$name = $this->name_at($name_index);
 		$previous = $this->collector->previous_field($scope, $name);
-		$field /** field_node */ = $previous ?? new field_node();
+		$field /** property_node */ = $previous ?? new property_node();
 		if ($previous === null) {
 			$field->set_span($start, $start);
 		}
@@ -969,6 +971,7 @@ final class Parser_Run
 		}
 		$old_end = $field->end_token();
 		$field->type_syntax = $type;
+		$field->modifiers = $modifiers;
 		$field->name = $name;
 		$field->collect($this->collector, $scope, $name_index);
 		$this->expect(';');
@@ -1050,8 +1053,8 @@ final class Parser_Run
 		$old_body_end = $old_start;
 		if ($previous !== null) {
 			if (($this->reuse_previous) && ($old_start >= 0)) {
-				$old_body_start = $function->body->start_token();
-				$old_body_end = $function->body->end_token();
+				$old_body_start = $function->require_body()->start_token();
+				$old_body_end = $function->require_body()->end_token();
 			}
 		}
 		$function->name = $function_name;
@@ -1091,13 +1094,13 @@ final class Parser_Run
 		$body_start = $this->position;
 		$body_end = $this->body_end();
 		$body_changed = !$this->same_body_text($old_body_start, $old_body_end, $body_start, $body_end);
-		$selected_scope /** scope */ = !$body_changed ? $function->body->local_scope() : new scope();
+		$selected_scope /** scope */ = !$body_changed ? $function->require_body()->local_scope() : new scope();
 		if ($body_changed) {
 			$selected_scope->set_parent($local_scope);
 			$selected_scope->mark_function();
 		}
 		$this->retain_scope($selected_scope);
-		$body /** function_body_node */ = !$body_changed ? $function->body : $this->block($selected_scope);
+		$body /** function_body_node */ = !$body_changed ? $function->require_body() : $this->block($selected_scope);
 		if (!$body_changed) {
 			$this->retain_range($body, $body_start);
 			$this->position = $body_end;
@@ -1105,7 +1108,7 @@ final class Parser_Run
 		else {
 			if ($previous !== null) {
 				if ($function->has_parsed_body()) {
-					$this->transfer_body_work($function->body, $body);
+					$this->transfer_body_work($function->require_body(), $body);
 				}
 			}
 		}

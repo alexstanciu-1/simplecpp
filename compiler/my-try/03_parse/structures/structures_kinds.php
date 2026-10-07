@@ -11,11 +11,14 @@ enum node_category {
 
 enum node_kind
 {
-	case struct_declaration;
+	case type_declaration;
+	case method_declaration;
+	case member_constant_declaration;
+	case trait_use;
 	case enum_declaration;
 	case enum_case;
 	case static_member_reference;
-	case field_declaration;
+	case property_declaration;
 	case field_expression;
 	case file;
 	case namespace_body;
@@ -76,6 +79,26 @@ enum node_kind
 	case expression_statement;
 	case return_statement;
 	case variable_declaration;
+}
+
+/** Authored declaration form, independent of semantic storage and capabilities. */
+enum type_declaration_kind {
+	case class_type;
+	case struct_type;
+	case interface_type;
+	case trait_type;
+}
+
+/** Retain explicit source modifiers; preparation owns defaults and legality. */
+enum declaration_modifier
+{
+	case public_access;
+	case protected_access;
+	case private_access;
+	case static_member;
+	case abstract_declaration;
+	case final_declaration;
+	case readonly_declaration;
 }
 
 /** Source notation is queried from tokens, never retained as a duplicate node flag. */

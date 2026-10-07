@@ -20,7 +20,7 @@ $parsed->root_scope()->set_parent(Model::$language_scope);
 $collection = $parsed->collection;
 $count = count($collection->entries);
 $prepared = (new File_Preparation($collection, Model::$language_scope))->prepare();
-$record = object_cast($parsed->root->single_body()->declarations[0], struct_node::class);
+$record = object_cast($parsed->root->single_body()->declarations[0], type_declaration_node::class);
 $function = object_cast($parsed->root->single_body()->declarations[1], function_node::class);
 $layout = $record->occurrence()->preparation_work_owner();
 $signature = $function->occurrence()->preparation_work_owner();
@@ -50,7 +50,7 @@ foreach ([$layout, $signature, $body, $entry] as $work) {
 	work_check($work->change_status === change_state::unchanged && $work->version === 1, 'Initial work did not settle exactly once');
 }
 work_check($record->occurrence()->change_status === change_state::unchanged, 'Record declaration did not settle');
-work_check($record->fields[0]->occurrence()->change_status === change_state::unchanged, 'Record field did not settle');
+work_check($record->properties[0]->occurrence()->change_status === change_state::unchanged, 'Record field did not settle');
 work_check($function->occurrence()->change_status === change_state::unchanged, 'Function declaration did not settle');
 work_check($function->parameters[0]->occurrence()->change_status === change_state::unchanged, 'Function parameter did not settle');
 $return = object_cast($parsed->root->single_body()->body->statements[1], return_node::class);

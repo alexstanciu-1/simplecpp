@@ -17,6 +17,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For the CH10 shared declaration model migration:
+
+```bash
+python3 compiler/my-try/tests/declaration_model.py --results /tmp/FRESH_DECLARATION_MODEL_RESULTS
+```
+
+Runs focused PHP-host model, parser, incremental, constant and emission checks through
+the shared pool. Covers typed member ownership, optional syntax, bodyless completion,
+inspection/maintenance agreement and rejection of unsupported modeled members. No
+conversion or native build is performed; CH10's test-duration review precedes its
+native validation.
+
 For source enums, exact backing/storage and incremental case references:
 
 ```bash

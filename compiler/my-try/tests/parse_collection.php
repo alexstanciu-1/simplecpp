@@ -66,8 +66,8 @@ try
 	$type = Model::$global_scope->types_named('Box')[0];
 	$box_entry = Model::$type_catalog->source_declarations()->declaration($type->definition_id());
 	$box = $box_entry->syntax();
-	$field = object_cast($box, struct_node::class)->fields[0];
-	$removed = object_cast($box, struct_node::class)->fields[1]->occurrence();
+	$field = object_cast($box, type_declaration_node::class)->properties[0];
+	$removed = object_cast($box, type_declaration_node::class)->properties[1]->occurrence();
 	$old_revision = $get->revision;
 	parse_check(q_count(Model::$global_scope->variables_named('local')) === 0, 'File-local variable leaked into the global scope');
 	parse_check(q_count($parsed->collection->function_references) === 1, 'Call occurrence was not retained for resolution');
@@ -84,7 +84,7 @@ try
 	parse_check($get->change_status === change_state::unchanged, 'Unchanged signature marked changed');
 	parse_check($get->revision !== $old_revision, 'Presence revision was not advanced');
 	parse_check(Model::$global_scope->types_named('Box')[0] === $type, 'Canonical type identity was replaced');
-	parse_check(object_cast($box, struct_node::class)->fields[0] === $field, 'Field node identity was replaced');
+	parse_check(object_cast($box, type_declaration_node::class)->properties[0] === $field, 'Field node identity was replaced');
 	parse_check(q_count(Model::$global_scope->functions_named('get')) === 1, 'Repeated registration duplicated a global symbol');
 	parse_check($parsed->root->single_body()->declarations[0] === $function_node, 'AST source order was not rebuilt');
 

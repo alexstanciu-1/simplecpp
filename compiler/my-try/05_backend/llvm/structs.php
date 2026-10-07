@@ -33,12 +33,12 @@ final class LLVM_Struct_Preparation
 				$type->declaration = $entry;
 				$type->name = '%' . LLVM_Names::encode($entry->name);
 				$fields /** Keyed_Storage<llvm_field> */ = $type->fields;
-				$syntax_fields /** Storage<field_node> */ = object_cast($entry, collected_struct::class)->syntax()->fields;
+				$syntax_fields /** Storage<property_node> */ = object_cast($entry, collected_struct::class)->syntax()->properties;
 				foreach ($syntax_fields as $syntax)
 				{
 					$spelling = '$' . $syntax->name;
 					$name = string_byte_slice($spelling, 1, string_byte_len($spelling) - 1);
-					$source_type = $tokens[$syntax->type_syntax->start_token()]->text();
+					$source_type = $tokens[$syntax->require_type_syntax()->start_token()]->text();
 					if (!isset($policy->types[$source_type])) {
 						throw new \RuntimeException('Struct proof supports only int fields');
 					}

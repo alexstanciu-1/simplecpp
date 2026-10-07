@@ -12,6 +12,22 @@ retains the former `03_parse/proposal/` snapshots when historical comparison is 
 
 ## Typed ownership
 
+`type_declaration_node` is the single class/struct/interface/trait syntax owner.
+It owns separate `properties`, `methods`, `constants` and `use_traits` collections,
+plus explicit base/extended-interface/implemented-interface syntax. There is no combined
+member owner. `property_node`, `method_node`, `member_constant_node` and `trait_use_node`
+retain their specialized fields. Cross-category inspection uses independent lazy
+cursors; maintenance visits every owning edge once. Category traversal order is not
+an evaluation-order rule. Source spans retain original positions.
+
+`callable_declaration_node` shares signature/body syntax between functions and methods;
+`constant_declaration_node` shares initializer/value storage between namespace and
+member constants. Legitimate absent callable bodies/return annotations are explicit;
+completed bodyless declarations remain distinct from unparsed nodes. Existing function
+consumers use required queries. Prepared method/receiver behavior is not manufactured.
+See the [agreement and bounded implementation](../planning/type_declarations.md) for
+source-admission gates and the future separate member-index/backend-name contracts.
+
 `enum_node` is one declaration shape with a name, optional backing-type syntax and
 ordered `Storage<enum_case_node>`. Each case owns a name and optional value expression.
 No unit/int/fixed-width flag duplicates the syntax. Independent lazy inspection
@@ -68,8 +84,10 @@ groups, labels and bodies in source order. Analysis-owned `Integer_Constants` se
 supported literal/reference/unary-sign forms over their prepared facts; syntax has
 no constant-evaluation processing hook.
 
-`function_node` owns parameters, a `type_node` return type and a
-`function_body_node`. `struct_node` owns fields. `file_node` owns source-ordered
+`function_node` inherits parameter, return-type and body ownership from
+`callable_declaration_node`; ordinary parsed functions still require both return
+syntax and a body. `type_declaration_node` owns the typed member collections above.
+`file_node` owns source-ordered
 `namespace_body_node` occurrences, including the implicit global occurrence. Each
 namespace body owns declarations and a separate executable `function_body_node`,
 and observes its own declaration/import scope. Statements cannot contain declarations:

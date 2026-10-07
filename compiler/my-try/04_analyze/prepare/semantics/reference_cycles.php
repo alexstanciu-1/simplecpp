@@ -40,7 +40,7 @@ final class Reference_Cycles
 					$definition = object_cast($entry, collected_function::class);
 					$index = q_count($vertices);
 					$by_definition[$definition] = $index;
-					$by_scope[$definition->syntax()->body->local_scope()] = $index;
+					$by_scope[$definition->syntax()->require_body()->local_scope()] = $index;
 					$vertices->append(new reference_cycle_vertex($definition));
 					$has_reference_return = $has_reference_return || ($definition->signature()->reference_return !== null);
 				}

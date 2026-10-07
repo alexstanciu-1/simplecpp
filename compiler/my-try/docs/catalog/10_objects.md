@@ -10,7 +10,7 @@ Requires functions, type identities and ownership. Start with a plain class befo
 Chapter closeout must include the [test-duration review](#ch10-perf-01--test-duration-review-before-native-build)
 before starting the chapter's native compiler build.
 
-## Class/struct parity — discussion required
+## Shared declaration model and class/struct parity
 
 Agreed direction (2026-10-06): develop `struct` alongside `class` throughout this
 chapter. Every class slice (properties, construction, methods and lifecycle) must
@@ -19,12 +19,19 @@ second implementation pass. Use the same AST node types, with an explicit
 class/struct flag identifying the declaration form; do not create parallel AST
 families or duplicate processing paths.
 
-Before implementation, discuss the shared model, migration of the existing struct
-nodes, and which semantic differences the flag selects under the authoritative
-language contracts. Shared syntax does not silently erase storage, ownership,
-visibility or other class/struct differences. Record any agreed exceptions or
-deferred capabilities explicitly. This note sets the Chapter 10 discussion agenda;
-it does not claim that class support or the AST unification is implemented today.
+The October 7 [shared declaration agreement](../planning/type_declarations.md)
+extends the single concrete node to classes, structs, interfaces and traits, with
+separate typed property/method/constant/trait-use collections. Functions/methods and
+namespace/member constants share abstract syntax bases. Shared syntax does not erase
+storage, ownership, visibility or semantic differences.
+
+The bounded model migration is implemented: existing structs, functions and source
+constants use the new structures; new member execution remains gated. The focused
+15-suite PHP-host proof passes under `/tmp/my-try-ch10-model-final-20261007/`, including
+incremental identity, traversal, unsupported-member rejection and C++ emission checks.
+This is not a conversion, generated-C++ execution or native compiler proof. Class,
+interface and trait source support and separate member lookup integration remain
+next slices; the imported cards below are not marked implemented by this model work.
 
 ## Chapter 09 carryovers
 

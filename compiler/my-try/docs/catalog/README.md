@@ -108,8 +108,9 @@ CH09's [bounded closeout](09_value_types.md#bounded-closeout--2026-10-06) is app
 constructor work carries to CH10 and remaining enum extensions are explicit debt.
 The requested combined CH08/09 compiler passes [complete cumulative native validation](../portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809),
 including all 44 partitioned projects, supplementary probes and rejection/recovery.
-No separate CH08 native build was performed. Next: CH10 shared class/struct model
-discussion; its feature implementation has not started.
+No separate CH08 native build was performed. CH10's [shared declaration model](../planning/type_declarations.md)
+is agreed and its bounded AST migration is implemented. New class/member execution
+remains a follow-up; its chapter-end test-duration review precedes the next native build.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

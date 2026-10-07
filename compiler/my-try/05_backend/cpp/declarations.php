@@ -153,7 +153,7 @@ final class CPP_Declarations
 	}
 
 	/** Render only this layout; nested representations contribute header dependencies. */
-	public static function generate_struct(struct_node $syntax, cpp_generation_context $context): string
+	public static function generate_struct(type_declaration_node $syntax, cpp_generation_context $context): string
 	{
 		$definition = object_cast($syntax->occurrence(), collected_struct::class);
 		$key = $definition->qualified_name();

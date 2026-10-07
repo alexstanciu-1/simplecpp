@@ -82,7 +82,7 @@ final class LLVM_Legacy_Template_File_Checker
 				$this->locals[$declaration->local_index] = $type;
 			}
 
-			$return_type = $this->type($file, $syntax->return_type, $this->bindings);
+			$return_type = $this->type($file, $syntax->require_return_type(), $this->bindings);
 			$returned = false;
 			foreach (object_cast($syntax->body, function_body_node::class)->statements as $statement) {
 				if ($returned) {
@@ -220,6 +220,6 @@ final class LLVM_Legacy_Template_File_Checker
 				throw new \RuntimeException('Generic reference call is unsupported');
 			}
 		}
-		return $this->type($target_file, $signature->return_type, $arguments);
+		return $this->type($target_file, $signature->require_return_type(), $arguments);
 	}
 }

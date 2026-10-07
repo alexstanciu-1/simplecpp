@@ -22,7 +22,7 @@ final class LLVM_Preparation {
 				if ($node instanceof enum_node) {
 					throw new \RuntimeException('Enums are not supported by the parked LLVM backend');
 				}
-				if ($node instanceof constant_declaration_node) {
+				if ($node instanceof namespace_constant_node) {
 					throw new \RuntimeException('Source constants are not supported by the parked LLVM backend');
 				}
 			}
@@ -97,7 +97,7 @@ final class LLVM_Preparation_Run
 		{
 			$entries /** Storage<collected_name> */ = $file->source->entries;
 			foreach ($file->source->root->single_body()->body->statements as $statement) {
-				if (!(($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::struct_declaration))) {
+				if (!(($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::type_declaration))) {
 					$this->register($file, null, []);
 					break;
 				}
@@ -153,7 +153,7 @@ final class LLVM_Preparation_Run
 		$function->declaration = $definition;
 		$function->arguments = $arguments;
 		$function->is_entry = $definition === null;
-		$function->body = $definition === null ? $file->source->root->single_body()->body : object_cast($definition, collected_function::class)->syntax()->body;
+		$function->body = $definition === null ? $file->source->root->single_body()->body : object_cast($definition, collected_function::class)->syntax()->require_body();
 		if ($definition === null) {
 			$function->name = $this->policy->entry_name;
 			$function->return_type = $this->policy->entry_return_type;
@@ -165,7 +165,7 @@ final class LLVM_Preparation_Run
 			}
 			$name = LLVM_Names::declaration($definition, $this->file_indexes[$file]);
 			$function->name = q_count($arguments) === 0 ? $name : $name . LLVM_Names::encode('<' . LLVM_Text::join($arguments, ',') . '>');
-			$type = $this->type_name($function, object_cast($definition, collected_function::class)->syntax()->return_type);
+			$type = $this->type_name($function, object_cast($definition, collected_function::class)->syntax()->require_return_type());
 			if (!isset($this->policy->types[$type])) {
 				throw new \RuntimeException('Unsupported function return type');
 			}

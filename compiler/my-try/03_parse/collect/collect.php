@@ -38,7 +38,7 @@ final class Symbol_Collector
 	}
 
 	/** Match the next unseen struct identity in its owning scope. */
-	public function previous_struct(scope $scope, string $name): ?struct_node
+	public function previous_struct(scope $scope, string $name): ?type_declaration_node
 	{
 		foreach ($scope->source_types_named($name) as $entry) {
 			if (!($entry instanceof collected_struct)) {
@@ -64,7 +64,7 @@ final class Symbol_Collector
 		return null;
 	}
 
-	public function previous_constant(scope $scope, string $name): ?constant_declaration_node
+	public function previous_constant(scope $scope, string $name): ?namespace_constant_node
 	{
 		foreach ($scope->constants_named($name) as $target) {
 			if ($target instanceof collected_constant) {
@@ -75,7 +75,7 @@ final class Symbol_Collector
 		return null;
 	}
 
-	public function collect_constant(constant_declaration_node $node, scope $scope, int $index): void
+	public function collect_constant(namespace_constant_node $node, scope $scope, int $index): void
 	{
 		if ($this->reuse($node, $index)) { return; }
 		$entry = new collected_constant($this->collection, $node);
@@ -86,7 +86,7 @@ final class Symbol_Collector
 	}
 
 	/** Match the next unseen field identity in its owning scope. */
-	public function previous_field(scope $scope, string $name): ?field_node
+	public function previous_field(scope $scope, string $name): ?property_node
 	{
 		foreach ($scope->variables_named($name) as $entry) {
 			if ($entry instanceof collected_field) {
@@ -131,8 +131,11 @@ final class Symbol_Collector
 	}
 
 	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
-	public function collect_struct(struct_node $node, scope $scope, int $index): void
+	public function collect_struct(type_declaration_node $node, scope $scope, int $index): void
 	{
+		if ($node->declaration_kind !== type_declaration_kind::struct_type) {
+			throw new \RuntimeException('Only struct declarations have source type registration in this model slice');
+		}
 		if ($this->reuse($node, $index)) {
 			return;
 		}
@@ -161,7 +164,7 @@ final class Symbol_Collector
 	}
 
 	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
-	public function collect_field(field_node $node, scope $scope, int $index): void
+	public function collect_field(property_node $node, scope $scope, int $index): void
 	{
 		if ($this->reuse($node, $index)) {
 			return;

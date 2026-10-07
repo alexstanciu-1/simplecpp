@@ -90,9 +90,9 @@ final class Preparation_Changes
 	}
 
 	/** Preserve field fact identities when record preparation finds no effective change. */
-	public static function restore_fields(struct_node $syntax, prepared_record $facts): void
+	public static function restore_fields(type_declaration_node $syntax, prepared_record $facts): void
 	{
-		$nodes /** Storage<field_node> */ = $syntax->fields;
+		$nodes /** Storage<property_node> */ = $syntax->properties;
 		$store /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		$fields /** vector<prepared_field> */ = $store->items();
 		foreach ($nodes as $index => $node) {

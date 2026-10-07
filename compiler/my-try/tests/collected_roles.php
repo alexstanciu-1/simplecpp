@@ -19,8 +19,8 @@ $parsed = (new Parser((new Tokenizer($source))->tokenize()))->parse();
 $parsed->root_scope()->set_parent(Model::$language_scope);
 $expected = [
 	collected_function::class => function_node::class,
-	collected_struct::class => struct_node::class,
-	collected_field::class => field_node::class,
+	collected_struct::class => type_declaration_node::class,
+	collected_field::class => property_node::class,
 	collected_parameter::class => parameter_node::class,
 	collected_variable::class => variable_declaration_node::class,
 	collected_function_reference::class => call_node::class,

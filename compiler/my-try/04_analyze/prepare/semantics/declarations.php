@@ -20,7 +20,7 @@ final class Declaration_Preparation
 		}
 
 		$facts = new prepared_function();
-		$facts->signature->return_type = Type_Preparation::type($syntax->return_type, $context);
+		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$contracts /** Storage<callable_parameter> */ = $facts->signature->parameters;
@@ -68,14 +68,26 @@ final class Declaration_Preparation
 	}
 
 	/** Fields belong to their record, never to the surrounding local-variable scope. */
-	public static function prepare_struct(struct_node $syntax, preparation_context $context): void
+	public static function prepare_struct(type_declaration_node $syntax, preparation_context $context): void
 	{
+		// The common AST does not confer support for new declaration/member semantics.
+		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
+		$implemented /** Storage<named_type_node> */ = $syntax->implemented_interfaces;
+		$methods /** Storage<method_node> */ = $syntax->methods;
+		$constants /** Storage<member_constant_node> */ = $syntax->constants;
+		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
+		if (($syntax->declaration_kind !== type_declaration_kind::struct_type)
+			|| ($syntax->base_class !== null) || (q_count($syntax->modifiers) !== 0)
+			|| !$extended->is_empty() || !$implemented->is_empty()
+			|| !$methods->is_empty() || !$constants->is_empty() || !$uses->is_empty()) {
+			throw new \RuntimeException('Type member semantics are not supported by this model-only slice');
+		}
 		$facts = new prepared_record();
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 
 		$copyable = true;
 		$query = new Capability_Preparation($context);
-		$nodes /** Storage<field_node> */ = $syntax->fields;
+		$nodes /** Storage<property_node> */ = $syntax->properties;
 		foreach ($nodes as $field) {
 			self::prepare_field($field, $context);
 			$field_facts = $field->require_preparation();
@@ -93,11 +105,19 @@ final class Declaration_Preparation
 	}
 
 	/** Field eligibility uses the common declared storage capability path. */
-	public static function prepare_field(field_node $field, preparation_context $context): void
+	public static function prepare_field(property_node $field, preparation_context $context): void
 	{
+		if (($field->type_syntax === null) || ($field->initializer !== null)) {
+			throw new \RuntimeException('Property inference and initializers are not supported by this model-only slice');
+		}
+		foreach ($field->modifiers as $modifier) {
+			if ($modifier !== declaration_modifier::public_access) {
+				throw new \RuntimeException('Property modifier is not supported by this model-only slice');
+			}
+		}
 		$prepared = new prepared_field();
 		$prepared->declaration = $field->occurrence();
-		$prepared->type = Type_Preparation::type($field->type_syntax, $context);
+		$prepared->type = Type_Preparation::type($field->require_type_syntax(), $context);
 		if (Type_Queries::canonical($prepared->type)->definition() instanceof enum_type_definition) {
 			throw new \RuntimeException('S2S enum-valued fields await explicit field initialization');
 		}

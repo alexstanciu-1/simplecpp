@@ -69,6 +69,63 @@ abstract class children_iterator implements child_iterator_i
 	}
 }
 
+/** Lazy category traversal without a flattened member inventory or secondary ownership. */
+final class type_declaration_children_iterator extends children_iterator
+{
+	private int $next_collection = 0;
+	private ?storage_children_iterator $cursor = null;
+
+	public function __construct(private type_declaration_node $source)
+	{
+	}
+
+	/** Each source collection remains typed; only its read-only cursor widens the child view. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_collection === 0) {
+			$this->next_collection = 1;
+			if ($this->source->base_class !== null) {
+				return $this->source->base_class;
+			}
+		}
+		while (true)
+		{
+			if ($this->cursor !== null) {
+				if ($this->cursor->valid()) {
+					$child = $this->cursor->current();
+					$this->cursor->next();
+					return $child;
+				}
+				$this->cursor = null;
+			}
+			switch ($this->next_collection)
+			{
+				case 1:
+					$this->cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->extended_interfaces));
+					break;
+				case 2:
+					$this->cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->implemented_interfaces));
+					break;
+				case 3:
+					$this->cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->properties));
+					break;
+				case 4:
+					$this->cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->methods));
+					break;
+				case 5:
+					$this->cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->constants));
+					break;
+				case 6:
+					$this->cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->use_traits));
+					break;
+				default:
+					return null;
+			}
+			$this->next_collection++;
+		}
+	}
+}
+
 /** Optional backing syntax precedes the enum-owned case sequence. */
 final class enum_children_iterator extends children_iterator
 {
@@ -864,12 +921,12 @@ final class index_children_iterator extends children_iterator
 }
 
 /** Retain the source and visit its named fields in grammar order. */
-final class field_children_iterator extends children_iterator
+final class property_children_iterator extends children_iterator
 {
-	private field_node $source;
-	private bool $consumed = false;
+	private property_node $source;
+	private int $next_field = 0;
 
-	public function __construct(field_node $source)
+	public function __construct(property_node $source)
 	{
 		$this->source = $source;
 	}
@@ -877,11 +934,17 @@ final class field_children_iterator extends children_iterator
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
 	{
-		if ($this->consumed) {
-			return null;
+		if ($this->next_field === 0) {
+			$this->next_field = 1;
+			if ($this->source->type_syntax !== null) {
+				return $this->source->type_syntax;
+			}
 		}
-		$this->consumed = true;
-		return $this->source->type_syntax;
+		if ($this->next_field === 1) {
+			$this->next_field = 2;
+			return $this->source->initializer;
+		}
+		return null;
 	}
 }
 
@@ -1024,7 +1087,7 @@ final class call_children_iterator extends children_iterator
 	}
 }
 
-enum function_children_stage
+enum callable_children_stage
 {
 	case parameters;
 	case return_type;
@@ -1033,13 +1096,13 @@ enum function_children_stage
 }
 
 /** Independent source owner plus explicit grammar stage and collection progress. */
-final class function_children_iterator extends children_iterator
+final class callable_children_iterator extends children_iterator
 {
-	private function_node $source;
-	private function_children_stage $stage = function_children_stage::parameters;
+	private callable_declaration_node $source;
+	private callable_children_stage $stage = callable_children_stage::parameters;
 	private ?storage_children_iterator $parameters_cursor = null;
 
-	public function __construct(function_node $source)
+	public function __construct(callable_declaration_node $source)
 	{
 		$this->source = $source;
 	}
@@ -1047,11 +1110,11 @@ final class function_children_iterator extends children_iterator
 	/** Resume the current collection or named field; exhausted collections move to the next stage. */
 	protected function read_next(): ?ast_node
 	{
-		while ($this->stage !== function_children_stage::finished)
+		while ($this->stage !== callable_children_stage::finished)
 		{
 			switch ($this->stage)
 			{
-				case function_children_stage::parameters:
+				case callable_children_stage::parameters:
 					if ($this->parameters_cursor === null) {
 						$this->parameters_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->parameters));
 					}
@@ -1062,13 +1125,16 @@ final class function_children_iterator extends children_iterator
 						return $this->parameters_cursor->current();
 					}
 					$this->parameters_cursor = null;
-					$this->stage = function_children_stage::return_type;
+					$this->stage = callable_children_stage::return_type;
 					break;
-				case function_children_stage::return_type:
-					$this->stage = function_children_stage::body;
-					return $this->source->return_type;
-				case function_children_stage::body:
-					$this->stage = function_children_stage::finished;
+				case callable_children_stage::return_type:
+					$this->stage = callable_children_stage::body;
+					if ($this->source->return_type !== null) {
+						return $this->source->return_type;
+					}
+					break;
+				case callable_children_stage::body:
+					$this->stage = callable_children_stage::finished;
 					return $this->source->body;
 			}
 		}

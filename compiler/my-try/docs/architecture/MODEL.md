@@ -233,6 +233,12 @@ operations remain gated.
 
 ## AST and scopes
 
+Shared declaration syntax is defined in `structures_declarations.php`: one concrete
+type-declaration shape and separate typed member owners; common callable and constant
+abstracts supply reusable syntax. Existing struct/function/namespace-constant semantic
+paths are preserved. New declaration kinds do not acquire struct capabilities or method
+execution from the common AST. See [declaration model](../planning/type_declarations.md).
+
 `object_construction_node` owns the constructed type syntax and ordered arguments.
 Parsing records those edges without ownership decisions. `Object_Construction_Preparation`
 resolves the type, proves the bounded field-default contract with declaration dependencies,
@@ -427,7 +433,8 @@ and read-only settled-value query. The interface invokes no processing or backen
 graph, failure/retry and retirement protocol. Analysis requires completion before
 consuming a source value, and propagates changes in type or exact value key.
 
-`Constant_Preparation` evaluates only the agreed scalar forms. Constant references
+`Constant_Preparation` owns namespace declaration policy; the shared
+`Constant_Expression_Preparation` evaluates only the agreed scalar forms. Constant references
 weakly observe their named target and share its immutable value snapshot. Registered
 sentinels/no-error retain their special values; source declarations admit only the
 four scalar families. C++ substitutes values using the same scalar emission helpers

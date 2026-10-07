@@ -13,7 +13,7 @@ trait LLVM_Statements
 	{
 		foreach (object_cast($node, function_body_node::class)->statements as $statement)
 		{
-			if ((($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::struct_declaration))) {
+			if ((($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::type_declaration))) {
 				continue;
 			}
 			if ($this->block->terminated) {

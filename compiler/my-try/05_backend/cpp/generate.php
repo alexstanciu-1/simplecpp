@@ -37,7 +37,7 @@ final class CPP_Generator
 				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
 				foreach ($nodes as $node) {
 					$definition = $node->occurrence();
-					if ($node instanceof constant_declaration_node) {
+					if ($node instanceof namespace_constant_node) {
 						if (!Preparation_Status::complete(object_cast($definition->preparation_work_owner(), preparation_owner::class))) {
 							throw new \RuntimeException('C++ generation requires completed constant preparation');
 						}
@@ -46,7 +46,7 @@ final class CPP_Generator
 					}
 					$ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class));
 					if ($node instanceof function_node) {
-						$ordered->append(object_cast(object_cast($node, function_node::class)->body->work(), preparation_owner::class));
+						$ordered->append(object_cast(object_cast($node, function_node::class)->require_body()->work(), preparation_owner::class));
 					}
 				}
 				// Validate every body, including declaration-only contributions.
@@ -133,7 +133,7 @@ final class CPP_Generator
 					$function = object_cast($node, function_node::class);
 					$definition = object_cast($function->occurrence(), collected_function::class);
 					$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
-					$body_owner = object_cast($function->body->work(), preparation_owner::class);
+					$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
 					$signature = $this->program->fragments[$signature_owner];
 					$body = $this->program->fragments[$body_owner];
 					$headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true;

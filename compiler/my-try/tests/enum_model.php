@@ -107,10 +107,10 @@ enum_model_check($second_definition->definition_id() !== $definition->definition
 enum_model_check($registry->canonical($second_definition)->type_id() !== $canonical->type_id(), 'Distinct enum types merged');
 enum_model_check(count(Model::$global_scope->types_named('Suit')) === 2, 'Incremental enum publication was skipped');
 
-$structure = new struct_node();
+$structure = new type_declaration_node();
 $structure->name = 'Box';
 $structure->set_span(0, 1);
-task_run_publish_unordered([$structure], 1, function (struct_node $node) use ($collector, $local_scope): int {
+task_run_publish_unordered([$structure], 1, function (type_declaration_node $node) use ($collector, $local_scope): int {
 	$node->collect($collector, $local_scope, 0);
 	return 0;
 }, function (int $result): void {

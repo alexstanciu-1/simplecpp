@@ -6,7 +6,7 @@ namespace scpp\compiler;
 /** Bounded compile-time scalar evaluation. Never evaluates host PHP or runtime calls. */
 final class Constant_Preparation
 {
-	public static function declaration(constant_declaration_node $syntax, preparation_context $context): void
+	public static function declaration(namespace_constant_node $syntax, preparation_context $context): void
 	{
 		$entry = object_cast($syntax->occurrence(), collected_constant::class);
 		$declaring_scope = object_cast(weakref_get($entry->scope), scope::class);
@@ -15,7 +15,7 @@ final class Constant_Preparation
 			throw new \RuntimeException('S2S duplicate constant name: ' . $entry->name);
 		}
 		Preparation_Cleanup::tree($syntax->initializer);
-		$value = self::evaluate($syntax->initializer, $context);
+		$value = Constant_Expression_Preparation::evaluate($syntax->initializer, $context);
 		if (!$value->type->matches($context->integer) && !$value->type->matches($context->floating)
 			&& !$value->type->matches($context->boolean) && !$value->type->matches($context->string_type)) {
 			throw new \RuntimeException('S2S source constants require bool, int, float or string');
@@ -23,7 +23,12 @@ final class Constant_Preparation
 		$syntax->set_preparation($value);
 	}
 
-	private static function evaluate(expression_node $syntax, preparation_context $context): constant_value
+}
+
+/** Shared expression evaluator; declaration lookup/visibility policy remains with its caller. */
+final class Constant_Expression_Preparation
+{
+	public static function evaluate(expression_node $syntax, preparation_context $context): constant_value
 	{
 		if ($syntax instanceof unary_expression_node) {
 			return self::signed_value(object_cast($syntax, unary_expression_node::class), $context);

@@ -52,6 +52,7 @@ require_once __DIR__ . '/04_analyze/prepare/data/compiler_calls.php';
 require_once __DIR__ . '/04_analyze/prepare/data/selection.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/references.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/reference_cycles.php';
+require_once __DIR__ . '/03_parse/structures/structures_declarations.php';
 require_once __DIR__ . '/03_parse/structures/structures_specialization.php';
 require_once __DIR__ . '/03_parse/structures/structures_enum.php';
 require_once __DIR__ . '/03_parse/structures/structures_construction.php';
