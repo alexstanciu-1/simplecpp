@@ -8,6 +8,10 @@ storage/copy differences remain unchanged. Availability is tracked in the
 
 ## Fixed instance calls
 
+The [concrete inheritance extension](inheritance_v0_2.md) enables inherited fixed
+methods and protected access with C++-compatible receiver restrictions. It supersedes
+the original slice's inheritance gate below, not its virtual-dispatch/overload gates.
+
 `$object->method(arguments)` and `$this->method(arguments)` select a fixed method
 name on the receiver's declared record type. Public methods are externally callable;
 private methods are callable only from the declaring record's context,

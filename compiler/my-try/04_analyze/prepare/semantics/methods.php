@@ -113,18 +113,24 @@ final class Method_Preparation
 	private static function select(call_node $syntax, collected_record $record, bool $static_call, preparation_context $context): prepared_call
 	{
 		$context->worker->require_declaration($context->owner, $record);
-		$methods /** Key_Storage_List<collected_method> */ = $record->syntax()->require_preparation()->methods;
-		$matches /** vector<collected_method> */ = $methods->named($syntax->name);
+		$matches = Inherited_Lookup::members($record, $syntax->name, preparation_lookup_kind::method_name, $context);
 		if ((q_count($matches) !== 1) || ($syntax->name === '__construct') || ($syntax->name === '__destruct')) {
 			throw new \RuntimeException('Member call requires one ordinary method: ' . $syntax->name);
 		}
-		$method = $matches[0];
+		$method = object_cast($matches[0]->member, collected_method::class);
 		Call_Preparation::require_signature($method, $context);
 		if ($method->callable_syntax()->require_preparation()->static_member !== $static_call) {
 			throw new \RuntimeException('Static methods require :: and instance methods require ->');
 		}
 		if (!Member_Preparation::accessible($method->callable_syntax()->require_preparation()->visibility, $method->declaring_type(), $context)) {
+			if ($method->callable_syntax()->require_preparation()->visibility === member_visibility::protected_access) {
+				throw new \RuntimeException('Protected method is not accessible here: ' . $syntax->name);
+			}
 			throw new \RuntimeException('Private method is not accessible here: ' . $syntax->name);
+		}
+		if (!$static_call) {
+			Member_Preparation::require_instance_access($method->callable_syntax()->require_preparation()->visibility,
+				$method->declaring_type(), $record, $context);
 		}
 		$facts = Call_Preparation::prepare($method, $syntax->arguments, $context);
 		return $facts;

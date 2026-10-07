@@ -120,6 +120,10 @@ and rejection of unsupported execution. No
 conversion or native build is performed; CH10's test-duration review precedes its
 native validation.
 
+Use `records.py --suite inheritance --results FRESH` for concrete class/struct bases,
+protected receiver admission, original static ownership, copy/cleanup behavior and
+cross-file invalidation/repair. This compiles generated programs, not the compiler.
+
 For source enums, exact backing/storage and incremental case references:
 
 ```bash

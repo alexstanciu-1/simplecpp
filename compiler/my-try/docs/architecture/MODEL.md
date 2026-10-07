@@ -89,7 +89,11 @@ requires relationships; ancestry queries never require record layout or method b
 The analysis-only relationship checkpoint does not publish executable prepared files.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges
-are contracts, not fallback implementations. Execution remains separately gated.
+are contracts, not fallback implementations. Concrete records may retain one
+`base_type` for their inline base subobject; layout completion depends on the base's
+layout, supported construction and copy contract. C++ reads its bare payload mapping.
+Declared inventories remain local; static references retain original storage ownership.
+Protected access is analysis-owned and receiver-aware. Interface execution remains gated.
 Parameters own optional default expressions; normalized scalar/enum default snapshots
 belong to their callable contracts and participate in signature equivalence. Calls
 retain only explicit arguments; emission supplies omitted defaults from the signature.

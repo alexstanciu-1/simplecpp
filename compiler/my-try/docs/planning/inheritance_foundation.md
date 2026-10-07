@@ -97,5 +97,16 @@ Record implements edges supply obligations, not concrete implementations.
 
 `Preparation_Worker::prepare_relationships` exposes the analysis-only checkpoint;
 ordinary preparation uses the same work. It publishes no executable prepared files.
-Full record/interface execution and C++ emission remain gated. Next: access/override
-contracts and bounded inherited execution, including layout and construction rules.
+At that checkpoint record/interface execution and C++ emission remained gated.
+
+## Concrete execution checkpoint
+
+The user approved bounded same-kind concrete inheritance, default-constructible bases,
+and rejection of ordinary inherited-member redeclarations. The protected receiver
+decision explicitly adopts C++ restrictions; broader PHP behavior is CH15 discussion
+debt. The implemented contract and remaining gates live in
+[the normative spec](../../../../specs/inheritance_v0_2.md) and
+[the CH11 checkpoint](../catalog/11_inheritance.md#concrete-inheritance-and-protected-access--2026-10-07).
+Base argument forwarding, parent calls, inherited data inputs and overrides remain
+follow-ups. Existing zero-parameter public base constructors are supported; source
+defaulted arguments still need the ordinary sequenced call path in a later slice.

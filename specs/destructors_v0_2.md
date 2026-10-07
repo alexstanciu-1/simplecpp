@@ -1,6 +1,11 @@
 # v0.2 destructors and automatic cleanup
 Doc Status: normative
 
+The [concrete inheritance extension](inheritance_v0_2.md) specifies child/base
+subobject cleanup order. It does not enable polymorphic deletion or establish
+virtual-destructor policy; the original non-inheriting scope below is historical
+where that extension explicitly applies.
+
 Classes and structs share the bounded authored destructor form:
 
 ```php

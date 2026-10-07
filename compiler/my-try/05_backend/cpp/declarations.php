@@ -223,7 +223,16 @@ final class CPP_Declarations
 
 		// Mark before descending so a by-value cycle fails before a partial layout is emitted.
 		$context->record_states[$key] = cpp_record_state::visiting;
-		$text = 'struct ' . CPP_Generator::source_name('record', $key) . "\n{\n";
+		$text = 'struct ' . CPP_Generator::source_name('record', $key);
+		$relationships /** type_relationship_work */ = $definition->relationship_work;
+		if ($relationships->require_facts()->final_type) { $text .= ' final'; }
+		$base_type = $syntax->require_preparation()->base_type;
+		if ($base_type !== null) {
+			$base_mapping = CPP_Types::payload($base_type);
+			CPP_Types::record_dependencies($base_mapping, $context);
+			$text .= ' : public ' . $base_mapping->spelling;
+		}
+		$text .= "\n{\n";
 
 		$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 		foreach ($fields->items() as $field)

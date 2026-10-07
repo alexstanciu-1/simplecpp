@@ -10,7 +10,8 @@ final class Member_Preparation
 		$visibility = false;
 		$has_static = false;
 		foreach ($modifiers as $modifier) {
-			if (($modifier === declaration_modifier::public_access) || ($modifier === declaration_modifier::private_access)) {
+			if (($modifier === declaration_modifier::public_access) || ($modifier === declaration_modifier::private_access)
+				|| ($modifier === declaration_modifier::protected_access)) {
 				if ($visibility) { throw new \RuntimeException('Duplicate or conflicting member visibility'); }
 				$visibility = true;
 			}
@@ -18,7 +19,7 @@ final class Member_Preparation
 				if ($has_static) { throw new \RuntimeException('Duplicate static modifier'); }
 				$has_static = true;
 			}
-			else { throw new \RuntimeException('Member requires public or private visibility and supported modifiers'); }
+			else { throw new \RuntimeException('Member requires public, protected or private visibility and supported modifiers'); }
 		}
 	}
 
@@ -58,18 +59,45 @@ final class Member_Preparation
 		return $syntax->require_preparation();
 	}
 
-	/** Protected access cannot be answered from a record-only context without ancestry facts. */
+	/** Observe ancestry without requiring receiver layout or member signatures. */
+	public static function derives_from(collected_member_owner $type, collected_member_owner $base, preparation_context $context): bool
+	{
+		$current /** collected_member_owner */ = $type;
+		while (true) {
+			if ($current === $base) { return true; }
+			$relations = $context->worker->require_relationships($current, $context);
+			$parent = weakref_get($relations->base);
+			if ($parent === null) { return false; }
+			$current = $parent;
+		}
+	}
+
+	/** Instance receiver restrictions are checked separately from declaring-context access. */
 	public static function accessible(member_visibility $visibility, collected_member_owner $owner, preparation_context $context): bool
 	{
 		if ($visibility === member_visibility::protected_access) {
-			throw new \RuntimeException('Protected access requires prepared inheritance relationships');
+			if ($context->member_owner === null) { return false; }
+			return self::derives_from($context->member_owner, $owner, $context);
 		}
 		return ($visibility === member_visibility::public_access) || ($context->member_owner === $owner);
+	}
+
+	/** Match C++ protected-instance access; a descendant cannot use an arbitrary base receiver. */
+	public static function require_instance_access(member_visibility $visibility, collected_member_owner $owner,
+		collected_record $receiver, preparation_context $context): void
+	{
+		self::require_access($visibility, $owner, $context);
+		if ($visibility !== member_visibility::protected_access) { return; }
+		$accessing /** collected_member_owner */ = $context->member_owner;
+		if (!self::derives_from($receiver, $accessing, $context)) {
+			throw new \RuntimeException('Protected instance access requires the accessing type or a descendant receiver');
+		}
 	}
 
 	public static function require_access(member_visibility $visibility, collected_member_owner $owner, preparation_context $context): void
 	{
 		if (!self::accessible($visibility, $owner, $context)) {
+			if ($visibility === member_visibility::protected_access) { throw new \RuntimeException('Protected member is not accessible here'); }
 			throw new \RuntimeException('Private member is not accessible here');
 		}
 	}
@@ -97,26 +125,29 @@ final class Member_Preparation
 			return self::constant_reference($installed[0]);
 		}
 		if (!$property) {
-			$targets = Observed_Lookup::constants($record->syntax()->member_scope(), $syntax->member_name, $context);
+			$targets = Inherited_Lookup::members($record, $syntax->member_name, preparation_lookup_kind::constant, $context);
 			if (q_count($targets) !== 1) { throw new \RuntimeException('Unknown or duplicate member constant'); }
-			$target = $targets[0];
+			$selected = $targets[0];
+			$target = $selected->member;
 			if (!($target instanceof collected_constant)) { throw new \RuntimeException('Unknown member constant'); }
 			$constant = object_cast($target, collected_constant::class);
-			if (weakref_get($constant->member_owner) !== $record) { throw new \RuntimeException('Unknown member constant'); }
 			$context->worker->require_declaration($context->owner, $constant);
-			self::require_access($constant->syntax()->require_preparation()->visibility, $record, $context);
+			self::require_access($constant->syntax()->require_preparation()->visibility, $selected->declaring_type, $context);
 			return self::constant_reference($constant);
 		}
 		$context->worker->require_declaration($context->owner, $record);
-		$fields /** Key_Storage_List<prepared_field> */ = $record->syntax()->require_preparation()->static_fields;
 		$name = string_byte_slice($syntax->member_name, 1, string_byte_len($syntax->member_name) - 1);
-		$matches /** vector<prepared_field> */ = $fields->named($name);
+		$matches = Inherited_Lookup::members($record, $name, preparation_lookup_kind::property_name, $context);
 		if (q_count($matches) !== 1) { throw new \RuntimeException('Qualified property access requires one static property'); }
-		$field = $matches[0];
-		self::require_access($field->visibility, $record, $context);
+		$selected_field = $matches[0];
+		$context->worker->require_declaration($context->owner, $selected_field->declaring_type);
+		$field = object_cast($selected_field->member, collected_field::class)->syntax()->require_preparation();
+		if (!$field->static_member) { throw new \RuntimeException('Qualified property access requires one static property'); }
+		self::require_access($field->visibility, $selected_field->declaring_type, $context);
 		$facts = new prepared_static_property();
 		$facts->field = $field;
-		$facts->record_type = $type;
+		$declaring_type = Model::$type_catalog->registry()->canonical(Source_Types::definition($selected_field->declaring_type));
+		$facts->record_type = Model::$type_catalog->registry()->use($declaring_type->type_id());
 		$facts->type = $field->type;
 		// Static storage is stable, but native-reference escape is outside this bounded slice.
 		$facts->place = new prepared_place($field, null, true);

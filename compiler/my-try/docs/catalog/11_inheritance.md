@@ -10,8 +10,33 @@ Requires classes and methods. Resolve relationships before advanced dispatch cas
 The user approved same-kind class/struct inheritance and preservation of existing
 non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_foundation.md)
 records those boundaries and the approved shared member-owner prerequisite.
-That model migration and relationship/lookup foundation are complete; CH11 execution
-is not enabled yet.
+That model migration and relationship/lookup foundation are complete. Bounded
+concrete inheritance now executes; interfaces, overrides and conversions remain gated.
+
+## Concrete inheritance and protected access — 2026-10-07
+
+The [normative contract](../../../../specs/inheritance_v0_2.md) enables single same-kind
+class/struct bases, inherited instance/static members and public/private/protected
+access. Protected instance access uses C++'s receiver restriction; broader PHP-style
+family access is [CH15 discussion debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
+
+Prepared records retain one inline base type, not copied member inventories. Base
+copy eligibility participates in inline child copying. C++ inherits from the bare
+record payload, never a `value<T>`/shared wrapper; complete base headers are dependencies.
+Static storage remains defined once by the original owner. Lifecycle order is base
+construction before child properties/body and base cleanup after child cleanup.
+
+Bases currently require implicit default construction or an authored public zero-
+parameter constructor. Base argument forwarding (including defaulted parameters),
+parent calls and inherited data inputs remain deferred. Same-category ordinary
+member redeclarations reject; constructors/destructors are distinct lifecycle cases.
+Interface/abstract execution, overrides and derived/base conversions remain gated.
+
+Proof: 30 generated inheritance programs, 35 generated static-member regressions and
+17 PHP-host model/regression suites passed. Includes cross-file changes, collision/
+visibility/final errors, failure/retry/repair and fresh/incremental output agreement.
+No native compiler rebuild. Next: discuss base-constructor argument forwarding and
+explicit parent calls before enabling overriding/virtual dispatch.
 
 ## Member-owner foundation — 2026-10-07
 
@@ -132,13 +157,13 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CLASS-INH-001](#class-inh-001) | pending-discussion | `class B extends A {}` | unverified | unverified | deferred | — |
+| [CLASS-INH-001](#class-inh-001) | implemented-bounded | `class B extends A {}` | verified | verified | deferred | Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07) |
 | [CLASS-INH-002](#class-inh-002) | pending-discussion | `class A extends B implements I, J {}` | unverified | unverified | deferred | — |
 | [CLASS-INH-003](#class-inh-003) | pending-discussion | `class A { use T; }` | unverified | unverified | deferred | — |
 | [CLASS-INH-004](#class-inh-004) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
 | [CLASS-INH-006](#class-inh-006) | pending-discussion | `$a = new A(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-007](#class-inh-007) | pending-discussion | `A a(1);` | unverified | unverified | deferred | — |
-| [CLASS-INH-008](#class-inh-008) | pending-discussion | `$this->f();` | unverified | unverified | deferred | — |
+| [CLASS-INH-008](#class-inh-008) | implemented-bounded | `$this->f();` | verified | verified | deferred | Fixed inherited methods; override/virtual contracts deferred |
 | [CLASS-INH-009](#class-inh-009) | pending-discussion | `parent::f(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-010](#class-inh-010) | pending-discussion | `parent::__construct($x);` | unverified | unverified | deferred | — |
 | [CLASS-INH-011](#class-inh-011) | pending-discussion | `#[\Override] function f(): int { return 1; }` | unverified | unverified | deferred | — |

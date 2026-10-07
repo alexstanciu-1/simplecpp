@@ -43,8 +43,7 @@ final class CPP_Generator
 						if ($relationships === null) { throw new \RuntimeException('C++ generation requires completed relationships'); }
 						if (!Preparation_Status::complete($relationships)) { throw new \RuntimeException('C++ generation requires completed relationships'); }
 						$ancestry = $relationships->require_facts();
-						if (($definition instanceof collected_interface) || (weakref_get($ancestry->base) !== null)
-							|| (q_count($ancestry->interfaces) !== 0)) {
+						if (($definition instanceof collected_interface) || (q_count($ancestry->interfaces) !== 0)) {
 							throw new \RuntimeException('Inherited/interface execution is not enabled by relationship preparation');
 						}
 					}

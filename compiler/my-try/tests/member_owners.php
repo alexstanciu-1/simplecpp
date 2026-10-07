@@ -82,14 +82,7 @@ foreach ([member_visibility::public_access, member_visibility::protected_access,
 	member_owner_check(Member_Preparation::visibility([$modifier]) === $visibility, 'Visibility was collapsed');
 }
 member_owner_check(CPP_Declarations::visibility(member_visibility::protected_access) === "protected:\n", 'Backend cannot spell settled protected access');
-$rejected = false;
-try {
-	Member_Preparation::validate_modifiers([declaration_modifier::protected_access], true);
-}
-catch (\RuntimeException $error) {
-	$rejected = str_contains($error->getMessage(), 'public or private');
-}
-member_owner_check($rejected, 'Model migration enabled protected source execution');
+Member_Preparation::validate_modifiers([declaration_modifier::protected_access], true);
 $worker = new Preparation_Worker(Model::$global_scope);
 $rejected = false;
 try {

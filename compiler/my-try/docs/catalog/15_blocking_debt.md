@@ -50,6 +50,20 @@ evaluation order and incremental signature-name invalidation.
 
 ## Non-blocking follow-ups
 
+### CH15-PROTECTED-01 — broader protected receiver access
+
+User decision: use C++-compatible protected access for the first CH11 inheritance
+slice. A descendant accesses a protected instance member through a receiver whose
+declared type is that descendant or one of its descendants, not an arbitrary
+base-typed or sibling-typed object. Protected static members have no instance
+receiver restriction. Check access during preparation, not by waiting for Clang.
+
+Discuss whether to adopt PHP's broader family access later. If adopted, design
+controlled lowering helpers for both properties and methods; merely emitting
+`protected:` cannot implement that contract. Keep visibility enforcement, evaluation
+order, storage identity and references intact. This discussion is non-blocking;
+the broader behavior is not currently authorized.
+
 ### CH15-TEST-FIXTURES-01 — transport-aware fixture deduplication
 
 The [CH10 timing review](../testing_ch10_review.md) identifies 471 duplicate

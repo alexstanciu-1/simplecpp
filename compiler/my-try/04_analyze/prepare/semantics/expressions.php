@@ -423,24 +423,28 @@ final class Expression_Preparation
 
 		$context->worker->require_record($payload, $context);
 		$record_entry /** collected_record */ = $declaration;
-		$record = $record_entry->syntax()->require_preparation();
-		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;
-		$matches /** vector<prepared_field> */ = $fields->named($syntax->occurrence()->name);
+		$matches = Inherited_Lookup::members($record_entry, $syntax->occurrence()->name, preparation_lookup_kind::property_name, $context);
 		if (q_count($matches) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved record property');
 		}
-		if (!Member_Preparation::accessible($matches[0]->visibility, $record_entry, $context)) {
+		$selected = $matches[0];
+		$context->worker->require_declaration($context->owner, $selected->declaring_type);
+		$field = object_cast($selected->member, collected_field::class)->syntax()->require_preparation();
+		if ($field->static_member) { throw new \RuntimeException('S2S needs one resolved record property'); }
+		if (!Member_Preparation::accessible($field->visibility, $selected->declaring_type, $context)) {
+			if ($field->visibility === member_visibility::protected_access) { throw new \RuntimeException('Protected property is not accessible here'); }
 			throw new \RuntimeException('S2S private property is not accessible here: ' . $syntax->name);
 		}
+		Member_Preparation::require_instance_access($field->visibility, $selected->declaring_type, $record_entry, $context);
 
 		$facts = new prepared_field_access();
 		$facts->record_type = $payload;
 		$facts->receiver_storage = $storage;
-		$facts->field = $matches[0];
-		$facts->type = $matches[0]->type;
+		$facts->field = $field;
+		$facts->type = $field->type;
 		if ($value->place !== null) {
 			$base_place /** prepared_place */ = $value->place;
-			$facts->place = new prepared_place($matches[0], $base_place, $storage !== record_storage_kind::inline_value);
+			$facts->place = new prepared_place($field, $base_place, $storage !== record_storage_kind::inline_value);
 		}
 
 		return $facts;

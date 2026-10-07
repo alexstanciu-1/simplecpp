@@ -519,6 +519,8 @@ final class prepared_construction_property_default extends prepared_property_def
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
 final class prepared_record {
+	/** Inline base subobject; declared member inventories remain local. */
+	public ?canonical_type_use $base_type = null;
 	/** Same property facts, separate storage inventories for layout and type-owned definitions. */
 	public Key_Storage_List $static_fields /** Key_Storage_List<prepared_field> */;
 	/** Non-owning member index; collection owns identities, signatures own contracts. */

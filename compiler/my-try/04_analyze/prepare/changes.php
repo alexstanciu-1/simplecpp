@@ -59,6 +59,10 @@ final class Preparation_Changes
 			return false;
 		}
 		if ($old->data_initializable !== $current->data_initializable) { return false; }
+		if (($old->base_type === null) !== ($current->base_type === null)) { return false; }
+		if ($old->base_type !== null) {
+			if (!$old->base_type->matches($current->base_type)) { return false; }
+		}
 		$old_methods /** Key_Storage_List<collected_method> */ = $old->methods;
 		$new_methods /** Key_Storage_List<collected_method> */ = $current->methods;
 		$previous_methods /** vector<collected_method> */ = $old_methods->items();

@@ -300,7 +300,8 @@ Only public instance properties participate in a synthesized constructor when no
 authored constructor exists. Excluded non-public instance properties must still have
 an explicit or established type default; otherwise an authored constructor is required.
 Static properties never become instance-construction inputs. The bounded implementation
-supports public/private instance properties, not protected or static members.
+now supports public/private/protected instance properties; only public properties
+participate in synthesized data inputs. Static members remain excluded from inputs.
 
 The first authored-constructor slice adopts this spelling, not PHP-style promotion
 such as `__construct(public string $name)`. See the
@@ -315,8 +316,9 @@ its corresponding property. For an omitted property, use its explicit default fi
 then its established type default, otherwise require the input. An absent class handle
 does not allocate a pointee. No implicit enum case or other invented default is allowed.
 Non-public properties are excluded from synthesized inputs, not silently exposed.
-Static members, inheritance and trait composition remain gated; their presence must
-not authorize bypassing invariants.
+Static members are excluded from inputs. Derived data initialization remains gated
+under the [concrete inheritance contract](inheritance_v0_2.md), as does trait
+composition; their presence must not authorize bypassing invariants.
 
 The initial supported key contract is literal string names, in either `{name: value}`
 or `["name" => value]` notation. Computed keys and positional record construction are

@@ -14,7 +14,10 @@ from instance receiver facts. `type_relationship_work` settles direct ancestry w
 record layout or signatures, using the same scheduler and lifecycle. The analysis-only
 `prepare_relationships` checkpoint returns completed relationship work, not executable
 files. `Inherited_Lookup` observes member pools and returns original declarations.
-Interface execution and protected access remain gated; declared inventories never
+Interface execution remains gated; concrete inherited member access shares this lookup.
+`Inheritance_Preparation` admits the inline base layout/default-construction contract
+and rejects ordinary member redeclarations. `Member_Preparation` checks declaring
+context and protected instance-receiver restrictions; declared inventories never
 become inherited lookup caches.
 
 | File | Responsibility |

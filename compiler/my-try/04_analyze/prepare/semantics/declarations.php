@@ -89,19 +89,23 @@ final class Declaration_Preparation
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		if ((($syntax->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
-			|| ($syntax->base_class !== null)
 			|| !$extended->is_empty() || !$implemented->is_empty()
 			|| !$uses->is_empty()) {
 			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
 		}
 		$facts = new prepared_record();
 		$context->member_owner = object_cast($syntax->occurrence(), collected_record::class);
+		Inheritance_Preparation::base(object_cast($syntax->occurrence(), collected_record::class), $facts, $context);
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		foreach ($syntax->modifiers as $modifier) {
+			if ($modifier === declaration_modifier::final_declaration) { continue; }
 			if ($modifier !== declaration_modifier::data_initializable) {
 				throw new \RuntimeException('Type modifier is not supported by this record slice');
 			}
 			$facts->data_initializable = true;
+		}
+		if ($facts->data_initializable && ($facts->base_type !== null)) {
+			throw new \RuntimeException('Inherited data initialization inputs are deferred');
 		}
 		foreach ($methods as $method) {
 			$members /** Key_Storage_List<collected_method> */ = $facts->methods;
@@ -116,6 +120,9 @@ final class Declaration_Preparation
 
 		$copyable = true;
 		$query = new Capability_Preparation($context);
+		if ($facts->base_type !== null) {
+			$copyable = $query->has_capability($facts->base_type, generic_contract::copyable_value);
+		}
 		$nodes /** Storage<property_node> */ = $syntax->properties;
 		$names /** hash<bool> */ = [];
 		foreach ($nodes as $field) {
