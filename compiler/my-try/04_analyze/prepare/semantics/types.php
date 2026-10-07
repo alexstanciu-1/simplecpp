@@ -188,6 +188,7 @@ final class Type_Preparation
 		$type_use = Model::$type_catalog->registry()->use($type->type_id());
 		if ($complete && ($definition->origin() === type_definition_origin::source) && !Type_Queries::is_class_handle($type_use)) {
 			$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+			if ($declaration instanceof collected_interface) { throw new \RuntimeException('Interface-typed values and conversions are deferred'); }
 			$context->worker->require_declaration($context->owner, $declaration);
 		}
 		$node->set_preparation($type_use);

@@ -42,10 +42,6 @@ final class CPP_Generator
 						$relationships = $type_owner->relationship_work;
 						if ($relationships === null) { throw new \RuntimeException('C++ generation requires completed relationships'); }
 						if (!Preparation_Status::complete($relationships)) { throw new \RuntimeException('C++ generation requires completed relationships'); }
-						$ancestry = $relationships->require_facts();
-						if (($definition instanceof collected_interface) || (q_count($ancestry->interfaces) !== 0)) {
-							throw new \RuntimeException('Inherited/interface execution is not enabled by relationship preparation');
-						}
 						$contracts = $type_owner->contract_work;
 						if ($contracts === null) { throw new \RuntimeException('C++ generation requires completed type contracts'); }
 						if (!Preparation_Status::complete($contracts)) { throw new \RuntimeException('C++ generation requires completed type contracts'); }
@@ -57,7 +53,10 @@ final class CPP_Generator
 						// Scalar constants substitute settled values; no storage or standalone artifact.
 						continue;
 					}
-					$ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class));
+					if ($definition instanceof collected_interface) {
+						$ordered->append(object_cast(object_cast($definition, collected_interface::class)->contract_work, type_contract_work::class));
+					}
+					else { $ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class)); }
 					if ($node instanceof callable_declaration_node) {
 						$ordered->append(object_cast(object_cast($node, callable_declaration_node::class)->require_body()->work(), preparation_owner::class));
 					}
@@ -124,12 +123,15 @@ final class CPP_Generator
 			$path = '';
 			$identity = '';
 			$text = '';
-			if ($definition instanceof collected_record) {
-				$this->validate_record_dependencies(object_cast($definition, collected_record::class), $record_context);
+			if ($definition instanceof collected_member_owner) {
+				if ($definition instanceof collected_record) {
+					$this->validate_record_dependencies(object_cast($definition, collected_record::class), $record_context);
+				}
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
 				$identity = 'type:' . $definition->qualified_name();
-				$text = $fragment->text;
-				$record = object_cast($definition, collected_record::class);
+				$record = object_cast($definition, collected_member_owner::class);
+				$bridge_context = new cpp_generation_context();
+				$text = CPP_Declarations::type_opening($record, $bridge_context) . $fragment->text;
 				$contract = $record->contract_work->require_facts();
 				$dispatch /** Keyed_Storage<prepared_method_contract> */ = $contract->methods;
 				$methods /** Storage<method_node> */ = $record->syntax()->methods;
@@ -147,7 +149,13 @@ final class CPP_Generator
 					foreach ($member_fragment->headers as $header => $used) { $artifact_headers[$header] = true; }
 					foreach ($member_fragment->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
 				}
-				$text .= CPP_Declarations::lifecycle_special_members($record, $contract);
+				$text .= CPP_Declarations::interface_forwarders($contract, $bridge_context);
+				foreach ($bridge_context->headers as $header => $used) { $artifact_headers[$header] = true; }
+				foreach ($bridge_context->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
+				if ($record instanceof collected_record) {
+					$text .= CPP_Declarations::lifecycle_special_members(object_cast($record, collected_record::class), $contract);
+				}
+				else { $text .= "public:\n\tvirtual ~" . self::source_name('record', $record->qualified_name()) . "() noexcept = default;\n"; }
 				$text .= "};\n\n";
 			}
 			elseif ($definition instanceof collected_enum) {
@@ -267,6 +275,10 @@ final class CPP_Generator
 			}
 			elseif ($entry instanceof collected_enum) {
 				$next->text = CPP_Enums::declaration(object_cast($entry, collected_enum::class)->enum_syntax(), $context);
+			}
+			elseif ($entry instanceof collected_interface) {
+				// Interfaces have no layout fragment; relationships/methods assemble from their owners.
+				$next->text = '';
 			}
 			else
 			{

@@ -2,8 +2,8 @@
 Doc Status: normative
 
 This bounded contract covers class-to-class and struct-to-struct single inheritance.
-It extends the CH10 member contracts; interface execution and
-source-level derived/base conversions remain deferred. Availability and evidence
+It extends the CH10 member contracts with abstract methods and interface implementation.
+Interface-typed values and source-level derived/base conversions remain deferred. Availability and evidence
 are tracked in [CH11](../compiler/my-try/docs/catalog/11_inheritance.md).
 
 ## Layout and lookup
@@ -40,8 +40,8 @@ Potential broader protected access is [non-blocking discussion debt](../compiler
 ## Construction, copying and cleanup
 
 Without an authored constructor, a child inherits the supported public constructor
-contract of its base, including parameter defaults, through concrete intermediate
-bases, including abstract ones. The original declaration owns that contract; it is not copied into the child's
+contract of its base, including parameter defaults, through abstract or concrete
+intermediate bases. The original declaration owns that contract; it is not copied into the child's
 method inventory. Child properties must support their own defaults. The existing
 fixed by-value constructor boundary remains; reference/variadic constructors are not
 introduced here. Implicit inline-payload default construction does not acquire source
@@ -127,10 +127,48 @@ implementation; static methods need no receiver. Arguments and reference-return
 contracts reuse ordinary method-call admission. `parent` outside a member context
 or without a concrete base is rejected. This is not late-bound `static::` dispatch.
 
+## Interface implementation
+
+Interfaces may extend multiple interfaces; classes and structs may implement multiple
+interfaces using one shared contract path. This slice admits public, bodyless instance
+method contracts only. Static methods, constants, properties, constructors, destructors,
+trait use and method bodies in interfaces remain rejected. Interface declarations
+have no source instance layout and cannot be constructed. Interface-typed storage,
+parameters/returns and source upcasts remain a following slice, not implicitly enabled.
+
+Concrete implementers must provide all required methods; abstract implementers may
+leave obligations outstanding. The same exact signature/reference/readonly/variadic
+and optional-parameter checks as abstract overrides apply. Implementations must be
+public instance methods. Matching local implementations become virtual; a checked
+`#[\Override]` assertion may refer to an interface requirement. One implementation
+may satisfy multiple compatible same-named contracts. An interface diamond retains
+one occurrence of the original requirement; incompatible same-named signatures reject
+during preparation, including in abstract types and interface redeclarations.
+
+A compatible inherited public method may satisfy a newly added interface. Preserve
+its source identity and original dispatch policy. Preparation records a forwarding
+binding where needed, and C++ emits a public overriding method in the implementing
+descendant that calls its base implementation. No synthetic AST method, cloned source
+body or retroactive virtualization of the original base method is introduced.
+Forwarding preserves reference returns/arguments, packed variadics and by-value
+ownership transfer. Descendants may override a non-final forwarding implementation.
+
+Approved bounded restriction: reject a new forwarding binding when the inherited
+implementation is already **virtual and final**. Such a C++ bridge would override
+the final method. An interface already satisfied by the base remains valid, and an
+inherited final **nonvirtual** implementation may be forwarded with a final bridge.
+See [CH11-INTERFACE-FINAL-01](../compiler/my-try/docs/catalog/11_inheritance.md#ch11-interface-final-01--inherited-final-virtual-forwarding).
+
+C++ interface edges use public virtual inheritance so diamonds share the same interface
+subobject. Concrete record-base inheritance is unchanged. Interface destruction is
+public, virtual and nonthrowing; implementing records use the existing polymorphic
+cleanup/copy/move policy. This representation is not permission to slice an inline
+struct or implicitly allocate/box it as an interface value.
+
 ## Remaining gates
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
-final type may be instantiated. Interface contracts, nonvirtual member hiding,
+final type may be instantiated. Interface-typed values/conversions, nonvirtual member hiding,
 inherited data inputs, late-bound `static::`, derived/base
 assignment/argument/return conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.

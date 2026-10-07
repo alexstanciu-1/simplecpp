@@ -95,7 +95,7 @@ try {
 	$worker = relationship_prepare();
 	relationship_check($work->version === $version, 'No-op rebuilt relationship facts');
 	try { $compiler->prepare(); throw new \LogicException('Inherited execution enabled'); }
-	catch (\RuntimeException $error) { relationship_check(str_contains($error->getMessage(), 'Interface preparation'), 'Unexpected execution gate'); }
+	catch (\RuntimeException $error) { relationship_check(str_contains($error->getMessage(), 'method contracts only'), 'Unexpected interface-constant execution gate'); }
 
 	// Cross-file edge changes, failure/retry and recovery retain the same work owner.
 	file_put_contents($base_path, str_replace('class Base', 'final class Base', $base_text));

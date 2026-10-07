@@ -97,6 +97,15 @@ layout/signature fragments. Bodyless methods have signature work only. A transit
 to bodyless syntax retains the old body in `retired_bodies` until analysis retires its
 work and clears facts, then frontend disposal releases it. Parsing does not schedule
 analysis or manufacture replacement bodies.
+
+Interfaces now use that same contract work directly, without record-layout work or
+record preparation facts. `interface_requirements` references original interface
+methods (deduplicated by identity), including satisfied requirements needed by
+descendants. `forwarders` contains prepared method decisions observing an inherited
+implementation and its immediate dispatch base; these are not collected methods or
+AST bodies. Signatures remain shared. C++ assembles direct base/interface spelling
+from current relationship facts, outside cached layout fragments, so relationship-only
+edits cannot leave stale header inheritance. Interface-typed values remain gated.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges
 are contracts, not fallback implementations. Concrete records may retain one

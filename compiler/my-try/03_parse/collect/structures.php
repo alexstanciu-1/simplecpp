@@ -281,7 +281,7 @@ final class collected_record extends collected_member_owner
 	}
 }
 
-/** Interface identity shares method ownership, not record capabilities. Execution remains gated. */
+/** Interface identity shares method ownership, never record layout or construction capabilities. */
 final class collected_interface extends collected_member_owner
 {
 	public function kind(): collected_name_kind

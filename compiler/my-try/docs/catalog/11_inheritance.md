@@ -11,8 +11,56 @@ The user approved same-kind class/struct inheritance and preservation of existin
 non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_foundation.md)
 records those boundaries and the approved shared member-owner prerequisite.
 That model migration and relationship/lookup foundation are complete. Bounded
-concrete inheritance and bounded abstract/override dispatch now execute; interfaces
-and derived/base conversions remain gated.
+concrete inheritance, abstract/override dispatch and interface implementations now
+execute. Interface-typed values and derived/base conversions remain gated.
+
+## Interface contracts and inherited implementations — 2026-10-07
+
+Implemented through the existing member-owner, signature and type-contract paths:
+public bodyless instance interface methods; multiple implements/extends; identity
+deduplication through diamonds; exact compatible same-named requirements; public
+local/inherited implementations; abstract outstanding obligations and checked Override.
+Classes and structs share the path. Interfaces have contract/signature work, no record
+layout or synthetic bodies. Requirements retain original declarations after satisfaction
+for descendant validation. Source interface-typed values and conversions remain gated.
+
+Inherited implementations use prepared forwarding decisions, never cloned AST members.
+C++ emits public virtual interface bases and small forwarding overrides as required,
+preserving reference/readonly arguments, reference results, variadic packs and unique
+ownership transfer. Interface cleanup uses the existing virtual nonthrowing policy.
+Relationship spelling is assembled outside cached field-layout fragments, so changing
+only an implements/extends edge updates headers without unnecessary layout invalidation.
+
+Focused proofs cover cross-file signature and relationship edits, failure/retry/repair,
+reset/removal and fresh/incremental agreement. Native fixture checks exercise calls and
+cleanup through C++ interface views without enabling source upcasts. The final focused
+run also compiles separate generated units without PCH to expose missing header dependencies.
+No native compiler rebuild. See [normative scope](../../../../specs/inheritance_v0_2.md#interface-implementation).
+
+Passed: 32 generated interface programs without PCH, 32 abstract-dispatch regression
+programs and 17 PHP-host model suites. Evidence: `/tmp/interfaces-20261007-final`,
+`/tmp/interfaces-abstract-20261007-1`, `/tmp/interfaces-model-20261007-2`.
+
+Follow-up: abstract implementers can retain unmet interface obligations, but calling
+such a method from their own body currently requires an explicit abstract method
+declaration in the class/struct. Interface-only call lookup is not yet enabled.
+Address it with interface call admission, including default-argument ownership for
+same-named requirements and reference-return cycle analysis; do not broaden the
+implementation lookup to mistake an interface requirement for an implementation.
+
+Next discussion: interface-typed handles and safe shared upcasts, retaining explicit
+ownership/lifetime boundaries and no implicit boxing of inline structs.
+
+### CH11-INTERFACE-FINAL-01 — inherited final virtual forwarding
+
+Open, explicitly accepted bounded restriction; does not block this implementation slice.
+If a descendant adds a new interface that needs a forwarding override of an inherited
+**final virtual** method, reject during preparation. A C++ forwarding method would
+override the final method and is ill-formed. Existing interfaces implemented by the
+base remain valid; final nonvirtual source methods may use final forwarding overrides.
+Revisit with a separate interface adapter/dispatch representation if needed, rather
+than dropping finality or retroactively changing base dispatch. This is not a general
+ban on inherited interface implementations.
 
 ## Abstract contracts and virtual dispatch — 2026-10-07
 
@@ -40,7 +88,7 @@ regressions and 17 PHP-host model suites. No native compiler rebuild. Final evid
 `/tmp/abstract-dispatch-20261007-7`, `/tmp/abstract-inheritance-20261007-1`,
 `/tmp/abstract-destructors-20261007-2`, `/tmp/abstract-model-20261007-3`.
 
-Next discussion: interface contracts/implementation and their dispatch representation.
+The subsequent interface checkpoint above extends this implementation.
 Conversions, trait composition, inherited data inputs, late static binding and
 non-public/abstract constructors remain separate groups.
 
@@ -214,9 +262,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLASS-INH-001](#class-inh-001) | implemented-bounded | `class B extends A {}` | verified | verified | deferred | Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07) |
-| [CLASS-INH-002](#class-inh-002) | pending-discussion | `class A extends B implements I, J {}` | unverified | unverified | deferred | — |
+| [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations; final-virtual forwarding restriction |
 | [CLASS-INH-003](#class-inh-003) | pending-discussion | `class A { use T; }` | unverified | unverified | deferred | — |
-| [CLASS-INH-004](#class-inh-004) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
+| [CLASS-INH-004](#class-inh-004) | implemented-bounded | `interface I { function f(int $a): int; }` | verified | verified | deferred | Public bodyless instance contracts; multiple interface inheritance |
 | [CLASS-INH-006](#class-inh-006) | pending-discussion | `$a = new A(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-007](#class-inh-007) | pending-discussion | `A a(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-008](#class-inh-008) | implemented-bounded | `$this->f();` | verified | verified | deferred | Ordinary fixed methods; abstract contracts dispatch virtually |
@@ -233,9 +281,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-ABS-006](#class-abs-006) | implemented-bounded | `abstract function f(int $x): int;` | verified | verified | deferred | Bodyless public/protected instance contract; concrete descendants must implement |
 | [CLASS-ABS-007](#class-abs-007) | implemented-bounded | `abstract function f(): int;` | verified | verified | deferred | Pure virtual declaration; no executable body work |
 | [CLASS-ABS-008](#class-abs-008) | implemented-bounded | `abstract class A { int $x; function f(): int { return $this->x; } }` | verified | verified | deferred | Concrete members/constructors remain available to descendants |
-| [CLASS-ABS-009](#class-abs-009) | pending-discussion | `interface I { function f(): int; }` | unverified | unverified | deferred | — |
-| [CLASS-ABS-010](#class-abs-010) | pending-discussion | `class A extends B implements I {}` | unverified | unverified | deferred | — |
-| [TYPE-PARAM-003G](#type-param-003g) | pending-discussion | `interface I { public function f(const string &$s): int; } class C implements I { public function f(string $s): int { return 1; } }` | unverified | unverified | deferred | — |
+| [CLASS-ABS-009](#class-abs-009) | implemented-bounded | `interface I { function f(): int; }` | verified | verified | deferred | Pure virtual declarations and virtual cleanup; no record layout |
+| [CLASS-ABS-010](#class-abs-010) | implemented-bounded | `class A extends B implements I {}` | verified | verified | deferred | Source identities retained; public inherited forwarding; shared virtual interface bases |
+| [TYPE-PARAM-003G](#type-param-003g) | implemented-bounded | `interface I { public function f(const string &$s): int; } class C implements I { public function f(string $s): int { return 1; } }` | verified | verified | deferred | Rejected during shared preparation; exact readonly/reference signature contract |
 ## CLASS-INH-001
 
 **v0.2 decision / target C++:** Pending discussion.

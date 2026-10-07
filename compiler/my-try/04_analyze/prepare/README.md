@@ -14,7 +14,8 @@ from instance receiver facts. `type_relationship_work` settles direct ancestry w
 record layout or signatures, using the same scheduler and lifecycle. The analysis-only
 `prepare_relationships` checkpoint returns completed relationship work, not executable
 files. `Inherited_Lookup` observes member pools and returns original declarations.
-Interface execution remains gated; concrete inherited member access shares this lookup.
+Interface contracts and concrete implementers share the contract worker; interface-typed
+values/upcasts remain gated. Interfaces acquire no record-layout work. Concrete inherited member access shares this lookup.
 Effective constructors may reference the original ancestor method, without cloning
 its signature. Authored constructor body preparation admits a leading parent call
 before making `$this` available and retains `prepared_base_initialization` on the
@@ -26,6 +27,11 @@ the same scheduler after layout/signatures; `Type_Contract_Preparation` validate
 method overriding, finality and abstract obligations. Layouts and signatures never
 depend back on this work. It retains local dispatch decisions and outstanding original
 abstract declarations, not a flattened member inventory. C++ consumes those facts.
+Interface requirements observe original declarations even after implementation so
+descendants can validate changes. Forwarding decisions observe the original method
+and the immediate record base, without synthesizing source methods. Interface signatures
+depend on relationships only, never their enclosing contract work. Same-signature
+diamonds deduplicate original identities; incompatible signatures reject.
 `Member_Preparation` checks declaring
 context and protected instance-receiver restrictions; declared inventories never
 become inherited lookup caches.

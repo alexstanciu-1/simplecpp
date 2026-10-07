@@ -38,6 +38,12 @@ It follows the same dependency/reset/retirement protocol. Callable `retired_bodi
 temporarily owns detached executable syntax through the coordinator's semantic
 retirement/frontend disposal boundary. Body work never substitutes signature identity.
 
+Interface contract work has the same owner/lifecycle but no accompanying record layout.
+Satisfied interface requirements retain original declaration identities for descendant
+validation. Forwarding decisions weakly observe the original inherited method and the
+immediate base used for qualified delegation; no duplicate source members or bodies
+are owned by the implementing descendant. Normal contract retirement drops these facts.
+
 Prepared expressions own their optional storage-place record. A place weakly observes
 the selected `prepared_storage` fact and, for direct struct-field projection, shares
 the base place. Whole-storage roots identify the original declaration/parameter, not

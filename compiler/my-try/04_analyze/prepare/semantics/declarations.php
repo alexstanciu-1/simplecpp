@@ -9,6 +9,9 @@ final class Declaration_Preparation
 	public static function prepare_callable(callable_declaration_node $syntax, preparation_context $context): void
 	{
 		if (($syntax instanceof method_node) && ($syntax->name === '__construct')) {
+			if (object_cast($syntax->occurrence(), collected_method::class)->declaring_type() instanceof collected_interface) {
+				throw new \RuntimeException('Interface constructor contracts are deferred');
+			}
 			Constructor_Preparation::signature(object_cast($syntax, method_node::class), $context);
 			return;
 		}
@@ -90,12 +93,11 @@ final class Declaration_Preparation
 	{
 		// The common AST does not confer support for new declaration/member semantics.
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
-		$implemented /** Storage<named_type_node> */ = $syntax->implemented_interfaces;
 		$methods /** Storage<method_node> */ = $syntax->methods;
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		if ((($syntax->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
-			|| !$extended->is_empty() || !$implemented->is_empty()
+			|| !$extended->is_empty()
 			|| !$uses->is_empty()) {
 			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
 		}

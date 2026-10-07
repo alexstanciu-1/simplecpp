@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite interfaces --results FRESH`
+checks interface contracts and inherited forwarding for classes/structs, native dispatch
+and cleanup through interface views, invalid signatures/finality, and incremental
+relationship changes. Add `--no-pch` to prove separate-unit header dependencies.
+Source interface values/upcasts remain gated; this does not rebuild the native compiler.
+
 `python3 compiler/my-try/tests/records.py --suite abstract_dispatch --results FRESH`
 covers abstract class/struct contracts, exact overrides/finality, virtual calls/cleanup,
 reference returns, bodyless transitions, cross-file invalidation and fresh/incremental

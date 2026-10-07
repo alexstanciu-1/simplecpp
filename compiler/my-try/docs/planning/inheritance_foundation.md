@@ -121,5 +121,8 @@ signatures. Earlier owners never depend back on it; no flattened member inventor
 introduced. The user approved including this prerequisite with abstract/final/override
 validation and virtual dispatch. Bodyless declarations retain signatures without body
 work; transitions use semantic retirement before frontend disposal. This foundation
-and its bounded class/struct execution are implemented; interface execution remains
-the next discussion, not implicitly enabled by the new contract owner.
+and its bounded class/struct execution are implemented. The subsequent interface slice
+reuses that owner for public instance contracts and inherited forwarding decisions,
+without record layout or synthetic source bodies. Virtual interface bases support
+diamonds; new forwarding of final virtual inherited methods is explicitly rejected
+and tracked in CH11. Interface-typed values/upcasts remain the next discussion.

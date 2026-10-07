@@ -109,7 +109,7 @@ final class CPP_Declarations
 	}
 
 	/** Prototypes only name records; value definitions need layouts, reference definitions do not. */
-	public static function signature(callable_declaration_node $syntax, cpp_generation_context $context, bool $prototype): string
+	public static function signature(callable_declaration_node $syntax, cpp_generation_context $context, bool $prototype, bool $inline_body = false): string
 	{
 		$facts = $syntax->require_preparation();
 		$parts = '';
@@ -120,7 +120,7 @@ final class CPP_Declarations
 			$parameter = $storage->contract;
 			$reference = $parameter->mode === passing_mode::reference ? '&' : '';
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
-			$requirement = self::signature_requirement($prototype, $parameter->mode === passing_mode::reference);
+			$requirement = self::signature_requirement($prototype && !$inline_body, $parameter->mode === passing_mode::reference);
 			$parts .= $separator . $qualifier . self::type_for($parameter->type, $context, $requirement) . $reference . ' ' . CPP_Generator::local_name($entry);
 			if ($prototype && ($syntax instanceof function_node) && ($parameter->default_value !== null)) {
 				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
@@ -134,7 +134,7 @@ final class CPP_Declarations
 
 		$function_declaration = object_cast($syntax->occurrence(), collected_source_callable::class);
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
-		$return_requirement = self::signature_requirement($prototype, $facts->signature->reference_return !== null);
+		$return_requirement = self::signature_requirement($prototype && !$inline_body, $facts->signature->reference_return !== null);
 		$return_prefix = self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ';
 		if ($function_declaration instanceof collected_method) {
 			$method = object_cast($function_declaration, collected_method::class);
@@ -269,16 +269,8 @@ final class CPP_Declarations
 
 		// Mark before descending so a by-value cycle fails before a partial layout is emitted.
 		$context->record_states[$key] = cpp_record_state::visiting;
-		$text = 'struct ' . CPP_Generator::source_name('record', $key);
-		$relationships /** type_relationship_work */ = $definition->relationship_work;
-		if ($relationships->require_facts()->final_type) { $text .= ' final'; }
-		$base_type = $syntax->require_preparation()->base_type;
-		if ($base_type !== null) {
-			$base_mapping = CPP_Types::payload($base_type);
-			CPP_Types::record_dependencies($base_mapping, $context);
-			$text .= ' : public ' . $base_mapping->spelling;
-		}
-		$text .= "\n{\n";
+		// Relationship spelling belongs to final assembly, not the cached field-layout fragment.
+		$text = '';
 
 		$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 		foreach ($fields->items() as $field)
@@ -320,6 +312,56 @@ final class CPP_Declarations
 		$context->records .= $text;
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
+	}
+
+	/** Shared declaration spelling; interfaces add no record fields or source constructors. */
+	public static function type_opening(collected_member_owner $owner, cpp_generation_context $context): string
+	{
+		$relations = $owner->relationship_work->require_facts();
+		$text = 'struct ' . CPP_Generator::source_name('record', $owner->qualified_name());
+		if ($relations->final_type) { $text .= ' final'; }
+		$separator = ' : ';
+		$base = weakref_get($relations->base);
+		if ($base !== null) {
+			$context->headers[CPP_Artifacts::type_header($base->qualified_name())] = true;
+			$text .= $separator . 'public ' . CPP_Generator::source_name('record', $base->qualified_name());
+			$separator = ', ';
+		}
+		foreach ($relations->interfaces as $interface) {
+			$context->headers[CPP_Artifacts::type_header($interface->qualified_name())] = true;
+			$text .= $separator . 'public virtual ' . CPP_Generator::source_name('record', $interface->qualified_name());
+			$separator = ', ';
+		}
+		return $text . "\n{\n";
+	}
+
+	/** Forward existing implementations without adding source declarations or copying their bodies. */
+	public static function interface_forwarders(prepared_type_contract $contract, cpp_generation_context $context): string
+	{
+		$text = '';
+		$bridges /** Keyed_Storage<prepared_method_contract> */ = $contract->forwarders;
+		foreach ($bridges as $bridge) {
+			$method = weakref_get($bridge->method);
+			$syntax = $method->callable_syntax();
+			$owner = weakref_get($bridge->forwarding_owner);
+			$arguments = '';
+			$separator = '';
+			$parameters /** Storage<prepared_parameter> */ = $syntax->require_preparation()->parameters;
+			foreach ($parameters as $parameter) {
+				$argument = CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
+				if ($parameter->contract->mode === passing_mode::value) {
+					$argument = 'std::move(' . $argument . ')';
+					$context->headers['utility'] = true;
+				}
+				$arguments .= $separator . $argument;
+				$separator = ', ';
+			}
+			$text .= "public:\n\t" . self::signature($syntax, $context, true, true)
+				. ' override' . ($bridge->final_method ? ' final' : '') . ' { return '
+				. CPP_Generator::source_name('record', $owner->qualified_name()) . '::'
+				. CPP_Generator::source_name('method', $syntax->name) . '(' . $arguments . "); }\n";
+		}
+		return $text;
 	}
 
 	/** Contract-owned virtual cleanup must preserve the ordinary copy/move/default operations. */

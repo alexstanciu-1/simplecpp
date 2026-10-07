@@ -19,13 +19,22 @@ final class prepared_type_contract
 	public bool $polymorphic = false;
 	public Keyed_Storage $methods /** Keyed_Storage<prepared_method_contract> */;
 	public array $obligations /** vector<collected_method> */ = [];
-	public function __construct() { $this->methods = new Keyed_Storage /** Keyed_Storage<prepared_method_contract> */(); }
+	/** Original interface declarations remain requirements after implementation, for descendant validation. */
+	public array $interface_requirements /** vector<collected_method> */ = [];
+	/** Lowering bridges observe inherited implementations; never synthetic source methods. */
+	public Keyed_Storage $forwarders /** Keyed_Storage<prepared_method_contract> */;
+	public function __construct()
+	{
+		$this->methods = new Keyed_Storage /** Keyed_Storage<prepared_method_contract> */();
+		$this->forwarders = new Keyed_Storage /** Keyed_Storage<prepared_method_contract> */();
+	}
 }
 
 final class prepared_method_contract
 {
 	public collected_method $method /** weak<collected_method> */;
 	public ?collected_method $overridden /** weak<collected_method> */ = null;
+	public ?collected_record $forwarding_owner /** weak<collected_record> */ = null;
 	public bool $virtual_method = false;
 	public bool $abstract_method = false;
 	public bool $final_method = false;

@@ -279,11 +279,8 @@ final class Preparation_Worker
 
 	public function select_record(type_declaration_node $node): void
 	{
-		if (!($node->occurrence() instanceof collected_record)) {
-			throw new \RuntimeException('Interface preparation is not enabled by member-owner registration');
-		}
-		$entry = object_cast($node->occurrence(), collected_record::class);
-		$this->select_owner($this->record_owner($entry));
+		$entry = object_cast($node->occurrence(), collected_member_owner::class);
+		if ($entry instanceof collected_record) { $this->select_owner($this->record_owner(object_cast($entry, collected_record::class))); }
 		$this->select_owner($this->contract_owner($entry));
 		$constants /** Storage<member_constant_node> */ = $node->constants;
 		foreach ($constants as $constant) {
@@ -566,7 +563,7 @@ final class Preparation_Worker
 	{
 		if ($owner instanceof type_contract_work) {
 			$contracts = object_cast($owner, type_contract_work::class);
-			$current = Type_Contract_Preparation::prepare(object_cast($contracts->member_definition(), collected_record::class), $context);
+			$current = Type_Contract_Preparation::prepare($contracts->member_definition(), $context);
 			$changed = !Type_Contract_Preparation::same($contracts->facts, $current);
 			if ($changed) { $contracts->facts = $current; }
 			$contracts->source_revision = (int)$contracts->member_definition()->revision;

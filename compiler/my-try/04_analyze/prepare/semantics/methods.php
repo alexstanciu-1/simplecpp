@@ -21,6 +21,8 @@ final class Method_Preparation
 	/** Ordinary parameter/return preparation remains owned by Declaration_Preparation. */
 	public static function signature(method_node $syntax, prepared_source_callable $facts, preparation_context $context): void
 	{
+		$method = object_cast($syntax->occurrence(), collected_method::class);
+		$interface_method = $method->declaring_type() instanceof collected_interface;
 		$destructor = $syntax->name === '__destruct';
 		if (string_byte_starts_with($syntax->name, '__') && !$destructor) {
 			throw new \RuntimeException('Special methods are deferred');
@@ -35,6 +37,13 @@ final class Method_Preparation
 		Member_Preparation::validate_modifiers($ordinary, true);
 		$facts->visibility = Member_Preparation::visibility($syntax->modifiers);
 		$facts->static_member = Member_Preparation::is_static($syntax->modifiers);
+		if ($interface_method) {
+			if ($syntax->has_parsed_body() || $facts->static_member || $facts->final_method
+				|| ($facts->visibility !== member_visibility::public_access) || $destructor) {
+				throw new \RuntimeException('Interface methods require public bodyless instance contracts');
+			}
+			$facts->abstract_method = true;
+		}
 		if ($facts->abstract_method === $syntax->has_parsed_body()) {
 			throw new \RuntimeException('Abstract methods require no body; concrete methods require a body');
 		}
@@ -57,8 +66,11 @@ final class Method_Preparation
 				throw new \RuntimeException('Ordinary methods do not accept set: parameters or a parameter named $this');
 			}
 		}
-		$method = object_cast($syntax->occurrence(), collected_method::class);
 		$context->member_owner = $method->declaring_type();
+		if ($interface_method) {
+			$context->worker->require_relationships($method->declaring_type(), $context);
+			return;
+		}
 		$context->worker->require_declaration($context->owner, $method->declaring_type());
 		if (!$facts->static_member) { $facts->receiver = self::receiver($method); }
 	}

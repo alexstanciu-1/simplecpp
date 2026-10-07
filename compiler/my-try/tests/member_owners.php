@@ -84,12 +84,7 @@ foreach ([member_visibility::public_access, member_visibility::protected_access,
 member_owner_check(CPP_Declarations::visibility(member_visibility::protected_access) === "protected:\n", 'Backend cannot spell settled protected access');
 Member_Preparation::validate_modifiers([declaration_modifier::protected_access], true);
 $worker = new Preparation_Worker(Model::$global_scope);
-$rejected = false;
-try {
-	$worker->select_record($node);
-}
-catch (\RuntimeException $error) {
-	$rejected = str_contains($error->getMessage(), 'Interface preparation is not enabled');
-}
-member_owner_check($rejected, 'Interface registration enabled record preparation');
+$worker->select_record($node);
+member_owner_check($owner->preparation_work_owner() === null && $owner->contract_work !== null,
+	'Interface contract selection manufactured record layout work');
 echo "Member-owner identity, registration, visibility and execution gates passed\n";
