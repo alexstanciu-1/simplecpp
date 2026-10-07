@@ -187,7 +187,7 @@ try
 	result_source($path, $valid);
 	result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental extraction output differ');
 	foreach (['if (source()) { return true; } return false;',
-		'return isset(source());', 'return empty(source());'] as $consumer)
+		'return isset(source());', 'return !isset(source());'] as $consumer)
 	{
 		$valid = 'function source(): result<int> { return 0; } function read(): bool { '
 			. $consumer . ' } function stable(): int { return 9; } $ok = read();';
@@ -211,7 +211,7 @@ try
 		result_source($path, $valid);
 		result_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental Result probe/condition differ');
 	}
-	result_source($path, '$r result<int> = 0; if ($r) {} $p bool = isset($r); $e bool = empty($r);');
+	result_source($path, '$r result<int> = 0; if ($r) {} $p bool = isset($r); $e bool = isset($r);');
 	$probe_root = Model::syntax_files()[0]->root;
 	result_check($probe_root->single_body()->body->statements[1]->require_preparation()->truthiness->operation
 		=== truthiness_operation::result_condition, 'Missing Result condition fact');

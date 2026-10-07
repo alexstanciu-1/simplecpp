@@ -87,6 +87,10 @@ copy independence, checked extraction, fields/calls/returns, null comparisons an
 noncopyable-payload rejection. Also covers reset cleanup, empty noncopyable values,
 cross-file capability edits, failed retries, repair and fresh/reset agreement.
 
+Use `--suite collection_probes` for collection/string-only `empty`, static rejection
+of scalars/records/wrappers, runtime mixed/dynamic kind/path errors, lazy key stopping,
+and noncopying inline/nullable record presence and truthiness.
+
 For the CH10 shared declaration model migration:
 
 ```bash

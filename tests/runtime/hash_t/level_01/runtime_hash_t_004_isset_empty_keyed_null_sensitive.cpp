@@ -11,7 +11,7 @@ int main() {
 	assert(scpp::php::isset(row, scpp::string_t("missing")).native_value() == false);
 
 	assert(scpp::php::empty(row, scpp::string_t("name")).native_value() == true);
-	assert(scpp::php::empty(row, scpp::string_t("maybe")).native_value() == true);
-	assert(scpp::php::empty(row, scpp::string_t("missing")).native_value() == true);
+	runtime_test::expect_throw<scpp::runtime_error>([&]() { (void)scpp::php::empty(row, scpp::string_t("maybe")); });
+	runtime_test::expect_throw<scpp::runtime_error>([&]() { (void)scpp::php::empty(row, scpp::string_t("missing")); });
 	return 0;
 }

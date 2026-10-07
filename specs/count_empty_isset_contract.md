@@ -1,5 +1,34 @@
 # count(), empty(), isset() runtime contract
 Doc Status: normative
+
+## v0.2 collection-only emptiness — 2026-10-07
+
+This amendment supersedes older scalar/wrapper and missing-key emptiness rules in
+this document and subordinate runtime/generator material. `empty(x)` asks whether
+an existing collection contains zero elements. Lists, keyed collections and strings
+qualify; a collection containing a null element is not empty. Strings are empty
+only at length zero, so `"0"` is not empty. Where both contracts exist, `empty(x)`
+agrees with `count(x) === 0` without requiring traversal to implement emptiness.
+
+Numbers, booleans, null, ordinary records and ownership/nullable/Result wrappers
+have no implicit emptiness contract. Wrappers do not delegate this operation to
+their payload. Known unsupported types reject during preparation, even on a keyed
+path whose entry might be missing. `mixed`/`dynamic` dispatch by runtime kind:
+string/table kinds qualify; unsupported kinds throw `invalid_empty_operand`.
+
+Keyed `empty` requires an existing supported leaf. Missing keys, null leaves and
+invalid intermediate/key shapes throw, never return true or create data. Path
+evaluation remains lazy: stop at the first failure, without evaluating later keys.
+Root and reached key expressions run once; already-performed effects are not undone.
+Presence remains a separate operation: use `!isset(...)` for absence. A potential
+`missing` spelling and user-defined collection emptiness registration are deferred.
+
+Ordinary inline class/struct records are present and truthy regardless of their
+fields. Nullable inline records are present/truthy exactly when they contain a
+record. These observations do not copy, consume or require a copyable payload.
+Neither grants an emptiness contract to the record or its wrapper.
+
+The previous PHP-like scalar/wrapper emptiness contract is intentionally replaced.
 This document is the single semantic source of truth for the current Prism++ runtime contract for:
 - `count(...)`
 - `empty(...)`
@@ -24,7 +53,7 @@ These APIs are semantic hubs and must not be implemented as unrelated shortcuts.
 
 Normative rule:
 - `count(...)` is a strict countability query
-- `empty(...)` is a PHP-aligned emptiness query with one explicit Prism++ deviation for `"0"`
+- `empty(...)` is a collection cardinality query, including strings
 - `isset(...)` is a null-sensitive presence query
 - `isset(...)` and `empty(...)` must be fully non-mutating
 - keyed `isset(...)` must not collapse into pure key-existence semantics when the stored value can be `null`
@@ -32,9 +61,9 @@ Normative rule:
 
 ### v0.2 ownership-handle admission
 
-For `shared<T>` and `unique<T>`, `isset` means the handle is present and `empty`
-means it is absent. Neither reads the pointee or copies the handle. A present
-handle to false/zero is still present and not empty. Conditions, unary negation
+For `shared<T>` and `unique<T>`, `isset` means the handle is present; it neither
+reads the pointee nor copies the handle. `empty` is not supported on these wrappers.
+A present handle to false/zero is still present. Conditions, unary negation
 and strict null comparisons use that same presence meaning.
 Weak handles require explicit locking; implicit conditions, negation, probes and
 null comparisons are rejected during preparation. Legacy runtime weak observers
@@ -65,41 +94,11 @@ Examples:
 
 ## 4. `empty(...)`
 
-`empty(...)` is intended to stay close to PHP for value states that semantically make sense, with one deliberate Prism++ deviation:
-- `empty("0")` is `false` in Prism++
-
-Normative rule:
-- for supported value families, `empty(x)` follows PHP-style emptiness
-- `"0"` remains the one documented exception and evaluates as not empty
-- unsupported/nonsensical type families must runtime-error rather than inventing ad-hoc emptiness semantics
-
-`empty(x)` is `true` for:
-- `null`
-- `false`
-- `0`
-- `0.0`
-- empty string `""`
-- empty countable / empty array-like value
-- missing keyed lookup
-- invalid keyed lookup shape
-- wrapper states that expose no present value under the same probe semantics
-
-`empty(x)` is `false` for:
-- `"0"`
-- any other non-empty string
-- any non-empty countable
-- present non-empty object-handle / scalar / wrapper values that have a visible present value and are not otherwise empty by the supported rule
-
-Examples:
-- `empty(null)` -> `true`
-- `empty(false)` -> `true`
-- `empty(0)` -> `true`
-- `empty(0.0)` -> `true`
-- `empty("")` -> `true`
-- `empty([])` -> `true`
-- `empty("0")` -> `false`
-
-This single documented difference from PHP must remain stated anywhere `empty(...)` semantics are described.
+The v0.2 collection-only amendment above governs admission and failure. Empty
+strings and collections return true; nonempty strings/collections return false.
+All other families reject, statically where known and dynamically otherwise.
+Missing/invalid keyed paths throw without creation. Do not use this operation as
+negated truthiness or a null-sensitive absence test.
 
 ## 5. `isset(...)`
 
@@ -119,26 +118,13 @@ Examples:
 
 ### Result wrapper states
 
-For supported scalar and boxed mixed/dynamic payloads, probes follow this state table. They do not throw
-merely because a Result is in a non-value state, and do not extract that absent payload.
-
-| State | `isset` | `empty` |
-| --- | --- | --- |
-| Value payload in any Result family | true | Payload emptiness |
-| `result<T>` failure | false | true |
-| `result_or_false<T>` false sentinel | false | true |
-| `result_or_bool<T>` false sentinel | false | true |
-| `result_or_bool<T>` true sentinel | true | false |
-
-A wrapped boolean-false **payload** is therefore present, unlike the false sentinel.
-A wrapped `"0"` is present and not empty, even though it is falsey in a condition.
-See [the condition/presence/extraction distinctions](conditional_expression_matrix.md#result-truthiness-is-not-success-or-presence).
-Ordinary exceptions evaluating the probe operand still propagate.
-
-A successful Result carrying boxed null is still in its value state: `isset` is
-true and `empty` is true. Probing the extracted box directly instead reports null
-as absent. This follows the wrapper-state rule, not implicit recursive unwrapping
-for presence. Payload emptiness still delegates to the box's scalar/container rules.
+For supported scalar and boxed payloads, `isset` observes the Result state:
+value payloads and the true sentinel are present; failure and false sentinels are
+absent. A successful Result carrying boxed null is still in its value state.
+Probing the extracted box directly instead reports null as absent.
+No Result family has an implicit `empty` contract. Payload emptiness requires
+explicit extraction and a supported resulting collection/string.
+Ordinary exceptions evaluating the operand propagate.
 
 ## 6. Non-mutating lookup rule
 
@@ -160,10 +146,10 @@ This applies to:
 Keyed probes traverse lazily, left-to-right. Evaluate/bind the root once, check that
 the current receiver supports lookup, evaluate the reached key once, and inspect its
 entry. Missing/null/non-container intermediates end the probe immediately (`isset`
-false, `empty` true); later key expressions do not run. A null/invalid root therefore
+false, `empty` throws); later key expressions do not run. A null/invalid root therefore
 skips even the first key. Ordinary exceptions in evaluated root/key expressions
-propagate. An invalid runtime key shape yields the probe's absent result, not a
-blanket exception catch. Statically unsupported key/type combinations are preparation
+propagate. An invalid runtime key shape yields false for `isset`, and throws for
+`empty`; neither uses a blanket exception catch. Statically unsupported key/type combinations are preparation
 errors under the v0.2 diagnostic policy.
 
 Key expressions may mutate the root. Re-resolve the reached prefix from the bound
@@ -190,17 +176,10 @@ Required rule:
 At minimum, coverage must prove:
 - `count(42)` throws
 - `count(mixed_t(hash))` returns size
-- `empty(null)` is `true`
-- `empty(false)` is `true`
-- `empty(0)` is `true`
-- `empty(0.0)` is `true`
-- `empty("")` is `true`
-- `empty("0")` is `false`
-- `empty(missing keyed lookup)` is `true`
-- `isset(missing keyed lookup)` is `false`
-- `isset(existing null)` is `false`
-- `isset(result_or_false(false-sentinel))` is `false`
-- `isset(result_or_bool(false-sentinel))` is `false`
+- `empty("")` is true and `empty("0")` is false
+- `empty` on null/scalars/wrappers rejects
+- `empty` on a missing keyed lookup throws
+- `isset` retains null-sensitive wrapper state semantics
 - no autovivification occurs during `isset(...)` / `empty(...)`
 
 ## Compiler object collections
@@ -208,6 +187,6 @@ At minimum, coverage must prove:
 The compiler module registers its two collections with the countable lookup
 protocol. `isset(collection, key)` tests live membership, since null records cannot
 be inserted. Required reads throw without insertion; `unset` tolerates absence.
-`empty(collection)` tests live count, and `empty(collection, key)` is true only
-for absent membership (present records are non-null object handles). See
+`empty(collection)` tests live count. Record-valued keyed entries do not acquire
+an emptiness contract; use `isset(collection, key)` for membership. See
 `specs/compiler_storage.md` for source syntax and iteration rules.

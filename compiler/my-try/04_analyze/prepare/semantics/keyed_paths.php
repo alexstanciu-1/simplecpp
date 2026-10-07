@@ -69,9 +69,6 @@ final class Keyed_Path_Preparation
 		$step->key_conversion = Conversion_Preparation::decide($key->type, $key_target, conversion_context::argument);
 		$steps /** Storage<prepared_keyed_step> */ = $path->steps;
 		$steps->append($step);
-		if ($leaf && !$removing) {
-			Value_Probe_Preparation::require_type($signature->value);
-		}
 		return $element;
 	}
 

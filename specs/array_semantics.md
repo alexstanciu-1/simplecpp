@@ -2,6 +2,11 @@
 Doc Status: normative
 Status: Active
 
+For v0.2, [collection-only emptiness](count_empty_isset_contract.md#v02-collection-only-emptiness--2026-10-07)
+supersedes old scalar/null/missing-key `empty` rules in this document. Keyed `empty`
+requires an existing string/collection leaf; missing/null and invalid paths throw.
+`isset`/`unset` retain their separately specified absence behavior and lazy traversal.
+
 See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 See also:
 - [Data notation and initialization interfaces](data_initialization.md) — the v0.2 construction standard; implementation availability is tracked separately
@@ -337,16 +342,16 @@ empty($a["missing"])
 ```
 
 Result:
-- `true`
+- throws `invalid_empty_operand` without creating an entry
 
 ### 5.2 Existing key
 
 `empty($a[k])` follows the same top-level runtime contract documented in `specs/count_empty_isset_contract.md`.
 
 In particular:
-- `null`, `false`, `0`, `0.0`, `""`, and empty array/table values are empty
-- `"0"` remains the one deliberate Prism++ exception and is not empty
-- unsupported/nonsensical type families must runtime-error rather than inventing new keyed-emptiness behavior
+- only strings and collection-valued leaves qualify; zero elements means empty
+- `"0"` is nonempty; null, numeric/bool scalars and wrappers do not qualify
+- known unsupported leaf types reject during preparation; dynamic kind failures throw
 
 ## 6. Top-level keyed write
 
@@ -501,7 +506,7 @@ Important distinction:
 - append on array/hash carriers
 - append on `mixed(kind=null)` with autovivification
 - `isset($a[k])` with null-sensitive semantics
-- `empty($a[k])` under the PHP-aligned Prism++ emptiness rule above, with the documented `"0"` exception
+- `empty($a[k])` for an existing collection/string leaf; missing, null and unsupported kinds throw under the v0.2 collection-only contract
 - `unset($a[k])` as no-op on missing keys and removal on existing keys
 - typed value destinations fed by array reads through the ordinary typed-boundary rules
 

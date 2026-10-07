@@ -57,10 +57,11 @@ enum truthiness_operation
 	case boolean_identity;
 	case scalar_condition;
 	case nullable_condition;
-	case ownership_presence;
+	case value_presence;
 	case result_condition;
 	case error_condition;
 	case boxed_condition;
+	case always_true;
 }
 
 final class truthiness_decision

@@ -69,7 +69,7 @@ void mixed_construction_is_independent() {
 		"mixed keyed factory preserves its family");
 	auto dynamic = value::make_container();
 	scpp::index_append(dynamic, value{int_t<>{7LL}});
-	require(scpp::isset(dynamic, 0).native_value() && !scpp::empty(dynamic, 0).native_value(),
+	require(scpp::isset(dynamic, 0).native_value(),
 		"native integer probes use the same tagged path");
 	require(scpp::isset(dynamic, int_t<>{0LL}).native_value()
 		&& scpp::isset(dynamic, string_t{"0"}).native_value() && scpp::isset(dynamic, "0").native_value(),
@@ -215,10 +215,12 @@ void conversions_and_probes() {
 	require(!scpp::condition_truthy(zero).native_value(), "string zero condition");
 	require(!scpp::empty(zero).native_value(), "string zero is not empty");
 	value none;
-	require(!scpp::isset(none).native_value() && scpp::empty(none).native_value(), "null probes");
+	require(!scpp::isset(none).native_value(), "null presence");
+	require_failure([&] { (void)scpp::empty(none); }, "null is not a collection");
 	require(!scpp::condition_truthy(none).native_value(), "null condition");
 	value false_value{scpp::bool_t{false}};
-	require(scpp::isset(false_value).native_value() && scpp::empty(false_value).native_value(), "present false probes");
+	require(scpp::isset(false_value).native_value(), "false is present");
+	require_failure([&] { (void)scpp::empty(false_value); }, "false is not a collection");
 	require(!scpp::condition_truthy(false_value).native_value(), "false condition");
 	value container = value::make_container();
 	require(scpp::condition_truthy(container).native_value() && scpp::empty(container).native_value(), "empty object presence vs emptiness");
@@ -230,7 +232,7 @@ void conversions_and_probes() {
 	scpp::index_store(container, key, zero);
 	require(scpp::isset(container, key).native_value() && !scpp::empty(container, key).native_value(), "keyed string zero");
 	require(!scpp::isset(container, scpp::mixed_t{false}).native_value(), "invalid probe key is absent");
-	require(scpp::empty(container, scpp::mixed_t{false}).native_value(), "invalid empty key is empty");
+	require_failure([&] { (void)scpp::empty(container, scpp::mixed_t{false}); }, "invalid empty key fails");
 	require(!scpp::keyed_ready(&none, true), "null unset parent is no-op");
 	require(!scpp::keyed_ready(&zero, false), "scalar probe parent is absent");
 	require_failure([&] { (void)scpp::keyed_ready(&zero, true); }, "scalar unset parent rejects");

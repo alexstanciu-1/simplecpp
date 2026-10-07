@@ -14,7 +14,7 @@ $directory = sys_get_temp_dir() . '/scpp_probes_' . bin2hex(random_bytes(6));
 mkdir($directory);
 $path = $directory . '/main.phs';
 try {
-	$valid = 'function source(): ?int { return null; } function stable(): int { return 7; } '
+	$valid = 'function source(): string { return ""; } function stable(): int { return 7; } '
 		. '$a bool = isset(source()); $b bool = empty(source()); return $b;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
@@ -32,12 +32,12 @@ try {
 	}
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
-	file_put_contents($path, str_replace('source(): ?int { return null;', 'source(): void { return;', $valid));
+	file_put_contents($path, str_replace('source(): string { return "";', 'source(): int { return 0;', $valid));
 	foreach ([[$path], []] as $changed) {
 		$compiler->sync($changed);
 		$failed = false;
 		try { $compiler->prepare(); }
-		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'value probes require'); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'empty requires'); }
 		probe_check($failed && Model::$cpp_files->is_empty(), 'Probe failure published stale output');
 		probe_check($stable->version === $version, 'Probe change rebuilt unrelated body');
 	}

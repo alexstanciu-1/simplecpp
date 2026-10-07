@@ -1,6 +1,7 @@
 #pragma once
 
 #include "operators/probe/probe.hpp"
+#include "scpp/value_p.hpp"
 
 #include <tuple>
 #include <type_traits>
@@ -254,6 +255,9 @@ template <typename T>
 inline bool_t isset_one(const weak_p<T> &value) {
 	return bool_t(!value.expired().native_value());
 }
+
+template <typename T>
+inline bool_t isset_one(const value_p<T> &) { return bool_t(true); }
 
 template <typename T>
 requires (

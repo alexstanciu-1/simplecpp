@@ -73,7 +73,6 @@ foreach (['struct', 'class'] as $kind) {
 foreach ([
 	'struct C { int $n; } $a ?C; $n = $a->n;',
 	'struct C {} struct D {} $v D; $a ?C = $v;',
-	'struct C {} $a ?C; if ($a) {}',
 	'struct C {} $a ?C; $b = empty($a);',
 	'struct C {} $a ?C; $b = $a ?? new C();',
 ] as $source) {

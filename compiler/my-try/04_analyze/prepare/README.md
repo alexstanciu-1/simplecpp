@@ -282,10 +282,10 @@ remain gated. Eager parent effect checks inspect both indexed children.
 `Keyed_Path_Preparation` binds lazy probe/removal recipes through the same signature
 and key-domain workers. Registry probe/removal opt-ins are independent of read/write
 permission. Each step observes bracket syntax; no value-read facts are manufactured.
-Unknown mixed keys stay mixed until runtime lookup, allowing probes to report an
-invalid shape without throwing a required-value conversion. Removal rejects such keys.
+Unknown mixed keys stay mixed until runtime lookup: `isset` reports false for an
+invalid shape, while `empty` and removal reject it.
 `Value_Probe_Preparation::require_type` owns both ordinary and leaf-value admission,
-including registered containers, nullable scalars and Result scalars. Signature binding
+with separate presence and collection-emptiness contracts. Signature binding
 does not require copy capability; copied reads and assignment results request it at
 their own boundaries. Vector-element removal and direct property unset remain gated.
 `Cleanup_Preparation` separately admits nullable-owner unset and defined scalar,
@@ -389,8 +389,12 @@ restrictions also cover take. `Condition_Truthiness` owns error presence tests; 
 logical negation records that decision instead of introducing a second error-state rule.
 
 `Value_Probe_Preparation` owns single-value `isset`/`empty` admission and attached
-boolean operation facts on `value_probe_node`. Scalars, nullable scalars, Result
-scalar/boxed payloads, boxed values and literal null are supported. Keyed paths use
+boolean operation facts on `value_probe_node`. Presence admits scalars, inline records,
+nullable scalar/record values, supported Result payloads, boxed values and literal null.
+Emptiness admits strings and built-in vector/hash collections; boxed values require
+a runtime string/table kind. Wrappers do not delegate emptiness to their payload.
+Statically unsupported operands reject in preparation; unsupported boxed kinds and
+missing keyed emptiness targets throw at runtime. Keyed paths use
 the shared path owner described above; property paths remain deferred. Emission
 uses separate runtime probe helpers, not condition truthiness: `empty("0")` is false.
 Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
@@ -400,8 +404,8 @@ Nullable scalar and inline-record boundaries use `conversions/nullable.php`: typ
 construction, exact-payload wrapping/copying and checked required-value extraction.
 `Capability_Preparation` recursively queries nullable payload copy permission through
 completed declarations and their dependencies. Empty construction/reset does not copy;
-ordinary extraction does. Inline-record probe/condition and join admission remains
-separate from this value-boundary permission. Explicit casts
+ordinary extraction does. Inline-record presence and conditions observe without copying;
+selection joins remain a separate admission boundary. Explicit casts
 remain distinct (notably the empty nullable-string exception). `operators/presence.php`
 selects strict null presence comparisons. Null literals carry a non-storable sentinel;
 `?T` resolves to the registered nullable semantic definition and shared application
@@ -409,7 +413,9 @@ interning. No source spelling test grants a nullable role. C++ consumes these de
 it does not infer payload conversions. See [Chapter 05](../../docs/catalog/05_dynamic_boundaries.md)
 for the bounded truthiness/coalescing slice and deferred broader operations/defaults.
 `Condition_Truthiness` admits nullable scalars through payload truthiness, with empty
-false. `Coalesce_Expression_Preparation` separately selects a required scalar value
+false. Inline records select always-true observation with operand evaluation preserved;
+nullable inline records select presence-only observation. Neither copies the payload.
+`Coalesce_Expression_Preparation` separately selects a required scalar value
 domain and exact conversions; its dedicated syntax/facts preserve lazy fallback and
 single evaluation without reusing truthiness as presence. Both operands are validated
 even when the scalar-left form never needs its fallback at runtime.

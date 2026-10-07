@@ -1,5 +1,16 @@
 # Conditional / Coalesce Runtime Matrix
 Doc Status: normative
+
+## v0.2 inline-record conditions — 2026-10-07
+
+Ordinary inline structs and `value<Class>` records are always truthy, independently
+of field values. A nullable inline record is false when absent and otherwise
+delegates to its always-truthy payload. Observation evaluates its operand once but
+does not copy or consume it; noncopyable payloads are supported. All condition
+consumers share this rule. Explicit boolean casts remain a separate contract.
+`isset` observes presence; `empty` now has the distinct
+[collection-only contract](count_empty_isset_contract.md#v02-collection-only-emptiness--2026-10-07)
+and must not be inferred from negated truthiness or absence.
 This document defines the initial centralized runtime matrix for helper-based lowering of:
 - `??` via `php::coalesce_eval(...)`
 - `?:` / ternary via `php::ternary_eval(...)`

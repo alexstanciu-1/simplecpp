@@ -19,6 +19,7 @@ final class CPP_Keyed_Path
 		$result_type = $removing ? 'void' : 'scpp::bool_t';
 		$stop = 'return;';
 		if (!$removing) { $stop = 'return scpp::bool_t{' . ($emptiness ? 'true' : 'false') . '};'; }
+		if (!$removing && $emptiness) { $stop = 'scpp::detail::throw_invalid_empty();'; }
 		$text = '([&]() -> ' . $result_type . ' { ' . ($removing ? 'auto& ' : 'const auto& ')
 			. $root . ' = ' . $emitter->expression($path->root) . '; ';
 		$resolver = 'keyed_resolve_' . $id . '_0';

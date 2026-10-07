@@ -1,5 +1,11 @@
 Doc Status: normative
 
+For v0.2, [collection-only emptiness](../../specs/count_empty_isset_contract.md#v02-collection-only-emptiness--2026-10-07)
+supersedes legacy scalar/wrapper `empty` behavior below. Only strings and collection
+kinds qualify; missing/invalid keyed paths and unsupported boxed kinds throw
+`invalid_empty_operand`. Wrappers do not delegate emptiness. The semantic compiler
+rejects statically known unsupported inputs before runtime lowering.
+
 
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
@@ -360,12 +366,13 @@ initialization/assignment. Whole-variable `unset` resets the handle; aliases rem
 bound. Null assignment through a native alias/reference parameter is valid, while
 `unset` directly on either remains rejected. `clean` does not accept these handles.
 Empty unique construction is not a copy and does not enable ordinary unique copying.
-Shared/unique conditions, negation, `isset`, `empty` and strict null comparisons
+Shared/unique conditions, negation, `isset` and strict null comparisons
 inspect handle presence, never the pointee's truthiness. Weak implicit presence
 forms reject during preparation; use the
 [explicit locking source operation](../../specs/type_use_modifiers.md#v02-weak-derivation-and-explicit-locking--2026-10-06).
 The initial source slice does not add null argument/return conversions, handle-valued
 selection joins, explicit bool casts or direct handle logical binary operations.
+The v0.2 `empty` operation rejects ownership wrappers; use `!isset` for absence.
 Source class/struct storage and explicit allocation are governed by the
 [bounded owned-construction contract](../../specs/type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06):
 bare classes use shared ownership, bare structs use values, and direct typed locals

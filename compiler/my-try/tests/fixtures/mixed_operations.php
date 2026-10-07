@@ -3,24 +3,23 @@
 /* Explicit casts, condition interpretation and non-mutating one-value probes. */
 $fixtures = [];
 $states = [
-	['null', false, false, true], ['false', false, true, true], ['true', true, true, false],
-	['0', false, true, true], ['7', true, true, false], ['0.0', false, true, true],
-	['1.5', true, true, false], ['""', false, true, true], ['"0"', false, true, false],
-	['"false"', true, true, false], ['"hello"', true, true, false],
+	['null', false, false], ['false', false, true], ['true', true, true],
+	['0', false, true], ['7', true, true], ['0.0', false, true],
+	['1.5', true, true], ['""', false, true], ['"0"', false, true],
+	['"false"', true, true], ['"hello"', true, true],
 ];
-foreach ($states as $index => [$literal, $truthy, $present, $empty])
+foreach ($states as $index => [$literal, $truthy, $present])
 {
 	$fixtures['mixed_probe_scalar_' . $index] = [
 		'function once(mixed $v, int &$n): mixed { $n++; return $v; } '
 			. '$v mixed = ' . $literal . '; $n = 0; $branch = 0; '
 			. 'if (once($v, $n)) { $branch = 1; } else { $branch = 2; } '
 			. '$selected = once($v, $n) ? 1 : 2; $negated = !once($v, $n); '
-			. '$present = isset(once($v, $n)); $empty = empty(once($v, $n));',
-		'local_n.native_value() == 5 && local_branch.native_value() == ' . ($truthy ? '1' : '2')
+			. '$present = isset(once($v, $n));',
+		'local_n.native_value() == 4 && local_branch.native_value() == ' . ($truthy ? '1' : '2')
 			. ' && local_selected.native_value() == ' . ($truthy ? '1' : '2')
 			. ' && local_negated.native_value() == ' . ($truthy ? 'false' : 'true')
-			. ' && local_present.native_value() == ' . ($present ? 'true' : 'false')
-			. ' && local_empty.native_value() == ' . ($empty ? 'true' : 'false'),
+			. ' && local_present.native_value() == ' . ($present ? 'true' : 'false'),
 	];
 }
 $fixtures['mixed_condition_consumers'] = [

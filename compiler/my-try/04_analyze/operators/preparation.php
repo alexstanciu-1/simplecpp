@@ -146,7 +146,9 @@ final class Operator_Preparation
 		if ($source_operator === operator_kind::logical_not)
 		{
 			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope))
-				|| Boxed_Conversions::is_boxed($operands[0]) || (Ownership_Conversions::role($operands[0]) !== null))
+				|| Boxed_Conversions::is_boxed($operands[0]) || (Ownership_Conversions::role($operands[0]) !== null)
+				|| (Type_Queries::source_record($operands[0]) !== null)
+				|| (Nullable_Conversions::payload($operands[0]) !== null))
 			{
 				$decision = new operator_decision();
 				$decision->source_operator = $source_operator;

@@ -50,6 +50,15 @@ evaluation order and incremental signature-name invalidation.
 
 ## Non-blocking follow-ups
 
+### CH15-MISSING-01 — optional absence spelling
+
+Agreed 2026-10-07: consider a `missing` operation/name after the collection-only
+`empty` change. For now use `!isset(...)`. Decide whether any new spelling is just
+an alias or needs distinctions among null, missing keys, expired handles and Result
+non-value states. No syntax or additional semantics are approved yet. Non-blocking
+for v0.2. Future custom collection emptiness opt-in must mean zero elements, not
+invalid/uninitialized/failed state; its registration surface is deferred too.
+
 ### CH15-METHOD-LIFETIME-01 — remaining instance receiver lifetimes
 
 Recorded 2026-10-07 after the approved bounded instance-method slice. Unsupported

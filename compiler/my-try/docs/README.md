@@ -69,7 +69,9 @@ distinguishes completed duplicate cards, intentional gates and later chapter own
 The [nullable normalization checkpoint](catalog/10_objects.md#nullable-handle-normalization--2026-10-07)
 implements the agreed no-double-absence handle model. The [inline-record checkpoint](catalog/10_objects.md#nullable-inline-record-boundaries--2026-10-07)
 adds construction, payload-aware copying, checked extraction and null comparisons.
-Next: nullable-record probes/truthiness, then selection joins; those remain gated.
+The [record observations/collection-only emptiness checkpoint](catalog/10_objects.md#record-observation-and-collection-only-empty--2026-10-07)
+adds noncopying `isset`/conditions and replaces absence-style `empty` consistently.
+Next: nullable-record selection joins; those remain gated.
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are

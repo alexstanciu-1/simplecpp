@@ -55,7 +55,7 @@ return [
 	],
 	'dynamic_checked_paths' => [
 		'function run(): bool { $a dynamic = {child: {n: 1}}; unset($a["child"]["n"]); '
-			. 'return empty($a["child"]["n"]) && !isset($a["child"]["n"]); } '
+			. 'return !isset($a["child"]["n"]); } '
 			. 'function absentwrite(): void { $a dynamic = null; $a["n"] = 1; } '
 			. 'function scalariteration(): void { $a dynamic = 7; foreach ($a as $item) {} }',
 		'([&]() { int caught = 0; try { function_absentwrite(); } catch (const std::runtime_error&) { ++caught; } '

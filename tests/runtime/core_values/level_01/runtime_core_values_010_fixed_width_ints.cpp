@@ -33,7 +33,7 @@ int main() {
 	assert(scpp::php::to_string(cast_down).native_value() == "127");
 	assert(scpp::php::condition_truthy(cast_down).native_value() == true);
 	assert(scpp::php::is_int(cast_down).native_value() == true);
-	assert(scpp::php::empty(scpp::int_t<std::uint8_t>(0)).native_value() == true);
+	runtime_test::expect_throw<scpp::runtime_error>([&]() { (void)scpp::php::empty(scpp::int_t<std::uint8_t>(0)); });
 
 	return 0;
 }

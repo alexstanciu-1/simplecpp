@@ -87,7 +87,10 @@ auto keyed_child(const R *receiver, const K &key, bool removing) {
 template <typename R, typename K>
 bool_t keyed_probe(const R *receiver, const K &key, bool emptiness) {
 	const auto *entry = keyed_lookup(receiver, key, false);
-	if (!entry) return bool_t{emptiness};
+	if (!entry) {
+		if (emptiness) detail::throw_invalid_empty();
+		return bool_t{false};
+	}
 	return emptiness ? ::scpp::php::empty(*entry) : ::scpp::php::isset(*entry);
 }
 

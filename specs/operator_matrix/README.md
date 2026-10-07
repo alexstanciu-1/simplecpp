@@ -2,6 +2,12 @@
 Doc Status: normative
 Status: Derived coordination specs
 
+v0.2 migration: `empty_value`/`empty_keyed` rows follow the
+[collection-only contract](../count_empty_isset_contract.md#v02-collection-only-emptiness--2026-10-07).
+Native/dynamic noncollection inputs throw; the semantic compiler rejects known
+unsupported types during preparation. Historical generated seeds must be regenerated
+from the updated rows before they are used as v0.2 expectations.
+
 ---
 
 ## 1. Purpose
@@ -139,4 +145,3 @@ Condition-truthiness note:
 - ternary / elvis condition semantics follow the shared `condition_truthiness` family, not explicit `(bool)` cast rules
 - `string_t` is truthy unless it is `""` or `"0"`
 - typed/explicit `string_t -> bool_t` normalization remains narrower and may runtime-error on other literals
-

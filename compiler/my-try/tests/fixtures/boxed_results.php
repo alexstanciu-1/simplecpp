@@ -35,7 +35,6 @@ foreach (['mixed' => 'scpp::mixed_t', 'dynamic' => 'scpp::dynamic_t<>'] as $fami
 		$boxed_result_fixtures[$prefix . '_states'] = [
 			'function truth(' . $type . ' $v): bool { if ($v) { return true; } return false; } '
 				. 'function present(' . $type . ' $v): bool { return isset($v); } '
-				. 'function vacant(' . $type . ' $v): bool { return empty($v); } '
 				. 'function container(): ' . $type . ' { $v ' . $family . ' = {}; return $v; } '
 				. 'function change(' . $family . ' &$v): void { $v["n"] = 9; } '
 				. 'function source(' . $type . ' $v, int &$calls): ' . $type . ' { $calls++; return $v; } '
@@ -45,17 +44,16 @@ foreach (['mixed' => 'scpp::mixed_t', 'dynamic' => 'scpp::dynamic_t<>'] as $fami
 				. 'scpp::error_t err{scpp::string_t{"old"}}; scpp::bool_t flag{false}; B out{scpp::int_t<>{91LL}}; '
 				. 'for (const auto& value : {B{}, B{scpp::bool_t{false}}, B{scpp::int_t<>{0LL}}, B{scpp::string_t{"0"}}}) { '
 				. 'R success{value}; if (function_truth(success).native_value() || !function_present(success).native_value()) return false; '
-				. 'if (function_vacant(success).native_value() == (value.kind() == B::kind_t::string_v)) return false; '
 				. 'if (!function_extract(success, out, calls' . $native_outputs . ').native_value() || out.kind() != value.kind()) return false; } '
 				. ($wrapper === 'result' ? 'if (err.has_error().native_value()) return false; ' : '')
 				. 'out = B{scpp::int_t<>{91LL}}; R failed{' . $failure . '}; '
 				. 'if (function_extract(failed, out, calls' . $native_outputs . ').native_value() || out.get_int().native_value() != 91 '
-				. '|| function_truth(failed).native_value() || function_present(failed).native_value() || !function_vacant(failed).native_value()) return false; '
+				. '|| function_truth(failed).native_value() || function_present(failed).native_value()) return false; '
 				. ($wrapper === 'result' ? 'if (!err.has_error().native_value()) return false; ' : '')
 				. ($wrapper === 'result_or_bool' ? 'R yes{scpp::true_sentinel}; if (!function_extract(yes, out, calls, flag).native_value() '
 					. '|| !flag.native_value() || out.get_int().native_value() != 91 || !function_truth(yes).native_value() '
-					. '|| !function_present(yes).native_value() || function_vacant(yes).native_value()) return false; ' : '')
-				. 'auto tree = function_container(); if (!function_present(tree).native_value() || !function_vacant(tree).native_value()) return false; '
+					. '|| !function_present(yes).native_value()) return false; ' : '')
+				. 'auto tree = function_container(); if (!function_present(tree).native_value()) return false; '
 				. ($family === 'dynamic' ? 'if (!function_truth(tree).native_value()) return false; '
 					: 'bool rejected = false; try { (void)function_truth(tree); } catch (const std::exception&) { rejected = true; } if (!rejected) return false; ')
 				. 'if (!function_extract(tree, out, calls' . $native_outputs . ').native_value()) return false; function_change(out); '

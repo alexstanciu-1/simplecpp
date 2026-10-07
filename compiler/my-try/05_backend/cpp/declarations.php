@@ -73,7 +73,10 @@ final class CPP_Declarations
 	/** Render the prepared condition operation using the established runtime authority. */
 	public static function truthiness(string $expression, truthiness_decision $decision, cpp_generation_context $context): string
 	{
-		if ($decision->operation === truthiness_operation::ownership_presence) {
+		if ($decision->operation === truthiness_operation::always_true) {
+			return '(static_cast<void>(' . $expression . '), true)';
+		}
+		if ($decision->operation === truthiness_operation::value_presence) {
 			return 'static_cast<bool>((' . $expression . ').has_value())';
 		}
 		if ($decision->operation === truthiness_operation::boolean_identity) {

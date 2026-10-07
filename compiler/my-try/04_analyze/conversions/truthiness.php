@@ -8,12 +8,18 @@ final class Condition_Truthiness
 	/** Wrapper conditions use their state/payload contract, never explicit bool casts. */
 	public static function decide(canonical_type_use $source): truthiness_decision
 	{
+		if ((Type_Queries::source_record($source) !== null) && !Type_Queries::is_class_handle($source)) {
+			$decision = new truthiness_decision();
+			$decision->source_type = $source;
+			$decision->operation = truthiness_operation::always_true;
+			return $decision;
+		}
 		if (Ownership_Conversions::role($source) !== null)
 		{
 			Ownership_Conversions::require_presence($source);
 			$decision = new truthiness_decision();
 			$decision->source_type = $source;
-			$decision->operation = truthiness_operation::ownership_presence;
+			$decision->operation = truthiness_operation::value_presence;
 			return $decision;
 		}
 		if (Boxed_Conversions::is_boxed($source))
@@ -43,11 +49,14 @@ final class Condition_Truthiness
 		}
 		$payload = Nullable_Conversions::payload($source);
 		if ($payload !== null) {
-			Nullable_Conversions::require_scalar_payload($payload);
+			Nullable_Conversions::require_value_payload($payload);
 			if ($source->by_value()) { throw new \RuntimeException('S2S nullable conditions do not support storage modifiers'); }
 			$decision = new truthiness_decision();
 			$decision->source_type = $source;
 			$decision->operation = truthiness_operation::nullable_condition;
+			if (Type_Queries::source_record($payload) !== null) {
+				$decision->operation = truthiness_operation::value_presence;
+			}
 			return $decision;
 		}
 		if (!Conversion_Preparation::is_scalar($source)) {

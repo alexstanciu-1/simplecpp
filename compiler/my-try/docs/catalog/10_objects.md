@@ -462,8 +462,38 @@ Includes class/struct copy independence, null checks, calls/returns/properties,
 empty access error code, noncopyable empty/reset, destructor cleanup and cross-file
 copy-capability invalidation/retry/repair. No native compiler rebuild or conversion.
 
-Next discussion: nullable-record probes/truthiness, without conflating presence with
-the existing payload-delegating condition contract; selection joins follow.
+The following checkpoint settles record observations; selection joins follow.
+
+## Record observation and collection-only empty — 2026-10-07
+
+Approved normative change: [collection-only emptiness](../../../../specs/count_empty_isset_contract.md#v02-collection-only-emptiness--2026-10-07).
+`empty` means zero elements for lists, keyed collections and strings. Records,
+scalars, null and wrappers do not acquire that contract. Known unsupported operands
+and keyed leaf types reject during preparation; mixed/dynamic kind failures and
+missing/invalid paths throw `invalid_empty_operand`. Traversal remains lazy and
+non-creating. `isset`/`!isset` retain presence/absence semantics; the possible `missing`
+spelling is non-blocking CH15 debt. User-defined collection registration is deferred.
+
+Inline records are always present/truthy, independent of fields. Nullable records
+delegate to this rule: absent false, present true. Observations evaluate the operand
+once without copying or consuming it, including noncopyable record types.
+Shared preparation selects `always_true` or general `value_presence` facts;
+emission never rediscovers record semantics. Plain and keyed probes share
+operation-specific admission, not one catch-all supported-type list. Runtime `empty`
+uses explicit collection overloads and boxed-kind dispatch, with no generic false
+fallback or wrapper delegation. Existing stage ownership and AST shapes are unchanged.
+
+Evidence: `/tmp/ch10-collection-probes-final/` passes 28 generated programs without
+PCH; `/tmp/ch10-probe-migration-final/` passes 9 focused PHP suites and 134 selected
+generated regressions with PCH; `/tmp/ch10-emptiness-runtime/` passes 7 affected
+runtime executables without PCH. Earlier fixture failures exposed a missing
+`value_p` presence overload and test-transport newline; both are repaired.
+Legacy absence tests now use `!isset`, with explicit new empty rejection/error tests.
+Authoritative specs and operator-matrix empty rows record the intentional v0.2 break.
+No native compiler rebuild or conversion was performed.
+
+Next: nullable-record ternary/Elvis/coalescing joins. Property-path probe admission
+and custom emptiness registration are not added by this slice.
 
 ## Chapter 09 carryovers
 
@@ -506,12 +536,12 @@ a native compiler rebuild. Existing checkpoint suites supply behavioral evidence
 
 ### Actual remaining work and owners
 
-1. **Nullable inline-record probes/conditions and joins — next discussion.**
+1. **Nullable inline-record joins — next discussion.**
    The normalization checkpoint above settles TYPE-VAR-004 for class handles and
    updates the earlier audit result. Nullable inline portions of TYPE-PARAM-004/
    TYPE-PROP-002 and the CH09 carryover now have bounded construction,
-   payload-dependent copy capability and checked extraction. Probes, condition
-   admission and joins remain. Bare handles
+   payload-dependent copy capability, checked extraction, presence and condition
+   admission. Selection joins remain. Bare handles
    retain their own absence state; inline records require a real nullable wrapper.
 2. **Property operation completeness.** Plain reads/writes are covered. Compound
    assignment and prefix/postfix mutation on instance/static properties remain

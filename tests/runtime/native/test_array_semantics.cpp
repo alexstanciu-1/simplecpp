@@ -124,8 +124,8 @@ void test_php_probe_helpers_preserve_null_sensitive_non_mutating_contract() {
 	assert(scpp::php::isset(root.get("child").get("name")).native_value() == true);
 	assert(scpp::php::isset(root.get("child").get("maybe")).native_value() == false);
 	assert(scpp::php::isset(root.get("child").get("missing")).native_value() == false);
-	assert(scpp::php::empty(root.get("child").get("maybe")).native_value() == true);
-	assert(scpp::php::empty(root.get("child").get("missing")).native_value() == true);
+	scpp_test::expect_throw<scpp::runtime_error>([&]() { (void)scpp::php::empty(root.get("child").get("maybe")); });
+	scpp_test::expect_throw<scpp::runtime_error>([&]() { (void)scpp::php::empty(root.get("child").get("missing")); });
 	assert(root.size().native_value() == before_root_size);
 	assert(root.get("child").size().native_value() == before_child_size);
 }
