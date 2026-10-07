@@ -29,9 +29,8 @@ final class Method_Preparation
 		$parameters /** Storage<parameter_node> */ = $syntax->parameters;
 		foreach ($parameters as $parameter)
 		{
-			if ($parameter->property_backed || $parameter->variadic || ($parameter->mode !== passing_mode::value)
-				|| ($parameter->name === 'this')) {
-				throw new \RuntimeException('Methods require ordinary fixed by-value parameters, not set: or $this');
+			if ($parameter->property_backed || ($parameter->name === 'this')) {
+				throw new \RuntimeException('Ordinary methods do not accept set: parameters or a parameter named $this');
 			}
 		}
 		$method = object_cast($syntax->occurrence(), collected_method::class);

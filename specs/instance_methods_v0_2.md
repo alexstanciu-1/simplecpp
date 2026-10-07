@@ -17,11 +17,32 @@ Property and method names occupy separate lookup categories and may coincide.
 Ordinary methods require an explicit return type and use the ordinary callable
 argument/default/conversion and return rules. Defaults are not a second method-specific
 mechanism. Constructor-specific `set:` inputs remain constructor-only. The bounded
-implementation admits fixed by-value parameters and value/void returns. Static calls,
-overloads, variadics, reference parameters/returns, inheritance/virtual dispatch and
+implementation admits value/void returns. Overloads, reference returns, inheritance/virtual dispatch and
 bound callable values remain separate slices, not implicit support from this contract.
 Named arguments are deferred to CH15. Static calls now have their own bounded
 [contract](static_members_v0_2.md) on the same method/callable foundation.
+
+## Shared method parameters — 2026-10-07
+
+Instance and static methods on both classes and structs use the ordinary function
+parameter contract, including fixed by-value parameters, writable `T &$value` and
+read-only `const T &$value` references, and a typed trailing `T ...$values` pack.
+Native references require exact compatible stable storage; no implicit conversions,
+temporary binding or heap-interior borrowing are introduced. Read-only access is
+enforced during preparation, including forwarding, aliases and container mutation,
+under [the existing reference rules](native_reference_safety.md).
+
+A typed variadic tail is an owned `vector<T>`, may be empty and may follow fixed
+parameters (including references or supported by-value defaults). It must be last;
+reference variadics, explicit pack defaults and call-site unpacking remain excluded.
+Element admission/conversion and copy capability are the same as for free functions.
+Explicit arguments are evaluated once in source order; value snapshots and reference
+bindings retain their distinct semantics. Two references may alias the same storage;
+read-only access does not promise that another alias cannot change it.
+
+This extends parameter admission only: constructor parameters, receiver lifetime
+restrictions and reference-return restrictions remain unchanged. No method-specific
+packing or borrowing implementation is defined.
 
 ## Receiver evaluation, access and lifetime
 

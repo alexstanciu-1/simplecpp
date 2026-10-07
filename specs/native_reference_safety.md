@@ -124,7 +124,9 @@ the C++ handle qualifier alone is not sufficient.
 
 The bounded source slice admits fixed explicit reference parameters only. By-value
 `const T $value`, const-reference returns, parameter defaults, variadics, temporary
-binding, methods/closures and broader const type/local syntax remain deferred. The
+binding, closures and broader const type/local syntax remain deferred. Methods now
+share the [fixed read-only reference contract](instance_methods_v0_2.md#shared-method-parameters--2026-10-07);
+constructors retain their separate bounded parameter admission. The
 read-only flag is part of the callable contract; changing it invalidates dependent
 callers and the affected body. C++ signatures, borrowed argument temporaries and
 local native aliases preserve `const T&` without taking an owning snapshot.

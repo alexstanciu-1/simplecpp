@@ -52,6 +52,12 @@ type-owned property reads/plain writes, defaults, visibility, disjoint member na
 data/constructor exclusion and cross-file invalidation, retry, reset and retirement.
 It uses the same runner; `--no-pch` checks actual emitted header dependencies.
 
+Use `--suite method_parameters` for shared writable/read-only reference and typed
+variadic admission across class/struct and instance/static methods. Covers alias
+observation versus value snapshots, empty/default packs, source-order evaluation,
+stable fields, container mutation, receiver retention, rejection and cross-file
+signature invalidation/recovery. No native compiler rebuild is performed.
+
 For the CH10 shared declaration model migration:
 
 ```bash

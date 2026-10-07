@@ -244,7 +244,7 @@ method-mediated reference-return cycle rejection. Constructor regression
 (`/tmp/ch10-methods-constructors`) passes 45 generated programs. These prove PHP-host compilation
 and generated execution, not a native compiler rebuild.
 
-Remaining groups: further method parameter and reference-return support and
+Remaining groups: method reference-return support and
 instance-qualified static calls. Inheritance/interface/trait behavior belongs to CH11.
 CH10-PERF-01 still precedes the chapter's native build.
 
@@ -276,6 +276,31 @@ Still gated: static-property reference escapes, compound updates, executable sta
 initializers, and `$object::method()` (separate CH10 follow-up). Inherited lookup,
 `parent::`, protected/abstract/final/override semantics, late-bound `static::` and
 inherited construction transfer to the [ordered CH11 prerequisites](11_inheritance.md#qualified-member-prerequisites-transferred-from-ch10).
+
+## Shared method parameters — 2026-10-07
+
+Ordinary instance/static methods on classes/structs now admit the existing function
+parameter contract: writable and read-only fixed references and typed trailing
+variadics, alongside existing value parameters/defaults. The implementation removes
+the method-only admission gate; `Declaration_Preparation`, `Call_Preparation`,
+`Value_Boundary_Preparation` and the sequenced C++ call emitter already own the full
+path. No new AST/prepared representation or separate method packing is needed.
+
+Legacy review: `Generator::renderCallArgsForParams` shares function/method packing;
+the v0.1 emitter borrows its pack as `const vector_t<T>&`. v0.2 preserves the approved
+CH04 owned-vector contract instead. Existing CH07 native-reference eligibility and
+read-only rules apply unchanged. The [authoritative amendment](../../../../specs/instance_methods_v0_2.md#shared-method-parameters--2026-10-07)
+keeps receiver lifetimes, constructors and reference returns outside this extension.
+
+`records.py --suite method_parameters --no-pch` owns focused class/struct ×
+instance/static behavioral proofs, invalid-borrow/signature rejection, reference-only
+and vector-to-variadic signature invalidation, repair, fresh/reset agreement, and
+shared receiver retention when a reference argument resets its originating handle.
+Evidence: `/tmp/ch10-method-parameters-final/` passes 50 generated programs without
+PCH; `/tmp/ch10-method-parameters-regression/` passes 9 focused PHP suites. The runner
+used CLI fallback because sandbox socket binding prevented FPM startup. No compiler
+native rebuild or conversion was performed.
+Next: discuss reference returns separately from receiver/property lifetime escapes.
 
 ## Chapter 09 carryovers
 
@@ -348,8 +373,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-014](#class-member-014) | supported-bounded | `private function f(): int { return 1; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-015](#class-member-015) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-016](#class-member-016) | supported-bounded | `function f(int $a = 1): int { return $a; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-MEMBER-017](#class-member-017) | pending-discussion | `function f(int ...$a): int { return 1; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-018A](#class-member-018a) | pending-discussion | `function f(int &$a): void {}` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-017](#class-member-017) | supported-bounded | `function f(int ...$a): int { return 1; }` | prepared | verified | deferred | Shared method parameters; records.py --suite method_parameters |
+| [CLASS-MEMBER-018A](#class-member-018a) | supported-bounded | `function f(int &$a): void {}` | prepared | verified | deferred | Shared method parameters; records.py --suite method_parameters |
 | [CLASS-MEMBER-018B](#class-member-018b) | pending-discussion | `function &f(): int {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-018C](#class-member-018c) | pending-discussion | `function &f(int &$a): int {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-018D](#class-member-018d) | pending-discussion | explicit PHP reference syntax on method/member signature | unverified | unverified | deferred | — |
