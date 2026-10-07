@@ -122,9 +122,23 @@ PHP-host compilation and generated programs, not a native compiler rebuild/conve
 
 Construction-default declaration rebuilds conservatively invalidate consumers; finer
 effective-equivalence reuse is optimization debt, not a second retained snapshot tree.
-Authored constructors/promotion and methods are next. CH10-PERF-01 still precedes the
+Authored constructors with property-backed inputs and methods are next. PHP-style
+property promotion is deferred to CH15-CTOR-SYNTAX-01. CH10-PERF-01 still precedes the
 chapter's native compiler build. Reference tags/data-set references remain non-blocking
 [CH15-DATA-REF-01](15_blocking_debt.md#ch15-data-ref-01--initialization-with-references-into-the-input-data-set).
+
+### First authored-constructor slice: adopted input spelling
+
+User decision, 2026-10-07: implement `__construct(use $name, use $age)` from the
+first constructor slice, resolving separately declared instance properties and their
+types/explicit defaults. Ordinary typed parameters can coexist with these inputs.
+Use the [authoritative contract](../../../../specs/data_initialization.md#property-backed-constructor-parameters).
+Public constructor inputs may initialize private properties without exposing those
+properties for external access; basic visibility enforcement is a prerequisite.
+Without an authored constructor, synthesized inputs remain public-instance-only.
+PHP-style property promotion from parameter declarations is non-blocking
+[Chapter 15 debt](15_blocking_debt.md#ch15-ctor-syntax-01--deferred-constructor-property-promotion),
+not part of this first slice. Authored-constructor execution is not yet implemented.
 
 ## Chapter 09 carryovers
 

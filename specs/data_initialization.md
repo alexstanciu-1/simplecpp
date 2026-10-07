@@ -249,14 +249,57 @@ $user User = {first: "Alex", last: "Smith"};
 ```
 
 Construction invokes that constructor, including its validation and assignments;
-it must not bypass its body by assigning properties afterward. Constructor property
-promotion is compatible with this rule but is not required. Ordinary required
+it must not bypass its body by assigning properties afterward. PHP-style constructor
+property promotion is deferred to Chapter 15; property-backed parameters below are
+adopted for the first authored-constructor slice. Ordinary required
 parameters remain required even when their types have defaults; optional parameters
 use their declared defaults. Property defaults and parameter defaults are distinct:
 property initialization precedes an authored constructor body, while parameter
 defaults supply omitted arguments. This contract applies to both classes and structs;
 it amends the earlier no-authored-struct-constructor restriction, without claiming
 that constructor parsing/execution is already implemented.
+
+#### Property-backed constructor parameters
+
+Approved 2026-10-07 for classes and structs, independently of `data` opt-in:
+
+```php
+data class User {
+    public string $name;
+    private int $age = 18;
+
+    public function __construct(use $name, use $age) {
+    }
+}
+$user User = {name: "Alex", age: 30};
+```
+
+Each comma-separated `use $property` denotes a constructor parameter backed by an
+already declared instance property. It obtains that property's type and explicit
+default and initializes the property directly before the constructor body, without
+first initializing and overwriting its default. It does not declare a new property,
+capture a closure variable, establish a reference/alias or change property visibility.
+The parameter is required when the property has no explicit default, even if its type
+has an implicit default. In the example, `name` is required and `age` is optional.
+
+Property-backed parameters may coexist with ordinary typed parameters. Inside the
+body, `$name` denotes the parameter and `$this->name` the initialized property; they
+are not aliases. Normal value/handle copy semantics still apply. A public constructor
+may explicitly accept a parameter initializing a private property: `age` is then a
+valid construction key, but direct external property access remains forbidden.
+
+Only public instance properties participate in a synthesized constructor when no
+authored constructor exists. Excluded non-public instance properties must still have
+an explicit or established type default; otherwise an authored constructor is required.
+Static properties never become instance-construction inputs. Visibility support remains
+an implementation gate; this contract does not silently enable non-public members.
+
+The first authored-constructor slice adopts this spelling, not PHP-style promotion
+such as `__construct(public string $name)`. See the
+[non-blocking promotion debt](../compiler/my-try/docs/catalog/15_blocking_debt.md#ch15-ctor-syntax-01--deferred-constructor-property-promotion).
+Parameter ordering, validity and initialization use the common constructor model;
+inheritance and parameter-side overrides of property types/defaults are not introduced
+by this agreement. Implementation availability remains tracked in Chapter 10.
 
 Without an authored constructor, the compiler synthesizes typed construction inputs
 from public instance properties in declaration order. Each supplied entry initializes
