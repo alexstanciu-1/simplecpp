@@ -101,8 +101,8 @@ final class CPP_Generator
 			$path = '';
 			$identity = '';
 			$text = '';
-			if ($definition instanceof collected_struct) {
-				$this->validate_record_dependencies(object_cast($definition, collected_struct::class), $record_context);
+			if ($definition instanceof collected_record) {
+				$this->validate_record_dependencies(object_cast($definition, collected_record::class), $record_context);
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
 				$identity = 'type:' . $definition->qualified_name();
 				$text = $fragment->text;
@@ -214,15 +214,18 @@ final class CPP_Generator
 			}
 			else
 			{
-				$syntax = object_cast($entry, collected_struct::class)->syntax();
-				CPP_Declarations::generate_struct($syntax, $context);
+				$syntax = object_cast($entry, collected_record::class)->syntax();
+				CPP_Declarations::generate_record($syntax, $context);
 				$next->text = $context->records;
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
-				$records /** Storage<collected_struct> */ = $next->records;
+				$records /** Storage<collected_record> */ = $next->records;
 				foreach ($fields->items() as $field) {
+					if (Type_Queries::is_class_handle($field->type)) {
+						continue;
+					}
 					$source_record = Type_Queries::source_record($field->type);
 					if ($source_record !== null) {
-						$record /** collected_struct */ = $source_record;
+						$record /** collected_record */ = $source_record;
 						$records->append($record);
 					}
 				}
@@ -237,7 +240,7 @@ final class CPP_Generator
 	}
 
 	/** Validate complete by-value edges; every record definition remains in its own header. */
-	private function validate_record_dependencies(collected_struct $entry, cpp_generation_context $context): void
+	private function validate_record_dependencies(collected_record $entry, cpp_generation_context $context): void
 	{
 		$key = $entry->qualified_name();
 		if (isset($context->record_states[$key])) {
@@ -249,7 +252,7 @@ final class CPP_Generator
 		$context->record_states[$key] = cpp_record_state::visiting;
 		$owner = object_cast($entry->preparation_work_owner(), preparation_owner::class);
 		$fragment = $this->program->fragments[$owner];
-		$records /** Storage<collected_struct> */ = $fragment->records;
+		$records /** Storage<collected_record> */ = $fragment->records;
 		foreach ($records as $dependency) {
 			$this->validate_record_dependencies($dependency, $context);
 		}

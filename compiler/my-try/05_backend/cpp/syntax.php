@@ -38,9 +38,14 @@ final class CPP_Syntax
 		}
 		if ($node instanceof object_construction_node) {
 			$construction = object_cast($node, object_construction_node::class)->require_construction_preparation();
+			if ($construction->storage === record_storage_kind::inline_value) {
+				return CPP_Declarations::type($construction->type, $this->context) . '{}';
+			}
 			$this->context->headers['scpp/memory.hpp'] = true;
-			$helper = $construction->ownership === ownership_kind::unique ? 'unique' : 'shared';
-			return '::scpp::' . $helper . '<' . CPP_Declarations::type($construction->constructed_type, $this->context) . '>()';
+			$helper = $construction->storage === record_storage_kind::unique ? 'unique' : 'shared';
+			$payload = CPP_Types::payload($construction->constructed_type);
+			CPP_Types::record_dependencies($payload, $this->context);
+			return '::scpp::' . $helper . '<' . $payload->spelling . '>()';
 		}
 		if ($node instanceof index_node) {
 			return $this->generate_index(object_cast($node, index_node::class));

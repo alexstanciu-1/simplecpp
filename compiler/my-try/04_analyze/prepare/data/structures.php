@@ -80,7 +80,8 @@ final class prepared_place
 	private ?prepared_place $base_place = null;
 
 	/** Whole roots are declarations/parameters; only direct fields may project from a base. */
-	public function __construct(prepared_storage $storage, ?prepared_place $base = null)
+	public function __construct(prepared_storage $storage, ?prepared_place $base = null,
+		private bool $heap_projection = false)
 	{
 		if ($base === null)
 		{
@@ -102,6 +103,18 @@ final class prepared_place
 		}
 		$this->selected_storage = $storage;
 		$this->base_place = $base;
+	}
+
+	/** Writable heap projections must never escape as native aliases or reference arguments. */
+	public function borrowable(): bool
+	{
+		if ($this->heap_projection) {
+			return false;
+		}
+		if ($this->base_place !== null) {
+			return $this->base_place->borrowable();
+		}
+		return true;
 	}
 
 	public function storage(): prepared_storage
@@ -145,7 +158,7 @@ final class prepared_index_expression extends prepared_expression
 final class prepared_object_construction extends prepared_expression
 {
 	public canonical_type_use $constructed_type;
-	public ownership_kind $ownership;
+	public record_storage_kind $storage;
 }
 
 /** Syntax owns entry order; the binding owns the selected factory contract. */
@@ -431,6 +444,8 @@ final class prepared_record {
 final class prepared_field_access extends prepared_expression {
 	/** @reference.source property_node.prepared_facts */
 	public prepared_field $field;
+	public canonical_type_use $record_type;
+	public record_storage_kind $receiver_storage;
 }
 
 /** Resolved call target and signature; evaluation order remains with the process workers. */

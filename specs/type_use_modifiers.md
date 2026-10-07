@@ -9,6 +9,11 @@ semantic type, storage compatibility and operator/conversion behavior. The sourc
 AST retains the explicit modifier node; prepared type identity does not retain a
 redundant modifier.
 
+Exception agreed 2026-10-07 for source record declarations: `value<MyStruct>`
+is an error, as is `shared<MyClass>`. These repeat the declaration's default
+storage and can misrepresent its kind to readers. This overrides the earlier
+struct-normalization rule; scalar/enum/runtime-value normalization is unchanged.
+
 The current registry establishes default value storage from its registered facts:
 
 - boolean, integer and floating families;
@@ -72,18 +77,36 @@ than compiler-supported direct nesting. No extra nested-wrapper support is promi
 
 ## v0.2 bounded owned construction — 2026-10-06
 
-For currently supported source structs, `new T()` constructs one default-initialized
-object with shared ownership. A direct explicitly typed local initializer can select
-ownership: `$s shared<T> = new T();` or `$u unique<T> = new T();`. The constructed
-type must exactly match the handle target. The unique form constructs directly as
-unique; it never creates an intermediate shared handle. Parentheses around the
-initializer do not change that rule. Weak handles cannot allocate.
+Amended 2026-10-07: the original CH07 shared-by-default struct construction was
+temporary and is replaced by declaration-directed storage. `new Class()` produces
+a shared object; `new Struct()` produces a struct value. One construction path
+selects the exact payload identity and storage independently.
+
+| Source form | Class | Struct |
+| --- | --- | --- |
+| `T` | Shared object handle | Inline value |
+| `value<T>` | Inline object | Error: redundant storage |
+| `shared<T>` | Error: redundant storage | Shared object handle |
+| `unique<T>` | Exclusive ownership | Exclusive ownership |
+| `weak<T>` | Non-owning observation | Non-owning observation |
+
+A direct explicitly typed local initializer may select inline/shared/unique
+storage: `$v value<Class> = new Class();`, `$s shared<Struct> = new Struct();`,
+or `$u unique<T> = new T();`. The payload must match exactly; construction does
+not allocate an intermediate object. Weak never allocates: derive from an existing
+shared owner, then lock before accessing. `lock(weak<Class>)` returns bare `Class`,
+not the rejected spelling `shared<Class>`. Parentheses preserve these rules.
+
+Ownership wrappers take an unmodified payload; `unique<value<Class>>` and similar
+stacked storage requests reject alongside the existing direct ownership nesting.
+Inline record copies require memberwise copyability. Shared/weak copies do not
+copy the payload. Existing handles never implicitly clone into inline objects.
 
 Fresh construction can initialize exact storage without copying an existing handle.
 It does not make unique handles copyable or authorize implicit moves from named
 variables. Contextual unique construction on later assignment, arguments, returns,
 fields and container entries remains deferred. In those contexts `new T()` retains
-its default shared result, which must satisfy ordinary boundary rules.
+its declaration-directed default result, which must satisfy ordinary boundary rules.
 
 The initial implementation admits no constructor arguments and requires a proven
 default initialization for every field, recursively through nested value structs.
@@ -91,8 +114,13 @@ Its admitted field defaults are scalar, mixed/dynamic, error, empty ownership or
 nullable handles, empty vector/hash containers and recursively admitted structs.
 Result fields and unrecognized runtime construction contracts reject in preparation.
 Runtime value-type construction, user constructor/destructor bodies, inheritance,
-pointee member access and explicit allocation-helper source spellings are separate
-slices; `new` does not turn those existing value types into heap objects implicitly.
+and explicit allocation-helper source spellings are separate slices. Plain public
+typed instance properties now share the class/struct lookup and read/write path.
+Missing/duplicate properties reject during preparation. Heap-backed properties may
+be written through stable receiver paths but cannot bind native aliases/reference
+arguments; inline projections preserve the existing stable-storage rules. Weak
+member access rejects until locked. Property initializers, methods and access-control
+extensions remain separate slices; runtime value types do not become heap objects.
 
 ## v0.2 explicit unique transfer — 2026-10-06
 

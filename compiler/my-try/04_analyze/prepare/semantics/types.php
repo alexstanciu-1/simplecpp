@@ -126,12 +126,13 @@ final class Type_Preparation
 			throw new \RuntimeException('S2S template type requires explicit arguments');
 		}
 		$concrete = object_cast($definition, concrete_type_definition_i::class);
-		if ($definition->origin() === type_definition_origin::source) {
+		$type = Model::$type_catalog->registry()->canonical($concrete);
+		$type_use = Model::$type_catalog->registry()->use($type->type_id());
+		if (($definition->origin() === type_definition_origin::source) && !Type_Queries::is_class_handle($type_use)) {
 			$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			$context->worker->require_declaration($context->owner, $declaration);
 		}
-		$type = Model::$type_catalog->registry()->canonical($concrete);
-		$node->set_preparation(Model::$type_catalog->registry()->use($type->type_id()));
+		$node->set_preparation($type_use);
 	}
 
 	/** Integer aliases with the same representation designate compatible reference storage. */

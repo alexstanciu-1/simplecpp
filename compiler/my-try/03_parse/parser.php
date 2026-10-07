@@ -567,8 +567,8 @@ final class Parser_Run
 		if ($this->text() === '{') {
 			return $this->statement_block();
 		}
-		if ($this->text() === 'struct') {
-			return $this->struct_declaration();
+		if (($this->text() === 'struct') || ($this->text() === 'class')) {
+			return $this->record_declaration();
 		}
 		if ((($this->text() === 'function') || ($this->text() === 'template'))) {
 			return $this->function_declaration();
@@ -620,7 +620,7 @@ final class Parser_Run
 			$statements /** Storage<statement_node> */ = $group->body->statements;
 			while (($this->text() !== '}') && ($this->text() !== 'case') && ($this->text() !== 'default'))
 			{
-				if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'template')) {
+				if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'template')) {
 					throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
 				}
 				$statements->append(object_cast($this->statement(), statement_node::class));
@@ -763,7 +763,7 @@ final class Parser_Run
 		$statements /** Storage<statement_node> */ = $body->statements;
 		while (($this->text() !== '}') && ($this->text() !== ''))
 		{
-			if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'template')) {
+			if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'template')) {
 				throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
 			}
 			$statement = $this->statement();
@@ -903,18 +903,19 @@ final class Parser_Run
 	}
 
 	/** Register the record immediately, then reconcile fields within its retained member scope. */
-	private function struct_declaration(): type_declaration_node
+	private function record_declaration(): type_declaration_node
 	{
 		if ($this->current_scope->is_function()) {
-			throw new \RuntimeException($this->error_message('Local struct declarations are not supported yet'));
+			throw new \RuntimeException($this->error_message('Local record declarations are not supported yet'));
 		}
-		$start = $this->expect('struct');
+		$kind = $this->text() === 'class' ? type_declaration_kind::class_type : type_declaration_kind::struct_type;
+		$start = $this->position++;
 		if (!$this->identifier()) {
-			throw new \RuntimeException($this->error_message('Expected struct name'));
+			throw new \RuntimeException($this->error_message('Expected record name'));
 		}
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);
-		$previous = $this->collector->previous_struct($this->source_scope, $name);
+		$previous = $this->collector->previous_record($this->source_scope, $name, $kind);
 		$record /** type_declaration_node */ = $previous ?? new type_declaration_node();
 		if ($previous === null) {
 			$record->set_span($start, $start);
@@ -927,6 +928,7 @@ final class Parser_Run
 		}
 		$old_end = $record->end_token();
 		$record->name = $name;
+		$record->declaration_kind = $kind;
 		$record->collect($this->collector, $this->source_scope, $name_index);
 		$record->member_scope()->set_parent($this->source_scope);
 		$fields /** Storage<property_node> */ = new Storage();

@@ -68,7 +68,7 @@ final class Declaration_Preparation
 	}
 
 	/** Fields belong to their record, never to the surrounding local-variable scope. */
-	public static function prepare_struct(type_declaration_node $syntax, preparation_context $context): void
+	public static function prepare_record(type_declaration_node $syntax, preparation_context $context): void
 	{
 		// The common AST does not confer support for new declaration/member semantics.
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
@@ -76,11 +76,12 @@ final class Declaration_Preparation
 		$methods /** Storage<method_node> */ = $syntax->methods;
 		$constants /** Storage<member_constant_node> */ = $syntax->constants;
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
-		if (($syntax->declaration_kind !== type_declaration_kind::struct_type)
+		if ((($syntax->declaration_kind !== type_declaration_kind::struct_type)
+			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
 			|| ($syntax->base_class !== null) || (q_count($syntax->modifiers) !== 0)
 			|| !$extended->is_empty() || !$implemented->is_empty()
 			|| !$methods->is_empty() || !$constants->is_empty() || !$uses->is_empty()) {
-			throw new \RuntimeException('Type member semantics are not supported by this model-only slice');
+			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
 		}
 		$facts = new prepared_record();
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
@@ -88,7 +89,12 @@ final class Declaration_Preparation
 		$copyable = true;
 		$query = new Capability_Preparation($context);
 		$nodes /** Storage<property_node> */ = $syntax->properties;
+		$names /** hash<bool> */ = [];
 		foreach ($nodes as $field) {
+			if (isset($names[$field->name])) {
+				throw new \RuntimeException('Duplicate property ' . $field->name);
+			}
+			$names[$field->name] = true;
 			self::prepare_field($field, $context);
 			$field_facts = $field->require_preparation();
 			$fields->add($field->name, $field_facts);
@@ -108,11 +114,11 @@ final class Declaration_Preparation
 	public static function prepare_field(property_node $field, preparation_context $context): void
 	{
 		if (($field->type_syntax === null) || ($field->initializer !== null)) {
-			throw new \RuntimeException('Property inference and initializers are not supported by this model-only slice');
+			throw new \RuntimeException('Property inference and initializers are not supported by this plain-record slice');
 		}
 		foreach ($field->modifiers as $modifier) {
 			if ($modifier !== declaration_modifier::public_access) {
-				throw new \RuntimeException('Property modifier is not supported by this model-only slice');
+				throw new \RuntimeException('Property modifier is not supported by this plain-record slice');
 			}
 		}
 		$prepared = new prepared_field();
@@ -126,7 +132,9 @@ final class Declaration_Preparation
 			generic_contract::value_storable)) {
 			throw new \RuntimeException('S2S struct field type does not declare value_storable');
 		}
-		$context->worker->require_record($prepared->type, $context);
+		if (!Type_Queries::is_class_handle($prepared->type)) {
+			$context->worker->require_record($prepared->type, $context);
+		}
 		$field->set_preparation($prepared);
 	}
 }

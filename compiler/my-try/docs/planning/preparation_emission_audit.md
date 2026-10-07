@@ -6,7 +6,8 @@ This report completes the bounded inspection requested by the
 [catalog prerequisite gate](../catalog/README.md#prerequisite-gates).
 **Inspection is complete. PE-01 is subsequently resolved for the agreed bounded
 copy policy, PE-02 by registry normalization, and PE-04 for supported straight-line
-bodies. PE-03 is resolved for function/parameter names; duplicate fields remain debt.** No compiler structures,
+bodies. PE-03 is resolved for function/parameter names and, as of CH10 on 2026-10-07,
+plain class/struct property names.** No compiler structures,
 semantics or generation behavior were changed by this audit.
 
 ## Result and boundary
@@ -151,7 +152,10 @@ unsupported results and recovery after a failed edit.
 
 ## PE-03 — duplicate declarations can reach C++
 
-**Status: partially resolved (2026-10-02); duplicate struct fields remain deferred.**
+**Status: resolved for the audited function/parameter/field forms.** Function/parameter
+admission was implemented on 2026-10-02; CH10's shared record preparation rejects
+duplicate class/struct properties on 2026-10-07 (`tests/records.py`). Broader future
+declaration forms require their own admission proofs. The original finding follows.
 **Priority: medium; declaration validation, not operator dispatch.**
 
 Chapter 04 now rejects duplicate ordinary function names (including unused functions)

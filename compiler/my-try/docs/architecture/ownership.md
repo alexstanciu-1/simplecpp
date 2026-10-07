@@ -26,6 +26,13 @@ must follow the existing declaration-fact identity and retirement protocol. Symb
 reference-return contracts retain only a parameter index, never caller storage. These
 records describe origin, not permission to escape or ownership of the runtime value.
 
+Plain class/struct properties share that place model. A heap projection marks its
+path non-borrowable; nested inline projections inherit this restriction. Writability
+still follows the root access contract. No native alias/reference argument may expose
+those heap-backed interiors. Inline class and struct projections remain borrowable
+under existing stable-root rules. Property facts retain storage/payload classification;
+they neither own a runtime handle nor extend its lifetime.
+
 Place access is queried from the root parameter's read-only/writable contract;
 aliases and stable field projections preserve it. Addressability does not imply
 writability. This restricts an access path, not every other alias or copied handle

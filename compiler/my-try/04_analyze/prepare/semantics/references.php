@@ -66,6 +66,9 @@ final class Reference_Preparation
 		if ($value->place === null) {
 			throw new \RuntimeException('S2S reference binding requires stable storage');
 		}
+		if (!$value->place->borrowable()) {
+			throw new \RuntimeException('S2S reference binding cannot borrow heap-backed properties');
+		}
 		$binding->type = $expected ?? $value->type;
 		if (!Type_Preparation::same_storage_type($binding->type, $value->type)) {
 			throw new \RuntimeException('S2S reference binding requires the exact storage type');

@@ -109,10 +109,11 @@ constructor work carries to CH10 and remaining enum extensions are explicit debt
 The requested combined CH08/09 compiler passes [complete cumulative native validation](../portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809),
 including all 44 partitioned projects, supplementary probes and rejection/recovery.
 No separate CH08 native build was performed. CH10's [shared declaration model](../planning/type_declarations.md)
-is agreed and its bounded AST migration is implemented. New class/member execution
-remains a follow-up; its chapter-end test-duration review precedes the next native build.
-Duplicate function/parameter admission is checked; duplicate struct fields remain
-PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
+and [plain record storage/property slice](10_objects.md#plain-records-and-storage--2026-10-07)
+are implemented. Property defaults and methods remain follow-ups; the chapter-end
+test-duration review precedes the next native build. Duplicate function/parameter
+and plain class/struct property admission is checked; the field portion of PE-03/FN-08
+is resolved by this slice. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.
 Bounded copy admission now uses prepared source-record capabilities; conditional
 runtime-template capabilities remain debt. The entry-return carrier mismatch is

@@ -8,7 +8,7 @@ namespace scpp\compiler;
 
 enum collected_name_kind
 {
-	case struct_declaration;
+	case record_declaration;
 	case enum_declaration;
 	case field_declaration;
 	case field_reference;
@@ -180,7 +180,7 @@ final class collected_constant extends collected_definition implements constant_
 	public function value(): constant_value { return $this->syntax_node->require_preparation(); }
 }
 
-/** Shared source-type identity; record-only consumers must explicitly narrow to collected_struct. */
+/** Shared source-type identity; record-only consumers must explicitly narrow to collected_record. */
 abstract class collected_type_definition extends collected_definition
 {
 }
@@ -212,7 +212,7 @@ final class collected_enum extends collected_type_definition
 	}
 }
 
-final class collected_struct extends collected_type_definition
+final class collected_record extends collected_type_definition
 {
 	/** @reference.source parsed_file.root (syntax graph) */
 	private type_declaration_node $syntax_node;
@@ -230,7 +230,7 @@ final class collected_struct extends collected_type_definition
 
 	public function kind(): collected_name_kind
 	{
-		return collected_name_kind::struct_declaration;
+		return collected_name_kind::record_declaration;
 	}
 }
 

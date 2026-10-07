@@ -39,7 +39,7 @@ of existing behavior, not implementation of every class/interface/trait feature.
   source spelling and diagnostics remain unchanged. No C++ naming belongs in AST
   or collected semantic identities.
 
-## Bounded migration implemented
+## Initial bounded migration (completed before record execution)
 
 The shared syntax lives in `03_parse/structures/structures_declarations.php`.
 Existing struct parsing now creates `type_declaration_node` and `property_node`;
@@ -64,7 +64,7 @@ Cross-category collision admission and C++ name separation are agreed behavior,
 not an execution claim from the syntax-only proof. Existing deferred duplicate-field
 diagnostics are not silently marked complete by this migration.
 
-## Non-goals and next boundary
+## Initial migration non-goals
 
 This slice does not admit authored classes/interfaces/traits, methods, member
 constants, constructors, destructors, trait composition, inheritance, interface
@@ -82,3 +82,40 @@ checks model ownership, independent cursors, bodyless completion, shared constan
 facts, retained identities, unchanged emitted artifacts on source movement, admission
 gates and existing PHP-host regressions. It does not compile generated C++ or rebuild
 the compiler natively. CH10-PERF-01 remains required before the chapter's native build.
+
+## Plain record execution — 2026-10-07
+
+The next approved slice generalizes `collected_struct` to `collected_record` and
+admits plain classes alongside structs through the same parser, member inventory,
+preparation work and emitter. Nominal declaration kind remains registry-owned.
+Kind changes replace identity; property edits retain it and invalidate consumers.
+Duplicate properties reject even when unused; methods/constants keep separate future
+lookup categories. Interface/trait execution, methods, inheritance, property defaults,
+non-public/static members and constructor arguments remain gated.
+
+The user approved the coordinated storage/property refactor and then explicitly
+rejected redundant declaration storage: `shared<Class>` and `value<Struct>` are errors.
+The [normative matrix](../../../../specs/type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06)
+replaces CH07's temporary shared-by-default struct allocation. Meaningful direct-local
+overrides are `value<Class>`, `unique<Class>`, `shared<Struct>`, `unique<Struct>`;
+weak forms derive from shared owners and never allocate. Locking a class observer
+returns bare Class. No implicit cloning or nested storage requests are introduced.
+
+`Type_Queries` exposes record storage/payload queries over settled registry facts.
+The backend distinguishes payload spelling from stored-value spelling; it never
+wraps a class's default shared handle in another wrapper. Inline payload copying
+requires prepared memberwise capabilities; copying a class handle does not require
+pointee copyability. Construction selects storage once in its attached facts.
+
+Property facts retain the receiver's payload/storage. Places carry heap-projection
+provenance: writes remain available through stable receiver paths, but native aliases
+and reference arguments reject heap-backed interiors, including nested inline fields.
+Ordinary stable inline fields remain borrowable. This adds no hidden lifetime owner,
+deep const policy, raw-pointer escape or field ownership transfer.
+
+Validation: `tests/records.py` covers the matrix, nested copying, recursive class
+handles, preparation rejections, property-edit failure/retry/repair and class/struct
+replacement versus a fresh build. It compiles generated fixture programs only.
+`tests/ownership.py` preserves allocation/transfer/weak-lifetime proofs using explicit
+class declarations where historical fixtures intended default shared storage.
+No native compiler rebuild or conversion proof is claimed.

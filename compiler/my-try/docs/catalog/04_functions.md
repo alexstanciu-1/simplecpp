@@ -291,7 +291,7 @@ native compilation is not warning-clean.
 | FN-05 | General constant/default expressions and composite defaults | Signature/default preparation plus the relevant type/constant owner |
 | FN-06 | Source vector reads/writes/iteration, including useful variadic-body iteration; container-specific copy behavior | Chapter 06; reuse ordinary vector storage, not pack-only operations |
 | FN-07 | Legacy annotation conflicts and syntax compatibility | Legacy-specific catalog work; not strict signature inference |
-| FN-08 | Duplicate struct fields (remaining PE-03), function templates and other broader declaration forms | Respective declaration/type chapters; function/parameter duplicates are already checked |
+| FN-08 | Function templates and other broader declaration forms | Respective chapters; CH10 resolved duplicate class/struct properties on 2026-10-07, completing the audited PE-03 forms |
 | FN-09 | Parked LLVM adaptation; native compiler checkpoint completed 2026-10-02 | LLVM only on request |
 
 No-overloading, explicit types, and no implicit capture are agreed rules, not missing

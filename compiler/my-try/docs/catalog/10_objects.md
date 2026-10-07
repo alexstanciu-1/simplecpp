@@ -26,12 +26,32 @@ namespace/member constants share abstract syntax bases. Shared syntax does not e
 storage, ownership, visibility or semantic differences.
 
 The bounded model migration is implemented: existing structs, functions and source
-constants use the new structures; new member execution remains gated. The focused
+constants use the new structures. The focused
 15-suite PHP-host proof passes under `/tmp/my-try-ch10-model-final-20261007/`, including
 incremental identity, traversal, unsupported-member rejection and C++ emission checks.
-This is not a conversion, generated-C++ execution or native compiler proof. Class,
-interface and trait source support and separate member lookup integration remain
-next slices; the imported cards below are not marked implemented by this model work.
+This model proof is not a conversion, generated-C++ execution or native compiler proof.
+Interface/trait execution and method/constant lookup remain follow-ups.
+
+## Plain records and storage — 2026-10-07
+
+Implemented plain classes and public typed instance properties alongside structs.
+Both use `collected_record`, common declaration preparation and property lookup.
+Duplicate/unknown properties reject in preparation. Zero-argument construction follows
+the [amended storage matrix](../../../../specs/type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06):
+bare class is shared, bare struct is inline; meaningful explicit storage overrides
+share one construction path. `shared<Class>` and `value<Struct>` reject as redundant.
+Weak references observe shared allocations and must be locked before member access.
+
+Heap-backed properties are writable through stable receiver paths, but native
+aliases/reference arguments to them reject; nested inline projections preserve this
+restriction. Inline properties retain existing stable-borrow rules. Property defaults,
+non-public/static members, methods, inheritance and constructor arguments remain gated.
+
+Focused evidence: `/tmp/ch10-records-final/` (16 generated programs plus rejection and
+incremental checks), `/tmp/ch10-records-ownership-02/` (14 PHP suites and 26 generated
+programs), `/tmp/ch10-records-regress-final/` (15 focused PHP suites). These are PHP-host
+compiler / generated-program proofs, not a rebuilt-native-compiler checkpoint.
+The chapter-end performance review still precedes any native compiler build.
 
 ## Chapter 09 carryovers
 
@@ -52,12 +72,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CLASS-DECL-001](#class-decl-001) | pending-discussion | `class A {}` | unverified | unverified | deferred | — |
+| [CLASS-DECL-001](#class-decl-001) | supported-bounded | `class A {}` | prepared | verified | deferred | Plain class/struct records; `tests/records.py` |
 | [CLASS-PROP-001](#class-prop-001) | pending-discussion | `class A { int $x; }` | unverified | unverified | deferred | Source variants need reconciliation |
 | [CLASS-PROP-002](#class-prop-002) | pending-discussion | `class A { int $x = 1; }` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLASS-PROP-003](#class-prop-003) | pending-discussion | `class A { int $x; }` | unverified | unverified | deferred | — |
+| [CLASS-PROP-003](#class-prop-003) | supported-bounded | `class A { int $x; }` | prepared | verified | deferred | Public typed instance property; no initializer |
 | [CLASS-PROP-004](#class-prop-004) | pending-discussion | `$this->x = 1;` | unverified | unverified | deferred | — |
-| [CLASS-PROP-005](#class-prop-005) | pending-discussion | `$a->x = 1;` | unverified | unverified | deferred | — |
+| [CLASS-PROP-005](#class-prop-005) | supported-bounded | `$a->x = 1;` | prepared | verified | deferred | Stable receiver; heap interiors not borrowable |
 | [CLASS-PROP-006](#class-prop-006) | pending-discussion | `A::$x = 1;` | unverified | unverified | deferred | — |
 | [CLASS-PROP-006A](#class-prop-006a) | pending-discussion | `self::$x = 1;` | unverified | unverified | deferred | — |
 | [CLASS-PROP-006B](#class-prop-006b) | pending-discussion | `parent::$x = 1;` | unverified | unverified | deferred | — |

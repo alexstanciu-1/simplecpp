@@ -366,9 +366,12 @@ forms reject during preparation; use the
 [explicit locking source operation](../../specs/type_use_modifiers.md#v02-weak-derivation-and-explicit-locking--2026-10-06).
 The initial source slice does not add null argument/return conversions, handle-valued
 selection joins, explicit bool casts or direct handle logical binary operations.
-Default source-struct allocation is now admitted by the
+Source class/struct storage and explicit allocation are governed by the
 [bounded owned-construction contract](../../specs/type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06):
-default shared or direct-local explicit unique/shared, without constructor arguments.
+bare classes use shared ownership, bare structs use values, and direct typed locals
+can select meaningful inline/unique/shared overrides, without constructor arguments.
+Redundant `shared<Class>` and `value<Struct>` are source errors; this is a compiler
+admission rule, not a removal of the generic runtime wrapper implementations.
 
 #### Runtime API baseline
 

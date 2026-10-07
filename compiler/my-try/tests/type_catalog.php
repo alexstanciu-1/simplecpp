@@ -145,12 +145,21 @@ $class_named_int = $custom_registry->canonical($custom_registry->define_nominal(
 	'int', type_definition_origin::source, nominal_type_kind::class_type, []));
 $record = $custom_registry->canonical($custom_registry->define_nominal(
 	'Point', type_definition_origin::source, nominal_type_kind::structure, []));
-foreach ([$renamed_integer, $record] as $registered_value) {
+foreach ([$renamed_integer] as $registered_value) {
 	type_catalog_check($custom_registry->is_value_type($registered_value->type_id())
 		&& $custom_registry->use($registered_value->type_id(), true)->matches(
 			$custom_registry->use($registered_value->type_id())),
 		'Registered value storage was not normalized independently of spelling');
 }
+type_catalog_check($custom_registry->is_value_type($record->type_id()), 'Struct lost default value storage');
+$redundant_record = false;
+try {
+	$custom_registry->use($record->type_id(), true);
+}
+catch (\InvalidArgumentException $error) {
+	$redundant_record = str_contains($error->getMessage(), 'repeats the declaration');
+}
+type_catalog_check($redundant_record, 'Explicit value<Struct> must reject redundant storage');
 type_catalog_check(!$custom_registry->is_value_type($class_named_int->type_id())
 	&& $custom_registry->use($class_named_int->type_id(), true)->by_value(),
 	'A class spelling was mistaken for a registered scalar value');

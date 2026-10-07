@@ -44,8 +44,8 @@ final class Ownership_Construction_Probe implements node_maintenance_worker_i
 			$input_type = $observation->operand->require_preparation()->type;
 			$input_role = Ownership_Conversions::role($input_type);
 			$output_role = Ownership_Conversions::role($facts->type);
-			$input_payload = $input_role->target_type(object_cast(Type_Queries::canonical($input_type), applied_template_type::class));
-			$output_payload = $output_role->target_type(object_cast(Type_Queries::canonical($facts->type), applied_template_type::class));
+			$input_payload = Ownership_Conversions::payload($input_type);
+			$output_payload = Ownership_Conversions::payload($facts->type);
 			ownership_source_check($input_payload->matches($output_payload), 'Observation changed payload identity');
 			$expected_family = $facts->operation === ownership_observation_kind::derive_weak ? ownership_kind::weak : ownership_kind::shared;
 			ownership_source_check($output_role->ownership_family() === $expected_family, 'Observation selected wrong handle family');
@@ -87,9 +87,8 @@ final class Ownership_Construction_Probe implements node_maintenance_worker_i
 		$facts = $construction->require_construction_preparation();
 		ownership_source_check($facts->is_fresh_value() && !$facts->addressable(), 'Construction must be a fresh non-addressable value');
 		$role = Ownership_Conversions::role($facts->type);
-		ownership_source_check($role->ownership_family() === $facts->ownership, 'Construction ownership disagrees with result');
-		$application = object_cast(Type_Queries::canonical($facts->type), applied_template_type::class);
-		ownership_source_check($role->target_type($application)->matches($facts->constructed_type), 'Construction target disagrees with result');
+		ownership_source_check(Type_Queries::record_storage($facts->type) === $facts->storage, 'Construction ownership disagrees with result');
+		ownership_source_check(Ownership_Conversions::payload($facts->type)->matches($facts->constructed_type), 'Construction target disagrees with result');
 		$children = [];
 		foreach ($construction->children() as $child) {
 			$children[] = $child;
@@ -110,23 +109,23 @@ final class Ownership_Construction_Probe implements node_maintenance_worker_i
 }
 
 $cases = [
-	'weak_lifetime' => 'struct P { unique<int> $child; } $owner = new P(); $observer = weak($owner); $copy = $observer; $held = lock($copy); if (!$owner) { return 1; } if (!$held) { return 2; } $owner = null; if (!isset(lock($observer))) { return 3; } $held = null; if (lock($observer)) { return 4; } if (lock($copy) !== null) { return 5; } return 0;',
+	'weak_lifetime' => 'class P { unique<int> $child; } $owner = new P(); $observer = weak($owner); $copy = $observer; $held = lock($copy); if (!$owner) { return 1; } if (!$held) { return 2; } $owner = null; if (!isset(lock($observer))) { return 3; } $held = null; if (lock($observer)) { return 4; } if (lock($copy) !== null) { return 5; } return 0;',
 	'weak_empty' => '$owner shared<int>; $observer weak<int> = weak($owner); $held shared<int> = lock($observer); if ($held) { return 1; } $copy = $observer; $observer = null; if (!empty(lock($copy))) { return 2; } $nested shared<vector<int>>; $nested_observer = weak($nested); if (lock($nested_observer)) { return 3; } return 0;',
-	'weak_temporary' => 'struct P { int $x; } function make(): shared<P> { return new P(); } $observer = weak(make()); if (lock($observer)) { return 1; } $held = lock(weak(make())); if (!$held) { return 2; } $direct = lock(weak(new P())); if (!$direct) { return 3; } return 0;',
-	'weak_once' => 'struct P { int $x; } function source(shared<P> $p, int &$calls): shared<P> { $calls += 1; return $p; } function observe(weak<P> $w, int &$calls): weak<P> { $calls += 1; return $w; } $owner = new P(); $calls = 0; $observer = weak(source($owner, $calls)); if ($calls !== 1) { return 1; } $held = lock(observe($observer, $calls)); if ($calls !== 2) { return 2; } $owner = null; if (!$held) { return 3; } $held = null; if (lock(observe($observer, $calls))) { return 4; } if ($calls !== 3) { return 5; } return 0;',
-	'weak_boundaries' => 'struct P { int $x; } function derive(shared<P> &$p): weak<P> { return weak($p); } function acquire(weak<P> $w): shared<P> { return lock($w); } function present(shared<P> $p): bool { return isset($p); } $owner = new P(); $alias =& $owner; $observer = derive($alias); $weak_alias =& $observer; if (!present(lock($weak_alias))) { return 1; } $held = acquire(weak($owner)); $owner = null; if (!$held) { return 2; } unset($held); if (present(acquire($observer))) { return 3; } return 0;',
-	'weak_condition_release' => 'struct P { int $x; } $owner = new P(); $observer = weak($owner); if (lock($observer)) { $owner = null; if (lock($observer)) { return 1; } } else { return 2; } return 0;',
-	'consume_return' => 'struct P { int $x; } function produce(): unique<P> { $p unique<P> = new P(); return move($p); } function forward(): unique<P> { return produce(); } function consume(unique<P> $p): bool { return isset($p); } $a = forward(); if (!$a) { return 1; } if (!consume(move($a))) { return 2; } if (isset($a)) { return 3; } if (!consume(produce())) { return 4; } $a = produce(); if (!$a) { return 5; } return 0;',
-	'consume_forward_parameter' => 'struct P { int $x; } function relay(unique<P> $p): unique<P> { return move($p); } function extract(unique<P> &$p): unique<P> { return move($p); } $a unique<P> = new P(); $b = relay(move($a)); if (isset($a)) { return 1; } $c = extract($b); if (isset($b)) { return 2; } if (!$c) { return 3; } return 0;',
-	'consume_order' => 'struct P { int $x; } function inspect(unique<P> $first, bool $source_present, unique<P> $second): int { if (!isset($first)) { return 1; } if ($source_present) { return 2; } if (isset($second)) { return 3; } return 0; } $a unique<P> = new P(); $result = inspect(move($a), isset($a), move($a)); return $result;',
-	'consume_alias' => 'struct P { int $x; } function identity(unique<P> $p): unique<P> { return move($p); } $a unique<P> = new P(); $alias =& $a; $alias = identity(move($a)); if (!$a) { return 1; } $b = identity(move($alias)); if (isset($a)) { return 2; } if (!$b) { return 3; } return 0;',
-	'move_local' => 'struct P { int $x; } $a unique<P> = new P(); $alias =& $a; $b = move($a); if (isset($a)) { return 1; } if (!empty($alias)) { return 2; } if (!$b) { return 3; } $a = move($b); if (!$alias) { return 4; } if ($b !== null) { return 5; } $c unique<P> = move($alias); if ($a !== null) { return 6; } if (!$c) { return 7; } return 0;',
-	'move_replace' => 'struct P { int $x; } $a unique<P> = new P(); $b unique<P> = new P(); $a = move($b); if (!$a) { return 1; } if (isset($b)) { return 2; } $a = move($a); if (!$a) { return 3; } $alias =& $a; $alias = move($a); if (!$a) { return 4; } $a = move($alias); if (!$alias) { return 5; } $a = move($b); if (!empty($alias)) { return 6; } $c = move($b); if (!empty($c)) { return 7; } return 0;',
-	'move_parameters' => 'struct P { int $x; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } $a unique<P> = new P(); $b unique<P>; transfer($a, $b); if (isset($a)) { return 1; } if (!$b) { return 2; } transfer($b, $b); if (!$b) { return 3; } return 0;',
-	'allocated_shared' => 'struct Point { int $x; } $p = new Point(); $copy = $p; if (!$p) { return 1; } if (empty($copy)) { return 2; } unset($p); if ($p !== null) { return 3; } if (!isset($copy)) { return 4; } $q shared<Point> = new Point(); if (null === $q) { return 5; } return 0;',
-	'allocated_unique' => 'struct Point { int $x; } function reset(unique<Point> &$p): void { $p = null; } $p unique<Point> = new Point(); $a =& $p; if (!$a) { return 1; } reset($p); if (isset($a)) { return 2; } $q unique<Point> = new Point(); unset($q); if (!empty($q)) { return 3; } return 0;',
-	'allocated_noncopyable' => 'struct Item { unique<int> $child; } struct Box { Item $item; vector<int> $values; ?string $note; dynamic $data; } $s = new Box(); $copy = $s; $u unique<Box> = new Box(); if (!$u) { return 1; } if (!$copy) { return 2; } return 0;',
-	'allocated_expression' => 'struct Point { int $x; } function make(): shared<Point> { return new Point(); } function present(shared<Point> $p): bool { return isset($p); } if (!present(new Point())) { return 1; } if (empty(make())) { return 2; } return 0;',
+	'weak_temporary' => 'class P { int $x; } function make(): P { return new P(); } $observer = weak(make()); if (lock($observer)) { return 1; } $held = lock(weak(make())); if (!$held) { return 2; } $direct = lock(weak(new P())); if (!$direct) { return 3; } return 0;',
+	'weak_once' => 'class P { int $x; } function source(P $p, int &$calls): P { $calls += 1; return $p; } function observe(weak<P> $w, int &$calls): weak<P> { $calls += 1; return $w; } $owner = new P(); $calls = 0; $observer = weak(source($owner, $calls)); if ($calls !== 1) { return 1; } $held = lock(observe($observer, $calls)); if ($calls !== 2) { return 2; } $owner = null; if (!$held) { return 3; } $held = null; if (lock(observe($observer, $calls))) { return 4; } if ($calls !== 3) { return 5; } return 0;',
+	'weak_boundaries' => 'class P { int $x; } function derive(P &$p): weak<P> { return weak($p); } function acquire(weak<P> $w): P { return lock($w); } function present(P $p): bool { return isset($p); } $owner = new P(); $alias =& $owner; $observer = derive($alias); $weak_alias =& $observer; if (!present(lock($weak_alias))) { return 1; } $held = acquire(weak($owner)); $owner = null; if (!$held) { return 2; } unset($held); if (present(acquire($observer))) { return 3; } return 0;',
+	'weak_condition_release' => 'class P { int $x; } $owner = new P(); $observer = weak($owner); if (lock($observer)) { $owner = null; if (lock($observer)) { return 1; } } else { return 2; } return 0;',
+	'consume_return' => 'class P { int $x; } function produce(): unique<P> { $p unique<P> = new P(); return move($p); } function forward(): unique<P> { return produce(); } function consume(unique<P> $p): bool { return isset($p); } $a = forward(); if (!$a) { return 1; } if (!consume(move($a))) { return 2; } if (isset($a)) { return 3; } if (!consume(produce())) { return 4; } $a = produce(); if (!$a) { return 5; } return 0;',
+	'consume_forward_parameter' => 'class P { int $x; } function relay(unique<P> $p): unique<P> { return move($p); } function extract(unique<P> &$p): unique<P> { return move($p); } $a unique<P> = new P(); $b = relay(move($a)); if (isset($a)) { return 1; } $c = extract($b); if (isset($b)) { return 2; } if (!$c) { return 3; } return 0;',
+	'consume_order' => 'class P { int $x; } function inspect(unique<P> $first, bool $source_present, unique<P> $second): int { if (!isset($first)) { return 1; } if ($source_present) { return 2; } if (isset($second)) { return 3; } return 0; } $a unique<P> = new P(); $result = inspect(move($a), isset($a), move($a)); return $result;',
+	'consume_alias' => 'class P { int $x; } function identity(unique<P> $p): unique<P> { return move($p); } $a unique<P> = new P(); $alias =& $a; $alias = identity(move($a)); if (!$a) { return 1; } $b = identity(move($alias)); if (isset($a)) { return 2; } if (!$b) { return 3; } return 0;',
+	'move_local' => 'class P { int $x; } $a unique<P> = new P(); $alias =& $a; $b = move($a); if (isset($a)) { return 1; } if (!empty($alias)) { return 2; } if (!$b) { return 3; } $a = move($b); if (!$alias) { return 4; } if ($b !== null) { return 5; } $c unique<P> = move($alias); if ($a !== null) { return 6; } if (!$c) { return 7; } return 0;',
+	'move_replace' => 'class P { int $x; } $a unique<P> = new P(); $b unique<P> = new P(); $a = move($b); if (!$a) { return 1; } if (isset($b)) { return 2; } $a = move($a); if (!$a) { return 3; } $alias =& $a; $alias = move($a); if (!$a) { return 4; } $a = move($alias); if (!$alias) { return 5; } $a = move($b); if (!empty($alias)) { return 6; } $c = move($b); if (!empty($c)) { return 7; } return 0;',
+	'move_parameters' => 'class P { int $x; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } $a unique<P> = new P(); $b unique<P>; transfer($a, $b); if (isset($a)) { return 1; } if (!$b) { return 2; } transfer($b, $b); if (!$b) { return 3; } return 0;',
+	'allocated_shared' => 'class Point { int $x; } $p = new Point(); $copy = $p; if (!$p) { return 1; } if (empty($copy)) { return 2; } unset($p); if ($p !== null) { return 3; } if (!isset($copy)) { return 4; } $q Point = new Point(); if (null === $q) { return 5; } return 0;',
+	'allocated_unique' => 'class Point { int $x; } function reset(unique<Point> &$p): void { $p = null; } $p unique<Point> = new Point(); $a =& $p; if (!$a) { return 1; } reset($p); if (isset($a)) { return 2; } $q unique<Point> = new Point(); unset($q); if (!empty($q)) { return 3; } return 0;',
+	'allocated_noncopyable' => 'struct Item { unique<int> $child; } class Box { Item $item; vector<int> $values; ?string $note; dynamic $data; } $s = new Box(); $copy = $s; $u unique<Box> = new Box(); if (!$u) { return 1; } if (!$copy) { return 2; } return 0;',
+	'allocated_expression' => 'class Point { int $x; } function make(): Point { return new Point(); } function present(Point $p): bool { return isset($p); } if (!present(new Point())) { return 1; } if (empty(make())) { return 2; } return 0;',
 	'empty_reset' => 'function reset_unique(unique<int> &$u): void { $u = null; } $s shared<int> = null; $u unique<int> = null; $w weak<int> = null; $a =& $u; $a = null; reset_unique($u); $s = null; $w = null; unset($s); unset($u); unset($w); if (isset($u)) { return 1; } if (!empty($s)) { return 2; } return 0;',
 	'presence' => '$s shared<int>; $u unique<int>; if ($s) { return 1; } elseif ($u) { return 2; } while ($u) { return 3; } for (; $s;) { return 4; } do { if (!$u) { break; } return 5; } while ($s); $n = $u ? 1 : 0; if ($s !== null) { return 6; } if (null !== $u) { return 7; } if (!($s === null)) { return 8; } if (!(null === $u)) { return 9; } return $n;',
 	'observe_once' => 'function observe(shared<int> $s, int &$calls): shared<int> { $calls += 1; return $s; } $s shared<int>; $calls = 0; if (observe($s, $calls)) { return 1; } $p = observe($s, $calls) === null; $q = isset(observe($s, $calls)); $r = empty(observe($s, $calls)); if ($calls !== 4) { return 2; } if (!$p) { return 3; } if ($q) { return 4; } if (!$r) { return 5; } return 0;',
@@ -152,7 +151,7 @@ foreach ($cases as $name => $source) {
 }
 
 // Native instrumentation consumes unmodified generated transfer code; weak markers expose destruction.
-$lifetime_input = 'struct P { shared<int> $marker; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } function relay(unique<P> $p): unique<P> { return move($p); } function call_relay(unique<P> &$p): unique<P> { return relay(move($p)); } function fail(): int { $n ?int = null; return $n; } function sink(unique<P> $p, int $n, int &$entered): void { $entered += 1; } function fail_after(unique<P> &$p, int &$entered): void { sink(move($p), fail(), $entered); } return 0;';
+$lifetime_input = 'class P { shared<int> $marker; } function transfer(unique<P> &$source, unique<P> &$destination): void { $destination = move($source); } function relay(unique<P> $p): unique<P> { return move($p); } function call_relay(unique<P> &$p): unique<P> { return relay(move($p)); } function fail(): int { $n ?int = null; return $n; } function sink(unique<P> $p, int $n, int &$entered): void { $entered += 1; } function fail_after(unique<P> &$p, int &$entered): void { sink(move($p), fail(), $entered); } return 0;';
 $lifetime_source = ownership_source($lifetime_input);
 $lifetime_harness = <<<'CPP'
 #undef main
@@ -202,7 +201,7 @@ file_put_contents($lifetime_path, "#define main generated_program_main\n" . $lif
 $executions[] = ['path' => $lifetime_path, 'exit_code' => 0];
 
 // Native identity and destruction checks call the generated observation functions unchanged.
-$observation_input = 'struct P { shared<int> $marker; unique<int> $noncopyable; } function observe(shared<P> &$p): weak<P> { return weak($p); } function acquire(weak<P> &$w): shared<P> { return lock($w); } return 0;';
+$observation_input = 'class P { shared<int> $marker; unique<int> $noncopyable; } function observe(P &$p): weak<P> { return weak($p); } function acquire(weak<P> &$w): P { return lock($w); } return 0;';
 $observation_native_source = ownership_source($observation_input);
 $observation_harness = <<<'CPP'
 #undef main
@@ -247,7 +246,7 @@ $rejections[] = ['$s shared<int>; $alias =& weak($s);', 'stable'];
 $rejections[] = ['$w weak<int>; $alias =& lock($w);', 'stable'];
 $rejections[] = ['function borrow(shared<int> &$s): void {} $w weak<int>; borrow(lock($w));', 'stable'];
 foreach (['move($a);', 'if (move($a)) {}', '$b = empty(move($a));', '$b =& move($a);', '$b = move(move($a));'] as $invalid) {
-	$rejections[] = ['struct P { int $x; } $a unique<P> = new P(); ' . $invalid, 'move requires'];
+	$rejections[] = ['class P { int $x; } $a unique<P> = new P(); ' . $invalid, 'move requires'];
 }
 $rejections[] = ['function consume(unique<int> $a): void {} $a unique<int>; consume($a);', 'copyable'];
 $rejections[] = ['function bad(unique<int> $a): unique<int> { return $a; }', 'copyable'];
@@ -262,7 +261,7 @@ $rejections[] = ['function consume(unique<string> $a): void {} $a unique<int>; c
 $rejections[] = ['$a shared<int>; $b = move($a);', 'unique ownership'];
 $rejections[] = ['$a weak<int>; $b = move($a);', 'unique ownership'];
 $rejections[] = ['$a = 1; $b = move($a);', 'unique ownership'];
-$rejections[] = ['struct P { int $x; } $b = move(new P());', 'whole local'];
+$rejections[] = ['class P { int $x; } $b = move(new P());', 'whole local'];
 $rejections[] = ['$a unique<int>; $b unique<string> = move($a);', 'ownership boundary'];
 $rejections[] = ['$a unique<int>; $b shared<int> = move($a);', 'ownership boundary'];
 $rejections[] = ['$a unique<int>; $b unique<int>; $c = ($b = move($a));', 'copyable'];
@@ -272,14 +271,14 @@ $rejections[] = ['struct H { unique<int> $p; } $h H; $alias =& $h->p; $b unique<
 $rejections[] = ['struct H { unique<int> $p; } $h H; $b = move($h->p);', 'whole local'];
 $rejections[] = ['struct H { unique<int> $p; } $h H; $b unique<int>; $h->p = move($b);', 'move requires'];
 $rejections[] = ['$a unique<int>; $b = move($a); $copy = $b;', 'copyable'];
-$rejections[] = ['struct P { int $x; } $p = new P(1);', 'constructor arguments'];
-$rejections[] = ['struct P { int $x; } $p weak<P> = new P();', 'cannot allocate'];
-$rejections[] = ['struct P { int $x; } struct Q { int $x; } $p unique<P> = new Q();', 'exactly match'];
-$rejections[] = ['struct P { result<int> $x; } $p = new P();', 'default-constructible'];
+$rejections[] = ['class P { int $x; } $p = new P(1);', 'constructor arguments'];
+$rejections[] = ['class P { int $x; } $p weak<P> = new P();', 'cannot allocate'];
+$rejections[] = ['class P { int $x; } struct Q { int $x; } $p unique<P> = new Q();', 'exactly match'];
+$rejections[] = ['class P { result<int> $x; } $p = new P();', 'default-constructible'];
 $rejections[] = ['$p = new int();', 'source struct'];
-$rejections[] = ['struct P { int $x; } $p unique<P> = new P(); $copy = $p;', 'copyable'];
-$rejections[] = ['struct P { int $x; } $p unique<P>; $p = new P();', 'ownership boundary'];
-$rejections[] = ['struct P { int $x; } function make(): unique<P> { return new P(); }', 'ownership boundary'];
+$rejections[] = ['class P { int $x; } $p unique<P> = new P(); $copy = $p;', 'copyable'];
+$rejections[] = ['class P { int $x; } $p unique<P>; $p = new P();', 'ownership boundary'];
+$rejections[] = ['class P { int $x; } function make(): unique<P> { return new P(); }', 'ownership boundary'];
 foreach (['shared', 'unique', 'weak'] as $outer) {
 	foreach (['shared', 'unique', 'weak'] as $inner) {
 		$rejections[] = ['$v ' . $outer . '<' . $inner . '<int>>;', 'Direct ownership wrapper nesting'];
@@ -350,7 +349,7 @@ try
 	$compiler->cpp();
 	ownership_source_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Ownership cleanup/reprepare changed output');
 
-	$construction_source = 'struct Field { int $n; } struct Box { Field $field; } function build(): shared<Box> { return new Box(); } $u unique<Box> = new Box(); return 0;';
+	$construction_source = 'struct Field { int $n; } class Box { Field $field; } function build(): Box { return new Box(); } $u unique<Box> = new Box(); return 0;';
 	file_put_contents($path, $construction_source);
 	$compiler->update_cpp([$path]);
 	$construction_output = CPP_Probe::text(Model::$cpp_files);

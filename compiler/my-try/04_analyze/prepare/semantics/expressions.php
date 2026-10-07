@@ -402,26 +402,33 @@ final class Expression_Preparation
 	{
 		$base = $syntax->base;
 		$value = self::prepare($base, $context);
-		$declaration = Type_Queries::source_record($value->type);
+		$storage = Type_Queries::record_storage($value->type);
+		if ($storage === record_storage_kind::weak) {
+			throw new \RuntimeException('S2S weak member access requires an explicit lock');
+		}
+		$payload = Type_Queries::record_payload($value->type);
+		$declaration = Type_Queries::source_record($payload);
 		if ($declaration === null) {
-			throw new \RuntimeException('S2S member access requires a struct value');
+			throw new \RuntimeException('S2S member access requires a class or struct record');
 		}
 
-		$context->worker->require_record($value->type, $context);
-		$record_entry /** collected_struct */ = $declaration;
+		$context->worker->require_record($payload, $context);
+		$record_entry /** collected_record */ = $declaration;
 		$record = $record_entry->syntax()->require_preparation();
 		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;
 		$matches /** vector<prepared_field> */ = $fields->named($syntax->occurrence()->name);
 		if (q_count($matches) !== 1) {
-			throw new \RuntimeException('S2S needs one resolved struct field');
+			throw new \RuntimeException('S2S needs one resolved record property');
 		}
 
 		$facts = new prepared_field_access();
+		$facts->record_type = $payload;
+		$facts->receiver_storage = $storage;
 		$facts->field = $matches[0];
 		$facts->type = $matches[0]->type;
 		if ($value->place !== null) {
 			$base_place /** prepared_place */ = $value->place;
-			$facts->place = new prepared_place($matches[0], $base_place);
+			$facts->place = new prepared_place($matches[0], $base_place, $storage !== record_storage_kind::inline_value);
 		}
 
 		return $facts;

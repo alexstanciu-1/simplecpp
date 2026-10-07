@@ -8,9 +8,9 @@ final class Source_Types
 	/** Preserve declaration provenance while constructing one shared type identity. */
 	public static function definition(collected_type_definition $entry): abstract_nominal_type_definition
 	{
-		if ($entry instanceof collected_struct) {
-			$type = Model::$type_catalog->define_source_structure($entry->qualified_name(),
-				object_cast($entry, collected_struct::class));
+		if ($entry instanceof collected_record) {
+			$type = Model::$type_catalog->define_source_record($entry->qualified_name(),
+				object_cast($entry, collected_record::class));
 			return $type->nominal_definition();
 		}
 		if ($entry instanceof collected_enum) {

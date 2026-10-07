@@ -377,11 +377,13 @@ final class registered_type_catalog
 	}
 
 	/** Create one source nominal identity while syntax remains owned by its collected file. */
-	public function define_source_structure(string $name, collected_struct $declaration): nominal_type
+	public function define_source_record(string $name, collected_record $declaration): nominal_type
 	{
 		$capabilities /** vector<generic_contract> */ = [];
+		$kind = $declaration->syntax()->declaration_kind === type_declaration_kind::class_type
+			? nominal_type_kind::class_type : nominal_type_kind::structure;
 		$definition = $this->type_registry->define_nominal($name, type_definition_origin::source,
-			nominal_type_kind::structure, $capabilities);
+			$kind, $capabilities);
 		$this->source_declaration_index->register($definition, $declaration);
 		$type = $this->type_registry->canonical($definition);
 		return object_cast($type, nominal_type::class);

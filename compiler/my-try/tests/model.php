@@ -90,18 +90,18 @@ final class Model_Test
 	/** Prove collection registered one separately owned source definition and canonical identity. */
 	private static function check_source_type_association(registered_type_catalog $catalog): void
 	{
-		$record /** nullable<collected_struct> */ = null;
+		$record /** nullable<collected_record> */ = null;
 		foreach (Model::collected_files() as $file) {
 			foreach ($file->entries as $entry) {
-				if ($entry instanceof collected_struct) {
-					$record = object_cast($entry, collected_struct::class);
+				if ($entry instanceof collected_record) {
+					$record = object_cast($entry, collected_record::class);
 				}
 			}
 		}
 		if ($record === null) {
 			throw new \RuntimeException('Type-root fixture has no source structure');
 		}
-		$record_entry /** collected_struct */ = $record;
+		$record_entry /** collected_record */ = $record;
 		$definitions = Model::$global_scope->types_named($record_entry->name);
 		if (q_count($definitions) !== 1) {
 			throw new \RuntimeException('Collection did not register exactly one source type definition');

@@ -153,9 +153,9 @@ final class CPP_Declarations
 	}
 
 	/** Render only this layout; nested representations contribute header dependencies. */
-	public static function generate_struct(type_declaration_node $syntax, cpp_generation_context $context): string
+	public static function generate_record(type_declaration_node $syntax, cpp_generation_context $context): string
 	{
-		$definition = object_cast($syntax->occurrence(), collected_struct::class);
+		$definition = object_cast($syntax->occurrence(), collected_record::class);
 		$key = $definition->qualified_name();
 		if (isset($context->record_states[$key])) {
 			if ($context->record_states[$key] === cpp_record_state::visiting) {
@@ -173,7 +173,11 @@ final class CPP_Declarations
 		{
 			$type = $field->type;
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
-			$text .= "\t" . self::type($type, $context) . ' ' . CPP_Generator::source_name('field', $entry->name) . ";\n";
+			$requirement = Type_Queries::is_class_handle($type)
+				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+			$representation = CPP_Types::representation_for($type, $requirement);
+			CPP_Types::record_dependencies($representation, $context);
+			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name) . ";\n";
 		}
 
 		$context->records .= $text . "};\n\n";
@@ -263,10 +267,15 @@ final class CPP_Declarations
 	/** Field identity comes from shared preparation, never a backend name lookup. */
 	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context): string
 	{
-		$entry = object_cast(weakref_get($syntax->require_field_access_preparation()->field->declaration), collected_name::class);
+		$facts = $syntax->require_field_access_preparation();
+		$entry = object_cast(weakref_get($facts->field->declaration), collected_name::class);
 		$base = $syntax->base;
 		// A reference declaration does not supply the layout needed by member access.
-		self::type($base->require_preparation()->type, $context);
-		return '(' . (new CPP_Syntax($context))->expression($base) . ').' . CPP_Generator::source_name('field', $entry->name);
+		$payload = CPP_Types::payload($facts->record_type);
+		CPP_Types::record_dependencies($payload, $context);
+		$arrow = ($facts->receiver_storage !== record_storage_kind::inline_value)
+			|| $base->require_preparation()->type->by_value();
+		return '(' . (new CPP_Syntax($context))->expression($base) . ')'
+			. ($arrow ? '->' : '.') . CPP_Generator::source_name('field', $entry->name);
 	}
 }

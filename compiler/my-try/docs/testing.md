@@ -1,6 +1,10 @@
 # Test runners
 Doc Status: supporting
 
+CH10 plain-record checks: `python3 compiler/my-try/tests/records.py --results FRESH`.
+Uses the shared runner and fixture PCH for class/struct storage, copy/weak behavior,
+rejections and incremental recovery. This compiles generated programs, not the compiler.
+
 Both `tests/run.py` and `tools/native_validate.py` use the reusable
 [`tools/test_runner.py`](../tools/test_runner.py) worker pool. The default is **12
 concurrent tasks**; `--jobs N` overrides it and `--jobs 1` runs serially. A completed

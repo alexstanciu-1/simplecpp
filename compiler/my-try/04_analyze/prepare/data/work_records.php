@@ -127,9 +127,9 @@ final class enum_definition_work extends declaration_work
 
 final class record_definition_work extends declaration_work
 {
-	private collected_struct $definition;
+	private collected_record $definition;
 
-	public function __construct(collected_struct $definition)
+	public function __construct(collected_record $definition)
 	{
 		parent::__construct($definition->collection);
 		$this->definition = $definition;
@@ -140,7 +140,7 @@ final class record_definition_work extends declaration_work
 		return $this->definition;
 	}
 
-	public function record_definition(): collected_struct
+	public function record_definition(): collected_record
 	{
 		return $this->definition;
 	}

@@ -23,7 +23,7 @@ final class LLVM_Struct_Preparation
 				if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
 					continue;
 				}
-				if ($entry->kind() !== collected_name_kind::struct_declaration) {
+				if ($entry->kind() !== collected_name_kind::record_declaration) {
 					continue;
 				}
 				if (isset($policy->types[$entry->name]) || (q_count(Scope_Lookup::visible(object_cast(weakref_get($entry->scope), scope::class))->source_types_named($entry->name)) !== 1)) {
@@ -33,7 +33,7 @@ final class LLVM_Struct_Preparation
 				$type->declaration = $entry;
 				$type->name = '%' . LLVM_Names::encode($entry->name);
 				$fields /** Keyed_Storage<llvm_field> */ = $type->fields;
-				$syntax_fields /** Storage<property_node> */ = object_cast($entry, collected_struct::class)->syntax()->properties;
+				$syntax_fields /** Storage<property_node> */ = object_cast($entry, collected_record::class)->syntax()->properties;
 				foreach ($syntax_fields as $syntax)
 				{
 					$spelling = '$' . $syntax->name;

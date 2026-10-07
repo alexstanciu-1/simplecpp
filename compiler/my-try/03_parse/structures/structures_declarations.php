@@ -186,7 +186,7 @@ final class member_constant_node extends constant_declaration_node
 	}
 }
 
-/** Common syntax owner; only the existing struct path publishes record facts in this slice. */
+/** Common syntax owner; plain classes and structs publish record facts, other kinds remain gated. */
 final class type_declaration_node extends declaration_node
 {
 	use Node_Source_Span;
@@ -233,7 +233,7 @@ final class type_declaration_node extends declaration_node
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
 	{
-		$collector->collect_struct($this, $scope, $index);
+		$collector->collect_record($this, $scope, $index);
 	}
 
 	public function kind(): node_kind

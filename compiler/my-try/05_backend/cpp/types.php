@@ -5,6 +5,13 @@ namespace scpp\compiler;
 
 final class CPP_Types
 {
+	/** Allocation and ownership wrappers name the payload, not its default stored representation. */
+	public static function payload(canonical_type_use $type_use,
+		cpp_type_requirement $requirement = cpp_type_requirement::complete): cpp_type
+	{
+		return self::unmodified_representation($type_use, $requirement);
+	}
+
 	/** Resolve the semantic identity first; backend metadata never establishes type equality. */
 	public static function representation(canonical_type_use $type_use): cpp_type
 	{
@@ -18,6 +25,10 @@ final class CPP_Types
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
 		$result = self::unmodified_representation($type_use, $payload_requirement);
+		if (Type_Queries::is_class_handle($type_use)) {
+			$result->spelling = '::scpp::shared_p<' . $result->spelling . '>';
+			self::add_header($result, 'scpp/shared_p.hpp');
+		}
 		if ($type_use->by_value()) {
 			$modifier = Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value);
 			$result->spelling = $modifier->name() . '<' . $result->spelling . '>';
@@ -54,7 +65,8 @@ final class CPP_Types
 					$arguments .= ', ';
 				}
 				// Template bindings do not yet promise incomplete-payload support.
-				$argument_type = self::representation($argument);
+				$argument_type = $definition instanceof ownership_semantics
+					? self::payload($argument) : self::representation($argument);
 				$arguments .= $argument_type->spelling;
 				self::merge_headers($result, $argument_type);
 			}
@@ -79,7 +91,7 @@ final class CPP_Types
 				$result->literal = cpp_literal_kind::none;
 				return $result;
 			}
-			if (!($entry instanceof collected_struct)) {
+			if (!($entry instanceof collected_record)) {
 				throw new \LogicException('C++ representation is not implemented for this source type declaration');
 			}
 			$result->spelling = CPP_Generator::source_name('record', $entry->qualified_name());

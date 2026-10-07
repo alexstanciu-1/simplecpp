@@ -86,7 +86,7 @@ final class LLVM_Preparation_Run
 					continue;
 				}
 				$this->owners[$entry] = $file;
-				if ($entry->kind() === collected_name_kind::struct_declaration) {
+				if ($entry->kind() === collected_name_kind::record_declaration) {
 					$type = $this->structs[$entry];
 					$struct_types[$type->name] = $type;
 				}

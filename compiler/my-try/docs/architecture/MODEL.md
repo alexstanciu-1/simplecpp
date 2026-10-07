@@ -236,15 +236,18 @@ operations remain gated.
 Shared declaration syntax is defined in `structures_declarations.php`: one concrete
 type-declaration shape and separate typed member owners; common callable and constant
 abstracts supply reusable syntax. Existing struct/function/namespace-constant semantic
-paths are preserved. New declaration kinds do not acquire struct capabilities or method
-execution from the common AST. See [declaration model](../planning/type_declarations.md).
+paths share `collected_record` for plain classes/structs. Other declaration kinds
+do not acquire record capabilities or method execution from the common AST.
+See [declaration model](../planning/type_declarations.md#plain-record-execution--2026-10-07).
 
 `object_construction_node` owns the constructed type syntax and ordered arguments.
 Parsing records those edges without ownership decisions. `Object_Construction_Preparation`
 resolves the type, proves the bounded field-default contract with declaration dependencies,
-and selects a default shared or direct-local contextual unique/shared result.
-`prepared_object_construction` retains the constructed type, result handle type and
-ownership selection. The shared `expression_value_origin` fact marks proven fresh
+and selects declaration-directed or direct-local contextual storage.
+`prepared_object_construction` retains the constructed payload, result type and
+`record_storage_kind`. Bare class uses shared storage; bare struct uses inline storage.
+Redundant `shared<Class>`/`value<Struct>` reject. C++ payload naming is separate
+from stored-value naming. The shared `expression_value_origin` fact marks proven fresh
 construction separately from ordinary values; its query does not rely on subtype dispatch.
 This distinguishes new construction from copying;
 the shared value-boundary decision uses that query only for matching storage.
@@ -459,11 +462,11 @@ becoming an integer or a record. The registry owns no case inventory, backing sy
 computed storage width or source-derived capabilities. Declaration preparation owns
 these facts, not the registry.
 
-`collected_type_definition` is the common source-declaration role for structs and
+`collected_type_definition` is the common source-declaration role for records and
 enums. `Source_Type_Declarations` weakly associates exact semantic IDs with that
 role; collection/publication/retirement share the existing paths. `Type_Queries::source_declaration`
-reads that general association, whereas `source_record` returns only a struct.
-Struct reconciliation and record-only backend consumers explicitly narrow the role.
+reads that general association, whereas `source_record` returns a `collected_record`
+(plain class or struct). Record reconciliation and backend consumers narrow the role.
 There is no parallel enum registry or new Model root. `enum_definition_work` uses
 the ordinary scheduler. `prepared_enum` retains canonical identity, optional source
 backing, selected integer storage and ordered exact-decimal case snapshots. Capability

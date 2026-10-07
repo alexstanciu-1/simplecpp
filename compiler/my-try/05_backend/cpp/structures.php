@@ -107,11 +107,11 @@ final class cpp_fragment
 	/** Definition signatures can need layouts that their public prototypes do not. */
 	public array $definition_headers /** hash<bool> */ = [];
 	/** Declaration dependencies needed before a value-record definition. */
-	public Storage $records /** Storage<collected_struct> */;
+	public Storage $records /** Storage<collected_record> */;
 
 	public function __construct()
 	{
-		$this->records = new Storage /** Storage<collected_struct> */();
+		$this->records = new Storage /** Storage<collected_record> */();
 	}
 }
 

@@ -25,13 +25,17 @@ final class Ownership_Observation_Preparation
 		if ($role->ownership_family() !== $input_family) {
 			throw new \RuntimeException($diagnostic);
 		}
-		$source_application = object_cast(Type_Queries::canonical($value->type), applied_template_type::class);
-		$payload = $role->target_type($source_application);
+		$payload = Ownership_Conversions::payload($value->type);
+		$facts = new prepared_ownership_observation();
+		$facts->operation = $syntax->operation;
+		if (($syntax->operation === ownership_observation_kind::lock_shared) && Type_Queries::is_source_class($payload)) {
+			$facts->type = $payload;
+			return $facts;
+		}
 		$definition = object_cast(Model::$type_catalog->definition($result_name), abstract_template_type_definition::class);
 		$registry = Model::$type_catalog->registry();
 		$arguments /** vector<canonical_type_use> */ = [$payload];
 		$result_application = $registry->intern_application($definition, $arguments, new Capability_Preparation($context));
-		$facts = new prepared_ownership_observation();
 		$facts->type = $registry->use($result_application->type_id());
 		$facts->operation = $syntax->operation;
 		return $facts;

@@ -37,15 +37,18 @@ final class Symbol_Collector
 		return null;
 	}
 
-	/** Match the next unseen struct identity in its owning scope. */
-	public function previous_struct(scope $scope, string $name): ?type_declaration_node
+	/** Reuse the same declaration kind; a kind edit replaces its nominal identity. */
+	public function previous_record(scope $scope, string $name, type_declaration_kind $kind = type_declaration_kind::struct_type): ?type_declaration_node
 	{
 		foreach ($scope->source_types_named($name) as $entry) {
-			if (!($entry instanceof collected_struct)) {
+			if (!($entry instanceof collected_record)) {
 				continue;
 			}
 			if ($this->unseen($entry)) {
-				return object_cast($entry, collected_struct::class)->syntax();
+				$syntax = object_cast($entry, collected_record::class)->syntax();
+				if ($syntax->declaration_kind === $kind) {
+					return $syntax;
+				}
 			}
 		}
 		return null;
@@ -131,15 +134,16 @@ final class Symbol_Collector
 	}
 
 	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
-	public function collect_struct(type_declaration_node $node, scope $scope, int $index): void
+	public function collect_record(type_declaration_node $node, scope $scope, int $index): void
 	{
-		if ($node->declaration_kind !== type_declaration_kind::struct_type) {
-			throw new \RuntimeException('Only struct declarations have source type registration in this model slice');
+		if (($node->declaration_kind !== type_declaration_kind::struct_type)
+			&& ($node->declaration_kind !== type_declaration_kind::class_type)) {
+			throw new \RuntimeException('Only class and struct records have registration in this slice');
 		}
 		if ($this->reuse($node, $index)) {
 			return;
 		}
-		$entry = new collected_struct($this->collection, $node);
+		$entry = new collected_record($this->collection, $node);
 		$this->register_source_type($entry, $scope, $node->name, $index);
 	}
 

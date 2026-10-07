@@ -122,8 +122,8 @@ enum_model_check(Type_Queries::source_declaration($record_use) === $structure->o
 enum_model_check(Type_Queries::source_record($record_use) === $structure->occurrence(), 'Record query lost struct identity');
 $collector->finish($root);
 $next_collector = new Symbol_Collector($collection, $tokens, $local_scope, Model::$global_scope, 2);
-enum_model_check($next_collector->previous_struct($local_scope, 'Suit') === null, 'Struct reconciliation selected enum syntax');
-enum_model_check($next_collector->previous_struct($local_scope, 'Box') === $structure, 'Struct reconciliation no longer reuses its syntax');
+enum_model_check($next_collector->previous_record($local_scope, 'Suit') === null, 'Struct reconciliation selected enum syntax');
+enum_model_check($next_collector->previous_record($local_scope, 'Box') === $structure, 'Struct reconciliation no longer reuses its syntax');
 $unit->collect($next_collector, $local_scope, 1);
 enum_model_check(($unit->occurrence() === $enum_entry) && (count($local_scope->types_named('Suit')) === 2), 'Reuse duplicated enum registration');
 

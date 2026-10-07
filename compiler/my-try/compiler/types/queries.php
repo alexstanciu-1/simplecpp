@@ -5,6 +5,50 @@ namespace scpp\compiler;
 
 final class Type_Queries
 {
+	/** Common classification for construction, member access and backend representation. */
+	public static function record_storage(canonical_type_use $type): record_storage_kind
+	{
+		$definition = self::canonical($type)->definition();
+		if ($definition instanceof ownership_semantics)
+		{
+			$kind = object_cast($definition, ownership_semantics::class)->ownership_family();
+			if ($kind === ownership_kind::weak) {
+				return record_storage_kind::weak;
+			}
+			return $kind === ownership_kind::unique ? record_storage_kind::unique : record_storage_kind::shared;
+		}
+		return self::is_class_handle($type) ? record_storage_kind::shared : record_storage_kind::inline_value;
+	}
+
+	/** Unwrap ownership or an inline modifier without changing the nominal payload identity. */
+	public static function record_payload(canonical_type_use $type): canonical_type_use
+	{
+		$definition = self::canonical($type)->definition();
+		if ($definition instanceof ownership_semantics) {
+			return object_cast($definition, ownership_semantics::class)->target_type(object_cast(self::canonical($type), applied_template_type::class));
+		}
+		return Model::$type_catalog->registry()->use($type->type_id());
+	}
+
+	/** Default class storage is shared; the canonical identity still names the payload. */
+	public static function is_source_class(canonical_type_use $type): bool
+	{
+		$definition = self::canonical($type)->definition();
+		if ($definition->origin() !== type_definition_origin::source) {
+			return false;
+		}
+		if (!($definition instanceof abstract_nominal_type_definition)) {
+			return false;
+		}
+		return object_cast($definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::class_type;
+	}
+
+	/** A class's default handle is not another ownership-template layer. */
+	public static function is_class_handle(canonical_type_use $type): bool
+	{
+		return !$type->by_value() && self::is_source_class($type);
+	}
+
 	/** Nominal enum identity stays distinct from its prepared integer storage. */
 	public static function is_enum(canonical_type_use $type): bool
 	{
@@ -28,11 +72,11 @@ final class Type_Queries
 	}
 
 	/** A source type need not have fields or record layout. */
-	public static function source_record(canonical_type_use $type): ?collected_struct
+	public static function source_record(canonical_type_use $type): ?collected_record
 	{
 		$declaration = self::source_declaration($type);
-		if ($declaration instanceof collected_struct) {
-			return object_cast($declaration, collected_struct::class);
+		if ($declaration instanceof collected_record) {
+			return object_cast($declaration, collected_record::class);
 		}
 		return null;
 	}

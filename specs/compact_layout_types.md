@@ -197,7 +197,11 @@ object ownership.
 Only no-argument struct construction is supported. Positional arguments, named
 arguments, and argument unpacking must produce a source diagnostic, rather than
 selecting aggregate positional initialization or class construction. Custom
-constructors and ownership-wrapper construction of structs are not introduced.
+constructors are not introduced. The v0.2
+[record-storage amendment](type_use_modifiers.md#v02-bounded-owned-construction--2026-10-06)
+additionally admits explicit shared/unique allocation at direct typed local
+initializers and weak observation of shared struct allocations. Bare `new Struct()`
+still creates a value; `value<Struct>` is rejected as redundant declaration storage.
 
 Explicit struct field initializers lower to generated member initializers.
 Omitted initializers use the generated C++ default for the field type.

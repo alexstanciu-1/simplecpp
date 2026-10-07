@@ -42,6 +42,15 @@ enum nominal_type_kind: int
 	case enumeration = 3;
 }
 
+/** Storage of a record instance, independently of its nominal declaration identity. */
+enum record_storage_kind
+{
+	case inline_value;
+	case shared;
+	case unique;
+	case weak;
+}
+
 enum floating_format: int
 {
 	case binary = 1;
@@ -1136,6 +1145,14 @@ final class Type_Registry implements type_capability_query
 	public function use(int $type_id, bool $by_value = false): canonical_type_use
 	{
 		$type = $this->type($type_id);
+		$definition = $type->definition();
+		if ($by_value && ($definition->origin() === type_definition_origin::source)) {
+			if ($definition instanceof abstract_nominal_type_definition) {
+				if (object_cast($definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::structure) {
+					throw new \InvalidArgumentException('value<Struct> repeats the declaration default storage');
+				}
+			}
+		}
 		if ($by_value) {
 			if ($type->definition() instanceof ownership_semantics) {
 				throw new \InvalidArgumentException('Value modifier cannot wrap an ownership type');
@@ -1260,6 +1277,18 @@ final class Type_Registry implements type_capability_query
 		if ($definition instanceof ownership_semantics) {
 			if ($this->type($complete[0]->type_id())->definition() instanceof ownership_semantics) {
 				throw new \InvalidArgumentException('Direct ownership wrapper nesting is not supported in v0.2');
+			}
+			if ($complete[0]->by_value()) {
+				throw new \InvalidArgumentException('Ownership wrappers require an unmodified payload type');
+			}
+			$payload_definition = $this->type($complete[0]->type_id())->definition();
+			if ($payload_definition->origin() === type_definition_origin::source) {
+				if ($payload_definition instanceof abstract_nominal_type_definition) {
+					if ((object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::class_type)
+						&& (object_cast($definition, ownership_semantics::class)->ownership_family() === ownership_kind::shared)) {
+						throw new \InvalidArgumentException('shared<Class> repeats the declaration default storage');
+					}
+				}
 			}
 		}
 		foreach ($complete as $position => $argument)

@@ -127,7 +127,7 @@ Model::$modules->add($module->name, $module);
 $compiler = new Compiler();
 $compiler->exec_cpp();
 $before = CPP_Output::encode(Model::$cpp_files);
-$record = object_cast(Model::$global_scope->source_types_named('Box')[0], collected_struct::class)->syntax();
+$record = object_cast(Model::$global_scope->source_types_named('Box')[0], collected_record::class)->syntax();
 $free = Model::$global_scope->functions_named('read')[0]->syntax();
 $ordinary_constant = object_cast(Model::$global_scope->constants_named('LIMIT')[0], collected_constant::class)->syntax();
 declaration_model_check($record instanceof type_declaration_node, 'Parser still builds a struct-only AST');
@@ -142,7 +142,7 @@ $source->changes = change_state::changed;
 $compiler->exec_cpp();
 declaration_model_check(CPP_Output::encode(Model::$cpp_files) === $before, 'Source movement changed emitted artifacts');
 declaration_model_check($free->require_body() === $body, 'Migration lost retained body identity');
-declaration_model_check(object_cast(Model::$global_scope->source_types_named('Box')[0], collected_struct::class)->syntax() === $record, 'Migration lost type identity');
+declaration_model_check(object_cast(Model::$global_scope->source_types_named('Box')[0], collected_record::class)->syntax() === $record, 'Migration lost type identity');
 
 // New modeled members must not disappear silently through the old struct preparation path.
 $record->methods->append($method);
@@ -152,7 +152,7 @@ try {
 	$compiler->prepare();
 }
 catch (\RuntimeException $error) {
-	$rejected = str_contains($error->getMessage(), 'model-only slice');
+	$rejected = str_contains($error->getMessage(), 'plain-record slice');
 }
 declaration_model_check($rejected, 'Unsupported modeled methods were silently ignored');
 echo "Declaration model ownership, shared syntax, migration and admission gates passed\n";

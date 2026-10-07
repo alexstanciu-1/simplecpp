@@ -150,7 +150,7 @@ $cases = [
 	'value_bool' => ['$a value<bool> = true; return $a && true;', 1],
 	'value_float' => ['$a value<float> = 3.5; $b float = $a; return $b;', 3],
 	'value_nested' => ['$a value<value<int>> = 9; return $a;', 9],
-	'value_record' => ['struct Point { uint16 $x; } function read(value<Point> $p): int { return $p->x; } $a Point; $a->x = 6; $b value<Point> = $a; return read($b);', 6],
+	'value_record' => ['struct Point { uint16 $x; } function read(Point $p): int { return $p->x; } $a Point; $a->x = 6; $b Point = $a; return read($b);', 6],
 	'interp_simple' => ['$name = "Alex"; $a = "Hello $name";', 0],
 	'interp_braced' => ['$count = 3; $a = "Count: {$count}";', 0],
 	'interp_adjacent' => ['$x = "a"; $y = "b"; $a = "$x$y{$x}";', 0],
@@ -1753,7 +1753,7 @@ $language_integer = Type_Queries::canonical(Language_Types::integer(Model::$lang
 if (count($found) !== 1 || $found[0] !== $language_integer) {
 	throw new \LogicException('Deleted source type blocked parent lookup');
 }
-$replacement = Model::$type_catalog->define_source_structure('int', object_cast($entry, collected_struct::class))->nominal_definition();
+$replacement = Model::$type_catalog->define_source_record('int', object_cast($entry, collected_record::class))->nominal_definition();
 $entry->changes = 0;
 $local->register_type($replacement);
 if (Scope_Lookup::types($local, 'int')[0] !== $replacement) {

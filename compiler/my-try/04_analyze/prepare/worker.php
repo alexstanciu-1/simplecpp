@@ -236,7 +236,7 @@ final class Preparation_Worker
 
 	public function select_record(type_declaration_node $node): void
 	{
-		$entry = object_cast($node->occurrence(), collected_struct::class);
+		$entry = object_cast($node->occurrence(), collected_record::class);
 		$this->select_owner($this->record_owner($entry));
 	}
 
@@ -316,8 +316,8 @@ final class Preparation_Worker
 		if ($entry instanceof collected_function) {
 			return $this->function_owner(object_cast($entry, collected_function::class));
 		}
-		if ($entry instanceof collected_struct) {
-			return $this->record_owner(object_cast($entry, collected_struct::class));
+		if ($entry instanceof collected_record) {
+			return $this->record_owner(object_cast($entry, collected_record::class));
 		}
 		if ($entry instanceof collected_constant) {
 			if ($entry->preparation === null) { $entry->preparation = new constant_definition_work(object_cast($entry, collected_constant::class)); }
@@ -340,7 +340,7 @@ final class Preparation_Worker
 		return $entry->preparation;
 	}
 
-	public function record_owner(collected_struct $entry): declaration_work
+	public function record_owner(collected_record $entry): declaration_work
 	{
 		if ($entry->preparation === null) {
 			$entry->preparation = new record_definition_work($entry);
@@ -373,7 +373,7 @@ final class Preparation_Worker
 		if ($entry === null) {
 			return;
 		}
-		$record /** collected_struct */ = $entry;
+		$record /** collected_record */ = $entry;
 		$this->require_declaration($context->owner, $record);
 	}
 
@@ -552,7 +552,7 @@ final class Preparation_Worker
 	{
 		$syntax = $owner->record_definition()->syntax();
 		$old = $syntax->preparation();
-		Declaration_Preparation::prepare_struct($syntax, $context);
+		Declaration_Preparation::prepare_record($syntax, $context);
 		$changed = !Preparation_Changes::same_record($old, $syntax->require_preparation());
 		foreach ($previous as $target /** @object-key */) {
 			if ($previous[$target] !== $target->version) {
@@ -597,7 +597,7 @@ final class Preparation_Worker
 	}
 
 	/** Fields share their record's completion boundary. */
-	private function settle_fields(collected_struct $entry): void
+	private function settle_fields(collected_record $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
 		$fields /** Storage<property_node> */ = $entry->syntax()->properties;

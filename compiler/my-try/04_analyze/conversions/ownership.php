@@ -7,11 +7,20 @@ final class Ownership_Conversions
 {
 	public static function role(canonical_type_use $type): ?ownership_semantics
 	{
+		if (Type_Queries::is_class_handle($type)) {
+			return object_cast(Model::$type_catalog->definition('shared'), ownership_semantics::class);
+		}
 		$definition = Type_Queries::canonical($type)->definition();
 		if (!($definition instanceof ownership_semantics)) {
 			return null;
 		}
 		return object_cast($definition, ownership_semantics::class);
+	}
+
+	/** Ownership-template arguments name payloads; bare source classes carry the same role implicitly. */
+	public static function payload(canonical_type_use $type): canonical_type_use
+	{
+		return Type_Queries::record_payload($type);
 	}
 
 	/** A weak observation cannot acquire a usable lifetime through a presence test. */

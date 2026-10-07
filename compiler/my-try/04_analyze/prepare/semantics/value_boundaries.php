@@ -22,6 +22,9 @@ final class Value_Boundary_Preparation
 			if ((!$value->addressable()) || !Type_Preparation::same_storage_type($value->type, $target)) {
 				throw new \RuntimeException('S2S reference arguments require stable storage of the exact parameter type');
 			}
+			if (!$value->place->borrowable()) {
+				throw new \RuntimeException('S2S reference arguments cannot borrow heap-backed properties');
+			}
 			if ($access === storage_access::writable) {
 				Reference_Preparation::require_writable($value->place);
 			}
