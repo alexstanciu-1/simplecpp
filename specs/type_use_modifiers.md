@@ -42,9 +42,10 @@ extracting or copying the payload. An inline class payload still carries its exp
 
 Implementation checkpoints are tracked in CH10. Handle normalization and the bounded
 inline-record value operations above are enabled through shared preparation and
-existing runtime lowering. Explicit payload transfer into/out of a nullable,
-contextual nullable data literals and joins/coalescing remain later
-slices. The runtime's general C++ template is not rewritten by source normalization.
+existing runtime lowering. Exact nullable-record selections follow the
+[selection matrix](conditional_expression_matrix.md#v02-nullable-inline-record-selections--2026-10-07).
+Explicit payload transfer into/out of a nullable and contextual nullable data literals
+remain later slices. The runtime's general C++ template is not rewritten by source normalization.
 
 Record presence/conditions follow the [v0.2 probe amendment](count_empty_isset_contract.md#v02-collection-only-emptiness--2026-10-07):
 inline records are always present/truthy and nullable records delegate to that rule.

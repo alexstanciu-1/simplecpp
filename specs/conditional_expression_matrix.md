@@ -1,6 +1,20 @@
 # Conditional / Coalesce Runtime Matrix
 Doc Status: normative
 
+## v0.2 nullable inline-record selections — 2026-10-07
+
+For an exact inline-record payload `T` (a struct or `value<Class>`), ternary and
+Elvis joins of `nullable<T>` with `T` or the same `nullable<T>` preserve
+`nullable<T>`. Coalescing `nullable<T> ?? T` produces an owned `T`, extracting the
+present payload or selecting the fallback. No implicit move or reference result
+is introduced: payloads must be copyable, including when one branch is known to
+be unselected. Both branches are validated during preparation; runtime evaluation
+is lazy and evaluates the condition/left operand once.
+
+Bare-null branches, nullable coalescing fallbacks, cross-record conversions and
+contextual data-literal branches remain outside this bounded slice. This does not
+broaden match, Result payloads or direct nonnullable-record joins.
+
 ## v0.2 inline-record conditions — 2026-10-07
 
 Ordinary inline structs and `value<Class>` records are always truthy, independently

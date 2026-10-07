@@ -23,11 +23,21 @@ foreach (['struct', 'class'] as $kind) {
 		'empty' => '$a ?PAYLOAD; $b ?PAYLOAD = null; if ($a !== null) { return 1; } if (null !== $b) { return 2; } $a = null; return 0;',
 		'copy' => '$v PAYLOAD = new C(); $a ?PAYLOAD = $v; $v->n = 8; $b ?PAYLOAD = $a; $a = null; $out PAYLOAD = $b; $n = $out->n; if ($n !== 7) { return 1; } $out->n = 9; $again PAYLOAD = $b; $n = $again->n; if ($n !== 7) { return 2; } if ($b === null) { return 3; } return 0;',
 		'new' => '$a ?PAYLOAD = new C(); $out PAYLOAD = $a; $n = $out->n; if ($n !== 7) { return 1; } return 0;',
+		'joins' => '$v PAYLOAD = new C(); $a ?PAYLOAD; $b ?PAYLOAD = $v; $x = true ? $a : $v; if (isset($x)) { return 1; } $y = false ? $v : $b; $z = true ? $b : $a; $out PAYLOAD = $y; $out->n = 9; $original PAYLOAD = $z; $number = $original->n; if ($number !== 7) { return 2; } $e = $a ?: $v; $f = $b ?: $a; $g PAYLOAD = $e; $h PAYLOAD = $f; $number = $g->n; if ($number !== 7) { return 3; } $number = $h->n; if ($number !== 7) { return 4; } return 0;',
+		'coalesce' => '$v PAYLOAD = new C(); $a ?PAYLOAD; $b ?PAYLOAD = $v; $x = $a ?? $v; $y = $b ?? $v; $x->n = 9; $number = $y->n; if ($number !== 7) { return 1; } $out PAYLOAD = $b; $number = $out->n; if ($number !== 7) { return 2; } return 0;',
+		'lazy_joins' => 'function source(bool $present, int &$calls): ?PAYLOAD { $calls++; if ($present) { $v PAYLOAD = new C(); return $v; } return null; } function fallback(int &$calls): PAYLOAD { $calls = $calls + 10; $v PAYLOAD = new C(); return $v; } $n = 0; $a = source(true, $n) ?: fallback($n); if ($n !== 1) { return 1; } $b = source(false, $n) ?: fallback($n); if ($n !== 12) { return 2; } $c = source(true, $n) ?? fallback($n); if ($n !== 13) { return 3; } $d = source(false, $n) ?? fallback($n); if ($n !== 24) { return 4; } $e = true ? $a : source(false, $n); if ($n !== 24) { return 5; } return 0;',
 		'boundaries' => 'function wrap(PAYLOAD $v): ?PAYLOAD { return $v; } function copy(?PAYLOAD $v): ?PAYLOAD { return $v; } function extract(?PAYLOAD $v): PAYLOAD { return $v; } function read(PAYLOAD $v): int { return $v->n; } $v PAYLOAD = new C(); $a = copy(wrap($v)); $b PAYLOAD = extract($a); $n = read($a); if ($n !== 7) { return 1; } $n = $b->n; if ($n !== 7) { return 2; } return 0;',
 		'fields' => 'class Holder { ?PAYLOAD $v = null; } $h = new Holder(); $v PAYLOAD = new C(); $h->v = $v; $a ?PAYLOAD = $h->v; $h->v = null; $out PAYLOAD = $a; $n = $out->n; if ($n !== 7) { return 1; } return 0;',
 		'empty_failure' => '$a ?PAYLOAD = null; $out PAYLOAD = $a; return 1;',
 	] as $name => $program) {
 		$output = nullable_records_source($kind . ' C { int $n = 7; } ' . str_replace('PAYLOAD', $type, $program));
+		if ($name === 'joins') {
+			foreach (['x', 'y', 'z', 'e', 'f'] as $local) {
+				if (!str_contains($output, 'auto local_' . $local . ' = ([&]() -> scpp::nullable<')) {
+					throw new \LogicException('Nullable join lost its wrapper result');
+				}
+			}
+		}
 		if ($name === 'empty_failure') {
 			foreach (Model::$cpp_files as $artifact) {
 				if ($artifact->identity === 'entry') {
@@ -63,6 +73,9 @@ foreach (['struct', 'class'] as $kind) {
 		'$v PAYLOAD; $a ?PAYLOAD = $v;',
 		'$a ?PAYLOAD; $v PAYLOAD = $a;',
 		'struct Holder { ?PAYLOAD $a; } $h Holder; $copy = $h;',
+		'$a ?PAYLOAD; $b ?PAYLOAD; $out = true ? $a : $b;',
+		'$a ?PAYLOAD; $b ?PAYLOAD; $out = $a ?: $b;',
+		'$a ?PAYLOAD; $b PAYLOAD; $out = $a ?? $b;',
 	] as $program) {
 		try { nullable_records_source($kind . ' C { unique<int> $owned; } ' . str_replace('PAYLOAD', $type, $program)); throw new \LogicException('Noncopyable payload copied'); }
 		catch (\RuntimeException $expected) {
@@ -74,7 +87,10 @@ foreach ([
 	'struct C { int $n; } $a ?C; $n = $a->n;',
 	'struct C {} struct D {} $v D; $a ?C = $v;',
 	'struct C {} $a ?C; $b = empty($a);',
-	'struct C {} $a ?C; $b = $a ?? new C();',
+	'struct C {} struct D {} $a ?C; $b D; $out = $a ?? $b;',
+	'struct C {} struct D {} $a ?C; $b D; $out = true ? $a : $b;',
+	'struct C {} $a ?C; $b ?C; $out = $a ?? $b;',
+	'struct C {} $a ?C; $out = true ? $a : null;',
 ] as $source) {
 	try { nullable_records_source($source); throw new \LogicException('Deferred nullable operation accepted'); }
 	catch (\RuntimeException $expected) {}
@@ -88,7 +104,7 @@ $main_path = $directory . '/main.phs';
 try {
 	$declaration = 'struct C { int $n = 7; } struct Holder { ?C $v; }';
 	file_put_contents($types_path, $declaration);
-	file_put_contents($main_path, '$a ?C; $b = $a; $h Holder; $copy = $h; return 0;');
+	file_put_contents($main_path, '$a ?C; $b = true ? $a : $a; $h Holder; $copy = $h; return 0;');
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler();
 	$compiler->init([$directory]);

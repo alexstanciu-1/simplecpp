@@ -405,7 +405,10 @@ construction, exact-payload wrapping/copying and checked required-value extracti
 `Capability_Preparation` recursively queries nullable payload copy permission through
 completed declarations and their dependencies. Empty construction/reset does not copy;
 ordinary extraction does. Inline-record presence and conditions observe without copying;
-selection joins remain a separate admission boundary. Explicit casts
+selection joins use `Selection_Result_Preparation::nullable_value_join` for exact
+scalar/inline-record payload agreement and copy capability. Ternary/Elvis retain
+the wrapper; nullable-left coalescing requires a nonnullable exact fallback and
+extracts an owned payload. This does not widen match or Result admission. Explicit casts
 remain distinct (notably the empty nullable-string exception). `operators/presence.php`
 selects strict null presence comparisons. Null literals carry a non-storable sentinel;
 `?T` resolves to the registered nullable semantic definition and shared application

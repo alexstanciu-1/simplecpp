@@ -46,11 +46,9 @@ final class Conditional_Expression_Preparation
 		if ((Nullable_Conversions::payload($selected) === null) && (Nullable_Conversions::payload($fallback) === null)) {
 			return Selection_Result_Preparation::exact_join($selected, $fallback, $context, 'conditional');
 		}
-		$selected_domain = self::scalar_domain($selected);
-		$fallback_domain = self::scalar_domain($fallback);
-		if (!$selected_domain->matches($fallback_domain)) {
-			throw new \RuntimeException('S2S conditional branches require matching scalar types or nullable payloads');
-		}
+		$selected_domain = self::value_domain($selected);
+		$fallback_domain = self::value_domain($fallback);
+		Selection_Result_Preparation::nullable_value_join($selected_domain, $fallback_domain, $context);
 		$result = $selected;
 		if (Nullable_Conversions::payload($fallback) !== null) { $result = $fallback; }
 		Capability_Preparation::require_copy($selected, $context);
@@ -74,17 +72,15 @@ final class Conditional_Expression_Preparation
 	}
 
 	/** Bare null and broader carriers do not establish a conditional result domain. */
-	private static function scalar_domain(canonical_type_use $type): canonical_type_use
+	private static function value_domain(canonical_type_use $type): canonical_type_use
 	{
 		$payload = Nullable_Conversions::payload($type);
 		if ($payload !== null) {
-			Nullable_Conversions::require_scalar_payload($payload);
+			Nullable_Conversions::require_value_payload($payload);
 			if ($type->by_value()) { throw new \RuntimeException('S2S nullable conditional branches do not support storage modifiers'); }
 			return $payload;
 		}
-		if (!Conversion_Preparation::is_scalar($type)) {
-			throw new \RuntimeException('S2S conditional branches require supported scalar value types or nullable scalars');
-		}
+		Nullable_Conversions::require_value_payload($type);
 		return $type;
 	}
 }

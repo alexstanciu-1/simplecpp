@@ -34,6 +34,10 @@ final class Coalesce_Expression_Preparation
 				$facts->type = Selection_Result_Preparation::boxed_join($selected_type, $fallback->type, $context);
 				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
 			}
+			elseif ($payload !== null) {
+				$facts->type = Selection_Result_Preparation::nullable_value_join($selected_type, $fallback->type, $context);
+				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
+			}
 			else {
 				// Coalescing has not admitted enum payloads/results; shared direct joins have.
 				if (!Conversion_Preparation::is_scalar($selected_type) || !Conversion_Preparation::is_scalar($fallback->type)) {

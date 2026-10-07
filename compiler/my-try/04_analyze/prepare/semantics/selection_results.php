@@ -5,6 +5,20 @@ namespace scpp\compiler;
 
 final class Selection_Result_Preparation
 {
+	/** Exact selected payloads for nullable joins; does not broaden match admission. */
+	public static function nullable_value_join(canonical_type_use $left, canonical_type_use $right,
+		preparation_context $context): canonical_type_use
+	{
+		Nullable_Conversions::require_value_payload($left);
+		Nullable_Conversions::require_value_payload($right);
+		if (!$left->matches($right)) {
+			throw new \RuntimeException('S2S nullable selection branches require the same payload type');
+		}
+		Capability_Preparation::require_copy($left, $context);
+		Capability_Preparation::require_copy($right, $context);
+		return $left;
+	}
+
 	/** Boxed-led selections retain their family; match keeps its direct-value domain. */
 	public static function boxed_join(canonical_type_use $left, canonical_type_use $right,
 		preparation_context $context): canonical_type_use

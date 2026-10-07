@@ -492,8 +492,30 @@ Legacy absence tests now use `!isset`, with explicit new empty rejection/error t
 Authoritative specs and operator-matrix empty rows record the intentional v0.2 break.
 No native compiler rebuild or conversion was performed.
 
-Next: nullable-record ternary/Elvis/coalescing joins. Property-path probe admission
-and custom emptiness registration are not added by this slice.
+The following checkpoint adds nullable-record joins. Property-path probe admission
+and custom emptiness registration are not added by these slices.
+
+## Nullable-record selection joins — 2026-10-07
+
+Exact inline-record payloads now reuse the nullable selection path for both structs
+and `value<Class>`. Ternary/Elvis retain `nullable<T>` when either branch has that
+wrapper; `nullable<T> ?? T` produces an owned `T`. Shared selection preparation
+validates exact payload agreement and copyability before emission. The existing
+conversion facts, AST and lazy C++ lowering are unchanged; match and Result
+admission do not widen. Noncopyable payloads reject even on an unselected branch.
+
+Bare-null branches, nullable `??` fallbacks, contextual data literals and
+cross-record conversions remain gated. See the authoritative
+[selection matrix](../../../../specs/conditional_expression_matrix.md#v02-nullable-inline-record-selections--2026-10-07).
+
+Evidence: `/tmp/ch10-nullable-joins-2/` passes 22 generated programs without PCH,
+including class/struct joins, copy independence, lazy single evaluation and prior
+nullable boundaries. PHP checks include rejection and copy-capability invalidation,
+retry and repair. `/tmp/ch10-nullable-joins-final-php/` verifies wrapper result
+spelling and incremental join invalidation; `/tmp/ch10-nullable-joins-regression/`
+passes five focused PHP suites. No native compiler rebuild or conversion was performed.
+
+Next discussion: property operation completeness.
 
 ## Chapter 09 carryovers
 
@@ -536,12 +558,12 @@ a native compiler rebuild. Existing checkpoint suites supply behavioral evidence
 
 ### Actual remaining work and owners
 
-1. **Nullable inline-record joins — next discussion.**
+1. **Nullable inline-record joins — bounded complete.**
    The normalization checkpoint above settles TYPE-VAR-004 for class handles and
    updates the earlier audit result. Nullable inline portions of TYPE-PARAM-004/
    TYPE-PROP-002 and the CH09 carryover now have bounded construction,
    payload-dependent copy capability, checked extraction, presence and condition
-   admission. Selection joins remain. Bare handles
+   admission and exact copyable-payload selection joins. Bare handles
    retain their own absence state; inline records require a real nullable wrapper.
 2. **Property operation completeness.** Plain reads/writes are covered. Compound
    assignment and prefix/postfix mutation on instance/static properties remain

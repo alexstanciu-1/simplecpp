@@ -71,7 +71,9 @@ implements the agreed no-double-absence handle model. The [inline-record checkpo
 adds construction, payload-aware copying, checked extraction and null comparisons.
 The [record observations/collection-only emptiness checkpoint](catalog/10_objects.md#record-observation-and-collection-only-empty--2026-10-07)
 adds noncopying `isset`/conditions and replaces absence-style `empty` consistently.
-Next: nullable-record selection joins; those remain gated.
+The [nullable selection checkpoint](catalog/10_objects.md#nullable-record-selection-joins--2026-10-07)
+adds exact copyable-payload ternary/Elvis/coalescing joins. Next discussion: property
+operation completeness through a common property-place path.
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are
