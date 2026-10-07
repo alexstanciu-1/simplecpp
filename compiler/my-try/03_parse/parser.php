@@ -998,10 +998,13 @@ final class Parser_Run
 	{
 		$start = $this->position;
 		$modifiers = $this->member_modifiers();
-		if (!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) {
-			throw new \RuntimeException($this->error_message('Expected field type'));
+		$type /** nullable<type_node> */ = null;
+		if (!string_byte_starts_with($this->text(), '$')) {
+			if (!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) {
+				throw new \RuntimeException($this->error_message('Expected field type or variable'));
+			}
+			$type = $this->type_syntax($scope);
 		}
-		$type = $this->type_syntax($scope);
 		if (!string_byte_starts_with($this->text(), '$')) {
 			throw new \RuntimeException($this->error_message('Expected field variable name'));
 		}

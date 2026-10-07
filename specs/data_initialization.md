@@ -342,6 +342,25 @@ typed data notation for containers/eligible nested records. Arbitrary calls, `$t
 and sibling-property references in default expressions remain deferred. These default
 rules also apply to ordinary class/struct construction, independently of `data` opt-in.
 
+### Default-based property type inference — v0.2, 2026-10-07
+
+Class/struct instance and static properties may omit their type when an admitted
+default establishes one concrete type: `public $count = 0;` declares a fixed `int`
+property. Preparation infers from the default's semantic type, including supported
+constant references and enum cases, not from generated C++ or later assignments.
+Explicit property types retain their normal assignment-conversion rules.
+
+No default, bare `null`, and unqualified data literals such as `[]` or `{x: 1}`
+require an explicit property type. An explicitly targeted data literal such as
+`vector<int>::[1, 2]` supplies its own type where construction defaults are allowed.
+Inference does not relax initializer restrictions: static properties still exclude
+data constructions, and arbitrary calls/instance reads remain deferred. Inferred
+properties participate normally in synthesized `data` construction and `set:` inputs.
+
+The inferred type is declaration-owned. A default dependency changing type
+invalidates layout and dependent semantics; a value-only change follows ordinary
+default invalidation. Unsupported or ambiguous defaults reject even on unused types.
+
 Preparation owns the authored or synthesized semantic construction contract, including
 input names, types, defaults and dependencies. Lowering emits its concrete constructor
 and calls from those facts; it must not discover the contract or perform source

@@ -74,7 +74,8 @@ adds noncopying `isset`/conditions and replaces absence-style `empty` consistent
 The [nullable selection checkpoint](catalog/10_objects.md#nullable-record-selection-joins--2026-10-07)
 adds exact copyable-payload ternary/Elvis/coalescing joins. Property compound and
 prefix/postfix updates now reuse the common mutation worker and existing property
-places. Next discussion: property type inference and construction conveniences.
+places. Default-based property inference now shares declaration/default preparation,
+including inferred-type dependency invalidation. Next discussion: ownership construction shortcuts.
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are

@@ -536,7 +536,27 @@ private/read-only instance targets, weak/temporary receivers and effectful RHS.
 `/tmp/ch10-property-mutations-regression/` passes five focused PHP suites.
 No native compiler rebuild or conversion was performed.
 
-Next discussion: property type inference and construction conveniences.
+The following checkpoint covers property inference; construction shortcuts remain separate.
+
+## Default-based property inference — 2026-10-07
+
+Class/struct instance and static properties may omit their type when an admitted
+default establishes it. Parsing retains optional type syntax in the existing node;
+declaration/default preparation resolves the type and conversion once. Constant
+references, enum cases and explicitly targeted instance data literals reuse their
+existing owners. Missing defaults, bare null and untargeted data require explicit
+types. Static construction restrictions and all other initializer gates remain.
+Synthesized data construction consumes inferred fields without a parallel path.
+
+The [authoritative default contract](../../../../specs/data_initialization.md#default-based-property-type-inference--v02-2026-10-07)
+defines inference and dependency behavior. Focused proofs extend
+`tests/property_defaults.php`, including imported constant type edits, fresh-build
+agreement, failed null inference/retry and repair.
+`/tmp/ch10-property-inference-1/` passes 31 generated programs without PCH;
+`/tmp/ch10-property-inference-regression/` passes six focused PHP suites.
+No native compiler rebuild or conversion was performed.
+
+Next discussion: ownership construction shortcuts.
 
 ## Chapter 09 carryovers
 
@@ -590,8 +610,8 @@ a native compiler rebuild. Existing checkpoint suites supply behavioral evidence
    compound assignment and prefix/postfix mutation share existing property places.
    Static-property native-reference escapes and nested plain assignment expressions
    remain gated; property probes retain their separate admission boundary.
-3. **Property type inference and construction conveniences.** Explicitly typed
-   fields are covered; NOTE-050's inference from defaults is not. CH09's bare
+3. **Construction conveniences.** Explicit and default-inferred
+   fields are covered. CH09's bare
    value/shared/unique construction shortcuts remain unagreed; explicit storage
    forms and argument-bearing class/struct construction are already covered.
 4. **Existing later owners, not new CH10 blockers.** Interface/abstract/protected,
@@ -3901,9 +3921,9 @@ The incompatible v0.1 restrictions below are superseded, not outstanding tasks.
 
 **v0.2 decision / examples:** partial-split. Partitioned output, typed fields,
 public/private members, methods, constructors/destructors and qualified static access
-are covered above. Relationships/dispatch belong to CH11. Default-based property
-type inference, compound property updates and bare ownership construction shortcuts
-are still unimplemented/unagreed; legacy annotation forms remain deferred. Explicit
+are covered above, along with default-based property inference and compound updates.
+Relationships/dispatch belong to CH11. Bare ownership construction shortcuts
+remain unagreed; legacy annotation forms remain deferred. Explicit
 source types and current preparation diagnostics supersede the v0.1 type-blind rules.
 
 > ## 16. Classes, Inheritance, and Members

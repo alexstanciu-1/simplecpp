@@ -150,23 +150,26 @@ final class Declaration_Preparation
 	/** Field eligibility uses the common declared storage capability path. */
 	public static function prepare_field(property_node $field, preparation_context $context, bool $allows_required = false): void
 	{
-		if ($field->type_syntax === null) {
-			throw new \RuntimeException('Property type inference is not supported by this plain-record slice');
-		}
 		Member_Preparation::validate_modifiers($field->modifiers, true);
 		$prepared = new prepared_field();
 		$prepared->public_access = Member_Preparation::is_public($field->modifiers);
 		$prepared->static_member = Member_Preparation::is_static($field->modifiers);
 		if ($prepared->static_member) { $allows_required = false; }
 		$prepared->declaration = $field->occurrence();
-		$prepared->type = Type_Preparation::type($field->require_type_syntax(), $context);
+		$type /** nullable<canonical_type_use> */ = null;
+		if ($field->type_syntax !== null) {
+			$type = Type_Preparation::type($field->require_type_syntax(), $context);
+		}
 		if ($field->initializer !== null) {
 			if ($prepared->static_member && ($field->initializer instanceof data_construction_node)) {
 				throw new \RuntimeException('Static properties require type defaults or constant expressions');
 			}
-			$prepared->default_value = Property_Defaults::prepare($field->initializer, $prepared->type, $context);
+			$prepared->default_value = Property_Defaults::prepare($field->initializer, $type, $context);
+			$type = $prepared->default_value->conversion->target_type;
 		}
-		elseif (Type_Queries::canonical($prepared->type)->definition() instanceof enum_type_definition) {
+		if ($type === null) { throw new \RuntimeException('Property without a default requires an explicit type'); }
+		$prepared->type = $type;
+		if (($field->initializer === null) && (Type_Queries::canonical($type)->definition() instanceof enum_type_definition)) {
 			if (!$allows_required) {
 				throw new \RuntimeException('S2S enum-valued fields await explicit field initialization');
 			}

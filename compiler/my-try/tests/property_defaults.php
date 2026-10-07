@@ -22,6 +22,10 @@ function property_defaults_source(string $source): string
 $results = [];
 foreach (['class', 'struct'] as $kind) {
 	$cases = [
+		'inferred' => ['const N = 7; ' . $kind . ' C { public $n = N; $f = 2.5; $b = true; $s = "8"; static $total = 3; } $c = new C(); $c->n++; C::$total += 2; $n = $c->n; $s = (int)$c->s; $f = (int)$c->f; $b = $c->b; $t = C::$total; if (!$b) { return 1; } return $n + $s + $f + $t;', 23],
+		'inferred_enum' => ['enum E { case First; case Second; } ' . $kind . ' C { $e = E::Second; static $other = E::First; } $c = new C(); $e = $c->e; return $e === E::Second ? 9 : 1;', 9],
+		'inferred_data' => [$kind . ' C { $v = vector<int>::[7, 2]; $d = dynamic::{x: 5}; } $c = new C(); $v = $c->v; $d = $c->d; $a int = $v[0]; $b int = $d["x"]; return $a + $b;', 12],
+		'inferred_constructor' => ['data ' . $kind . ' C { public $n = 7; } $c C = {n: 9}; return $c->n;', 9],
 		'scalar' => ['const N = 7; ' . $kind . ' C { int $n = -(-N); float $f = 2.5; bool $b = true; string $s = "7"; } $c = new C(); $f = (int) $c->f; $b = $c->b; $s = (int) $c->s; if ($b && $f === 2 && $s === 7) { return $c->n; } return 1;', 7],
 		'nullable' => [$kind . ' C { ?int $a = null; ?int $b = 8; } $c = new C(); $a = $c->a; $b = $c->b; if ($a === null) { return $b ?? 1; } return 2;', 8],
 		'enum' => ['enum E { case First; case Second; } ' . $kind . ' C { E $e = E::Second; } $c = new C(); $e = $c->e; return $e === E::Second ? 9 : 1;', 9],
@@ -49,6 +53,12 @@ foreach (['class', 'struct'] as $kind) {
 		$results[] = ['path' => $path, 'exit_code' => 9];
 	}
 	foreach ([
+		'$n;',
+		'$n = null;',
+		'$n = [];',
+		'$n = {x: 1};',
+		'$n = calculate();',
+		'static $n = vector<int>::[1];',
 		'int $n = missing;',
 		'int $n = "wrong";',
 		'int $n = null;',
@@ -131,6 +141,29 @@ try {
 		file_put_contents($path, CPP_Probe::text(Model::$cpp_files));
 		$results[] = ['path' => $path, 'exit_code' => 9];
 	}
+	// An imported default owns both inferred layout and initializer dependencies.
+	file_put_contents($types_path, 'namespace Types; use const Defaults\\N as LIMIT; class C { public $n = LIMIT; }');
+	file_put_contents($main_path, 'use Types\\C; $c = new C(); return (int)$c->n;');
+	$fresh->update_cpp([$types_path, $main_path]);
+	$inferred_int = CPP_Output::encode(Model::$cpp_files);
+	file_put_contents($constants_path, 'namespace Defaults; const N = "8";');
+	$fresh->update_cpp([$constants_path]);
+	$inferred_string = CPP_Output::encode(Model::$cpp_files);
+	if ($inferred_string === $inferred_int) { throw new \LogicException('Inferred property type did not invalidate output'); }
+	Compiler_Lifecycle::reset();
+	$check = new Compiler();
+	$check->init([$directory]);
+	$check->select_entry('main', 'main.phs');
+	$check->exec_cpp();
+	if (CPP_Output::encode(Model::$cpp_files) !== $inferred_string) { throw new \LogicException('Inferred type edit differs from fresh build'); }
+	file_put_contents($constants_path, 'namespace Defaults; const N = null;');
+	foreach ([[$constants_path], []] as $changes) {
+		try { $check->update_cpp($changes); throw new \LogicException('Null established inferred property type'); }
+		catch (\RuntimeException $expected) {}
+	}
+	file_put_contents($constants_path, 'namespace Defaults; const N = "8";');
+	$check->update_cpp([$constants_path]);
+	if (CPP_Output::encode(Model::$cpp_files) !== $inferred_string) { throw new \LogicException('Inferred property repair retained stale facts'); }
 }
 finally {
 	unlink($constants_path);

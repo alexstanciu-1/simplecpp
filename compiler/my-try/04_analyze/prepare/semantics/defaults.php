@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final class Property_Defaults
 {
 	/** Validate the default expression family and reuse its existing semantic owner. */
-	public static function prepare(expression_node $syntax, canonical_type_use $type,
+	public static function prepare(expression_node $syntax, ?canonical_type_use $type,
 		preparation_context $context): prepared_property_default
 	{
 		Preparation_Cleanup::tree($syntax);
@@ -15,6 +15,7 @@ final class Property_Defaults
 			$construction = object_cast($syntax, data_construction_node::class);
 			self::require_constant_entries($construction, $context);
 			$value = Expression_Preparation::prepare($construction, $context, $type);
+			if ($type === null) { $type = $value->type; }
 			$default = new prepared_construction_property_default();
 			$default->construction = $construction;
 			$default->conversion = Conversion_Preparation::decide($value->type, $type, conversion_context::assignment);
@@ -22,6 +23,12 @@ final class Property_Defaults
 		}
 		$facts = new prepared_constant_property_default();
 		$facts->value = Constant_Expression_Preparation::evaluate($syntax, $context);
+		if ($type === null) {
+			$type = $facts->value->type;
+			if (Nullable_Conversions::is_null($type)) {
+				throw new \RuntimeException('Property null default requires an explicit type');
+			}
+		}
 		$facts->conversion = Conversion_Preparation::decide(
 			$facts->value->type, $type, conversion_context::assignment);
 		return $facts;
