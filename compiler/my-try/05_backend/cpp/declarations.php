@@ -156,9 +156,22 @@ final class CPP_Declarations
 	}
 
 	/** Property-backed inputs initialize members before the body, preserving parameter values. */
-	public static function constructor_initializers(collected_method $method): string
+	public static function constructor_initializers(collected_method $method, cpp_generation_context $context): string
 	{
 		$text = '';
+		$base = $method->callable_syntax()->require_body()->base_initialization;
+		if ($base !== null) {
+			$mapping = CPP_Types::payload($base->base_type);
+			CPP_Types::record_dependencies($mapping, $context);
+			$arguments /** Storage<expression_node> */ = new Storage /** Storage<expression_node> */();
+			$source_call = weakref_get($base->source_call);
+			if ($source_call !== null) { $arguments = $source_call->arguments; }
+			$values = '';
+			if ($base->call !== null) { $values = self::initializer_arguments($base->call, $arguments, $context); }
+			// Braced base initialization sequences parameter initializations left-to-right,
+			// without materializing/copying a complete base object.
+			$text = ' : ' . $mapping->spelling . '{' . $values . '}';
+		}
 		$parameters /** Storage<prepared_parameter> */ = $method->callable_syntax()->require_preparation()->parameters;
 		$by_property /** hash<string> */ = [];
 		foreach ($parameters as $parameter) {
@@ -176,6 +189,39 @@ final class CPP_Declarations
 			}
 		}
 		return $text;
+	}
+
+	/** Fixed by-value constructors use the same conversions/defaults, in braced-list order. */
+	private static function initializer_arguments(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
+		cpp_generation_context $context): string
+	{
+		$values = '';
+		$separator = '';
+		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
+		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
+		foreach ($parameters as $index => $parameter) {
+			$value = '';
+			if ($index < $prepared_arguments->count()) {
+				$argument = $prepared_arguments[$index];
+				$value = self::argument_value($argument, $arguments, $context);
+			}
+			else { $value = self::parameter_default($parameter->default_value, $context); }
+			// An explicit typed value boundary also handles copies from lvalues and moves.
+			$values .= $separator . self::type($parameter->type, $context) . '(' . $value . ')';
+			$separator = ', ';
+		}
+		return $values;
+	}
+
+	/** Shared explicit-argument evaluation and typed boundary for calls and base initialization. */
+	private static function argument_value(prepared_call_argument $argument, Storage $arguments /** Storage<expression_node> */,
+		cpp_generation_context $context): string
+	{
+		$value = (new CPP_Syntax($context))->expression($arguments[$argument->source_index]);
+		if ($argument->boundary !== value_boundary_operation::bind_reference) {
+			$value = self::conversion($value, $argument->require_conversion(), $context);
+		}
+		return $value;
 	}
 
 	/** Consume normalized default facts; syntax and source tokens have no authority here. */
@@ -261,6 +307,13 @@ final class CPP_Declarations
 				. CPP_Generator::source_name('field', $entry->name) . ";\n";
 		}
 		$text .= "public:\n";
+		$constructor = weakref_get($syntax->require_preparation()->constructor);
+		if ($constructor !== null) {
+			if ($constructor->declaring_type() !== $syntax->occurrence()) {
+				$base_mapping = CPP_Types::payload($syntax->require_preparation()->base_type);
+				$text .= "\tusing " . $base_mapping->spelling . '::' . $base_mapping->spelling . ";\n";
+			}
+		}
 		if (($initialization !== null) && (weakref_get($syntax->require_preparation()->constructor) === null)) {
 			$text .= CPP_Data_Construction::constructor(CPP_Generator::source_name('record', $key), $initialization, $context);
 		}
@@ -331,20 +384,30 @@ final class CPP_Declarations
 		}
 		if ($facts->receiver !== null) {
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
-			$base /** expression_node */ = $syntax->receiver;
 			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
-			$value = (new CPP_Syntax($context))->expression($base);
+			$value = 'this';
+			$arrow = true;
+			if ($receiver->lifetime !== method_receiver_lifetime::current_instance) {
+				$base /** expression_node */ = $syntax->receiver;
+				$value = (new CPP_Syntax($context))->expression($base);
+				$arrow = ($receiver->lifetime !== method_receiver_lifetime::borrow_inline) || $base->require_preparation()->type->by_value();
+			}
 			$name = 'receiver_' . $context->next_temporary;
 			$context->next_temporary++;
 			$binding = $receiver->lifetime === method_receiver_lifetime::borrow_inline ? 'auto& ' : 'auto ';
 			$prefix = $binding . $name . ' = ' . $value . ";\n";
-			$arrow = ($receiver->lifetime !== method_receiver_lifetime::borrow_inline) || $base->require_preparation()->type->by_value();
 			if ($receiver->lifetime === method_receiver_lifetime::retain_shared) {
 				// Check before evaluating arguments; the retained handle owns the selected object.
 				$prefix .= '(void)' . $name . ".operator->();\n";
 			}
 			$method = object_cast(weakref_get($facts->target), collected_method::class);
-			$callee = $name . ($arrow ? '->' : '.') . CPP_Generator::source_name('method', $method->name);
+			$qualification = '';
+			if ($receiver->dispatch_type !== null) {
+				$mapping = CPP_Types::payload($receiver->dispatch_type);
+				CPP_Types::record_dependencies($mapping, $context);
+				$qualification = $mapping->spelling . '::';
+			}
+			$callee = $name . ($arrow ? '->' : '.') . $qualification . CPP_Generator::source_name('method', $method->name);
 			return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 		}
 		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context, '', null, '');
@@ -388,21 +451,16 @@ final class CPP_Declarations
 		$packed_separator = '';
 		foreach ($prepared_arguments as $index => $prepared_argument)
 		{
-			$argument = $arguments[$prepared_argument->source_index];
 			$parameter_index /** int */ = $facts->fixed_count;
 			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
 			$argument_type = $parameter->element_type ?? $parameter->type;
 			// Generate nested calls before assigning the outer temporary name.
-			$value = (new CPP_Syntax($context))->expression($argument);
+			$value = self::argument_value($prepared_argument, $arguments, $context);
 			$name = 'argument_' . $context->next_temporary;
 			$context->next_temporary++;
 			$boundary = $prepared_arguments[$index]->boundary;
 			$reference = $boundary === value_boundary_operation::bind_reference ? '&' : '';
-			if ($boundary !== value_boundary_operation::bind_reference) {
-				$value = self::conversion(
-					$value, $prepared_arguments[$index]->require_conversion(), $context);
-			}
 
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
 			$argument_requirement = self::signature_requirement(false, $boundary === value_boundary_operation::bind_reference);

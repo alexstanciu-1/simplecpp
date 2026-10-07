@@ -58,12 +58,13 @@ final class Body_Preparation
 
 	/** Prepare all syntax, including unreachable statements; compose only reachable normal exits. */
 	public static function prepare_statements(statement_body_node $body,
-			preparation_context $context): statement_completion
+			preparation_context $context, int $start = 0): statement_completion
 	{
 		$result = new statement_completion(true);
 		$nodes /** Storage<statement_node> */ = $body->statements;
-		foreach ($nodes as $node)
+		foreach ($nodes as $index => $node)
 		{
+			if ($index < $start) { continue; }
 			$completion = self::prepare_statement($node, $context);
 			$result = Completion_Preparation::sequence($result, $completion);
 		}
@@ -292,7 +293,8 @@ final class Body_Preparation
 			$locals->add($entry->name, $parameter);
 		}
 
-		$completion = self::prepare_statements($syntax->require_body(), $context);
+		$start = Constructor_Preparation::prepare_base($syntax, $context);
+		$completion = self::prepare_statements($syntax->require_body(), $context, $start);
 		if ($completion->can_fall_through && (Type_Queries::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
 			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
 		}

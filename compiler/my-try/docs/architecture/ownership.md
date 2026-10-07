@@ -187,6 +187,14 @@ records never own workers or operation contexts.
 
 ## Explicit nullability and publication
 
+An authored constructor's function body owns optional base-initialization facts. They
+weakly observe the leading source call (when explicit) and share its admitted call
+contract; they do not retain a worker or duplicate source arguments. Body cleanup
+clears the facts, including on failure/reset. The base initializer's C++ fragment is
+body-owned, so a parent-argument edit cannot leave stale signature-cached initialization.
+An inherited effective constructor observes the original ancestor declaration and
+signature; it adds no child method or parameter inventory.
+
 Constructor signatures own an optional `prepared_receiver` and named input schema.
 The receiver weakly observes the collected method; a method weakly observes its
 declaring record. Body contexts are transient observers, not retained owners.
@@ -194,8 +202,9 @@ declaring record. Body contexts are transient observers, not retained owners.
 share the same parameter contracts used by positional calls. Synthesized entries
 observe public property facts. Neither schema retains an analysis worker or adds
 another type-registry cache. Constructor signature work depends on record completion;
-record facts observe constructor identity without requiring its signature, avoiding
-a declaration dependency cycle. Callers depend on both relevant declarations, not
+record facts observe constructor identity without requiring its signature, including
+inherited identity. This avoids layout/signature cycles for constructor parameters
+naming descendants. Callers depend on both relevant declarations, not
 the constructor body. Backend assembly combines layout and member declarations
 without making record preparation depend on the backend.
 

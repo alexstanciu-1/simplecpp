@@ -74,6 +74,9 @@ final class Method_Preparation
 			$type = Member_Preparation::owner($syntax->owner_type, $context);
 			$static_record = Type_Queries::source_record($type);
 			if ($static_record === null) { throw new \RuntimeException('Static call requires a source class or struct'); }
+			if ($syntax->owner_type->name === 'parent') {
+				return self::select($syntax, $static_record, true, $context, true);
+			}
 			return self::select($syntax, $static_record, true, $context);
 		}
 		$base /** expression_node */ = $syntax->receiver;
@@ -110,7 +113,8 @@ final class Method_Preparation
 		return $facts;
 	}
 
-	private static function select(call_node $syntax, collected_record $record, bool $static_call, preparation_context $context): prepared_call
+	private static function select(call_node $syntax, collected_record $record, bool $static_call, preparation_context $context,
+		bool $parent_call = false): prepared_call
 	{
 		$context->worker->require_declaration($context->owner, $record);
 		$matches = Inherited_Lookup::members($record, $syntax->name, preparation_lookup_kind::method_name, $context);
@@ -119,6 +123,7 @@ final class Method_Preparation
 		}
 		$method = object_cast($matches[0]->member, collected_method::class);
 		Call_Preparation::require_signature($method, $context);
+		if ($parent_call) { $static_call = $method->callable_syntax()->require_preparation()->static_member; }
 		if ($method->callable_syntax()->require_preparation()->static_member !== $static_call) {
 			throw new \RuntimeException('Static methods require :: and instance methods require ->');
 		}
@@ -129,10 +134,19 @@ final class Method_Preparation
 			throw new \RuntimeException('Private method is not accessible here: ' . $syntax->name);
 		}
 		if (!$static_call) {
+			if ($parent_call) {
+				if ($context->receiver === null) { throw new \RuntimeException('Parent instance call requires an initialized $this'); }
+				$record = object_cast($context->member_owner, collected_record::class);
+			}
 			Member_Preparation::require_instance_access($method->callable_syntax()->require_preparation()->visibility,
 				$method->declaring_type(), $record, $context);
 		}
 		$facts = Call_Preparation::prepare($method, $syntax->arguments, $context);
+		if ($parent_call && !$static_call) {
+			$receiver = new prepared_method_receiver($context->receiver->type, method_receiver_lifetime::current_instance);
+			$receiver->dispatch_type = $syntax->owner_type->require_preparation();
+			$facts->receiver = $receiver;
+		}
 		return $facts;
 	}
 }

@@ -15,6 +15,11 @@ record layout or signatures, using the same scheduler and lifecycle. The analysi
 `prepare_relationships` checkpoint returns completed relationship work, not executable
 files. `Inherited_Lookup` observes member pools and returns original declarations.
 Interface execution remains gated; concrete inherited member access shares this lookup.
+Effective constructors may reference the original ancestor method, without cloning
+its signature. Authored constructor body preparation admits a leading parent call
+before making `$this` available and retains `prepared_base_initialization` on the
+body. Its call/default dependencies and cleanup follow ordinary body work. Parent
+ordinary calls use the same method selection/access and argument boundary paths.
 `Inheritance_Preparation` admits the inline base layout/default-construction contract
 and rejects ordinary member redeclarations. `Member_Preparation` checks declaring
 context and protected instance-receiver restrictions; declared inventories never

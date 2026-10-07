@@ -13,6 +13,31 @@ records those boundaries and the approved shared member-owner prerequisite.
 That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance now executes; interfaces, overrides and conversions remain gated.
 
+## Parent access and constructor forwarding — 2026-10-07
+
+Implemented for both classes and structs under the
+[normative contract](../../../../specs/inheritance_v0_2.md): explicit parent ordinary
+methods/constants/static properties; inherited public fixed-value constructors and
+defaults; leading `parent::__construct(...)`; implicit zero-supplied-argument base
+initialization with missing required inputs rejected during preparation.
+
+The effective constructor remains the original declaration. No inherited members or
+parameter schemas are copied. Base initialization belongs to body preparation and its
+C++ body fragment, independently of the public signature. Braced C++ base initialization
+preserves argument order without copying a complete base. `$this` is unavailable in
+base arguments; private access and non-public constructor gates remain in force.
+
+Proof: 51 generated inheritance programs, 51 constructor regressions, 34 method-return
+regressions and 17 PHP-host model suites passed. Includes ordering, noncopyable base/unique input, reference-return
+parent calls, multilevel/cross-file forwarding, body-only header stability, defaults,
+failure/retry/repair, removal and fresh/incremental agreement. No native compiler rebuild.
+The inherited signature may name a descendant without forcing a layout/signature cycle;
+previously supported implicit derived zero-parameter construction remains valid.
+
+Next discussion: abstract/final/override contracts and dispatch. Inherited `data`
+inputs, non-public/abstract constructor contracts, late `static::` and source upcasts
+remain outside this slice.
+
 ## Concrete inheritance and protected access — 2026-10-07
 
 The [normative contract](../../../../specs/inheritance_v0_2.md) enables single same-kind
@@ -26,7 +51,7 @@ record payload, never a `value<T>`/shared wrapper; complete base headers are dep
 Static storage remains defined once by the original owner. Lifecycle order is base
 construction before child properties/body and base cleanup after child cleanup.
 
-Bases currently require implicit default construction or an authored public zero-
+At this earlier checkpoint bases required implicit default construction or an authored public zero-
 parameter constructor. Base argument forwarding (including defaulted parameters),
 parent calls and inherited data inputs remain deferred. Same-category ordinary
 member redeclarations reject; constructors/destructors are distinct lifecycle cases.
@@ -35,8 +60,8 @@ Interface/abstract execution, overrides and derived/base conversions remain gate
 Proof: 30 generated inheritance programs, 35 generated static-member regressions and
 17 PHP-host model/regression suites passed. Includes cross-file changes, collision/
 visibility/final errors, failure/retry/repair and fresh/incremental output agreement.
-No native compiler rebuild. Next: discuss base-constructor argument forwarding and
-explicit parent calls before enabling overriding/virtual dispatch.
+No native compiler rebuild. The subsequent parent/constructor checkpoint above
+extends construction; overriding/virtual dispatch remains deferred.
 
 ## Member-owner foundation — 2026-10-07
 
@@ -164,8 +189,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-006](#class-inh-006) | pending-discussion | `$a = new A(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-007](#class-inh-007) | pending-discussion | `A a(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-008](#class-inh-008) | implemented-bounded | `$this->f();` | verified | verified | deferred | Fixed inherited methods; override/virtual contracts deferred |
-| [CLASS-INH-009](#class-inh-009) | pending-discussion | `parent::f(1);` | unverified | unverified | deferred | — |
-| [CLASS-INH-010](#class-inh-010) | pending-discussion | `parent::__construct($x);` | unverified | unverified | deferred | — |
+| [CLASS-INH-009](#class-inh-009) | implemented-bounded | `parent::f(1);` | verified | verified | deferred | Fixed original-owner dispatch; current instance required for instance methods |
+| [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; public fixed-value constructors |
+| CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits the original public constructor contract and source defaults; concrete ancestors only |
 | [CLASS-INH-011](#class-inh-011) | pending-discussion | `#[\Override] function f(): int { return 1; }` | unverified | unverified | deferred | — |
 | [CLASS-INH-012](#class-inh-012) | pending-discussion | `class B extends A {}` | unverified | unverified | deferred | — |
 | [CLASS-ABS-001](#class-abs-001) | pending-discussion | `function __destruct() { $this->cleanup(); }` | unverified | unverified | deferred | — |
@@ -438,7 +464,8 @@ this->f();
 
 ## CLASS-INH-009
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Explicit original-owner call, using the current
+instance for nonstatic methods; inherited access checks apply. See the parent checkpoint.
 
 ### Imported version 1
 
@@ -475,7 +502,8 @@ base::f(static_cast<int_t>(1));
 
 ## CLASS-INH-010
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Leading standalone call becomes a braced base
+initializer with shared argument conversions/defaults. No post-construction call.
 
 ### Imported version 1
 

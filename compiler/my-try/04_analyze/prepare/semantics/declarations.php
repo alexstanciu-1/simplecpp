@@ -147,6 +147,7 @@ final class Declaration_Preparation
 			$capabilities[] = generic_contract::copyable_value;
 		}
 		$facts->capabilities = $capabilities;
+		Inheritance_Preparation::inherit_constructor($facts, $context);
 		if ($facts->data_initializable && (weakref_get($facts->constructor) === null)) {
 			$facts->initialization = new record_initialization_contract();
 			Constructor_Preparation::synthesized_inputs($facts, $context);

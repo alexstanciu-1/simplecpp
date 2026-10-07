@@ -107,6 +107,9 @@ decision explicitly adopts C++ restrictions; broader PHP behavior is CH15 discus
 debt. The implemented contract and remaining gates live in
 [the normative spec](../../../../specs/inheritance_v0_2.md) and
 [the CH11 checkpoint](../catalog/11_inheritance.md#concrete-inheritance-and-protected-access--2026-10-07).
-Base argument forwarding, parent calls, inherited data inputs and overrides remain
-follow-ups. Existing zero-parameter public base constructors are supported; source
-defaulted arguments still need the ordinary sequenced call path in a later slice.
+The following parent/constructor checkpoint enables public constructor forwarding,
+source defaults and explicit parent member access. Base initialization is body-owned,
+with a weak source-call observer and common call admission. C++ stores initializer
+text in the body fragment; braced initialization sequences values without a base copy.
+Inherited data inputs, overrides, non-public/abstract constructors and late static
+dispatch remain follow-ups. See the current CH11 handoff rather than earlier gates.

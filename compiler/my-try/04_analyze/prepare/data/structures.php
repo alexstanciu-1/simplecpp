@@ -527,6 +527,7 @@ final class prepared_record {
 	public Key_Storage_List $methods /** Key_Storage_List<collected_method> */;
 	public bool $data_initializable = false;
 	public ?record_initialization_contract $initialization = null;
+	/** Effective constructor, possibly inherited; methods still index only local declarations. */
 	public ?collected_method $constructor /** weak<collected_method> */ = null;
 	/** Derived only after every field has completed preparation. */
 	public array $capabilities /** vector<generic_contract> */ = [];
@@ -590,6 +591,14 @@ final class prepared_call extends prepared_expression
 	}
 }
 
+/** Body-owned base initialization; the optional source call remains owned by body syntax. */
+final class prepared_base_initialization
+{
+	public canonical_type_use $base_type;
+	public ?prepared_call $call = null;
+	public ?call_node $source_call /** weak<call_node> */ = null;
+}
+
 /** Preparation chooses receiver lifetime handling; emission does not infer admissibility. */
 enum method_receiver_lifetime
 {
@@ -600,6 +609,9 @@ enum method_receiver_lifetime
 
 final class prepared_method_receiver
 {
+	/** Explicit ancestor qualification; null retains ordinary fixed member dispatch. */
+	public ?canonical_type_use $dispatch_type = null;
+
 	public function __construct(public canonical_type_use $record_type,
 		public method_receiver_lifetime $lifetime) {}
 }

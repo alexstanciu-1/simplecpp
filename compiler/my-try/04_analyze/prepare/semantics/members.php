@@ -46,12 +46,16 @@ final class Member_Preparation
 	/** Qualified lookup needs nominal identity, not completion of the record's instance layout. */
 	public static function owner(named_type_node $syntax, preparation_context $context): canonical_type_use
 	{
-		if (($syntax->name === 'parent') || ($syntax->name === 'static')) {
+		if ($syntax->name === 'static') {
 			throw new \RuntimeException('Inheritance-dependent qualification is deferred to CH11');
 		}
-		if ($syntax->name === 'self') {
+		if (($syntax->name === 'self') || ($syntax->name === 'parent')) {
 			$record = $context->member_owner;
 			if ($record === null) { throw new \RuntimeException('self requires a declaring type context'); }
+			if ($syntax->name === 'parent') {
+				$record = weakref_get($context->worker->require_relationships($record, $context)->base);
+				if ($record === null) { throw new \RuntimeException('parent requires a concrete base'); }
+			}
 			$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
 			$syntax->set_preparation(Model::$type_catalog->registry()->use($type->type_id()));
 		}

@@ -5,7 +5,7 @@ namespace scpp\compiler;
 
 final class Inheritance_Preparation
 {
-	/** Complete the actual base layout and its supported no-argument construction contract. */
+	/** Complete the base layout; authored child construction is prepared with its body. */
 	public static function base(collected_record $entry, prepared_record $facts, preparation_context $context): void
 	{
 		$relationships = $context->worker->require_relationships($entry, $context);
@@ -18,18 +18,30 @@ final class Inheritance_Preparation
 			$base_type = Model::$type_catalog->registry()->use($canonical->type_id(), true);
 		}
 		$facts->base_type = $base_type;
-		$constructor = weakref_get($base->syntax()->require_preparation()->constructor);
-		if ($constructor !== null) {
-			Call_Preparation::require_signature($constructor, $context);
-			$parameters /** Storage<callable_parameter> */ = $constructor->callable_syntax()->require_preparation()->signature->parameters;
-			if (!$parameters->is_empty()) {
-				throw new \RuntimeException('Base constructor arguments, including defaulted arguments, are deferred');
+		if (weakref_get($base->syntax()->require_preparation()->constructor) === null) {
+			if (!Object_Construction_Preparation::supports_default($base_type, $context)) {
+				throw new \RuntimeException('Inheritance requires a default-constructible base');
 			}
 		}
-		elseif (!Object_Construction_Preparation::supports_default($base_type, $context)) {
-			throw new \RuntimeException('Inheritance requires a default-constructible base');
-		}
 		self::reject_redeclarations($entry->syntax(), $base, $context);
+	}
+
+	/** No synthesized callable identity: construction observes the original ancestor signature. */
+	public static function inherit_constructor(prepared_record $facts, preparation_context $context): void
+	{
+		if (($facts->base_type === null) || (weakref_get($facts->constructor) !== null)) { return; }
+		$base /** collected_record */ = Type_Queries::source_record($facts->base_type);
+		$constructor = weakref_get($base->syntax()->require_preparation()->constructor);
+		if ($constructor === null) { return; }
+		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
+		foreach ($fields->items() as $field) {
+			if ($field->default_value === null) {
+				if (!Object_Construction_Preparation::supports_default($field->type, $context)) {
+					throw new \RuntimeException('Inherited construction requires default-constructible child properties');
+				}
+			}
+		}
+		$facts->constructor = $constructor;
 	}
 
 	/** Lifecycle methods are not inherited ordinary members; their bodies construct/destroy subobjects. */

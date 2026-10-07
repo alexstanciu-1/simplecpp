@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite inheritance --results FRESH`
+also covers explicit parent access, inherited public constructors/defaults, leading
+base initialization, argument ordering, noncopyable payloads, cross-file body/default
+edits, signature/header stability, failure/retry/repair and fresh/incremental agreement.
+
 CH10 plain-record checks: `python3 compiler/my-try/tests/records.py --results FRESH`.
 Uses the shared runner and fixture PCH for class/struct storage, copy/weak behavior,
 rejections and incremental recovery. This compiles generated programs, not the compiler.

@@ -102,6 +102,8 @@ final class cpp_fragment
 	public string $text = '';
 	/** Function declaration spelling, including defaults; text remains the definition signature. */
 	public string $prototype_text = '';
+	/** Constructor initialization depends on executable body facts, not only the signature. */
+	public string $initializer_text = '';
 	/** Type-owned storage definitions belong to the declaring source implementation unit. */
 	public string $storage_text = '';
 	public array $headers /** hash<bool> */ = [];

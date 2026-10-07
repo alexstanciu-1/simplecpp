@@ -184,7 +184,7 @@ final class CPP_Generator
 				foreach ($body->forward_declarations as $name => $used) {
 					$declarations[$name] = true;
 				}
-				$body_text .= $signature->text . "\n{\n" . $body->text . "}\n\n";
+				$body_text .= $signature->text . $body->initializer_text . "\n{\n" . $body->text . "}\n\n";
 			}
 			if ($body_text !== '') {
 				$path = CPP_Artifacts::unit_path($prepared->source);
@@ -235,6 +235,10 @@ final class CPP_Generator
 			if ($body_owner instanceof source_callable_body_work) {
 				$function = object_cast($body_owner, source_callable_body_work::class)->callable_definition()->callable_syntax();
 				$context->return_type = $function->require_preparation()->signature->return_type;
+				$definition = object_cast($body_owner, source_callable_body_work::class)->callable_definition();
+				if ($definition instanceof collected_method) {
+					$next->initializer_text = CPP_Declarations::constructor_initializers(object_cast($definition, collected_method::class), $context);
+				}
 			}
 			$next->text = self::generate_statements($body_owner->executable_body(), $context);
 		}
@@ -245,9 +249,6 @@ final class CPP_Generator
 				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
 				$definition_context = new cpp_generation_context();
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
-				if ($entry instanceof collected_method) {
-					$next->text .= CPP_Declarations::constructor_initializers(object_cast($entry, collected_method::class));
-				}
 				$next->definition_headers = $definition_context->headers;
 				$next->prototype_text = CPP_Declarations::signature($function_syntax, $context, true);
 			}
@@ -310,7 +311,13 @@ final class CPP_Generator
 		$text = '';
 		$statements /** Storage<statement_node> */ = $body->statements;
 		$worker = new CPP_Syntax($context);
-		foreach ($statements as $node) {
+		$skip_first = false;
+		if ($body instanceof function_body_node) {
+			$initialization = object_cast($body, function_body_node::class)->base_initialization;
+			if ($initialization !== null) { $skip_first = weakref_get($initialization->source_call) !== null; }
+		}
+		foreach ($statements as $index => $node) {
+			if ($skip_first && ($index === 0)) { continue; }
 			$text .= $worker->statement($node);
 		}
 		return $text;

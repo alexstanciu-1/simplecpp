@@ -5,6 +5,53 @@ namespace scpp\compiler;
 
 final class Constructor_Preparation
 {
+	/** Base initialization runs before receiver availability and before child property initialization. */
+	public static function prepare_base(callable_declaration_node $syntax, preparation_context $context): int
+	{
+		if (!($syntax instanceof method_node) || ($syntax->name !== '__construct')) { return 0; }
+		$record = object_cast($context->member_owner, collected_record::class);
+		$base_type = $record->syntax()->require_preparation()->base_type;
+		$nodes /** Storage<statement_node> */ = $syntax->require_body()->statements;
+		$source_call /** nullable<call_node> */ = null;
+		if (!$nodes->is_empty()) {
+			$first = $nodes[0];
+			if ($first instanceof expression_statement_node) {
+				$expression = object_cast($first, expression_statement_node::class)->expression;
+				if ($expression instanceof call_node) {
+					$call = object_cast($expression, call_node::class);
+					if ($call->owner_type !== null) {
+						if (($call->owner_type->name === 'parent') && ($call->name === '__construct')) { $source_call = $call; }
+					}
+				}
+			}
+		}
+		if ($base_type === null) {
+			if ($source_call !== null) { throw new \RuntimeException('parent constructor requires a concrete base'); }
+			return 0;
+		}
+		$facts = new prepared_base_initialization();
+		$facts->base_type = $base_type;
+		$facts->source_call = $source_call;
+		$base /** collected_record */ = Type_Queries::source_record($base_type);
+		$constructor = weakref_get($base->syntax()->require_preparation()->constructor);
+		$arguments /** Storage<expression_node> */ = new Storage /** Storage<expression_node> */();
+		if ($source_call !== null) { $arguments = $source_call->arguments; }
+		$receiver = $context->receiver;
+		$context->receiver = null;
+		try {
+			if ($constructor !== null) {
+				$facts->call = Call_Preparation::prepare($constructor, $arguments, $context);
+				if ($source_call !== null) { $source_call->set_preparation($facts->call); }
+			}
+			elseif ($source_call !== null) {
+				throw new \RuntimeException('Explicit parent constructor requires an authored ancestor constructor');
+			}
+		}
+		finally { $context->receiver = $receiver; }
+		$syntax->require_body()->base_initialization = $facts;
+		return $source_call === null ? 0 : 1;
+	}
+
 	/** Resolve public by-value constructor inputs after the declaring layout has settled. */
 	public static function signature(method_node $syntax, preparation_context $context): void
 	{

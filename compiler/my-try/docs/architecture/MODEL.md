@@ -94,6 +94,17 @@ are contracts, not fallback implementations. Concrete records may retain one
 layout, supported construction and copy contract. C++ reads its bare payload mapping.
 Declared inventories remain local; static references retain original storage ownership.
 Protected access is analysis-owned and receiver-aware. Interface execution remains gated.
+The effective `prepared_record::constructor` may observe the original ancestor method;
+the local method inventory is unchanged. Inherited construction observes the ancestor
+signature through ordinary dependencies. Authored constructor bodies own optional
+`prepared_base_initialization` facts on their function body; they contain the inline
+base type, ordinary admitted call and optional weak source-call observer. Cleanup clears
+these with the body. The leading parent statement remains in source syntax but is
+consumed as initialization, with no receiver available during argument preparation.
+C++ caches the entire initializer list with the body fragment, not the public signature.
+Braced base initialization preserves left-to-right argument boundaries without copying
+a temporary base. Explicit parent instance calls retain a current-instance dispatch fact
+and original target; no fabricated `$this` AST or inherited-member copies are needed.
 Parameters own optional default expressions; normalized scalar/enum default snapshots
 belong to their callable contracts and participate in signature equivalence. Calls
 retain only explicit arguments; emission supplies omitted defaults from the signature.

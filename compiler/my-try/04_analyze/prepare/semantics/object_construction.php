@@ -65,7 +65,14 @@ final class Object_Construction_Preparation
 		$record = Type_Queries::source_record($type);
 		if ($record !== null) {
 			$context->worker->require_declaration($context->owner, $record);
-			if (weakref_get($record->syntax()->require_preparation()->constructor) !== null) {
+			$constructor = weakref_get($record->syntax()->require_preparation()->constructor);
+			if ($constructor !== null) {
+				if ($constructor->declaring_type() !== $record) {
+					$signature = Call_Preparation::require_signature($constructor, $context);
+					$parameters /** Storage<callable_parameter> */ = $signature->parameters;
+					// Preserve the pre-forwarding implicit derived default constructor.
+					if ($parameters->is_empty()) { return self::record_default($type, $context); }
+				}
 				// Authored calls currently require an explicit new/data consumer, which sequences defaults.
 				return false;
 			}

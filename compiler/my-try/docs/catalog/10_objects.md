@@ -664,7 +664,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-005](#class-prop-005) | supported-bounded | `$a->x = 1;` | prepared | verified | deferred | Stable receiver; heap interiors not borrowable |
 | [CLASS-PROP-006](#class-prop-006) | supported-bounded | `A::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-006A](#class-prop-006a) | supported-bounded | `self::$x = 1;` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
-| [CLASS-PROP-006B](#class-prop-006b) | deferred-CH11 | `parent::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-PROP-006B](#class-prop-006b) | implemented-CH11 | `parent::$x = 1;` | verified | verified | deferred | Original-owner static storage; CH11 parent checkpoint |
 | [CLASS-PROP-006C](#class-prop-006c) | deferred-CH11 | `static::$x = 1;` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-PROP-007](#class-prop-007) | supported-bounded | `$a::$x = 2;` | shared static member | qualifier before RHS | deferred | Reads, plain/compound writes and updates; reference escapes gated |
 | [CLASS-PROP-008](#class-prop-008) | deferred-CH11 | `class B extends A { function f(): void { $this->x = 1; } }` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
@@ -675,7 +675,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-CALL-002](#class-call-002) | supported-bounded | `A::f(1);` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CALL-003](#class-call-003) | supported-bounded | `$a::f(1);` | fixed concrete target | evaluate once before arguments | deferred | Expression-qualified static-call checkpoint |
 | [CLASS-CALL-004](#class-call-004) | supported-bounded | `$this->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
-| [CLASS-CALL-005](#class-call-005) | deferred-CH11 | `parent::f(1);` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-CALL-005](#class-call-005) | implemented-CH11 | `parent::f(1);` | verified | verified | deferred | Fixed ancestor dispatch; CH11 parent checkpoint |
 | [CLASS-CALL-005A](#class-call-005a) | deferred-CH11 | `static::f(1);`<br>`static::f(1)` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-CALL-006](#class-call-006) | supported-bounded | `function f(): int { return 1; }` | prepared (bounded) | see proof | deferred | Ordinary methods are nonvirtual; methods.php; inheritance CH11 |
 | [CLASS-CALL-007](#class-call-007) | deferred-CH11 | `$i->f(1);` | see reconciliation | see reconciliation | deferred | Interface relationships and dispatch |
@@ -688,7 +688,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-CONST-001](#class-const-001) | supported-bounded | `class A { public const X = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CONST-002](#class-const-002) | supported-bounded | `A::X` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CONST-003](#class-const-003) | supported-bounded | `self::X` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
-| [CLASS-CONST-004](#class-const-004) | deferred-CH11 | `parent::X` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-CONST-004](#class-const-004) | implemented-CH11 | `parent::X` | verified | verified | deferred | Original-owner constant access; CH11 parent checkpoint |
 | [CLASS-CONST-005](#class-const-005) | deferred-CH11 | `static::X` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-MEMBER-001](#class-member-001) | supported-bounded | `function f(int $a): int { return $a; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-001B](#class-member-001b) | supported-bounded | `function f(vector<int> $a): int { return 1; }` | prepared (bounded) | see proof | deferred | Strict vector<T> parameters; method_parameters.php; PHPDoc spelling remains legacy |
@@ -715,7 +715,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-018E](#class-member-018e) | gated | `function &f() { return $this->x; }` | see reconciliation | see reconciliation | deferred | Receiver/property reference escape not enabled; method_returns.php |
 | [CLASS-PROP-002A](#class-prop-002a) | supported-bounded | `class A { static int $x = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-002B](#class-prop-002b) | supported-bounded | `self::$x` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
-| [CLASS-PROP-002C](#class-prop-002c) | deferred-CH11 | `parent::$x` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
+| [CLASS-PROP-002C](#class-prop-002c) | implemented-CH11 | `parent::$x` | verified | verified | deferred | Original-owner static storage; CH11 parent checkpoint |
 | [CLASS-PROP-002D](#class-prop-002d) | deferred-CH11 | `static::$x` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-METHOD-001](#class-method-001) | supported-bounded | `class A { function f(): int { return 1; } }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-METHOD-002](#class-method-002) | supported-bounded | `class A { static function f(int $a): int { return $a; } }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |

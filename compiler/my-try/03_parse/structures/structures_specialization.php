@@ -144,6 +144,13 @@ final class namespace_body_node extends ast_node
  */
 final class function_body_node extends statement_body_node
 {
+	public ?prepared_base_initialization $base_initialization = null;
+
+	public function clear_preparation(): void
+	{
+		$this->base_initialization = null;
+	}
+
 	/**
 	 * Required observer; the parser retains this scope in parsed_file.scopes.
 	 * @storage.reference parsed_file.scopes
