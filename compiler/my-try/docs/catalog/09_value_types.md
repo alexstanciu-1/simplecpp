@@ -260,14 +260,13 @@ enum wrapper payloads, broader initialization and remaining hardening are record
 in [CH15](15_blocking_debt.md#chapter-09-closeout-follow-ups).
 These are explicit deferrals, not new semantic prohibitions or silent completions.
 
-The combined CH08/09 native compiler now builds with process/file-lock and JSON
-document prerequisites integrated. Its main 1,111-case sweep passed before a
-namespace-scope lifetime repair; all 44 partitioned CH08/09 projects pass after
-that repair and the explicit-entry proof-driver fix. The final cumulative
-supplementary/rejection/recovery sweep remains; see the
-[portability report](../portability/conversion_review.md#chapter-0809-native-progress--2026-10-06-partial).
-CH07 remains the latest complete cumulative native checkpoint; these bounded
-post-repair passes do not silently replace it.
+The combined CH08/09 native compiler passes the complete October 7 checkpoint,
+with process/file-lock and JSON document prerequisites integrated: 1,111 main
+cases, all 44 partitioned CH08/09 projects, 997 supplementary probes, four further
+control-flow/lifetime probes, 376 rejection/recovery cases and the final incremental
+build. See the [portability report](../portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809)
+for source/harness evidence and the STAN/LLVM exclusions. This supersedes the
+earlier partial passes and clears the native gate before CH10 discussion.
 
 ## TYPE-VAR-006
 

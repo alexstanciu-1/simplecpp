@@ -61,7 +61,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [Chapter 08 bounded pass concluded](catalog/08_project_symbols.md#positive-pass-conclusion--2026-10-06); [Chapter 09 bounded closeout approved](catalog/09_value_types.md#bounded-closeout--2026-10-06). Runtime prerequisites are integrated; the compiler builds natively and 44 partitioned CH08/09 projects pass after scope/harness repairs. [Final cumulative native validation remains](portability/conversion_review.md#chapter-0809-native-progress--2026-10-06-partial) before CH10 discussion. [Chapter 15 debt](catalog/15_blocking_debt.md) remains |
+| Current handoff | [Chapter 08 bounded pass concluded](catalog/08_project_symbols.md#positive-pass-conclusion--2026-10-06); [Chapter 09 bounded closeout approved](catalog/09_value_types.md#bounded-closeout--2026-10-06). [Complete cumulative native validation passed](portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809), including 44 partitioned CH08/09 projects. Next: CH10 shared class/struct model discussion. [Chapter 15 debt](catalog/15_blocking_debt.md) remains |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
@@ -120,6 +120,6 @@ slots; use `--jobs N` to override. See [test runners](testing.md) for isolation 
 evidence details. Running the compiler in PHP and compiling its output is
 not proof that the compiler itself builds natively; see the portability review.
 
-The latest requested [native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-06-chapter-07)
-covers the bounded Chapter 05/06/07 implementation through references and ownership. Deferred
+The latest requested [native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809)
+covers the bounded Chapter 05–09 implementation through partitioned namespace/constant/enum programs. Deferred
 Chapter 15 capabilities remain outside that proof.

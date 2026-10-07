@@ -8,7 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
-from cpp_artifacts import decode_artifacts, materialize_artifacts, single_unit_text, probe_text
+from cpp_artifacts import decode_artifacts, materialize_artifacts, single_unit_text, probe_text, probe_bundle
 from cpp_fixture import CppFixtureCompiler
 from native_validate import php_literal
 
@@ -107,6 +107,36 @@ def main():
                         execute(directory, compiler, name, bundle, expected))
                    for directory, compiler in compilers
                    for name, bundle, expected in [('single', payload, 7), ('multi', multi, 42)]], jobs=12)
+        # Native assertions can introduce calls absent from the original entry.
+        # Both insertion and appended-main probes need declarations, not merged units.
+        probe_payload = json.dumps({'format': 'scpp-cpp-artifacts-v1', 'artifacts': [
+            {'id': 'answer', 'kind': 'header', 'path': 'answer.hpp',
+             'text': '#pragma once\nint answer();\n'},
+            {'id': 'library', 'kind': 'translation_unit', 'path': 'library.cpp',
+             'text': '#include "answer.hpp"\nint answer() { return 7; }\n'},
+            {'id': 'entry', 'kind': 'translation_unit', 'path': 'entry.cpp',
+             'text': 'int main() { return 0; }\n'}]})
+        editable = probe_text(probe_payload)
+        if decode_artifacts(probe_bundle(editable)) != decode_artifacts(probe_payload):
+            raise RuntimeError('Uninstrumented transport changed production dependencies')
+        probes = {
+            'inserted': editable.replace('return 0;', 'return answer();'),
+            'appended': editable.replace('int main()', 'int unused_entry()')
+                        + 'int main() { return answer(); }\n',
+        }
+
+        def execute_probe(directory, compiler, name, text):
+            source = directory / (name + '.cpp')
+            source.write_text(text)
+            executable = directory / name
+            label = directory.name + '-' + name
+            compiler.compile(label, source, executable)
+            runner.run(label + '-execute', [executable], expected=7)
+
+        run_tasks([Task(directory.name + '-' + name,
+                       lambda directory=directory, compiler=compiler, name=name, text=text:
+                       execute_probe(directory, compiler, name, text))
+                   for directory, compiler in compilers for name, text in probes.items()], jobs=12)
         # Malformed source must never publish a partial successful bundle on stdout.
         (source / 'main.phs').write_text('function broken(')
         rejected = runner.run('artifact-cli-rejected', ['php', ROOT / 'main.php', '--s2s', source], expected=1,
@@ -117,7 +147,7 @@ def main():
         if not driver_rejected.startswith(b'ERROR\n'):
             raise RuntimeError('Native-driver rejection/recovery protocol changed')
         (output / 'summary.json').write_text(json.dumps(dict(
-            passed=True, php_suites=len(suites) + 1, generated_program_runs=4,
+            passed=True, php_suites=len(suites) + 1, generated_program_runs=8,
             partitioned_fixture='backend transport fixture, not multi-source lowering',
             native_compiler_rebuilt=False, persistent_pch=False), indent=2) + '\n')
 

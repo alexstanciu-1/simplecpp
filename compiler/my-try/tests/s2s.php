@@ -632,7 +632,8 @@ foreach ($cases as $name => [$source, $exit])
 		$probe = "\tif (!(" . $value_fixtures[$name][1] . ")) { return 91; }\n";
 		$probe_path = $directory . '/' . $name . '_state.cpp';
 		$probe_text = str_replace("\treturn 0;", $probe . "\treturn 0;", CPP_Probe::text(Model::$cpp_files));
-		if (isset($read_fixtures[$name])) {
+		if (isset($data_fixtures[$name]) || isset($read_fixtures[$name])) {
+			// Probe-created containers need this API even when only an implementation unit uses it.
 			$probe_text = "#include \"scpp/data_initializer.hpp\"\n#include \"scpp/memory.hpp\"\n" . $probe_text;
 		}
 		if (isset($mixed_fixtures[$name])) {

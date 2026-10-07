@@ -120,7 +120,7 @@ def validate(args, target, results, logs, started, runner):
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
     harness_paths = [Path(__file__), *sorted((APP / 'tests').glob('*.php')),
                      *sorted((APP / 'tests/fixtures').glob('*.php')),
-                     APP / 'tools/cpp_fixture.py', APP / 'tools/test_runner.py',
+                     APP / 'tools/cpp_fixture.py', APP / 'tools/cpp_artifacts.py', APP / 'tools/test_runner.py',
                      APP / 'tools/php_executor.py', APP / 'tests/native_driver.php.in']
     (results / 'harness_hashes.json').write_text(json.dumps({
         str(path.relative_to(APP)): hashlib.sha256(path.read_bytes()).hexdigest()

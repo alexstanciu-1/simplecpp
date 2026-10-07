@@ -519,7 +519,7 @@ remain open.
 Chapter 07's bounded pass is complete. Stable whole-storage calls, lexical aliases,
 same-origin reference returns/forwarding, explicit const borrowing, reset behavior
 and shared/unique/weak construction/transfer/observation have focused proofs and a
-[native compiler checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-06-chapter-07).
+[native compiler checkpoint](../portability/conversion_review.md#previous-native-checkpoint--2026-10-06-chapter-07).
 
 The checkpoint passes 1,109 source executions (60 Chapter 07 cases), 526 supplementary
 probes, two control-flow error probes, two ownership lifetime probes and 376

@@ -154,9 +154,11 @@ from layout consumers. Layout edits preserve unrelated final artifact bytes.
 
 `tests/cpp_probe.php` supplies an editable artifact-section transport for existing
 native assertions. The shared fixture compiler preserves each section's file and
-compiles units separately. Prefix includes/macros apply to the probe files; appended
-native harness code belongs to the entry and may include otherwise-unused declaration
-headers for its assertions. `content()` is inspection-only, not compilable output.
+compiles units separately. Prefix includes/macros apply to the probe files. Instrumented
+entries include the bundle's declaration headers, since inserted assertions and appended
+native harness code can name declarations unused by the original entry. Production
+bundles and uninstrumented transport roundtrips retain their precise dependencies.
+`content()` is inspection-only, not compilable output.
 
 For the Chapter 08 artifact-delivery foundation:
 

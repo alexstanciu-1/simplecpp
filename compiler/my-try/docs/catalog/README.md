@@ -93,7 +93,7 @@ is complete. Chapters 03 and 04 have completed their bounded positive passes and
 native checkpoints. Chapter 05 has completed its [bounded positive pass with debt](05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04);
 Chapter 06 has completed its [bounded positive pass with explicit debt](06_containers.md#positive-pass-conclusion--2026-10-05),
 including separated mixed/dynamic integration and registered JSON APIs. The requested
-[native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-06-chapter-07)
+[native checkpoint](../portability/conversion_review.md#previous-native-checkpoint--2026-10-06-chapter-07)
 covers these slices and Chapter 07's [completed bounded pass](07_references_lifetime.md#positive-pass-conclusion--2026-10-06):
 local aliases, same-origin reference returns/forwarding, explicit const borrowing,
 whole-storage resets and bounded shared/unique/weak execution. Broader lifetime and
@@ -106,10 +106,10 @@ explicit enum parameter defaults and [compiler-provided `enum_name`](09_value_ty
 are implemented, together with [checked numeric enum helpers](09_value_types.md#numeric-enum-helpers--2026-10-06).
 CH09's [bounded closeout](09_value_types.md#bounded-closeout--2026-10-06) is approved;
 constructor work carries to CH10 and remaining enum extensions are explicit debt.
-The requested combined CH08/09 compiler builds natively and its 44 partitioned
-projects pass after scope/harness repairs; [final cumulative validation remains](../portability/conversion_review.md#chapter-0809-native-progress--2026-10-06-partial).
-No separate CH08 native build was performed. CH10 follows validation and starts
-with shared class/struct model discussion.
+The requested combined CH08/09 compiler passes [complete cumulative native validation](../portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809),
+including all 44 partitioned projects, supplementary probes and rejection/recovery.
+No separate CH08 native build was performed. Next: CH10 shared class/struct model
+discussion; its feature implementation has not started.
 Duplicate function/parameter admission is checked; duplicate struct fields remain
 PE-03/FN-08 debt. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.

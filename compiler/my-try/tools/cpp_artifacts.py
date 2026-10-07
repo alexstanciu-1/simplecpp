@@ -58,7 +58,7 @@ def probe_text(payload):
                    + artifact['text'] + '// SCPP-END-ARTIFACT\n' for artifact in artifacts)
 
 
-def probe_bundle(text):
+def probe_bundle(text, *, instrumented=False):
     """Recover files after test-only textual instrumentation, without combining definitions."""
     pattern = re.compile(r'^// SCPP-ARTIFACT (\{[^\n]*\})\n(.*?)^// SCPP-END-ARTIFACT\n', re.M | re.S)
     matches = list(pattern.finditer(text))
@@ -76,8 +76,10 @@ def probe_bundle(text):
         artifacts.append(artifact)
         previous = match.end()
     entry = next(artifact for artifact in artifacts if artifact['id'] == 'entry')
-    if suffix.strip():
-        # Appended native probes may name declarations unused by the source entry.
+    if instrumented or suffix.strip():
+        # Test assertions inserted into or appended after main may name declarations
+        # unused by the source entry. Only the probe entry gets these dependencies;
+        # production bundles and uninstrumented transport roundtrips stay unchanged.
         headers = ''.join('#include "' + artifact['path'] + '"\n' for artifact in artifacts
                           if artifact['kind'] == 'header')
         entry['text'] = headers + entry['text'] + suffix

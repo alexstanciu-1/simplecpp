@@ -44,7 +44,7 @@ class CppFixtureCompiler:
             self.pch_flags = ['-include-pch', artifact]
 
     def compile(self, name, source, executable):
-        bundle = probe_bundle(Path(source).read_text())
+        bundle = probe_bundle(Path(source).read_text(), instrumented=True)
         if bundle is not None:
             return self.compile_artifacts(name, bundle, executable)
         return self.runner.run(name, [*self.flags, *self.pch_flags, source, *self.link_flags, '-o', executable])

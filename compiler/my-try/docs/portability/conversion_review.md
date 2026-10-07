@@ -3,17 +3,64 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers the implemented Chapter 05/06/07 slices, including
-registered JSON, separated mixed/dynamic families, references and ownership.
-The [Chapter 07 closeout](../catalog/07_references_lifetime.md) and Chapter 15 deferrals still
+The latest checkpoint covers the implemented Chapter 05–09 slices, including
+registered JSON, separated mixed/dynamic families, references, ownership and
+partitioned namespace/constant/enum programs.
+The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
+
+## Latest native checkpoint — 2026-10-07 Chapter 08/09
+
+Candidate base `a377058cb7dbd8979dc0a82ef5300f12f031f055`, with the recorded
+test-harness overlay, passes the complete requested frontend/C++ native validation.
+Attempt 15 under `/tmp/my-try-ch0809-native-20261006/logs-15/` passes:
+
+- Native compiler construction, emission/type and control-flow incremental proofs.
+- 23 host PHP suites and 1,111 PHP/native output comparisons plus generated-program
+  executions, including all 15 floating-spelling assertions.
+- 44 separately compiled CH08/09 projects: 13 namespace, 7 source-constant and
+  24 enum projects, with exact host/native artifacts and independent outcomes.
+- 997 supplementary value/error/state probes, two control-flow error probes and
+  two ownership lifetime probes with host/native base-output parity.
+- 376 rejection/recovery cases, repeated compilation and the final incremental
+  native rebuild.
+
+The 12-job, PCH-enabled attempt took **1,589.296 seconds**, reusing native build
+objects. This is an observed validation run, not a clean-build or PCH benchmark.
+PHP-FPM was unavailable in the sandbox; the runner used its supported CLI fallback.
+Legacy STAN and parked LLVM were explicitly skipped (`--no-stan --types-only`).
+Evidence: `summary.json`, `source_hashes.json`, `harness_hashes.json`, `candidate.json`
+and command journals in the same results directory. The artifact transport helper
+is now included in the harness hash manifest.
+
+Attempts 13–14 exposed test instrumentation dependencies, not a reason to merge
+production translation units. Inserted native assertions can call declarations
+unused by the original entry, so the shared probe compiler includes bundle headers
+in its instrumented entry. Uninstrumented roundtrips and production bundles keep
+their precise dependencies. A data-construction assertion also needed its own
+`data_initializer.hpp` include; its fixture group now supplies it explicitly.
+No compiler or language semantics changed in these harness repairs.
+
+Focused evidence under `/tmp/my-try-probe-includes-20261007/` proves eight generated
+program runs with/without PCH, including inserted and appended assertions.
+`/tmp/my-try-probe-roundtrip-20261007/` proves 26 separate-unit program runs,
+30 standalone headers and three transitive-dependency checks.
+`/tmp/my-try-data-probe-20261007/` proves 48 data programs and one runtime-input
+lifetime check without PCH. Four representative failed probes also pass under
+`/tmp/my-try-probe-replay-20261007-2/`; its first replay omitted the runtime object
+and is not a successful native proof.
+
+This supersedes the partial checkpoints below and clears the requested CH08/09
+native gate before CH10 discussion. Dedicated publication/cache lifecycle proofs
+remain scoped as documented: compiling those owners into the native compiler is
+not itself a native execution proof of every cache/publication workflow.
 
 ## Chapter 08/09 native progress — 2026-10-06 partial
 
 Candidate base `3d47e9288bde404720fcba726872a5af0b6af357`, working-tree overlay,
-evidence `/tmp/my-try-ch0809-native-20261006/`. The compiler now builds natively;
-the complete post-repair validation sweep is still pending (details below).
+evidence `/tmp/my-try-ch0809-native-20261006/`. This historical repair sequence is
+superseded by the complete October 7 checkpoint above.
 Attempts 1–2 stopped at conversion (string casts; readonly enum artifact field).
 Attempt 3 converted but rejected the required `process` module. A diagnostic fourth
 attempt temporarily omitted that setting and reached C++ compilation, exposing
@@ -68,11 +115,10 @@ The first focused retry is retained in `/tmp/my-try-ch0809-focused-20261006/`.
 The namespace regression separately passes 7 PHP suites, 24 generated programs
 and tokenizer/parser conversion in `/tmp/my-try-namespace-lifetime-20261006/`.
 
-**Remaining:** run the complete native harness again with the final parser/driver
+At this point the complete harness still needed to run with the final parser/driver
 repairs, including supplementary probes and rejection/recovery, which attempt 12
-never reached. The 1,111-case result predates those two repairs; do not combine
-these separate checkpoints into a full final pass. CH07 remains the latest complete
-cumulative checkpoint. The native harness checks the
+never reached. Those separate results were not a cumulative pass; attempt 15 above
+now supplies that full post-repair checkpoint. The native harness checks the
 required strict JSON symbols and process/lock headers before conversion/build.
 Ordinary mixed/dynamic decoding remains unsuitable for schema consumers; no facade
 weakening, target switch or dropped CH08 checks are authorized.
@@ -81,7 +127,7 @@ Authored repairs use supported integer-to-text concatenation, a private enum-kin
 field with read-only accessor, explicit typed Storage receivers, explicit nullable
 lookup, a qualified type name hidden by an inherited field, and an unpromoted
 constructor field so the base constructor stays first. These follow the portable-PHP
-skill; the JSON prerequisite is now proved, and final cumulative revalidation remains.
+skill; the JSON prerequisite and final cumulative revalidation are now proved above.
 The harness is extended to compare and execute partitioned namespace/constants/enum
 projects with independent enum assertions; that native leg now passes in the
 focused post-repair run above.
@@ -93,7 +139,7 @@ namespaces, source constants, enums, cleanup), under
 `/tmp/my-try-ch0809-final-php-20261006/`. The native-cache regression also passes in
 126.79 seconds under `/tmp/my-try-ch0809-cache-recheck-20261006/`, covering real
 generated-program builds and cache lifecycle from the PHP-hosted builder, not a
-native compiler execution. The combined sweep's newer partial outcome is recorded above.
+native compiler execution. The combined sweep's complete outcome is recorded above.
 
 After these source repairs, the focused enum, namespace and constant runners pass:
 20/7/10 PHP suites respectively and 24/24/10 generated programs; namespace tokenizer
@@ -101,7 +147,7 @@ and parser conversion also pass. Evidence is under
 `/tmp/my-try-ch0809-portable-{enums,namespaces,constants}-20261006/`.
 These overlapping suites are not 37 distinct suites and are not native compiler proof.
 
-## Latest native checkpoint — 2026-10-06 Chapter 07
+## Previous native checkpoint — 2026-10-06 Chapter 07
 
 The worktree based on `0aab4b9f6f1ea99869c335dc0de0fbc4cb281686`, with the authored
 portability and harness adaptations below, passes native compiler construction,
