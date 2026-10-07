@@ -14,7 +14,8 @@ Duplicate/conflicting modifiers and unsupported combinations reject in preparati
 the declaring type and requires that context. Static methods have no `$this`.
 They reuse ordinary callable arguments, defaults, conversions and return rules;
 the current method slice admits the [shared method parameter contract](instance_methods_v0_2.md#shared-method-parameters--2026-10-07)
-(values, fixed writable/read-only references and typed trailing packs) and value/void returns.
+(values, fixed writable/read-only references and typed trailing packs), value/void returns
+and [same-origin reference returns](instance_methods_v0_2.md#same-origin-method-reference-returns--2026-10-07).
 Explicit arguments evaluate once in source order. Instance methods require `->`;
 static methods require `::` in this slice.
 

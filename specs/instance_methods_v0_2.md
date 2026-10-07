@@ -17,7 +17,7 @@ Property and method names occupy separate lookup categories and may coincide.
 Ordinary methods require an explicit return type and use the ordinary callable
 argument/default/conversion and return rules. Defaults are not a second method-specific
 mechanism. Constructor-specific `set:` inputs remain constructor-only. The bounded
-implementation admits value/void returns. Overloads, reference returns, inheritance/virtual dispatch and
+implementation admits value/void and bounded same-origin reference returns. Overloads, inheritance/virtual dispatch and
 bound callable values remain separate slices, not implicit support from this contract.
 Named arguments are deferred to CH15. Static calls now have their own bounded
 [contract](static_members_v0_2.md) on the same method/callable foundation.
@@ -43,6 +43,25 @@ read-only access does not promise that another alias cannot change it.
 This extends parameter admission only: constructor parameters, receiver lifetime
 restrictions and reference-return restrictions remain unchanged. No method-specific
 packing or borrowing implementation is defined.
+
+## Same-origin method reference returns — 2026-10-07
+
+Instance/static methods on classes/structs share the
+[same-origin reference-return contract](native_reference_safety.md#v02-same-origin-reference-returns--2026-10-06).
+`function &select(T &$value): T` requires exactly one fixed writable reference
+parameter of the return storage type. Every return selects that whole parameter,
+directly, through local aliases or through nonrecursive function/method forwarding.
+Ordinary completion checks still apply. Returning locals, temporaries, `$this`
+properties or container interiors is rejected, as are multiple possible origins,
+recursive reference returns and const-reference returns. Constructors are unchanged.
+
+Ordinary assignment `$copy = $ops->select($value)` copies the selected value using
+its normal copy contract; it does not acquire a storage alias or leak memory.
+Value/COW copies remain values; shared handles retain shared identity. Noncopyable
+values reject copying during preparation. `$alias =& $ops->select($value)` instead
+binds the caller's original storage. Neither form extends that storage's lifetime.
+Receiver retention lasts through the call only; returned storage cannot depend on
+the receiver staying alive. Existing receiver eligibility is unchanged.
 
 ## Receiver evaluation, access and lifetime
 

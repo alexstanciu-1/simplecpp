@@ -244,8 +244,8 @@ method-mediated reference-return cycle rejection. Constructor regression
 (`/tmp/ch10-methods-constructors`) passes 45 generated programs. These prove PHP-host compilation
 and generated execution, not a native compiler rebuild.
 
-Remaining groups: method reference-return support and
-instance-qualified static calls. Inheritance/interface/trait behavior belongs to CH11.
+Method reference returns are covered by the later checkpoint below.
+Instance-qualified static calls remain. Inheritance/interface/trait behavior belongs to CH11.
 CH10-PERF-01 still precedes the chapter's native build.
 
 ## Static members — 2026-10-07
@@ -300,7 +300,34 @@ Evidence: `/tmp/ch10-method-parameters-final/` passes 50 generated programs with
 PCH; `/tmp/ch10-method-parameters-regression/` passes 9 focused PHP suites. The runner
 used CLI fallback because sandbox socket binding prevented FPM startup. No compiler
 native rebuild or conversion was performed.
-Next: discuss reference returns separately from receiver/property lifetime escapes.
+Reference returns are covered by the next checkpoint; receiver/property escapes remain gated.
+
+## Same-origin method returns — 2026-10-07
+
+Instance/static methods on both classes and structs now share CH07's exactly-one
+writable-reference-parameter return contract. Direct returns, local aliases and
+nonrecursive function/method forwarding preserve caller-owned storage. Existing
+completion, exact-type, copy-capability, escape and recursion checks remain shared.
+No new retained model or method-specific reference analysis was added. C++ callable
+signatures now share their return prefix, including reference spelling and layout
+requirements. Receiver/property lifetime support is not broadened.
+
+Ordinary assignment copies with the type's normal value/COW/shared-handle semantics;
+explicit `=&` aliases storage. Noncopyable value copies reject during preparation.
+The [normative contract](../../../../specs/instance_methods_v0_2.md#same-origin-method-reference-returns--2026-10-07)
+records these consequences. `records.py --suite method_returns --no-pch` covers
+class/struct × instance/static calls, forwarding, alias/copy behavior, receiver
+release, invalid escapes/cycles and cross-file invalidation/retry/repair/reset.
+
+Legacy evidence preserves explicit reference markers without proving provenance;
+v0.2 additionally checks same-origin safety during shared preparation. Focused
+evidence `/tmp/ch10-method-returns-1/` passes 34 generated programs without PCH.
+`/tmp/ch10-method-returns-regression/` passes 10 focused PHP suites, including
+constructors, method parameters, reference forwarding and preparation recovery.
+This proves PHP-host compilation and generated execution, not a native compiler build.
+
+Next bounded discussion: instance-qualified static calls. Property reference returns,
+multiple origins and broader lifetimes remain outside this checkpoint.
 
 ## Chapter 09 carryovers
 
@@ -376,8 +403,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-017](#class-member-017) | supported-bounded | `function f(int ...$a): int { return 1; }` | prepared | verified | deferred | Shared method parameters; records.py --suite method_parameters |
 | [CLASS-MEMBER-018A](#class-member-018a) | supported-bounded | `function f(int &$a): void {}` | prepared | verified | deferred | Shared method parameters; records.py --suite method_parameters |
 | [CLASS-MEMBER-018B](#class-member-018b) | pending-discussion | `function &f(): int {}` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-018C](#class-member-018c) | pending-discussion | `function &f(int &$a): int {}` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-018D](#class-member-018d) | pending-discussion | explicit PHP reference syntax on method/member signature | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-018C](#class-member-018c) | supported-bounded | `function &f(int &$a): int {}` | shared callable | same-origin checked | generated execution | Complete body required; same-origin method return checkpoint |
+| [CLASS-MEMBER-018D](#class-member-018d) | supported-bounded | explicit PHP reference syntax on method/member signature | shared callable | exact stable storage | generated execution | Fixed references and same-origin returns only |
 | [CLASS-MEMBER-018E](#class-member-018e) | pending-discussion | `function &f() { return $this->x; }` | unverified | unverified | deferred | — |
 | [CLASS-PROP-002A](#class-prop-002a) | supported-bounded | `class A { static int $x = 1; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-PROP-002B](#class-prop-002b) | supported-bounded | `self::$x` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
@@ -2678,7 +2705,8 @@ int_t& f();
 
 ## CLASS-MEMBER-018C
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Supported with a complete same-origin body; shared
+callable signatures preserve `T&`. See the method-return checkpoint above.
 
 ### Imported version 1
 
@@ -2715,7 +2743,8 @@ int_t& f(int_t& a);
 
 ## CLASS-MEMBER-018D
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Supported for fixed native-reference parameters and
+bounded same-origin method returns; explicit markers do not bypass lifetime checks.
 
 ### Imported version 1
 

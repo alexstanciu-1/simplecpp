@@ -20,8 +20,8 @@ final class Method_Preparation
 	/** Ordinary parameter/return preparation remains owned by Declaration_Preparation. */
 	public static function signature(method_node $syntax, prepared_source_callable $facts, preparation_context $context): void
 	{
-		if (string_byte_starts_with($syntax->name, '__') || $syntax->returns_reference) {
-			throw new \RuntimeException('Special methods and reference-return methods are deferred');
+		if (string_byte_starts_with($syntax->name, '__')) {
+			throw new \RuntimeException('Special methods are deferred');
 		}
 		Member_Preparation::validate_modifiers($syntax->modifiers, true);
 		$facts->public_access = Member_Preparation::is_public($syntax->modifiers);

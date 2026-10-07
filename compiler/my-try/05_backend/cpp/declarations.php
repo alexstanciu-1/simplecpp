@@ -118,19 +118,19 @@ final class CPP_Declarations
 		}
 
 		$function_declaration = object_cast($syntax->occurrence(), collected_source_callable::class);
+		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
+		$return_requirement = self::signature_requirement($prototype, $facts->signature->reference_return !== null);
+		$return_prefix = self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ';
 		if ($function_declaration instanceof collected_method) {
 			$method = object_cast($function_declaration, collected_method::class);
 			$record_name = CPP_Generator::source_name('record', $method->declaring_record()->qualified_name());
 			$name = $syntax->name === '__construct' ? $record_name : CPP_Generator::source_name('method', $syntax->name);
 			if (!$prototype) { $name = $record_name . '::' . $name; }
-			$prefix = $syntax->name === '__construct' ? '' : self::type_for($facts->signature->return_type,
-				$context, self::signature_requirement($prototype, false)) . ' ';
+			$prefix = $syntax->name === '__construct' ? '' : $return_prefix;
 			if ($prototype && $facts->static_member) { $prefix = 'static ' . $prefix; }
 			return $prefix . $name . '(' . $parts . ')';
 		}
-		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
-		$return_requirement = self::signature_requirement($prototype, $facts->signature->reference_return !== null);
-		return self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ' . CPP_Callables::source_reference(object_cast($function_declaration, collected_function::class)) . '(' . $parts . ')';
+		return $return_prefix . CPP_Callables::source_reference(object_cast($function_declaration, collected_function::class)) . '(' . $parts . ')';
 	}
 
 	private static function signature_requirement(bool $prototype, bool $reference): cpp_type_requirement

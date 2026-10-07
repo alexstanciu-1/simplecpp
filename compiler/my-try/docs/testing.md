@@ -58,6 +58,11 @@ observation versus value snapshots, empty/default packs, source-order evaluation
 stable fields, container mutation, receiver retention, rejection and cross-file
 signature invalidation/recovery. No native compiler rebuild is performed.
 
+Use `--suite method_returns` for same-origin returns across class/struct and
+instance/static methods: copying versus aliasing, COW/shared/unique storage,
+forwarding, receiver release, invalid escapes/cycles, cross-file edits, retry/repair
+and fresh/reset agreement. `--no-pch` checks generated header completeness.
+
 For the CH10 shared declaration model migration:
 
 ```bash
