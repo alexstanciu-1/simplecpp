@@ -92,6 +92,7 @@ enum type_declaration_kind {
 /** Retain explicit source modifiers; preparation owns defaults and legality. */
 enum declaration_modifier
 {
+	case data_initializable;
 	case public_access;
 	case protected_access;
 	case private_access;

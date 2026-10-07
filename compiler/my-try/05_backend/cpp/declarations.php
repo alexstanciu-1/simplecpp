@@ -180,15 +180,32 @@ final class CPP_Declarations
 			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
 			$default_value = $field->default_value;
 			if ($default_value !== null) {
-				$value = CPP_Generator::generate_constant_value($default_value->value, $context);
-				$text .= ' = ' . self::conversion($value, $default_value->conversion, $context);
+				$text .= ' = ' . self::property_default($default_value, $context);
 			}
 			$text .= ";\n";
 		}
 
+		$initialization = $syntax->require_preparation()->initialization;
+		if ($initialization !== null) {
+			$text .= CPP_Data_Construction::constructor(CPP_Generator::source_name('record', $key), $initialization, $context);
+		}
 		$context->records .= $text . "};\n\n";
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
+	}
+
+	/** Constant snapshots and runtime constructions share the same typed default boundary. */
+	public static function property_default(prepared_property_default $facts, cpp_generation_context $context): string
+	{
+		$value = '';
+		if ($facts instanceof prepared_constant_property_default) {
+			$value = CPP_Generator::generate_constant_value(object_cast($facts, prepared_constant_property_default::class)->value, $context);
+		}
+		else {
+			$construction = object_cast($facts, prepared_construction_property_default::class);
+			$value = CPP_Data_Construction::generate($construction->construction, $context);
+		}
+		return self::conversion($value, $facts->conversion, $context);
 	}
 
 	/** Locals snapshot value arguments left-to-right; reference arguments keep the original place. */

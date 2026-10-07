@@ -40,7 +40,7 @@ final class Object_Construction_Preparation
 	}
 
 	/** Bounded default-construction proof; record dependencies include nested value fields. */
-	private static function supports_default(canonical_type_use $type, preparation_context $context): bool
+	public static function supports_default(canonical_type_use $type, preparation_context $context): bool
 	{
 		if (Ownership_Conversions::role($type) !== null) {
 			return true;

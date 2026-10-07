@@ -17,7 +17,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/enums.php`, `data/enums.php` | Enum backing/ranges, compact storage, immutable case snapshots and selected references |
-| `semantics/defaults.php` | Parameter defaults and declaration-owned property constant defaults, conversions and value equivalence |
+| `semantics/defaults.php` | Parameter defaults; property constants and data constructions with constant leaves; conversions and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
 | `semantics/cleanup.php` | Whole-storage unset/clean admission and routing to independent keyed removal |
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
@@ -25,7 +25,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `semantics/compiler_calls.php`, `data/compiler_calls.php` | Argument-selected compiler-call signatures and immutable specialization facts |
 | `semantics/ownership_observation.php` | Exact-payload weak derivation and explicit strong acquisition |
 | `semantics/initialization.php` | Shared initialization-interface selection/substitution and factory/input validation; model query only, not literal execution |
-| `semantics/data_construction.php` | Contextual literal targets, input-shape selection and ordered entry conversion facts through common bindings |
+| `semantics/data_construction.php` | Contextual targets, homogeneous sequence bindings and heterogeneous source-record contracts; ordered input conversions and omission checks |
 | `semantics/selection_results.php` | Shared exact scalar/enum value-result admission and conversions; separate boxed join |
 | `semantics/matches.php` | Strict constant-label match preparation and per-arm facts |
 | `semantics/selection.php`, `data/selection.php` | Shared canonical-int/enum selector admission and typed constant labels for switch/match |

@@ -12,7 +12,7 @@ from cpp_fixture import CppFixtureCompiler
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', type=Path, required=True)
-parser.add_argument('--suite', choices=['records', 'property_defaults'], default='records')
+parser.add_argument('--suite', choices=['records', 'property_defaults', 'data_records'], default='records')
 args = parser.parse_args()
 output = args.results.resolve()
 output.mkdir(parents=True, exist_ok=False)

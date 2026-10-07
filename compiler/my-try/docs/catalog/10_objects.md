@@ -76,7 +76,7 @@ default replacement/removal, fresh/incremental and cleanup agreement).
 Tests used the runner's CLI fallback because sandbox socket binding prevented FPM.
 No conversion/native compiler rebuild is claimed.
 
-Next bounded slices, not enabled by this checkpoint:
+At that checkpoint the remaining bounded slices were:
 
 1. Typed container/nested-record default construction, preserving per-instance behavior.
 2. `data` syntax and prepared typed construction contracts; synthesized keyed record
@@ -86,7 +86,45 @@ Next bounded slices, not enabled by this checkpoint:
 
 Arbitrary calls, `$this`/sibling defaults, computed record keys, positional record
 notation, inheritance/traits/non-public members and competing explicit keyed factories
-remain gated. Do not mark `data` construction implemented from the spec agreement.
+remain gated. The following checkpoint implements the first two follow-ups.
+
+## Container defaults and synthesized data construction — 2026-10-07
+
+Implemented typed construction defaults for vector, hash, mixed and dynamic through
+their existing common factory path, plus nested opted-in records. Defaults admit
+constant leaves, execute per instance and preserve value/COW versus shared identity;
+separately constructed objects do not share a mutable default object.
+
+`data class` and `data struct` now use the same declaration modifier and prepared
+heterogeneous property-input contract. Both `{name: value}` and `["name" => value]`
+use the existing construction AST/parser. Literal names map to public properties;
+supplied expressions run once in source order, omitted defaults follow property order,
+and a generated tagged constructor initializes all members directly. Explicit values
+suppress their defaults. Empty `[]`/`{}` use defaults; required enum/non-defaultable
+inputs must be supplied. Duplicate/unknown/computed keys, incompatible inputs, missing
+required inputs, absent opt-in and weak allocation reject during preparation.
+
+The existing storage matrix applies without mixed boxing: bare class/struct plus
+meaningful inline/shared/unique targets, with nested contextual construction and
+ordinary value call/return boundaries. Ordinary zero-argument `new` keeps its default
+construction behavior and rejects required omissions. This does not expose positional
+constructor arguments, authored constructor bodies, promotion or methods. Explicit
+move expressions into record fields remain gated; fresh exact owned construction and
+ordinary copyable inputs use existing value-boundary admission.
+
+Proofs: `/tmp/ch10-data-records-final/` (28 generated record programs plus rejection,
+cross-file schema/default edits, opt-in removal, failure/retry/repair, fresh/incremental
+and cleanup agreement); `/tmp/ch10-container-defaults-final/` (23 default programs);
+`/tmp/ch10-data-records-regress-02/` (5 PHP suites, 48 generated container programs and
+one runtime input-lifetime proof); `/tmp/ch10-data-declarations-regress-01/` (15 PHP
+suites). Shared runner/PCH used with CLI fallback on denied FPM sockets. These prove
+PHP-host compilation and generated programs, not a native compiler rebuild/conversion.
+
+Construction-default declaration rebuilds conservatively invalidate consumers; finer
+effective-equivalence reuse is optimization debt, not a second retained snapshot tree.
+Authored constructors/promotion and methods are next. CH10-PERF-01 still precedes the
+chapter's native compiler build. Reference tags/data-set references remain non-blocking
+[CH15-DATA-REF-01](15_blocking_debt.md#ch15-data-ref-01--initialization-with-references-into-the-input-data-set).
 
 ## Chapter 09 carryovers
 
@@ -107,9 +145,10 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| [CH10-DATA-001](#container-defaults-and-synthesized-data-construction--2026-10-07) | supported-bounded | `data struct A { int $x; } $a A = {x: 1};` | prepared | verified | deferred | Shared class/struct synthesized construction; authored constructors remain gated |
 | [CLASS-DECL-001](#class-decl-001) | supported-bounded | `class A {}` | prepared | verified | deferred | Plain class/struct records; `tests/records.py` |
 | [CLASS-PROP-001](#class-prop-001) | pending-discussion | `class A { int $x; }` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLASS-PROP-002](#class-prop-002) | supported-bounded | `class A { int $x = 1; }` | prepared | verified | deferred | Class/struct typed constant defaults; `records.py --suite property_defaults`; container defaults follow |
+| [CLASS-PROP-002](#class-prop-002) | supported-bounded | `class A { int $x = 1; }` | prepared | verified | deferred | Class/struct constant and data-construction defaults; `records.py --suite property_defaults` |
 | [CLASS-PROP-003](#class-prop-003) | supported-bounded | `class A { int $x; }` | prepared | verified | deferred | Public typed instance property; no initializer |
 | [CLASS-PROP-004](#class-prop-004) | pending-discussion | `$this->x = 1;` | unverified | unverified | deferred | — |
 | [CLASS-PROP-005](#class-prop-005) | supported-bounded | `$a->x = 1;` | prepared | verified | deferred | Stable receiver; heap interiors not borrowable |

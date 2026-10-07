@@ -196,14 +196,25 @@ configuration changes require a full compilation reset.
 
 ### Initialization contracts
 
-Public class/struct property defaults retain `prepared_property_default` on the
-prepared field: an immutable `constant_value` snapshot and its conversion. Shared
-constant evaluation supplies scalar/imported constants, null and enum cases; no
-new expression evaluator or syntax backlink is introduced. Record declaration work
-owns dependencies and compares defaults as part of effective record equivalence.
-C++ emits the snapshots as member initializers. Container/default constructions and
-the approved heterogeneous `data` contract remain subsequent slices; these facts do
-not enable source factory invocation or constructor bodies.
+Public class/struct property defaults retain the common `prepared_property_default`
+typed boundary. Constant defaults own immutable value snapshots; construction defaults
+observe their property-owned data-construction syntax and reuse its attached facts.
+Shared constant evaluation admits leaves; ordinary construction preparation owns typing,
+conversions and nested targets. No second expression evaluator or container-family
+algorithm is introduced. Record work owns dependencies; construction-default rebuilds
+conservatively republish facts rather than comparing mutable AST attachments as snapshots.
+C++ emits per-instance member initializers through existing construction lowering.
+
+Explicit `data` declarations publish a `record_initialization_contract` observing
+their ordered prepared property inventory. Its heterogeneous inputs are not a runtime
+sequence binding or a registry cache. The common construction AST retains either
+`prepared_sequence_construction` (runtime factory binding) or
+`prepared_record_construction` (source input contract, payload and storage). Record
+entries retain their resolved input position and ordinary typed boundary. Analysis
+checks opt-in, literal names, uniqueness, conversions and required omissions; C++ emits
+ordered input snapshots and a tagged all-input constructor with direct member
+initializers. Supplied properties never execute their defaults. Authored constructors,
+methods and source sequence-factory execution remain gated.
 
 `contract_type_reference` under `compiler/types/` represents target, template-argument
 or concrete-type references for both initialization and index signatures.
@@ -231,8 +242,8 @@ interface facts. Installed declarations freeze once a binding is published; conf
 changes require reset. Preparation reset keeps these roots, syntax/type reset replaces
 them. No worker or backend spelling is retained. See the [Chapter 06 checkpoint](../catalog/06_containers.md#initialization-binding-and-input-model--2026-10-05).
 
-Construction syntax now owns `prepared_data_construction` with its selected binding
-and inherited result type. Each existing entry owns `prepared_data_entry` conversions;
+Construction syntax owns a specialized `prepared_data_construction` with its selected
+sequence binding or record contract and inherited result type. Each existing entry owns `prepared_data_entry` conversions;
 no prepared entry inventory duplicates syntax order. The expected construction type
 is a transient explicit argument from a typed consumer, not mutable ambient context
 or another retained type field. Explicit target syntax takes precedence. Cleanup and

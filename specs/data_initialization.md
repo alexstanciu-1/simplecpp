@@ -4,6 +4,9 @@ Doc Status: normative
 Status: Notation and initialization-interface standards complete, 2026-10-05;
 explicit data-record construction amendment approved 2026-10-07.
 The compiler catalog tracks partial implementation; source-defined factories remain gated.
+The [Chapter 10 checkpoint](../compiler/my-try/docs/catalog/10_objects.md#container-defaults-and-synthesized-data-construction--2026-10-07)
+implements the bounded synthesized `data` record path and property construction defaults;
+authored constructors and source-written sequence factories remain separate gates.
 
 ## Authority and version boundary
 

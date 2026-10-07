@@ -114,6 +114,13 @@ snapshot entry. Effective-equal edits preserve facts; changed inventories publis
 new snapshots and invalidate consumers through the existing work graph.
 
 Prepared facts retain canonical types and reference collected declarations.
+Construction property-default facts also retain the property-owned initializer syntax
+as a forward reference, never its enclosing property or a processing worker. The
+ordinary syntax maintenance path clears that expression's preparation. Source record
+initialization contracts share the prepared field inventory; construction consumers
+observe that contract through normal declaration dependencies. Neither input views
+nor runtime references escape from these compile-time links. Constant defaults remain
+immutable value snapshots; rebuilt construction defaults are conservatively unequal.
 Calls weakly observe a `callable_definition_i` owned by source collection, the runtime
 callable catalog or the language scope. Fixed targets expose `callable_target_i`;
 compiler definitions acquire concrete signatures during argument-driven analysis.

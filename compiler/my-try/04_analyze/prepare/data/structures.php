@@ -161,10 +161,30 @@ final class prepared_object_construction extends prepared_expression
 	public record_storage_kind $storage;
 }
 
-/** Syntax owns entry order; the binding owns the selected factory contract. */
-final class prepared_data_construction extends prepared_expression
+/** One syntax family, with distinct settled sequence-factory and typed-record contracts. */
+abstract class prepared_data_construction extends prepared_expression
+{
+}
+
+final class prepared_sequence_construction extends prepared_data_construction
 {
 	public initialization_binding $binding;
+}
+
+/** A source-owned heterogeneous input schema, independent of the selected storage. */
+final class record_initialization_contract
+{
+	/** @storage.reference prepared_record.fields */
+	public function __construct(public Key_Storage_List $inputs /** Key_Storage_List<prepared_field> */)
+	{
+	}
+}
+
+final class prepared_record_construction extends prepared_data_construction
+{
+	public record_initialization_contract $contract;
+	public canonical_type_use $payload_type;
+	public record_storage_kind $storage;
 }
 
 /** Conversions belong to the consuming entry, not synthetic cast syntax. */
@@ -172,6 +192,8 @@ final class prepared_data_entry
 {
 	public ?conversion_decision $key_conversion = null;
 	public conversion_decision $value_conversion;
+	/** Record input index; sequence entries retain their source position instead. */
+	public int $input_position = -1;
 }
 
 enum take_operation { case nullable_value; case false_result; case error_result; case boolean_result; }
@@ -417,15 +439,30 @@ final class prepared_field extends prepared_storage {
 	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
-/** Declaration-owned immutable default snapshot; no syntax or processing owner. */
-final class prepared_property_default
+/** Declaration-owned typed default boundary; concrete forms distinguish constants from construction. */
+abstract class prepared_property_default
+{
+	public conversion_decision $conversion;
+	abstract public function value_type(): canonical_type_use;
+}
+
+final class prepared_constant_property_default extends prepared_property_default
 {
 	public constant_value $value;
-	public conversion_decision $conversion;
+	public function value_type(): canonical_type_use { return $this->value->type; }
+}
+
+/** Observes the property-owned construction; its ordinary expression facts own execution. */
+final class prepared_construction_property_default extends prepared_property_default
+{
+	/** @reference.source property_node.initializer */
+	public data_construction_node $construction;
+	public function value_type(): canonical_type_use { return $this->conversion->source_type; }
 }
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
 final class prepared_record {
+	public ?record_initialization_contract $initialization = null;
 	/** Derived only after every field has completed preparation. */
 	public array $capabilities /** vector<generic_contract> */ = [];
 

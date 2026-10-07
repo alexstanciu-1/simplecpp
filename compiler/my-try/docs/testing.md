@@ -6,8 +6,12 @@ Uses the shared runner and fixture PCH for class/struct storage, copy/weak behav
 rejections and incremental recovery. This compiles generated programs, not the compiler.
 Use `--suite property_defaults` with the same runner for class/struct constant, enum,
 nullable and boxed defaults, storage overrides, independent instances and cross-file
-default dependency edits/recovery. Container defaults and `data` construction are not
-claimed by that proof.
+default dependency edits/recovery. It also covers nested vector/hash/mixed/dynamic
+construction defaults and per-instance mutable-default independence.
+Use `--suite data_records` for synthesized class/struct keyed construction, required
+inputs, source ordering, suppression of supplied-property defaults, storage variants,
+nested record defaults and cross-file schema/default invalidation. Authored constructor
+bodies and methods remain outside these proofs.
 
 Both `tests/run.py` and `tools/native_validate.py` use the reusable
 [`tools/test_runner.py`](../tools/test_runner.py) worker pool. The default is **12

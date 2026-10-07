@@ -29,6 +29,9 @@ foreach (['class', 'struct'] as $kind) {
 		'owned' => [$kind . ' C { int $n = 9; } $c unique<C> = new C(); return $c->n;', 9],
 		'per_instance' => [$kind . ' C { int $n = 7; string $s = "7"; } $a = new C(); $a->n = 9; $a->s = "9"; $b = new C(); $s = (int) $b->s; return $s === 7 ? $b->n : 1;', 7],
 		'nested' => ['struct Inner { int $n = 9; } ' . $kind . ' C { Inner $inner; } $c = new C(); return $c->inner->n;', 9],
+		'containers' => ['const N = 7; ' . $kind . ' C { vector<int> $v = [N, 2,]; hash<int> $h = {x: 3}; mixed $m = {x: 4}; dynamic $d = {x: 5}; } $c = new C(); $v = $c->v; $h = $c->h; $m = $c->m; $d = $c->d; $a int = $v[0]; $b int = $h["x"]; $e int = $m["x"]; $f int = $d["x"]; return $a + $b + $e + $f;', 19],
+		'nested_containers' => [$kind . ' C { vector<vector<int>> $v = [[9]]; dynamic $d = {inner: {x: 7}}; } $c = new C(); $v = $c->v; $d = $c->d; $a int = $v[0][0]; $b int = $d["inner"]["x"]; return $a + $b;', 16],
+		'container_instances' => [$kind . ' C { dynamic $d = {x: 7}; vector<int> $v = [7]; } $a = new C(); $b = new C(); $d = $a->d; $d["x"] = 9; $v = $a->v; $v[0] = 9; $a->v = $v; $other = $b->d; $bv = $b->v; $x int = $other["x"]; $y int = $bv[0]; return $x + $y;', 14],
 	];
 	foreach ($cases as $name => [$source, $expected]) {
 		$output = property_defaults_source($source);
@@ -51,7 +54,7 @@ foreach (['class', 'struct'] as $kind) {
 		'int $n = null;',
 		'int $n = calculate();',
 		'int $n = $this->other;',
-		'vector<int> $n = [1, 2];',
+		'vector<int> $n = [calculate()];',
 		'E $n = F::First;',
 	] as $property) {
 		try {

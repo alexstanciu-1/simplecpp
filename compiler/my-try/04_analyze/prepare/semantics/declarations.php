@@ -78,13 +78,19 @@ final class Declaration_Preparation
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		if ((($syntax->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
-			|| ($syntax->base_class !== null) || (q_count($syntax->modifiers) !== 0)
+			|| ($syntax->base_class !== null)
 			|| !$extended->is_empty() || !$implemented->is_empty()
 			|| !$methods->is_empty() || !$constants->is_empty() || !$uses->is_empty()) {
 			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
 		}
 		$facts = new prepared_record();
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
+		foreach ($syntax->modifiers as $modifier) {
+			if ($modifier !== declaration_modifier::data_initializable) {
+				throw new \RuntimeException('Type modifier is not supported by this record slice');
+			}
+			$facts->initialization = new record_initialization_contract($fields);
+		}
 
 		$copyable = true;
 		$query = new Capability_Preparation($context);
@@ -95,7 +101,7 @@ final class Declaration_Preparation
 				throw new \RuntimeException('Duplicate property ' . $field->name);
 			}
 			$names[$field->name] = true;
-			self::prepare_field($field, $context);
+			self::prepare_field($field, $context, $facts->initialization !== null);
 			$field_facts = $field->require_preparation();
 			$fields->add($field->name, $field_facts);
 			if (!$query->has_capability($field_facts->type, generic_contract::copyable_value)) {
@@ -111,7 +117,7 @@ final class Declaration_Preparation
 	}
 
 	/** Field eligibility uses the common declared storage capability path. */
-	public static function prepare_field(property_node $field, preparation_context $context): void
+	public static function prepare_field(property_node $field, preparation_context $context, bool $allows_required = false): void
 	{
 		if ($field->type_syntax === null) {
 			throw new \RuntimeException('Property type inference is not supported by this plain-record slice');
@@ -128,7 +134,9 @@ final class Declaration_Preparation
 			$prepared->default_value = Property_Defaults::prepare($field->initializer, $prepared->type, $context);
 		}
 		elseif (Type_Queries::canonical($prepared->type)->definition() instanceof enum_type_definition) {
-			throw new \RuntimeException('S2S enum-valued fields await explicit field initialization');
+			if (!$allows_required) {
+				throw new \RuntimeException('S2S enum-valued fields await explicit field initialization');
+			}
 		}
 		$query = new Capability_Preparation($context);
 		if (!$query->has_capability($prepared->type,

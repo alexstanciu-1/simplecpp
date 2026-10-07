@@ -567,7 +567,7 @@ final class Parser_Run
 		if ($this->text() === '{') {
 			return $this->statement_block();
 		}
-		if (($this->text() === 'struct') || ($this->text() === 'class')) {
+		if (($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data')) {
 			return $this->record_declaration();
 		}
 		if ((($this->text() === 'function') || ($this->text() === 'template'))) {
@@ -620,7 +620,7 @@ final class Parser_Run
 			$statements /** Storage<statement_node> */ = $group->body->statements;
 			while (($this->text() !== '}') && ($this->text() !== 'case') && ($this->text() !== 'default'))
 			{
-				if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'template')) {
+				if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
 					throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
 				}
 				$statements->append(object_cast($this->statement(), statement_node::class));
@@ -763,7 +763,7 @@ final class Parser_Run
 		$statements /** Storage<statement_node> */ = $body->statements;
 		while (($this->text() !== '}') && ($this->text() !== ''))
 		{
-			if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'template')) {
+			if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
 				throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
 			}
 			$statement = $this->statement();
@@ -908,8 +908,17 @@ final class Parser_Run
 		if ($this->current_scope->is_function()) {
 			throw new \RuntimeException($this->error_message('Local record declarations are not supported yet'));
 		}
+		$start = $this->position;
+		$modifiers /** vector<declaration_modifier> */ = [];
+		if ($this->text() === 'data') {
+			$modifiers[] = declaration_modifier::data_initializable;
+			$this->position++;
+		}
+		if (($this->text() !== 'class') && ($this->text() !== 'struct')) {
+			throw new \RuntimeException($this->error_message('Expected class or struct after data'));
+		}
 		$kind = $this->text() === 'class' ? type_declaration_kind::class_type : type_declaration_kind::struct_type;
-		$start = $this->position++;
+		$this->position++;
 		if (!$this->identifier()) {
 			throw new \RuntimeException($this->error_message('Expected record name'));
 		}
@@ -929,6 +938,7 @@ final class Parser_Run
 		$old_end = $record->end_token();
 		$record->name = $name;
 		$record->declaration_kind = $kind;
+		$record->modifiers = $modifiers;
 		$record->collect($this->collector, $this->source_scope, $name_index);
 		$record->member_scope()->set_parent($this->source_scope);
 		$fields /** Storage<property_node> */ = new Storage();

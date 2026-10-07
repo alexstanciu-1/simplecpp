@@ -1,21 +1,47 @@
 <?php
 
-/* Declaration-owned constant defaults; bounded admission, not expression folding. */
+/* Declaration-owned defaults reuse constant evaluation and data-construction preparation. */
 namespace scpp\compiler;
 
-/** Property defaults reuse constant evaluation and ordinary initialization conversions. */
+/** Property defaults admit constant values or constructions with constant leaves. */
 final class Property_Defaults
 {
-	/** Evaluate only the admitted constant subset, then validate its typed boundary. */
+	/** Validate the default expression family and reuse its existing semantic owner. */
 	public static function prepare(expression_node $syntax, canonical_type_use $type,
 		preparation_context $context): prepared_property_default
 	{
 		Preparation_Cleanup::tree($syntax);
-		$facts = new prepared_property_default();
+		if ($syntax instanceof data_construction_node) {
+			$construction = object_cast($syntax, data_construction_node::class);
+			self::require_constant_entries($construction, $context);
+			$value = Expression_Preparation::prepare($construction, $context, $type);
+			$default = new prepared_construction_property_default();
+			$default->construction = $construction;
+			$default->conversion = Conversion_Preparation::decide($value->type, $type, conversion_context::assignment);
+			return $default;
+		}
+		$facts = new prepared_constant_property_default();
 		$facts->value = Constant_Expression_Preparation::evaluate($syntax, $context);
 		$facts->conversion = Conversion_Preparation::decide(
 			$facts->value->type, $type, conversion_context::assignment);
 		return $facts;
+	}
+
+	/** Defaults admit construction with constant leaves, not arbitrary calls or instance reads. */
+	private static function require_constant_entries(data_construction_node $syntax, preparation_context $context): void
+	{
+		$entries /** Storage<data_entry_node> */ = $syntax->entries;
+		foreach ($entries as $entry) {
+			if ($entry->key !== null) {
+				Constant_Expression_Preparation::evaluate($entry->key, $context);
+			}
+			if ($entry->value instanceof data_construction_node) {
+				self::require_constant_entries(object_cast($entry->value, data_construction_node::class), $context);
+			}
+			else {
+				Constant_Expression_Preparation::evaluate($entry->value, $context);
+			}
+		}
 	}
 
 	/** Defaults affect construction even when field identity and layout are unchanged. */
@@ -27,8 +53,14 @@ final class Property_Defaults
 		if ($after === null) {
 			return false;
 		}
-		return $before->value->type->matches($after->value->type)
-			&& ($before->value->value_key() === $after->value->value_key());
+		if (($before instanceof prepared_constant_property_default) && ($after instanceof prepared_constant_property_default)) {
+			$left = object_cast($before, prepared_constant_property_default::class)->value;
+			$right = object_cast($after, prepared_constant_property_default::class)->value;
+			return $left->type->matches($right->type) && ($left->value_key() === $right->value_key());
+		}
+		// Construction facts are re-prepared with their declaration. Conservatively republish;
+		// never compare mutable expression attachments as if they were immutable snapshots.
+		return false;
 	}
 }
 

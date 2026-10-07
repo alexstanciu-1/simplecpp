@@ -153,7 +153,7 @@ try {
 		['$v vector<int> = [$new = 1];', 'established local'],
 		['function accept(vector<int> &$v): void {} accept([1]);', 'stable storage'],
 		['$d dynamic = {}; $m mixed = $d;', 'family conversion requires'],
-		['struct Plain { int $x; } $v Plain = {x: 1};', 'source initialization interfaces are deferred'],
+		['struct Plain { int $x; } $v Plain = {x: 1};', 'data opt-in'],
 		['$v dynamic = {x: true ? {} : {}};', 'known concrete target'],
 	];
 	foreach ($rejections as [$source, $message]) { data_preparation_rejects($path, $source . ' return 0;', $message); }
