@@ -32,6 +32,23 @@ deferral does not change ordinary typed-object member access or existing contrac
 
 ## Non-blocking follow-ups
 
+### CH15-DATA-REF-01 — initialization with references into the input data set
+
+Recorded by user request on 2026-10-07. **Non-blocking for Chapter 10 and v0.2.**
+Design a solution for initialization from PHP-array-like or JS-like data notation
+when there is a reference to an element inside that same input data set. Coordinate
+with the [data-construction contract](../../../../specs/data_initialization.md#31a-explicit-data-classes-and-structs--2026-10-07)
+and the class/struct constructor model; do not introduce a separate notation parser.
+
+Clarify whether the reference denotes the source element or the corresponding
+constructed value, whether it is used only during construction or retained afterward,
+and how identity, copying/COW, mutation and owner lifetime affect it. Include references
+between entries, forward references and cycles in the design review where applicable;
+no syntax or support for those cases is approved by this note. Define evaluation order,
+failure cleanup and rejection/runtime checks before enabling the feature. Preserve
+existing reference restrictions and non-escaping initialization-input lifetimes until
+a safe contract and focused behavioral/lifetime proofs replace them.
+
 ### Chapter 09 closeout follow-ups
 
 Approved on 2026-10-06; these do not block the bounded CH09 feature closeout.
