@@ -48,6 +48,13 @@ final class CPP_Generator
 					if ($node instanceof callable_declaration_node) {
 						$ordered->append(object_cast(object_cast($node, callable_declaration_node::class)->require_body()->work(), preparation_owner::class));
 					}
+					elseif ($node instanceof type_declaration_node) {
+						$methods /** Storage<method_node> */ = object_cast($node, type_declaration_node::class)->methods;
+						foreach ($methods as $method) {
+							$ordered->append(object_cast($method->occurrence()->preparation_work_owner(), preparation_owner::class));
+							$ordered->append(object_cast($method->require_body()->work(), preparation_owner::class));
+						}
+					}
 				}
 				// Validate every body, including declaration-only contributions.
 				if (!Preparation_Status::complete(object_cast($namespace_body->body->work(), preparation_owner::class))) {
@@ -98,6 +105,9 @@ final class CPP_Generator
 			if ($owner->kind() !== preparation_kind::declaration) { continue; }
 			$fragment = $this->program->fragments[$owner];
 			$definition = object_cast($owner->declaration(), collected_definition::class);
+			if ($definition instanceof collected_method) { continue; }
+			$artifact_headers /** hash<bool> */ = $fragment->headers;
+			$artifact_declarations /** hash<bool> */ = $fragment->forward_declarations;
 			$path = '';
 			$identity = '';
 			$text = '';
@@ -106,6 +116,16 @@ final class CPP_Generator
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
 				$identity = 'type:' . $definition->qualified_name();
 				$text = $fragment->text;
+				$record = object_cast($definition, collected_record::class);
+				$methods /** Storage<method_node> */ = $record->syntax()->methods;
+				foreach ($methods as $method) {
+					$member_owner /** preparation_owner */ = $method->occurrence()->preparation_work_owner();
+					$member_fragment = $this->program->fragments[$member_owner];
+					$text .= "\t" . $member_fragment->prototype_text . ";\n";
+					foreach ($member_fragment->headers as $header => $used) { $artifact_headers[$header] = true; }
+					foreach ($member_fragment->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
+				}
+				if (!$methods->is_empty()) { $text .= "};\n\n"; }
 			}
 			elseif ($definition instanceof collected_enum) {
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
@@ -118,34 +138,33 @@ final class CPP_Generator
 				$text = $fragment->prototype_text . ";\n";
 			}
 			$result->append(new cpp_artifact($identity, cpp_artifact_kind::header, $path,
-				"#pragma once\n" . CPP_Artifacts::preamble($fragment->headers, $fragment->forward_declarations, $path) . $text));
+				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text));
 		}
 		foreach ($files as $prepared)
 		{
 			$headers /** hash<bool> */ = [];
 			$declarations /** hash<bool> */ = [];
 			$body_text = '';
-			$namespace_bodies /** Storage<namespace_body_node> */ = $prepared->source->root->namespace_bodies;
-			foreach ($namespace_bodies as $namespace_body) {
-				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
-				foreach ($nodes as $node) {
-					if (!($node instanceof callable_declaration_node)) { continue; }
-					$function = object_cast($node, callable_declaration_node::class);
-					$definition = object_cast($function->occurrence(), collected_source_callable::class);
-					$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
-					$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
-					$signature = $this->program->fragments[$signature_owner];
-					$body = $this->program->fragments[$body_owner];
-					$headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true;
-					foreach ($signature->definition_headers as $header => $used) {
-						$headers[$header] = true;
-					}
-					foreach ($body->headers as $header => $used) { $headers[$header] = true; }
-					foreach ($body->forward_declarations as $name => $used) {
-						$declarations[$name] = true;
-					}
-					$body_text .= $signature->text . "\n{\n" . $body->text . "}\n\n";
+			foreach ($ordered as $callable_owner) {
+				if (!($callable_owner instanceof source_callable_signature_work) || ($callable_owner->source !== $prepared->source)) { continue; }
+				$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
+				$function = $definition->callable_syntax();
+				$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
+				$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
+				$signature = $this->program->fragments[$signature_owner];
+				$body = $this->program->fragments[$body_owner];
+				if ($definition instanceof collected_method) {
+					$headers[CPP_Artifacts::type_header(object_cast($definition, collected_method::class)->declaring_record()->qualified_name())] = true;
 				}
+				else { $headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true; }
+				foreach ($signature->definition_headers as $header => $used) {
+					$headers[$header] = true;
+				}
+				foreach ($body->headers as $header => $used) { $headers[$header] = true; }
+				foreach ($body->forward_declarations as $name => $used) {
+					$declarations[$name] = true;
+				}
+				$body_text .= $signature->text . "\n{\n" . $body->text . "}\n\n";
 			}
 			if ($body_text !== '') {
 				$path = CPP_Artifacts::unit_path($prepared->source);
@@ -206,6 +225,9 @@ final class CPP_Generator
 				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
 				$definition_context = new cpp_generation_context();
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
+				if ($entry instanceof collected_method) {
+					$next->text .= CPP_Declarations::constructor_initializers(object_cast($entry, collected_method::class));
+				}
 				$next->definition_headers = $definition_context->headers;
 				$next->prototype_text = CPP_Declarations::signature($function_syntax, $context, true);
 			}
@@ -910,6 +932,7 @@ final class CPP_Generator
 	public static function generate_reference(prepared_variable_reference $reference, cpp_generation_context $context): string
 	{
 		$target = object_cast(weakref_get($reference->declaration), collected_name::class);
+		if ($target instanceof collected_method) { return 'this'; }
 		return self::local_name($target);
 	}
 

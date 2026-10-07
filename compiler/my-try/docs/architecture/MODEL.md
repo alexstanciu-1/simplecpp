@@ -94,7 +94,10 @@ observe their declaring record and are indexed separately from free functions an
 properties. Common signature/body work and `prepared_source_callable` use the
 shared callable syntax accessor. The common AST owns attached signature facts.
 Selection, reset and retirement cover both roles without a second member lifecycle.
-Member execution remains gated until the constructor slice supplies its semantics.
+The bounded constructor slice uses this lifecycle; ordinary method calls remain gated.
+Record syntax changes describe property/modifier/member membership independently of
+method contents. Each method's signature and body retain their own change flags.
+This prevents body-only edits from rebuilding record defaults and invalidating callers.
 
 `callable_definition_i` is the ordinary lookup identity role. Its fixed-signature
 child `callable_target_i` is implemented by the existing `collected_function` identity
@@ -213,16 +216,30 @@ algorithm is introduced. Record work owns dependencies; construction-default reb
 conservatively republish facts rather than comparing mutable AST attachments as snapshots.
 C++ emits per-instance member initializers through existing construction lowering.
 
-Explicit `data` declarations publish a `record_initialization_contract` observing
-their ordered prepared property inventory. Its heterogeneous inputs are not a runtime
-sequence binding or a registry cache. The common construction AST retains either
+Explicit `data` declarations retain their opt-in separately from construction contracts.
+Without an authored constructor, the record owns a synthesized
+`record_initialization_contract`; otherwise the prepared source callable owns it.
+Named `record_initialization_input` records share ordinary `callable_parameter`
+contracts. Synthesized inputs additionally observe the selected public property;
+authored contracts weakly observe their member identity. Source `set:` parameter
+facts observe their initialized property separately from the input-name schema.
+These heterogeneous inputs are not a runtime sequence binding or a registry cache.
+The common construction AST retains either
 `prepared_sequence_construction` (runtime factory binding) or
 `prepared_record_construction` (source input contract, payload and storage). Record
 entries retain their resolved input position and ordinary typed boundary. Analysis
 checks opt-in, literal names, uniqueness, conversions and required omissions; C++ emits
-ordered input snapshots and a tagged all-input constructor with direct member
-initializers. Supplied properties never execute their defaults. Authored constructors,
-methods and source sequence-factory execution remain gated.
+ordered input snapshots and either an authored constructor invocation or a tagged
+synthesized constructor. Both initialize members directly. Supplied `set:`/synthesized
+properties never execute their defaults. Default facts distinguish existing literal
+function defaults, typed constant/construction defaults, and synthesized type defaults.
+General methods and source sequence-factory execution remain gated.
+
+`prepared_receiver` is constructor-owned storage, not a fabricated local or source
+parameter. The invocation-local body context observes it and its declaring record.
+Only direct `$this` property access is admitted; projected storage is writable but
+non-borrowable. Preparation checks private access against the declaring record.
+No receiver copy, return, rebinding or escape is enabled by this representation.
 
 `contract_type_reference` under `compiler/types/` represents target, template-argument
 or concrete-type references for both initialization and index signatures.
@@ -281,7 +298,11 @@ This distinguishes new construction from copying;
 the shared value-boundary decision uses that query only for matching storage.
 It does not grant new type capabilities or contextual construction outside explicit locals.
 The backend chooses the runtime allocation helper from the prepared ownership decision.
-Constructor overloads/bodies and runtime value construction are not implemented here.
+Authored constructor arguments retain an ordinary `prepared_call`, whose signature
+describes initialization (internal void result). The construction expression separately
+owns its result/storage type. Ordered call lowering receives the backend-selected
+allocation spelling; it does not treat a constructor as a free-function symbol.
+Overloads and runtime value construction remain outside this slice.
 
 `move_expression_node` owns one operand. Its `prepared_move` retains the selected
 source place but has no result place: extraction produces an owned temporary, not

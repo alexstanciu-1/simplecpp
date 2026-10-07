@@ -89,7 +89,7 @@ final class Parameter_Defaults
 		else {
 			$value = self::literal($syntax, $context);
 		}
-		$facts = new prepared_parameter_default();
+		$facts = new prepared_literal_parameter_default();
 		$facts->value = $value;
 		$facts->conversion = Conversion_Preparation::decide(
 			$value->type, $parameter->type, conversion_context::argument);
@@ -147,8 +147,16 @@ final class Parameter_Defaults
 	{
 		if ($before === null) { return $after === null; }
 		if ($after === null) { return false; }
-		$left = $before->value;
-		$right = $after->value;
+		if (($before instanceof prepared_property_parameter_default) && ($after instanceof prepared_property_parameter_default)) {
+			return Property_Defaults::same(object_cast($before, prepared_property_parameter_default::class)->value,
+				object_cast($after, prepared_property_parameter_default::class)->value);
+		}
+		if (($before instanceof prepared_type_parameter_default) && ($after instanceof prepared_type_parameter_default)) {
+			return object_cast($before, prepared_type_parameter_default::class)->type->matches(object_cast($after, prepared_type_parameter_default::class)->type);
+		}
+		if (!($before instanceof prepared_literal_parameter_default) || !($after instanceof prepared_literal_parameter_default)) { return false; }
+		$left = object_cast($before, prepared_literal_parameter_default::class)->value;
+		$right = object_cast($after, prepared_literal_parameter_default::class)->value;
 		if (!$left->type->matches($right->type)) { return false; }
 		return $left->value_key() === $right->value_key();
 	}

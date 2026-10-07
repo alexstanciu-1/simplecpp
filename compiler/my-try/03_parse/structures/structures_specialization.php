@@ -750,7 +750,11 @@ final class parameter_node extends ast_node
 
 	private ?prepared_parameter $prepared_facts = null;
 
-	public type_node $type_syntax;
+	public ?type_node $type_syntax = null;
+	/** Contextual set: input; its type comes from a separately declared property. */
+	public bool $property_backed = false;
+
+	public function require_type_syntax(): type_node { return $this->type_syntax; }
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
 	public passing_mode $mode = passing_mode::value;
@@ -788,7 +792,9 @@ final class parameter_node extends ast_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$worker->edge($this, $this->type_syntax);
+		if ($this->type_syntax !== null) {
+			$worker->edge($this, $this->type_syntax);
+		}
 		if ($this->default_value !== null) {
 			$worker->edge($this, $this->default_value);
 		}

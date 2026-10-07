@@ -107,7 +107,7 @@ final class CPP_Declarations
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
 			$requirement = self::signature_requirement($prototype, $parameter->mode === passing_mode::reference);
 			$parts .= $separator . $qualifier . self::type_for($parameter->type, $context, $requirement) . $reference . ' ' . CPP_Generator::local_name($entry);
-			if ($prototype && ($parameter->default_value !== null)) {
+			if ($prototype && ($syntax instanceof function_node) && ($parameter->default_value !== null)) {
 				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
 			}
 			elseif ($prototype && ($parameter->element_type !== null)) {
@@ -118,9 +118,15 @@ final class CPP_Declarations
 		}
 
 		$function_declaration = object_cast($syntax->occurrence(), collected_source_callable::class);
+		if ($function_declaration instanceof collected_method) {
+			$method = object_cast($function_declaration, collected_method::class);
+			$record_name = CPP_Generator::source_name('record', $method->declaring_record()->qualified_name());
+			$name = $prototype ? $record_name : $record_name . '::' . $record_name;
+			return $name . '(' . $parts . ')';
+		}
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
 		$return_requirement = self::signature_requirement($prototype, $facts->signature->reference_return !== null);
-		return self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';
+		return self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ' . CPP_Callables::source_reference(object_cast($function_declaration, collected_function::class)) . '(' . $parts . ')';
 	}
 
 	private static function signature_requirement(bool $prototype, bool $reference): cpp_type_requirement
@@ -128,9 +134,38 @@ final class CPP_Declarations
 		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 	}
 
-	/** Consume normalized default facts; syntax and source tokens have no authority here. */
-	private static function parameter_default(prepared_parameter_default $facts, cpp_generation_context $context): string
+	/** Property-backed inputs initialize members before the body, preserving parameter values. */
+	public static function constructor_initializers(collected_method $method): string
 	{
+		$text = '';
+		$parameters /** Storage<prepared_parameter> */ = $method->callable_syntax()->require_preparation()->parameters;
+		$by_property /** hash<string> */ = [];
+		foreach ($parameters as $parameter) {
+			if ($parameter->initialized_property !== null) {
+				$field = object_cast(weakref_get($parameter->initialized_property->declaration), collected_name::class);
+				$by_property[$field->name] = CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
+			}
+		}
+		$fields /** Key_Storage_List<prepared_field> */ = $method->declaring_record()->syntax()->require_preparation()->fields;
+		foreach ($fields->items() as $field) {
+			$name = object_cast(weakref_get($field->declaration), collected_name::class)->name;
+			if (isset($by_property[$name])) {
+				$text .= ($text === '' ? ' : ' : ', ') . CPP_Generator::source_name('field', $name) . '(' . $by_property[$name] . ')';
+			}
+		}
+		return $text;
+	}
+
+	/** Consume normalized default facts; syntax and source tokens have no authority here. */
+	public static function parameter_default(prepared_parameter_default $default, cpp_generation_context $context): string
+	{
+		if ($default instanceof prepared_property_parameter_default) {
+			return self::property_default(object_cast($default, prepared_property_parameter_default::class)->value, $context);
+		}
+		if ($default instanceof prepared_type_parameter_default) {
+			return self::type(object_cast($default, prepared_type_parameter_default::class)->type, $context) . '{}';
+		}
+		$facts = object_cast($default, prepared_literal_parameter_default::class);
 		$value = $facts->value;
 		$text = '';
 		if ($value instanceof prepared_integer_literal) {
@@ -177,6 +212,7 @@ final class CPP_Declarations
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 			$representation = CPP_Types::representation_for($type, $requirement);
 			CPP_Types::record_dependencies($representation, $context);
+			$text .= ($field->public_access ? "public:\n" : "private:\n");
 			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
 			$default_value = $field->default_value;
 			if ($default_value !== null) {
@@ -186,10 +222,12 @@ final class CPP_Declarations
 		}
 
 		$initialization = $syntax->require_preparation()->initialization;
-		if ($initialization !== null) {
+		$text .= "public:\n";
+		if (($initialization !== null) && (weakref_get($syntax->require_preparation()->constructor) === null)) {
 			$text .= CPP_Data_Construction::constructor(CPP_Generator::source_name('record', $key), $initialization, $context);
 		}
-		$context->records .= $text . "};\n\n";
+		$context->records .= $text;
+		if (weakref_get($syntax->require_preparation()->constructor) === null) { $context->records .= "};\n\n"; }
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
 	}
@@ -216,7 +254,7 @@ final class CPP_Declarations
 
 	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
 	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
-		cpp_generation_context $context): string
+		cpp_generation_context $context, string $callee = '', ?canonical_type_use $constructed_type = null): string
 	{
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
@@ -224,7 +262,8 @@ final class CPP_Declarations
 		// The immediately invoked lambda sequences arguments and contains their temporaries.
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
 		$return_requirement = self::signature_requirement(false, $facts->signature->reference_return !== null);
-		$text = '([&]() -> ' . self::type_for($facts->type, $context, $return_requirement) . $return_reference . " {\n";
+		$result_type = $constructed_type ?? $facts->type;
+		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
 		$names = '';
 		$separator = '';
 		$packed_names = '';
@@ -266,7 +305,11 @@ final class CPP_Declarations
 		// Semantic defaults do not depend on defaults being repeated in a runtime C++ declaration.
 		for ($index = q_count($prepared_arguments); $index < $facts->fixed_count; $index++) {
 			$default_value /** prepared_parameter_default */ = $parameters[$index]->default_value;
-			$names .= $separator . self::parameter_default($default_value, $context);
+			$name = 'default_argument_' . $context->next_temporary;
+			$context->next_temporary++;
+			$text .= self::type($parameters[$index]->type, $context) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
+			$context->headers['utility'] = true;
+			$names .= $separator . 'std::move(' . $name . ')';
 			$separator = ', ';
 		}
 		if ($facts->variadic_parameter !== null) {
@@ -274,14 +317,16 @@ final class CPP_Declarations
 			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
 		}
 
-		$reference = '';
-		if ($facts->specialization !== null) {
-			$specialization /** prepared_compiler_call */ = $facts->specialization;
-			$reference = CPP_Compiler_Functions::reference($specialization, $context);
-		}
-		else {
-			$target = object_cast(weakref_get($facts->target), callable_target_i::class);
-			$reference = CPP_Callables::reference($target, $context);
+		$reference = $callee;
+		if ($callee === '') {
+			if ($facts->specialization !== null) {
+				$specialization /** prepared_compiler_call */ = $facts->specialization;
+				$reference = CPP_Compiler_Functions::reference($specialization, $context);
+			}
+			else {
+				$target = object_cast(weakref_get($facts->target), callable_target_i::class);
+				$reference = CPP_Callables::reference($target, $context);
+			}
 		}
 		$text .= "\treturn " . $reference . '(' . $names . ");\n}())";
 		return $text;
@@ -298,6 +343,10 @@ final class CPP_Declarations
 		CPP_Types::record_dependencies($payload, $context);
 		$arrow = ($facts->receiver_storage !== record_storage_kind::inline_value)
 			|| $base->require_preparation()->type->by_value();
+		if ($base instanceof variable_reference_node) {
+			$reference = object_cast($base, variable_reference_node::class)->require_variable_reference_preparation();
+			if (weakref_get($reference->declaration) instanceof collected_method) { $arrow = true; }
+		}
 		return '(' . (new CPP_Syntax($context))->expression($base) . ')'
 			. ($arrow ? '->' : '.') . CPP_Generator::source_name('field', $entry->name);
 	}

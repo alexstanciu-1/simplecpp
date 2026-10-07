@@ -115,7 +115,7 @@ foreach (['return', 'input', 'reference', 'count', 'variadic', 'default'] as $ba
 	$parameter->type = $bad_kind === 'input' ? $integer : $good->factory()->signature()->parameters[0]->type;
 	$parameter->mode = $bad_kind === 'reference' ? passing_mode::reference : passing_mode::value;
 	if ($bad_kind === 'variadic') { $parameter->element_type = $integer; }
-	if ($bad_kind === 'default') { $parameter->default_value = new prepared_parameter_default(); }
+	if ($bad_kind === 'default') { $parameter->default_value = new prepared_literal_parameter_default(); }
 	if ($bad_kind !== 'count') { $signature->parameters->append($parameter); }
 	$factory = Model::$runtime_callables->register_static_factory('test.bad.' . $bad_kind, $signature->return_type, $signature);
 	$bad = new initialization_binding($vector, $integer, null, $integer, $factory);

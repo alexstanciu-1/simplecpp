@@ -647,7 +647,9 @@ final class parameter_children_iterator extends children_iterator
 	{
 		if ($this->next_field === 0) {
 			$this->next_field++;
-			return $this->source->type_syntax;
+			if ($this->source->type_syntax !== null) {
+				return $this->source->type_syntax;
+			}
 		}
 		if ($this->next_field === 1) {
 			$this->next_field++;

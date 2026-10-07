@@ -85,21 +85,20 @@ final class Record_Construction_Preparation
 		$payload = Type_Queries::record_payload($target);
 		$record /** collected_record */ = Type_Queries::source_record($payload);
 		$context->worker->require_declaration($context->owner, $record);
-		$contract = $record->syntax()->require_preparation()->initialization;
-		if ($contract === null) {
+		if (!$record->syntax()->require_preparation()->data_initializable) {
 			throw new \RuntimeException('S2S record data construction requires explicit data opt-in');
 		}
+		$contract = Constructor_Preparation::inputs($record, $context);
 		$storage = Type_Queries::record_storage($target);
 		if ($storage === record_storage_kind::weak) {
 			throw new \RuntimeException('S2S weak handles cannot allocate');
 		}
-		$inputs /** Key_Storage_List<prepared_field> */ = $contract->inputs;
+		$inputs /** Key_Storage_List<record_initialization_input> */ = $contract->inputs;
 		$positions /** hash<int> */ = [];
-		foreach ($inputs->items() as $position => $field) {
-			$declaration = object_cast(weakref_get($field->declaration), collected_name::class);
-			$positions[$declaration->name] = $position;
+		foreach ($inputs->items() as $position => $input) {
+			$positions[$input->name] = $position;
 		}
-		$fields /** vector<prepared_field> */ = $inputs->items();
+		$fields /** vector<record_initialization_input> */ = $inputs->items();
 		$seen /** hash<bool> */ = [];
 		$entries /** Storage<data_entry_node> */ = $node->entries;
 		foreach ($entries as $entry) {
@@ -114,7 +113,7 @@ final class Record_Construction_Preparation
 				throw new \RuntimeException('S2S duplicate record construction input: ' . $key);
 			}
 			$seen[$key] = true;
-			$field = $fields[$positions[$key]];
+			$field = $fields[$positions[$key]]->parameter;
 			$value = Expression_Preparation::prepare_for_consumer($entry->value, $context, $field->type, expression_consumer::value);
 			$entry_facts = new prepared_data_entry();
 			$entry_facts->input_position = $positions[$key];
@@ -126,11 +125,9 @@ final class Record_Construction_Preparation
 		}
 		foreach ($positions as $name => $position) {
 			if (!isset($seen[$name])) {
-				$field = $fields[$position];
+				$field = $fields[$position]->parameter;
 				if ($field->default_value === null) {
-					if (!Object_Construction_Preparation::supports_default($field->type, $context)) {
 						throw new \RuntimeException('S2S missing required record construction input: ' . $name);
-					}
 				}
 			}
 		}

@@ -401,7 +401,22 @@ final class Expression_Preparation
 	public static function prepare_field_access(field_access_node $syntax, preparation_context $context): prepared_field_access
 	{
 		$base = $syntax->base;
-		$value = self::prepare($base, $context);
+		$value /** prepared_expression */;
+		$is_receiver = false;
+		if ($base instanceof variable_reference_node) {
+			$is_receiver = object_cast($base, variable_reference_node::class)->name === 'this';
+		}
+		if ($is_receiver) {
+			$receiver = $context->receiver;
+			if ($receiver === null) { throw new \RuntimeException('$this requires an instance body'); }
+			$reference = new prepared_variable_reference();
+			$reference->type = $receiver->type;
+			$reference->declaration = $receiver->declaration;
+			$reference->place = new prepared_place($receiver, null, true);
+			object_cast($base, variable_reference_node::class)->set_preparation($reference);
+			$value = $reference;
+		}
+		else { $value = self::prepare($base, $context); }
 		$storage = Type_Queries::record_storage($value->type);
 		if ($storage === record_storage_kind::weak) {
 			throw new \RuntimeException('S2S weak member access requires an explicit lock');
@@ -419,6 +434,9 @@ final class Expression_Preparation
 		$matches /** vector<prepared_field> */ = $fields->named($syntax->occurrence()->name);
 		if (q_count($matches) !== 1) {
 			throw new \RuntimeException('S2S needs one resolved record property');
+		}
+		if (!$matches[0]->public_access && ($context->receiver_record !== $record_entry)) {
+			throw new \RuntimeException('S2S private property is not accessible here: ' . $syntax->name);
 		}
 
 		$facts = new prepared_field_access();

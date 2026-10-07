@@ -8,8 +8,9 @@ final class Declaration_Preparation
 	/** Publish a complete signature before any body so calls do not depend on source order. */
 	public static function prepare_callable(callable_declaration_node $syntax, preparation_context $context): void
 	{
-		if (!($syntax instanceof function_node)) {
-			throw new \RuntimeException('Source member signatures are not enabled yet');
+		if ($syntax instanceof method_node) {
+			Constructor_Preparation::signature(object_cast($syntax, method_node::class), $context);
+			return;
 		}
 		$declaration = $syntax->occurrence();
 		$declaring_scope = object_cast(weakref_get($declaration->scope), scope::class);
@@ -51,7 +52,7 @@ final class Declaration_Preparation
 		$facts = new prepared_parameter();
 		$facts->declaration = $node->occurrence();
 		$contract = new callable_parameter();
-		$contract->type = Type_Preparation::type($node->type_syntax, $context);
+		$contract->type = Type_Preparation::type($node->require_type_syntax(), $context);
 		Type_Preparation::require_value_type($contract->type);
 		$contract->mode = $node->mode;
 		$contract->access = $node->access;
@@ -83,7 +84,7 @@ final class Declaration_Preparation
 			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
 			|| ($syntax->base_class !== null)
 			|| !$extended->is_empty() || !$implemented->is_empty()
-			|| !$methods->is_empty() || !$constants->is_empty() || !$uses->is_empty()) {
+			|| !$constants->is_empty() || !$uses->is_empty()) {
 			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
 		}
 		$facts = new prepared_record();
@@ -92,7 +93,14 @@ final class Declaration_Preparation
 			if ($modifier !== declaration_modifier::data_initializable) {
 				throw new \RuntimeException('Type modifier is not supported by this record slice');
 			}
-			$facts->initialization = new record_initialization_contract($fields);
+			$facts->data_initializable = true;
+		}
+		foreach ($methods as $method) {
+			if ($method->name !== '__construct') {
+				throw new \RuntimeException('Type member semantics are not supported by this plain-record slice; only constructors are enabled');
+			}
+			if ($facts->constructor !== null) { throw new \RuntimeException('Duplicate constructor'); }
+			$facts->constructor = object_cast($method->occurrence(), collected_method::class);
 		}
 
 		$copyable = true;
@@ -104,7 +112,7 @@ final class Declaration_Preparation
 				throw new \RuntimeException('Duplicate property ' . $field->name);
 			}
 			$names[$field->name] = true;
-			self::prepare_field($field, $context, $facts->initialization !== null);
+			self::prepare_field($field, $context, $facts->data_initializable || ($facts->constructor !== null));
 			$field_facts = $field->require_preparation();
 			$fields->add($field->name, $field_facts);
 			if (!$query->has_capability($field_facts->type, generic_contract::copyable_value)) {
@@ -116,6 +124,10 @@ final class Declaration_Preparation
 			$capabilities[] = generic_contract::copyable_value;
 		}
 		$facts->capabilities = $capabilities;
+		if ($facts->data_initializable && ($facts->constructor === null)) {
+			$facts->initialization = new record_initialization_contract();
+			Constructor_Preparation::synthesized_inputs($facts, $context);
+		}
 		$syntax->set_preparation($facts);
 	}
 
@@ -126,11 +138,14 @@ final class Declaration_Preparation
 			throw new \RuntimeException('Property type inference is not supported by this plain-record slice');
 		}
 		foreach ($field->modifiers as $modifier) {
-			if ($modifier !== declaration_modifier::public_access) {
+			if (($modifier !== declaration_modifier::public_access) && ($modifier !== declaration_modifier::private_access)) {
 				throw new \RuntimeException('Property modifier is not supported by this plain-record slice');
 			}
 		}
 		$prepared = new prepared_field();
+		foreach ($field->modifiers as $modifier) {
+			if ($modifier === declaration_modifier::private_access) { $prepared->public_access = false; }
+		}
 		$prepared->declaration = $field->occurrence();
 		$prepared->type = Type_Preparation::type($field->require_type_syntax(), $context);
 		if ($field->initializer !== null) {
@@ -148,6 +163,14 @@ final class Declaration_Preparation
 		}
 		if (!Type_Queries::is_class_handle($prepared->type)) {
 			$context->worker->require_record($prepared->type, $context);
+			if (($prepared->default_value === null) && !$allows_required) {
+				$nested = Type_Queries::source_record(Type_Queries::record_payload($prepared->type));
+				if ($nested !== null) {
+					if (!Object_Construction_Preparation::supports_default($prepared->type, $context)) {
+						throw new \RuntimeException('Inline record property requires an explicit initializer');
+					}
+				}
+			}
 		}
 		$field->set_preparation($prepared);
 	}

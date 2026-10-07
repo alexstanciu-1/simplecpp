@@ -16,6 +16,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `lookup.php` | Analysis-owned observed lexical lookup across independent type/function/constant pools |
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
+| `semantics/constructors.php` | Public constructor contracts, property-backed parameters, receivers and shared named construction inputs |
 | `semantics/enums.php`, `data/enums.php` | Enum backing/ranges, compact storage, immutable case snapshots and selected references |
 | `semantics/defaults.php` | Parameter defaults; property constants and data constructions with constant leaves; conversions and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |
@@ -246,6 +247,17 @@ escaping exceptions request a full rebuild. The full policy is in
 [debt](../../docs/planning/incremental_strategy.md).
 
 ## Current language boundary
+
+Bounded authored constructors reuse source-callable signature/body work. Record
+completion publishes field facts and constructor identity; signature work depends
+on that layout, never the reverse. `set:` obtains property type/default and retains
+its initialization target. Positional calls reuse call admission; keyed data calls
+observe the same parameter contracts through a named schema. Source/default ordering
+and copy admission are settled before emission. Private access is checked by the
+body's declaring-record context; `$this` is only admitted as a property receiver.
+Implicit inline-record construction with an authored constructor remains gated:
+use explicit `new` or `data` initialization. General methods/receiver escape and
+body-only definite initialization of required properties are follow-ups.
 
 One-argument container reads use `Indexing_Preparation` through ordinary operator
 selection. Registry definitions supply key/result type references and failure policy;

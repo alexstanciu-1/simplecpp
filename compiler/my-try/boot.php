@@ -112,6 +112,7 @@ require_once __DIR__ . '/04_analyze/operators/presence.php';
 require_once __DIR__ . '/04_analyze/operators/mutations.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/defaults.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/declarations.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/constructors.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/bodies.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/completion.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/transfers.php';

@@ -81,7 +81,7 @@ At that checkpoint the remaining bounded slices were:
 1. Typed container/nested-record default construction, preserving per-instance behavior.
 2. `data` syntax and prepared typed construction contracts; synthesized keyed record
    execution, literal-key diagnostics and source-order evaluation without mandatory boxing.
-3. Authored constructors/promotion and ordinary method support; keyed inputs reuse
+3. Authored constructors and ordinary method support; keyed inputs reuse
    constructor contracts rather than bypassing their bodies.
 
 Arbitrary calls, `$this`/sibling defaults, computed record keys, positional record
@@ -107,7 +107,7 @@ required inputs, absent opt-in and weak allocation reject during preparation.
 The existing storage matrix applies without mixed boxing: bare class/struct plus
 meaningful inline/shared/unique targets, with nested contextual construction and
 ordinary value call/return boundaries. Ordinary zero-argument `new` keeps its default
-construction behavior and rejects required omissions. This does not expose positional
+construction behavior and rejects required omissions. That checkpoint did not expose positional
 constructor arguments, authored constructor bodies, promotion or methods. Explicit
 move expressions into record fields remain gated; fresh exact owned construction and
 ordinary copyable inputs use existing value-boundary admission.
@@ -122,7 +122,7 @@ PHP-host compilation and generated programs, not a native compiler rebuild/conve
 
 Construction-default declaration rebuilds conservatively invalidate consumers; finer
 effective-equivalence reuse is optimization debt, not a second retained snapshot tree.
-Authored constructors with property-backed inputs and methods are next. PHP-style
+Authored constructors with property-backed inputs are implemented below; ordinary methods remain next. PHP-style
 property promotion is deferred to CH15-CTOR-SYNTAX-01. CH10-PERF-01 still precedes the
 chapter's native compiler build. Reference tags/data-set references remain non-blocking
 [CH15-DATA-REF-01](15_blocking_debt.md#ch15-data-ref-01--initialization-with-references-into-the-input-data-set).
@@ -141,7 +141,7 @@ The focused function runner passes 12 PHP suites and 77 generated programs
 (`/tmp/ch10-callable-foundation-01`). Member identity/index/retirement checks live in
 `tests/preparation_work.php`; the model checks passed in
 `/tmp/ch10-callable-model-02`. These are PHP-host/generated-program proofs, not a native
-compiler build. Constructor parsing and execution are the next implementation slice.
+compiler build. Constructor parsing and execution are implemented in the checkpoint below.
 
 ### First authored-constructor slice: adopted input spelling
 
@@ -157,7 +157,59 @@ properties for external access; basic visibility enforcement is a prerequisite.
 Without an authored constructor, synthesized inputs remain public-instance-only.
 PHP-style property promotion from parameter declarations is non-blocking
 [Chapter 15 debt](15_blocking_debt.md#ch15-ctor-syntax-01--deferred-constructor-property-promotion),
-not part of this first slice. Authored-constructor execution is not yet implemented.
+not part of this first slice. Execution is implemented in the bounded checkpoint below.
+
+### Authored constructors — 2026-10-07
+
+One public `__construct`, ordinary fixed by-value parameters, contextual `set:$property`
+inputs, supported constant/data defaults, positional `new`, and keyed `data` calls
+now use the shared class/struct path. Constructors have no source return type.
+Public/private instance properties share field facts and preparation-owned visibility.
+`$this->property` reads/plain writes are supported in the constructor body; receiver
+storage is non-borrowable and cannot be copied, rebound or escaped as `$this`.
+
+Source constructor signatures own their named typed input schema. Synthesized
+schemas expose public properties only. Both use `record_initialization_input`
+referencing ordinary callable parameter contracts, with optional property mappings
+only for synthesis. `set:` source parameters separately retain the resolved property
+they initialize, without manufacturing/promoting properties. Parameter defaults use
+the shared typed property-default machinery; ordinary function default admission
+is unchanged. A property-backed input requires copyable storage because its parameter
+remains independently usable after member initialization (no hidden move).
+
+Supplied expressions are snapshotted in source order, followed by omitted defaults
+in parameter order. Native constructors initialize `set:` properties directly before
+executing the body; supplied inputs skip property defaults. Both construction forms
+share storage/allocation lowering. Type headers contain member declarations, while
+constructor definitions/bodies live in the existing per-source implementation unit.
+Body-only edits preserve signature work, callers and headers. Constructor removal
+retires both work identities and their fragments.
+
+Legacy review: CLASS-MEMBER-011 and CLASS-CONSTRUCT-001 use real C++ constructors with
+out-of-line bodies, which this slice preserves. Unlike the type-blind legacy path,
+preparation resolves visibility, field/input bindings, conversions and missing inputs
+before emission. No promotion expansion or second class/struct execution path is added.
+
+Focused proof: `tests/records.py --suite constructors`; generated programs, contextual
+`set` type naming, namespace/default edits, failed retry/repair, fresh/incremental
+equality, preparation reset and method retirement. Ordinary function and synthesized
+record regression groups also pass. These are PHP-host/generated-program checks;
+the native compiler has **not** been rebuilt.
+
+Evidence: 45 constructor programs pass with PCH (`/tmp/ch10-constructors-final-03`)
+and without PCH (`/tmp/ch10-constructors-headers-final`). The final focused PHP run
+passes 14 suites (`/tmp/ch10-constructor-php-final`); regression runs pass 77 function
+programs (`/tmp/ch10-constructor-functions-final`) and 28 synthesized-data programs
+(`/tmp/ch10-constructor-data-final`). The shared runner used CLI fallback because
+FPM socket startup was unavailable.
+
+Remaining constructor gates: reference/variadic parameters, inheritance/parent calls,
+promotion, general methods, receiver escape, and implicit default initialization of
+inline records with authored constructors. For that last case use explicit `new C()`
+or eligible `data` notation; unsupported implicit sites reject during preparation,
+even if every authored input has a default. Required non-defaultable properties must
+use `set:` or a property default; body-only definite initialization is deferred.
+Indexed/compound property updates retain their existing separate gates.
 
 ## Chapter 09 carryovers
 
@@ -178,12 +230,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CH10-DATA-001](#container-defaults-and-synthesized-data-construction--2026-10-07) | supported-bounded | `data struct A { int $x; } $a A = {x: 1};` | prepared | verified | deferred | Shared class/struct synthesized construction; authored constructors remain gated |
+| [CH10-DATA-001](#authored-constructors--2026-10-07) | supported-bounded | `data struct A { int $x; } $a A = {x: 1};` | prepared | verified | deferred | Shared synthesized/authored typed inputs; `records.py --suite constructors` |
 | [CLASS-DECL-001](#class-decl-001) | supported-bounded | `class A {}` | prepared | verified | deferred | Plain class/struct records; `tests/records.py` |
 | [CLASS-PROP-001](#class-prop-001) | pending-discussion | `class A { int $x; }` | unverified | unverified | deferred | Source variants need reconciliation |
 | [CLASS-PROP-002](#class-prop-002) | supported-bounded | `class A { int $x = 1; }` | prepared | verified | deferred | Class/struct constant and data-construction defaults; `records.py --suite property_defaults` |
 | [CLASS-PROP-003](#class-prop-003) | supported-bounded | `class A { int $x; }` | prepared | verified | deferred | Public typed instance property; no initializer |
-| [CLASS-PROP-004](#class-prop-004) | pending-discussion | `$this->x = 1;` | unverified | unverified | deferred | — |
+| [CLASS-PROP-004](#class-prop-004) | supported-bounded | `$this->x = 1;` | prepared | verified | deferred | Constructor bodies; general method execution deferred |
 | [CLASS-PROP-005](#class-prop-005) | supported-bounded | `$a->x = 1;` | prepared | verified | deferred | Stable receiver; heap interiors not borrowable |
 | [CLASS-PROP-006](#class-prop-006) | pending-discussion | `A::$x = 1;` | unverified | unverified | deferred | — |
 | [CLASS-PROP-006A](#class-prop-006a) | pending-discussion | `self::$x = 1;` | unverified | unverified | deferred | — |
@@ -202,7 +254,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-CALL-005A](#class-call-005a) | pending-discussion | `static::f(1);`<br>`static::f(1)` | unverified | unverified | deferred | Source variants need reconciliation |
 | [CLASS-CALL-006](#class-call-006) | pending-discussion | `function f(): int { return 1; }` | unverified | unverified | deferred | — |
 | [CLASS-CALL-007](#class-call-007) | pending-discussion | `$i->f(1);` | unverified | unverified | deferred | — |
-| [CLASS-CALL-008](#class-call-008) | pending-discussion | `new A(1)` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-CALL-008](#class-call-008) | supported-bounded | `new A(1)` | prepared | verified | deferred | Fixed public constructor; class/struct and storage variants |
 | [CLASS-CALL-008A](#class-call-008a) | pending-discussion | `new static(1)` | unverified | unverified | deferred | — |
 | [CLASS-CALL-009](#class-call-009) | pending-discussion | `$a->$name();` | unverified | unverified | deferred | — |
 | [CLASS-CALL-010](#class-call-010) | pending-discussion | `[$a, 'f']` | unverified | unverified | deferred | — |
@@ -224,7 +276,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-008](#class-member-008) | pending-discussion | `final function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-009](#class-member-009) | pending-discussion | `abstract static function f(): int;` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-010](#class-member-010) | pending-discussion | `#[\Override] static function f(): int { return 1; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-011](#class-member-011) | pending-discussion | `function __construct(int $x) { $this->x = $x; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-011](#class-member-011) | supported-bounded | `function __construct(int $x) { $this->x = $x; }` | prepared | verified | deferred | Shared callable lifecycle and out-of-line body; also `set:` |
 | [CLASS-MEMBER-012](#class-member-012) | pending-discussion | `function __destruct() {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-013](#class-member-013) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-014](#class-member-014) | pending-discussion | `private function f(): int { return 1; }` | unverified | unverified | deferred | Source variants need reconciliation |
@@ -245,7 +297,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-THIS-001](#class-this-001) | pending-discussion | `class A { int $x; function f(): int { return $this->x; } }` | unverified | unverified | deferred | — |
 | [CLASS-NEW-001](#class-new-001) | pending-discussion | `$a = new A();` | unverified | unverified | deferred | — |
 | [CLASS-NEW-002](#class-new-002) | pending-discussion | `$a = new \A\B();` | unverified | unverified | deferred | — |
-| [CLASS-CONSTRUCT-001](#class-construct-001) | pending-discussion | `class A { function __construct(int $x) { $this->x = $x; } }` | unverified | unverified | deferred | — |
+| [CLASS-CONSTRUCT-001](#class-construct-001) | supported-bounded | `class A { function __construct(int $x) { $this->x = $x; } }` | prepared | verified | deferred | Public constructor, declared properties, out-of-line body; no return type |
 | [OBJ-PROP-READ-001](#obj-prop-read-001) | pending-discussion | `$a = $obj->x;` | unverified | unverified | deferred | — |
 | [OBJ-PROP-WRITE-001](#obj-prop-write-001) | pending-discussion | `$obj->x = 1;` | unverified | unverified | deferred | — |
 | [OBJ-METHOD-CALL-001](#obj-method-call-001) | pending-discussion | `$a = $obj->f();` | unverified | unverified | deferred | — |

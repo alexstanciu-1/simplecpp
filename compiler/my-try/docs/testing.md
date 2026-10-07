@@ -29,6 +29,18 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
+For bounded class/struct constructors, `set:` inputs and named data calls:
+
+```bash
+python3 compiler/my-try/tests/records.py --suite constructors --results /tmp/FRESH_CTOR_RESULTS
+```
+
+Use `--no-pch` to verify generated header completeness. This exports partitioned
+programs and checks ordering, defaults, visibility, storage variants, contextual
+`set` spelling and incremental signature/body separation, retry/repair, reset and
+retirement. It compiles generated programs, not the compiler itself. Existing
+`--suite records`, `property_defaults` and `data_records` select adjacent proofs.
+
 For the CH10 shared declaration model migration:
 
 ```bash

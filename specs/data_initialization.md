@@ -4,9 +4,9 @@ Doc Status: normative
 Status: Notation and initialization-interface standards complete, 2026-10-05;
 explicit data-record construction amendment approved 2026-10-07.
 The compiler catalog tracks partial implementation; source-defined factories remain gated.
-The [Chapter 10 checkpoint](../compiler/my-try/docs/catalog/10_objects.md#container-defaults-and-synthesized-data-construction--2026-10-07)
-implements the bounded synthesized `data` record path and property construction defaults;
-authored constructors and source-written sequence factories remain separate gates.
+The [Chapter 10 checkpoint](../compiler/my-try/docs/catalog/10_objects.md#authored-constructors--2026-10-07)
+implements bounded synthesized and authored record construction, property defaults,
+and contextual `set:` parameters. Source-written sequence factories remain gated.
 
 ## Authority and version boundary
 
@@ -256,8 +256,8 @@ parameters remain required even when their types have defaults; optional paramet
 use their declared defaults. Property defaults and parameter defaults are distinct:
 property initialization precedes an authored constructor body, while parameter
 defaults supply omitted arguments. This contract applies to both classes and structs;
-it amends the earlier no-authored-struct-constructor restriction, without claiming
-that constructor parsing/execution is already implemented.
+it amends the earlier no-authored-struct-constructor restriction. The current bounded
+implementation and remaining gates are recorded in Chapter 10.
 
 #### Property-backed constructor parameters
 
@@ -299,8 +299,8 @@ valid construction key, but direct external property access remains forbidden.
 Only public instance properties participate in a synthesized constructor when no
 authored constructor exists. Excluded non-public instance properties must still have
 an explicit or established type default; otherwise an authored constructor is required.
-Static properties never become instance-construction inputs. Visibility support remains
-an implementation gate; this contract does not silently enable non-public members.
+Static properties never become instance-construction inputs. The bounded implementation
+supports public/private instance properties, not protected or static members.
 
 The first authored-constructor slice adopts this spelling, not PHP-style promotion
 such as `__construct(public string $name)`. See the
@@ -314,8 +314,9 @@ from public instance properties in declaration order. Each supplied entry initia
 its corresponding property. For an omitted property, use its explicit default first,
 then its established type default, otherwise require the input. An absent class handle
 does not allocate a pointee. No implicit enum case or other invented default is allowed.
-Non-public/static members, inheritance and trait composition are outside the first
-synthesized-record slice; their presence must not authorize bypassing invariants.
+Non-public properties are excluded from synthesized inputs, not silently exposed.
+Static members, inheritance and trait composition remain gated; their presence must
+not authorize bypassing invariants.
 
 The initial supported key contract is literal string names, in either `{name: value}`
 or `["name" => value]` notation. Computed keys and positional record construction are
@@ -325,8 +326,10 @@ concrete property/parameter types supply nested construction targets. This is no
 `key_value_initializable<Self, mixed>` bag and does not require boxing record inputs.
 
 Evaluate supplied expressions once in source order, even when keys differ from
-constructor/property declaration order. For synthesized construction, then initialize
-omitted defaults in property declaration order. A supplied property value replaces
+constructor/property declaration order. Then evaluate omitted parameter defaults in
+parameter order (public-property order for synthesized inputs). For authored
+construction, property initialization follows declaration order before the body;
+`set:` inputs directly initialize their selected properties. A supplied property value replaces
 its default directly; do not first construct and discard the default. Defaults are
 per-instance: value containers are independent under their normal value/COW behavior,
 and mutable default objects must not become shared global singleton instances.

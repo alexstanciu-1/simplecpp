@@ -21,6 +21,7 @@ final class Preparation_Changes
 		}
 		foreach ($parameters as $index => $parameter) {
 			$before = $previous[$index];
+			if ($before->initialized_property !== $parameter->initialized_property) { return false; }
 			$before_contract = $before->contract;
 			$contract = $parameter->contract;
 			if ($before_contract->access !== $contract->access) {
@@ -55,9 +56,11 @@ final class Preparation_Changes
 		if ($old === null) {
 			return false;
 		}
+		if ($old->data_initializable !== $current->data_initializable) { return false; }
 		if (($old->initialization === null) !== ($current->initialization === null)) {
 			return false;
 		}
+		if (weakref_get($old->constructor) !== weakref_get($current->constructor)) { return false; }
 		foreach ($old->capabilities as $capability) {
 			if (!$current->has_capability($capability)) {
 				return false;
@@ -75,6 +78,7 @@ final class Preparation_Changes
 		}
 		foreach ($fields as $index => $field) {
 			$before = $previous[$index];
+			if ($before->public_access !== $field->public_access) { return false; }
 			if (!Property_Defaults::same($before->default_value, $field->default_value)) {
 				return false;
 			}

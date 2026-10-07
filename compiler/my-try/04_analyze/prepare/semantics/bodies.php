@@ -124,6 +124,7 @@ final class Body_Preparation
 	/** Establish source-order local storage before publishing it to later statements. */
 	public static function prepare_local_storage(collected_name $entry, ?type_node $type_syntax, ?expression_node $initializer, preparation_context $context): prepared_binding
 	{
+		if ($entry->name === 'this') { throw new \RuntimeException('$this cannot be declared or rebound'); }
 		$binding = new prepared_binding();
 		$locals = $context->locals;
 		$before_initializer /** vector<prepared_storage> */ = $locals->local_named($entry->name);
@@ -203,6 +204,13 @@ final class Body_Preparation
 		Type_Preparation::require_value_type($binding->type);
 		if ($value === null)
 		{
+			if (Type_Queries::record_storage($binding->type) === record_storage_kind::inline_value) {
+				if (Type_Queries::source_record(Type_Queries::record_payload($binding->type)) !== null) {
+					if (!Object_Construction_Preparation::supports_default($binding->type, $context)) {
+						throw new \RuntimeException('Inline record storage requires an explicit initializer');
+					}
+				}
+			}
 			if (Type_Queries::canonical($binding->type)->definition() instanceof enum_type_definition) {
 				throw new \RuntimeException('S2S enum storage requires an explicit initializer');
 			}
@@ -270,6 +278,11 @@ final class Body_Preparation
 	public static function prepare_body(callable_declaration_node $syntax, preparation_context $context): void
 	{
 		$signature = $syntax->require_preparation();
+		if ($syntax instanceof method_node) {
+			$method = object_cast($syntax->occurrence(), collected_method::class);
+			$context->receiver_record = $method->declaring_record();
+			$context->receiver = $signature->receiver;
+		}
 		$context->return_type = $signature->signature->return_type;
 		Reference_Preparation::begin_body($syntax, $context);
 		$locals = $context->locals;

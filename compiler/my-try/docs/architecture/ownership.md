@@ -117,8 +117,9 @@ Prepared facts retain canonical types and reference collected declarations.
 Construction property-default facts also retain the property-owned initializer syntax
 as a forward reference, never its enclosing property or a processing worker. The
 ordinary syntax maintenance path clears that expression's preparation. Source record
-initialization contracts share the prepared field inventory; construction consumers
-observe that contract through normal declaration dependencies. Neither input views
+initialization contracts own named inputs sharing callable parameter contracts;
+synthesized inputs also reference their prepared fields. Construction consumers
+observe the schema through normal declaration/signature dependencies. Neither input views
 nor runtime references escape from these compile-time links. Constant defaults remain
 immutable value snapshots; rebuilt construction defaults are conservatively unequal.
 Calls weakly observe a `callable_definition_i` owned by source collection, the runtime
@@ -165,6 +166,18 @@ explicit unlinking. C++ fragments refer to existing work identities. Retained mo
 records never own workers or operation contexts.
 
 ## Explicit nullability and publication
+
+Constructor signatures own an optional `prepared_receiver` and named input schema.
+The receiver weakly observes the collected method; a method weakly observes its
+declaring record. Body contexts are transient observers, not retained owners.
+`set:` parameter facts retain the selected prepared property, while schema entries
+share the same parameter contracts used by positional calls. Synthesized entries
+observe public property facts. Neither schema retains an analysis worker or adds
+another type-registry cache. Constructor signature work depends on record completion;
+record facts observe constructor identity without requiring its signature, avoiding
+a declaration dependency cycle. Callers depend on both relevant declarations, not
+the constructor body. Backend assembly combines layout and member declarations
+without making record preparation depend on the backend.
 
 Required fields may be populated after construction, but must be assigned before
 read or publication. `?T` means absence is usable state and needs explicit reset and

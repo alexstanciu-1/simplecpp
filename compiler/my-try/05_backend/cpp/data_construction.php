@@ -30,6 +30,33 @@ final class CPP_Initialization_Registration
 	}
 }
 
+/** Allocation is shared by positional new and named data inputs, independent of class/struct spelling. */
+final class CPP_Record_Construction
+{
+	/** Storage facts select allocation; source spelling and constructor selection are already settled. */
+	public static function allocation(canonical_type_use $type, canonical_type_use $payload_type,
+		record_storage_kind $storage, cpp_generation_context $context): string
+	{
+		if ($storage === record_storage_kind::inline_value) { return CPP_Declarations::type($type, $context); }
+		$payload = CPP_Types::payload($payload_type);
+		CPP_Types::record_dependencies($payload, $context);
+		$context->headers['scpp/memory.hpp'] = true;
+		$helper = $storage === record_storage_kind::unique ? 'unique' : 'shared';
+		return '::scpp::' . $helper . '<' . $payload->spelling . '>';
+	}
+
+	/** Positional calls reuse ordinary ordered argument and default materialization. */
+	public static function object(prepared_object_construction $facts, Storage $arguments /** Storage<expression_node> */,
+		cpp_generation_context $context): string
+	{
+		$callee = self::allocation($facts->type, $facts->constructed_type, $facts->storage, $context);
+		if ($facts->constructor_call !== null) {
+			return CPP_Declarations::selected_call($facts->constructor_call, $arguments, $context, $callee, $facts->type);
+		}
+		return $callee . ($facts->storage === record_storage_kind::inline_value ? '{}' : '()');
+	}
+}
+
 final class CPP_Data_Construction
 {
 	/** Publish one backend binding for the already selected concrete semantic factory. */
@@ -111,28 +138,23 @@ final class CPP_Data_Construction
 			$text .= CPP_Declarations::type($input->value_conversion->target_type, $context) . ' ' . $name . ' = ' . $value . ";\n";
 			$arguments[$input->input_position] = $name;
 		}
-		$inputs /** Key_Storage_List<prepared_field> */ = $facts->contract->inputs;
-		$ordered = $payload->spelling . '::scpp_data_tag{}';
-		foreach ($inputs->items() as $position => $field) {
+		$inputs /** Key_Storage_List<record_initialization_input> */ = $facts->contract->inputs;
+		$ordered = '';
+		if (weakref_get($facts->contract->constructor) === null) { $ordered = $payload->spelling . '::scpp_data_tag{}'; }
+		foreach ($inputs->items() as $position => $input) {
+			$parameter = $input->parameter;
 			if (!isset($arguments[$position])) {
 				$name = 'record_default_' . $context->next_temporary;
 				$context->next_temporary++;
-				$field_type = CPP_Declarations::type($field->type, $context);
-				$value = $field_type . '{}';
-				if ($field->default_value !== null) {
-					$value = CPP_Declarations::property_default($field->default_value, $context);
-				}
+				$field_type = CPP_Declarations::type($parameter->type, $context);
+				$default /** prepared_parameter_default */ = $parameter->default_value;
+				$value = CPP_Declarations::parameter_default($default, $context);
 				$text .= $field_type . ' ' . $name . ' = ' . $value . ";\n";
 				$arguments[$position] = $name;
 			}
-			$ordered .= ', std::move(' . $arguments[$position] . ')';
+			$ordered .= ($ordered === '' ? '' : ', ') . 'std::move(' . $arguments[$position] . ')';
 		}
-		$callee = $type;
-		if ($facts->storage !== record_storage_kind::inline_value) {
-			$context->headers['scpp/memory.hpp'] = true;
-			$helper = $facts->storage === record_storage_kind::unique ? 'unique' : 'shared';
-			$callee = '::scpp::' . $helper . '<' . $payload->spelling . '>';
-		}
+		$callee = CPP_Record_Construction::allocation($facts->type, $facts->payload_type, $facts->storage, $context);
 		return $text . 'return ' . $callee . '(' . $ordered . ");\n}())";
 	}
 
@@ -143,8 +165,9 @@ final class CPP_Data_Construction
 		$context->headers['utility'] = true;
 		$parameters = 'scpp_data_tag';
 		$initializers = '';
-		$inputs /** Key_Storage_List<prepared_field> */ = $contract->inputs;
-		foreach ($inputs->items() as $position => $field) {
+		$inputs /** Key_Storage_List<record_initialization_input> */ = $contract->inputs;
+		foreach ($inputs->items() as $position => $input) {
+			$field /** prepared_field */ = $input->field;
 			$requirement = Type_Queries::is_class_handle($field->type)
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 			$parameters .= ', ' . CPP_Declarations::type_for($field->type, $context, $requirement) . ' input_' . $position;

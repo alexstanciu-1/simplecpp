@@ -929,26 +929,53 @@ final class Parser_Run
 		if ($previous === null) {
 			$record->set_span($start, $start);
 		}
-		$old_start = $record->start_token();
-		if ($previous !== null) {
-			if (object_cast($record->optional_occurrence(), collected_name::class)->change_status === change_state::deleted) {
-				$old_start = -1;
-			}
-		}
-		$old_end = $record->end_token();
+		$old_fields /** Storage<property_node> */ = $record->properties;
+		$old_methods /** Storage<method_node> */ = $record->methods;
+		$old_modifiers /** vector<declaration_modifier> */ = $record->modifiers;
 		$record->name = $name;
 		$record->declaration_kind = $kind;
 		$record->modifiers = $modifiers;
 		$record->collect($this->collector, $this->source_scope, $name_index);
 		$record->member_scope()->set_parent($this->source_scope);
 		$fields /** Storage<property_node> */ = new Storage();
+		$methods /** Storage<method_node> */ = new Storage();
 		$this->expect('{');
 		while ($this->text() !== '}') {
-			$fields->append($this->field_declaration($record->member_scope()));
+			$member_start = $this->position;
+			$member_modifiers /** vector<declaration_modifier> */ = [];
+			if (($this->text() === 'public') || ($this->text() === 'private')) {
+				$member_modifiers[] = $this->text() === 'public' ? declaration_modifier::public_access : declaration_modifier::private_access;
+				$this->position++;
+			}
+			if ($this->text() === 'function') {
+				$methods->append(object_cast($this->callable_declaration(object_cast($record->occurrence(), collected_record::class), $member_modifiers, $member_start), method_node::class));
+			}
+			else {
+				$this->position = $member_start;
+				$fields->append($this->field_declaration($record->member_scope()));
+			}
 		}
 		$this->expect('}');
 		$record->properties = $fields;
-		$this->finish_declaration($record, $start, $this->same_tokens($old_start, $old_end, $start, $this->position));
+		$record->methods = $methods;
+		$same = $previous !== null;
+		if (q_count($old_modifiers) !== q_count($modifiers)) { $same = false; }
+		else {
+			foreach ($modifiers as $index => $modifier) {
+				if ($old_modifiers[$index] !== $modifier) { $same = false; }
+			}
+		}
+		if ((q_count($old_fields) !== q_count($fields)) || (q_count($old_methods) !== q_count($methods))) { $same = false; }
+		else {
+			foreach ($fields as $index => $field) {
+				if (($old_fields[$index] !== $field) || ($field->occurrence()->change_status !== change_state::unchanged)) { $same = false; }
+			}
+			// Method contents have their own change flags/work. Record layout observes membership only.
+			foreach ($methods as $index => $method) {
+				if ($old_methods[$index] !== $method) { $same = false; }
+			}
+		}
+		$this->finish_declaration($record, $start, $same);
 		return $record;
 	}
 
@@ -957,8 +984,8 @@ final class Parser_Run
 	{
 		$start = $this->position;
 		$modifiers /** vector<declaration_modifier> */ = [];
-		if ($this->text() === 'public') {
-			$modifiers[] = declaration_modifier::public_access;
+		if (($this->text() === 'public') || ($this->text() === 'private')) {
+			$modifiers[] = $this->text() === 'public' ? declaration_modifier::public_access : declaration_modifier::private_access;
 			$this->position++;
 		}
 		if (!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) {
@@ -1017,11 +1044,17 @@ final class Parser_Run
 	/** Parse ordered parameters into the function scope owned by the parsed file. */
 	private function function_declaration(): function_node
 	{
+		return object_cast($this->callable_declaration(null, /** vector<declaration_modifier> */ []), function_node::class);
+	}
+
+	/** Reconcile callable signatures and bodies identically for namespace functions and members. */
+	private function callable_declaration(?collected_record $record, array $modifiers /** vector<declaration_modifier> */, int $source_start = -1): callable_declaration_node
+	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
 		if ($this->current_scope->is_function()) {
 			throw new \RuntimeException($this->error_message('Nested function declarations are not implemented'));
 		}
-		$start = $this->position;
+		$start = $source_start < 0 ? $this->position : $source_start;
 		$formals /** hash<int> */ = [];
 		if ($this->text() === 'template')
 		{
@@ -1062,8 +1095,21 @@ final class Parser_Run
 			throw new \RuntimeException($this->error_message('Template parameter conflicts with function name'));
 		}
 
-		$previous = $this->collector->previous_function($this->source_scope, $function_name);
-		$function /** function_node */ = $previous ?? new function_node();
+		$declaration_scope = $this->source_scope;
+		$previous /** nullable<callable_declaration_node> */ = null;
+		$function /** callable_declaration_node */;
+		if ($record === null) {
+			$previous = $this->collector->previous_function($declaration_scope, $function_name);
+			if ($previous === null) { $function = new function_node(); }
+			else { $function = $previous; }
+		}
+		else {
+			$declaration_scope = $record->syntax()->member_scope();
+			$previous = $this->collector->previous_method($declaration_scope, $function_name);
+			if ($previous === null) { $function = new method_node(); }
+			else { $function = $previous; }
+			object_cast($function, method_node::class)->modifiers = $modifiers;
+		}
 		if ($previous === null) {
 			$function->set_span($start, $start);
 		}
@@ -1082,9 +1128,14 @@ final class Parser_Run
 			}
 		}
 		$function->name = $function_name;
-		$function->collect($this->collector, $this->source_scope, $name_token_index);
+		if ($record === null) {
+			$this->collector->collect_function(object_cast($function, function_node::class), $declaration_scope, $name_token_index);
+		}
+		else {
+			$this->collector->collect_method(object_cast($function, method_node::class), $record, $name_token_index);
+		}
 		$local_scope = $function->signature_scope();
-		$local_scope->set_parent($this->source_scope);
+		$local_scope->set_parent($declaration_scope);
 		$slots /** hash<int> */ = [];
 		$slot = 0;
 		foreach ($formals as $name => $token_index) {
@@ -1096,7 +1147,7 @@ final class Parser_Run
 		if ($this->text() !== ')')
 		{
 			do {
-				$parameters->append($this->parameter($local_scope));
+				$parameters->append($this->parameter($local_scope, $record !== null));
 				if ($this->text() !== ',') {
 					break;
 				}
@@ -1105,15 +1156,19 @@ final class Parser_Run
 			while (true);
 		}
 		$this->expect(')');
-		if ($this->text() !== ':') {
+		$constructor = ($record !== null) && ($function_name === '__construct');
+		$return_type /** nullable<type_node> */ = null;
+		if (!$constructor && ($this->text() !== ':')) {
 			throw new \RuntimeException($this->error_message('Function requires an explicit return type, including void'));
 		}
-		$this->expect(':');
-		if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
-			throw new \RuntimeException($this->error_message('Expected return type name'));
-		}
+		if (!$constructor || ($this->text() === ':')) {
+			$this->expect(':');
+			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
+				throw new \RuntimeException($this->error_message('Expected return type name'));
+			}
 
-		$return_type = $this->type_syntax($local_scope);
+			$return_type = $this->type_syntax($local_scope);
+		}
 
 		$body_start = $this->position;
 		$body_end = $this->body_end();
@@ -1148,7 +1203,7 @@ final class Parser_Run
 	}
 
 	/** Register a typed parameter as an explicit variable declaration in the body scope. */
-	private function parameter(scope $scope): parameter_node
+	private function parameter(scope $scope, bool $member = false): parameter_node
 	{
 		$start = $this->position;
 		$access = storage_access::writable;
@@ -1156,10 +1211,22 @@ final class Parser_Run
 			$access = storage_access::read_only;
 			$this->position++;
 		}
-		if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
-			throw new \RuntimeException($this->error_message('Expected parameter type'));
+		$property_backed = false;
+		$type /** nullable<type_node> */ = null;
+		if ($member && ($this->text() === 'set')) {
+			$this->position++;
+			if ($this->text() === ':') {
+				$property_backed = true;
+				$this->position++;
+			}
+			else { $this->position--; }
 		}
-		$type = $this->type_syntax($scope);
+		if (!$property_backed) {
+			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
+				throw new \RuntimeException($this->error_message('Expected parameter type'));
+			}
+			$type = $this->type_syntax($scope);
+		}
 		$mode = passing_mode::value;
 		if ($this->text() === '&') {
 			$mode = passing_mode::reference;
@@ -1185,6 +1252,7 @@ final class Parser_Run
 		}
 		$old_end = $parameter->end_token();
 		$parameter->type_syntax = $type;
+		$parameter->property_backed = $property_backed;
 		$parameter->mode = $mode;
 		$parameter->access = $access;
 		$parameter->variadic = $variadic;

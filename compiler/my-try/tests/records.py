@@ -12,7 +12,8 @@ from cpp_fixture import CppFixtureCompiler
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', type=Path, required=True)
-parser.add_argument('--suite', choices=['records', 'property_defaults', 'data_records'], default='records')
+parser.add_argument('--suite', choices=['records', 'property_defaults', 'data_records', 'constructors'], default='records')
+parser.add_argument('--no-pch', action='store_true', help='Verify emitted header dependencies without a PCH')
 args = parser.parse_args()
 output = args.results.resolve()
 output.mkdir(parents=True, exist_ok=False)
@@ -22,7 +23,7 @@ with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
     runner.run(args.suite, ['php', APP / 'tests' / (args.suite + '.php'), programs])
     fixtures = json.loads((programs / 'executions.json').read_text())
     compiler = CppFixtureCompiler(runner, APP.parents[1], output,
-                                  pch=True, return_type_errors=True, runtime=True)
+                                  pch=not args.no_pch, return_type_errors=True, runtime=True)
     def execute(item):
         source = Path(item['path'])
         executable = source.with_suffix('.program')
@@ -31,4 +32,5 @@ with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
     run_tasks([Task(Path(item['path']).stem, lambda item=item: execute(item))
                for item in fixtures], jobs=12)
 (output / 'summary.json').write_text(json.dumps(dict(
-    passed=True, generated_programs=len(fixtures), native_compiler_rebuilt=False), indent=2) + '\n')
+    passed=True, generated_programs=len(fixtures), cpp_pch=not args.no_pch,
+    native_compiler_rebuilt=False), indent=2) + '\n')

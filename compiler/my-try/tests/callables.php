@@ -75,7 +75,7 @@ $parameter->mode = passing_mode::value;
 $literal = new prepared_integer_literal();
 $literal->type = $parameter->type;
 $literal->decimal = '2';
-$default_value = new prepared_parameter_default();
+$default_value = new prepared_literal_parameter_default();
 $default_value->value = $literal;
 $default_value->conversion = Conversion_Preparation::decide($literal->type, $parameter->type, conversion_context::argument);
 $parameter->default_value = $default_value;
@@ -115,7 +115,8 @@ callable_check(CPP_Callables::reference($function->occurrence(), $cpp) === 'func
 callable_check($reference === 'scpp::vector_t<scpp::int_t<>>::from_count', 'Static reference lost concrete owner spelling: ' . $reference);
 callable_check(isset($cpp->headers['test/factory.hpp']) && isset($cpp->headers['scpp/vector_t.hpp']), 'Callable/type headers missing');
 $text = CPP_Declarations::selected_call($selected, $empty, $cpp);
-callable_check(str_contains($text, $reference . '(static_cast<scpp::int_t<>>(2LL))'), 'Runtime call relies on undeclared C++ defaults');
+callable_check(str_contains($text, 'default_argument_0 = static_cast<scpp::int_t<>>(2LL)')
+	&& str_contains($text, $reference . '(std::move(default_argument_0))'), 'Runtime call relies on undeclared C++ defaults');
 callable_rejects(fn() => Model::$cpp_callable_bindings->bind_static($runtime, 'again', ''), 'Duplicate storage key');
 $other = new Runtime_Callables();
 $foreign = $other->register_static_factory($runtime->key(), $signature->return_type, $signature);

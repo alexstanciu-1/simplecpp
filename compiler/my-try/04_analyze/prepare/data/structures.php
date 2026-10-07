@@ -94,7 +94,7 @@ final class prepared_place
 					throw new \LogicException('An alias must reuse its original storage place');
 				}
 			}
-			elseif (!($storage instanceof prepared_parameter)) {
+			elseif (!($storage instanceof prepared_parameter) && !($storage instanceof prepared_receiver)) {
 				throw new \LogicException('A storage root requires a local or parameter');
 			}
 		}
@@ -159,6 +159,7 @@ final class prepared_object_construction extends prepared_expression
 {
 	public canonical_type_use $constructed_type;
 	public record_storage_kind $storage;
+	public ?prepared_call $constructor_call = null;
 }
 
 /** One syntax family, with distinct settled sequence-factory and typed-record contracts. */
@@ -174,10 +175,18 @@ final class prepared_sequence_construction extends prepared_data_construction
 /** A source-owned heterogeneous input schema, independent of the selected storage. */
 final class record_initialization_contract
 {
-	/** @storage.reference prepared_record.fields */
-	public function __construct(public Key_Storage_List $inputs /** Key_Storage_List<prepared_field> */)
+	public ?collected_method $constructor /** weak<collected_method> */ = null;
+	public Key_Storage_List $inputs /** Key_Storage_List<record_initialization_input> */;
+	public function __construct()
 	{
+		$this->inputs = new Key_Storage_List /** Key_Storage_List<record_initialization_input> */();
 	}
+}
+
+/** Named typed input; a property link is present only for synthesized member initialization. */
+final class record_initialization_input
+{
+	public function __construct(public string $name, public callable_parameter $parameter, public ?prepared_field $field = null) {}
 }
 
 final class prepared_record_construction extends prepared_data_construction
@@ -409,19 +418,40 @@ final class prepared_binding extends prepared_storage {
 /** Source storage refers to the same contract consumed by calls, without duplicating its type. */
 final class prepared_parameter extends prepared_storage {
 	public callable_parameter $contract;
+	public ?prepared_field $initialized_property = null;
 	public function storage_type(): canonical_type_use { return $this->contract->type; }
 }
 
+/** An instance receiver is not a source parameter or an owned local copy. */
+final class prepared_receiver extends prepared_storage
+{
+	public canonical_type_use $type;
+	public function storage_type(): canonical_type_use { return $this->type; }
+}
+
 /** Normalized scalar literal snapshot; never retains mutable default syntax. */
-final class prepared_parameter_default {
+abstract class prepared_parameter_default {}
+
+final class prepared_literal_parameter_default extends prepared_parameter_default {
 	public prepared_constant_expression $value;
 	public conversion_decision $conversion;
+}
+
+final class prepared_property_parameter_default extends prepared_parameter_default {
+	public function __construct(public prepared_property_default $value) {}
+}
+
+/** Only synthesized public-property inputs use the type's implicit default. */
+final class prepared_type_parameter_default extends prepared_parameter_default {
+	public function __construct(public canonical_type_use $type) {}
 }
 
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
 final class prepared_source_callable
 {
 	public callable_signature $signature;
+	public ?prepared_receiver $receiver = null;
+	public ?record_initialization_contract $initialization = null;
 	/** Ordered aliases of facts owned by parameter specializations. @storage.reference parameter_node.prepared_facts */
 	public Storage $parameters /** Storage<prepared_parameter> */;
 
@@ -435,6 +465,7 @@ final class prepared_source_callable
 /** Field identity is scoped by its owning prepared record. */
 final class prepared_field extends prepared_storage {
 	public canonical_type_use $type;
+	public bool $public_access = true;
 	public ?prepared_property_default $default_value = null;
 	public function storage_type(): canonical_type_use { return $this->type; }
 }
@@ -462,7 +493,9 @@ final class prepared_construction_property_default extends prepared_property_def
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
 final class prepared_record {
+	public bool $data_initializable = false;
 	public ?record_initialization_contract $initialization = null;
+	public ?collected_method $constructor /** weak<collected_method> */ = null;
 	/** Derived only after every field has completed preparation. */
 	public array $capabilities /** vector<generic_contract> */ = [];
 
@@ -567,6 +600,8 @@ final class reference_cycle_vertex
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {
+	public ?collected_record $receiver_record = null;
+	public ?prepared_receiver $receiver = null;
 	public Preparation_Worker $worker;
 	public preparation_owner $owner;
 	public collected_file $collection;
