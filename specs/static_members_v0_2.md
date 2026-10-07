@@ -19,6 +19,30 @@ and [same-origin reference returns](instance_methods_v0_2.md#same-origin-method-
 Explicit arguments evaluate once in source order. Instance methods require `->`;
 static methods require `::` in this slice.
 
+### Expression-qualified static calls — 2026-10-07
+
+`$object::method(args)` and `produce()::method(args)` select a fixed static method
+from the qualifier's declared concrete class/struct type, not its runtime class.
+Supported record storage modifiers share this nominal selection, including inline,
+shared, unique and weak storage. Read-only storage may qualify a static call.
+
+Evaluate the qualifier exactly once, discard its result, then evaluate arguments
+once in source order and invoke the selected static method. Evaluation failure
+prevents arguments and invocation. The discarded evaluation is a complete statement:
+its temporary result is released before arguments. Qualification itself introduces
+no copy, ownership transfer, instance retention, dereference or weak lock. Ordinary
+evaluation inside the qualifier still has its normal effects and checks.
+Absent typed handles are therefore permitted; there is no instance presence check.
+
+This deliberately replaces v0.1's unevaluated `class_t<decltype(expr)>` lowering.
+Use existing callable parameter/default/variadic/reference-return and visibility
+rules. No `$this` is supplied to the static method. Non-static targets, unknown
+members, inaccessible methods, dynamic member names and qualifiers without a known
+concrete record target reject before C++ generation. Interface-based implementation
+selection and inherited/late-bound dispatch await CH11; a static interface signature
+alone does not identify an implementation. Instance-qualified properties/constants
+remain outside this slice.
+
 `Type::NAME` and `self::NAME` select member constants. Constants reuse source
 constant evaluation: bool/int/float/string literals, constant references and
 supported numeric signs. Cycles and invalid initializers reject even if unused.
@@ -49,8 +73,8 @@ may be substituted from their prepared immutable values; no runtime storage is r
 ## Explicit boundaries
 
 Native-reference escape from static properties, compound updates and increment/
-decrement remain gated. Instance-qualified `$object::method()` is a separate CH10
-follow-up, not inheritance work. Inherited lookup/access, `parent::`, late-bound
+decrement remain gated. Instance-qualified properties/constants remain CH10
+follow-ups. Inherited lookup/access, `parent::`, late-bound
 `static::`, protected/override/abstract/final semantics and inherited construction
 belong in CH11 after relationship and dispatch prerequisites. These gates do not
 claim permanent language prohibitions.

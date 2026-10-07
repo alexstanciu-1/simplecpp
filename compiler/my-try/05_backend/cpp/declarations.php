@@ -285,6 +285,11 @@ final class CPP_Declarations
 	public static function generate_call(call_node $syntax, cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_call_preparation();
+		if ($facts->evaluates_qualifier) {
+			$qualifier /** expression_node */ = $syntax->receiver;
+			$evaluation = '(void)(' . (new CPP_Syntax($context))->expression($qualifier) . ");\n";
+			return self::selected_call($facts, $syntax->arguments, $context, '', null, $evaluation);
+		}
 		if ($facts->receiver !== null) {
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
 			$base /** expression_node */ = $syntax->receiver;

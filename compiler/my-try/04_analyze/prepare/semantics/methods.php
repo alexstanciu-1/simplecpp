@@ -74,6 +74,11 @@ final class Method_Preparation
 		$payload = Type_Queries::record_payload($value->type);
 		$record = Type_Queries::source_record($payload);
 		if ($record === null) { throw new \RuntimeException('Instance call requires a class or struct receiver'); }
+		if ($syntax->static_qualification) {
+			$qualified = self::select($syntax, $record, true, $context);
+			$qualified->evaluates_qualifier = true;
+			return $qualified;
+		}
 		if ($value->place !== null) { Reference_Preparation::require_writable($value->place); }
 		$lifetime = method_receiver_lifetime::retain_shared;
 		if ($storage !== record_storage_kind::shared)

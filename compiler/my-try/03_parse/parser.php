@@ -2095,8 +2095,20 @@ final class Parser_Run
 	/** Member and index access retain a base expression so reads, writes and references share one shape. */
 	private function access_suffix(expression_node $base, int $start): expression_node
 	{
-		while ((($this->text() === '[') || ($this->text() === '->')))
+		while (($this->text() === '[') || ($this->text() === '->') || ($this->text() === '::'))
 		{
+			if ($this->text() === '::') {
+				$this->position++;
+				if (!$this->identifier() || ($this->text_at_offset(1) !== '(')) {
+					throw new \RuntimeException($this->error_message('Expression qualification requires a fixed method call'));
+				}
+				$qualified_call = $this->call_expression();
+				$qualified_call->receiver = $base;
+				$qualified_call->static_qualification = true;
+				$this->finish_node($qualified_call, $start);
+				$base = $qualified_call;
+				continue;
+			}
 			if ($this->text() === '->')
 			{
 				$this->position++;

@@ -20,7 +20,32 @@ Continue on those same member categories, in this order:
 
 CH10 cards CLASS-PROP-006B/006C/008/002C/002D, CLASS-CALL-005/005A/008A,
 CLASS-CONST-004/005 and inheritance-dependent member modifiers track this transfer.
-`$object::method()` is not inheritance-dependent and remains a CH10 follow-up.
+Concrete-type `$object::method()` is owned by CH10; its inheritance-dependent
+extensions are recorded below.
+
+### Expression-qualified static dispatch — CH10 follow-up debt, 2026-10-07
+
+CH10's agreed bounded direction selects a static method from the qualifier's
+declared concrete record type, evaluating the qualifier once before arguments.
+It does not select the runtime object's concrete class or require a present handle.
+Evaluate-once replaces the old S2S unevaluated `decltype(expr)` behavior and reuses
+the sequenced callable path. See the [normative contract](../../../../specs/static_members_v0_2.md#expression-qualified-static-calls--2026-10-07).
+
+After relationship/member-contract preparation is available, explicitly settle:
+
+- Inherited static-member lookup, hiding and access through base-typed qualifiers;
+  distinguish fixed declared-type selection from late-bound `static::`.
+- Interface-typed qualifiers, including `produce()::method()` where `produce`
+  returns an interface. A static signature requirement alone does not identify
+  an implementing class's callable body. Decide whether such calls remain rejected,
+  require a concrete type, or need an explicitly approved runtime dispatch protocol.
+- If runtime implementation selection is adopted, define absent-handle behavior,
+  dispatch representation and lowering before enabling it; do not silently extend
+  the CH10 no-presence-check rule to a call needing runtime type identity.
+
+For the bounded CH10 slice, interface/abstract dispatch is deferred and unresolved
+static targets reject during preparation. No runtime static-dispatch machinery is
+authorized by this note.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 

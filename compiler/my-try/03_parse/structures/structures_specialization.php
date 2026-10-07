@@ -686,9 +686,11 @@ final class call_node extends expression_node
 
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
-	/** Absent for free calls; fixed instance calls own their receiver syntax. */
+	/** Instance calls and expression-qualified static calls own their qualifier syntax. */
 	public ?expression_node $receiver = null;
-	/** Qualified calls own a type spelling instead of an instance receiver. */
+	/** Expression qualification uses :: rather than the instance -> spelling. */
+	public bool $static_qualification = false;
+	/** Type-qualified calls own a type spelling instead of an expression qualifier. */
 	public ?named_type_node $owner_type = null;
 	/** Current frontend accepts only named explicit template type arguments. */
 	public Storage $template_arguments /** Storage<named_type_node> */;

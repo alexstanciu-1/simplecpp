@@ -553,6 +553,8 @@ final class prepared_static_property extends prepared_expression
 /** Resolved call target and signature; evaluation order remains with the process workers. */
 final class prepared_call extends prepared_expression
 {
+	/** Evaluate the expression qualifier for effects, without binding an instance. */
+	public bool $evaluates_qualifier = false;
 	public ?prepared_method_receiver $receiver = null;
 	/** Fixed prefix length; the remaining source arguments belong to variadic_parameter. */
 	public int $fixed_count = 0;

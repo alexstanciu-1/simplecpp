@@ -63,6 +63,11 @@ instance/static methods: copying versus aliasing, COW/shared/unique storage,
 forwarding, receiver release, invalid escapes/cycles, cross-file edits, retry/repair
 and fresh/reset agreement. `--no-pch` checks generated header completeness.
 
+Use `--suite qualified_static_calls` for expression-qualified static methods:
+class/struct storage variants, absent/read-only qualifiers, effect ordering,
+projections, shared parameter/return handling, visibility and incremental recovery.
+These are generated-program proofs, not a native compiler rebuild.
+
 For the CH10 shared declaration model migration:
 
 ```bash

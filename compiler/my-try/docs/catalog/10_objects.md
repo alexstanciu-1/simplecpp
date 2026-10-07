@@ -245,7 +245,7 @@ method-mediated reference-return cycle rejection. Constructor regression
 and generated execution, not a native compiler rebuild.
 
 Method reference returns are covered by the later checkpoint below.
-Instance-qualified static calls remain. Inheritance/interface/trait behavior belongs to CH11.
+Expression-qualified static calls are covered below. Inheritance/interface/trait behavior belongs to CH11.
 CH10-PERF-01 still precedes the chapter's native build.
 
 ## Static members — 2026-10-07
@@ -273,7 +273,8 @@ programs; `/tmp/ch10-static-constructors/` passes 45 constructor programs.
 and installed readonly constants. These are not a native compiler rebuild.
 
 Still gated: static-property reference escapes, compound updates, executable static
-initializers, and `$object::method()` (separate CH10 follow-up). Inherited lookup,
+initializers, and expression-qualified properties/constants. Expression-qualified
+static methods are covered below. Inherited lookup,
 `parent::`, protected/abstract/final/override semantics, late-bound `static::` and
 inherited construction transfer to the [ordered CH11 prerequisites](11_inheritance.md#qualified-member-prerequisites-transferred-from-ch10).
 
@@ -326,8 +327,36 @@ evidence `/tmp/ch10-method-returns-1/` passes 34 generated programs without PCH.
 constructors, method parameters, reference forwarding and preparation recovery.
 This proves PHP-host compilation and generated execution, not a native compiler build.
 
-Next bounded discussion: instance-qualified static calls. Property reference returns,
+Expression-qualified static calls are covered below. Property reference returns,
 multiple origins and broader lifetimes remain outside this checkpoint.
+
+## Expression-qualified static calls — 2026-10-07
+
+`$object::method()` and `produce()::method()` reuse the ordinary static callable
+selection, argument and return path for concrete class/struct types. Parser syntax
+distinguishes `::` from `->` on the common call node; prepared calls record discarded
+qualifier evaluation separately from an instance binding. Generation uses the
+existing sequenced-call prefix, not a second static-call implementation.
+
+The approved [contract amendment](../../../../specs/static_members_v0_2.md#expression-qualified-static-calls--2026-10-07)
+evaluates the qualifier exactly once before arguments, releasing its temporary
+result before argument evaluation. This replaces v0.1's unevaluated `decltype`.
+Qualification requires no copying, dereference, lock or presence check, including
+read-only and shared/unique/weak/inline record storage. Ordinary effects/checks
+inside the qualifier still execute. Fixed static target and visibility checks stay
+in preparation. Dynamic names, fat-value qualifiers and instance-qualified static
+properties/constants remain gated. Interface/inherited/late-bound selection is
+tracked in [CH11](11_inheritance.md#expression-qualified-static-dispatch--ch10-follow-up-debt-2026-10-07).
+
+Focused runner: `records.py --suite qualified_static_calls --no-pch`, covering
+class/struct storage, evaluation order/count, absent handles, noncopyable qualifiers,
+temporary release, reference returns, variadics, private access and cross-file
+static/visibility edits, retries, repairs and fresh/reset equivalence.
+
+Evidence: `/tmp/ch10-qualified-static-final/` passes 25 generated programs without
+PCH; `/tmp/ch10-qualified-static-regression/` passes 11 focused PHP suites. The
+shared runner used CLI fallback because sandbox socket binding prevented FPM startup.
+No native compiler rebuild or conversion was performed.
 
 ## Chapter 09 carryovers
 
@@ -366,7 +395,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-011](#class-prop-011) | supported-bounded | `class A { public int $x = 1; public static int $s = 2; }` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
 | [CLASS-CALL-001](#class-call-001) | supported-bounded | `$a->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-CALL-002](#class-call-002) | supported-bounded | `A::f(1);` | prepared | verified | deferred | Static member slice; records.py --suite static_members |
-| [CLASS-CALL-003](#class-call-003) | pending-discussion | `$a::f(1);` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-CALL-003](#class-call-003) | supported-bounded | `$a::f(1);` | fixed concrete target | evaluate once before arguments | deferred | Expression-qualified static-call checkpoint |
 | [CLASS-CALL-004](#class-call-004) | supported-bounded | `$this->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-CALL-005](#class-call-005) | deferred-CH11 | `parent::f(1);` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
 | [CLASS-CALL-005A](#class-call-005a) | deferred-CH11 | `static::f(1);`<br>`static::f(1)` | unverified | unverified | deferred | CH11 relationship, access and dispatch prerequisites |
@@ -1164,9 +1193,12 @@ A::f(static_cast<int_t>(1));
 
 ## CLASS-CALL-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Evaluate qualifier once, discard, then run the
+ordinary statically selected call. Intentionally replaces the imported unevaluated
+`decltype` behavior; interface/runtime dispatch remains deferred to CH11.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Both imported versions describe the same unevaluated lowering. The explicit v0.2
+decision above supersedes that behavior; the originals remain as historical evidence.
 
 ### Imported version 1
 
