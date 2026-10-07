@@ -114,7 +114,7 @@ callable_check(!method_exists(callable_target_i::class, 'cpp_reference')
 callable_check(CPP_Callables::reference($function->occurrence(), $cpp) === 'function_build', 'Source dispatch lost its C++ name');
 callable_check($reference === 'scpp::vector_t<scpp::int_t<>>::from_count', 'Static reference lost concrete owner spelling: ' . $reference);
 callable_check(isset($cpp->headers['test/factory.hpp']) && isset($cpp->headers['scpp/vector_t.hpp']), 'Callable/type headers missing');
-$text = CPP_Declarations::selected_call($selected, $empty, $cpp);
+$text = CPP_Declarations::selected_call($selected, $empty, $cpp, '', null, '');
 callable_check(str_contains($text, 'default_argument_0 = static_cast<scpp::int_t<>>(2LL)')
 	&& str_contains($text, $reference . '(std::move(default_argument_0))'), 'Runtime call relies on undeclared C++ defaults');
 callable_rejects(fn() => Model::$cpp_callable_bindings->bind_static($runtime, 'again', ''), 'Duplicate storage key');

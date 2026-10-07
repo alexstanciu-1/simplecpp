@@ -18,8 +18,8 @@ final class Type_Preparation
 		}
 		$definition /** nullable<abstract_template_type_definition> */ = null;
 		if ($modifier === null) {
-			$scope = object_cast(weakref_get($entry->scope), scope::class);
-			$matches = Observed_Lookup::types($scope, $entry->name, $context);
+			$lookup_scope = object_cast(weakref_get($entry->scope), scope::class);
+			$matches = Observed_Lookup::types($lookup_scope, $entry->name, $context);
 			if (q_count($matches) !== 1) { return self::type($syntax, $context); }
 			$selected = $matches[0];
 			if (($selected !== Model::$type_catalog->definition('shared'))
@@ -42,9 +42,9 @@ final class Type_Preparation
 				$result = Model::$type_catalog->registry()->use($payload->type_id(), true);
 			}
 			else {
-				$template /** abstract_template_type_definition */ = $definition;
+				$template_definition /** abstract_template_type_definition */ = $definition;
 				$arguments /** vector<canonical_type_use> */ = [$payload];
-				$result = self::application($template, $arguments, $context);
+				$result = self::application($template_definition, $arguments, $context);
 			}
 			$named->set_preparation($result);
 			return $result;

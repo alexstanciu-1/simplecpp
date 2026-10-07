@@ -64,7 +64,7 @@ $sync_compiler->update_llvm($changed_paths);
 $syntax_after /** Storage<parsed_file> */ = Model::syntax_files();
 $next_candidates /** vector<collected_function> */ = Model::$global_scope->functions_named('answer');
 $next_function = object_cast($next_candidates[0], collected_function::class);
-if ((!$next_function->syntax()->require_body()->syntax_changed) || ($next_function->syntax() !== $first_function->syntax()) || ($syntax_after[1] !== $kept_caller)) {
+if ((!$next_function->callable_syntax()->require_body()->syntax_changed) || ($next_function->syntax() !== $first_function->syntax()) || ($syntax_after[1] !== $kept_caller)) {
 	throw new \LogicException('Native sync lost body flags or reparsed the unchanged caller');
 }
 $current_inputs['a.phs']->file->content = 'function answer(): int { return 8; } function answer(): int { return 9; }';

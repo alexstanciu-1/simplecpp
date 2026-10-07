@@ -51,7 +51,7 @@ final class CPP_Record_Construction
 	{
 		$callee = self::allocation($facts->type, $facts->constructed_type, $facts->storage, $context);
 		if ($facts->constructor_call !== null) {
-			return CPP_Declarations::selected_call($facts->constructor_call, $arguments, $context, $callee, $facts->type);
+			return CPP_Declarations::selected_call($facts->constructor_call, $arguments, $context, $callee, $facts->type, '');
 		}
 		return $callee . ($facts->storage === record_storage_kind::inline_value ? '{}' : '()');
 	}
@@ -147,8 +147,8 @@ final class CPP_Data_Construction
 				$name = 'record_default_' . $context->next_temporary;
 				$context->next_temporary++;
 				$field_type = CPP_Declarations::type($parameter->type, $context);
-				$default /** prepared_parameter_default */ = $parameter->default_value;
-				$value = CPP_Declarations::parameter_default($default, $context);
+				$default_facts /** prepared_parameter_default */ = $parameter->default_value;
+				$value = CPP_Declarations::parameter_default($default_facts, $context);
 				$text .= $field_type . ' ' . $name . ' = ' . $value . ";\n";
 				$arguments[$position] = $name;
 			}

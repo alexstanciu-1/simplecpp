@@ -4,6 +4,7 @@
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 require_once __DIR__ . '/cpp_probe.php';
+require_once __DIR__ . '/native_record_export.php';
 
 /** Compile through the actual stage/publication pipeline, preserving artifact boundaries. */
 function property_defaults_source(string $source): string
@@ -16,7 +17,7 @@ function property_defaults_source(string $source): string
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
 	(new Compiler())->exec_cpp();
-	return CPP_Probe::text(Model::$cpp_files);
+	return native_record_export();
 }
 
 $results = [];

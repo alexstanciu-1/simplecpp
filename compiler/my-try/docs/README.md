@@ -61,7 +61,7 @@ experiment retained for regressions, not a second semantic development path.
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | CH08/09 [cumulative native validation passed](portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809). CH10's records, defaults, `data` construction, constructors, instance/static methods, shared reference/variadic parameters, same-origin method returns, expression-qualified static members and [destructors](catalog/10_objects.md#destructors-and-automatic-cleanup--2026-10-07) pass focused PHP-host/generated-program checks. [CH10 checkpoints](catalog/10_objects.md) retain detailed proof boundaries. Inheritance-dependent behavior is ordered in CH11; CH10 remains open. The [test-duration review](catalog/10_objects.md#ch10-perf-01--test-duration-review-before-native-build) precedes CH10 native validation. [Chapter 15 debt](catalog/15_blocking_debt.md) remains |
+| Current handoff | [CH10 native validation passed](portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-10): cumulative regressions plus 426 dedicated native/PHP artifact comparisons and 428 generated executions. The [CH10 checkpoints](catalog/10_objects.md) retain detailed feature/proof boundaries. Its pre-build timing review is complete. Inheritance/interface/trait behavior is ordered in CH11; [Chapter 15 debt](catalog/15_blocking_debt.md) remains. Next: discuss CH11 |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 
 CH10's [reconciled inventory](catalog/10_objects.md#reconciliation--2026-10-07)
@@ -77,7 +77,7 @@ prefix/postfix updates now reuse the common mutation worker and existing propert
 places. Default-based property inference now shares declaration/default preparation,
 including inferred-type dependency invalidation. Direct-local ownership shortcuts
 now reuse typed construction. The [CH10 timing review](catalog/10_objects.md#ch10-perf-01--test-duration-review-before-native-build)
-is complete; native compiler validation remains a separate requested checkpoint.
+and the requested CH10 native compiler validation are complete.
 
 Current guides describe responsibilities and invariants. Tests provide behavioral
 evidence; root repository specs define language semantics. Archived documents are
@@ -135,6 +135,6 @@ slots; use `--jobs N` to override. See [test runners](testing.md) for isolation 
 evidence details. Running the compiler in PHP and compiling its output is
 not proof that the compiler itself builds natively; see the portability review.
 
-The latest requested [native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-0809)
-covers the bounded Chapter 05–09 implementation through partitioned namespace/constant/enum programs. Deferred
+The latest requested [native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-10)
+covers the bounded Chapter 05–10 implementation through class/struct programs. Deferred
 Chapter 15 capabilities remain outside that proof.

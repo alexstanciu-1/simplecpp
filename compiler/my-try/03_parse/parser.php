@@ -310,7 +310,7 @@ final class Parser_Run
 				continue;
 			}
 			if ($this->text() === 'const') {
-				$declarations->append($this->constant_declaration());
+				$declarations->append($this->constant_declaration(null, /** vector<declaration_modifier> */ [], -1));
 				continue;
 			}
 			if ($this->text() === 'enum') {
@@ -799,7 +799,7 @@ final class Parser_Run
 	}
 
 	/** Retain the declaration identity while replacing only changed initializer syntax. */
-	private function constant_declaration(?collected_record $record = null, array $modifiers /** vector<declaration_modifier> */ = [], int $member_start = -1): constant_declaration_node
+	private function constant_declaration(?collected_record $record, array $modifiers /** vector<declaration_modifier> */, int $member_start): constant_declaration_node
 	{
 		$start = $this->expect('const');
 		if ($member_start >= 0) { $start = $member_start; }
@@ -1051,16 +1051,15 @@ final class Parser_Run
 	{
 		$result /** vector<declaration_modifier> */ = [];
 		while (true) {
-			$modifier /** nullable<declaration_modifier> */ = match ($this->text()) {
-				'public' => declaration_modifier::public_access,
-				'private' => declaration_modifier::private_access,
-				'protected' => declaration_modifier::protected_access,
-				'static' => declaration_modifier::static_member,
-				'final' => declaration_modifier::final_declaration,
-				'abstract' => declaration_modifier::abstract_declaration,
-				'readonly' => declaration_modifier::readonly_declaration,
-				default => null,
-			};
+			$modifier /** nullable<declaration_modifier> */ = null;
+			$text = $this->text();
+			if ($text === 'public') { $modifier = declaration_modifier::public_access; }
+			elseif ($text === 'private') { $modifier = declaration_modifier::private_access; }
+			elseif ($text === 'protected') { $modifier = declaration_modifier::protected_access; }
+			elseif ($text === 'static') { $modifier = declaration_modifier::static_member; }
+			elseif ($text === 'final') { $modifier = declaration_modifier::final_declaration; }
+			elseif ($text === 'abstract') { $modifier = declaration_modifier::abstract_declaration; }
+			elseif ($text === 'readonly') { $modifier = declaration_modifier::readonly_declaration; }
 			if ($modifier === null) { break; }
 			$result[] = $modifier;
 			$this->position++;
@@ -1082,11 +1081,11 @@ final class Parser_Run
 	/** Parse ordered parameters into the function scope owned by the parsed file. */
 	private function function_declaration(): function_node
 	{
-		return object_cast($this->callable_declaration(null, /** vector<declaration_modifier> */ []), function_node::class);
+		return object_cast($this->callable_declaration(null, /** vector<declaration_modifier> */ [], -1), function_node::class);
 	}
 
 	/** Reconcile callable signatures and bodies identically for namespace functions and members. */
-	private function callable_declaration(?collected_record $record, array $modifiers /** vector<declaration_modifier> */, int $source_start = -1): callable_declaration_node
+	private function callable_declaration(?collected_record $record, array $modifiers /** vector<declaration_modifier> */, int $source_start): callable_declaration_node
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
 		if ($this->current_scope->is_function()) {
@@ -1257,7 +1256,7 @@ final class Parser_Run
 				$property_backed = true;
 				$this->position++;
 			}
-			else { $this->position--; }
+			else { $this->position -= 1; }
 		}
 		if (!$property_backed) {
 			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {

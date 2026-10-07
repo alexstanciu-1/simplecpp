@@ -49,7 +49,7 @@ final class Symbol_Collector
 	}
 
 	/** Reuse the same declaration kind; a kind edit replaces its nominal identity. */
-	public function previous_record(scope $scope, string $name, type_declaration_kind $kind = type_declaration_kind::struct_type): ?type_declaration_node
+	public function previous_record(scope $scope, string $name, type_declaration_kind $kind): ?type_declaration_node
 	{
 		foreach ($scope->source_types_named($name) as $entry) {
 			if (!($entry instanceof collected_record)) {
@@ -93,7 +93,10 @@ final class Symbol_Collector
 	{
 		if ($this->reuse($node, $index)) { return; }
 		$entry = new collected_constant($this->collection, $node);
-		$entry->record_owner = $record;
+		if ($record !== null) {
+			$owner /** collected_record */ = $record;
+			$entry->record_owner = $owner;
+		}
 		$entry->retained_symbol = true;
 		$this->append($entry, $scope, $node->name, $index);
 		$scope->register($entry);

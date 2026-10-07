@@ -3,12 +3,67 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers the implemented Chapter 05–09 slices, including
+The latest checkpoint covers the implemented Chapter 05–10 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
-partitioned namespace/constant/enum programs.
+partitioned namespace/constant/enum programs and bounded class/struct behavior.
 The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
+
+## Latest native checkpoint — 2026-10-07 Chapter 10
+
+Candidate base `a22db14484425425f492809c00d0c04d8367fd34`, with working-tree
+portability/test-harness repairs. Evidence: `/tmp/my-try-ch10-native-20261007/`.
+Attempt 16 passes the complete requested cumulative frontend/C++ checkpoint:
+
+- Native compiler build, emission/type and control-flow incremental proofs.
+- 23 host suites, 1,111 native/PHP source comparisons and generated executions,
+  including 15 floating-spelling assertions.
+- 44 partitioned namespace/constant/enum projects.
+- 997 supplementary probes, two control-flow error probes and two ownership
+  lifetime probes.
+- 370 rejection/recovery comparisons, repeated compilation and the final
+  incremental native rebuild.
+
+Elapsed time: **1,544.541 seconds**, with 12 jobs, fixture PCH and reused compiler
+objects. This is not a clean-build benchmark; the dedicated CH10 run overlapped.
+Legacy STAN and LLVM execution were explicitly skipped (`--no-stan --types-only`).
+PHP-FPM was unavailable; the cumulative runner used its supported CLI fallback.
+Evidence includes `summary.json`, source/harness hashes, candidate metadata and
+`logs-16/commands.json` in the results directory above.
+
+Initial conversion repairs make helper arguments explicit, replace unsupported
+postfix decrement, initialize a negative field default in its constructor, and
+rename C++ keyword/type-hiding locals. Native compilation additionally requires an
+explicit nullable-to-owner boundary before weak assignment, portable modifier
+selection, and a meaningful polymorphic `prepared_parameter_default::result_type`
+query for checked narrowing. No user-language contract is changed.
+
+Native execution also exposed constructor backlink comparisons that bypassed
+`weakref_get`. Declaration preparation now acquires that weak link explicitly
+before deciding whether to synthesize data inputs or permit required properties.
+Six obsolete CH03 record-condition rejection fixtures were removed: inline-record
+truthiness is now intentional and covered by CH10 collection-probe tests.
+
+The separate `tools/native_records.py` runner exports successful CH10 source
+programs from 15 dedicated suites, compares native/host artifacts, then executes
+the generated fixtures. Rejection and incremental assertions inside those PHP
+suites remain host-only; do not claim their native coverage. Initial export proof:
+`/tmp/ch10-native-host-exports/` (16 PHP suites including enum model), with 426
+successful source snapshots and 428 generated execution fixtures.
+
+The dedicated CH10 rerun passes under `/tmp/my-try-ch10-records-native-2/`:
+all 426 native/PHP artifact comparisons and all 428 generated-program executions.
+Its `summary.json` records the native executable hash. Together with cumulative
+attempt 16, this clears the CH10 native gate. Deferred Chapter 11/15 capabilities
+and native execution of CH10-specific incremental/rejection assertions are not
+claimed by this proof.
+
+Repair history: attempts 1–8 addressed conversion, 9–13 native compilation,
+14–15 stale host-harness expectations, and 16 passed. The first separate CH10
+comparison run exposed the weak-constructor issue; its second run passed.
+Parked LLVM files received only the typed callable-accessor repair needed to
+compile the compiler; no LLVM semantic development or execution was performed.
 
 ## Latest native checkpoint — 2026-10-07 Chapter 08/09
 

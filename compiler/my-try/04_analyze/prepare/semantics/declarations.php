@@ -110,7 +110,7 @@ final class Declaration_Preparation
 			}
 			$members->add($method->name, object_cast($method->occurrence(), collected_method::class));
 			if ($method->name !== '__construct') { continue; }
-			if ($facts->constructor !== null) { throw new \RuntimeException('Duplicate constructor'); }
+			if (weakref_get($facts->constructor) !== null) { throw new \RuntimeException('Duplicate constructor'); }
 			$facts->constructor = object_cast($method->occurrence(), collected_method::class);
 		}
 
@@ -123,7 +123,7 @@ final class Declaration_Preparation
 				throw new \RuntimeException('Duplicate property ' . $field->name);
 			}
 			$names[$field->name] = true;
-			self::prepare_field($field, $context, $facts->data_initializable || ($facts->constructor !== null));
+			self::prepare_field($field, $context, $facts->data_initializable || (weakref_get($facts->constructor) !== null));
 			$field_facts = $field->require_preparation();
 			if ($field_facts->static_member) {
 				$static_fields /** Key_Storage_List<prepared_field> */ = $facts->static_fields;
@@ -140,7 +140,7 @@ final class Declaration_Preparation
 			$capabilities[] = generic_contract::copyable_value;
 		}
 		$facts->capabilities = $capabilities;
-		if ($facts->data_initializable && ($facts->constructor === null)) {
+		if ($facts->data_initializable && (weakref_get($facts->constructor) === null)) {
 			$facts->initialization = new record_initialization_contract();
 			Constructor_Preparation::synthesized_inputs($facts, $context);
 		}

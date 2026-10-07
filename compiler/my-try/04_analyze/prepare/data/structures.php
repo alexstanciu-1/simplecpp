@@ -205,7 +205,8 @@ final class prepared_data_entry
 	public ?conversion_decision $key_conversion = null;
 	public conversion_decision $value_conversion;
 	/** Record input index; sequence entries retain their source position instead. */
-	public int $input_position = -1;
+	public int $input_position;
+	public function __construct() { $this->input_position = -1; }
 }
 
 enum take_operation { case nullable_value; case false_result; case error_result; case boolean_result; }
@@ -432,21 +433,26 @@ final class prepared_receiver extends prepared_storage
 	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
-/** Normalized scalar literal snapshot; never retains mutable default syntax. */
-abstract class prepared_parameter_default {}
+/** Prepared parameter defaults expose their resulting type across concrete representations. */
+abstract class prepared_parameter_default {
+	abstract public function result_type(): canonical_type_use;
+}
 
 final class prepared_literal_parameter_default extends prepared_parameter_default {
 	public prepared_constant_expression $value;
 	public conversion_decision $conversion;
+	public function result_type(): canonical_type_use { return $this->conversion->target_type; }
 }
 
 final class prepared_property_parameter_default extends prepared_parameter_default {
 	public function __construct(public prepared_property_default $value) {}
+	public function result_type(): canonical_type_use { return $this->value->conversion->target_type; }
 }
 
 /** Only synthesized public-property inputs use the type's implicit default. */
 final class prepared_type_parameter_default extends prepared_parameter_default {
 	public function __construct(public canonical_type_use $type) {}
+	public function result_type(): canonical_type_use { return $this->type; }
 }
 
 /** Constant visibility participates in dependency equivalence alongside its value. */

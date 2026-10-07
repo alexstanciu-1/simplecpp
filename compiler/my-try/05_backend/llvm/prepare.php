@@ -109,7 +109,7 @@ final class LLVM_Preparation_Run
 					continue;
 				}
 				if ($entry->kind() === collected_name_kind::function_declaration) {
-					if (q_count(object_cast($entry, collected_function::class)->syntax()->template_parameters) === 0) {
+					if (q_count(object_cast($entry, collected_function::class)->callable_syntax()->template_parameters) === 0) {
 						$this->register($file, $entry, []);
 					}
 				}
@@ -126,7 +126,7 @@ final class LLVM_Preparation_Run
 	{
 		$formals /** hash<int> */ = [];
 		if ($definition !== null) {
-			$formals = object_cast($definition, collected_function::class)->syntax()->template_parameters;
+			$formals = object_cast($definition, collected_function::class)->callable_syntax()->template_parameters;
 		}
 		if (q_count($formals) !== q_count($arguments)) {
 			throw new \RuntimeException('Explicit template argument count mismatch');
@@ -153,7 +153,7 @@ final class LLVM_Preparation_Run
 		$function->declaration = $definition;
 		$function->arguments = $arguments;
 		$function->is_entry = $definition === null;
-		$function->body = $definition === null ? $file->source->root->single_body()->body : object_cast($definition, collected_function::class)->syntax()->require_body();
+		$function->body = $definition === null ? $file->source->root->single_body()->body : object_cast($definition, collected_function::class)->callable_syntax()->require_body();
 		if ($definition === null) {
 			$function->name = $this->policy->entry_name;
 			$function->return_type = $this->policy->entry_return_type;
@@ -165,7 +165,7 @@ final class LLVM_Preparation_Run
 			}
 			$name = LLVM_Names::declaration($definition, $this->file_indexes[$file]);
 			$function->name = q_count($arguments) === 0 ? $name : $name . LLVM_Names::encode('<' . LLVM_Text::join($arguments, ',') . '>');
-			$type = $this->type_name($function, object_cast($definition, collected_function::class)->syntax()->require_return_type());
+			$type = $this->type_name($function, object_cast($definition, collected_function::class)->callable_syntax()->require_return_type());
 			if (!isset($this->policy->types[$type])) {
 				throw new \RuntimeException('Unsupported function return type');
 			}
@@ -276,7 +276,7 @@ final class LLVM_Preparation_Run
 		}
 		if ($function->declaration !== null)
 		{
-			foreach (object_cast($function->declaration, collected_function::class)->syntax()->parameters as $index => $syntax)
+			foreach (object_cast($function->declaration, collected_function::class)->callable_syntax()->parameters as $index => $syntax)
 			{
 				$entry = $file->names->declarations[object_cast($syntax, parameter_node::class)->occurrence()->token_index];
 				$parameter = new llvm_parameter();

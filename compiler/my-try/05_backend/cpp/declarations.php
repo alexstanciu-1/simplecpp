@@ -166,15 +166,15 @@ final class CPP_Declarations
 	}
 
 	/** Consume normalized default facts; syntax and source tokens have no authority here. */
-	public static function parameter_default(prepared_parameter_default $default, cpp_generation_context $context): string
+	public static function parameter_default(prepared_parameter_default $default_facts, cpp_generation_context $context): string
 	{
-		if ($default instanceof prepared_property_parameter_default) {
-			return self::property_default(object_cast($default, prepared_property_parameter_default::class)->value, $context);
+		if ($default_facts instanceof prepared_property_parameter_default) {
+			return self::property_default(object_cast($default_facts, prepared_property_parameter_default::class)->value, $context);
 		}
-		if ($default instanceof prepared_type_parameter_default) {
-			return self::type(object_cast($default, prepared_type_parameter_default::class)->type, $context) . '{}';
+		if ($default_facts instanceof prepared_type_parameter_default) {
+			return self::type(object_cast($default_facts, prepared_type_parameter_default::class)->type, $context) . '{}';
 		}
-		$facts = object_cast($default, prepared_literal_parameter_default::class);
+		$facts = object_cast($default_facts, prepared_literal_parameter_default::class);
 		$value = $facts->value;
 		$text = '';
 		if ($value instanceof prepared_integer_literal) {
@@ -325,7 +325,7 @@ final class CPP_Declarations
 			$callee = $name . ($arrow ? '->' : '.') . CPP_Generator::source_name('method', $method->name);
 			return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 		}
-		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context);
+		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context, '', null, '');
 	}
 
 	/** Discard without copying; qualifier temporaries end before the selected operation. */
@@ -348,8 +348,8 @@ final class CPP_Declarations
 
 	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
 	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
-		cpp_generation_context $context, string $callee = '', ?canonical_type_use $constructed_type = null,
-		string $prefix = ''): string
+		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type,
+		string $prefix): string
 	{
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;

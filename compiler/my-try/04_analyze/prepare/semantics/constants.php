@@ -9,11 +9,11 @@ final class Constant_Preparation
 	public static function declaration(constant_declaration_node $syntax, preparation_context $context): void
 	{
 		$entry = object_cast($syntax->occurrence(), collected_constant::class);
-		$public = true;
+		$public_access = true;
 		if ($syntax instanceof member_constant_node) {
 			$modifiers = object_cast($syntax, member_constant_node::class)->modifiers;
 			Member_Preparation::validate_modifiers($modifiers, false);
-			$public = Member_Preparation::is_public($modifiers);
+			$public_access = Member_Preparation::is_public($modifiers);
 			$context->receiver_record = weakref_get($entry->record_owner);
 		}
 		$declaring_scope = object_cast(weakref_get($entry->scope), scope::class);
@@ -27,7 +27,7 @@ final class Constant_Preparation
 			&& !$value->type->matches($context->boolean) && !$value->type->matches($context->string_type)) {
 			throw new \RuntimeException('S2S source constants require bool, int, float or string in a constant initializer');
 		}
-		$syntax->set_preparation(new prepared_source_constant($value, $public));
+		$syntax->set_preparation(new prepared_source_constant($value, $public_access));
 	}
 
 }

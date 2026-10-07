@@ -50,9 +50,9 @@ final class Member_Preparation
 		return $syntax->require_preparation();
 	}
 
-	public static function require_access(bool $public, collected_record $record, preparation_context $context): void
+	public static function require_access(bool $public_access, collected_record $record, preparation_context $context): void
 	{
-		if (!$public && ($context->receiver_record !== $record)) { throw new \RuntimeException('Private member is not accessible here'); }
+		if (!$public_access && ($context->receiver_record !== $record)) { throw new \RuntimeException('Private member is not accessible here'); }
 	}
 
 	public static function reference(static_member_reference_node $syntax, preparation_context $context): prepared_expression
@@ -72,8 +72,8 @@ final class Member_Preparation
 			if (!$property) { return Enum_Preparation::reference($syntax, $context); }
 			// Installed readonly constants such as error::$no_error keep their registered contract.
 			$owner = $syntax->require_type_owner();
-			$scope = object_cast(weakref_get($owner->occurrence()->scope), scope::class);
-			$installed = Observed_Lookup::constants($scope, $owner->name . '::' . $syntax->member_name, $context);
+			$lookup_scope = object_cast(weakref_get($owner->occurrence()->scope), scope::class);
+			$installed = Observed_Lookup::constants($lookup_scope, $owner->name . '::' . $syntax->member_name, $context);
 			if (q_count($installed) !== 1) { throw new \RuntimeException('Unknown installed static member'); }
 			return self::constant_reference($installed[0]);
 		}

@@ -16,10 +16,10 @@ final class Property_Defaults
 			self::require_constant_entries($construction, $context);
 			$value = Expression_Preparation::prepare($construction, $context, $type);
 			if ($type === null) { $type = $value->type; }
-			$default = new prepared_construction_property_default();
-			$default->construction = $construction;
-			$default->conversion = Conversion_Preparation::decide($value->type, $type, conversion_context::assignment);
-			return $default;
+			$default_facts = new prepared_construction_property_default();
+			$default_facts->construction = $construction;
+			$default_facts->conversion = Conversion_Preparation::decide($value->type, $type, conversion_context::assignment);
+			return $default_facts;
 		}
 		$facts = new prepared_constant_property_default();
 		$facts->value = Constant_Expression_Preparation::evaluate($syntax, $context);

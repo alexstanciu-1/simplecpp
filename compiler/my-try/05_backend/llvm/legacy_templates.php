@@ -56,10 +56,10 @@ final class LLVM_Legacy_Template_File_Checker
 			if ($entry->kind() !== collected_name_kind::function_declaration) {
 				continue;
 			}
-			if (q_count(object_cast($entry, collected_function::class)->syntax()->template_parameters) === 0) {
+			if (q_count(object_cast($entry, collected_function::class)->callable_syntax()->template_parameters) === 0) {
 				continue;
 			}
-			$syntax = object_cast($entry, collected_function::class)->syntax();
+			$syntax = object_cast($entry, collected_function::class)->callable_syntax();
 
 			// Each definition starts a new symbolic environment.
 			$bindings /** vector<string> */ = [];
@@ -193,7 +193,7 @@ final class LLVM_Legacy_Template_File_Checker
 			throw new \RuntimeException('Generic member/index operations are not permitted by the current proof');
 		}
 		$target = $this->file->names->call_references[$node->start_token()];
-		$signature = object_cast($target, collected_function::class)->syntax();
+		$signature = object_cast($target, collected_function::class)->callable_syntax();
 		$parameters /** Storage<parameter_node> */ = $signature->parameters;
 		$arguments /** vector<string> */ = [];
 		foreach (object_cast($node, call_node::class)->template_arguments as $argument) {

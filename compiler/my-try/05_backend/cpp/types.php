@@ -6,10 +6,9 @@ namespace scpp\compiler;
 final class CPP_Types
 {
 	/** Allocation and ownership wrappers name the payload, not its default stored representation. */
-	public static function payload(canonical_type_use $type_use,
-		cpp_type_requirement $requirement = cpp_type_requirement::complete): cpp_type
+	public static function payload(canonical_type_use $type_use): cpp_type
 	{
-		return self::unmodified_representation($type_use, $requirement);
+		return self::unmodified_representation($type_use, cpp_type_requirement::complete);
 	}
 
 	/** Resolve the semantic identity first; backend metadata never establishes type equality. */

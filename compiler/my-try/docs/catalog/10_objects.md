@@ -10,6 +10,16 @@ Requires functions, type identities and ownership. Start with a plain class befo
 Chapter closeout must include the [test-duration review](#ch10-perf-01--test-duration-review-before-native-build)
 before starting the chapter's native compiler build.
 
+## Native validation — 2026-10-07
+
+The pre-build timing review and requested native validation are complete.
+The [CH10 native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-07-chapter-10)
+passes cumulative regressions plus 426 dedicated class/struct native/PHP artifact
+comparisons and 428 generated-program executions across 15 suites. Native repairs
+preserve the approved language contracts. Dedicated CH10 rejection/incremental
+assertions remain PHP-host proofs; the cumulative runner retains its own native
+rejection/recovery and incremental scope. Chapter 11/15 deferrals remain unchanged.
+
 ## Shared declaration model and class/struct parity
 
 Agreed direction (2026-10-06): develop `struct` alongside `class` throughout this
@@ -4023,7 +4033,7 @@ source types and current preparation diagnostics supersede the v0.1 type-blind r
 
 Status: reviewed 2026-10-07. See the [measured review](../testing_ch10_review.md).
 The pre-build investigation gate is satisfied; optimization is proposed, not applied.
-Native compiler validation has not been run for CH10.
+The subsequent [native checkpoint](#native-validation--2026-10-07) passes.
 
 User decision, 2026-10-07: current focused-test cost is acceptable. Revisit test
 performance when testing exceeds 30% of the overall work time for a slice. Compare

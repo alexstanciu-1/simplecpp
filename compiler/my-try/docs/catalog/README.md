@@ -114,8 +114,11 @@ are implemented, along with [bounded constant property defaults](10_objects.md#p
 [Container defaults and synthesized `data` construction](10_objects.md#container-defaults-and-synthesized-data-construction--2026-10-07)
 and [authored constructors with property-backed inputs](10_objects.md#authored-constructors--2026-10-07)
 and [bounded instance methods](10_objects.md#instance-methods--2026-10-07)
-are also implemented. Static methods/member constants remain follow-ups; the chapter-end
-test-duration review precedes the next native build. Duplicate function/parameter
+are also implemented, alongside static members, method reference/variadic contracts,
+destructors, nullable records, property updates/inference and local storage shortcuts.
+The timing review and [CH10 native checkpoint](10_objects.md#native-validation--2026-10-07)
+are complete; inheritance/interface/trait behavior belongs to CH11 and explicit
+final-review debt stays in CH15. Duplicate function/parameter
 and plain class/struct property admission is checked; the field portion of PE-03/FN-08
 is resolved by this slice. Non-void fallthrough rejects during preparation using the supported
 body/branch/loop/switch completion model, without a CFG.
