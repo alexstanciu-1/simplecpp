@@ -50,9 +50,7 @@ final class Type_Preparation
 		$definition = object_cast(Model::$type_catalog->definition('nullable'), abstract_template_type_definition::class);
 		$arguments /** vector<canonical_type_use> */ = [$payload];
 		try {
-			$registry = Model::$type_catalog->registry();
-			$application = $registry->intern_application($definition, $arguments, new Capability_Preparation($context));
-			$node->set_preparation($registry->use($application->type_id()));
+			$node->set_preparation(self::application($definition, $arguments, $context));
 		}
 		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }
 	}
@@ -95,20 +93,33 @@ final class Type_Preparation
 		$arguments /** vector<canonical_type_use> */ = [];
 		$type_arguments /** Storage<type_node> */ = $node->arguments;
 		$registry = Model::$type_catalog->registry();
-		$registry->validate_application_arity($template_definition, q_count($type_arguments));
+		try { $registry->validate_application_arity($template_definition, q_count($type_arguments)); }
+		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }
 		foreach ($type_arguments as $argument) {
 			$arguments[] = self::type($argument, $context);
 		}
 
 		try {
-			$application = $registry->intern_application($template_definition, $arguments,
-				new Capability_Preparation($context));
-			$node->set_preparation($registry->use($application->type_id()));
+			$node->set_preparation(self::application($template_definition, $arguments, $context));
 		}
 		catch (\InvalidArgumentException $error) {
 			// Source contract failures participate in normal declaration/body retry scheduling.
 			throw new \RuntimeException($error->getMessage());
 		}
+	}
+
+	/** Both nullable spellings normalize handle absence before interning a wrapper. */
+	private static function application(abstract_template_type_definition $definition,
+		array $arguments /** vector<canonical_type_use> */, preparation_context $context): canonical_type_use
+	{
+		$registry = Model::$type_catalog->registry();
+		$registry->validate_application_arity($definition, q_count($arguments));
+		if ($definition instanceof nullable_semantics) {
+			$payload = $arguments[0];
+			if (Ownership_Conversions::role($payload) !== null) { return $payload; }
+		}
+		$application = $registry->intern_application($definition, $arguments, new Capability_Preparation($context));
+		return $registry->use($application->type_id());
 	}
 
 	/** Named types resolve against the collected lexical scope and record dependencies. */

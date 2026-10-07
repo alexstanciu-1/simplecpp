@@ -358,7 +358,8 @@ try
 		$failed = false;
 		try { $compiler->update_cpp($changes); }
 		catch (\RuntimeException $error) {
-			$failed = str_contains($error->getMessage(), 'default-constructible');
+			$failed = str_contains($error->getMessage(), 'default-constructible')
+				|| str_contains($error->getMessage(), 'Inline record property requires an explicit initializer');
 		}
 		ownership_source_check($failed && Model::$cpp_files->is_empty(), 'Nested default-construction edit was not rejected');
 	}

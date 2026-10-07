@@ -405,6 +405,32 @@ failed retries, destructor removal/readdition and fresh/reset agreement pass.
 `/tmp/ch10-destructors-regression/` passes 12 focused PHP suites. No compiler native
 rebuild or conversion was performed.
 
+## Nullable handle normalization — 2026-10-07
+
+The [approved contract](../../../../specs/type_use_modifiers.md#v02-nullable-records-and-handle-normalization--2026-10-07)
+distinguishes nullable inline values from already-nullable owning/observing handles.
+Both `?Handle` and `nullable<Handle>` now normalize in one shared type-preparation
+application path before wrapper interning. Reference-compatible identity is the
+original handle type, not a second runtime wrapper. No emitter-only spelling fix,
+registry capability cache or change to the runtime nullable template was introduced.
+
+Bare class, explicit shared struct, unique and weak handles preserve their existing
+construction/copy/move/reference/presence rules. Redundant storage overrides still
+reject; nullable spelling does not grant weak presence tests without locking.
+`?Struct` and `?value<Class>` retain nullable model identity. Their value operations
+remain gated pending payload-dependent copy capability and shared boundary admission;
+removing the scalar-only guard alone would wrongly advertise noncopyable payloads
+as copyable. Record payload truthiness also needs an admitted payload condition path,
+not a substitution of presence for the established delegation rule.
+
+Focused runner: `records.py --suite nullable_handles --no-pch`.
+Evidence: `/tmp/ch10-nullable-handles-final-2/` passes 18 generated programs without
+PCH, including exact-reference compatibility, unique movement, weak locking, fields
+and preserved inline-wrapper identity. `/tmp/ch10-nullable-handles-regression-final/`
+passes 8 focused PHP suites after refreshing the older nested-field rejection
+diagnostic expectation. No native compiler rebuild or conversion was performed.
+Next: nullable inline-record boundaries/capabilities, then probes/truthiness and joins.
+
 ## Chapter 09 carryovers
 
 CH09's approved bounded closeout transfers constructor integration for explicit
@@ -426,8 +452,8 @@ Reconciled the working rows and individual card decisions against the dated CH10
 proofs, current preparation/emission and authoritative amendments. Original imported
 examples remain intact as historical evidence, not additional implementation work.
 Counts include one synthetic data row and two prose rows; they are not code coverage:
-49 supported-bounded, 17 deferred-CH11, 5 deliberate rejections, 3 gated,
-1 pending-discussion, 4 partial-split, 1 reconciled-bounded and 1 deferred-legacy
+50 supported-bounded, 17 deferred-CH11, 5 deliberate rejections, 3 gated,
+4 partial-split, 1 reconciled-bounded and 1 deferred-legacy
 (81 rows including the separate legacy table).
 
 `partial-split` means the imported example combines supported concrete-record work
@@ -445,13 +471,12 @@ a native compiler rebuild. Existing checkpoint suites supply behavioral evidence
 
 ### Actual remaining work and owners
 
-1. **Nullable records and handle spelling — recommended next discussion.**
-   TYPE-VAR-004, nullable portions of TYPE-PARAM-004/TYPE-PROP-002 and the CH09
-   nullable-inline-record carryover need one contract. Bare class/shared handles
-   already allow absence; current `?T` syntax builds the nullable family, but its
-   operations remain scalar-only. Do not silently inherit the v0.1 claim that `A`
-   and `?A` always lower identically. Settle record values versus nullable handles,
-   construction, copying/extraction and member-access boundaries before implementation.
+1. **Nullable inline-record operations — next bounded implementation.**
+   The normalization checkpoint above settles TYPE-VAR-004 for class handles and
+   updates the earlier audit result. Nullable inline portions of TYPE-PARAM-004/
+   TYPE-PROP-002 and the CH09 carryover remain: construction, payload-dependent copy
+   capability, checked extraction, probes and condition admission. Bare handles
+   retain their own absence state; inline records require a real nullable wrapper.
 2. **Property operation completeness.** Plain reads/writes are covered. Compound
    assignment and prefix/postfix mutation on instance/static properties remain
    gated, as do static-property native-reference escapes. Discuss the bounded
@@ -547,7 +572,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [OBJ-METHOD-CALL-001](#obj-method-call-001) | supported-bounded | `$a = $obj->f();` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [OBJ-METHOD-CALL-002](#obj-method-call-002) | supported-bounded | `$a = $obj->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [TYPE-VAR-003](#type-var-003) | supported-bounded | `$x A = new A();` | prepared (bounded) | see proof | deferred | Explicit record storage construction; records.php and constructors.php |
-| [TYPE-VAR-004](#type-var-004) | pending-discussion | `$x ?A = null;` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [TYPE-VAR-004](#type-var-004) | supported-bounded | `$x ?A = null;` | normalized class handle | shared existing handle path | deferred | nullable_handles.php; inline record operations remain separate |
 | [TYPE-PARAM-004](#type-param-004) | partial-split | `function f(A $a, ?B $b, I $i): A { return $a; }` | see reconciliation | see reconciliation | deferred | Concrete record boundaries supported; nullable records pending CH10; interfaces/abstract types CH11 |
 | [TYPE-PROP-001](#type-prop-001) | partial-split | `class A { protected string $s; protected B $b; }` | see reconciliation | see reconciliation | deferred | Public/private typed fields supported; protected access CH11 |
 | [TYPE-PROP-001B](#type-prop-001b) | supported-bounded | `class A { public int $x; }` | prepared (bounded) | see proof | deferred | Strict public typed field; records.php; legacy spelling separate |
@@ -3514,9 +3539,11 @@ shared_p<A> x = create<A>();
 
 **Strict-mode PHP input example:** `$x ?A = null;`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+For a class, nullable spelling now explicitly normalizes to its already-nullable
+handle identity. For a struct/inline class payload, nullable remains a real wrapper.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** supported-bounded for class handles under the explicit
+normalization contract, not merely accidental backend equivalence. See checkpoint above.
 
 ### Imported version 1
 

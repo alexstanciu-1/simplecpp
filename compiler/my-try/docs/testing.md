@@ -78,6 +78,10 @@ last-owner/weak behavior, inline copies/aliases, early exits, member order, data
 authored construction, native move/copy traits, unwinding and termination boundaries.
 Includes cross-file body edits, invalid-signature retry, removal/readdition and resets.
 
+Use `--suite nullable_handles` for `?Handle`/`nullable<Handle>` normalization, exact
+reference compatibility, shared/unique/weak behavior and preserved inline-wrapper
+identity. It deliberately does not claim nullable inline-record value operations.
+
 For the CH10 shared declaration model migration:
 
 ```bash

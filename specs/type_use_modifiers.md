@@ -1,6 +1,36 @@
 # Type-use storage modifiers
 Doc Status: normative
 
+## v0.2 nullable records and handle normalization — 2026-10-07
+
+Nullable spelling does not add an absence layer to an ownership handle. `?Class`
+normalizes to the ordinary class handle. `?shared<Struct>`, `?unique<T>` and
+`?weak<T>` normalize to the corresponding already-nullable handles. Explicit
+`nullable<Handle>` follows the same rule. Normalization preserves exact semantic
+type/storage identity, copy/transfer restrictions and reference compatibility;
+it is not merely identical C++ spelling. No `nullable<shared<T>>` or equivalent
+second absence layer is generated for these source forms.
+
+The redundant nullable spelling is accepted because it describes absence. Existing
+rejections of redundant storage overrides (`shared<Class>`, `value<Struct>`) remain;
+adding `?` does not legalize an otherwise invalid inner type. Weak handles still
+require explicit locking for presence/truthiness or access where the current
+compiler contract requires it.
+
+Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
+and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present
+default-valued record. Member access requires checked extraction first; no optional
+chaining or new interior borrow is implied. Payload copy capability must propagate:
+wrapping a noncopyable record must not make it copyable. Nullable truthiness retains
+the existing rule (absent is false; present delegates to the payload's admitted
+condition contract), not an invented unconditional presence rule for all records.
+
+Implementation checkpoints are tracked in CH10. The first checkpoint implements
+handle normalization in shared type preparation for both spellings; inline-record
+construction, copying/extraction, probes and truthiness admission remain gated until
+their shared operation/capability paths are extended. Joins/coalescing are a later
+slice. The runtime's general C++ template is not rewritten by source normalization.
+
 Agreed 2026-10-02 for the my-try v0.2 frontend.
 
 `value<T>` requests value storage. When the type registry already identifies `T`
