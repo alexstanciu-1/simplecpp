@@ -382,6 +382,7 @@ final class Expression_Preparation
 	/** Resolve one named callable and establish reference/value argument boundaries. */
 	public static function prepare_call(call_node $syntax, preparation_context $context): prepared_call
 	{
+		if ($syntax->receiver !== null) { return Method_Preparation::call($syntax, $context); }
 		$templates /** Storage<named_type_node> */ = $syntax->template_arguments;
 		if (!$templates->is_empty()) {
 			throw new \RuntimeException('S2S template calls are deferred');
@@ -401,22 +402,7 @@ final class Expression_Preparation
 	public static function prepare_field_access(field_access_node $syntax, preparation_context $context): prepared_field_access
 	{
 		$base = $syntax->base;
-		$value /** prepared_expression */;
-		$is_receiver = false;
-		if ($base instanceof variable_reference_node) {
-			$is_receiver = object_cast($base, variable_reference_node::class)->name === 'this';
-		}
-		if ($is_receiver) {
-			$receiver = $context->receiver;
-			if ($receiver === null) { throw new \RuntimeException('$this requires an instance body'); }
-			$reference = new prepared_variable_reference();
-			$reference->type = $receiver->type;
-			$reference->declaration = $receiver->declaration;
-			$reference->place = new prepared_place($receiver, null, true);
-			object_cast($base, variable_reference_node::class)->set_preparation($reference);
-			$value = $reference;
-		}
-		else { $value = self::prepare($base, $context); }
+		$value = Method_Preparation::base($base, $context);
 		$storage = Type_Queries::record_storage($value->type);
 		if ($storage === record_storage_kind::weak) {
 			throw new \RuntimeException('S2S weak member access requires an explicit lock');

@@ -45,8 +45,8 @@ try
 	smoke_require(Model::syntax_files()[1] === $kept_caller, 'Unchanged caller was reparsed');
 	smoke_require(smoke_output() !== $baseline, 'Edit did not change generated output');
 	$names = (new LLVM_Legacy_Name_Preparation())->prepare($kept_caller->collection);
-	$reference = $kept_caller->collection->entries[$kept_caller->collection->function_references[0]];
-	smoke_require($names->function_references[$reference->token_index] === $targets[0], 'Caller resolved the old declaration');
+	$reference = $kept_caller->collection->entries[$kept_caller->collection->call_references[0]];
+	smoke_require($names->call_references[$reference->token_index] === $targets[0], 'Caller resolved the old declaration');
 
 	// The usual smoke stops after one full build and one incremental update.
 	file_put_contents($definition, $original);

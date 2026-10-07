@@ -22,14 +22,7 @@ final class Constructor_Preparation
 		$layout = $record->syntax()->require_preparation();
 		$facts = new prepared_source_callable();
 		$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
-		$receiver = new prepared_receiver();
-		$receiver->declaration = $entry;
-		$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
-		$receiver->type = Model::$type_catalog->registry()->use($type->type_id());
-		if (Type_Queries::is_class_handle($receiver->type)) {
-			$receiver->type = Model::$type_catalog->registry()->use($type->type_id(), true);
-		}
-		$facts->receiver = $receiver;
+		$facts->receiver = Method_Preparation::receiver($entry);
 		$contract = new record_initialization_contract();
 		$contract->constructor = $entry;
 		$facts->initialization = $contract;

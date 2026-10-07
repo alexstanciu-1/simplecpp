@@ -27,7 +27,7 @@ final class llvm_legacy_prepared_names {
 	/** @storage.reference collected_file.entries
 	 * @reference.weak
 	 */
-	public array $function_references /** hash<collected_name, int> */ = [];
+	public array $call_references /** hash<collected_name, int> */ = [];
 }
 
 /** Parked LLVM-only template-check invocation; complete before its file workers run. */

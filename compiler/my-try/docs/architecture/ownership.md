@@ -114,6 +114,12 @@ snapshot entry. Effective-equal edits preserve facts; changed inventories publis
 new snapshots and invalidate consumers through the existing work graph.
 
 Prepared facts retain canonical types and reference collected declarations.
+Record method indexes reference collection-owned identities, not signature snapshots.
+Method signatures depend on their record; calls depend on both record membership and
+the selected signature. Call syntax owns its optional receiver; prepared receiver-call
+facts contain only canonical type and lifetime policy, with no syntax/worker backlink.
+Generated shared-call temporaries retain the selected receiver through argument
+evaluation and invocation; inline calls borrow only admitted stable storage.
 Construction property-default facts also retain the property-owned initializer syntax
 as a forward reference, never its enclosing property or a processing worker. The
 ordinary syntax maintenance path clears that expression's preparation. Source record

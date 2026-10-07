@@ -25,7 +25,7 @@ try
 	$function = object_cast(Model::$global_scope->functions_named('value')[0]->syntax(), function_node::class);
 	$body = $function->body;
 	$first = $body->start_token();
-	$entry = $record->parsed->collection->entries[$record->parsed->collection->function_references[0]];
+	$entry = $record->parsed->collection->entries[$record->parsed->collection->call_references[0]];
 	$entry_index = $entry->token_index;
 	$facts = $body->work();
 	$version = $facts->version;

@@ -243,9 +243,9 @@ final class Symbol_Collector
 	}
 
 	/** Record this occurrence without resolving names or allocating preparation facts. */
-	public function collect_function_reference(call_node $node, scope $scope, int $index): void
+	public function collect_call_reference(call_node $node, scope $scope, int $index): void
 	{
-		$entry = new collected_function_reference($this->collection, $node);
+		$entry = new collected_call_reference($this->collection, $node);
 		$this->append($entry, $scope, $node->name, $index);
 	}
 
@@ -331,9 +331,9 @@ final class Symbol_Collector
 	}
 
 	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
-	public function index_function_reference(collected_function_reference $entry): void
+	public function index_call_reference(collected_call_reference $entry): void
 	{
-		$this->collection->function_references[] = $entry->local_index;
+		$this->collection->call_references[] = $entry->local_index;
 	}
 
 	/** Maintain the existing occurrence list during insertion and retained-body refresh. */
@@ -370,7 +370,7 @@ final class Symbol_Collector
 		$collection->defined_elements = /** vector<int> */ [];
 		$collection->variable_references = /** vector<int> */ [];
 		$collection->constant_references = /** vector<int> */ [];
-		$collection->function_references = /** vector<int> */ [];
+		$collection->call_references = /** vector<int> */ [];
 		$collection->type_references = /** vector<int> */ [];
 		$collection->field_references = /** vector<int> */ [];
 		$collection->pending_bindings = /** vector<int> */ [];

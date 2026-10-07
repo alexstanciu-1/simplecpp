@@ -29,8 +29,8 @@ if (count(Model::$global_scope->functions_named('exported')) !== 1 || (count(Mod
 	throw new \LogicException('Publication lost an export or exposed function locals');
 }
 $resolved = (new LLVM_Legacy_Name_Preparation())->prepare($second->collection);
-$entry = $second->collection->entries[$second->collection->function_references[0]];
-if ($resolved->function_references[$entry->token_index]->collection !== $first->collection) {
+$entry = $second->collection->entries[$second->collection->call_references[0]];
+if ($resolved->call_references[$entry->token_index]->collection !== $first->collection) {
 	throw new \LogicException('Publication changed cross-file identity');
 }
 try {

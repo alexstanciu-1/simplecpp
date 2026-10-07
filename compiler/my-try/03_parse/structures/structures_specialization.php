@@ -686,6 +686,8 @@ final class call_node extends expression_node
 
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
+	/** Absent for free calls; fixed instance calls own their receiver syntax. */
+	public ?expression_node $receiver = null;
 	/** Current frontend accepts only named explicit template type arguments. */
 	public Storage $template_arguments /** Storage<named_type_node> */;
 	public Storage $arguments /** Storage<expression_node> */;
@@ -700,7 +702,7 @@ final class call_node extends expression_node
 	/** Parsing triggers collection here; registration and reconciliation belong to the collector. */
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
 	{
-		$collector->collect_function_reference($this, $scope, $index);
+		$collector->collect_call_reference($this, $scope, $index);
 	}
 
 	public function kind(): node_kind
@@ -730,6 +732,7 @@ final class call_node extends expression_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
+		if ($this->receiver !== null) { $worker->edge($this, $this->receiver); }
 		$template_arguments /** Storage<named_type_node> */ = $this->template_arguments;
 		foreach ($template_arguments as $template_argument) {
 			$worker->edge($this, $template_argument);

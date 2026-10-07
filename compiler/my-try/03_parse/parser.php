@@ -2070,6 +2070,13 @@ final class Parser_Run
 				if (!$this->identifier()) {
 					throw new \RuntimeException($this->error_message('Expected field name'));
 				}
+				if ($this->text_at_offset(1) === '(') {
+					$call = $this->call_expression();
+					$call->receiver = $base;
+					$this->finish_node($call, $start);
+					$base = $call;
+					continue;
+				}
 				$field = new field_access_node();
 				$field->base = $base;
 				$field_index = $this->position++;

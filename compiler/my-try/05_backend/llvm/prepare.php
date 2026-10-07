@@ -290,15 +290,15 @@ final class LLVM_Preparation_Run
 			}
 		}
 		(new LLVM_Struct_Preparation())->fields($function);
-		foreach ($file->source->function_references as $index)
+		foreach ($file->source->call_references as $index)
 		{
 			$use = $entries[$index];
 			if (!LLVM_Legacy_Name_Preparation::belongs($function, $use)) {
 				continue;
 			}
-			$definition = $file->names->function_references[$use->token_index];
+			$definition = $file->names->call_references[$use->token_index];
 			$arguments /** vector<string> */ = [];
-			foreach (object_cast($use, collected_function_reference::class)->syntax()->template_arguments as $argument) {
+			foreach (object_cast($use, collected_call_reference::class)->syntax()->template_arguments as $argument) {
 				$arguments[] = $this->type_name($function, $argument);
 			}
 			$target = $this->register($this->owners[$definition], $definition, $arguments);

@@ -70,7 +70,7 @@ final class LLVM_Legacy_Name_Preparation
 			}
 			$result->references[$entry->token_index] = $candidates[0];
 		}
-		foreach ($file->function_references as $index)
+		foreach ($file->call_references as $index)
 		{
 			$entry = $entries[$index];
 			if (($entry->changes === \scpp\compiler\SYNC_DELETED) || ($entry->kind() === collected_name_kind::field_declaration)) {
@@ -97,7 +97,7 @@ final class LLVM_Legacy_Name_Preparation
 			if (q_count($function_candidates) !== 1) {
 				throw new \RuntimeException(("Expected one function target for " . $entry->name . " at " . $file->source_file()->path . ": token " . $entry->token_index));
 			}
-			$result->function_references[$entry->token_index] = $function_candidates[0];
+			$result->call_references[$entry->token_index] = $function_candidates[0];
 		}
 		foreach ($file->type_references as $index)
 		{

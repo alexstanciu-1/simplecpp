@@ -40,7 +40,7 @@ final class Collection_Retirement
 		$source->defined_elements = self::present($entries, $source->defined_elements);
 		$source->variable_references = self::present($entries, $source->variable_references);
 		$source->constant_references = self::present($entries, $source->constant_references);
-		$source->function_references = self::present($entries, $source->function_references);
+		$source->call_references = self::present($entries, $source->call_references);
 		$source->type_references = self::present($entries, $source->type_references);
 		$source->field_references = self::present($entries, $source->field_references);
 		$source->pending_bindings = self::present($entries, $source->pending_bindings);

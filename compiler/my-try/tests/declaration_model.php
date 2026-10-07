@@ -156,7 +156,7 @@ try {
 	$compiler->prepare();
 }
 catch (\RuntimeException $error) {
-	$rejected = str_contains($error->getMessage(), 'plain-record slice');
+	$rejected = str_contains($error->getMessage(), 'public or private');
 }
 declaration_model_check($rejected, 'Unsupported modeled methods were silently ignored');
 echo "Declaration model ownership, shared syntax, migration and admission gates passed\n";

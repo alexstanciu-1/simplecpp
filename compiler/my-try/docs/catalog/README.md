@@ -113,7 +113,8 @@ and [plain record storage/property slice](10_objects.md#plain-records-and-storag
 are implemented, along with [bounded constant property defaults](10_objects.md#property-defaults-and-data-construction-agreement--2026-10-07).
 [Container defaults and synthesized `data` construction](10_objects.md#container-defaults-and-synthesized-data-construction--2026-10-07)
 and [authored constructors with property-backed inputs](10_objects.md#authored-constructors--2026-10-07)
-are also implemented. Ordinary methods remain a follow-up; the chapter-end
+and [bounded instance methods](10_objects.md#instance-methods--2026-10-07)
+are also implemented. Static methods/member constants remain follow-ups; the chapter-end
 test-duration review precedes the next native build. Duplicate function/parameter
 and plain class/struct property admission is checked; the field portion of PE-03/FN-08
 is resolved by this slice. Non-void fallthrough rejects during preparation using the supported

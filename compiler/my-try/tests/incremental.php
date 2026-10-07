@@ -39,8 +39,8 @@ try
 	sync_check(sync_function('value')->syntax() === $old_node && Model::tokens()[0] !== $old_tokens, 'Declaration identity or new token generation lost');
 	sync_check(Model::syntax_files()[1] === $unchanged, 'Unchanged file was reparsed');
 	$resolved = (new LLVM_Legacy_Name_Preparation())->prepare($unchanged->collection);
-	$reference = $unchanged->collection->entries[$unchanged->collection->function_references[0]];
-	sync_check($resolved->function_references[$reference->token_index] === sync_function('value'), 'Unchanged caller retained old binding');
+	$reference = $unchanged->collection->entries[$unchanged->collection->call_references[0]];
+	sync_check($resolved->call_references[$reference->token_index] === sync_function('value'), 'Unchanged caller retained old binding');
 
 	file_put_contents($a, "\nfunction value( ): int { return 2; }\nstruct Box { int \$item; }");
 	$compiler->sync([$a]);

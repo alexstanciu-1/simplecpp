@@ -41,6 +41,12 @@ programs and checks ordering, defaults, visibility, storage variants, contextual
 retirement. It compiles generated programs, not the compiler itself. Existing
 `--suite records`, `property_defaults` and `data_records` select adjacent proofs.
 
+Use `--suite methods` for fixed instance calls, receiver retention/order, private
+access, same-named properties/methods, defaults, storage variants and cross-file
+signature/body invalidation, retry/repair and retirement. The absent-receiver fixture
+adds a test-only native exception boundary to prove checked failure, not a crash code.
+`--no-pch` verifies emitted headers without implicit fixture includes.
+
 For the CH10 shared declaration model migration:
 
 ```bash

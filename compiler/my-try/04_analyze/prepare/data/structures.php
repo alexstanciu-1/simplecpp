@@ -449,6 +449,7 @@ final class prepared_type_parameter_default extends prepared_parameter_default {
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
 final class prepared_source_callable
 {
+	public bool $public_access = true;
 	public callable_signature $signature;
 	public ?prepared_receiver $receiver = null;
 	public ?record_initialization_contract $initialization = null;
@@ -493,6 +494,8 @@ final class prepared_construction_property_default extends prepared_property_def
 
 /** Field lookup retains declaration order and duplicate names without silently choosing one. */
 final class prepared_record {
+	/** Non-owning member index; collection owns identities, signatures own contracts. */
+	public Key_Storage_List $methods /** Key_Storage_List<collected_method> */;
 	public bool $data_initializable = false;
 	public ?record_initialization_contract $initialization = null;
 	public ?collected_method $constructor /** weak<collected_method> */ = null;
@@ -505,6 +508,7 @@ final class prepared_record {
 	public function __construct()
 	{
 		$this->fields = new Key_Storage_List /** Key_Storage_List<prepared_field> */();
+		$this->methods = new Key_Storage_List /** Key_Storage_List<collected_method> */();
 	}
 	public function has_capability(generic_contract $capability): bool
 	{
@@ -529,6 +533,7 @@ final class prepared_field_access extends prepared_expression {
 /** Resolved call target and signature; evaluation order remains with the process workers. */
 final class prepared_call extends prepared_expression
 {
+	public ?prepared_method_receiver $receiver = null;
 	/** Fixed prefix length; the remaining source arguments belong to variadic_parameter. */
 	public int $fixed_count = 0;
 	public ?callable_parameter $variadic_parameter = null;
@@ -545,6 +550,20 @@ final class prepared_call extends prepared_expression
 	{
 		$this->arguments = new Storage /** Storage<prepared_call_argument> */();
 	}
+}
+
+/** Preparation chooses receiver lifetime handling; emission does not infer admissibility. */
+enum method_receiver_lifetime
+{
+	case retain_shared;
+	case borrow_inline;
+	case current_instance;
+}
+
+final class prepared_method_receiver
+{
+	public function __construct(public canonical_type_use $record_type,
+		public method_receiver_lifetime $lifetime) {}
 }
 
 /** A reference argument has no conversion; a by-value argument requires one decision. */
@@ -583,13 +602,13 @@ final class prepared_file {
 /** Invocation-local call-cycle vertex; integer edges do not retain other vertices. */
 final class reference_cycle_vertex
 {
-	public collected_function $definition;
+	public collected_source_callable $definition;
 	public array $calls /** vector<int> */ = [];
 	public int $visit_index;
 	public int $low_link;
 	public bool $on_stack = false;
 
-	public function __construct(collected_function $definition)
+	public function __construct(collected_source_callable $definition)
 	{
 		$this->definition = $definition;
 		$this->visit_index = -1;

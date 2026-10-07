@@ -11,6 +11,7 @@ final class Preparation_Changes
 		if ($old === null) {
 			return false;
 		}
+		if ($old->public_access !== $current->public_access) { return false; }
 		if (!self::same_reference_return($old->signature->reference_return, $current->signature->reference_return)) {
 			return false;
 		}
@@ -57,6 +58,14 @@ final class Preparation_Changes
 			return false;
 		}
 		if ($old->data_initializable !== $current->data_initializable) { return false; }
+		$old_methods /** Key_Storage_List<collected_method> */ = $old->methods;
+		$new_methods /** Key_Storage_List<collected_method> */ = $current->methods;
+		$previous_methods /** vector<collected_method> */ = $old_methods->items();
+		$current_methods /** vector<collected_method> */ = $new_methods->items();
+		if (q_count($previous_methods) !== q_count($current_methods)) { return false; }
+		foreach ($current_methods as $index => $method) {
+			if ($previous_methods[$index] !== $method) { return false; }
+		}
 		if (($old->initialization === null) !== ($current->initialization === null)) {
 			return false;
 		}

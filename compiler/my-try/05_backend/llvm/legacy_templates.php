@@ -192,7 +192,7 @@ final class LLVM_Legacy_Template_File_Checker
 		if ($node->kind() !== node_kind::call_expression) {
 			throw new \RuntimeException('Generic member/index operations are not permitted by the current proof');
 		}
-		$target = $this->file->names->function_references[$node->start_token()];
+		$target = $this->file->names->call_references[$node->start_token()];
 		$signature = object_cast($target, collected_function::class)->syntax();
 		$parameters /** Storage<parameter_node> */ = $signature->parameters;
 		$arguments /** vector<string> */ = [];

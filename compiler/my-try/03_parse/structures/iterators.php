@@ -1032,6 +1032,7 @@ final class namespace_body_children_iterator extends children_iterator
 
 enum call_children_stage
 {
+	case receiver;
 	case template_arguments;
 	case arguments;
 	case finished;
@@ -1041,7 +1042,7 @@ enum call_children_stage
 final class call_children_iterator extends children_iterator
 {
 	private call_node $source;
-	private call_children_stage $stage = call_children_stage::template_arguments;
+	private call_children_stage $stage = call_children_stage::receiver;
 	private ?storage_children_iterator $template_arguments_cursor = null;
 	private ?storage_children_iterator $arguments_cursor = null;
 
@@ -1057,6 +1058,10 @@ final class call_children_iterator extends children_iterator
 		{
 			switch ($this->stage)
 			{
+				case call_children_stage::receiver:
+					$this->stage = call_children_stage::template_arguments;
+					if ($this->source->receiver !== null) { return $this->source->receiver; }
+					break;
 				case call_children_stage::template_arguments:
 					if ($this->template_arguments_cursor === null) {
 						$this->template_arguments_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->template_arguments));

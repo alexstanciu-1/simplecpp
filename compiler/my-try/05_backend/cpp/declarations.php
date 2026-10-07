@@ -121,8 +121,11 @@ final class CPP_Declarations
 		if ($function_declaration instanceof collected_method) {
 			$method = object_cast($function_declaration, collected_method::class);
 			$record_name = CPP_Generator::source_name('record', $method->declaring_record()->qualified_name());
-			$name = $prototype ? $record_name : $record_name . '::' . $record_name;
-			return $name . '(' . $parts . ')';
+			$name = $syntax->name === '__construct' ? $record_name : CPP_Generator::source_name('method', $syntax->name);
+			if (!$prototype) { $name = $record_name . '::' . $name; }
+			$prefix = $syntax->name === '__construct' ? '' : self::type_for($facts->signature->return_type,
+				$context, self::signature_requirement($prototype, false)) . ' ';
+			return $prefix . $name . '(' . $parts . ')';
 		}
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
 		$return_requirement = self::signature_requirement($prototype, $facts->signature->reference_return !== null);
@@ -227,7 +230,8 @@ final class CPP_Declarations
 			$text .= CPP_Data_Construction::constructor(CPP_Generator::source_name('record', $key), $initialization, $context);
 		}
 		$context->records .= $text;
-		if (weakref_get($syntax->require_preparation()->constructor) === null) { $context->records .= "};\n\n"; }
+		$methods /** Key_Storage_List<collected_method> */ = $syntax->require_preparation()->methods;
+		if (q_count($methods->items()) === 0) { $context->records .= "};\n\n"; }
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
 	}
@@ -249,12 +253,32 @@ final class CPP_Declarations
 	/** Locals snapshot value arguments left-to-right; reference arguments keep the original place. */
 	public static function generate_call(call_node $syntax, cpp_generation_context $context): string
 	{
+		$facts = $syntax->require_call_preparation();
+		if ($facts->receiver !== null) {
+			$receiver /** prepared_method_receiver */ = $facts->receiver;
+			$base /** expression_node */ = $syntax->receiver;
+			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
+			$value = (new CPP_Syntax($context))->expression($base);
+			$name = 'receiver_' . $context->next_temporary;
+			$context->next_temporary++;
+			$binding = $receiver->lifetime === method_receiver_lifetime::borrow_inline ? 'auto& ' : 'auto ';
+			$prefix = $binding . $name . ' = ' . $value . ";\n";
+			$arrow = ($receiver->lifetime !== method_receiver_lifetime::borrow_inline) || $base->require_preparation()->type->by_value();
+			if ($receiver->lifetime === method_receiver_lifetime::retain_shared) {
+				// Check before evaluating arguments; the retained handle owns the selected object.
+				$prefix .= '(void)' . $name . ".operator->();\n";
+			}
+			$method = object_cast(weakref_get($facts->target), collected_method::class);
+			$callee = $name . ($arrow ? '->' : '.') . CPP_Generator::source_name('method', $method->name);
+			return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
+		}
 		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context);
 	}
 
 	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
 	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
-		cpp_generation_context $context, string $callee = '', ?canonical_type_use $constructed_type = null): string
+		cpp_generation_context $context, string $callee = '', ?canonical_type_use $constructed_type = null,
+		string $prefix = ''): string
 	{
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
@@ -264,6 +288,7 @@ final class CPP_Declarations
 		$return_requirement = self::signature_requirement(false, $facts->signature->reference_return !== null);
 		$result_type = $constructed_type ?? $facts->type;
 		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
+		$text .= $prefix;
 		$names = '';
 		$separator = '';
 		$packed_names = '';

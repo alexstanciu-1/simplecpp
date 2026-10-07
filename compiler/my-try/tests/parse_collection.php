@@ -70,7 +70,7 @@ try
 	$removed = object_cast($box, type_declaration_node::class)->properties[1]->occurrence();
 	$old_revision = $get->revision;
 	parse_check(q_count(Model::$global_scope->variables_named('local')) === 0, 'File-local variable leaked into the global scope');
-	parse_check(q_count($parsed->collection->function_references) === 1, 'Call occurrence was not retained for resolution');
+	parse_check(q_count($parsed->collection->call_references) === 1, 'Call occurrence was not retained for resolution');
 	parse_check($function->preparation() === null, 'Parsing performed preparation');
 
 	// File executable statements exclude declarations; declaration movement alone does not change the body.

@@ -15,7 +15,7 @@ enum collected_name_kind
 	case variable_declaration;
 	case function_declaration;
 	case method_declaration;
-	case function_reference;
+	case call_reference;
 	case variable_reference;
 	case constant_reference;
 	case constant_declaration;
@@ -338,11 +338,11 @@ final class collected_variable extends collected_declaration
 	}
 }
 
-final class collected_function_reference extends collected_reference
+final class collected_call_reference extends collected_reference
 {
 	public function index_collection(Symbol_Collector $collector): void
 	{
-		$collector->index_function_reference($this);
+		$collector->index_call_reference($this);
 	}
 
 	/** @reference.source parsed_file.root (syntax graph) */
@@ -361,7 +361,7 @@ final class collected_function_reference extends collected_reference
 
 	public function kind(): collected_name_kind
 	{
-		return collected_name_kind::function_reference;
+		return collected_name_kind::call_reference;
 	}
 }
 
@@ -545,10 +545,10 @@ final class collected_file
 	 */
 	public array $constant_references /** vector<int> */ = [];
 	/**
-	 * Local indexes of direct named calls awaiting function lookup.
+	 * Local indexes of fixed named calls awaiting free/member target selection.
 	 * @storage.index collected_file.entries
 	 */
-	public array $function_references /** vector<int> */ = [];
+	public array $call_references /** vector<int> */ = [];
 	/**
 	 * Local indexes awaiting type lookup.
 	 * @storage.index collected_file.entries

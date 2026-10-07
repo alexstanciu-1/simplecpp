@@ -121,7 +121,8 @@ final class CPP_Generator
 				foreach ($methods as $method) {
 					$member_owner /** preparation_owner */ = $method->occurrence()->preparation_work_owner();
 					$member_fragment = $this->program->fragments[$member_owner];
-					$text .= "\t" . $member_fragment->prototype_text . ";\n";
+					$text .= ($method->require_preparation()->public_access ? "public:\n" : "private:\n")
+						. "\t" . $member_fragment->prototype_text . ";\n";
 					foreach ($member_fragment->headers as $header => $used) { $artifact_headers[$header] = true; }
 					foreach ($member_fragment->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
 				}

@@ -9,18 +9,18 @@ final class Reference_Cycles
 	private array $stack /** vector<int> */ = [];
 	private int $stack_size = 0;
 	private int $next_index = 0;
-	private Storage $cyclic /** Storage<collected_function> */;
+	private Storage $cyclic /** Storage<collected_source_callable> */;
 
 	public function __construct()
 	{
 		$this->vertices = new Storage /** Storage<reference_cycle_vertex> */();
-		$this->cyclic = new Storage /** Storage<collected_function> */();
+		$this->cyclic = new Storage /** Storage<collected_source_callable> */();
 	}
 
 	/** Use current collection indexes and settled targets, including unchanged bodies on incremental runs. */
-	public function find(Storage $sources /** Storage<collected_file> */): Storage /** Storage<collected_function> */
+	public function find(Storage $sources /** Storage<collected_file> */): Storage /** Storage<collected_source_callable> */
 	{
-		$by_definition = new \SplObjectStorage /** hash<int, shared<collected_function>> */();
+		$by_definition = new \SplObjectStorage /** hash<int, shared<collected_source_callable>> */();
 		$by_scope = new \SplObjectStorage /** hash<int, shared<scope>> */();
 		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
 		$has_reference_return = false;
@@ -36,8 +36,8 @@ final class Reference_Cycles
 				if ($entry->change_status === change_state::deleted) {
 					continue;
 				}
-				if ($entry instanceof collected_function) {
-					$definition = object_cast($entry, collected_function::class);
+				if ($entry instanceof collected_source_callable) {
+					$definition = object_cast($entry, collected_source_callable::class);
 					$index = q_count($vertices);
 					$by_definition[$definition] = $index;
 					$by_scope[$definition->callable_syntax()->require_body()->local_scope()] = $index;
@@ -55,21 +55,21 @@ final class Reference_Cycles
 				continue;
 			}
 			$entries /** Storage<collected_name> */ = $source->entries;
-			foreach ($source->function_references as $position)
+			foreach ($source->call_references as $position)
 			{
 				$entry = $entries[$position];
 				if ($entry->change_status === change_state::deleted) {
 					continue;
 				}
-				$call = object_cast($entry, collected_function_reference::class);
+				$call = object_cast($entry, collected_call_reference::class);
 				$lexical_scope /** nullable<scope> */ = weakref_get($call->scope);
 				while ($lexical_scope !== null)
 				{
 					$current_scope /** scope */ = $lexical_scope;
 					if (isset($by_scope[$current_scope])) {
 						$target = weakref_get($call->syntax()->require_call_preparation()->target);
-						if ($target instanceof collected_function) {
-							$callee = object_cast($target, collected_function::class);
+						if ($target instanceof collected_source_callable) {
+							$callee = object_cast($target, collected_source_callable::class);
 							$vertex = $vertices[$by_scope[$current_scope]];
 							$vertex->calls[] = $by_definition[$callee];
 						}
@@ -136,7 +136,7 @@ final class Reference_Cycles
 		if ((q_count($component) === 1) && !$self_call) {
 			return;
 		}
-		$cyclic /** Storage<collected_function> */ = $this->cyclic;
+		$cyclic /** Storage<collected_source_callable> */ = $this->cyclic;
 		foreach ($component as $member) {
 			$definition = $vertices[$member]->definition;
 			if ($definition->signature()->reference_return !== null) {

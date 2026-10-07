@@ -122,7 +122,7 @@ PHP-host compilation and generated programs, not a native compiler rebuild/conve
 
 Construction-default declaration rebuilds conservatively invalidate consumers; finer
 effective-equivalence reuse is optimization debt, not a second retained snapshot tree.
-Authored constructors with property-backed inputs are implemented below; ordinary methods remain next. PHP-style
+Authored constructors with property-backed inputs and bounded instance methods are implemented below. PHP-style
 property promotion is deferred to CH15-CTOR-SYNTAX-01. CH10-PERF-01 still precedes the
 chapter's native compiler build. Reference tags/data-set references remain non-blocking
 [CH15-DATA-REF-01](15_blocking_debt.md#ch15-data-ref-01--initialization-with-references-into-the-input-data-set).
@@ -204,12 +204,49 @@ programs (`/tmp/ch10-constructor-functions-final`) and 28 synthesized-data progr
 FPM socket startup was unavailable.
 
 Remaining constructor gates: reference/variadic parameters, inheritance/parent calls,
-promotion, general methods, receiver escape, and implicit default initialization of
+promotion, receiver escape, and implicit default initialization of
 inline records with authored constructors. For that last case use explicit `new C()`
 or eligible `data` notation; unsupported implicit sites reject during preparation,
 even if every authored input has a default. Required non-defaultable properties must
 use `set:` or a property default; body-only definite initialization is deferred.
 Indexed/compound property updates retain their existing separate gates.
+
+## Instance methods — 2026-10-07
+
+Implemented fixed public/private instance methods for classes and structs together.
+`$object->method(...)` and `$this->method(...)` use `call_node` with an optional
+receiver, neutral collected call occurrences, common source-callable work and the
+ordinary argument/default/return path. Property and method names remain separate;
+C++ uses separate field/method names and emits method bodies out of line.
+
+Preparation owns visibility, receiver access and lifetime admission. Shared receivers
+are retained/checked before arguments; inline whole-storage receivers are borrowed,
+not copied. Read-only receivers reject until a declared read-only-method contract
+exists. Unique/weak receivers, projected inline receivers and inline temporaries
+remain gated; explicit weak locking feeds the shared path. The authoritative
+[instance-method contract](../../../../specs/instance_methods_v0_2.md) and
+[CH15 receiver debt](15_blocking_debt.md#ch15-method-lifetime-01--remaining-instance-receiver-lifetimes)
+record the boundary. Ordinary methods do not accept constructor `set:` parameters.
+
+Legacy review: CLASS-CALL-001/004 and CLASS-MEMBER-001/014/016 retain fixed calls,
+visibility, defaults and out-of-line C++ definitions. Unlike type-blind v0.1, shared
+preparation selects the method and rejects unsupported access/lifetimes before C++.
+The existing arithmetic operand-order gates are unchanged; materialize property/call
+reads into locals where required rather than inferring method-body effects.
+
+Proofs: `/tmp/ch10-methods-final` passes 26 generated programs without PCH, including
+shared retention during argument-side handle reset, receiver/argument ordering,
+checked absence, constructor calls, recursive methods, private peer access, storage
+variants and cross-file incremental/default/visibility recovery. Model regression
+`/tmp/ch10-methods-model-01` passes 15 PHP suites. Final focused checks
+(`/tmp/ch10-methods-php-final`, 9 suites) also cover method retirement/re-addition and
+method-mediated reference-return cycle rejection. Constructor regression
+(`/tmp/ch10-methods-constructors`) passes 45 generated programs. These prove PHP-host compilation
+and generated execution, not a native compiler rebuild.
+
+Remaining groups: static methods and member constants, further method parameter and
+reference-return support, then separately agreed inheritance/interface/trait behavior.
+CH10-PERF-01 still precedes the chapter's native build.
 
 ## Chapter 09 carryovers
 
@@ -246,10 +283,10 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-009](#class-prop-009) | pending-discussion | `$this->y = 1;` where `y` is undeclared | unverified | unverified | deferred | — |
 | [CLASS-PROP-010](#class-prop-010) | pending-discussion | `$this->$name = 1;` | unverified | unverified | deferred | — |
 | [CLASS-PROP-011](#class-prop-011) | pending-discussion | `class A { public int $x = 1; public static int $s = 2; }` | unverified | unverified | deferred | — |
-| [CLASS-CALL-001](#class-call-001) | pending-discussion | `$a->f(1);` | unverified | unverified | deferred | — |
+| [CLASS-CALL-001](#class-call-001) | supported-bounded | `$a->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-CALL-002](#class-call-002) | pending-discussion | `A::f(1);` | unverified | unverified | deferred | — |
 | [CLASS-CALL-003](#class-call-003) | pending-discussion | `$a::f(1);` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLASS-CALL-004](#class-call-004) | pending-discussion | `$this->f(1);` | unverified | unverified | deferred | — |
+| [CLASS-CALL-004](#class-call-004) | supported-bounded | `$this->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-CALL-005](#class-call-005) | pending-discussion | `parent::f(1);` | unverified | unverified | deferred | — |
 | [CLASS-CALL-005A](#class-call-005a) | pending-discussion | `static::f(1);`<br>`static::f(1)` | unverified | unverified | deferred | Source variants need reconciliation |
 | [CLASS-CALL-006](#class-call-006) | pending-discussion | `function f(): int { return 1; }` | unverified | unverified | deferred | — |
@@ -265,7 +302,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-CONST-003](#class-const-003) | pending-discussion | `self::X` | unverified | unverified | deferred | — |
 | [CLASS-CONST-004](#class-const-004) | pending-discussion | `parent::X` | unverified | unverified | deferred | — |
 | [CLASS-CONST-005](#class-const-005) | pending-discussion | `static::X` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-001](#class-member-001) | pending-discussion | `function f(int $a): int { return $a; }` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-MEMBER-001](#class-member-001) | supported-bounded | `function f(int $a): int { return $a; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-001B](#class-member-001b) | pending-discussion | `function f(vector<int> $a): int { return 1; }` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [CLASS-MEMBER-002](#class-member-002) | pending-discussion | `function f(int $a): int { return $a; }` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-003](#class-member-003) | pending-discussion | `function f(int $value): int { return $value; }` | unverified | unverified | deferred | — |
@@ -279,9 +316,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-MEMBER-011](#class-member-011) | supported-bounded | `function __construct(int $x) { $this->x = $x; }` | prepared | verified | deferred | Shared callable lifecycle and out-of-line body; also `set:` |
 | [CLASS-MEMBER-012](#class-member-012) | pending-discussion | `function __destruct() {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-013](#class-member-013) | pending-discussion | `interface I { function f(int $a): int; }` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-014](#class-member-014) | pending-discussion | `private function f(): int { return 1; }` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-MEMBER-014](#class-member-014) | supported-bounded | `private function f(): int { return 1; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-015](#class-member-015) | pending-discussion | `function f(int $a): int {} function f(string $a): int {}` | unverified | unverified | deferred | — |
-| [CLASS-MEMBER-016](#class-member-016) | pending-discussion | `function f(int $a = 1): int { return $a; }` | unverified | unverified | deferred | — |
+| [CLASS-MEMBER-016](#class-member-016) | supported-bounded | `function f(int $a = 1): int { return $a; }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-MEMBER-017](#class-member-017) | pending-discussion | `function f(int ...$a): int { return 1; }` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-018A](#class-member-018a) | pending-discussion | `function f(int &$a): void {}` | unverified | unverified | deferred | — |
 | [CLASS-MEMBER-018B](#class-member-018b) | pending-discussion | `function &f(): int {}` | unverified | unverified | deferred | — |
@@ -292,16 +329,16 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-PROP-002B](#class-prop-002b) | pending-discussion | `self::$x` | unverified | unverified | deferred | — |
 | [CLASS-PROP-002C](#class-prop-002c) | pending-discussion | `parent::$x` | unverified | unverified | deferred | — |
 | [CLASS-PROP-002D](#class-prop-002d) | pending-discussion | `static::$x` | unverified | unverified | deferred | — |
-| [CLASS-METHOD-001](#class-method-001) | pending-discussion | `class A { function f(): int { return 1; } }` | unverified | unverified | deferred | — |
+| [CLASS-METHOD-001](#class-method-001) | supported-bounded | `class A { function f(): int { return 1; } }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-METHOD-002](#class-method-002) | pending-discussion | `class A { static function f(int $a): int { return $a; } }` | unverified | unverified | deferred | — |
-| [CLASS-THIS-001](#class-this-001) | pending-discussion | `class A { int $x; function f(): int { return $this->x; } }` | unverified | unverified | deferred | — |
+| [CLASS-THIS-001](#class-this-001) | supported-bounded | `class A { int $x; function f(): int { return $this->x; } }` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [CLASS-NEW-001](#class-new-001) | pending-discussion | `$a = new A();` | unverified | unverified | deferred | — |
 | [CLASS-NEW-002](#class-new-002) | pending-discussion | `$a = new \A\B();` | unverified | unverified | deferred | — |
 | [CLASS-CONSTRUCT-001](#class-construct-001) | supported-bounded | `class A { function __construct(int $x) { $this->x = $x; } }` | prepared | verified | deferred | Public constructor, declared properties, out-of-line body; no return type |
 | [OBJ-PROP-READ-001](#obj-prop-read-001) | pending-discussion | `$a = $obj->x;` | unverified | unverified | deferred | — |
 | [OBJ-PROP-WRITE-001](#obj-prop-write-001) | pending-discussion | `$obj->x = 1;` | unverified | unverified | deferred | — |
-| [OBJ-METHOD-CALL-001](#obj-method-call-001) | pending-discussion | `$a = $obj->f();` | unverified | unverified | deferred | — |
-| [OBJ-METHOD-CALL-002](#obj-method-call-002) | pending-discussion | `$a = $obj->f(1);` | unverified | unverified | deferred | — |
+| [OBJ-METHOD-CALL-001](#obj-method-call-001) | supported-bounded | `$a = $obj->f();` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
+| [OBJ-METHOD-CALL-002](#obj-method-call-002) | supported-bounded | `$a = $obj->f(1);` | prepared | verified | deferred | Fixed instance slice; receiver lifetime gates apply |
 | [TYPE-VAR-003](#type-var-003) | pending-discussion | `$x A = new A();` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-VAR-004](#type-var-004) | pending-discussion | `$x ?A = null;` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [TYPE-PARAM-004](#type-param-004) | pending-discussion | `function f(A $a, ?B $b, I $i): A { return $a; }` | unverified | unverified | deferred | — |

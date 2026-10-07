@@ -94,13 +94,19 @@ observe their declaring record and are indexed separately from free functions an
 properties. Common signature/body work and `prepared_source_callable` use the
 shared callable syntax accessor. The common AST owns attached signature facts.
 Selection, reset and retirement cover both roles without a second member lifecycle.
-The bounded constructor slice uses this lifecycle; ordinary method calls remain gated.
+Constructors and bounded instance methods use this lifecycle. `call_node` owns an
+optional receiver and shares `collected_call_reference`/`call_references` with free
+calls. `prepared_record` indexes collected member identities; member signatures own
+visibility and contracts. Member-set changes invalidate lookup consumers without
+making a record depend on its methods' signatures. Prepared calls retain an optional
+receiver-lifetime decision (shared retention, inline borrowing or current instance).
+The existing reference-cycle analysis includes methods without another retained graph.
 Record syntax changes describe property/modifier/member membership independently of
 method contents. Each method's signature and body retain their own change flags.
 This prevents body-only edits from rebuilding record defaults and invalidating callers.
 
 `callable_definition_i` is the ordinary lookup identity role. Its fixed-signature
-child `callable_target_i` is implemented by the existing `collected_function` identity
+child `callable_target_i` is implemented by `collected_source_callable` identities
 and by `registered_function` and `registered_static_factory`. Their `signature()` accessor only reads attached
 contracts. `Call_Preparation::require_signature` completes source declarations and
 registers the consumer dependency; installed runtime targets already own a complete

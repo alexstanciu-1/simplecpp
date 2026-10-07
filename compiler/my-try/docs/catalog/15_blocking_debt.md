@@ -50,6 +50,23 @@ evaluation order and incremental signature-name invalidation.
 
 ## Non-blocking follow-ups
 
+### CH15-METHOD-LIFETIME-01 — remaining instance receiver lifetimes
+
+Recorded 2026-10-07 after the approved bounded instance-method slice. Unsupported
+paths remain preparation errors, so this follow-up does not permit unsafe calls or
+block the supported shared/whole-inline path. Review unique-owned receivers,
+projected inline receivers and inline temporaries, plus a declared read-only-method
+contract. Weak receivers require explicit locking for now.
+
+Receiver selection precedes arguments. For example,
+`$owner->method(consume(move($owner)))` must not retain a dangling raw receiver or
+silently select a replacement object. Shared calls retain the selected object;
+unique/projection cases need call-scoped lifetime/invalidation guarantees before
+admission. Assess compile-time borrowing versus checked runtime protection, including
+aliases, nested calls, replacement and exceptions. Do not infer a read-only API from
+the current method body. Preserve the shared callable path; do not add family-specific
+call implementations or change ownership-wrapper semantics as a workaround.
+
 ### CH15-CTOR-SYNTAX-01 — deferred constructor property promotion
 
 Recorded by user request on 2026-10-07. **Non-blocking for Chapter 10 and v0.2.**

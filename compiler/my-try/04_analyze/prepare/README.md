@@ -17,6 +17,7 @@ No separate resolution pass precedes it. LLVM preparation remains
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
 | `semantics/constructors.php` | Public constructor contracts, property-backed parameters, receivers and shared named construction inputs |
+| `semantics/methods.php` | Shared instance context, ordinary method admission/selection, visibility and receiver lifetime decisions |
 | `semantics/enums.php`, `data/enums.php` | Enum backing/ranges, compact storage, immutable case snapshots and selected references |
 | `semantics/defaults.php` | Parameter defaults; property constants and data constructions with constant leaves; conversions and value equivalence |
 | `semantics/bodies.php` | Statement order, locals, returns and parameter seeding |

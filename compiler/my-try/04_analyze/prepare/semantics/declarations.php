@@ -8,22 +8,27 @@ final class Declaration_Preparation
 	/** Publish a complete signature before any body so calls do not depend on source order. */
 	public static function prepare_callable(callable_declaration_node $syntax, preparation_context $context): void
 	{
-		if ($syntax instanceof method_node) {
+		if (($syntax instanceof method_node) && ($syntax->name === '__construct')) {
 			Constructor_Preparation::signature(object_cast($syntax, method_node::class), $context);
 			return;
 		}
-		$declaration = $syntax->occurrence();
-		$declaring_scope = object_cast(weakref_get($declaration->scope), scope::class);
-		// Observe the name pool so adding/removing an unused duplicate invalidates this signature.
-		$candidates = Observed_Lookup::functions($declaring_scope, $declaration->name, $context);
-		if (q_count($candidates) !== 1) {
-			throw new \RuntimeException('S2S duplicate function name: ' . $declaration->name);
+		$facts = new prepared_source_callable();
+		if ($syntax instanceof method_node) {
+			Method_Preparation::signature(object_cast($syntax, method_node::class), $facts, $context);
+		}
+		else {
+			$declaration = $syntax->occurrence();
+			$declaring_scope = object_cast(weakref_get($declaration->scope), scope::class);
+			// Observe the name pool so adding/removing an unused duplicate invalidates this signature.
+			$candidates = Observed_Lookup::functions($declaring_scope, $declaration->name, $context);
+			if (q_count($candidates) !== 1) {
+				throw new \RuntimeException('S2S duplicate function name: ' . $declaration->name);
+			}
 		}
 		if (q_count($syntax->template_parameters) !== 0) {
 			throw new \RuntimeException('S2S function templates are deferred');
 		}
 
-		$facts = new prepared_source_callable();
 		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
@@ -96,9 +101,12 @@ final class Declaration_Preparation
 			$facts->data_initializable = true;
 		}
 		foreach ($methods as $method) {
-			if ($method->name !== '__construct') {
-				throw new \RuntimeException('Type member semantics are not supported by this plain-record slice; only constructors are enabled');
+			$members /** Key_Storage_List<collected_method> */ = $facts->methods;
+			if (q_count($members->named($method->name)) !== 0) {
+				throw new \RuntimeException($method->name === '__construct' ? 'Duplicate constructor' : 'Duplicate method: ' . $method->name);
 			}
+			$members->add($method->name, object_cast($method->occurrence(), collected_method::class));
+			if ($method->name !== '__construct') { continue; }
 			if ($facts->constructor !== null) { throw new \RuntimeException('Duplicate constructor'); }
 			$facts->constructor = object_cast($method->occurrence(), collected_method::class);
 		}
