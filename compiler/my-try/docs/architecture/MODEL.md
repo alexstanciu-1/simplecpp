@@ -88,6 +88,14 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ### Callable contracts
 
+Source functions and methods share `collected_source_callable`; final
+`collected_function` and `collected_method` preserve distinct lookup roles. Members
+observe their declaring record and are indexed separately from free functions and
+properties. Common signature/body work and `prepared_source_callable` use the
+shared callable syntax accessor. The common AST owns attached signature facts.
+Selection, reset and retirement cover both roles without a second member lifecycle.
+Member execution remains gated until the constructor slice supplies its semantics.
+
 `callable_definition_i` is the ordinary lookup identity role. Its fixed-signature
 child `callable_target_i` is implemented by the existing `collected_function` identity
 and by `registered_function` and `registered_static_factory`. Their `signature()` accessor only reads attached
@@ -127,7 +135,7 @@ parameter or general reflection type is manufactured for compile-time inputs.
 Parameter `storage_access` is independent of `passing_mode` and canonical type
 identity. Syntax records explicit const access; declaration preparation publishes it
 in the shared parameter contract and signature equivalence observes changes.
-`prepared_function` owns the signature plus its source parameter facts;
+`prepared_source_callable` owns the signature plus its source parameter facts;
 `prepared_parameter` links its collected storage identity to the same parameter
 contract (no duplicated type/mode/default state). `prepared_storage::storage_type()`
 provides the common local/field/parameter storage query. Contracts are populated

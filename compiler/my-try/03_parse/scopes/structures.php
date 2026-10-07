@@ -21,6 +21,8 @@ final class scope
 	private Key_Storage_List $variables /** Key_Storage_List<collected_name> */;
 	/** @storage.reference collected_file.entries @reference.weak */
 	private Key_Storage_List $functions /** Key_Storage_List<collected_function> */;
+	/** Member-callable index; never contributes to unqualified free-function lookup. */
+	private Key_Storage_List $methods /** Key_Storage_List<collected_method> */;
 	/** @storage.reference Model.runtime_callables @reference.weak */
 	private Key_Storage_List $runtime_functions /** Key_Storage_List<registered_function> */;
 	/** Language scope owns compiler-provided function identities. */
@@ -36,6 +38,7 @@ final class scope
 		$this->variables = new Key_Storage_List /** Key_Storage_List<collected_name> */();
 		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
+		$this->methods = new Key_Storage_List /** Key_Storage_List<collected_method> */();
 		$this->runtime_functions = new Key_Storage_List /** Key_Storage_List<registered_function> */();
 		$this->compiler_functions = new Keyed_Storage /** Keyed_Storage<compiler_function_definition> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition_i> */();
@@ -131,6 +134,11 @@ final class scope
 			$function = object_cast($entry, collected_function::class);
 			$functions->add($function->name, $function);
 		}
+		elseif ($entry instanceof collected_method) {
+			$methods /** Key_Storage_List<collected_method> */ = $this->methods;
+			$method = object_cast($entry, collected_method::class);
+			$methods->add($method->name, $method);
+		}
 		elseif ($entry instanceof collected_constant) {
 			$this->register_constant(object_cast($entry, collected_constant::class));
 		}
@@ -166,6 +174,10 @@ final class scope
 		$types /** Key_Storage_List<type_definition_i> */ = $this->types;
 		if ($entry instanceof collected_function) {
 			$functions->remove($entry->name, object_cast($entry, collected_function::class));
+		}
+		if ($entry instanceof collected_method) {
+			$methods /** Key_Storage_List<collected_method> */ = $this->methods;
+			$methods->remove($entry->name, object_cast($entry, collected_method::class));
 		}
 		if ($entry instanceof collected_constant) {
 			$constants /** Key_Storage_List<constant_target_i> */ = $this->constants;
@@ -210,6 +222,12 @@ final class scope
 	}
 
 	/** Return a typed snapshot; an absent name has no candidates. */
+	public function methods_named(string $name): array /** vector<collected_method> */
+	{
+		$items /** Key_Storage_List<collected_method> */ = $this->methods;
+		return $items->named($name);
+	}
+
 	public function functions_named(string $name): array /** vector<collected_function> */
 	{
 		$items /** Key_Storage_List<collected_function> */ = $this->functions;
@@ -293,6 +311,10 @@ final class scope
 		$variables /** Key_Storage_List<collected_name> */ = $this->variables;
 		foreach ($functions->items() as $function) {
 			$result[] = $function;
+		}
+		$methods /** Key_Storage_List<collected_method> */ = $this->methods;
+		foreach ($methods->items() as $method) {
+			$result[] = $method;
 		}
 		foreach ($variables->items() as $variable) {
 			$result[] = $variable;

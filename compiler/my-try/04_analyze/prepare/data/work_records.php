@@ -70,11 +70,11 @@ abstract class declaration_work extends preparation_owner
 	}
 }
 
-final class function_signature_work extends declaration_work
+final class source_callable_signature_work extends declaration_work
 {
-	private collected_function $definition;
+	private collected_source_callable $definition;
 
-	public function __construct(collected_function $definition)
+	public function __construct(collected_source_callable $definition)
 	{
 		parent::__construct($definition->collection);
 		$this->definition = $definition;
@@ -85,7 +85,7 @@ final class function_signature_work extends declaration_work
 		return $this->definition;
 	}
 
-	public function function_definition(): collected_function
+	public function callable_definition(): collected_source_callable
 	{
 		return $this->definition;
 	}
@@ -170,13 +170,13 @@ abstract class body_work extends preparation_owner
 	}
 }
 
-final class function_body_work extends body_work
+final class source_callable_body_work extends body_work
 {
-	private collected_function $definition;
+	private collected_source_callable $definition;
 
-	public function __construct(collected_function $definition)
+	public function __construct(collected_source_callable $definition)
 	{
-		parent::__construct($definition->collection, $definition->syntax()->require_body());
+		parent::__construct($definition->collection, $definition->callable_syntax()->require_body());
 		$this->definition = $definition;
 	}
 
@@ -185,7 +185,7 @@ final class function_body_work extends body_work
 		return $this->definition;
 	}
 
-	public function function_definition(): collected_function
+	public function callable_definition(): collected_source_callable
 	{
 		return $this->definition;
 	}

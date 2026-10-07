@@ -9,7 +9,7 @@ final class Preparation_Worker
 	/** A failed item is attempted at most once by this invocation, but stays changed for the next. */
 	private \SplObjectStorage $attempt_failed /** hash<bool, shared<preparation_owner>> */;
 	private \SplObjectStorage $declarations /** hash<bool, shared<declaration_work>> */;
-	private \SplObjectStorage $function_bodies /** hash<bool, shared<function_body_work>> */;
+	private \SplObjectStorage $callable_bodies /** hash<bool, shared<source_callable_body_work>> */;
 	private \SplObjectStorage $file_bodies /** hash<bool, shared<file_body_work>> */;
 	private \SplObjectStorage $owners /** hash<bool, shared<preparation_owner>> */;
 
@@ -19,7 +19,7 @@ final class Preparation_Worker
 		$this->language = $language;
 		$this->attempt_failed = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		$this->declarations = new \SplObjectStorage /** hash<bool, shared<declaration_work>> */();
-		$this->function_bodies = new \SplObjectStorage /** hash<bool, shared<function_body_work>> */();
+		$this->callable_bodies = new \SplObjectStorage /** hash<bool, shared<source_callable_body_work>> */();
 		$this->file_bodies = new \SplObjectStorage /** hash<bool, shared<file_body_work>> */();
 		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 	}
@@ -57,7 +57,7 @@ final class Preparation_Worker
 				break;
 			}
 		}
-		foreach ($this->function_bodies as $owner /** @object-key */) {
+		foreach ($this->callable_bodies as $owner /** @object-key */) {
 			$this->body($owner);
 		}
 		foreach ($this->file_bodies as $owner /** @object-key */) {
@@ -68,7 +68,7 @@ final class Preparation_Worker
 		// Only settled call facts participate; failure uses ordinary retained retry/publication guards.
 		$cyclic = (new Reference_Cycles())->find($sources);
 		foreach ($cyclic as $definition) {
-			$body_owner /** body_work */ = $definition->syntax()->require_body()->work();
+			$body_owner /** body_work */ = $definition->callable_syntax()->require_body()->work();
 			$this->failure($body_owner, 'S2S recursive reference-return cycles are deferred: ' . $definition->name);
 		}
 		$this->require_success();
@@ -148,8 +148,8 @@ final class Preparation_Worker
 				if ($entry->preparation_work_owner() !== null) {
 					$result[$entry->preparation_work_owner()] = true;
 				}
-				if ($entry instanceof collected_function) {
-					$function = object_cast($entry, collected_function::class)->syntax();
+				if ($entry instanceof collected_source_callable) {
+					$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
 					if ($function->has_parsed_body()) {
 						if ($function->require_body()->work() !== null) {
 							$result[$function->require_body()->work()] = true;
@@ -206,8 +206,8 @@ final class Preparation_Worker
 		$this->select_owner($file_body);
 		$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
 		foreach ($nodes as $node) {
-			if ($node instanceof function_node) {
-				$this->select_function(object_cast($node, function_node::class));
+			if ($node instanceof callable_declaration_node) {
+				$this->select_callable(object_cast($node, callable_declaration_node::class));
 			}
 			elseif ($node instanceof type_declaration_node) {
 				$this->select_record(object_cast($node, type_declaration_node::class));
@@ -223,12 +223,12 @@ final class Preparation_Worker
 	}
 
 	/** Signature and implementation remain independent work identities. */
-	public function select_function(function_node $node): void
+	public function select_callable(callable_declaration_node $node): void
 	{
-		$entry = object_cast($node->occurrence(), collected_function::class);
-		$this->select_owner($this->function_owner($entry));
+		$entry = object_cast($node->occurrence(), collected_source_callable::class);
+		$this->select_owner($this->callable_owner($entry));
 		if ($node->require_body()->work() === null) {
-			$node->require_body()->attach_work(new function_body_work($entry));
+			$node->require_body()->attach_work(new source_callable_body_work($entry));
 		}
 		$body /** body_work */ = $node->require_body()->work();
 		$this->select_owner($body);
@@ -238,6 +238,10 @@ final class Preparation_Worker
 	{
 		$entry = object_cast($node->occurrence(), collected_record::class);
 		$this->select_owner($this->record_owner($entry));
+		$methods /** Storage<method_node> */ = $node->methods;
+		foreach ($methods as $method) {
+			$this->select_callable($method);
+		}
 	}
 
 	private function select_owner(preparation_owner $owner): void
@@ -266,8 +270,8 @@ final class Preparation_Worker
 		if ($owner instanceof declaration_work) {
 			$this->enqueue_declaration(object_cast($owner, declaration_work::class));
 		}
-		elseif ($owner instanceof function_body_work) {
-			$this->enqueue_function_body(object_cast($owner, function_body_work::class));
+		elseif ($owner instanceof source_callable_body_work) {
+			$this->enqueue_callable_body(object_cast($owner, source_callable_body_work::class));
 		}
 		elseif ($owner instanceof file_body_work) {
 			$this->enqueue_file_body(object_cast($owner, file_body_work::class));
@@ -297,10 +301,10 @@ final class Preparation_Worker
 		}
 	}
 
-	private function enqueue_function_body(function_body_work $owner): void
+	private function enqueue_callable_body(source_callable_body_work $owner): void
 	{
 		if ($this->queue_ready($owner)) {
-			$this->function_bodies[$owner] = true;
+			$this->callable_bodies[$owner] = true;
 		}
 	}
 
@@ -313,8 +317,8 @@ final class Preparation_Worker
 
 	public function declaration_owner(collected_definition $entry): declaration_work
 	{
-		if ($entry instanceof collected_function) {
-			return $this->function_owner(object_cast($entry, collected_function::class));
+		if ($entry instanceof collected_source_callable) {
+			return $this->callable_owner(object_cast($entry, collected_source_callable::class));
 		}
 		if ($entry instanceof collected_record) {
 			return $this->record_owner(object_cast($entry, collected_record::class));
@@ -332,10 +336,10 @@ final class Preparation_Worker
 		throw new \RuntimeException('Preparation work is not supported for this declaration');
 	}
 
-	public function function_owner(collected_function $entry): declaration_work
+	public function callable_owner(collected_source_callable $entry): declaration_work
 	{
 		if ($entry->preparation === null) {
-			$entry->preparation = new function_signature_work($entry);
+			$entry->preparation = new source_callable_signature_work($entry);
 		}
 		return $entry->preparation;
 	}
@@ -471,8 +475,8 @@ final class Preparation_Worker
 	/** Dispatch by retained work role; records carry identities, not processing hooks. */
 	private function rebuild_declaration(declaration_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
 	{
-		if ($owner instanceof function_signature_work) {
-			return $this->prepare_function_signature(object_cast($owner, function_signature_work::class), $context);
+		if ($owner instanceof source_callable_signature_work) {
+			return $this->prepare_callable_signature(object_cast($owner, source_callable_signature_work::class), $context);
 		}
 		if ($owner instanceof record_definition_work) {
 			return $this->prepare_record_definition(object_cast($owner, record_definition_work::class), $context, $previous);
@@ -500,8 +504,8 @@ final class Preparation_Worker
 
 	private function settle_members(declaration_work $owner): void
 	{
-		if ($owner instanceof function_signature_work) {
-			$this->settle_parameters(object_cast($owner, function_signature_work::class)->function_definition());
+		if ($owner instanceof source_callable_signature_work) {
+			$this->settle_parameters(object_cast($owner, source_callable_signature_work::class)->callable_definition());
 		}
 		elseif ($owner instanceof record_definition_work) {
 			$this->settle_fields(object_cast($owner, record_definition_work::class)->record_definition());
@@ -514,8 +518,8 @@ final class Preparation_Worker
 
 	private function rebuild_body(body_work $owner, preparation_context $context): void
 	{
-		if ($owner instanceof function_body_work) {
-			$this->prepare_function_body(object_cast($owner, function_body_work::class), $context);
+		if ($owner instanceof source_callable_body_work) {
+			$this->prepare_callable_body(object_cast($owner, source_callable_body_work::class), $context);
 		}
 		elseif ($owner instanceof file_body_work) {
 			$this->prepare_file_body(object_cast($owner, file_body_work::class), $context);
@@ -533,14 +537,14 @@ final class Preparation_Worker
 	}
 
 	/** Preserve parameter fact identities when the effective signature is unchanged. */
-	private function prepare_function_signature(function_signature_work $owner, preparation_context $context): bool
+	private function prepare_callable_signature(source_callable_signature_work $owner, preparation_context $context): bool
 	{
-		$syntax = $owner->function_definition()->syntax();
+		$syntax = $owner->callable_definition()->callable_syntax();
 		$old = $syntax->preparation();
-		Declaration_Preparation::prepare_function($syntax, $context);
+		Declaration_Preparation::prepare_callable($syntax, $context);
 		$changed = !Preparation_Changes::same_signature($old, $syntax->require_preparation());
 		if (!$changed) {
-			$previous /** prepared_function */ = $old;
+			$previous /** prepared_source_callable */ = $old;
 			$syntax->set_preparation($previous);
 			Preparation_Changes::restore_parameters($syntax, $previous);
 		}
@@ -568,10 +572,10 @@ final class Preparation_Worker
 	}
 
 	/** Demand the signature before replacing selected body facts. */
-	private function prepare_function_body(function_body_work $owner, preparation_context $context): void
+	private function prepare_callable_body(source_callable_body_work $owner, preparation_context $context): void
 	{
-		$entry = $owner->function_definition();
-		$syntax = $entry->syntax();
+		$entry = $owner->callable_definition();
+		$syntax = $entry->callable_syntax();
 		$this->require_declaration($owner, $entry);
 		Preparation_Cleanup::tree($syntax->require_body());
 		Body_Preparation::prepare_body($syntax, $context);
@@ -587,10 +591,10 @@ final class Preparation_Worker
 	}
 
 	/** Members settle with their enclosing declaration, never during parsing. */
-	private function settle_parameters(collected_function $entry): void
+	private function settle_parameters(collected_source_callable $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
-		$parameters /** Storage<parameter_node> */ = $entry->syntax()->parameters;
+		$parameters /** Storage<parameter_node> */ = $entry->callable_syntax()->parameters;
 		foreach ($parameters as $parameter) {
 			$parameter->occurrence()->change_status = change_state::unchanged;
 		}
@@ -756,8 +760,8 @@ final class Preparation_Worker
 			if ($entry->preparation_work_owner() !== null) {
 				object_cast($entry, collected_definition::class)->preparation = null;
 			}
-			if ($entry instanceof collected_function) {
-				$function = object_cast($entry, collected_function::class)->syntax();
+			if ($entry instanceof collected_source_callable) {
+				$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
 				if ($function->has_parsed_body()) {
 					$function->require_body()->detach_work();
 				}
@@ -790,9 +794,9 @@ final class Preparation_Worker
 		unset($this->declarations[$owner]);
 	}
 
-	private function retire_function_body(function_body_work $owner): void
+	private function retire_callable_body(source_callable_body_work $owner): void
 	{
-		unset($this->function_bodies[$owner]);
+		unset($this->callable_bodies[$owner]);
 	}
 
 	private function retire_file_body(file_body_work $owner): void
@@ -808,8 +812,8 @@ final class Preparation_Worker
 		if ($owner instanceof declaration_work) {
 			$this->retire_declaration(object_cast($owner, declaration_work::class));
 		}
-		elseif ($owner instanceof function_body_work) {
-			$this->retire_function_body(object_cast($owner, function_body_work::class));
+		elseif ($owner instanceof source_callable_body_work) {
+			$this->retire_callable_body(object_cast($owner, source_callable_body_work::class));
 		}
 		elseif ($owner instanceof file_body_work) {
 			$this->retire_file_body(object_cast($owner, file_body_work::class));

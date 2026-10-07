@@ -14,6 +14,7 @@ enum collected_name_kind
 	case field_reference;
 	case variable_declaration;
 	case function_declaration;
+	case method_declaration;
 	case function_reference;
 	case variable_reference;
 	case constant_reference;
@@ -139,18 +140,24 @@ abstract class collected_definition extends collected_declaration implements pre
 abstract class collected_reference extends collected_name {
 }
 
-final class collected_function extends collected_definition implements callable_target_i
+/** Shared source identity; semantic work never needs to pretend a member is a free function. */
+abstract class collected_source_callable extends collected_definition implements callable_target_i
 {
 	/** @reference.source parsed_file.root (syntax graph) */
-	private function_node $syntax_node;
+	private callable_declaration_node $syntax_node;
 
-	public function __construct(collected_file $collection, function_node $node)
+	public function __construct(collected_file $collection, callable_declaration_node $node)
 	{
 		parent::__construct($collection);
 		$this->syntax_node = $node;
 	}
 
-	public function syntax(): function_node
+	public function syntax(): ast_node
+	{
+		return $this->syntax_node;
+	}
+
+	public function callable_syntax(): callable_declaration_node
 	{
 		return $this->syntax_node;
 	}
@@ -159,10 +166,41 @@ final class collected_function extends collected_definition implements callable_
 	{
 		return $this->syntax_node->require_preparation()->signature;
 	}
+}
 
+final class collected_function extends collected_source_callable
+{
 	public function kind(): collected_name_kind
 	{
 		return collected_name_kind::function_declaration;
+	}
+}
+
+/** The type owns member membership; the method owns its independent signature and body work. */
+final class collected_method extends collected_source_callable
+{
+	/** @reference.source type_declaration_node occurrence; no additional owner */
+	private collected_record $record_owner /** weak<collected_record> */;
+
+	public function __construct(collected_file $collection, method_node $node, collected_record $record)
+	{
+		parent::__construct($collection, $node);
+		$this->record_owner = $record;
+	}
+
+	public function declaring_record(): collected_record
+	{
+		return weakref_get($this->record_owner);
+	}
+
+	public function qualified_name(): string
+	{
+		return $this->declaring_record()->qualified_name() . '::' . $this->name;
+	}
+
+	public function kind(): collected_name_kind
+	{
+		return collected_name_kind::method_declaration;
 	}
 }
 

@@ -6,8 +6,11 @@ namespace scpp\compiler;
 final class Declaration_Preparation
 {
 	/** Publish a complete signature before any body so calls do not depend on source order. */
-	public static function prepare_function(function_node $syntax, preparation_context $context): void
+	public static function prepare_callable(callable_declaration_node $syntax, preparation_context $context): void
 	{
+		if (!($syntax instanceof function_node)) {
+			throw new \RuntimeException('Source member signatures are not enabled yet');
+		}
 		$declaration = $syntax->occurrence();
 		$declaring_scope = object_cast(weakref_get($declaration->scope), scope::class);
 		// Observe the name pool so adding/removing an unused duplicate invalidates this signature.
@@ -19,7 +22,7 @@ final class Declaration_Preparation
 			throw new \RuntimeException('S2S function templates are deferred');
 		}
 
-		$facts = new prepared_function();
+		$facts = new prepared_source_callable();
 		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;

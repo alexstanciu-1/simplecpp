@@ -31,7 +31,18 @@ final class Symbol_Collector
 	{
 		foreach ($scope->functions_named($name) as $entry) {
 			if ($this->unseen($entry)) {
-				return $entry->syntax();
+				return object_cast($entry->callable_syntax(), function_node::class);
+			}
+		}
+		return null;
+	}
+
+	/** Members reconcile only inside the declaring type, independently of properties. */
+	public function previous_method(scope $scope, string $name): ?method_node
+	{
+		foreach ($scope->methods_named($name) as $entry) {
+			if ($this->unseen($entry)) {
+				return object_cast($entry->callable_syntax(), method_node::class);
 			}
 		}
 		return null;
@@ -131,6 +142,17 @@ final class Symbol_Collector
 		$this->append($entry, $scope, $node->name, $index);
 		$scope->register($entry);
 		$this->publish($entry, $scope);
+	}
+
+	/** Member registration shares retained identities but never namespace publication. */
+	public function collect_method(method_node $node, collected_record $record, int $index): void
+	{
+		if ($this->reuse($node, $index)) { return; }
+		$entry = new collected_method($this->collection, $node, $record);
+		$entry->retained_symbol = true;
+		$member_scope = $record->syntax()->member_scope();
+		$this->append($entry, $member_scope, $node->name, $index);
+		$member_scope->register($entry);
 	}
 
 	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */

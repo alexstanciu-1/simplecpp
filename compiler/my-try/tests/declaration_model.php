@@ -145,6 +145,10 @@ declaration_model_check($free->require_body() === $body, 'Migration lost retaine
 declaration_model_check(object_cast(Model::$global_scope->source_types_named('Box')[0], collected_record::class)->syntax() === $record, 'Migration lost type identity');
 
 // New modeled members must not disappear silently through the old struct preparation path.
+$member_collection = $record->occurrence()->collection;
+$collector = new Symbol_Collector($member_collection, $member_collection->token_snapshot(), $source->parsed->root_scope(), null, $member_collection->revision);
+$collector->collect_method($method, $record->occurrence(), $record->start_token());
+$method->set_parsed_body(new function_body_node(new scope()));
 $record->methods->append($method);
 $record->occurrence()->change_status = change_state::changed;
 $rejected = false;

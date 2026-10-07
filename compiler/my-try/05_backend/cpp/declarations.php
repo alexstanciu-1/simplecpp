@@ -94,7 +94,7 @@ final class CPP_Declarations
 	}
 
 	/** Prototypes only name records; value definitions need layouts, reference definitions do not. */
-	public static function signature(function_node $syntax, cpp_generation_context $context, bool $prototype): string
+	public static function signature(callable_declaration_node $syntax, cpp_generation_context $context, bool $prototype): string
 	{
 		$facts = $syntax->require_preparation();
 		$parts = '';
@@ -117,7 +117,7 @@ final class CPP_Declarations
 			$separator = ', ';
 		}
 
-		$function_declaration = object_cast($syntax->occurrence(), collected_function::class);
+		$function_declaration = object_cast($syntax->occurrence(), collected_source_callable::class);
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
 		$return_requirement = self::signature_requirement($prototype, $facts->signature->reference_return !== null);
 		return self::type_for($facts->signature->return_type, $context, $return_requirement) . $return_reference . ' ' . CPP_Callables::source_reference($function_declaration) . '(' . $parts . ')';

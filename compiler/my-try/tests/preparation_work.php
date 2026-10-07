@@ -27,15 +27,15 @@ $signature = $function->occurrence()->preparation_work_owner();
 $body = $function->body->work();
 $entry = $parsed->root->single_body()->body->work();
 work_check($layout instanceof record_definition_work, 'Record was not assigned layout work');
-work_check($signature instanceof function_signature_work, 'Function was not assigned signature work');
-work_check($body instanceof function_body_work, 'Function body was not assigned body work');
+work_check($signature instanceof source_callable_signature_work, 'Function was not assigned signature work');
+work_check($body instanceof source_callable_body_work, 'Function body was not assigned body work');
 work_check($entry instanceof file_body_work, 'File body was not assigned file-body work');
 work_check($entry->declaration() === null, 'File body acquired a named declaration');
 work_check($entry->executable_body() === $parsed->root->single_body()->body, 'File work lost its explicit executable body');
 work_check($body->executable_body() === $function->body, 'Function work lost its explicit executable body');
 work_check($body->declaration() === $signature->declaration(), 'Body and signature lost the shared function identity');
-work_check($signature->required_declaration() === $signature->function_definition(), 'Required and specialized signature access lost identity');
-work_check($body->function_definition() === $signature->function_definition(), 'Specialized body access lost function identity');
+work_check($signature->required_declaration() === $signature->callable_definition(), 'Required and specialized signature access lost identity');
+work_check($body->callable_definition() === $signature->callable_definition(), 'Specialized body access lost function identity');
 work_check($layout->declaration() === $layout->required_declaration(), 'Optional and required record access lost identity');
 work_check($layout->required_declaration() === $layout->record_definition(), 'Specialized record access lost identity');
 work_check($signature !== $body, 'Signature and body work collapsed');
@@ -69,7 +69,7 @@ foreach ([$layout, $signature, $body, $entry] as $work) {
 // Wrong-role relationships fail at the typed constructor/attachment boundary.
 $rejected = 0;
 try {
-	$invalid_body = new function_body_work($record->occurrence());
+	$invalid_body = new source_callable_body_work($record->occurrence());
 }
 catch (\TypeError $expected) {
 	$rejected++;
@@ -105,11 +105,41 @@ work_check(Preparation_Status::source_changed($entry), 'Entry work missed its ow
 $parsed->root->single_body()->body->syntax_changed = false;
 
 // Retirement dispatch must unlink every role, including both directions of dependencies.
+// A member uses the same work classes, without becoming a namespace function or property.
+$method = new method_node();
+$method->name = 'value';
+$method->set_span($record->start_token(), $record->end_token());
+$method_scope = new scope();
+$method_scope->set_parent($method->signature_scope());
+$method->signature_scope()->set_parent($record->member_scope());
+$method->set_parsed_body(new function_body_node($method_scope));
+$collector = new Symbol_Collector($collection, $collection->token_snapshot(), $parsed->root_scope(), null, $collection->revision);
+$collector->collect_method($method, $record->occurrence(), $record->start_token());
+$record->methods->append($method);
+$worker = new Preparation_Worker(Model::$language_scope);
+$worker->select_callable($method);
+$member_signature = $method->occurrence()->preparation_work_owner();
+$member_body = $method->require_body()->work();
+work_check($member_signature instanceof source_callable_signature_work, 'Member acquired a separate signature work family');
+work_check($member_body instanceof source_callable_body_work, 'Member acquired a separate body work family');
+work_check($member_signature->callable_definition() === $member_body->callable_definition(), 'Member work lost shared declaration identity');
+work_check($member_signature !== $member_body, 'Member signature and body work collapsed');
+work_check($method->occurrence()->declaring_record() === $record->occurrence(), 'Member lost its declaring type');
+work_check($method->occurrence()->qualified_name() === 'Box::value', 'Member qualified identity omitted its type');
+work_check(count($record->member_scope()->methods_named('value')) === 1, 'Member was not indexed');
+work_check(count($record->member_scope()->functions_named('value')) === 0, 'Member leaked into free-function lookup');
+work_check(count($record->member_scope()->variables_named('value')) === 1, 'Member polluted same-named property lookup');
+$worker->select_callable($method);
+work_check($member_signature === $method->occurrence()->preparation_work_owner(), 'Member selection replaced signature identity');
+work_check($member_body === $method->require_body()->work(), 'Member selection replaced body identity');
 $sources /** Storage<collected_file> */ = new Storage();
 $sources->append($collection);
 (new Preparation_Worker(Model::$language_scope))->discard_sources($sources);
-foreach ([$layout, $signature, $body, $entry] as $work) {
+foreach ([$layout, $signature, $body, $entry, $member_signature, $member_body] as $work) {
 	work_check($work->change_status === change_state::deleted, 'Discard did not retire work');
 	work_check(count($work->dependencies) === 0 && count($work->dependents) === 0 && count($work->lookups) === 0, 'Retired work retained graph registrations');
 }
+$collection->deleted = true;
+Collection_Retirement::remove_deleted_sources($sources);
+work_check(count($record->member_scope()->methods_named('value')) === 0, 'Member retirement left its scope index behind');
 echo "Preparation work: passive typed roles, member settlement, no-op identity, invalid-role rejection and retirement passed\n";

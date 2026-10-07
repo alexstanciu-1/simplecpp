@@ -267,7 +267,7 @@ final class Body_Preparation
 	}
 
 	/** Seed the worker-owned body context with parameters before source-order bindings. */
-	public static function prepare_body(function_node $syntax, preparation_context $context): void
+	public static function prepare_body(callable_declaration_node $syntax, preparation_context $context): void
 	{
 		$signature = $syntax->require_preparation();
 		$context->return_type = $signature->signature->return_type;

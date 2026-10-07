@@ -45,8 +45,8 @@ final class CPP_Generator
 						continue;
 					}
 					$ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class));
-					if ($node instanceof function_node) {
-						$ordered->append(object_cast(object_cast($node, function_node::class)->require_body()->work(), preparation_owner::class));
+					if ($node instanceof callable_declaration_node) {
+						$ordered->append(object_cast(object_cast($node, callable_declaration_node::class)->require_body()->work(), preparation_owner::class));
 					}
 				}
 				// Validate every body, including declaration-only contributions.
@@ -129,9 +129,9 @@ final class CPP_Generator
 			foreach ($namespace_bodies as $namespace_body) {
 				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
 				foreach ($nodes as $node) {
-					if (!($node instanceof function_node)) { continue; }
-					$function = object_cast($node, function_node::class);
-					$definition = object_cast($function->occurrence(), collected_function::class);
+					if (!($node instanceof callable_declaration_node)) { continue; }
+					$function = object_cast($node, callable_declaration_node::class);
+					$definition = object_cast($function->occurrence(), collected_source_callable::class);
 					$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
 					$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
 					$signature = $this->program->fragments[$signature_owner];
@@ -193,8 +193,8 @@ final class CPP_Generator
 		$next = new cpp_fragment();
 		if ($owner instanceof body_work) {
 			$body_owner = object_cast($owner, body_work::class);
-			if ($body_owner instanceof function_body_work) {
-				$function = object_cast($body_owner, function_body_work::class)->function_definition()->syntax();
+			if ($body_owner instanceof source_callable_body_work) {
+				$function = object_cast($body_owner, source_callable_body_work::class)->callable_definition()->callable_syntax();
 				$context->return_type = $function->require_preparation()->signature->return_type;
 			}
 			$next->text = self::generate_statements($body_owner->executable_body(), $context);
@@ -202,8 +202,8 @@ final class CPP_Generator
 		else
 		{
 			$entry = object_cast($owner->declaration(), collected_name::class);
-			if ($entry instanceof collected_function) {
-				$function_syntax = object_cast($entry, collected_function::class)->syntax();
+			if ($entry instanceof collected_source_callable) {
+				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
 				$definition_context = new cpp_generation_context();
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;

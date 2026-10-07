@@ -9,8 +9,8 @@ final class Call_Preparation
 	/** Complete source prerequisites before reading the shared callable contract. */
 	public static function require_signature(callable_target_i $target, preparation_context $context): callable_signature
 	{
-		if ($target instanceof collected_function) {
-			$definition = object_cast($target, collected_function::class);
+		if ($target instanceof collected_source_callable) {
+			$definition = object_cast($target, collected_source_callable::class);
 			$context->worker->require_declaration($context->owner, $definition);
 		}
 		elseif (!($target instanceof registered_static_factory) && !($target instanceof registered_function)) {
@@ -96,7 +96,7 @@ final class Call_Preparation
 		$facts->target = $target;
 		$facts->signature = $signature;
 		if ($facts->signature->reference_return !== null) {
-			if (!($target instanceof collected_function)) {
+			if (!($target instanceof collected_source_callable)) {
 				throw new \RuntimeException('S2S runtime reference-return calls await lifetime integration');
 			}
 		}

@@ -127,6 +127,22 @@ property promotion is deferred to CH15-CTOR-SYNTAX-01. CH10-PERF-01 still preced
 chapter's native compiler build. Reference tags/data-set references remain non-blocking
 [CH15-DATA-REF-01](15_blocking_debt.md#ch15-data-ref-01--initialization-with-references-into-the-input-data-set).
 
+### Source-callable lifecycle foundation — 2026-10-07
+
+The approved constructor prerequisite generalizes retained source-callable identity,
+signature facts, signature/body work, cleanup and retirement. Functions and members
+share `collected_source_callable`, `prepared_source_callable`,
+`source_callable_signature_work` and `source_callable_body_work`. Member identities
+observe their declaring record and have a separate scope index: they never enter
+namespace publication or free-function lookup. The common callable AST owns facts.
+Workers continue to own all processing; no visitor or model processing hook is added.
+
+The focused function runner passes 12 PHP suites and 77 generated programs
+(`/tmp/ch10-callable-foundation-01`). Member identity/index/retirement checks live in
+`tests/preparation_work.php`; the model checks passed in
+`/tmp/ch10-callable-model-02`. These are PHP-host/generated-program proofs, not a native
+compiler build. Constructor parsing and execution are the next implementation slice.
+
 ### First authored-constructor slice: adopted input spelling
 
 User decision, 2026-10-07: implement `__construct(set:$name, set:$age)` from the

@@ -39,9 +39,9 @@ No separate resolution pass precedes it. LLVM preparation remains
 
 ## Work and dispatch
 
-`Preparation_Worker` selects typed declaration work: `function_signature_work`,
+`Preparation_Worker` selects typed declaration work: `source_callable_signature_work`,
 `record_definition_work`, `constant_definition_work` and `enum_definition_work`.
-Bodies use `function_body_work` and `file_body_work`;
+Bodies use `source_callable_body_work` and `file_body_work`;
 bodies are processing units, never symbols. Fields/parameters settle with their
 definition. Parsing transfers existing body-work identity without setting work state.
 Collected declaration change flags and body `syntax_changed` remain set across

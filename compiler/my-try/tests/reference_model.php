@@ -130,9 +130,9 @@ $context = new preparation_context();
 reference_rejects(fn() => Call_Preparation::prepare($runtime, $empty, $context), 'await lifetime integration');
 
 // Signature equivalence observes the result mode and symbolic parameter, not object identity.
-$before = new prepared_function();
+$before = new prepared_source_callable();
 $before->signature = reference_signature($integer, 0);
-$after = new prepared_function();
+$after = new prepared_source_callable();
 $after->signature = reference_signature($integer, 0);
 $origin_parameters = Model::$global_scope->functions_named('origins')[0]->syntax()->require_preparation()->parameters;
 foreach ([$before, $after] as $facts) {

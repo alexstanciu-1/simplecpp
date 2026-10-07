@@ -153,8 +153,8 @@ final class CPP_Callables
 	/** Backend-owned dispatch keeps callable identities independent of any output target. */
 	public static function reference(callable_target_i $target, cpp_generation_context $context): string
 	{
-		if ($target instanceof collected_function) {
-			$function = object_cast($target, collected_function::class);
+		if ($target instanceof collected_source_callable) {
+			$function = object_cast($target, collected_source_callable::class);
 			$context->headers[CPP_Artifacts::callable_header($function->qualified_name())] = true;
 			return self::source_reference($function);
 		}
@@ -172,7 +172,7 @@ final class CPP_Callables
 		throw new \LogicException('C++ callable target is not supported');
 	}
 
-	public static function source_reference(collected_function $target): string
+	public static function source_reference(collected_source_callable $target): string
 	{
 		return CPP_Generator::source_name('function', $target->qualified_name());
 	}

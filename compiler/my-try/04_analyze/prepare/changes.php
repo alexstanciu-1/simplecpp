@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class Preparation_Changes
 {
 	/** Parameter identity matters because prepared signatures retain links to their declarations. */
-	public static function same_signature(?prepared_function $old, prepared_function $current): bool
+	public static function same_signature(?prepared_source_callable $old, prepared_source_callable $current): bool
 	{
 		if ($old === null) {
 			return false;
@@ -86,7 +86,7 @@ final class Preparation_Changes
 	}
 
 	/** Unchanged signatures keep the exact fact objects already referenced by their consumers. */
-	public static function restore_parameters(function_node $syntax, prepared_function $facts): void
+	public static function restore_parameters(callable_declaration_node $syntax, prepared_source_callable $facts): void
 	{
 		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;

@@ -7,6 +7,14 @@ abstract class callable_declaration_node extends declaration_node
 {
 	use Node_Source_Span;
 	use Collected_Occurrence;
+	use Preparation_Facts;
+
+	private ?prepared_source_callable $prepared_facts = null;
+
+	public function require_preparation(): prepared_source_callable
+	{
+		return $this->prepared_facts;
+	}
 
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
@@ -106,9 +114,6 @@ abstract class callable_declaration_node extends declaration_node
 /** Free-function semantics remain separate from member receiver/modifier semantics. */
 final class function_node extends callable_declaration_node
 {
-	use Preparation_Facts;
-
-	private ?prepared_function $prepared_facts = null;
 
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
 	{
@@ -120,10 +125,6 @@ final class function_node extends callable_declaration_node
 		return node_kind::function_declaration;
 	}
 
-	public function require_preparation(): prepared_function
-	{
-		return $this->prepared_facts;
-	}
 }
 
 /** Syntax foundation only; member signature/receiver preparation is a later slice. */

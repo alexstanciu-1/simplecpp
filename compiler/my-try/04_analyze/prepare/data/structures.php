@@ -419,7 +419,7 @@ final class prepared_parameter_default {
 }
 
 /** Signatures are complete before bodies, permitting forward and recursive calls. */
-final class prepared_function
+final class prepared_source_callable
 {
 	public callable_signature $signature;
 	/** Ordered aliases of facts owned by parameter specializations. @storage.reference parameter_node.prepared_facts */
