@@ -12,7 +12,7 @@ final class Method_Preparation
 		$receiver->declaration = $method;
 		$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
 		$receiver->type = Model::$type_catalog->registry()->use($type->type_id());
-		if (Type_Queries::is_class_handle($receiver->type)) {
+		if (Type_Queries::is_nominal_handle($receiver->type)) {
 			$receiver->type = Model::$type_catalog->registry()->use($type->type_id(), true);
 		}
 		return $receiver;
@@ -111,8 +111,9 @@ final class Method_Preparation
 		$value = self::base($base, $context);
 		$storage = Type_Queries::record_storage($value->type);
 		$payload = Type_Queries::record_payload($value->type);
-		$record = Type_Queries::source_record($payload);
-		if ($record === null) { throw new \RuntimeException('Instance call requires a class or struct receiver'); }
+		$declaration = Type_Queries::source_declaration($payload);
+		if (!($declaration instanceof collected_member_owner)) { throw new \RuntimeException('Instance call requires a class, struct or interface receiver'); }
+		$record = object_cast($declaration, collected_member_owner::class);
 		if ($syntax->static_qualification) {
 			$qualified = self::select($syntax, $record, true, $context);
 			$qualified->evaluates_qualifier = true;
@@ -141,11 +142,21 @@ final class Method_Preparation
 		return $facts;
 	}
 
-	private static function select(call_node $syntax, collected_record $record, bool $static_call, preparation_context $context,
+	private static function select(call_node $syntax, collected_member_owner $record, bool $static_call, preparation_context $context,
 		bool $parent_call = false): prepared_call
 	{
-		$context->worker->require_declaration($context->owner, $record);
+		if ($record instanceof collected_record) { $context->worker->require_declaration($context->owner, $record); }
+		else { $context->worker->require_type_contract($record, $context); }
 		$matches = Inherited_Lookup::members($record, $syntax->name, preparation_lookup_kind::method_name, $context);
+		if ((q_count($matches) === 0) && !$static_call && !$parent_call) {
+			// Call contracts are not implementations: keep this fallback out of ordinary inherited lookup.
+			$contracts = $context->worker->require_type_contract($record, $context);
+			foreach ($contracts->interface_requirements as $requirement) {
+				if ($requirement->name === $syntax->name) {
+					$matches[] = new inherited_member_candidate($requirement->declaring_type(), $requirement);
+				}
+			}
+		}
 		if ((q_count($matches) !== 1) || ($syntax->name === '__construct') || ($syntax->name === '__destruct')) {
 			throw new \RuntimeException('Member call requires one ordinary method: ' . $syntax->name);
 		}

@@ -3,7 +3,7 @@ Doc Status: normative
 
 This bounded contract covers class-to-class and struct-to-struct single inheritance.
 It extends the CH10 member contracts with abstract methods and interface implementation.
-Interface-typed values remain deferred; shared derived/base upcasts are enabled below. Availability and evidence
+Interface-typed shared handles and shared derived/base upcasts are enabled below. Availability and evidence
 are tracked in [CH11](../compiler/my-try/docs/catalog/11_inheritance.md).
 
 ## Layout and lookup
@@ -133,8 +133,8 @@ Interfaces may extend multiple interfaces; classes and structs may implement mul
 interfaces using one shared contract path. This slice admits public, bodyless instance
 method contracts only. Static methods, constants, properties, constructors, destructors,
 trait use and method bodies in interfaces remain rejected. Interface declarations
-have no source instance layout and cannot be constructed. Interface-typed storage,
-parameters/returns and source upcasts remain a following slice, not implicitly enabled.
+have no source instance layout and cannot be constructed. Interface-typed storage
+uses the shared-handle contract below.
 
 Concrete implementers must provide all required methods; abstract implementers may
 leave obligations outstanding. The same exact signature/reference/readonly/variadic
@@ -168,7 +168,7 @@ struct or implicitly allocate/box it as an interface value.
 ## Remaining gates
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
-final type may be instantiated. Interface-typed values/conversions, nonvirtual member hiding,
+final type may be instantiated. Nonvirtual member hiding,
 inherited data inputs, late-bound `static::`, non-shared derived/base
 conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
@@ -190,4 +190,34 @@ container's element type.
 Reference parameters (including read-only references), aliases and reference returns
 retain exact storage-type requirements. No implicit downcasts, inline-record base
 copies, unique/weak upcasts, wrapper-payload conversions or new conditional joins
-are enabled by this slice. Interface handle admission follows separately.
+are enabled by this slice.
+
+## Interface handles and calls
+
+A bare interface type denotes an absent-or-present shared handle, with the same
+copying, presence, null-assignment and checked dereference behavior as a class handle.
+`?I` and `nullable<I>` normalize to `I`; there is no nested absence wrapper.
+Interfaces cannot be allocated or stored inline. Explicit `shared<I>` is redundant;
+`value<I>`, `unique<I>`, `weak<I>` and interface weak observation are not admitted in
+this bounded slice.
+
+Proven shared upcasts include implementing class to interface, explicitly shared
+struct to interface, and derived interface to ancestor interface. All reuse the
+typed value boundaries above. An inline struct is never implicitly boxed. A direct
+`$i I = new C()` constructs the concrete class in its ordinary shared storage, then
+applies the checked-at-preparation upcast; it does not allocate an interface object.
+
+Calls expose only the receiver's statically selected contract and dispatch to the
+concrete implementation. Default arguments come from that selected declaration,
+not the runtime object's implementation. Calls retain the shared receiver and check
+presence before evaluating arguments. Reference parameters/results and variadic
+arguments reuse the ordinary callable protocol; handle-storage references remain
+invariant, including read-only reference parameters.
+
+An abstract implementer may call an outstanding interface requirement from its body
+without redeclaring it as an abstract class/struct method. This call-only lookup
+does not turn an interface requirement into an implementation. If distinct inherited
+same-named declarations leave no unique call contract, reject the call; an explicit
+compatible redeclaration selects the contract/defaults. Identity diamonds remain
+unambiguous. Reference-return cycle checking includes interface implementations and
+inherited forwarders, using original source callable identities.

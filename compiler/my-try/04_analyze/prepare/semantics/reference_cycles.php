@@ -51,6 +51,7 @@ final class Reference_Cycles
 		if (!$has_reference_return) {
 			return $this->cyclic;
 		}
+		$this->interface_targets($sources, $by_definition);
 		foreach ($sources as $source)
 		{
 			if ($source->deleted) {
@@ -93,6 +94,43 @@ final class Reference_Cycles
 			}
 		}
 		return $this->cyclic;
+	}
+
+	/** Interface contracts route to original implementations, including inherited forwarding bindings. */
+	private function interface_targets(Storage $sources /** Storage<collected_file> */,
+		\SplObjectStorage $by_definition /** hash<int, shared<collected_source_callable>> */): void
+	{
+		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
+		foreach ($sources as $source) {
+			if ($source->deleted) { continue; }
+			$entries /** Storage<collected_name> */ = $source->entries;
+			foreach ($source->defined_elements as $position) {
+				$entry = $entries[$position];
+				if (($entry->change_status === change_state::deleted) || !($entry instanceof collected_record)) { continue; }
+				$record = object_cast($entry, collected_record::class);
+				$contracts = $record->contract_work->require_facts();
+				foreach ($contracts->interface_requirements as $requirement) {
+					$implementation = self::implementation($record, $requirement->name);
+					if ($implementation !== null) {
+						$vertex = $vertices[$by_definition[$requirement]];
+						$vertex->calls[] = $by_definition[$implementation];
+					}
+				}
+			}
+		}
+	}
+
+	/** Read settled decisions; no scheduling, synthetic methods or retained dispatch graph. */
+	private static function implementation(collected_record $record, string $name): ?collected_method
+	{
+		$contracts = $record->contract_work->require_facts();
+		$methods /** Keyed_Storage<prepared_method_contract> */ = $contracts->methods;
+		$forwarders /** Keyed_Storage<prepared_method_contract> */ = $contracts->forwarders;
+		if (isset($methods[$name])) { return weakref_get($methods[$name]->method); }
+		if (isset($forwarders[$name])) { return weakref_get($forwarders[$name]->method); }
+		$base = weakref_get($record->relationship_work->require_facts()->base);
+		if ($base === null) { return null; }
+		return self::implementation($base, $name);
 	}
 
 	/** Virtual alternatives belong to the call site; explicit parent calls stay exact. */
@@ -164,7 +202,7 @@ final class Reference_Cycles
 		$cyclic /** Storage<collected_source_callable> */ = $this->cyclic;
 		foreach ($component as $member) {
 			$definition = $vertices[$member]->definition;
-			if ($definition->signature()->reference_return !== null) {
+			if (($definition->signature()->reference_return !== null) && $definition->callable_syntax()->has_parsed_body()) {
 				$cyclic->append($definition);
 			}
 		}

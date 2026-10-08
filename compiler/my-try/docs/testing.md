@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite interface_handles --no-pch --results FRESH`
+checks interface shared storage/upcasts, static-contract defaults, abstract-body
+calls, reference cycles, receiver lifetime and cross-file edits/recovery. It compiles
+generated programs; it does not rebuild the compiler natively.
+
 `python3 compiler/my-try/tests/records.py --suite shared_upcasts --no-pch --results FRESH`
 checks shared derived/base identity, absence, cleanup, typed boundaries and exact
 reference restrictions, including cross-file ancestry edits/retry/repair. This is
@@ -10,7 +15,8 @@ generated-program execution, not a native compiler rebuild.
 checks interface contracts and inherited forwarding for classes/structs, native dispatch
 and cleanup through interface views, invalid signatures/finality, and incremental
 relationship changes. Add `--no-pch` to prove separate-unit header dependencies.
-Source interface values/upcasts remain gated; this does not rebuild the native compiler.
+Source interface values/upcasts have their separate `interface_handles` suite above;
+this does not rebuild the native compiler.
 
 `python3 compiler/my-try/tests/records.py --suite abstract_dispatch --results FRESH`
 covers abstract class/struct contracts, exact overrides/finality, virtual calls/cleanup,

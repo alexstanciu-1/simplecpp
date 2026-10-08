@@ -74,9 +74,7 @@ foreach ([
 	['interface I { function read(): int; } class B { final function read(): int { return 1; } } class M extends B implements I {} class C extends M { function read(): int { return 2; } }', 'final'],
 	['interface I { int $n; }', 'method contracts only'],
 	['interface I { const N = 1; }', 'method contracts only'],
-	['interface I {} $x I;', 'Interface-typed'],
-	['interface I {} $x = new I();', 'Interface-typed'],
-	['interface I { function read(): int; } abstract class B implements I { function invoke(): int { return $this->read(); } }', 'Member call requires'],
+	['interface I {} $x = new I();', 'new requires'],
 	['interface I { function read(): int; } abstract class A { abstract function read(): int; } class B extends A { final function read(): int { return 1; } } class C extends B implements I {}', 'final virtual'],
 	['interface I { function read(): int; } class B { private function read(): int { return 1; } } class C extends B implements I {}', 'public instance'],
 ] as [$text, $message]) {

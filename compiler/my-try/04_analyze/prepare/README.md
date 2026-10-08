@@ -14,8 +14,11 @@ from instance receiver facts. `type_relationship_work` settles direct ancestry w
 record layout or signatures, using the same scheduler and lifecycle. The analysis-only
 `prepare_relationships` checkpoint returns completed relationship work, not executable
 files. `Inherited_Lookup` observes member pools and returns original declarations.
-Interface contracts and concrete implementers share the contract worker; interface-typed
-values/upcasts remain gated. Interfaces acquire no record-layout work. Concrete inherited member access shares this lookup.
+Interface contracts and concrete implementers share the contract worker; interface
+handles and upcasts reuse shared storage/conversion decisions. Interfaces acquire no
+record-layout work. Concrete inherited member access shares this lookup. Call-only
+fallback admits outstanding interface requirements in abstract bodies, independently
+of implementation lookup; ambiguous distinct call contracts still require redeclaration.
 Effective constructors may reference the original ancestor method, without cloning
 its signature. Authored constructor body preparation admits a leading parent call
 before making `$this` available and retains `prepared_base_initialization` on the

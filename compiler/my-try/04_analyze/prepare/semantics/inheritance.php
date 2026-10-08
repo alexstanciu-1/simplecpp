@@ -14,7 +14,7 @@ final class Inheritance_Preparation
 		$context->worker->require_declaration($context->owner, $base);
 		$canonical = Model::$type_catalog->registry()->canonical(Source_Types::definition($base));
 		$base_type = Model::$type_catalog->registry()->use($canonical->type_id());
-		if (Type_Queries::is_class_handle($base_type)) {
+		if (Type_Queries::is_nominal_handle($base_type)) {
 			$base_type = Model::$type_catalog->registry()->use($canonical->type_id(), true);
 		}
 		$facts->base_type = $base_type;

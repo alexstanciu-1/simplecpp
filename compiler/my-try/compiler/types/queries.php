@@ -17,7 +17,7 @@ final class Type_Queries
 			}
 			return $kind === ownership_kind::unique ? record_storage_kind::unique : record_storage_kind::shared;
 		}
-		return self::is_class_handle($type) ? record_storage_kind::shared : record_storage_kind::inline_value;
+		return self::is_nominal_handle($type) ? record_storage_kind::shared : record_storage_kind::inline_value;
 	}
 
 	/** Unwrap ownership or an inline modifier without changing the nominal payload identity. */
@@ -43,10 +43,12 @@ final class Type_Queries
 		return object_cast($definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::class_type;
 	}
 
-	/** A class's default handle is not another ownership-template layer. */
-	public static function is_class_handle(canonical_type_use $type): bool
+	/** Classes and interfaces carry default shared storage, not an ownership-template layer. */
+	public static function is_nominal_handle(canonical_type_use $type): bool
 	{
-		return !$type->by_value() && self::is_source_class($type);
+		if ($type->by_value()) { return false; }
+		if (self::is_source_class($type)) { return true; }
+		return self::source_declaration($type) instanceof collected_interface;
 	}
 
 	/** Nominal enum identity stays distinct from its prepared integer storage. */

@@ -1149,6 +1149,9 @@ final class Type_Registry implements type_capability_query
 		$definition = $type->definition();
 		if ($by_value && ($definition->origin() === type_definition_origin::source)) {
 			if ($definition instanceof abstract_nominal_type_definition) {
+				if (object_cast($definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::interface_type) {
+					throw new \InvalidArgumentException('Interface storage requires its default shared handle');
+				}
 				if (object_cast($definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::structure) {
 					throw new \InvalidArgumentException('value<Struct> repeats the declaration default storage');
 				}
@@ -1285,6 +1288,9 @@ final class Type_Registry implements type_capability_query
 			$payload_definition = $this->type($complete[0]->type_id())->definition();
 			if ($payload_definition->origin() === type_definition_origin::source) {
 				if ($payload_definition instanceof abstract_nominal_type_definition) {
+					if (object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::interface_type) {
+						throw new \InvalidArgumentException('Interface ownership wrappers are deferred; use its default shared handle');
+					}
 					if ((object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::class_type)
 						&& (object_cast($definition, ownership_semantics::class)->ownership_family() === ownership_kind::shared)) {
 						throw new \InvalidArgumentException('shared<Class> repeats the declaration default storage');

@@ -282,7 +282,7 @@ final class CPP_Declarations
 		{
 			$type = $field->type;
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
-			$requirement = Type_Queries::is_class_handle($type)
+			$requirement = Type_Queries::is_nominal_handle($type)
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 			$representation = CPP_Types::representation_for($type, $requirement);
 			CPP_Types::record_dependencies($representation, $context);

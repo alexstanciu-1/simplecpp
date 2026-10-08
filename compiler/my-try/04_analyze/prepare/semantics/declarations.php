@@ -198,7 +198,7 @@ final class Declaration_Preparation
 			generic_contract::value_storable)) {
 			throw new \RuntimeException('S2S struct field type does not declare value_storable');
 		}
-		if (!Type_Queries::is_class_handle($prepared->type)) {
+		if (!Type_Queries::is_nominal_handle($prepared->type)) {
 			$context->worker->require_record($prepared->type, $context);
 			if (($prepared->default_value === null) && !$allows_required) {
 				$nested = Type_Queries::source_record(Type_Queries::record_payload($prepared->type));

@@ -24,7 +24,7 @@ final class CPP_Types
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
 		$result = self::unmodified_representation($type_use, $payload_requirement);
-		if (Type_Queries::is_class_handle($type_use)) {
+		if (Type_Queries::is_nominal_handle($type_use)) {
 			$result->spelling = '::scpp::shared_p<' . $result->spelling . '>';
 			self::add_header($result, 'scpp/shared_p.hpp');
 		}
@@ -90,7 +90,7 @@ final class CPP_Types
 				$result->literal = cpp_literal_kind::none;
 				return $result;
 			}
-			if (!($entry instanceof collected_record)) {
+			if (!($entry instanceof collected_member_owner)) {
 				throw new \LogicException('C++ representation is not implemented for this source type declaration');
 			}
 			$result->spelling = CPP_Generator::source_name('record', $entry->qualified_name());

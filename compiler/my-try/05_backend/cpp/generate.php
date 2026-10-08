@@ -291,7 +291,7 @@ final class CPP_Generator
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 				$records /** Storage<collected_record> */ = $next->records;
 				foreach ($fields->items() as $field) {
-					if (Type_Queries::is_class_handle($field->type)) {
+					if (Type_Queries::is_nominal_handle($field->type)) {
 						continue;
 					}
 					$source_record = Type_Queries::source_record($field->type);

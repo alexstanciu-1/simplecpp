@@ -12,7 +12,40 @@ non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_f
 records those boundaries and the approved shared member-owner prerequisite.
 That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance, abstract/override dispatch and interface implementations now
-execute. Shared derived/base upcasts are enabled; interface-typed values remain gated.
+execute. Shared derived/base upcasts and interface-typed handles now execute.
+
+## Interface handles and calls — 2026-10-08
+
+The agreed handle group is implemented: bare interfaces use shared nominal storage,
+with existing presence/absence, copying, checked calls and nullable normalization.
+Class/interface and shared-struct/interface upcasts reuse dependency-aware conversion
+decisions; interface/ancestor upcasts use the same path. No payload allocation/copy,
+implicit struct boxing or interface-layout facts were introduced. Direct class
+construction can feed a shared base/interface destination through the same boundary.
+
+Method selection remains shared. Abstract bodies can call unimplemented interface
+requirements via a call-only fallback; implementation validation still requires real
+source implementations. Defaults follow the selected static contract. Distinct
+same-named inherited contracts require an explicit redeclaration before an otherwise
+ambiguous call, even when one concrete implementation satisfies both. This preserves
+the existing unique-declaration lookup rule rather than arbitrarily choosing defaults.
+
+Reference-cycle analysis links original interface declarations to their settled
+implementation decisions, including inherited forwarders, in its transient graph.
+Only actual bodies receive cycle-failure state. Cross-file failure/retry/repair covers
+ancestry, default changes and a newly introduced reference cycle.
+
+Covers the transferred CLASS-CALL-007 interface-call behavior; CLASS-MEMBER-013
+continues to share ordinary signature/contract preparation. `value<I>`, explicit
+ownership wrappers, weak observation, downcasts and static-interface dispatch remain
+outside this slice. No native compiler rebuild.
+
+Proof: 25 generated programs without PCH (`/tmp/interface-handles-20261008-final`),
+32 interface-contract regressions (`/tmp/interface-handles-contracts-20261008-1`),
+32 abstract-dispatch regressions (`/tmp/interface-handles-abstract-20261008-1`) and
+17 PHP-host model suites (`/tmp/interface-handles-model-20261008-1`) passed.
+Next discussion: reconcile the remaining CH11 groups before selecting trait composition,
+late static binding or another ownership-conversion slice.
 
 ## Dependency-aware shared upcasts — 2026-10-08
 
@@ -35,9 +68,8 @@ and return consumers. Also passed: 51 generated inheritance regressions and 17
 PHP-host model suites. Evidence: `/tmp/shared-upcasts-20261008-final`,
 `/tmp/shared-upcasts-inheritance-20261008-2`, `/tmp/shared-upcasts-model-20261008-1`.
 
-Next checkpoint (already agreed): interface-handle admission and calls, including
-abstract-body interface requirement lookup and reference-return cycle integration.
-The interface-value and abstract-body gates below remain accurate until that lands.
+The interface-handle checkpoint above completes the agreed follow-on admission,
+abstract-body requirement lookup and reference-return cycle integration.
 
 ## Interface contracts and inherited implementations — 2026-10-07
 
@@ -47,7 +79,8 @@ deduplication through diamonds; exact compatible same-named requirements; public
 local/inherited implementations; abstract outstanding obligations and checked Override.
 Classes and structs share the path. Interfaces have contract/signature work, no record
 layout or synthetic bodies. Requirements retain original declarations after satisfaction
-for descendant validation. Source interface-typed values and conversions remain gated.
+for descendant validation. Source interface-typed values were gated at this checkpoint;
+the subsequent interface-handle checkpoint above enables their bounded execution.
 
 Inherited implementations use prepared forwarding decisions, never cloned AST members.
 C++ emits public virtual interface bases and small forwarding overrides as required,
@@ -66,14 +99,10 @@ Passed: 32 generated interface programs without PCH, 32 abstract-dispatch regres
 programs and 17 PHP-host model suites. Evidence: `/tmp/interfaces-20261007-final`,
 `/tmp/interfaces-abstract-20261007-1`, `/tmp/interfaces-model-20261007-2`.
 
-Follow-up: abstract implementers can retain unmet interface obligations, but calling
-such a method from their own body currently requires an explicit abstract method
-declaration in the class/struct. Interface-only call lookup is not yet enabled.
-Address it with interface call admission, including default-argument ownership for
-same-named requirements and reference-return cycle analysis; do not broaden the
-implementation lookup to mistake an interface requirement for an implementation.
+The subsequent interface-handle checkpoint closes the abstract-body requirement
+lookup gap using call-only lookup and reference-return cycle integration.
 
-Next discussion: interface-typed handles and safe shared upcasts, retaining explicit
+The subsequent shared-upcast and interface-handle checkpoints preserve the agreed
 ownership/lifetime boundaries and no implicit boxing of inline structs.
 
 ### CH11-INTERFACE-FINAL-01 — inherited final virtual forwarding

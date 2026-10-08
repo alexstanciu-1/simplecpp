@@ -17,7 +17,7 @@ final class Capability_Preparation implements type_capability_query
 			return $this->has_capability($payload, $capability);
 		}
 		// Handle copying/storage is independent of the pointee's fields or completeness.
-		if (Type_Queries::is_class_handle($type_use)) {
+		if (Type_Queries::is_nominal_handle($type_use)) {
 			return ($capability === generic_contract::copyable_value)
 				|| ($capability === generic_contract::value_storable);
 		}
@@ -48,7 +48,7 @@ final class Capability_Preparation implements type_capability_query
 	/** Abstract subobjects may be copied, but cannot be materialized as complete inline values. */
 	public static function require_concrete_value(canonical_type_use $type_use, preparation_context $context): void
 	{
-		if (Type_Queries::is_class_handle($type_use)) { return; }
+		if (Type_Queries::is_nominal_handle($type_use)) { return; }
 		$record = Type_Queries::source_record($type_use);
 		if ($record === null) { return; }
 		if ($context->worker->require_relationships($record, $context)->abstract_type) {

@@ -26,6 +26,9 @@ final class Ownership_Observation_Preparation
 			throw new \RuntimeException($diagnostic);
 		}
 		$payload = Ownership_Conversions::payload($value->type);
+		if (Type_Queries::source_declaration($payload) instanceof collected_interface) {
+			throw new \RuntimeException('Interface weak observation is deferred');
+		}
 		$facts = new prepared_ownership_observation();
 		$facts->operation = $syntax->operation;
 		if (($syntax->operation === ownership_observation_kind::lock_shared) && Type_Queries::is_source_class($payload)) {

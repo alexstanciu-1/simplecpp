@@ -88,7 +88,7 @@ final class Member_Preparation
 
 	/** Match C++ protected-instance access; a descendant cannot use an arbitrary base receiver. */
 	public static function require_instance_access(member_visibility $visibility, collected_member_owner $owner,
-		collected_record $receiver, preparation_context $context): void
+		collected_member_owner $receiver, preparation_context $context): void
 	{
 		self::require_access($visibility, $owner, $context);
 		if ($visibility !== member_visibility::protected_access) { return; }

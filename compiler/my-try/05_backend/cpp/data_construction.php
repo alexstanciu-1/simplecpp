@@ -168,7 +168,7 @@ final class CPP_Data_Construction
 		$inputs /** Key_Storage_List<record_initialization_input> */ = $contract->inputs;
 		foreach ($inputs->items() as $position => $input) {
 			$field /** prepared_field */ = $input->field;
-			$requirement = Type_Queries::is_class_handle($field->type)
+			$requirement = Type_Queries::is_nominal_handle($field->type)
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 			$parameters .= ', ' . CPP_Declarations::type_for($field->type, $context, $requirement) . ' input_' . $position;
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);

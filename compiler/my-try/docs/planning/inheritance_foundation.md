@@ -127,5 +127,6 @@ without record layout or synthetic source bodies. Virtual interface bases suppor
 diamonds; new forwarding of final virtual inherited methods is explicitly rejected
 and tracked in CH11. The interface-handle/shared-upcast group is now agreed.
 Its dependency-aware conversion prerequisite and shared derived/base checkpoint
-landed on 2026-10-08; interface-handle admission, calls and abstract-body lookup
-remain the next implementation checkpoint, with reference-cycle integration.
+landed on 2026-10-08. Interface-handle admission, calls and abstract-body lookup now
+complete that group, including reference-cycle integration and ordinary receiver
+retention. See CH11 for proof and remaining ownership/static-dispatch gates.

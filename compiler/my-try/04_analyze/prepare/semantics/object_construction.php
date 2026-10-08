@@ -45,9 +45,13 @@ final class Object_Construction_Preparation
 				throw new \RuntimeException('S2S weak handles cannot allocate');
 			}
 			if (!Type_Queries::record_payload($destination)->matches($target)) {
-				throw new \RuntimeException('S2S construction target must exactly match destination');
+				// Construct a class in its own shared storage; the enclosing boundary proves any upcast.
+				if (!Type_Queries::is_nominal_handle($target)
+					|| (Type_Queries::record_storage($destination) !== record_storage_kind::shared)) {
+					throw new \RuntimeException('S2S construction target must exactly match destination');
+				}
 			}
-			$result = $destination;
+			else { $result = $destination; }
 		}
 		$facts = new prepared_object_construction();
 		$facts->value_origin = expression_value_origin::fresh_construction;
@@ -61,7 +65,7 @@ final class Object_Construction_Preparation
 	/** Bounded default-construction proof; record dependencies include nested value fields. */
 	public static function supports_default(canonical_type_use $type, preparation_context $context, bool $base_subobject = false): bool
 	{
-		if (Type_Queries::is_class_handle($type)) { return true; }
+		if (Type_Queries::is_nominal_handle($type)) { return true; }
 		if (Ownership_Conversions::role($type) !== null) {
 			return true;
 		}

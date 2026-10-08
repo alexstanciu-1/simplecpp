@@ -7,7 +7,7 @@ final class Ownership_Conversions
 {
 	public static function role(canonical_type_use $type): ?ownership_semantics
 	{
-		if (Type_Queries::is_class_handle($type)) {
+		if (Type_Queries::is_nominal_handle($type)) {
 			return object_cast(Model::$type_catalog->definition('shared'), ownership_semantics::class);
 		}
 		$definition = Type_Queries::canonical($type)->definition();

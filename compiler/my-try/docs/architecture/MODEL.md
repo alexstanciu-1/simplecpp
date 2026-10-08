@@ -105,14 +105,17 @@ descendants. `forwarders` contains prepared method decisions observing an inheri
 implementation and its immediate dispatch base; these are not collected methods or
 AST bodies. Signatures remain shared. C++ assembles direct base/interface spelling
 from current relationship facts, outside cached layout fragments, so relationship-only
-edits cannot leave stale header inheritance. Interface-typed values remain gated.
+edits cannot leave stale header inheritance. Bare interfaces and classes share the
+`is_nominal_handle` storage query; interface identity still confers no record layout.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges
 are contracts, not fallback implementations. Concrete records may retain one
 `base_type` for their inline base subobject; layout completion depends on the base's
 layout, supported construction and copy contract. C++ reads its bare payload mapping.
 Declared inventories remain local; static references retain original storage ownership.
-Protected access is analysis-owned and receiver-aware. Interface execution remains gated.
+Protected access is analysis-owned and receiver-aware. Interface calls share method
+selection and receiver retention. A call-only fallback admits outstanding interface
+requirements inside abstract bodies without polluting implementation lookup.
 The effective `prepared_record::constructor` may observe the original ancestor method;
 the local method inventory is unchanged. Inherited construction observes the ancestor
 signature through ordinary dependencies. Authored constructor bodies own optional
@@ -222,7 +225,9 @@ Strongly connected components containing reference-returning functions reject th
 the worker's normal failure/retry protocol before prepared-file publication. By-value
 recursive components remain allowed. This linear check includes unchanged bodies and
 is rerun for incremental updates; it does not re-prepare bodies, retain a second graph,
-or turn body relationships into declaration dependencies.
+or turn body relationships into declaration dependencies. Interface requirement
+vertices link to original settled implementation identities, including inherited
+forwarders; bodyless contracts never receive body-failure state.
 
 Expression facts carry optional `prepared_place`, with `addressable()` derived from
 presence. Places select original local declarations or parameters and may project
