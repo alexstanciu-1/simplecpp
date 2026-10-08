@@ -181,7 +181,12 @@ scope, collected identity, work record or prepared facts. Parameter names remain
 on the parameter nodes. The owning AST node exposes these children directly in
 grammar order for inspection/maintenance; the component is not another AST node.
 This is the first [closure foundation checkpoint](../planning/closure_foundation.md),
-not anonymous callable support. Body/scope/work separation remains pending.
+not anonymous callable execution. `Callable_Syntax` now shares the remaining
+body/scope construction state and neutral structural traversal. `closure_node`
+uses it as an expression without named-declaration inheritance or collection.
+The inspection-only `callable_syntax_owner_i` exposes signature/body queries, not
+processing hooks. Anonymous work identity and scheduler integration remain pending;
+analysis rejects closure execution explicitly at this checkpoint.
 
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members

@@ -239,6 +239,16 @@ records never own workers or operation contexts.
 
 ## Explicit nullability and publication
 
+Closure syntax owns its signature scope and a distinct body scope, alongside the
+ordinary function body whose scope link is weak. This keeps nested scopes alive
+when an enclosing body is reused without reparsing its closures. Parsing retains
+the signature/body scopes in the existing failure inventory before collecting
+observers, so a failed unattached expression cannot leave expired scope links.
+Closures are not published as named declarations. Independently scheduled anonymous
+work and its reconciliation are still pending; no execution is enabled by these
+syntax owners. Shared callable inspection retains the syntax owner only for the
+cursor lifetime and follows the existing ordered children.
+
 An authored constructor's function body owns optional base-initialization facts. They
 weakly observe the leading source call (when explicit) and share its admitted call
 contract; they do not retain a worker or duplicate source arguments. Body cleanup

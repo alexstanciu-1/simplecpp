@@ -31,7 +31,16 @@ across syntax/collection, analysis lifecycle and backend consumers.
    their original nodes; there is no duplicated name list. Parser, preparation,
    inspection and maintenance consume these same edges. Existing bodies, scopes,
    collected identities and work ownership are unchanged at this checkpoint.
-2. **Anonymous identity and body lifecycle — pending.** Share source-callable work
+2. **Anonymous identity and body lifecycle — in progress.** The syntax checkpoint
+   shares signature/body/scope construction, inspection and neutral maintenance
+   through `Callable_Syntax`, without moving stage processing into the AST.
+   `closure_node` is an expression, not a declaration. It uses the common parameter
+   grammar and `function_body_node`; its body scope has an explicit strong owner
+   so enclosing-body reuse does not depend on a fresh nested-scope scan. Partial
+   parses retain scopes through the existing parser failure inventory. No named
+   callable is published and analysis explicitly rejects execution for now.
+
+   **Still pending:** share source-callable work
    independently of named publication, compose the remaining common syntax state,
    and integrate anonymous occurrences with selection, invalidation and retirement.
    Closure syntax remains an expression. Reuse `function_body_node` and stage-owned
@@ -63,3 +72,13 @@ assertions. `records.py --suite method_parameters` passed all 50 generated C++
 programs with fixture PCH in `/tmp/my-try-ch12-signature-execution-01`.
 The shared 12-slot runner used CLI fallback because FPM socket startup was denied.
 No native compiler rebuild or new LLVM behavior was tested.
+
+Anonymous syntax checkpoint: `closure_model.php` proves distinct expression/scoped
+identities, original parameter names, child ordering, neutral maintenance, no-op
+reuse, enclosing-body replacement, deleted parameter retirement, partial-parse
+recovery and restoration of ordinary named execution after closure removal.
+Syntax identity currently survives only when the enclosing body is reused; it is
+not yet an independently reconciled anonymous work identity or a concrete value type.
+Thirteen focused PHP suites passed in `/tmp/my-try-ch12-closure-model-01`;
+`/tmp/my-try-ch12-closure-model-02` reran the expanded nested/top-level scope proof.
+This checkpoint did not rebuild the native compiler or execute generated programs.

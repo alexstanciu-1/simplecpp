@@ -24,6 +24,7 @@ enum node_kind
 	case namespace_body;
 	case import_binding;
 	case function_declaration;
+	case closure_expression;
 	case parameter_declaration;
 	case block;
 	case conditional;

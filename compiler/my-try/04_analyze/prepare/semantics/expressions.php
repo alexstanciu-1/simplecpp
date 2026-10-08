@@ -16,7 +16,10 @@ final class Expression_Preparation
 	public static function prepare_for_consumer(expression_node $node, preparation_context $context,
 		?canonical_type_use $expected_type, expression_consumer $consumer): prepared_expression
 	{
-		if ($node instanceof object_type_node) {
+		if ($node instanceof closure_node) {
+			throw new \RuntimeException('Closure execution awaits anonymous callable preparation');
+		}
+		elseif ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);
 			$object_type->set_preparation(Object_Type_Preparation::prepare($object_type, $context));
 		}

@@ -1251,7 +1251,6 @@ final class Parser_Run
 		if (!$this->identifier() || (($this->text() === 'function') || ($this->text() === 'return') || ($this->text() === 'void'))) {
 			throw new \RuntimeException($this->error_message('Expected function name'));
 		}
-		$parameters /** Storage<parameter_node> */ = new Storage();
 		$name_token_index = $this->position++;
 		$function_name = $token_rows[$name_token_index]->text();
 		if (isset($formals[$function_name])) {
@@ -1306,19 +1305,7 @@ final class Parser_Run
 		}
 		$local_scope->set_templates($slots);
 
-		$this->expect('(');
-		if ($this->text() !== ')')
-		{
-			do {
-				$parameters->append($this->parameter($local_scope, $record !== null));
-				if ($this->text() !== ',') {
-					break;
-				}
-				$this->position++;
-			}
-			while (true);
-		}
-		$this->expect(')');
+		$parameters /** Storage<parameter_node> */ = $this->callable_parameters($local_scope, $record !== null);
 		$lifecycle_method = ($record !== null) && (($function_name === '__construct') || ($function_name === '__destruct'));
 		$return_type /** nullable<type_node> */ = null;
 		if (!$lifecycle_method && ($this->text() !== ':')) {
@@ -1375,6 +1362,47 @@ final class Parser_Run
 		$function->template_parameters = $formals;
 		$this->finish_declaration($function, $start, $this->same_tokens($old_start, $old_body_start, $start, $body_start));
 		return $function;
+	}
+
+	/** One parameter grammar for named declarations and anonymous expressions. */
+	private function callable_parameters(scope $parameter_scope, bool $member): Storage /** Storage<parameter_node> */
+	{
+		$parameters /** Storage<parameter_node> */ = new Storage();
+		$this->expect('(');
+		if ($this->text() !== ')') {
+			do {
+				$parameters->append($this->parameter($parameter_scope, $member));
+				if ($this->text() !== ',') { break; }
+				$this->position++;
+			} while (true);
+		}
+		$this->expect(')');
+		return $parameters;
+	}
+
+	/** Anonymous syntax owns ordinary callable scopes without entering named lookup. */
+	private function closure_expression(): closure_node
+	{
+		$start = $this->expect('function');
+		$closure = new closure_node();
+		$signature_scope = $closure->signature_scope();
+		$signature_scope->set_parent($this->current_scope);
+		// Keep parameter observers valid even when parsing fails before the node is attached.
+		$this->retain_scope($signature_scope);
+		$signature = $closure->signature_syntax;
+		$signature->returns_reference = $this->text() === '&';
+		if ($signature->returns_reference) { $this->position++; }
+		$signature->parameters = $this->callable_parameters($signature_scope, false);
+		if ($this->text() === 'use') {
+			throw new \RuntimeException($this->error_message('Closure capture syntax is deferred'));
+		}
+		$this->expect(':');
+		$signature->return_type = $this->type_syntax($signature_scope);
+		$body_scope = $closure->body_scope();
+		$this->retain_scope($body_scope);
+		$closure->set_parsed_body($this->block($body_scope));
+		$this->finish_node($closure, $start);
+		return $closure;
 	}
 
 	/** Register a typed parameter as an explicit variable declaration in the body scope. */
@@ -1811,6 +1839,9 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->text() === 'function') {
+			return $this->closure_expression();
+		}
 		if ($this->text() === 'object_cast') {
 			$start = $this->position++;
 			$cast = new object_type_node();

@@ -32,7 +32,9 @@ cards below retain their original order and provenance.
 The capture-free slice and coordinated callable prerequisite are agreed in the
 [closure foundation plan](../planning/closure_foundation.md). The first checkpoint
 extracts authored signature data by composition and preserves existing named-callable
-behavior. Anonymous identity/body lifecycle and closure execution remain pending;
+behavior. The next syntax checkpoint adds expression-owned closures with shared
+body/scope construction and traversal, and one parameter grammar. Anonymous work
+identity/scheduling and closure execution remain pending;
 the imported rows below are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 

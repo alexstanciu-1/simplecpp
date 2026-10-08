@@ -17,21 +17,26 @@ final class callable_signature_syntax
 	}
 }
 
-abstract class callable_declaration_node extends declaration_node
+/** Read-only syntax role; it confers neither named publication nor callable semantics. */
+interface callable_syntax_owner_i
 {
-	use Node_Source_Span;
-	use Collected_Occurrence;
-	use Preparation_Facts;
+	public function signature_parts(): callable_signature_syntax;
+	public function optional_callable_body(): ?function_body_node;
+}
 
-	private ?prepared_source_callable $prepared_facts = null;
-
-	public function require_preparation(): prepared_source_callable
+/** Shared owned syntax and local construction state, without a declaration name. */
+trait Callable_Syntax
+{
+	public function signature_parts(): callable_signature_syntax
 	{
-		return $this->prepared_facts;
+		return $this->signature_syntax;
 	}
 
-	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
-	public string $name;
+	public function optional_callable_body(): ?function_body_node
+	{
+		return $this->body;
+	}
+
 	/** Single owner of authored parameter/return syntax, shared in shape with future expressions. */
 	public callable_signature_syntax $signature_syntax;
 	public ?function_body_node $body = null;
@@ -40,15 +45,13 @@ abstract class callable_declaration_node extends declaration_node
 	/** A failed later parse may retain an earlier body; this is not current-file completion. */
 	private bool $parsed_definition = false;
 	/**
-	 * Scope introduced and owned by this declaration; parent wiring belongs to parsing.
+	 * Scope introduced and owned by this callable; parent wiring belongs to parsing.
 	 * @ownership owner
 	 */
 	private scope $owned_signature_scope;
-	/** Already indexed by saved formal names; values retain token locations only. */
-	public array $template_parameters /** hash<int> */ = [];
 
 	/** Allocate only the concrete node's ordered syntax collections. */
-	public function __construct()
+	private function initialize_callable_syntax(): void
 	{
 		$this->retired_bodies = new Storage /** Storage<function_body_node> */();
 		$this->owned_signature_scope = new scope();
@@ -109,13 +112,8 @@ abstract class callable_declaration_node extends declaration_node
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
-	public function maintain(node_maintenance_worker_i $worker): void
+	public function maintain_callable_children(node_maintenance_worker_i $worker): void
 	{
-		// Formal names are stable keys; their source locations follow the worker's token policy.
-		$formals /** hash<int> */ = $this->template_parameters;
-		foreach ($formals as $name => $index) {
-			$this->template_parameters[$name] = $worker->token_index($index);
-		}
 		$worker->enter($this);
 		$items /** Storage<parameter_node> */ = $this->signature_syntax->parameters;
 		foreach ($items as $child) {
@@ -127,6 +125,72 @@ abstract class callable_declaration_node extends declaration_node
 		if ($this->body !== null) {
 			$worker->edge($this, $this->body);
 		}
+	}
+}
+
+abstract class callable_declaration_node extends declaration_node implements callable_syntax_owner_i
+{
+	use Node_Source_Span;
+	use Collected_Occurrence;
+	use Preparation_Facts;
+	use Callable_Syntax;
+
+	private ?prepared_source_callable $prepared_facts = null;
+
+	/** Named identity and template bindings are not part of anonymous callable syntax. */
+	public string $name;
+	public array $template_parameters /** hash<int> */ = [];
+
+	public function __construct()
+	{
+		$this->initialize_callable_syntax();
+	}
+
+	public function require_preparation(): prepared_source_callable
+	{
+		return $this->prepared_facts;
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$formals /** hash<int> */ = $this->template_parameters;
+		foreach ($formals as $name => $index) {
+			$this->template_parameters[$name] = $worker->token_index($index);
+		}
+		$this->maintain_callable_children($worker);
+	}
+}
+
+/** Anonymous expression syntax; semantic identity and executable preparation follow separately. */
+final class closure_node extends expression_node implements callable_syntax_owner_i
+{
+	use Node_Source_Span;
+	use Callable_Syntax;
+
+	/** Nested bodies survive reuse of their enclosing body without another scope scan. */
+	private scope $owned_body_scope;
+
+	public function __construct()
+	{
+		$this->initialize_callable_syntax();
+		$this->owned_body_scope = new scope();
+		$this->owned_body_scope->set_parent($this->signature_scope());
+		$this->owned_body_scope->mark_function();
+	}
+
+	public function body_scope(): scope
+	{
+		return $this->owned_body_scope;
+	}
+
+	public function kind(): node_kind
+	{
+		return node_kind::closure_expression;
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$this->maintain_callable_children($worker);
 	}
 }
 

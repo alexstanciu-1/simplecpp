@@ -1111,11 +1111,11 @@ enum callable_children_stage
 /** Independent source owner plus explicit grammar stage and collection progress. */
 final class callable_children_iterator extends children_iterator
 {
-	private callable_declaration_node $source;
+	private callable_syntax_owner_i $source;
 	private callable_children_stage $stage = callable_children_stage::parameters;
 	private ?storage_children_iterator $parameters_cursor = null;
 
-	public function __construct(callable_declaration_node $source)
+	public function __construct(callable_syntax_owner_i $source)
 	{
 		$this->source = $source;
 	}
@@ -1129,7 +1129,8 @@ final class callable_children_iterator extends children_iterator
 			{
 				case callable_children_stage::parameters:
 					if ($this->parameters_cursor === null) {
-						$this->parameters_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->signature_syntax->parameters));
+						$parameters /** Storage<parameter_node> */ = $this->source->signature_parts()->parameters;
+						$this->parameters_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($parameters));
 					}
 					else {
 						$this->parameters_cursor->next();
@@ -1142,13 +1143,13 @@ final class callable_children_iterator extends children_iterator
 					break;
 				case callable_children_stage::return_type:
 					$this->stage = callable_children_stage::body;
-					if ($this->source->signature_syntax->return_type !== null) {
-						return $this->source->signature_syntax->return_type;
+					if ($this->source->signature_parts()->return_type !== null) {
+						return $this->source->signature_parts()->return_type;
 					}
 					break;
 				case callable_children_stage::body:
 					$this->stage = callable_children_stage::finished;
-					return $this->source->body;
+					return $this->source->optional_callable_body();
 			}
 		}
 		return null;
