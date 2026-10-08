@@ -97,9 +97,16 @@ final class Declaration_Preparation
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		if ((($syntax->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
-			|| !$extended->is_empty()
-			|| !$uses->is_empty()) {
+			|| !$extended->is_empty()) {
 			throw new \RuntimeException('Type member semantics are not supported by this plain-record slice');
+		}
+		if (!$uses->is_empty()) {
+			$instances /** Storage<trait_instance> */ = object_cast($syntax->occurrence(), collected_record::class)->trait_instances;
+			$targets = Trait_Preparation::targets(object_cast($syntax->occurrence(), collected_record::class));
+			if (q_count($targets) !== q_count($instances)) { throw new \RuntimeException('Trait use requires coordinator composition'); }
+			foreach ($targets as $index => $target) {
+				if ($instances[$index]->origin !== $target) { throw new \RuntimeException('Trait use requires coordinator composition'); }
+			}
 		}
 		$facts = new prepared_record();
 		$context->member_owner = object_cast($syntax->occurrence(), collected_record::class);

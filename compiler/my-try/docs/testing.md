@@ -2,12 +2,14 @@
 Doc Status: supporting
 
 The model runner includes `trait_model.php`: trait source identities, simple use
-syntax, lexical spellings, incremental parsing/recovery and the execution gate.
+syntax, lexical spellings, incremental parsing/recovery and automatic composition.
 `trait_instances.php` additionally proves consumer-owned materialization, independent
 ordinary method preparation, lexical imports, class/struct receivers, token snapshots
 and explicit retirement. It also checks ordinary contributed layout/defaults, member
 calls, category collisions, eligibility, reference cycles and C++ consumer-unit
-placement. These checks do not yet compile/run executable source trait uses.
+placement. `traits.php` adds automatic selection, edits, retry/reset/fresh agreement.
+`python3 compiler/my-try/tests/records.py --suite traits --no-pch --results FRESH`
+compiles/runs nine generated programs; it does not rebuild the compiler natively.
 
 `python3 compiler/my-try/tests/records.py --suite interface_handles --no-pch --results FRESH`
 checks interface shared storage/upcasts, static-contract defaults, abstract-body

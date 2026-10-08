@@ -39,6 +39,9 @@ final class Reference_Cycles
 				}
 				if ($entry instanceof collected_source_callable) {
 					$definition = object_cast($entry, collected_source_callable::class);
+					if ($definition instanceof collected_method) {
+						if (object_cast($definition, collected_method::class)->declaring_type() instanceof collected_trait) { continue; }
+					}
 					$index = q_count($vertices);
 					$by_definition[$definition] = $index;
 					if ($definition->callable_syntax()->has_parsed_body()) {

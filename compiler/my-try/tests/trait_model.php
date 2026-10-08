@@ -52,8 +52,9 @@ try {
 	trait_model_check($a->syntax()->use_traits[0]->traits[0]->name === '\\features\\Label', 'Use order not updated');
 	file_put_contents($trait_path, str_replace('+= 1', '+= 2', $traits)); $compiler->sync([$trait_path]);
 	trait_model_check(trait_model_owner('features\\Counter') === $trait && $trait->syntax()->methods[0] === $method, 'Body edit lost trait/method identity');
-	try { $compiler->prepare(); throw new \LogicException('Trait execution was enabled before instantiation'); }
-	catch (\RuntimeException $error) { trait_model_check(str_contains($error->getMessage(), 'consumer-owned member instantiation'), 'Wrong trait gate'); }
+	$compiler->prepare();
+	trait_model_check($a->trait_instances->count() === 2 && $b->trait_instances->count() === 1, 'Source uses did not compose automatically');
+	trait_model_check($method->preparation() === null, 'Automatic composition prepared the authored trait method');
 
 	foreach (['class A { use Counted { next as other; } }', 'class A { use Counted,; }'] as $invalid) {
 		file_put_contents($consumer_path, 'namespace app; ' . $invalid);
@@ -74,4 +75,4 @@ finally {
 	foreach ([$trait_path, $consumer_path] as $path) { if (is_file($path)) { unlink($path); } }
 	rmdir($directory);
 }
-echo "Trait origins, simple use syntax, identity/recovery and execution gate passed\n";
+echo "Trait origins, simple use syntax, identity/recovery and automatic composition passed\n";

@@ -273,6 +273,7 @@ final class Compiler
 		Model::$prepared_entry = null;
 		try {
 			Compiler_Lifecycle::retire_deleted_sources($sources, Model::$language_scope);
+			Trait_Composition::synchronize($sources, Model::$language_scope);
 			$prepared = (new Preparation_Worker(Model::$language_scope))->prepare($sources);
 			$entry = Program_Preparation::entry($prepared, Model::$entry_selection, $require_entry);
 			Model::$prepared_files = $prepared;
@@ -314,8 +315,12 @@ final class Compiler
 		}
 		Model::$cpp_files = $output;
 		// The single active consumer acknowledges only after successful output publication.
+		$consumed /** Storage<collected_file> */ = new Storage();
 		foreach ($prepared as $file) {
-			$file->source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+			$consumed->append($file->source);
+		}
+		foreach (Member_Inventory::source_collections($consumed) as $source) {
+			$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		}
 	}
 

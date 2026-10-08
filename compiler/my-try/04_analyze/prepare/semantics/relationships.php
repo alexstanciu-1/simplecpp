@@ -20,7 +20,7 @@ final class Relationship_Preparation
 	public static function prepare(collected_member_owner $entry, preparation_context $context): prepared_type_relationships
 	{
 		if ($entry instanceof collected_trait) {
-			throw new \RuntimeException('Trait execution awaits consumer-owned member instantiation');
+			throw new \RuntimeException('Traits are composition sources, not runtime types');
 		}
 		$syntax = $entry->syntax();
 		$facts = new prepared_type_relationships();

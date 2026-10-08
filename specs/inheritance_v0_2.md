@@ -165,6 +165,30 @@ public, virtual and nonthrowing; implementing records use the existing polymorph
 cleanup/copy/move policy. This representation is not permission to slice an inline
 struct or implicitly allocate/box it as an interface value.
 
+## Trait composition
+
+Classes and structs may compose direct traits using `use T, U;` in their member
+body. Trait names follow the consumer's normal lexical namespace/import lookup.
+Each target must resolve unambiguously to a trait; duplicate use is rejected.
+
+This bounded slice admits explicitly typed instance properties with ordinary defaults
+and concrete ordinary instance methods. Each consumer owns independent working
+members. Lexical names/imports in their types, defaults and bodies remain those of
+the trait source; `$this`, private/protected access and member lookup use the consumer.
+The authored trait is not prepared as an instance, is not constructible and is not a
+runtime base or conversion target. Contributed methods reuse ordinary parameter,
+reference-return and dispatch contracts, including satisfying interface obligations.
+
+Reject duplicate same-category members between traits or between a trait and the
+consumer, including an authored method replacing a trait method. Property and method
+names remain separate categories. Existing inherited-member restrictions still apply.
+Public contributed instance properties participate in synthesized `data` inputs under
+the ordinary public-property rules; private properties do not become data inputs.
+
+Nested trait uses, adaptations/aliases, trait lifecycle methods, static members,
+constants and bodyless trait requirements remain deferred. This v0.2 contract
+supersedes the legacy blanket rejection of trait syntax, not the deferred extensions.
+
 ## Remaining gates
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete

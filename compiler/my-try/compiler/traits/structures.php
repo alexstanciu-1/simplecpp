@@ -26,6 +26,8 @@ final class trait_instance
 	/** Private collection owner: not published as another source file. */
 	public collected_file $collection;
 	public Storage $members /** Storage<trait_member_instance> */;
+	public string $origin_input;
+	public string $consumer_input;
 
 	public function __construct(collected_trait $origin, collected_record $consumer, parsed_file $parsed)
 	{
@@ -34,6 +36,8 @@ final class trait_instance
 		$this->parsed = $parsed;
 		$this->collection = $parsed->collection;
 		$this->members = new Storage /** Storage<trait_member_instance> */();
+		$this->origin_input = $origin->collection->source_file()->content;
+		$this->consumer_input = $consumer->collection->source_file()->content;
 	}
 
 	public function consumer(): collected_record { return weakref_get($this->consumer_reference); }

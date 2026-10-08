@@ -317,8 +317,10 @@ then its established type default, otherwise require the input. An absent class 
 does not allocate a pointee. No implicit enum case or other invented default is allowed.
 Non-public properties are excluded from synthesized inputs, not silently exposed.
 Static members are excluded from inputs. Derived data initialization remains gated
-under the [concrete inheritance contract](inheritance_v0_2.md), as does trait
-composition; their presence must not authorize bypassing invariants.
+under the [concrete inheritance contract](inheritance_v0_2.md). Public instance
+properties contributed by the supported direct-trait slice participate through the
+same property contract; composition must not expose non-public properties or bypass
+construction invariants.
 
 The initial supported key contract is literal string names, in either `{name: value}`
 or `["name" => value]` notation. Computed keys and positional record construction are

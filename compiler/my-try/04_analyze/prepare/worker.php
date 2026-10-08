@@ -106,6 +106,7 @@ final class Preparation_Worker
 				foreach ($declarations as $node) {
 					if ($node instanceof type_declaration_node) {
 						$entry = object_cast($node->occurrence(), collected_member_owner::class);
+						if ($entry instanceof collected_trait) { Trait_Preparation::source(object_cast($entry, collected_trait::class)); continue; }
 						$work = $this->relationship_owner($entry);
 						$this->select_owner($work);
 						$selected->append($work);
@@ -281,7 +282,8 @@ final class Preparation_Worker
 	{
 		$entry = object_cast($node->occurrence(), collected_member_owner::class);
 		if ($entry instanceof collected_trait) {
-			throw new \RuntimeException('Trait execution awaits consumer-owned member instantiation');
+			Trait_Preparation::source(object_cast($entry, collected_trait::class));
+			return;
 		}
 		if ($entry instanceof collected_record) { $this->select_owner($this->record_owner(object_cast($entry, collected_record::class))); }
 		$this->select_owner($this->contract_owner($entry));
@@ -293,6 +295,14 @@ final class Preparation_Worker
 		foreach ($methods as $method) {
 			$this->select_callable($method);
 		}
+	}
+
+	/** Composition membership changes independently of authored syntax. */
+	public function invalidate_members(collected_record $record): void
+	{
+		$work = $record->preparation_work_owner();
+		if ($work !== null) { $this->schedule($work); }
+		if ($record->contract_work !== null) { $this->schedule($record->contract_work); }
 	}
 
 	private function select_owner(preparation_owner $owner): void

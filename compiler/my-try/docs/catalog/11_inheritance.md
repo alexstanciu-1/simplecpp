@@ -36,8 +36,12 @@ The third checkpoint feeds contributed members through shared read-only inventor
 observed lookup, record defaults/layout, collision validation, method scheduling,
 virtual contracts, reference cycles and C++ artifact enumeration. Method implementations
 belong to the consumer unit; lexical source spelling still belongs to the trait.
-Source `use` execution remains gated. Next: automatic composition selection and
-edit/removal/retry/reset integration, followed by generated-program execution proofs.
+Direct source `use` now executes. The coordinator resolves through analysis, publishes
+consumer batches, and retires stale instances before source-scope disposal. No-op
+input preserves identity; edits conservatively rebuild affected consumers. Failure
+retries, removed uses/origins, preparation/full reset and fresh-output agreement are
+covered. Nested uses, adaptations, lifecycle/static members, constants and bodyless
+trait requirements remain deferred. Next: reconcile remaining CH11 groups.
 
 Proof: all 18 PHP-host model suites passed, including trait syntax/identity,
 use/body edits, malformed-use recovery and removal; `/tmp/trait-model-20261008-1`.
@@ -51,6 +55,13 @@ Final default-value/eligibility/cycle/artifact probe: `/tmp/trait-inventory-focu
 The extended instance proof took 0.42 seconds, and the longest suite (`s2s`) took
 12.42 seconds. It checks emitted artifacts but does not compile/run a trait program.
 No native compiler build is claimed by these checkpoints.
+
+Automatic composition proof: 20 PHP-host suites passed in `/tmp/traits-model-20261008-2`.
+Nine generated programs compiled and ran without PCH in `/tmp/traits-cpp-20261008-2`,
+covering class/struct consumers, independent state, inherited/interface calls,
+reference returns, `data` inputs and edited/fresh output. The compiler was not rebuilt
+natively. The normative contract is [trait composition](../../../../specs/inheritance_v0_2.md#trait-composition).
+Final focused retirement/fragment-eviction checks: `/tmp/traits-final-20261008-2`.
 
 ## Interface handles and calls — 2026-10-08
 
@@ -355,7 +366,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLASS-INH-001](#class-inh-001) | implemented-bounded | `class B extends A {}` | verified | verified | deferred | Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07) |
 | [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations; final-virtual forwarding restriction |
-| [CLASS-INH-003](#class-inh-003) | model-in-progress | `class A { use T; }` | syntax/identity verified | gated | deferred | Consumer-owned instance model approved; materialization and execution pending |
+| [CLASS-INH-003](#class-inh-003) | implemented-bounded | `class A { use T; }` | direct instance composition | verified | deferred | Independent consumer members; edits/retry/reset; adaptations/nested/lifecycle/static members deferred |
 | [CLASS-INH-004](#class-inh-004) | implemented-bounded | `interface I { function f(int $a): int; }` | verified | verified | deferred | Public bodyless instance contracts; multiple interface inheritance |
 | [CLASS-INH-006](#class-inh-006) | pending-discussion | `$a = new A(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-007](#class-inh-007) | pending-discussion | `A a(1);` | unverified | unverified | deferred | — |
@@ -452,7 +463,10 @@ class A : public B, public I, public J { public: using base = B; };
 
 ## CLASS-INH-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Supported direct instance composition for classes and
+structs, with consumer-owned member instances and ordinary C++ member emission.
+Same-category conflicts reject. See the normative trait contract and handoff above.
+The imported v0.1 rejection below is historical, not current v0.2 behavior.
 
 ### Imported version 1
 

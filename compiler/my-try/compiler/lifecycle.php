@@ -142,7 +142,14 @@ final class Compiler_Lifecycle
 		Model::$prepared_entry = null;
 		if (self::$syntax_initialized)
 		{
-			foreach (Model::syntax_files() as $parsed)
+			$syntax_files /** Storage<parsed_file> */ = new Storage();
+			$source_files /** Storage<collected_file> */ = new Storage();
+			foreach (Model::syntax_files() as $syntax_file) {
+				$syntax_files->append($syntax_file);
+				$source_files->append($syntax_file->collection);
+			}
+			foreach (Trait_Composition::private_parses($source_files) as $private_parse) { $syntax_files->append($private_parse); }
+			foreach ($syntax_files as $parsed)
 			{
 				Preparation_Cleanup::tree($parsed->root);
 				$source = $parsed->collection;
@@ -203,6 +210,7 @@ final class Compiler_Lifecycle
 				throw new \RuntimeException('Retirement requires a successful parsing/collection join');
 			}
 		}
+		Trait_Composition::retire_stale($sources, $language);
 		(new Preparation_Worker($language))->retire_deleted_sources($sources);
 		Collection_Retirement::remove_deleted_sources($sources);
 	}
@@ -218,6 +226,7 @@ final class Compiler_Lifecycle
 				}
 			}
 		}
+		foreach (Trait_Composition::private_parses($sources) as $private_parse) { $sources->append($private_parse->collection); }
 		(new Preparation_Worker(Model::$language_scope))->discard_sources($sources);
 	}
 

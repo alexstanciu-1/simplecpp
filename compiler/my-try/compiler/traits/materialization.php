@@ -7,6 +7,15 @@ final class Trait_Materialization
 	/** Build privately and publish only after all members have materialized successfully. */
 	public static function instantiate(collected_trait $origin, collected_record $consumer): trait_instance
 	{
+		$instance = self::build($origin, $consumer);
+		$instances /** Storage<trait_instance> */ = $consumer->trait_instances;
+		$instances->append($instance);
+		return $instance;
+	}
+
+	/** Construct privately; the coordinator publishes a complete consumer batch. */
+	public static function build(collected_trait $origin, collected_record $consumer): trait_instance
+	{
 		$syntax = $origin->syntax();
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		$constants /** Storage<member_constant_node> */ = $syntax->constants;
@@ -31,8 +40,6 @@ final class Trait_Materialization
 			$members->append(new trait_member_instance($member->occurrence(), $working[$index]->occurrence()));
 			$index++;
 		}
-		$instances /** Storage<trait_instance> */ = $consumer->trait_instances;
-		$instances->append($instance);
 		return $instance;
 	}
 

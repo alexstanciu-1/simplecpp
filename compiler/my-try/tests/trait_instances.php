@@ -42,7 +42,7 @@ $origin_path = $directory . '/origin.phs';
 $consumer_path = $directory . '/consumer.phs';
 try {
 	file_put_contents($origin_path, 'namespace features; use defs\\Payload as Item; trait Reader { private int $extra = 9; public function read(Item $item, int $offset = 2): int { $local = $this->own; $extra = $this->extra; return $local + $extra; } public function relay(Item $item): int { return $this->read($item); } }');
-	// Uses stay gated. Exercise the approved materialization boundary directly until integration.
+	// Exercise materialization directly, independently of the automatic source-use path.
 	file_put_contents($consumer_path, 'namespace defs; struct Payload { int $number; } namespace app; struct Item { string $wrong; } class A { private int $own = 1; public int $read = 4; } struct B { private int $own = 3; } $item \\defs\\Payload; $a = new A(); $answer = $a->relay($item);');
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]);
@@ -124,24 +124,18 @@ try {
 	instance_check($working_tokens !== $origin_tokens && $working_tokens->tokens[$left->start_token()] !== $origin_tokens->tokens[$original->start_token()], 'Snapshot shares mutable token rows');
 	$spelling = $working_tokens->text_at($left->start_token());
 	$offset = $working_tokens->tokens[$left->start_token()]->offset;
+	$left_work = $left->require_body()->work(); $right_work = $right->require_body()->work();
+	Trait_Composition::retire($a, Model::$language_scope);
+	instance_check($left_work->change_status === change_state::deleted, 'Working body not retired');
+	instance_check($right_work->change_status !== change_state::deleted, 'Retirement crossed consumer boundary');
+	instance_check(count($first->collection->entries) === 0 && count($second->collection->entries) > 0, 'Private occurrence retirement crossed instances');
 	file_put_contents($origin_path, 'namespace features; trait Reader { use Other; public function changed(): int { return 7; } }');
 	$compiler->sync([$origin_path]);
 	instance_check($working_tokens->text_at($left->start_token()) === $spelling && $working_tokens->tokens[$left->start_token()]->offset === $offset, 'Origin edit changed instance snapshot');
 	try { Trait_Materialization::instantiate($trait, $a); throw new \LogicException('Nested use was silently omitted'); }
 	catch (\RuntimeException $error) { instance_check(str_contains($error->getMessage(), 'direct properties and methods'), 'Wrong materialization failure'); }
-	instance_check(count($a->trait_instances) === 1, 'Failed materialization published a partial instance');
-	// Exercise the existing ordered retirement protocol explicitly, ahead of automatic use reconciliation.
-	$private_sources = new Storage(); $private_sources->append($first->collection);
-	(new Preparation_Worker(Model::$language_scope))->discard_sources($private_sources);
-	instance_check($left->require_body()->work()->change_status === change_state::deleted, 'Working body not retired');
-	instance_check($right->require_body()->work()->change_status !== change_state::deleted, 'Retirement crossed consumer boundary');
-	$first->collection->deleted = true;
-	Collection_Retirement::remove_deleted_sources($private_sources);
-	instance_check(count($first->collection->entries) === 0 && count($second->collection->entries) > 0, 'Private occurrence retirement crossed instances');
-	$remaining_sources = new Storage(); $remaining_sources->append($second->collection);
-	(new Preparation_Worker(Model::$language_scope))->discard_sources($remaining_sources);
-	$second->collection->deleted = true;
-	Collection_Retirement::remove_deleted_sources($remaining_sources);
+	instance_check(count($a->trait_instances) === 0, 'Failed materialization published a partial instance');
+	instance_check($right_work->change_status === change_state::deleted && $b->trait_instances->is_empty(), 'Origin edit did not retire remaining consumer');
 }
 finally {
 	Compiler_Lifecycle::reset();

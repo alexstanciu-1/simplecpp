@@ -114,7 +114,7 @@ owns named references, not resolved or cloned members. Consumer-owned independen
 member instances are [materialized explicitly](../planning/trait_member_instances.md):
 `collected_record::trait_instances` owns private fragment syntax, collection/scopes
 and copied tokens. Each member pairs its origin with an independent working occurrence.
-Source `use` integration/execution remains gated; origin nodes never receive
+Source `use` selection/materialization is coordinator-owned; origin nodes never receive
 consumer-specific facts. The parser only replays supplied member spans; composition
 supplies the consumer and lexical context without adding authored AST membership.
 `Member_Inventory` builds transient local-member views for analysis and emission;

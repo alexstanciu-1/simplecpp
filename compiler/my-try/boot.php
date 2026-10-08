@@ -79,6 +79,7 @@ require_once __DIR__ . '/03_parse/collect/structures.php';
 require_once __DIR__ . '/compiler/traits/structures.php';
 require_once __DIR__ . '/compiler/traits/materialization.php';
 require_once __DIR__ . '/compiler/traits/inventory.php';
+require_once __DIR__ . '/compiler/traits/composition.php';
 // Concrete work accessors use collected-role covariance, which PHP checks while loading classes.
 require_once __DIR__ . '/04_analyze/prepare/data/work_records.php';
 require_once __DIR__ . '/03_parse/collect/collect.php';

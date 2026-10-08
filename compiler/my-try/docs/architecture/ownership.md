@@ -22,8 +22,9 @@ collection (not a second published source), with independent tokens, scopes and
 working members. The consumer backlink is weak. Member origin links preserve
 provenance; the private lexical scope observes the trait's source scope, while each
 working method weakly observes the consumer as declaring type. Explicit semantic
-retirement followed by collection disposal works per instance. Automatic selection,
-replacement and reset enumeration remain gated pending composition integration; see
+retirement followed by collection disposal works per instance. The successful parse
+join retires stale instances before disposing source scopes. Automatic selection,
+replacement, preparation reset and full reset include private collections; see
 the [trait plan](../planning/trait_member_instances.md).
 
 `collected_method` weakly observes its `collected_member_owner` through

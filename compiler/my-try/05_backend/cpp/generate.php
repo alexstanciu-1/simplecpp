@@ -37,6 +37,7 @@ final class CPP_Generator
 				$nodes /** Storage<declaration_node> */ = $namespace_body->declarations;
 				foreach ($nodes as $node) {
 					$definition = $node->occurrence();
+					if ($definition instanceof collected_trait) { continue; }
 					if ($definition instanceof collected_member_owner) {
 						$type_owner = object_cast($definition, collected_member_owner::class);
 						$relationships = $type_owner->relationship_work;
