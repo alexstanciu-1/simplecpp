@@ -33,6 +33,29 @@ final class CPP_Initialization_Registration
 /** Allocation is shared by positional new and named data inputs, independent of class/struct spelling. */
 final class CPP_Record_Construction
 {
+	/** The public allocation entry requires a key obtainable only in source-authorized contexts. */
+	public static function keyed(collected_method $method): bool
+	{
+		return ($method->name === '__construct')
+			&& ($method->callable_syntax()->require_preparation()->visibility !== member_visibility::public_access);
+	}
+
+	public static function key(collected_method $method): string
+	{
+		if (!self::keyed($method)) { return ''; }
+		return CPP_Generator::source_name('record', $method->declaring_type()->qualified_name()) . '::scpp_constructor_key()';
+	}
+
+	public static function key_declaration(collected_method $method): string
+	{
+		if (!self::keyed($method)) { return ''; }
+		$name = CPP_Generator::source_name('record', $method->declaring_type()->qualified_name());
+		return "public:\n\tclass scpp_construction_key { friend class " . $name
+			. "; scpp_construction_key() {} };\n"
+			. CPP_Declarations::visibility($method->callable_syntax()->require_preparation()->visibility)
+			. "\tstatic scpp_construction_key scpp_constructor_key() { return scpp_construction_key(); }\n";
+	}
+
 	/** Storage facts select allocation; source spelling and constructor selection are already settled. */
 	public static function allocation(canonical_type_use $type, canonical_type_use $payload_type,
 		record_storage_kind $storage, cpp_generation_context $context): string
@@ -141,6 +164,7 @@ final class CPP_Data_Construction
 		$inputs /** vector<record_initialization_input> */ = $facts->contract->inputs_in_order();
 		$ordered = '';
 		if (weakref_get($facts->contract->constructor) === null) { $ordered = $payload->spelling . '::scpp_data_tag{}'; }
+		else { $ordered = CPP_Record_Construction::key(weakref_get($facts->contract->constructor)); }
 		foreach ($inputs as $position => $input) {
 			$parameter = $input->parameter;
 			if (!isset($arguments[$position])) {

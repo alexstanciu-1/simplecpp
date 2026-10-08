@@ -39,7 +39,30 @@ Potential broader protected access is [non-blocking discussion debt](../compiler
 
 ## Construction, copying and cleanup
 
-Without an authored constructor, a child inherits the supported public constructor
+### Constructor visibility
+
+Classes and structs share constructor access rules. Public constructors are externally
+callable; protected constructors are callable from their declaring type and descendants;
+private constructors are callable only from their declaring type. A public static
+factory may construct through its owner's private constructor. Ordinary `new`, keyed
+`data` construction and late-static construction all check the effective constructor's
+original visibility and declaring owner during preparation. Inheritance does not widen
+constructor visibility or grant a descendant access to a private base constructor.
+
+Explicit and implicit base initialization check access from the authored child
+constructor's context: protected is available, private rejects. Inheriting the original
+constructor contract is distinct from authoring a child constructor that calls it.
+Reference/variadic parameters, abstract constructors, inherited `set:` rebinding and
+non-public destructor access remain outside this extension.
+
+The C++ backend uses a compiler-only key for non-public constructor entries. The entry
+is public so the existing shared/unique allocation helpers can invoke it; obtaining
+the key has the source constructor's visibility. The key's default constructor is
+private and non-aggregate, with its declaring record as friend. It is not a source
+member or parameter. Inline, shared, unique, data and base initialization use the same
+key protocol, without an extra payload copy or changing shared allocation strategy.
+
+Without an authored constructor, a child inherits the supported constructor
 contract of its base, including parameter defaults, through abstract or concrete
 intermediate bases. The original declaration owns that contract; it is not copied into the child's
 method inventory. Child properties must support their own defaults. The existing
@@ -48,7 +71,8 @@ introduced here. Implicit inline-payload default construction does not acquire s
 argument-default evaluation: use explicit `new` when an effective authored constructor
 needs supplied/defaulted parameters, consistently with the existing record construction
 contract. Previously supported implicit derived default construction with an inherited
-zero-parameter constructor remains valid; this does not broaden direct authored-record
+public zero-parameter constructor remains valid; non-public constructors require an
+explicit checked construction boundary. This does not broaden direct authored-record
 default construction.
 
 An authored child constructor may begin with exactly one standalone
@@ -68,7 +92,7 @@ omitted defaults in parameter order. Base construction precedes child property d
 object or extra base copy is required.
 
 Derived `data` initialization requires explicit `data` opt-in on the child. With an
-effective authored public constructor, declared locally or inherited, keys name that
+effective authored constructor, declared locally or inherited, keys name that
 constructor's parameters, with its original types/defaults; they do not expose extra
 child or base properties. The base need not opt into data construction. An inherited
 constructor retains its declaring owner and requires default-constructible child
@@ -278,7 +302,7 @@ substitute a receiver's declared type silently. See the
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Nonvirtual instance member hiding,
 runtime-called-type instance propagation, unique/inline derived/base
-conversions and non-public/abstract constructor contracts remain
+conversions and abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
 
 ## Shared derived/base upcasts

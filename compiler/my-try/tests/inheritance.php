@@ -20,6 +20,10 @@ function inheritance_source(string $source): string
 $results = [];
 foreach (['class', 'struct'] as $kind) {
 	$cases = [
+		'protected_constructor' => ['int $n; protected function __construct(set:$n) {}', 'public function __construct() { parent::__construct(9); }', '$c = new C(); return $c->n;', 9],
+		'protected_implicit_base' => ['int $n; protected function __construct(set:$n = 9) {}', 'public function __construct() {}', '$c = new C(); return $c->n;', 9],
+		'protected_inherited_factory' => ['int $n; protected function __construct(set:$n) {}', 'public static function make(): C { return new C(9); }', '$c = C::make(); return $c->n;', 9],
+		'private_owner_factory' => ['int $n; private function __construct(set:$n) {} public static function make(): C { return new C(9); }', '', '$c = B::make(); return $c->n;', 9],
 		'property' => ['int $n = 3;', 'int $m = 4;', '$c = new C(); $c->n += 2; $n = $c->n; $m = $c->m; return $n + $m;', 9],
 		'method' => ['int $n = 3; public function get(): int { return $this->n; }', '', '$c = new C(); return $c->get();', 3],
 		'protected' => ['protected int $n = 7; protected function get(): int { return $this->n; }', 'public function read(): int { return $this->get(); }', '$c = new C(); return $c->read();', 7],
@@ -74,6 +78,11 @@ foreach ([
 }
 foreach ([
 	['class B { protected int $n; } class C extends B {} $c = new C(); return $c->n;', 'Protected'],
+	['class B { protected function __construct() {} } class C extends B {} $c = new C();', 'Protected member'],
+	['class B { private function __construct() {} } class C extends B {} $c = new C();', 'Private member'],
+	['class B { private function __construct() {} } class C extends B { function __construct() {} }', 'Private member'],
+	['class B { private function __construct() {} } class C extends B { function __construct() { parent::__construct(); } }', 'Private member'],
+	['class B { protected function __construct() {} } data class C extends B {} $c C = {};', 'Protected member'],
 	['class B { private int $n; } class C extends B { function read(): int { return $this->n; } }', 'private property'],
 	['class B { protected int $n; } class C extends B { function read(B $b): int { return $b->n; } }', 'descendant receiver'],
 	['class B { protected function get(): int { return 1; } } class C extends B { function read(B $b): int { return $b->get(); } }', 'descendant receiver'],

@@ -19,6 +19,7 @@ foreach (['class', 'struct'] as $kind) {
 	$base = $kind . ' B { int $n; function __construct(int $input = 7) { $this->n = $input + 1; } } ';
 	$child = 'data ' . $kind . ' C extends B { int $extra = 1; } ';
 	foreach ([
+		'protected_inherited' => [$kind . ' B { int $n; protected function __construct(set:$n) {} } data ' . $kind . ' C extends B { static function make(): C { $c C = {n:9}; return $c; } } $c = C::make(); return $c->n;', 9],
 		'inherited' => [$base . $child . '$c C = {input: 8}; return $c->n;', 9],
 		'default' => [$base . $child . '$c C = {}; $n = $c->n; $extra = $c->extra; return $n + $extra;', 9],
 		'php_keys' => [$base . $child . '$c = C::["input" => 8]; return $c->n;', 9],

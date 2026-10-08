@@ -38,6 +38,9 @@ foreach (['class', 'struct'] as $kind) {
 		'inherited_default' => ['public int $n = 9; public function __construct(set:$n) {}', '$c = new C(); return $c->n;', 9],
 		'override_default' => ['public int $n = 7; public function __construct(set:$n = 9) {}', '$c = new C(); return $c->n;', 9],
 		'private' => ['private int $age; public int $n; public function __construct(set:$age) { $this->n = $this->age; }', '$c = new C(9); return $c->n;', 9],
+		'private_factory' => ['public int $n; private function __construct(set:$n) {} public static function make(): C { return new C(9); }', '$c = C::make(); return $c->n;', 9],
+		'private_data_factory' => ['public int $n; private function __construct(set:$n) {} public static function make(): C { $c C = {n:9}; return $c; }', '$c = C::make(); return $c->n;', 9],
+		'private_unique_factory' => ['public int $n; private function __construct(set:$n) {} public static function make(): int { $c unique<C> = new C(9); return $c->n; }', 'return C::make();', 9],
 		'data_parameters' => ['public int $n; public function __construct(int $input) { $this->n = $input; }', '$c C = {input: 9}; return $c->n;', 9],
 		'data_set' => ['public int $n; public function __construct(set:$n = 7) { $this->n = $n + 2; }', '$c C = {}; return $c->n;', 9],
 		'container_default' => ['public vector<int> $v = [9]; public function __construct(set:$v) {}', '$c = new C(); $v = $c->v; return $v[0];', 9],
@@ -55,6 +58,17 @@ foreach (['class', 'struct'] as $kind) {
 		'fresh_default' => ['public dynamic $d = {n:9}; public function __construct(set:$d) {}', '$a = new C(); $b = new C(); $da = $a->d; $db = $b->d; $da["n"] = 7; $n int = $db["n"]; return $n;', 9],
 	];
 	if ($kind === 'struct') { unset($cases['shared_handle']); }
+	foreach (['private', 'protected'] as $visibility) {
+		foreach (['$c = new C();', '$c C = {};'] as $consumer) {
+			try {
+				constructors_source('data ' . $kind . ' C { ' . $visibility . ' function __construct() {} } ' . $consumer);
+				throw new \LogicException('Constructor visibility bypass');
+			}
+			catch (\RuntimeException $error) {
+				if (!str_contains(strtolower($error->getMessage()), $visibility . ' member')) { throw $error; }
+			}
+		}
+	}
 	foreach ($cases as $name => [$body, $program, $expected]) {
 		$output = constructors_source('data ' . $kind . ' C { ' . $body . ' } ' . $program);
 		if (isset($argv[1])) {
@@ -92,7 +106,7 @@ foreach ([
 	['data class C { int $n; function __construct(int $input) {} } $c C = {n: 1};', 'unknown record'],
 	['class C { function __construct(set:$n) {} }', 'existing instance property'],
 	['class C { function __construct(): void {} }', 'without a return type'],
-	['class C { private function __construct() {} }', 'public constructors'],
+	['class C { private function __construct() {} } $c = new C();', 'Private member'],
 	['class C { private int $n; function __construct(set:$n) {} } $c = new C(1); return $c->n;', 'private property'],
 	['data class C { private int $n = 1; } $c C = {n: 2};', 'unknown record'],
 	['class C { function __construct(int &$n) {} }', 'fixed by-value'],
@@ -214,6 +228,23 @@ try {
 	file_put_contents($type_path, str_replace('set:$n = 7', 'set:$n = 9', $declaration));
 	$fresh->update_cpp([$type_path]);
 	if (CPP_Output::encode(Model::$cpp_files) !== $incremental) { throw new \LogicException('Readded constructor differs from fresh output'); }
+	$factory = 'namespace Types; data class C { int $n; public function __construct(set:$n) {} static function make(): C { $c C = {n:9}; return $c; } }';
+	file_put_contents($type_path, $factory);
+	file_put_contents($entry_path, 'use Types\\C; $c = C::make(); return $c->n;');
+	$fresh->update_cpp([$type_path, $entry_path]);
+	foreach (['private', 'protected', 'public'] as $visibility) {
+		file_put_contents($type_path, str_replace('public function __construct', $visibility . ' function __construct', $factory));
+		$fresh->update_cpp([$type_path]);
+		$edited = CPP_Output::encode(Model::$cpp_files);
+		if (isset($argv[1])) {
+			$path = $argv[1] . '/visibility_' . $visibility . '.cpp';
+			file_put_contents($path, native_record_export());
+			$results[] = ['path' => $path, 'exit_code' => 9];
+		}
+		Compiler_Lifecycle::reset();
+		$fresh = new Compiler(); $fresh->init([$directory]); $fresh->select_entry('main', 'main.phs'); $fresh->exec_cpp();
+		if (CPP_Output::encode(Model::$cpp_files) !== $edited) { throw new \LogicException('Visibility edit differs from fresh construction'); }
+	}
 }
 finally {
 	unlink($type_path);

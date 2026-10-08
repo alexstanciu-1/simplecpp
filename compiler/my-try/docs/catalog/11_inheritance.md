@@ -42,7 +42,7 @@ Remaining extensions require agreement, not another implementation of completed 
    weak upcasts already work.
 3. Trait extensions: nested uses, adaptations, lifecycle members and bodyless requirements. Static members
    and constants now share the existing consumer-owned path below.
-4. Other explicit bounds: non-public/abstract constructor contracts, non-public
+4. Other explicit bounds: abstract constructor contracts, non-public
    destructors, variance/covariant returns, interface-qualified static dispatch and the
    inherited-final-virtual interface-forwarding restriction.
 
@@ -60,6 +60,33 @@ Verification: the checkpoints record PHP-host and generated-C++ proofs. The late
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Constructor visibility — 2026-10-08
+
+Public/protected/private constructor access now uses shared member-access checks at
+ordinary new, data, late-static and explicit/implicit base-initialization boundaries.
+Inherited constructors retain their original owner and visibility. Source signatures
+retain visibility; no new AST or callable path is introduced. Non-public implicit
+inline default construction requires an explicit new/data boundary; the old public
+zero-parameter inherited default remains unchanged.
+
+The approved backend prerequisite uses a public keyed constructor entry and an
+access-controlled key accessor owned by the original record. Keys are non-aggregate
+and not source-visible. Existing allocation helpers preserve make_shared allocation;
+inline/unique/shared/data/base paths share the protocol. Key declarations are assembled
+from current signatures, not cached field-layout fragments, so visibility edits are
+reflected without stale layout output. Destructors and abstract/reference/variadic
+constructor contracts remain outside this slice.
+
+Passed: 60 generated constructor programs (`/tmp/constructor-access-final`), 59
+inheritance programs (`/tmp/constructor-access-inheritance-1`), 40 derived-data programs
+(`/tmp/constructor-access-data-1`), all without PCH; six adjacent PHP suites passed in
+`/tmp/constructor-access-regression`. Coverage includes private factories, protected
+explicit/implicit base calls, original-owner inherited access, data/unique allocation,
+visibility rejection and signature-edit failure/retry/repair/fresh agreement.
+No native compiler rebuild. Earlier checkpoints' public-only
+constructor limits are historical and superseded by this section and the
+[normative contract](../../../../specs/inheritance_v0_2.md#constructor-visibility).
 
 ## Derived data through constructor contracts — 2026-10-08
 
@@ -563,8 +590,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-007](#class-inh-007) | superseded-contract | `$a value<A> = new A(1);` | verified | representation verified | deferred | C++-style source spelling is not PHS; explicit inline class storage is intentionally supported by CH10 |
 | [CLASS-INH-008](#class-inh-008) | implemented-bounded | `$this->f();` | verified | verified | deferred | Ordinary fixed methods; abstract contracts dispatch virtually |
 | [CLASS-INH-009](#class-inh-009) | implemented-bounded | `parent::f(1);` | verified | verified | deferred | Fixed original-owner dispatch; current instance required for instance methods |
-| [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; public fixed-value constructors |
-| CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original public concrete constructor contract/defaults through abstract or concrete ancestors |
+| [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; fixed-value constructors with original-owner access checks |
+| CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original concrete constructor visibility, contract/defaults through abstract or concrete ancestors |
 | CLASS-INH-014 | implemented-bounded | `static::method(); new static();` | verified | verified | deferred | Demanded static called-type instances; shared-class factories; runtime instance propagation deferred |
 | CLASS-INH-015 | implemented-bounded | `data class C extends B {} $c C = {input: 9};` | verified | verified | deferred | Explicit opt-in; authored/inherited parameter contracts or composed synthesized public-property inputs through data bases |
 | [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |

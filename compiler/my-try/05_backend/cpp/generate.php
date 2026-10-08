@@ -145,7 +145,9 @@ final class CPP_Generator
 					if ($method->require_preparation()->override_assertion) { $suffix .= ' override'; }
 					if ($virtual_method && $decision->final_method) { $suffix .= ' final'; }
 					if ($decision->abstract_method) { $suffix .= ' = 0'; }
-					$text .= CPP_Declarations::visibility($method->require_preparation()->visibility)
+					$visibility = $method->name === '__construct' ? member_visibility::public_access : $method->require_preparation()->visibility;
+					$text .= CPP_Record_Construction::key_declaration(object_cast($method->occurrence(), collected_method::class));
+					$text .= CPP_Declarations::visibility($visibility)
 						. "\t" . ($virtual_method ? 'virtual ' : '') . $member_fragment->prototype_text . $suffix . ";\n";
 					foreach ($member_fragment->headers as $header => $used) { $artifact_headers[$header] = true; }
 					foreach ($member_fragment->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }

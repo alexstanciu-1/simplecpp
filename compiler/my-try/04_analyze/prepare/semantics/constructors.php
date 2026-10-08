@@ -40,6 +40,7 @@ final class Constructor_Preparation
 		$context->receiver = null;
 		try {
 			if ($constructor !== null) {
+				self::require_access($constructor, $context);
 				$facts->call = Call_Preparation::prepare($constructor, $arguments, $context);
 				if ($source_call !== null) { $source_call->set_preparation($facts->call); }
 			}
@@ -52,7 +53,7 @@ final class Constructor_Preparation
 		return $source_call === null ? 0 : 1;
 	}
 
-	/** Resolve public by-value constructor inputs after the declaring layout has settled. */
+	/** Resolve by-value constructor inputs after the declaring layout has settled. */
 	public static function signature(method_node $syntax, preparation_context $context): void
 	{
 		if (!$syntax->has_parsed_body()) { throw new \RuntimeException('Constructor requires a concrete body'); }
@@ -60,17 +61,13 @@ final class Constructor_Preparation
 			throw new \RuntimeException('Only __construct without a return type or reference return is supported');
 		}
 		Member_Preparation::validate_modifiers($syntax->modifiers, false);
-		foreach ($syntax->modifiers as $modifier) {
-			if ($modifier !== declaration_modifier::public_access) {
-				throw new \RuntimeException('The first constructor slice requires public constructors');
-			}
-		}
 		$entry = object_cast($syntax->occurrence(), collected_method::class);
 		$record = object_cast($entry->declaring_type(), collected_record::class);
 		$context->member_owner = $record;
 		$context->worker->require_declaration($context->owner, $record);
 		$layout = $record->syntax()->require_preparation();
 		$facts = new prepared_source_callable();
+		$facts->visibility = Member_Preparation::visibility($syntax->modifiers);
 		$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
 		$facts->receiver = Method_Preparation::receiver($entry);
 		$contract = new record_initialization_contract();
@@ -167,13 +164,21 @@ final class Constructor_Preparation
 		}
 	}
 
+	/** Access is checked at each construction boundary using the original declaring owner. */
+	public static function require_access(collected_method $method, preparation_context $context): void
+	{
+		Call_Preparation::require_signature($method, $context);
+		Member_Preparation::require_access($method->callable_syntax()->require_preparation()->visibility,
+			$method->declaring_type(), $context);
+	}
+
 	/** Caller work depends on the constructor signature, never its implementation body. */
 	public static function inputs(collected_record $record, preparation_context $context): record_initialization_contract
 	{
 		$layout = $record->syntax()->require_preparation();
 		$method = weakref_get($layout->constructor);
 		if ($method !== null) {
-			Call_Preparation::require_signature($method, $context);
+			self::require_access($method, $context);
 			return $method->callable_syntax()->require_preparation()->initialization;
 		}
 		return $layout->initialization;

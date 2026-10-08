@@ -144,6 +144,9 @@ final class CPP_Declarations
 		if ($function_declaration instanceof collected_method) {
 			$method = object_cast($function_declaration, collected_method::class);
 			$record_name = CPP_Generator::source_name('record', $method->declaring_type()->qualified_name());
+			if (CPP_Record_Construction::keyed($method)) {
+				$parts = $record_name . '::scpp_construction_key' . ($parts === '' ? '' : ', ' . $parts);
+			}
 			$name = $syntax->name === '__construct' ? $record_name : CPP_Callables::method_name($method);
 			$destructor = $syntax->name === '__destruct';
 			if ($destructor) { $name = '~' . $record_name; }
@@ -202,6 +205,9 @@ final class CPP_Declarations
 	{
 		$values = '';
 		$separator = '';
+		$target = object_cast(weakref_get($facts->target), collected_method::class);
+		$values = CPP_Record_Construction::key($target);
+		if ($values !== '') { $separator = ', '; }
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		foreach ($parameters as $index => $parameter) {
@@ -516,6 +522,11 @@ final class CPP_Declarations
 		$text .= $prefix;
 		$names = '';
 		$separator = '';
+		if ($constructed_type !== null) {
+			$constructor = object_cast(weakref_get($facts->target), collected_method::class);
+			$names = CPP_Record_Construction::key($constructor);
+			if ($names !== '') { $separator = ', '; }
+		}
 		$packed_names = '';
 		$packed_separator = '';
 		foreach ($prepared_arguments as $index => $prepared_argument)

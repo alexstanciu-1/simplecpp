@@ -295,6 +295,10 @@ body, `$name` denotes the parameter and `$this->name` the initialized property; 
 are not aliases. Normal value/handle copy semantics still apply. A public constructor
 may explicitly accept a parameter initializing a private property: `age` is then a
 valid construction key, but direct external property access remains forbidden.
+An authored private/protected constructor is usable only from its authorized source
+contexts, exactly as with ordinary `new`; keyed data notation does not bypass access.
+Inherited constructors preserve the original visibility and declaring owner. See
+[constructor visibility](inheritance_v0_2.md#constructor-visibility).
 
 Only public instance properties participate in a synthesized constructor when no
 authored constructor exists. Excluded non-public instance properties must still have
@@ -325,7 +329,7 @@ construction invariants.
 #### Derived records with authored constructor contracts — 2026-10-08
 
 A derived class/struct must explicitly opt in with `data`; the modifier is not
-inherited. Its effective public constructor may be authored on the child or inherited
+inherited. Its effective constructor may be authored on the child or inherited
 from an ancestor, which need not itself be `data`. Keys always name that selected
 constructor's parameters. Inherited parameter types, names and defaults keep their
 original declaration/lexical context. Extra public properties do not add implicit keys.

@@ -44,6 +44,7 @@ final class Object_Construction_Preparation
 		$constructor = weakref_get($record->syntax()->require_preparation()->constructor);
 		$call /** nullable<prepared_call> */ = null;
 		if ($constructor !== null) {
+			Constructor_Preparation::require_access($constructor, $context);
 			$call = Call_Preparation::prepare($constructor, $source_arguments, $context);
 		}
 		else {
@@ -93,6 +94,8 @@ final class Object_Construction_Preparation
 			if ($constructor !== null) {
 				if ($constructor->declaring_type() !== $record) {
 					$signature = Call_Preparation::require_signature($constructor, $context);
+					Constructor_Preparation::require_access($constructor, $context);
+					if ($constructor->callable_syntax()->require_preparation()->visibility !== member_visibility::public_access) { return false; }
 					$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 					// Preserve the pre-forwarding implicit derived default constructor.
 					if ($parameters->is_empty()) { return self::record_default($type, $context); }
