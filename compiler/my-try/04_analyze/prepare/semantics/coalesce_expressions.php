@@ -30,7 +30,13 @@ final class Coalesce_Expression_Preparation
 				$selected_type = Result_Conversions::require_payload($left->type, $role);
 				$facts->presence = coalesce_presence::wrapper_value;
 			}
-			if (Boxed_Conversions::is_boxed($selected_type) || Boxed_Conversions::is_boxed($fallback->type)) {
+			$relationships = new Conversion_Relationships($context);
+			if ((Ownership_Conversions::role($left->type) !== null) || (Ownership_Conversions::role($fallback->type) !== null)) {
+				$facts->type = Selection_Result_Preparation::shared_join($left->type, $fallback->type, $context);
+				$facts->presence = coalesce_presence::handle_presence;
+				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch, $relationships);
+			}
+			elseif (Boxed_Conversions::is_boxed($selected_type) || Boxed_Conversions::is_boxed($fallback->type)) {
 				$facts->type = Selection_Result_Preparation::boxed_join($selected_type, $fallback->type, $context);
 				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
 			}
@@ -48,7 +54,7 @@ final class Coalesce_Expression_Preparation
 			}
 			Capability_Preparation::require_copy($left->type, $context);
 			$facts->left_extraction = Conversion_Preparation::decide($left->type, $selected_type, conversion_context::coalesce_value);
-			$facts->left_conversion = Conversion_Preparation::decide($selected_type, $facts->type, conversion_context::coalesce_value);
+			$facts->left_conversion = Conversion_Preparation::decide($selected_type, $facts->type, conversion_context::coalesce_value, $relationships);
 			return $facts;
 		}
 		finally { $context->statement_assignment = $statement_assignment; }

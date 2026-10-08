@@ -22,8 +22,9 @@ final class Conditional_Expression_Preparation
 			}
 			$fallback = Expression_Preparation::prepare($syntax->fallback, $context);
 			$facts->type = self::join($selected->type, $fallback->type, $context);
-			$facts->true_conversion = Conversion_Preparation::decide($selected->type, $facts->type, conversion_context::conditional_branch);
-			$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
+			$relationships = new Conversion_Relationships($context);
+			$facts->true_conversion = Conversion_Preparation::decide($selected->type, $facts->type, conversion_context::conditional_branch, $relationships);
+			$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch, $relationships);
 			return $facts;
 		}
 		finally { $context->statement_assignment = $statement_assignment; }
@@ -33,6 +34,9 @@ final class Conditional_Expression_Preparation
 	private static function join(canonical_type_use $selected, canonical_type_use $fallback,
 		preparation_context $context): canonical_type_use
 	{
+		if ((Ownership_Conversions::role($selected) !== null) || (Ownership_Conversions::role($fallback) !== null)) {
+			return Selection_Result_Preparation::shared_join($selected, $fallback, $context);
+		}
 		$selected_role = Result_Conversions::role($selected);
 		$fallback_role = Result_Conversions::role($fallback);
 		if (($selected_role !== null) || ($fallback_role !== null)) {

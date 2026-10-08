@@ -38,9 +38,10 @@ Remaining extensions require agreement, not another implementation of completed 
    `new static`; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
 2. Additional ownership conversions/joins: interface weak handles,
-   unique/weak downcasts, cross-casts, derived/base or sibling conditional joins;
+   unique/weak downcasts, cross-casts, unique/weak or sibling conditional joins;
    shared checked ancestry casts, class/struct weak upcasts and safe unique transfers
-   already work.
+   already work. Shared derived/base and record/interface joins now work without
+   inferring unseen common ancestors.
 3. Trait extensions: adaptations and lifecycle members. Abstract requirements, nested uses, static members
    and constants now share the existing consumer-owned path below.
 4. Other explicit bounds: abstract constructor contracts, non-public
@@ -52,7 +53,7 @@ and trait-extension groups; no new group is enabled by this reconciliation.
 CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
-five ownership/type-access rows added below make already-proven coverage explicit. This is
+six ownership/type-access rows added below make already-proven coverage explicit. This is
 not a claim that every extension above is required for v0.2. Their implementation
 or deferral still needs agreement. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
@@ -61,6 +62,28 @@ Verification: the checkpoints record PHP-host and generated-C++ proofs. The late
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Shared selection joins — 2026-10-08
+
+Full ternary, Elvis and coalescing use the existing selection-result owner to choose
+one supplied shared type via dependency-aware ancestry. Class and shared-struct
+derived/base pairs normalize to the supplied base; record/interface pairs normalize
+to the supplied interface. Destination types never determine the join. No sibling
+common ancestor inference, unique/weak joins, inline slicing or wrapper-payload
+widening. Match admission remains unchanged.
+
+Existing branch conversion facts carry shared upcasts; the backend reuses ordinary
+handle construction. Coalescing has an explicit handle-presence fact and reuses its
+evaluate-once temporary/lazy fallback flow. No new AST, allocation or runtime helper.
+The [conditional contract](../../../../specs/conditional_expression_matrix.md#v02-shared-handle-joins)
+records this intentional v0.2 extension to the old exact-type rule.
+
+Focused proofs cover class/struct joins, invariant-reference checks of inferred types,
+interface views, identity, empty results, lazy/evaluate-once behavior, sibling rejection
+even with an explicit destination, and all three spellings across ancestry edits with
+failure/retry/repair/reset/fresh agreement. Validation: 29 generated-C++ fixtures passed
+without PCH in `/tmp/shared-joins-final2`; eight adjacent PHP suites passed in
+`/tmp/shared-joins-adjacent`. No native compiler rebuild.
 
 ## Checked object access — 2026-10-08
 
@@ -689,6 +712,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH11-WEAK-UPCAST | implemented-bounded | `$base weak<Base> = $derived;` | verified | verified | deferred | [Weak ancestry](#weak-ancestry-upcasts--2026-10-08); no lock or lifetime extension; invariant references |
 | CH11-UNIQUE-UPCAST | implemented-bounded | `$base unique<Base> = move($derived);` | verified | verified | deferred | [Unique ancestry](#unique-ancestry-transfers--2026-10-08); virtual base destruction required; consuming boundaries only |
 | CH11-OBJECT-TYPE | implemented-bounded | `object_cast($base, Derived::class)` / `$base instanceof Derived` | verified | verified | deferred | [Checked access](#checked-object-access--2026-10-08); shared identity, checked failure, no flow narrowing |
+| CH11-SHARED-JOIN | implemented-bounded | `$condition ? $derived : $base` / `$derived ?: $base` / `$base ?? $derived` | verified | verified | deferred | [Shared joins](#shared-selection-joins--2026-10-08); one supplied base/interface, no sibling inference |
 
 ## CLASS-INH-001
 

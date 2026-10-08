@@ -361,6 +361,7 @@ enum coalesce_presence
 	case always;
 	case wrapper_value;
 	case boxed_nonnull;
+	case handle_presence;
 }
 
 /** Owned selected-value domain; wrapper extraction occurs only after presence. */

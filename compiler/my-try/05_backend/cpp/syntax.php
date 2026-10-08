@@ -474,6 +474,9 @@ final class CPP_Syntax
 		elseif ($facts->presence === coalesce_presence::boxed_nonnull) {
 			$presence = '!' . $temporary . '.is_null().native_value()';
 		}
+		elseif ($facts->presence === coalesce_presence::handle_presence) {
+			$presence = 'static_cast<bool>(' . $temporary . ')';
+		}
 		else {
 			throw new \LogicException('Unsupported prepared coalesce presence');
 		}

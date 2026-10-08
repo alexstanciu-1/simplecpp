@@ -5,6 +5,30 @@ namespace scpp\compiler;
 
 final class Selection_Result_Preparation
 {
+	/** Choose one supplied shared type, never an unseen common ancestor or destination. */
+	public static function shared_join(canonical_type_use $left, canonical_type_use $right,
+		preparation_context $context): canonical_type_use
+	{
+		$left_role = Ownership_Conversions::role($left);
+		$right_role = Ownership_Conversions::role($right);
+		if (($left_role === null) || ($right_role === null)) {
+			throw new \RuntimeException('Shared selection requires two shared handles');
+		}
+		if (($left_role->ownership_family() !== ownership_kind::shared)
+			|| ($right_role->ownership_family() !== ownership_kind::shared)) {
+			throw new \RuntimeException('Shared selection requires two shared handles');
+		}
+		if ($left->matches($right)) { return $left; }
+		$relationships = new Conversion_Relationships($context);
+		if ($relationships->is_subtype(Ownership_Conversions::payload($left), Ownership_Conversions::payload($right))) {
+			return $right;
+		}
+		if ($relationships->is_subtype(Ownership_Conversions::payload($right), Ownership_Conversions::payload($left))) {
+			return $left;
+		}
+		throw new \RuntimeException('Shared selection requires one branch type to be a base of the other; sibling inference is deferred');
+	}
+
 	/** Exact selected payloads for nullable joins; does not broaden match admission. */
 	public static function nullable_value_join(canonical_type_use $left, canonical_type_use $right,
 		preparation_context $context): canonical_type_use

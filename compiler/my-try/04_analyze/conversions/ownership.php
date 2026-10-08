@@ -51,7 +51,9 @@ final class Ownership_Conversions
 			if ((($family === ownership_kind::shared) || ($family === ownership_kind::weak) || ($family === ownership_kind::unique))
 				&& ($target_role->ownership_family() === $family)
 				&& (($context === conversion_context::assignment) || ($context === conversion_context::argument)
-					|| ($context === conversion_context::return_value))) {
+					|| ($context === conversion_context::return_value)
+					|| (($family === ownership_kind::shared) && (($context === conversion_context::conditional_branch)
+						|| ($context === conversion_context::coalesce_value))))) {
 				if ($relationships->is_subtype(self::payload($source), self::payload($target))) {
 					if ($family === ownership_kind::unique) {
 						if (!$relationships->has_virtual_destruction(self::payload($target))) {

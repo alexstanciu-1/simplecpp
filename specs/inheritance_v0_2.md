@@ -348,8 +348,9 @@ container's element type.
 
 Reference parameters (including read-only references), aliases and reference returns
 retain exact storage-type requirements. No implicit downcasts, inline-record base
-copies, wrapper-payload conversions or new conditional joins
-are enabled by this slice.
+copies or wrapper-payload conversions are enabled by this slice. Shared conditional
+joins follow the [v0.2 selection amendment](conditional_expression_matrix.md#v02-shared-handle-joins):
+one supplied branch type must upcast to the other, without sibling ancestor inference.
 
 ## Checked shared-object access and type tests
 

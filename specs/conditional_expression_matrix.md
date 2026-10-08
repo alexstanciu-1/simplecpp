@@ -84,6 +84,31 @@ Practical effect:
 - `mixed_t(null)` may trigger fallback when it is the current branch being tested for usability
 - but if fallback selects a `mixed_t(null)` branch, the selected value domain is still valid and the coalesce result may be `mixed_t(null)`
 
+## v0.2 shared-handle joins
+
+Full ternary, shorthand Elvis and coalescing accept two shared-handle alternatives
+when their types match or one supplied type can upcast to the other. In the latter
+case the result is that supplied base/interface type, independent of branch order
+and of the destination receiving the expression. Ordinary classes and explicitly
+shared structs use the same rule; a record paired with an implemented interface
+produces the interface handle. Preparation observes ancestry dependencies.
+
+No unseen common ancestor/interface is inferred for siblings. Such branches must
+first be explicitly normalized to a chosen shared type. Unique/weak joins, inline
+record joins, bare-null branch inference and wrapper-payload widening are not
+enabled by this amendment. Match retains its existing result admission.
+
+The condition/left operand is evaluated once. Only the selected ternary branch or
+needed fallback executes. Shared Elvis and coalescing both test handle presence;
+an empty left selects the fallback, which may itself be empty. The selected handle
+retains its object/control-block identity without allocating or copying a payload.
+Results are values, not reference aliases. Statically invalid joins reject during
+preparation even when the invalid branch is unselected.
+
+This amendment extends the older exact-type matrices below, not their scalar,
+Result, nullable or boxed-family behavior. It does not claim support in the legacy
+type-blind generator or its portable-PHP authoring profile.
+
 ## Initial `??` matrix
 
 | Left | Right | Result | Status | Notes |
