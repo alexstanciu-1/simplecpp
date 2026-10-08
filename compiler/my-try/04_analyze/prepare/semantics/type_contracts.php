@@ -63,7 +63,7 @@ final class Type_Contract_Preparation
 					throw new \RuntimeException('Nonvirtual inherited member redeclaration is deferred');
 				}
 				if (($signature->static_member !== $parent_signature->static_member)
-					|| !self::compatible($parent_signature->signature, $signature->signature)) {
+					|| !Callable_Adaptation::exact($parent_signature->signature, $signature->signature)) {
 					if ($static_redeclaration) {
 						throw new \RuntimeException('Static redeclaration requires an exact compatible signature');
 					}
@@ -92,7 +92,7 @@ final class Type_Contract_Preparation
 			$implementation = object_cast($matches[0]->member, collected_method::class);
 			Call_Preparation::require_signature($implementation, $context);
 			$provided = $implementation->callable_syntax()->require_preparation();
-			if ($provided->static_member || !self::compatible($required->signature, $provided->signature)
+			if ($provided->static_member || !Callable_Adaptation::exact($required->signature, $provided->signature)
 				|| ($provided->visibility === member_visibility::private_access)
 				|| (($required->visibility === member_visibility::public_access) && ($provided->visibility !== member_visibility::public_access))) {
 				throw new \RuntimeException('Trait requirement needs an exact compatible instance signature and visibility');
@@ -117,7 +117,7 @@ final class Type_Contract_Preparation
 				Call_Preparation::require_signature($implementation, $context);
 				$signature = $implementation->callable_syntax()->require_preparation();
 				if ($signature->static_member || ($signature->visibility !== member_visibility::public_access)
-					|| !self::compatible($requirement->signature(), $signature->signature)) {
+					|| !Callable_Adaptation::exact($requirement->signature(), $signature->signature)) {
 					throw new \RuntimeException('Interface implementation requires an exact compatible public instance signature');
 				}
 				if (isset($decisions[$requirement->name])) { $decisions[$requirement->name]->virtual_method = true; }
@@ -182,7 +182,7 @@ final class Type_Contract_Preparation
 			if ($previous === $method) { return; }
 			if ($previous->name === $method->name) {
 				Call_Preparation::require_signature($previous, $context);
-				if (!self::compatible($previous->signature(), $method->signature())) {
+				if (!Callable_Adaptation::exact($previous->signature(), $method->signature())) {
 					throw new \RuntimeException('Incompatible same-named interface contracts');
 				}
 			}
@@ -201,26 +201,6 @@ final class Type_Contract_Preparation
 		$base = weakref_get($context->worker->require_relationships($owner, $context)->base);
 		if ($base === null) { throw new \LogicException('Missing inherited method contract'); }
 		return self::effective_method($base, $name, $context);
-	}
-
-	private static function compatible(callable_signature $base, callable_signature $child): bool
-	{
-		if (!$base->return_type->matches($child->return_type)) { return false; }
-		if (($base->reference_return === null) !== ($child->reference_return === null)) { return false; }
-		if ($base->reference_return !== null) {
-			if ($base->reference_return->parameter_index() !== $child->reference_return->parameter_index()) { return false; }
-		}
-		$before /** Storage<callable_parameter> */ = $base->parameters;
-		$after /** Storage<callable_parameter> */ = $child->parameters;
-		if ($before->count() !== $after->count()) { return false; }
-		foreach ($before as $index => $parameter) {
-			$current = $after[$index];
-			if (!$parameter->type->matches($current->type) || ($parameter->mode !== $current->mode)
-				|| ($parameter->access !== $current->access)
-				|| (($parameter->element_type === null) !== ($current->element_type === null))
-				|| (($parameter->default_value === null) !== ($current->default_value === null))) { return false; }
-		}
-		return true;
 	}
 
 	public static function same(?prepared_type_contract $old, prepared_type_contract $current): bool

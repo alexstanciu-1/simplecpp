@@ -38,7 +38,7 @@ User scope decision — 2026-10-08:
 | --- | --- |
 | Shared cross-casts | Implemented: observed relationship admission through existing checked access |
 | Non-public destructors | Implemented: independent lifecycle contract and access-aware ownership |
-| Variance/covariant returns | Implement in CH11; agree parameter/return compatibility and lowering bounds |
+| Variance/covariant returns | Agreed shared-value scope; adaptation foundation implemented, dispatch integration next |
 | Instance late static binding; inline/struct `new static()` | Deferred to CH15 |
 | Unique/weak downcasts; unique/weak conditional joins; sibling conditional joins | Deferred to CH15 |
 | Trait adaptations; abstract constructor contracts | Deferred to CH15 |
@@ -48,7 +48,8 @@ User scope decision — 2026-10-08:
 The [CH15 scope register](15_blocking_debt.md#ch15-inheritance-extensions-01--deferred-ch11-extensions)
 retains the seven newly deferred items and their prerequisites. Existing unsupported
 paths stay rejected; recording the queue does not enable new language semantics.
-Next discussion: variance/covariant returns.
+Next implementation: variance dispatch contracts and C++ bridges; see the
+[agreed scope and checkpoints](../planning/callable_variance.md).
 CH11 is not declared complete; native compiler validation remains outstanding.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the

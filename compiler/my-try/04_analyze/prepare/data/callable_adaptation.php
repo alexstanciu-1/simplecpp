@@ -1,0 +1,18 @@
+<?php
+
+namespace scpp\compiler;
+
+/** Required-contract inputs flow to the implementation; its output flows back. */
+final class prepared_callable_adaptation
+{
+	public array $parameters /** vector<conversion_decision> */ = [];
+	public conversion_decision $result;
+
+	public function is_identity(): bool
+	{
+		foreach ($this->parameters as $parameter) {
+			if ($parameter->operation !== conversion_operation::identity) { return false; }
+		}
+		return $this->result->operation === conversion_operation::identity;
+	}
+}

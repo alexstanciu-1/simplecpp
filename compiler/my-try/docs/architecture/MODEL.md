@@ -225,6 +225,13 @@ parameter or general reflection type is manufactured for compile-time inputs.
 
 `callable_signature` and `callable_parameter` have no source-storage links.
 
+`prepared_callable_adaptation` describes required-to-provided parameter conversions
+and the reverse provided-to-required result conversion. `Callable_Adaptation` owns
+directional comparison, accepting only identity or observed shared upcasts. It retains
+no signature owner, worker or backend spelling. Existing type-contract checks consume
+its exact mode; attaching variance adaptations to dispatch edges and emitting their
+bridges is the next [planned checkpoint](../planning/callable_variance.md).
+
 Shared upcast conversion decisions retain canonical source/target types and a named
 operation, never a worker or ancestry cache. The optional transient
 `conversion_relationship_query` is supplied by storage-boundary preparation;

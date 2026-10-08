@@ -49,6 +49,8 @@ require_once __DIR__ . '/compiler/initialization/catalog.php';
 require_once __DIR__ . '/04_analyze/prepare/data/structures.php';
 require_once __DIR__ . '/04_analyze/prepare/data/instance_requests.php';
 require_once __DIR__ . '/04_analyze/prepare/data/relationships.php';
+require_once __DIR__ . '/04_analyze/prepare/data/callable_adaptation.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/callable_adaptation.php';
 require_once __DIR__ . '/04_analyze/prepare/data/type_lifecycle.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/type_lifecycle.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/relationships.php';
