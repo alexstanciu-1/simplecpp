@@ -287,6 +287,14 @@ final class Body_Preparation
 		}
 		$context->return_type = $signature->signature->return_type;
 		Reference_Preparation::begin_body($syntax, $context);
+		self::bind_parameters($signature, $context);
+		$start = Constructor_Preparation::prepare_base($syntax, $context);
+		self::prepare_callable_statements($syntax->require_body(), $signature, $context, $start, $syntax->name);
+	}
+
+	public static function bind_parameters(prepared_source_callable $signature, preparation_context $context): void
+	{
+		$context->return_type = $signature->signature->return_type;
 		$locals = $context->locals;
 		$parameters /** Storage<prepared_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {
@@ -294,10 +302,13 @@ final class Body_Preparation
 			$locals->add($entry->name, $parameter);
 		}
 
-		$start = Constructor_Preparation::prepare_base($syntax, $context);
-		$completion = self::prepare_statements($syntax->require_body(), $context, $start);
+	}
+
+	public static function prepare_callable_statements(function_body_node $body, prepared_source_callable $signature, preparation_context $context, int $start, string $name): void
+	{
+		$completion = self::prepare_statements($body, $context, $start);
 		if ($completion->can_fall_through && (Type_Queries::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
-			throw new \RuntimeException('S2S non-void function ' . $syntax->name . ' can reach the end without returning a value');
+			throw new \RuntimeException('S2S non-void function ' . $name . ' can reach the end without returning a value');
 		}
 	}
 }

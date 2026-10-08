@@ -12,7 +12,7 @@ final class Preparation_Worker
 	/** A failed item is attempted at most once by this invocation, but stays changed for the next. */
 	private \SplObjectStorage $attempt_failed /** hash<bool, shared<preparation_owner>> */;
 	private \SplObjectStorage $contracts /** hash<bool, shared<contract_work>> */;
-	private \SplObjectStorage $callable_bodies /** hash<bool, shared<source_callable_body_work>> */;
+	private \SplObjectStorage $callable_bodies /** hash<bool, shared<body_work>> */;
 	private \SplObjectStorage $file_bodies /** hash<bool, shared<file_body_work>> */;
 	private \SplObjectStorage $owners /** hash<bool, shared<preparation_owner>> */;
 
@@ -24,7 +24,7 @@ final class Preparation_Worker
 		$this->materialization_signal = new \RuntimeException('Callable materialization requires the coordinator');
 		$this->attempt_failed = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		$this->contracts = new \SplObjectStorage /** hash<bool, shared<contract_work>> */();
-		$this->callable_bodies = new \SplObjectStorage /** hash<bool, shared<source_callable_body_work>> */();
+		$this->callable_bodies = new \SplObjectStorage /** hash<bool, shared<body_work>> */();
 		$this->file_bodies = new \SplObjectStorage /** hash<bool, shared<file_body_work>> */();
 		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 	}
@@ -102,8 +102,12 @@ final class Preparation_Worker
 				break;
 			}
 		}
-		foreach ($this->callable_bodies as $owner /** @object-key */) {
-			$this->body($owner);
+		while (q_count($this->callable_bodies) !== 0) {
+			foreach ($this->callable_bodies as $owner /** @object-key */) {
+				unset($this->callable_bodies[$owner]);
+				$this->body($owner);
+				break;
+			}
 		}
 		foreach ($this->file_bodies as $owner /** @object-key */) {
 			$this->body($owner);
@@ -206,6 +210,11 @@ final class Preparation_Worker
 		}
 		foreach ($sources as $source) {
 			$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+			$anonymous /** Storage<anonymous_callable_identity> */ = $source->anonymous_callables;
+			foreach ($anonymous as $identity) {
+				$identity->signature_work = null;
+				if ($identity->syntax()->has_parsed_body()) { $identity->syntax()->require_body()->detach_work(); }
+			}
 		}
 	}
 
@@ -215,6 +224,15 @@ final class Preparation_Worker
 		$result /** hash<bool, shared<preparation_owner>> */ = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		foreach ($sources as $source)
 		{
+			$anonymous /** Storage<anonymous_callable_identity> */ = $source->anonymous_callables;
+			foreach ($anonymous as $identity) {
+				if (!$all && !$source->deleted && !$identity->deleted) { continue; }
+				if ($identity->signature_work !== null) { $result[$identity->signature_work] = true; }
+				if ($identity->syntax()->has_parsed_body()) {
+					$work = $identity->syntax()->require_body()->work();
+					if ($work !== null) { $result[$work] = true; }
+				}
+			}
 			$bodies /** Storage<namespace_body_node> */ = $source->root->retired_namespace_bodies;
 			foreach ($bodies as $namespace_body) {
 				if ($namespace_body->body->work() !== null) {
@@ -293,6 +311,13 @@ final class Preparation_Worker
 	/** Source change flags seed stable owners; analysis selects their typed work. */
 	private function select(collected_file $source): void
 	{
+		$anonymous /** Storage<anonymous_callable_identity> */ = $source->anonymous_callables;
+		foreach ($anonymous as $identity) {
+			if ($identity->deleted || ($identity->signature_work === null)) { continue; }
+			$this->select_owner($identity->signature_work);
+			$work = $identity->syntax()->require_body()->work();
+			if ($work !== null) { $this->select_owner($work); }
+		}
 		$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
 		foreach ($bodies as $namespace_body) {
 			$this->select_source_body($source, $namespace_body);
@@ -324,6 +349,23 @@ final class Preparation_Worker
 			}
 			else { throw new \RuntimeException('Preparation is not supported for this declaration'); }
 		}
+	}
+
+	/** Signature and implementation remain independent work identities. */
+	public function prepare_anonymous(anonymous_callable_identity $identity, preparation_owner $consumer): void
+	{
+		if ($identity->signature_work === null) { $identity->signature_work = new anonymous_signature_work($identity); }
+		$signature /** anonymous_signature_work */ = $identity->signature_work;
+		$this->select_owner($signature);
+		$this->require_contract($consumer, $signature);
+		$syntax = $identity->syntax();
+		if ($syntax->require_body()->work() === null) { $syntax->require_body()->attach_work(new anonymous_body_work($identity)); }
+		$body /** body_work */ = $syntax->require_body()->work();
+		$this->owners[$body] = true;
+		if (isset($this->attempt_failed[$body])) { throw new \RuntimeException($body->failure_message); }
+		if (!Preparation_Status::complete($body)) { $this->body($body); }
+		unset($this->callable_bodies[$body]);
+		if ($body->failed) { throw new \RuntimeException($body->failure_message); }
 	}
 
 	/** Signature and implementation remain independent work identities. */
@@ -396,8 +438,8 @@ final class Preparation_Worker
 		if ($owner instanceof contract_work) {
 			$this->enqueue_contract(object_cast($owner, contract_work::class));
 		}
-		elseif ($owner instanceof source_callable_body_work) {
-			$this->enqueue_callable_body(object_cast($owner, source_callable_body_work::class));
+		elseif (($owner instanceof source_callable_body_work) || ($owner instanceof anonymous_body_work)) {
+			$this->enqueue_callable_body(object_cast($owner, body_work::class));
 		}
 		elseif ($owner instanceof file_body_work) {
 			$this->enqueue_file_body(object_cast($owner, file_body_work::class));
@@ -429,7 +471,7 @@ final class Preparation_Worker
 		}
 	}
 
-	private function enqueue_callable_body(source_callable_body_work $owner): void
+	private function enqueue_callable_body(body_work $owner): void
 	{
 		if ($this->queue_ready($owner)) {
 			$this->callable_bodies[$owner] = true;
@@ -664,6 +706,14 @@ final class Preparation_Worker
 	/** Dispatch by retained work role; records carry identities, not processing hooks. */
 	private function rebuild_contract(contract_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<contract_work>> */): bool
 	{
+		if ($owner instanceof anonymous_signature_work) {
+			$anonymous = object_cast($owner, anonymous_signature_work::class);
+			$current = Declaration_Preparation::prepare_anonymous($anonymous->anonymous_identity()->syntax(), $context);
+			$changed = !Preparation_Changes::same_signature($anonymous->facts, $current);
+			if ($changed) { $anonymous->facts = $current; }
+			else { Preparation_Changes::restore_parameters($anonymous->anonymous_identity()->syntax(), $anonymous->require_facts()); }
+			return $changed;
+		}
 		if ($owner instanceof type_lifecycle_work) {
 			$lifecycle = object_cast($owner, type_lifecycle_work::class);
 			$current = Type_Lifecycle_Preparation::prepare($lifecycle->member_definition(), $context);
@@ -718,6 +768,11 @@ final class Preparation_Worker
 
 	private function settle_members(contract_work $owner): void
 	{
+		if ($owner instanceof anonymous_signature_work) {
+			$parameters /** Storage<parameter_node> */ = object_cast($owner, anonymous_signature_work::class)->anonymous_identity()->syntax()->signature_syntax->parameters;
+			foreach ($parameters as $parameter) { $parameter->occurrence()->change_status = change_state::unchanged; }
+			return;
+		}
 		if ($owner instanceof type_semantic_work) { return; }
 		if ($owner instanceof source_callable_signature_work) {
 			$this->settle_parameters(object_cast($owner, source_callable_signature_work::class)->callable_definition());
@@ -733,6 +788,16 @@ final class Preparation_Worker
 
 	private function rebuild_body(body_work $owner, preparation_context $context): void
 	{
+		if ($owner instanceof anonymous_body_work) {
+			$anonymous = object_cast($owner, anonymous_body_work::class);
+			$signature /** anonymous_signature_work */ = $anonymous->anonymous_identity()->signature_work;
+			$this->require_contract($owner, $signature);
+			Preparation_Cleanup::tree($owner->executable_body());
+			Body_Preparation::bind_parameters($signature->require_facts(), $context);
+			Body_Preparation::prepare_callable_statements($owner->executable_body(), $signature->require_facts(), $context, 0, '<closure>');
+			$owner->executable_body()->syntax_changed = false;
+			return;
+		}
 		if ($owner instanceof source_callable_body_work) {
 			$this->prepare_callable_body(object_cast($owner, source_callable_body_work::class), $context);
 		}
@@ -988,6 +1053,13 @@ final class Preparation_Worker
 	/** Clear semantic attachments only; collected membership and syntax belong to the frontend. */
 	private function detach_retired_work(collected_file $source): void
 	{
+		$anonymous /** Storage<anonymous_callable_identity> */ = $source->anonymous_callables;
+		foreach ($anonymous as $identity) {
+			if (!$source->deleted && !$identity->deleted) { continue; }
+			$identity->signature_work = null;
+			Preparation_Cleanup::tree($identity->syntax());
+			if ($identity->syntax()->has_parsed_body()) { $identity->syntax()->require_body()->detach_work(); }
+		}
 		$entries /** Storage<collected_name> */ = $source->entries;
 		foreach ($entries as $entry) {
 			if ($entry instanceof collected_source_callable) {
@@ -1055,6 +1127,7 @@ final class Preparation_Worker
 	/** Explicitly sever both directions; strong-reference storage must not keep retired owners alive. */
 	private function retire(preparation_owner $owner): void
 	{
+		if ($owner instanceof anonymous_signature_work) { object_cast($owner, anonymous_signature_work::class)->facts = null; }
 		if ($owner instanceof type_lifecycle_work) { object_cast($owner, type_lifecycle_work::class)->facts = null; }
 		if ($owner instanceof type_contract_work) { object_cast($owner, type_contract_work::class)->facts = null; }
 		if ($owner instanceof type_relationship_work) {
@@ -1070,6 +1143,10 @@ final class Preparation_Worker
 		}
 		elseif ($owner instanceof file_body_work) {
 			$this->retire_file_body(object_cast($owner, file_body_work::class));
+		}
+		elseif ($owner instanceof anonymous_body_work) {
+			unset($this->callable_bodies[$owner]);
+			Preparation_Cleanup::tree(object_cast($owner, anonymous_body_work::class)->executable_body());
 		}
 		else { throw new \LogicException('Unsupported preparation work role'); }
 		$this->detach_dependencies($owner);

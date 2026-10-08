@@ -6,6 +6,7 @@ namespace scpp\compiler;
 /** Processing kinds have separate work lists; a body is not a language symbol. */
 enum preparation_kind {
 	case declaration;
+	case anonymous_contract;
 	case function_body;
 	case file_body;
 }
@@ -101,6 +102,24 @@ final class source_callable_signature_work extends contract_work
 	{
 		return $this->definition;
 	}
+}
+
+final class anonymous_signature_work extends contract_work
+{
+	public ?prepared_source_callable $facts = null;
+	private anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */;
+	public function __construct(anonymous_callable_identity $identity)
+	{
+		parent::__construct($identity->collection());
+		$this->source_identity = $identity;
+	}
+	public function anonymous_identity(): anonymous_callable_identity
+	{
+		return weakref_get($this->source_identity);
+	}
+	public function declaration(): ?collected_definition { return null; }
+	public function kind(): preparation_kind { return preparation_kind::anonymous_contract; }
+	public function require_facts(): prepared_source_callable { return $this->facts; }
 }
 
 final class constant_definition_work extends declaration_work
@@ -252,6 +271,22 @@ final class source_callable_body_work extends body_work
 	{
 		return preparation_kind::function_body;
 	}
+}
+
+final class anonymous_body_work extends body_work
+{
+	private anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */;
+	public function __construct(anonymous_callable_identity $identity)
+	{
+		parent::__construct($identity->collection(), $identity->syntax()->require_body());
+		$this->source_identity = $identity;
+	}
+	public function anonymous_identity(): anonymous_callable_identity
+	{
+		return weakref_get($this->source_identity);
+	}
+	public function declaration(): ?collected_definition { return null; }
+	public function kind(): preparation_kind { return preparation_kind::function_body; }
 }
 
 final class file_body_work extends body_work

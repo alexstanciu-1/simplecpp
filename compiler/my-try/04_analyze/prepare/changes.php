@@ -114,9 +114,9 @@ final class Preparation_Changes
 	}
 
 	/** Unchanged signatures keep the exact fact objects already referenced by their consumers. */
-	public static function restore_parameters(callable_declaration_node $syntax, prepared_source_callable $facts): void
+	public static function restore_parameters(callable_syntax_owner_i $syntax, prepared_source_callable $facts): void
 	{
-		$nodes /** Storage<parameter_node> */ = $syntax->signature_syntax->parameters;
+		$nodes /** Storage<parameter_node> */ = $syntax->signature_parts()->parameters;
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		foreach ($nodes as $index => $node) {
 			$node->set_preparation($parameters[$index]);

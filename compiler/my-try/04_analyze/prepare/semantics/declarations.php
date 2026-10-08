@@ -40,9 +40,18 @@ final class Declaration_Preparation
 			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		}
 
+		self::prepare_parameters($syntax->signature_syntax, $facts, $context);
+		Reference_Preparation::prepare_signature($syntax, $facts->signature);
+		Callable_Contracts::validate($facts->signature);
+		$syntax->set_preparation($facts);
+	}
+
+	/** Shared authored parameter admission, independent of named lookup. */
+	public static function prepare_parameters(callable_signature_syntax $syntax, prepared_source_callable $facts, preparation_context $context): void
+	{
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$contracts /** Storage<callable_parameter> */ = $facts->signature->parameters;
-		$nodes /** Storage<parameter_node> */ = $syntax->signature_syntax->parameters;
+		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
 		$names /** hash<bool> */ = [];
 		foreach ($nodes as $parameter) {
 			if (isset($names[$parameter->name])) {
@@ -55,9 +64,24 @@ final class Declaration_Preparation
 			$contracts->append($prepared->contract);
 		}
 
-		Reference_Preparation::prepare_signature($syntax, $facts->signature);
+	}
+
+	/** Anonymous admission reuses named-callable parameter and signature contracts. */
+	public static function prepare_anonymous(closure_node $syntax, preparation_context $context): prepared_source_callable
+	{
+		if ($syntax->signature_syntax->returns_reference) { throw new \RuntimeException('Closure reference returns are deferred'); }
+		$nodes /** Storage<parameter_node> */ = $syntax->signature_syntax->parameters;
+		foreach ($nodes as $parameter) {
+			if ($parameter->variadic || ($parameter->default_value !== null) || ($parameter->mode !== passing_mode::value)) {
+				throw new \RuntimeException('Closure parameters currently require exact-arity by-value inputs');
+			}
+		}
+		$facts = new prepared_source_callable();
+		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
+		Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
+		self::prepare_parameters($syntax->signature_syntax, $facts, $context);
 		Callable_Contracts::validate($facts->signature);
-		$syntax->set_preparation($facts);
+		return $facts;
 	}
 
 	/** Prepare one parameter with the same signature context used by its enclosing function. */

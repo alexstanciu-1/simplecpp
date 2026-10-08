@@ -17,6 +17,8 @@ final class Preparation_Status
 	/** Source changes remain independent of work state until analysis consumes them. */
 	public static function source_changed(preparation_owner $owner): bool
 	{
+		// Anonymous identities retain immutable syntax; replacement creates fresh work.
+		if ($owner instanceof anonymous_signature_work) { return false; }
 		if ($owner instanceof type_semantic_work) {
 			$type_work = object_cast($owner, type_semantic_work::class);
 			return $type_work->source_revision !== (int)$type_work->member_definition()->revision;
@@ -36,6 +38,12 @@ final class Preparation_Status
 	/** Reject stale work at process entry; recursive syntax dispatch needs no per-node flag. */
 	public static function require_active(preparation_owner $owner): void
 	{
+		if ($owner instanceof anonymous_signature_work) {
+			if (object_cast($owner, anonymous_signature_work::class)->anonymous_identity()->deleted) { throw new \LogicException('Deleted anonymous contract'); }
+		}
+		if ($owner instanceof anonymous_body_work) {
+			if (object_cast($owner, anonymous_body_work::class)->anonymous_identity()->deleted) { throw new \LogicException('Deleted anonymous body'); }
+		}
 		if ($owner->source->deleted || ($owner->change_status === change_state::deleted)) {
 			throw new \LogicException('Deleted work cannot be prepared or generated');
 		}

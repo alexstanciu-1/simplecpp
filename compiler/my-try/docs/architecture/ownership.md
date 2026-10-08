@@ -249,9 +249,11 @@ original expression. The expression-to-identity and identity-to-collection backl
 are weak, so no new owning cycle is introduced. Parser reconciliation marks obsolete
 membership; join-ordered frontend disposal removes it before dropping retired scopes.
 These records survive failed parses for retry, but deleted Storage IDs are never reused.
-Closures are not published as named declarations. Independently scheduled anonymous
-work and its reconciliation are still pending; no execution is enabled by these
-syntax owners. Shared callable inspection retains the syntax owner only for the
+Closures are not published as named declarations. Each identity owns optional
+anonymous signature work; its syntax body owns anonymous body work. Work observes
+the identity weakly. Analysis severs dependencies and semantic attachments before
+frontend disposal, and on reset. Enclosing-body cleanup skips nested closures,
+whose independently scheduled workers own their facts. Shared callable inspection retains the syntax owner only for the
 cursor lifetime and follows the existing ordered children.
 
 An authored constructor's function body owns optional base-initialization facts. They

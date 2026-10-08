@@ -31,7 +31,7 @@ across syntax/collection, analysis lifecycle and backend consumers.
    their original nodes; there is no duplicated name list. Parser, preparation,
    inspection and maintenance consume these same edges. Existing bodies, scopes,
    collected identities and work ownership are unchanged at this checkpoint.
-2. **Anonymous identity and body lifecycle — in progress.** The syntax checkpoint
+2. **Anonymous identity and body lifecycle — implemented for the bounded foundation.** The syntax checkpoint
    shares signature/body/scope construction, inspection and neutral maintenance
    through `Callable_Syntax`, without moving stage processing into the AST.
    `closure_node` is an expression, not a declaration. It uses the common parameter
@@ -58,8 +58,16 @@ across syntax/collection, analysis lifecycle and backend consumers.
    Named lookup remains an adapter into direct contract demand. Existing type
    relationships, lifecycle and interface contracts use the same demand helper.
 
-   **Still pending:** connect anonymous occurrences to shared signature/body
-   preparation, semantic selection, invalidation and retirement.
+   **Anonymous work integrated:** source identities own signature contracts and
+   their bodies own independent body work. First expression demand prepares both;
+   retained work participates in the existing queues, dependency invalidation,
+   failure/retry and join-ordered retirement. Work backlinks to anonymous identities
+   are weak. Shared parameter admission, parameter binding and return-path checking
+   serve named and anonymous callables. Enclosing-body cleanup stops at closure
+   boundaries; each callable clears its own body facts. Equivalent signatures retain
+   parameter fact identity. No fake declaration or name is published.
+
+   **Still pending:** concrete value typing, invocation and C++ lambda emission.
    Closure syntax remains an expression. Reuse `function_body_node` and stage-owned
    workers; add no AST processing hooks or generic visitor.
 3. **Capture-free vertical slice — pending.** Register concrete expression types,
@@ -105,7 +113,7 @@ same-signature occurrences, non-reused deleted slots, speculative-parse disposal
 repair and whole-source removal. Scheduler integration remains pending: the current
 dependency graph at that checkpoint accepted only named `declaration_work`.
 The contract-scheduler checkpoint removes that requirement without subclassing
-a fake function. Anonymous work attachment remains the next integration.
+a fake function. Anonymous work attachment was the following integration.
 Nine focused PHP suites passed in `/tmp/my-try-ch12-anonymous-identity-01`; the
 expanded deletion/rollover proof and parser/token cleanup regressions passed in
 `/tmp/my-try-ch12-anonymous-identity-03`. These are host behavior and
@@ -118,3 +126,12 @@ The ninth suite (`s2s`) initially lacked its required output-directory argument:
 assertions passed but artifact writes warned. Its corrected run passed in 13.35
 seconds under `/tmp/my-try-ch12-contract-work-03`, with generated artifacts retained.
 The shared runner used CLI fallback. No native compiler rebuild was performed.
+
+Anonymous-work checkpoint: eight focused suites passed in
+`/tmp/my-try-ch12-anonymous-work-03` (longest: `s2s`, 13.71 seconds).
+The expanded whole-source retirement check passed in
+`/tmp/my-try-ch12-anonymous-work-04`. Proofs cover independent settled work,
+parameter fact preservation, enclosing-retry cleanup boundaries, callee-contract
+invalidation/recovery, missing returns, deferred parameter rejection and retirement.
+These are host PHP and artifact-generation checks, not native compiler rebuilding
+or closure execution. CLI fallback was used after FPM socket startup was denied.

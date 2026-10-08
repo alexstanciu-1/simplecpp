@@ -17,6 +17,8 @@ final class Preparation_Cleanup implements node_maintenance_worker_i
 
 	public function edge(ast_node $parent, ast_node $child): void
 	{
+		// A nested callable owns independently scheduled facts, not its enclosing body's facts.
+		if ($child instanceof closure_node) { return; }
 		$child->maintain($this);
 	}
 

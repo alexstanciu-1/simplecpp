@@ -17,7 +17,8 @@ final class Expression_Preparation
 		?canonical_type_use $expected_type, expression_consumer $consumer): prepared_expression
 	{
 		if ($node instanceof closure_node) {
-			throw new \RuntimeException('Closure execution awaits anonymous callable preparation');
+			$context->worker->prepare_anonymous(object_cast($node, closure_node::class)->anonymous_identity(), $context->owner);
+			throw new \RuntimeException('Closure execution awaits value typing and lowering');
 		}
 		elseif ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);

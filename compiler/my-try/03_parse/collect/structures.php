@@ -547,6 +547,7 @@ final class collected_variable_write extends collected_name
 /** Anonymous source occurrence, never a name-pool member or backend symbol. */
 final class anonymous_callable_identity
 {
+	public ?anonymous_signature_work $signature_work = null;
 	private collected_file $source_collection /** weak<collected_file> */;
 	private closure_node $syntax_node;
 	/** Stable, non-reused position within the owning collection's anonymous inventory. */

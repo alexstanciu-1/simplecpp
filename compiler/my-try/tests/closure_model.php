@@ -69,6 +69,21 @@ try {
 	try { $compiler->prepare(); }
 	catch (\RuntimeException $error) { $rejected = str_contains($error->getMessage(), 'Closure execution awaits'); }
 	closure_model_check($rejected && Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Model-only closure reached output');
+	$signature_work = $first_identity->signature_work;
+	$body_work = $first->require_body()->work();
+	closure_model_check($signature_work instanceof anonymous_signature_work && $body_work instanceof anonymous_body_work, 'Anonymous callable did not acquire independent work');
+	closure_model_check(Preparation_Status::complete($signature_work) && Preparation_Status::complete($body_work), 'Anonymous facts failed to settle before execution gate');
+	closure_model_check($signature_work->declaration() === null && $body_work->declaration() === null, 'Anonymous work acquired a fake declaration');
+	closure_model_check($body_work->dependencies[$signature_work] === 1, 'Anonymous body does not observe its signature');
+	$return_facts = $first->require_body()->statements[0]->preparation();
+	try { $compiler->prepare(); } catch (\RuntimeException $expected) { }
+	closure_model_check($signature_work->version === 1 && $body_work->version === 1
+		&& $first->require_body()->statements[0]->preparation() === $return_facts, 'Enclosing retry rebuilt or erased settled anonymous facts');
+	$parameter_facts = $first->signature_syntax->parameters[0]->require_preparation();
+	$signature_work->change_status = change_state::changed;
+	try { $compiler->prepare(); } catch (\RuntimeException $expected) { }
+	closure_model_check($signature_work->version === 1 && $first->signature_syntax->parameters[0]->require_preparation() === $parameter_facts,
+		'Equivalent anonymous signature replaced referenced parameter facts');
 	// Replacing the enclosing body currently replaces anonymous occurrences: no false stable-ID claim.
 	// Rollover must not make an old occurrence's revision look newly collected.
 	$collection->revision = 4294967295;
@@ -76,6 +91,9 @@ try {
 	file_put_contents($path, str_replace('$amount + 1', '$amount + 2', $text)); $compiler->sync([$path]);
 	closure_model_check(closure_model_function() === $owner && closure_model_local($owner, 0) !== $first, 'Body replacement retained stale closure syntax');
 	closure_model_check($parameter->change_status === change_state::deleted, 'Removed closure parameter was not retired');
+	closure_model_check($signature_work->change_status === change_state::deleted && $body_work->change_status === change_state::deleted
+		&& count($signature_work->dependents) === 0 && count($body_work->dependencies) === 0
+		&& $first_identity->signature_work === null && $first->require_body()->work() === null, 'Anonymous retirement retained work or dependency edges');
 	closure_model_check($first_identity->deleted && !isset($collection->anonymous_callables[$first_identity->local_index])
 		&& closure_model_local($owner, 0)->anonymous_identity()->local_index > $second_identity->local_index, 'Removed anonymous identity was reused or retained');
 	// Partial anonymous syntax must recover through the same parser and retirement protocol.
@@ -103,12 +121,41 @@ try {
 	$side_identity = closure_model_local($spare, 0)->anonymous_identity();
 	$side_collection = $side_identity->collection();
 	closure_model_check($side_collection !== $collection, 'Identity lost source context');
+	try { $compiler->prepare(); } catch (\RuntimeException $expected) { }
+	$side_work = $side_identity->signature_work;
+	closure_model_check($side_work instanceof anonymous_signature_work, 'Side-source anonymous contract was not demanded');
 	unlink($side_path); $compiler->sync([$side_path]);
 	closure_model_check($side_identity->deleted && $side_collection->anonymous_callables->is_empty(), 'Source deletion retained anonymous membership');
+	closure_model_check($side_work->change_status === change_state::deleted && $side_identity->signature_work === null, 'Source deletion retained anonymous semantic work');
 	file_put_contents($path, 'function owner(): int { return 7; } return owner();');
 	$compiler->update_cpp([$path]);
 	closure_model_check(!Model::$cpp_files->is_empty(), 'Removal/repair failed to restore named execution');
 	closure_model_check($collection->anonymous_callables->is_empty(), 'Closure removal leaked its identity inventory');
+	file_put_contents($path, '$f = function (int $value): int { $local = $value; };');
+	$compiler->sync([$path]);
+	$missing_return = false;
+	try { $compiler->prepare(); }
+	catch (\RuntimeException $error) { $missing_return = str_contains($error->getMessage(), 'can reach the end without returning'); }
+	closure_model_check($missing_return, 'Anonymous body bypassed shared return-path validation');
+	file_put_contents($path, '$f = function (int $value = 1): int { return $value; };');
+	$compiler->sync([$path]);
+	$unsupported_parameter = false;
+	try { $compiler->prepare(); }
+	catch (\RuntimeException $error) { $unsupported_parameter = str_contains($error->getMessage(), 'exact-arity by-value'); }
+	closure_model_check($unsupported_parameter, 'Deferred anonymous parameter contract was accepted');
+	$dependency_source = 'function external(int $n): int { return $n; } $f = function (): int { return external(1); };';
+	file_put_contents($path, $dependency_source); $compiler->sync([$path]);
+	try { $compiler->prepare(); } catch (\RuntimeException $expected) { }
+	$dependency_closure = object_cast(Model::syntax_files()[0]->root->single_body()->body->statements[0]->expression->value, closure_node::class);
+	$dependency_work = $dependency_closure->require_body()->work();
+	closure_model_check(Preparation_Status::complete($dependency_work), 'Anonymous call dependency did not settle');
+	file_put_contents($path, str_replace('int $n)', 'int $n, int $extra)', $dependency_source)); $compiler->sync([$path]);
+	try { $compiler->prepare(); } catch (\RuntimeException $expected) { }
+	closure_model_check($dependency_closure->require_body()->work() === $dependency_work && $dependency_work->failed,
+		'Changed callee contract did not invalidate retained anonymous body');
+	file_put_contents($path, $dependency_source); $compiler->sync([$path]);
+	try { $compiler->prepare(); } catch (\RuntimeException $expected) { }
+	closure_model_check(Preparation_Status::complete($dependency_work) && $dependency_work->version > 1, 'Anonymous dependency failure did not recover');
 	echo "Closure syntax model: PASS\n";
 }
 finally {
