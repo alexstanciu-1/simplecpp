@@ -29,23 +29,37 @@ v0.2's explicit `value<Class>` representation. C++-style `A a(1);` is still not 
 source syntax. For destructors, valid instance access and an invalid returned value
 are distinct; the imported examples must not conflate them.
 
-Remaining extensions require agreement, not another implementation of those cards:
+Derived `data` construction is complete within its agreed bounds: authored/inherited
+constructors and composed synthesized inputs. The checkpoints below record evidence.
 
-1. Derived `data` construction is now covered by authored/inherited constructors and
-   composed synthesized inputs; the checkpoints below record their explicit boundaries.
-2. Runtime-called-type propagation through instance methods; do not infer dynamic
+Remaining extensions require agreement, not another implementation of completed cards:
+
+1. Runtime-called-type propagation through instance methods and inline/struct
+   `new static`; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
-3. Additional ownership conversions/joins: unique ancestry, interface weak handles,
+2. Additional ownership conversions/joins: unique ancestry, interface weak handles,
    checked downcasts, derived/base or sibling conditional joins; shared and class/struct
    weak upcasts already work.
-4. Trait extensions: nested uses, adaptations and bodyless requirements. Static members
+3. Trait extensions: nested uses, adaptations, lifecycle members and bodyless requirements. Static members
    and constants now share the existing consumer-owned path below.
-5. Other explicit bounds: non-public constructors/destructors, variance and the
+4. Other explicit bounds: non-public/abstract constructor contracts, non-public
+   destructors, variance/covariant returns, interface-qualified static dispatch and the
    inherited-final-virtual interface-forwarding restriction.
 
 Next discussion: choose among the remaining runtime called-type, ownership-conversion
 and trait-extension groups; no new group is enabled by this reconciliation.
 CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
+
+All 25 pre-audit progress rows are resolved within their documented bounds; the
+three ownership rows added below make already-proven coverage explicit. This is
+not a claim that every extension above is required for v0.2. Their implementation
+or deferral still needs agreement. Broader protected receiver access is already
+non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
+
+Verification: the checkpoints record PHP-host and generated-C++ proofs. The latest
+native compiler checkpoint remains CH10; CH11 native validation is outstanding and
+must be requested separately. The dated sections below are historical checkpoints;
+their slice-local exclusions and next steps do not override this current handoff.
 
 ## Derived data through constructor contracts — 2026-10-08
 
@@ -285,7 +299,7 @@ Bare-class and explicitly shared-struct derived/base boundaries now execute thro
 one path for assignments, by-value function/method arguments and returns, properties,
 data inputs and individual container elements. Reference storage stays invariant;
 downcasts, boxing, unique conversions and whole-container conversions reject. Weak
-class/struct upcasts are covered by the subsequent checkpoint below.
+class/struct upcasts are covered by the weak-ancestry checkpoint above.
 C++ constructs the target shared handle using existing runtime support and records
 complete source/target header requirements. No runtime change or native compiler rebuild.
 
@@ -459,10 +473,10 @@ override compatibility, constructors, conversions and dispatch remain disabled.
 
 Next: discuss access/override admission and the first bounded inherited execution slice.
 
-### Remaining execution order
+### Original execution order (completed within the bounds above)
 
 CH10 implements fixed declaring-type/self static methods, constants and properties.
-Continue on those same member categories, in this order:
+The implemented sequence reused those same member categories:
 
 1. Establish base/interface/trait relationships and inherited member lookup.
 2. Resolve inherited lookup and public/protected/private access, then `parent::`
@@ -566,9 +580,13 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-ABS-009](#class-abs-009) | implemented-bounded | `interface I { function f(): int; }` | verified | verified | deferred | Pure virtual declarations and virtual cleanup; no record layout |
 | [CLASS-ABS-010](#class-abs-010) | implemented-bounded | `class A extends B implements I {}` | verified | verified | deferred | Source identities retained; public inherited forwarding; shared virtual interface bases |
 | [TYPE-PARAM-003G](#type-param-003g) | implemented-bounded | `interface I { public function f(const string &$s): int; } class C implements I { public function f(string $s): int { return 1; } }` | verified | verified | deferred | Rejected during shared preparation; exact readonly/reference signature contract |
+| CH11-SHARED-UPCAST | implemented-bounded | `$base Base = $derived;` | verified | verified | deferred | [Shared ancestry](#dependency-aware-shared-upcasts--2026-10-08); invariant references; no slicing |
+| CH11-INTERFACE-HANDLE | implemented-bounded | `$view I = $object; $view->method();` | verified | verified | deferred | [Shared interface handles](#interface-handles-and-calls--2026-10-08); checked calls; no implicit struct boxing |
+| CH11-WEAK-UPCAST | implemented-bounded | `$base weak<Base> = $derived;` | verified | verified | deferred | [Weak ancestry](#weak-ancestry-upcasts--2026-10-08); no lock or lifetime extension; invariant references |
+
 ## CLASS-INH-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07). See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -605,7 +623,7 @@ class B : public A { public: using base = A; };
 
 ## CLASS-INH-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared contract validation; local/inherited implementations; final-virtual forwarding restriction. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -680,7 +698,7 @@ ERROR
 
 ## CLASS-INH-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Public bodyless instance contracts; multiple interface inheritance. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -791,7 +809,7 @@ ERROR
 
 ## CLASS-INH-008
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Ordinary fixed methods; abstract contracts dispatch virtually. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -904,7 +922,7 @@ A::A(int_t x) : base(x) {}
 
 ## CLASS-INH-011
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Checked inherited virtual target; exact signature; nonvirtual hiding rejected. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -1182,7 +1200,7 @@ ERROR
 
 ## CLASS-ABS-005
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Cannot instantiate even without abstract members; class and struct. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -1217,7 +1235,7 @@ abstract class A {}
 
 ## CLASS-ABS-006
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Bodyless public/protected instance contract; concrete descendants must implement. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -1254,7 +1272,7 @@ virtual int_t f(int_t x) = 0;
 
 ## CLASS-ABS-007
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Pure virtual declaration; no executable body work. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -1289,7 +1307,7 @@ declaration only in header; no `.cpp` body
 
 ## CLASS-ABS-008
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Concrete members/constructors remain available to descendants. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -1324,7 +1342,7 @@ fields + ctor/dtor + concrete methods remain allowed
 
 ## CLASS-ABS-009
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Pure virtual declarations and virtual cleanup; no record layout. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -1359,7 +1377,7 @@ pure virtual interface class
 
 ## CLASS-ABS-010
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Source identities retained; public inherited forwarding; shared virtual interface bases. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -1394,7 +1412,7 @@ class A extends B implements I {}
 
 ## TYPE-PARAM-003G
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Rejected during shared preparation; exact readonly/reference signature contract. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 

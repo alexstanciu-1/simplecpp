@@ -277,7 +277,7 @@ substitute a receiver's declared type silently. See the
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Nonvirtual instance member hiding,
-runtime-called-type instance propagation, non-shared derived/base
+runtime-called-type instance propagation, unique/inline derived/base
 conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
 
