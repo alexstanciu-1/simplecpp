@@ -71,7 +71,6 @@ foreach (['class', 'struct'] as $kind) {
 		'$c weak<C>; $b weak<B> =& $c;',
 		$owner . '$b weak<B> = $c;',
 		'$cs vector<weak<C>> = []; $bs vector<weak<B>> = $cs;',
-		'interface I {} ' . $kind . ' Impl implements I {} $c weak<Impl>; $b weak<I> = $c;',
 	] as $body) {
 		try { upcast_source($records . $body); throw new \LogicException('Expected rejected weak boundary'); }
 		catch (\RuntimeException $expected) {}

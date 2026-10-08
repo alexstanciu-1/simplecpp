@@ -56,15 +56,36 @@ foreach ([
 	'contract_redeclaration' => ['interface A { function read(int $n = 1): int; } interface B { function read(int $n = 2): int; } interface I extends A, B { function read(int $n = 9): int; } class C implements I { function read(int $n = 3): int { return $n; } } $i I = new C(); return $i->read();', 9],
 	'cleanup' => ['interface I {} class Log { static int $n = 0; } class C implements I { function __destruct() { Log::$n += 9; } } $i I = new C(); $j = $i; $i = null; if (Log::$n !== 0) { return 101; } $j = null; return Log::$n;', 9],
 ] as $name => [$source, $expected]) { handle_export($name, handle_source($source), $expected); }
+foreach (['class', 'struct'] as $kind) {
+	$handle = $kind === 'class' ? 'C' : 'shared<C>';
+	$prefix = 'interface I { function read(): int; } interface J extends I {} ' . $kind
+		. ' C implements J { int $n = 9; function read(): int { return $this->n; } } ';
+	foreach ([
+		'derive' => '$c HANDLE = new C(); $i I = $c; $w = weak($i); $live = lock($w); $c->n = 7; return $live->read();',
+		'upcast' => '$c HANDLE = new C(); $w = weak($c); $i weak<I> = $w; $live = lock($i); return $live->read();',
+		'interface_upcast' => '$c HANDLE = new C(); $j J = $c; $w = weak($j); $i weak<I> = $w; $live = lock($i); return $live->read();',
+		'boundaries' => 'function pass(weak<I> $w): weak<I> { return $w; } function up(weak<C> $w): weak<I> { return $w; } $c HANDLE = new C(); $w = weak($c); $a = pass($w); $b = up($w); $i weak<I>; $i = $b; $live = lock($i); return $live->read();',
+		'expired' => '$c HANDLE = new C(); $w = weak($c); $c = null; $i weak<I> = $w; $live = lock($i); return isset($live) ? 101 : 9;',
+		'empty' => '$i I; $w = weak($i); $copy weak<I> = $w; $live = lock($copy); return isset($live) ? 101 : 9;',
+		'retention' => '$c HANDLE = new C(); $i I = $c; $w = weak($i); $held = lock($w); $c = null; $i = null; $again = lock($w); if (!isset($again)) { return 101; } $held = null; $again = null; $last = lock($w); return isset($last) ? 102 : 9;',
+		'container' => 'data class H { weak<I> $w; } $c HANDLE = new C(); $w = weak($c); $h H = {w: $w}; $items vector<weak<I>> = [$w]; $i = $items[0]; $live = lock($i); return $live->read();',
+	] as $name => $body) {
+		handle_export('weak_' . $kind . '_' . $name, handle_source($prefix . str_replace('HANDLE', $handle, $body)), $name === 'derive' ? 7 : 9);
+	}
+}
+handle_export('weak_cleanup', handle_source('interface I {} class Log { static int $n = 0; } class C implements I { function __destruct() { Log::$n += 9; } } $i I = new C(); $w = weak($i); $i = null; $live = lock($w); if (isset($live)) { return 101; } return Log::$n;'), 9);
 foreach ([
+	[$basic . '$i weak<I>; if ($i) { return 1; }', 'explicit lock'],
+	[$basic . 'function use_ref(weak<I> &$w): void {} $c weak<C>; use_ref($c);', 'exact'],
+	[$basic . 'function use_ref(const weak<I> &$w): void {} $c weak<C>; use_ref($c);', 'exact'],
+	[$basic . '$i weak<I>; $c weak<C> = $i;', 'ownership boundary'],
+	[$basic . '$i I; $w weak<I> = $i;', 'ownership boundary'],
 	[$basic . '$i I = new C(); $x = $i->n;', 'member access'],
 	[$basic . '$i I = new C(); $c C = $i;', 'ownership boundary'],
 	[$basic . 'function replace(I &$i): void {} $c = new C(); replace($c);', 'exact'],
 	[$basic . '$i value<I>;', 'Interface storage'],
 	[$basic . '$i shared<I>;', 'Interface ownership'],
 	[$basic . '$i unique<I>;', 'Interface ownership'],
-	[$basic . '$i weak<I>;', 'Interface ownership'],
-	[$basic . '$i I; $w = weak($i);', 'Interface weak'],
 	[$basic . '$i = new I();', 'new requires'],
 	[$basic . '$i I = {};', 'initialization'],
 	['interface I {} struct C implements I {} $c C; $i I = $c;', 'ownership boundary'],
@@ -83,6 +104,28 @@ $interface_path = $directory . '/interface.phs';
 $class_path = $directory . '/class.phs';
 $main_path = $directory . '/main.phs';
 try {
+	// Weak conversion consumers must observe both implementing and interface ancestry.
+	foreach (['$c = new C(); $w = weak($c);', '$j J; $w = weak($j);'] as $index => $producer) {
+		$interface_text = 'interface I {} interface J extends I {}';
+		$class_text = 'class C implements J {}';
+		file_put_contents($interface_path, $interface_text); file_put_contents($class_path, $class_text);
+		file_put_contents($main_path, $producer . ' $i weak<I> = $w; return 9;');
+		Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+		$original = CPP_Output::encode(Model::$cpp_files);
+		$edited = $index === 0 ? $class_path : $interface_path;
+		file_put_contents($edited, $index === 0 ? 'class C {}' : 'interface I {} interface J {}');
+		foreach ([[$edited], []] as $changes) {
+			try { $compiler->update_cpp($changes); throw new \LogicException('Weak interface ancestry edit survived'); }
+			catch (\RuntimeException $error) { if (!str_contains($error->getMessage(), 'ownership boundary')) { throw $error; } }
+		}
+		file_put_contents($interface_path, $interface_text); file_put_contents($class_path, $class_text); $compiler->update_cpp([$edited]);
+		if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Weak interface repair differs'); }
+		handle_export('weak_cross_file_' . $index, native_record_export(), 9);
+		Compiler_Lifecycle::reset_preparation(); $compiler->prepare(); $compiler->cpp();
+		if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Weak interface reset differs'); }
+		Compiler_Lifecycle::reset(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+		if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Weak interface fresh differs'); }
+	}
 	$interface_text = 'interface J { function read(int $n = 4): int; } interface I extends J {}';
 	$class_text = 'class C implements I { function read(int $n = 5): int { return $n; } }';
 	file_put_contents($interface_path, $interface_text); file_put_contents($class_path, $class_text);

@@ -245,11 +245,13 @@ allocates nor copies the pointee, consumes the shared handle, or retains strong
 ownership. Empty shared produces empty weak. Weak handles are copyable independently
 of pointee copyability. `unique<T>` and other families are not accepted; implicit
 shared-to-weak conversions remain rejected. Cross-payload weak conversions are
-limited to proven class/struct derived-to-base upcasts, as specified in
+limited to proven class/struct/interface ancestry upcasts, as specified in
 [inheritance](inheritance_v0_2.md#weak-derivedbase-upcasts); they do not lock or
 extend lifetime.
 
-`lock(expression)` accepts exact `weak<T>` and returns `shared<T>`. A successful
+`lock(expression)` accepts exact `weak<T>` and returns its shared representation:
+bare `T` for classes/interfaces and `shared<T>` for structs. `weak($view)` accepts
+the corresponding default shared class/interface handle as well. A successful
 lock acquires ownership of the same object. An empty or expired weak returns empty
 shared, not an exception or an additional nullable wrapper. Both operations evaluate
 their single operand exactly once and produce non-addressable handle values. They

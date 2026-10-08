@@ -388,16 +388,17 @@ to reject a statically admissible base-to-derived operation.
 
 ## Weak derived/base upcasts
 
-`weak<Derived>` may implicitly convert to `weak<Base>` for proven class or struct
-ancestry, at the same per-value boundaries as shared upcasts. Both types must stay
+`weak<Derived>` may implicitly convert to `weak<Base>` for proven class, struct or
+interface ancestry, at the same per-value boundaries as shared upcasts. This includes
+implementing records to interfaces and derived interfaces to ancestor interfaces. Both types must stay
 in the weak family. The conversion preserves the control block and empty/expired
 state without locking, allocating, copying the payload or extending its lifetime.
 An expired observer can therefore still be upcast; its lock remains empty.
 
-`lock()` uses the target payload type: a bare base-class handle or `shared<Base>`
+`lock()` uses the target payload type: a bare base-class/interface handle or `shared<Base>`
 for a struct. Only a successful explicit lock acquires strong ownership. References,
 including read-only references, aliases and reference returns remain invariant.
-Interface weak handles, downcasts, implicit shared-to-weak
+Weak downcasts, implicit shared-to-weak
 conversion, whole-container conversions and new conditional joins remain deferred.
 
 ## Unique derived/base transfers
@@ -431,8 +432,16 @@ A bare interface type denotes an absent-or-present shared handle, with the same
 copying, presence, null-assignment and checked dereference behavior as a class handle.
 `?I` and `nullable<I>` normalize to `I`; there is no nested absence wrapper.
 Interfaces cannot be allocated or stored inline. Explicit `shared<I>` is redundant;
-`value<I>`, `unique<I>`, `weak<I>` and interface weak observation are not admitted in
+`value<I>` and `unique<I>` are not admitted in
 this bounded slice.
+
+`weak<I>` is an ordinary non-owning interface observer. `weak($view)` derives it
+explicitly from an `I` handle, and `lock($observer)` returns `I`, possibly empty.
+Neither derivation nor weak upcasting allocates, copies a payload or extends its
+lifetime. A successful lock acquires ownership of the same object/control block.
+Weak handles require explicit locking before presence tests or method calls;
+reference parameters remain invariant, including readonly references. Weak
+downcasts and weak conditional joins remain deferred.
 
 Proven shared upcasts include implementing class to interface, explicitly shared
 struct to interface, and derived interface to ancestor interface. All reuse the

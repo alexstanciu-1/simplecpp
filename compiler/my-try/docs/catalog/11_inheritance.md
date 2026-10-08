@@ -37,8 +37,8 @@ Remaining extensions require agreement, not another implementation of completed 
 1. Runtime-called-type propagation through instance methods and inline/struct
    `new static`; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
-2. Additional ownership conversions/joins: interface weak handles,
-   unique/weak downcasts, cross-casts, unique/weak or sibling conditional joins;
+2. Additional ownership conversions/joins: unique/weak downcasts, cross-casts,
+   unique/weak or sibling conditional joins;
    shared checked ancestry casts, class/struct weak upcasts and safe unique transfers
    already work. Shared derived/base and record/interface joins now work without
    inferring unseen common ancestors.
@@ -62,6 +62,24 @@ Verification: the checkpoints record PHP-host and generated-C++ proofs. The late
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Interface weak handles — 2026-10-08
+
+Interfaces now participate in the existing weak ownership family: explicit `weak($view)`
+derivation, `weak<I>` storage/copying, and `lock(weak<I>) -> I`. The nominal-handle
+query selects the shared result for both classes and interfaces; no interface-specific
+AST, prepared record, runtime carrier or C++ lowering path was added. Existing observed
+ancestry supports weak implementing-record/interface and derived-interface/base-interface
+upcasts at ordinary value boundaries. Empty/expired observations stay empty on locking,
+without allocation or strong retention. References remain invariant; locking precedes
+presence checks or calls. Unique interface ownership and weak downcasts/joins stay gated.
+
+The interface-handle suite covers class/shared-struct derivation and upcasts, interface
+ancestry, arguments/returns/assignment, data/container inputs, expiry, successful lock
+retention, destruction without weak retention and cross-file failure/retry/repair/reset/
+fresh agreement. Validation: 44 generated-C++ cases passed without PCH in
+`/tmp/interface-weak-01`; seven focused PHP suites passed in
+`/tmp/interface-weak-adjacent-final`. No native compiler rebuild.
 
 ## Shared selection joins — 2026-10-08
 
@@ -667,9 +685,10 @@ Review the Simple C++ inheritance contracts before implementing this chapter:
 - Override compatibility and covariant returns, including the distinction between
   object inheritance and C++ handle return types.
 - Conditional-expression result types: derived/base and sibling branches, and
-  whether an explicit destination type should influence their common type.
-  The current [ternary contract](../../../../specs/conditional_expression_matrix.md)
-  does not use the destination type or define inheritance joins.
+  whether an explicit destination type should influence their common type: settled
+  for shared handles by the [selection amendment](../../../../specs/conditional_expression_matrix.md#v02-shared-handle-joins).
+  The result is one supplied base/interface, independent of destination. Sibling
+  inference and unique/weak joins remain deferred.
 
 Reconcile normative specs, runtime, lowering and focused proofs when each decision
 is agreed. This records review work, not approval to expand the language contract.
@@ -709,7 +728,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-PARAM-003G](#type-param-003g) | implemented-bounded | `interface I { public function f(const string &$s): int; } class C implements I { public function f(string $s): int { return 1; } }` | verified | verified | deferred | Rejected during shared preparation; exact readonly/reference signature contract |
 | CH11-SHARED-UPCAST | implemented-bounded | `$base Base = $derived;` | verified | verified | deferred | [Shared ancestry](#dependency-aware-shared-upcasts--2026-10-08); invariant references; no slicing |
 | CH11-INTERFACE-HANDLE | implemented-bounded | `$view I = $object; $view->method();` | verified | verified | deferred | [Shared interface handles](#interface-handles-and-calls--2026-10-08); checked calls; no implicit struct boxing |
-| CH11-WEAK-UPCAST | implemented-bounded | `$base weak<Base> = $derived;` | verified | verified | deferred | [Weak ancestry](#weak-ancestry-upcasts--2026-10-08); no lock or lifetime extension; invariant references |
+| CH11-WEAK-UPCAST | implemented-bounded | `$base weak<Base> = $derived;` | verified | verified | deferred | [Weak ancestry](#weak-ancestry-upcasts--2026-10-08), including [interfaces](#interface-weak-handles--2026-10-08); no lock or lifetime extension; invariant references |
 | CH11-UNIQUE-UPCAST | implemented-bounded | `$base unique<Base> = move($derived);` | verified | verified | deferred | [Unique ancestry](#unique-ancestry-transfers--2026-10-08); virtual base destruction required; consuming boundaries only |
 | CH11-OBJECT-TYPE | implemented-bounded | `object_cast($base, Derived::class)` / `$base instanceof Derived` | verified | verified | deferred | [Checked access](#checked-object-access--2026-10-08); shared identity, checked failure, no flow narrowing |
 | CH11-SHARED-JOIN | implemented-bounded | `$condition ? $derived : $base` / `$derived ?: $base` / `$base ?? $derived` | verified | verified | deferred | [Shared joins](#shared-selection-joins--2026-10-08); one supplied base/interface, no sibling inference |

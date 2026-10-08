@@ -1289,8 +1289,9 @@ final class Type_Registry implements type_capability_query
 			$payload_definition = $this->type($complete[0]->type_id())->definition();
 			if ($payload_definition->origin() === type_definition_origin::source) {
 				if ($payload_definition instanceof abstract_nominal_type_definition) {
-					if (object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::interface_type) {
-						throw new \InvalidArgumentException('Interface ownership wrappers are deferred; use its default shared handle');
+					if ((object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::interface_type)
+						&& (object_cast($definition, ownership_semantics::class)->ownership_family() !== ownership_kind::weak)) {
+						throw new \InvalidArgumentException('Interface ownership permits weak<I>; use the default interface type for shared ownership');
 					}
 					if ((object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::class_type)
 						&& (object_cast($definition, ownership_semantics::class)->ownership_family() === ownership_kind::shared)) {
