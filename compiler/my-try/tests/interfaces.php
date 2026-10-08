@@ -34,6 +34,8 @@ foreach (['class', 'struct'] as $kind) {
 		'override' => 'interface I { function read(): int; } ' . $kind . ' C implements I { #[\Override] function read(): int { return 9; } }',
 		'inherited' => 'interface I { function read(): int; } ' . $kind . ' B { function read(): int { return 9; } } ' . $kind . ' C extends B implements I {}',
 		'inherited_final_nonvirtual' => 'interface I { function read(): int; } ' . $kind . ' B { final function read(): int { return 9; } } ' . $kind . ' C extends B implements I {}',
+		'inherited_final_virtual' => 'interface I { function read(): int; } abstract ' . $kind . ' A { abstract function read(): int; } ' . $kind . ' B extends A { final function read(): int { return 9; } } ' . $kind . ' C extends B implements I {}',
+		'final_multiple_views' => 'interface I { function read(): int; } interface J { function read(): int; } abstract ' . $kind . ' A { abstract function read(): int; } ' . $kind . ' B extends A { final function read(): int { return 9; } } ' . $kind . ' M extends B implements J {} ' . $kind . ' C extends M implements I {}',
 		'bridge_descendant' => 'interface I { function read(): int; } ' . $kind . ' B { function read(): int { return 1; } } ' . $kind . ' M extends B implements I {} ' . $kind . ' C extends M { #[\Override] function read(): int { return 9; } }',
 		'abstract_intermediate' => 'interface I { function read(): int; } abstract ' . $kind . ' B implements I {} ' . $kind . ' C extends B { function read(): int { return 9; } }',
 		'diamond' => 'interface I { function read(): int; } interface L extends I {} interface R extends I {} interface D extends L, R {} ' . $kind . ' C implements D { function read(): int { return 9; } }',
@@ -75,7 +77,7 @@ foreach ([
 	['interface I { int $n; }', 'method contracts only'],
 	['interface I { const N = 1; }', 'method contracts only'],
 	['interface I {} $x = new I();', 'new requires'],
-	['interface I { function read(): int; } abstract class A { abstract function read(): int; } class B extends A { final function read(): int { return 1; } } class C extends B implements I {}', 'final virtual'],
+	['interface I { function read(): int; } abstract class A { abstract function read(): int; } class B extends A { final function read(): int { return 1; } } class M extends B implements I {} class C extends M { function read(): int { return 2; } }', 'final method'],
 	['interface I { function read(): int; } class B { private function read(): int { return 1; } } class C extends B implements I {}', 'public instance'],
 ] as [$text, $message]) {
 	try { interface_source($text); throw new \LogicException('Expected rejection: ' . $message); }
@@ -117,6 +119,31 @@ try {
 			throw new \LogicException('Interface repair lost work identity or output equivalence');
 		}
 	}
+	// Finality changes select a new interface view, never an override of the final slot.
+	$virtual_base = 'abstract class A { abstract function read(): int; } class B extends A { function read(): int { return 9; } }';
+	foreach ([false, true, false, true] as $final) {
+		$current_base = $final ? str_replace('class B extends A { function', 'class B extends A { final function', $virtual_base) : $virtual_base;
+		file_put_contents($base_path, $current_base); $compiler->update_cpp([$base_path]);
+		$base = Model::$global_scope->source_types_named('B')[0];
+		$bindings = $child->contract_work->require_facts()->bindings;
+		$ancestor_overrides = 0;
+		foreach ($bindings as $binding) {
+			if (weakref_get($binding->required_owner) === $base) { $ancestor_overrides++; }
+			if ($final && weakref_get($binding->required_owner) === $interface) {
+				if (weakref_get($binding->implementation_owner) !== $base) { throw new \LogicException('Final interface view missed inherited slot'); }
+			}
+		}
+		if ($ancestor_overrides !== ($final ? 0 : 1)) { throw new \LogicException('Incorrect final-slot override selection'); }
+	}
+	$valid_final = CPP_Output::encode(Model::$cpp_files);
+	file_put_contents($base_path, str_replace('final function', 'final protected function', $current_base));
+	foreach ([[$base_path], []] as $changes) {
+		try { $compiler->update_cpp($changes); throw new \LogicException('Nonpublic final interface implementation accepted'); }
+		catch (\RuntimeException $expected) {}
+	}
+	file_put_contents($base_path, $current_base); $compiler->update_cpp([$base_path]);
+	if (CPP_Output::encode(Model::$cpp_files) !== $valid_final) { throw new \LogicException('Final interface repair differs'); }
+	interface_export('final_cross_file_repair', native_record_export(), 9, true);
 	// Unchanged method contracts must not hide relationship-only header edits.
 	file_put_contents($interface_path, str_replace('interface I {', 'interface I extends Empty {', $interface_text));
 	$compiler->update_cpp([$interface_path]);

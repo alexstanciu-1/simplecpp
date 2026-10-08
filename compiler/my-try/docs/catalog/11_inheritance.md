@@ -43,20 +43,22 @@ User scope decision — 2026-10-08:
 | Unique/weak downcasts; unique/weak conditional joins; sibling conditional joins | Deferred to CH15 |
 | Trait adaptations; abstract constructor contracts | Deferred to CH15 |
 | Trait constructors/destructors | Previously deferred to CH15 |
-| Interface-qualified static dispatch; inherited final-virtual interface forwarding | Still undecided; not implicitly deferred or approved |
+| Inherited final-virtual interface forwarding | Implemented: interface view delegates without overriding the inherited final slot |
+| Interface-qualified static dispatch | Deferred to CH15; interface-typed static qualifiers remain rejected |
 
 The [CH15 scope register](15_blocking_debt.md#ch15-inheritance-extensions-01--deferred-ch11-extensions)
 retains the seven newly deferred items and their prerequisites. Existing unsupported
 paths stay rejected; recording the queue does not enable new language semantics.
 The three selected groups are implemented; see the
 [variance scope and checkpoints](../planning/callable_variance.md).
-Next discussion: resolve the two undecided dispatch limits before chapter closeout.
-CH11 is not declared complete; native compiler validation remains outstanding.
+The two remaining dispatch decisions are now resolved: final-method interface views
+are enabled and interface-qualified static dispatch is deferred. CH11's agreed
+implementation scope is complete; native compiler validation remains outstanding.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
 six ownership/type-access rows added below make already-proven coverage explicit. This is
 not a claim that every extension above is required for v0.2. The selected groups are
-implemented; two dispatch items remain undecided. Broader protected receiver access is already
+implemented; deferred extensions remain explicitly gated. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
 
 Verification: the checkpoints record PHP-host and generated-C++ proofs. The latest
@@ -557,14 +559,20 @@ ownership/lifetime boundaries and no implicit boxing of inline structs.
 
 ### CH11-INTERFACE-FINAL-01 — inherited final virtual forwarding
 
-Open, explicitly accepted bounded restriction; does not block this implementation slice.
-If a descendant adds a new interface that needs a forwarding override of an inherited
-**final virtual** method, reject during preparation. A C++ forwarding method would
-override the final method and is ill-formed. Existing interfaces implemented by the
-base remain valid; final nonvirtual source methods may use final forwarding overrides.
-Revisit with a separate interface adapter/dispatch representation if needed, rather
-than dropping finality or retroactively changing base dispatch. This is not a general
-ban on inherited interface implementations.
+Resolved on 2026-10-08 using the shared dispatch-binding model. A compatible public
+inherited final method may satisfy a new interface for either classes or structs.
+The interface binding targets the inherited final virtual slot without overriding
+it. A descendant-owned final entry keeps source lookup unambiguous; all views call
+the unchanged authored implementation. Nonfinal forwarding still connects ancestor
+slots to descendant dispatch. Visibility, variance and final-override checks remain.
+
+Validation: 58 generated-C++ interface/variance cases passed without PCH in
+`/tmp/final-interface01`. New cases cover both record kinds, multiple interface views,
+shared variance, descendant override rejection and cross-file finality changes with
+visibility failure/retry/repair and fresh/incremental agreement. No native compiler rebuild.
+
+Interface-qualified static dispatch is separately deferred to
+[CH15](15_blocking_debt.md#ch15-interface-static-01--interface-qualified-static-dispatch).
 
 ## Abstract contracts and virtual dispatch — 2026-10-07
 
@@ -713,7 +721,7 @@ After relationship/member-contract preparation is available, explicitly settle:
 
 - Inherited static-member lookup, hiding and access through base-typed qualifiers;
   distinguish fixed declared-type selection from late-bound `static::`.
-- Interface-typed qualifiers, including `produce()::method()` where `produce`
+- Deferred to CH15 on 2026-10-08: interface-typed qualifiers, including `produce()::method()` where `produce`
   returns an interface. A static signature requirement alone does not identify
   an implementing class's callable body. Decide whether such calls remain rejected,
   require a concrete type, or need an explicitly approved runtime dispatch protocol.
@@ -766,7 +774,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLASS-INH-001](#class-inh-001) | implemented-bounded | `class B extends A {}` | verified | verified | deferred | Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07) |
-| [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations; final-virtual forwarding restriction |
+| [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations including final virtual methods |
 | [CLASS-INH-003](#class-inh-003) | implemented-bounded | `class A { use T; }` | nested uses, abstract requirements, instance/static members and constants | verified | deferred | Independent consumer members/storage; edits/retry/reset; adaptations/lifecycle deferred |
 | [CLASS-INH-004](#class-inh-004) | implemented-bounded | `interface I { function f(int $a): int; }` | verified | verified | deferred | Public bodyless instance contracts; multiple interface inheritance |
 | [CLASS-INH-006](#class-inh-006) | implemented-bounded | `$a = new A(1);` | verified | verified | deferred | Shared class construction; checked constructor arguments; inherited constructors reuse original contract |

@@ -243,11 +243,12 @@ body or retroactive virtualization of the original base method is introduced.
 Forwarding preserves reference returns/arguments, packed variadics and by-value
 ownership transfer. Descendants may override a non-final forwarding implementation.
 
-Approved bounded restriction: reject a new forwarding binding when the inherited
-implementation is already **virtual and final**. This remains a source admission gate
-pending a separate decision, even though distinct backend slots remove the former
-C++ name collision. An interface already satisfied by the base remains valid, and an
-inherited final **nonvirtual** implementation may be forwarded with a final bridge.
+An inherited public **final** method, virtual or nonvirtual, may satisfy a newly
+added interface under the same signature-adaptation checks. This adds an interface
+view, not a replacement implementation. For an inherited final virtual method, the
+interface binding targets the existing final slot without overriding it. The
+descendant's source-facing entry remains unambiguous and final; later descendants
+cannot replace the method. Existing base/interface views retain their implementation.
 See [CH11-INTERFACE-FINAL-01](../compiler/my-try/docs/catalog/11_inheritance.md#ch11-interface-final-01--inherited-final-virtual-forwarding).
 
 C++ interface edges use public virtual inheritance so diamonds share the same interface
@@ -322,6 +323,16 @@ Adaptations/aliases and trait lifecycle methods remain deferred. This v0.2 contr
 supersedes the legacy blanket rejection of trait syntax, not the deferred extensions.
 
 ## Remaining gates
+
+### Interface-qualified static calls
+
+Interface-typed expression qualifiers such as `produce()::method()` remain rejected.
+The existing expression-qualified static-call contract selects the qualifier's declared
+concrete record type, not its runtime implementing class. Interface contracts do not
+identify a static implementation body. Runtime selection, absent-handle behavior and
+any static-interface declaration protocol are deferred to
+[CH15](../compiler/my-try/docs/catalog/15_blocking_debt.md#ch15-interface-static-01--interface-qualified-static-dispatch).
+Use an explicit concrete static target or an ordinary interface instance method.
 
 ### Late-static calls and shared factories
 

@@ -54,7 +54,9 @@ Source admission now enables the agreed shared-value variance. Concrete calls re
 the authored signature; base/interface calls retain their static contract and defaults.
 No runtime representation changes, synthetic AST methods, payload copies, new objects
 or downcasts are added. Native-call/bridge overhead has not been benchmarked; no claim
-of automatic bridge elimination is made. Existing undecided dispatch limits stay gated.
+of automatic bridge elimination is made. The subsequent approved final-forwarding slice
+binds new interface views to inherited final slots without overriding them; interface-
+qualified static dispatch remains rejected and is explicitly deferred to CH15.
 
 Focused proofs cover multi-level/abstract overrides, interfaces and inherited forwarding,
 class/struct receivers, shared struct and interface payloads, trait requirements,

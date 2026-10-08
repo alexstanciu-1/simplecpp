@@ -67,8 +67,24 @@ this deferral assigns no new release-blocking classification or language semanti
 | Abstract constructor contracts | Descendant signature obligations, inheritance, access and ordinary/data construction |
 
 Shared cross-casts, non-public destructors and variance/covariant returns remain selected
-CH11 work, not this debt. Interface-qualified static dispatch and inherited-final-virtual
-interface forwarding remain undecided. Trait lifecycle support has its separate entry below.
+CH11 work, not this debt. Inherited-final-virtual interface forwarding is implemented;
+interface-qualified static dispatch is explicitly deferred below. Trait lifecycle
+support has its separate entry below.
+
+### CH15-INTERFACE-STATIC-01 — interface-qualified static dispatch
+
+Deferred by user approval on 2026-10-08; not a CH11 implementation/closeout blocker.
+Keep interface-typed expression qualifiers (`produce()::method()` returning an
+interface) rejected. Ordinary expression-qualified static calls select a concrete
+declared type and evaluate the qualifier once; they do not select its runtime class.
+
+Before enabling this extension, decide whether static interface contracts are useful
+and how a concrete implementation is selected. A signature alone supplies no callable
+body. Runtime selection would need an explicit dispatch representation, absent-handle
+policy, evaluation/lifetime rules and incremental dependencies. Preserve the existing
+declared-type semantics unless a coordinated contract change is approved. Explicit
+concrete static calls and ordinary interface instance calls remain available.
+This deferral assigns no new release-blocking classification.
 
 ### CH15-TRAIT-LIFECYCLE-01 — trait constructors and destructors
 

@@ -145,25 +145,25 @@ final class Type_Contract_Preparation
 							if ($previous === $requirement) { $needs_forwarder = false; }
 						}
 					}
-					if ($needs_forwarder && !isset($forwarders[$requirement->name])) {
-						$inherited = self::effective_method($base, $implementation->name, $context);
-						if ($inherited->virtual_method && $inherited->final_method) {
-							throw new \RuntimeException('New interface forwarding through an inherited final virtual method is deferred');
-						}
+					if (!$needs_forwarder) { continue; }
+					$inherited = self::effective_method($base, $implementation->name, $context);
+					if (!isset($forwarders[$requirement->name])) {
 						$bridge = new prepared_method_contract();
 						$bridge->dispatch_owner = $record;
 						$bridge->method = $implementation;
 						$bridge->virtual_method = true;
 						$bridge->final_method = $signature->final_method;
 						$forwarders->add($implementation->name, $bridge);
-						if ($inherited->virtual_method) {
+						// Final slots keep their inherited implementation. The descendant entry
+						// has its own final slot; it must not override the ancestor's final slot.
+						if ($inherited->virtual_method && !$inherited->final_method) {
 							$identity = Callable_Adaptation::between($implementation->signature(), $implementation->signature());
 							self::bind($facts, $implementation, weakref_get($inherited->dispatch_owner), $implementation, $record, $identity);
 						}
 					}
-					if ($needs_forwarder) {
-						self::bind($facts, $requirement, $requirement->declaring_type(), $implementation, $record, $adaptation);
-					}
+					$dispatch_owner = $record;
+					if ($inherited->virtual_method && $inherited->final_method) { $dispatch_owner = weakref_get($inherited->dispatch_owner); }
+					self::bind($facts, $requirement, $requirement->declaring_type(), $implementation, $dispatch_owner, $adaptation);
 				}
 			}
 		}

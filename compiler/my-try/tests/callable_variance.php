@@ -51,6 +51,7 @@ foreach ([
 	'self_result' => 'abstract class A { abstract function f(): A; } class B extends A { function f(): B { return new B(); } } $b = new B(); $a A = $b; $r = $a->f(); return $r instanceof B ? 9 : 1;',
 	'trait_abstract_slot' => 'trait T { abstract function f(Dog $x): Animal; function read(Dog $x): Animal { return $this->f($x); } } abstract class A { use T; } class C extends A { function f(Animal $x): Dog { return new Dog(); } } $c = new C(); $a A = $c; $d = new Dog(); $r = $a->read($d); return $r->n;',
 	'reference_result' => 'interface I { function &f(Dog $x, int &$n): int; } class C implements I { function &f(Animal $x, int &$n): int { return $n; } } $c = new C(); $i I = $c; $d = new Dog(); $n = 1; $alias =& $i->f($d, $n); $alias = 9; return $n;',
+	'final_forwarding' => 'interface I { function f(Dog $x): Animal; } abstract class A { abstract function f(Animal $x): Dog; } class B extends A { final function f(Animal $x): Dog { return new Dog(); } } class C extends B implements I {} $c = new C(); $a A = $c; $i I = $c; $d = new Dog(); $r = $a->f($d); $s = $i->f($d); $rn = $r->n; $sn = $s->n; return $rn + $sn - 9;',
 ] as $name => $text) { variance_export($name, variance_source($payloads . $text)); }
 
 foreach ([
