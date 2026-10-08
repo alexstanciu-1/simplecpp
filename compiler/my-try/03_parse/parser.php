@@ -1700,7 +1700,7 @@ final class Parser_Run
 			return $mutation;
 		}
 		if (($text !== '+') && ($text !== '-') && ($text !== '~') && ($text !== '!')) {
-			return $this->power_expression();
+			return $this->object_type_test();
 		}
 		$start = $this->position++;
 		$unary = new unary_expression_node();
@@ -1708,6 +1708,30 @@ final class Parser_Run
 		$unary->operand = $this->unary_expression();
 		$this->finish_node($unary, $start);
 		return $unary;
+	}
+
+	/** Literal type tests bind before boolean negation; no expression-valued type operand. */
+	private function object_type_test(): expression_node
+	{
+		$start = $this->position;
+		$operand = $this->power_expression();
+		if ($this->text() !== 'instanceof') { return $operand; }
+		$this->position++;
+		$test = new object_type_node();
+		$test->operation = object_type_operation::type_test;
+		$test->operand = $operand;
+		$test->target_type = $this->object_type_target();
+		$this->finish_node($test, $start);
+		return $test;
+	}
+
+	private function object_type_target(): type_node
+	{
+		$target = $this->type_syntax($this->current_scope);
+		if (!($target instanceof named_type_node)) {
+			throw new \RuntimeException($this->error_message('Object type operation requires a literal named target'));
+		}
+		return $target;
 	}
 
 	/** Power associates right-to-left and accepts a signed exponent through unary parsing. */
@@ -1787,6 +1811,20 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
+		if ($this->text() === 'object_cast') {
+			$start = $this->position++;
+			$cast = new object_type_node();
+			$cast->operation = object_type_operation::checked_cast;
+			$this->expect('(');
+			$cast->operand = $this->expression();
+			$this->expect(',');
+			$cast->target_type = $this->object_type_target();
+			$this->expect('::');
+			$this->expect('class');
+			$this->expect(')');
+			$this->finish_node($cast, $start);
+			return $cast;
+		}
 		if (($this->text() === 'weak') || ($this->text() === 'lock'))
 		{
 			$start = $this->position;

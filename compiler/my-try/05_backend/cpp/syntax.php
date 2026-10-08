@@ -15,6 +15,17 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		if ($node instanceof object_type_node) {
+			$object_type = object_cast($node, object_type_node::class);
+			$facts = $object_type->require_object_type_preparation();
+			$target = CPP_Types::payload($facts->target_payload);
+			CPP_Types::record_dependencies($target, $this->context);
+			CPP_Declarations::type($object_type->operand->require_preparation()->type, $this->context);
+			$this->context->headers['scpp/object_cast.hpp'] = true;
+			$helper = $facts->operation === object_type_operation::checked_cast ? 'checked_object_cast' : 'object_is';
+			return '::scpp::' . $helper . '<' . $target->spelling . '>('
+				. $this->expression($object_type->operand) . ')';
+		}
 		if ($node instanceof ownership_observation_node)
 		{
 			$observation = object_cast($node, ownership_observation_node::class);

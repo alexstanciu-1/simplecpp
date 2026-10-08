@@ -351,6 +351,40 @@ retain exact storage-type requirements. No implicit downcasts, inline-record bas
 copies, wrapper-payload conversions or new conditional joins
 are enabled by this slice.
 
+## Checked shared-object access and type tests
+
+`object_cast($value, Target::class)` is an explicit required shared-object cast.
+The target is a statically named source class, struct or interface (including ordinary
+namespace/import lookup), not a runtime string or ownership-wrapper expression.
+Class/interface results use their ordinary shared representation; a struct target
+returns `shared<Target>`, never an inline copy. The operation evaluates its input once,
+preserves object identity and the existing shared control block, and does not consume
+the original handle, allocate a new object or copy its payload.
+
+A present compatible object succeeds. An empty handle or runtime type mismatch throws
+a runtime error with code `invalid_object_cast`. Ordinary typed boundaries still do not
+implicitly downcast. This source-language spelling adopts the checked behavior of the
+existing portability helper without exposing its reserved generator binding.
+
+`$value instanceof Target` uses the same static relationship admission and evaluates
+its input once. It returns false for an empty or incompatible handle and true for a
+compatible present object. It does not narrow the variable's static type or authorize
+reference rebinding. Boolean negation includes the test: `!$value instanceof Target`
+means `!($value instanceof Target)`; parentheses are recommended for clarity.
+
+Preparation admits same-type/upward shared views and base-to-derived class/struct
+narrowing, including interface-to-record narrowing where the target implements that
+interface. Narrowing requires a polymorphic source contract. An abstract declaration
+alone is not sufficient, and the compiler does not introduce virtual members to make
+a cast possible. Unsupported relationships and nonpolymorphic narrowing fail during
+preparation even when the input is empty. Ancestry and polymorphism are observed
+dependencies, so edits invalidate consumers.
+
+Sibling/interface cross-casts, unique/weak handles, inline values, bare-null operands,
+dynamic targets, automatic flow narrowing and nullable ownership wrappers are outside
+this bounded slice. Runtime mismatch is a valid value-dependent failure, not a reason
+to reject a statically admissible base-to-derived operation.
+
 ## Weak derived/base upcasts
 
 `weak<Derived>` may implicitly convert to `weak<Base>` for proven class or struct

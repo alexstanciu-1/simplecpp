@@ -71,6 +71,13 @@ final class prepared_ownership_observation extends prepared_expression
 	public ownership_observation_kind $operation;
 }
 
+/** Settled object access contract; backend never rediscovers ancestry or RTTI support. */
+final class prepared_object_type extends prepared_expression
+{
+	public object_type_operation $operation;
+	public canonical_type_use $target_payload;
+}
+
 /** A storage selection, not an owning payload or a certificate that a borrow may escape. */
 final class prepared_place
 {

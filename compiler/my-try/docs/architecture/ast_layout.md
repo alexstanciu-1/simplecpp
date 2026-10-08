@@ -10,6 +10,15 @@ proposal; see the [migration audit](../archive/specialized_ast_migration_audit.m
 for implemented differences and the bounded native iterator checkpoint. Git history
 retains the former `03_parse/proposal/` snapshots when historical comparison is needed.
 
+## Object type operations
+
+`object_type_node` owns an operand and literal target-type syntax, with a checked-cast
+or type-test operation. Both source spellings share this shape. Inspection/maintenance
+visit operand then target. Analysis owns relationship/polymorphism admission and
+attaches the selected result and target payload; the backend consumes these facts
+and emits the existing runtime checked-cast/test helpers. No implicit flow narrowing
+or backend semantic validation is added.
+
 ## Typed ownership
 
 `type_declaration_node` is the single class/struct/interface/trait syntax owner.

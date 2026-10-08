@@ -38,8 +38,9 @@ Remaining extensions require agreement, not another implementation of completed 
    `new static`; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
 2. Additional ownership conversions/joins: interface weak handles,
-   checked downcasts, derived/base or sibling conditional joins; shared and class/struct
-   weak upcasts and safe unique transfers already work.
+   unique/weak downcasts, cross-casts, derived/base or sibling conditional joins;
+   shared checked ancestry casts, class/struct weak upcasts and safe unique transfers
+   already work.
 3. Trait extensions: adaptations and lifecycle members. Abstract requirements, nested uses, static members
    and constants now share the existing consumer-owned path below.
 4. Other explicit bounds: abstract constructor contracts, non-public
@@ -51,7 +52,7 @@ and trait-extension groups; no new group is enabled by this reconciliation.
 CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
-four ownership rows added below make already-proven coverage explicit. This is
+five ownership/type-access rows added below make already-proven coverage explicit. This is
 not a claim that every extension above is required for v0.2. Their implementation
 or deferral still needs agreement. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
@@ -60,6 +61,27 @@ Verification: the checkpoints record PHP-host and generated-C++ proofs. The late
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Checked object access — 2026-10-08
+
+`object_cast($value, Target::class)` and literal `instanceof` share one object-type
+syntax/facts path. Preparation resolves imported target names and observes ancestry
+and source polymorphism; emission reuses runtime shared-handle checked casts/tests.
+Successful casts retain identity/control-block ownership; empty/mismatched casts
+throw `invalid_object_cast`, while tests return false. No flow narrowing, implicit
+downcasts, payload copies or new virtual members. Struct cast results are shared handles.
+
+Bounds: same/upward views, class/struct base-to-derived and interface-to-implementing
+record narrowing. Cross-casts, unique/weak inputs, inline inputs, dynamic target names
+and bare-null inputs remain deferred. See the [language contract](../../../../specs/inheritance_v0_2.md#checked-shared-object-access-and-type-tests).
+
+Validation: 17 generated-C++ fixtures passed without PCH in `/tmp/object-types-02`:
+class/struct identity, success/mismatch/absence, interface inputs, evaluate-once,
+namespace imports and cross-file failure/retry/repair/reset/fresh agreement. Eight
+adjacent PHP suites passed across `/tmp/object-types-adjacent` and
+`/tmp/object-types-parser`. The model suite's built-in-root-count assertion also fails
+on an isolated `2b566321` baseline (`/tmp/object-types-baseline-check`); it is unchanged
+and outside this slice. No native compiler rebuild.
 
 ## Unique ancestry transfers — 2026-10-08
 
@@ -666,6 +688,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH11-INTERFACE-HANDLE | implemented-bounded | `$view I = $object; $view->method();` | verified | verified | deferred | [Shared interface handles](#interface-handles-and-calls--2026-10-08); checked calls; no implicit struct boxing |
 | CH11-WEAK-UPCAST | implemented-bounded | `$base weak<Base> = $derived;` | verified | verified | deferred | [Weak ancestry](#weak-ancestry-upcasts--2026-10-08); no lock or lifetime extension; invariant references |
 | CH11-UNIQUE-UPCAST | implemented-bounded | `$base unique<Base> = move($derived);` | verified | verified | deferred | [Unique ancestry](#unique-ancestry-transfers--2026-10-08); virtual base destruction required; consuming boundaries only |
+| CH11-OBJECT-TYPE | implemented-bounded | `object_cast($base, Derived::class)` / `$base instanceof Derived` | verified | verified | deferred | [Checked access](#checked-object-access--2026-10-08); shared identity, checked failure, no flow narrowing |
 
 ## CLASS-INH-001
 
