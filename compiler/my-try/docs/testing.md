@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite derived_data --no-pch --results FRESH`
+checks derived class/struct data construction through authored and inherited public
+constructors: parameter-name keys/defaults, base execution, child defaults, ordering,
+nested inputs and storage forms. Rejections preserve opt-in and synthesized-schema
+boundaries; cross-file edits prove signature invalidation, retry/repair and reset/fresh
+agreement. This compiles generated programs, not the compiler itself.
+
 `python3 compiler/my-try/tests/records.py --suite late_static --no-pch --results FRESH`
 checks called-type selection, self/parent forwarding, explicit reset, two contexts,
 recursion, shared-class factories/constructors, inherited storage and declared-type

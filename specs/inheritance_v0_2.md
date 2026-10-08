@@ -67,8 +67,16 @@ omitted defaults in parameter order. Base construction precedes child property d
 `set:` initialization and the remaining constructor body. No temporary complete base
 object or extra base copy is required.
 
-Derived `data` initialization remains deferred until inherited input
-ownership is agreed; ordinary default construction of a supported data base is allowed.
+Derived `data` initialization requires explicit `data` opt-in on the child and an
+effective authored public constructor, declared locally or inherited. Keys name that
+constructor's parameters, with its original types/defaults; they do not expose extra
+child or base properties. The base need not opt into data construction. An inherited
+constructor retains its declaring owner and requires default-constructible child
+properties, as for ordinary `new`. An authored child constructor uses the same
+parent-initialization rules above. No post-construction property assignment bypasses
+constructor bodies or access rules. Synthesized inherited-property input schemas
+remain deferred, including a derived `data` declaration with no effective authored
+constructor. Ordinary default construction of a supported data base remains allowed.
 
 Inline copy eligibility includes the base's payload eligibility as well as the
 child's declared instance fields. Shared-handle copies retain identity as before.
@@ -246,7 +254,7 @@ substitute a receiver's declared type silently. See the
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Nonvirtual instance member hiding,
-inherited data inputs, runtime-called-type instance propagation, non-shared derived/base
+synthesized inherited data inputs, runtime-called-type instance propagation, non-shared derived/base
 conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
 

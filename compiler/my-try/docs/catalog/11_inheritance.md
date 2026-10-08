@@ -31,8 +31,8 @@ are distinct; the imported examples must not conflate them.
 
 Remaining extensions require agreement, not another implementation of those cards:
 
-1. Derived `data` initialization: authored/inherited constructor input names versus
-   synthesized public-property inputs, base initialization and access.
+1. Synthesized derived `data` inputs: inherited public-property ownership and base
+   initialization. The authored/inherited constructor slice below now executes.
 2. Runtime-called-type propagation through instance methods; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
 3. Additional ownership conversions/joins: unique/weak ancestry, checked downcasts,
@@ -41,9 +41,33 @@ Remaining extensions require agreement, not another implementation of those card
 5. Other explicit bounds: non-public constructors/destructors, variance and the
    inherited-final-virtual interface-forwarding restriction.
 
-Suggested next discussion: derived data initialization, reusing the existing
-constructor/input model. This is a proposal, not permission to lift its current gate.
+Next discussion: synthesized derived data inputs and their base-construction contract.
+This is a proposal, not permission to lift that remaining gate.
 CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
+
+## Derived data through constructor contracts — 2026-10-08
+
+Implemented explicit `data` opt-in on a derived class/struct with an effective authored
+public constructor, either local or inherited. Keys are that constructor's parameter
+names; original types/defaults and lexical ownership remain unchanged. Extra child/base
+properties never become implicit inputs. Base construction, child defaults and authored
+body execution reuse ordinary constructor semantics without post-construction assignment.
+
+The existing preparation model already represents the selected inherited constructor
+and exposes its shared initialization contract. The change narrows the declaration gate
+to derived data types requiring synthesized inputs, after effective constructor selection.
+No new retained structure, AST variant, class/struct fork or C++ lowering path was needed.
+See [the normative contract](../../../../specs/data_initialization.md#derived-records-with-authored-constructor-contracts--2026-10-08).
+
+Proof: 21 generated programs passed without PCH in `/tmp/derived-data-20261008-1`;
+six adjacent PHP suites passed in `/tmp/derived-data-regression-20261008-1`.
+`tests/derived_data.php` covers names/defaults, both constructor forms, multilevel
+inheritance, input order, nested targets, storage, rejection and cross-file retry/repair,
+reset and fresh/incremental agreement. No native compiler rebuild.
+
+Remaining: synthesized inherited-property schemas require discussion. `data` is not
+inherited, non-public/reference/variadic constructors retain their existing gates, and
+inherited `set:` property rebinding is not introduced.
 
 ## Late-static execution — 2026-10-08
 
@@ -474,6 +498,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; public fixed-value constructors |
 | CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original public concrete constructor contract/defaults through abstract or concrete ancestors |
 | CLASS-INH-014 | implemented-bounded | `static::method(); new static();` | verified | verified | deferred | Demanded static called-type instances; shared-class factories; runtime instance propagation deferred |
+| CLASS-INH-015 | implemented-bounded | `data class C extends B {} $c C = {input: 9};` | verified | verified | deferred | Explicit opt-in; selected authored/inherited constructor inputs; synthesized inherited schemas deferred |
 | [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |
 | [CLASS-INH-012](#class-inh-012) | implemented-equivalent | `class B extends A {}` | verified | verified | deferred | Prepared base identity and qualified ancestor calls replace reliance on a literal C++ base alias |
 | [CLASS-ABS-001](#class-abs-001) | implemented-bounded | `function __destruct() { $this->cleanup(); }` | verified | verified | deferred | Shared method lifecycle; out-of-line nonthrowing body; ordinary instance calls |

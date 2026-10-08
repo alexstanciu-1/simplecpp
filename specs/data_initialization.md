@@ -316,11 +316,41 @@ its corresponding property. For an omitted property, use its explicit default fi
 then its established type default, otherwise require the input. An absent class handle
 does not allocate a pointee. No implicit enum case or other invented default is allowed.
 Non-public properties are excluded from synthesized inputs, not silently exposed.
-Static members are excluded from inputs. Derived data initialization remains gated
-under the [concrete inheritance contract](inheritance_v0_2.md). Public instance
+Static members are excluded from inputs. Derived data initialization uses only an
+effective authored constructor in the bounded inheritance slice described below.
+Synthesized inherited-property inputs remain deferred. Public instance
 properties contributed by the supported direct-trait slice participate through the
 same property contract; composition must not expose non-public properties or bypass
 construction invariants.
+
+#### Derived records with authored constructor contracts — 2026-10-08
+
+A derived class/struct must explicitly opt in with `data`; the modifier is not
+inherited. Its effective public constructor may be authored on the child or inherited
+from an ancestor, which need not itself be `data`. Keys always name that selected
+constructor's parameters. Inherited parameter types, names and defaults keep their
+original declaration/lexical context. Extra public properties do not add implicit keys.
+
+```php
+class Base {
+    int $number;
+    function __construct(int $input = 7) { $this->number = $input + 1; }
+}
+data class Child extends Base {
+    int $extra = 1;
+}
+$child Child = {input: 8}; // number == 9; extra == 1
+// {number: 8} and {extra: 8} are invalid: neither names a constructor parameter.
+```
+
+Ordinary inherited-constructor eligibility and child defaults apply. An authored
+child constructor runs normal base initialization before child initialization/body;
+data notation never follows it with property assignments. Supplied inputs retain
+source evaluation order, followed by omitted parameter defaults. The existing
+duplicate/unknown/missing-key, type-boundary and storage rules remain unchanged.
+Both record kinds reuse one construction path. A derived `data` type without an
+effective authored constructor is still rejected: synthesizing inherited-property
+inputs requires a separate agreement. See [inheritance](inheritance_v0_2.md).
 
 The initial supported key contract is literal string names, in either `{name: value}`
 or `["name" => value]` notation. Computed keys and positional record construction are

@@ -120,9 +120,6 @@ final class Declaration_Preparation
 			}
 			$facts->data_initializable = true;
 		}
-		if ($facts->data_initializable && ($facts->base_type !== null)) {
-			throw new \RuntimeException('Inherited data initialization inputs are deferred');
-		}
 		foreach ($methods as $method) {
 			$members /** Key_Storage_List<collected_method> */ = $facts->methods;
 			if (q_count($members->named($method->name)) !== 0) {
@@ -168,6 +165,11 @@ final class Declaration_Preparation
 		$facts->capabilities = $capabilities;
 		Inheritance_Preparation::inherit_constructor($facts, $context);
 		if ($facts->data_initializable && (weakref_get($facts->constructor) === null)) {
+			// Authored and inherited constructors already own their named input contract.
+			// Do not synthesize a partial schema containing only the child's properties.
+			if ($facts->base_type !== null) {
+				throw new \RuntimeException('Synthesized inherited data initialization inputs are deferred');
+			}
 			$facts->initialization = new record_initialization_contract();
 			Constructor_Preparation::synthesized_inputs($facts, $context);
 		}

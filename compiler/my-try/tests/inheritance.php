@@ -90,7 +90,7 @@ foreach ([
 	['class B { function __construct() {} } class C extends B { function __construct() { if (true) { parent::__construct(); } } }', 'ordinary method'],
 	['class B { function __construct() {} } class C extends B { function get(): void { parent::__construct(); } }', 'ordinary method'],
 	['class C { function get(): int { return parent::read(); } }', 'concrete base'],
-	['data class B { int $n; } data class C extends B {}', 'Inherited data'],
+	['data class B { int $n; } data class C extends B {}', 'Synthesized inherited data'],
 	['struct B { unique<int> $p; } struct C extends B {} $c = new C(); $d = $c;', 'copyable_value'],
 ] as [$source, $message]) {
 	try { inheritance_source($source); throw new \LogicException('Expected rejection: ' . $message); }
