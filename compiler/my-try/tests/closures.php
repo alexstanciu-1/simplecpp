@@ -8,6 +8,20 @@ $directory = sys_get_temp_dir() . '/closure-execution-' . bin2hex(random_bytes(6
 mkdir($directory);
 $path = $directory . '/main.phs';
 $cases = [
+	'capture_snapshot' => ['$n = 3; $f = function (int $x) use ($n): int { return $x + $n; }; $n = 8; return $f(4);', 7],
+	'capture_copy' => ['$n = 3; $f = function () use ($n): int { return $n; }; $g = $f; return $g();', 3],
+	'capture_nested' => ['$n = 4; $f = function () use ($n): int { $g = function () use ($n): int { return $n + 1; }; return $g(); }; return $f();', 5],
+	'capture_alias' => ['$n = 4; $alias =& $n; $f = function () use ($alias): int { return $alias; }; $n = 9; return $f();', 4],
+	'capture_vector' => ['$v vector<int> = [3]; $f = function () use ($v): int { return $v[0]; }; $v[0] = 8; return $f();', 3],
+	'capture_shared' => ['class Box { public int $n = 3; } $box = new Box(); $old = $box; $f = function () use ($box): int { $box->n = 7; return $box->n; }; $box = new Box(); $f(); return $old->n;', 7],
+	'capture_vector_return' => ['$n = 5; $f = function () use ($n): vector<int> { return [$n, 2]; }; $v = $f(); return $v[0];', 5],
+	'capture_shared_method' => ['class Box { public int $n = 3; public function set(): void { $this->n = 8; } } $box = new Box(); $f = function () use ($box): void { $box->set(); }; $f(); return $box->n;', 8],
+	'capture_dynamic' => ['$d dynamic = {n: 3}; $f = function () use ($d): void { $d["n"] = 9; }; $f(); $n int = $d["n"]; return $n;', 9],
+	'capture_dynamic_remove' => ['$d dynamic = {n: 3}; $f = function () use ($d): void { unset($d["n"]); }; $f(); return isset($d["n"]);', 0],
+	'capture_mixed' => ['$m mixed = [3]; $f = function () use ($m): int { $n int = $m[0]; return $n; }; $m[0] = 8; return $f();', 3],
+	'capture_callable' => ['$n = 4; $f = function () use ($n): int { return $n; }; $g = function () use ($f): int { return $f(); }; return $g();', 4],
+	'capture_parameter' => ['function calc(int $n): int { $f = function () use ($n): int { return $n + 1; }; return $f(); } return calc(5);', 6],
+	'typed_capture' => ['function apply(function<int()> $f): int { return $f(); } $n = 6; return apply(function () use ($n): int { return $n; });', 6],
 	'local' => ['$f = function (int $value): int { return $value + 2; }; return $f(5);', 7],
 	'copy' => ['$f = function (int $value): int { return $value + 2; }; $g = $f; return $g(6);', 8],
 	'nested' => ['$f = function (int $value): int { $g = function (int $inner): int { return $inner + 1; }; return $g($value); }; return $f(8);', 9],
@@ -40,6 +54,18 @@ try {
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('No-op changed closure output'); }
 	}
 	$invalid = [
+		'$f = function () use ($absent): int { return 1; }; return 0;',
+		'$n = 1; $f = function () use ($n, $n): int { return $n; }; return 0;',
+		'$n = 1; $f = function (int $n) use ($n): int { return $n; }; return 0;',
+		'$n = 1; $f = function () use ($n): int { $n = 2; return $n; }; return 0;',
+		'$n = 1; $f = function () use ($n): int { $n++; return $n; }; return 0;',
+		'function change(int &$n): void { $n = 2; } $n = 1; $f = function () use ($n): void { change($n); }; return 0;',
+		'$v vector<int> = [1]; $f = function () use ($v): void { $v[0] = 2; }; return 0;',
+		'$d dynamic = {n: 1}; $f = function () use ($d): void { $d = dynamic::{n: 2}; }; return 0;',
+		'struct Box { public int $n = 1; } $b = new Box(); $f = function () use ($b): void { $b->n = 2; }; return 0;',
+		'class Box {} $b unique<Box> = new Box(); $f = function () use ($b): void { return; }; return 0;',
+		'$m mixed = [1]; $f = function () use ($m): void { $m[0] = 2; }; return 0;',
+		'$n = 1; $f = function (): int { $g = function () use ($n): int { return $n; }; return $g(); }; return 0;',
 		'$f = function (int $a): int { return $a; }; return $f();',
 		'$f = function (int $a): int { return $a; }; return $f(1, 2);',
 		'$f = function (): int { return 1; }; $f = function (): int { return 2; }; return $f();',
@@ -74,6 +100,40 @@ try {
 	if (CPP_Probe::text(Model::$cpp_files) !== $dependency_output) { throw new \LogicException('Anonymous dependency edit left stale C++'); }
 	file_put_contents($output . '/dependency_edit.cpp', $dependency_output);
 	$executions[] = ['path' => $output . '/dependency_edit.cpp', 'exit_code' => 2];
+	$capture_source = 'function calc(int $n): int { $f = function () use ($n): int { return (int)$n; }; return $f(); } return calc(6);';
+	Compiler_Lifecycle::reset(); file_put_contents($path, $capture_source);
+	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	foreach (Model::collected_files()[0]->anonymous_callables as $identity) { $capture_identity = $identity; }
+	$capture_body = $capture_identity->syntax()->require_body()->work();
+	$capture_version = $capture_body->version;
+	$capture_field = $capture_body->captures[0];
+	$source_place = $capture_identity->syntax()->captures[0]->require_preparation()->place;
+	if ($source_place->storage() === $capture_field || (new prepared_place($capture_field))->access() !== storage_access::read_only) {
+		throw new \LogicException('Capture aliases source storage or lost read-only access');
+	}
+	$compiler->exec_cpp();
+	if ($capture_body->version !== $capture_version) { throw new \LogicException('No-op rebuilt capture environment'); }
+	$children = iterator_to_array($capture_identity->syntax()->children(), false);
+	if ($children[0] !== $capture_identity->syntax()->captures[0]) { throw new \LogicException('Capture omitted from grammar-ordered inspection'); }
+	$capture_changed = str_replace(['calc(int $n)', 'calc(6)'], ['calc(float $n)', 'calc(6.0)'], $capture_source);
+	file_put_contents($path, $capture_changed);
+	$compiler->update_cpp([$path]);
+	if ($capture_body->captures[0]->type->matches($capture_field->type)) { throw new \LogicException('Signature edit retained stale capture input type'); }
+	$capture_output = CPP_Probe::text(Model::$cpp_files);
+	file_put_contents($path, 'return 0;'); $compiler->update_cpp([$path]);
+	if (count($capture_body->captures) !== 0) { throw new \LogicException('Retired body retained capture environment'); }
+	file_put_contents($path, $capture_changed);
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	if (CPP_Probe::text(Model::$cpp_files) !== $capture_output) { throw new \LogicException('Capture signature edit disagrees with fresh output'); }
+	file_put_contents($output . '/capture_signature_edit.cpp', $capture_output);
+	$executions[] = ['path' => $output . '/capture_signature_edit.cpp', 'exit_code' => 6];
+	foreach (['$n = 1; $f = function () use (&$n): int { return $n; };', '$f = function () use ($this): void { return; };'] as $deferred) {
+		file_put_contents($path, $deferred); $rejected = false;
+		try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
+		if (!$rejected) { throw new \LogicException('Deferred capture was accepted'); }
+		file_put_contents($path, $capture_changed); $compiler->update_cpp([$path]);
+		if (CPP_Probe::text(Model::$cpp_files) !== $capture_output) { throw new \LogicException('Capture failure did not recover'); }
+	}
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	$registry = Model::$type_catalog->registry();
 	$integer = Language_Types::integer(Model::$language_scope);

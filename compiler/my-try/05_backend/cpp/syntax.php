@@ -29,11 +29,18 @@ final class CPP_Syntax
 					. CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
 			}
 			$previous_return = $this->context->return_type;
+			$capture_parts /** vector<string> */ = [];
+			$captures /** Storage<variable_reference_node> */ = $closure->captures;
+			foreach ($captures as $capture) {
+				$capture_parts[] = $this->expression($capture);
+			}
 			$this->context->return_type = $facts->signature->return_type;
 			$body = '';
 			try { $body = CPP_Generator::generate_statements($closure->require_body(), $this->context); }
 			finally { $this->context->return_type = $previous_return; }
-			return '[](' . implode(', ', $parts) . ') -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
+			// Semantic capture bindings are read-only; mutable permits shared-payload APIs and nested callable invocation.
+			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
+			return '[' . implode(', ', $capture_parts) . '](' . implode(', ', $parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
 		}
 		if ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);

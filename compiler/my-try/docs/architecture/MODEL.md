@@ -216,6 +216,16 @@ The existing call target interface lets value invocation reuse ordinary argument
 admission. Dependency-aware conversion preparation checks a concrete closure's
 signature before publishing `callable_wrap`; only the backend chooses `std::function`.
 
+Closure syntax owns an ordered capture-reference list between parameters and return
+syntax. Creation-site preparation resolves it using the enclosing local environment.
+Anonymous body work owns independent `prepared_capture` storage facts, observing the
+original collected names but not aliasing their storage. Captures are not parameters
+and do not affect the public signature. Body preparation installs them alongside
+parameters; fresh creation-site inputs rebuild the body, while independent contract
+invalidation reuses established inputs. Retirement clears the captured environment.
+Capture bindings are read-only; prepared projection access distinguishes a shared
+pointee from its owning binding without changing ordinary const-parameter contracts.
+
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members
 observe their declaring type and are indexed separately from free functions and

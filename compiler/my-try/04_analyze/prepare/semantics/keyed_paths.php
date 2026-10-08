@@ -22,7 +22,8 @@ final class Keyed_Path_Preparation
 				if (!$path->root->require_preparation()->addressable()) {
 					throw new \RuntimeException('S2S unset requires stable storage');
 				}
-				Reference_Preparation::require_writable($path->root->require_preparation()->place);
+				$root_value = $path->root->require_preparation();
+				Reference_Preparation::require_mutable_contents($root_value->place, $root_value->type);
 			}
 			return $path;
 		}

@@ -275,10 +275,13 @@ final class source_callable_body_work extends body_work
 
 final class anonymous_body_work extends body_work
 {
+	/** Prepared creation-site inputs; never retain the enclosing transient environment. */
+	public Storage $captures /** Storage<prepared_capture> */;
 	private anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */;
 	public function __construct(anonymous_callable_identity $identity)
 	{
 		parent::__construct($identity->collection(), $identity->syntax()->require_body());
+		$this->captures = new Storage();
 		$this->source_identity = $identity;
 	}
 	public function anonymous_identity(): anonymous_callable_identity

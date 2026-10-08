@@ -119,7 +119,7 @@ final class Method_Preparation
 			$qualified->evaluates_qualifier = true;
 			return $qualified;
 		}
-		if ($value->place !== null) { Reference_Preparation::require_writable($value->place); }
+		if ($value->place !== null) { Reference_Preparation::require_mutable_contents($value->place, $value->type); }
 		$lifetime = method_receiver_lifetime::retain_shared;
 		if ($storage !== record_storage_kind::shared)
 		{

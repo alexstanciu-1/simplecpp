@@ -65,7 +65,7 @@ inferred. Explicit callable locals require initialization. Copying and reassignm
 preserve the callable contract. Function and instance/static method parameters use
 the same rule, for classes and structs alike.
 
-Empty callable storage, callable returns, reference signatures, captures and
+Empty callable storage, callable returns, reference signatures, reference captures and
 contextual signature inference remain deferred in this slice. Properties and
 wrapper/container storage of callable values are also deferred. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
@@ -103,12 +103,37 @@ Closures may capture variables from the surrounding scope:
 ```php
 $x = 10;
 
-$f = function (int $a): int use ($x) {
+$f = function (int $a) use ($x): int {
 	return $a + $x;
 };
 ```
 
 Captured values are stored as fields in the generated closure object.
+
+### v0.2 explicit value captures
+
+`use ($x, $y)` copies the current values when the closure expression executes.
+It uses each type's ordinary copy contract: value/COW containers retain value
+semantics, while shared objects and dynamic containers retain shared identity.
+Reassigning the outer variable does not replace the captured value. This is not
+a deep snapshot. Unique/noncopyable values are rejected; capture never implies move.
+
+Captured bindings are read-only in this slice. Reassignment, increments, mutable
+borrowing and mutation of captured inline/value-container storage are rejected
+during preparation. Shared pointees and dynamic container contents remain mutable;
+read-only binding does not imply deep immutability. Copying a closure copies its
+captured fields using the same ordinary type rules.
+
+Capture names must resolve to established visible locals or parameters at creation.
+Duplicate captures and capture/parameter name collisions are errors. A nested closure
+can capture only from its immediate enclosing environment (including that closure's
+parameters, locals and explicit captures); it cannot bypass a missing outer capture.
+Existing local initialization, lexical scope and shadowing rules apply unchanged.
+
+The syntax order is `function (parameters) use (captures): ReturnType { body }`.
+Reference captures, `$this`, automatic arrow captures and mutable captured bindings
+remain deferred. Parameter/return rules are shared with other source callables;
+capture admission does not enable deferred callable signatures or callable returns.
 
 ---
 
@@ -131,6 +156,10 @@ auto f = [](int a) -> int {
 ```
 
 Captured variables become lambda captures.
+
+The backend may emit C++ `mutable` to use non-const shared-payload APIs and invoke
+captured callable values. This is a lowering detail, not permission to reassign
+source captured bindings; shared preparation enforces their read-only contract.
 
 No type erasure is introduced unless required by a callable boundary.
 

@@ -93,7 +93,18 @@ across syntax/collection, analysis lifecycle and backend consumers.
    share existing admission and lowering. Callable returns, empty storage, reference
    signatures, properties and wrapper/container storage reject during preparation.
 
-Non-goals: captures/arrows, escaping references, defaults/variadics and reference
+5. **Explicit value captures — implemented.** Creation-site preparation resolves
+   capture references through the current local environment and requires ordinary
+   copy capability. `anonymous_body_work::captures` owns independent read-only
+   `prepared_capture` fields; it never retains the outer transient environment or
+   turns captures into callable parameters. Rebuilding the enclosing expression
+   supplies fresh inputs and rebuilds the anonymous body. Independent dependency
+   rebuilds reuse the established inputs; retirement clears them. Shared-payload
+   access is distinct from rebinding. The ordinary place/access checks protect
+   inline and value-container storage; shared pointees/dynamic contents stay mutable.
+   C++ uses value captures, with semantic read-only enforcement before emission.
+
+Non-goals: reference/this captures, mutable capture bindings, arrows, escaping references, defaults/variadics and reference
 returns on closures, named-call syntax, callable-return support,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
@@ -178,3 +189,16 @@ The prior committed registry/bootstrap and current versions produce identical
 counts (`/tmp/my-try-ch12-callable-counts`). A diagnostic-only count correction
 exposed the stale whitelist; the test was restored unchanged. It also exercises
 parked LLVM and is not claimed passing. No native compiler rebuild was performed.
+
+Value-capture proof (2026-10-08): 28 generated C++ programs passed with PCH in
+`/tmp/my-try-ch12-captures-05`. They cover creation-time snapshots, closure copying,
+nested/callable/parameter/alias captures, vector/mixed value semantics, shared-object
+identity after outer rebinding, shared methods, dynamic writes/removal, vector returns
+and explicit callable arguments. Preparation rejects duplicate/missing/colliding
+captures, noncopyable values, captured-binding mutations and value-container writes.
+Deferred reference/this capture failures recover on the same compiler instance.
+Inspection, no-op versions, enclosing-signature edits, retirement and fresh/incremental
+agreement are checked. Ten focused suites passed in `...capture-checks-01`; thirteen
+passed in `/tmp/my-try-ch12-capture-checks-02`, including reference, property mutation,
+indexing, cleanup and method-parameter regressions. The shared runner used CLI fallback.
+These are host compiler checks and generated-program execution, not a native compiler rebuild.

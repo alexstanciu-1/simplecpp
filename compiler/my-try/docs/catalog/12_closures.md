@@ -43,7 +43,10 @@ slice now supports distinct concrete types, inferred locals/copies, exact-arity
 invocation and native C++ lambda emission without type erasure;
 explicit `function<R(Args...)>` locals and by-value parameters additionally support
 exact signature conversion to `std::function`. Callable locals must be initialized.
-the imported rows below are not implementation claims. Preserve parameter names for
+Explicit by-value `use ($name)` captures now preserve ordinary copy/sharing semantics
+and have read-only bindings. Shared object/dynamic contents remain mutable. Reference,
+`$this`, arrow and mutable-binding captures remain deferred. The imported rows below
+are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
@@ -55,12 +58,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
 | [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
 | [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |
-| [CLOSURE-USE-001](#closure-use-001) | pending-discussion | `$f function<int()> = function () use ($a): int { return $a; };`<br>`$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLOSURE-USE-001](#closure-use-001) | implemented-bounded | `$f function<int()> = function () use ($a): int { return $a; };` | passed | passed | deferred | Explicit signature, copyable captures, read-only bindings; omitted return/context inference remains deferred |
 | [CLOSURE-CALLABLE-001](#closure-callable-001) | pending-discussion | `$f function<int()> = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
-| [CLOSURE-CALLABLE-002](#closure-callable-002) | pending-discussion | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | unverified | unverified | deferred | — |
+| [CLOSURE-CALLABLE-002](#closure-callable-002) | implemented-bounded | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | passed | passed | deferred | Explicit signatures and captures; inferred storage remains concrete, unlike imported v0.1 erasure |
 | [ARROW-001](#arrow-001) | pending-discussion | `$a = 10; $f = fn(int $x): int => $x + $a;` | unverified | unverified | deferred | — |
 | [CLOSURE-USE-002](#closure-use-002) | pending-discussion | `$f function<int()> = function () use (&$a): int { return $a; };` | unverified | unverified | deferred | — |
-| [CLOSURE-RETURN-001](#closure-return-001) | pending-discussion | `$f = function () use ($a): vector<int> { return [$a, 2]; };` | unverified | unverified | deferred | — |
+| [CLOSURE-RETURN-001](#closure-return-001) | implemented-bounded | `$f = function () use ($a): vector<int> { return [$a, 2]; };` | passed | passed | deferred | Reuses ordinary function return/literal preparation; generated execution |
 | [CLOSURE-REJECT-001](#closure-reject-001) | pending-discussion | `$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-REJECT-002](#closure-reject-002) | pending-discussion | `$items[] = function (): int { return 1; };` | unverified | unverified | deferred | — |
 ## CLOSURE-USE-001

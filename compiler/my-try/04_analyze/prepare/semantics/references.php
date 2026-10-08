@@ -5,6 +5,23 @@ namespace scpp\compiler;
 
 final class Reference_Preparation
 {
+	/** A capture freezes its binding, not a shared pointee or dynamic container. */
+	public static function contents_access(prepared_place $place, canonical_type_use $receiver): storage_access
+	{
+		if ($place->root_storage() instanceof prepared_capture) {
+			if ((Type_Queries::record_storage($receiver) === record_storage_kind::shared)
+				|| Boxed_Conversions::is_dynamic($receiver)) { return storage_access::writable; }
+		}
+		return $place->access();
+	}
+
+	public static function require_mutable_contents(prepared_place $place, canonical_type_use $receiver): void
+	{
+		if (self::contents_access($place, $receiver) === storage_access::read_only) {
+			throw new \RuntimeException('Mutation through read-only value storage is not allowed');
+		}
+	}
+
 	/** Addressability permits borrowing; mutation additionally requires writable access. */
 	public static function require_writable(prepared_place $place): void
 	{

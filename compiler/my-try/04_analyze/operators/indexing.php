@@ -166,7 +166,7 @@ final class Indexing_Preparation
 		if (!$prepared->addressable()) {
 			throw new \RuntimeException('S2S indexed assignment requires stable receiver storage');
 		}
-		Reference_Preparation::require_writable($prepared->place);
+		Reference_Preparation::require_mutable_contents($prepared->place, $prepared->type);
 		$facts->root = $root;
 		return $prepared->type;
 	}

@@ -352,7 +352,8 @@ final class Preparation_Worker
 	}
 
 	/** Signature and implementation remain independent work identities. */
-	public function prepare_anonymous(anonymous_callable_identity $identity, preparation_owner $consumer): void
+	public function prepare_anonymous(anonymous_callable_identity $identity, preparation_owner $consumer,
+		?Storage $captures /** nullable<Storage<prepared_capture>> */ = null): void
 	{
 		if ($identity->signature_work === null) { $identity->signature_work = new anonymous_signature_work($identity); }
 		$signature /** anonymous_signature_work */ = $identity->signature_work;
@@ -361,6 +362,12 @@ final class Preparation_Worker
 		$syntax = $identity->syntax();
 		if ($syntax->require_body()->work() === null) { $syntax->require_body()->attach_work(new anonymous_body_work($identity)); }
 		$body /** body_work */ = $syntax->require_body()->work();
+		if ($captures !== null) {
+			object_cast($body, anonymous_body_work::class)->captures = $captures;
+			$body->state = preparation_state::pending;
+			// Newly supplied creation-site facts permit retry after an earlier scheduled attempt.
+			unset($this->attempt_failed[$body]);
+		}
 		$this->owners[$body] = true;
 		if (isset($this->attempt_failed[$body])) { throw new \RuntimeException($body->failure_message); }
 		if (!Preparation_Status::complete($body)) { $this->body($body); }
@@ -794,6 +801,15 @@ final class Preparation_Worker
 			$this->require_contract($owner, $signature);
 			Preparation_Cleanup::tree($owner->executable_body());
 			Body_Preparation::bind_parameters($signature->require_facts(), $context);
+			$captures /** Storage<prepared_capture> */ = $anonymous->captures;
+			foreach ($captures as $capture) {
+				$name = weakref_get($capture->declaration)->name;
+				if (q_count($context->locals->local_named($name)) !== 0) {
+					throw new \RuntimeException('Capture collides with a parameter: ' . $name);
+				}
+				Capability_Preparation::require_copy($capture->type, $context);
+				$context->locals->add($name, $capture);
+			}
 			Body_Preparation::prepare_callable_statements($owner->executable_body(), $signature->require_facts(), $context, 0, '<closure>');
 			$owner->executable_body()->syntax_changed = false;
 			return;
@@ -1146,6 +1162,7 @@ final class Preparation_Worker
 		}
 		elseif ($owner instanceof anonymous_body_work) {
 			unset($this->callable_bodies[$owner]);
+			object_cast($owner, anonymous_body_work::class)->captures = new Storage();
 			Preparation_Cleanup::tree(object_cast($owner, anonymous_body_work::class)->executable_body());
 		}
 		else { throw new \LogicException('Unsupported preparation work role'); }

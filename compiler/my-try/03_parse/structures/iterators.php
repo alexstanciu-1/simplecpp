@@ -1125,6 +1125,7 @@ final class call_children_iterator extends children_iterator
 enum callable_children_stage
 {
 	case parameters;
+	case captures;
 	case return_type;
 	case body;
 	case finished;
@@ -1135,9 +1136,10 @@ final class callable_children_iterator extends children_iterator
 {
 	private callable_syntax_owner_i $source;
 	private callable_children_stage $stage = callable_children_stage::parameters;
-	private ?storage_children_iterator $parameters_cursor = null;
+	private ?storage_children_iterator $sequence_cursor = null;
 
-	public function __construct(callable_syntax_owner_i $source)
+	public function __construct(callable_syntax_owner_i $source,
+		private ?Storage $captures /** nullable<Storage<variable_reference_node>> */ = null)
 	{
 		$this->source = $source;
 	}
@@ -1150,17 +1152,29 @@ final class callable_children_iterator extends children_iterator
 			switch ($this->stage)
 			{
 				case callable_children_stage::parameters:
-					if ($this->parameters_cursor === null) {
+					if ($this->sequence_cursor === null) {
 						$parameters /** Storage<parameter_node> */ = $this->source->signature_parts()->parameters;
-						$this->parameters_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($parameters));
+						$this->sequence_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($parameters));
 					}
 					else {
-						$this->parameters_cursor->next();
+						$this->sequence_cursor->next();
 					}
-					if ($this->parameters_cursor->valid()) {
-						return $this->parameters_cursor->current();
+					if ($this->sequence_cursor->valid()) {
+						return $this->sequence_cursor->current();
 					}
-					$this->parameters_cursor = null;
+					$this->sequence_cursor = null;
+					$this->stage = callable_children_stage::captures;
+					break;
+				case callable_children_stage::captures:
+					if ($this->captures !== null) {
+						if ($this->sequence_cursor === null) {
+							$captures /** Storage<variable_reference_node> */ = $this->captures;
+							$this->sequence_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($captures));
+						}
+						else { $this->sequence_cursor->next(); }
+						if ($this->sequence_cursor->valid()) { return $this->sequence_cursor->current(); }
+					}
+					$this->sequence_cursor = null;
 					$this->stage = callable_children_stage::return_type;
 					break;
 				case callable_children_stage::return_type:

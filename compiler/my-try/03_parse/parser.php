@@ -1399,7 +1399,24 @@ final class Parser_Run
 		if ($signature->returns_reference) { $this->position++; }
 		$signature->parameters = $this->callable_parameters($signature_scope, false);
 		if ($this->text() === 'use') {
-			throw new \RuntimeException($this->error_message('Closure capture syntax is deferred'));
+			$this->position++;
+			$this->expect('(');
+			$captures /** Storage<variable_reference_node> */ = $closure->captures;
+			while ($this->text() !== ')') {
+				if ($this->text() === '&') {
+					throw new \RuntimeException($this->error_message('Reference captures are deferred'));
+				}
+				if (!string_byte_starts_with($this->text(), '$')) {
+					throw new \RuntimeException($this->error_message('Expected capture variable'));
+				}
+				$capture_start = $this->position++;
+				$capture = $this->variable_reference($capture_start);
+				$capture->collect($this->collector, $this->current_scope, $capture_start);
+				$captures->append($capture);
+				if ($this->text() !== ',') { break; }
+				$this->position++;
+			}
+			$this->expect(')');
 		}
 		$this->expect(':');
 		$signature->return_type = $this->type_syntax($signature_scope);

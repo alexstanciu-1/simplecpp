@@ -15,7 +15,7 @@ final class Capability_Preparation implements type_capability_query
 		if ($definition instanceof closure_type_definition) {
 			$identity = Model::$type_catalog->closures()->identity($type_use);
 			$this->context->worker->require_contract($this->context->owner, $identity->signature_work);
-			// This bounded closure family has no captures; future capture storage must refine copying.
+			// Only copyable captures are admitted; move/reference captures remain gated.
 			return $definition->declares_capability($capability);
 		}
 		// Wrapper identity is registered independently of the payload's completed copy contract.

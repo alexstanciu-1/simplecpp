@@ -19,7 +19,23 @@ final class Expression_Preparation
 		if ($node instanceof closure_node) {
 			$closure = object_cast($node, closure_node::class);
 			$identity = $closure->anonymous_identity();
-			$context->worker->prepare_anonymous($identity, $context->owner);
+			$captures /** Storage<prepared_capture> */ = new Storage();
+			$seen /** hash<bool> */ = [];
+			$capture_syntax /** Storage<variable_reference_node> */ = $closure->captures;
+			foreach ($capture_syntax as $capture_syntax_node) {
+				$name = $capture_syntax_node->name;
+				if (($name === 'this') || isset($seen[$name])) {
+					throw new \RuntimeException('Duplicate capture or deferred this capture');
+				}
+				$seen[$name] = true;
+				$source_value = self::prepare($capture_syntax_node, $context);
+				Capability_Preparation::require_copy($source_value->type, $context);
+				$capture = new prepared_capture();
+				$capture->declaration = $capture_syntax_node->require_variable_reference_preparation()->declaration;
+				$capture->type = $source_value->type;
+				$captures->append($capture);
+			}
+			$context->worker->prepare_anonymous($identity, $context->owner, q_count($captures) === 0 ? null : $captures);
 			if ($identity->value_type === null) {
 				$registry = Model::$type_catalog->registry();
 				$definition = $registry->define_closure();
@@ -474,7 +490,8 @@ final class Expression_Preparation
 		$facts->type = $field->type;
 		if ($value->place !== null) {
 			$base_place /** prepared_place */ = $value->place;
-			$facts->place = new prepared_place($field, $base_place, $storage !== record_storage_kind::inline_value);
+			$facts->place = new prepared_place($field, $base_place, $storage !== record_storage_kind::inline_value,
+				Reference_Preparation::contents_access($base_place, $value->type));
 		}
 
 		return $facts;

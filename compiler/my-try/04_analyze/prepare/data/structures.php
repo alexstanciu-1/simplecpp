@@ -91,7 +91,7 @@ final class prepared_place
 
 	/** Whole roots include type-owned fields; instance fields require a base. */
 	public function __construct(prepared_storage $storage, ?prepared_place $base = null,
-		private bool $borrow_restricted = false)
+		private bool $borrow_restricted = false, private ?storage_access $projected_access = null)
 	{
 		if ($base === null)
 		{
@@ -107,7 +107,7 @@ final class prepared_place
 			elseif ($storage instanceof prepared_field) {
 				if (!object_cast($storage, prepared_field::class)->static_member) { throw new \LogicException('A field storage root requires type-owned storage'); }
 			}
-			elseif (!($storage instanceof prepared_parameter) && !($storage instanceof prepared_receiver)) {
+			elseif (!($storage instanceof prepared_parameter) && !($storage instanceof prepared_receiver) && !($storage instanceof prepared_capture)) {
 				throw new \LogicException('A storage root requires a local or parameter');
 			}
 		}
@@ -143,7 +143,10 @@ final class prepared_place
 	/** Aliases share this place; field projections preserve access from the original root. */
 	public function access(): storage_access
 	{
+		if ($this->projected_access !== null) { return $this->projected_access; }
+		if ($this->base_place !== null) { return $this->base_place->access(); }
 		$root = $this->root_storage();
+		if ($root instanceof prepared_capture) { return storage_access::read_only; }
 		if ($root instanceof prepared_parameter) {
 			return object_cast($root, prepared_parameter::class)->contract->access;
 		}
@@ -430,6 +433,12 @@ abstract class prepared_storage {
 	/** @storage.reference collected_file.entries @reference.weak */
 	public collected_name $declaration /** weak<collected_name> */;
 	abstract public function storage_type(): canonical_type_use;
+}
+
+/** An owned capture field, distinct from the outer storage it copies at creation. */
+final class prepared_capture extends prepared_storage {
+	public canonical_type_use $type;
+	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
 /** A local binding or member write retains its resolved storage declaration and canonical type. */

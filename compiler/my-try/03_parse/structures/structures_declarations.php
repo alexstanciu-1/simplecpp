@@ -112,12 +112,16 @@ trait Callable_Syntax
 	}
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
-	public function maintain_callable_children(node_maintenance_worker_i $worker): void
+	public function maintain_callable_children(node_maintenance_worker_i $worker,
+		?Storage $captures /** nullable<Storage<variable_reference_node>> */ = null): void
 	{
 		$worker->enter($this);
 		$items /** Storage<parameter_node> */ = $this->signature_syntax->parameters;
 		foreach ($items as $child) {
 			$worker->edge($this, $child);
+		}
+		if ($captures !== null) {
+			foreach ($captures as $capture) { $worker->edge($this, $capture); }
 		}
 		if ($this->signature_syntax->return_type !== null) {
 			$worker->edge($this, $this->signature_syntax->return_type);
@@ -168,6 +172,7 @@ final class closure_node extends expression_node implements callable_syntax_owne
 	use Callable_Syntax;
 	use Preparation_Facts;
 	private ?prepared_expression $prepared_facts = null;
+	public Storage $captures /** Storage<variable_reference_node> */;
 	public function require_preparation(): prepared_expression { return $this->prepared_facts; }
 	private ?anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */ = null;
 
@@ -190,6 +195,7 @@ final class closure_node extends expression_node implements callable_syntax_owne
 	public function __construct()
 	{
 		$this->initialize_callable_syntax();
+		$this->captures = new Storage();
 		$this->owned_body_scope = new scope();
 		$this->owned_body_scope->set_parent($this->signature_scope());
 		$this->owned_body_scope->mark_function();
@@ -205,9 +211,14 @@ final class closure_node extends expression_node implements callable_syntax_owne
 		return node_kind::closure_expression;
 	}
 
+	public function children(): child_iterator_i
+	{
+		return new callable_children_iterator($this, $this->captures);
+	}
+
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
-		$this->maintain_callable_children($worker);
+		$this->maintain_callable_children($worker, $this->captures);
 	}
 }
 
