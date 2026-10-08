@@ -14,6 +14,37 @@ That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance, abstract/override dispatch and interface implementations now
 execute. Shared derived/base upcasts and interface-typed handles now execute.
 
+## Remaining-work reconciliation — 2026-10-08
+
+The seven previously pending imported rows below are now reconciled with existing
+contracts and retained proofs, not newly implemented. Construction is covered by
+`tests/constructors.php` and `tests/inheritance.php`; explicit inline class storage
+by `inline_class_copy`. Parent selection uses prepared original owners, not a required
+literal C++ `using base` alias. Destruction is covered by `tests/destructors.php`,
+inheritance cleanup ordering and `tests/abstract_dispatch.php` virtual-destruction
+checks. Existing dated execution evidence remains in their owning checkpoints.
+
+The old blanket prohibition on native inline class construction does not apply to
+v0.2's explicit `value<Class>` representation. C++-style `A a(1);` is still not PHS
+source syntax. For destructors, valid instance access and an invalid returned value
+are distinct; the imported examples must not conflate them.
+
+Remaining extensions require agreement, not another implementation of those cards:
+
+1. Derived `data` initialization: authored/inherited constructor input names versus
+   synthesized public-property inputs, base initialization and access.
+2. Runtime-called-type propagation through instance methods; do not infer dynamic
+   identity from a declared receiver type or silently change fixed method dispatch.
+3. Additional ownership conversions/joins: unique/weak ancestry, checked downcasts,
+   derived/base or sibling conditional joins; shared upcasts already work.
+4. Trait extensions: nested uses, adaptations, static members, constants and requirements.
+5. Other explicit bounds: non-public constructors/destructors, variance and the
+   inherited-final-virtual interface-forwarding restriction.
+
+Suggested next discussion: derived data initialization, reusing the existing
+constructor/input model. This is a proposal, not permission to lift its current gate.
+CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
+
 ## Late-static execution — 2026-10-08
 
 Static source calls now demand original-method/called-type implementations. Lexical
@@ -400,10 +431,9 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 CH10 now owns the [bounded destructor implementation](10_objects.md#destructors-and-automatic-cleanup--2026-10-07)
 and [nonthrowing lifecycle contract](../../../../specs/destructors_v0_2.md).
 The imported CLASS-ABS-001/002/003/004 examples overlap that completed base slice.
-CH11 must still settle base/member destruction order with inheritance, virtual
-destructor policy, abstract/interface ownership and non-public destructor access;
-do not create a separate destructor AST/body path or infer polymorphic deletion from
-CH10's non-inheriting records.
+CH11 has settled child/member/base cleanup order, virtual destruction for virtual
+contracts, and shared abstract/interface ownership. Non-public destructor access
+remains rejected. No separate destructor AST/body path is needed.
 
 Review the Simple C++ inheritance contracts before implementing this chapter:
 
@@ -437,19 +467,19 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations; final-virtual forwarding restriction |
 | [CLASS-INH-003](#class-inh-003) | implemented-bounded | `class A { use T; }` | direct instance composition | verified | deferred | Independent consumer members; edits/retry/reset; adaptations/nested/lifecycle/static members deferred |
 | [CLASS-INH-004](#class-inh-004) | implemented-bounded | `interface I { function f(int $a): int; }` | verified | verified | deferred | Public bodyless instance contracts; multiple interface inheritance |
-| [CLASS-INH-006](#class-inh-006) | pending-discussion | `$a = new A(1);` | unverified | unverified | deferred | — |
-| [CLASS-INH-007](#class-inh-007) | pending-discussion | `A a(1);` | unverified | unverified | deferred | — |
+| [CLASS-INH-006](#class-inh-006) | implemented-bounded | `$a = new A(1);` | verified | verified | deferred | Shared class construction; checked constructor arguments; inherited constructors reuse original contract |
+| [CLASS-INH-007](#class-inh-007) | superseded-contract | `$a value<A> = new A(1);` | verified | representation verified | deferred | C++-style source spelling is not PHS; explicit inline class storage is intentionally supported by CH10 |
 | [CLASS-INH-008](#class-inh-008) | implemented-bounded | `$this->f();` | verified | verified | deferred | Ordinary fixed methods; abstract contracts dispatch virtually |
 | [CLASS-INH-009](#class-inh-009) | implemented-bounded | `parent::f(1);` | verified | verified | deferred | Fixed original-owner dispatch; current instance required for instance methods |
 | [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; public fixed-value constructors |
 | CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original public concrete constructor contract/defaults through abstract or concrete ancestors |
 | CLASS-INH-014 | implemented-bounded | `static::method(); new static();` | verified | verified | deferred | Demanded static called-type instances; shared-class factories; runtime instance propagation deferred |
 | [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |
-| [CLASS-INH-012](#class-inh-012) | pending-discussion | `class B extends A {}` | unverified | unverified | deferred | — |
-| [CLASS-ABS-001](#class-abs-001) | pending-discussion | `function __destruct() { $this->cleanup(); }` | unverified | unverified | deferred | — |
-| [CLASS-ABS-002](#class-abs-002) | pending-discussion | `function __destruct() {}` | unverified | unverified | deferred | — |
-| [CLASS-ABS-003](#class-abs-003) | pending-discussion | `function __destruct() { return $this->x; }`<br>`function __destruct() { $this->x; }` | unverified | unverified | deferred | Source variants need reconciliation |
-| [CLASS-ABS-004](#class-abs-004) | pending-discussion | `static function __destruct() {}` | unverified | unverified | deferred | Source variants need reconciliation |
+| [CLASS-INH-012](#class-inh-012) | implemented-equivalent | `class B extends A {}` | verified | verified | deferred | Prepared base identity and qualified ancestor calls replace reliance on a literal C++ base alias |
+| [CLASS-ABS-001](#class-abs-001) | implemented-bounded | `function __destruct() { $this->cleanup(); }` | verified | verified | deferred | Shared method lifecycle; out-of-line nonthrowing body; ordinary instance calls |
+| [CLASS-ABS-002](#class-abs-002) | implemented-bounded | `function __destruct() {}` | verified | verified | deferred | Type-header declaration and implementation-unit definition |
+| [CLASS-ABS-003](#class-abs-003) | implemented-bounded | `function __destruct() { $n = $this->x; }` | verified | verified | deferred | Instance property access allowed; returning a value rejects under the void-body contract |
+| [CLASS-ABS-004](#class-abs-004) | implemented-rejection | `static function __destruct() {}` | verified | verified | deferred | Rejected eagerly during signature preparation, even if unused |
 | [CLASS-ABS-005](#class-abs-005) | implemented-bounded | `abstract class A {}` | verified | verified | deferred | Cannot instantiate even without abstract members; class and struct |
 | [CLASS-ABS-006](#class-abs-006) | implemented-bounded | `abstract function f(int $x): int;` | verified | verified | deferred | Bodyless public/protected instance contract; concrete descendants must implement |
 | [CLASS-ABS-007](#class-abs-007) | implemented-bounded | `abstract function f(): int;` | verified | verified | deferred | Pure virtual declaration; no executable body work |
@@ -608,7 +638,7 @@ class I { public: virtual int_t f(int_t a) = 0; virtual ~I() = default; };
 
 ## CLASS-INH-006
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared class construction; checked constructor arguments; inherited constructors reuse original contract. See the progress table and reconciliation above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -645,7 +675,7 @@ auto a = create<A>(static_cast<int_t>(1));
 
 ## CLASS-INH-007
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** C++-style source spelling is not PHS; explicit inline class storage is intentionally supported by CH10. See the progress table and reconciliation above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -832,7 +862,7 @@ int_t f() override;
 
 ## CLASS-INH-012
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Prepared base identity and qualified ancestor calls replace reliance on a literal C++ base alias. See the progress table and reconciliation above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -869,7 +899,7 @@ class B : public A { public: using base = A; };
 
 ## CLASS-ABS-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Shared method lifecycle; out-of-line nonthrowing body; ordinary instance calls. See the progress table and reconciliation above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -904,7 +934,7 @@ function __destruct() { $this->cleanup(); }
 
 ## CLASS-ABS-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Type-header declaration and implementation-unit definition. See the progress table and reconciliation above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 
@@ -939,9 +969,9 @@ header declaration + source definition
 
 ## CLASS-ABS-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Instance property access allowed; returning a value rejects under the void-body contract. See the progress table and reconciliation above; imported lowering below is historical evidence, not the v0.2 contract.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Imported versions are preserved for provenance. The v0.2 decision above separates valid instance access from invalid value-returning destruction.
 
 ### Imported version 1
 
@@ -1006,9 +1036,9 @@ function __destruct() { $this->x; }
 
 ## CLASS-ABS-004
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Rejected eagerly during signature preparation, even if unused. See the progress table and reconciliation above; imported lowering below is historical evidence, not the v0.2 contract.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Both imported variants describe the same rejection, now enforced in shared preparation.
 
 ### Imported version 1
 

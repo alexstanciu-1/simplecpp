@@ -2,9 +2,9 @@
 Doc Status: normative
 
 The [concrete inheritance extension](inheritance_v0_2.md) specifies child/base
-subobject cleanup order. It does not enable polymorphic deletion or establish
-virtual-destructor policy; the original non-inheriting scope below is historical
-where that extension explicitly applies.
+subobject cleanup order and virtual destruction for virtual/interface contracts.
+Ordinary nonpolymorphic hierarchies do not acquire virtual destruction. Its shared
+base/interface handle rules supersede the original non-inheriting scope where applicable.
 
 Classes and structs share the bounded authored destructor form:
 
@@ -45,8 +45,8 @@ under normal C++ ownership rules.
 Assignment to an existing inline object remains memberwise assignment, not an
 implicit destructor/reconstruction of that whole object. Replacing an owning handle
 can release its old object. Static-storage shutdown ordering across unrelated units
-is not given a stronger guarantee by this slice. Inheritance, virtual destruction
-and non-public destructor access policies await CH11.
+is not given a stronger guarantee by this slice. Inheritance and virtual destruction
+follow the inheritance contract; non-public destructors remain rejected.
 
 ## Nonthrowing boundary
 

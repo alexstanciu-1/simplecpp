@@ -80,7 +80,8 @@ remain. Hierarchies with virtual method contracts have virtual destruction, incl
 an implicit public nonthrowing virtual destructor when none is authored. Preserve
 ordinary memberwise copy/move availability; a generated destructor must not silently
 suppress moves. Ordinary nonpolymorphic hierarchies do not acquire virtual destruction.
-Source base-handle conversions remain deferred.
+Shared base/interface handle conversions follow the contracts below; other ownership
+conversion forms remain deferred.
 
 ## Abstract types and overriding
 
