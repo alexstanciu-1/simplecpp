@@ -88,7 +88,7 @@ final class Preparation_Worker
 		}
 		$this->changed_lookups();
 
-		// Declaration processing may schedule more declarations; identity sets coalesce notifications.
+		// Contract processing may schedule more contracts; identity sets coalesce notifications.
 		while (q_count($this->contracts) !== 0)
 		{
 			foreach ($this->contracts as $owner /** @object-key */)

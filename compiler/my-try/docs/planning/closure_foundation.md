@@ -111,8 +111,10 @@ expanded deletion/rollover proof and parser/token cleanup regressions passed in
 `/tmp/my-try-ch12-anonymous-identity-03`. These are host behavior and
 artifact-generation checks, not native compiler or generated-program execution.
 
-Contract-scheduler checkpoint: nine focused suites passed in
+Contract-scheduler checkpoint: eight focused suites passed cleanly in
 `/tmp/my-try-ch12-contract-work-02`, including work-role/direct-demand assertions,
 failure/retry, retirement, callable/trait instances and incremental C++ artifacts.
-The longest suite (`s2s`) took 13.53 seconds. The shared runner used CLI fallback.
-No native compiler rebuild was performed.
+The ninth suite (`s2s`) initially lacked its required output-directory argument:
+assertions passed but artifact writes warned. Its corrected run passed in 13.35
+seconds under `/tmp/my-try-ch12-contract-work-03`, with generated artifacts retained.
+The shared runner used CLI fallback. No native compiler rebuild was performed.
