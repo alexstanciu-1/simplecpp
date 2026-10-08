@@ -15,6 +15,26 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		if ($node instanceof closure_node) {
+			$closure = object_cast($node, closure_node::class);
+			$signature_work /** anonymous_signature_work */ = $closure->anonymous_identity()->signature_work;
+			if (!Preparation_Status::complete($signature_work) || !Preparation_Status::complete($closure->require_body()->work())) {
+				throw new \LogicException('C++ closure requires settled callable work');
+			}
+			$facts = $signature_work->require_facts();
+			$parts /** vector<string> */ = [];
+			$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
+			foreach ($parameters as $parameter) {
+				$parts[] = CPP_Declarations::parameter_type($parameter->contract, $this->context, false) . ' '
+					. CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
+			}
+			$previous_return = $this->context->return_type;
+			$this->context->return_type = $facts->signature->return_type;
+			$body = '';
+			try { $body = CPP_Generator::generate_statements($closure->require_body(), $this->context); }
+			finally { $this->context->return_type = $previous_return; }
+			return '[](' . implode(', ', $parts) . ') -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
+		}
 		if ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);
 			$facts = $object_type->require_object_type_preparation();

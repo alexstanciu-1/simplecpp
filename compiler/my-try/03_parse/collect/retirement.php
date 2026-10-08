@@ -46,6 +46,7 @@ final class Collection_Retirement
 		$removed_anonymous /** vector<int> */ = [];
 		foreach ($anonymous as $identity) {
 			if ($source->deleted || $identity->deleted) {
+				Model::$type_catalog->closures()->retire($identity);
 				$identity->deleted = true;
 				$removed_anonymous[] = $identity->local_index;
 			}

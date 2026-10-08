@@ -17,8 +17,18 @@ final class Expression_Preparation
 		?canonical_type_use $expected_type, expression_consumer $consumer): prepared_expression
 	{
 		if ($node instanceof closure_node) {
-			$context->worker->prepare_anonymous(object_cast($node, closure_node::class)->anonymous_identity(), $context->owner);
-			throw new \RuntimeException('Closure execution awaits value typing and lowering');
+			$closure = object_cast($node, closure_node::class);
+			$identity = $closure->anonymous_identity();
+			$context->worker->prepare_anonymous($identity, $context->owner);
+			if ($identity->value_type === null) {
+				$registry = Model::$type_catalog->registry();
+				$definition = $registry->define_closure();
+				$identity->value_type = $registry->use($registry->canonical($definition)->type_id());
+				Model::$type_catalog->closures()->register($identity->value_type, $identity);
+			}
+			$facts = new prepared_closure();
+			$facts->type = $identity->value_type;
+			$closure->set_preparation($facts);
 		}
 		elseif ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);
@@ -403,6 +413,11 @@ final class Expression_Preparation
 	/** Resolve one named callable and establish reference/value argument boundaries. */
 	public static function prepare_call(call_node $syntax, preparation_context $context): prepared_call
 	{
+		if ($syntax->callee !== null) {
+			$value = self::prepare($syntax->callee, $context);
+			$target = Model::$type_catalog->closures()->identity($value->type);
+			return Call_Preparation::prepare($target, $syntax->arguments, $context);
+		}
 		if (($syntax->receiver !== null) || ($syntax->owner_type !== null)) { return Method_Preparation::call($syntax, $context); }
 		$templates /** Storage<named_type_node> */ = $syntax->template_arguments;
 		if (!$templates->is_empty()) {

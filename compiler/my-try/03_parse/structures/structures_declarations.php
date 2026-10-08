@@ -166,6 +166,9 @@ final class closure_node extends expression_node implements callable_syntax_owne
 {
 	use Node_Source_Span;
 	use Callable_Syntax;
+	use Preparation_Facts;
+	private ?prepared_expression $prepared_facts = null;
+	public function require_preparation(): prepared_expression { return $this->prepared_facts; }
 	private ?anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */ = null;
 
 	public function anonymous_identity(): anonymous_callable_identity

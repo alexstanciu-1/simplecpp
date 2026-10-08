@@ -38,7 +38,7 @@ across syntax/collection, analysis lifecycle and backend consumers.
    grammar and `function_body_node`; its body scope has an explicit strong owner
    so enclosing-body reuse does not depend on a fresh nested-scope scan. Partial
    parses retain scopes through the existing parser failure inventory. No named
-   callable is published and analysis explicitly rejects execution for now.
+   callable is published; execution was gated until the vertical slice below.
 
    **Source identity implemented:** `collected_file::anonymous_callables` owns
    `anonymous_callable_identity` records separately from named entries. Each records
@@ -67,13 +67,21 @@ across syntax/collection, analysis lifecycle and backend consumers.
    boundaries; each callable clears its own body facts. Equivalent signatures retain
    parameter fact identity. No fake declaration or name is published.
 
-   **Still pending:** concrete value typing, invocation and C++ lambda emission.
+   **Value integration:** implemented by the vertical slice below.
    Closure syntax remains an expression. Reuse `function_body_node` and stage-owned
    workers; add no AST processing hooks or generic visitor.
-3. **Capture-free vertical slice — pending.** Register concrete expression types,
-   prepare local storage/invocation through shared call admission, and lower direct
-   C++ lambdas without implicit `std::function`. Check explicit signatures, lexical
-   scope and all return paths before emission.
+3. **Capture-free vertical slice — implemented.** Each expression has a distinct
+   `closure_type_definition`; `Source_Closure_Types` weakly associates its canonical
+   type with the anonymous identity. Registry definitions contain no syntax/signature
+   facts or C++ spelling. Retirement removes the association. Expression callees
+   share `call_node`, argument grammar and prepared argument admission with named
+   calls. C++ uses native capture-free lambdas and inferred `auto` storage, without
+   `std::function`; the callee is evaluated once before ordered arguments. Explicit
+   signatures, lexical scope and return paths are checked before emission.
+
+   Anonymous body changes currently invalidate executable fragments at source-file
+   granularity because lambdas render inline. This is conservative but correct;
+   finer nested-fragment dependency tracking is a later optimization.
 
 Non-goals: captures/arrows, escaping references, defaults/variadics and reference
 returns on closures, named-call syntax, callable-boundary conversion/type erasure,
@@ -135,3 +143,12 @@ parameter fact preservation, enclosing-retry cleanup boundaries, callee-contract
 invalidation/recovery, missing returns, deferred parameter rejection and retirement.
 These are host PHP and artifact-generation checks, not native compiler rebuilding
 or closure execution. CLI fallback was used after FPM socket startup was denied.
+
+Executable checkpoint: eight generated C++ programs passed with PCH in
+`/tmp/my-try-ch12-closure-native-programs-03`: local calls, copying, nested closures,
+void returns, named-function bodies, immediate invocation, ordered arguments and
+incremental regeneration after a called function's default argument changes.
+The fixture also checks six preparation rejections, no-op output and clean versus
+incremental agreement after a body edit. Eight focused compiler suites passed in
+`/tmp/my-try-ch12-closure-validation-02`. This executes generated programs, not a
+rebuilt native compiler.

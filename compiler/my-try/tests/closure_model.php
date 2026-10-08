@@ -65,10 +65,9 @@ try {
 	foreach (Model::collected_files()[0]->entries as $entry) {
 		if ($entry instanceof collected_source_callable) { closure_model_check($entry->name === 'owner', 'Closure leaked into named callable inventory'); }
 	}
-	$rejected = false;
-	try { $compiler->prepare(); }
-	catch (\RuntimeException $error) { $rejected = str_contains($error->getMessage(), 'Closure execution awaits'); }
-	closure_model_check($rejected && Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Model-only closure reached output');
+	$compiler->prepare();
+	closure_model_check(!$first_identity->value_type->matches($second_identity->value_type), 'Distinct closure expressions acquired interchangeable types');
+	closure_model_check(Model::$type_catalog->closures()->identity($first_identity->value_type) === $first_identity, 'Concrete type lost its source callable association');
 	$signature_work = $first_identity->signature_work;
 	$body_work = $first->require_body()->work();
 	closure_model_check($signature_work instanceof anonymous_signature_work && $body_work instanceof anonymous_body_work, 'Anonymous callable did not acquire independent work');
@@ -96,6 +95,10 @@ try {
 		&& $first_identity->signature_work === null && $first->require_body()->work() === null, 'Anonymous retirement retained work or dependency edges');
 	closure_model_check($first_identity->deleted && !isset($collection->anonymous_callables[$first_identity->local_index])
 		&& closure_model_local($owner, 0)->anonymous_identity()->local_index > $second_identity->local_index, 'Removed anonymous identity was reused or retained');
+	$retired_type_rejected = false;
+	try { Model::$type_catalog->closures()->identity($first_identity->value_type); }
+	catch (\RuntimeException $expected) { $retired_type_rejected = true; }
+	closure_model_check($retired_type_rejected, 'Retired closure retained its type-to-source association');
 	// Partial anonymous syntax must recover through the same parser and retirement protocol.
 	file_put_contents($path, 'function owner(): int { $a = function (int $broken): int { return ;');
 	$failed = false;

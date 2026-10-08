@@ -59,6 +59,9 @@ abstract class prepared_expression {
 	}
 }
 
+/** Concrete anonymous value; callable contract ownership remains on its source identity. */
+final class prepared_closure extends prepared_expression {}
+
 /** Source place is observed, not exported as the move result's addressability. */
 final class prepared_move extends prepared_expression
 {

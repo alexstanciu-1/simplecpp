@@ -685,6 +685,8 @@ final class constant_reference_node extends expression_node
 
 final class call_node extends expression_node
 {
+	/** Expression invocation has no named lookup occurrence. */
+	public ?expression_node $callee = null;
 	use Node_Source_Span;
 	use Collected_Occurrence;
 	use Preparation_Facts;
@@ -744,6 +746,7 @@ final class call_node extends expression_node
 	{
 		$worker->enter($this);
 		if ($this->owner_type !== null) { $worker->edge($this, $this->owner_type); }
+		if ($this->callee !== null) { $worker->edge($this, $this->callee); }
 		if ($this->receiver !== null) { $worker->edge($this, $this->receiver); }
 		$template_arguments /** Storage<named_type_node> */ = $this->template_arguments;
 		foreach ($template_arguments as $template_argument) {

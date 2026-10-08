@@ -11,6 +11,13 @@ final class Capability_Preparation implements type_capability_query
 
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
 	{
+		$definition = Type_Queries::canonical($type_use)->definition();
+		if ($definition instanceof closure_type_definition) {
+			$identity = Model::$type_catalog->closures()->identity($type_use);
+			$this->context->worker->require_contract($this->context->owner, $identity->signature_work);
+			// This bounded closure family has no captures; future capture storage must refine copying.
+			return $definition->declares_capability($capability);
+		}
 		// Wrapper identity is registered independently of the payload's completed copy contract.
 		$payload = Nullable_Conversions::payload($type_use);
 		if (($payload !== null) && ($capability === generic_contract::copyable_value)) {

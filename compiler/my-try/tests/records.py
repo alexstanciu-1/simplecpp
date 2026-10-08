@@ -12,7 +12,7 @@ from cpp_fixture import CppFixtureCompiler
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', type=Path, required=True)
-parser.add_argument('--suite', choices=['records', 'property_defaults', 'data_records', 'derived_data', 'constructors', 'methods', 'static_members', 'static_redeclarations', 'late_static', 'method_parameters', 'method_returns', 'qualified_static_calls', 'qualified_static_members', 'destructors', 'nullable_handles', 'nullable_records', 'collection_probes', 'property_mutations', 'inheritance', 'abstract_dispatch', 'callable_variance', 'interfaces', 'shared_upcasts', 'shared_joins', 'object_types', 'interface_handles', 'traits'], default='records')
+parser.add_argument('--suite', choices=['closures', 'records', 'property_defaults', 'data_records', 'derived_data', 'constructors', 'methods', 'static_members', 'static_redeclarations', 'late_static', 'method_parameters', 'method_returns', 'qualified_static_calls', 'qualified_static_members', 'destructors', 'nullable_handles', 'nullable_records', 'collection_probes', 'property_mutations', 'inheritance', 'abstract_dispatch', 'callable_variance', 'interfaces', 'shared_upcasts', 'shared_joins', 'object_types', 'interface_handles', 'traits'], default='records')
 parser.add_argument('--no-pch', action='store_true', help='Verify emitted header dependencies without a PCH')
 args = parser.parse_args()
 output = args.results.resolve()

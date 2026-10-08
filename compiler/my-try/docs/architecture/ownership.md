@@ -253,7 +253,11 @@ Closures are not published as named declarations. Each identity owns optional
 anonymous signature work; its syntax body owns anonymous body work. Work observes
 the identity weakly. Analysis severs dependencies and semantic attachments before
 frontend disposal, and on reset. Enclosing-body cleanup skips nested closures,
-whose independently scheduled workers own their facts. Shared callable inspection retains the syntax owner only for the
+whose expression facts retain their concrete semantic type. The separate closure
+type index observes anonymous identities weakly and retires entries with them.
+Type registry definitions never retain source syntax or callable preparation.
+Nested closures have independently scheduled workers
+which own their facts. Shared callable inspection retains the syntax owner only for the
 cursor lifetime and follows the existing ordered children.
 
 An authored constructor's function body owns optional base-initialization facts. They

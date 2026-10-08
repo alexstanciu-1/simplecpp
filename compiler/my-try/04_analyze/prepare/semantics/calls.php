@@ -9,7 +9,11 @@ final class Call_Preparation
 	/** Complete source prerequisites before reading the shared callable contract. */
 	public static function require_signature(callable_target_i $target, preparation_context $context): callable_signature
 	{
-		if ($target instanceof collected_source_callable) {
+		if ($target instanceof anonymous_callable_identity) {
+			$identity = object_cast($target, anonymous_callable_identity::class);
+			$context->worker->prepare_anonymous($identity, $context->owner);
+		}
+		elseif ($target instanceof collected_source_callable) {
 			$definition = object_cast($target, collected_source_callable::class);
 			$context->worker->require_declaration($context->owner, $definition);
 		}

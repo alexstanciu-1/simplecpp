@@ -545,8 +545,10 @@ final class collected_variable_write extends collected_name
 }
 
 /** Anonymous source occurrence, never a name-pool member or backend symbol. */
-final class anonymous_callable_identity
+final class anonymous_callable_identity implements callable_target_i
 {
+	public ?canonical_type_use $value_type = null;
+	public function signature(): callable_signature { return $this->signature_work->require_facts()->signature; }
 	public ?anonymous_signature_work $signature_work = null;
 	private collected_file $source_collection /** weak<collected_file> */;
 	private closure_node $syntax_node;

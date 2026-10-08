@@ -67,6 +67,7 @@ final class Type_Queries
 	{
 		$canonical = self::canonical($type);
 		$definition = $canonical->definition();
+		if ($definition instanceof closure_type_definition) { return null; }
 		if ($definition->origin() !== type_definition_origin::source) {
 			return null;
 		}

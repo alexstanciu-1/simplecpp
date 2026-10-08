@@ -85,6 +85,16 @@ final class CPP_Generator
 		$bodies /** Storage<preparation_owner> */ = new Storage();
 		foreach ($ordered as $owner)
 		{
+			// Closure bodies render inline in their source's executable fragments.
+			// Until fragment-level nested dependencies are retained, invalidate those
+			// fragments together when independently prepared anonymous work changes.
+			if ($owner instanceof body_work) {
+				foreach ($owner->source->preparation_changes as $changed /** @object-key */) {
+					if (($changed instanceof anonymous_body_work) || ($changed instanceof anonymous_signature_work)) {
+						if (isset($this->program->fragments[$owner])) { $this->program->fragments[$owner]->change_status = change_state::changed; }
+					}
+				}
+			}
 			if (!Preparation_Status::complete($owner)) {
 				throw new \RuntimeException('C++ generation requires completed preparation');
 			}
@@ -397,7 +407,10 @@ final class CPP_Generator
 	{
 		// Even an inferred `auto` copy or replacement needs its concrete value definition.
 		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
-		$type_name = CPP_Declarations::type_for($binding->type, $context, $requirement);
+		$type_name = 'auto';
+		if (!(Type_Queries::canonical($binding->type)->definition() instanceof closure_type_definition)) {
+			$type_name = CPP_Declarations::type_for($binding->type, $context, $requirement);
+		}
 		$prefix = '';
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$prefix = $explicit_type ? $type_name . ' ' : 'auto ';

@@ -42,6 +42,7 @@ enum nominal_type_kind: int
 	case enumeration = 3;
 	case interface_type = 4;
 	case trait_type = 5;
+	case closure_type = 6;
 }
 
 /** Storage of a record instance, independently of its nominal declaration identity. */
@@ -318,6 +319,11 @@ abstract class abstract_nominal_type_definition extends semantic_type_definition
 }
 
 final class nominal_type_definition extends abstract_nominal_type_definition
+{
+}
+
+/** Unique expression type; source ownership and callable facts live outside the registry. */
+final class closure_type_definition extends abstract_nominal_type_definition
 {
 }
 
@@ -1014,6 +1020,16 @@ final class Type_Registry implements type_capability_query
 		return $definition;
 	}
 
+	public function define_closure(): closure_type_definition
+	{
+		$id = $this->allocate_definition_id();
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
+		$definition = new closure_type_definition($id, '<closure:' . $id . '>', type_definition_origin::source,
+			nominal_type_kind::closure_type, $capabilities);
+		$this->register_definition($definition);
+		return $definition;
+	}
+
 	public function define_mixed(string $name, type_definition_origin $origin,
 		array $capabilities /** vector<generic_contract> */): mixed_type_definition
 	{
@@ -1182,6 +1198,7 @@ final class Type_Registry implements type_capability_query
 		if ($definition instanceof abstract_nominal_type_definition) {
 			$nominal = object_cast($definition, abstract_nominal_type_definition::class);
 			return ($nominal->nominal_kind() === nominal_type_kind::structure)
+				|| ($nominal->nominal_kind() === nominal_type_kind::closure_type)
 				|| ($nominal->nominal_kind() === nominal_type_kind::enumeration);
 		}
 		if ($definition instanceof abstract_template_type_definition) {

@@ -194,8 +194,10 @@ occurrences through ordinary successful-join disposal. Positions are not emitted
 names. Anonymous signatures and bodies now have independently retained work,
 initially demanded by expression preparation and subsequently selected by the
 existing dependency scheduler. Named and anonymous callables share parameter
-admission/binding and body return-path checks. Analysis still rejects closure value
-typing/invocation explicitly; settled body facts do not yet enable emission.
+admission/binding and body return-path checks. Capture-free closures now receive
+distinct concrete types. `Source_Closure_Types` weakly associates those types with
+anonymous identities, independently of the named type-declaration index. Local
+invocation uses an expression callee on `call_node` and shared call admission.
 
 Independently settled dependencies use `contract_work`. Named declaration work is
 one specialization; source-callable signature work uses the base directly and
@@ -204,6 +206,8 @@ The preparation worker owns contract queueing, direct demand, version observatio
 failure/retry and retirement. Named lookup resolves a contract, not the reverse.
 Existing named backend fragment categories are unchanged. Anonymous contracts have
 their own category and do not publish a named declaration fragment.
+They render as inline C++ lambdas with `auto` local storage. Anonymous changes
+conservatively invalidate executable C++ fragments in their owning source.
 
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members

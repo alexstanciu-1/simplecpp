@@ -2308,8 +2308,17 @@ final class Parser_Run
 	/** Member and index access retain a base expression so reads, writes and references share one shape. */
 	private function access_suffix(expression_node $base, int $start): expression_node
 	{
-		while (($this->text() === '[') || ($this->text() === '->') || ($this->text() === '::'))
+		while (($this->text() === '[') || ($this->text() === '->') || ($this->text() === '::') || ($this->text() === '('))
 		{
+			if ($this->text() === '(') {
+				$invocation = new call_node();
+				$invocation->name = '';
+				$invocation->callee = $base;
+				$invocation->arguments = $this->call_arguments();
+				$this->finish_node($invocation, $start);
+				$base = $invocation;
+				continue;
+			}
 			if ($this->text() === '::') {
 				$this->position++;
 				if (!$this->identifier() || ($this->text_at_offset(1) !== '(')) {
@@ -2372,7 +2381,6 @@ final class Parser_Run
 		$start = $this->position;
 		$call = new call_node();
 		$template_arguments /** Storage<named_type_node> */ = $call->template_arguments;
-		$arguments /** Storage<expression_node> */ = $call->arguments;
 		$call->name = $this->source_name();
 		if ($this->text() === '<')
 		{
@@ -2392,6 +2400,16 @@ final class Parser_Run
 			while (true);
 			$this->expect('>');
 		}
+		$call->arguments = $this->call_arguments();
+		$this->finish_node($call, $start);
+		$call->collect($this->collector, $this->current_scope, $start);
+		return $call;
+	}
+
+	/** Named and expression calls share one ordered argument grammar. */
+	private function call_arguments(): Storage /** Storage<expression_node> */
+	{
+		$arguments /** Storage<expression_node> */ = new Storage /** Storage<expression_node> */();
 		$this->expect('(');
 		if ($this->text() !== ')')
 		{
@@ -2405,9 +2423,7 @@ final class Parser_Run
 			while (true);
 		}
 		$this->expect(')');
-		$this->finish_node($call, $start);
-		$call->collect($this->collector, $this->current_scope, $start);
-		return $call;
+		return $arguments;
 	}
 
 	/** Ownership and constructor validity belong to preparation, not syntax recognition. */

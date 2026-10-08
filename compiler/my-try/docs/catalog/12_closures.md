@@ -38,8 +38,9 @@ anonymous identities now survive body reuse and retire through join-ordered clea
 The dependency scheduler now accepts independently settled `contract_work`, with
 named declaration lookup as an adapter; signatures no longer inherit named work.
 Anonymous signature/body work now uses shared parameter/return checking and the
-dependency scheduler, including retry and retirement. Value typing, invocation
-and C++ lambda emission remain pending;
+dependency scheduler, including retry and retirement. The capture-free vertical
+slice now supports distinct concrete types, inferred locals/copies, exact-arity
+invocation and native C++ lambda emission without type erasure;
 the imported rows below are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
@@ -47,8 +48,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CLOSURE-001](#closure-001) | foundation-in-progress | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | unverified | unverified | deferred | Agreed capture-free scope; execution pending shared foundation |
-| [CLOSURE-CALL-001](#closure-call-001) | foundation-in-progress | `$f(); $g(3); $h(3); $h(3, 9);` | unverified | unverified | deferred | Agreed capture-free scope; execution pending shared foundation |
+| [CLOSURE-001](#closure-001) | implemented-bounded | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | passed | passed | deferred | Capture-free explicit signatures; concrete local types; `closures.php` |
+| [CLOSURE-CALL-001](#closure-call-001) | implemented-bounded | `$f(); $g(3); $h(3); $h(3, 9);` | passed | passed | deferred | Exact-arity by-value parameters; ordered arguments; generated execution |
 | [SCOPE-VAR-003](#scope-var-003) | pending-discussion | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
 | [CLOSURE-STAN-001](#closure-stan-001) | pending-discussion | `$f function<string()> = function (): int { return 1; };` | unverified | unverified | deferred | — |

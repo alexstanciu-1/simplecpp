@@ -323,9 +323,37 @@ final class Source_Type_Declarations
 	}
 }
 
+final class source_closure_association
+{
+	private anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */;
+	public function __construct(anonymous_callable_identity $identity) { $this->source_identity = $identity; }
+	public function identity(): anonymous_callable_identity { return weakref_get($this->source_identity); }
+}
+
+/** Non-owning type-to-callable index; no anonymous names enter source lookup. */
+final class Source_Closure_Types
+{
+	private array $associations /** hash<source_closure_association, int> */ = [];
+	public function register(canonical_type_use $type, anonymous_callable_identity $identity): void
+	{
+		$this->associations[$type->type_id()] = new source_closure_association($identity);
+	}
+	public function identity(canonical_type_use $type): anonymous_callable_identity
+	{
+		if (!isset($this->associations[$type->type_id()])) { throw new \RuntimeException('Expression is not a concrete callable value'); }
+		return $this->associations[$type->type_id()]->identity();
+	}
+	public function retire(anonymous_callable_identity $identity): void
+	{
+		if ($identity->value_type !== null) { unset($this->associations[$identity->value_type->type_id()]); }
+	}
+}
+
 /** Complete semantic installation result; backend bindings are deliberately absent. */
 final class registered_type_catalog
 {
+	private Source_Closure_Types $closure_index;
+	public function closures(): Source_Closure_Types { return $this->closure_index; }
 	private Type_Registry $type_registry;
 	private Source_Type_Exposures $source_exposures;
 	private Runtime_Type_Providers $runtime_providers;
@@ -339,6 +367,7 @@ final class registered_type_catalog
 		canonical_type_use $false_marker_type, canonical_type_use $true_marker_type)
 	{
 		$this->type_registry = $registry;
+		$this->closure_index = new Source_Closure_Types();
 		$this->source_exposures = $source;
 		$this->runtime_providers = $providers;
 		$this->source_declaration_index = new Source_Type_Declarations();
