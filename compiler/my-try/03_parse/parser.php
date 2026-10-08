@@ -1315,7 +1315,8 @@ final class Parser_Run
 		}
 		if (!$lifecycle_method || ($this->text() === ':')) {
 			$this->expect(':');
-			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
+			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || ($this->text() === 'return')
+				|| (($this->text() === 'function') && ($this->text_at_offset(1) !== '<'))) {
 				throw new \RuntimeException($this->error_message('Expected return type name'));
 			}
 
@@ -1429,7 +1430,8 @@ final class Parser_Run
 			else { $this->position -= 1; }
 		}
 		if (!$property_backed) {
-			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || (($this->text() === 'function') || ($this->text() === 'return'))) {
+			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || ($this->text() === 'return')
+				|| (($this->text() === 'function') && ($this->text_at_offset(1) !== '<'))) {
 				throw new \RuntimeException($this->error_message('Expected parameter type'));
 			}
 			$type = $this->type_syntax($scope);
@@ -2178,6 +2180,22 @@ final class Parser_Run
 	private function type_syntax_end(int $offset): int
 	{
 		while ($this->text_at_offset($offset) === '?') { $offset++; }
+		if (($this->text_at_offset($offset) === 'function') && ($this->text_at_offset($offset + 1) === '<')) {
+			$offset = $this->type_syntax_end($offset + 2);
+			if ($offset < 0) { return -1; }
+			if ($this->text_at_offset($offset) !== '(') { return -1; }
+			$offset++;
+			if ($this->text_at_offset($offset) !== ')') {
+				do {
+					$offset = $this->type_syntax_end($offset);
+					if ($offset < 0) { return -1; }
+					if ($this->text_at_offset($offset) !== ',') { break; }
+					$offset++;
+				} while (true);
+			}
+			if (($this->text_at_offset($offset) !== ')') || ($this->text_at_offset($offset + 1) !== '>')) { return -1; }
+			return $offset + 2;
+		}
 		$offset = $this->source_name_end($offset);
 		if ($offset < 0) {
 			return -1;
@@ -2468,6 +2486,24 @@ final class Parser_Run
 	/** Parse one named type, template application or registered type-use modifier. */
 	private function type_syntax(scope $lookup_scope): type_node
 	{
+		if (($this->text() === 'function') && ($this->text_at_offset(1) === '<')) {
+			$start = $this->position;
+			$this->position += 2;
+			$callable = new callable_type_node();
+			$callable->result_type = $this->type_syntax($lookup_scope);
+			$this->expect('(');
+			$parameters /** Storage<type_node> */ = $callable->parameter_types;
+			if ($this->text() !== ')') {
+				do {
+					$parameters->append($this->type_syntax($lookup_scope));
+					if ($this->text() !== ',') { break; }
+					$this->position++;
+				} while (true);
+			}
+			$this->expect(')'); $this->expect('>');
+			$this->finish_node($callable, $start);
+			return $callable;
+		}
 		if ($this->text() === '?') {
 			$start = $this->position++;
 			$optional = new nullable_type_node();

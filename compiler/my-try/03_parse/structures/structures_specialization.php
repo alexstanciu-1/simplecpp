@@ -1242,6 +1242,26 @@ final class array_type_node extends type_node
 }
 
 /** A source type constructor and its ordered arguments; preparation attaches one interned identity. */
+final class callable_type_node extends type_node
+{
+	use Node_Source_Span;
+	use Preparation_Facts;
+	private ?canonical_type_use $prepared_facts = null;
+	public type_node $result_type;
+	public Storage $parameter_types /** Storage<type_node> */;
+	public function __construct() { $this->parameter_types = new Storage /** Storage<type_node> */(); }
+	public function kind(): node_kind { return node_kind::callable_type; }
+	public function require_preparation(): canonical_type_use { return $this->prepared_facts; }
+	public function children(): child_iterator_i { return new callable_type_children_iterator($this); }
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->result_type);
+		$parameters /** Storage<type_node> */ = $this->parameter_types;
+		foreach ($parameters as $parameter) { $worker->edge($this, $parameter); }
+	}
+}
+
 final class template_application_type_node extends type_node
 {
 	use Node_Source_Span;

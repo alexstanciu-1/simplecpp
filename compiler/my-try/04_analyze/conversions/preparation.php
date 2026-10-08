@@ -45,6 +45,15 @@ final class Conversion_Preparation
 		if ($source->matches($target)) {
 			return self::operation($source, $target, $context, conversion_operation::identity);
 		}
+		$target_definition = Type_Queries::canonical($target)->definition();
+		if ($target_definition instanceof callable_type_definition) {
+			if ($relationships !== null) {
+				if ($relationships->is_callable_compatible($source, object_cast($target_definition, callable_type_definition::class))) {
+					return self::operation($source, $target, $context, conversion_operation::callable_wrap);
+				}
+			}
+			throw new \RuntimeException('Callable boundary requires an exact parameter and return signature');
+		}
 		if ($source->by_value() !== $target->by_value()) {
 			throw new \RuntimeException('S2S value boundary requires matching type-use modifiers');
 		}

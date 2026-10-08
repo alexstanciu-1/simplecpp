@@ -415,6 +415,8 @@ final class Expression_Preparation
 	{
 		if ($syntax->callee !== null) {
 			$value = self::prepare($syntax->callee, $context);
+			$definition = Type_Queries::canonical($value->type)->definition();
+			if ($definition instanceof callable_type_definition) { return Call_Preparation::prepare(object_cast($definition, callable_type_definition::class), $syntax->arguments, $context); }
 			$target = Model::$type_catalog->closures()->identity($value->type);
 			return Call_Preparation::prepare($target, $syntax->arguments, $context);
 		}

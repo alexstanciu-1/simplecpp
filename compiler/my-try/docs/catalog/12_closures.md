@@ -41,6 +41,8 @@ Anonymous signature/body work now uses shared parameter/return checking and the
 dependency scheduler, including retry and retirement. The capture-free vertical
 slice now supports distinct concrete types, inferred locals/copies, exact-arity
 invocation and native C++ lambda emission without type erasure;
+explicit `function<R(Args...)>` locals and by-value parameters additionally support
+exact signature conversion to `std::function`. Callable locals must be initialized.
 the imported rows below are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
@@ -50,9 +52,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLOSURE-001](#closure-001) | implemented-bounded | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | passed | passed | deferred | Capture-free explicit signatures; concrete local types; `closures.php` |
 | [CLOSURE-CALL-001](#closure-call-001) | implemented-bounded | `$f(); $g(3); $h(3); $h(3, 9);` | passed | passed | deferred | Exact-arity by-value parameters; ordered arguments; generated execution |
-| [SCOPE-VAR-003](#scope-var-003) | pending-discussion | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
+| [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
 | [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
-| [CLOSURE-STAN-001](#closure-stan-001) | pending-discussion | `$f function<string()> = function (): int { return 1; };` | unverified | unverified | deferred | — |
+| [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |
 | [CLOSURE-USE-001](#closure-use-001) | pending-discussion | `$f function<int()> = function () use ($a): int { return $a; };`<br>`$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | Source variants need reconciliation |
 | [CLOSURE-CALLABLE-001](#closure-callable-001) | pending-discussion | `$f function<int()> = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-CALLABLE-002](#closure-callable-002) | pending-discussion | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | unverified | unverified | deferred | — |

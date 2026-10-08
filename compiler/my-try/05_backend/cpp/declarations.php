@@ -36,6 +36,9 @@ final class CPP_Declarations
 	/** Render only the operation selected by shared conversion preparation. */
 	public static function conversion(string $expression, conversion_decision $decision, cpp_generation_context $context): string
 	{
+		if ($decision->operation === conversion_operation::callable_wrap) {
+			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+		}
 		if ($decision->operation === conversion_operation::identity) {
 			return $expression;
 		}

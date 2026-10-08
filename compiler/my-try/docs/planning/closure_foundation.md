@@ -83,8 +83,18 @@ across syntax/collection, analysis lifecycle and backend consumers.
    granularity because lambdas render inline. This is conservative but correct;
    finer nested-fragment dependency tracking is a later optimization.
 
+4. **Explicit callable boundaries — implemented.** `callable_type_node` preserves
+   signature type syntax. Registry-owned `callable_type_definition` identities are
+   interned by canonical return/ordered parameter types, including modifiers. Their
+   contracts contain no source names, defaults or syntax. Preparation checks exact
+   closure compatibility through the dependency-aware conversion query; C++ consumes
+   a `callable_wrap` decision and emits `std::function` only at explicit boundaries.
+   Initialized locals, copying/reassignment and by-value function/method parameters
+   share existing admission and lowering. Callable returns, empty storage, reference
+   signatures, properties and wrapper/container storage reject during preparation.
+
 Non-goals: captures/arrows, escaping references, defaults/variadics and reference
-returns on closures, named-call syntax, callable-boundary conversion/type erasure,
+returns on closures, named-call syntax, callable-return support,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
@@ -152,3 +162,19 @@ The fixture also checks six preparation rejections, no-op output and clean versu
 incremental agreement after a body edit. Eight focused compiler suites passed in
 `/tmp/my-try-ch12-closure-validation-02`. This executes generated programs, not a
 rebuilt native compiler.
+
+Explicit-boundary proof: thirteen generated C++ programs passed with PCH in
+`/tmp/my-try-ch12-callable-boundaries-05`, adding typed local replacement/copying,
+function arguments, instance/static class methods, struct methods and void callable
+contracts. Nine focused compiler suites passed in
+`/tmp/my-try-ch12-callable-validation-01`; the expanded no-op type-count assertion
+passed with `closures.php` in `...-validation-02`.
+Exact interning and the expanded signature-arity rejection passed in
+`/tmp/my-try-ch12-callable-validation-03`.
+
+Legacy test debt: `tests/model.php` expects old startup counts (26/17/0 instead of
+30/22/3) and excludes `structures_declarations.php` from its passive-data whitelist.
+The prior committed registry/bootstrap and current versions produce identical
+counts (`/tmp/my-try-ch12-callable-counts`). A diagnostic-only count correction
+exposed the stale whitelist; the test was restored unchanged. It also exercises
+parked LLVM and is not claimed passing. No native compiler rebuild was performed.

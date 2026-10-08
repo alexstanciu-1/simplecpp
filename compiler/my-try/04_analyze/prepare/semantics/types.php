@@ -67,7 +67,24 @@ final class Type_Preparation
 	/** Named syntax resolves through the existing lexical/publication scope chain. */
 	public static function type(type_node $node, preparation_context $context): canonical_type_use
 	{
-		if ($node instanceof named_type_node) {
+		if ($node instanceof callable_type_node) {
+			$callable = object_cast($node, callable_type_node::class);
+			$result = self::type($callable->result_type, $context);
+			if (Type_Queries::canonical($result)->definition() instanceof callable_type_definition) { throw new \RuntimeException('Callable returns are deferred'); }
+			$inputs /** vector<canonical_type_use> */ = [];
+			$parameters /** Storage<type_node> */ = $callable->parameter_types;
+			foreach ($parameters as $parameter) {
+				$input = self::type($parameter, $context);
+				self::require_value_type($input);
+				Capability_Preparation::require_concrete_value($input, $context);
+				$inputs[] = $input;
+			}
+			Capability_Preparation::require_concrete_value($result, $context);
+			$registry = Model::$type_catalog->registry();
+			$definition = $registry->define_callable($result, $inputs);
+			$callable->set_preparation($registry->use($registry->canonical($definition)->type_id()));
+		}
+		elseif ($node instanceof named_type_node) {
 			self::prepare_named_type(object_cast($node, named_type_node::class), $context);
 		}
 		elseif ($node instanceof nullable_type_node) {
@@ -159,6 +176,9 @@ final class Type_Preparation
 	private static function application(abstract_template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */, preparation_context $context): canonical_type_use
 	{
+		foreach ($arguments as $argument) {
+			if (Type_Queries::canonical($argument)->definition() instanceof callable_type_definition) { throw new \RuntimeException('Callable wrapper and container storage is deferred'); }
+		}
 		$registry = Model::$type_catalog->registry();
 		$registry->validate_application_arity($definition, q_count($arguments));
 		if ($definition instanceof nullable_semantics) {

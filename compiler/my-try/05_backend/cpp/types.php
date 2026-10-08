@@ -55,6 +55,22 @@ final class CPP_Types
 		$type = Type_Queries::canonical($type_use);
 		$definition = $type->definition();
 		$result = new cpp_type();
+		if ($definition instanceof callable_type_definition) {
+			$signature = object_cast($definition, callable_type_definition::class)->signature();
+			$return_mapping = self::representation($signature->return_type);
+			self::merge_headers($result, $return_mapping);
+			$parts /** vector<string> */ = [];
+			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
+			foreach ($parameters as $parameter) {
+				$mapping = self::representation($parameter->type);
+				self::merge_headers($result, $mapping);
+				$parts[] = $mapping->spelling;
+			}
+			$result->spelling = 'std::function<' . $return_mapping->spelling . '(' . implode(', ', $parts) . ')>';
+			self::add_header($result, 'functional');
+			$result->literal = cpp_literal_kind::none;
+			return $result;
+		}
 		if ($type instanceof applied_template_type) {
 			$application = object_cast($type, applied_template_type::class);
 			$binding = Model::$cpp_type_bindings->definition($definition->definition_id());

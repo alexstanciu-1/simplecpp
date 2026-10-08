@@ -43,6 +43,7 @@ enum nominal_type_kind: int
 	case interface_type = 4;
 	case trait_type = 5;
 	case closure_type = 6;
+	case callable_type = 7;
 }
 
 /** Storage of a record instance, independently of its nominal declaration identity. */
@@ -325,6 +326,27 @@ final class nominal_type_definition extends abstract_nominal_type_definition
 /** Unique expression type; source ownership and callable facts live outside the registry. */
 final class closure_type_definition extends abstract_nominal_type_definition
 {
+}
+
+/** Structural, name-free callable contract; no source occurrence or backend spelling. */
+final class callable_type_definition extends abstract_nominal_type_definition implements callable_target_i
+{
+	private callable_signature $call_contract;
+	public function __construct(int $id, string $name, canonical_type_use $result, array $inputs /** vector<canonical_type_use> */)
+	{
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
+		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::callable_type, $capabilities);
+		$this->call_contract = new callable_signature();
+		$this->call_contract->return_type = $result;
+		$parameters /** Storage<callable_parameter> */ = $this->call_contract->parameters;
+		foreach ($inputs as $input) {
+			$parameter = new callable_parameter();
+			$parameter->type = $input;
+			$parameter->mode = passing_mode::value;
+			$parameters->append($parameter);
+		}
+	}
+	public function signature(): callable_signature { return $this->call_contract; }
 }
 
 /** Enum identity is nominal; backing syntax, case values and storage selection are not registry facts. */
@@ -960,6 +982,17 @@ interface type_capability_query
 /** Own numeric identities, canonical concrete types and exact template application reuse. */
 final class Type_Registry implements type_capability_query
 {
+	private array $callable_types /** hash<callable_type_definition> */ = [];
+	public function define_callable(canonical_type_use $result, array $inputs /** vector<canonical_type_use> */): callable_type_definition
+	{
+		$key = $result->type_id() . ':' . ($result->by_value() ? 'v' : 'n');
+		foreach ($inputs as $input) { $key .= ',' . $input->type_id() . ':' . ($input->by_value() ? 'v' : 'n'); }
+		if (isset($this->callable_types[$key])) { return $this->callable_types[$key]; }
+		$definition = new callable_type_definition($this->allocate_definition_id(), '<function:' . $key . '>', $result, $inputs);
+		$this->register_definition($definition);
+		$this->callable_types[$key] = $definition;
+		return $definition;
+	}
 	private int $next_definition_id /** uint32 */ = 1;
 	private int $next_type_id /** uint32 */ = 1;
 	private bool $definition_ids_exhausted = false;
@@ -1199,6 +1232,7 @@ final class Type_Registry implements type_capability_query
 			$nominal = object_cast($definition, abstract_nominal_type_definition::class);
 			return ($nominal->nominal_kind() === nominal_type_kind::structure)
 				|| ($nominal->nominal_kind() === nominal_type_kind::closure_type)
+				|| ($nominal->nominal_kind() === nominal_type_kind::callable_type)
 				|| ($nominal->nominal_kind() === nominal_type_kind::enumeration);
 		}
 		if ($definition instanceof abstract_template_type_definition) {

@@ -17,7 +17,7 @@ final class Call_Preparation
 			$definition = object_cast($target, collected_source_callable::class);
 			$context->worker->require_declaration($context->owner, $definition);
 		}
-		elseif (!($target instanceof registered_static_factory) && !($target instanceof registered_function)) {
+		elseif (!($target instanceof registered_static_factory) && !($target instanceof registered_function) && !($target instanceof callable_type_definition)) {
 			throw new \LogicException('Unsupported callable target for preparation');
 		}
 		return $target->signature();

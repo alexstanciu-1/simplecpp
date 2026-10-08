@@ -20,6 +20,7 @@ enum conversion_context
 
 enum conversion_operation
 {
+	case callable_wrap;
 	case identity;
 	case integer_value_cast;
 	case explicit_runtime_cast;
@@ -41,6 +42,7 @@ enum conversion_operation
 /** Transient analysis query; conversion facts never retain its worker or context. */
 interface conversion_relationship_query
 {
+	public function is_callable_compatible(canonical_type_use $source, callable_type_definition $target): bool;
 	public function is_subtype(canonical_type_use $source, canonical_type_use $target): bool;
 	public function has_virtual_destruction(canonical_type_use $type): bool;
 }

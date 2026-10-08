@@ -206,6 +206,9 @@ final class Body_Preparation
 		Type_Lifecycle_Preparation::require_storage($binding->type, $context);
 		if ($value === null)
 		{
+			if (Type_Queries::canonical($binding->type)->definition() instanceof callable_type_definition) {
+				throw new \RuntimeException('Callable storage requires an explicit initializer');
+			}
 			if (Type_Queries::record_storage($binding->type) === record_storage_kind::inline_value) {
 				if (Type_Queries::source_record(Type_Queries::record_payload($binding->type)) !== null) {
 					if (!Object_Construction_Preparation::supports_default($binding->type, $context)) {

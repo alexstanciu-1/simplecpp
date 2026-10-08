@@ -5,6 +5,23 @@ namespace scpp\compiler;
 
 final class Conversion_Relationships implements conversion_relationship_query
 {
+	public function is_callable_compatible(canonical_type_use $source, callable_type_definition $target): bool
+	{
+		if (!(Type_Queries::canonical($source)->definition() instanceof closure_type_definition)) { return false; }
+		$identity = Model::$type_catalog->closures()->identity($source);
+		$this->context->worker->prepare_anonymous($identity, $this->context->owner);
+		$provided = $identity->signature();
+		$required = $target->signature();
+		if (!$provided->return_type->matches($required->return_type)) { return false; }
+		$inputs /** Storage<callable_parameter> */ = $provided->parameters;
+		$expected /** Storage<callable_parameter> */ = $required->parameters;
+		if (q_count($inputs) !== q_count($expected)) { return false; }
+		foreach ($inputs as $index => $input) {
+			if (!$input->type->matches($expected[$index]->type) || ($input->mode !== passing_mode::value)) { return false; }
+		}
+		Capability_Preparation::require_copy($source, $this->context);
+		return true;
+	}
 	public function __construct(private preparation_context $context)
 	{
 	}

@@ -1031,6 +1031,23 @@ final class namespace_body_children_iterator extends children_iterator
 	}
 }
 
+final class callable_type_children_iterator extends children_iterator
+{
+	private bool $result_pending = true;
+	private ?storage_children_iterator $parameters = null;
+	public function __construct(private callable_type_node $source) {}
+	protected function read_next(): ?ast_node
+	{
+		if ($this->result_pending) { $this->result_pending = false; return $this->source->result_type; }
+		if ($this->parameters === null) {
+			$this->parameters = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->parameter_types));
+		}
+		else { $this->parameters->next(); }
+		if ($this->parameters->valid()) { return $this->parameters->current(); }
+		return null;
+	}
+}
+
 enum call_children_stage
 {
 	case callee;

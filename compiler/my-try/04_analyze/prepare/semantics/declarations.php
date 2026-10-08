@@ -36,6 +36,9 @@ final class Declaration_Preparation
 			$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
 		}
 		else { $facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context); }
+		if (Type_Queries::canonical($facts->signature->return_type)->definition() instanceof callable_type_definition) {
+			throw new \RuntimeException('Callable returns are deferred');
+		}
 		if (!$syntax->signature_syntax->returns_reference) {
 			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		}
@@ -78,6 +81,9 @@ final class Declaration_Preparation
 		}
 		$facts = new prepared_source_callable();
 		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
+		if (Type_Queries::canonical($facts->signature->return_type)->definition() instanceof callable_type_definition) {
+			throw new \RuntimeException('Callable returns are deferred');
+		}
 		Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		self::prepare_parameters($syntax->signature_syntax, $facts, $context);
 		Callable_Contracts::validate($facts->signature);
@@ -91,6 +97,11 @@ final class Declaration_Preparation
 		$facts->declaration = $node->occurrence();
 		$contract = new callable_parameter();
 		$contract->type = Type_Preparation::type($node->require_type_syntax(), $context);
+		if (Type_Queries::canonical($contract->type)->definition() instanceof callable_type_definition) {
+			if (($node->mode !== passing_mode::value) || $node->variadic || ($node->default_value !== null)) {
+				throw new \RuntimeException('Callable parameters currently require ordinary by-value inputs');
+			}
+		}
 		Type_Preparation::require_value_type($contract->type);
 		$contract->mode = $node->mode;
 		$contract->access = $node->access;
@@ -226,6 +237,7 @@ final class Declaration_Preparation
 			$type = $prepared->default_value->conversion->target_type;
 		}
 		if ($type === null) { throw new \RuntimeException('Property without a default requires an explicit type'); }
+		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) { throw new \RuntimeException('Callable properties are deferred'); }
 		$prepared->type = $type;
 		Type_Lifecycle_Preparation::require_storage($type, $context);
 		if (($field->initializer === null) && (Type_Queries::canonical($type)->definition() instanceof enum_type_definition)) {

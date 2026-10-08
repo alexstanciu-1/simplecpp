@@ -209,6 +209,13 @@ their own category and do not publish a named declaration fragment.
 They render as inline C++ lambdas with `auto` local storage. Anonymous changes
 conservatively invalidate executable C++ fragments in their owning source.
 
+Explicit `function<R(Args...)>` syntax uses `callable_type_node`. Its structural
+`callable_type_definition` is interned by canonical return/input types and modifiers;
+the registry-owned contract has no parameter names, defaults or source observers.
+The existing call target interface lets value invocation reuse ordinary argument
+admission. Dependency-aware conversion preparation checks a concrete closure's
+signature before publishing `callable_wrap`; only the backend chooses `std::function`.
+
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members
 observe their declaring type and are indexed separately from free functions and
