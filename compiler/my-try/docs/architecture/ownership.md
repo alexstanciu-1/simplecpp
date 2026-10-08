@@ -76,9 +76,12 @@ clear the snapshot and unlink registrations through the existing worker protocol
 
 Interface contract work has the same owner/lifecycle but no accompanying record layout.
 Satisfied interface requirements retain original declaration identities for descendant
-validation. Forwarding decisions weakly observe the original inherited method and the
-immediate base used for qualified delegation; no duplicate source members or bodies
-are owned by the implementing descendant. Normal contract retirement drops these facts.
+validation. Local inherited-dispatch decisions weakly observe the unchanged source
+method and their descendant dispatch owner. Dispatch bindings weakly observe required
+and implementation methods and their respective slot owners; they own conversion-only
+adaptation snapshots, never workers, copied syntax or runtime objects. Normal contract
+retirement drops these facts. Reference-cycle analysis uses bindings transiently;
+C++ spelling and bridge definitions remain backend-owned.
 
 Prepared expressions own their optional storage-place record. A place weakly observes
 the selected `prepared_storage` fact and, for direct struct-field projection, shares

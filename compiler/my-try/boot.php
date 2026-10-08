@@ -167,6 +167,7 @@ require_once __DIR__ . '/05_backend/cpp/compiler_functions.php';
 require_once __DIR__ . '/05_backend/cpp/selection.php';
 require_once __DIR__ . '/05_backend/cpp/literals.php';
 require_once __DIR__ . '/05_backend/cpp/declarations.php';
+require_once __DIR__ . '/05_backend/cpp/dispatch.php';
 require_once __DIR__ . '/05_backend/cpp/callable_bindings.php';
 require_once __DIR__ . '/05_backend/cpp/json_bindings.php';
 require_once __DIR__ . '/05_backend/cpp/data_construction.php';

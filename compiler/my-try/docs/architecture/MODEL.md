@@ -109,8 +109,11 @@ preserve versions; reset and retirement clear facts and dependency registrations
 Interfaces now use that same contract work directly, without record-layout work or
 record preparation facts. `interface_requirements` references original interface
 methods (deduplicated by identity), including satisfied requirements needed by
-descendants. `forwarders` contains prepared method decisions observing an inherited
-implementation and its immediate dispatch base; these are not collected methods or
+descendants. `forwarders` contains local dispatch introductions for unchanged inherited
+implementations. Each method decision records its dispatch owner, distinct from the
+source declaring owner. `bindings` pairs required declarations/slot owners with selected
+implementations/dispatch owners and prepared signature adaptations. Trait bindings are
+semantic only; they introduce no extra runtime base. These are not collected methods or
 AST bodies. Signatures remain shared. C++ assembles direct base/interface spelling
 from current relationship facts, outside cached layout fragments, so relationship-only
 edits cannot leave stale header inheritance. Bare interfaces and classes share the
@@ -228,9 +231,13 @@ parameter or general reflection type is manufactured for compile-time inputs.
 `prepared_callable_adaptation` describes required-to-provided parameter conversions
 and the reverse provided-to-required result conversion. `Callable_Adaptation` owns
 directional comparison, accepting only identity or observed shared upcasts. It retains
-no signature owner, worker or backend spelling. Existing type-contract checks consume
-its exact mode; attaching variance adaptations to dispatch edges and emitting their
-bridges is the next [planned checkpoint](../planning/callable_variance.md).
+no signature owner, worker or backend spelling. Type contracts use observed directional
+comparison for virtual/interface/trait contracts and invariant comparison for static
+redeclarations. Dispatch bindings own these adaptation snapshots; equality includes
+their conversion types/operations so signature and ancestry edits propagate.
+C++ owns facade/body/slot spelling and emits bridge definitions in implementation
+units, not type headers. Reference-cycle analysis consumes these same bindings.
+See the [checkpoint](../planning/callable_variance.md).
 
 Shared upcast conversion decisions retain canonical source/target types and a named
 operation, never a worker or ancestry cache. The optional transient

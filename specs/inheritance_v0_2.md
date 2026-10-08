@@ -140,18 +140,19 @@ may leave obligations unimplemented or redeclare a virtual method abstract.
 
 An implementation of an inherited virtual method remains virtual automatically.
 Optional `#[\Override]` asserts that such a target exists; reject it otherwise.
-The bounded contract requires exact parameter types, passing/reference modes,
-read-only qualification, variadic shape, optional-parameter positions, return type
-and reference-return origin. Parameter names and default values need not match;
+The bounded contract permits shared-value variance as specified below; all other
+types, passing/reference modes, read-only qualification, variadic shape,
+optional-parameter positions and reference-return origin remain exact.
+Parameter names and default values need not match;
 defaults are selected from the statically resolved callable contract. Visibility
-may widen from protected to public, never narrow. Covariance/contravariance remain
-deferred. A final implementation cannot be overridden; a final type cannot be extended.
+may widen from protected to public, never narrow.
+A final implementation cannot be overridden; a final type cannot be extended.
 `abstract final` types/methods are invalid. Nonvirtual instance hiding remains rejected.
 
 ### Compatible static-method redeclarations
 
 A descendant class/struct may redeclare a static method with the same exact callable
-contract checked above, including reference-return origin, variadic shape and optional
+contract, without the shared-value variance below, including reference-return origin, variadic shape and optional
 parameter positions. Parameter names and default values may differ. Static and instance
 methods cannot replace one another. Visibility may stay equal or widen (including
 private to protected/public), never narrow. A final static method cannot be redeclared.
@@ -172,6 +173,35 @@ possible virtual targets; explicit parent calls retain their exact target.
 
 Constructor contracts remain concrete; abstract/final/override destructor modifiers
 and abstract constructors are not introduced by this slice.
+
+### Shared-value callable variance
+
+Virtual overrides, interface implementations and abstract trait requirements use one
+directional compatibility rule. A fixed by-value shared parameter may broaden from
+the required payload to an ancestor payload (contravariance). A by-value shared result
+may narrow from the required payload to a descendant payload (covariance). Ordinary
+class handles, interface handles and explicitly shared structs use the same proven
+ancestry. For example, an implementation `f(Animal $x): Dog` may satisfy a contract
+`f(Dog $x): Animal` when Dog extends Animal.
+
+References, including readonly parameters and reference results, remain invariant;
+so do variadic element types, inline values, unique/weak ownership and containers.
+Counts, optional positions and passing/access modes do not change. Static methods
+and constructors do not acquire variance. Cross-casts and numeric conversions are
+not subtyping. Invalid combinations reject during preparation, with ancestry edits
+invalidating consumers.
+
+Calls retain their statically selected signature and defaults. Dispatch adaptations
+upcast required arguments to the implementation's parameters and upcast its result
+back to the required return type. They preserve absence and shared object identity,
+without allocating an object, copying its payload or performing a runtime downcast.
+The authored body executes once. Explicit parent calls still bypass virtual dispatch.
+
+Required declarations and selected implementations remain distinct identities. C++
+uses source-facing entries, separately named authored bodies and virtual slots;
+bridges are declared in type headers and defined in the owning implementation unit.
+Inherited ordinary implementations gain descendant-owned dispatch without changing
+their original declaration or introducing another AST method.
 
 ## Explicit parent member access
 
@@ -194,13 +224,16 @@ have no source instance layout and cannot be constructed. Interface-typed storag
 uses the shared-handle contract below.
 
 Concrete implementers must provide all required methods; abstract implementers may
-leave obligations outstanding. The same exact signature/reference/readonly/variadic
-and optional-parameter checks as abstract overrides apply. Implementations must be
+leave obligations outstanding. The same directional signature checks and invariant
+reference/readonly/variadic/optional-position rules as abstract overrides apply. Implementations must be
 public instance methods. Matching local implementations become virtual; a checked
 `#[\Override]` assertion may refer to an interface requirement. One implementation
 may satisfy multiple compatible same-named contracts. An interface diamond retains
-one occurrence of the original requirement; incompatible same-named signatures reject
-during preparation, including in abstract types and interface redeclarations.
+one occurrence of the original requirement. Same-named contracts must be directionally
+compatible in at least one direction; otherwise preparation rejects, including in
+abstract types. An explicit interface redeclaration must satisfy every inherited
+same-named contract, not merely be comparable to it. This does not synthesize a new
+common signature or resolve ambiguous calls through multiple declarations.
 
 A compatible inherited public method may satisfy a newly added interface. Preserve
 its source identity and original dispatch policy. Preparation records a forwarding
@@ -211,8 +244,9 @@ Forwarding preserves reference returns/arguments, packed variadics and by-value
 ownership transfer. Descendants may override a non-final forwarding implementation.
 
 Approved bounded restriction: reject a new forwarding binding when the inherited
-implementation is already **virtual and final**. Such a C++ bridge would override
-the final method. An interface already satisfied by the base remains valid, and an
+implementation is already **virtual and final**. This remains a source admission gate
+pending a separate decision, even though distinct backend slots remove the former
+C++ name collision. An interface already satisfied by the base remains valid, and an
 inherited final **nonvirtual** implementation may be forwarded with a final bridge.
 See [CH11-INTERFACE-FINAL-01](../compiler/my-try/docs/catalog/11_inheritance.md#ch11-interface-final-01--inherited-final-virtual-forwarding).
 
@@ -271,7 +305,7 @@ A trait may declare a public/protected abstract instance method. Each final cons
 owns its independent requirement signature with the trait's lexical provenance.
 Requirements are separate from effective methods: they do not collide with an authored,
 inherited or contributed implementation of the same name. Every requirement must match
-the existing exact callable contract (including reference and variadic modes), and its
+the directional callable contract above (with invariant reference and variadic modes), and its
 implementation cannot narrow visibility or be static. Distinct concrete implementations
 still collide. Private/static abstract requirements and lifecycle requirements reject.
 

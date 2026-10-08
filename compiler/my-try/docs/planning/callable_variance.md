@@ -24,25 +24,40 @@ the comparison is exact. The result owns ordered parameter conversion decisions
 and shared upcast operations are admitted; facts retain neither queries nor workers,
 and backend spelling is absent. Reference conversions remain identity only.
 
-The existing type-contract owner now delegates all exact comparisons to this owner.
-Source-level variance is still rejected: this checkpoint does not attach adaptations
-to dispatch edges or emit bridges. There is no claim of executable variance support.
+This first checkpoint delegated existing exact comparisons to the shared owner.
+It kept source variance rejected until the dispatch integration below.
 
 Proof: 22 adaptation-model cases plus reference-return checks and six adjacent PHP
 suites passed in `/tmp/callable-adaptation-final2`. Existing generated execution stayed
 green: 32 abstract-dispatch cases without PCH in `/tmp/callable-adaptation-dispatch`.
 The compiler itself was not rebuilt natively.
 
-## Checkpoint 2: dispatch integration — next
+## Checkpoint 2: dispatch integration — implemented
 
-Separate each required dispatch contract from the selected authored implementation.
-Retain original declaration identities and prepared adaptations, without copied AST
-methods/bodies. Generate typed bridges where needed; execute the authored body once,
-preserving shared identity without object allocation or runtime downcasts. Concrete
-calls retain the authored signature; base/interface calls retain their static contract.
+Each `prepared_dispatch_binding` observes a required declaration/slot owner and a
+selected implementation/dispatch owner, owning the directional adaptation. Local
+method decisions and inherited dispatch introductions remain name-indexed; bindings
+do not become source members. An inherited ordinary method can gain a descendant-owned
+slot without changing its original declaration. Trait bindings feed semantic cycle
+analysis without inventing a runtime trait base. Contract equivalence observes binding
+identities and conversion types/operations through the existing incremental lifecycle.
 
-Cover multi-level overriding, several interface contracts, inherited implementations,
-abstract intermediates, explicit parent calls, finality, defaults and reference-return
-invariance. Keep existing undecided dispatch limits gated unless separately approved.
-Signature/ancestry edits need failure/retry/repair and reset/fresh proofs before source
-admission is widened. Update the authoritative inheritance spec when enabling execution.
+`CPP_Dispatch` owns source-facing nonvirtual entries, distinct authored implementation
+names and owner-qualified virtual slots. Required slots delegate through the selected
+implementation slot, preserving descendant overriding across multiple levels. Explicit
+parent calls name the original authored implementation and bypass redispatch. Bridge
+definitions live in source implementation units, keeping headers declaration-only
+for callable types and avoiding complete-type include cycles. Existing signatures and
+bodies remain independently cached; settled dispatch is assembled alongside them.
+
+Source admission now enables the agreed shared-value variance. Concrete calls retain
+the authored signature; base/interface calls retain their static contract and defaults.
+No runtime representation changes, synthetic AST methods, payload copies, new objects
+or downcasts are added. Native-call/bridge overhead has not been benchmarked; no claim
+of automatic bridge elimination is made. Existing undecided dispatch limits stay gated.
+
+Focused proofs cover multi-level/abstract overrides, interfaces and inherited forwarding,
+class/struct receivers, shared struct and interface payloads, trait requirements,
+parent calls, identity/one-body execution, defaults, absence, invariant reference results,
+signature/ancestry failure/retry/repair and reset/fresh output agreement. Execution
+evidence is recorded in the chapter checkpoint. The compiler itself was not rebuilt.

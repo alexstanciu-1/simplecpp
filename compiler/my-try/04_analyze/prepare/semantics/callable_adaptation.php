@@ -5,7 +5,22 @@ namespace scpp\compiler;
 
 final class Callable_Adaptation
 {
-	/** Source admission remains exact until dispatch bridges consume adaptation facts. */
+	public static function same(prepared_callable_adaptation $left, prepared_callable_adaptation $right): bool
+	{
+		if (q_count($left->parameters) !== q_count($right->parameters)) { return false; }
+		foreach ($left->parameters as $index => $conversion) {
+			if (!self::same_conversion($conversion, $right->parameters[$index])) { return false; }
+		}
+		return self::same_conversion($left->result, $right->result);
+	}
+
+	private static function same_conversion(conversion_decision $left, conversion_decision $right): bool
+	{
+		return ($left->operation === $right->operation) && $left->source_type->matches($right->source_type)
+			&& $left->target_type->matches($right->target_type);
+	}
+
+	/** Invariant consumers do not supply an ancestry query. */
 	public static function exact(callable_signature $required, callable_signature $provided): bool
 	{
 		return self::between($required, $provided) !== null;

@@ -180,6 +180,10 @@ final class CPP_Callables
 			return CPP_Generator::source_name('implementation', $method->name)
 				. '_for_' . CPP_Generator::source_name('type', $instance->called_type()->qualified_name());
 		}
+		if (!$method->callable_syntax()->require_preparation()->static_member) {
+			return CPP_Generator::source_name('implementation', $method->declaring_type()->qualified_name())
+				. '__' . CPP_Generator::source_name('method', $method->name);
+		}
 		return CPP_Generator::source_name('method', $method->name);
 	}
 	/** Backend-owned dispatch keeps callable identities independent of any output target. */

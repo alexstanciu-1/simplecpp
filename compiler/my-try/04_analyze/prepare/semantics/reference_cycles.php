@@ -114,11 +114,13 @@ final class Reference_Cycles
 				if (($entry->change_status === change_state::deleted) || !($entry instanceof collected_record)) { continue; }
 				$record = object_cast($entry, collected_record::class);
 				$contracts = $record->contract_work->require_facts();
-				$requirements /** vector<collected_method> */ = $contracts->interface_requirements;
-				foreach ($contracts->trait_requirements as $requirement) { $requirements[] = $requirement; }
-				foreach ($requirements as $requirement) {
-					$implementation = self::implementation($record, $requirement->name);
-					if (($implementation !== null) && ($implementation !== $requirement)) {
+				$bindings /** Storage<prepared_dispatch_binding> */ = $contracts->bindings;
+				foreach ($bindings as $binding) {
+					$requirement = weakref_get($binding->required);
+					// Concrete parent bodies are exact targets for parent::, not requirement vertices.
+					if ($requirement->callable_syntax()->has_parsed_body()) { continue; }
+					$implementation = weakref_get($binding->implementation);
+					if ($implementation !== $requirement) {
 						$vertex = $vertices[$by_definition[$requirement]];
 						$vertex->calls[] = $by_definition[$implementation];
 					}
@@ -127,33 +129,31 @@ final class Reference_Cycles
 		}
 	}
 
-	/** Read settled decisions; no scheduling, synthetic methods or retained dispatch graph. */
-	private static function implementation(collected_record $record, string $name): ?collected_method
-	{
-		$contracts = $record->contract_work->require_facts();
-		$methods /** Keyed_Storage<prepared_method_contract> */ = $contracts->methods;
-		$forwarders /** Keyed_Storage<prepared_method_contract> */ = $contracts->forwarders;
-		if (isset($methods[$name])) { return weakref_get($methods[$name]->method); }
-		if (isset($forwarders[$name])) { return weakref_get($forwarders[$name]->method); }
-		$base = weakref_get($record->relationship_work->require_facts()->base);
-		if ($base === null) { return null; }
-		return self::implementation($base, $name);
-	}
-
 	/** Virtual alternatives belong to the call site; explicit parent calls stay exact. */
 	private function virtual_targets(reference_cycle_vertex $caller, collected_source_callable $target): void
 	{
 		if (!($target instanceof collected_method)) { return; }
 		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
-		foreach ($vertices as $index => $vertex) {
-			if (!($vertex->definition instanceof collected_method)) { continue; }
-			$method /** nullable<collected_method> */ = object_cast($vertex->definition, collected_method::class);
-			while ($method !== null) {
-				$contracts = $method->declaring_type()->contract_work->require_facts();
-				$methods /** Keyed_Storage<prepared_method_contract> */ = $contracts->methods;
-				if (!isset($methods[$method->name])) { break; }
-				$method = weakref_get($methods[$method->name]->overridden);
-				if ($method === $target) { $caller->calls[] = $index; break; }
+		$reachable = new \SplObjectStorage /** hash<bool, shared<collected_source_callable>> */();
+		$reachable[$target] = true;
+		$changed = true;
+		while ($changed) {
+			$changed = false;
+			foreach ($vertices as $index => $vertex) {
+				if (!($vertex->definition instanceof collected_method)) { continue; }
+				$method = object_cast($vertex->definition, collected_method::class);
+				if (isset($reachable[$method])) { continue; }
+				$bindings /** Storage<prepared_dispatch_binding> */ = $method->declaring_type()->contract_work->require_facts()->bindings;
+				foreach ($bindings as $binding) {
+					if (weakref_get($binding->implementation) !== $method) { continue; }
+					$required = weakref_get($binding->required);
+					if (isset($reachable[$required])) {
+						$reachable[$method] = true;
+						$caller->calls[] = $index;
+						$changed = true;
+						break;
+					}
+				}
 			}
 		}
 	}

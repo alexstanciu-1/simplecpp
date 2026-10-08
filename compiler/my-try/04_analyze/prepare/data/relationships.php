@@ -23,23 +23,38 @@ final class prepared_type_contract
 	public array $interface_requirements /** vector<collected_method> */ = [];
 	/** Consumer-owned trait signatures, retained independently of selected methods. */
 	public array $trait_requirements /** vector<collected_method> */ = [];
-	/** Lowering bridges observe inherited implementations; never synthetic source methods. */
+	/** Locally introduced dispatch for unchanged inherited implementations. */
 	public Keyed_Storage $forwarders /** Keyed_Storage<prepared_method_contract> */;
+	/** Required contracts routed to selected implementations; no synthetic source members. */
+	public Storage $bindings /** Storage<prepared_dispatch_binding> */;
 	public function __construct()
 	{
 		$this->methods = new Keyed_Storage /** Keyed_Storage<prepared_method_contract> */();
 		$this->forwarders = new Keyed_Storage /** Keyed_Storage<prepared_method_contract> */();
+		$this->bindings = new Storage /** Storage<prepared_dispatch_binding> */();
 	}
 }
 
 final class prepared_method_contract
 {
+	/** A descendant can introduce dispatch for an unchanged inherited declaration. */
+	public collected_member_owner $dispatch_owner /** weak<collected_member_owner> */;
 	public collected_method $method /** weak<collected_method> */;
 	public ?collected_method $overridden /** weak<collected_method> */ = null;
-	public ?collected_record $forwarding_owner /** weak<collected_record> */ = null;
 	public bool $virtual_method = false;
 	public bool $abstract_method = false;
 	public bool $final_method = false;
+}
+
+final class prepared_dispatch_binding
+{
+	public collected_method $required /** weak<collected_method> */;
+	public collected_member_owner $required_owner /** weak<collected_member_owner> */;
+	public collected_method $implementation /** weak<collected_method> */;
+	public collected_member_owner $implementation_owner /** weak<collected_member_owner> */;
+	public prepared_callable_adaptation $adaptation;
+	/** Trait requirements route semantic calls, but are not separate runtime bases. */
+	public bool $virtual_dispatch = true;
 }
 
 /** Lookup selects syntax identity only; access and signature compatibility follow separately. */

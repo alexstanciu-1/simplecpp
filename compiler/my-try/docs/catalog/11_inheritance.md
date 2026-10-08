@@ -38,7 +38,7 @@ User scope decision — 2026-10-08:
 | --- | --- |
 | Shared cross-casts | Implemented: observed relationship admission through existing checked access |
 | Non-public destructors | Implemented: independent lifecycle contract and access-aware ownership |
-| Variance/covariant returns | Agreed shared-value scope; adaptation foundation implemented, dispatch integration next |
+| Variance/covariant returns | Implemented: shared-value adaptation and declaration-specific dispatch bindings/bridges |
 | Instance late static binding; inline/struct `new static()` | Deferred to CH15 |
 | Unique/weak downcasts; unique/weak conditional joins; sibling conditional joins | Deferred to CH15 |
 | Trait adaptations; abstract constructor contracts | Deferred to CH15 |
@@ -48,20 +48,42 @@ User scope decision — 2026-10-08:
 The [CH15 scope register](15_blocking_debt.md#ch15-inheritance-extensions-01--deferred-ch11-extensions)
 retains the seven newly deferred items and their prerequisites. Existing unsupported
 paths stay rejected; recording the queue does not enable new language semantics.
-Next implementation: variance dispatch contracts and C++ bridges; see the
-[agreed scope and checkpoints](../planning/callable_variance.md).
+The three selected groups are implemented; see the
+[variance scope and checkpoints](../planning/callable_variance.md).
+Next discussion: resolve the two undecided dispatch limits before chapter closeout.
 CH11 is not declared complete; native compiler validation remains outstanding.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
 six ownership/type-access rows added below make already-proven coverage explicit. This is
-not a claim that every extension above is required for v0.2. The selected groups still
-need completion of the variance/covariant-return group; two dispatch items remain undecided. Broader protected receiver access is already
+not a claim that every extension above is required for v0.2. The selected groups are
+implemented; two dispatch items remain undecided. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
 
 Verification: the checkpoints record PHP-host and generated-C++ proofs. The latest
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Shared callable variance — 2026-10-08
+
+Virtual overrides, interfaces and trait requirements share fixed shared-parameter
+contravariance and shared-result covariance. References, variadics and other ownership
+families remain invariant. Source identities and member lookup stay unchanged; prepared
+bindings distinguish required contracts and slot owners from selected implementations.
+C++ source entries, authored bodies and virtual slots have separate backend names.
+Typed bridge definitions stay in the declaring source's implementation unit and preserve
+shared identity, defaults and explicit-parent behavior without copies or runtime casts.
+The [authoritative contract](../../../../specs/inheritance_v0_2.md#shared-value-callable-variance)
+and [model checkpoint](../planning/callable_variance.md) record scope and ownership.
+
+Validation: 219 generated-C++ cases across variance, abstract dispatch, interfaces,
+traits, method parameters and reference returns passed without PCH in
+`/tmp/variance-final`, including 20 new variance fixtures. The same suites include
+preparation rejections, cross-file failure/retry/repair and reset/fresh checks.
+Consolidation re-exported all 219 fixtures in `/tmp/variance-consolidated`: 217 artifact
+sets were byte-identical and the two changed sets were recompiled and passed. Thirteen
+adjacent PHP suites passed in `/tmp/variance-adjacent-final`.
+No native compiler rebuild was performed.
 
 ## Non-public destructors — 2026-10-08
 
@@ -755,7 +777,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original concrete constructor visibility, contract/defaults through abstract or concrete ancestors |
 | CLASS-INH-014 | implemented-bounded | `static::method(); new static();` | verified | verified | deferred | Demanded static called-type instances; shared-class factories; runtime instance propagation deferred |
 | CLASS-INH-015 | implemented-bounded | `data class C extends B {} $c C = {input: 9};` | verified | verified | deferred | Explicit opt-in; authored/inherited parameter contracts or composed synthesized public-property inputs through data bases |
-| [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |
+| [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; shared-value variance; nonvirtual hiding rejected |
+| CH11-CALLABLE-VARIANCE | implemented-bounded | `f(Animal $x): Dog` implementing `f(Dog $x): Animal` | verified | verified | deferred | [Directional shared adaptation and dispatch bridges](#shared-callable-variance--2026-10-08); invariant references/other ownership |
 | [CLASS-INH-012](#class-inh-012) | implemented-equivalent | `class B extends A {}` | verified | verified | deferred | Prepared base identity and qualified ancestor calls replace reliance on a literal C++ base alias |
 | [CLASS-ABS-001](#class-abs-001) | implemented-bounded | `function __destruct() { $this->cleanup(); }` | verified | verified | deferred | Shared method lifecycle; out-of-line nonthrowing body; ordinary instance calls |
 | [CLASS-ABS-002](#class-abs-002) | implemented-bounded | `function __destruct() {}` | verified | verified | deferred | Type-header declaration and implementation-unit definition; [non-public cleanup access](#non-public-destructors--2026-10-08) |
@@ -1113,7 +1136,7 @@ A::A(int_t x) : base(x) {}
 
 ## CLASS-INH-011
 
-**v0.2 decision / target C++:** Checked inherited virtual target; exact signature; nonvirtual hiding rejected. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
+**v0.2 decision / target C++:** Checked inherited virtual target; shared-value variance with invariant references/other ownership; nonvirtual hiding rejected. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
 
 ### Imported version 1
 

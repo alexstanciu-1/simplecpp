@@ -40,6 +40,7 @@ final class Type_Contract_Preparation
 			Call_Preparation::require_signature($method, $context);
 			$signature = $syntax->require_preparation();
 			$decision = new prepared_method_contract();
+			$decision->dispatch_owner = $record;
 			$decision->method = $method;
 			$decision->abstract_method = $signature->abstract_method;
 			$decision->final_method = $signature->final_method;
@@ -62,12 +63,13 @@ final class Type_Contract_Preparation
 				if (!$static_redeclaration && !$inherited->virtual_method) {
 					throw new \RuntimeException('Nonvirtual inherited member redeclaration is deferred');
 				}
-				if (($signature->static_member !== $parent_signature->static_member)
-					|| !Callable_Adaptation::exact($parent_signature->signature, $signature->signature)) {
+				$adaptation = Callable_Adaptation::between($parent_signature->signature, $signature->signature,
+					$static_redeclaration ? null : new Conversion_Relationships($context));
+				if (($signature->static_member !== $parent_signature->static_member) || ($adaptation === null)) {
 					if ($static_redeclaration) {
 						throw new \RuntimeException('Static redeclaration requires an exact compatible signature');
 					}
-					throw new \RuntimeException('Override requires an exact compatible instance signature');
+					throw new \RuntimeException('Override requires a compatible instance signature');
 				}
 				if ((($signature->visibility === member_visibility::private_access) && ($parent_signature->visibility !== member_visibility::private_access))
 					|| (($parent_signature->visibility === member_visibility::public_access) && ($signature->visibility !== member_visibility::public_access))) {
@@ -76,9 +78,18 @@ final class Type_Contract_Preparation
 				if (!$static_redeclaration) {
 					$decision->overridden = $parent;
 					$decision->virtual_method = true;
+					self::bind($facts, $parent, weakref_get($inherited->dispatch_owner), $method, $record, $adaptation);
 				}
 			}
-			if ($is_interface) { self::add_requirement($facts, $method, $context); }
+			if ($is_interface) {
+				foreach ($facts->interface_requirements as $ancestor_requirement) {
+					if ($ancestor_requirement->name !== $method->name) { continue; }
+					if (Callable_Adaptation::between($ancestor_requirement->signature(), $method->signature(), new Conversion_Relationships($context)) === null) {
+						throw new \RuntimeException('Incompatible same-named interface contracts: redeclaration must satisfy inherited signatures');
+					}
+				}
+				self::add_requirement($facts, $method, $context);
+			}
 			if ($decision->virtual_method) { $facts->polymorphic = true; }
 			$decisions->add($syntax->name, $decision);
 		}
@@ -92,14 +103,17 @@ final class Type_Contract_Preparation
 			$implementation = object_cast($matches[0]->member, collected_method::class);
 			Call_Preparation::require_signature($implementation, $context);
 			$provided = $implementation->callable_syntax()->require_preparation();
-			if ($provided->static_member || !Callable_Adaptation::exact($required->signature, $provided->signature)
+			$adaptation = Callable_Adaptation::between($required->signature, $provided->signature, new Conversion_Relationships($context));
+			if ($provided->static_member || ($adaptation === null)
 				|| ($provided->visibility === member_visibility::private_access)
 				|| (($required->visibility === member_visibility::public_access) && ($provided->visibility !== member_visibility::public_access))) {
-				throw new \RuntimeException('Trait requirement needs an exact compatible instance signature and visibility');
+				throw new \RuntimeException('Trait requirement needs a compatible instance signature and visibility');
 			}
+			self::bind($facts, $requirement, $requirement->declaring_type(), $implementation, $implementation->declaring_type(), $adaptation, false);
 			if ($provided->abstract_method && !isset($decisions[$requirement->name])) {
 				if ($implementation->declaring_type() === $record) {
 					$slot = new prepared_method_contract();
+					$slot->dispatch_owner = $record;
 					$slot->method = $implementation;
 					$slot->abstract_method = true;
 					$slot->virtual_method = true;
@@ -116,11 +130,14 @@ final class Type_Contract_Preparation
 				$implementation = object_cast($matches[0]->member, collected_method::class);
 				Call_Preparation::require_signature($implementation, $context);
 				$signature = $implementation->callable_syntax()->require_preparation();
-				if ($signature->static_member || ($signature->visibility !== member_visibility::public_access)
-					|| !Callable_Adaptation::exact($requirement->signature(), $signature->signature)) {
-					throw new \RuntimeException('Interface implementation requires an exact compatible public instance signature');
+				$adaptation = Callable_Adaptation::between($requirement->signature(), $signature->signature, new Conversion_Relationships($context));
+				if ($signature->static_member || ($signature->visibility !== member_visibility::public_access) || ($adaptation === null)) {
+					throw new \RuntimeException('Interface implementation requires a compatible public instance signature');
 				}
-				if (isset($decisions[$requirement->name])) { $decisions[$requirement->name]->virtual_method = true; }
+				if (isset($decisions[$requirement->name])) {
+					$decisions[$requirement->name]->virtual_method = true;
+					self::bind($facts, $requirement, $requirement->declaring_type(), $implementation, $record, $adaptation);
+				}
 				elseif (!$signature->abstract_method) {
 					$needs_forwarder = true;
 					if ($base !== null) {
@@ -134,11 +151,18 @@ final class Type_Contract_Preparation
 							throw new \RuntimeException('New interface forwarding through an inherited final virtual method is deferred');
 						}
 						$bridge = new prepared_method_contract();
+						$bridge->dispatch_owner = $record;
 						$bridge->method = $implementation;
-						$bridge->forwarding_owner = $base;
 						$bridge->virtual_method = true;
 						$bridge->final_method = $signature->final_method;
 						$forwarders->add($implementation->name, $bridge);
+						if ($inherited->virtual_method) {
+							$identity = Callable_Adaptation::between($implementation->signature(), $implementation->signature());
+							self::bind($facts, $implementation, weakref_get($inherited->dispatch_owner), $implementation, $record, $identity);
+						}
+					}
+					if ($needs_forwarder) {
+						self::bind($facts, $requirement, $requirement->declaring_type(), $implementation, $record, $adaptation);
 					}
 				}
 			}
@@ -174,6 +198,24 @@ final class Type_Contract_Preparation
 		}
 	}
 
+	private static function bind(prepared_type_contract $facts, collected_method $required,
+		collected_member_owner $required_owner, collected_method $implementation, collected_member_owner $implementation_owner,
+		prepared_callable_adaptation $adaptation, bool $virtual_dispatch = true): void
+	{
+		$bindings /** Storage<prepared_dispatch_binding> */ = $facts->bindings;
+		foreach ($bindings as $existing) {
+			if ((weakref_get($existing->required) === $required) && (weakref_get($existing->required_owner) === $required_owner)) { return; }
+		}
+		$binding = new prepared_dispatch_binding();
+		$binding->required = $required;
+		$binding->required_owner = $required_owner;
+		$binding->implementation = $implementation;
+		$binding->implementation_owner = $implementation_owner;
+		$binding->adaptation = $adaptation;
+		$binding->virtual_dispatch = $virtual_dispatch;
+		$bindings->append($binding);
+	}
+
 	/** Requirements observe original identities, deduplicating diamonds without copying signatures. */
 	private static function add_requirement(prepared_type_contract $facts, collected_method $method, preparation_context $context): void
 	{
@@ -182,8 +224,11 @@ final class Type_Contract_Preparation
 			if ($previous === $method) { return; }
 			if ($previous->name === $method->name) {
 				Call_Preparation::require_signature($previous, $context);
-				if (!Callable_Adaptation::exact($previous->signature(), $method->signature())) {
-					throw new \RuntimeException('Incompatible same-named interface contracts');
+				$query = new Conversion_Relationships($context);
+				if (Callable_Adaptation::between($previous->signature(), $method->signature(), $query) === null) {
+					if (Callable_Adaptation::between($method->signature(), $previous->signature(), $query) === null) {
+						throw new \RuntimeException('Incompatible same-named interface contracts');
+					}
 				}
 			}
 		}
@@ -207,6 +252,18 @@ final class Type_Contract_Preparation
 	{
 		if ($old === null) { return false; }
 		if (($old->abstract_type !== $current->abstract_type) || ($old->polymorphic !== $current->polymorphic)) { return false; }
+		$old_bindings /** Storage<prepared_dispatch_binding> */ = $old->bindings;
+		$new_bindings /** Storage<prepared_dispatch_binding> */ = $current->bindings;
+		if ($old_bindings->count() !== $new_bindings->count()) { return false; }
+		foreach ($new_bindings as $index => $binding) {
+			$previous_binding = $old_bindings[$index];
+			if ((weakref_get($previous_binding->required) !== weakref_get($binding->required))
+				|| (weakref_get($previous_binding->required_owner) !== weakref_get($binding->required_owner))
+				|| (weakref_get($previous_binding->implementation) !== weakref_get($binding->implementation))
+				|| (weakref_get($previous_binding->implementation_owner) !== weakref_get($binding->implementation_owner))
+				|| ($previous_binding->virtual_dispatch !== $binding->virtual_dispatch)
+				|| !Callable_Adaptation::same($previous_binding->adaptation, $binding->adaptation)) { return false; }
+		}
 		if (q_count($old->interface_requirements) !== q_count($current->interface_requirements)) { return false; }
 		if (q_count($old->trait_requirements) !== q_count($current->trait_requirements)) { return false; }
 		foreach ($old->trait_requirements as $index => $method) {
@@ -222,7 +279,7 @@ final class Type_Contract_Preparation
 			if (!isset($old_bridges[$name])) { return false; }
 			$previous = $old_bridges[$name];
 			if ((weakref_get($previous->method) !== weakref_get($bridge->method))
-				|| (weakref_get($previous->forwarding_owner) !== weakref_get($bridge->forwarding_owner))
+				|| (weakref_get($previous->dispatch_owner) !== weakref_get($bridge->dispatch_owner))
 				|| ($previous->final_method !== $bridge->final_method)) { return false; }
 		}
 		$before /** Keyed_Storage<prepared_method_contract> */ = $old->methods;
@@ -232,6 +289,7 @@ final class Type_Contract_Preparation
 			if (!isset($before[$name])) { return false; }
 			$previous = $before[$name];
 			if ((weakref_get($previous->method) !== weakref_get($method->method))
+				|| (weakref_get($previous->dispatch_owner) !== weakref_get($method->dispatch_owner))
 				|| (weakref_get($previous->overridden) !== weakref_get($method->overridden))
 				|| ($previous->virtual_method !== $method->virtual_method)
 				|| ($previous->abstract_method !== $method->abstract_method)

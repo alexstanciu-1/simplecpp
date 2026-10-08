@@ -140,19 +140,20 @@ final class CPP_Generator
 					$member_owner /** preparation_owner */ = $method->occurrence()->preparation_work_owner();
 					$member_fragment = $this->program->fragments[$member_owner];
 					$decision = $dispatch[$method->name];
-					$virtual_method = $decision->virtual_method || (($method->name === '__destruct') && $contract->polymorphic);
-					$suffix = '';
-					if ($method->require_preparation()->override_assertion) { $suffix .= ' override'; }
-					if ($virtual_method && $decision->final_method) { $suffix .= ' final'; }
-					if ($decision->abstract_method) { $suffix .= ' = 0'; }
+					$ordinary_instance = !$method->require_preparation()->static_member
+						&& ($method->name !== '__construct') && ($method->name !== '__destruct');
+					$virtual_method = ($method->name === '__destruct') && $contract->polymorphic;
 					$visibility = $method->name === '__construct' ? member_visibility::public_access : $method->require_preparation()->visibility;
 					$text .= CPP_Record_Construction::key_declaration(object_cast($method->occurrence(), collected_method::class));
-					$text .= CPP_Declarations::visibility($visibility)
-						. "\t" . ($virtual_method ? 'virtual ' : '') . $member_fragment->prototype_text . $suffix . ";\n";
+					$text .= CPP_Declarations::visibility($visibility);
+					if (!$decision->abstract_method) {
+						$text .= "\t" . ($virtual_method ? 'virtual ' : '') . $member_fragment->prototype_text . ";\n";
+					}
+					if ($ordinary_instance) { $text .= CPP_Dispatch::method($decision, $bridge_context, true); }
 					foreach ($member_fragment->headers as $header => $used) { $artifact_headers[$header] = true; }
 					foreach ($member_fragment->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
 				}
-				$text .= CPP_Declarations::interface_forwarders($contract, $bridge_context);
+				$text .= CPP_Dispatch::bridges($contract, $record, $bridge_context, true);
 				foreach ($bridge_context->headers as $header => $used) { $artifact_headers[$header] = true; }
 				foreach ($bridge_context->forward_declarations as $name => $used) { $artifact_declarations[$name] = true; }
 				if ($record instanceof collected_record) {
@@ -179,7 +180,14 @@ final class CPP_Generator
 			$headers /** hash<bool> */ = [];
 			$declarations /** hash<bool> */ = [];
 			$body_text = '';
+			$dispatch_context = new cpp_generation_context();
 			foreach ($ordered as $callable_owner) {
+				if (($callable_owner instanceof record_definition_work) || ($callable_owner instanceof type_contract_work)) {
+					if ($callable_owner->source === $prepared->source) {
+						$dispatch_owner = object_cast($callable_owner->declaration(), collected_member_owner::class);
+						$body_text .= CPP_Dispatch::definitions($dispatch_owner, $dispatch_context);
+					}
+				}
 				if (($callable_owner instanceof record_definition_work) && ($callable_owner->source === $prepared->source)) {
 					$layout = $this->program->fragments[$callable_owner];
 					if ($layout->storage_text !== '') {
@@ -215,6 +223,8 @@ final class CPP_Generator
 				}
 				$body_text .= $signature->text . $body->initializer_text . "\n{\n" . $body->text . "}\n\n";
 			}
+			foreach ($dispatch_context->headers as $header => $used) { $headers[$header] = true; }
+			foreach ($dispatch_context->forward_declarations as $name => $used) { $declarations[$name] = true; }
 			if ($body_text !== '') {
 				$path = CPP_Artifacts::unit_path($prepared->source);
 				$result->append(new cpp_artifact('implementation:' . $path, cpp_artifact_kind::translation_unit,
