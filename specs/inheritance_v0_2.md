@@ -191,6 +191,36 @@ supersedes the legacy blanket rejection of trait syntax, not the deferred extens
 
 ## Remaining gates
 
+### Agreed late-static extension — implementation gated
+
+The next extension distinguishes the lexical declaring type (names and access) from
+the called type. An explicit `Child::method()` establishes Child, including when
+the implementation is inherited. `self::method()` and `parent::method()` select a
+fixed implementation and forward the current called type; `static::method()` selects
+through that called type and forwards it. Expression-qualified static calls establish
+the qualifier's declared type and evaluate that expression exactly once, consistently
+with the [static-member contract](static_members_v0_2.md).
+
+Late-selected properties keep the actual declaring owner's single storage location;
+constants keep their selected declaration. No inherited storage duplication is implied.
+Compatible descendant static-method redeclarations are part of this extension, with
+exact callable contracts and no visibility narrowing, not C++ virtual overriding.
+Inherited property/constant redeclaration restrictions do not change.
+
+`new static(...)` will construct the called class using its checked constructor
+contract. The first construction group admits shared class handles only and applies
+ordinary checked-at-preparation result conversions; it does not slice inline records.
+Called-type context is compiler-managed, never ambient global runtime state. Cross-file
+families are supported by the agreed design rather than v0.1's file-local restriction.
+
+Availability: only the independent callable-instance model/lifecycle is implemented.
+Source `static::`, `new static` and compatible static redeclarations remain gated until
+their preparation/lowering checkpoints land. Runtime-called-type propagation through
+instance methods requires a separate design; do not substitute a receiver's declared
+type silently. See the [implementation plan](../compiler/my-try/docs/planning/called_type_instances.md).
+
+### Current rejection boundary
+
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Nonvirtual member hiding,
 inherited data inputs, late-bound `static::`, non-shared derived/base

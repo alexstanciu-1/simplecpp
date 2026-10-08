@@ -181,6 +181,10 @@ final class collected_function extends collected_source_callable
 /** The type owns member membership; the method owns its independent signature and body work. */
 final class collected_method extends collected_source_callable
 {
+	/** Private implementations, keyed by called-type identity; not member lookup entries. */
+	public Storage $called_instances /** Storage<callable_instance> */;
+	/** Working-method backlink; its origin owns the instance. */
+	public ?callable_instance $instance_context /** weak<callable_instance> */ = null;
 	/** @reference.source type_declaration_node occurrence; no additional owner */
 	private collected_member_owner $type_owner /** weak<collected_member_owner> */;
 
@@ -188,6 +192,7 @@ final class collected_method extends collected_source_callable
 	{
 		parent::__construct($collection, $node);
 		$this->type_owner = $owner;
+		$this->called_instances = new Storage /** Storage<callable_instance> */();
 	}
 
 	public function declaring_type(): collected_member_owner

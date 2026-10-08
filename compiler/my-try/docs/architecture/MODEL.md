@@ -683,6 +683,13 @@ non-storable sentinel identity, without source exposure or a storage backend bin
 
 ## Structure and processing boundary
 
+Called-type implementation instances are owned separately by the original collected
+method. Each owns independent working syntax and ordinary signature/body work, without
+changing declaring-type identity or authored class membership. Materialization and
+retirement belong to `Callable_Instances`, a coordinator; `Source_Fragments` shares
+snapshot/retirement support with trait composition. Source-call selection and C++
+instance emission remain gated. See [called-type instances](../planning/called_type_instances.md).
+
 Structures may initialize data, enforce local invariants, expose typed access and
 clear attached facts. Workers own stage dispatch/traversal, semantic algorithms,
 scheduling, dependency maintenance and publication. Retained structures

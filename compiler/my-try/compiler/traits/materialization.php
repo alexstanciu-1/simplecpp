@@ -29,7 +29,7 @@ final class Trait_Materialization
 		foreach ($methods as $method) { $origins->append($method); }
 		$lexical = new scope();
 		$lexical->set_parent(weakref_get($origin->scope));
-		$tokens = self::snapshot($origin->token_snapshot());
+		$tokens = Source_Fragments::snapshot($origin->token_snapshot());
 		$run = new Parser_Run($tokens, $lexical);
 		$parsed = $run->parse_member_fragments($consumer, $origins);
 		$instance = new trait_instance($origin, $consumer, $parsed);
@@ -43,18 +43,4 @@ final class Trait_Materialization
 		return $instance;
 	}
 
-	/** Token cleanup mutates rows and offsets: copying just the Storage handle is insufficient. */
-	private static function snapshot(token_list $source): token_list
-	{
-		$result = new token_list();
-		$result->file = $source->file;
-		$result->content = $source->content;
-		$result->first_token = $source->first_token;
-		$result->end_token = $source->end_token;
-		$result->content_offset = $source->content_offset;
-		$rows /** Storage<token> */ = $source->tokens;
-		$copies /** Storage<token> */ = $result->tokens;
-		foreach ($rows as $row) { $copies->append(new token($row->offset, $row->length, $row->text())); }
-		return $result;
-	}
 }

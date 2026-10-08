@@ -14,6 +14,26 @@ That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance, abstract/override dispatch and interface implementations now
 execute. Shared derived/base upcasts and interface-typed handles now execute.
 
+## Called-type callable foundation — 2026-10-08
+
+The approved [late-static extension](../../../../specs/inheritance_v0_2.md#agreed-late-static-extension--implementation-gated)
+requires independent callable instances, not repeated mutation of a method's single
+prepared body. The [model/lifecycle checkpoint](../planning/called_type_instances.md)
+is implemented: origin-owned instances keyed by called type, private working syntax,
+unchanged lexical declaring owner, shared token snapshot/retirement support, no-op
+identity and join/reset cleanup. `tests/callable_instances.php` is included in the
+model runner. No source late-static execution or native compiler proof is claimed.
+
+Proof: 21 PHP-host suites passed in `/tmp/callable-instances-model-20261008-2`;
+the instance suite took 0.57 seconds and the longest suite (`s2s`) 12.72 seconds.
+The shared runner used its expected CLI fallback because sandbox FPM startup failed.
+Final focused imported-name, called-type removal and shared trait-lifecycle checks:
+`/tmp/callable-instances-final-20261008-2` (three suites passed).
+
+Next: coordinator-owned demand materialization and analysis scheduling, then called-type
+selection/forwarding, compatible static redeclarations and backend implementation
+identities. Runtime-called-type propagation through instance methods is separate.
+
 ## Trait composition foundation — 2026-10-08
 
 The user approved simple instance-method/property composition for classes and structs,

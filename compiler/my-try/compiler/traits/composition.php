@@ -43,20 +43,14 @@ final class Trait_Composition
 		$instances /** Storage<trait_instance> */ = $record->trait_instances;
 		if ($instances->is_empty()) { return; }
 		$sources /** Storage<collected_file> */ = new Storage();
+		$parses /** Storage<parsed_file> */ = new Storage();
 		foreach ($instances as $instance) {
-			$instance->collection->deleted = true;
 			$sources->append($instance->collection);
+			$parses->append($instance->parsed);
 		}
-		$worker = new Preparation_Worker($language);
-		$worker->retire_deleted_sources($sources);
-		$worker->invalidate_members($record);
-		foreach ($instances as $instance) { Preparation_Cleanup::tree($instance->parsed->root); }
-		Collection_Retirement::remove_deleted_sources($sources);
-		// Backend fragments retain their deleted owner/source until ordinary eviction;
-		// this private, unpublished source must not retain a source/work self-cycle.
-		foreach ($sources as $source) {
-			$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		}
+		Callable_Instances::retire_sources($sources, $language);
+		Source_Fragments::retire($parses, $language);
+		(new Preparation_Worker($language))->invalidate_members($record);
 		$record->trait_instances = new Storage /** Storage<trait_instance> */();
 	}
 

@@ -17,6 +17,14 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+Original `collected_method` identities own their called-type `callable_instance`
+inventory. Instances own private parsed fragments/working methods; origin, called
+record, captured called scope and working-method context backlinks are weak. The
+working declaration retains the original lexical declaring type, not the called
+type. Private source retirement/reset uses the coordinator protocol shared with
+traits. These instances are not class member lookup entries and are not yet selected
+by source calls; see the [checkpoint and integration plan](../planning/called_type_instances.md).
+
 Consumer-owned `trait_instance` records retain a private parsed fragment and its
 collection (not a second published source), with independent tokens, scopes and
 working members. The consumer backlink is weak. Member origin links preserve

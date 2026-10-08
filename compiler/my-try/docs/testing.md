@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+The model runner also includes `callable_instances.php`: called-type key reuse,
+independent ordinary method preparation, lexical declaring-type preservation,
+private token buffers, no-op identity/output and source-edit/reset retirement.
+Late-static call selection/emission is not enabled by this model-only proof.
+
 The model runner includes `trait_model.php`: trait source identities, simple use
 syntax, lexical spellings, incremental parsing/recovery and automatic composition.
 `trait_instances.php` additionally proves consumer-owned materialization, independent
