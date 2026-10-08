@@ -17,6 +17,15 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+Consumer-owned `trait_instance` records retain a private parsed fragment and its
+collection (not a second published source), with independent tokens, scopes and
+working members. The consumer backlink is weak. Member origin links preserve
+provenance; the private lexical scope observes the trait's source scope, while each
+working method weakly observes the consumer as declaring type. Explicit semantic
+retirement followed by collection disposal works per instance. Automatic selection,
+replacement and reset enumeration remain gated pending composition integration; see
+the [trait plan](../planning/trait_member_instances.md).
+
 `collected_method` weakly observes its `collected_member_owner` through
 `declaring_type()`; member constants use the same optional weak owner role.
 Records and interfaces share that identity contract, not layout. Member scopes and

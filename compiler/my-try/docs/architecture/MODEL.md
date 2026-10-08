@@ -111,8 +111,12 @@ edits cannot leave stale header inheritance. Bare interfaces and classes share t
 `collected_trait` preserves an authored composition source as another member owner,
 with a distinct nominal kind and no value capabilities. Simple `use_traits` syntax
 owns named references, not resolved or cloned members. Consumer-owned independent
-member instances are [approved but not materialized yet](../planning/trait_member_instances.md).
-Execution remains gated rather than attaching consumer-specific facts to origin nodes.
+member instances are [materialized explicitly](../planning/trait_member_instances.md):
+`collected_record::trait_instances` owns private fragment syntax, collection/scopes
+and copied tokens. Each member pairs its origin with an independent working occurrence.
+Source `use` integration/execution remains gated; origin nodes never receive
+consumer-specific facts. The parser only replays supplied member spans; composition
+supplies the consumer and lexical context without adding authored AST membership.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges
 are contracts, not fallback implementations. Concrete records may retain one

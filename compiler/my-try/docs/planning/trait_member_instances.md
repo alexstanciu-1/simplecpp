@@ -40,9 +40,13 @@ consumers would corrupt receiver, access and member-resolution facts.
    nominal source identity. Uses collect ordinary named type references. Reconciliation
    notices use-list edits; source methods retain original trait ownership. Normal
    execution rejects before trait bodies can acquire record receiver/layout facts.
-2. **Pending:** consumer-owned instance storage, independent working syntax/occurrence
-   materialization and source/consumer context separation. Prove two consumers of one
-   trait can prepare independently, without changing origin syntax or facts.
+2. **Implemented:** consumer-owned instance storage and independent working syntax,
+   occurrences and scopes. `Trait_Materialization` reuses the member parser through
+   a private fragment collection and deep-copied token snapshot. Trait-local lexical
+   context and consumer declaring ownership stay separate. Two consumers prepare
+   method signatures/bodies independently through the ordinary worker, without
+   changing origin syntax/facts or authored consumer membership. This is an explicit
+   composition boundary, not yet invoked automatically by source `use` declarations.
 3. **Pending:** observed contributed-member lookup, collisions, ordinary signature/body
    scheduling and C++ artifact enumeration. Reuse member categories and source-callable
    work; no separate trait-method lowering implementation.
@@ -60,3 +64,16 @@ unless implementation exposes a new cross-owner redesign beyond this plan.
 authored consumer inventories, retained method identity, use/body edits, malformed-use
 recovery, removal and fresh parsing. It does not prove consumer instantiation,
 executable traits or native compiler portability.
+
+`tests/trait_instances.php` proves materialization into a class and a struct,
+trait-local imported parameter types, independent receivers/private consumer access,
+property initializer syntax, ordinary signature/body preparation, source-edit-safe
+token snapshots and explicit per-instance semantic/frontend retirement. Property
+layout/default preparation and automatic use/edit/removal reconciliation remain
+checkpoints 3–4. Private collections are not published as additional source files.
+
+The initial snapshot copies the full origin token buffer per instance, preserving
+all retained indexes without AST clone dispatch or source-text regeneration. A compact
+shared immutable provenance buffer is a later optimization, not a reason to share
+mutable token rows. Live instances must be retired before their origin lexical
+environment is disposed; automatic lifecycle integration remains gated.

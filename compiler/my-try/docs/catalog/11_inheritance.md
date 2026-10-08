@@ -28,12 +28,20 @@ identity without granting record layout or handle capabilities. Methods retain t
 original trait owner; uses do not flatten members into authored consumers. Parsing
 tracks use-list edits and rejects adaptation/trailing-comma forms.
 
-Execution remains gated before source trait bodies acquire preparation state. Instance
-materialization, consumer-specific preparation/lifecycle and emission are **not yet
-implemented**. Next: implement those approved consumer-owned member instances.
+The second checkpoint materializes consumer-owned members through the shared parser
+and proves independent method preparation for class and struct consumers, using
+trait-local imports and consumer receiver/access context. Private token snapshots
+preserve source spans; authored trait/consumer membership remains unchanged.
+Source `use` execution remains gated. Next: contributed lookup/collisions, normal
+scheduling and artifact enumeration, then automatic lifecycle integration.
 
 Proof: all 18 PHP-host model suites passed, including trait syntax/identity,
 use/body edits, malformed-use recovery and removal; `/tmp/trait-model-20261008-1`.
+Materialization checkpoint: all 19 PHP-host model suites passed in
+`/tmp/trait-instances-20261008-3`; final atomic-failure/retirement probe passed in
+`/tmp/trait-instance-focused-2`. The focused instance suite took 0.34 seconds in the
+model run; the longest suite (`s2s`) took 12.55 seconds. FPM was unavailable in the
+sandbox, so the shared runner used its CLI fallback.
 No generated trait program or native compiler build is claimed by this checkpoint.
 
 ## Interface handles and calls — 2026-10-08

@@ -276,6 +276,15 @@ abstract class collected_member_owner extends collected_type_definition
 
 final class collected_record extends collected_member_owner
 {
+	/** Composition-owned working members, never authored AST membership. @storage.owner */
+	public Storage $trait_instances /** Storage<trait_instance> */;
+
+	public function __construct(collected_file $collection, type_declaration_node $node)
+	{
+		parent::__construct($collection, $node);
+		$this->trait_instances = new Storage /** Storage<trait_instance> */();
+	}
+
 	public function kind(): collected_name_kind
 	{
 		return collected_name_kind::record_declaration;

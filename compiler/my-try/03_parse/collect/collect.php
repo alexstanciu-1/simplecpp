@@ -149,12 +149,12 @@ final class Symbol_Collector
 	}
 
 	/** Member registration shares retained identities but never namespace publication. */
-	public function collect_method(method_node $node, collected_member_owner $record, int $index): void
+	public function collect_method(method_node $node, collected_member_owner $record, int $index, ?scope $registration_scope = null): void
 	{
 		if ($this->reuse($node, $index)) { return; }
 		$entry = new collected_method($this->collection, $node, $record);
 		$entry->retained_symbol = true;
-		$member_scope = $record->syntax()->member_scope();
+		$member_scope = $registration_scope ?? $record->syntax()->member_scope();
 		$this->append($entry, $member_scope, $node->name, $index);
 		$member_scope->register($entry);
 	}

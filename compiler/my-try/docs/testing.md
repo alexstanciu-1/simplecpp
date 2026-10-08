@@ -3,7 +3,9 @@ Doc Status: supporting
 
 The model runner includes `trait_model.php`: trait source identities, simple use
 syntax, lexical spellings, incremental parsing/recovery and the execution gate.
-It does not yet prove consumer-owned instance materialization or executable traits.
+`trait_instances.php` additionally proves consumer-owned materialization, independent
+ordinary method preparation, lexical imports, class/struct receivers, token snapshots
+and explicit retirement. These checks do not yet prove executable source trait uses.
 
 `python3 compiler/my-try/tests/records.py --suite interface_handles --no-pch --results FRESH`
 checks interface shared storage/upcasts, static-contract defaults, abstract-body

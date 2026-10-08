@@ -167,6 +167,40 @@ final class Parser_Run
 		return $this->parsed;
 	}
 
+	/** Reparse selected member spans into a private collection; the caller supplies ownership, not name resolution. */
+	public function parse_member_fragments(collected_record $consumer, Storage $origins /** Storage<declaration_node> */): parsed_file
+	{
+		$this->current_scope = $this->source_scope;
+		$this->retain_scope($this->source_scope);
+		$root = $this->parsed->root;
+		$body = $root->single_body();
+		$declarations /** Storage<declaration_node> */ = $body->declarations;
+		foreach ($origins as $origin) {
+			$this->position = $origin->start_token();
+			$member /** declaration_node */;
+			if ($origin instanceof method_node) {
+				$modifiers = $this->member_modifiers();
+				$member = $this->callable_declaration($consumer, $modifiers, $origin->start_token(), $this->source_scope);
+			}
+			elseif ($origin instanceof property_node) {
+				$member = $this->field_declaration($this->source_scope);
+			}
+			else { throw new \LogicException('Member fragment requires a method or property origin'); }
+			if ($this->position !== $origin->end_token()) {
+				throw new \LogicException('Member fragment did not consume its complete source span');
+			}
+			$declarations->append($member);
+		}
+		$root->set_span($this->tokens->first_token, $this->tokens->end_token);
+		$body->set_span($root->start_token(), $root->end_token());
+		$body->body->set_span($root->start_token(), $root->start_token());
+		$this->collector->finish($root);
+		$this->parsed->scopes = $this->scopes;
+		$this->parsed->complete = true;
+		$this->parsed->collection->parse_complete = true;
+		return $this->parsed;
+	}
+
 	/** Namespace occurrences share one body parser and retain identities by path and occurrence order. */
 	public function parse(): parsed_file
 	{
@@ -1171,7 +1205,7 @@ final class Parser_Run
 	}
 
 	/** Reconcile callable signatures and bodies identically for namespace functions and members. */
-	private function callable_declaration(?collected_member_owner $record, array $modifiers /** vector<declaration_modifier> */, int $source_start): callable_declaration_node
+	private function callable_declaration(?collected_member_owner $record, array $modifiers /** vector<declaration_modifier> */, int $source_start, ?scope $registration_scope = null): callable_declaration_node
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
 		if ($this->current_scope->is_function()) {
@@ -1227,7 +1261,7 @@ final class Parser_Run
 			else { $function = $previous; }
 		}
 		else {
-			$declaration_scope = $record->syntax()->member_scope();
+			$declaration_scope = $registration_scope ?? $record->syntax()->member_scope();
 			$previous = $this->collector->previous_method($declaration_scope, $function_name);
 			if ($previous === null) { $function = new method_node(); }
 			else { $function = $previous; }
@@ -1255,7 +1289,7 @@ final class Parser_Run
 			$this->collector->collect_function(object_cast($function, function_node::class), $declaration_scope, $name_token_index);
 		}
 		else {
-			$this->collector->collect_method(object_cast($function, method_node::class), $record, $name_token_index);
+			$this->collector->collect_method(object_cast($function, method_node::class), $record, $name_token_index, $declaration_scope);
 		}
 		$local_scope = $function->signature_scope();
 		$local_scope->set_parent($declaration_scope);
