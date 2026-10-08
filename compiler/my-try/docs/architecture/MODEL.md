@@ -186,6 +186,15 @@ Concrete call signatures describe runtime parameters only. No dummy string/value
 parameter or general reflection type is manufactured for compile-time inputs.
 
 `callable_signature` and `callable_parameter` have no source-storage links.
+
+Shared upcast conversion decisions retain canonical source/target types and a named
+operation, never a worker or ancestry cache. The optional transient
+`conversion_relationship_query` is supplied by storage-boundary preparation;
+`Conversion_Relationships` observes the existing relationship work through the
+consumer's preparation context. Pure scalar conversion callers need no such query.
+Without one, nonidentity ancestry conversions remain rejected. C++ consumes the
+decision and requires complete source/target headers for the runtime conversion.
+
 Parameter `storage_access` is independent of `passing_mode` and canonical type
 identity. Syntax records explicit const access; declaration preparation publishes it
 in the shared parameter contract and signature equivalence observes changes.

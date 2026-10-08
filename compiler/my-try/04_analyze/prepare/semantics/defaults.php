@@ -18,7 +18,8 @@ final class Property_Defaults
 			if ($type === null) { $type = $value->type; }
 			$default_facts = new prepared_construction_property_default();
 			$default_facts->construction = $construction;
-			$default_facts->conversion = Conversion_Preparation::decide($value->type, $type, conversion_context::assignment);
+			$default_facts->conversion = Conversion_Preparation::decide($value->type, $type, conversion_context::assignment,
+				new Conversion_Relationships($context));
 			return $default_facts;
 		}
 		$facts = new prepared_constant_property_default();

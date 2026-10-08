@@ -125,4 +125,7 @@ and its bounded class/struct execution are implemented. The subsequent interface
 reuses that owner for public instance contracts and inherited forwarding decisions,
 without record layout or synthetic source bodies. Virtual interface bases support
 diamonds; new forwarding of final virtual inherited methods is explicitly rejected
-and tracked in CH11. Interface-typed values/upcasts remain the next discussion.
+and tracked in CH11. The interface-handle/shared-upcast group is now agreed.
+Its dependency-aware conversion prerequisite and shared derived/base checkpoint
+landed on 2026-10-08; interface-handle admission, calls and abstract-body lookup
+remain the next implementation checkpoint, with reference-cycle integration.

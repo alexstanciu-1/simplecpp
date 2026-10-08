@@ -59,7 +59,8 @@ final class Iteration_Preparation
 			$binding->declaration = $existing[0]->declaration;
 			$binding->resolved_kind = binding_kind::assignment;
 		}
-		$binding->conversion = Conversion_Preparation::decide($source, $binding->type, conversion_context::assignment);
+		$binding->conversion = Conversion_Preparation::decide($source, $binding->type, conversion_context::assignment,
+			new Conversion_Relationships($context));
 		Capability_Preparation::require_copy($source, $context);
 		Capability_Preparation::require_copy($binding->type, $context);
 		Type_Preparation::require_value_type($binding->type);

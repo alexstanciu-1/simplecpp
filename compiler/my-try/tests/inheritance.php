@@ -92,7 +92,6 @@ foreach ([
 	['class C { function get(): int { return parent::read(); } }', 'concrete base'],
 	['data class B { int $n; } data class C extends B {}', 'Inherited data'],
 	['struct B { unique<int> $p; } struct C extends B {} $c = new C(); $d = $c;', 'copyable_value'],
-	['class B {} class C extends B {} function use_base(B $b): int { return 1; } $c = new C(); return use_base($c);', 'matching handles'],
 ] as [$source, $message]) {
 	try { inheritance_source($source); throw new \LogicException('Expected rejection: ' . $message); }
 	catch (\RuntimeException $error) {

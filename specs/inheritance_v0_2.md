@@ -3,7 +3,7 @@ Doc Status: normative
 
 This bounded contract covers class-to-class and struct-to-struct single inheritance.
 It extends the CH10 member contracts with abstract methods and interface implementation.
-Interface-typed values and source-level derived/base conversions remain deferred. Availability and evidence
+Interface-typed values remain deferred; shared derived/base upcasts are enabled below. Availability and evidence
 are tracked in [CH11](../compiler/my-try/docs/catalog/11_inheritance.md).
 
 ## Layout and lookup
@@ -169,6 +169,25 @@ struct or implicitly allocate/box it as an interface value.
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Interface-typed values/conversions, nonvirtual member hiding,
-inherited data inputs, late-bound `static::`, derived/base
-assignment/argument/return conversions and non-public/abstract constructor contracts remain
+inherited data inputs, late-bound `static::`, non-shared derived/base
+conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
+
+## Shared derived/base upcasts
+
+An existing shared derived handle may implicitly convert to a shared handle of a
+proven base at a typed assignment, by-value argument or value-return boundary.
+Bare classes use their ordinary shared representation; explicitly shared structs
+use the same conversion path. The conversion shares the existing object/control
+block, preserves absence and never copies, slices or boxes the payload. It does not
+make ordinary methods virtual: calls still follow the existing dispatch contract.
+
+The same per-value boundary applies to property assignment, data inputs, individual
+typed-container elements and assignment into a reused foreach variable. This does
+not convert a whole `vector<Derived>` into `vector<Base>` or widen another mutable
+container's element type.
+
+Reference parameters (including read-only references), aliases and reference returns
+retain exact storage-type requirements. No implicit downcasts, inline-record base
+copies, unique/weak upcasts, wrapper-payload conversions or new conditional joins
+are enabled by this slice. Interface handle admission follows separately.

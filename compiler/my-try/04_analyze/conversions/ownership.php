@@ -32,9 +32,9 @@ final class Ownership_Conversions
 		}
 	}
 
-	/** Null construction is not copying; other ownership-changing conversions remain gated. */
+	/** Shared upcasts preserve ownership; unique/weak conversions remain gated. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
-		conversion_context $context): conversion_decision
+		conversion_context $context, ?conversion_relationship_query $relationships = null): conversion_decision
 	{
 		if ($source->matches($target)) {
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
@@ -44,6 +44,18 @@ final class Ownership_Conversions
 				return Conversion_Preparation::operation($source, $target, $context, conversion_operation::ownership_empty);
 			}
 		}
-		throw new \RuntimeException('S2S ownership boundary requires matching handles or null storage initialization/assignment');
+		$source_role = self::role($source);
+		$target_role = self::role($target);
+		if (($source_role !== null) && ($target_role !== null) && ($relationships !== null)) {
+			if (($source_role->ownership_family() === ownership_kind::shared)
+				&& ($target_role->ownership_family() === ownership_kind::shared)
+				&& (($context === conversion_context::assignment) || ($context === conversion_context::argument)
+					|| ($context === conversion_context::return_value))) {
+				if ($relationships->is_subtype(self::payload($source), self::payload($target))) {
+					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::shared_upcast);
+				}
+			}
+		}
+		throw new \RuntimeException('S2S ownership boundary requires matching handles, a proven shared upcast, or null storage initialization/assignment');
 	}
 }

@@ -7,7 +7,7 @@ final class Conversion_Preparation
 {
 	/** Exact canonical identity precedes target-family conversion policy. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
-		conversion_context $context): conversion_decision
+		conversion_context $context, ?conversion_relationship_query $relationships = null): conversion_decision
 	{
 		Type_Preparation::require_value_type($target);
 		if (($context === conversion_context::initializer_key) || ($context === conversion_context::container_element)) {
@@ -15,7 +15,7 @@ final class Conversion_Preparation
 				return Boxed_Conversions::container_input($source, $target, $context);
 			}
 			// Ordinary typed input follows the same boundaries as a by-value argument.
-			$input = self::decide($source, $target, conversion_context::argument);
+			$input = self::decide($source, $target, conversion_context::argument, $relationships);
 			$input->context = $context;
 			return $input;
 		}
@@ -30,7 +30,7 @@ final class Conversion_Preparation
 			throw new \RuntimeException('S2S explicit cast target is not supported');
 		}
 		if ((Ownership_Conversions::role($source) !== null) || (Ownership_Conversions::role($target) !== null)) {
-			return Ownership_Conversions::decide($source, $target, $context);
+			return Ownership_Conversions::decide($source, $target, $context, $relationships);
 		}
 		if ((Result_Conversions::role($source) !== null) || (Result_Conversions::role($target) !== null)) {
 			return Result_Conversions::decide($source, $target, $context);

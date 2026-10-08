@@ -39,6 +39,7 @@ become inherited lookup caches.
 | File | Responsibility |
 | --- | --- |
 | `../conversions/` | Backend-neutral conversion decisions, central routing and target-family policies |
+| `semantics/conversion_relationships.php` | Transient dependency-aware ancestry query for shared upcasts; no registry cache or retained worker |
 | `worker.php` | Select/order work, require prerequisites, maintain dependencies, compare/settle results and handle failures |
 | `lookup.php` | Analysis-owned observed lexical lookup across independent type/function/constant pools |
 | `file.php` | Standalone file-entry adapter |

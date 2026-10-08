@@ -12,7 +12,32 @@ non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_f
 records those boundaries and the approved shared member-owner prerequisite.
 That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance, abstract/override dispatch and interface implementations now
-execute. Interface-typed values and derived/base conversions remain gated.
+execute. Shared derived/base upcasts are enabled; interface-typed values remain gated.
+
+## Dependency-aware shared upcasts — 2026-10-08
+
+First checkpoint of the agreed interface-handle group: conversion preparation accepts
+a transient `conversion_relationship_query`. Its analysis-owned implementation observes
+source ancestry through relationship work, including failed searches; no cached registry
+answer, retained worker, backend lookup or second hierarchy is introduced. Conversion
+facts retain only the selected `shared_upcast` operation and canonical types.
+
+Bare-class and explicitly shared-struct derived/base boundaries now execute through
+one path for assignments, by-value function/method arguments and returns, properties,
+data inputs and individual container elements. Reference storage stays invariant;
+downcasts, boxing, unique/weak conversions and whole-container conversions reject.
+C++ constructs the target shared handle using existing runtime support and records
+complete source/target header requirements. No runtime change or native compiler rebuild.
+
+Proof: 16 generated programs without PCH, including cross-file ancestry removal,
+failure/retry/repair and fresh/incremental agreement for unchanged assignment, argument
+and return consumers. Also passed: 51 generated inheritance regressions and 17
+PHP-host model suites. Evidence: `/tmp/shared-upcasts-20261008-final`,
+`/tmp/shared-upcasts-inheritance-20261008-2`, `/tmp/shared-upcasts-model-20261008-1`.
+
+Next checkpoint (already agreed): interface-handle admission and calls, including
+abstract-body interface requirement lookup and reference-return cycle integration.
+The interface-value and abstract-body gates below remain accurate until that lands.
 
 ## Interface contracts and inherited implementations — 2026-10-07
 

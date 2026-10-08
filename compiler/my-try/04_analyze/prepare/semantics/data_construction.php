@@ -70,7 +70,8 @@ final class Data_Construction_Preparation
 			$facts->key_conversion = Conversion_Preparation::decide($key->type, $key_type, conversion_context::initializer_key);
 		}
 		$value = Expression_Preparation::prepare($entry->value, $context, $binding->nested_target());
-		$facts->value_conversion = Conversion_Preparation::decide($value->type, $binding->value(), conversion_context::container_element);
+		$facts->value_conversion = Conversion_Preparation::decide($value->type, $binding->value(), conversion_context::container_element,
+			new Conversion_Relationships($context));
 		$entry->set_preparation($facts);
 	}
 }
@@ -120,7 +121,8 @@ final class Record_Construction_Preparation
 			$value = Expression_Preparation::prepare_for_consumer($entry->value, $context, $field->type, expression_consumer::value);
 			$entry_facts = new prepared_data_entry();
 			$entry_facts->input_position = $positions[$key];
-			$entry_facts->value_conversion = Conversion_Preparation::decide($value->type, $field->type, conversion_context::argument);
+			$entry_facts->value_conversion = Conversion_Preparation::decide($value->type, $field->type, conversion_context::argument,
+				new Conversion_Relationships($context));
 			// Both admitted forms materialize a private input value; lowering then moves that
 			// temporary, never the original source storage, into the generated constructor.
 			Value_Boundary_Preparation::decide_value($field->type, $entry_facts->value_conversion, $context, $value);

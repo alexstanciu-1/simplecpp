@@ -26,6 +26,7 @@ enum conversion_operation
 	case text_conversion;
 	case nullable_empty;
 	case ownership_empty;
+	case shared_upcast;
 	case nullable_wrap;
 	case nullable_extract;
 	case result_wrap;
@@ -34,6 +35,12 @@ enum conversion_operation
 	case result_extract;
 	case boxed_wrap;
 	case boxed_extract;
+}
+
+/** Transient analysis query; conversion facts never retain its worker or context. */
+interface conversion_relationship_query
+{
+	public function is_subtype(canonical_type_use $source, canonical_type_use $target): bool;
 }
 
 /** Retained semantic result of comparing one produced value with its consumer. */

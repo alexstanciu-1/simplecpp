@@ -118,7 +118,8 @@ final class Indexing_Preparation
 			$value = Expression_Preparation::prepare($assignment->value, $context, $signature->nested);
 			$facts->type = $signature->value;
 			$facts->decision = $decision;
-			$facts->value_conversion = Conversion_Preparation::decide($value->type, $signature->value, conversion_context::container_element);
+			$facts->value_conversion = Conversion_Preparation::decide($value->type, $signature->value, conversion_context::container_element,
+				new Conversion_Relationships($context));
 			return $facts;
 		}
 		finally {

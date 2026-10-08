@@ -199,7 +199,7 @@ final class Body_Preparation
 				|| ($binding->resolved_kind === binding_kind::assignment);
 			if ($has_expected_type) {
 				$binding->conversion = Conversion_Preparation::decide(
-					$value->type, $binding->type, conversion_context::assignment);
+					$value->type, $binding->type, conversion_context::assignment, new Conversion_Relationships($context));
 			}
 		}
 		Type_Preparation::require_value_type($binding->type);
@@ -264,7 +264,7 @@ final class Body_Preparation
 		if ($context->return_type !== null) {
 			$type /** canonical_type_use */ = $context->return_type;
 			$facts->conversion = Conversion_Preparation::decide(
-				$value->type, $type, conversion_context::return_value);
+				$value->type, $type, conversion_context::return_value, new Conversion_Relationships($context));
 			if (Type_Queries::canonical($type)->family() !== type_family::no_value) {
 				$facts->boundary = Value_Boundary_Preparation::decide_value($type, $facts->conversion, $context, $value);
 			}

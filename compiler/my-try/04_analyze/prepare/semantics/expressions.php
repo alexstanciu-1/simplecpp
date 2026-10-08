@@ -215,7 +215,7 @@ final class Expression_Preparation
 		$binding->declaration = $field->declaration;
 		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(
-			$value->type, $binding->type, conversion_context::assignment);
+			$value->type, $binding->type, conversion_context::assignment, new Conversion_Relationships($context));
 		// Field ownership transfer remains outside the whole-storage boundary slice.
 		if ($value->value_origin === expression_value_origin::owned_call_result) {
 			throw new \RuntimeException('S2S consuming ownership into fields is deferred');

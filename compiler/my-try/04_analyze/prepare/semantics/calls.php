@@ -147,7 +147,7 @@ final class Call_Preparation
 			$prepared_argument->source_index = $index;
 			if ($parameter->mode === passing_mode::value) {
 				$prepared_argument->conversion = Conversion_Preparation::decide(
-					$value->type, $argument_type, conversion_context::argument);
+					$value->type, $argument_type, conversion_context::argument, new Conversion_Relationships($context));
 			}
 			$prepared_argument->boundary = Value_Boundary_Preparation::decide(
 				$argument_type, $prepared_argument->conversion, $context, $value, $parameter->mode, $parameter->access);

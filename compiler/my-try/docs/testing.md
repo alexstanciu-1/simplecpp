@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite shared_upcasts --no-pch --results FRESH`
+checks shared derived/base identity, absence, cleanup, typed boundaries and exact
+reference restrictions, including cross-file ancestry edits/retry/repair. This is
+generated-program execution, not a native compiler rebuild.
+
 `python3 compiler/my-try/tests/records.py --suite interfaces --results FRESH`
 checks interface contracts and inherited forwarding for classes/structs, native dispatch
 and cleanup through interface views, invalid signatures/finality, and incremental
