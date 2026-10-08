@@ -8,6 +8,33 @@ final class Trait_Preparation
 	public static function targets(collected_record $consumer): Storage /** Storage<collected_trait> */
 	{
 		$result /** Storage<collected_trait> */ = new Storage();
+		$active /** hash<bool, shared<collected_trait>> */ = new \SplObjectStorage();
+		$visited /** hash<bool, shared<collected_trait>> */ = new \SplObjectStorage();
+		foreach (self::direct_targets($consumer) as $trait) {
+			self::expand($trait, $result, $active, $visited);
+		}
+		return $result;
+	}
+
+	/** Stable depth-first source order; identity deduplication never hides a cycle. */
+	private static function expand(collected_trait $trait, Storage $result /** Storage<collected_trait> */,
+		\SplObjectStorage $active /** hash<bool, shared<collected_trait>> */,
+		\SplObjectStorage $visited /** hash<bool, shared<collected_trait>> */): void
+	{
+		if (isset($active[$trait])) { throw new \RuntimeException('Trait use cycle: ' . $trait->name); }
+		if (isset($visited[$trait])) { return; }
+		self::source($trait);
+		$active[$trait] = true;
+		$result->append($trait);
+		foreach (self::direct_targets($trait) as $nested) { self::expand($nested, $result, $active, $visited); }
+		unset($active[$trait]);
+		$visited[$trait] = true;
+	}
+
+	/** Each use list resolves in its own author's lexical environment. */
+	private static function direct_targets(collected_member_owner $consumer): Storage /** Storage<collected_trait> */
+	{
+		$result /** Storage<collected_trait> */ = new Storage();
 		$uses /** Storage<trait_use_node> */ = $consumer->syntax()->use_traits;
 		foreach ($uses as $use) {
 			$names /** Storage<named_type_node> */ = $use->traits;
@@ -31,13 +58,12 @@ final class Trait_Preparation
 	public static function source(collected_trait $trait): void
 	{
 		$syntax = $trait->syntax();
-		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		$constants /** Storage<member_constant_node> */ = $syntax->constants;
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
 		$implemented /** Storage<named_type_node> */ = $syntax->implemented_interfaces;
-		if (!$uses->is_empty() || !$extended->is_empty() || !$implemented->is_empty()
+		if (!$extended->is_empty() || !$implemented->is_empty()
 			|| ($syntax->base_class !== null) || (q_count($syntax->modifiers) !== 0)) {
-			throw new \RuntimeException('Trait source supports only direct properties, methods and constants');
+			throw new \RuntimeException('Trait source supports properties, methods, constants and simple trait uses');
 		}
 		$properties /** Storage<property_node> */ = $syntax->properties;
 		$methods /** Storage<method_node> */ = $syntax->methods;

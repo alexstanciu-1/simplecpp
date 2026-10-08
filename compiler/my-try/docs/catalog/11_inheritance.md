@@ -40,7 +40,7 @@ Remaining extensions require agreement, not another implementation of completed 
 2. Additional ownership conversions/joins: unique ancestry, interface weak handles,
    checked downcasts, derived/base or sibling conditional joins; shared and class/struct
    weak upcasts already work.
-3. Trait extensions: nested uses, adaptations, lifecycle members and bodyless requirements. Static members
+3. Trait extensions: adaptations, lifecycle members and bodyless requirements. Nested uses, static members
    and constants now share the existing consumer-owned path below.
 4. Other explicit bounds: abstract constructor contracts, non-public
    destructors, variance/covariant returns, interface-qualified static dispatch and the
@@ -60,6 +60,27 @@ Verification: the checkpoints record PHP-host and generated-C++ proofs. The late
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Nested trait uses — 2026-10-08
+
+Nested uses now expand through an analysis-owned, source-ordered traversal. Active-path
+cycles reject; repeated origins reached through different paths contribute once per
+consumer. Direct duplicate uses still reject. Materialization and lifecycle remain
+consumer-owned, preserving each originating trait's namespace/imports. Intermediate
+origins remain in the batch so their use-list edits participate in existing retirement.
+No retained graph, copied inherited inventory or trait-specific backend was introduced.
+
+Proof: 34 generated C++ programs without PCH in `/tmp/nested-traits-20261008-1`, plus
+six focused PHP suites in `/tmp/nested-traits-regression-2`. Includes diamonds, static
+storage, lexical provenance, nested-origin/use removal, cycle failure/retry/repair,
+reset and fresh agreement. No native compiler rebuild.
+
+Abstract trait requirements are semantically agreed but not yet enabled. Inspection
+found that ordinary inventories treat a requirement and its implementation as duplicate
+methods across layout, lookup, contract preparation and backend emission. The
+[proposed requirement/implementation separation](../planning/trait_member_instances.md#abstract-requirement-prerequisite--needs-implementation-approval)
+needs confirmation before a coordinated cross-owner refactor. Adaptations and lifecycle
+members remain deferred; this checkpoint does not claim the whole agreed group complete.
 
 ## Constructor visibility — 2026-10-08
 
@@ -584,7 +605,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLASS-INH-001](#class-inh-001) | implemented-bounded | `class B extends A {}` | verified | verified | deferred | Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07) |
 | [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations; final-virtual forwarding restriction |
-| [CLASS-INH-003](#class-inh-003) | implemented-bounded | `class A { use T; }` | instance/static members and constants | verified | deferred | Independent consumer members/storage; edits/retry/reset; adaptations/nested/lifecycle/requirements deferred |
+| [CLASS-INH-003](#class-inh-003) | implemented-bounded | `class A { use T; }` | nested uses; instance/static members and constants | verified | deferred | Independent consumer members/storage; edits/retry/reset; adaptations/lifecycle/requirements deferred |
 | [CLASS-INH-004](#class-inh-004) | implemented-bounded | `interface I { function f(int $a): int; }` | verified | verified | deferred | Public bodyless instance contracts; multiple interface inheritance |
 | [CLASS-INH-006](#class-inh-006) | implemented-bounded | `$a = new A(1);` | verified | verified | deferred | Shared class construction; checked constructor arguments; inherited constructors reuse original contract |
 | [CLASS-INH-007](#class-inh-007) | superseded-contract | `$a value<A> = new A(1);` | verified | representation verified | deferred | C++-style source spelling is not PHS; explicit inline class storage is intentionally supported by CH10 |

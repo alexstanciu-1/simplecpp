@@ -35,6 +35,9 @@ foreach ([
 foreach (['class', 'struct'] as $kind) {
 	$counter = 'trait T { public static int $count = 0; public static function next(): int { self::$count += 1; return self::$count; } } ';
 	foreach ([
+		'nested_diamond' => [$counter . 'trait Left { use T; } trait Right { use T; } trait Both { use Left, Right; } ' . $kind . ' A { use Both, T; } A::next(); return A::next();', 2],
+		'nested_instance' => [$base . 'trait Outer { use Counter; } ' . $kind . ' A { use Outer; } $a = new A(); return $a->next();', 5],
+		'nested_lexical' => ['namespace origin; const N = 9; trait T { function read(): int { return N; } } namespace middle; use origin\\T as Inner; trait Outer { use Inner; } namespace app; const N = 1; ' . $kind . ' A { use \\middle\\Outer; } $a = new A(); return $a->read();', 9],
 		'static_consumers' => [$counter . $kind . ' A { use T; } ' . $kind . ' B { use T; } A::next(); A::next(); B::next(); $a = A::$count; $b = B::$count; return $a * 10 + $b;', 21],
 		'static_inherited' => [$counter . $kind . ' A { use T; } ' . $kind . ' B extends A {} B::next(); A::next(); return B::$count;', 2],
 		'static_dispatch' => ['trait T { static function run(): int { return static::pick(); } static function pick(): int { return 2; } } ' . $kind . ' A { use T; } ' . $kind . ' B extends A { static function pick(): int { return 9; } } return B::run();', 9],
@@ -53,7 +56,10 @@ foreach ([
 	['class Other {} class A { use Other; }', 'trait target'],
 	['class A { use int; }', 'trait target'],
 	['class A { use Unknown; }', 'unambiguous target'],
-	['trait T { use U; } trait U {} class A { use T; }', 'direct properties'],
+	['trait T { use U; } trait U { use T; } class A { use T; }', 'Trait use cycle'],
+	['trait T { use T; } class A { use T; }', 'Trait use cycle'],
+	['trait T { use Missing; } class A { use T; }', 'unambiguous target'],
+	['trait T { const N = 1; } trait U { const N = 2; } trait Outer { use T,U; } class A { use Outer; }', 'duplicate constant'],
 	['trait T { const N = 1; } class A { use T; const N = 2; }', 'duplicate constant'],
 	['trait T { const N = 1; } trait U { const N = 2; } class A { use T,U; }', 'duplicate constant'],
 	['trait T { const N = 1; } class A { const N = 2; } class B extends A { use T; }', 'redeclaration'],
@@ -70,7 +76,7 @@ $directory = sys_get_temp_dir() . '/traits-lifecycle-' . bin2hex(random_bytes(6)
 $origin_path = $directory . '/trait.phs'; $consumer_path = $directory . '/consumer.phs'; $main_path = $directory . '/main.phs';
 try {
 	$origin = 'namespace feature; trait T { private int $number = 4; public function read(): int { return $this->number; } }';
-	$consumer = 'namespace app; use feature\\T as Shared; class A { use Shared; }';
+	$consumer = 'namespace app; use feature\\T as Shared; trait Outer { use Shared; } class A { use Outer; }';
 	file_put_contents($origin_path, $origin); file_put_contents($consumer_path, $consumer);
 	file_put_contents($main_path, '$a = new \\app\\A(); return $a->read();');
 	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
@@ -95,7 +101,9 @@ try {
 		traits_check($owner->source !== $instance->collection, 'Retired instance retained a backend fragment');
 	}
 	traits_export('edited_default', native_record_export(), 8); $edited = CPP_Output::encode(Model::$cpp_files);
-	foreach ([[$consumer_path, 'namespace app; class A {}', $consumer], [$origin_path, '', str_replace('= 4', '= 8', $origin)]] as [$path, $invalid, $valid]) {
+	foreach ([[$consumer_path, 'namespace app; class A {}', $consumer],
+		[$consumer_path, str_replace('use Shared;', 'use Outer;', $consumer), $consumer],
+		[$origin_path, '', str_replace('= 4', '= 8', $origin)]] as [$path, $invalid, $valid]) {
 		file_put_contents($path, $invalid);
 		foreach ([[$path], []] as $changes) {
 			try { $compiler->update_cpp($changes); throw new \LogicException('Broken use/member survived retry'); }

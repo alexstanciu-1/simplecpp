@@ -223,9 +223,18 @@ struct or implicitly allocate/box it as an interface value.
 
 ## Trait composition
 
-Classes and structs may compose direct traits using `use T, U;` in their member
+Classes, structs and traits may compose traits using `use T, U;` in their member
 body. Trait names follow the consumer's normal lexical namespace/import lookup.
 Each target must resolve unambiguously to a trait; duplicate use is rejected.
+
+For a consuming class/struct, resolve nested uses in each originating trait's lexical
+environment. Reject reachable use cycles and repeated direct targets in one owner's
+use lists. Reaching the same originating trait through different paths contributes
+its members once to that consumer. Traverse owners before their nested uses, in source
+order, retaining the first occurrence; distinct originating declarations still obey
+the ordinary collision rules. Each final consumer owns its independent working members
+and static storage, with original lexical provenance. No intermediate trait becomes
+a runtime base or member-storage owner. Unused trait graphs are resolved when consumed.
 
 This bounded slice admits explicitly typed instance/static properties, concrete ordinary
 instance/static methods and member constants under their ordinary contracts. Each consumer owns independent working
@@ -255,7 +264,7 @@ remain those of the trait source; member constants require qualification. Trait 
 themselves are not static-call or static-storage targets. Existing inherited collision,
 compatible static redeclaration and finality rules remain in force.
 
-Nested trait uses, adaptations/aliases, trait lifecycle methods and bodyless trait
+Adaptations/aliases, trait lifecycle methods and bodyless trait
 requirements remain deferred. This v0.2 contract
 supersedes the legacy blanket rejection of trait syntax, not the deferred extensions.
 

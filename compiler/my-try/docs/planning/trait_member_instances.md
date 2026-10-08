@@ -6,8 +6,33 @@ Doc Status: planning
 Traits contribute ordinary instance/static methods, explicitly typed instance/static properties and constants
 to classes and structs through simple `use A, B;` declarations. Reject same-category
 collisions, including authored consumer methods replacing contributed methods.
-Property/method/constant names remain separate categories. Nested uses, adaptations,
+Property/method/constant names remain separate categories. Adaptations,
 lifecycle methods and bodyless requirements remain outside the execution slice.
+
+Nested use is now resolved by an analysis-owned transient DFS, before materialization.
+It rejects active-path cycles, deduplicates visited origin identities across paths and
+retains each intermediate origin in the consumer batch, even when it has no members.
+Thus existing snapshot retirement also observes intermediate use/import edits. Each
+origin still materializes directly into the final consumer, using its original scope.
+
+## Abstract requirement prerequisite — needs implementation approval
+
+The user approved the semantics: authored, inherited or contributed instance methods
+may satisfy a trait requirement; abstract consumers may retain unresolved obligations.
+The current ordinary-method inventory cannot represent a requirement alongside its
+same-named implementation: layout, lookup, type contracts and backend enumeration all
+currently treat it as another declaration. Simply relaxing collision checks would
+leave ambiguous calls or duplicate generated declarations.
+
+Proposed coordinated repair: preserve consumer-owned requirement syntax/signature work,
+but expose requirements separately from effective implementation lookup/emission. Type
+contracts validate all obligations using shared signature/access rules, retain unresolved
+abstract slots and select implementations without rewriting authored membership. Carry
+those decisions through inherited lookup, reference-return cycle analysis and C++
+enumeration. Test authored/contributed/inherited satisfaction, conflicting signatures,
+abstract propagation, reference returns and edit/removal/retry/fresh equivalence.
+Do not silently discard requirements or pretend they are interface bases. This cross-owner
+prerequisite remains pending; nested uses do not enable bodyless trait methods.
 
 The user approved consumer-owned instances after inspection established that one
 source method owns one declaring type, prepared signature and prepared body, and
