@@ -673,6 +673,8 @@ final class reference_cycle_vertex
 final class preparation_context
 {
 	public ?collected_member_owner $member_owner = null;
+	/** Concrete implementation context, independent of lexical access/receiver ownership. */
+	public ?collected_record $called_type = null;
 	public ?prepared_receiver $receiver = null;
 	public Preparation_Worker $worker;
 	public preparation_owner $owner;

@@ -4,6 +4,8 @@ Doc Status: supporting
 The model runner also includes `callable_instances.php`: called-type key reuse,
 independent ordinary method preparation, lexical declaring-type preservation,
 private token buffers, no-op identity/output and source-edit/reset retirement.
+It now uses ordinary compiler preparation to prove private-body scheduling, no-op
+version stability, third-file dependency changes and retained failure/retry/repair.
 Late-static call selection/emission is not enabled by this model-only proof.
 
 The model runner includes `trait_model.php`: trait source identities, simple use

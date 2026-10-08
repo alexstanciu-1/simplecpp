@@ -80,6 +80,7 @@ require_once __DIR__ . '/compiler/traits/structures.php';
 require_once __DIR__ . '/compiler/source_fragments.php';
 require_once __DIR__ . '/compiler/callables/instance_structures.php';
 require_once __DIR__ . '/compiler/callables/instances.php';
+require_once __DIR__ . '/compiler/callables/inventory.php';
 require_once __DIR__ . '/compiler/traits/materialization.php';
 require_once __DIR__ . '/compiler/traits/inventory.php';
 require_once __DIR__ . '/compiler/traits/composition.php';

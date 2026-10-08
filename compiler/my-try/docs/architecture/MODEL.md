@@ -690,6 +690,12 @@ retirement belong to `Callable_Instances`, a coordinator; `Source_Fragments` sha
 snapshot/retirement support with trait composition. Source-call selection and C++
 instance emission remain gated. See [called-type instances](../planning/called_type_instances.md).
 
+`Callable_Inventory` is a transient read-only view of source and private implementation
+collections. Preparation uses it to select ordinary private method work and cycle
+analysis uses it to include private call edges. It does not publish private sources
+as program files. Transient preparation contexts carry the called type separately
+from the lexical member owner; no worker or context is retained by an instance.
+
 Structures may initialize data, enforce local invariants, expose typed access and
 clear attached facts. Workers own stage dispatch/traversal, semantic algorithms,
 scheduling, dependency maintenance and publication. Retained structures

@@ -30,7 +30,14 @@ The shared runner used its expected CLI fallback because sandbox FPM startup fai
 Final focused imported-name, called-type removal and shared trait-lifecycle checks:
 `/tmp/callable-instances-final-20261008-2` (three suites passed).
 
-Next: coordinator-owned demand materialization and analysis scheduling, then called-type
+Ordinary scheduling is now integrated through a read-only callable collection view.
+Existing instances participate in signature/body scheduling and reference-cycle checks,
+including external dependency invalidation and failure/retry/repair. Their called type
+is carried separately in the transient preparation context. Private implementations
+do not become program files. All 21 PHP-host model suites passed in
+`/tmp/callable-scheduling-20261008-1`; no native compiler rebuild was performed.
+
+Next: coordinator-owned demand materialization, then called-type
 selection/forwarding, compatible static redeclarations and backend implementation
 identities. Runtime-called-type propagation through instance methods is separate.
 

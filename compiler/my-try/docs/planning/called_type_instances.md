@@ -56,14 +56,30 @@ dependencies observed during private preparation use the existing analysis graph
 
 ## Following checkpoints
 
-1. Connect demand-driven instance requests to coordinator materialization and ordinary
-   scheduling. Analysis must not call the parser. Intern before preparing recursive
+### Ordinary scheduling integration — implemented
+
+`Callable_Inventory` provides a read-only, deduplicated view of source, trait-private
+and callable-private collections. The preparation worker selects existing private
+implementations through ordinary signature/body work; it never materializes them.
+These collections participate in lookup invalidation, failure/retry and reference-cycle
+auditing, but are not returned as additional prepared program files. No-op preparation
+retains body versions. Invocation-local `preparation_context::called_type` comes from
+the working method's instance, separately from lexical `member_owner` and receiver.
+
+The normal compiler preparation path now proves third-file dependency edits,
+retained private failures on retry and identity-preserving repair. Explicit instance
+materialization remains the test entrypoint; source calls still do not request one.
+
+### Remaining integration
+
+1. Connect demand-driven instance requests to coordinator materialization and the
+   existing scheduler. Analysis must not call the parser. Intern before preparing recursive
    bodies; calls and dependency edges select the existing working identity.
-2. Carry called type separately through preparation, resolve late-static operations
+2. Consume the separate called-type preparation context to resolve late-static operations
    there, and admit compatible static redeclarations without virtualizing them.
 3. Emit distinct stable implementation identities, preferably out-of-line in the
    original declaring source's implementation unit. Include private implementations
-   in cycle auditing, readiness guards, fragment enumeration and successful change
+   in readiness guards, fragment enumeration and successful change
    acknowledgement. Never emit them as additional ordinary class member declarations.
 4. Prove forwarding, recursion, cross-file dependencies, constructors, storage owner,
    retries/edits and clean/incremental equality with generated-program execution.
@@ -76,6 +92,8 @@ calls never select these instances. Runtime instance dispatch remains separate.
 `tests/callable_instances.php` exercises key reuse, two independent prepared bodies,
 lexical private access/type lookup, unchanged authored membership/facts, token-row
 isolation, no-op output, failed-parse preservation, both source edit directions,
-preparation reset and full retirement. The model runner includes this proof alongside
+preparation reset and full retirement. The scheduling extension additionally exercises
+ordinary compiler preparation, stable no-op versions, third-file constant dependencies,
+failure/retry/repair and private-versus-program-file membership. The model runner includes this proof alongside
 trait and incremental regressions. This is PHP-host evidence, not generated late-static
 execution or a native compiler rebuild.

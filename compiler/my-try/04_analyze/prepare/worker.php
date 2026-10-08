@@ -36,6 +36,21 @@ final class Preparation_Worker
 				$this->select($source);
 			}
 		}
+		// Private implementations share ordinary work, but are never additional program files.
+		foreach (Callable_Inventory::source_collections($sources) as $collection)
+		{
+			if ($collection->deleted) { continue; }
+			$entries /** Storage<collected_name> */ = $collection->entries;
+			foreach ($collection->defined_elements as $position) {
+				$entry = $entries[$position];
+				if ($entry instanceof collected_method) {
+					$method = object_cast($entry, collected_method::class);
+					if (weakref_get($method->instance_context) !== null) {
+						$this->select_callable($method->callable_syntax());
+					}
+				}
+			}
+		}
 		$this->changed_lookups();
 
 		// Declaration processing may schedule more declarations; identity sets coalesce notifications.
@@ -783,6 +798,13 @@ final class Preparation_Worker
 		$context->worker = $this;
 		$context->owner = $owner;
 		$context->collection = $owner->source;
+		$definition = $owner->declaration();
+		if ($definition instanceof collected_method) {
+			$instance = weakref_get(object_cast($definition, collected_method::class)->instance_context);
+			if ($instance !== null) {
+				$context->called_type = $instance->called_type();
+			}
+		}
 		$context->locals = new local_environment(null);
 		$context->integer = Language_Types::integer($this->language);
 		$context->boolean = Language_Types::boolean($this->language);
