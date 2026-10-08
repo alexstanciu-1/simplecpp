@@ -11,6 +11,7 @@ final class Data_Construction_Preparation
 		$target = $expected_type;
 		if ($node->target_type !== null) { $target = Type_Preparation::type($node->target_type, $context); }
 		if ($target === null) { throw new \RuntimeException('S2S data construction requires a known concrete target'); }
+		Type_Lifecycle_Preparation::require_storage($target, $context);
 		$payload = Type_Queries::record_payload($target);
 		if (Type_Queries::source_record($payload) !== null) {
 			$saved_assignment = $context->statement_assignment;
@@ -85,6 +86,7 @@ final class Record_Construction_Preparation
 	{
 		$payload = Type_Queries::record_payload($target);
 		$record /** collected_record */ = Type_Queries::source_record($payload);
+		Type_Lifecycle_Preparation::require_construction($target, $context);
 		if ($context->worker->require_relationships($record, $context)->abstract_type) {
 			throw new \RuntimeException('Cannot construct an abstract type');
 		}

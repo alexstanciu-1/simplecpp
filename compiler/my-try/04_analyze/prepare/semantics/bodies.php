@@ -203,6 +203,7 @@ final class Body_Preparation
 			}
 		}
 		Type_Preparation::require_value_type($binding->type);
+		Type_Lifecycle_Preparation::require_storage($binding->type, $context);
 		if ($value === null)
 		{
 			if (Type_Queries::record_storage($binding->type) === record_storage_kind::inline_value) {

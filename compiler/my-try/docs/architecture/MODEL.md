@@ -98,6 +98,14 @@ to bodyless syntax retains the old body in `retired_bodies` until analysis retir
 work and clears facts, then frontend disposal releases it. Parsing does not schedule
 analysis or manufacture replacement bodies.
 
+`type_lifecycle_work` shares that work base but remains independent of layout and
+callable signatures. Its declaration-only `prepared_type_lifecycle` snapshot records
+destructor visibility (implicit destruction is public). Preparation observes local
+destructor name pools and base lifecycle contracts; no method body or dispatch work
+is demanded. Storage/allocation checks consume this snapshot through the scheduler,
+avoiding cycles for `unique<Self>` fields and return signatures. Equivalent snapshots
+preserve versions; reset and retirement clear facts and dependency registrations.
+
 Interfaces now use that same contract work directly, without record-layout work or
 record preparation facts. `interface_requirements` references original interface
 methods (deduplicated by identity), including satisfied requirements needed by

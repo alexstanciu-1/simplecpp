@@ -17,6 +17,16 @@ function destructors_source(string $source): string
 	return native_record_export();
 }
 
+function destructor_lifecycle(): type_lifecycle_work
+{
+	foreach (Model::collected_files() as $source) {
+		foreach ($source->entries as $entry) {
+			if ($entry instanceof collected_record && $entry->name === 'C') { return $entry->lifecycle_work; }
+		}
+	}
+	throw new \LogicException('Missing destructor lifecycle work');
+}
+
 $results = [];
 foreach (['class', 'struct'] as $kind) {
 	foreach ([
@@ -94,7 +104,6 @@ foreach ([
 	'function __destruct(): void {}',
 	'function &__destruct() {}',
 	'static function __destruct() {}',
-	'private function __destruct() {}',
 	'function __destruct() { return 1; }',
 	'function __destruct() {} function __destruct() {}',
 ] as $member) {
@@ -107,6 +116,55 @@ foreach (['$c->__destruct();', 'C::__destruct();', '$c::__destruct();'] as $call
 }
 try { destructors_source('struct C { unique<int> $owned; function __destruct() {} } $a C; $copy = $a;'); throw new \LogicException('Noncopyable record became copyable'); }
 catch (\RuntimeException $expected) {}
+
+foreach (['class', 'struct'] as $kind) {
+	$child = $kind === 'class' ? 'Child' : 'shared<Child>';
+	$base = $kind === 'class' ? 'Base' : 'shared<Base>';
+	foreach ([
+		'protected_base' => '$c CHILD = new Child(); $b BASE = $c; $w = weak($b); $c = null; if (Log::$n !== 0) { return 1; } $b = null; return Log::$n;',
+		'unique_child' => '$c unique<Child> = new Child(); $c = null; return Log::$n;',
+		'inline_child' => 'if (true) { $c INLINE; } return Log::$n;',
+	] as $name => $body) {
+		$source = 'class Log { static int $n = 0; } ' . $kind . ' Base { protected function __destruct() { Log::$n = Log::$n * 10 + 2; } } '
+			. $kind . ' Child extends Base { public function __destruct() { Log::$n = 1; } } '
+			. str_replace(['CHILD', 'BASE', 'INLINE'], [$child, $base, $kind === 'class' ? 'value<Child>' : 'Child'], $body);
+		$output = destructors_source($source);
+		if (isset($argv[1])) {
+			$path = $argv[1] . '/' . $kind . '_' . $name . '.cpp'; file_put_contents($path, $output);
+			$results[] = ['path' => $path, 'exit_code' => 12];
+		}
+	}
+}
+foreach ([
+	'implicit_child_cleanup' => 'class Log { static int $n = 0; } class Base { protected function __destruct() { Log::$n = 9; } } class Child extends Base {} $c = new Child(); $b Base = $c; $c = null; $b = null; return Log::$n;',
+	'private_declaration' => 'class C { private function __destruct() {} } $c C; $w = weak($c); return 9;',
+	'recursive_unique' => 'class C { unique<C> $next; function __destruct() {} static function make(): unique<C> { $c unique<C> = new C(); return move($c); } } $c = C::make(); return 9;',
+	'private_inline_owner' => 'struct C { static int $n = 0; private function __destruct() { self::$n = 9; } static function run(): void { $c C; } } C::run(); return C::$n;',
+	'protected_interface_cleanup' => 'interface I {} class Log { static int $n = 0; } class B implements I { protected function __destruct() { Log::$n = 9; } } class C extends B {} $c = new C(); $i I = $c; $w = weak($i); $c = null; $i = null; if (lock($w)) { return 1; } return Log::$n;',
+] as $name => $source) {
+	$output = destructors_source($source);
+	if (isset($argv[1])) {
+		$path = $argv[1] . '/' . $name . '.cpp'; file_put_contents($path, $output);
+		$results[] = ['path' => $path, 'exit_code' => 9];
+	}
+}
+foreach ([
+	'class C { private function __destruct() {} } $c = new C();' => 'public destructor',
+	'class C { protected function __destruct() {} static function make(): C { return new C(); } } $c = C::make();' => 'public destructor',
+	'data class C { protected function __destruct() {} } $c C = {};' => 'public destructor',
+	'class C { protected function __destruct() {} } $c unique<C>;' => 'accessible destructor',
+	'class C { protected function __destruct() {} } $c value<C>;' => 'accessible destructor',
+	'struct C { private function __destruct() {} } $c C;' => 'accessible destructor',
+	'struct C { private function __destruct() {} } $c nullable<C> = null;' => 'accessible destructor',
+	'struct C { protected function __destruct() {} } $c vector<C> = [];' => 'accessible destructor',
+	'class C { private function __destruct() {} } class Child extends C {}' => 'Private base destructor',
+	'class C { protected function __destruct() {} } function consume(unique<C> $v): void {}' => 'accessible destructor',
+	'class C { private function __destruct() {} unique<C> $next; }' => 'accessible destructor',
+	'struct C { private function __destruct() {} static function make(): C { $c C; return $c; } } C::make();' => 'accessible destructor',
+] as $source => $diagnostic) {
+	try { destructors_source($source); throw new \LogicException('Inaccessible destruction accepted'); }
+	catch (\RuntimeException $error) { if (!str_contains($error->getMessage(), $diagnostic)) { throw $error; } }
+}
 
 $directory = sys_get_temp_dir() . '/destructors-' . bin2hex(random_bytes(6));
 mkdir($directory);
@@ -122,8 +180,28 @@ try {
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();
 	$original = CPP_Output::encode(Model::$cpp_files);
+	$lifecycle = destructor_lifecycle();
+	$version = $lifecycle->version;
+	foreach ($lifecycle->dependencies as $dependency) {
+		if ($dependency instanceof record_definition_work || $dependency instanceof source_callable_signature_work || $dependency instanceof type_contract_work) {
+			throw new \LogicException('Lifecycle contract depends on layout or method preparation');
+		}
+	}
+	$compiler->update_cpp([]);
+	if ($lifecycle->version !== $version) { throw new \LogicException('No-op changed lifecycle version'); }
+	foreach (['private', 'protected'] as $visibility) {
+		file_put_contents($type_path, str_replace('function __destruct()', $visibility . ' function __destruct()', $declaration));
+		foreach ([[$type_path], []] as $changes) {
+			try { $compiler->update_cpp($changes); throw new \LogicException('Destructor access edit accepted'); }
+			catch (\RuntimeException $error) { if (!str_contains($error->getMessage(), 'public destructor')) { throw $error; } }
+		}
+		file_put_contents($type_path, $declaration); $compiler->update_cpp([$type_path]);
+		if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Destructor visibility repair changed output'); }
+	}
 	file_put_contents($type_path, str_replace('self::$n = 9', 'self::$n = 8', $declaration));
+	$before_body_edit = destructor_lifecycle()->version;
 	$compiler->update_cpp([$type_path]);
+	if (destructor_lifecycle()->version !== $before_body_edit) { throw new \LogicException('Body edit changed lifecycle contract'); }
 	if (CPP_Output::encode(Model::$cpp_files) === $original) { throw new \LogicException('Destructor body edit not emitted'); }
 	file_put_contents($type_path, str_replace('function __destruct()', 'static function __destruct()', $declaration));
 	foreach ([[$type_path], []] as $changes) {
@@ -149,6 +227,13 @@ try {
 		$path = $argv[1] . '/incremental.cpp';
 		file_put_contents($path, CPP_Probe::text(Model::$cpp_files));
 		$results[] = ['path' => $path, 'exit_code' => 9];
+	}
+	$retired = destructor_lifecycle();
+	file_put_contents($type_path, 'namespace Types;'); file_put_contents($entry_path, 'return 9;');
+	$fresh->update_cpp([$type_path, $entry_path]);
+	if ($retired->facts !== null || $retired->change_status !== change_state::deleted
+		|| count($retired->dependencies) !== 0 || count($retired->dependents) !== 0 || count($retired->lookups) !== 0) {
+		throw new \LogicException('Retired lifecycle retained facts or dependencies');
 	}
 }
 finally { unlink($type_path); unlink($entry_path); rmdir($directory); }

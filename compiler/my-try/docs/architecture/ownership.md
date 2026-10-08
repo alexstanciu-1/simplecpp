@@ -69,6 +69,11 @@ It follows the same dependency/reset/retirement protocol. Callable `retired_bodi
 temporarily owns detached executable syntax through the coordinator's semantic
 retirement/frontend disposal boundary. Body work never substitutes signature identity.
 
+The same collected owner retains `lifecycle_work` for declaration-only destruction
+access. Its scalar visibility snapshot owns no syntax, layout or callable references.
+Base cleanup and storage consumers use normal dependency edges; reset/retirement
+clear the snapshot and unlink registrations through the existing worker protocol.
+
 Interface contract work has the same owner/lifecycle but no accompanying record layout.
 Satisfied interface requirements retain original declaration identities for descendant
 validation. Forwarding decisions weakly observe the original inherited method and the

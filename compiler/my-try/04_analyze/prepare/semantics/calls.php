@@ -103,6 +103,7 @@ final class Call_Preparation
 		$facts->type = $facts->signature->return_type;
 		if ($facts->signature->reference_return === null)
 		{
+			Type_Lifecycle_Preparation::require_storage($facts->type, $context);
 			$role = Ownership_Conversions::role($facts->type);
 			if ($role !== null) {
 				if ($role->ownership_family() === ownership_kind::unique) {

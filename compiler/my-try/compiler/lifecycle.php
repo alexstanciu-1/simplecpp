@@ -171,6 +171,12 @@ final class Compiler_Lifecycle
 					if ($entry instanceof collected_member_owner) {
 						$relationships = object_cast($entry, collected_member_owner::class)->relationship_work;
 						$contracts = object_cast($entry, collected_member_owner::class)->contract_work;
+						$lifecycle = object_cast($entry, collected_member_owner::class)->lifecycle_work;
+						if ($lifecycle !== null) {
+							$lifecycle->state = preparation_state::pending;
+							$lifecycle->change_status = change_state::changed;
+							$lifecycle->facts = null;
+						}
 						if ($contracts !== null) {
 							$contracts->state = preparation_state::pending;
 							$contracts->change_status = change_state::changed;

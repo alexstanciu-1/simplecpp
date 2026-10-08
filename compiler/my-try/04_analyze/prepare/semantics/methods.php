@@ -56,8 +56,8 @@ final class Method_Preparation
 		$parameters /** Storage<parameter_node> */ = $syntax->parameters;
 		if ($destructor) {
 			if (!$parameters->is_empty() || ($syntax->return_type !== null) || $syntax->returns_reference
-				|| $facts->static_member || ($facts->visibility !== member_visibility::public_access)) {
-				throw new \RuntimeException('Destructor requires public instance access, no parameters and no declared return type/reference');
+				|| $facts->static_member) {
+				throw new \RuntimeException('Destructor requires instance access, no parameters and no declared return type/reference');
 			}
 		}
 		foreach ($parameters as $parameter)

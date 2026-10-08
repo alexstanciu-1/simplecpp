@@ -30,6 +30,7 @@ final class Value_Boundary_Preparation
 			}
 			return value_boundary_operation::bind_reference;
 		}
+		Type_Lifecycle_Preparation::require_storage($target, $context);
 		if ($value->is_owned_temporary() && $value->type->matches($target)) {
 			return value_boundary_operation::consume_value;
 		}

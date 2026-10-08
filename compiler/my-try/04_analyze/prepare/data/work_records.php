@@ -165,6 +165,13 @@ final class type_contract_work extends type_semantic_work
 	public function require_facts(): prepared_type_contract { return $this->facts; }
 }
 
+/** Destruction admission is independent of layout and callable signatures. */
+final class type_lifecycle_work extends type_semantic_work
+{
+	public ?prepared_type_lifecycle $facts = null;
+	public function require_facts(): prepared_type_lifecycle { return $this->facts; }
+}
+
 final class record_definition_work extends declaration_work
 {
 	private collected_record $definition;

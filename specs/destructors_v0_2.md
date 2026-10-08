@@ -14,9 +14,10 @@ public function __destruct() {
 }
 ```
 
-Omitted visibility is public. The initial implementation requires public instance
-access, zero parameters, no declared return type and no reference return. Static,
-duplicate, private/protected and value-returning destructors reject in preparation.
+Omitted visibility is public. Destructors require instance access, zero parameters,
+no declared return type and no reference return. Static, duplicate and value-returning
+destructors reject in preparation. Public, protected and private declarations are
+accepted subject to the cleanup-access rules below.
 The ordinary void-body contract allows fallthrough and bare `return;`. Explicit
 source invocation (`$object->__destruct()`, `Type::__destruct()` or expression-qualified
 static spelling) is rejected. Destruction is an ownership operation, not an ordinary
@@ -46,7 +47,31 @@ Assignment to an existing inline object remains memberwise assignment, not an
 implicit destructor/reconstruction of that whole object. Replacing an owning handle
 can release its old object. Static-storage shutdown ordering across unrelated units
 is not given a stronger guarantee by this slice. Inheritance and virtual destruction
-follow the inheritance contract; non-public destructors remain rejected.
+follow the inheritance contract.
+
+## Destruction access
+
+Destructor visibility remains meaningful; automatic ownership helpers gain no
+privileged access and this slice introduces no custom deleters.
+
+- A protected base destructor is accessible to descendant subobject cleanup. An
+  implicit child destructor is public; it does not inherit the base's visibility.
+- A private base destructor cannot be invoked by descendant cleanup; this unsupported
+  hierarchy is rejected during preparation, not deferred to C++ diagnostics.
+- Shared allocation requires a public destructor on the actual allocated record,
+  even inside a source factory. An existing shared view may name a base with a
+  non-public destructor: its original control block retains concrete-object cleanup.
+  Shared copying, weak observation/locking and checked casts do not allocate a new object.
+- Unique storage requires a public payload destructor, including empty storage.
+  Unique ancestry transfer additionally retains its virtual-destruction requirement.
+- Ordinary inline struct cleanup checks lexical access. Explicit `value<Class>`
+  storage and runtime-owned container/nullable payload cleanup require public access,
+  because their runtime wrappers are not members or friends of the payload.
+
+The same checks apply to ordinary `new`, keyed `data` construction, fields, locals
+and value-call boundaries. A private constructor accessible to a factory does not
+grant the allocation helper access to a private destructor. Explicit destructor calls
+remain forbidden for every visibility. Nonthrowing behavior and cleanup order are unchanged.
 
 ## Nonthrowing boundary
 

@@ -249,6 +249,8 @@ final class Preparation_Worker
 					if ($relationships !== null) { $result[$relationships] = true; }
 					$contracts = object_cast($entry, collected_member_owner::class)->contract_work;
 					if ($contracts !== null) { $result[$contracts] = true; }
+					$lifecycle = object_cast($entry, collected_member_owner::class)->lifecycle_work;
+					if ($lifecycle !== null) { $result[$lifecycle] = true; }
 				}
 				if ($entry instanceof collected_source_callable) {
 					$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
@@ -347,6 +349,7 @@ final class Preparation_Worker
 		}
 		if ($entry instanceof collected_record) { $this->select_owner($this->record_owner(object_cast($entry, collected_record::class))); }
 		$this->select_owner($this->contract_owner($entry));
+		$this->select_owner($this->lifecycle_owner($entry));
 		$constants /** Storage<member_constant_node> */ = Member_Inventory::constants($entry);
 		foreach ($constants as $constant) {
 			$this->select_owner($this->declaration_owner(object_cast($constant->occurrence(), collected_constant::class)));
@@ -364,6 +367,7 @@ final class Preparation_Worker
 		$work = $record->preparation_work_owner();
 		if ($work !== null) { $this->schedule($work); }
 		if ($record->contract_work !== null) { $this->schedule($record->contract_work); }
+		if ($record->lifecycle_work !== null) { $this->schedule($record->lifecycle_work); }
 	}
 
 	private function select_owner(preparation_owner $owner): void
@@ -478,6 +482,22 @@ final class Preparation_Worker
 	{
 		if ($entry->contract_work === null) { $entry->contract_work = new type_contract_work($entry); }
 		return $entry->contract_work;
+	}
+
+	public function lifecycle_owner(collected_member_owner $entry): type_lifecycle_work
+	{
+		if ($entry->lifecycle_work === null) { $entry->lifecycle_work = new type_lifecycle_work($entry); }
+		return $entry->lifecycle_work;
+	}
+
+	public function require_lifecycle(collected_member_owner $entry, preparation_context $context): prepared_type_lifecycle
+	{
+		$target = $this->lifecycle_owner($entry);
+		$context->owner->dependencies[$target] = $target->version;
+		$target->dependents[$context->owner] = true;
+		$this->declaration($target);
+		$context->owner->dependencies[$target] = $target->version;
+		return $target->require_facts();
 	}
 
 	public function require_type_contract(collected_member_owner $entry, preparation_context $context): prepared_type_contract
@@ -639,6 +659,14 @@ final class Preparation_Worker
 	/** Dispatch by retained work role; records carry identities, not processing hooks. */
 	private function rebuild_declaration(declaration_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
 	{
+		if ($owner instanceof type_lifecycle_work) {
+			$lifecycle = object_cast($owner, type_lifecycle_work::class);
+			$current = Type_Lifecycle_Preparation::prepare($lifecycle->member_definition(), $context);
+			$changed = !Type_Lifecycle_Preparation::same($lifecycle->facts, $current);
+			if ($changed) { $lifecycle->facts = $current; }
+			$lifecycle->source_revision = (int)$lifecycle->member_definition()->revision;
+			return $changed;
+		}
 		if ($owner instanceof type_contract_work) {
 			$contracts = object_cast($owner, type_contract_work::class);
 			$current = Type_Contract_Preparation::prepare($contracts->member_definition(), $context);
@@ -968,6 +996,7 @@ final class Preparation_Worker
 			if ($entry instanceof collected_member_owner) {
 				object_cast($entry, collected_member_owner::class)->relationship_work = null;
 				object_cast($entry, collected_member_owner::class)->contract_work = null;
+				object_cast($entry, collected_member_owner::class)->lifecycle_work = null;
 			}
 			if ($entry instanceof collected_source_callable) {
 				$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
@@ -1016,6 +1045,7 @@ final class Preparation_Worker
 	/** Explicitly sever both directions; strong-reference storage must not keep retired owners alive. */
 	private function retire(preparation_owner $owner): void
 	{
+		if ($owner instanceof type_lifecycle_work) { object_cast($owner, type_lifecycle_work::class)->facts = null; }
 		if ($owner instanceof type_contract_work) { object_cast($owner, type_contract_work::class)->facts = null; }
 		if ($owner instanceof type_relationship_work) {
 			object_cast($owner, type_relationship_work::class)->facts = null;

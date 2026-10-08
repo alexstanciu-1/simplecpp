@@ -37,7 +37,7 @@ User scope decision — 2026-10-08:
 | Group | Decision |
 | --- | --- |
 | Shared cross-casts | Implemented: observed relationship admission through existing checked access |
-| Non-public destructors | Implement in CH11; settle protected/private access and cleanup ownership |
+| Non-public destructors | Implemented: independent lifecycle contract and access-aware ownership |
 | Variance/covariant returns | Implement in CH11; agree parameter/return compatibility and lowering bounds |
 | Instance late static binding; inline/struct `new static()` | Deferred to CH15 |
 | Unique/weak downcasts; unique/weak conditional joins; sibling conditional joins | Deferred to CH15 |
@@ -48,19 +48,42 @@ User scope decision — 2026-10-08:
 The [CH15 scope register](15_blocking_debt.md#ch15-inheritance-extensions-01--deferred-ch11-extensions)
 retains the seven newly deferred items and their prerequisites. Existing unsupported
 paths stay rejected; recording the queue does not enable new language semantics.
-Next discussion: non-public destructors, followed by variance/covariant returns.
+Next discussion: variance/covariant returns.
 CH11 is not declared complete; native compiler validation remains outstanding.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
 six ownership/type-access rows added below make already-proven coverage explicit. This is
 not a claim that every extension above is required for v0.2. The selected groups still
-need completion of the two remaining bounded contract discussions; two dispatch items remain undecided. Broader protected receiver access is already
+need completion of the variance/covariant-return group; two dispatch items remain undecided. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
 
 Verification: the checkpoints record PHP-host and generated-C++ proofs. The latest
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Non-public destructors — 2026-10-08
+
+Classes and structs accept protected/private destructor declarations without granting
+runtime wrappers privileged access. Protected base cleanup works through public
+authored or implicit child destruction; private base cleanup rejects. Shared base
+views retain original concrete cleanup. Allocation requires a public actual-payload
+destructor; unique storage and runtime-owned value/container payloads require public
+cleanup. Bare inline structs use lexical access, including caller-side return cleanup.
+Ordinary new/data construction, locals, fields and callable boundaries share this
+admission; no custom deleter, runtime wrapper rewrite or AST extension was added.
+
+The prerequisite is `type_lifecycle_work`, an independent declaration-only sibling
+of relationship/dispatch work. Its visibility snapshot never requires layout or
+callable signatures. Existing scheduling, lookup observations, version comparison,
+failure/retry, reset and retirement own its lifecycle. Recursive `unique<Self>`
+fields and value-return signatures do not introduce a signature/layout cycle.
+
+Validation: 36 generated-C++ destructor cases without PCH in
+`/tmp/nonpublic-destructors-final2`; focused PHP proofs include access rejections,
+cross-file visibility failure/retry/repair, body-only/no-op version stability,
+reset/fresh agreement and retirement unlinking. Thirteen adjacent PHP suites passed
+in `/tmp/nonpublic-destructors-adjacent-final2`. No native compiler rebuild.
 
 ## Shared cross-casts — 2026-10-08
 
@@ -734,7 +757,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |
 | [CLASS-INH-012](#class-inh-012) | implemented-equivalent | `class B extends A {}` | verified | verified | deferred | Prepared base identity and qualified ancestor calls replace reliance on a literal C++ base alias |
 | [CLASS-ABS-001](#class-abs-001) | implemented-bounded | `function __destruct() { $this->cleanup(); }` | verified | verified | deferred | Shared method lifecycle; out-of-line nonthrowing body; ordinary instance calls |
-| [CLASS-ABS-002](#class-abs-002) | implemented-bounded | `function __destruct() {}` | verified | verified | deferred | Type-header declaration and implementation-unit definition |
+| [CLASS-ABS-002](#class-abs-002) | implemented-bounded | `function __destruct() {}` | verified | verified | deferred | Type-header declaration and implementation-unit definition; [non-public cleanup access](#non-public-destructors--2026-10-08) |
 | [CLASS-ABS-003](#class-abs-003) | implemented-bounded | `function __destruct() { $n = $this->x; }` | verified | verified | deferred | Instance property access allowed; returning a value rejects under the void-body contract |
 | [CLASS-ABS-004](#class-abs-004) | implemented-rejection | `static function __destruct() {}` | verified | verified | deferred | Rejected eagerly during signature preparation, even if unused |
 | [CLASS-ABS-005](#class-abs-005) | implemented-bounded | `abstract class A {}` | verified | verified | deferred | Cannot instantiate even without abstract members; class and struct |

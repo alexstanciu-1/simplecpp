@@ -68,6 +68,7 @@ final class Object_Construction_Preparation
 			}
 			else { $result = $destination; }
 		}
+		Type_Lifecycle_Preparation::require_construction($result, $context);
 		$facts = new prepared_object_construction();
 		$facts->value_origin = expression_value_origin::fresh_construction;
 		$facts->constructed_type = $target;

@@ -52,8 +52,9 @@ constructor visibility or grant a descendant access to a private base constructo
 Explicit and implicit base initialization check access from the authored child
 constructor's context: protected is available, private rejects. Inheriting the original
 constructor contract is distinct from authoring a child constructor that calls it.
-Reference/variadic parameters, abstract constructors, inherited `set:` rebinding and
-non-public destructor access remain outside this extension.
+Reference/variadic parameters, abstract constructors and inherited `set:` rebinding
+remain outside this constructor extension. Non-public destructor access follows the
+[cleanup-access contract](destructors_v0_2.md#destruction-access).
 
 The C++ backend uses a compiler-only key for non-public constructor entries. The entry
 is public so the existing shared/unique allocation helpers can invoke it; obtaining

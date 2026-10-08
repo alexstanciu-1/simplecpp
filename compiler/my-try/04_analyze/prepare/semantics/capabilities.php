@@ -48,6 +48,7 @@ final class Capability_Preparation implements type_capability_query
 	/** Abstract subobjects may be copied, but cannot be materialized as complete inline values. */
 	public static function require_concrete_value(canonical_type_use $type_use, preparation_context $context): void
 	{
+		Type_Lifecycle_Preparation::require_storage($type_use, $context);
 		if (Type_Queries::is_nominal_handle($type_use)) { return; }
 		$record = Type_Queries::source_record($type_use);
 		if ($record === null) { return; }
