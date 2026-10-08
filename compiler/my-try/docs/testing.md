@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite static_redeclarations --no-pch --results FRESH`
+checks compatible static redeclarations in classes/structs, fixed named/expression/self/parent
+selection, reference returns, variadics, visibility, finality and virtual-only Override
+assertions. Ten generated programs execute; this is not a native compiler rebuild.
+
 The model runner also includes `callable_instances.php`: called-type key reuse,
 independent ordinary method preparation, lexical declaring-type preservation,
 private token buffers, no-op identity/output and source-edit/reset retirement.

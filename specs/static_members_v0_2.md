@@ -97,13 +97,13 @@ may be substituted from their prepared immutable values; no runtime storage is r
 The [concrete inheritance extension](inheritance_v0_2.md) now enables inherited
 static lookup and protected access, preserving original declaring-type storage.
 It also enables explicit `parent::` methods/constants/static properties, with lookup
-starting at the immediate base. It supersedes those parts of the original CH11
-transfer below; late-static dispatch and override/interface behavior remain deferred.
+starting at the immediate base. Compatible static-method redeclarations are enabled
+under that spec's exact-signature, visibility and finality rules; they do not establish
+virtual dispatch. The inheritance spec owns implemented instance overrides/interfaces
+and construction boundaries, superseding the original blanket CH11 deferral.
 
-Native-reference escape from static properties remains gated. Inherited lookup/access, `parent::`, late-bound
-`static::`, protected/override/abstract/final semantics and inherited construction
-belong in CH11 after relationship and dispatch prerequisites. These gates do not
-claim permanent language prohibitions.
+Native-reference escape from static properties and late-bound `static::` remain gated.
+These gates do not claim permanent language prohibitions.
 
 ## Property updates — 2026-10-07
 

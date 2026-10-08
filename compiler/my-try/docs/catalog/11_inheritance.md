@@ -46,8 +46,16 @@ Proof: all 22 PHP-host suites passed in `/tmp/callable-demands-20261008-2`;
 the demand test took 0.47 seconds, and the longest suite (`s2s`) 12.73 seconds.
 No native compiler rebuild or generated late-static execution is claimed.
 
-Next: initial source-call instance selection, late-static operations,
-compatible static redeclarations and backend implementation
+Compatible static redeclarations are now enabled for classes/structs through shared
+type-contract validation, without virtual dispatch. Exact signature, reference/variadic,
+visibility and final checks apply; `Override` remains virtual-only. Focused proof:
+`tests/static_redeclarations.php`, run through `records.py --suite static_redeclarations`.
+Ten generated programs passed without PCH in `/tmp/static-redeclarations-20261008-1`;
+five adjacent PHP-host suites passed in `/tmp/static-redeclarations-regression-20261008-1`.
+No native compiler rebuild.
+
+Next: agree [original-body validation timing](../planning/called_type_instances.md#remaining-integration),
+then initial source-call instance selection, late-static operations and backend implementation
 identities. Runtime-called-type propagation through instance methods is separate.
 
 ## Trait composition foundation — 2026-10-08

@@ -97,8 +97,21 @@ the coordinator API. This remains a preparation proof, not late-static execution
 
 ### Remaining integration
 
+Compatible static redeclarations are now enabled through the existing type-contract
+worker: exact signatures, no visibility narrowing, final enforcement and no virtual
+decision. Existing `Override` assertions remain restricted to virtual contracts.
+The normal fixed C++ member path needs no separate static redeclaration lowering.
+
+**Decision needed before source activation:** original static bodies are currently
+checked eagerly, independently of demanded instances. An abstract Base with
+`make(): Base { return new static(); }` cannot be checked as a concrete Base
+construction merely to validate a call to `Child::make()`. Proposal: check static
+declarations/signatures eagerly, but type-check bodies per demanded called-type
+instance. Uncalled bodies would remain syntax-checked without full body semantic
+validation. This diagnostic-timing change is not yet approved or implemented.
+
 1. Enable initial instance selection from source calls and resolve `static::`/`new static`
-   there, and admit compatible static redeclarations without virtualizing them.
+   there, after agreeing the original-body validation boundary above.
 2. Emit distinct stable implementation identities, preferably out-of-line in the
    original declaring source's implementation unit. Include private implementations
    in readiness guards, fragment enumeration and successful change

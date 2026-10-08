@@ -56,17 +56,26 @@ final class Type_Contract_Preparation
 				Call_Preparation::require_signature($parent, $context);
 				$inherited = self::effective_method($base, $parent->name, $context);
 				if ($inherited->final_method) { throw new \RuntimeException('Cannot override a final method'); }
-				if (!$inherited->virtual_method) { throw new \RuntimeException('Nonvirtual inherited member redeclaration is deferred'); }
 				$parent_signature = $parent->callable_syntax()->require_preparation();
-				if ($signature->static_member || !self::compatible($parent_signature->signature, $signature->signature)) {
+				$static_redeclaration = $signature->static_member && $parent_signature->static_member;
+				if (!$static_redeclaration && !$inherited->virtual_method) {
+					throw new \RuntimeException('Nonvirtual inherited member redeclaration is deferred');
+				}
+				if (($signature->static_member !== $parent_signature->static_member)
+					|| !self::compatible($parent_signature->signature, $signature->signature)) {
+					if ($static_redeclaration) {
+						throw new \RuntimeException('Static redeclaration requires an exact compatible signature');
+					}
 					throw new \RuntimeException('Override requires an exact compatible instance signature');
 				}
-				if (($signature->visibility === member_visibility::private_access)
+				if ((($signature->visibility === member_visibility::private_access) && ($parent_signature->visibility !== member_visibility::private_access))
 					|| (($parent_signature->visibility === member_visibility::public_access) && ($signature->visibility !== member_visibility::public_access))) {
 					throw new \RuntimeException('Override cannot narrow visibility');
 				}
-				$decision->overridden = $parent;
-				$decision->virtual_method = true;
+				if (!$static_redeclaration) {
+					$decision->overridden = $parent;
+					$decision->virtual_method = true;
+				}
 			}
 			if ($is_interface) { self::add_requirement($facts, $method, $context); }
 			if ($decision->virtual_method) { $facts->polymorphic = true; }

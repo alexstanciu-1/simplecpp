@@ -16,7 +16,7 @@ An inherited static property has one storage location owned by that declaring ty
 Ordinary methods retain fixed, non-virtual dispatch unless implementing an inherited
 virtual contract established by an abstract method.
 
-Same-category redeclaration of any inherited property, nonvirtual method or constant
+Same-category redeclaration of any inherited property, nonvirtual instance method or constant
 is rejected in this first slice, including private inherited names. Cross-category
 names remain independent. Constructors/destructors are lifecycle declarations,
 not ordinary inherited members subject to this collision rule.
@@ -103,7 +103,21 @@ and reference-return origin. Parameter names and default values need not match;
 defaults are selected from the statically resolved callable contract. Visibility
 may widen from protected to public, never narrow. Covariance/contravariance remain
 deferred. A final implementation cannot be overridden; a final type cannot be extended.
-`abstract final` types/methods are invalid. Nonvirtual hiding remains rejected.
+`abstract final` types/methods are invalid. Nonvirtual instance hiding remains rejected.
+
+### Compatible static-method redeclarations
+
+A descendant class/struct may redeclare a static method with the same exact callable
+contract checked above, including reference-return origin, variadic shape and optional
+parameter positions. Parameter names and default values may differ. Static and instance
+methods cannot replace one another. Visibility may stay equal or widen (including
+private to protected/public), never narrow. A final static method cannot be redeclared.
+
+Static redeclaration does not establish virtual dispatch or make its record polymorphic.
+`#[\Override]` continues to assert a virtual/interface contract and is rejected on
+these static redeclarations. Named and expression-qualified calls use their selected
+declared type; existing `self::`/`parent::` calls keep fixed implementation selection.
+Inherited properties and constants retain their existing redeclaration restrictions.
 
 Ordinary instance calls use virtual dispatch where the selected method has a virtual
 contract. Explicit `parent::` calls select the ancestor implementation without virtual
@@ -213,8 +227,8 @@ ordinary checked-at-preparation result conversions; it does not slice inline rec
 Called-type context is compiler-managed, never ambient global runtime state. Cross-file
 families are supported by the agreed design rather than v0.1's file-local restriction.
 
-Availability: only the independent callable-instance model/lifecycle is implemented.
-Source `static::`, `new static` and compatible static redeclarations remain gated until
+Availability: the independent callable-instance foundation and compatible static
+redeclarations are implemented. Source `static::` and `new static` remain gated until
 their preparation/lowering checkpoints land. Runtime-called-type propagation through
 instance methods requires a separate design; do not substitute a receiver's declared
 type silently. See the [implementation plan](../compiler/my-try/docs/planning/called_type_instances.md).
@@ -222,7 +236,7 @@ type silently. See the [implementation plan](../compiler/my-try/docs/planning/ca
 ### Current rejection boundary
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
-final type may be instantiated. Nonvirtual member hiding,
+final type may be instantiated. Nonvirtual instance member hiding,
 inherited data inputs, late-bound `static::`, non-shared derived/base
 conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
