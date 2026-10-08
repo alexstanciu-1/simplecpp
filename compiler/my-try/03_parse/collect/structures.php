@@ -544,9 +544,39 @@ final class collected_variable_write extends collected_name
 	}
 }
 
+/** Anonymous source occurrence, never a name-pool member or backend symbol. */
+final class anonymous_callable_identity
+{
+	private collected_file $source_collection /** weak<collected_file> */;
+	private closure_node $syntax_node;
+	/** Stable, non-reused position within the owning collection's anonymous inventory. */
+	public int $local_index;
+	public int $revision = 0;
+	/** Frontend membership tombstone, not preparation state. */
+	public bool $deleted = false;
+
+	public function __construct(collected_file $collection, closure_node $syntax)
+	{
+		$this->source_collection = $collection;
+		$this->syntax_node = $syntax;
+	}
+
+	public function collection(): collected_file
+	{
+		return weakref_get($this->source_collection);
+	}
+
+	public function syntax(): closure_node
+	{
+		return $this->syntax_node;
+	}
+}
+
 /** Mutable file inventory: persistent declarations and the current parse's unresolved occurrences. */
 final class collected_file
 {
+	/** Owns anonymous occurrences independently of named declaration lookup/publication. */
+	public Storage $anonymous_callables /** Storage<anonymous_callable_identity> */;
 	/** Prior lexical owners survive parsing until semantic retirement and frontend disposal join. */
 	public Storage $retired_scopes /** Storage<scope> */;
 	public bool $parse_complete = false;
@@ -611,6 +641,7 @@ final class collected_file
 	public function __construct(token_list $tokens)
 	{
 		$this->tokens = $tokens;
+		$this->anonymous_callables = new Storage /** Storage<anonymous_callable_identity> */();
 		$this->retired_scopes = new Storage /** Storage<scope> */();
 		$this->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		$this->entries = new Storage /** Storage<collected_name> */();

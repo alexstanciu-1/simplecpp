@@ -42,6 +42,15 @@ final class Collection_Retirement
 		foreach ($removed as $index) {
 			$entries->remove($index);
 		}
+		$anonymous /** Storage<anonymous_callable_identity> */ = $source->anonymous_callables;
+		$removed_anonymous /** vector<int> */ = [];
+		foreach ($anonymous as $identity) {
+			if ($source->deleted || $identity->deleted) {
+				$identity->deleted = true;
+				$removed_anonymous[] = $identity->local_index;
+			}
+		}
+		foreach ($removed_anonymous as $index) { $anonymous->remove($index); }
 		$source->defined_elements = self::present($entries, $source->defined_elements);
 		$source->variable_references = self::present($entries, $source->variable_references);
 		$source->constant_references = self::present($entries, $source->constant_references);

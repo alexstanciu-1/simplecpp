@@ -29,6 +29,7 @@ final class Closure_Model_Trace implements node_maintenance_worker_i
 $directory = sys_get_temp_dir() . '/closure-model-' . bin2hex(random_bytes(6));
 mkdir($directory);
 $path = $directory . '/main.phs';
+$side_path = $directory . '/side.phs';
 $text = 'function owner(): int { $a = function (int $amount): int { return $amount + 1; }; $b = function (int $amount): int { return $amount + 1; }; return 0; } return 0;';
 try {
 	file_put_contents($path, $text);
@@ -36,6 +37,11 @@ try {
 	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]);
 	$owner = closure_model_function();
 	$first = closure_model_local($owner, 0); $second = closure_model_local($owner, 1);
+	$first_identity = $first->anonymous_identity(); $second_identity = $second->anonymous_identity();
+	$collection = $first_identity->collection();
+	closure_model_check($first_identity !== $second_identity && $first_identity->local_index !== $second_identity->local_index
+		&& $first_identity->syntax() === $first && $second_identity->collection() === $collection, 'Anonymous identity is not source-local and distinct');
+	closure_model_check(count($collection->anonymous_callables) === 2 && !property_exists($first_identity, 'name'), 'Anonymous inventory became named lookup');
 	closure_model_check($first instanceof expression_node && !($first instanceof declaration_node), 'Closure is not an expression');
 	closure_model_check($first->kind() === node_kind::closure_expression && $first->optional_occurrence() === null, 'Closure acquired named occurrence');
 	closure_model_check(!property_exists($first, 'name') && !property_exists($first, 'template_parameters'), 'Anonymous syntax acquired declaration fields');
@@ -53,6 +59,8 @@ try {
 	$parameter = $first->signature_syntax->parameters[0]->occurrence();
 	$compiler->sync([$path]);
 	closure_model_check(closure_model_local($owner, 0) === $first && $first->signature_syntax->parameters[0]->occurrence() === $parameter, 'No-op replaced anonymous syntax');
+	closure_model_check($first->anonymous_identity() === $first_identity && !$first_identity->deleted
+		&& count($collection->anonymous_callables) === 2, 'No-op replaced or duplicated anonymous identities');
 	closure_model_check($first->require_body()->local_scope() === $first->body_scope(), 'Retained nested body lost its scope owner');
 	foreach (Model::collected_files()[0]->entries as $entry) {
 		if ($entry instanceof collected_source_callable) { closure_model_check($entry->name === 'owner', 'Closure leaked into named callable inventory'); }
@@ -62,9 +70,14 @@ try {
 	catch (\RuntimeException $error) { $rejected = str_contains($error->getMessage(), 'Closure execution awaits'); }
 	closure_model_check($rejected && Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(), 'Model-only closure reached output');
 	// Replacing the enclosing body currently replaces anonymous occurrences: no false stable-ID claim.
+	// Rollover must not make an old occurrence's revision look newly collected.
+	$collection->revision = 4294967295;
+	$first_identity->revision = 1; $second_identity->revision = 1;
 	file_put_contents($path, str_replace('$amount + 1', '$amount + 2', $text)); $compiler->sync([$path]);
 	closure_model_check(closure_model_function() === $owner && closure_model_local($owner, 0) !== $first, 'Body replacement retained stale closure syntax');
 	closure_model_check($parameter->change_status === change_state::deleted, 'Removed closure parameter was not retired');
+	closure_model_check($first_identity->deleted && !isset($collection->anonymous_callables[$first_identity->local_index])
+		&& closure_model_local($owner, 0)->anonymous_identity()->local_index > $second_identity->local_index, 'Removed anonymous identity was reused or retained');
 	// Partial anonymous syntax must recover through the same parser and retirement protocol.
 	file_put_contents($path, 'function owner(): int { $a = function (int $broken): int { return ;');
 	$failed = false;
@@ -82,13 +95,25 @@ try {
 	closure_model_check(Model::syntax_files()[0]->root->single_body()->body === $root
 		&& $top->require_body()->local_scope() === $top->body_scope()
 		&& $inner->require_body()->local_scope() === $inner->body_scope(), 'Top-level reuse lost nested scope ownership');
+	closure_model_check(count($collection->anonymous_callables) === 2 && !$top->anonymous_identity()->deleted
+		&& !$inner->anonymous_identity()->deleted, 'Speculative top-level parse retained duplicate identities');
+	file_put_contents($side_path, 'function spare(): int { $f = function (): int { return 1; }; return 0; }');
+	$compiler->sync([$side_path]);
+	$spare = object_cast(Model::$global_scope->functions_named('spare')[0]->syntax(), function_node::class);
+	$side_identity = closure_model_local($spare, 0)->anonymous_identity();
+	$side_collection = $side_identity->collection();
+	closure_model_check($side_collection !== $collection, 'Identity lost source context');
+	unlink($side_path); $compiler->sync([$side_path]);
+	closure_model_check($side_identity->deleted && $side_collection->anonymous_callables->is_empty(), 'Source deletion retained anonymous membership');
 	file_put_contents($path, 'function owner(): int { return 7; } return owner();');
 	$compiler->update_cpp([$path]);
 	closure_model_check(!Model::$cpp_files->is_empty(), 'Removal/repair failed to restore named execution');
+	closure_model_check($collection->anonymous_callables->is_empty(), 'Closure removal leaked its identity inventory');
 	echo "Closure syntax model: PASS\n";
 }
 finally {
 	Compiler_Lifecycle::reset();
 	if (is_file($path)) { unlink($path); }
+	if (is_file($side_path)) { unlink($side_path); }
 	rmdir($directory);
 }

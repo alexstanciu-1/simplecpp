@@ -40,9 +40,19 @@ across syntax/collection, analysis lifecycle and backend consumers.
    parses retain scopes through the existing parser failure inventory. No named
    callable is published and analysis explicitly rejects execution for now.
 
-   **Still pending:** share source-callable work
-   independently of named publication, compose the remaining common syntax state,
-   and integrate anonymous occurrences with selection, invalidation and retirement.
+   **Source identity implemented:** `collected_file::anonymous_callables` owns
+   `anonymous_callable_identity` records separately from named entries. Each records
+   its original expression, collection context and non-reused Storage position.
+   Collection/backlinks are weak; syntax ownership is strong. Parser registration
+   precedes body parsing, retaining partial occurrences for recovery. One retained
+   token-range rule reconciles named occurrences and anonymous identities. Successful
+   parse/join cleanup removes obsolete identities before releasing retired scopes.
+   IDs are not C++ names or fresh-build-stable serialization keys. Replacing an
+   enclosing body currently creates fresh anonymous identities; unchanged bodies
+   preserve theirs without ordinal rematching.
+
+   **Still pending:** share source-callable work independently of named publication,
+   and integrate anonymous occurrences with semantic selection, invalidation and retirement.
    Closure syntax remains an expression. Reuse `function_body_node` and stage-owned
    workers; add no AST processing hooks or generic visitor.
 3. **Capture-free vertical slice — pending.** Register concrete expression types,
@@ -82,3 +92,14 @@ not yet an independently reconciled anonymous work identity or a concrete value 
 Thirteen focused PHP suites passed in `/tmp/my-try-ch12-closure-model-01`;
 `/tmp/my-try-ch12-closure-model-02` reran the expanded nested/top-level scope proof.
 This checkpoint did not rebuild the native compiler or execute generated programs.
+
+The source-identity checkpoint extends that proof with stable no-op IDs, distinct
+same-signature occurrences, non-reused deleted slots, speculative-parse disposal,
+repair and whole-source removal. Scheduler integration remains pending: the current
+dependency graph accepts `declaration_work`, whose required owner is a named
+`collected_definition`. The next migration must separate independently settled
+contracts from named declaration lookup, rather than subclassing a fake function.
+Nine focused PHP suites passed in `/tmp/my-try-ch12-anonymous-identity-01`; the
+expanded deletion/rollover proof and parser/token cleanup regressions passed in
+`/tmp/my-try-ch12-anonymous-identity-03`. These are host behavior and
+artifact-generation checks, not native compiler or generated-program execution.

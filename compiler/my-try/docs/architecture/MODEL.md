@@ -185,7 +185,13 @@ not anonymous callable execution. `Callable_Syntax` now shares the remaining
 body/scope construction state and neutral structural traversal. `closure_node`
 uses it as an expression without named-declaration inheritance or collection.
 The inspection-only `callable_syntax_owner_i` exposes signature/body queries, not
-processing hooks. Anonymous work identity and scheduler integration remain pending;
+processing hooks. Anonymous source identities now belong to
+`collected_file::anonymous_callables`, independently of named lookup. Each identity
+owns its original closure syntax, weakly observes its collection and has a non-reused
+source-local Storage position. The syntax backlink is weak. Shared token-range
+reconciliation preserves identities in reused bodies and retires replaced/speculative
+occurrences through ordinary successful-join disposal. Positions are not emitted
+names. Anonymous work identity and scheduler integration remain pending;
 analysis rejects closure execution explicitly at this checkpoint.
 
 Source functions and methods share `collected_source_callable`; final

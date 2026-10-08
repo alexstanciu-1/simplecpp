@@ -26,6 +26,16 @@ final class Symbol_Collector
 		$this->global = $published;
 	}
 
+	/** Allocate an anonymous source identity without publishing a declaration name. */
+	public function collect_anonymous_callable(closure_node $syntax): void
+	{
+		$identity = new anonymous_callable_identity($this->collection, $syntax);
+		$identities /** Storage<anonymous_callable_identity> */ = $this->collection->anonymous_callables;
+		$identity->local_index = $identities->append($identity);
+		$identity->revision = (int)$this->collection->revision;
+		$syntax->attach_anonymous_identity($identity);
+	}
+
 	/** Match the next unseen function identity in its owning scope. */
 	public function previous_function(scope $scope, string $name): ?function_node
 	{
@@ -388,8 +398,34 @@ final class Symbol_Collector
 	{
 		$this->collection->root = $root;
 		$this->refresh_occurrences();
+		$this->refresh_anonymous_callables();
 		self::sweep($this->collection, false);
 		return $this->collection;
+	}
+
+	/** Retained syntax keeps its identity; replaced and speculative occurrences retire. */
+	private function refresh_anonymous_callables(): void
+	{
+		$identities /** Storage<anonymous_callable_identity> */ = $this->collection->anonymous_callables;
+		foreach ($identities as $identity) {
+			if ($identity->deleted) { continue; }
+			$identity->revision = $this->retained_revision($identity->syntax()->start_token(), $identity->revision);
+			$identity->deleted = $identity->revision !== (int)$this->collection->revision;
+		}
+	}
+
+	/** One token-range reconciliation rule for named uses and anonymous occurrences. */
+	private function retained_revision(int $token_index, int $revision): int
+	{
+		$ranges /** Storage<retained_token_range> */ = $this->collection->token_snapshot()->retained_ranges;
+		foreach ($ranges as $range) {
+			if (($token_index >= $range->first) && ($token_index < $range->end)) {
+				return (int)$this->collection->revision;
+			}
+			$current_end = $range->current_first + ($range->end - $range->first);
+			if (($token_index >= $range->current_first) && ($token_index < $current_end)) { return 0; }
+		}
+		return $revision;
 	}
 
 	/** Retire obsolete occurrences after reuse decisions, rebuilding current work lists once. */
@@ -405,22 +441,12 @@ final class Symbol_Collector
 		$collection->pending_bindings = /** vector<int> */ [];
 		$entries /** Storage<collected_name> */ = $collection->entries;
 		$retired /** vector<int> */ = [];
-		$ranges /** Storage<retained_token_range> */ = $collection->token_snapshot()->retained_ranges;
 		foreach ($entries as $entry)
 		{
 			// Reused regions retain old identities; temporary parses of their new interval retire.
-			foreach ($ranges as $range)
-			{
-				if (($entry->token_index >= $range->first) && ($entry->token_index < $range->end)) {
-					$entry->revision = $collection->revision;
-					break;
-				}
-				$current_end = $range->current_first + ($range->end - $range->first);
-				if (($entry->token_index >= $range->current_first) && ($entry->token_index < $current_end)) {
-					$entry->revision = 0;
-					break;
-				}
-			}
+			$selected_revision = $this->retained_revision((int)$entry->token_index, (int)$entry->revision);
+			if ($selected_revision === 0) { $entry->revision = 0; }
+			elseif ($selected_revision === (int)$collection->revision) { $entry->revision = $collection->revision; }
 			$index = $entry->local_index;
 			if (!$entry->is_retained() && ((int)$entry->revision !== (int)$collection->revision)) {
 				$retired[] = $index;

@@ -148,6 +148,8 @@ final class Parser_Run
 			foreach ($entries as $entry) {
 				$entry->revision = 0;
 			}
+			$anonymous /** Storage<anonymous_callable_identity> */ = $collection->anonymous_callables;
+			foreach ($anonymous as $identity) { $identity->revision = 0; }
 			$revision = 1;
 		}
 		$this->collector = new Symbol_Collector($collection, $tokens, $file_scope, $global, $revision);
@@ -1385,6 +1387,8 @@ final class Parser_Run
 	{
 		$start = $this->expect('function');
 		$closure = new closure_node();
+		$closure->set_span($start, $start);
+		$this->collector->collect_anonymous_callable($closure);
 		$signature_scope = $closure->signature_scope();
 		$signature_scope->set_parent($this->current_scope);
 		// Keep parameter observers valid even when parsing fails before the node is attached.

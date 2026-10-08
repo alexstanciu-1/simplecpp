@@ -166,6 +166,20 @@ final class closure_node extends expression_node implements callable_syntax_owne
 {
 	use Node_Source_Span;
 	use Callable_Syntax;
+	private ?anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */ = null;
+
+	public function anonymous_identity(): anonymous_callable_identity
+	{
+		return weakref_get($this->source_identity);
+	}
+
+	public function attach_anonymous_identity(anonymous_callable_identity $identity): void
+	{
+		if (weakref_get($this->source_identity) !== null) {
+			throw new \LogicException('Anonymous callable identity is already attached');
+		}
+		$this->source_identity = $identity;
+	}
 
 	/** Nested bodies survive reuse of their enclosing body without another scope scan. */
 	private scope $owned_body_scope;

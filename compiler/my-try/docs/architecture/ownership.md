@@ -244,6 +244,11 @@ ordinary function body whose scope link is weak. This keeps nested scopes alive
 when an enclosing body is reused without reparsing its closures. Parsing retains
 the signature/body scopes in the existing failure inventory before collecting
 observers, so a failed unattached expression cannot leave expired scope links.
+`collected_file::anonymous_callables` owns anonymous identity records; each owns its
+original expression. The expression-to-identity and identity-to-collection backlinks
+are weak, so no new owning cycle is introduced. Parser reconciliation marks obsolete
+membership; join-ordered frontend disposal removes it before dropping retired scopes.
+These records survive failed parses for retry, but deleted Storage IDs are never reused.
 Closures are not published as named declarations. Independently scheduled anonymous
 work and its reconciliation are still pending; no execution is enabled by these
 syntax owners. Shared callable inspection retains the syntax owner only for the
