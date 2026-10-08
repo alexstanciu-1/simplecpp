@@ -31,7 +31,7 @@ final class Type_Contract_Preparation
 		}
 		// Direct signature dependencies matter even when the original requirement identities stay unchanged.
 		foreach ($facts->interface_requirements as $requirement) { Call_Preparation::require_signature($requirement, $context); }
-		$methods /** Storage<method_node> */ = $record->syntax()->methods;
+		$methods /** Storage<method_node> */ = Member_Inventory::methods($record);
 		$decisions /** Keyed_Storage<prepared_method_contract> */ = $facts->methods;
 		foreach ($methods as $syntax) {
 			if (isset($decisions[$syntax->name])) { throw new \RuntimeException('Duplicate method: ' . $syntax->name); }

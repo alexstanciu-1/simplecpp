@@ -93,7 +93,7 @@ final class Declaration_Preparation
 	{
 		// The common AST does not confer support for new declaration/member semantics.
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
-		$methods /** Storage<method_node> */ = $syntax->methods;
+		$methods /** Storage<method_node> */ = Member_Inventory::methods(object_cast($syntax->occurrence(), collected_member_owner::class));
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		if ((($syntax->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($syntax->declaration_kind !== type_declaration_kind::class_type))
@@ -103,6 +103,7 @@ final class Declaration_Preparation
 		}
 		$facts = new prepared_record();
 		$context->member_owner = object_cast($syntax->occurrence(), collected_record::class);
+		Trait_Preparation::validate(object_cast($syntax->occurrence(), collected_record::class));
 		Inheritance_Preparation::base(object_cast($syntax->occurrence(), collected_record::class), $facts, $context);
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		foreach ($syntax->modifiers as $modifier) {
@@ -131,7 +132,7 @@ final class Declaration_Preparation
 		if ($facts->base_type !== null) {
 			$copyable = $query->has_capability($facts->base_type, generic_contract::copyable_value);
 		}
-		$nodes /** Storage<property_node> */ = $syntax->properties;
+		$nodes /** Storage<property_node> */ = Member_Inventory::properties(object_cast($syntax->occurrence(), collected_member_owner::class));
 		$names /** hash<bool> */ = [];
 		foreach ($nodes as $field) {
 			if (isset($names[$field->name])) {
@@ -168,6 +169,15 @@ final class Declaration_Preparation
 
 	/** Field eligibility uses the common declared storage capability path. */
 	public static function prepare_field(property_node $field, preparation_context $context, bool $allows_required = false): void
+	{
+		$previous_source = $context->collection;
+		$context->collection = $field->occurrence()->collection;
+		try { self::prepare_field_value($field, $context, $allows_required); }
+		finally { $context->collection = $previous_source; }
+	}
+
+	/** Source spelling follows the field; dependencies and access remain owned by the record. */
+	private static function prepare_field_value(property_node $field, preparation_context $context, bool $allows_required): void
 	{
 		Member_Preparation::validate_modifiers($field->modifiers, true);
 		$prepared = new prepared_field();

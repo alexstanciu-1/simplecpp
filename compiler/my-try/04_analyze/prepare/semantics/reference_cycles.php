@@ -20,6 +20,7 @@ final class Reference_Cycles
 	/** Use current collection indexes and settled targets, including unchanged bodies on incremental runs. */
 	public function find(Storage $sources /** Storage<collected_file> */): Storage /** Storage<collected_source_callable> */
 	{
+		$sources = Member_Inventory::source_collections($sources);
 		$by_definition = new \SplObjectStorage /** hash<int, shared<collected_source_callable>> */();
 		$by_scope = new \SplObjectStorage /** hash<int, shared<scope>> */();
 		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;

@@ -123,7 +123,7 @@ final class Preparation_Changes
 	/** Preserve field fact identities when record preparation finds no effective change. */
 	public static function restore_fields(type_declaration_node $syntax, prepared_record $facts): void
 	{
-		$nodes /** Storage<property_node> */ = $syntax->properties;
+		$nodes /** Storage<property_node> */ = Member_Inventory::properties(object_cast($syntax->occurrence(), collected_member_owner::class));
 		$store /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		$static_store /** Key_Storage_List<prepared_field> */ = $facts->static_fields;
 		foreach ($nodes as $node) {

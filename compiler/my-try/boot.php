@@ -52,6 +52,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/relationships.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/conversion_relationships.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/inheritance.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/type_contracts.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/traits.php';
 require_once __DIR__ . '/04_analyze/prepare/inherited_lookup.php';
 require_once __DIR__ . '/04_analyze/prepare/data/enums.php';
 require_once __DIR__ . '/04_analyze/prepare/data/compiler_calls.php';
@@ -77,6 +78,7 @@ require_once __DIR__ . '/03_parse/parser.php';
 require_once __DIR__ . '/03_parse/collect/structures.php';
 require_once __DIR__ . '/compiler/traits/structures.php';
 require_once __DIR__ . '/compiler/traits/materialization.php';
+require_once __DIR__ . '/compiler/traits/inventory.php';
 // Concrete work accessors use collected-role covariance, which PHP checks while loading classes.
 require_once __DIR__ . '/04_analyze/prepare/data/work_records.php';
 require_once __DIR__ . '/03_parse/collect/collect.php';

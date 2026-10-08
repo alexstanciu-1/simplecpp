@@ -117,6 +117,11 @@ and copied tokens. Each member pairs its origin with an independent working occu
 Source `use` integration/execution remains gated; origin nodes never receive
 consumer-specific facts. The parser only replays supplied member spans; composition
 supplies the consumer and lexical context without adding authored AST membership.
+`Member_Inventory` builds transient local-member views for analysis and emission;
+it neither owns members nor caches inherited lookup results. Ordinary layout and
+callable processing consume those views. Member lookup observes each private scope,
+and reference-cycle analysis includes private occurrence collections. C++ places a
+working method in its declaring consumer's unit, independently of lexical provenance.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges
 are contracts, not fallback implementations. Concrete records may retain one

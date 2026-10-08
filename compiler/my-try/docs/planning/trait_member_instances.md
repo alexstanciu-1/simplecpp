@@ -47,9 +47,12 @@ consumers would corrupt receiver, access and member-resolution facts.
    method signatures/bodies independently through the ordinary worker, without
    changing origin syntax/facts or authored consumer membership. This is an explicit
    composition boundary, not yet invoked automatically by source `use` declarations.
-3. **Pending:** observed contributed-member lookup, collisions, ordinary signature/body
-   scheduling and C++ artifact enumeration. Reuse member categories and source-callable
-   work; no separate trait-method lowering implementation.
+3. **Implemented:** read-only `Member_Inventory` views feed observed local-member
+   lookup, ordinary record layout/defaults, same-category collision checks,
+   signature/body scheduling, virtual contracts and C++ artifact enumeration.
+   Working methods emit into the consumer's implementation unit, not the trait's
+   lexical source unit. Private collections participate in reference-cycle checks.
+   No separate trait-method lowering or authored AST flattening is introduced.
 4. **Pending:** incremental edit/removal/retry/reset integration and generated-program
    proofs, including private access, namespace/import differences and property defaults.
 
@@ -69,8 +72,18 @@ executable traits or native compiler portability.
 trait-local imported parameter types, independent receivers/private consumer access,
 property initializer syntax, ordinary signature/body preparation, source-edit-safe
 token snapshots and explicit per-instance semantic/frontend retirement. Property
-layout/default preparation and automatic use/edit/removal reconciliation remain
-checkpoints 3–4. Private collections are not published as additional source files.
+layout/default preparation now follows ordinary record preparation. The extended
+proof covers contributed-field reads, intra-trait and consumer calls, collisions,
+same-named property/method coexistence, unsupported member rejection, reference-return
+cycles and emitted method placement. Automatic use/edit/removal reconciliation remains
+checkpoint 4. Private collections are not published as additional source files.
+
+Field preparation temporarily selects the field occurrence's collection for source
+spelling and restores it afterward; dependency/access ownership remains the consumer
+record. This distinction is required for cross-file property defaults, not just bodies.
+Source `use` execution stays gated until composition selection, dependency invalidation,
+retirement/reset and backend fragment eviction are coordinated. Merely attaching a
+new instance to an already-prepared consumer is not an incremental update protocol.
 
 The initial snapshot copies the full origin token buffer per instance, preserving
 all retained indexes without AST clone dispatch or source-text regeneration. A compact

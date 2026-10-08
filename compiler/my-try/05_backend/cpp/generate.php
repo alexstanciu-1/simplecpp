@@ -61,7 +61,7 @@ final class CPP_Generator
 						$ordered->append(object_cast(object_cast($node, callable_declaration_node::class)->require_body()->work(), preparation_owner::class));
 					}
 					elseif ($node instanceof type_declaration_node) {
-						$methods /** Storage<method_node> */ = object_cast($node, type_declaration_node::class)->methods;
+						$methods /** Storage<method_node> */ = Member_Inventory::methods(object_cast($definition, collected_member_owner::class));
 						foreach ($methods as $method) {
 							$ordered->append(object_cast($method->occurrence()->preparation_work_owner(), preparation_owner::class));
 							if ($method->has_parsed_body()) { $ordered->append(object_cast($method->require_body()->work(), preparation_owner::class)); }
@@ -134,7 +134,7 @@ final class CPP_Generator
 				$text = CPP_Declarations::type_opening($record, $bridge_context) . $fragment->text;
 				$contract = $record->contract_work->require_facts();
 				$dispatch /** Keyed_Storage<prepared_method_contract> */ = $contract->methods;
-				$methods /** Storage<method_node> */ = $record->syntax()->methods;
+				$methods /** Storage<method_node> */ = Member_Inventory::methods($record);
 				foreach ($methods as $method) {
 					$member_owner /** preparation_owner */ = $method->occurrence()->preparation_work_owner();
 					$member_fragment = $this->program->fragments[$member_owner];
@@ -186,8 +186,13 @@ final class CPP_Generator
 						$body_text .= $layout->storage_text;
 					}
 				}
-				if (!($callable_owner instanceof source_callable_signature_work) || ($callable_owner->source !== $prepared->source)) { continue; }
+				if (!($callable_owner instanceof source_callable_signature_work)) { continue; }
 				$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
+				$implementation_source = $definition->collection;
+				if ($definition instanceof collected_method) {
+					$implementation_source = object_cast($definition, collected_method::class)->declaring_type()->collection;
+				}
+				if ($implementation_source !== $prepared->source) { continue; }
 				$function = $definition->callable_syntax();
 				if (!$function->has_parsed_body()) { continue; }
 				$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);

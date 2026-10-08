@@ -32,8 +32,12 @@ The second checkpoint materializes consumer-owned members through the shared par
 and proves independent method preparation for class and struct consumers, using
 trait-local imports and consumer receiver/access context. Private token snapshots
 preserve source spans; authored trait/consumer membership remains unchanged.
-Source `use` execution remains gated. Next: contributed lookup/collisions, normal
-scheduling and artifact enumeration, then automatic lifecycle integration.
+The third checkpoint feeds contributed members through shared read-only inventories:
+observed lookup, record defaults/layout, collision validation, method scheduling,
+virtual contracts, reference cycles and C++ artifact enumeration. Method implementations
+belong to the consumer unit; lexical source spelling still belongs to the trait.
+Source `use` execution remains gated. Next: automatic composition selection and
+edit/removal/retry/reset integration, followed by generated-program execution proofs.
 
 Proof: all 18 PHP-host model suites passed, including trait syntax/identity,
 use/body edits, malformed-use recovery and removal; `/tmp/trait-model-20261008-1`.
@@ -42,7 +46,11 @@ Materialization checkpoint: all 19 PHP-host model suites passed in
 `/tmp/trait-instance-focused-2`. The focused instance suite took 0.34 seconds in the
 model run; the longest suite (`s2s`) took 12.55 seconds. FPM was unavailable in the
 sandbox, so the shared runner used its CLI fallback.
-No generated trait program or native compiler build is claimed by this checkpoint.
+Inventory checkpoint: all 19 PHP-host suites passed in `/tmp/trait-inventory-20261008-1`.
+Final default-value/eligibility/cycle/artifact probe: `/tmp/trait-inventory-focused-4`.
+The extended instance proof took 0.42 seconds, and the longest suite (`s2s`) took
+12.42 seconds. It checks emitted artifacts but does not compile/run a trait program.
+No native compiler build is claimed by these checkpoints.
 
 ## Interface handles and calls — 2026-10-08
 

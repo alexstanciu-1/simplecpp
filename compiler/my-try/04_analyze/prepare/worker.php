@@ -289,7 +289,7 @@ final class Preparation_Worker
 		foreach ($constants as $constant) {
 			$this->select_owner($this->declaration_owner(object_cast($constant->occurrence(), collected_constant::class)));
 		}
-		$methods /** Storage<method_node> */ = $node->methods;
+		$methods /** Storage<method_node> */ = Member_Inventory::methods($entry);
 		foreach ($methods as $method) {
 			$this->select_callable($method);
 		}
@@ -712,7 +712,7 @@ final class Preparation_Worker
 	private function settle_fields(collected_record $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
-		$fields /** Storage<property_node> */ = $entry->syntax()->properties;
+		$fields /** Storage<property_node> */ = Member_Inventory::properties($entry);
 		foreach ($fields as $field) {
 			$field->occurrence()->change_status = change_state::unchanged;
 		}

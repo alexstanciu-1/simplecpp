@@ -9,7 +9,16 @@ final class Inherited_Lookup
 	private static function local(collected_member_owner $entry, string $name, preparation_lookup_kind $kind,
 		preparation_context $context): array /** vector<inherited_member_candidate> */
 	{
-		$members = $entry->syntax()->member_scope();
+		$result /** vector<inherited_member_candidate> */ = [];
+		foreach (Member_Inventory::scopes($entry) as $members) {
+			foreach (self::in_scope($entry, $members, $name, $kind, $context) as $candidate) { $result[] = $candidate; }
+		}
+		return $result;
+	}
+
+	private static function in_scope(collected_member_owner $entry, scope $members, string $name,
+		preparation_lookup_kind $kind, preparation_context $context): array /** vector<inherited_member_candidate> */
+	{
 		$result /** vector<inherited_member_candidate> */ = [];
 		$context->worker->observe($members, $name, $kind, $context->owner);
 		if ($kind === preparation_lookup_kind::property_name) {

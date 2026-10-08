@@ -48,7 +48,7 @@ final class Inheritance_Preparation
 	private static function reject_redeclarations(type_declaration_node $syntax, collected_record $base,
 		preparation_context $context): void
 	{
-		$properties /** Storage<property_node> */ = $syntax->properties;
+		$properties /** Storage<property_node> */ = Member_Inventory::properties(object_cast($syntax->occurrence(), collected_member_owner::class));
 		foreach ($properties as $property) {
 			self::require_new_name($base, $property->name, preparation_lookup_kind::property_name, $context);
 		}

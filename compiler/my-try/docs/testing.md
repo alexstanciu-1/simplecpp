@@ -5,7 +5,9 @@ The model runner includes `trait_model.php`: trait source identities, simple use
 syntax, lexical spellings, incremental parsing/recovery and the execution gate.
 `trait_instances.php` additionally proves consumer-owned materialization, independent
 ordinary method preparation, lexical imports, class/struct receivers, token snapshots
-and explicit retirement. These checks do not yet prove executable source trait uses.
+and explicit retirement. It also checks ordinary contributed layout/defaults, member
+calls, category collisions, eligibility, reference cycles and C++ consumer-unit
+placement. These checks do not yet compile/run executable source trait uses.
 
 `python3 compiler/my-try/tests/records.py --suite interface_handles --no-pch --results FRESH`
 checks interface shared storage/upcasts, static-contract defaults, abstract-body
