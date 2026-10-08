@@ -97,12 +97,11 @@ final class Record_Construction_Preparation
 		if ($storage === record_storage_kind::weak) {
 			throw new \RuntimeException('S2S weak handles cannot allocate');
 		}
-		$inputs /** Key_Storage_List<record_initialization_input> */ = $contract->inputs;
+		$fields /** vector<record_initialization_input> */ = $contract->inputs_in_order();
 		$positions /** hash<int> */ = [];
-		foreach ($inputs->items() as $position => $input) {
+		foreach ($fields as $position => $input) {
 			$positions[$input->name] = $position;
 		}
-		$fields /** vector<record_initialization_input> */ = $inputs->items();
 		$seen /** hash<bool> */ = [];
 		$entries /** Storage<data_entry_node> */ = $node->entries;
 		foreach ($entries as $entry) {

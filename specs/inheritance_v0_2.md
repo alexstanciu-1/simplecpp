@@ -67,16 +67,25 @@ omitted defaults in parameter order. Base construction precedes child property d
 `set:` initialization and the remaining constructor body. No temporary complete base
 object or extra base copy is required.
 
-Derived `data` initialization requires explicit `data` opt-in on the child and an
-effective authored public constructor, declared locally or inherited. Keys name that
+Derived `data` initialization requires explicit `data` opt-in on the child. With an
+effective authored public constructor, declared locally or inherited, keys name that
 constructor's parameters, with its original types/defaults; they do not expose extra
 child or base properties. The base need not opt into data construction. An inherited
 constructor retains its declaring owner and requires default-constructible child
 properties, as for ordinary `new`. An authored child constructor uses the same
 parent-initialization rules above. No post-construction property assignment bypasses
-constructor bodies or access rules. Synthesized inherited-property input schemas
-remain deferred, including a derived `data` declaration with no effective authored
-constructor. Ordinary default construction of a supported data base remains allowed.
+constructor bodies or access rules.
+
+Without an effective authored constructor, a derived `data` type may compose its
+base's synthesized data contract and its own public instance-property inputs. The
+base must itself explicitly opt into `data` and provide a synthesized contract;
+no automatic exposure of a non-data base is permitted. Inputs are base-first, then
+local declaration order; original types/defaults and visibility remain unchanged.
+Construct the base subobject directly with its supplied/defaulted inputs, then child
+members. Required base inputs are allowed and checked at the data-construction site.
+Ordinary `new`/implicit default construction still requires a default-constructible
+base and local properties. An effective authored constructor always selects the
+parameter-based contract instead; property inputs are never appended to it.
 
 Inline copy eligibility includes the base's payload eligibility as well as the
 child's declared instance fields. Shared-handle copies retain identity as before.
@@ -254,7 +263,7 @@ substitute a receiver's declared type silently. See the
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Nonvirtual instance member hiding,
-synthesized inherited data inputs, runtime-called-type instance propagation, non-shared derived/base
+runtime-called-type instance propagation, non-shared derived/base
 conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
 

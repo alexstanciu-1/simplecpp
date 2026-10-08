@@ -316,9 +316,8 @@ its corresponding property. For an omitted property, use its explicit default fi
 then its established type default, otherwise require the input. An absent class handle
 does not allocate a pointee. No implicit enum case or other invented default is allowed.
 Non-public properties are excluded from synthesized inputs, not silently exposed.
-Static members are excluded from inputs. Derived data initialization uses only an
-effective authored constructor in the bounded inheritance slice described below.
-Synthesized inherited-property inputs remain deferred. Public instance
+Static members are excluded from inputs. Derived data initialization selects either
+the effective authored constructor or the composed synthesized contract below. Public instance
 properties contributed by the supported direct-trait slice participate through the
 same property contract; composition must not expose non-public properties or bypass
 construction invariants.
@@ -348,9 +347,36 @@ child constructor runs normal base initialization before child initialization/bo
 data notation never follows it with property assignments. Supplied inputs retain
 source evaluation order, followed by omitted parameter defaults. The existing
 duplicate/unknown/missing-key, type-boundary and storage rules remain unchanged.
-Both record kinds reuse one construction path. A derived `data` type without an
-effective authored constructor is still rejected: synthesizing inherited-property
-inputs requires a separate agreement. See [inheritance](inheritance_v0_2.md).
+Both record kinds reuse one construction path. Without an effective authored
+constructor, the synthesized contract below applies. See [inheritance](inheritance_v0_2.md).
+
+#### Synthesized inherited-property inputs — 2026-10-08
+
+Every participating derived type explicitly opts in with `data`. Its immediate base
+must also be `data` with a synthesized contract; reject synthesis through a non-data
+base even if that base has a default constructor. An effective authored constructor
+always takes precedence, including an inherited one; its parameter contract is not
+augmented with child-property inputs.
+
+```php
+data class Base { public string $name; }
+data class Child extends Base { public int $age = 18; }
+$child Child = {name: "Alex", age: 25};
+```
+
+Compose base inputs first, followed by local public instance properties in declaration
+order. Private/protected/static properties remain excluded and keep their ordinary
+initialization. Inherited types and defaults retain their original lexical declaration
+context. Existing same-category redeclaration restrictions prevent ambiguous inherited
+keys. Duplicate/unknown keys and missing required values reject during preparation.
+
+Evaluate supplied entries in source order, then omitted defaults in base-first input
+order. Construct the base subobject directly through its synthesized contract before
+initializing child members: no default-then-assignment, temporary complete base copy,
+or bypass of access/constructor rules. Supplied base inputs suppress the corresponding
+defaults. Multi-level composition repeats the same rule. Required base inputs do not
+prevent declaring the child, but do prevent ordinary default construction unless all
+base/member defaults are available. Source member inventories remain local.
 
 The initial supported key contract is literal string names, in either `{name: value}`
 or `["name" => value]` notation. Computed keys and positional record construction are

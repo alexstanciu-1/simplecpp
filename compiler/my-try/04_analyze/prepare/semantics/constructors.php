@@ -135,6 +135,16 @@ final class Constructor_Preparation
 	public static function synthesized_inputs(prepared_record $record, preparation_context $context): void
 	{
 		$contract /** record_initialization_contract */ = $record->initialization;
+		if ($record->base_type !== null) {
+			$base /** collected_record */ = Type_Queries::source_record($record->base_type);
+			$context->worker->require_declaration($context->owner, $base);
+			$base_facts = $base->syntax()->require_preparation();
+			if (!$base_facts->data_initializable || ($base_facts->initialization === null)) {
+				throw new \RuntimeException('Synthesized derived data requires a data base with synthesized inputs');
+			}
+			$contract->base_type = $record->base_type;
+			$contract->base_contract = $base_facts->initialization;
+		}
 		$inputs /** Key_Storage_List<record_initialization_input> */ = $contract->inputs;
 		$fields /** Key_Storage_List<prepared_field> */ = $record->fields;
 		foreach ($fields->items() as $field) {

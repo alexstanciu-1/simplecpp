@@ -165,14 +165,10 @@ final class Declaration_Preparation
 		$facts->capabilities = $capabilities;
 		Inheritance_Preparation::inherit_constructor($facts, $context);
 		if ($facts->data_initializable && (weakref_get($facts->constructor) === null)) {
-			// Authored and inherited constructors already own their named input contract.
-			// Do not synthesize a partial schema containing only the child's properties.
-			if ($facts->base_type !== null) {
-				throw new \RuntimeException('Synthesized inherited data initialization inputs are deferred');
-			}
 			$facts->initialization = new record_initialization_contract();
 			Constructor_Preparation::synthesized_inputs($facts, $context);
 		}
+		Inheritance_Preparation::require_default_base($facts, $context);
 		$syntax->set_preparation($facts);
 	}
 

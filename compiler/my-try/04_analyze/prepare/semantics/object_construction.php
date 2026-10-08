@@ -120,7 +120,14 @@ final class Object_Construction_Preparation
 	{
 		$record /** collected_record */ = Type_Queries::source_record($type);
 		$context->worker->require_declaration($context->owner, $record);
-		$fields /** Key_Storage_List<prepared_field> */ = $record->syntax()->require_preparation()->fields;
+		$layout = $record->syntax()->require_preparation();
+		// Synthesized base inputs may be required even when every local property defaults.
+		if ($layout->initialization !== null) {
+			if ($layout->initialization->base_contract !== null) {
+				if (!self::supports_default($layout->base_type, $context, true)) { return false; }
+			}
+		}
+		$fields /** Key_Storage_List<prepared_field> */ = $layout->fields;
 		foreach ($fields->items() as $field) {
 			if ($field->default_value !== null) {
 				continue;

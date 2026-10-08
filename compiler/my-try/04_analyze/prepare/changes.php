@@ -76,6 +76,9 @@ final class Preparation_Changes
 		if (($old->initialization === null) !== ($current->initialization === null)) {
 			return false;
 		}
+		if ($old->initialization !== null) {
+			if ($old->initialization->base_contract !== $current->initialization->base_contract) { return false; }
+		}
 		if (weakref_get($old->constructor) !== weakref_get($current->constructor)) { return false; }
 		foreach ($old->capabilities as $capability) {
 			if (!$current->has_capability($capability)) {

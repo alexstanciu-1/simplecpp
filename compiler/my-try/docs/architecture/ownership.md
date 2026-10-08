@@ -17,6 +17,12 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+Synthesized record initialization facts share the base's completed initialization
+contract in an acyclic ancestry graph and own only local input membership. The base
+link retains settled facts, never workers or copied source members. Normal declaration
+dependencies invalidate descendants; reset/retirement releases these facts. The
+ordered input query builds a transient view sharing original input/default identities.
+
 Original `collected_method` identities own their called-type `callable_instance`
 inventory. Instances own private parsed fragments/working methods; origin, called
 record, captured called scope and working-method context backlinks are weak. The

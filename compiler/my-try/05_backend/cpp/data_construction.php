@@ -138,10 +138,10 @@ final class CPP_Data_Construction
 			$text .= CPP_Declarations::type($input->value_conversion->target_type, $context) . ' ' . $name . ' = ' . $value . ";\n";
 			$arguments[$input->input_position] = $name;
 		}
-		$inputs /** Key_Storage_List<record_initialization_input> */ = $facts->contract->inputs;
+		$inputs /** vector<record_initialization_input> */ = $facts->contract->inputs_in_order();
 		$ordered = '';
 		if (weakref_get($facts->contract->constructor) === null) { $ordered = $payload->spelling . '::scpp_data_tag{}'; }
-		foreach ($inputs->items() as $position => $input) {
+		foreach ($inputs as $position => $input) {
 			$parameter = $input->parameter;
 			if (!isset($arguments[$position])) {
 				$name = 'record_default_' . $context->next_temporary;
@@ -165,12 +165,24 @@ final class CPP_Data_Construction
 		$context->headers['utility'] = true;
 		$parameters = 'scpp_data_tag';
 		$initializers = '';
-		$inputs /** Key_Storage_List<record_initialization_input> */ = $contract->inputs;
-		foreach ($inputs->items() as $position => $input) {
+		$base_count = 0;
+		if ($contract->base_contract !== null) {
+			$base_count = q_count($contract->base_contract->inputs_in_order());
+			$base = CPP_Types::payload($contract->base_type);
+			CPP_Types::record_dependencies($base, $context);
+			$initializers = ' : ' . $base->spelling . '{' . $base->spelling . '::scpp_data_tag{}';
+			for ($index = 0; $index < $base_count; $index++) {
+				$initializers .= ', std::move(input_' . $index . ')';
+			}
+			$initializers .= '}';
+		}
+		$inputs /** vector<record_initialization_input> */ = $contract->inputs_in_order();
+		foreach ($inputs as $position => $input) {
 			$field /** prepared_field */ = $input->field;
 			$requirement = Type_Queries::is_nominal_handle($field->type)
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
 			$parameters .= ', ' . CPP_Declarations::type_for($field->type, $context, $requirement) . ' input_' . $position;
+			if ($position < $base_count) { continue; }
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$initializers .= ($initializers === '' ? ' : ' : ', ')
 				. CPP_Generator::source_name('field', $entry->name) . '(std::move(input_' . $position . '))';

@@ -31,8 +31,8 @@ are distinct; the imported examples must not conflate them.
 
 Remaining extensions require agreement, not another implementation of those cards:
 
-1. Synthesized derived `data` inputs: inherited public-property ownership and base
-   initialization. The authored/inherited constructor slice below now executes.
+1. Derived `data` construction is now covered by authored/inherited constructors and
+   composed synthesized inputs; the checkpoints below record their explicit boundaries.
 2. Runtime-called-type propagation through instance methods; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
 3. Additional ownership conversions/joins: unique/weak ancestry, checked downcasts,
@@ -41,8 +41,8 @@ Remaining extensions require agreement, not another implementation of those card
 5. Other explicit bounds: non-public constructors/destructors, variance and the
    inherited-final-virtual interface-forwarding restriction.
 
-Next discussion: synthesized derived data inputs and their base-construction contract.
-This is a proposal, not permission to lift that remaining gate.
+Next discussion: choose among the remaining runtime called-type, ownership-conversion
+and trait-extension groups; no new group is enabled by this reconciliation.
 CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
 
 ## Derived data through constructor contracts — 2026-10-08
@@ -65,9 +65,31 @@ six adjacent PHP suites passed in `/tmp/derived-data-regression-20261008-1`.
 inheritance, input order, nested targets, storage, rejection and cross-file retry/repair,
 reset and fresh/incremental agreement. No native compiler rebuild.
 
-Remaining: synthesized inherited-property schemas require discussion. `data` is not
-inherited, non-public/reference/variadic constructors retain their existing gates, and
-inherited `set:` property rebinding is not introduced.
+The following checkpoint adds composed synthesized inputs. `data` is not inherited,
+non-public/reference/variadic constructors retain their existing gates, and inherited
+`set:` property rebinding is not introduced.
+
+## Composed synthesized data inputs — 2026-10-08
+
+Implemented the agreed explicit-data ancestry boundary. Each synthesized contract
+references its base's settled contract plus local public inputs; no inherited AST or
+member inventory is copied. The transient input view is base-first. C++ forwards the
+base prefix into its tagged constructor directly, then initializes child members.
+Authored/inherited constructors keep exclusive ownership of their parameter contracts.
+
+Required base inputs are checked at construction, not rejected while declaring the
+derived type. Ordinary default construction still checks the base. Base-contract
+identity participates in declaration equivalence so ancestor schema/default edits
+invalidate unchanged descendants and callers. Non-data bases, excluded member keys,
+duplicate/missing inputs and inherited redeclarations reject during preparation.
+
+Proof: `records.py --suite derived_data --no-pch` in
+`/tmp/synthesized-data-20261008-2`; the expanded suite has 38 generated programs.
+Six focused PHP suites passed in `/tmp/synthesized-data-regression-20261008-1`.
+Includes multilevel composition, required enum inputs, private defaults, suppressed
+base defaults, ordered effects, ordinary new, storage and cross-file schema/default
+edits with failure/retry/repair, no-op/reset and fresh/incremental equality.
+No native compiler rebuild. Specs and model/ownership guidance record the shared path.
 
 ## Late-static execution — 2026-10-08
 
@@ -498,7 +520,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; public fixed-value constructors |
 | CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original public concrete constructor contract/defaults through abstract or concrete ancestors |
 | CLASS-INH-014 | implemented-bounded | `static::method(); new static();` | verified | verified | deferred | Demanded static called-type instances; shared-class factories; runtime instance propagation deferred |
-| CLASS-INH-015 | implemented-bounded | `data class C extends B {} $c C = {input: 9};` | verified | verified | deferred | Explicit opt-in; selected authored/inherited constructor inputs; synthesized inherited schemas deferred |
+| CLASS-INH-015 | implemented-bounded | `data class C extends B {} $c C = {input: 9};` | verified | verified | deferred | Explicit opt-in; authored/inherited parameter contracts or composed synthesized public-property inputs through data bases |
 | [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |
 | [CLASS-INH-012](#class-inh-012) | implemented-equivalent | `class B extends A {}` | verified | verified | deferred | Prepared base identity and qualified ancestor calls replace reliance on a literal C++ base alias |
 | [CLASS-ABS-001](#class-abs-001) | implemented-bounded | `function __destruct() { $this->cleanup(); }` | verified | verified | deferred | Shared method lifecycle; out-of-line nonthrowing body; ordinary instance calls |

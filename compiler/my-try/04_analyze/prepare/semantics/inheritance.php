@@ -18,12 +18,23 @@ final class Inheritance_Preparation
 			$base_type = Model::$type_catalog->registry()->use($canonical->type_id(), true);
 		}
 		$facts->base_type = $base_type;
+		self::reject_redeclarations($entry->syntax(), $base, $context);
+	}
+
+	/** A composed data contract supplies the base directly; other paths need its ordinary default. */
+	public static function require_default_base(prepared_record $facts, preparation_context $context): void
+	{
+		$base_type = $facts->base_type;
+		if ($base_type === null) { return; }
+		if ($facts->initialization !== null) {
+			if ($facts->initialization->base_contract !== null) { return; }
+		}
+		$base /** collected_record */ = Type_Queries::source_record($base_type);
 		if (weakref_get($base->syntax()->require_preparation()->constructor) === null) {
 			if (!Object_Construction_Preparation::supports_default($base_type, $context, true)) {
 				throw new \RuntimeException('Inheritance requires a default-constructible base');
 			}
 		}
-		self::reject_redeclarations($entry->syntax(), $base, $context);
 	}
 
 	/** No synthesized callable identity: construction observes the original ancestor signature. */

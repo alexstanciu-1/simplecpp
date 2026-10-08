@@ -179,10 +179,24 @@ final class prepared_sequence_construction extends prepared_data_construction
 final class record_initialization_contract
 {
 	public ?collected_method $constructor /** weak<collected_method> */ = null;
+	/** Acyclic settled base contract; local input membership remains local. */
+	public ?record_initialization_contract $base_contract = null;
+	public ?canonical_type_use $base_type = null;
 	public Key_Storage_List $inputs /** Key_Storage_List<record_initialization_input> */;
 	public function __construct()
 	{
 		$this->inputs = new Key_Storage_List /** Key_Storage_List<record_initialization_input> */();
+	}
+	/** Transient ordered view, retaining original input/default identities. */
+	public function inputs_in_order(): array /** vector<record_initialization_input> */
+	{
+		$result /** vector<record_initialization_input> */ = [];
+		if ($this->base_contract !== null) {
+			foreach ($this->base_contract->inputs_in_order() as $input) { $result[] = $input; }
+		}
+		$local /** Key_Storage_List<record_initialization_input> */ = $this->inputs;
+		foreach ($local->items() as $input) { $result[] = $input; }
+		return $result;
 	}
 }
 

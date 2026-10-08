@@ -142,6 +142,13 @@ C++ caches the entire initializer list with the body fragment, not the public si
 Braced base initialization preserves left-to-right argument boundaries without copying
 a temporary base. Explicit parent instance calls retain a current-instance dispatch fact
 and original target; no fabricated `$this` AST or inherited-member copies are needed.
+
+Synthesized `record_initialization_contract` facts retain a settled base contract and
+its inline type, separately from local inputs. `inputs_in_order()` is a transient
+base-first view of original input/default identities, not a flattened member inventory.
+Preparation owns eligibility and dependency tracking; backend construction forwards
+the base prefix directly into the base's tagged constructor. Base-contract identity
+participates in record equivalence so schema/default edits propagate to callers.
 Parameters own optional default expressions; normalized scalar/enum default snapshots
 belong to their callable contracts and participate in signature equivalence. Calls
 retain only explicit arguments; emission supplies omitted defaults from the signature.
