@@ -14,6 +14,28 @@ That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance, abstract/override dispatch and interface implementations now
 execute. Shared derived/base upcasts and interface-typed handles now execute.
 
+## Trait composition foundation — 2026-10-08
+
+The user approved simple instance-method/property composition for classes and structs,
+with same-category collisions rejected and adaptations/nested uses/lifecycle/static
+members/constants outside the first execution slice. Consumer-owned independent member
+instances are the approved prerequisite; see the
+[ownership plan and checkpoints](../planning/trait_member_instances.md).
+
+The first checkpoint parses trait declarations and simple grouped `use` lists through
+the common declaration AST. `collected_trait` and nominal `trait_type` preserve source
+identity without granting record layout or handle capabilities. Methods retain their
+original trait owner; uses do not flatten members into authored consumers. Parsing
+tracks use-list edits and rejects adaptation/trailing-comma forms.
+
+Execution remains gated before source trait bodies acquire preparation state. Instance
+materialization, consumer-specific preparation/lifecycle and emission are **not yet
+implemented**. Next: implement those approved consumer-owned member instances.
+
+Proof: all 18 PHP-host model suites passed, including trait syntax/identity,
+use/body edits, malformed-use recovery and removal; `/tmp/trait-model-20261008-1`.
+No generated trait program or native compiler build is claimed by this checkpoint.
+
 ## Interface handles and calls — 2026-10-08
 
 The agreed handle group is implemented: bare interfaces use shared nominal storage,
@@ -317,7 +339,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLASS-INH-001](#class-inh-001) | implemented-bounded | `class B extends A {}` | verified | verified | deferred | Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07) |
 | [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations; final-virtual forwarding restriction |
-| [CLASS-INH-003](#class-inh-003) | pending-discussion | `class A { use T; }` | unverified | unverified | deferred | — |
+| [CLASS-INH-003](#class-inh-003) | model-in-progress | `class A { use T; }` | syntax/identity verified | gated | deferred | Consumer-owned instance model approved; materialization and execution pending |
 | [CLASS-INH-004](#class-inh-004) | implemented-bounded | `interface I { function f(int $a): int; }` | verified | verified | deferred | Public bodyless instance contracts; multiple interface inheritance |
 | [CLASS-INH-006](#class-inh-006) | pending-discussion | `$a = new A(1);` | unverified | unverified | deferred | — |
 | [CLASS-INH-007](#class-inh-007) | pending-discussion | `A a(1);` | unverified | unverified | deferred | — |

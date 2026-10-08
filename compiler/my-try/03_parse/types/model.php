@@ -41,6 +41,7 @@ enum nominal_type_kind: int
 	case class_type = 2;
 	case enumeration = 3;
 	case interface_type = 4;
+	case trait_type = 5;
 }
 
 /** Storage of a record instance, independently of its nominal declaration identity. */

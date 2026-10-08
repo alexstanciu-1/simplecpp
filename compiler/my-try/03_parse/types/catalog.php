@@ -409,6 +409,16 @@ final class registered_type_catalog
 		return object_cast($type, nominal_type::class);
 	}
 
+	/** A trait has a named source identity, but no runtime value/storage capabilities. */
+	public function define_source_trait(string $name, collected_trait $declaration): nominal_type
+	{
+		$capabilities /** vector<generic_contract> */ = [];
+		$definition = $this->type_registry->define_nominal($name, type_definition_origin::source,
+			nominal_type_kind::trait_type, $capabilities);
+		$this->source_declaration_index->register($definition, $declaration);
+		return object_cast($this->type_registry->canonical($definition), nominal_type::class);
+	}
+
 	public function definition(string $source_name): type_definition_i
 	{
 		$exposure = $this->source_exposures->type($source_name);

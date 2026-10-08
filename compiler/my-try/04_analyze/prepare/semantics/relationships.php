@@ -19,6 +19,9 @@ final class Relationship_Preparation
 	/** Resolve ordered direct edges only; completed dependencies reject indirect cycles. */
 	public static function prepare(collected_member_owner $entry, preparation_context $context): prepared_type_relationships
 	{
+		if ($entry instanceof collected_trait) {
+			throw new \RuntimeException('Trait execution awaits consumer-owned member instantiation');
+		}
 		$syntax = $entry->syntax();
 		$facts = new prepared_type_relationships();
 		foreach ($syntax->modifiers as $modifier) {

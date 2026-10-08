@@ -164,8 +164,9 @@ final class Symbol_Collector
 	{
 		if (($node->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($node->declaration_kind !== type_declaration_kind::class_type)
-			&& ($node->declaration_kind !== type_declaration_kind::interface_type)) {
-			throw new \RuntimeException('Trait registration awaits composition semantics');
+			&& ($node->declaration_kind !== type_declaration_kind::interface_type)
+			&& ($node->declaration_kind !== type_declaration_kind::trait_type)) {
+			throw new \RuntimeException('Unsupported member-owning declaration kind');
 		}
 		if ($this->reuse($node, $index)) {
 			return;
@@ -173,6 +174,9 @@ final class Symbol_Collector
 		$entry /** collected_member_owner */;
 		if ($node->declaration_kind === type_declaration_kind::interface_type) {
 			$entry = new collected_interface($this->collection, $node);
+		}
+		elseif ($node->declaration_kind === type_declaration_kind::trait_type) {
+			$entry = new collected_trait($this->collection, $node);
 		}
 		else {
 			$entry = new collected_record($this->collection, $node);

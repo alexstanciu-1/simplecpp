@@ -10,6 +10,7 @@ enum collected_name_kind
 {
 	case record_declaration;
 	case interface_declaration;
+	case trait_declaration;
 	case enum_declaration;
 	case field_declaration;
 	case field_reference;
@@ -287,6 +288,15 @@ final class collected_interface extends collected_member_owner
 	public function kind(): collected_name_kind
 	{
 		return collected_name_kind::interface_declaration;
+	}
+}
+
+/** Authored composition source; never a record layout, receiver instance or callable implementation. */
+final class collected_trait extends collected_member_owner
+{
+	public function kind(): collected_name_kind
+	{
+		return collected_name_kind::trait_declaration;
 	}
 }
 

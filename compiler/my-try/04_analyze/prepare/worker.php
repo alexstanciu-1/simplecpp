@@ -280,6 +280,9 @@ final class Preparation_Worker
 	public function select_record(type_declaration_node $node): void
 	{
 		$entry = object_cast($node->occurrence(), collected_member_owner::class);
+		if ($entry instanceof collected_trait) {
+			throw new \RuntimeException('Trait execution awaits consumer-owned member instantiation');
+		}
 		if ($entry instanceof collected_record) { $this->select_owner($this->record_owner(object_cast($entry, collected_record::class))); }
 		$this->select_owner($this->contract_owner($entry));
 		$constants /** Storage<member_constant_node> */ = $node->constants;

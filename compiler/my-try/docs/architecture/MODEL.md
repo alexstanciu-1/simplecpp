@@ -107,6 +107,12 @@ AST bodies. Signatures remain shared. C++ assembles direct base/interface spelli
 from current relationship facts, outside cached layout fragments, so relationship-only
 edits cannot leave stale header inheritance. Bare interfaces and classes share the
 `is_nominal_handle` storage query; interface identity still confers no record layout.
+
+`collected_trait` preserves an authored composition source as another member owner,
+with a distinct nominal kind and no value capabilities. Simple `use_traits` syntax
+owns named references, not resolved or cloned members. Consumer-owned independent
+member instances are [approved but not materialized yet](../planning/trait_member_instances.md).
+Execution remains gated rather than attaching consumer-specific facts to origin nodes.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges
 are contracts, not fallback implementations. Concrete records may retain one

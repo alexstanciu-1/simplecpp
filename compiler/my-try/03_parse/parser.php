@@ -568,7 +568,7 @@ final class Parser_Run
 			return $this->statement_block();
 		}
 		if (($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data')
-			|| ($this->text() === 'interface') || ($this->text() === 'final') || ($this->text() === 'abstract')) {
+			|| ($this->text() === 'interface') || ($this->text() === 'trait') || ($this->text() === 'final') || ($this->text() === 'abstract')) {
 			return $this->type_declaration();
 		}
 		if ((($this->text() === 'function') || ($this->text() === 'template'))) {
@@ -923,11 +923,12 @@ final class Parser_Run
 			else { $modifiers[] = declaration_modifier::abstract_declaration; }
 			$this->position++;
 		}
-		if (($this->text() !== 'class') && ($this->text() !== 'struct') && ($this->text() !== 'interface')) {
-			throw new \RuntimeException($this->error_message('Expected class, struct or interface declaration'));
+		if (($this->text() !== 'class') && ($this->text() !== 'struct') && ($this->text() !== 'interface') && ($this->text() !== 'trait')) {
+			throw new \RuntimeException($this->error_message('Expected class, struct, interface or trait declaration'));
 		}
 		$kind = $this->text() === 'class' ? type_declaration_kind::class_type : type_declaration_kind::struct_type;
 		if ($this->text() === 'interface') { $kind = type_declaration_kind::interface_type; }
+		if ($this->text() === 'trait') { $kind = type_declaration_kind::trait_type; }
 		$this->position++;
 		if (!$this->identifier()) {
 			throw new \RuntimeException($this->error_message('Expected record name'));
@@ -972,9 +973,19 @@ final class Parser_Run
 		$fields /** Storage<property_node> */ = new Storage();
 		$methods /** Storage<method_node> */ = new Storage();
 		$constants /** Storage<member_constant_node> */ = new Storage();
+		$uses /** Storage<trait_use_node> */ = new Storage();
 		$this->expect('{');
 		while ($this->text() !== '}') {
 			$member_start = $this->position;
+			if ($this->text() === 'use') {
+				$this->position++;
+				$use = new trait_use_node();
+				$use->traits = $this->relationship_names();
+				$this->expect(';');
+				$use->set_span($member_start, $this->position);
+				$uses->append($use);
+				continue;
+			}
 			$member_modifiers = $this->member_modifiers();
 			if ($this->text() === 'function') {
 				$methods->append(object_cast($this->callable_declaration(object_cast($record->occurrence(), collected_member_owner::class), $member_modifiers, $member_start), method_node::class));
@@ -991,6 +1002,7 @@ final class Parser_Run
 		$record->properties = $fields;
 		$record->methods = $methods;
 		$record->constants = $constants;
+		$record->use_traits = $uses;
 		$same = $previous !== null;
 		if ($old_relationship_text !== $this->relationship_key($record)) { $same = false; }
 		if (q_count($old_constants) !== q_count($constants)) { $same = false; }
@@ -1050,6 +1062,12 @@ final class Parser_Run
 		foreach ($extended as $type_name) { $key .= ';extends:' . $type_name->name; }
 		$implemented /** Storage<named_type_node> */ = $node->implemented_interfaces;
 		foreach ($implemented as $type_name) { $key .= ';implements:' . $type_name->name; }
+		$uses /** Storage<trait_use_node> */ = $node->use_traits;
+		foreach ($uses as $use) {
+			$key .= ';use';
+			$traits /** Storage<named_type_node> */ = $use->traits;
+			foreach ($traits as $type_name) { $key .= ':' . $type_name->name; }
+		}
 		return $key;
 	}
 
