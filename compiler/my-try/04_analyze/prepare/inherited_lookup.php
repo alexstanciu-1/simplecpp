@@ -30,6 +30,7 @@ final class Inherited_Lookup
 		}
 		elseif ($kind === preparation_lookup_kind::method_name) {
 			foreach ($members->methods_named($name) as $method) {
+				if (Member_Inventory::is_requirement($method)) { continue; }
 				$result[] = new inherited_member_candidate($entry, $method);
 			}
 		}
@@ -52,7 +53,22 @@ final class Inherited_Lookup
 		$result = self::local($entry, $name, $kind, $context);
 		if (q_count($result) !== 0) { return $result; }
 		$base = weakref_get($relationships->base);
-		if ($base !== null) { return self::members($base, $name, $kind, $context); }
+		if ($base !== null) {
+			$result = self::members($base, $name, $kind, $context);
+			if (q_count($result) !== 0) { return $result; }
+		}
+		if ($kind === preparation_lookup_kind::method_name) {
+			$selected /** nullable<collected_method> */ = null;
+			foreach (Member_Inventory::requirements($entry) as $requirement) {
+				if ($requirement->name !== $name) { continue; }
+				if ($selected === null) { $selected = $requirement; }
+				elseif ((Member_Preparation::visibility($selected->callable_syntax()->modifiers) !== member_visibility::public_access)
+					&& (Member_Preparation::visibility($requirement->callable_syntax()->modifiers) === member_visibility::public_access)) {
+					$selected = $requirement;
+				}
+			}
+			if ($selected !== null) { return [new inherited_member_candidate($entry, $selected)]; }
+		}
 		// Implements contributes obligations, never a concrete method implementation.
 		if (!($entry instanceof collected_interface)) { return $result; }
 		$seen /** hash<bool, shared<collected_declaration>> */ = new \SplObjectStorage /** hash<bool, shared<collected_declaration>> */();

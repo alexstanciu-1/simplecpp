@@ -42,6 +42,12 @@ join retires stale instances before disposing source scopes. Automatic selection
 replacement, preparation reset and full reset include private collections; see
 the [trait plan](../planning/trait_member_instances.md).
 
+Trait requirements use the same consumer-owned working syntax/signature records,
+without executable body work. Prepared type contracts reference these requirement
+identities separately from selected method decisions, including inherited obligations.
+There is no second requirement syntax owner; ordinary private-collection retirement
+invalidates and releases them with the rest of the contributed members.
+
 `collected_method` weakly observes its `collected_member_owner` through
 `declaring_type()`; member constants use the same optional weak owner role.
 Records and interfaces share that identity contract, not layout. Member scopes and

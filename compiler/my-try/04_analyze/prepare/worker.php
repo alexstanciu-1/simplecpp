@@ -352,6 +352,7 @@ final class Preparation_Worker
 			$this->select_owner($this->declaration_owner(object_cast($constant->occurrence(), collected_constant::class)));
 		}
 		$methods /** Storage<method_node> */ = Member_Inventory::methods($entry);
+		foreach (Member_Inventory::requirements($entry) as $requirement) { $this->select_callable($requirement->callable_syntax()); }
 		foreach ($methods as $method) {
 			$this->select_callable($method);
 		}

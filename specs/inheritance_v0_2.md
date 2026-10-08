@@ -264,8 +264,26 @@ remain those of the trait source; member constants require qualification. Trait 
 themselves are not static-call or static-storage targets. Existing inherited collision,
 compatible static redeclaration and finality rules remain in force.
 
-Adaptations/aliases, trait lifecycle methods and bodyless trait
-requirements remain deferred. This v0.2 contract
+### Abstract trait requirements
+
+A trait may declare a public/protected abstract instance method. Each final consumer
+owns its independent requirement signature with the trait's lexical provenance.
+Requirements are separate from effective methods: they do not collide with an authored,
+inherited or contributed implementation of the same name. Every requirement must match
+the existing exact callable contract (including reference and variadic modes), and its
+implementation cannot narrow visibility or be static. Distinct concrete implementations
+still collide. Private/static abstract requirements and lifecycle requirements reject.
+
+An abstract consumer may leave requirements unresolved; a concrete consumer may not.
+Compatible unresolved requirements share a single pure virtual slot, selecting public
+visibility when required and otherwise retaining declaration order. An explicit authored
+method supplies its own call contract/defaults. Inherited obligations continue to apply
+to descendants. Satisfying a requirement with an existing ordinary method does not
+retroactively make that method virtual; implementing an inherited abstract slot uses
+the ordinary override path. Reference-return cycle checks include requirement-to-
+implementation edges, including descendant implementations of abstract slots.
+
+Adaptations/aliases and trait lifecycle methods remain deferred. This v0.2 contract
 supersedes the legacy blanket rejection of trait syntax, not the deferred extensions.
 
 ## Remaining gates

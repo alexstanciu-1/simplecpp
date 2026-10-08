@@ -154,6 +154,14 @@ final class CPP_Callables
 	public static function implementations(collected_member_owner $record): Storage /** Storage<method_node> */
 	{
 		$result /** Storage<method_node> */ = new Storage();
+		$contracts = $record->contract_work->require_facts();
+		$decisions /** Keyed_Storage<prepared_method_contract> */ = $contracts->methods;
+		foreach ($decisions as $decision) {
+			$selected = weakref_get($decision->method);
+			if (Member_Inventory::is_requirement($selected)) {
+				$result->append(object_cast($selected->callable_syntax(), method_node::class));
+			}
+		}
 		foreach (Member_Inventory::methods($record) as $syntax) {
 			$method = object_cast($syntax->occurrence(), collected_method::class);
 			if (!Callable_Inventory::deferred_body($method)) { $result->append($syntax); continue; }

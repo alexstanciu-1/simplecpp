@@ -22,6 +22,7 @@ final class Type_Contract_Preparation
 			$facts->polymorphic = $facts->polymorphic || $base_contract->polymorphic;
 			$pending = $base_contract->obligations;
 			$facts->interface_requirements = $base_contract->interface_requirements;
+			$facts->trait_requirements = $base_contract->trait_requirements;
 		}
 		foreach ($relations->interfaces as $interface) {
 			$interface_contract = $context->worker->require_type_contract($interface, $context);
@@ -82,6 +83,31 @@ final class Type_Contract_Preparation
 			$decisions->add($syntax->name, $decision);
 		}
 		$forwarders /** Keyed_Storage<prepared_method_contract> */ = $facts->forwarders;
+		foreach (Member_Inventory::requirements($record) as $requirement) { $facts->trait_requirements[] = $requirement; }
+		foreach ($facts->trait_requirements as $requirement) {
+			Call_Preparation::require_signature($requirement, $context);
+			$required = $requirement->callable_syntax()->require_preparation();
+			$matches = Inherited_Lookup::members($record, $requirement->name, preparation_lookup_kind::method_name, $context);
+			if (q_count($matches) !== 1) { throw new \RuntimeException('Trait requirement needs one instance method'); }
+			$implementation = object_cast($matches[0]->member, collected_method::class);
+			Call_Preparation::require_signature($implementation, $context);
+			$provided = $implementation->callable_syntax()->require_preparation();
+			if ($provided->static_member || !self::compatible($required->signature, $provided->signature)
+				|| ($provided->visibility === member_visibility::private_access)
+				|| (($required->visibility === member_visibility::public_access) && ($provided->visibility !== member_visibility::public_access))) {
+				throw new \RuntimeException('Trait requirement needs an exact compatible instance signature and visibility');
+			}
+			if ($provided->abstract_method && !isset($decisions[$requirement->name])) {
+				if ($implementation->declaring_type() === $record) {
+					$slot = new prepared_method_contract();
+					$slot->method = $implementation;
+					$slot->abstract_method = true;
+					$slot->virtual_method = true;
+					$decisions->add($requirement->name, $slot);
+					$facts->polymorphic = true;
+				}
+			}
+		}
 		if (!$is_interface) {
 			foreach ($facts->interface_requirements as $requirement) {
 				$matches = Inherited_Lookup::members($record, $requirement->name, preparation_lookup_kind::method_name, $context);
@@ -202,6 +228,10 @@ final class Type_Contract_Preparation
 		if ($old === null) { return false; }
 		if (($old->abstract_type !== $current->abstract_type) || ($old->polymorphic !== $current->polymorphic)) { return false; }
 		if (q_count($old->interface_requirements) !== q_count($current->interface_requirements)) { return false; }
+		if (q_count($old->trait_requirements) !== q_count($current->trait_requirements)) { return false; }
+		foreach ($old->trait_requirements as $index => $method) {
+			if ($method !== $current->trait_requirements[$index]) { return false; }
+		}
 		foreach ($old->interface_requirements as $index => $method) {
 			if ($method !== $current->interface_requirements[$index]) { return false; }
 		}

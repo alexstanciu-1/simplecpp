@@ -21,6 +21,8 @@ final class prepared_type_contract
 	public array $obligations /** vector<collected_method> */ = [];
 	/** Original interface declarations remain requirements after implementation, for descendant validation. */
 	public array $interface_requirements /** vector<collected_method> */ = [];
+	/** Consumer-owned trait signatures, retained independently of selected methods. */
+	public array $trait_requirements /** vector<collected_method> */ = [];
 	/** Lowering bridges observe inherited implementations; never synthetic source methods. */
 	public Keyed_Storage $forwarders /** Keyed_Storage<prepared_method_contract> */;
 	public function __construct()

@@ -119,8 +119,13 @@ consumer-specific facts. The parser only replays supplied member spans; composit
 supplies the consumer and lexical context without adding authored AST membership.
 `Member_Inventory` builds transient local-member views for analysis and emission;
 it neither owns members nor caches inherited lookup results. Ordinary layout and
-callable processing consume those views. Member lookup observes each private scope,
-and reference-cycle analysis includes private occurrence collections. C++ places a
+callable processing consume those views. Member lookup observes each private scope.
+Bodyless trait contributions have a separate requirement view and signature work;
+`prepared_type_contract::trait_requirements` retains their independent identities.
+Effective method decisions select an implementation or unresolved abstract slot;
+requirements do not enter layout's ordinary method inventory as duplicates. Emission
+uses selected slots, and cycle analysis follows requirement-to-implementation edges.
+Reference-cycle analysis includes private occurrence collections. C++ places a
 working method in its declaring consumer's unit, independently of lexical provenance.
 Inherited lookup observes each consulted category/name pool and returns original
 declarations plus their owner, without an effective-member cache. Implements edges

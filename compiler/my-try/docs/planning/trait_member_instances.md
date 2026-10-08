@@ -7,7 +7,8 @@ Traits contribute ordinary instance/static methods, explicitly typed instance/st
 to classes and structs through simple `use A, B;` declarations. Reject same-category
 collisions, including authored consumer methods replacing contributed methods.
 Property/method/constant names remain separate categories. Adaptations,
-lifecycle methods and bodyless requirements remain outside the execution slice.
+lifecycle methods remain outside the execution slice. Abstract instance requirements
+are distinct from concrete contributions and may be satisfied by a same-named method.
 
 Nested use is now resolved by an analysis-owned transient DFS, before materialization.
 It rejects active-path cycles, deduplicates visited origin identities across paths and
@@ -15,24 +16,25 @@ retains each intermediate origin in the consumer batch, even when it has no memb
 Thus existing snapshot retirement also observes intermediate use/import edits. Each
 origin still materializes directly into the final consumer, using its original scope.
 
-## Abstract requirement prerequisite — needs implementation approval
+## Abstract requirement separation — implemented
 
-The user approved the semantics: authored, inherited or contributed instance methods
-may satisfy a trait requirement; abstract consumers may retain unresolved obligations.
-The current ordinary-method inventory cannot represent a requirement alongside its
-same-named implementation: layout, lookup, type contracts and backend enumeration all
-currently treat it as another declaration. Simply relaxing collision checks would
-leave ambiguous calls or duplicate generated declarations.
+Consumer-owned bodyless contributions retain independent signature work and lexical
+provenance. `Member_Inventory::requirements` exposes them separately from ordinary
+methods; layout collision checks and normal method emission use the implementation
+view. Type contracts retain `trait_requirements`, validate every exact signature and
+visibility obligation, and select one abstract slot when no implementation exists.
+Inherited lookup prefers implementations and falls back to an unresolved requirement.
+Compatible same-name slots select the widest required visibility, then source order.
 
-Proposed coordinated repair: preserve consumer-owned requirement syntax/signature work,
-but expose requirements separately from effective implementation lookup/emission. Type
-contracts validate all obligations using shared signature/access rules, retain unresolved
-abstract slots and select implementations without rewriting authored membership. Carry
-those decisions through inherited lookup, reference-return cycle analysis and C++
-enumeration. Test authored/contributed/inherited satisfaction, conflicting signatures,
-abstract propagation, reference returns and edit/removal/retry/fresh equivalence.
-Do not silently discard requirements or pretend they are interface bases. This cross-owner
-prerequisite remains pending; nested uses do not enable bodyless trait methods.
+Backend enumeration emits selected abstract slots only, never both a requirement
+and its implementation. Reference-cycle analysis connects interface and trait
+requirements to selected implementations through one traversal. Existing private
+collections own signature work and participate in reset/retirement; no requirement
+AST, runtime trait base or duplicated implementation inventory was introduced.
+
+The agreed coordinated prerequisite is complete. Authored, contributed and inherited
+satisfaction, abstract propagation, reference-return cycles and signature/body-shape
+edit/retry/repair/reset/fresh checks are in `tests/traits.php`. Dated evidence is in CH11.
 
 The user approved consumer-owned instances after inspection established that one
 source method owns one declaring type, prepared signature and prepared body, and

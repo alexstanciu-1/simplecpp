@@ -35,6 +35,14 @@ foreach ([
 foreach (['class', 'struct'] as $kind) {
 	$counter = 'trait T { public static int $count = 0; public static function next(): int { self::$count += 1; return self::$count; } } ';
 	foreach ([
+		'requirement_authored' => ['trait T { abstract function read(): int; function run(): int { return $this->read(); } } ' . $kind . ' A { use T; function read(): int { return 9; } } $a = new A(); return $a->run();', 9],
+		'requirement_contributed' => ['trait T { abstract function read(): int; } trait U { function read(): int { return 9; } } ' . $kind . ' A { use T,U; } $a = new A(); return $a->read();', 9],
+		'requirement_inherited' => ['trait T { abstract function read(): int; } ' . $kind . ' B { function read(): int { return 9; } } ' . $kind . ' A extends B { use T; } $a = new A(); return $a->read();', 9],
+		'requirement_abstract' => ['trait T { abstract protected function read(): int; function run(): int { return $this->read(); } } abstract ' . $kind . ' B { use T; } ' . $kind . ' A extends B { protected function read(): int { return 9; } } $a = new A(); return $a->run();', 9],
+		'requirement_reference' => ['trait T { abstract function &pick(int &$n): int; function &relay(int &$n): int { return $this->pick($n); } } ' . $kind . ' A { use T; function &pick(int &$n): int { return $n; } } $a = new A(); $n = 1; $alias =& $a->relay($n); $alias = 9; return $n;', 9],
+		'requirement_reference_abstract' => ['trait T { abstract function &pick(int &$n): int; function &relay(int &$n): int { return $this->pick($n); } } abstract ' . $kind . ' B { use T; } ' . $kind . ' A extends B { function &pick(int &$n): int { return $n; } } $a = new A(); $n = 1; $alias =& $a->relay($n); $alias = 9; return $n;', 9],
+		'requirement_multiple' => ['trait T { abstract function read(): int; } trait U { abstract function read(): int; } trait Outer { use T,U; } abstract ' . $kind . ' B { use Outer; } ' . $kind . ' A extends B { function read(): int { return 9; } } $a = new A(); return $a->read();', 9],
+		'requirement_visibility' => ['trait T { abstract protected function read(): int; } trait U { abstract public function read(): int; function run(): int { return $this->read(); } } abstract ' . $kind . ' B { use T,U; } ' . $kind . ' A extends B { public function read(): int { return 9; } } $a = new A(); return $a->run();', 9],
 		'nested_diamond' => [$counter . 'trait Left { use T; } trait Right { use T; } trait Both { use Left, Right; } ' . $kind . ' A { use Both, T; } A::next(); return A::next();', 2],
 		'nested_instance' => [$base . 'trait Outer { use Counter; } ' . $kind . ' A { use Outer; } $a = new A(); return $a->next();', 5],
 		'nested_lexical' => ['namespace origin; const N = 9; trait T { function read(): int { return N; } } namespace middle; use origin\\T as Inner; trait Outer { use Inner; } namespace app; const N = 1; ' . $kind . ' A { use \\middle\\Outer; } $a = new A(); return $a->read();', 9],
@@ -51,6 +59,13 @@ foreach (['class', 'struct'] as $kind) {
 }
 foreach ([
 	[$base . 'class A { use Counter, Counter; }', 'Duplicate trait use'],
+	['trait T { abstract function read(): int; } class A { use T; }', 'unimplemented abstract'],
+	['trait T { abstract function read(): int; } class A { use T; function read(): string { return "bad"; } }', 'Trait requirement'],
+	['trait T { abstract function read(): int; } class A { use T; private function read(): int { return 1; } }', 'Trait requirement'],
+	['trait T { abstract function read(): int; } class A { use T; static function read(): int { return 1; } }', 'Trait requirement'],
+	['trait T { abstract function read(): int; } trait U { abstract function read(): string; } abstract class A { use T,U; }', 'Trait requirement'],
+	['trait T { abstract static function read(): int; } class A { use T; }', 'abstract instance'],
+	['trait T { abstract function &pick(int &$n): int; function &relay(int &$n): int { return $this->pick($n); } } abstract class B { use T; } class A extends B { function &pick(int &$n): int { return $this->relay($n); } }', 'recursive reference-return'],
 	[$base . 'class A { use Counter; int $count; }', 'Duplicate property'],
 	[$base . 'class A { use Counter; function next(): int { return 0; } }', 'Duplicate method'],
 	['class Other {} class A { use Other; }', 'trait target'],
@@ -139,6 +154,27 @@ try {
 	traits_check(CPP_Output::encode(Model::$cpp_files) === $edited, 'Static trait reset differs');
 	Compiler_Lifecycle::reset(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	traits_check(CPP_Output::encode(Model::$cpp_files) === $edited, 'Static trait fresh/incremental mismatch');
+	$origin = 'namespace feature; trait T { abstract function read(): int; function run(): int { return $this->read(); } }';
+	$consumer = 'namespace app; use feature\\T; class A { use T; function read(): int { return 9; } }';
+	file_put_contents($origin_path, $origin); file_put_contents($consumer_path, $consumer);
+	file_put_contents($main_path, '$a = new \\app\\A(); return $a->run();');
+	$compiler->update_cpp([$origin_path, $consumer_path, $main_path]);
+	$initial = CPP_Output::encode(Model::$cpp_files);
+	foreach ([str_replace('read(): int;', 'read(): string;', $origin),
+		str_replace('abstract function read(): int;', 'function read(): int { return 1; }', $origin)] as $invalid) {
+		file_put_contents($origin_path, $invalid);
+		foreach ([[$origin_path], []] as $changes) {
+			try { $compiler->update_cpp($changes); throw new \LogicException('Invalid trait requirement survived retry'); }
+			catch (\RuntimeException $expected) {}
+		}
+		file_put_contents($origin_path, $origin); $compiler->update_cpp([$origin_path]);
+		traits_check(CPP_Output::encode(Model::$cpp_files) === $initial, 'Requirement repair differs');
+	}
+	Compiler_Lifecycle::reset_preparation(); $compiler->prepare(); $compiler->cpp();
+	traits_check(CPP_Output::encode(Model::$cpp_files) === $initial, 'Requirement reset differs');
+	Compiler_Lifecycle::reset(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	traits_check(CPP_Output::encode(Model::$cpp_files) === $initial, 'Requirement fresh output differs');
+	traits_export('requirement_repair', native_record_export(), 9);
 }
 finally {
 	Compiler_Lifecycle::reset();

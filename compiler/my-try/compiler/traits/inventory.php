@@ -35,10 +35,33 @@ final class Member_Inventory
 		foreach ($authored as $method) { $result->append($method); }
 		foreach (self::contributions($owner) as $member) {
 			if ($member->working instanceof collected_method) {
+				$contributed = object_cast($member->working, collected_method::class);
+				if (!$contributed->callable_syntax()->has_parsed_body()) { continue; }
 				$result->append(object_cast($member->working->syntax(), method_node::class));
 			}
 		}
 		return $result;
+	}
+
+	/** Bodyless contributions are contracts, not competing method implementations. */
+	public static function requirements(collected_member_owner $owner): Storage /** Storage<collected_method> */
+	{
+		$result /** Storage<collected_method> */ = new Storage();
+		foreach (self::contributions($owner) as $member) {
+			if ($member->working instanceof collected_method) {
+				$method = object_cast($member->working, collected_method::class);
+				if (!$method->callable_syntax()->has_parsed_body()) { $result->append($method); }
+			}
+		}
+		return $result;
+	}
+
+	public static function is_requirement(collected_method $method): bool
+	{
+		foreach (self::requirements($method->declaring_type()) as $requirement) {
+			if ($requirement === $method) { return true; }
+		}
+		return false;
 	}
 
 	public static function properties(collected_member_owner $owner): Storage /** Storage<property_node> */

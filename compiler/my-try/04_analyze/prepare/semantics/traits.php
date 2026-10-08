@@ -89,9 +89,17 @@ final class Trait_Preparation
 		}
 		elseif ($syntax instanceof method_node) {
 			$method = object_cast($syntax, method_node::class);
-			if (string_byte_starts_with($method->name, '__')
-				|| !$method->has_parsed_body()) {
+			if (string_byte_starts_with($method->name, '__')) {
 				throw new \RuntimeException('Trait methods require ordinary concrete bodies');
+			}
+			if (!$method->has_parsed_body()) {
+				$abstract = false;
+				foreach ($method->modifiers as $modifier) {
+					if ($modifier === declaration_modifier::abstract_declaration) { $abstract = true; }
+				}
+				if (!$abstract || Member_Preparation::is_static($method->modifiers)) {
+					throw new \RuntimeException('Trait requirements must be abstract instance methods');
+				}
 			}
 		}
 	}

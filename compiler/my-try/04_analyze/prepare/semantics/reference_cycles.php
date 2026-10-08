@@ -56,7 +56,7 @@ final class Reference_Cycles
 		if (!$has_reference_return) {
 			return $this->cyclic;
 		}
-		$this->interface_targets($sources, $by_definition);
+		$this->requirement_targets($sources, $by_definition);
 		foreach ($sources as $source)
 		{
 			if ($source->deleted) {
@@ -101,8 +101,8 @@ final class Reference_Cycles
 		return $this->cyclic;
 	}
 
-	/** Interface contracts route to original implementations, including inherited forwarding bindings. */
-	private function interface_targets(Storage $sources /** Storage<collected_file> */,
+	/** Interface/trait contracts route to implementations, including inherited forwarding bindings. */
+	private function requirement_targets(Storage $sources /** Storage<collected_file> */,
 		\SplObjectStorage $by_definition /** hash<int, shared<collected_source_callable>> */): void
 	{
 		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
@@ -114,9 +114,11 @@ final class Reference_Cycles
 				if (($entry->change_status === change_state::deleted) || !($entry instanceof collected_record)) { continue; }
 				$record = object_cast($entry, collected_record::class);
 				$contracts = $record->contract_work->require_facts();
-				foreach ($contracts->interface_requirements as $requirement) {
+				$requirements /** vector<collected_method> */ = $contracts->interface_requirements;
+				foreach ($contracts->trait_requirements as $requirement) { $requirements[] = $requirement; }
+				foreach ($requirements as $requirement) {
 					$implementation = self::implementation($record, $requirement->name);
-					if ($implementation !== null) {
+					if (($implementation !== null) && ($implementation !== $requirement)) {
 						$vertex = $vertices[$by_definition[$requirement]];
 						$vertex->calls[] = $by_definition[$implementation];
 					}
@@ -149,6 +151,7 @@ final class Reference_Cycles
 			while ($method !== null) {
 				$contracts = $method->declaring_type()->contract_work->require_facts();
 				$methods /** Keyed_Storage<prepared_method_contract> */ = $contracts->methods;
+				if (!isset($methods[$method->name])) { break; }
 				$method = weakref_get($methods[$method->name]->overridden);
 				if ($method === $target) { $caller->calls[] = $index; break; }
 			}
