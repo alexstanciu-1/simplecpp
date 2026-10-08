@@ -29,7 +29,8 @@ public:
 
 	template <typename U>
 	unique_p(unique_p<U> &&other) noexcept
-		requires std::is_convertible_v<U *, T *>
+		requires (std::is_convertible_v<U *, T *> &&
+			(std::is_same_v<std::remove_cv_t<U>, std::remove_cv_t<T>> || std::has_virtual_destructor_v<T>))
 		: value_(std::move(other.value_)) {}
 	unique_p(const unique_p &) = delete;
 	unique_p &operator=(const unique_p &) = delete;
@@ -46,7 +47,8 @@ public:
 
 	template <typename U>
 	unique_p &operator=(unique_p<U> &&other) noexcept
-		requires std::is_convertible_v<U *, T *>
+		requires (std::is_convertible_v<U *, T *> &&
+			(std::is_same_v<std::remove_cv_t<U>, std::remove_cv_t<T>> || std::has_virtual_destructor_v<T>))
 	{
 		value_ = std::move(other.value_);
 		return *this;

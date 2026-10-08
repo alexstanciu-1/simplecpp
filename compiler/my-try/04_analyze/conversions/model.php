@@ -27,6 +27,7 @@ enum conversion_operation
 	case nullable_empty;
 	case ownership_empty;
 	case ownership_upcast;
+	case unique_upcast;
 	case nullable_wrap;
 	case nullable_extract;
 	case result_wrap;
@@ -41,6 +42,7 @@ enum conversion_operation
 interface conversion_relationship_query
 {
 	public function is_subtype(canonical_type_use $source, canonical_type_use $target): bool;
+	public function has_virtual_destruction(canonical_type_use $type): bool;
 }
 
 /** Retained semantic result of comparing one produced value with its consumer. */

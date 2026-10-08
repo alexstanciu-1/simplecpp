@@ -20,6 +20,14 @@ final class Conversion_Relationships implements conversion_relationship_query
 			object_cast($target_owner, collected_member_owner::class));
 	}
 
+	/** Observe the target contract: a later edit can remove safe base destruction. */
+	public function has_virtual_destruction(canonical_type_use $type): bool
+	{
+		$record = Type_Queries::source_record($type);
+		if ($record === null) { return false; }
+		return $this->context->worker->require_type_contract($record, $this->context)->polymorphic;
+	}
+
 	/** Relationship completion rejects cycles; each visited edge becomes a consumer dependency. */
 	private function reaches(collected_member_owner $source, collected_member_owner $target): bool
 	{

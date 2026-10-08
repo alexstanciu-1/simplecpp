@@ -32,7 +32,7 @@ final class Ownership_Conversions
 		}
 	}
 
-	/** Same-family shared/weak upcasts preserve ownership; unique conversions remain gated. */
+	/** Same-family ancestry conversions preserve ownership; unique targets require safe deletion. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context, ?conversion_relationship_query $relationships = null): conversion_decision
 	{
@@ -48,15 +48,21 @@ final class Ownership_Conversions
 		$target_role = self::role($target);
 		if (($source_role !== null) && ($target_role !== null) && ($relationships !== null)) {
 			$family = $source_role->ownership_family();
-			if ((($family === ownership_kind::shared) || ($family === ownership_kind::weak))
+			if ((($family === ownership_kind::shared) || ($family === ownership_kind::weak) || ($family === ownership_kind::unique))
 				&& ($target_role->ownership_family() === $family)
 				&& (($context === conversion_context::assignment) || ($context === conversion_context::argument)
 					|| ($context === conversion_context::return_value))) {
 				if ($relationships->is_subtype(self::payload($source), self::payload($target))) {
+					if ($family === ownership_kind::unique) {
+						if (!$relationships->has_virtual_destruction(self::payload($target))) {
+							throw new \RuntimeException('Unique upcast requires virtual destruction on the destination base');
+						}
+						return Conversion_Preparation::operation($source, $target, $context, conversion_operation::unique_upcast);
+					}
 					return Conversion_Preparation::operation($source, $target, $context, conversion_operation::ownership_upcast);
 				}
 			}
 		}
-		throw new \RuntimeException('S2S ownership boundary requires matching handles, a proven same-family shared/weak upcast, or null storage initialization/assignment');
+		throw new \RuntimeException('S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment');
 	}
 }

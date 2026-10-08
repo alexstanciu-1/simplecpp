@@ -77,6 +77,51 @@ foreach (['class', 'struct'] as $kind) {
 		catch (\RuntimeException $expected) {}
 	}
 }
+foreach (['class', 'struct'] as $kind) {
+	$records = 'abstract ' . $kind . ' B { int $n = 9; abstract function read(): int; } '
+		. $kind . ' C extends B { function read(): int { return $this->n; } } ';
+	foreach ([
+		'local' => '$c unique<C> = new C(); $b unique<B> = move($c); if (isset($c)) { return 101; } return $b->n;',
+		'assignment' => '$c unique<C> = new C(); $b unique<B>; $b = move($c); if (isset($c)) { return 101; } return $b->n;',
+		'argument' => 'function read(unique<B> $b): int { return $b->n; } $c unique<C> = new C(); $n = read(move($c)); if (isset($c)) { return 101; } return $n;',
+		'return' => 'function produce(): unique<B> { $c unique<C> = new C(); return move($c); } $b = produce(); return $b->n;',
+		'call_result' => 'function produce(): unique<C> { $c unique<C> = new C(); return move($c); } $b unique<B> = produce(); return $b->n;',
+		'empty' => '$c unique<C>; $b unique<B> = move($c); return isset($b) ? 101 : 9;',
+		'alias' => '$c unique<C> = new C(); $alias =& $c; $b unique<B> = move($alias); if (isset($c)) { return 101; } return $b->n;',
+	] as $name => $body) { upcast_export('unique_' . $kind . '_' . $name, upcast_source($records . $body), 9); }
+	foreach ([
+		'$c unique<C>; $b unique<B> = $c;',
+		'function read(unique<B> &$b): void {} $c unique<C>; read($c);',
+		'function read(const unique<B> &$b): void {} $c unique<C>; read($c);',
+		'$b unique<B>; $c unique<C> = move($b);',
+	] as $body) {
+		try { upcast_source($records . $body); throw new \LogicException('Invalid unique upcast accepted'); }
+		catch (\RuntimeException $expected) {}
+	}
+}
+upcast_export('unique_runtime_guards', <<<'CPP'
+#include "scpp/memory.hpp"
+#include <type_traits>
+struct UnsafeBase {};
+struct UnsafeChild : UnsafeBase {};
+static_assert(!std::is_constructible_v<scpp::unique_p<UnsafeBase>, scpp::unique_p<UnsafeChild>&&>);
+static_assert(!std::is_assignable_v<scpp::unique_p<UnsafeBase>&, scpp::unique_p<UnsafeChild>&&>);
+static_assert(std::is_constructible_v<scpp::unique_p<const UnsafeChild>, scpp::unique_p<UnsafeChild>&&>);
+static int cleanup = 0;
+struct SafeBase { virtual ~SafeBase() { cleanup += 1; } };
+struct SafeChild : SafeBase { ~SafeChild() { cleanup += 8; } };
+int main() {
+    auto child = scpp::unique<SafeChild>();
+    auto identity = child.get();
+    scpp::unique_p<SafeBase> base{std::move(child)};
+    if (child || base.get() != identity) return 101;
+    base = scpp::unique<SafeChild>();
+    if (cleanup != 9) return 102;
+    base.reset();
+    return cleanup == 18 ? 9 : 103;
+}
+CPP, 9);
+upcast_export('unique_cleanup', upcast_source('class Log { static int $n = 0; } abstract class B { abstract function read(): int; function __destruct() { Log::$n += 1; } } class C extends B { function read(): int { return 9; } function __destruct() { Log::$n += 8; } } $c unique<C> = new C(); $b unique<B> = move($c); if (Log::$n !== 0) { return 101; } $b = null; return Log::$n;'), 9);
 foreach ([
 	$classes . '$b = new B(); $c C = $b;',
 	$classes . 'class Other {} $c = new C(); $o Other = $c;',
@@ -86,6 +131,7 @@ foreach ([
 	'struct B {} struct C extends B {} $c C; $b B = $c;',
 	'struct B {} struct C extends B {} $c C; $b shared<B> = $c;',
 	'struct B {} struct C extends B {} $c unique<C>; $b unique<B> = move($c);',
+	'abstract class B {} class C extends B {} $c unique<C>; $b unique<B> = move($c);',
 	$classes . '$cs vector<C> = []; $bs vector<B> = $cs;',
 ] as $source) {
 	try { upcast_source($source); throw new \LogicException('Expected rejected non-shared-upcast boundary'); }
@@ -126,6 +172,28 @@ try {
 		$compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 		if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Fresh upcast output differs'); }
 	}
+	// Removing the target's virtual contract must invalidate an otherwise unchanged transfer.
+	$virtual_base = 'interface I { function read(): int; } class B implements I { int $n = 9; function read(): int { return 9; } }';
+	file_put_contents($base_path, $virtual_base);
+	file_put_contents($child_path, 'class C extends B {}');
+	file_put_contents($main_path, '$c unique<C> = new C(); $b unique<B> = move($c); return $b->n;');
+	Compiler_Lifecycle::reset();
+	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$original = CPP_Output::encode(Model::$cpp_files);
+	file_put_contents($base_path, str_replace(' implements I', '', $virtual_base));
+	foreach ([[$base_path], []] as $changes) {
+		try { $compiler->update_cpp($changes); throw new \LogicException('Unsafe unique upcast survived virtual-contract edit'); }
+		catch (\RuntimeException $error) {
+			if (!str_contains($error->getMessage(), 'virtual destruction')) { throw $error; }
+		}
+	}
+	file_put_contents($base_path, $virtual_base); $compiler->update_cpp([$base_path]);
+	if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Unique upcast repair changed output'); }
+	upcast_export('unique_contract_repair', native_record_export(), 9);
+	Compiler_Lifecycle::reset_preparation(); $compiler->prepare(); $compiler->cpp();
+	if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Unique upcast reset changed output'); }
+	Compiler_Lifecycle::reset(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	if (CPP_Output::encode(Model::$cpp_files) !== $original) { throw new \LogicException('Unique upcast fresh output differs'); }
 }
 finally {
 	Compiler_Lifecycle::reset();
@@ -133,4 +201,4 @@ finally {
 	rmdir($directory);
 }
 if (isset($argv[1])) { file_put_contents($argv[1] . '/executions.json', json_encode($results, JSON_PRETTY_PRINT)); }
-echo "Shared/weak upcasts, invariant references and ancestry invalidation passed\n";
+echo "Shared/weak/unique upcasts, invariant references and contract invalidation passed\n";

@@ -328,7 +328,7 @@ substitute a receiver's declared type silently. See the
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Nonvirtual instance member hiding,
-runtime-called-type instance propagation, unique/inline derived/base
+runtime-called-type instance propagation, inline derived/base
 conversions and abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
 
@@ -348,7 +348,7 @@ container's element type.
 
 Reference parameters (including read-only references), aliases and reference returns
 retain exact storage-type requirements. No implicit downcasts, inline-record base
-copies, unique upcasts, wrapper-payload conversions or new conditional joins
+copies, wrapper-payload conversions or new conditional joins
 are enabled by this slice.
 
 ## Weak derived/base upcasts
@@ -362,8 +362,33 @@ An expired observer can therefore still be upcast; its lock remains empty.
 `lock()` uses the target payload type: a bare base-class handle or `shared<Base>`
 for a struct. Only a successful explicit lock acquires strong ownership. References,
 including read-only references, aliases and reference returns remain invariant.
-Interface weak handles, downcasts, unique conversions, implicit shared-to-weak
+Interface weak handles, downcasts, implicit shared-to-weak
 conversion, whole-container conversions and new conditional joins remain deferred.
+
+## Unique derived/base transfers
+
+An owned `unique<Derived>` value may convert to `unique<Base>` when preparation proves
+class/struct ancestry and the destination Base already has virtual destruction under
+its prepared type contract. No new virtual methods/destructor or concrete deleter are
+introduced by the conversion. An abstract declaration alone is insufficient; ordinary
+nonpolymorphic bases reject, even when the source handle is empty.
+
+Named sources require `move($source)`; an existing unique-valued call result is already
+owned and needs no additional move. The conversion preserves object identity, transfers
+ownership without allocation or payload copying, and leaves moved-from named storage
+empty. Existing nontransactional evaluation and replacement-cleanup rules remain.
+The admitted boundaries are whole-local/parameter initialization or statement assignment,
+fixed by-value arguments and value returns. References, including readonly references,
+remain invariant. Interface destinations, downcasts, unique conditional joins, implicit
+new-to-different-unique destinations, fields and container-element transfers remain out
+of scope. Unique method receiver lifetime support is not enabled by an ownership upcast.
+
+The runtime continues to store `std::unique_ptr<T>` with its default deleter, rather than
+remembering the concrete allocation type. Its converting move constructor/assignment
+require pointer convertibility plus virtual target destruction for distinct unqualified
+payload types. Same-payload cv-qualification conversion remains available to native C++.
+Preparation observes both ancestry and the target destruction contract, so edits that
+remove either guarantee invalidate existing conversions.
 
 ## Interface handles and calls
 

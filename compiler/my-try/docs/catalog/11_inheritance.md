@@ -37,9 +37,9 @@ Remaining extensions require agreement, not another implementation of completed 
 1. Runtime-called-type propagation through instance methods and inline/struct
    `new static`; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
-2. Additional ownership conversions/joins: unique ancestry, interface weak handles,
+2. Additional ownership conversions/joins: interface weak handles,
    checked downcasts, derived/base or sibling conditional joins; shared and class/struct
-   weak upcasts already work.
+   weak upcasts and safe unique transfers already work.
 3. Trait extensions: adaptations and lifecycle members. Abstract requirements, nested uses, static members
    and constants now share the existing consumer-owned path below.
 4. Other explicit bounds: abstract constructor contracts, non-public
@@ -51,7 +51,7 @@ and trait-extension groups; no new group is enabled by this reconciliation.
 CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
-three ownership rows added below make already-proven coverage explicit. This is
+four ownership rows added below make already-proven coverage explicit. This is
 not a claim that every extension above is required for v0.2. Their implementation
 or deferral still needs agreement. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
@@ -60,6 +60,24 @@ Verification: the checkpoints record PHP-host and generated-C++ proofs. The late
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Unique ancestry transfers — 2026-10-08
+
+Unique class/struct upcasts now reuse dependency-aware ancestry conversion with an
+additional observed target-contract check: the base must already have virtual destruction.
+The `unique_upcast` decision permits consuming owned temporaries at existing whole-local,
+fixed-value argument and return boundaries; named values still require move. References
+remain invariant. The C++ backend reuses target-handle construction. Runtime converting
+moves reject unsafe deletion through nonvirtual bases without changing handle storage.
+
+Tests cover class/struct transfer, arguments/returns, owned call results, empty handles,
+aliases, native guard traits, pointer identity/replacement cleanup, generated derived/base
+cleanup and removal of virtual destruction with failure/retry/repair/reset/fresh agreement.
+Interface targets, fields/elements, joins and unique method receiver lifetimes remain
+outside this slice. Validation: 54 generated-C++ fixtures passed in
+`/tmp/unique-upcasts-final2`; seven adjacent PHP suites passed in
+`/tmp/unique-upcasts-adjacent` (ownership, conversions, references, interface handles,
+abstract dispatch, method parameters and method returns). No native compiler rebuild.
 
 ## Nested trait uses — 2026-10-08
 
@@ -647,6 +665,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH11-SHARED-UPCAST | implemented-bounded | `$base Base = $derived;` | verified | verified | deferred | [Shared ancestry](#dependency-aware-shared-upcasts--2026-10-08); invariant references; no slicing |
 | CH11-INTERFACE-HANDLE | implemented-bounded | `$view I = $object; $view->method();` | verified | verified | deferred | [Shared interface handles](#interface-handles-and-calls--2026-10-08); checked calls; no implicit struct boxing |
 | CH11-WEAK-UPCAST | implemented-bounded | `$base weak<Base> = $derived;` | verified | verified | deferred | [Weak ancestry](#weak-ancestry-upcasts--2026-10-08); no lock or lifetime extension; invariant references |
+| CH11-UNIQUE-UPCAST | implemented-bounded | `$base unique<Base> = move($derived);` | verified | verified | deferred | [Unique ancestry](#unique-ancestry-transfers--2026-10-08); virtual base destruction required; consuming boundaries only |
 
 ## CLASS-INH-001
 

@@ -204,7 +204,9 @@ storage are accepted on either side. The result owns its value, is not addressab
 and cannot be bound by native reference. Ordinary named unique copies still reject.
 Discarded moves, presence tests of moves, value-producing/chained assignments,
 conditional joins, direct fields (including locally known aliases), container
-elements, shared/weak moves and cross-type transfers remain outside this slice.
+elements and shared/weak moves remain outside this slice. The subsequent
+[unique ancestry contract](inheritance_v0_2.md#unique-derivedbase-transfers) admits
+checked derived/base transfers through existing consuming boundaries.
 Invalid combinations reject in preparation; no source transfer happens at compile time.
 
 Transfers are not transactional: a later runtime failure does not undo a completed
@@ -233,7 +235,7 @@ argument temporaries and does not restore moved sources. Two explicit moves of t
 same source therefore supply its prior ownership first, then an empty handle.
 This is not Rust exclusive-borrow enforcement.
 
-Unique variadic packs, cross-type ownership conversions, conditional ownership joins,
+Unique variadic packs, other cross-type ownership conversions, conditional ownership joins,
 field/container transfer and implicit null argument/return conversions remain deferred.
 
 ## v0.2 weak derivation and explicit locking — 2026-10-06
