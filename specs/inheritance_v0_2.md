@@ -297,8 +297,22 @@ container's element type.
 
 Reference parameters (including read-only references), aliases and reference returns
 retain exact storage-type requirements. No implicit downcasts, inline-record base
-copies, unique/weak upcasts, wrapper-payload conversions or new conditional joins
+copies, unique upcasts, wrapper-payload conversions or new conditional joins
 are enabled by this slice.
+
+## Weak derived/base upcasts
+
+`weak<Derived>` may implicitly convert to `weak<Base>` for proven class or struct
+ancestry, at the same per-value boundaries as shared upcasts. Both types must stay
+in the weak family. The conversion preserves the control block and empty/expired
+state without locking, allocating, copying the payload or extending its lifetime.
+An expired observer can therefore still be upcast; its lock remains empty.
+
+`lock()` uses the target payload type: a bare base-class handle or `shared<Base>`
+for a struct. Only a successful explicit lock acquires strong ownership. References,
+including read-only references, aliases and reference returns remain invariant.
+Interface weak handles, downcasts, unique conversions, implicit shared-to-weak
+conversion, whole-container conversions and new conditional joins remain deferred.
 
 ## Interface handles and calls
 

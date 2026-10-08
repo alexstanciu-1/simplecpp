@@ -46,6 +46,37 @@ try {
 	throw new \LogicException('Upcast bypassed dependency-aware query');
 }
 catch (\RuntimeException $expected) {}
+// Weak boundaries reuse the ancestry decision without acquiring a strong owner.
+foreach (['class', 'struct'] as $kind) {
+	$records = $kind . ' B { int $n = 1; } ' . $kind . ' M extends B {} ' . $kind . ' C extends M {} ';
+	$owner = $kind === 'class' ? '$c = new C(); ' : '$c shared<C> = new C(); ';
+	foreach ([
+		'identity' => [$owner . '$w = weak($c); $b weak<B> = $w; $held = lock($b); $held->n = 9; return $c->n;', 9],
+		'assignment' => [$owner . '$b weak<B>; $b = weak($c); $held = lock($b); return $held->n;', 1],
+		'boundaries' => ['function convert(weak<C> $w): weak<B> { return $w; } function read(weak<B> $w): int { $b = lock($w); return $b->n; } ' . $owner . '$first = read(convert(weak($c))); $second = read(weak($c)); return $first + $second;', 2],
+		'empty' => ['$w weak<C>; $b weak<B> = $w; return isset(lock($b)) ? 1 : 9;', 9],
+		'expired' => [$owner . '$w = weak($c); $c = null; $b weak<B> = $w; return isset(lock($b)) ? 1 : 9;', 9],
+		'no_retention' => [$owner . '$w = weak($c); $b weak<B> = $w; $c = null; return isset(lock($b)) ? 1 : 9;', 9],
+		'lock_retains' => [$owner . '$w = weak($c); $b weak<B> = $w; $held = lock($b); $c = null; if (!isset(lock($w))) { return 101; } $held = null; return isset(lock($b)) ? 1 : 9;', 9],
+		'property_data_elements' => ['data class Holder { weak<B> $b; } ' . $owner . '$w = weak($c); $h Holder = {b: $w}; $h->b = $w; $bs vector<weak<B>> = [$w]; $bs[] = $w; $bs[0] = $w; $held = lock($h->b); $held->n = 9; $other = lock($bs[1]); return $other->n;', 9],
+		'iteration' => [$owner . '$ws vector<weak<C>> = [weak($c)]; $b weak<B>; foreach ($ws as $b) { $held = lock($b); $held->n = 9; } return $c->n;', 9],
+	] as $name => [$body, $expected]) {
+		upcast_export('weak_' . $kind . '_' . $name, upcast_source($records . $body), $expected);
+	}
+	foreach ([
+		'$b weak<B>; $c weak<C> = $b;',
+		$kind . ' Other {} $c weak<C>; $o weak<Other> = $c;',
+		'function replace(weak<B> &$b): void {} $c weak<C>; replace($c);',
+		'function inspect(const weak<B> &$b): void {} $c weak<C>; inspect($c);',
+		'$c weak<C>; $b weak<B> =& $c;',
+		$owner . '$b weak<B> = $c;',
+		'$cs vector<weak<C>> = []; $bs vector<weak<B>> = $cs;',
+		'interface I {} ' . $kind . ' Impl implements I {} $c weak<Impl>; $b weak<I> = $c;',
+	] as $body) {
+		try { upcast_source($records . $body); throw new \LogicException('Expected rejected weak boundary'); }
+		catch (\RuntimeException $expected) {}
+	}
+}
 foreach ([
 	$classes . '$b = new B(); $c C = $b;',
 	$classes . 'class Other {} $c = new C(); $o Other = $c;',
@@ -55,7 +86,6 @@ foreach ([
 	'struct B {} struct C extends B {} $c C; $b B = $c;',
 	'struct B {} struct C extends B {} $c C; $b shared<B> = $c;',
 	'struct B {} struct C extends B {} $c unique<C>; $b unique<B> = move($c);',
-	'struct B {} struct C extends B {} $c weak<C>; $b weak<B> = $c;',
 	$classes . '$cs vector<C> = []; $bs vector<B> = $cs;',
 ] as $source) {
 	try { upcast_source($source); throw new \LogicException('Expected rejected non-shared-upcast boundary'); }
@@ -76,6 +106,9 @@ try {
 		'assignment' => '$c C; $b B = $c; return isset($b) ? 1 : 9;',
 		'argument' => 'function accept(B $b): int { return isset($b) ? 1 : 9; } $c C; return accept($c);',
 		'return' => 'function convert(C $c): B { return $c; } $c C; $b = convert($c); return isset($b) ? 1 : 9;',
+		'weak_assignment' => '$c weak<C>; $b weak<B> = $c; return isset(lock($b)) ? 1 : 9;',
+		'weak_argument' => 'function accept(weak<B> $b): int { return isset(lock($b)) ? 1 : 9; } $c weak<C>; return accept($c);',
+		'weak_return' => 'function convert(weak<C> $c): weak<B> { return $c; } $c weak<C>; $b = convert($c); return isset(lock($b)) ? 1 : 9;',
 	] as $boundary => $main) {
 		file_put_contents($main_path, $main);
 		Compiler_Lifecycle::reset();
@@ -100,4 +133,4 @@ finally {
 	rmdir($directory);
 }
 if (isset($argv[1])) { file_put_contents($argv[1] . '/executions.json', json_encode($results, JSON_PRETTY_PRINT)); }
-echo "Shared upcasts, invariant references and ancestry invalidation passed\n";
+echo "Shared/weak upcasts, invariant references and ancestry invalidation passed\n";

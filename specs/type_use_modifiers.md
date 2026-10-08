@@ -242,7 +242,10 @@ field/container transfer and implicit null argument/return conversions remain de
 allocates nor copies the pointee, consumes the shared handle, or retains strong
 ownership. Empty shared produces empty weak. Weak handles are copyable independently
 of pointee copyability. `unique<T>` and other families are not accepted; implicit
-shared-to-weak conversions and cross-payload conversions remain rejected.
+shared-to-weak conversions remain rejected. Cross-payload weak conversions are
+limited to proven class/struct derived-to-base upcasts, as specified in
+[inheritance](inheritance_v0_2.md#weak-derivedbase-upcasts); they do not lock or
+extend lifetime.
 
 `lock(expression)` accepts exact `weak<T>` and returns `shared<T>`. A successful
 lock acquires ownership of the same object. An empty or expired weak returns empty

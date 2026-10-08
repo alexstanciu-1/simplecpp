@@ -12,7 +12,7 @@ non-virtual-by-default dispatch. The [foundation plan](../planning/inheritance_f
 records those boundaries and the approved shared member-owner prerequisite.
 That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance, abstract/override dispatch and interface implementations now
-execute. Shared derived/base upcasts and interface-typed handles now execute.
+execute. Shared/weak derived/base upcasts and interface-typed shared handles now execute.
 
 ## Remaining-work reconciliation — 2026-10-08
 
@@ -35,8 +35,9 @@ Remaining extensions require agreement, not another implementation of those card
    composed synthesized inputs; the checkpoints below record their explicit boundaries.
 2. Runtime-called-type propagation through instance methods; do not infer dynamic
    identity from a declared receiver type or silently change fixed method dispatch.
-3. Additional ownership conversions/joins: unique/weak ancestry, checked downcasts,
-   derived/base or sibling conditional joins; shared upcasts already work.
+3. Additional ownership conversions/joins: unique ancestry, interface weak handles,
+   checked downcasts, derived/base or sibling conditional joins; shared and class/struct
+   weak upcasts already work.
 4. Trait extensions: nested uses, adaptations and bodyless requirements. Static members
    and constants now share the existing consumer-owned path below.
 5. Other explicit bounds: non-public constructors/destructors, variance and the
@@ -256,18 +257,35 @@ Proof: 25 generated programs without PCH (`/tmp/interface-handles-20261008-final
 Next discussion: reconcile the remaining CH11 groups before selecting trait composition,
 late static binding or another ownership-conversion slice.
 
+## Weak ancestry upcasts — 2026-10-08
+
+Class/struct `weak<Derived>` to `weak<Base>` boundaries now reuse the dependency-aware
+ownership conversion path. The common `ownership_upcast` fact selects the existing
+runtime converting constructor; shared and weak conversions stay within their own
+family. No lock, allocation, payload copy or lifetime extension is introduced.
+References remain invariant, including read-only references. Interface weak handles,
+unique conversions, downcasts and new joins remain outside this checkpoint.
+
+`tests/shared_upcasts.php` now covers both families: empty/expired observers, identity,
+explicit-lock lifetime, arguments/returns, properties/data inputs/container elements,
+iteration and cross-file ancestry failure/retry/repair with fresh-output agreement.
+Proof: 37 generated C++ programs passed without PCH in
+`/tmp/weak-upcasts-20261008-2`; five focused PHP suites passed in
+`/tmp/weak-upcasts-regression-20261008-2`. No runtime change or native compiler rebuild.
+
 ## Dependency-aware shared upcasts — 2026-10-08
 
 First checkpoint of the agreed interface-handle group: conversion preparation accepts
 a transient `conversion_relationship_query`. Its analysis-owned implementation observes
 source ancestry through relationship work, including failed searches; no cached registry
 answer, retained worker, backend lookup or second hierarchy is introduced. Conversion
-facts retain only the selected `shared_upcast` operation and canonical types.
+facts retain only the selected `ownership_upcast` operation and canonical types.
 
 Bare-class and explicitly shared-struct derived/base boundaries now execute through
 one path for assignments, by-value function/method arguments and returns, properties,
 data inputs and individual container elements. Reference storage stays invariant;
-downcasts, boxing, unique/weak conversions and whole-container conversions reject.
+downcasts, boxing, unique conversions and whole-container conversions reject. Weak
+class/struct upcasts are covered by the subsequent checkpoint below.
 C++ constructs the target shared handle using existing runtime support and records
 complete source/target header requirements. No runtime change or native compiler rebuild.
 

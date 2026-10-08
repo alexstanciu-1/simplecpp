@@ -39,7 +39,7 @@ final class CPP_Declarations
 		if ($decision->operation === conversion_operation::identity) {
 			return $expression;
 		}
-		if ($decision->operation === conversion_operation::shared_upcast) {
+		if ($decision->operation === conversion_operation::ownership_upcast) {
 			// The runtime's converting handle constructor needs complete ancestry, not just forward declarations.
 			self::type($decision->source_type, $context);
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';

@@ -26,7 +26,7 @@ enum conversion_operation
 	case text_conversion;
 	case nullable_empty;
 	case ownership_empty;
-	case shared_upcast;
+	case ownership_upcast;
 	case nullable_wrap;
 	case nullable_extract;
 	case result_wrap;
