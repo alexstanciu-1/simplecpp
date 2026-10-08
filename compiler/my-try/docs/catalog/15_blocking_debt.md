@@ -48,6 +48,24 @@ keyed `data` constructor inputs without conflating data notation with ordinary c
 Reconcile authoritative contracts before implementation; prove binding diagnostics,
 evaluation order and incremental signature-name invalidation.
 
+## Deferred feature scope
+
+### CH15-TRAIT-LIFECYCLE-01 — trait constructors and destructors
+
+Deferred by user on 2026-10-08 from CH11; not part of its next implementation queue.
+Trait constructors/destructors remain disabled. Final review should decide whether
+and when to enable them; no release-blocking classification was assigned by this
+deferral.
+
+Before implementation, reconcile authoritative contracts for local-versus-trait-versus-
+inherited constructor precedence, conflicting trait lifecycle members, constructor
+`set:` bindings to consumer properties, visibility, parent initialization and `data`
+construction. Review destructor selection, nonthrowing cleanup and base/member order;
+do not silently chain multiple trait destructors. The discussed precedence rules were
+proposals, not approved language semantics. Reuse consumer-owned trait method instances
+and the common callable/constructor/destructor paths rather than new lifecycle ASTs.
+Trait adaptation syntax is separate deferred work, not enabled by this debt.
+
 ## Non-blocking follow-ups
 
 ### CH15-PROTECTED-01 — broader protected receiver access

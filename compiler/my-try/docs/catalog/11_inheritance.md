@@ -42,15 +42,18 @@ Remaining extensions require agreement, not another implementation of completed 
    shared checked ancestry casts, class/struct weak upcasts and safe unique transfers
    already work. Shared derived/base and record/interface joins now work without
    inferring unseen common ancestors.
-3. Trait extensions: adaptations and lifecycle members. Abstract requirements, nested uses, static members
-   and constants now share the existing consumer-owned path below.
+3. Trait adaptations remain deferred. Constructors/destructors were explicitly moved
+   to [CH15 lifecycle debt](15_blocking_debt.md#ch15-trait-lifecycle-01--trait-constructors-and-destructors).
+   Abstract requirements, nested uses, static members and constants now share the
+   existing consumer-owned path below.
 4. Other explicit bounds: abstract constructor contracts, non-public
    destructors, variance/covariant returns, interface-qualified static dispatch and the
    inherited-final-virtual interface-forwarding restriction.
 
 Next discussion: choose among the remaining runtime called-type, ownership-conversion
 and trait-extension groups; no new group is enabled by this reconciliation.
-CH11 is not declared complete, and no debt is transferred to CH15 by this reconciliation.
+CH11 is not declared complete. Trait lifecycle debt was explicitly transferred to CH15
+by the user; other remaining extensions are not automatically transferred.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
 six ownership/type-access rows added below make already-proven coverage explicit. This is
