@@ -1129,7 +1129,7 @@ final class callable_children_iterator extends children_iterator
 			{
 				case callable_children_stage::parameters:
 					if ($this->parameters_cursor === null) {
-						$this->parameters_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->parameters));
+						$this->parameters_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->signature_syntax->parameters));
 					}
 					else {
 						$this->parameters_cursor->next();
@@ -1142,8 +1142,8 @@ final class callable_children_iterator extends children_iterator
 					break;
 				case callable_children_stage::return_type:
 					$this->stage = callable_children_stage::body;
-					if ($this->source->return_type !== null) {
-						return $this->source->return_type;
+					if ($this->source->signature_syntax->return_type !== null) {
+						return $this->source->signature_syntax->return_type;
 					}
 					break;
 				case callable_children_stage::body:

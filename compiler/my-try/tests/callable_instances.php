@@ -46,7 +46,7 @@ try {
 	callable_instance_check(weakref_get($first->working->instance_context) === $first, 'Working context backlink lost');
 	$left = $first->working->callable_syntax(); $right = $second->working->callable_syntax();
 	callable_instance_check($left !== $right && $left !== $authored && $left->require_body() !== $right->require_body(), 'Syntax shared');
-	callable_instance_check($left->parameters[1] !== $right->parameters[1] && $left->signature_scope() !== $right->signature_scope(), 'Parameters/scopes shared');
+	callable_instance_check($left->signature_syntax->parameters[1] !== $right->signature_syntax->parameters[1] && $left->signature_scope() !== $right->signature_scope(), 'Parameters/scopes shared');
 	callable_instance_check($child->syntax()->methods->is_empty() && count($base->syntax()->methods) === 1, 'Member inventories changed');
 	$compiler->prepare();
 	$compiler->cpp();

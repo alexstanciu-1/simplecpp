@@ -149,7 +149,7 @@ try
 		$before = Model::sources()[0]->tokens;
 		$old_global = Model::$global_scope;
 		$broken->occurrence()->preparation->change_status = change_state::changed;
-		unset($broken->return_type);
+		unset($broken->signature_syntax->return_type);
 		try {
 			$compiler->prepare();
 			throw new \LogicException('Expected internal preparation error');

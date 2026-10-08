@@ -60,7 +60,7 @@ final class Constructor_Preparation
 	public static function signature(method_node $syntax, preparation_context $context): void
 	{
 		if (!$syntax->has_parsed_body()) { throw new \RuntimeException('Constructor requires a concrete body'); }
-		if (($syntax->name !== '__construct') || ($syntax->return_type !== null) || $syntax->returns_reference) {
+		if (($syntax->name !== '__construct') || ($syntax->signature_syntax->return_type !== null) || $syntax->signature_syntax->returns_reference) {
 			throw new \RuntimeException('Only __construct without a return type or reference return is supported');
 		}
 		Member_Preparation::validate_modifiers($syntax->modifiers, false);
@@ -80,7 +80,7 @@ final class Constructor_Preparation
 		$fields /** Key_Storage_List<prepared_field> */ = $layout->fields;
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$contracts /** Storage<callable_parameter> */ = $facts->signature->parameters;
-		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
+		$nodes /** Storage<parameter_node> */ = $syntax->signature_syntax->parameters;
 		$initialized /** hash<bool> */ = [];
 		foreach ($nodes as $node) {
 			if (($node->name === 'this') || (q_count($inputs->named($node->name)) !== 0)) {

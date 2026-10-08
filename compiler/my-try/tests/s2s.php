@@ -892,7 +892,7 @@ foreach ($cases as $name => [$source, $exit])
 	if ($name === 'ident_var_001')
 	{
 		$function = object_cast($syntax->root->single_body()->declarations[0], function_node::class);
-		$parameter = $function->parameters[0];
+		$parameter = $function->signature_syntax->parameters[0];
 		$assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
 		$target = object_cast($assignment->target, variable_reference_node::class);
 		$source = object_cast($assignment->value, variable_reference_node::class);
@@ -938,8 +938,8 @@ foreach ($cases as $name => [$source, $exit])
 		$signature = 'scpp::int_t<> function_U_f(scpp::int_t<> local_U_x, scpp::int_t<> local_UUU_x, '
 			. 'scpp::int_t<> local_aU_U_b, scpp::int_t<> local_aUUU_UUU_b)';
 		if (($function->name !== '_f') || ($call->name !== '_f') ||
-			($function->parameters[0]->name !== '_x') || ($function->parameters[1]->name !== 'U_x') ||
-			($function->parameters[2]->name !== 'a__b') || ($function->parameters[3]->name !== 'aU_U_b') ||
+			($function->signature_syntax->parameters[0]->name !== '_x') || ($function->signature_syntax->parameters[1]->name !== 'U_x') ||
+			($function->signature_syntax->parameters[2]->name !== 'a__b') || ($function->signature_syntax->parameters[3]->name !== 'aU_U_b') ||
 			($target->name !== '_copy') || ($source->name !== '_x') ||
 			(substr_count($text, $signature) !== 2) ||
 			!str_contains($text, 'auto local_U_copy = local_U_x;') ||
@@ -963,7 +963,7 @@ foreach ($cases as $name => [$source, $exit])
 	if ($name === 'function_locals')
 	{
 		$function = object_cast($syntax->root->single_body()->declarations[0], function_node::class);
-		$parameter = $function->parameters[0]->require_preparation();
+		$parameter = $function->signature_syntax->parameters[0]->require_preparation();
 		$function_assignment = object_cast($function->body->statements[0]->expression, assignment_expression_node::class);
 		$function_binding = $function_assignment->require_assignment_preparation()->binding;
 		$entry_assignment = object_cast($syntax->root->single_body()->body->statements[0]->expression, assignment_expression_node::class);

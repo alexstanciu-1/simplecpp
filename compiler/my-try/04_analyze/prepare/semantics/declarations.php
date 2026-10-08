@@ -36,13 +36,13 @@ final class Declaration_Preparation
 			$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
 		}
 		else { $facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context); }
-		if (!$syntax->returns_reference) {
+		if (!$syntax->signature_syntax->returns_reference) {
 			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		}
 
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$contracts /** Storage<callable_parameter> */ = $facts->signature->parameters;
-		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
+		$nodes /** Storage<parameter_node> */ = $syntax->signature_syntax->parameters;
 		$names /** hash<bool> */ = [];
 		foreach ($nodes as $parameter) {
 			if (isset($names[$parameter->name])) {

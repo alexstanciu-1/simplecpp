@@ -53,9 +53,9 @@ final class Method_Preparation
 		if ($destructor && ($facts->abstract_method || $facts->final_method || $facts->override_assertion)) {
 			throw new \RuntimeException('Destructor abstract/final/override modifiers are deferred');
 		}
-		$parameters /** Storage<parameter_node> */ = $syntax->parameters;
+		$parameters /** Storage<parameter_node> */ = $syntax->signature_syntax->parameters;
 		if ($destructor) {
-			if (!$parameters->is_empty() || ($syntax->return_type !== null) || $syntax->returns_reference
+			if (!$parameters->is_empty() || ($syntax->signature_syntax->return_type !== null) || $syntax->signature_syntax->returns_reference
 				|| $facts->static_member) {
 				throw new \RuntimeException('Destructor requires instance access, no parameters and no declared return type/reference');
 			}

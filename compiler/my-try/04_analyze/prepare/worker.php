@@ -805,7 +805,7 @@ final class Preparation_Worker
 	private function settle_parameters(collected_source_callable $entry): void
 	{
 		$entry->change_status = change_state::unchanged;
-		$parameters /** Storage<parameter_node> */ = $entry->callable_syntax()->parameters;
+		$parameters /** Storage<parameter_node> */ = $entry->callable_syntax()->signature_syntax->parameters;
 		foreach ($parameters as $parameter) {
 			$parameter->occurrence()->change_status = change_state::unchanged;
 		}

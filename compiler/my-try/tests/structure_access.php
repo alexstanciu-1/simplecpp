@@ -32,7 +32,7 @@ final class Structure_Access_Test
 		self::check($root->single_body()->body->local_scope() !== $root->single_body()->body_scope(), 'File and executable scopes collapsed');
 		self::check($function->signature_scope()->parent_scope() === $root->single_body()->body_scope(), 'Signature scope ancestry changed');
 		$children = iterator_to_array($function->children());
-		self::check($children === [$function->parameters[0], $function->parameters[1], $function->return_type, $function->body], 'Function grammar order changed');
+		self::check($children === [$function->signature_syntax->parameters[0], $function->signature_syntax->parameters[1], $function->signature_syntax->return_type, $function->body], 'Function grammar order changed');
 		self::check(iterator_to_array($call->children()) === [$call->arguments[0], $call->arguments[1]], 'Call order changed');
 		self::check(iterator_to_array($binding->children()) === [$binding->type_syntax, $call], 'Declaration order changed');
 		self::check($call->name === 'add' && $function->name === 'add' && $binding->name === 'x', 'Saved names missing');
@@ -40,7 +40,7 @@ final class Structure_Access_Test
 		$one = $function->children();
 		$two = $function->children();
 		$one->next();
-		self::check($one->current() === $function->parameters[1] && $two->current() === $function->parameters[0], 'Iterator state is shared');
+		self::check($one->current() === $function->signature_syntax->parameters[1] && $two->current() === $function->signature_syntax->parameters[0], 'Iterator state is shared');
 		self::check($parsed->collection->token_snapshot() === $parsed->tokens, 'Token ownership changed');
 		foreach ($parsed->collection->entries as $entry) {
 			self::check($entry->source_file() === $source, 'Occurrence source access lost identity');

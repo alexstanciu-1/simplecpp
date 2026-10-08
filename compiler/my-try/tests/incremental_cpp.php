@@ -165,7 +165,7 @@ try
 	file_put_contents($path, $defaults);
 	$compiler->update_cpp([$path]);
 	$default_function = cpp_function('value');
-	$default_parameter = $default_function->parameters[0];
+	$default_parameter = $default_function->signature_syntax->parameters[0];
 	$default_children = iterator_to_array($default_parameter->children());
 	cpp_check(count($default_children) === 2 && $default_children[1] === $default_parameter->default_value, 'Parameter inspection omitted default syntax');
 	$default_owner = $default_function->occurrence()->preparation;
@@ -177,7 +177,7 @@ try
 	cpp_check(Model::$cpp_output_program->fragments[$default_owner] === $default_fragment, 'No-op default rerendered signature');
 	file_put_contents($path, str_replace('= 7', '= 9', $defaults));
 	$compiler->update_cpp([$path]);
-	cpp_check(cpp_function('value')->parameters[0] === $default_parameter, 'Default edit replaced parameter identity');
+	cpp_check(cpp_function('value')->signature_syntax->parameters[0] === $default_parameter, 'Default edit replaced parameter identity');
 	cpp_check(Model::$cpp_output_program->fragments[$default_owner] !== $default_fragment && Model::$cpp_output_program->fragments[$default_caller] !== $default_caller_fragment, 'Default edit left stale signature or caller');
 	$default_text = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, ' ' . str_replace('= 7', '= 9', $defaults));
@@ -201,7 +201,7 @@ try
 	$ordinary_vector = 'function pack(vector<int> $items): vector<int> { return $items; } function caller(): vector<int> { $items vector<int>; return pack($items); } $items = caller(); return 0;';
 	file_put_contents($path, $ordinary_vector);
 	$compiler->update_cpp([$path]);
-	$pack_parameter = cpp_function('pack')->parameters[0];
+	$pack_parameter = cpp_function('pack')->signature_syntax->parameters[0];
 	$vector_type = $pack_parameter->require_preparation()->storage_type();
 	$variadic_source = str_replace('pack(vector<int> $items)', 'pack(int ...$items)', $ordinary_vector);
 	file_put_contents($path, $variadic_source);
@@ -209,7 +209,7 @@ try
 	try { $compiler->update_cpp([$path]); }
 	catch (\RuntimeException $error) { $pack_failed = true; }
 	cpp_check($pack_failed && Model::$cpp_files->is_empty(), 'Variadic mode edit failed to invalidate vector caller');
-	cpp_check(cpp_function('pack')->parameters[0] === $pack_parameter && $pack_parameter->require_preparation()->storage_type()->matches($vector_type), 'Variadic storage lost canonical vector identity');
+	cpp_check(cpp_function('pack')->signature_syntax->parameters[0] === $pack_parameter && $pack_parameter->require_preparation()->storage_type()->matches($vector_type), 'Variadic storage lost canonical vector identity');
 	cpp_check($pack_parameter->variadic && $pack_parameter->require_preparation()->contract->element_type !== null, 'Variadic element facts missing');
 	file_put_contents($path, str_replace('pack($items)', 'pack()', $variadic_source));
 	$compiler->update_cpp([$path]);

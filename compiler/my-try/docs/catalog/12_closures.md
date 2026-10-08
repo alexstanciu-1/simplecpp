@@ -27,12 +27,21 @@ cards below retain their original order and provenance.
 
 ## Progress
 
+### Current handoff — 2026-10-08
+
+The capture-free slice and coordinated callable prerequisite are agreed in the
+[closure foundation plan](../planning/closure_foundation.md). The first checkpoint
+extracts authored signature data by composition and preserves existing named-callable
+behavior. Anonymous identity/body lifecycle and closure execution remain pending;
+the imported rows below are not implementation claims. Preserve parameter names for
+future named arguments without confusing them with anonymous callable identity.
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CLOSURE-001](#closure-001) | pending-discussion | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | unverified | unverified | deferred | — |
-| [CLOSURE-CALL-001](#closure-call-001) | pending-discussion | `$f(); $g(3); $h(3); $h(3, 9);` | unverified | unverified | deferred | — |
+| [CLOSURE-001](#closure-001) | foundation-in-progress | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | unverified | unverified | deferred | Agreed capture-free scope; execution pending shared foundation |
+| [CLOSURE-CALL-001](#closure-call-001) | foundation-in-progress | `$f(); $g(3); $h(3); $h(3, 9);` | unverified | unverified | deferred | Agreed capture-free scope; execution pending shared foundation |
 | [SCOPE-VAR-003](#scope-var-003) | pending-discussion | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | unverified | unverified | deferred | Strict source adaptation; imported legacy form retained |
 | [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
 | [CLOSURE-STAN-001](#closure-stan-001) | pending-discussion | `$f function<string()> = function (): int { return 1; };` | unverified | unverified | deferred | — |

@@ -61,7 +61,9 @@ try
 	$function_node = $get->syntax();
 	$function = object_cast($function_node, function_node::class);
 	$body = $function->body;
-	$parameter = $function->parameters[0];
+	$signature_syntax = $function->signature_syntax;
+	$parameter = $function->signature_syntax->parameters[0];
+	parse_check($parameter->name === 'x', 'Authored parameter name was lost');
 	$parameter_entry = $parameter->occurrence();
 	$type = Model::$global_scope->types_named('Box')[0];
 	$box_entry = Model::$type_catalog->source_declarations()->declaration($type->definition_id());
@@ -78,7 +80,8 @@ try
 	parse_check($a->parsed === $parsed, 'Parsed file identity was replaced');
 	parse_check(Model::$global_scope->functions_named('get')[0] === $get, 'Function symbol identity was replaced');
 	parse_check($get->syntax() === $function_node, 'Function node identity was replaced');
-	parse_check(($function->parameters[0] === $parameter) && ($parameter->occurrence() === $parameter_entry), 'Parameter identity was replaced');
+	parse_check($function->signature_syntax === $signature_syntax, 'Signature component identity was replaced');
+	parse_check(($function->signature_syntax->parameters[0] === $parameter) && ($parameter->occurrence() === $parameter_entry), 'Parameter identity was replaced');
 	parse_check($function->body === $body, 'Unchanged function body was not retained');
 	parse_check(!$function->body->syntax_changed && !$parsed->root->single_body()->body->syntax_changed, 'Declaration order or token offsets changed an executable-body flag');
 	parse_check($get->change_status === change_state::unchanged, 'Unchanged signature marked changed');

@@ -72,7 +72,7 @@ final class LLVM_Legacy_Template_File_Checker
 			}
 			$locals /** hash<string, int> */ = [];
 			$this->locals = $locals;
-			foreach ($syntax->parameters as $parameter)
+			foreach ($syntax->signature_syntax->parameters as $parameter)
 			{
 				$type = $this->type($file, object_cast($parameter, parameter_node::class)->type_syntax, $this->bindings);
 				if (($type === 'void') || ((object_cast($parameter, parameter_node::class)->mode === passing_mode::reference) && string_byte_starts_with($type, 'parameter:'))) {
@@ -194,7 +194,7 @@ final class LLVM_Legacy_Template_File_Checker
 		}
 		$target = $this->file->names->call_references[$node->start_token()];
 		$signature = object_cast($target, collected_function::class)->callable_syntax();
-		$parameters /** Storage<parameter_node> */ = $signature->parameters;
+		$parameters /** Storage<parameter_node> */ = $signature->signature_syntax->parameters;
 		$arguments /** vector<string> */ = [];
 		foreach (object_cast($node, call_node::class)->template_arguments as $argument) {
 			$type = $this->type($this->file, $argument, $this->bindings);
@@ -203,7 +203,7 @@ final class LLVM_Legacy_Template_File_Checker
 			}
 			$arguments[] = $type;
 		}
-		if ((q_count($arguments) !== q_count($signature->template_parameters)) || (q_count(object_cast($node, call_node::class)->arguments) !== q_count($signature->parameters))) {
+		if ((q_count($arguments) !== q_count($signature->template_parameters)) || (q_count(object_cast($node, call_node::class)->arguments) !== q_count($signature->signature_syntax->parameters))) {
 			throw new \RuntimeException('Generic call argument count mismatch');
 		}
 		// Name bindings for a target file remain shared and independent of this checking context.

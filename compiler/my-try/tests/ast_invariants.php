@@ -46,8 +46,21 @@ rejected(function () use ($assignment, $type): void {
 	$assignment->value = $type;
 }, \TypeError::class);
 $function = new function_node(new scope());
+$method = new method_node();
+$anonymous_signature = new callable_signature_syntax();
+if (($function->signature_syntax === $method->signature_syntax)
+	|| ($function->signature_syntax->parameters === $method->signature_syntax->parameters)
+	|| !$anonymous_signature->parameters->is_empty()
+	|| ($anonymous_signature->return_type !== null)
+	|| $anonymous_signature->returns_reference) {
+	throw new \LogicException('Callable signature ownership/defaults are not independent');
+}
+if (property_exists($anonymous_signature, 'name') || property_exists($anonymous_signature, 'prepared_facts')
+	|| property_exists($anonymous_signature, 'scope') || ($anonymous_signature instanceof ast_node)) {
+	throw new \LogicException('Authored signature acquired identity, semantic facts or extra AST membership');
+}
 rejected(function () use ($function, $literal): void {
-	$function->return_type = $literal;
+	$function->signature_syntax->return_type = $literal;
 }, \TypeError::class);
 rejected(function () use ($literal): void {
 	$literal->set_span(3, 2);

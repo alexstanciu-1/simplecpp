@@ -1336,9 +1336,9 @@ final class Parser_Run
 		if ($record !== null) {
 			if ($this->text() === ';') {
 				$this->position++;
-				$function->return_type = $return_type;
-				$function->returns_reference = $returns_reference;
-				$function->parameters = $parameters;
+				$function->signature_syntax->return_type = $return_type;
+				$function->signature_syntax->returns_reference = $returns_reference;
+				$function->signature_syntax->parameters = $parameters;
 				$function->template_parameters = $formals;
 				$function->set_bodyless_declaration();
 				$this->finish_declaration($function, $start, false);
@@ -1367,11 +1367,11 @@ final class Parser_Run
 			}
 		}
 
-		$function->return_type = $return_type;
-		$function->returns_reference = $returns_reference;
+		$function->signature_syntax->return_type = $return_type;
+		$function->signature_syntax->returns_reference = $returns_reference;
 		$body->syntax_changed = $body->syntax_changed || $body_changed;
 		$function->set_parsed_body($body);
-		$function->parameters = $parameters;
+		$function->signature_syntax->parameters = $parameters;
 		$function->template_parameters = $formals;
 		$this->finish_declaration($function, $start, $this->same_tokens($old_start, $old_body_start, $start, $body_start));
 		return $function;

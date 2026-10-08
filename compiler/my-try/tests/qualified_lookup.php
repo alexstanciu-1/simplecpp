@@ -125,7 +125,7 @@ $syntax_file->path = 'qualified-syntax.phs';
 $syntax_file->content = 'namespace Client; function probe(?\\Lib\\Box $x): ?\\Lib\\Box { $copy ?\\Lib\\Box = null; $list vector<\\Lib\\Box> = []; for ($i \\Lib\\Box; false;) {} return $x; }';
 $syntax = (new Parser((new Tokenizer($syntax_file))->tokenize()))->parse();
 $function = $syntax->root->single_body()->declarations[0];
-qualified_check($function->return_type->payload->name === '\\Lib\\Box', 'Nullable return lost qualified payload');
+qualified_check($function->signature_syntax->return_type->payload->name === '\\Lib\\Box', 'Nullable return lost qualified payload');
 qualified_check($function->body->statements[0]->type_syntax->payload->name === '\\Lib\\Box', 'Nullable local lookahead lost qualified payload');
 qualified_check($function->body->statements[1]->type_syntax->arguments[0]->name === '\\Lib\\Box', 'Template payload lost qualified name');
 

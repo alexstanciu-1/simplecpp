@@ -92,8 +92,8 @@ final class AST_Test
 		$result = $parser->parse();
 		self::verify($result);
 		$function = $result->root->single_body()->declarations[0];
-		self::check($function->parameters[0]->mode === passing_mode::value);
-		self::check($function->parameters[1]->mode === passing_mode::reference);
+		self::check($function->signature_syntax->parameters[0]->mode === passing_mode::value);
+		self::check($function->signature_syntax->parameters[1]->mode === passing_mode::reference);
 		self::check($function->body->statements[0]->expression === null);
 		$statements = $result->root->single_body()->body->statements;
 		self::check($statements[0] instanceof variable_declaration_node && $statements[0]->initializer === null);

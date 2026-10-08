@@ -83,7 +83,7 @@ final class Reference_Preparation
 	/** The unique reference parameter makes the return obligation declaration-local. */
 	public static function prepare_signature(callable_declaration_node $syntax, callable_signature $signature): void
 	{
-		if (!$syntax->returns_reference) {
+		if (!$syntax->signature_syntax->returns_reference) {
 			return;
 		}
 		$selected = -1;

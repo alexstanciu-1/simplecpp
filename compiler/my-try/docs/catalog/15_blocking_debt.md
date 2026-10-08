@@ -48,6 +48,14 @@ keyed `data` constructor inputs without conflating data notation with ordinary c
 Reconcile authoritative contracts before implementation; prove binding diagnostics,
 evaluation order and incremental signature-name invalidation.
 
+CH12 agreement (2026-10-08): preserve original parameter names while giving each
+closure an anonymous source-occurrence identity in its enclosing context. Identity
+and generated C++ naming are separate from parameter-name contracts. Concrete
+closures can retain their names; an erased `function<int(int)>` boundary carries
+no authored names in that spelling. Named calls across such a boundary require
+an explicit name-bearing contract or rejection; do not recover names from whichever
+closure happened to initialize the value. Named-call implementation remains deferred.
+
 ## Deferred feature scope
 
 ### CH15-INHERITANCE-EXTENSIONS-01 — deferred CH11 extensions

@@ -34,7 +34,7 @@ foreach ([false, true] as $nested)
 	(new File_Preparation($parsed->collection, Model::$language_scope))->prepare();
 	$signature = $function->require_preparation();
 	dispatch_check($signature->parameters[0]->contract->mode === passing_mode::reference, 'Parameter preparation lost reference passing');
-	dispatch_check($signature->parameters[1] === $function->parameters[1]->require_preparation(), 'Signature does not share parameter facts');
+	dispatch_check($signature->parameters[1] === $function->signature_syntax->parameters[1]->require_preparation(), 'Signature does not share parameter facts');
 
 	$member = object_cast(object_cast($statements[0], expression_statement_node::class)->expression, assignment_expression_node::class);
 	$local = object_cast(object_cast($statements[1], expression_statement_node::class)->expression, assignment_expression_node::class);

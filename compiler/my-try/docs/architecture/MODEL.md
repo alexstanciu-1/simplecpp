@@ -174,6 +174,15 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ### Callable contracts
 
+Authored parameter/return syntax is composed through `callable_signature_syntax`.
+Each function/method owns one component containing its original parameter nodes,
+optional return type and explicit reference-return marker. It has no source name,
+scope, collected identity, work record or prepared facts. Parameter names remain
+on the parameter nodes. The owning AST node exposes these children directly in
+grammar order for inspection/maintenance; the component is not another AST node.
+This is the first [closure foundation checkpoint](../planning/closure_foundation.md),
+not anonymous callable support. Body/scope/work separation remains pending.
+
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members
 observe their declaring type and are indexed separately from free functions and

@@ -52,7 +52,7 @@ foreach ([$layout, $signature, $body, $entry] as $work) {
 work_check($record->occurrence()->change_status === change_state::unchanged, 'Record declaration did not settle');
 work_check($record->properties[0]->occurrence()->change_status === change_state::unchanged, 'Record field did not settle');
 work_check($function->occurrence()->change_status === change_state::unchanged, 'Function declaration did not settle');
-work_check($function->parameters[0]->occurrence()->change_status === change_state::unchanged, 'Function parameter did not settle');
+work_check($function->signature_syntax->parameters[0]->occurrence()->change_status === change_state::unchanged, 'Function parameter did not settle');
 $return = object_cast($parsed->root->single_body()->body->statements[1], return_node::class);
 $call = object_cast($return->expression, call_node::class)->require_call_preparation();
 work_check(weakref_get($call->target) === $function->occurrence(), 'Call lost its typed function identity');

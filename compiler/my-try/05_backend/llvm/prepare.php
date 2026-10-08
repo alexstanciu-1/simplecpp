@@ -276,7 +276,7 @@ final class LLVM_Preparation_Run
 		}
 		if ($function->declaration !== null)
 		{
-			foreach (object_cast($function->declaration, collected_function::class)->callable_syntax()->parameters as $index => $syntax)
+			foreach (object_cast($function->declaration, collected_function::class)->callable_syntax()->signature_syntax->parameters as $index => $syntax)
 			{
 				$entry = $file->names->declarations[object_cast($syntax, parameter_node::class)->occurrence()->token_index];
 				$parameter = new llvm_parameter();

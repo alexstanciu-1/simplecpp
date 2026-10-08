@@ -59,7 +59,7 @@ try {
 	$right = object_cast($second->members[1]->working->syntax(), method_node::class);
 	instance_check($first->members[1]->origin === $original->occurrence(), 'Member origin lost');
 	instance_check($left !== $original && $left !== $right && $left->require_body() !== $right->require_body(), 'Working syntax is shared');
-	instance_check($left->parameters[1] !== $right->parameters[1] && $left->parameters[1] !== $original->parameters[1], 'Parameters shared');
+	instance_check($left->signature_syntax->parameters[1] !== $right->signature_syntax->parameters[1] && $left->signature_syntax->parameters[1] !== $original->signature_syntax->parameters[1], 'Parameters shared');
 	instance_check($left->signature_scope() !== $right->signature_scope(), 'Signature scopes shared');
 	instance_check($left->occurrence()->declaring_type() === $a && $right->occurrence()->declaring_type() === $b, 'Declaring owner is not consumer');
 	instance_check($left->occurrence()->qualified_name() === 'app\\A::read', 'Member identity used trait namespace');

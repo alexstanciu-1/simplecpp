@@ -3,6 +3,20 @@
 /* Shared declaration syntax; semantic admission and processing remain stage-owned. */
 namespace scpp\compiler;
 
+/** Authored signature data, independent of declaration names and expression identity. */
+final class callable_signature_syntax
+{
+	public Storage $parameters /** Storage<parameter_node> */;
+	public ?type_node $return_type = null;
+	/** Explicit source marker; its lifetime contract is established by preparation. */
+	public bool $returns_reference = false;
+
+	public function __construct()
+	{
+		$this->parameters = new Storage /** Storage<parameter_node> */();
+	}
+}
+
 abstract class callable_declaration_node extends declaration_node
 {
 	use Node_Source_Span;
@@ -18,10 +32,8 @@ abstract class callable_declaration_node extends declaration_node
 
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
-	public Storage $parameters /** Storage<parameter_node> */;
-	public ?type_node $return_type = null;
-	/** Explicit source marker; its lifetime contract is established by preparation. */
-	public bool $returns_reference = false;
+	/** Single owner of authored parameter/return syntax, shared in shape with future expressions. */
+	public callable_signature_syntax $signature_syntax;
 	public ?function_body_node $body = null;
 	/** Preserve replaced executable ownership until join-ordered semantic retirement. */
 	public Storage $retired_bodies /** Storage<function_body_node> */;
@@ -41,7 +53,7 @@ abstract class callable_declaration_node extends declaration_node
 		$this->retired_bodies = new Storage /** Storage<function_body_node> */();
 		$this->owned_signature_scope = new scope();
 		$this->owned_signature_scope->mark_function();
-		$this->parameters = new Storage /** Storage<parameter_node> */();
+		$this->signature_syntax = new callable_signature_syntax();
 	}
 
 	/** Query construction state without reading a potentially uninitialized required field. */
@@ -80,7 +92,7 @@ abstract class callable_declaration_node extends declaration_node
 
 	public function require_return_type(): type_node
 	{
-		return $this->return_type;
+		return $this->signature_syntax->return_type;
 	}
 
 	public function signature_scope(): scope
@@ -105,12 +117,12 @@ abstract class callable_declaration_node extends declaration_node
 			$this->template_parameters[$name] = $worker->token_index($index);
 		}
 		$worker->enter($this);
-		$items /** Storage<parameter_node> */ = $this->parameters;
+		$items /** Storage<parameter_node> */ = $this->signature_syntax->parameters;
 		foreach ($items as $child) {
 			$worker->edge($this, $child);
 		}
-		if ($this->return_type !== null) {
-			$worker->edge($this, $this->return_type);
+		if ($this->signature_syntax->return_type !== null) {
+			$worker->edge($this, $this->signature_syntax->return_type);
 		}
 		if ($this->body !== null) {
 			$worker->edge($this, $this->body);
