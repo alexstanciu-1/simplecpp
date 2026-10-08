@@ -63,8 +63,9 @@ final class Type_Contract_Preparation
 				if (!$static_redeclaration && !$inherited->virtual_method) {
 					throw new \RuntimeException('Nonvirtual inherited member redeclaration is deferred');
 				}
-				$adaptation = Callable_Adaptation::between($parent_signature->signature, $signature->signature,
-					$static_redeclaration ? null : new Conversion_Relationships($context));
+				$relationship_query /** nullable<conversion_relationship_query> */ = null;
+				if (!$static_redeclaration) { $relationship_query = new Conversion_Relationships($context); }
+				$adaptation = Callable_Adaptation::between($parent_signature->signature, $signature->signature, $relationship_query);
 				if (($signature->static_member !== $parent_signature->static_member) || ($adaptation === null)) {
 					if ($static_redeclaration) {
 						throw new \RuntimeException('Static redeclaration requires an exact compatible signature');

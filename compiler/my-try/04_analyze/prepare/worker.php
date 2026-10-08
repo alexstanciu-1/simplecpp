@@ -29,7 +29,7 @@ final class Preparation_Worker
 		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 	}
 
-	public function is_materialization_yield(\RuntimeException $error): bool
+	public function is_materialization_yield(\Throwable $error): bool
 	{
 		return same_exception($error, $this->materialization_signal);
 	}
@@ -797,7 +797,7 @@ final class Preparation_Worker
 	{
 		$body = $owner->executable_body();
 		Preparation_Cleanup::tree($body);
-		Body_Preparation::prepare_statements($body, $context);
+		Body_Preparation::prepare_statements($body, $context, 0);
 		$body->syntax_changed = false;
 	}
 
@@ -921,7 +921,12 @@ final class Preparation_Worker
 			}
 		}
 		elseif ($lookup->kind === preparation_lookup_kind::method_name) {
-			foreach ($lookup->lookup_scope->methods_named($lookup->name) as $method) { $result[] = $method; }
+			foreach ($lookup->lookup_scope->methods_named($lookup->name) as $method) {
+				// Use the callable view, as function-name lookup does; the native
+				// declaration also reaches this marker through collected_definition.
+				$callable /** callable_definition_i */ = $method;
+				$result[] = $callable;
+			}
 		}
 		elseif ($lookup->kind === preparation_lookup_kind::import_name) {
 			foreach ($lookup->lookup_scope->imports_named($lookup->name) as $binding) { $result[] = $binding; }

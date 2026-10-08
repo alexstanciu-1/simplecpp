@@ -1076,6 +1076,9 @@ final class TypeMapper
 	private function mapUserTypeName(string $phpType): string
 	{
 		$trimmed = ltrim($phpType, '\\');
+		if (str_starts_with($phpType, '\\') && !$this->isRuntimeProvidedType($phpType)) {
+			return '::scpp::' . str_replace('\\', '::', $trimmed);
+		}
 		if (str_contains($trimmed, '\\')) {
 			return str_replace('\\', '::', $trimmed);
 		}

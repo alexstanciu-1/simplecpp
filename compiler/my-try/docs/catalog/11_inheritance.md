@@ -53,7 +53,7 @@ The three selected groups are implemented; see the
 [variance scope and checkpoints](../planning/callable_variance.md).
 The two remaining dispatch decisions are now resolved: final-method interface views
 are enabled and interface-qualified static dispatch is deferred. CH11's agreed
-implementation scope is complete; native compiler validation remains outstanding.
+implementation scope and the requested bounded native compiler validation are complete.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
 six ownership/type-access rows added below make already-proven coverage explicit. This is
@@ -61,9 +61,12 @@ not a claim that every extension above is required for v0.2. The selected groups
 implemented; deferred extensions remain explicitly gated. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
 
-Verification: the checkpoints record PHP-host and generated-C++ proofs. The latest
-native compiler checkpoint remains CH10; CH11 native validation is outstanding and
-must be requested separately. The dated sections below are historical checkpoints;
+Verification: the [CH11 native checkpoint](../portability/conversion_review.md#latest-native-checkpoint--2026-10-08-chapter-11)
+passes cumulative native validation plus 1,569 chapter source comparisons (three
+runs of 523 snapshots) and 518 generated-program executions. Chapter-specific
+rejection/edit assertions remain host checks; the checkpoint states the cumulative
+native rejection/incremental scope. Legacy STAN and LLVM are explicitly skipped.
+The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
 
 ## Shared callable variance — 2026-10-08

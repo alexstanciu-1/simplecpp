@@ -199,9 +199,23 @@ final class Symbol_Collector
 	{
 		$entry->retained_symbol = true;
 		$this->append($entry, $scope, $name, $index);
+		if ($this->global === null) {
+			self::define_source_type($entry, $scope);
+		}
+		else {
+			// Parallel parse workers share registry identities and source associations,
+			// not just the global scope index. Publish that transaction under the same lock.
+			task_synchronize(function () use ($entry, $scope): void {
+				self::define_source_type($entry, $scope);
+			});
+		}
+		$this->publish($entry, $scope);
+	}
+
+	private static function define_source_type(collected_type_definition $entry, scope $scope): void
+	{
 		$definition = Source_Types::definition($entry);
 		$scope->register_type_as($entry->name, object_cast($definition, type_definition_i::class));
-		$this->publish($entry, $scope);
 	}
 
 	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */

@@ -30,6 +30,13 @@ need no lock. Exported declaration registration calls `task_synchronize`, using 
 batch publication mutex. `Source_Publication::publish_stage` installs tokens or the
 mutable parse result, including incomplete results retained for retry.
 
+Source nominal-type creation, canonical identity creation and declaration association
+also share that mutex as one registration transaction. They mutate the global type
+catalog even when the new declaration belongs to a private file scope. Independent
+parser work must not allocate these identities concurrently. Standalone parsing
+without a global publication destination remains synchronous and needs no task lock.
+This does not enable parallel semantic preparation or concurrent compiler sessions.
+
 After joining, successful-file revision sweeps mark deleted symbols. Parse errors are
 reported after other files finish. Earlier read/tokenization errors prevent parsing.
 No rollback or transactional batch guarantee is implied. Concurrent compiler sessions

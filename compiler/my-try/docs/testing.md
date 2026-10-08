@@ -104,19 +104,23 @@ existing order; independent suites run concurrently.
 
 ## Commands
 
-For CH10 source parity using an already-built native validation driver:
+For CH10 or CH11 source parity using an already-built native validation driver:
 
 ```bash
 python3 compiler/my-try/tools/native_records.py --executable /absolute/path/to/native/main --results /tmp/FRESH_NATIVE_RECORDS
+python3 compiler/my-try/tools/native_records.py --chapter 11 --executable /absolute/path/to/native/main --results /tmp/FRESH_NATIVE_CH11
 ```
 
-This runs the 15 dedicated record suites, captures successful source programs with
+This runs the 15 CH10 suites (default) or 14 CH11 suites, captures successful source programs with
 their PHP-hosted artifacts, compares native artifacts, then compiles/runs instrumented
 fixtures through the shared pool/PCH path. `SCPP_RECORD_EXPORT` is a test-only host
 export hook; ordinary suite behavior is unchanged when it is absent. Rejections and
 incremental checks inside these suites remain host checks, not native proofs. The
 separate cumulative native driver supplies its existing rejection/incremental scope.
 The runner requires that driver; it does not build a compiler by itself.
+`--repeat-parity N` repeats source comparisons in separate processes and directories,
+including fresh multi-file parse schedules; generated fixtures execute once afterward.
+This is a focused concurrency regression check, not an exhaustive race-safety proof.
 
 For bounded class/struct constructors, `set:` inputs and named data calls:
 

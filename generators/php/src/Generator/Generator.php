@@ -7538,6 +7538,11 @@ final class Generator
 			return $import;
 		}
 		$qualified = $this->nameRegistry->qualifyClassName($normalized, $flags, $namespacePhp);
+		// An explicit root is syntax, not a lookup hint. Preserve it even when
+		// the declaration is supplied by another generated translation unit.
+		if ($flags === 0) {
+			return '\\' . $qualified;
+		}
 		if ($this->typeMapper->exactDeclaredTypeKind($qualified) !== null) {
 			return $qualified;
 		}

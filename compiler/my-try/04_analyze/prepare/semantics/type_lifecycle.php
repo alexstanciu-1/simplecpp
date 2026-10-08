@@ -13,7 +13,8 @@ final class Type_Lifecycle_Preparation
 			$context->worker->observe($members, '__destruct', preparation_lookup_kind::method_name, $context->owner);
 			foreach ($members->methods_named('__destruct') as $method) {
 				$count++;
-				$facts->destructor_visibility = Member_Preparation::visibility($method->callable_syntax()->modifiers);
+				$syntax = object_cast($method->callable_syntax(), method_node::class);
+				$facts->destructor_visibility = Member_Preparation::visibility($syntax->modifiers);
 			}
 		}
 		if ($count > 1) { throw new \RuntimeException('Duplicate destructor'); }

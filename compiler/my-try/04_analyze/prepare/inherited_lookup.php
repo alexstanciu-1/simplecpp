@@ -62,9 +62,13 @@ final class Inherited_Lookup
 			foreach (Member_Inventory::requirements($entry) as $requirement) {
 				if ($requirement->name !== $name) { continue; }
 				if ($selected === null) { $selected = $requirement; }
-				elseif ((Member_Preparation::visibility($selected->callable_syntax()->modifiers) !== member_visibility::public_access)
-					&& (Member_Preparation::visibility($requirement->callable_syntax()->modifiers) === member_visibility::public_access)) {
-					$selected = $requirement;
+				else {
+					$selected_syntax = object_cast($selected->callable_syntax(), method_node::class);
+					$required_syntax = object_cast($requirement->callable_syntax(), method_node::class);
+					if ((Member_Preparation::visibility($selected_syntax->modifiers) !== member_visibility::public_access)
+						&& (Member_Preparation::visibility($required_syntax->modifiers) === member_visibility::public_access)) {
+						$selected = $requirement;
+					}
 				}
 			}
 			if ($selected !== null) { return [new inherited_member_candidate($entry, $selected)]; }

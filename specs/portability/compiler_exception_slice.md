@@ -62,6 +62,15 @@ identity across base/derived handles; PHP uses actual object identity and native
 code compares both handles through the framework base. The original exception
 object is retained across cause links and rethrows.
 
+Required exception fields (instance and static) use that same fixed spelling map.
+Identity-only predicates should accept `\Throwable`, not a specific caught subtype:
+native catch dispatch exposes the framework base handle and does not narrow it.
+The legacy emitter preserves explicit root qualification in fields and signatures,
+without introducing namespace-local forward declarations for global framework types.
+`tests/portability/exception_identity.py` proves stored signal identity, distinct
+same-message exceptions, static/nullable fields and rethrow identity in PHP/native
+execution. The October 8 proof used `--no-stan`; it is not a STAN validation claim.
+
 ## Proven scope and remaining debt
 
 [exception-03](../planning/compiler_migration/results/exception-03/summary.json)

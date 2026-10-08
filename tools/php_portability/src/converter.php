@@ -752,7 +752,7 @@ final class Converter {
 					$this->fail($at, 'required field needs a concrete scalar or named type');
 				}
 				$this->expect(';');
-				$fields[] = new Node('property', $visibility . ' ' . $type[1] . ' ' . $field[1] . ';', $at);
+				$fields[] = new Node('property', $visibility . ' ' . Exception_Policy::name($type[1]) . ' ' . $field[1] . ';', $at);
 				continue;
 			}
 			$this->expect('=');

@@ -33,8 +33,13 @@ Important authoring boundaries:
 
 - Native hashes have value membership semantics. PHP SplObjectStorage assignment
   aliases membership. Build then publish, and do not mutate through another alias
-  after publication. The three compiler owners follow this discipline. Record
+  after publication. Compiler owners must follow this discipline. Record
   identity remains shared in either language.
+- The same rule applies to method arguments: a by-value hash parameter does not
+  share subsequent membership writes with its caller. Recursive traversal that
+  needs one visited/active set should keep it on an invocation-local worker and
+  mutate that field directly. CH11's native trait-diamond comparison exposed this
+  distinction; passing the PHP object recursively had hidden duplicate visits.
 - Do not iterate this PHP carrier as if it were a PHP associative array:
   SplObjectStorage iteration exposes keys differently from native hash iteration.
   For deliberate key iteration, write

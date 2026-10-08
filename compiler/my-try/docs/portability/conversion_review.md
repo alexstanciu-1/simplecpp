@@ -3,12 +3,62 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers the implemented Chapter 05–10 slices, including
+The latest checkpoint covers the implemented Chapter 05–11 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
-partitioned namespace/constant/enum programs and bounded class/struct behavior.
+partitioned namespace/constant/enum programs, bounded class/struct behavior,
+inheritance, traits, interface dispatch and shared callable variance.
 The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
+
+## Latest native checkpoint — 2026-10-08 Chapter 11
+
+Candidate base `65d96f7e6bd0af0c6a5420eb49447266d4c1fcd4`, with the current
+portability overlay. Evidence: `/tmp/my-try-ch11-native-20261008/`.
+Attempt 9 first built the native compiler. Attempt 10 passes the complete cumulative
+frontend/C++ validation: 23 host suites; native emission/type/control-flow proofs;
+1,111 native/PHP source comparisons and generated executions; 44 partitioned
+namespace/constant/enum projects; 997 supplementary probes; two control-flow error
+and two ownership lifetime probes; 370 rejection/recovery comparisons; repeated
+compilation and the final incremental native rebuild.
+
+The PCH-enabled, 12-job attempt took **2,357.066 seconds**, including a
+**307.944-second** native build with reused build state. This is not a clean-build
+benchmark. Evidence includes `summary.json`, source/harness hashes, candidate
+metadata and `logs-10/commands.json`. PHP-FPM was unavailable; the supported CLI
+fallback was used.
+
+Repairs preserve the existing language contracts:
+
+- Explicit integer arguments/default initialization, compact-to-wide token offsets,
+  typed Storage receivers, method-node views and nullable-to-weak boundaries.
+- Fixed exception-field mapping and rooted declared-type lowering in the legacy
+  toolchain. The materialization signal predicate accepts the exception base and
+  still compares object identity. Focused PHP/native identity and cross-file import
+  proofs pass under `/tmp/my-try-exception-identity-01/` and
+  `/tmp/my-try-ch11-import-regression-01/`.
+- The syntax-purity fixture excludes independent lifecycle work alongside other
+  semantic work records; it still compares syntax and scopes.
+- Dedicated CH11 native comparison exposed copied trait traversal maps and unsafe
+  concurrent source-type registry writes. Traversal state is now invocation-owned;
+  source-type registration uses the existing parse/publication batch mutex.
+
+The first dedicated CH11 attempt (`/tmp/my-try-ch11-records-native-01/`) passed
+518 of 523 source comparisons; two trait-diamond and three intermittent multi-file
+failures prevented a pass claim. All five now pass 20 repeated native comparisons
+each (`/tmp/my-try-ch11-native-stability-01/`). The final dedicated run under
+`/tmp/my-try-ch11-records-native-02/` passes all 14 host suites, **1,569 native
+artifact comparisons** (523 successful source snapshots, three independent runs
+each) and **518 generated-program executions**. Its summary records the executable
+SHA-256; command journals retain individual timings.
+
+The dedicated runner exercises native successful compilation and repeated no-op
+preparation, not every CH11 rejection or edit/recovery assertion. Those chapter
+assertions remain host checks; the cumulative native driver supplies its separately
+listed rejection/incremental coverage. Repeated scheduling checks are not an
+exhaustive concurrency or sanitizer proof. This clears the requested bounded CH11
+native gate without enabling deferred CH15 extensions.
+Legacy STAN and LLVM remain explicitly excluded (`--no-stan --types-only`).
 
 ## Latest native checkpoint — 2026-10-07 Chapter 10
 

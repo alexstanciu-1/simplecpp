@@ -130,12 +130,13 @@ final class enum_definition_work extends declaration_work
 /** Independent type facts never acknowledge the record layout's source flag. */
 abstract class type_semantic_work extends declaration_work
 {
-	public int $source_revision = -1;
+	public int $source_revision;
 	private collected_member_owner $definition;
 
 	public function __construct(collected_member_owner $definition)
 	{
 		parent::__construct($definition->collection);
+		$this->source_revision = -1;
 		$this->definition = $definition;
 	}
 

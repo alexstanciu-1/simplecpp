@@ -28,4 +28,12 @@ foreach (['file_lock_handle', 'process_handle', 'process_output', 'json_document
 	check(!$mapper->isRuntimeProvidedType('Application\\' . $alias), 'qualified user type mistaken for runtime alias');
 }
 check(!$mapper->isRuntimeProvidedType('UserRecord'), 'user class classified as runtime-owned');
+check($mapper->mapDeclaredType('\\RootRecord') === 'shared_p<::scpp::RootRecord>', 'rooted user type lost its root');
+$rooted = (new Transpiler(phpProfile: 'strict'))->transpile('/tmp/rooted-types.phs', sourceOverride:
+	'namespace Application; class Owner { public \\RootRecord $record; '
+	. 'public function keep(\\RootRecord $record): \\RootRecord { return $record; } }');
+check($rooted->errors === [], 'rooted declaration generation failed');
+$rootedHeader = implode("\n", $rooted->headerLines);
+check(str_contains($rootedHeader, 'shared_p<::scpp::RootRecord>'), 'rooted field/signature not preserved');
+check(!str_contains($rootedHeader, 'class RootRecord;'), 'rooted external type acquired a local shadow declaration');
 echo "PASS: runtime declaration ownership, qualified aliases, shared/reference/wrapper signatures and user forwards\n";

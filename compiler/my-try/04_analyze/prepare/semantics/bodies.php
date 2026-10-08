@@ -14,7 +14,7 @@ final class Body_Preparation
 			return new statement_completion(true);
 		}
 		if ($node instanceof function_body_node) {
-			return self::prepare_statements(object_cast($node, function_body_node::class), $context);
+			return self::prepare_statements(object_cast($node, function_body_node::class), $context, 0);
 		}
 		if ($node instanceof statement_body_node) {
 			return self::prepare_block(object_cast($node, statement_body_node::class), $context);
@@ -58,7 +58,7 @@ final class Body_Preparation
 
 	/** Prepare all syntax, including unreachable statements; compose only reachable normal exits. */
 	public static function prepare_statements(statement_body_node $body,
-			preparation_context $context, int $start = 0): statement_completion
+			preparation_context $context, int $start): statement_completion
 	{
 		$result = new statement_completion(true);
 		$nodes /** Storage<statement_node> */ = $body->statements;
@@ -77,7 +77,7 @@ final class Body_Preparation
 		$enclosing = $context->locals;
 		$context->locals = new local_environment($enclosing);
 		try {
-			return self::prepare_statements($body, $context);
+			return self::prepare_statements($body, $context, 0);
 		}
 		finally {
 			$context->locals = $enclosing;

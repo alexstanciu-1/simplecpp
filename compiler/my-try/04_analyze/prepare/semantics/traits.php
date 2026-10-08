@@ -4,31 +4,38 @@ namespace scpp\compiler;
 /** Eligibility belongs to analysis; materialization alone never grants semantics. */
 final class Trait_Preparation
 {
+	/** Invocation-local traversal state: recursive calls must share these maps. */
+	private \SplObjectStorage $active /** hash<bool, shared<collected_trait>> */;
+	private \SplObjectStorage $visited /** hash<bool, shared<collected_trait>> */;
+
+	public function __construct()
+	{
+		$this->active = new \SplObjectStorage /** hash<bool, shared<collected_trait>> */();
+		$this->visited = new \SplObjectStorage /** hash<bool, shared<collected_trait>> */();
+	}
+
 	/** Whole-use admission is re-evaluated on every coordinator invocation, like imports. */
 	public static function targets(collected_record $consumer): Storage /** Storage<collected_trait> */
 	{
 		$result /** Storage<collected_trait> */ = new Storage();
-		$active /** hash<bool, shared<collected_trait>> */ = new \SplObjectStorage();
-		$visited /** hash<bool, shared<collected_trait>> */ = new \SplObjectStorage();
+		$traversal = new Trait_Preparation();
 		foreach (self::direct_targets($consumer) as $trait) {
-			self::expand($trait, $result, $active, $visited);
+			$traversal->expand($trait, $result);
 		}
 		return $result;
 	}
 
 	/** Stable depth-first source order; identity deduplication never hides a cycle. */
-	private static function expand(collected_trait $trait, Storage $result /** Storage<collected_trait> */,
-		\SplObjectStorage $active /** hash<bool, shared<collected_trait>> */,
-		\SplObjectStorage $visited /** hash<bool, shared<collected_trait>> */): void
+	private function expand(collected_trait $trait, Storage $result /** Storage<collected_trait> */): void
 	{
-		if (isset($active[$trait])) { throw new \RuntimeException('Trait use cycle: ' . $trait->name); }
-		if (isset($visited[$trait])) { return; }
+		if (isset($this->active[$trait])) { throw new \RuntimeException('Trait use cycle: ' . $trait->name); }
+		if (isset($this->visited[$trait])) { return; }
 		self::source($trait);
-		$active[$trait] = true;
+		$this->active[$trait] = true;
 		$result->append($trait);
-		foreach (self::direct_targets($trait) as $nested) { self::expand($nested, $result, $active, $visited); }
-		unset($active[$trait]);
-		$visited[$trait] = true;
+		foreach (self::direct_targets($trait) as $nested) { $this->expand($nested, $result); }
+		unset($this->active[$trait]);
+		$this->visited[$trait] = true;
 	}
 
 	/** Each use list resolves in its own author's lexical environment. */

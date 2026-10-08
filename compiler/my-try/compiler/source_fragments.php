@@ -16,7 +16,7 @@ final class Source_Fragments
 		$rows /** Storage<token> */ = $source->tokens;
 		$copies /** Storage<token> */ = $result->tokens;
 		foreach ($rows as $row) {
-			$copies->append(new token($row->offset, $row->length, $row->text()));
+			$copies->append(new token((int)$row->offset, (int)$row->length, $row->text()));
 		}
 		return $result;
 	}

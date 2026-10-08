@@ -24,7 +24,7 @@ function s2s_snapshot(parsed_file $syntax): string
 		$result = ['class' => get_class($value), 'id' => spl_object_id($value)];
 		foreach ((new \ReflectionClass($value))->getProperties() as $property) {
 			// Successful preparation settles the body dirty flag without changing source syntax.
-			if (in_array($property->name, ['prepared_facts', 'preparation', 'base_initialization', 'contract_work', 'relationship_work', 'body_preparation', 'body_work', 'syntax_changed', 'imports_changed', 'prepared', 'preparation_lookups', 'change_status', 'preparation_changes', 'retired_scopes'], true)) {
+			if (in_array($property->name, ['prepared_facts', 'preparation', 'base_initialization', 'contract_work', 'relationship_work', 'lifecycle_work', 'body_preparation', 'body_work', 'syntax_changed', 'imports_changed', 'prepared', 'preparation_lookups', 'change_status', 'preparation_changes', 'retired_scopes'], true)) {
 				continue;
 			}
 			$result[$property->name] = $visit($property->getValue($value));
@@ -1102,7 +1102,7 @@ int main() { try { (void)function_fail(); } catch (const scpp::runtime_error& er
 
 	Preparation_Cleanup::tree($syntax->root);
 	if (s2s_snapshot($syntax) !== $before) {
-		throw new \LogicException('Preparation/emission changed source syntax or its scopes');
+		throw new \LogicException('Preparation/emission changed source syntax or its scopes: ' . $name);
 	}
 }
 $scope_isolation_rejections = [

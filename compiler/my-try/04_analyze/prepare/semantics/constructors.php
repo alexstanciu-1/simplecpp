@@ -31,7 +31,10 @@ final class Constructor_Preparation
 		}
 		$facts = new prepared_base_initialization();
 		$facts->base_type = $base_type;
-		$facts->source_call = $source_call;
+		if ($source_call !== null) {
+			$explicit_call /** call_node */ = $source_call;
+			$facts->source_call = $explicit_call;
+		}
 		$base /** collected_record */ = Type_Queries::source_record($base_type);
 		$constructor = weakref_get($base->syntax()->require_preparation()->constructor);
 		$arguments /** Storage<expression_node> */ = new Storage /** Storage<expression_node> */();

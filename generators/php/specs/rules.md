@@ -430,6 +430,9 @@ Supported now:
 Notes:
 - plain `use` is treated as a symbol import, not as a namespace-alias feature
 - fully-qualified PHP names in normal code still lower via the rooted `::scpp::...` form
+- Explicitly rooted user types retain that root in fields and callable signatures,
+  including across files; they must not introduce namespace-local shadow forward
+  declarations. Runtime-provided aliases retain their existing runtime spelling.
 - non-root qualified names in normal code remain syntactic, for example `A\B\C` -> `A::B::C`
 - no PHP fallback import/name-resolution behavior is implemented
 

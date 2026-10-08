@@ -35,7 +35,8 @@ final class Callable_Instances
 		$members->append($origin->callable_syntax());
 		$run = new Parser_Run(Source_Fragments::snapshot($origin->token_snapshot()), $lexical);
 		$parsed = $run->parse_member_fragments(object_cast($declaring, collected_record::class), $members);
-		$working = object_cast($parsed->root->single_body()->declarations[0]->occurrence(), collected_method::class);
+		$declarations /** Storage<declaration_node> */ = $parsed->root->single_body()->declarations;
+		$working = object_cast($declarations[0]->occurrence(), collected_method::class);
 		$instance = new callable_instance($origin, $called, $parsed, $working);
 		$working->instance_context = $instance;
 		$instances->append($instance);
