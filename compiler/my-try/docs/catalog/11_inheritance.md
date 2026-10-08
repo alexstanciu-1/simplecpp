@@ -32,33 +32,29 @@ are distinct; the imported examples must not conflate them.
 Derived `data` construction is complete within its agreed bounds: authored/inherited
 constructors and composed synthesized inputs. The checkpoints below record evidence.
 
-Remaining extensions require agreement, not another implementation of completed cards:
+User scope decision — 2026-10-08:
 
-1. Runtime-called-type propagation through instance methods and inline/struct
-   `new static`; do not infer dynamic
-   identity from a declared receiver type or silently change fixed method dispatch.
-2. Additional ownership conversions/joins: unique/weak downcasts, cross-casts,
-   unique/weak or sibling conditional joins;
-   shared checked ancestry casts, class/struct weak upcasts and safe unique transfers
-   already work. Shared derived/base and record/interface joins now work without
-   inferring unseen common ancestors.
-3. Trait adaptations remain deferred. Constructors/destructors were explicitly moved
-   to [CH15 lifecycle debt](15_blocking_debt.md#ch15-trait-lifecycle-01--trait-constructors-and-destructors).
-   Abstract requirements, nested uses, static members and constants now share the
-   existing consumer-owned path below.
-4. Other explicit bounds: abstract constructor contracts, non-public
-   destructors, variance/covariant returns, interface-qualified static dispatch and the
-   inherited-final-virtual interface-forwarding restriction.
+| Group | Decision |
+| --- | --- |
+| Shared cross-casts | Implement in CH11; discuss checked relationship admission first |
+| Non-public destructors | Implement in CH11; settle protected/private access and cleanup ownership |
+| Variance/covariant returns | Implement in CH11; agree parameter/return compatibility and lowering bounds |
+| Instance late static binding; inline/struct `new static()` | Deferred to CH15 |
+| Unique/weak downcasts; unique/weak conditional joins; sibling conditional joins | Deferred to CH15 |
+| Trait adaptations; abstract constructor contracts | Deferred to CH15 |
+| Trait constructors/destructors | Previously deferred to CH15 |
+| Interface-qualified static dispatch; inherited final-virtual interface forwarding | Still undecided; not implicitly deferred or approved |
 
-Next discussion: choose among the remaining runtime called-type, ownership-conversion
-and trait-extension groups; no new group is enabled by this reconciliation.
-CH11 is not declared complete. Trait lifecycle debt was explicitly transferred to CH15
-by the user; other remaining extensions are not automatically transferred.
+The [CH15 scope register](15_blocking_debt.md#ch15-inheritance-extensions-01--deferred-ch11-extensions)
+retains the seven newly deferred items and their prerequisites. Existing unsupported
+paths stay rejected; recording the queue does not enable new language semantics.
+Next discussion: shared cross-casts, followed by the two other selected groups.
+CH11 is not declared complete; native compiler validation remains outstanding.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
 six ownership/type-access rows added below make already-proven coverage explicit. This is
-not a claim that every extension above is required for v0.2. Their implementation
-or deferral still needs agreement. Broader protected receiver access is already
+not a claim that every extension above is required for v0.2. The selected groups still
+need bounded contract discussions; two dispatch items remain undecided. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
 
 Verification: the checkpoints record PHP-host and generated-C++ proofs. The latest

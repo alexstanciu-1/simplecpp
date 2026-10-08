@@ -50,6 +50,26 @@ evaluation order and incremental signature-name invalidation.
 
 ## Deferred feature scope
 
+### CH15-INHERITANCE-EXTENSIONS-01 — deferred CH11 extensions
+
+Explicit user decision on 2026-10-08: remove the following from the current CH11
+implementation queue and revisit in final review. Existing rejection boundaries remain;
+this deferral assigns no new release-blocking classification or language semantics.
+
+| Item | Review prerequisite |
+| --- | --- |
+| Instance late static binding | Runtime called-type representation, fixed-method selection, forwarding, specialization scheduling and invalidation; hidden virtual machinery is only a proposal |
+| Inline/struct `new static()` | Called-type construction, value representation, result typing and no accidental slicing |
+| Unique/weak downcasts | Ownership-specific checked narrowing and failure/consumption guarantees; weak locking remains explicit |
+| Unique/weak conditional joins | Selection result rules, unique consumption and weak presence without hidden lifetime acquisition |
+| Sibling conditional joins | Common-ancestor/interface selection and ambiguity; current shared joins choose only one supplied type |
+| Trait adaptations | Alias/conflict-resolution syntax integrated with consumer-owned members |
+| Abstract constructor contracts | Descendant signature obligations, inheritance, access and ordinary/data construction |
+
+Shared cross-casts, non-public destructors and variance/covariant returns remain selected
+CH11 work, not this debt. Interface-qualified static dispatch and inherited-final-virtual
+interface forwarding remain undecided. Trait lifecycle support has its separate entry below.
+
 ### CH15-TRAIT-LIFECYCLE-01 — trait constructors and destructors
 
 Deferred by user on 2026-10-08 from CH11; not part of its next implementation queue.
