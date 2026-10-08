@@ -375,13 +375,18 @@ means `!($value instanceof Target)`; parentheses are recommended for clarity.
 
 Preparation admits same-type/upward shared views and base-to-derived class/struct
 narrowing, including interface-to-record narrowing where the target implements that
-interface. Narrowing requires a polymorphic source contract. An abstract declaration
+interface. It also admits cross-casts between interfaces and between a record and an
+interface when runtime overlap is possible. Two interfaces do not need a known common
+implementer. An unrelated nonfinal record may gain the interface through a descendant;
+a final record that does not implement the interface is rejected in either direction.
+Unrelated record pairs remain rejected because record inheritance is single-base.
+Narrowing and cross-casts require a polymorphic source contract. An abstract declaration
 alone is not sufficient, and the compiler does not introduce virtual members to make
 a cast possible. Unsupported relationships and nonpolymorphic narrowing fail during
-preparation even when the input is empty. Ancestry and polymorphism are observed
+preparation even when the input is empty. Ancestry, finality and polymorphism are observed
 dependencies, so edits invalidate consumers.
 
-Sibling/interface cross-casts, unique/weak handles, inline values, bare-null operands,
+Unrelated-record casts, unique/weak handles, inline values, bare-null operands,
 dynamic targets, automatic flow narrowing and nullable ownership wrappers are outside
 this bounded slice. Runtime mismatch is a valid value-dependent failure, not a reason
 to reject a statically admissible base-to-derived operation.

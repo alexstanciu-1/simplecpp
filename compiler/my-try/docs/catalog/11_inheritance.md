@@ -36,7 +36,7 @@ User scope decision — 2026-10-08:
 
 | Group | Decision |
 | --- | --- |
-| Shared cross-casts | Implement in CH11; discuss checked relationship admission first |
+| Shared cross-casts | Implemented: observed relationship admission through existing checked access |
 | Non-public destructors | Implement in CH11; settle protected/private access and cleanup ownership |
 | Variance/covariant returns | Implement in CH11; agree parameter/return compatibility and lowering bounds |
 | Instance late static binding; inline/struct `new static()` | Deferred to CH15 |
@@ -48,19 +48,38 @@ User scope decision — 2026-10-08:
 The [CH15 scope register](15_blocking_debt.md#ch15-inheritance-extensions-01--deferred-ch11-extensions)
 retains the seven newly deferred items and their prerequisites. Existing unsupported
 paths stay rejected; recording the queue does not enable new language semantics.
-Next discussion: shared cross-casts, followed by the two other selected groups.
+Next discussion: non-public destructors, followed by variance/covariant returns.
 CH11 is not declared complete; native compiler validation remains outstanding.
 
 All 25 pre-audit progress rows are resolved within their documented bounds; the
 six ownership/type-access rows added below make already-proven coverage explicit. This is
 not a claim that every extension above is required for v0.2. The selected groups still
-need bounded contract discussions; two dispatch items remain undecided. Broader protected receiver access is already
+need completion of the two remaining bounded contract discussions; two dispatch items remain undecided. Broader protected receiver access is already
 non-blocking [CH15 debt](15_blocking_debt.md#ch15-protected-01--broader-protected-receiver-access).
 
 Verification: the checkpoints record PHP-host and generated-C++ proofs. The latest
 native compiler checkpoint remains CH10; CH11 native validation is outstanding and
 must be requested separately. The dated sections below are historical checkpoints;
 their slice-local exclusions and next steps do not override this current handoff.
+
+## Shared cross-casts — 2026-10-08
+
+Checked casts and type tests now admit interface/interface and record/interface
+cross-views with possible runtime overlap. No known common implementer is required.
+Unrelated records and final records lacking the requested interface are rejected
+during preparation; runtime narrowing/cross-casts require a polymorphic source.
+Ancestry, finality and polymorphism use observed preparation dependencies. The existing
+AST, prepared facts, C++ lowering and shared runtime helpers are unchanged: success
+preserves identity/control-block ownership; mismatch/absence throws
+`invalid_object_cast` for casts and yields false for tests. Shared struct results
+stay shared, without payload copies. Unique/weak casts remain deferred.
+
+Validation: 33 generated-C++ cases passed without PCH in
+`/tmp/shared-cross-casts-final`, including class/shared-struct cross-views, mutation
+identity, single evaluation, final implementers and mismatch/absence. PHP checks
+cover impossible relationships and cross-file finality failure/retry/repair in both
+directions, plus reset/fresh agreement. Seven adjacent PHP suites passed in
+`/tmp/shared-cross-casts-adjacent`. No native compiler rebuild.
 
 ## Interface weak handles — 2026-10-08
 
@@ -729,7 +748,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | CH11-INTERFACE-HANDLE | implemented-bounded | `$view I = $object; $view->method();` | verified | verified | deferred | [Shared interface handles](#interface-handles-and-calls--2026-10-08); checked calls; no implicit struct boxing |
 | CH11-WEAK-UPCAST | implemented-bounded | `$base weak<Base> = $derived;` | verified | verified | deferred | [Weak ancestry](#weak-ancestry-upcasts--2026-10-08), including [interfaces](#interface-weak-handles--2026-10-08); no lock or lifetime extension; invariant references |
 | CH11-UNIQUE-UPCAST | implemented-bounded | `$base unique<Base> = move($derived);` | verified | verified | deferred | [Unique ancestry](#unique-ancestry-transfers--2026-10-08); virtual base destruction required; consuming boundaries only |
-| CH11-OBJECT-TYPE | implemented-bounded | `object_cast($base, Derived::class)` / `$base instanceof Derived` | verified | verified | deferred | [Checked access](#checked-object-access--2026-10-08); shared identity, checked failure, no flow narrowing |
+| CH11-OBJECT-TYPE | implemented-bounded | `object_cast($base, Derived::class)` / `$base instanceof Derived` | verified | verified | deferred | [Checked access](#checked-object-access--2026-10-08) and [shared cross-casts](#shared-cross-casts--2026-10-08); shared identity, checked failure, observed finality, no flow narrowing |
 | CH11-SHARED-JOIN | implemented-bounded | `$condition ? $derived : $base` / `$derived ?: $base` / `$base ?? $derived` | verified | verified | deferred | [Shared joins](#shared-selection-joins--2026-10-08); one supplied base/interface, no sibling inference |
 
 ## CLASS-INH-001
