@@ -36,7 +36,7 @@ abstract class preparation_owner
 	public collected_file $source;
 	public int $version = 0;
 	/** Strong identity keys; explicit cleanup severs registrations on replacement, deletion and reset. */
-	public \SplObjectStorage $dependencies /** hash<int, shared<declaration_work>> */;
+	public \SplObjectStorage $dependencies /** hash<int, shared<contract_work>> */;
 	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
 	public \SplObjectStorage $lookups /** hash<bool, shared<preparation_lookup>> */;
 
@@ -44,7 +44,7 @@ abstract class preparation_owner
 	public function __construct(collected_file $source)
 	{
 		$this->source = $source;
-		$this->dependencies = new \SplObjectStorage /** hash<int, shared<declaration_work>> */();
+		$this->dependencies = new \SplObjectStorage /** hash<int, shared<contract_work>> */();
 		$this->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		$this->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
 	}
@@ -56,8 +56,13 @@ abstract class preparation_owner
 	abstract public function declaration(): ?collected_definition;
 }
 
-/** Declaration work is independently settled before any body consumes its facts. */
-abstract class declaration_work extends preparation_owner
+/** Independently settled facts are dependency targets, whether named or anonymous. */
+abstract class contract_work extends preparation_owner
+{
+}
+
+/** Named declaration contracts additionally expose their lookup/publication identity. */
+abstract class declaration_work extends contract_work
 {
 	abstract public function required_declaration(): collected_definition;
 
@@ -72,7 +77,7 @@ abstract class declaration_work extends preparation_owner
 	}
 }
 
-final class source_callable_signature_work extends declaration_work
+final class source_callable_signature_work extends contract_work
 {
 	private collected_source_callable $definition;
 
@@ -82,9 +87,14 @@ final class source_callable_signature_work extends declaration_work
 		$this->definition = $definition;
 	}
 
-	public function required_declaration(): collected_definition
+	public function declaration(): ?collected_definition
 	{
 		return $this->definition;
+	}
+
+	public function kind(): preparation_kind
+	{
+		return preparation_kind::declaration;
 	}
 
 	public function callable_definition(): collected_source_callable

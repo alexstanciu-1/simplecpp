@@ -51,8 +51,15 @@ across syntax/collection, analysis lifecycle and backend consumers.
    enclosing body currently creates fresh anonymous identities; unchanged bodies
    preserve theirs without ordinal rematching.
 
-   **Still pending:** share source-callable work independently of named publication,
-   and integrate anonymous occurrences with semantic selection, invalidation and retirement.
+   **Contract scheduler separated:** `contract_work` is the dependency-target base;
+   named `declaration_work` is a specialization. Source-callable signatures use the
+   contract base directly. Worker-owned queueing, demand, retries and retirement
+   share this path; optional declaration lookup is not a scheduler requirement.
+   Named lookup remains an adapter into direct contract demand. Existing type
+   relationships, lifecycle and interface contracts use the same demand helper.
+
+   **Still pending:** connect anonymous occurrences to shared signature/body
+   preparation, semantic selection, invalidation and retirement.
    Closure syntax remains an expression. Reuse `function_body_node` and stage-owned
    workers; add no AST processing hooks or generic visitor.
 3. **Capture-free vertical slice — pending.** Register concrete expression types,
@@ -96,10 +103,16 @@ This checkpoint did not rebuild the native compiler or execute generated program
 The source-identity checkpoint extends that proof with stable no-op IDs, distinct
 same-signature occurrences, non-reused deleted slots, speculative-parse disposal,
 repair and whole-source removal. Scheduler integration remains pending: the current
-dependency graph accepts `declaration_work`, whose required owner is a named
-`collected_definition`. The next migration must separate independently settled
-contracts from named declaration lookup, rather than subclassing a fake function.
+dependency graph at that checkpoint accepted only named `declaration_work`.
+The contract-scheduler checkpoint removes that requirement without subclassing
+a fake function. Anonymous work attachment remains the next integration.
 Nine focused PHP suites passed in `/tmp/my-try-ch12-anonymous-identity-01`; the
 expanded deletion/rollover proof and parser/token cleanup regressions passed in
 `/tmp/my-try-ch12-anonymous-identity-03`. These are host behavior and
 artifact-generation checks, not native compiler or generated-program execution.
+
+Contract-scheduler checkpoint: nine focused suites passed in
+`/tmp/my-try-ch12-contract-work-02`, including work-role/direct-demand assertions,
+failure/retry, retirement, callable/trait instances and incremental C++ artifacts.
+The longest suite (`s2s`) took 13.53 seconds. The shared runner used CLI fallback.
+No native compiler rebuild was performed.

@@ -129,7 +129,7 @@ abstract class collected_definition extends collected_declaration implements pre
 		return $identity->member_name($this->name);
 	}
 
-	public ?declaration_work $preparation = null;
+	public ?contract_work $preparation = null;
 
 	public function preparation_work_owner(): ?preparation_owner
 	{

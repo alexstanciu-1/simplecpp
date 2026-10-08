@@ -24,6 +24,9 @@ final class Preparation_Status
 		if ($owner instanceof declaration_work) {
 			return object_cast($owner, declaration_work::class)->required_declaration()->change_status !== change_state::unchanged;
 		}
+		if ($owner instanceof source_callable_signature_work) {
+			return object_cast($owner, source_callable_signature_work::class)->callable_definition()->change_status !== change_state::unchanged;
+		}
 		if ($owner instanceof body_work) {
 			return object_cast($owner, body_work::class)->executable_body()->syntax_changed;
 		}

@@ -11,7 +11,7 @@ final class Preparation_Worker
 	private \RuntimeException $materialization_signal;
 	/** A failed item is attempted at most once by this invocation, but stays changed for the next. */
 	private \SplObjectStorage $attempt_failed /** hash<bool, shared<preparation_owner>> */;
-	private \SplObjectStorage $declarations /** hash<bool, shared<declaration_work>> */;
+	private \SplObjectStorage $contracts /** hash<bool, shared<contract_work>> */;
 	private \SplObjectStorage $callable_bodies /** hash<bool, shared<source_callable_body_work>> */;
 	private \SplObjectStorage $file_bodies /** hash<bool, shared<file_body_work>> */;
 	private \SplObjectStorage $owners /** hash<bool, shared<preparation_owner>> */;
@@ -23,7 +23,7 @@ final class Preparation_Worker
 		$this->instance_requests = new Storage /** Storage<callable_instance_request> */();
 		$this->materialization_signal = new \RuntimeException('Callable materialization requires the coordinator');
 		$this->attempt_failed = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		$this->declarations = new \SplObjectStorage /** hash<bool, shared<declaration_work>> */();
+		$this->contracts = new \SplObjectStorage /** hash<bool, shared<contract_work>> */();
 		$this->callable_bodies = new \SplObjectStorage /** hash<bool, shared<source_callable_body_work>> */();
 		$this->file_bodies = new \SplObjectStorage /** hash<bool, shared<file_body_work>> */();
 		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
@@ -89,12 +89,12 @@ final class Preparation_Worker
 		$this->changed_lookups();
 
 		// Declaration processing may schedule more declarations; identity sets coalesce notifications.
-		while (q_count($this->declarations) !== 0)
+		while (q_count($this->contracts) !== 0)
 		{
-			foreach ($this->declarations as $owner /** @object-key */)
+			foreach ($this->contracts as $owner /** @object-key */)
 			{
 				try {
-					$this->declaration($owner);
+					$this->contract($owner);
 				}
 				catch (\RuntimeException $error) {
 					// Failure is retained on owners; independent declarations may still settle.
@@ -177,7 +177,7 @@ final class Preparation_Worker
 		Import_Preparation::validate($sources);
 		$error = '';
 		foreach ($selected as $work) {
-			try { $this->declaration($work); }
+			try { $this->contract($work); }
 			catch (\RuntimeException $failure) { $error .= $failure->getMessage() . "\n"; }
 		}
 		if ($error !== '') { throw new \RuntimeException($error); }
@@ -393,8 +393,8 @@ final class Preparation_Worker
 		if ($owner->change_status !== change_state::added) {
 			$owner->change_status = change_state::changed;
 		}
-		if ($owner instanceof declaration_work) {
-			$this->enqueue_declaration(object_cast($owner, declaration_work::class));
+		if ($owner instanceof contract_work) {
+			$this->enqueue_contract(object_cast($owner, contract_work::class));
 		}
 		elseif ($owner instanceof source_callable_body_work) {
 			$this->enqueue_callable_body(object_cast($owner, source_callable_body_work::class));
@@ -416,14 +416,16 @@ final class Preparation_Worker
 	}
 
 	/** Declaration change state follows its work state even during recursive processing. */
-	private function enqueue_declaration(declaration_work $owner): void
+	private function enqueue_contract(contract_work $owner): void
 	{
-		$entry = $owner->required_declaration();
-		if (!($owner instanceof type_semantic_work) && ($entry->change_status !== change_state::added)) {
-			$entry->change_status = change_state::changed;
+		$entry = $owner->declaration();
+		if ($entry !== null) {
+			if (!($owner instanceof type_semantic_work) && ($entry->change_status !== change_state::added)) {
+				$entry->change_status = change_state::changed;
+			}
 		}
 		if ($this->queue_ready($owner)) {
-			$this->declarations[$owner] = true;
+			$this->contracts[$owner] = true;
 		}
 	}
 
@@ -441,7 +443,7 @@ final class Preparation_Worker
 		}
 	}
 
-	public function declaration_owner(collected_definition $entry): declaration_work
+	public function declaration_owner(collected_definition $entry): contract_work
 	{
 		if ($entry instanceof collected_source_callable) {
 			return $this->callable_owner(object_cast($entry, collected_source_callable::class));
@@ -462,12 +464,12 @@ final class Preparation_Worker
 		throw new \RuntimeException('Preparation work is not supported for this declaration');
 	}
 
-	public function callable_owner(collected_source_callable $entry): declaration_work
+	public function callable_owner(collected_source_callable $entry): source_callable_signature_work
 	{
 		if ($entry->preparation === null) {
 			$entry->preparation = new source_callable_signature_work($entry);
 		}
-		return $entry->preparation;
+		return object_cast($entry->preparation, source_callable_signature_work::class);
 	}
 
 	public function relationship_owner(collected_member_owner $entry): type_relationship_work
@@ -493,20 +495,14 @@ final class Preparation_Worker
 	public function require_lifecycle(collected_member_owner $entry, preparation_context $context): prepared_type_lifecycle
 	{
 		$target = $this->lifecycle_owner($entry);
-		$context->owner->dependencies[$target] = $target->version;
-		$target->dependents[$context->owner] = true;
-		$this->declaration($target);
-		$context->owner->dependencies[$target] = $target->version;
+		$this->require_contract($context->owner, $target);
 		return $target->require_facts();
 	}
 
 	public function require_type_contract(collected_member_owner $entry, preparation_context $context): prepared_type_contract
 	{
 		$target = $this->contract_owner($entry);
-		$context->owner->dependencies[$target] = $target->version;
-		$target->dependents[$context->owner] = true;
-		$this->declaration($target);
-		$context->owner->dependencies[$target] = $target->version;
+		$this->require_contract($context->owner, $target);
 		return $target->require_facts();
 	}
 
@@ -514,14 +510,11 @@ final class Preparation_Worker
 	public function require_relationships(collected_member_owner $entry, preparation_context $context): prepared_type_relationships
 	{
 		$target = $this->relationship_owner($entry);
-		$context->owner->dependencies[$target] = $target->version;
-		$target->dependents[$context->owner] = true;
-		$this->declaration($target);
-		$context->owner->dependencies[$target] = $target->version;
+		$this->require_contract($context->owner, $target);
 		return $target->require_facts();
 	}
 
-	public function record_owner(collected_record $entry): declaration_work
+	public function record_owner(collected_record $entry): contract_work
 	{
 		if ($entry->preparation === null) {
 			$entry->preparation = new record_definition_work($entry);
@@ -530,21 +523,33 @@ final class Preparation_Worker
 	}
 
 	/** Identity lookup alone does not require a completed declaration; callers choose when it does. */
-	public function depend(preparation_owner $owner, collected_definition $entry): declaration_work
+	public function depend(preparation_owner $owner, collected_definition $entry): contract_work
 	{
 		$target = $this->declaration_owner($entry);
-		$owner->dependencies[$target] = $target->version;
-		$target->dependents[$owner] = true;
+		$this->depend_contract($owner, $target);
 		return $target;
 	}
 
-	/** Register the dependency before demanding completed facts; failed facts are never consumed. */
-	public function require_declaration(preparation_owner $owner, collected_definition $entry): declaration_work
+	/** Dependency registration does not require a name or lookup publication. */
+	public function depend_contract(preparation_owner $owner, contract_work $target): void
 	{
-		$target = $this->depend($owner, $entry);
-		$this->declaration($target);
 		$owner->dependencies[$target] = $target->version;
+		$target->dependents[$owner] = true;
+	}
+
+	/** Register the dependency before demanding completed facts; failed facts are never consumed. */
+	public function require_declaration(preparation_owner $owner, collected_definition $entry): contract_work
+	{
+		$target = $this->declaration_owner($entry);
+		$this->require_contract($owner, $target);
 		return $target;
+	}
+
+	public function require_contract(preparation_owner $owner, contract_work $target): void
+	{
+		$this->depend_contract($owner, $target);
+		$this->contract($target);
+		$owner->dependencies[$target] = $target->version;
 	}
 
 	/** By-value record layout requires completion and therefore detects declaration cycles. */
@@ -570,12 +575,12 @@ final class Preparation_Worker
 				$lookup->lookup_scope->remove_preparation_lookup($lookup);
 			}
 		}
-		$owner->dependencies = new \SplObjectStorage /** hash<int, shared<declaration_work>> */();
+		$owner->dependencies = new \SplObjectStorage /** hash<int, shared<contract_work>> */();
 		$owner->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
 	}
 
 	/** Rebuild selected signatures/layout facts; only effective changes propagate to consumers. */
-	public function declaration(declaration_work $owner): void
+	public function contract(contract_work $owner): void
 	{
 		Preparation_Status::require_active($owner);
 		if (Preparation_Status::source_changed($owner)) {
@@ -587,7 +592,7 @@ final class Preparation_Worker
 			}
 			throw new \RuntimeException('Cyclic by-value declaration dependency');
 		}
-		unset($this->declarations[$owner]);
+		unset($this->contracts[$owner]);
 		if (isset($this->attempt_failed[$owner])) {
 			throw new \RuntimeException($owner->failure_message);
 		}
@@ -597,7 +602,7 @@ final class Preparation_Worker
 			$owner->state = preparation_state::processing;
 			try {
 				foreach ($owner->dependencies as $dependency /** @object-key */) {
-					$this->declaration($dependency);
+					$this->contract($dependency);
 				}
 			}
 			catch (\RuntimeException $error) {
@@ -610,13 +615,13 @@ final class Preparation_Worker
 			}
 		}
 		$recovering = $owner->failed;
-		$old_dependencies /** hash<int, shared<declaration_work>> */ = $owner->dependencies;
+		$old_dependencies /** hash<int, shared<contract_work>> */ = $owner->dependencies;
 		$this->detach_dependencies($owner);
 		$owner->state = preparation_state::processing;
 		$context = $this->context($owner);
 		try
 		{
-			$changed = $this->rebuild_declaration($owner, $context, $old_dependencies);
+			$changed = $this->rebuild_contract($owner, $context, $old_dependencies);
 			$this->settle($owner);
 			$this->settle_members($owner);
 			if ($changed || $recovering) {
@@ -657,7 +662,7 @@ final class Preparation_Worker
 	}
 
 	/** Dispatch by retained work role; records carry identities, not processing hooks. */
-	private function rebuild_declaration(declaration_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
+	private function rebuild_contract(contract_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<contract_work>> */): bool
 	{
 		if ($owner instanceof type_lifecycle_work) {
 			$lifecycle = object_cast($owner, type_lifecycle_work::class);
@@ -711,7 +716,7 @@ final class Preparation_Worker
 		throw new \LogicException('Unsupported declaration work role');
 	}
 
-	private function settle_members(declaration_work $owner): void
+	private function settle_members(contract_work $owner): void
 	{
 		if ($owner instanceof type_semantic_work) { return; }
 		if ($owner instanceof source_callable_signature_work) {
@@ -721,7 +726,7 @@ final class Preparation_Worker
 			$this->settle_fields(object_cast($owner, record_definition_work::class)->record_definition());
 		}
 		elseif (($owner instanceof constant_definition_work) || ($owner instanceof enum_definition_work)) {
-			$owner->required_declaration()->change_status = change_state::unchanged;
+			object_cast($owner, declaration_work::class)->required_declaration()->change_status = change_state::unchanged;
 		}
 		else { throw new \LogicException('Unsupported declaration work role'); }
 	}
@@ -762,7 +767,7 @@ final class Preparation_Worker
 	}
 
 	/** Nested layout versions matter even if this record retains the same field type identities. */
-	private function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<declaration_work>> */): bool
+	private function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<contract_work>> */): bool
 	{
 		$this->require_relationships($owner->record_definition(), $context);
 		$syntax = $owner->record_definition()->syntax();
@@ -1028,13 +1033,13 @@ final class Preparation_Worker
 		}
 	}
 
-	/** Only declarations can be dependency targets; remove incoming edges before common cleanup. */
-	private function retire_declaration(declaration_work $owner): void
+	/** Only contracts can be dependency targets; remove incoming edges before common cleanup. */
+	private function retire_contract(contract_work $owner): void
 	{
 		foreach ($owner->dependents as $dependent /** @object-key */) {
 			unset($dependent->dependencies[$owner]);
 		}
-		unset($this->declarations[$owner]);
+		unset($this->contracts[$owner]);
 	}
 
 	private function retire_callable_body(source_callable_body_work $owner): void
@@ -1057,8 +1062,8 @@ final class Preparation_Worker
 		}
 		$owner->change_status = change_state::deleted;
 		$owner->source->preparation_changes[$owner] = true;
-		if ($owner instanceof declaration_work) {
-			$this->retire_declaration(object_cast($owner, declaration_work::class));
+		if ($owner instanceof contract_work) {
+			$this->retire_contract(object_cast($owner, contract_work::class));
 		}
 		elseif ($owner instanceof source_callable_body_work) {
 			$this->retire_callable_body(object_cast($owner, source_callable_body_work::class));

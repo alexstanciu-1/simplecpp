@@ -34,7 +34,9 @@ work_check($entry->declaration() === null, 'File body acquired a named declarati
 work_check($entry->executable_body() === $parsed->root->single_body()->body, 'File work lost its explicit executable body');
 work_check($body->executable_body() === $function->body, 'Function work lost its explicit executable body');
 work_check($body->declaration() === $signature->declaration(), 'Body and signature lost the shared function identity');
-work_check($signature->required_declaration() === $signature->callable_definition(), 'Required and specialized signature access lost identity');
+work_check($signature instanceof contract_work && !($signature instanceof declaration_work), 'Signature scheduling still requires named-declaration work');
+work_check($layout instanceof contract_work, 'Record contracts left the common dependency family');
+work_check($signature->declaration() === $signature->callable_definition(), 'Optional and specialized signature access lost identity');
 work_check($body->callable_definition() === $signature->callable_definition(), 'Specialized body access lost function identity');
 work_check($layout->declaration() === $layout->required_declaration(), 'Optional and required record access lost identity');
 work_check($layout->required_declaration() === $layout->record_definition(), 'Specialized record access lost identity');
@@ -57,6 +59,11 @@ $return = object_cast($parsed->root->single_body()->body->statements[1], return_
 $call = object_cast($return->expression, call_node::class)->require_call_preparation();
 work_check(weakref_get($call->target) === $function->occurrence(), 'Call lost its typed function identity');
 $version = $body->version;
+$contract_worker = new Preparation_Worker(Model::$language_scope);
+$contract_worker->require_contract($entry, $signature);
+work_check($entry->dependencies[$signature] === $signature->version, 'Direct contract demand lost the observed version');
+work_check(isset($signature->dependents[$entry]), 'Direct contract demand lost its reverse edge');
+work_check($signature->version === 1, 'Demand rebuilt an unchanged signature contract');
 (new File_Preparation($collection, Model::$language_scope))->prepare();
 work_check($body === $function->body->work() && $body->version === $version, 'No-op preparation replaced or rebuilt body work');
 work_check($layout === $record->occurrence()->preparation_work_owner(), 'No-op replaced record work');

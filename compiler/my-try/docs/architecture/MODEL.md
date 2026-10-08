@@ -194,6 +194,14 @@ occurrences through ordinary successful-join disposal. Positions are not emitted
 names. Anonymous work identity and scheduler integration remain pending;
 analysis rejects closure execution explicitly at this checkpoint.
 
+Independently settled dependencies use `contract_work`. Named declaration work is
+one specialization; source-callable signature work uses the base directly and
+exposes its current named identity only through the optional declaration query.
+The preparation worker owns contract queueing, direct demand, version observation,
+failure/retry and retirement. Named lookup resolves a contract, not the reverse.
+Existing named backend fragment categories are unchanged; this does not yet attach
+anonymous contracts or emit closures.
+
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members
 observe their declaring type and are indexed separately from free functions and

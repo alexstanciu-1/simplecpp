@@ -35,6 +35,8 @@ extracts authored signature data by composition and preserves existing named-cal
 behavior. The next syntax checkpoint adds expression-owned closures with shared
 body/scope construction and traversal, and one parameter grammar. Source-local
 anonymous identities now survive body reuse and retire through join-ordered cleanup.
+The dependency scheduler now accepts independently settled `contract_work`, with
+named declaration lookup as an adapter; signatures no longer inherit named work.
 Anonymous work
 identity/scheduling and closure execution remain pending;
 the imported rows below are not implementation claims. Preserve parameter names for
