@@ -26,7 +26,6 @@ try {
 	file_put_contents($child_path, 'class Child extends Base {} class Other extends Base {}');
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'child.phs'); $compiler->exec_cpp();
-	$before = CPP_Output::encode(Model::$cpp_files);
 	$base = demand_record('Base'); $child = demand_record('Child'); $other = demand_record('Other');
 	$start = object_cast($base->syntax()->methods[0]->occurrence(), collected_method::class);
 	$step = object_cast($base->syntax()->methods[1]->occurrence(), collected_method::class);
@@ -48,6 +47,8 @@ try {
 	$waiting = $first->working->callable_syntax()->require_body()->work();
 	demand_check(!$waiting->failed && $waiting->state === preparation_state::pending && $waiting->version === 0, 'Suspension became failure/completion');
 	$compiler->prepare();
+	$compiler->cpp();
+	$before = CPP_Output::encode(Model::$cpp_files);
 	demand_check($waiting->state === preparation_state::ready && !$waiting->failed, 'Coordinator did not resume suspended body');
 	$child_step = Callable_Inventory::find($step, $child);
 	$other_step = Callable_Inventory::find($step, $other);
@@ -67,7 +68,7 @@ try {
 	foreach ([$first, $second, $child_step, $other_step, $base_step] as $index => $instance) {
 		demand_check($instance->working->callable_syntax()->require_body()->work()->version === $versions[$index], 'No-op demand rebuilt a body');
 	}
-	demand_check(CPP_Output::encode(Model::$cpp_files) === $before, 'Gated private implementations leaked into output');
+	demand_check(CPP_Output::encode(Model::$cpp_files) === $before, 'No-op changed private implementation output');
 	Compiler_Lifecycle::reset_preparation();
 	(new File_Preparation($base->collection, Model::$language_scope))->prepare();
 	demand_check($waiting->state === preparation_state::ready && $child_step->working->callable_syntax()->require_body()->work()->state === preparation_state::ready, 'Standalone adapter did not share preparation');

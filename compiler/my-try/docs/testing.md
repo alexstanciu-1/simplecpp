@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite late_static --no-pch --results FRESH`
+checks called-type selection, self/parent forwarding, explicit reset, two contexts,
+recursion, shared-class factories/constructors, inherited storage and declared-type
+qualifiers. It also checks eager signatures versus demanded bodies and cross-file
+call removal, failure/retry/repair, no-op/reset and fresh/incremental agreement.
+This compiles generated programs; it does not rebuild the compiler natively.
+
 `python3 compiler/my-try/tests/records.py --suite static_redeclarations --no-pch --results FRESH`
 checks compatible static redeclarations in classes/structs, fixed named/expression/self/parent
 selection, reference returns, variadics, visibility, finality and virtual-only Override
@@ -11,7 +18,8 @@ independent ordinary method preparation, lexical declaring-type preservation,
 private token buffers, no-op identity/output and source-edit/reset retirement.
 It now uses ordinary compiler preparation to prove private-body scheduling, no-op
 version stability, third-file dependency changes and retained failure/retry/repair.
-Late-static call selection/emission is not enabled by this model-only proof.
+Explicit test-only roots are seeded after source preparation consumes pending edits.
+The separate late-static suite proves source call selection and emitted execution.
 
 `callable_demands.php` seeds private roots, then proves analysis-to-coordinator
 suspension/materialization through their real calls: self/parent forwarding, explicit

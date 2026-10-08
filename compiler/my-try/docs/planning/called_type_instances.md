@@ -1,140 +1,118 @@
 # Called-type callable instances
 Doc Status: planning
 
-## Approved direction — 2026-10-08
+## Approved direction and implemented scope — 2026-10-08
 
-Late static binding separates the lexical declaring type from the called type.
-`Child::method()` establishes Child; `self::method()` and `parent::method()` select
-fixed implementations while forwarding that called type. `static::method()` selects
-through it. Expression-qualified calls evaluate their qualifier once and establish
-its declared type, not the runtime object's type. Static properties retain their
-actual declaring storage owner; constants retain their selected declaration.
+The [normative contract](../../../../specs/inheritance_v0_2.md#late-static-calls-and-shared-factories)
+separates lexical declaring type from called type. `Child::method()` establishes
+Child; `self::method()` and `parent::method()` select fixed implementations while
+forwarding called type. `static::method()` selects through it. Expression-qualified
+calls evaluate their qualifier once and establish its declared type, not the runtime
+object's type. Properties retain their actual declaring storage owner; constants
+retain their selected declaration. These paths now execute through shared method
+preparation and C++ callable bindings.
 
-The first `new static(...)` group constructs shared class handles, checking the
-selected constructor and result conversion. Inline struct construction/slicing and
-runtime-called-type propagation through instance methods are not part of this group.
-Compatible static/static redeclarations are approved with exact callable contracts
-and no visibility narrowing; they must not be lowered as C++ virtual overrides.
+`new static(...)` constructs shared class handles using checked constructor/result
+conversions. Inline struct construction/slicing and runtime-called-type propagation
+through instance methods remain outside this group. Compatible static redeclarations
+use exact contracts and no visibility narrowing; they are not C++ virtual overrides.
+Unlike v0.1's file-local structural lowering, cross-file families are supported.
+There is no ambient called-type runtime state or backend semantic name resolution.
 
-Legacy `generators/php/specs/rules.md` limits late-static lowering to file-local
-structural families. The v0.2 semantic compiler does not retain that restriction.
-No ambient global called-type state or backend-only name/type resolution is allowed.
+Approved diagnostic timing: declarations/signatures/defaults are checked eagerly;
+static bodies are syntax-checked and then semantically checked per demanded instance.
+Uncalled static bodies are not fully semantically checked. This lets an abstract
+Base define `make(): Base { return new static(); }` without constructing Base while
+checking a call to `Child::make()`. Other callable body-check timing is unchanged.
 
-## Model and lifecycle checkpoint
+## Ownership and lifecycle
 
-**Implemented, not connected to source call selection yet:** an original
-`collected_method` owns `called_instances`, uniquely selected by called-record
-identity. Each `callable_instance` owns private parsed syntax/collection and one
-working method. Original method and called type are weak observers, as are the
-working-method context backlink and captured called-type scope identity.
+An original `collected_method` owns `called_instances`, uniquely keyed by called-record
+identity. Each `callable_instance` owns private syntax/collection and one working
+method. Original method and called type are weak observers, as are the working-method
+context backlink and captured called-type scope identity.
 
-`Callable_Instances::obtain` is a coordinator API, not an AST hook or an analysis
-callback into parsing. It reuses the existing member fragment parser and publishes
-only after successful materialization. Repeated requests return the same instance;
-an instance cannot itself be used as the origin of another instance. Semantic
-eligibility/ancestry and dispatch selection remain analysis responsibilities in
-the next checkpoint; this API alone grants no new source-language capability.
+`Callable_Instances::obtain` is coordinator-owned, not an AST hook or analysis callback
+into parsing. It reuses member-fragment parsing and publishes only complete instances.
+Repeated requests reuse identity; an instance cannot itself become an origin.
+Analysis owns semantic eligibility, access, ancestry and dispatch selection.
 
-Working bodies preserve the original declaring type and lexical scope. This differs
-from trait contribution, which changes the declaring type to its consumer. Neither
-operation adds specialized implementations to authored record membership. Independent
-parameters/defaults/expressions/scopes carry ordinary signature and body work; source
-and instance facts must never overwrite one another.
+Working bodies preserve original declaring type and lexical scope. Trait contribution
+instead changes the declaring type to its consumer. Neither operation inserts helpers
+into authored source member membership. Independent parameters, defaults, expressions
+and scopes carry ordinary work; source and instance facts never overwrite one another.
 
-`Source_Fragments` shares token snapshots and ordered private-source retirement with
-traits. Full token rows are copied so source cleanup cannot rebase working spans.
-Successful parse joins retire stale callable instances before trait/source disposal.
-Origin and called-source input/scope changes conservatively retire the affected
-instances. Failed parsing preserves them until a successful join. Trait retirement
-also retires instances of its working methods. Preparation reset clears private
-facts while retaining work identity; full/syntax reset retires private collections.
+`Source_Fragments` shares token snapshots and ordered retirement with traits. Full
+token rows are copied so source cleanup cannot rebase private spans. Successful parse
+joins retire stale instances before source/trait disposal; failed parsing preserves
+them. Preparation reset clears facts while retaining work identity; full/syntax reset
+retires private collections and analysis dependencies before releasing ownership.
 
-The first policy is deliberately conservative: edits anywhere in either source file
-rebuild affected instances. Narrower invalidation and compact immutable token storage
-are optimizations, not permission to share mutable preparation facts. External
-dependencies observed during private preparation use the existing analysis graph.
+The first invalidation policy is conservative. Call-bearing body, record, import and
+deletion changes retire the existing family before preparation rebuilds current
+demands. This removes implementations whose last call disappeared, including obsolete
+body diagnostics. Origin/called-source input or scope replacement also retires affected
+instances. Constant-only edits in another file preserve instance identity and use
+ordinary dependency invalidation. More selective reachability/pruning and compact
+token snapshots are future optimizations, not permission to share mutable facts.
 
-## Following checkpoints
+## Scheduling and coordinator handoff
 
-### Ordinary scheduling integration — implemented
+`Callable_Inventory` is the read-only, deduplicated source/trait/private collection
+view. Original static signatures are selected eagerly, but original static body work
+is skipped; existing private implementations enter normal signature/body queues.
+Reference-cycle auditing follows those working identities. Private collections never
+become additional prepared program files. The invocation-local context carries
+`called_type` separately from lexical `member_owner` and the instance receiver.
 
-`Callable_Inventory` provides a read-only, deduplicated view of source, trait-private
-and callable-private collections. The preparation worker selects existing private
-implementations through ordinary signature/body work; it never materializes them.
-These collections participate in lookup invalidation, failure/retry and reference-cycle
-auditing, but are not returned as additional prepared program files. No-op preparation
-retains body versions. Invocation-local `preparation_context::called_type` comes from
-the working method's instance, separately from lexical `member_owner` and receiver.
+`Preparation_Run` drives compiler and standalone preparation. An executable static
+call selects an existing implementation or publishes `callable_instance_request`
+and suspends. The coordinator materializes the missing original/called pair and
+resumes with a fresh worker; settled work retains identity/version. Each suspension
+must introduce a missing key, otherwise the coordinator rejects lack of progress.
 
-The normal compiler preparation path now proves third-file dependency edits,
-retained private failures on retry and identity-preserving repair. Explicit instance
-materialization remains the test entrypoint; source calls still do not request one.
+The signal is one worker-local built-in RuntimeException, compared with portable
+`same_exception`, never by message text. Suspension leaves body work pending, not
+failed, without completion-version advancement. Only executable bodies can request
+instances; declaration/default suspension is not enabled. No worker, request or signal
+is retained by syntax. Normal errors retain ordinary failure/retry behavior.
+Materialization precedes body preparation, so recursion reuses the interned identity.
 
-### Coordinator demand handoff — implemented
+Successful preparation acknowledges parsed changes on original deferred bodies without
+claiming their semantic completion. Successful whole C++ publication acknowledges
+changes across the complete callable collection view, including private implementations.
 
-`Preparation_Run` drives both compiler and standalone preparation. A private body's
-static call selects an existing implementation or publishes an invocation-local
-`callable_instance_request` and suspends. The coordinator materializes the requested
-original-method/called-type pair, then resumes with a fresh worker. Already settled
-work retains its identity/version. Each suspension must introduce a missing key;
-the coordinator rejects a no-progress handoff rather than retrying indefinitely.
+## C++ lowering
 
-The suspension signal is one worker-local built-in `RuntimeException`, compared with
-the portable `same_exception` identity helper. Message text never distinguishes
-control flow from diagnostics. Body suspension leaves work pending and does not
-record a failure or advance its completion version. Only executable bodies can demand
-instances; declaration/default suspension is not enabled. No signal/request/worker
-is retained by syntax or instance records. Normal diagnostics retain existing retry
-behavior; no partially prepared program is returned on suspension.
+`CPP_Callables::implementations` supplies a backend-only emission view: ordinary
+instance methods plus demanded static working methods. Source member lookup and type
+contracts still contain original declarations only. Stable helper names encode source
+method and called-type identity using the backend's identifier encoding.
 
-Inside explicitly materialized private implementations, static `self::` and `parent::`
-calls forward called type; named and expression-qualified static calls establish their
-selected declared type. Access and fixed implementation selection still use ordinary
-method preparation first. Calls then depend on the working signature. Materialization
-precedes body preparation, so recursive calls reuse the interned working identity.
-Public source calls do not yet create the initial instance; tests seed that root through
-the coordinator API. This remains a preparation proof, not late-static execution.
+Helpers are static C++ members of the original declaring record, preserving native
+private/protected access. Their declarations belong in that record's type header;
+definitions remain out of line in its source implementation unit. Header changes when
+new called-type instances are demanded are intentional. No semantic resolution or
+instance materialization occurs during emission. Ordinary readiness, dependency,
+signature/body fragment and result-conversion paths are reused.
 
-### Remaining integration
+## Proof and remaining work
 
-Compatible static redeclarations are now enabled through the existing type-contract
-worker: exact signatures, no visibility narrowing, final enforcement and no virtual
-decision. Existing `Override` assertions remain restricted to virtual contracts.
-The normal fixed C++ member path needs no separate static redeclaration lowering.
+`tests/callable_instances.php` covers identity, private syntax/token isolation, lexical
+lookup/access, unchanged source membership, third-file dependencies, failure/retry/
+repair, parse failure, source edits/removal and resets. Explicit test-only seeding
+occurs after the source preparation boundary consumes pending call-shape edits.
+`tests/callable_demands.php` covers exact signal identity, pending work, coordinator
+resumption, forwarding/reset, recursive identity and the standalone adapter.
 
-**Decision needed before source activation:** original static bodies are currently
-checked eagerly, independently of demanded instances. An abstract Base with
-`make(): Base { return new static(); }` cannot be checked as a concrete Base
-construction merely to validate a call to `Child::make()`. Proposal: check static
-declarations/signatures eagerly, but type-check bodies per demanded called-type
-instance. Uncalled bodies would remain syntax-checked without full body semantic
-validation. This diagnostic-timing change is not yet approved or implemented.
+`tests/late_static.php`, through `records.py --suite late_static`, proves actual
+dispatch, forwarding/reset, shared factories/constructors, inherited storage, structs,
+declared-type qualification, deferred bodies and cross-file removal/retry/repair with
+fresh/incremental equality. Adjacent method/reference-return suites cover existing
+call contracts. These are PHP-host and generated-program proofs, not a native compiler
+rebuild. Dated evidence is recorded in CH11.
 
-1. Enable initial instance selection from source calls and resolve `static::`/`new static`
-   there, after agreeing the original-body validation boundary above.
-2. Emit distinct stable implementation identities, preferably out-of-line in the
-   original declaring source's implementation unit. Include private implementations
-   in readiness guards, fragment enumeration and successful change
-   acknowledgement. Never emit them as additional ordinary class member declarations.
-3. Prove forwarding, recursion, cross-file dependencies, constructors, storage owner,
-   retries/edits and clean/incremental equality with generated-program execution.
-
-Until those checkpoints land, `static::`/`new static` remain rejected and normal
-calls never select these instances. Runtime instance dispatch remains separate.
-
-## Proof
-
-`tests/callable_instances.php` exercises key reuse, two independent prepared bodies,
-lexical private access/type lookup, unchanged authored membership/facts, token-row
-isolation, no-op output, failed-parse preservation, both source edit directions,
-preparation reset and full retirement. The scheduling extension additionally exercises
-ordinary compiler preparation, stable no-op versions, third-file constant dependencies,
-failure/retry/repair and private-versus-program-file membership. The model runner includes this proof alongside
-trait and incremental regressions. This is PHP-host evidence, not generated late-static
-execution or a native compiler rebuild.
-
-`tests/callable_demands.php` proves analysis yields without parsing, exact signal
-identity, pending-not-failed work, coordinator resumption, two called-type contexts,
-parent forwarding, explicit-type reset, recursive target identity, stable no-op
-versions/output and the shared standalone adapter. Its initial root instances are
-explicitly seeded; all transitive instances are demanded by real private body calls.
+Remaining: runtime-called-type propagation through ordinary instance methods requires
+a separate design; inline `new static` remains rejected. Reconcile the remaining CH11
+catalog groups before choosing another slice. Precise demand-family pruning is an
+optimization follow-up, not an extension to this execution contract.

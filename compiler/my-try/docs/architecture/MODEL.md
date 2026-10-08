@@ -687,8 +687,10 @@ Called-type implementation instances are owned separately by the original collec
 method. Each owns independent working syntax and ordinary signature/body work, without
 changing declaring-type identity or authored class membership. Materialization and
 retirement belong to `Callable_Instances`, a coordinator; `Source_Fragments` shares
-snapshot/retirement support with trait composition. Source-call selection and C++
-instance emission remain gated. See [called-type instances](../planning/called_type_instances.md).
+snapshot/retirement support with trait composition. Static source calls select concrete
+instances; original signatures are checked eagerly, bodies per demand. The backend
+emits stable static helpers in the original declaring record without adding source
+members. See [called-type instances](../planning/called_type_instances.md).
 
 `Callable_Inventory` is a transient read-only view of source and private implementation
 collections. Preparation uses it to select ordinary private method work and cycle

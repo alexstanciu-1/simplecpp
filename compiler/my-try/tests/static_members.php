@@ -47,7 +47,7 @@ foreach (['class', 'struct'] as $kind) {
 	}
 }
 foreach ([
-	['class C { int $n; static function f(): int { return $this->n; } }', '$this requires'],
+	['class C { int $n; static function f(): int { return $this->n; } } return C::f();', '$this requires'],
 	['class C { function f(): int { return 1; } } return C::f();', 'Static methods require'],
 	['class C { static function f(): int { return 1; } } $c = new C(); return $c->f();', 'Static methods require'],
 	['class C { private const N = 9; } return C::N;', 'Private member'],

@@ -47,7 +47,10 @@ final class Member_Preparation
 	public static function owner(named_type_node $syntax, preparation_context $context): canonical_type_use
 	{
 		if ($syntax->name === 'static') {
-			throw new \RuntimeException('Inheritance-dependent qualification is deferred to CH11');
+			if ($context->called_type === null) { throw new \RuntimeException('static requires a concrete called-type context'); }
+			$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($context->called_type));
+			$syntax->set_preparation(Model::$type_catalog->registry()->use($type->type_id()));
+			return $syntax->require_preparation();
 		}
 		if (($syntax->name === 'self') || ($syntax->name === 'parent')) {
 			$record = $context->member_owner;

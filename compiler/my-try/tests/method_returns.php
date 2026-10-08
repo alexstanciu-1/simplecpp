@@ -43,18 +43,18 @@ foreach (['class', 'struct'] as $kind) {
 		}
 		foreach ([
 			['', 'int', 'return 1;', ''],
-			['int &$n', 'int', '$local = 1; return $local;', ''],
-			['int &$n', 'int', 'return 1;', ''],
-			['int &$n', 'int', 'return $this->n;', ''],
-			['vector<int> &$n', 'int', 'return $n[0];', ''],
+			['int &$n', 'int', '$local = 1; return $local;', '$input = 1; CALL($input);'],
+			['int &$n', 'int', 'return 1;', '$input = 1; CALL($input);'],
+			['int &$n', 'int', 'return $this->n;', '$input = 1; CALL($input);'],
+			['vector<int> &$n', 'int', 'return $n[0];', '$input vector<int> = [1]; CALL($input);'],
 			['int &$n, int &$other', 'int', 'return $other;', ''],
 			['const int &$n', 'int', 'return $n;', ''],
 			['int &$n', 'float', 'return $n;', ''],
-			['int &$n', 'int', 'if ($n) { return $n; }', ''],
+			['int &$n', 'int', 'if ($n) { return $n; }', '$input = 1; CALL($input);'],
 			['int &$n', 'int', 'return $n;', 'CALL(1);'],
 			['int &$n', 'int', 'return $n;', '$v vector<int> = [1]; CALL($v[0]);'],
 			['unique<int> &$n', 'unique<int>', 'return $n;', '$n unique<int>; $copy = CALL($n);'],
-			['int &$n', 'int', 'return ' . ($mode === 'static' ? 'self::f' : '$this->f') . '($n);', ''],
+			['int &$n', 'int', 'return ' . ($mode === 'static' ? 'self::f' : '$this->f') . '($n);', '$input = 1; CALL($input);'],
 		] as [$parameters, $type, $body, $program]) {
 			$failed = false;
 			try {

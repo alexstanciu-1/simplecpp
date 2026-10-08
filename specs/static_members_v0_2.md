@@ -38,9 +38,10 @@ This deliberately replaces v0.1's unevaluated `class_t<decltype(expr)>` lowering
 Use existing callable parameter/default/variadic/reference-return and visibility
 rules. No `$this` is supplied to the static method. Non-static targets, unknown
 members, inaccessible methods, dynamic member names and qualifiers without a known
-concrete record target reject before C++ generation. Interface-based implementation
-selection and inherited/late-bound dispatch await CH11; a static interface signature
-alone does not identify an implementation.
+concrete record target reject before C++ generation. The inheritance contract now
+enables inherited selection and late-static calls using that declared called type.
+Interface-based static implementation selection remains deferred; a static interface
+signature alone does not identify an implementation.
 
 ### Expression-qualified properties and constants — 2026-10-07
 
@@ -63,7 +64,7 @@ Reject them in constant declarations, constant-only defaults and switch/match la
 never discard qualifier effects during folding. Constants cannot be assigned.
 Dynamic names, reference escapes and nested
 value-producing property assignments are not enabled by this slice. Interface and
-inherited qualification remain subject to CH11's pending contracts.
+inherited qualification follow the inheritance contract's availability boundaries.
 
 `Type::NAME` and `self::NAME` select member constants. Constants reuse source
 constant evaluation: bool/int/float/string literals, constant references and
@@ -102,8 +103,13 @@ under that spec's exact-signature, visibility and finality rules; they do not es
 virtual dispatch. The inheritance spec owns implemented instance overrides/interfaces
 and construction boundaries, superseding the original blanket CH11 deferral.
 
-Native-reference escape from static properties and late-bound `static::` remain gated.
-These gates do not claim permanent language prohibitions.
+Late-bound `static::` and shared-class `new static` are enabled in concrete static
+call implementations under the inheritance contract. Static signatures are checked
+eagerly; bodies are checked per demanded called-type instance, not for every unused
+declaration. C++ helpers retain the original declaring type's access context and have
+out-of-line definitions; they do not become additional source-language members.
+Native-reference escape from static properties and runtime-called-type propagation
+through instance methods remain gated. These gates are not permanent prohibitions.
 
 ## Property updates — 2026-10-07
 

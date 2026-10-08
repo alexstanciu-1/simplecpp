@@ -85,7 +85,7 @@ foreach ([
 	['class B { public function __construct() {} } class C extends B { public function __construct() { $n = 1; parent::__construct(); } }', 'ordinary method'],
 	['class B { public function __construct() {} } class C extends B { public function __construct() { parent::__construct(); parent::__construct(); } }', 'ordinary method'],
 	['class B { public function __construct(int $n) {} } class C extends B { int $n = 1; public function __construct() { parent::__construct($this->n); } }', 'instance body'],
-	['class B { protected function read(): int { return 1; } } class C extends B { public static function get(): int { return parent::read(); } }', 'initialized $this'],
+	['class B { protected function read(): int { return 1; } } class C extends B { public static function get(): int { return parent::read(); } } return C::get();', 'initialized $this'],
 	['class B { private function read(): int { return 1; } } class C extends B { public function get(): int { return parent::read(); } }', 'Private method'],
 	['class B { function __construct() {} } class C extends B { function __construct() { if (true) { parent::__construct(); } } }', 'ordinary method'],
 	['class B { function __construct() {} } class C extends B { function get(): void { parent::__construct(); } }', 'ordinary method'],

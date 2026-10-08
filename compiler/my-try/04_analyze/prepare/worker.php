@@ -135,6 +135,15 @@ final class Preparation_Worker
 		foreach ($result as $prepared) {
 			$bodies /** Storage<namespace_body_node> */ = $prepared->source->root->namespace_bodies;
 			foreach ($bodies as $body) { $body->imports_changed = false; }
+			$entries /** Storage<collected_name> */ = $prepared->source->entries;
+			foreach ($entries as $entry) {
+				if ($entry instanceof collected_source_callable) {
+					$callable = object_cast($entry, collected_source_callable::class);
+					if (Callable_Inventory::deferred_body($callable) && $callable->callable_syntax()->has_parsed_body()) {
+						$callable->callable_syntax()->require_body()->syntax_changed = false;
+					}
+				}
+			}
 		}
 		return $result;
 	}
@@ -320,6 +329,7 @@ final class Preparation_Worker
 	{
 		$entry = object_cast($node->occurrence(), collected_source_callable::class);
 		$this->select_owner($this->callable_owner($entry));
+		if (Callable_Inventory::deferred_body($entry)) { return; }
 		if (!$node->has_parsed_body()) { return; }
 		if ($node->require_body()->work() === null) {
 			$node->require_body()->attach_work(new source_callable_body_work($entry));

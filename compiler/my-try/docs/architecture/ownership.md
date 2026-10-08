@@ -22,8 +22,9 @@ inventory. Instances own private parsed fragments/working methods; origin, calle
 record, captured called scope and working-method context backlinks are weak. The
 working declaration retains the original lexical declaring type, not the called
 type. Private source retirement/reset uses the coordinator protocol shared with
-traits. These instances are not class member lookup entries and are not yet selected
-by source calls; see the [checkpoint and integration plan](../planning/called_type_instances.md).
+traits. Static source calls select these instances, but they never become source
+member lookup entries. Call-shape edits conservatively retire demand families before
+rebuilding current requests; see the [implementation plan](../planning/called_type_instances.md).
 
 Consumer-owned `trait_instance` records retain a private parsed fragment and its
 collection (not a second published source), with independent tokens, scopes and

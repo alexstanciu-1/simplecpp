@@ -1,7 +1,7 @@
 <?php
 namespace scpp\compiler;
 
-/** Explicit coordinator API; normal call selection does not request instances yet. */
+/** Coordinator materialization and retirement of analysis-requested implementations. */
 final class Callable_Instances
 {
 	/** Intern a complete private implementation; semantic dispatch admission belongs to analysis. */
@@ -78,9 +78,15 @@ final class Callable_Instances
 		return $result;
 	}
 
-	/** Preserve live keys; invalidate only instances whose origin/called-source snapshot changed. */
+	/** Retire changed call families, otherwise preserve live source-snapshot keys. */
 	public static function retire_stale(Storage $sources /** Storage<collected_file> */, scope $language): void
 	{
+		// Call-shape changes can remove the last demand. Conservatively rebuild the family
+		// rather than retaining unreachable implementations or their obsolete diagnostics.
+		if (self::call_shape_changed($sources)) {
+			self::retire_sources($sources, $language);
+			return;
+		}
 		foreach (self::methods($sources) as $method)
 		{
 			$previous /** Storage<callable_instance> */ = $method->called_instances;
@@ -103,6 +109,35 @@ final class Callable_Instances
 				$method->called_instances = $live;
 			}
 		}
+	}
+
+	/** Constant-only edits preserve identities and use ordinary dependency invalidation. */
+	private static function call_shape_changed(Storage $sources /** Storage<collected_file> */): bool
+	{
+		foreach ($sources as $source) {
+			if ($source->deleted) { return true; }
+			$bodies /** Storage<namespace_body_node> */ = $source->root->namespace_bodies;
+			foreach ($bodies as $body) {
+				if ($body->imports_changed || $body->body->syntax_changed) { return true; }
+			}
+			$entries /** Storage<collected_name> */ = $source->entries;
+			foreach ($entries as $entry) {
+				if ($entry instanceof collected_record) {
+					if ($entry->change_status !== change_state::unchanged) { return true; }
+				}
+				if ($entry instanceof collected_source_callable) {
+					$callable = object_cast($entry, collected_source_callable::class);
+					if ($callable instanceof collected_method) {
+						if (object_cast($callable, collected_method::class)->declaring_type() instanceof collected_trait) { continue; }
+					}
+					if ($entry->change_status !== change_state::unchanged) { return true; }
+					if ($callable->callable_syntax()->has_parsed_body()) {
+						if ($callable->callable_syntax()->require_body()->syntax_changed) { return true; }
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	/** Full origin disposal must retire private dependency work before releasing instance ownership. */

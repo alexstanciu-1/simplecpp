@@ -150,6 +150,30 @@ final class CPP_Callable_Bindings
 
 final class CPP_Callables
 {
+	/** Emission view only: authored inventories keep source methods, not specialization helpers. */
+	public static function implementations(collected_member_owner $record): Storage /** Storage<method_node> */
+	{
+		$result /** Storage<method_node> */ = new Storage();
+		foreach (Member_Inventory::methods($record) as $syntax) {
+			$method = object_cast($syntax->occurrence(), collected_method::class);
+			if (!Callable_Inventory::deferred_body($method)) { $result->append($syntax); continue; }
+			$instances /** Storage<callable_instance> */ = $method->called_instances;
+			foreach ($instances as $instance) {
+				$result->append(object_cast($instance->working->callable_syntax(), method_node::class));
+			}
+		}
+		return $result;
+	}
+	/** Stable backend-only helper identity; never published in source member lookup. */
+	public static function method_name(collected_method $method): string
+	{
+		$instance = weakref_get($method->instance_context);
+		if ($instance !== null) {
+			return CPP_Generator::source_name('implementation', $method->name)
+				. '_for_' . CPP_Generator::source_name('type', $instance->called_type()->qualified_name());
+		}
+		return CPP_Generator::source_name('method', $method->name);
+	}
 	/** Backend-owned dispatch keeps callable identities independent of any output target. */
 	public static function reference(callable_target_i $target, cpp_generation_context $context): string
 	{
@@ -157,7 +181,7 @@ final class CPP_Callables
 			$method = object_cast($target, collected_method::class);
 			$record = $method->declaring_type();
 			$context->headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
-			return CPP_Generator::source_name('record', $record->qualified_name()) . '::' . CPP_Generator::source_name('method', $method->name);
+			return CPP_Generator::source_name('record', $record->qualified_name()) . '::' . self::method_name($method);
 		}
 		if ($target instanceof collected_function) {
 			$function = object_cast($target, collected_function::class);

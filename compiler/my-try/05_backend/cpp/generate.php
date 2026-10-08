@@ -62,7 +62,7 @@ final class CPP_Generator
 						$ordered->append(object_cast(object_cast($node, callable_declaration_node::class)->require_body()->work(), preparation_owner::class));
 					}
 					elseif ($node instanceof type_declaration_node) {
-						$methods /** Storage<method_node> */ = Member_Inventory::methods(object_cast($definition, collected_member_owner::class));
+						$methods /** Storage<method_node> */ = CPP_Callables::implementations(object_cast($definition, collected_member_owner::class));
 						foreach ($methods as $method) {
 							$ordered->append(object_cast($method->occurrence()->preparation_work_owner(), preparation_owner::class));
 							if ($method->has_parsed_body()) { $ordered->append(object_cast($method->require_body()->work(), preparation_owner::class)); }
@@ -135,7 +135,7 @@ final class CPP_Generator
 				$text = CPP_Declarations::type_opening($record, $bridge_context) . $fragment->text;
 				$contract = $record->contract_work->require_facts();
 				$dispatch /** Keyed_Storage<prepared_method_contract> */ = $contract->methods;
-				$methods /** Storage<method_node> */ = Member_Inventory::methods($record);
+				$methods /** Storage<method_node> */ = CPP_Callables::implementations($record);
 				foreach ($methods as $method) {
 					$member_owner /** preparation_owner */ = $method->occurrence()->preparation_work_owner();
 					$member_fragment = $this->program->fragments[$member_owner];

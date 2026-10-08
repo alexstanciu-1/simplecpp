@@ -17,7 +17,21 @@ final class Object_Construction_Preparation
 				$destination = $nullable_payload;
 			}
 		}
-		$target = Type_Preparation::type($node->target_type, $context);
+		$late_static = false;
+		if ($node->target_type instanceof named_type_node) {
+			$late_static = object_cast($node->target_type, named_type_node::class)->name === 'static';
+		}
+		$target /** canonical_type_use */;
+		if ($late_static) {
+			$target = Member_Preparation::owner(object_cast($node->target_type, named_type_node::class), $context);
+			if (!Type_Queries::is_nominal_handle($target)) { throw new \RuntimeException('new static requires shared class storage'); }
+			if ($destination !== null) {
+				if (Type_Queries::record_storage($destination) !== record_storage_kind::shared) {
+					throw new \RuntimeException('new static requires shared class storage');
+				}
+			}
+		}
+		else { $target = Type_Preparation::type($node->target_type, $context); }
 		$source_arguments /** Storage<expression_node> */ = $node->arguments;
 		if ($target->by_value() || (Type_Queries::source_record($target) === null)) {
 			throw new \RuntimeException('S2S new requires a source struct or class');

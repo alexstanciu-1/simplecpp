@@ -4,6 +4,17 @@ namespace scpp\compiler;
 /** Read-only callable graph view; private implementations are not source/member declarations. */
 final class Callable_Inventory
 {
+	/** Static source bodies are checked only through concrete called-type implementations. */
+	public static function deferred_body(collected_source_callable $definition): bool
+	{
+		if (!($definition instanceof collected_method)) { return false; }
+		$method = object_cast($definition, collected_method::class);
+		if (weakref_get($method->instance_context) !== null) { return false; }
+		foreach ($method->callable_syntax()->modifiers as $modifier) {
+			if ($modifier === declaration_modifier::static_member) { return true; }
+		}
+		return false;
+	}
 	/** Read an interned implementation without parsing, scheduling or changing membership. */
 	public static function find(collected_method $origin, collected_record $called): ?callable_instance
 	{

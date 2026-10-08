@@ -14,15 +14,41 @@ That model migration and relationship/lookup foundation are complete. Bounded
 concrete inheritance, abstract/override dispatch and interface implementations now
 execute. Shared derived/base upcasts and interface-typed handles now execute.
 
+## Late-static execution — 2026-10-08
+
+Static source calls now demand original-method/called-type implementations. Lexical
+names/access remain with the declaring record; self/parent forward called type,
+explicit qualifiers establish it and static selects through it. Shared-class
+`new static` uses ordinary checked construction and result conversions, including
+factories declared on abstract bases. Static property storage remains single-owner.
+
+The user approved eager signature/declaration checks and per-demand static body
+checks; uncalled bodies remain syntax-checked without full semantic validation.
+Backend-only static C++ helpers preserve declaring-type access and stay out of source
+lookup. They have stable names, header declarations and out-of-line definitions.
+Call-shape edits conservatively retire demand families so removed calls do not retain
+obsolete implementations/errors; constant-only external dependencies use normal
+invalidation. See the [current implementation plan](../planning/called_type_instances.md).
+
+Proof: `/tmp/late-static-20261008-3` runs 12 generated programs without PCH, including
+two contexts, recursion and cross-file failure/removal/repair. All 22 model suites
+passed in `/tmp/late-static-model-20261008-2`, ten adjacent PHP suites in
+`/tmp/late-static-regression-20261008-2`, and 34 generated reference-return programs
+in `/tmp/late-static-returns-20261008-1`. The shared runner used CLI fallback because
+sandbox FPM startup was unavailable. No native compiler rebuild.
+
+Next: reconcile remaining CH11 groups. Runtime-called-type propagation through
+ordinary instance methods and inline `new static` remain outside this slice.
+
 ## Called-type callable foundation — 2026-10-08
 
-The approved [late-static extension](../../../../specs/inheritance_v0_2.md#agreed-late-static-extension--implementation-gated)
+The approved [late-static extension](../../../../specs/inheritance_v0_2.md#late-static-calls-and-shared-factories)
 requires independent callable instances, not repeated mutation of a method's single
 prepared body. The [model/lifecycle checkpoint](../planning/called_type_instances.md)
 is implemented: origin-owned instances keyed by called type, private working syntax,
 unchanged lexical declaring owner, shared token snapshot/retirement support, no-op
 identity and join/reset cleanup. `tests/callable_instances.php` is included in the
-model runner. No source late-static execution or native compiler proof is claimed.
+model runner. This initial checkpoint did not yet prove source late-static execution.
 
 Proof: 21 PHP-host suites passed in `/tmp/callable-instances-model-20261008-2`;
 the instance suite took 0.57 seconds and the longest suite (`s2s`) 12.72 seconds.
@@ -41,7 +67,7 @@ Coordinator-owned demand materialization is now integrated. Private-body static 
 publish requests and suspend without marking work failed; the coordinator interns
 the missing implementation before resuming. Tests seed the initial private instance,
 then prove transitive self/parent forwarding, explicit-type context reset, recursion
-and no-op reuse through real body calls. Public source calls still use their old path.
+and no-op reuse through real body calls. At that checkpoint public calls still used their old path.
 Proof: all 22 PHP-host suites passed in `/tmp/callable-demands-20261008-2`;
 the demand test took 0.47 seconds, and the longest suite (`s2s`) 12.73 seconds.
 No native compiler rebuild or generated late-static execution is claimed.
@@ -54,9 +80,8 @@ Ten generated programs passed without PCH in `/tmp/static-redeclarations-2026100
 five adjacent PHP-host suites passed in `/tmp/static-redeclarations-regression-20261008-1`.
 No native compiler rebuild.
 
-Next: agree [original-body validation timing](../planning/called_type_instances.md#remaining-integration),
-then initial source-call instance selection, late-static operations and backend implementation
-identities. Runtime-called-type propagation through instance methods is separate.
+The subsequent execution checkpoint above completes source activation, the approved
+body-validation timing and backend identities. Runtime instance propagation is separate.
 
 ## Trait composition foundation — 2026-10-08
 
@@ -418,6 +443,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLASS-INH-009](#class-inh-009) | implemented-bounded | `parent::f(1);` | verified | verified | deferred | Fixed original-owner dispatch; current instance required for instance methods |
 | [CLASS-INH-010](#class-inh-010) | implemented-bounded | `parent::__construct($x);` | verified | verified | deferred | First standalone statement only; sequenced base initialization; public fixed-value constructors |
 | CLASS-INH-013 | implemented-bounded | `class Child extends Base {}` | verified | verified | deferred | Inherits original public concrete constructor contract/defaults through abstract or concrete ancestors |
+| CLASS-INH-014 | implemented-bounded | `static::method(); new static();` | verified | verified | deferred | Demanded static called-type instances; shared-class factories; runtime instance propagation deferred |
 | [CLASS-INH-011](#class-inh-011) | implemented-bounded | `#[\Override] function f(): int { return 1; }` | verified | verified | deferred | Checked inherited virtual target; exact signature; nonvirtual hiding rejected |
 | [CLASS-INH-012](#class-inh-012) | pending-discussion | `class B extends A {}` | unverified | unverified | deferred | — |
 | [CLASS-ABS-001](#class-abs-001) | pending-discussion | `function __destruct() { $this->cleanup(); }` | unverified | unverified | deferred | — |

@@ -39,6 +39,7 @@ final class Reference_Cycles
 				}
 				if ($entry instanceof collected_source_callable) {
 					$definition = object_cast($entry, collected_source_callable::class);
+					if (Callable_Inventory::deferred_body($definition)) { continue; }
 					if ($definition instanceof collected_method) {
 						if (object_cast($definition, collected_method::class)->declaring_type() instanceof collected_trait) { continue; }
 					}

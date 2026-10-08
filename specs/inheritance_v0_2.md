@@ -205,9 +205,9 @@ supersedes the legacy blanket rejection of trait syntax, not the deferred extens
 
 ## Remaining gates
 
-### Agreed late-static extension — implementation gated
+### Late-static calls and shared factories
 
-The next extension distinguishes the lexical declaring type (names and access) from
+Late static binding distinguishes the lexical declaring type (names and access) from
 the called type. An explicit `Child::method()` establishes Child, including when
 the implementation is inherited. `self::method()` and `parent::method()` select a
 fixed implementation and forward the current called type; `static::method()` selects
@@ -221,23 +221,31 @@ Compatible descendant static-method redeclarations are part of this extension, w
 exact callable contracts and no visibility narrowing, not C++ virtual overriding.
 Inherited property/constant redeclaration restrictions do not change.
 
-`new static(...)` will construct the called class using its checked constructor
+`new static(...)` constructs the called class using its checked constructor
 contract. The first construction group admits shared class handles only and applies
 ordinary checked-at-preparation result conversions; it does not slice inline records.
 Called-type context is compiler-managed, never ambient global runtime state. Cross-file
 families are supported by the agreed design rather than v0.1's file-local restriction.
 
-Availability: the independent callable-instance foundation and compatible static
-redeclarations are implemented. Source `static::` and `new static` remain gated until
-their preparation/lowering checkpoints land. Runtime-called-type propagation through
-instance methods requires a separate design; do not substitute a receiver's declared
-type silently. See the [implementation plan](../compiler/my-try/docs/planning/called_type_instances.md).
+Static declarations, signatures and declaration defaults are checked eagerly. Static
+bodies are syntax-checked when parsed, then semantically checked per requested
+called-type implementation. An uncalled static body does not receive full body-semantic
+validation. An abstract base may declare `make(): Base { return new static(); }`:
+`Child::make()` checks construction of Child, whereas `Base::make()` rejects abstract
+construction. Ordinary functions and instance methods retain their existing body checks.
+
+Availability: static calls establish concrete called-type implementations, including
+cross-file calls, `static::` methods/properties/constants and shared-class `new static`.
+Runtime-called-type propagation through ordinary instance methods requires a separate
+design; `static::`/`new static` without a concrete called-type context reject. Do not
+substitute a receiver's declared type silently. See the
+[implementation plan](../compiler/my-try/docs/planning/called_type_instances.md).
 
 ### Current rejection boundary
 
 Reject inheritance cycles, cross-kind bases and extension of final types. A concrete
 final type may be instantiated. Nonvirtual instance member hiding,
-inherited data inputs, late-bound `static::`, non-shared derived/base
+inherited data inputs, runtime-called-type instance propagation, non-shared derived/base
 conversions and non-public/abstract constructor contracts remain
 separate groups. C++'s ability to express these does not enable them in source.
 

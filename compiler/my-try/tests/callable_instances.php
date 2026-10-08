@@ -30,7 +30,6 @@ try {
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'child.phs');
 	$compiler->exec_cpp();
-	$baseline = CPP_Output::encode(Model::$cpp_files);
 	$base = callable_instance_owner('origin\\Base');
 	$child = callable_instance_owner('app\\Child');
 	$other = callable_instance_owner('app\\Other');
@@ -50,12 +49,14 @@ try {
 	callable_instance_check($left->parameters[1] !== $right->parameters[1] && $left->signature_scope() !== $right->signature_scope(), 'Parameters/scopes shared');
 	callable_instance_check($child->syntax()->methods->is_empty() && count($base->syntax()->methods) === 1, 'Member inventories changed');
 	$compiler->prepare();
+	$compiler->cpp();
+	$baseline = CPP_Output::encode(Model::$cpp_files);
 	callable_instance_check($left->require_body()->work()->state === preparation_state::ready && $right->require_body()->work()->state === preparation_state::ready, 'Working bodies did not settle');
 	callable_instance_check($left->require_preparation() !== $right->require_preparation() && $authored->require_preparation() === $original_facts, 'Preparation aliased authored/other instance');
 	callable_instance_check(Type_Queries::source_record($left->require_preparation()->parameters[0]->storage_type()) === callable_instance_owner('types\\Item'), 'Lexical imported parameter type lost');
 	callable_instance_check($first->parsed->tokens->tokens[$left->start_token()] !== $origin->token_snapshot()->tokens[$authored->start_token()], 'Token rows shared');
 	$compiler->update_cpp([]);
-	callable_instance_check(Callable_Instances::obtain($origin, $child) === $first && CPP_Output::encode(Model::$cpp_files) === $baseline, 'No-op changed instances or published private implementations');
+	callable_instance_check(Callable_Instances::obtain($origin, $child) === $first && CPP_Output::encode(Model::$cpp_files) === $baseline, 'No-op changed instances or implementation output');
 	$first_work = $left->require_body()->work();
 	$first_version = $first_work->version;
 	$compiler->prepare();
@@ -93,6 +94,7 @@ try {
 	callable_instance_check($origin->called_instances->is_empty() && $first_work->change_status === change_state::deleted, 'Called-source edit did not retire instances');
 	callable_instance_check($first->parsed->collection->entries->is_empty(), 'Retired occurrences remain');
 	$child = callable_instance_owner('app\\Child');
+	$compiler->prepare();
 	$replacement = Callable_Instances::obtain($origin, $child);
 	$compiler->prepare();
 	$replacement_work = $replacement->working->callable_syntax()->require_body()->work();
@@ -100,6 +102,7 @@ try {
 	$compiler->sync([$base_path]);
 	callable_instance_check($replacement_work->change_status === change_state::deleted && $origin->called_instances->is_empty(), 'Origin edit did not retire instances');
 	$origin = object_cast(callable_instance_owner('origin\\Base')->syntax()->methods[0]->occurrence(), collected_method::class);
+	$compiler->prepare();
 	$last = Callable_Instances::obtain($origin, callable_instance_owner('app\\Child'));
 	$compiler->prepare();
 	$last_work = $last->working->callable_syntax()->require_body()->work();
@@ -108,6 +111,7 @@ try {
 	callable_instance_check($last_work->change_status === change_state::deleted && $origin->called_instances->is_empty(), 'Called-type removal retained instance');
 	file_put_contents($child_path, $child_text);
 	$compiler->sync([$child_path]);
+	$compiler->prepare();
 	$last = Callable_Instances::obtain($origin, callable_instance_owner('app\\Child'));
 	$compiler->prepare();
 	$last_work = $last->working->callable_syntax()->require_body()->work();

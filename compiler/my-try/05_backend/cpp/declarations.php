@@ -144,7 +144,7 @@ final class CPP_Declarations
 		if ($function_declaration instanceof collected_method) {
 			$method = object_cast($function_declaration, collected_method::class);
 			$record_name = CPP_Generator::source_name('record', $method->declaring_type()->qualified_name());
-			$name = $syntax->name === '__construct' ? $record_name : CPP_Generator::source_name('method', $syntax->name);
+			$name = $syntax->name === '__construct' ? $record_name : CPP_Callables::method_name($method);
 			$destructor = $syntax->name === '__destruct';
 			if ($destructor) { $name = '~' . $record_name; }
 			if (!$prototype) { $name = $record_name . '::' . $name; }

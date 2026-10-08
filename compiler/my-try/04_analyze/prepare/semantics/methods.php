@@ -183,11 +183,10 @@ final class Method_Preparation
 			Member_Preparation::require_instance_access($method->callable_syntax()->require_preparation()->visibility,
 				$method->declaring_type(), $record, $context);
 		}
-		// Private implementations forward self/parent context; explicit qualifiers establish their own type.
-		// Ordinary source calls remain fixed until public late-static selection/emission is enabled.
-		if ($static_call && ($context->called_type !== null)) {
+		// Select an implementation only after lexical access and dispatch admission.
+		if ($static_call) {
 			$called = object_cast($record, collected_record::class);
-			if ($syntax->owner_type !== null) {
+			if (($syntax->owner_type !== null) && ($context->called_type !== null)) {
 				if (($syntax->owner_type->name === 'self') || ($syntax->owner_type->name === 'parent')) {
 					$called = $context->called_type;
 				}
