@@ -37,8 +37,17 @@ is carried separately in the transient preparation context. Private implementati
 do not become program files. All 21 PHP-host model suites passed in
 `/tmp/callable-scheduling-20261008-1`; no native compiler rebuild was performed.
 
-Next: coordinator-owned demand materialization, then called-type
-selection/forwarding, compatible static redeclarations and backend implementation
+Coordinator-owned demand materialization is now integrated. Private-body static calls
+publish requests and suspend without marking work failed; the coordinator interns
+the missing implementation before resuming. Tests seed the initial private instance,
+then prove transitive self/parent forwarding, explicit-type context reset, recursion
+and no-op reuse through real body calls. Public source calls still use their old path.
+Proof: all 22 PHP-host suites passed in `/tmp/callable-demands-20261008-2`;
+the demand test took 0.47 seconds, and the longest suite (`s2s`) 12.73 seconds.
+No native compiler rebuild or generated late-static execution is claimed.
+
+Next: initial source-call instance selection, late-static operations,
+compatible static redeclarations and backend implementation
 identities. Runtime-called-type propagation through instance methods is separate.
 
 ## Trait composition foundation — 2026-10-08

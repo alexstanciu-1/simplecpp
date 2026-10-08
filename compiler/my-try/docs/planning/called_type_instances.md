@@ -70,18 +70,40 @@ The normal compiler preparation path now proves third-file dependency edits,
 retained private failures on retry and identity-preserving repair. Explicit instance
 materialization remains the test entrypoint; source calls still do not request one.
 
+### Coordinator demand handoff — implemented
+
+`Preparation_Run` drives both compiler and standalone preparation. A private body's
+static call selects an existing implementation or publishes an invocation-local
+`callable_instance_request` and suspends. The coordinator materializes the requested
+original-method/called-type pair, then resumes with a fresh worker. Already settled
+work retains its identity/version. Each suspension must introduce a missing key;
+the coordinator rejects a no-progress handoff rather than retrying indefinitely.
+
+The suspension signal is one worker-local built-in `RuntimeException`, compared with
+the portable `same_exception` identity helper. Message text never distinguishes
+control flow from diagnostics. Body suspension leaves work pending and does not
+record a failure or advance its completion version. Only executable bodies can demand
+instances; declaration/default suspension is not enabled. No signal/request/worker
+is retained by syntax or instance records. Normal diagnostics retain existing retry
+behavior; no partially prepared program is returned on suspension.
+
+Inside explicitly materialized private implementations, static `self::` and `parent::`
+calls forward called type; named and expression-qualified static calls establish their
+selected declared type. Access and fixed implementation selection still use ordinary
+method preparation first. Calls then depend on the working signature. Materialization
+precedes body preparation, so recursive calls reuse the interned working identity.
+Public source calls do not yet create the initial instance; tests seed that root through
+the coordinator API. This remains a preparation proof, not late-static execution.
+
 ### Remaining integration
 
-1. Connect demand-driven instance requests to coordinator materialization and the
-   existing scheduler. Analysis must not call the parser. Intern before preparing recursive
-   bodies; calls and dependency edges select the existing working identity.
-2. Consume the separate called-type preparation context to resolve late-static operations
+1. Enable initial instance selection from source calls and resolve `static::`/`new static`
    there, and admit compatible static redeclarations without virtualizing them.
-3. Emit distinct stable implementation identities, preferably out-of-line in the
+2. Emit distinct stable implementation identities, preferably out-of-line in the
    original declaring source's implementation unit. Include private implementations
    in readiness guards, fragment enumeration and successful change
    acknowledgement. Never emit them as additional ordinary class member declarations.
-4. Prove forwarding, recursion, cross-file dependencies, constructors, storage owner,
+3. Prove forwarding, recursion, cross-file dependencies, constructors, storage owner,
    retries/edits and clean/incremental equality with generated-program execution.
 
 Until those checkpoints land, `static::`/`new static` remain rejected and normal
@@ -97,3 +119,9 @@ ordinary compiler preparation, stable no-op versions, third-file constant depend
 failure/retry/repair and private-versus-program-file membership. The model runner includes this proof alongside
 trait and incremental regressions. This is PHP-host evidence, not generated late-static
 execution or a native compiler rebuild.
+
+`tests/callable_demands.php` proves analysis yields without parsing, exact signal
+identity, pending-not-failed work, coordinator resumption, two called-type contexts,
+parent forwarding, explicit-type reset, recursive target identity, stable no-op
+versions/output and the shared standalone adapter. Its initial root instances are
+explicitly seeded; all transitive instances are demanded by real private body calls.

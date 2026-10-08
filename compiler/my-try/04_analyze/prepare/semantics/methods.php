@@ -183,6 +183,17 @@ final class Method_Preparation
 			Member_Preparation::require_instance_access($method->callable_syntax()->require_preparation()->visibility,
 				$method->declaring_type(), $record, $context);
 		}
+		// Private implementations forward self/parent context; explicit qualifiers establish their own type.
+		// Ordinary source calls remain fixed until public late-static selection/emission is enabled.
+		if ($static_call && ($context->called_type !== null)) {
+			$called = object_cast($record, collected_record::class);
+			if ($syntax->owner_type !== null) {
+				if (($syntax->owner_type->name === 'self') || ($syntax->owner_type->name === 'parent')) {
+					$called = $context->called_type;
+				}
+			}
+			$method = $context->worker->require_callable_instance($context->owner, $method, $called);
+		}
 		$facts = Call_Preparation::prepare($method, $syntax->arguments, $context);
 		if ($parent_call && !$static_call) {
 			$receiver = new prepared_method_receiver($context->receiver->type, method_receiver_lifetime::current_instance);

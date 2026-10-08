@@ -696,6 +696,13 @@ analysis uses it to include private call edges. It does not publish private sour
 as program files. Transient preparation contexts carry the called type separately
 from the lexical member owner; no worker or context is retained by an instance.
 
+`Preparation_Run` is the shared coordinator for compiler and standalone analysis.
+Worker-local instance requests and an identity-tagged suspension signal return control
+to it before parsing private fragments. The suspended body remains pending; fresh
+analysis rounds reuse settled work and resolve calls to interned working identities.
+Only body execution may suspend. No request/worker is retained in the source model,
+and the coordinator cannot publish a partial preparation result.
+
 Structures may initialize data, enforce local invariants, expose typed access and
 clear attached facts. Workers own stage dispatch/traversal, semantic algorithms,
 scheduling, dependency maintenance and publication. Retained structures

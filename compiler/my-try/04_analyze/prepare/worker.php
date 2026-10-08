@@ -6,6 +6,9 @@ namespace scpp\compiler;
 final class Preparation_Worker
 {
 	private scope $language;
+	private Storage $instance_requests /** Storage<callable_instance_request> */;
+	/** Identity-tagged control signal, never a user diagnostic or retained work field. */
+	private \RuntimeException $materialization_signal;
 	/** A failed item is attempted at most once by this invocation, but stays changed for the next. */
 	private \SplObjectStorage $attempt_failed /** hash<bool, shared<preparation_owner>> */;
 	private \SplObjectStorage $declarations /** hash<bool, shared<declaration_work>> */;
@@ -17,11 +20,43 @@ final class Preparation_Worker
 	public function __construct(scope $language)
 	{
 		$this->language = $language;
+		$this->instance_requests = new Storage /** Storage<callable_instance_request> */();
+		$this->materialization_signal = new \RuntimeException('Callable materialization requires the coordinator');
 		$this->attempt_failed = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
 		$this->declarations = new \SplObjectStorage /** hash<bool, shared<declaration_work>> */();
 		$this->callable_bodies = new \SplObjectStorage /** hash<bool, shared<source_callable_body_work>> */();
 		$this->file_bodies = new \SplObjectStorage /** hash<bool, shared<file_body_work>> */();
 		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+	}
+
+	public function is_materialization_yield(\RuntimeException $error): bool
+	{
+		return same_exception($error, $this->materialization_signal);
+	}
+
+	public function materialization_requests(): Storage /** Storage<callable_instance_request> */
+	{
+		return $this->instance_requests;
+	}
+
+	/** A body may demand an implementation; declaration/default suspension is not enabled. */
+	public function require_callable_instance(preparation_owner $owner, collected_method $origin, collected_record $called): collected_method
+	{
+		if (!($owner instanceof body_work)) {
+			throw new \RuntimeException('Called-type implementation requires executable body context');
+		}
+		if (weakref_get($origin->instance_context) !== null) {
+			throw new \LogicException('Callable demand requires an original method');
+		}
+		$instance = Callable_Inventory::find($origin, $called);
+		if ($instance === null) {
+			$requests /** Storage<callable_instance_request> */ = $this->instance_requests;
+			$requests->append(new callable_instance_request($origin, $called));
+			throw $this->materialization_signal;
+		}
+		$this->select_callable($instance->working->callable_syntax());
+		$this->require_declaration($owner, $instance->working);
+		return $instance->working;
 	}
 
 	/** After coordinator-ordered retirement, fresh/update runs share selection and execution. */
@@ -582,6 +617,10 @@ final class Preparation_Worker
 			$owner->source->preparation_changes[$owner] = true;
 		}
 		catch (\RuntimeException $error) {
+			if ($this->is_materialization_yield($error)) {
+				$owner->state = preparation_state::pending;
+				throw $error;
+			}
 			$this->failure($owner, $error->getMessage());
 		}
 	}

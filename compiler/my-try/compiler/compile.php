@@ -274,7 +274,7 @@ final class Compiler
 		try {
 			Compiler_Lifecycle::retire_deleted_sources($sources, Model::$language_scope);
 			Trait_Composition::synchronize($sources, Model::$language_scope);
-			$prepared = (new Preparation_Worker(Model::$language_scope))->prepare($sources);
+			$prepared = Preparation_Run::prepare($sources, Model::$language_scope);
 			$entry = Program_Preparation::entry($prepared, Model::$entry_selection, $require_entry);
 			Model::$prepared_files = $prepared;
 			Model::$prepared_entry = $entry;

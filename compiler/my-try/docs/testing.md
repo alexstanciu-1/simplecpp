@@ -8,6 +8,11 @@ It now uses ordinary compiler preparation to prove private-body scheduling, no-o
 version stability, third-file dependency changes and retained failure/retry/repair.
 Late-static call selection/emission is not enabled by this model-only proof.
 
+`callable_demands.php` seeds private roots, then proves analysis-to-coordinator
+suspension/materialization through their real calls: self/parent forwarding, explicit
+type reset, recursive identity, no-op versions and standalone preparation. An unrelated
+exception with identical text must not be mistaken for the suspension signal.
+
 The model runner includes `trait_model.php`: trait source identities, simple use
 syntax, lexical spellings, incremental parsing/recovery and automatic composition.
 `trait_instances.php` additionally proves consumer-owned materialization, independent

@@ -4,6 +4,17 @@ namespace scpp\compiler;
 /** Read-only callable graph view; private implementations are not source/member declarations. */
 final class Callable_Inventory
 {
+	/** Read an interned implementation without parsing, scheduling or changing membership. */
+	public static function find(collected_method $origin, collected_record $called): ?callable_instance
+	{
+		$instances /** Storage<callable_instance> */ = $origin->called_instances;
+		foreach ($instances as $instance) {
+			if ($instance->called_type() === $called) {
+				return $instance;
+			}
+		}
+		return null;
+	}
 	/** Include live private implementations once, preserving original collection identities. */
 	public static function source_collections(Storage $sources /** Storage<collected_file> */): Storage /** Storage<collected_file> */
 	{

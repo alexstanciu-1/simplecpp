@@ -21,7 +21,7 @@ final class File_Preparation
 		$sources->append($this->source);
 		Compiler_Lifecycle::retire_deleted_sources($sources, $this->language);
 		Trait_Composition::synchronize($sources, $this->language);
-		$prepared /** Storage<prepared_file> */ = (new Preparation_Worker($this->language))->prepare($sources);
+		$prepared /** Storage<prepared_file> */ = Preparation_Run::prepare($sources, $this->language);
 		return $prepared[0];
 	}
 }
