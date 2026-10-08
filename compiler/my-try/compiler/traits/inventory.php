@@ -54,6 +54,19 @@ final class Member_Inventory
 		return $result;
 	}
 
+	public static function constants(collected_member_owner $owner): Storage /** Storage<member_constant_node> */
+	{
+		$result /** Storage<member_constant_node> */ = new Storage();
+		$authored /** Storage<member_constant_node> */ = $owner->syntax()->constants;
+		foreach ($authored as $constant) { $result->append($constant); }
+		foreach (self::contributions($owner) as $member) {
+			if ($member->working instanceof collected_constant) {
+				$result->append(object_cast($member->working->syntax(), member_constant_node::class));
+			}
+		}
+		return $result;
+	}
+
 	public static function contributions(collected_member_owner $owner): Storage /** Storage<trait_member_instance> */
 	{
 		$result /** Storage<trait_member_instance> */ = new Storage();

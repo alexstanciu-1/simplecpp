@@ -64,7 +64,7 @@ final class Inheritance_Preparation
 			self::require_new_name($base, $property->name, preparation_lookup_kind::property_name, $context);
 		}
 		// Method redeclarations require completed contracts, not layout-time signature cycles.
-		$constants /** Storage<member_constant_node> */ = $syntax->constants;
+		$constants /** Storage<member_constant_node> */ = Member_Inventory::constants(object_cast($syntax->occurrence(), collected_member_owner::class));
 		foreach ($constants as $constant) {
 			self::require_new_name($base, $constant->name, preparation_lookup_kind::constant, $context);
 		}

@@ -185,7 +185,11 @@ final class Parser_Run
 			elseif ($origin instanceof property_node) {
 				$member = $this->field_declaration($this->source_scope);
 			}
-			else { throw new \LogicException('Member fragment requires a method or property origin'); }
+			elseif ($origin instanceof member_constant_node) {
+				$modifiers = $this->member_modifiers();
+				$member = $this->constant_declaration($consumer, $modifiers, $origin->start_token(), $this->source_scope);
+			}
+			else { throw new \LogicException('Member fragment requires a method, property or constant origin'); }
 			if ($this->position !== $origin->end_token()) {
 				throw new \LogicException('Member fragment did not consume its complete source span');
 			}
@@ -834,11 +838,13 @@ final class Parser_Run
 	}
 
 	/** Retain the declaration identity while replacing only changed initializer syntax. */
-	private function constant_declaration(?collected_member_owner $record, array $modifiers /** vector<declaration_modifier> */, int $member_start): constant_declaration_node
+	private function constant_declaration(?collected_member_owner $record, array $modifiers /** vector<declaration_modifier> */,
+		int $member_start, ?scope $registration_scope = null): constant_declaration_node
 	{
 		$start = $this->expect('const');
 		if ($member_start >= 0) { $start = $member_start; }
 		$declaration_scope = $record === null ? $this->source_scope : $record->syntax()->member_scope();
+		if ($registration_scope !== null) { $declaration_scope = $registration_scope; }
 		if (!$this->identifier()) { throw new \RuntimeException($this->error_message('Expected constant name')); }
 		$name_index = $this->position++;
 		$name = $this->tokens->text_at($name_index);

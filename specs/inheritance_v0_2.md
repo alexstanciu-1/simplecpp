@@ -203,8 +203,8 @@ Classes and structs may compose direct traits using `use T, U;` in their member
 body. Trait names follow the consumer's normal lexical namespace/import lookup.
 Each target must resolve unambiguously to a trait; duplicate use is rejected.
 
-This bounded slice admits explicitly typed instance properties with ordinary defaults
-and concrete ordinary instance methods. Each consumer owns independent working
+This bounded slice admits explicitly typed instance/static properties, concrete ordinary
+instance/static methods and member constants under their ordinary contracts. Each consumer owns independent working
 members. Lexical names/imports in their types, defaults and bodies remain those of
 the trait source; `$this`, private/protected access and member lookup use the consumer.
 The authored trait is not prepared as an instance, is not constructible and is not a
@@ -212,13 +212,27 @@ runtime base or conversion target. Contributed methods reuse ordinary parameter,
 reference-return and dispatch contracts, including satisfying interface obligations.
 
 Reject duplicate same-category members between traits or between a trait and the
-consumer, including an authored method replacing a trait method. Property and method
+consumer, including an authored method replacing a trait method. Property, method and constant
 names remain separate categories. Existing inherited-member restrictions still apply.
 Public contributed instance properties participate in synthesized `data` inputs under
 the ordinary public-property rules; private properties do not become data inputs.
 
-Nested trait uses, adaptations/aliases, trait lifecycle methods, static members,
-constants and bodyless trait requirements remain deferred. This v0.2 contract
+Each direct consumer owns separate contributed static-property storage. A descendant
+inheriting that property uses the original consumer's storage, not another copy.
+Static fields remain excluded from instance layout and data inputs. Their initializers
+follow ordinary static defaults/constant-expression restrictions. Constants use the
+existing scalar constant evaluator and visibility rules, including eager validation
+of consumer-owned constants even when unused.
+
+Contributed static methods use the ordinary called-type instance path: `self` denotes
+the consumer and `static` follows the called type. Static signatures are checked eagerly;
+bodies are checked per demand. Lexical names/imports, including bare namespace constants,
+remain those of the trait source; member constants require qualification. Trait types
+themselves are not static-call or static-storage targets. Existing inherited collision,
+compatible static redeclaration and finality rules remain in force.
+
+Nested trait uses, adaptations/aliases, trait lifecycle methods and bodyless trait
+requirements remain deferred. This v0.2 contract
 supersedes the legacy blanket rejection of trait syntax, not the deferred extensions.
 
 ## Remaining gates

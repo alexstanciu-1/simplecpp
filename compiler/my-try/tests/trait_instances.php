@@ -114,9 +114,8 @@ try {
 		$collision_sources = new Storage(); $collision_sources->append($collision_parse->collection); $collision_sources->append($collision_instance->collection);
 		(new Preparation_Worker(Model::$language_scope))->discard_sources($collision_sources);
 	}
-	instance_rejection('static int $number;', 'instance storage');
 	instance_rejection('$number = 4;', 'explicit types');
-	instance_rejection('public static function count(): int { return 1; }', 'ordinary concrete instance');
+	instance_rejection('public function __construct() {}', 'ordinary concrete bodies');
 	instance_rejection('public function &select(int &$value): int { return $this->select($value); }', 'recursive reference-return cycles');
 	// Snapshot owns token rows, so origin compaction cannot rebase working spans.
 	$working_tokens = $first->parsed->tokens;
@@ -133,7 +132,7 @@ try {
 	$compiler->sync([$origin_path]);
 	instance_check($working_tokens->text_at($left->start_token()) === $spelling && $working_tokens->tokens[$left->start_token()]->offset === $offset, 'Origin edit changed instance snapshot');
 	try { Trait_Materialization::instantiate($trait, $a); throw new \LogicException('Nested use was silently omitted'); }
-	catch (\RuntimeException $error) { instance_check(str_contains($error->getMessage(), 'direct properties and methods'), 'Wrong materialization failure'); }
+	catch (\RuntimeException $error) { instance_check(str_contains($error->getMessage(), 'direct members'), 'Wrong materialization failure'); }
 	instance_check(count($a->trait_instances) === 0, 'Failed materialization published a partial instance');
 	instance_check($right_work->change_status === change_state::deleted && $b->trait_instances->is_empty(), 'Origin edit did not retire remaining consumer');
 }

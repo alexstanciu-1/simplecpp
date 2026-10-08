@@ -35,14 +35,15 @@ final class Trait_Preparation
 		$constants /** Storage<member_constant_node> */ = $syntax->constants;
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
 		$implemented /** Storage<named_type_node> */ = $syntax->implemented_interfaces;
-		if (!$uses->is_empty() || !$constants->is_empty() || !$extended->is_empty() || !$implemented->is_empty()
+		if (!$uses->is_empty() || !$extended->is_empty() || !$implemented->is_empty()
 			|| ($syntax->base_class !== null) || (q_count($syntax->modifiers) !== 0)) {
-			throw new \RuntimeException('Trait source supports only direct instance properties and methods');
+			throw new \RuntimeException('Trait source supports only direct properties, methods and constants');
 		}
 		$properties /** Storage<property_node> */ = $syntax->properties;
 		$methods /** Storage<method_node> */ = $syntax->methods;
 		foreach ($properties as $property) { self::member($property); }
 		foreach ($methods as $method) { self::member($method); }
+		foreach ($constants as $constant) { self::member($constant); }
 	}
 
 	public static function validate(collected_record $consumer): void
@@ -56,15 +57,15 @@ final class Trait_Preparation
 	{
 		if ($syntax instanceof property_node) {
 			$property = object_cast($syntax, property_node::class);
-			if (($property->type_syntax === null) || Member_Preparation::is_static($property->modifiers)) {
-				throw new \RuntimeException('Trait properties require explicit types and instance storage');
+			if ($property->type_syntax === null) {
+				throw new \RuntimeException('Trait properties require explicit types');
 			}
 		}
 		elseif ($syntax instanceof method_node) {
 			$method = object_cast($syntax, method_node::class);
-			if (string_byte_starts_with($method->name, '__') || Member_Preparation::is_static($method->modifiers)
+			if (string_byte_starts_with($method->name, '__')
 				|| !$method->has_parsed_body()) {
-				throw new \RuntimeException('Trait methods require ordinary concrete instance bodies');
+				throw new \RuntimeException('Trait methods require ordinary concrete bodies');
 			}
 		}
 	}

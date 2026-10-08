@@ -42,7 +42,11 @@ and explicit retirement. It also checks ordinary contributed layout/defaults, me
 calls, category collisions, eligibility, reference cycles and C++ consumer-unit
 placement. `traits.php` adds automatic selection, edits, retry/reset/fresh agreement.
 `python3 compiler/my-try/tests/records.py --suite traits --no-pch --results FRESH`
-compiles/runs nine generated programs; it does not rebuild the compiler natively.
+also executes contributed static methods/properties/constants for classes and structs,
+independent consumer versus inherited storage, lexical constant lookup, late-static
+overrides, reference returns/variadics and static trait-edit recovery. Constants retain
+private fragment scopes and use ordinary eager preparation/collision validation.
+The suite compiles/runs generated programs; it does not rebuild the compiler natively.
 
 `python3 compiler/my-try/tests/records.py --suite interface_handles --no-pch --results FRESH`
 checks interface shared storage/upcasts, static-contract defaults, abstract-body

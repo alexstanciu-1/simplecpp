@@ -3,11 +3,11 @@ Doc Status: planning
 
 ## Approved direction — 2026-10-08
 
-Traits contribute ordinary instance methods and explicitly typed instance properties
+Traits contribute ordinary instance/static methods, explicitly typed instance/static properties and constants
 to classes and structs through simple `use A, B;` declarations. Reject same-category
 collisions, including authored consumer methods replacing contributed methods.
-Property/method names remain separate categories. Nested uses, adaptations,
-lifecycle methods, static members and constants are outside the first execution slice.
+Property/method/constant names remain separate categories. Nested uses, adaptations,
+lifecycle methods and bodyless requirements remain outside the execution slice.
 
 The user approved consumer-owned instances after inspection established that one
 source method owns one declaring type, prepared signature and prepared body, and
@@ -59,10 +59,15 @@ consumers would corrupt receiver, access and member-resolution facts.
    The successful parse join retires stale private collections before source scopes
    are disposed. Preparation reset and full reset include private syntax/work.
 
-Do not enable executable trait composition based solely on checkpoint 1. Do not
-add inert instance records merely to claim checkpoint 2 without materialization and
-an ownership-isolation proof. The approved migration needs no further semantic decision
-unless implementation exposes a new cross-owner redesign beyond this plan.
+5. **Implemented:** static members and constants use the same consumer-owned graph.
+   The fragment parser accepts constants with an explicit private registration scope,
+   preserving lexical provenance without inserting members into authored inventories.
+   The read-only constant inventory feeds eager scheduling and inherited-collision
+   checks; ordinary constant preparation observes every consumer member scope.
+   Static methods reuse demanded callable instances and ordinary C++ emission. Static
+   properties have separate storage per direct consumer; inherited storage stays with
+   that owner. Bare constant lookup follows the expression's lexical namespace scope,
+   not the consumer selected for access/self. No trait-specific backend path is needed.
 
 ## Evidence
 
@@ -81,8 +86,10 @@ same-named property/method coexistence, unsupported member rejection, reference-
 cycles and emitted method placement. `tests/traits.php` proves automatic composition,
 no-op identity, failed-parse preservation, default edits, use/origin removal, retry,
 repair, reset and fresh-output agreement. Private collections are not published as
-additional source files. Nine generated programs pass without PCH; the compiler
-itself has not been rebuilt natively for this slice.
+additional source files. The expanded static-member proof covers both record kinds,
+independent/inherited storage, late-static overrides, lexical constants, private access,
+reference returns, variadics and constant/default edit recovery. Dated results live in
+CH11; the compiler itself has not been rebuilt natively for this slice.
 
 Field preparation temporarily selects the field occurrence's collection for source
 spelling and restores it afterward; dependency/access ownership remains the consumer

@@ -16,9 +16,16 @@ final class Constant_Preparation
 			$visibility = Member_Preparation::visibility($modifiers);
 			$context->member_owner = weakref_get($entry->member_owner);
 		}
-		$declaring_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$candidates = Observed_Lookup::constants($declaring_scope, $entry->name, $context);
-		if (q_count($candidates) !== 1) {
+		$owner = weakref_get($entry->member_owner);
+		$candidate_count = 0;
+		if ($owner !== null) {
+			$candidate_count = q_count(Inherited_Lookup::members($owner, $entry->name, preparation_lookup_kind::constant, $context));
+		}
+		else {
+			$declaring_scope = object_cast(weakref_get($entry->scope), scope::class);
+			$candidate_count = q_count(Observed_Lookup::constants($declaring_scope, $entry->name, $context));
+		}
+		if ($candidate_count !== 1) {
 			throw new \RuntimeException('S2S duplicate constant name: ' . $entry->name);
 		}
 		Preparation_Cleanup::tree($syntax->initializer);

@@ -368,7 +368,12 @@ final class Expression_Preparation
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
 		// Bare constants retain namespace/import lookup; member constants require qualification.
 		if ($context->member_owner !== null) {
-			$lexical_scope = $context->member_owner->syntax()->member_scope()->parent_scope();
+			// Follow source provenance, not the consumer used for access/self resolution.
+			while (!$lexical_scope->has_import_environment()) {
+				$parent = $lexical_scope->parent_scope();
+				if ($parent === null) { break; }
+				$lexical_scope = $parent;
+			}
 		}
 		$targets = Observed_Lookup::constants($lexical_scope, $entry->name, $context);
 		if (q_count($targets) !== 1) {

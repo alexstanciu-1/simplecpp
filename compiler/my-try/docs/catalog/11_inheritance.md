@@ -37,7 +37,8 @@ Remaining extensions require agreement, not another implementation of those card
    identity from a declared receiver type or silently change fixed method dispatch.
 3. Additional ownership conversions/joins: unique/weak ancestry, checked downcasts,
    derived/base or sibling conditional joins; shared upcasts already work.
-4. Trait extensions: nested uses, adaptations, static members, constants and requirements.
+4. Trait extensions: nested uses, adaptations and bodyless requirements. Static members
+   and constants now share the existing consumer-owned path below.
 5. Other explicit bounds: non-public constructors/destructors, variance and the
    inherited-final-virtual interface-forwarding restriction.
 
@@ -162,6 +163,18 @@ body-validation timing and backend identities. Runtime instance propagation is s
 
 ## Trait composition foundation — 2026-10-08
 
+The static-member extension now adds static methods, typed static properties and
+constants through the same consumer-owned instances. Each direct consumer has its
+own static storage; inheritance preserves that storage owner. `self` selects the
+consumer; late `static` follows the existing called-type contract. Lexical namespace
+constants/imports retain trait source provenance. Constants participate in eager
+preparation and cross-contribution/inherited collision checks, not a new backend path.
+
+Proof: 28 generated programs without PCH in `/tmp/trait-static-20261008-3`; model
+regressions in `/tmp/trait-static-model-20261008-2`. Includes class/struct storage,
+late-static dispatch, private constants/defaults, reference returns, variadics and
+trait-edit failure/retry/repair/reset/fresh agreement. No native compiler rebuild.
+
 The user approved simple instance-method/property composition for classes and structs,
 with same-category collisions rejected and adaptations/nested uses/lifecycle/static
 members/constants outside the first execution slice. Consumer-owned independent member
@@ -186,7 +199,8 @@ Direct source `use` now executes. The coordinator resolves through analysis, pub
 consumer batches, and retires stale instances before source-scope disposal. No-op
 input preserves identity; edits conservatively rebuild affected consumers. Failure
 retries, removed uses/origins, preparation/full reset and fresh-output agreement are
-covered. Nested uses, adaptations, lifecycle/static members, constants and bodyless
+covered. The subsequent extension above adds static members/constants. Nested uses,
+adaptations, lifecycle members and bodyless
 trait requirements remain deferred. Next: reconcile remaining CH11 groups.
 
 Proof: all 18 PHP-host model suites passed, including trait syntax/identity,
@@ -511,7 +525,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLASS-INH-001](#class-inh-001) | implemented-bounded | `class B extends A {}` | verified | verified | deferred | Concrete same-kind bases; [checkpoint](#concrete-inheritance-and-protected-access--2026-10-07) |
 | [CLASS-INH-002](#class-inh-002) | implemented-bounded | `class A extends B implements I, J {}` | verified | verified | deferred | Shared contract validation; local/inherited implementations; final-virtual forwarding restriction |
-| [CLASS-INH-003](#class-inh-003) | implemented-bounded | `class A { use T; }` | direct instance composition | verified | deferred | Independent consumer members; edits/retry/reset; adaptations/nested/lifecycle/static members deferred |
+| [CLASS-INH-003](#class-inh-003) | implemented-bounded | `class A { use T; }` | instance/static members and constants | verified | deferred | Independent consumer members/storage; edits/retry/reset; adaptations/nested/lifecycle/requirements deferred |
 | [CLASS-INH-004](#class-inh-004) | implemented-bounded | `interface I { function f(int $a): int; }` | verified | verified | deferred | Public bodyless instance contracts; multiple interface inheritance |
 | [CLASS-INH-006](#class-inh-006) | implemented-bounded | `$a = new A(1);` | verified | verified | deferred | Shared class construction; checked constructor arguments; inherited constructors reuse original contract |
 | [CLASS-INH-007](#class-inh-007) | superseded-contract | `$a value<A> = new A(1);` | verified | representation verified | deferred | C++-style source spelling is not PHS; explicit inline class storage is intentionally supported by CH10 |
@@ -610,7 +624,7 @@ class A : public B, public I, public J { public: using base = B; };
 
 ## CLASS-INH-003
 
-**v0.2 decision / target C++:** Supported direct instance composition for classes and
+**v0.2 decision / target C++:** Supported direct instance/static members and constants for classes and
 structs, with consumer-owned member instances and ordinary C++ member emission.
 Same-category conflicts reject. See the normative trait contract and handoff above.
 The imported v0.1 rejection below is historical, not current v0.2 behavior.

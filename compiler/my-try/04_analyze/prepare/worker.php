@@ -347,7 +347,7 @@ final class Preparation_Worker
 		}
 		if ($entry instanceof collected_record) { $this->select_owner($this->record_owner(object_cast($entry, collected_record::class))); }
 		$this->select_owner($this->contract_owner($entry));
-		$constants /** Storage<member_constant_node> */ = $node->constants;
+		$constants /** Storage<member_constant_node> */ = Member_Inventory::constants($entry);
 		foreach ($constants as $constant) {
 			$this->select_owner($this->declaration_owner(object_cast($constant->occurrence(), collected_constant::class)));
 		}

@@ -19,14 +19,15 @@ final class Trait_Materialization
 		$syntax = $origin->syntax();
 		$uses /** Storage<trait_use_node> */ = $syntax->use_traits;
 		$constants /** Storage<member_constant_node> */ = $syntax->constants;
-		if (!$uses->is_empty() || !$constants->is_empty()) {
-			throw new \RuntimeException('Trait materialization currently supports only direct properties and methods');
+		if (!$uses->is_empty()) {
+			throw new \RuntimeException('Trait materialization currently supports only direct members');
 		}
 		$origins /** Storage<declaration_node> */ = new Storage();
 		$properties /** Storage<property_node> */ = $syntax->properties;
 		$methods /** Storage<method_node> */ = $syntax->methods;
 		foreach ($properties as $property) { $origins->append($property); }
 		foreach ($methods as $method) { $origins->append($method); }
+		foreach ($constants as $constant) { $origins->append($constant); }
 		$lexical = new scope();
 		$lexical->set_parent(weakref_get($origin->scope));
 		$tokens = Source_Fragments::snapshot($origin->token_snapshot());
