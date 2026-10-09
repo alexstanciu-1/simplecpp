@@ -724,6 +724,19 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For runtime observation boundaries:
+
+```bash
+python3 compiler/my-try/tests/runtime_observation.py --results /tmp/FRESH_OBSERVATION_RESULTS
+```
+
+Four PHP suites check metadata, shared admission and ordinary reference regressions.
+Five generated programs exercise local/readonly inputs, temporaries, temporary-owner
+fields, noncopyable vectors and both boxed families. Concrete test-only metadata
+isolates the boundary from pending generic registration. AddressSanitizer checks
+invalid accesses; leak detection is disabled for sandbox compatibility. This does
+not rebuild the compiler natively or enable production `count` registration.
+
 Import from `tools/test_runner.py`; the scheduler is independent of test language:
 
 ```python

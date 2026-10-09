@@ -141,6 +141,10 @@ final class Runtime_Catalog_Reader
 					$result->mode = passing_mode::reference;
 					$result->access = storage_access::read_only;
 				}
+				elseif ($mode === 'observe') {
+					$result->mode = passing_mode::observation;
+					$result->access = storage_access::read_only;
+				}
 				elseif ($mode !== 'value') {
 					$reader->reject('Unsupported parameter passing mode');
 				}

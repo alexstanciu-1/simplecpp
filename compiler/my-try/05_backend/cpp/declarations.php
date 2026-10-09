@@ -509,6 +509,11 @@ final class CPP_Declarations
 	{
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
+		if (q_count($prepared_arguments) === 1) {
+			if ($prepared_arguments[0]->boundary === value_boundary_operation::observe_value) {
+				return self::observed_call($facts, $arguments, $context, $callee, $constructed_type, $prefix);
+			}
+		}
 
 		// The immediately invoked lambda sequences arguments and contains their temporaries.
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
@@ -582,6 +587,22 @@ final class CPP_Declarations
 		}
 		$text .= "\treturn " . $reference . '(' . $names . ");\n}())";
 		return $text;
+	}
+
+	/** One full expression keeps argument/owner temporaries alive without retaining a borrow. */
+	private static function observed_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
+		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type, string $prefix): string
+	{
+		if (($callee !== '') || ($constructed_type !== null) || ($prefix !== '') || ($facts->signature->reference_return !== null)) {
+			throw new \LogicException('Observation requires a direct non-retaining runtime call');
+		}
+		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
+		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
+		$argument = $prepared_arguments[0];
+		$value = (new CPP_Syntax($context))->expression($arguments[$argument->source_index]);
+		$type = self::type($parameters[0]->type, $context);
+		$target = object_cast(weakref_get($facts->target), registered_function::class);
+		return CPP_Callables::reference($target, $context) . '(static_cast<const ' . $type . '&>(' . $value . '))';
 	}
 
 	/** Field identity comes from shared preparation, never a backend name lookup. */

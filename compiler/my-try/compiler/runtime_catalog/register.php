@@ -11,6 +11,7 @@ final class Runtime_Catalog_Registration
 		$registry = $types->registry();
 		$names /** hash<bool> */ = [];
 		$reference_names /** hash<bool> */ = [];
+		$observation_names /** hash<bool> */ = [];
 		foreach ($input->modules as $module)
 		{
 			$functions /** Storage<runtime_function_spec> */ = $module->functions;
@@ -22,6 +23,7 @@ final class Runtime_Catalog_Registration
 				$parameter_names /** hash<bool> */ = [];
 				$overload_key = $function->name;
 				$has_reference = false;
+				$has_observation = false;
 				foreach ($function->parameters as $parameter)
 				{
 					if (isset($parameter_names[$parameter->name])) {
@@ -39,6 +41,9 @@ final class Runtime_Catalog_Registration
 					if ($parameter->mode === passing_mode::reference) {
 						$has_reference = true;
 					}
+					if ($parameter->mode === passing_mode::observation) {
+						$has_observation = true;
+					}
 					$parameters->append($resolved);
 					$overload_key .= ':' . $resolved->type->type_id();
 				}
@@ -49,6 +54,12 @@ final class Runtime_Catalog_Registration
 					}
 				}
 				$reference_names[$function->name] = $has_reference;
+				if (isset($observation_names[$function->name])) {
+					if ($observation_names[$function->name] !== $has_observation) {
+						throw new \RuntimeException('Runtime overloads cannot mix observation and consuming inputs');
+					}
+				}
+				$observation_names[$function->name] = $has_observation;
 				if (isset($names[$overload_key])) {
 					throw new \RuntimeException('Duplicate runtime overload: ' . $function->name);
 				}

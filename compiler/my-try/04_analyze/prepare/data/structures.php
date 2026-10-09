@@ -30,6 +30,7 @@ enum value_boundary_operation
 	case copy_value;
 	case consume_value;
 	case bind_reference;
+	case observe_value;
 	case construct_empty;
 }
 

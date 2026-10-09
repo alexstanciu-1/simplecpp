@@ -342,8 +342,17 @@ identities; `functions` remains the source-only retirement inventory. `callables
 combines them with language-scope-owned `compiler_function_definition` identities
 for ordinary nearest-scope lookup and analysis lookup observations.
 Installed pools are immutable under retained consumers. Runtime overload selection
-admits exactly matching fixed, required, by-value parameter signatures; it is not
-general conversion ranking. JSON is the first installed free-function provider.
+admits exactly matching fixed, required value or observation parameter signatures;
+an overload set cannot mix these modes. It is not general conversion ranking.
+JSON is the first installed free-function provider.
+
+Runtime-only `passing_mode::observation` is a read-only, non-retaining unary boundary.
+Shared preparation records `observe_value` without manufacturing an escaping place
+or requiring copyability. Ordinary reference admission is unchanged. C++ emits one
+full-expression const-reference call so temporary values and temporary property
+owners remain alive through observation. Provider metadata promises no mutation or
+borrow escape; multi-argument observation and source syntax remain disabled. Concrete
+test providers exercise this path; parameterized runtime registration is still next.
 
 Compiler definitions describe an immutable operation kind, not a preselected
 signature. `Compiler_Call_Preparation` selects argument-dependent contracts and

@@ -17,6 +17,15 @@ final class Value_Boundary_Preparation
 		preparation_context $context, prepared_expression $value,
 		passing_mode $mode, storage_access $access): value_boundary_operation
 	{
+		if ($mode === passing_mode::observation)
+		{
+			if (($access !== storage_access::read_only) || !Type_Preparation::same_storage_type($value->type, $target)) {
+				throw new \RuntimeException('Runtime observation requires an exact readonly input');
+			}
+			// No copyability, stable-place or escaping-reference requirement. The whole
+			// expression (including any owner temporary) must survive the observing call.
+			return value_boundary_operation::observe_value;
+		}
 		if ($mode === passing_mode::reference)
 		{
 			if ((!$value->addressable()) || !Type_Preparation::same_storage_type($value->type, $target)) {

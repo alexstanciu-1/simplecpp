@@ -91,10 +91,20 @@ Currently countable:
 - compiler-module `Storage<T>` and `Keyed_Storage<T>` (live membership, excluding holes)
 - `hash_t<T>`
 - `mixed_t` that currently carries a live hash/table-compatible value
+- `dynamic_t` whose current kind is a table (list or keyed object)
 
 Normative rule:
 - countable input -> return size
 - anything else -> throw runtime error
+
+For v0.2, statically known non-countable operands reject during preparation;
+`mixed`/`dynamic` retain runtime kind checks. The runtime-error examples below
+describe runtime dispatch, not permission to compile known invalid operands.
+Strings are not countable even though they support collection emptiness; use
+`strlen` for byte length. Wrappers do not forward countability to their payloads.
+Counting observes container membership without copying/consuming the container
+or its elements, including noncopyable elements. Runtime carrier support does not
+imply that every carrier already has source registration in the v0.2 compiler.
 
 Examples:
 - `count([])` -> `0`

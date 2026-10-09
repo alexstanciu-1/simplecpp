@@ -94,6 +94,15 @@ final class Callable_Contracts
 		$variadic_seen = false;
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {
+			if ($parameter->mode === passing_mode::observation)
+			{
+				if ((q_count($parameters) !== 1) || ($parameter->access !== storage_access::read_only)
+					|| ($parameter->default_value !== null) || ($parameter->element_type !== null)
+					|| ($signature->reference_return !== null)) {
+					throw new \RuntimeException('Runtime observation requires one fixed readonly input and a value return');
+				}
+				continue;
+			}
 			if ($parameter->access === storage_access::read_only) {
 				if (($parameter->mode !== passing_mode::reference) || ($parameter->element_type !== null)
 					|| ($parameter->default_value !== null)) {

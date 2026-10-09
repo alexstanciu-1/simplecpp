@@ -23,7 +23,7 @@ final class Call_Preparation
 		return $target->signature();
 	}
 
-	/** Bounded installed overload selection: exact fixed value signatures, without conversion ranking. */
+	/** Bounded installed overload selection: exact fixed signatures, without conversion ranking. */
 	public static function prepare_named(array $targets /** vector<callable_definition_i> */,
 		Storage $arguments /** Storage<expression_node> */, preparation_context $context): prepared_call
 	{
@@ -38,6 +38,8 @@ final class Call_Preparation
 			throw new \RuntimeException('S2S named call has no resolved function');
 		}
 
+		$observing = false;
+		$by_value = false;
 		foreach ($targets as $candidate)
 		{
 			if (!($candidate instanceof registered_function)) {
@@ -47,16 +49,22 @@ final class Call_Preparation
 			$parameters /** Storage<callable_parameter> */ = $registered->signature()->parameters;
 			foreach ($parameters as $parameter)
 			{
-				if (($parameter->mode !== passing_mode::value) || ($parameter->default_value !== null)
+				if ((($parameter->mode !== passing_mode::value) && ($parameter->mode !== passing_mode::observation)) || ($parameter->default_value !== null)
 					|| ($parameter->element_type !== null)) {
-					throw new \RuntimeException('S2S runtime overloads require fixed required value parameters');
+					throw new \RuntimeException('S2S runtime overloads require fixed required value or observation parameters');
 				}
+				if ($parameter->mode === passing_mode::observation) { $observing = true; }
+				else { $by_value = true; }
 			}
+		}
+		if ($observing && $by_value) {
+			throw new \RuntimeException('Runtime overloads cannot mix observation and consuming inputs');
 		}
 
 		// Prepare once without a candidate's contextual type; ambiguous literals need explicit targets.
 		foreach ($arguments as $argument) {
-			Expression_Preparation::prepare_for_consumer($argument, $context, null, expression_consumer::consuming_argument);
+			$consumer = $observing ? expression_consumer::value : expression_consumer::consuming_argument;
+			Expression_Preparation::prepare_for_consumer($argument, $context, null, $consumer);
 		}
 		$matches /** vector<callable_target_i> */ = [];
 		foreach ($targets as $candidate)
@@ -142,6 +150,12 @@ final class Call_Preparation
 			$parameter_index /** int */ = $facts->fixed_count;
 			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
+			if ($parameter->mode === passing_mode::observation) {
+				if (!($target instanceof registered_function)) {
+					throw new \RuntimeException('Observation parameters belong to registered runtime contracts');
+				}
+				Callable_Contracts::validate($signature);
+			}
 			$argument_type = $parameter->element_type ?? $parameter->type;
 			$consumer = expression_consumer::value;
 			if (($parameter->mode === passing_mode::value) && ($parameter->element_type === null)) {

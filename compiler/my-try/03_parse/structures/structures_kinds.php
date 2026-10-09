@@ -144,6 +144,8 @@ enum if_arm_kind {
 enum passing_mode {
 	case value;
 	case reference;
+	/** Runtime-only non-retaining observation; no source parameter spelling. */
+	case observation;
 }
 
 /** Access through a binding is independent of how its value is passed. */

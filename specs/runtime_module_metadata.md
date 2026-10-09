@@ -21,9 +21,31 @@ A function requires `id`, `name`, `parameters`, and `returns`. Identities are gl
 unique across selected modules. Source names may repeat for overloads with different
 parameter types; return type or passing mode alone does not distinguish overloads.
 Each parameter requires a unique `name`, a `type`, and `passing` (`value`, `reference`,
-or `readonly_reference`). These names are metadata, not named-argument support.
+`readonly_reference`, or `observe`). These names are metadata, not named-argument support.
 Reference-bearing signatures must have an unoverloaded source name in this slice;
 ordinary call admission still checks reference places and access.
+
+### Non-retaining observation
+
+`observe` describes a runtime-only, read-only input boundary, not an ordinary source
+reference parameter. The provider promises not to mutate the input, retain a borrow,
+or return a value that borrows from it. Admission requires the exact storage type,
+but does not require copyability or a stable reference place. Locals, readonly
+inputs, temporary values and property expressions may be observed without copying
+or consuming their storage. Evaluating the supplied expression may itself have
+effects; it runs exactly once.
+
+The current bounded consumer accepts one fixed required observation input and a
+value return. Defaults, variadics, reference returns, static factories and source
+observation declarations are not enabled. An overload set cannot mix observation
+and consuming/reference input contracts. The trusted provider is responsible for
+the non-retention promise; metadata cannot prove arbitrary C++ implementation bodies.
+
+C++ lowering passes a `const T&` view in the call's full expression. Argument and
+receiver temporaries therefore survive the call; a property of a temporary owner
+must not be staged into a reference whose owner has already been destroyed.
+Multi-argument observation is deferred until argument-induced invalidation rules
+are established. This does not relax ordinary source reference lifetime rules.
 
 A type is either a source-exposed registered name such as `"string"`, or an application:
 
