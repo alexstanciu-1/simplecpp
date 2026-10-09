@@ -81,21 +81,53 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Concrete reference returns | implemented-bounded | `$f = fn&(int &$v): int => $v; $alias =& $f($value);` | passed | passed | deferred | Shared origin contract; capture/local escape and cycles reject; erased signatures deferred |
 | Borrowed receiver capture | implemented-bounded | `$f = function () use ($this): int { return $this->count; };` | passed | passed | deferred | Shared borrow lifetime; arrows, nested access and class/struct receivers; no owning capture |
 | [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
-| [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
+| [SCOPE-VAR-002](#scope-var-002) | implemented-bounded | `if (true) { $g = function (): int { return 1; }; } return $g();` | rejection passed | not emitted | deferred | Existing lexical scope; `closures.php` |
 | [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |
 | [CLOSURE-USE-001](#closure-use-001) | implemented-bounded | `$f function<int()> = function () use ($a): int { return $a; };` | passed | passed | deferred | Explicit signature, copyable captures, read-only bindings; omitted return/context inference remains deferred |
-| [CLOSURE-CALLABLE-001](#closure-callable-001) | pending-discussion | `$f function<int()> = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
+| [CLOSURE-CALLABLE-001](#closure-callable-001) | deferred | `$f function<int()> = function () use ($a) { return $a; };` | rejected-bounded | not emitted | deferred | Contextual signature completion deferred; explicit signatures required |
 | [CLOSURE-CALLABLE-002](#closure-callable-002) | implemented-bounded | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | passed | passed | deferred | Explicit signatures and captures; inferred storage remains concrete, unlike imported v0.1 erasure |
 | [ARROW-001](#arrow-001) | implemented-bounded | `$a = 10; $f = fn(int $x): int => $x + $a;` | passed | passed | deferred | Same closure node/body/capture pipeline; nested scope, snapshot, boundary and incremental proofs |
 | [CLOSURE-USE-002](#closure-use-002) | implemented-bounded | `$f = function () use (&$a): int { return $a; };` | passed | passed | deferred | Concrete locals; lexical lifetime and transitive-copy checks; erased borrowing closures rejected |
 | [CLOSURE-RETURN-001](#closure-return-001) | implemented-bounded | `$f = function () use ($a): vector<int> { return [$a, 2]; };` | passed | passed | deferred | Reuses ordinary function return/literal preparation; generated execution |
-| [CLOSURE-REJECT-001](#closure-reject-001) | pending-discussion | `$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
-| [CLOSURE-REJECT-002](#closure-reject-002) | pending-discussion | `$items[] = function (): int { return 1; };` | unverified | unverified | deferred | — |
+| [CLOSURE-REJECT-001](#closure-reject-001) | implemented-bounded | `$a = 1; $f = function () use ($a) { return $a; };` | rejection passed | not emitted | deferred | Missing return type rejects; `closures.php` |
+| [CLOSURE-REJECT-002](#closure-reject-002) | implemented-bounded | `$items mixed = []; $items[] = function (): int { return 1; };` | rejection passed | not emitted | deferred | Established mixed/dynamic destinations reject callable payloads; `closures.php` |
+
+### Reconciliation — 2026-10-09
+
+All 13 imported IDs now have a current decision: 11 are implemented within their
+stated positive/rejection bounds; two remain deferred (contextual signatures and
+empty callable storage). Concrete reference returns and borrowed receivers add two
+implemented rows. This is card reconciliation, not whole-chapter completion: imported
+prose and extensions contain further capabilities.
+
+| Remaining capability | Current boundary / owner |
+| --- | --- |
+| Contextual signatures | Explicit closure/arrow signatures required; CLOSURE-CALLABLE-001 |
+| Callable returns/factories | Shared named/anonymous return gate; owned-value environments and borrowing environments need distinct admission |
+| Empty callable storage | Initialization required; SCOPE-VAR-003 |
+| Callable properties, wrappers and typed containers | Explicit preparation gates; shared storage/copy/lifetime admission still needed |
+| Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
+| Broader callable boundaries | Erased reference/default/variadic signatures, owning/escaping receivers and captured-field borrows remain outside the implemented slices |
+| Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
+| Void-valued return expressions | Shared return-owner debt recorded in the foundation plan; do not special-case arrows |
+
+Recommended next discussion: callable returns through explicit `function<R(Args...)>`
+contracts, shared by functions/methods/closures, initially with capture-free or
+copyable owned-value environments only. Borrowing closures must remain rejected.
+This recommendation is not implementation approval or a new scope deferral.
+
+Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
+`closure_model` checks, including added exact rejection shapes. No compiler semantics,
+native compiler build or generated-program execution changed in this reconciliation.
+
 ## CLOSURE-USE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented with explicit signatures and ordinary copy/shared semantics.
+Concrete locals lower to native lambdas; explicit compatible `function<...>` boundaries
+use `std::function`. Omitted signatures/contextual completion remain deferred.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Different source versions share this ID. Both remain below for provenance; the
+v0.2 decision above supersedes their differing inferred/erased signature behavior.
 
 ### Imported version 1
 
@@ -204,7 +236,8 @@ std::function<int_t()> f = [&a]() -> int_t { return a; };
 
 ## CLOSURE-CALLABLE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred: contextual signature completion is not enabled.
+The target type does not currently fill in an omitted closure return/parameter type.
 
 ### Imported version 1
 
@@ -241,7 +274,8 @@ std::function<int_t()> f = [a]() -> int_t { return a; };
 
 ## CLOSURE-CALLABLE-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented with a concrete anonymous type for inferred locals,
+not implicit `std::function` erasure. Parameters/return remain explicitly authored.
 
 ### Imported version 1
 
@@ -278,7 +312,8 @@ std::function<int_t(int_t, int_t)> add = [base](int_t x, int_t y) -> int_t { ret
 
 ## CLOSURE-RETURN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented through shared return and data-construction preparation.
+Returning a vector is supported; returning a callable is a separate deferred boundary.
 
 ### Imported version 1
 
@@ -315,7 +350,9 @@ std::function<vector_t<int_t>()> f = [a]() -> vector_t<int_t> { return vector_t<
 
 ## CLOSURE-REJECT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented rejection when the return signature is missing.
+No body inference is performed. Contextual completion is separately deferred under
+CLOSURE-CALLABLE-001.
 
 ### Imported version 1
 
@@ -352,7 +389,9 @@ ERROR
 
 ## CLOSURE-REJECT-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented rejection for callable values in mixed/dynamic
+entries. Typed callable containers/properties are also gated; enabling storage remains
+separate work, not a consequence of completing this rejection card.
 
 ### Imported version 1
 
@@ -389,7 +428,8 @@ ERROR
 
 ## CLOSURE-STAN-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented in shared semantic preparation, without invoking
+legacy STAN. Incompatible erased callable signatures reject before C++ emission.
 
 ### Imported version 1
 
@@ -426,7 +466,9 @@ STAN ERROR
 
 ## CLOSURE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented for explicit signatures using the shared callable lifecycle,
+body checking and native lambda lowering. Callable-returning factories in the imported
+prose remain deferred; this bounded card does not claim their support.
 
 ### Imported version 1
 
@@ -463,7 +505,9 @@ std::function<int_t(int_t)> f = [](int_t a) -> int_t { if (static_cast<bool>(a =
 
 ## CLOSURE-CALL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented through shared call admission: ordered arguments,
+defaults, typed variadics and reference parameters for concrete closures. Erased callable
+boundaries retain their narrower contract.
 
 ### Imported version 1
 
@@ -500,7 +544,8 @@ f(); g(int_t(3)); h(int_t(3)); h(int_t(3), int_t(9));
 
 ## SCOPE-VAR-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented lexical-scope rejection. A local first established in
+a nested block is not visible outside it; no PHP-style function-scope hoisting.
 
 ### Imported version 1
 
@@ -539,9 +584,11 @@ ERROR
 
 **Strict-mode PHP input example:** `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);`
 
-This is the working source spelling. Imported examples and C++ expectations below remain reference material; the v0.2 result still needs agreement and proof.
+This is the working source spelling. Imported examples and C++ expectations below remain reference material.
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Deferred empty callable storage. Current callable
+locals require initialization; the existing rejection is covered by `closures.php`.
+Empty invocation behavior or definite-initialization rules need a separate agreement.
 
 ### Imported version 1
 

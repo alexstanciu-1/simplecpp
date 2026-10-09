@@ -149,6 +149,9 @@ try {
 		'$f = function (): int { return 1; }; $f = function (): int { return 2; }; return $f();',
 		'$outer = 3; $f = function (): int { return $outer; }; return $f();',
 		'$f mixed = function (): int { return 1; }; return 0;',
+		'if (true) { $g = function (): int { return 1; }; } return $g();',
+		'$items mixed = []; $items[] = function (): int { return 1; }; return 0;',
+		'$items dynamic = []; $items[] = function (): int { return 1; }; return 0;',
 		'$value = 1; return $value();',
 		'$f function<int()>; return 0;',
 		'$f function<string()> = function (): int { return 1; }; return 0;',
@@ -206,7 +209,9 @@ try {
 	file_put_contents($output . '/capture_signature_edit.cpp', $capture_output);
 	$executions[] = ['path' => $output . '/capture_signature_edit.cpp', 'exit_code' => 6];
 	foreach (['$f = function () use ($this): void { return; };',
-		'$n = 1; $f = fn() use ($n): int => $n;', '$f = fn() => 1;', '$f = fn($n): int => $n;'] as $deferred) {
+		'$n = 1; $f = fn() use ($n): int => $n;', '$f = fn() => 1;', '$f = fn($n): int => $n;',
+		'$a = 1; $f = function () use ($a) { return $a; };',
+		'$a = 1; $f function<int()> = function () use ($a) { return $a; };'] as $deferred) {
 		file_put_contents($path, $deferred); $rejected = false;
 		try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Deferred capture was accepted'); }
