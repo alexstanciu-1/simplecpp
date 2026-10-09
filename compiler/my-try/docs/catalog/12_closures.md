@@ -57,6 +57,11 @@ storage cannot escape; erased reference signatures remain deferred. The imported
 are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
+Reference-capture behavior is now agreed, but implementation is paused on the
+[lexical lifetime-region prerequisite](../planning/closure_foundation.md#reference-capture-prerequisite-discovered--2026-10-09).
+Collected name scopes do not represent ordinary block storage lifetimes. Reference
+captures remain rejected until that shared semantic owner and its lifecycle are agreed.
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |

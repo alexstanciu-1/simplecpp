@@ -143,6 +143,64 @@ LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
 
+### Reference-capture prerequisite discovered — 2026-10-09
+
+The user approved a bounded reference-capture slice: whole locals/parameters and
+eligible aliases, inherited readonly access, checked local copies, transitive borrow
+obligations through value-captured closures, and rejection at erased callable
+boundaries. Arrows stay by-value; captured fields, `$this`, callable returns and
+captured-storage reference returns are not enabled by this agreement.
+
+**Implementation paused for model approval.** Collected `scope` records describe
+callable/name lookup boundaries, not every executable block's storage lifetime.
+`Body_Preparation::prepare_block` creates a transient `local_environment`; the parser
+does not create a matching collected scope for an ordinary `block_node`. Consequently,
+testing only collected-scope ancestry and declaration position is not a truthful
+lexical lifetime proof. A direct checker test accepted a hypothetical destination
+outside the block owning the borrowed local:
+
+```php
+if (true) {
+    $n = 3;
+    $f = function () use (&$n): int { return $n; };
+    $g = $f; // valid local copy
+}
+$later = 0; // this outer storage must not be an eligible destination for f's type
+```
+
+This was a model-level counterexample, not a demonstrated source-level runtime
+escape: existing lexical lookup and erased-conversion gates restrict how such a
+destination could be expressed. Those gates must not substitute for the approved
+lifetime proof. Incremental testing also showed that reparsed signatures and reused
+bodies can carry token indexes from different generations; physical token order
+across those boundaries is not lifetime order.
+
+**Proposed prerequisite, awaiting approval:** give shared semantic storage preparation
+an explicit lexical lifetime-region identity, independent of collected name scopes.
+Local storage records identify their region and establishment order; aliases preserve
+their target origin. Structured-body/loop/switch preparation supplies the appropriate
+region, and parameters use their callable invocation lifetime. Captures retain only
+neutral lifetime/origin facts, never transient environments or workers. Copy admission
+and erased-boundary checks consume the same borrowing obligations. Rebuild/retirement
+must refresh those facts and prevent stale origin observers. The exact region ownership
+and nested-callable context link must be settled before coding this prerequisite.
+
+This touches shared local/storage preparation, structured environments, anonymous
+work lifecycle and copy boundaries, rather than just capture parsing/lowering.
+It unlocks checked reference captures without pretending name scopes are lifetimes.
+Validation must cover nested and sibling blocks, loop iterations/header storage,
+switch arms, parameter origins, aliases, transitive captures, no-op reuse, signature
+edits, failure recovery and retirement. No general escape analysis, heap promotion,
+exclusive borrowing, escaping callbacks or new callable storage forms are proposed.
+
+The incomplete implementation was removed; reference captures remain rejected on
+the committed compiler. The first experimental execution run passed 85 generated
+programs (`/tmp/my-try-ch12-reference-captures-01`) and 12 focused suites passed
+(`/tmp/my-try-ch12-reference-capture-checks-01`), but those results do not prove the
+missing lifetime model and are not claims of shipped support. Expanded runs `...-02`
+and `...-03` exposed the incremental-order issue and the block-lifetime counterexample.
+No native compiler rebuild was performed.
+
 The signature checkpoint must preserve AST child order, signature/parameter identity
 through incremental parsing, existing functions/methods/constructors, bodyless
 transitions, reference contracts, purity, failure/retry and emitted artifacts.
