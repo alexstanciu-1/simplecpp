@@ -100,7 +100,7 @@ final class Call_Preparation
 		$facts->target = $target;
 		$facts->signature = $signature;
 		if ($facts->signature->reference_return !== null) {
-			if (!($target instanceof collected_source_callable)) {
+			if (!($target instanceof collected_source_callable) && !($target instanceof anonymous_callable_identity)) {
 				throw new \RuntimeException('S2S runtime reference-return calls await lifetime integration');
 			}
 		}

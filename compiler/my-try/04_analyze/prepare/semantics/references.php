@@ -98,9 +98,9 @@ final class Reference_Preparation
 	}
 
 	/** The unique reference parameter makes the return obligation declaration-local. */
-	public static function prepare_signature(callable_declaration_node $syntax, callable_signature $signature): void
+	public static function prepare_signature(callable_signature_syntax $syntax, callable_signature $signature): void
 	{
-		if (!$syntax->signature_syntax->returns_reference) {
+		if (!$syntax->returns_reference) {
 			return;
 		}
 		$selected = -1;
@@ -121,9 +121,8 @@ final class Reference_Preparation
 	}
 
 	/** Every return shares one declaration-owned origin; ordinary completion checks fallthrough. */
-	public static function begin_body(callable_declaration_node $syntax, preparation_context $context): void
+	public static function begin_body(prepared_source_callable $facts, preparation_context $context): void
 	{
-		$facts = $syntax->require_preparation();
 		if ($facts->signature->reference_return === null) {
 			return;
 		}

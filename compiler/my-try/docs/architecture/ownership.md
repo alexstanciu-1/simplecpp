@@ -260,6 +260,12 @@ Nested closures have independently scheduled workers
 which own their facts. Shared callable inspection retains the syntax owner only for the
 cursor lifetime and follows the existing ordered children.
 
+Expression invocations share collected call occurrences with named calls but do not
+enter named lookup. Reference-cycle analysis builds an invocation-local graph over
+named and anonymous targets and their body scopes. Vertices temporarily retain target,
+optional body and diagnostic label; graph results feed ordinary body-work failure
+handling. No second retained call graph or new lifetime owner is introduced.
+
 An authored constructor's function body owns optional base-initialization facts. They
 weakly observe the leading source call (when explicit) and share its admitted call
 contract; they do not retain a worker or duplicate source arguments. Body cleanup

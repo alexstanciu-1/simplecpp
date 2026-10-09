@@ -8,6 +8,17 @@ $directory = sys_get_temp_dir() . '/closure-execution-' . bin2hex(random_bytes(6
 mkdir($directory);
 $path = $directory . '/main.phs';
 $cases = [
+	'reference_return' => ['$f = function &(int &$n): int { return $n; }; $n = 3; $a =& $f($n); $a = 7; return $n;', 7],
+	'reference_return_alias_copy' => ['$f = function &(int &$n): int { $a =& $n; return $a; }; $g = $f; $n = 3; $a =& $g($n); $a = 8; return $n;', 8],
+	'reference_return_value_copy' => ['$f = fn&(int &$n): int => $n; $n = 3; $copy = $f($n); $copy = 8; return $n;', 3],
+	'reference_return_immediate' => ['$n = 3; $a = & (fn&(int &$n): int => $n)($n); $a = 6; return $n;', 6],
+	'reference_return_capture' => ['$increment = 4; $f = function &(int &$n) use ($increment): int { $n += $increment; return $n; }; $n = 3; $a =& $f($n); $a++; return $n;', 8],
+	'reference_return_forward' => ['function &identity(int &$n): int { return $n; } $f = fn&(int &$n): int => identity($n); $g = fn&(int &$n): int => $f($n); $n = 3; $a =& $g($n); $a = 9; return $n;', 9],
+	'reference_return_named_forward' => ['function &select(int &$n): int { $f = fn&(int &$v): int => $v; return $f($n); } $n = 3; $a =& select($n); $a = 8; return $n;', 8],
+	'reference_return_branches' => ['$f = function &(int &$n, bool $yes = true): int { if ($yes) { return $n; } $a =& $n; return $a; }; $n = 3; $a =& $f($n, false); $a = 4; return $n;', 4],
+	'reference_return_pack' => ['$f = function &(int &$n, int ...$values): int { foreach ($values as $v) { $n += $v; } return $n; }; $n = 1; $a =& $f($n, 2, 3); $a++; return $n;', 7],
+	'reference_return_vector' => ['$f = fn&(vector<int> &$v): vector<int> => $v; $v vector<int> = [2]; $a =& $f($v); $a[] = 7; $copy = $f($v); $copy[0] = 9; return $v[0] + $a[1];', 9],
+	'reference_return_unused_recursive_closure' => ['function &select(int &$n): int { $unused = fn&(int &$v): int => select($v); return $n; } $n = 3; $a =& select($n); $a = 6; return $n;', 6],
 	'closure_default' => ['$f = function (int $n = 4): int { return $n; }; $g = $f; return $g();', 4],
 	'closure_default_override' => ['$f = function (int $n = 4): int { return $n; }; return $f(7);', 7],
 	'closure_reference' => ['$f = function (int &$n): void { $a =& $n; $a += 3; }; $n = 4; $f($n); return $n;', 7],
@@ -83,6 +94,23 @@ try {
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('No-op changed closure output'); }
 	}
 	$invalid = [
+		'$f = function &(): int { $n = 3; return $n; }; return 0;',
+		'$f = fn&(int &$a, int &$b): int => $a; return 0;',
+		'$f = fn&(const int &$n): int => $n; return 0;',
+		'$f = fn&(int &$n): float => $n; return 0;',
+		'$f = function &(int &$n): int { $local = 2; $a =& $local; return $a; }; return 0;',
+		'$f = fn&(int &$n, int $value): int => $value; return 0;',
+		'$f = fn&(int &$n): int => $n + 1; return 0;',
+		'$n = 3; $f = function &(int &$value) use ($n): int { return $n; }; return 0;',
+		'$n = 3; $f = fn&(int &$value): int => $n; return 0;',
+		'$n = 3; $f = function &(int &$value) use ($n): int { $a =& $n; return $a; }; return 0;',
+		'class Box { public int $n = 1; } $b = new Box(); $f = fn&(int &$value): int => $b->n; return 0;',
+		'struct Box { public int $n = 1; } $f = fn&(Box &$b): Box => $b->n; return 0;',
+		'$f = function &(int &$n, bool $yes): int { if ($yes) { return $n; } }; return 0;',
+		'$f = fn&(int &$n): int => $n; $a =& $f(3); return 0;',
+		'$f = fn&(int &$n): int => $n; $n = 3.0; $a =& $f($n); return 0;',
+		'$f function<int(int)> = fn&(int &$n): int => $n; return 0;',
+		'function &escape(int &$n): int { $f = fn&(int &$v): int => $v; $local = 3; return $f($local); } return 0;',
 		'$f function<int(int)> = function (int $n = 4): int { return $n; }; return 0;',
 		'$f function<int(vector<int>)> = fn(int ...$v): int => 0; return 0;',
 		'$f function<int(int)> = fn(int &$n): int => $n; return 0;',
@@ -204,6 +232,31 @@ try {
 	file_put_contents($output . '/arrow_capture_edit.cpp', $arrow_output);
 	$executions[] = ['path' => $output . '/arrow_capture_edit.cpp', 'exit_code' => 7];
 	$default_source = $cases['closure_default'][0];
+	// Both directions through anonymous callables participate in the existing cycle policy.
+	$reference_source = $cases['reference_return_named_forward'][0];
+	Compiler_Lifecycle::reset(); file_put_contents($path, $reference_source);
+	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$reference_output = CPP_Probe::text(Model::$cpp_files);
+	foreach ([
+		'function &select(int &$n): int { $f = fn&(int &$v): int => select($v); return $f($n); } return 0;',
+		'function helper(int &$n): int { $f = function &(int &$v): int { helper($v); return $v; }; return $f($n); } return 0;',
+	] as $recursive_source) {
+		file_put_contents($path, $recursive_source); $rejected = false;
+		try { $compiler->update_cpp([$path]); }
+		catch (\RuntimeException $error) {
+			if (!str_contains($error->getMessage(), 'recursive reference-return cycles')) { throw $error; }
+			$rejected = true;
+		}
+		if (!$rejected) { throw new \LogicException('Anonymous reference-return cycle was accepted'); }
+		file_put_contents($path, $reference_source); $compiler->update_cpp([$path]);
+		if (CPP_Probe::text(Model::$cpp_files) !== $reference_output) { throw new \LogicException('Reference cycle repair left stale output'); }
+	}
+	// Removing the return-reference marker must invalidate aliases, then recover.
+	file_put_contents($path, str_replace('fn&', 'fn', $reference_source)); $rejected = false;
+	try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
+	if (!$rejected) { throw new \LogicException('Reference-return edit left a stale place'); }
+	file_put_contents($path, $reference_source); $compiler->update_cpp([$path]);
+	if (CPP_Probe::text(Model::$cpp_files) !== $reference_output) { throw new \LogicException('Reference-return repair disagrees with fresh output'); }
 	Compiler_Lifecycle::reset(); file_put_contents($path, $default_source);
 	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
 	file_put_contents($path, str_replace('$n = 4', '$n = 6', $default_source)); $compiler->update_cpp([$path]);

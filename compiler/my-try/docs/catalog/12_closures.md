@@ -50,8 +50,10 @@ node and capture fields with scope-aware automatic value-capture discovery. Expl
 parameter/return signatures remain required. Concrete closures and arrows now share
 function/method defaults, typed variadics and writable/read-only reference inputs.
 Erased callable conversion remains fixed, required and by-value: defaults, packs and
-references reject rather than silently losing their contracts. Reference returns
-remain a separate lifetime slice. The imported rows below
+references reject rather than silently losing their contracts. Concrete reference
+returns now reuse the single caller-owned reference-parameter contract, including
+aliases, forwarding, copying and recursive-component rejection. Captured/local/interior
+storage cannot escape; erased reference signatures remain deferred. The imported rows below
 are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
@@ -61,6 +63,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | [CLOSURE-001](#closure-001) | implemented-bounded | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | passed | passed | deferred | Capture-free explicit signatures; concrete local types; `closures.php` |
 | [CLOSURE-CALL-001](#closure-call-001) | implemented-bounded | `$f(); $g(3); $h(3); $h(3, 9);` | passed | passed | deferred | Shared defaults, typed variadic packs and value/reference inputs; ordered arguments; generated execution |
+| Concrete reference returns | implemented-bounded | `$f = fn&(int &$v): int => $v; $alias =& $f($value);` | passed | passed | deferred | Shared origin contract; capture/local escape and cycles reject; erased signatures deferred |
 | [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
 | [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
 | [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |

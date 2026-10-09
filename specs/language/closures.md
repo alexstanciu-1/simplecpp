@@ -120,7 +120,39 @@ storage; readonly references cannot be used to mutate it. Copying a concrete clo
 preserves its full parameter contract. Capturing a reference parameter by value still
 copies its current value; it does not introduce reference capture.
 
-Closure reference returns remain deferred and are distinct from reference inputs.
+## Bounded reference returns
+
+Concrete closures and arrows inherit the [reference-return contract](../references.md)
+of named functions. An explicit `&` return marker selects exactly one fixed writable
+reference parameter whose storage type exactly matches the return type:
+
+```php
+$select = function &(int &$value): int {
+	$alias =& $value;
+	return $alias;
+};
+$select_arrow = fn&(int &$value): int => $value;
+$value = 3;
+$borrowed =& $select($value);
+$copy = $select_arrow($value);
+```
+
+Every return must preserve that whole parameter's origin, directly, through local
+aliases or supported nonrecursive forwarding. Calls substitute the caller's storage
+origin; destroying a temporary closure does not invalidate that caller-owned storage.
+Ordinary assignment copies the returned value under its normal copyability contract;
+it neither leaks nor implicitly moves. `=&` binds to the returned storage instead.
+
+Closure locals, captured fields (including aliases of captures), captured-object
+properties, interior storage and temporaries cannot escape by reference. Value
+captures may still be used while returning the permitted parameter. Copying a
+concrete closure preserves its reference-return contract. Ordinary default/variadic
+by-value parameters may accompany the single reference parameter.
+
+The existing recursive-reference-return restriction includes concrete anonymous
+callables and cycles through by-value helpers. Merely creating an uninvoked closure
+does not call its body. Const-reference returns and erased reference signatures remain
+deferred: `function<R(Args...)>` must not silently erase this origin contract.
 
 ## Capture semantics
 

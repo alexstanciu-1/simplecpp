@@ -323,14 +323,20 @@ body proof or a caller lifetime. Signature comparison includes it. Source signat
 derive it from exactly one fixed reference parameter; body preparation verifies each
 return against that whole parameter independently of statement position. Structured
 completion checks missing returns. Calls substitute the actual argument's place.
+Named declarations, concrete closures and arrows share this admission and body
+obligation. Captured fields never become reference-parameter origins, and erased
+callable conversion rejects reference-return contracts rather than discarding them.
 Runtime reference-return execution remains gated; initialization factories require
 value returns. Nonrecursive forwarding reuses the same argument-place substitution
 and per-return whole-parameter proof, including local aliases.
 
 After all bodies settle, `Reference_Cycles` builds an invocation-local graph from
-current collected function/call indexes and prepared call targets. Its transient
-`reference_cycle_vertex` records use integer edges, not mutually owning handles.
-Strongly connected components containing reference-returning functions reject through
+current collected named/anonymous callable inventories, call occurrences and prepared
+targets. Expression calls have occurrences without named lookup. Its transient
+`reference_cycle_vertex` records hold a target, optional body and diagnostic label,
+with integer edges, not mutually owning handles. Lexical body scopes keep anonymous
+calls separate from their enclosing callable; creation alone is not a call edge.
+Strongly connected components containing reference-returning callables reject through
 the worker's normal failure/retry protocol before prepared-file publication. By-value
 recursive components remain allowed. This linear check includes unchanged bodies and
 is rerun for incremental updates; it does not re-prepare bodies, retain a second graph,

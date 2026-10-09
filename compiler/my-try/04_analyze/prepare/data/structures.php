@@ -689,15 +689,19 @@ final class prepared_file {
 /** Invocation-local call-cycle vertex; integer edges do not retain other vertices. */
 final class reference_cycle_vertex
 {
-	public collected_source_callable $definition;
+	public callable_target_i $target;
+	public ?function_body_node $body;
+	public string $label;
 	public array $calls /** vector<int> */ = [];
 	public int $visit_index;
 	public int $low_link;
 	public bool $on_stack = false;
 
-	public function __construct(collected_source_callable $definition)
+	public function __construct(callable_target_i $target, ?function_body_node $body, string $label)
 	{
-		$this->definition = $definition;
+		$this->target = $target;
+		$this->body = $body;
+		$this->label = $label;
 		$this->visit_index = -1;
 		$this->low_link = -1;
 	}

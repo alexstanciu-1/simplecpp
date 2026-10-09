@@ -288,8 +288,6 @@ final class Body_Preparation
 			$context->member_owner = $method->declaring_type();
 			$context->receiver = $signature->receiver;
 		}
-		$context->return_type = $signature->signature->return_type;
-		Reference_Preparation::begin_body($syntax, $context);
 		self::bind_parameters($signature, $context);
 		$start = Constructor_Preparation::prepare_base($syntax, $context);
 		self::prepare_callable_statements($syntax->require_body(), $signature, $context, $start, $syntax->name);
@@ -298,6 +296,7 @@ final class Body_Preparation
 	public static function bind_parameters(prepared_source_callable $signature, preparation_context $context): void
 	{
 		$context->return_type = $signature->signature->return_type;
+		Reference_Preparation::begin_body($signature, $context);
 		$locals = $context->locals;
 		$parameters /** Storage<prepared_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {

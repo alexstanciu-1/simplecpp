@@ -44,7 +44,7 @@ final class Declaration_Preparation
 		}
 
 		self::prepare_parameters($syntax->signature_syntax, $facts, $context);
-		Reference_Preparation::prepare_signature($syntax, $facts->signature);
+		Reference_Preparation::prepare_signature($syntax->signature_syntax, $facts->signature);
 		Callable_Contracts::validate($facts->signature);
 		$syntax->set_preparation($facts);
 	}
@@ -72,14 +72,16 @@ final class Declaration_Preparation
 	/** Anonymous admission reuses named-callable parameter and signature contracts. */
 	public static function prepare_anonymous(closure_node $syntax, preparation_context $context): prepared_source_callable
 	{
-		if ($syntax->signature_syntax->returns_reference) { throw new \RuntimeException('Closure reference returns are deferred'); }
 		$facts = new prepared_source_callable();
 		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
 		if (Type_Queries::canonical($facts->signature->return_type)->definition() instanceof callable_type_definition) {
 			throw new \RuntimeException('Callable returns are deferred');
 		}
-		Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
+		if (!$syntax->signature_syntax->returns_reference) {
+			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
+		}
 		self::prepare_parameters($syntax->signature_syntax, $facts, $context);
+		Reference_Preparation::prepare_signature($syntax->signature_syntax, $facts->signature);
 		Callable_Contracts::validate($facts->signature);
 		return $facts;
 	}

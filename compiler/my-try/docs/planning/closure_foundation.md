@@ -126,8 +126,18 @@ across syntax/collection, analysis lifecycle and backend consumers.
    Erased callable conversion explicitly rejects defaults, variadics and reference
    signatures, preserving its current fixed required by-value contract.
 
-Non-goals: reference/this captures, mutable capture bindings, escaping references and reference
-returns on closures, named-call syntax, callable-return support,
+8. **Bounded reference returns — implemented.** Reference preparation consumes shared
+   signature syntax and prepared callable facts; parameter seeding establishes the
+   same whole-parameter return obligation for named and anonymous bodies. Call
+   admission substitutes caller storage without anonymous-specific lowering. Erased
+   conversion rejects reference returns explicitly. The temporary cycle graph indexes
+   callable targets and optional bodies, including anonymous identities; named virtual
+   dispatch remains an adapter. Expression calls now register ordinary call occurrences
+   without named lookup. This fixes missing graph edges and preserves lexical callable
+   boundaries without adding a retained graph or capture escape analysis.
+
+Non-goals: reference/this captures, mutable capture bindings, captured-storage reference
+returns, erased reference signatures, named-call syntax, callable-return support,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
@@ -250,3 +260,18 @@ mutation and the same parameter-order/default/variadic violations as named funct
 Ten focused suites passed in `/tmp/my-try-ch12-parameter-checks-01`, including method
 parameters, references, anonymous lifecycle/recovery and incremental C++. No native
 compiler rebuild was performed; the shared runner used CLI fallback.
+
+Reference-return proof (2026-10-09): 70 generated C++ programs passed with PCH in
+`/tmp/my-try-ch12-reference-returns-02`. New cases cover aliases, copied closures,
+copy-versus-borrow results, immediate temporary closures, captures used independently
+of the returned parameter, bidirectional named/anonymous forwarding, defaults,
+variadics and vector copy semantics. Preparation rejects captured/local/interior
+escapes, unsupported signatures and invalid arguments. Cycle rejection includes
+anonymous bodies and by-value helpers, while uninvoked closure creation adds no call
+edge. Signature-marker edits and cycle repairs recover on the same compiler instance.
+The initial run caught missing expression-call inventory entries; parser collection
+now records them through the existing call-occurrence path. Thirteen focused suites
+passed in `/tmp/my-try-ch12-reference-checks-02`, including named/method reference
+returns, forwarding, parser retention, cleanup and incremental artifacts. An earlier
+check used the nonexistent suite name `method_references`; the corrected run uses
+`method_returns`. The shared runner used CLI fallback; no native compiler rebuild.

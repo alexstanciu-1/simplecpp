@@ -11,6 +11,7 @@ final class Conversion_Relationships implements conversion_relationship_query
 		$identity = Model::$type_catalog->closures()->identity($source);
 		$this->context->worker->prepare_anonymous($identity, $this->context->owner);
 		$provided = $identity->signature();
+		if ($provided->reference_return !== null) { return false; }
 		$required = $target->signature();
 		if (!$provided->return_type->matches($required->return_type)) { return false; }
 		$inputs /** Storage<callable_parameter> */ = $provided->parameters;

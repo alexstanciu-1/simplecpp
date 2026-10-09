@@ -116,9 +116,10 @@ final class Preparation_Worker
 		$this->require_success();
 		// Only settled call facts participate; failure uses ordinary retained retry/publication guards.
 		$cyclic = (new Reference_Cycles())->find($sources);
-		foreach ($cyclic as $definition) {
-			$body_owner /** body_work */ = $definition->callable_syntax()->require_body()->work();
-			$this->failure($body_owner, 'S2S recursive reference-return cycles are deferred: ' . $definition->name);
+		foreach ($cyclic as $vertex) {
+			$body /** function_body_node */ = $vertex->body;
+			$body_owner /** body_work */ = $body->work();
+			$this->failure($body_owner, 'S2S recursive reference-return cycles are deferred: ' . $vertex->label);
 		}
 		$this->require_success();
 

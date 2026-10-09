@@ -685,7 +685,7 @@ final class constant_reference_node extends expression_node
 
 final class call_node extends expression_node
 {
-	/** Expression invocation has no named lookup occurrence. */
+	/** Expression invocation shares call occurrence tracking but performs no named lookup. */
 	public ?expression_node $callee = null;
 	use Node_Source_Span;
 	use Collected_Occurrence;

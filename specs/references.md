@@ -189,6 +189,11 @@ returns, runtime-registered reference returns, const-reference returns and refer
 foreach are separate work. The advisory warning policy below remains intended;
 my-try's missing retained warning delivery is tracked as CH07-WARN-01 in its catalog.
 
+Concrete closures and arrows use this same whole-reference-parameter contract,
+including origin substitution, copy versus alias behavior and recursive-component
+rejection. Captured storage is not caller-owned parameter storage and cannot be
+returned by reference. See [closures](language/closures.md#bounded-reference-returns).
+
 ## Runtime note
 
 The current safe subset treats typed native-reference extraction from `mixed_t` as disabled runtime surface. The legacy `.as_*_ref()` helpers may remain present temporarily for transition purposes, but they are not part of the supported safe reference model.

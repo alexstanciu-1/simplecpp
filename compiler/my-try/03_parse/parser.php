@@ -2369,6 +2369,7 @@ final class Parser_Run
 				$invocation->callee = $base;
 				$invocation->arguments = $this->call_arguments();
 				$this->finish_node($invocation, $start);
+				$invocation->collect($this->collector, $this->current_scope, $start);
 				$base = $invocation;
 				continue;
 			}
