@@ -50,6 +50,29 @@ struct json_parse_failure final {
 	throw std::runtime_error("json unicode error: invalid Unicode code point");
 }
 
+// Validate complete source bytes before grammar; escaped codepoints are checked
+// by the shared lexical reader. No Unicode normalization or locale dependence.
+inline void validate_utf8(std::string_view input) {
+	for (std::size_t i = 0; i < input.size();) {
+		const auto start = i;
+		const auto first = static_cast<unsigned char>(input[i++]);
+		if (first < 0x80) continue;
+		unsigned remaining; std::uint32_t cp, minimum;
+		if (first >= 0xC2 && first <= 0xDF) { remaining = 1; cp = first & 0x1F; minimum = 0x80; }
+		else if (first >= 0xE0 && first <= 0xEF) { remaining = 2; cp = first & 0x0F; minimum = 0x800; }
+		else if (first >= 0xF0 && first <= 0xF4) { remaining = 3; cp = first & 7; minimum = 0x10000; }
+		else { reader_detail::fail_json_parse("invalid UTF-8", start, "utf8"); }
+		if (input.size() - i < remaining) reader_detail::fail_json_parse("unfinished UTF-8", start, "utf8");
+		while (remaining--) {
+			const auto c = static_cast<unsigned char>(input[i++]);
+			if ((c & 0xC0) != 0x80) reader_detail::fail_json_parse("invalid UTF-8 continuation", start, "utf8");
+			cp = (cp << 6) | (c & 0x3F);
+		}
+		if (cp < minimum || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+			reader_detail::fail_json_parse("invalid UTF-8 codepoint", start, "utf8");
+	}
+}
+
 class json_reader {
 protected:
 	std::string_view input_;

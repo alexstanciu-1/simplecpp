@@ -76,6 +76,7 @@ final class TypeMapper
 		'source::source_line_index',
 		'source::source_location',
 		'json_document',
+		'json_pull_reader',
 		'json_node',
 		'json_parse_error',
 		'file_lock_handle',

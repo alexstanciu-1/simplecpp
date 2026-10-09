@@ -21,6 +21,8 @@ and compiles once with `scpp_json` and the CLI's JSON runtime composition. Stric
 registration, normalized contracts and runtime class stubs expose this family to
 PHS/STAN; no generator type inference is added. No third-party dependency or OS
 API is required. Tests and reported host evidence determine validated platforms.
+Document construction now consumes the shared [pull reader](pull_reader.md), so
+typed schema consumers and immutable documents use one native structural parser.
 
 ## Strict surface
 

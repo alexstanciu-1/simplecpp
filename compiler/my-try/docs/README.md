@@ -33,6 +33,7 @@ experiment retained for regressions, not a second semantic development path.
 | Mixed/dynamic runtime design discussion | [Shared machinery, family separation and recorded mixed layout improvement](planning/mixed_dynamic_storage.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
 | Current scalar operators | [Bounded contracts, lowering and proof](s2s_scalar_operators.md) |
+| Runtime-symbol catalog ingestion | Shared [typed JSON pull reader](../../../specs/builtins/json/pull_reader.md) is the direct-to-record prerequisite; module schema/catalog registration remains next, outside this reader slice. Existing Json_View consumers are unchanged. |
 | Conditional wrapper extraction and error state | [Take checkpoint](catalog/05_dynamic_boundaries.md#conditional-take-and-no-error-values--2026-10-04), [language contract](../../../specs/error_values_and_take.md) |
 | Wrapper-left coalescing into mixed | [Consequences and two-step preparation](catalog/05_dynamic_boundaries.md#wrapper-left-mixed-coalescing--2026-10-04) |
 | Explicit mixed/dynamic casts | [Bridge semantics and boundaries](catalog/05_dynamic_boundaries.md#explicit-mixeddynamic-bridges--2026-10-04) |

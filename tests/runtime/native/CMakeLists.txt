@@ -174,6 +174,12 @@ target_include_directories(test_json_document PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 target_compile_features(test_json_document PRIVATE cxx_std_23)
 add_test(NAME scpp_test_json_document COMMAND test_json_document)
 
+add_executable(test_json_pull_reader test_json_pull_reader.cpp)
+target_link_libraries(test_json_pull_reader PRIVATE scpp_runtime_test_support)
+target_include_directories(test_json_pull_reader PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
+target_compile_features(test_json_pull_reader PRIVATE cxx_std_23)
+add_test(NAME scpp_test_json_pull_reader COMMAND test_json_pull_reader)
+
 # datetime runtime and PHP wrapper coverage.
 add_executable(test_datetime test_datetime.cpp)
 target_link_libraries(test_datetime PRIVATE scpp_lang_php scpp_datetime scpp_runtime scpp_runtime_test_support)

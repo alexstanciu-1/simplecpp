@@ -1,5 +1,5 @@
 #include "modules/json/document.hpp"
-#include "modules/json/detail/reader.hpp"
+#include "modules/json/pull_reader.hpp"
 #include <charconv>
 #include <unordered_map>
 #include <vector>
@@ -30,87 +30,39 @@ struct access {
 	static shared_p<node> child(const shared_p<node> &n, std::size_t index) { return make_node(n->data_, index); }
 };
 
-// Validate complete source bytes before grammar; escaped codepoints are checked
-// by the shared lexical reader. No Unicode normalization or locale dependence.
-void validate_utf8(std::string_view input) {
-	for (std::size_t i = 0; i < input.size();) {
-		const auto start = i;
-		const auto first = static_cast<unsigned char>(input[i++]);
-		if (first < 0x80) continue;
-		unsigned remaining; std::uint32_t cp, minimum;
-		if (first >= 0xC2 && first <= 0xDF) { remaining = 1; cp = first & 0x1F; minimum = 0x80; }
-		else if (first >= 0xE0 && first <= 0xEF) { remaining = 2; cp = first & 0x0F; minimum = 0x800; }
-		else if (first >= 0xF0 && first <= 0xF4) { remaining = 3; cp = first & 7; minimum = 0x10000; }
-		else { reader_detail::fail_json_parse("invalid UTF-8", start, "utf8"); }
-		if (input.size() - i < remaining) reader_detail::fail_json_parse("unfinished UTF-8", start, "utf8");
-		while (remaining--) {
-			const auto c = static_cast<unsigned char>(input[i++]);
-			if ((c & 0xC0) != 0x80) reader_detail::fail_json_parse("invalid UTF-8 continuation", start, "utf8");
-			cp = (cp << 6) | (c & 0x3F);
-		}
-		if (cp < minimum || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
-			reader_detail::fail_json_parse("invalid UTF-8 codepoint", start, "utf8");
-	}
-}
-
-class parser final : private reader_detail::json_reader {
+class parser final {
 	storage data_;
-	std::size_t max_depth_;
-	std::size_t parse_value(std::size_t depth) {
-		skip_whitespace();
-		if (at_end()) reader_detail::fail_json_parse("expected JSON value", pos_);
+	pull_reader reader_;
+	std::size_t parse_value() {
 		value out;
-		switch (peek()) {
-			case 'n': expect_literal("null"); break;
-			case 't': expect_literal("true"); out.type = kind::boolean; out.boolean = true; break;
-			case 'f': expect_literal("false"); out.type = kind::boolean; break;
-			case '"': out.type = kind::string; out.text = parse_string().native_value(); break;
-			case '[': case '{': {
-				if (depth >= max_depth_) reader_detail::fail_json_parse("nesting limit exceeded", pos_, "depth");
-				const bool object = get() == '{';
-				const char close = object ? '}' : ']';
-				out.type = object ? kind::object : kind::array;
-				skip_whitespace();
-				if (peek() == close) { ++pos_; break; }
-				while (true) {
-					std::string key;
-					if (object) {
-						skip_whitespace();
-						const auto key_start = pos_;
-						key = parse_string().native_value();
-						if (!out.members.emplace(key, out.children.size()).second) {
-							reader_detail::fail_json_parse("duplicate object key " + std::string(input_.substr(key_start, pos_ - key_start)), key_start, "duplicate_key");
-						}
-						skip_whitespace();
-						if (get() != ':') reader_detail::fail_json_parse("expected ':'", pos_ - 1);
-					}
-					const auto child = parse_value(depth + 1);
-					if (object) {
-						out.keys.push_back(std::move(key));
-						out.children.push_back(child);
-					} else { out.children.push_back(child); }
-					skip_whitespace();
-					if (peek() == close) { ++pos_; break; }
-					if (peek() != ',') reader_detail::fail_json_parse("expected comma or container end", pos_);
-					++pos_;
-				}
-				break;
+		const auto type = reader_.kind().native_value();
+		if (type == "null") { reader_.read_null(); }
+		else if (type == "boolean") { out.type = kind::boolean; out.boolean = reader_.read_boolean().native_value(); }
+		else if (type == "string") { out.type = kind::string; out.text = reader_.read_string().native_value(); }
+		else if (type == "number") { out.type = kind::number; out.text = reader_.read_number().native_value(); }
+		else if (type == "object") {
+			out.type = kind::object;
+			reader_.begin_object();
+			while (reader_.next_property().native_value()) {
+				auto key = reader_.property_name().native_value();
+				out.members.emplace(key, out.children.size());
+				out.keys.push_back(std::move(key));
+				out.children.push_back(parse_value());
 			}
-			default:
-				if (peek() != '-' && !reader_detail::is_ascii_digit(peek())) reader_detail::fail_json_parse("unexpected character", pos_);
-				out.type = kind::number; out.text = parse_number_token();
+		} else {
+			out.type = kind::array;
+			reader_.begin_array();
+			while (reader_.next_element().native_value()) out.children.push_back(parse_value());
 		}
 		const auto index = data_.values.size();
 		data_.values.push_back(std::move(out));
 		return index;
 	}
 public:
-	parser(std::string_view input, std::size_t max_depth) : json_reader(input), max_depth_(max_depth) {}
+	parser(const string_t &input, const int_t<> &max_depth) : reader_(input, string_t("<json>"), max_depth) {}
 	std::shared_ptr<const storage> parse() {
-		validate_utf8(input_);
-		data_.root = parse_value(0);
-		skip_whitespace();
-		if (!at_end()) reader_detail::fail_json_parse("trailing non-whitespace after JSON value", pos_);
+		data_.root = parse_value();
+		reader_.finish_document();
 		return std::make_shared<const storage>(std::move(data_));
 	}
 };
@@ -121,16 +73,14 @@ namespace scpp::json {
 result<shared_p<document>> document_parse(const string_t &text, shared_p<parse_error> &diagnostic, const int_t<> &max_depth) {
 	diagnostic.reset();
 	try {
-		const auto limit = max_depth.native_value();
-		if (limit < 1 || limit > 256) reader_detail::fail_json_parse("max_depth must be 1..256", 0, "invalid_limit");
-		return document_detail::access::make_document(document_detail::parser(text.native_value(), static_cast<std::size_t>(limit)).parse());
-	} catch (const reader_detail::json_parse_failure &failure) {
+		return document_detail::access::make_document(document_detail::parser(text, max_depth).parse());
+	} catch (const read_error &failure) {
 		auto info = std::make_shared<parse_error>();
 		info->category = string_t(failure.category);
 		info->byte_offset = int_t<>(static_cast<std::int64_t>(failure.position));
-		info->message = string_t(failure.message);
+		info->message = string_t(failure.detail);
 		diagnostic = shared_p<parse_error>(std::move(info));
-		return error_t(string_t(std::string("json document error at byte ") + std::to_string(failure.position) + ": " + failure.message));
+		return error_t(string_t(std::string("json document error at byte ") + std::to_string(failure.position) + ": " + failure.detail));
 	}
 }
 result<shared_p<node>> document_root(const shared_p<document> &d) {

@@ -636,6 +636,22 @@ final class RuntimeShallowSourceGenerator
 		if ($isStrict) {
 			$scppClasses = [
 				$this->renderClassStub('json_document', [], $isStrict),
+				$this->renderClassStub('json_pull_reader', [
+					['kind' => 'method', 'name' => 'start', 'return' => 'result<bool>', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'file', 'type' => 'string'], ['name' => 'limit', 'type' => 'int']]],
+					['kind' => 'method', 'name' => 'kind', 'return' => 'result<string>', 'params' => []],
+					['kind' => 'method', 'name' => 'property_name', 'return' => 'result<string>', 'params' => []],
+					['kind' => 'method', 'name' => 'read_string', 'return' => 'result<string>', 'params' => []],
+					['kind' => 'method', 'name' => 'read_number', 'return' => 'result<string>', 'params' => []],
+					['kind' => 'method', 'name' => 'begin_object', 'return' => 'result<bool>', 'params' => []],
+					['kind' => 'method', 'name' => 'begin_array', 'return' => 'result<bool>', 'params' => []],
+					['kind' => 'method', 'name' => 'next_property', 'return' => 'result<bool>', 'params' => []],
+					['kind' => 'method', 'name' => 'next_element', 'return' => 'result<bool>', 'params' => []],
+					['kind' => 'method', 'name' => 'read_boolean', 'return' => 'result<bool>', 'params' => []],
+					['kind' => 'method', 'name' => 'read_null', 'return' => 'result<bool>', 'params' => []],
+					['kind' => 'method', 'name' => 'finish_document', 'return' => 'result<bool>', 'params' => []],
+					['kind' => 'method', 'name' => 'read_integer', 'return' => 'result<int>', 'params' => []],
+					['kind' => 'method', 'name' => 'reject', 'return' => 'result<bool>', 'params' => [['name' => 'message', 'type' => 'string']]],
+				], $isStrict),
 				$this->renderClassStub('json_node', [], $isStrict),
 				$this->renderClassStub('json_parse_error', [
 					['kind' => 'property', 'name' => 'category', 'type' => 'string'],

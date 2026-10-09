@@ -27,6 +27,7 @@ try {
     }
     if (in_array('--json', $argv, true)) {
         $artifacts['json_document.phs'] = file_get_contents(__DIR__ . '/runtime/json_document.phs');
+        $artifacts['json_reader.phs'] = file_get_contents(__DIR__ . '/runtime/json_reader.phs');
     }
     if (in_array('--os', $argv, true)) {
         $artifacts['file_locks.phs'] = file_get_contents(__DIR__ . '/runtime/file_locks.phs');

@@ -382,6 +382,14 @@ PHP writing API. Native framework assembly requires `--filesystem`.
 
 For scalar schema values, [Json_View integer/boolean access](scalar_catalog.md) rejects wrong kinds, fractions/exponents and integer overflow; do not coerce provider metadata through strings or floating values.
 
+For new sequential schema ingestion, `scpp\Json_Reader` constructs typed records
+directly without a generic JSON tree. See the [pull-reader contract](../builtins/json/pull_reader.md)
+and [portable typed-record example](../../tests/portability/fixtures/json_reader.php).
+Native framework assembly requires `--json` and the JSON module. Consume each
+selected value, enforce schema rules, then call `finish_document()` before publication.
+JSON/reader failures map to portable `RuntimeException`; do not catch native C++
+exceptions in authored PHP. Existing random-access `Json_View` consumers need no migration.
+
 For nullable constructor containers, unwrap into a concrete typed vector with
 `take_nullable` before `foreach`. A null guard alone does not unwrap the native
 nullable container. Normalized record catalog input proves this path in
