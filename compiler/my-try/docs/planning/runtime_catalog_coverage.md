@@ -16,7 +16,7 @@ inventory of every internal C++ helper.
 | --- | --- | --- |
 | core | Byte `strlen`; `count` for vector/hash/mixed/dynamic | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
-| strings | `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`, `str_starts_with`, `str_ends_with` | Existing fixed signatures and value-argument sequencing |
+| strings | Case conversion, contains/prefix/suffix, trim/ltrim/rtrim (both arities), bin2hex, string-only str_replace | Existing fixed signatures, exact overload selection and value-argument sequencing |
 
 The host and native-driver startup lists select these three modules. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
@@ -26,7 +26,7 @@ String registration adds metadata and tests, not parsing/preparation/backend han
 
 | Group | Examples | Next prerequisite / check |
 | --- | --- | --- |
-| Further concrete string overloads | trim/ltrim/rtrim, bin2hex, replace | Verify normative strict signatures and runtime bindings; documented finite arities can use ordinary overload rows |
+| Further concrete string overloads | number_format, padding | Verify normative strict signatures and runtime bindings; documented finite arities can use ordinary overload rows |
 | Contract-sensitive strings | strpos/strrpos, substr family, hex2bin | Reconcile older byte/falseable docs with strict runtime code-point/nullable/Result contracts before enabling; do not silently generalize the strlen decision |
 | Container-producing/consuming helpers | explode, implode, collection APIs | Audit exact element/key contracts and any mutating/reference requirements; generic registration itself is available |
 | Numeric and utility helpers | scalar math, formatting, predicates | Inventory authoritative signatures, supported widths and overload ambiguity; not every helper is a free function |
@@ -49,3 +49,9 @@ unchanged UTF-8 bytes, empty strings, byte predicates, source shadowing, input p
 and ordered argument snapshots when a later argument changes the original string.
 PHP checks also cover selection, dependency deduplication and rejected calls, with
 catalog/generic regressions. No native compiler rebuild is implied.
+
+The same runner covers both trim arities, literal byte-set masks (including no
+range expansion), empty/all-trimmed inputs, unchanged non-ASCII whitespace, embedded
+NUL/high bytes for hex encoding and replacement, and argument snapshots when a mask
+producer replaces the original string. These are metadata additions only; no parser,
+preparation, backend or runtime implementation changed for this group.

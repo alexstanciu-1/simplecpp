@@ -18,6 +18,13 @@ output.mkdir(parents=True, exist_ok=False)
 (output / 'generics').mkdir()
 expected = {'case': 'abc-é中😀|ABC-é中😀|hELLO|Hello|ÉX|éx'.encode(), 'empty': b'[]',
             'predicates': b'', 'order': b'changed', 'purity': b'AbC|abc|ABC', 'shadow': b'', 'boxed_failure': b''}
+expected.update({
+    'trim_default': '[abc]|[abc  ]|[  abc]|[]|[]|[ x ]'.encode(),
+    'trim_masks': b'abc|abcxy|xyabc|abc|b|',
+    'hex_bytes': b'[]|417a|00ff|c3a9e4b8adf09f9880',
+    'replace': b'XXa|abc|abc|b|aa|615862',
+    'trim_order': b'abc|changed',
+})
 with CommandRunner(output / 'logs', ROOT) as runner:
     run_tasks([
         Task('strings', lambda: runner.run('strings', ['php', APP / 'tests/runtime_strings.php', output])),

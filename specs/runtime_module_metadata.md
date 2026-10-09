@@ -151,11 +151,17 @@ order metadata loading; they do not yet configure linker inputs automatically.
 - `json`: existing dynamic/mixed decode contracts and both encode overloads, preserving
   Result wrapping and family separation.
 - `strings`: `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`,
-  `str_starts_with`, `str_ends_with`, bound to the existing `scpp::str` implementations.
+  `str_starts_with`, `str_ends_with`, both arities of `trim`/`ltrim`/`rtrim`, `bin2hex`
+  and three-string `str_replace`, bound to the existing `scpp::str` implementations.
   Case changes are ASCII/byte-oriented, not Unicode case folding. Predicates are
   byte-oriented and accept an empty needle. These fixed contracts use ordinary
   value arguments: ordered argument snapshots remain alive through the runtime call;
   this does not enable multi-argument observation.
+  Trim masks are byte sets (no range expansion); omitted masks select the runtime's
+  one-argument overload. Hex encoding is lowercase and binary-safe. Replacement is
+  non-overlapping with an empty-search no-op; array forms and a count output are not
+  enabled. Multiple documented arities use separate fixed contracts, not optional
+  metadata parameters or new default-argument lowering.
 
 New runtime type declarations, fixed-array non-type parameters, compiler-module
 Storage registration, optional/default

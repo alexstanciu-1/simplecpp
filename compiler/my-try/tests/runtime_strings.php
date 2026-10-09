@@ -20,6 +20,11 @@ function strings_compile(string $source): void
 }
 
 $cases = [
+	'trim_default' => 'echo "[", trim(" \t\n\r\v\0abc \t\n\r\v\0"), "]|[", ltrim("  abc  "), "]|[", rtrim("  abc  "), "]|[", trim(" \t\0"), "]|[", trim(""), "]|[", trim(" x "), "]"; return 0;',
+	'trim_masks' => 'echo trim("xyabcxy", "xy"), "|", ltrim("xyabcxy", "xy"), "|", rtrim("xyabcxy", "xy"), "|", trim("abc", ""), "|", trim("a..b..z", "a..z"), "|", trim("xxx", "x"); return 0;',
+	'hex_bytes' => 'echo "[", bin2hex(""), "]|", bin2hex("Az"), "|", bin2hex("\0\xff"), "|", bin2hex("é中😀"); return 0;',
+	'replace' => 'echo str_replace("aa", "X", "aaaaa"), "|", str_replace("", "X", "abc"), "|", str_replace("z", "X", "abc"), "|", str_replace("a", "", "aba"), "|", str_replace("a", "aa", "a"), "|", bin2hex(str_replace("\0", "X", "a\0b")); return 0;',
+	'trim_order' => 'function mask(int &$calls, string &$value): string { $calls++; $value = "changed"; return "x"; } $value = "xxxabcxxx"; $calls = 0; $result = trim($value, mask($calls, $value)); if ($calls !== 1) { return 1; } echo $result, "|", $value; return 0;',
 	'case' => 'echo strtolower("AbC-é中😀"), "|", strtoupper("aBc-é中😀"), "|", lcfirst("HELLO"), "|", ucfirst("hello"), "|", lcfirst("ÉX"), "|", ucfirst("éx"); return 0;',
 	'empty' => 'echo "[", strtolower(""), strtoupper(""), lcfirst(""), ucfirst(""), "]"; if (!str_contains("", "") || !str_starts_with("", "") || !str_ends_with("", "")) { return 1; } return 0;',
 	'predicates' => 'if (!str_contains("abc", "b") || !str_starts_with("abc", "ab") || !str_ends_with("abc", "bc")) { return 1; } if (str_contains("abc", "B") || str_starts_with("abc", "bc") || str_ends_with("abc", "ab")) { return 2; } if (str_starts_with("a", "abc") || str_ends_with("a", "abc") || str_contains("", "a")) { return 3; } if (!str_contains("é中😀", "中") || !str_starts_with("é中😀", "é") || !str_ends_with("é中😀", "😀")) { return 4; } if (!str_contains("abc", "") || !str_starts_with("abc", "") || !str_ends_with("abc", "")) { return 5; } return 0;',
@@ -38,7 +43,10 @@ $cpp = '#include <stdexcept>' . "\n" . $cpp
 file_put_contents($argv[1] . '/boxed_failure.cpp', $cpp);
 foreach (['strtolower();', 'strtoupper("x", "y");', 'lcfirst(vector<int>::[1]);',
 	'ucfirst("x", "y");', 'str_contains("x");', 'str_starts_with("x", "y", "z");',
-	'str_ends_with(vector<int>::[], "x");'] as $source) {
+	'str_ends_with(vector<int>::[], "x");', 'trim();', 'ltrim("x", "x", "x");',
+	'rtrim(vector<int>::[]);', 'trim("x", vector<int>::[]);', 'bin2hex("x", "y");',
+	'str_replace("x", "y");', 'str_replace("x", "y", "x", 0);',
+	'str_replace(vector<string>::["x"], "y", "x");'] as $source) {
 	$failed = false;
 	try { strings_compile($source); }
 	catch (\RuntimeException $error) { $failed = true; }
