@@ -79,7 +79,10 @@ on exceptions. This is retention of the same instance, not cloning.
 An inline whole-storage receiver is borrowed for the call; do not copy it merely to
 invoke a method. Mutations affect that storage. `$this` is the current instance and
 is permitted as a fixed property/method receiver; copying, returning, passing or
-rebinding `$this` is not enabled by this slice.
+rebinding `$this` is not enabled by this slice. The
+[bounded closure receiver contract](language/closures.md#v02-borrowed-receiver-captures)
+additionally permits explicit `use ($this)` and automatic arrow receiver capture:
+these borrow the instance within the current invocation, without copying or retaining it.
 
 Methods currently have no declared read-only receiver contract. Therefore method
 calls through read-only access paths reject during preparation, even for a method

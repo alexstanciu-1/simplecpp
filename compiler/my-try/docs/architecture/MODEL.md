@@ -174,6 +174,14 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ### Callable contracts
 
+Receiver captures reuse `prepared_capture::borrow` with an existing `prepared_receiver`
+origin; the typed `receiver()` query derives the role without a second kind flag.
+Instance-body local membership establishes the receiver's invocation lifetime, but
+ordinary expression preparation still rejects using `$this` as a value. Anonymous
+body preparation restores the captured receiver and its original declaring access
+context. Nested captures preserve the original lifetime; C++ emits `[this]`, not
+an object copy or owning handle. Existing destination and erasure checks apply.
+
 Authored parameter/return syntax is composed through `callable_signature_syntax`.
 Each function/method owns one component containing its original parameter nodes,
 optional return type and explicit reference-return marker. It has no source name,

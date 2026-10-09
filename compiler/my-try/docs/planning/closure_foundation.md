@@ -143,12 +143,30 @@ across syntax/collection, analysis lifecycle and backend consumers.
    not artificial parentage under the creation environment. Shared destination checks
    preserve transitive obligations; erased callable boundaries reject borrowing values.
 
-Non-goals: this/captured-field captures, mutable by-value capture bindings, captured-storage reference
+10. **Borrowed receiver captures — implemented.** Explicit `use ($this)` and automatic
+    arrow discovery reuse the existing borrow origin and invocation-region checks.
+    Anonymous bodies recover receiver/member access from the original signature-owned
+    receiver. Native `[this]` captures do not copy or retain the instance. Local copies
+    preserve obligations; erased conversion and `use (&$this)` reject. No retained
+    receiver-context structure or separate closure lowering path was introduced.
+
+Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
 returns, erased reference signatures, named-call syntax, callable-return support,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Borrowed receiver checkpoint (2026-10-09): 34 generated C++ programs passed with PCH
+in `/tmp/my-try-ch12-receiver-05`, including nine receiver execution/edit cases and
+the prior 25 reference-capture cases. Tests cover private/protected access, class/struct
+identity, trait consumers, nested explicit/arrows, transitive erasure rejection,
+signature edits, invalid-mode recovery and fresh/incremental agreement. Nine focused
+PHP suites passed in `/tmp/my-try-ch12-receiver-checks-01`; four final suites (closures,
+reference captures, storage lifetimes and trait instances) passed in
+`/tmp/my-try-ch12-receiver-final-checks`. Earlier runs corrected two
+fixture mistakes: an undemanded static method and unsupported typed-constant spelling.
+No native compiler rebuild, converter run or LLVM extension was performed.
 
 ### Reference-capture prerequisite discovered — 2026-10-09
 

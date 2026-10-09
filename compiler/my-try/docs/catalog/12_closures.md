@@ -45,7 +45,7 @@ explicit `function<R(Args...)>` locals and by-value parameters additionally supp
 exact signature conversion to `std::function`. Callable locals must be initialized.
 Explicit by-value `use ($name)` captures now preserve ordinary copy/sharing semantics
 and have read-only bindings. Shared object/dynamic contents remain mutable.
-`$this` and mutable by-value bindings remain deferred. Arrows now reuse the same closure
+Mutable by-value bindings remain deferred. Arrows now reuse the same closure
 node and capture fields with scope-aware automatic value-capture discovery. Explicit
 parameter/return signatures remain required. Concrete closures and arrows now share
 function/method defaults, typed variadics and writable/read-only reference inputs.
@@ -62,9 +62,15 @@ Bounded reference captures now execute using the approved
 Collected name scopes do not represent ordinary block storage lifetimes; neutral
 semantic regions now own that proof. Whole locals/parameters and eligible aliases
 can be borrowed, with readonly access and transitive local-copy checks. Erasure of
-borrowing closures, captured-field borrowing and `$this` remain rejected. Proof:
+borrowing closures and captured-field borrowing remain rejected. Proof:
 25 reference-capture programs and 70 existing closure programs, plus focused lifetime,
 incremental and recovery checks; no native compiler rebuild.
+
+Receiver capture now uses that same borrow path: explicit `use ($this)` and automatic
+arrow captures borrow the current class/struct instance for the creating invocation.
+Private/protected access, nested captures and trait consumers preserve the original
+declaring context. `use (&$this)`, absent/static receivers and erased borrowing
+environments reject. Owning/escaping receiver capture remains deferred.
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
@@ -73,6 +79,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLOSURE-001](#closure-001) | implemented-bounded | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | passed | passed | deferred | Capture-free explicit signatures; concrete local types; `closures.php` |
 | [CLOSURE-CALL-001](#closure-call-001) | implemented-bounded | `$f(); $g(3); $h(3); $h(3, 9);` | passed | passed | deferred | Shared defaults, typed variadic packs and value/reference inputs; ordered arguments; generated execution |
 | Concrete reference returns | implemented-bounded | `$f = fn&(int &$v): int => $v; $alias =& $f($value);` | passed | passed | deferred | Shared origin contract; capture/local escape and cycles reject; erased signatures deferred |
+| Borrowed receiver capture | implemented-bounded | `$f = function () use ($this): int { return $this->count; };` | passed | passed | deferred | Shared borrow lifetime; arrows, nested access and class/struct receivers; no owning capture |
 | [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
 | [SCOPE-VAR-002](#scope-var-002) | pending-discussion | `if (true) { $g = function (): int { return 1; }; } return $g();` | unverified | unverified | deferred | — |
 | [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |

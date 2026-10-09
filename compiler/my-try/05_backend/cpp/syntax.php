@@ -33,6 +33,7 @@ final class CPP_Syntax
 			$body_work = object_cast($closure->require_body()->work(), anonymous_body_work::class);
 			$captures /** Storage<prepared_capture> */ = $body_work->captures;
 			foreach ($captures as $capture) {
+				if ($capture->receiver() !== null) { $capture_parts[] = 'this'; continue; }
 				$capture_parts[] = ($capture->borrow === null ? '' : '&')
 					. CPP_Generator::local_name(object_cast(weakref_get($capture->declaration), collected_name::class));
 			}

@@ -12,6 +12,14 @@ $output = $argv[1];
 $directory = sys_get_temp_dir() . '/reference-captures-' . bin2hex(random_bytes(6)); mkdir($directory);
 $path = $directory . '/main.phs'; $executions = [];
 $cases = [
+	'receiver_class' => ['class Box { private int $n = 1; public function run(): int { $f = function () use ($this): int { return ++$this->n; }; $g = $f; $g(); return $f(); } } $b = new Box(); return $b->run();', 3],
+	'receiver_struct' => ['struct Box { private int $n = 1; public function run(): int { $f = fn(): int => ++$this->n; return $f(); } } $b = new Box(); return $b->run();', 2],
+	'receiver_nested' => ['class Box { private function value(): int { return 7; } public function run(): int { $f = function () use ($this): int { $g = fn(): int => $this->value(); return $g(); }; return $f(); } } $b = new Box(); return $b->run();', 7],
+	'receiver_transitive' => ['class Box { public int $n = 4; public function run(): int { $f = fn(): int => $this->n; $g = fn(): int => $f(); return $g(); } } $b = new Box(); return $b->run();', 4],
+	'receiver_protected' => ['class Base { protected int $n = 6; } class Box extends Base { public function run(): int { $f = fn(): int => $this->n; return $f(); } } $b = new Box(); return $b->run();', 6],
+	'receiver_trait' => ['trait Run { public function run(): int { $f = fn(): int => $this->n; return $f(); } } class Box { use Run; private int $n = 8; } $b = new Box(); return $b->run();', 8],
+	'receiver_self' => ['class Box { private const N = 9; public function run(): int { $f = function () use ($this): int { return self::N; }; return $f(); } } $b = new Box(); return $b->run();', 9],
+	'receiver_nested_explicit' => ['class Box { public int $n = 5; public function run(): int { $f = fn(): int => (function () use ($this): int { return $this->n; })(); return $f(); } } $b = new Box(); return $b->run();', 5],
 	'borrow' => ['$n = 1; $f = function () use (&$n): void { $n++; }; $n = 4; $f(); return $n;', 5],
 	'copy' => ['$n = 1; $f = function () use (&$n): void { $n++; }; $g = $f; $f(); $g(); return $n;', 3],
 	'inner_copy' => ['$n = 1; $f = function () use (&$n): void { $n++; }; if (true) { $g = $f; $g(); } return $n;', 2],
@@ -38,6 +46,13 @@ $cases = [
 	'borrow_callable' => ['$f = fn(): int => 4; $g = function () use (&$f): int { $copy = $f; return $copy(); }; return $g();', 4],
 ];
 $invalid = [
+	'class Box { public function run(): void { $f = function () use (&$this): void {}; } } return 0;',
+	'class Box { public function run(): void { $f function<int()> = fn(): int => $this->n; } public int $n = 1; } return 0;',
+	'class Box { public static function run(): void { $f = function () use ($this): void {}; } } Box::run(); return 0;',
+	'class Box { public function run(): void { $f = function (): int { return $this->n; }; } public int $n = 1; } return 0;',
+	'class Box { public function run(): void { $copy = $this; } } return 0;',
+	'class Box { public int $n = 1; public function run(): void { $f = fn(): int => $this->n; $g function<int()> = fn(): int => $f(); } } return 0;',
+	'class Box { public int $n = 1; public function run(): void { $f = function (): int { $g = fn(): int => $this->n; return $g(); }; } } return 0;',
 	'$n = 1; $f function<int()> = function () use (&$n): int { return $n; }; return 0;',
 	'$n = 1; $f = function () use (&$n): int { return $n; }; $g function<int()> = fn(): int => $f(); return 0;',
 	'function apply(function<int()> $f): int { return $f(); } $n = 1; $f = function () use (&$n): int { return $n; }; return apply($f);',
@@ -107,6 +122,24 @@ try {
 	capture_check($retained->captures[0]->borrow->lifetime !== $old_lifetime, 'Rebuild retained obsolete invocation region');
 	file_put_contents($path, 'return 0;'); $compiler->update_cpp([$path]);
 	capture_check(count($retained->captures) === 0, 'Retirement retained lifetime origins');
+	$source = $cases['receiver_class'][0]; file_put_contents($path, $source); $compiler->update_cpp([$path]);
+	foreach (Model::collected_files()[0]->anonymous_callables as $identity) { $receiver_work = $identity->syntax()->require_body()->work(); }
+	$receiver_capture = $receiver_work->captures[0];
+	capture_check($receiver_capture->receiver() !== null, 'Receiver capture lost its storage role');
+	$receiver_lifetime = $receiver_capture->borrow->lifetime;
+	$source = str_replace('run(): int', 'run(int $unused = 0): int', $source);
+	file_put_contents($path, $source); $compiler->update_cpp([$path]);
+	$receiver_text = CPP_Probe::text(Model::$cpp_files);
+	capture_check($receiver_work->captures[0]->borrow->lifetime !== $receiver_lifetime, 'Receiver signature edit retained old invocation lifetime');
+	file_put_contents($path, str_replace('use ($this)', 'use (&$this)', $source)); $rejected = false;
+	try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
+	capture_check($rejected, 'Invalid receiver mode accepted after incremental edit');
+	file_put_contents($path, $source); $compiler->update_cpp([$path]);
+	capture_check(CPP_Probe::text(Model::$cpp_files) === $receiver_text, 'Receiver mode recovery changed output');
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	capture_check(CPP_Probe::text(Model::$cpp_files) === $receiver_text, 'Receiver incremental/fresh output differs');
+	file_put_contents($output . '/receiver_edit.cpp', $receiver_text);
+	$executions[] = ['path' => $output . '/receiver_edit.cpp', 'exit_code' => 3];
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	echo "Reference capture artifacts: PASS\n";
 }

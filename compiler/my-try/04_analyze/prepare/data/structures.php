@@ -441,6 +441,14 @@ final class prepared_capture extends prepared_storage {
 	public ?storage_borrow $borrow = null;
 	public storage_access $access = storage_access::read_only;
 	public function storage_type(): canonical_type_use { return $this->type; }
+	/** Receiver role is derived from the borrow origin, never a duplicated kind flag. */
+	public function receiver(): ?prepared_receiver
+	{
+		if ($this->borrow === null) { return null; }
+		$origin = $this->borrow->place->root_storage();
+		if ($origin instanceof prepared_receiver) { return object_cast($origin, prepared_receiver::class); }
+		return null;
+	}
 }
 
 /** A local binding or member write retains its resolved storage declaration and canonical type. */

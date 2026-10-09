@@ -15,7 +15,8 @@ final class Capture_Preparation
 		else {
 			$references /** Storage<closure_capture_node> */ = $syntax->captures;
 			foreach ($references as $reference) {
-				Expression_Preparation::prepare($reference->variable, $context);
+				if ($reference->variable->name === 'this') { Method_Preparation::base($reference->variable, $context); }
+				else { Expression_Preparation::prepare($reference->variable, $context); }
 				$name = $reference->variable->name;
 				$names[] = $name;
 				$modes[$name] = $reference->mode;
@@ -24,7 +25,6 @@ final class Capture_Preparation
 		$captures /** Storage<prepared_capture> */ = new Storage();
 		$seen /** hash<bool> */ = [];
 		foreach ($names as $name) {
-			if ($name === 'this') { throw new \RuntimeException('This capture is deferred'); }
 			if (isset($seen[$name])) { throw new \RuntimeException('Duplicate capture: ' . $name); }
 			$seen[$name] = true;
 			$bindings /** vector<prepared_storage> */ = $context->locals->named($name);
@@ -34,7 +34,15 @@ final class Capture_Preparation
 			$capture->declaration = $binding->declaration;
 			$capture->type = $binding->storage_type();
 			$mode = $modes[$name] ?? passing_mode::value;
-			if ($mode === passing_mode::reference) {
+			if ($name === 'this') {
+				if ($mode === passing_mode::reference) { throw new \RuntimeException('Receiver capture uses $this, not &$this'); }
+				$receiver = $context->receiver;
+				if ($receiver === null) { throw new \RuntimeException('Receiver capture requires an instance body'); }
+				$origin = Reference_Preparation::storage_place($binding);
+				$capture->borrow = new storage_borrow(new prepared_place($receiver, null, true), Storage_Lifetimes::place($origin, $context));
+				$capture->access = storage_access::writable;
+			}
+			elseif ($mode === passing_mode::reference) {
 				$place = Reference_Preparation::storage_place($binding);
 				$storage = $place->storage();
 				if (($place->base() !== null) || !$place->borrowable()

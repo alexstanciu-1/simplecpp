@@ -295,6 +295,7 @@ final class Body_Preparation
 			$method = object_cast($syntax->occurrence(), collected_method::class);
 			$context->member_owner = $method->declaring_type();
 			$context->receiver = $signature->receiver;
+			if ($context->receiver !== null) { $context->locals->add('this', $context->receiver); }
 		}
 		self::bind_parameters($signature, $context);
 		$start = Constructor_Preparation::prepare_base($syntax, $context);

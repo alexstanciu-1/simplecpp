@@ -806,6 +806,13 @@ final class Preparation_Worker
 			$guarantees /** Storage<storage_lifetime> */ = $context->borrowed_lifetimes;
 			foreach ($captures as $capture) {
 				$name = weakref_get($capture->declaration)->name;
+				$receiver = $capture->receiver();
+				if ($receiver !== null) {
+					$name = 'this';
+					$context->receiver = $receiver;
+					$method = object_cast(weakref_get($receiver->declaration), collected_method::class);
+					$context->member_owner = $method->declaring_type();
+				}
 				if (q_count($context->locals->local_named($name)) !== 0) {
 					throw new \RuntimeException('Capture collides with a parameter: ' . $name);
 				}

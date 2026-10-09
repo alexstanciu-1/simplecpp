@@ -270,6 +270,11 @@ capture inputs replace old origins, and retirement clears capture environments. 
 invocation guarantees are transient and derived from settled captures, not owning
 back-links to the creating environment or a second retained escape graph.
 
+A receiver capture's place weakly observes the original signature-owned
+`prepared_receiver`. Its method declaration supplies lexical access context; no new
+retained receiver, member-owner link or owning runtime handle is introduced. Method
+repreparation establishes a fresh invocation region and refreshes capture inputs.
+
 Expression invocations share collected call occurrences with named calls but do not
 enter named lookup. Reference-cycle analysis builds an invocation-local graph over
 named and anonymous targets and their body scopes. Vertices temporarily retain target,

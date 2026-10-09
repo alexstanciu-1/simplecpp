@@ -193,7 +193,8 @@ parameters, locals and explicit captures); it cannot bypass a missing outer capt
 Existing local initialization, lexical scope and shadowing rules apply unchanged.
 
 The syntax order is `function (parameters) use (captures): ReturnType { body }`.
-`$this` and mutable by-value capture bindings remain deferred.
+Mutable by-value capture bindings remain deferred. Receiver capture follows the
+separate borrowed-instance rule below.
 Parameter/return rules are shared with other source callables;
 capture admission does not enable deferred callable signatures or callable returns.
 
@@ -232,6 +233,31 @@ under the current whole-reference-parameter contract. Callable returns and prope
 container storage remain deferred. This is a bounded lexical lifetime check, not
 general escape analysis, exclusive borrowing or PHP-style lifetime extension.
 
+### v0.2 borrowed receiver captures
+
+An explicit closure in an instance body may name `use ($this)`. Arrows capture the
+receiver automatically when required by their expression. Unlike ordinary value
+capture, this borrows the current instance: it neither copies the object nor retains
+an owning shared handle. Classes and structs use the same rule.
+
+```php
+$read = function () use ($this): int { return $this->count; };
+$increment = fn(): int => ++$this->count;
+```
+
+Receiver-capturing closures and their transitive copies are bounded by the creating
+instance invocation's lifetime. Existing local-copy checks and erased-boundary
+rejection apply. Member mutations affect the original object. The receiver's original
+declaring context supplies private/protected member access; nested captures preserve
+that context. An explicit nested closure must name `$this` itself; it cannot bypass
+an enclosing explicit closure that did not capture it.
+
+`use (&$this)` rejects: the receiver is not a rebindable variable. Static methods and
+non-instance contexts provide no receiver. Ordinary copying, passing, returning or
+rebinding of `$this` remains disabled; captured properties cannot escape by reference.
+Owning/escaping receiver captures and PHP-style receiver lifetime extension are not
+part of this contract. This does not enable instance late-static binding.
+
 ## Arrow functions
 
 `fn(parameters): ReturnType => expression` is a closure with an expression body
@@ -260,7 +286,8 @@ An explicit nested closure's authored capture list does contribute creation-site
 requirements to its enclosing arrow. Unavailable names and noncopyable captures
 are preparation errors. Arrows remain by-value capture syntax; `fn&` marks a reference
 return, not reference capture. Capturing a borrowing closure preserves its existing
-lifetime obligations. Automatic `$this` remains deferred.
+lifetime obligations. `$this` uses the borrowed receiver contract above, not an
+ordinary by-value object copy.
 
 ---
 
