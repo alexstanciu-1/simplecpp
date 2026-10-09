@@ -106,9 +106,13 @@ prose and extensions contain further capabilities.
 | Remaining capability | Current boundary / owner |
 | --- | --- |
 | Authored callable property defaults | Explicitly deferred by user on 2026-10-09; [CH15-CALLABLE-DEFAULTS-01](15_blocking_debt.md#ch15-callable-defaults-01--authored-callable-property-defaults); use constructor inputs or ordinary assignments |
-| Callable wrappers | Remain gated; explicit properties and vector/hash elements use shared callable conversion |
+| Callable wrappers | Selected for CH12 follow-up on 2026-10-09; currently gated; discuss supported wrapper contracts, without assuming redundant nullable storage |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
-| Broader callable boundaries | Erased reference/default/variadic signatures, owning/escaping receivers and captured-field borrows remain outside the implemented slices |
+| Explicit reference parameters and variadics | Selected for CH12 follow-up; shared callable signature model and argument admission |
+| Explicit reference returns | Selected for CH12 follow-up; preserve whole-reference-parameter origin and lifetime contract |
+| Captured-field borrows | Selected for CH12 follow-up; establish stable field provenance and containing-storage lifetime checks |
+| Defaults across erased callable boundaries | User-deferred; [CH15-CALLABLE-PARAM-DEFAULTS-01](15_blocking_debt.md#ch15-callable-param-defaults-01--defaults-across-erased-callable-boundaries) |
+| Owning/escaping receiver captures | User-deferred; [CH15-CALLABLE-RECEIVER-01](15_blocking_debt.md#ch15-callable-receiver-01--owning-and-escaping-receiver-captures) |
 | Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
 
 Callable returns now use explicit `function<R(Args...)>` contracts across functions,
@@ -131,8 +135,13 @@ Authored callable property defaults are explicitly deferred (2026-10-09). The
 capture-free proposal, including callable leaves in instance-container defaults,
 is a discussion candidate only, not an approved implementation contract. Revisit
 creation context, initialization timing and constructor override rules when resumed.
-Next: select or defer the remaining extensions before chapter closeout; this
-decision does not itself defer all remaining CH12 work.
+User selection (2026-10-09): pursue explicit reference parameters, reference returns,
+variadics, captured-field borrows and callable wrappers. Defer parameter defaults
+across erased boundaries and owning/escaping receivers to CH15. These are selected
+work items, not implemented capabilities or approval of unspecified type syntax.
+Recommended order: reference/variadic input contracts together, reference-return
+origin contracts, captured-field borrows, then wrapper integration. Preserve existing
+rejection boundaries until each shared model and its proofs are in place.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
 `closure_model` checks, including added exact rejection shapes. No compiler semantics,

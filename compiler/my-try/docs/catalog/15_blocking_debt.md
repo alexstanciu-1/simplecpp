@@ -75,6 +75,28 @@ Static container literals and arbitrary factory-call defaults remain separately 
 Use the shared property-default and callable preparation/lifecycle owners; do not
 introduce separate closure, vector and hash initialization implementations.
 
+### CH15-CALLABLE-PARAM-DEFAULTS-01 — defaults across erased callable boundaries
+
+Explicitly deferred by the user on 2026-10-09 from CH12. Concrete closures retain
+their supported parameter defaults. Conversion to explicit `function<...>` storage
+continues to reject defaulted signatures rather than silently discard the default.
+This is distinct from authored property defaults above. Revisit whether defaults
+belong to the destination contract, whether adaptation may require explicit arguments,
+and how default identity, evaluation and compatibility interact with named arguments.
+Use the shared callable signature/argument owners. No new release-blocking status
+or callable-type spelling is assigned by this deferral.
+
+### CH15-CALLABLE-RECEIVER-01 — owning and escaping receiver captures
+
+Explicitly deferred by the user on 2026-10-09 from CH12. Current `$this` captures
+remain borrowed and invocation-bounded; they cannot escape into erased callable
+returns, properties or containers. Revisit explicit ownership syntax, class versus
+inline-record behavior, shared retention, cycles, weak alternatives and destruction
+ordering before enabling an owning alternative. Do not silently turn existing
+borrowed capture into owning capture. This deferral does not defer the separately
+selected captured-field borrow work, nor grant it receiver lifetime extension.
+No new release-blocking classification is assigned.
+
 ### CH15-INHERITANCE-EXTENSIONS-01 — deferred CH11 extensions
 
 Explicit user decision on 2026-10-08: remove the following from the current CH11
