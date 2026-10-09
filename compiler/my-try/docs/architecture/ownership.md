@@ -255,6 +255,10 @@ the identity weakly. Analysis severs dependencies and semantic attachments befor
 frontend disposal, and on reset. Enclosing-body cleanup skips nested closures,
 whose expression facts retain their concrete semantic type. The separate closure
 type index observes anonymous identities weakly and retires entries with them.
+Anonymous signature work additionally retains a canonical expected-type input, never
+the consuming AST/environment/worker. Creation-site preparation refreshes this input;
+signature queries preserve it, and retirement/reset clears it. Resolved signature facts
+do not overwrite omitted source annotations or create contextual syntax occurrences.
 Type registry definitions never retain source syntax or callable preparation.
 Nested closures have independently scheduled workers
 which own their facts. Shared callable inspection retains the syntax owner only for the

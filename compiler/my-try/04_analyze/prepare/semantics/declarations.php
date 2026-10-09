@@ -47,18 +47,27 @@ final class Declaration_Preparation
 	}
 
 	/** Shared authored parameter admission, independent of named lookup. */
-	public static function prepare_parameters(callable_signature_syntax $syntax, prepared_source_callable $facts, preparation_context $context): void
+	public static function prepare_parameters(callable_signature_syntax $syntax, prepared_source_callable $facts, preparation_context $context,
+		?callable_signature $expected = null): void
 	{
 		$parameters /** Storage<prepared_parameter> */ = $facts->parameters;
 		$contracts /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$nodes /** Storage<parameter_node> */ = $syntax->parameters;
 		$names /** hash<bool> */ = [];
-		foreach ($nodes as $parameter) {
+		if ($expected !== null) {
+			if (q_count($nodes) !== q_count($expected->parameters)) { throw new \RuntimeException('Contextual callable parameter count mismatch'); }
+		}
+		foreach ($nodes as $index => $parameter) {
 			if (isset($names[$parameter->name])) {
 				throw new \RuntimeException('S2S duplicate parameter name: ' . $parameter->name);
 			}
 			$names[$parameter->name] = true;
-			self::prepare_parameter($parameter, $context);
+			$expected_parameter /** nullable<canonical_type_use> */ = null;
+			if ($expected !== null) {
+				$expected_parameters /** Storage<callable_parameter> */ = $expected->parameters;
+				$expected_parameter = $expected_parameters[$index]->type;
+			}
+			self::prepare_parameter($parameter, $context, $expected_parameter);
 			$prepared = $parameter->require_preparation();
 			$parameters->append($prepared);
 			$contracts->append($prepared->contract);
@@ -67,26 +76,35 @@ final class Declaration_Preparation
 	}
 
 	/** Anonymous admission reuses named-callable parameter and signature contracts. */
-	public static function prepare_anonymous(closure_node $syntax, preparation_context $context): prepared_source_callable
+	public static function prepare_anonymous(closure_node $syntax, preparation_context $context, ?canonical_type_use $expected_type = null): prepared_source_callable
 	{
 		$facts = new prepared_source_callable();
-		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
+		$expected /** nullable<callable_signature> */ = null;
+		if ($expected_type !== null) {
+			$expected = object_cast(Type_Queries::canonical($expected_type)->definition(), callable_type_definition::class)->signature();
+		}
+		$return_type = $syntax->signature_syntax->return_type;
+		if ($return_type !== null) { $facts->signature->return_type = Type_Preparation::type($return_type, $context); }
+		elseif ($expected !== null) { $facts->signature->return_type = $expected->return_type; }
+		else { throw new \RuntimeException('Closure requires an explicit return type or expected callable contract'); }
 		if (!$syntax->signature_syntax->returns_reference) {
 			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		}
-		self::prepare_parameters($syntax->signature_syntax, $facts, $context);
+		self::prepare_parameters($syntax->signature_syntax, $facts, $context, $expected);
 		Reference_Preparation::prepare_signature($syntax->signature_syntax, $facts->signature);
 		Callable_Contracts::validate($facts->signature);
 		return $facts;
 	}
 
 	/** Prepare one parameter with the same signature context used by its enclosing function. */
-	public static function prepare_parameter(parameter_node $node, preparation_context $context): void
+	public static function prepare_parameter(parameter_node $node, preparation_context $context, ?canonical_type_use $expected_type = null): void
 	{
 		$facts = new prepared_parameter();
 		$facts->declaration = $node->occurrence();
 		$contract = new callable_parameter();
-		$contract->type = Type_Preparation::type($node->require_type_syntax(), $context);
+		if ($node->type_syntax !== null) { $contract->type = Type_Preparation::type($node->type_syntax, $context); }
+		elseif ($expected_type !== null) { $contract->type = $expected_type; }
+		else { throw new \RuntimeException('Parameter requires an explicit type or expected callable contract'); }
 		if (Type_Queries::canonical($contract->type)->definition() instanceof callable_type_definition) {
 			if (($node->mode !== passing_mode::value) || $node->variadic || ($node->default_value !== null)) {
 				throw new \RuntimeException('Callable parameters currently require ordinary by-value inputs');

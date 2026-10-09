@@ -174,6 +174,15 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ### Callable contracts
 
+Anonymous signature work owns an optional canonical expected-type input supplied by
+creation-site expression preparation. Query-only signature/capability demands do not
+erase it. Changed inputs schedule signature rebuilding; ordinary signature comparison
+and dependencies invalidate the body/consumers. Retirement clears input and facts.
+Shared parameter preparation can fill absent types from the expected signature, while
+authored AST types remain nullable/unchanged. Expected types arrive through the existing
+consumer path for storage, selected arguments and returns; no inferred syntax, extra
+anonymous identity or backend type inference is introduced.
+
 Explicit callable returns reuse the ordinary return conversion and value boundary.
 Recursive callable contracts can return other callable contracts; their canonical
 identity and C++ spelling already compose. Concrete-to-erased conversion observes

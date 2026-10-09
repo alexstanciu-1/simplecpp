@@ -354,10 +354,22 @@ final class Preparation_Worker
 
 	/** Signature and implementation remain independent work identities. */
 	public function prepare_anonymous(anonymous_callable_identity $identity, preparation_owner $consumer,
-		?Storage $captures /** nullable<Storage<prepared_capture>> */ = null): void
+		?Storage $captures /** nullable<Storage<prepared_capture>> */ = null, ?canonical_type_use $expected_type = null): void
 	{
 		if ($identity->signature_work === null) { $identity->signature_work = new anonymous_signature_work($identity); }
 		$signature /** anonymous_signature_work */ = $identity->signature_work;
+		if ($captures !== null) {
+			// Only creation supplies inputs; later signature/capability queries retain them.
+			$expected /** nullable<canonical_type_use> */ = null;
+			if ($expected_type !== null) {
+				if (Type_Queries::canonical($expected_type)->definition() instanceof callable_type_definition) { $expected = $expected_type; }
+			}
+			if ($signature->expected_type !== $expected) {
+				$signature->expected_type = $expected;
+				unset($this->attempt_failed[$signature]);
+				$this->schedule($signature);
+			}
+		}
 		$this->select_owner($signature);
 		$this->require_contract($consumer, $signature);
 		$syntax = $identity->syntax();
@@ -716,7 +728,7 @@ final class Preparation_Worker
 	{
 		if ($owner instanceof anonymous_signature_work) {
 			$anonymous = object_cast($owner, anonymous_signature_work::class);
-			$current = Declaration_Preparation::prepare_anonymous($anonymous->anonymous_identity()->syntax(), $context);
+			$current = Declaration_Preparation::prepare_anonymous($anonymous->anonymous_identity()->syntax(), $context, $anonymous->expected_type);
 			$changed = !Preparation_Changes::same_signature($anonymous->facts, $current);
 			if ($changed) { $anonymous->facts = $current; }
 			else { Preparation_Changes::restore_parameters($anonymous->anonymous_identity()->syntax(), $anonymous->require_facts()); }
@@ -1156,7 +1168,11 @@ final class Preparation_Worker
 	/** Explicitly sever both directions; strong-reference storage must not keep retired owners alive. */
 	private function retire(preparation_owner $owner): void
 	{
-		if ($owner instanceof anonymous_signature_work) { object_cast($owner, anonymous_signature_work::class)->facts = null; }
+		if ($owner instanceof anonymous_signature_work) {
+			$anonymous = object_cast($owner, anonymous_signature_work::class);
+			$anonymous->facts = null;
+			$anonymous->expected_type = null;
+		}
 		if ($owner instanceof type_lifecycle_work) { object_cast($owner, type_lifecycle_work::class)->facts = null; }
 		if ($owner instanceof type_contract_work) { object_cast($owner, type_contract_work::class)->facts = null; }
 		if ($owner instanceof type_relationship_work) {

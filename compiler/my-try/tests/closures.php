@@ -227,8 +227,7 @@ try {
 	$executions[] = ['path' => $output . '/capture_signature_edit.cpp', 'exit_code' => 6];
 	foreach (['$f = function () use ($this): void { return; };',
 		'$n = 1; $f = fn() use ($n): int => $n;', '$f = fn() => 1;', '$f = fn($n): int => $n;',
-		'$a = 1; $f = function () use ($a) { return $a; };',
-		'$a = 1; $f function<int()> = function () use ($a) { return $a; };'] as $deferred) {
+		'$a = 1; $f = function () use ($a) { return $a; };'] as $deferred) {
 		file_put_contents($path, $deferred); $rejected = false;
 		try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Deferred capture was accepted'); }

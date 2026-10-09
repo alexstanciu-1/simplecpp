@@ -20,7 +20,7 @@ final class Expression_Preparation
 			$closure = object_cast($node, closure_node::class);
 			$identity = $closure->anonymous_identity();
 			$captures = Capture_Preparation::prepare($closure, $context);
-			$context->worker->prepare_anonymous($identity, $context->owner, q_count($captures) === 0 ? null : $captures);
+			$context->worker->prepare_anonymous($identity, $context->owner, $captures, $expected_type);
 			if ($identity->value_type === null) {
 				$registry = Model::$type_catalog->registry();
 				$definition = $registry->define_closure();

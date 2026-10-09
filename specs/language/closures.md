@@ -73,11 +73,36 @@ Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime
 obligations.
 
-Empty callable storage, erased reference signatures and
-contextual signature inference remain deferred in this slice. Properties and
+Empty callable storage and erased reference signatures remain deferred in this slice. Properties and
 wrapper/container storage of callable values are also deferred. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
 the concrete-lambda lowering of inferred locals.
+
+### Contextual signature completion
+
+An explicit expected `function<R(Args...)>` contract may supply omitted closure or
+arrow parameter/return types at a typed local initializer, assignment to established
+callable storage, selected call argument, or explicit callable return boundary.
+
+```php
+$add function<int(int)> = function ($value) { return $value + 1; };
+function apply(function<int(int)> $operation): int { return $operation(4); }
+$result = apply(fn($value) => $value + 1);
+```
+
+Only omitted types are completed. Authored annotations remain authoritative and must
+match the expected contract under exact callable compatibility. Parameter count must
+match; parameter names remain authored and do not become part of the erased type.
+Partial annotations are allowed. A nested factory's expected result contract can
+supply context to its returned closure through the ordinary return path.
+
+Without an expected callable contract, all parameter/return types must be authored.
+No types are inferred from the body, argument values, later calls or overload-candidate
+guessing. Named declarations retain their existing explicit-signature requirements.
+This does not admit defaults, variadics, references or borrowing environments across
+erased boundaries. Omitted types remain absent in syntax; resolved types belong to
+prepared signature facts. A source occurrence retains one anonymous identity when
+its surrounding contract changes during incremental preparation.
 
 ### Callable returns and factories
 
@@ -294,7 +319,8 @@ $f = fn(int $x): int => $x * $factor;
 ```
 
 The expression is its return expression; ordinary return checking and conversion
-apply. Parameter and return types remain explicit in the current v0.2 slice.
+apply. Parameter and return types must be explicit or supplied by an expected callable
+contract as described above.
 The current ordinary return path does not admit a void-valued return expression;
 consequently `fn(): void => void_call()` remains rejected rather than gaining an
 arrow-only exception. A block closure with a void call followed by `return;` works.

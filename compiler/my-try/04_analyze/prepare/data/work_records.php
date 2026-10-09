@@ -107,6 +107,8 @@ final class source_callable_signature_work extends contract_work
 final class anonymous_signature_work extends contract_work
 {
 	public ?prepared_source_callable $facts = null;
+	/** Creation-site contract input, separate from authored syntax and resolved facts. */
+	public ?canonical_type_use $expected_type = null;
 	private anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */;
 	public function __construct(anonymous_callable_identity $identity)
 	{

@@ -157,12 +157,29 @@ across syntax/collection, analysis lifecycle and backend consumers.
     C++ type spelling/conversion already supports nested `std::function` signatures.
     No new retained model, factory path or ownership exception is needed.
 
+12. **Contextual signature completion — implemented.** Anonymous signature work retains
+    an optional canonical expected-type input from creation-site preparation. Shared
+    parameter/return preparation fills omissions without synthesizing AST types.
+    Existing consumer paths supply typed storage, selected arguments and returns.
+    Query-only demands preserve inputs; changed inputs reschedule signature work;
+    retirement clears them. Exact conversion and borrow gates are unchanged.
+
 Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
 returns, erased reference signatures, named-call syntax, inferred callable returns,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Contextual checkpoint (2026-10-09): 12 generated C++ programs passed with PCH in
+`/tmp/my-try-ch12-contextual-04`. Ten focused PHP suites passed in
+`/tmp/my-try-ch12-contextual-checks`; final contextual/closure/reference-capture checks
+are recorded in `/tmp/my-try-ch12-contextual-final`. Coverage includes partial types,
+all four consumer sites, nested factories, incompatible/absent signatures, reference
+and receiver rejection, unchanged AST omissions, stable anonymous identity on provider
+edits, arity-error recovery, fresh/incremental agreement and retirement. Earlier
+multi-file fixtures needed explicit entry selection and a float argument after the
+provider changed to a float contract. No native compiler rebuild or conversion run.
 
 Callable-return checkpoint (2026-10-09): all 83 generated C++ programs passed with
 PCH in `/tmp/my-try-ch12-factories-02` (70 existing cases plus 12 factory cases and

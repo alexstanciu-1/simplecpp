@@ -47,7 +47,8 @@ Explicit by-value `use ($name)` captures now preserve ordinary copy/sharing sema
 and have read-only bindings. Shared object/dynamic contents remain mutable.
 Mutable by-value bindings remain deferred. Arrows now reuse the same closure
 node and capture fields with scope-aware automatic value-capture discovery. Explicit
-parameter/return signatures remain required. Concrete closures and arrows now share
+parameter/return signatures must be authored or supplied by an explicit expected
+callable contract. Concrete closures and arrows now share
 function/method defaults, typed variadics and writable/read-only reference inputs.
 Erased callable conversion remains fixed, required and by-value: defaults, packs and
 references reject rather than silently losing their contracts. Concrete reference
@@ -84,8 +85,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
 | [SCOPE-VAR-002](#scope-var-002) | implemented-bounded | `if (true) { $g = function (): int { return 1; }; } return $g();` | rejection passed | not emitted | deferred | Existing lexical scope; `closures.php` |
 | [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |
-| [CLOSURE-USE-001](#closure-use-001) | implemented-bounded | `$f function<int()> = function () use ($a): int { return $a; };` | passed | passed | deferred | Explicit signature, copyable captures, read-only bindings; omitted return/context inference remains deferred |
-| [CLOSURE-CALLABLE-001](#closure-callable-001) | deferred | `$f function<int()> = function () use ($a) { return $a; };` | rejected-bounded | not emitted | deferred | Contextual signature completion deferred; explicit signatures required |
+| [CLOSURE-USE-001](#closure-use-001) | implemented-bounded | `$f function<int()> = function () use ($a): int { return $a; };` | passed | passed | deferred | Authored/contextual signature, copyable captures, read-only bindings |
+| [CLOSURE-CALLABLE-001](#closure-callable-001) | implemented-bounded | `$f function<int()> = function () use ($a) { return $a; };` | passed | passed | deferred | Context supplies omitted types at initializer/assignment/argument/return boundaries; `contextual_closures.php` |
 | [CLOSURE-CALLABLE-002](#closure-callable-002) | implemented-bounded | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | passed | passed | deferred | Explicit signatures and captures; inferred storage remains concrete, unlike imported v0.1 erasure |
 | [ARROW-001](#arrow-001) | implemented-bounded | `$a = 10; $f = fn(int $x): int => $x + $a;` | passed | passed | deferred | Same closure node/body/capture pipeline; nested scope, snapshot, boundary and incremental proofs |
 | [CLOSURE-USE-002](#closure-use-002) | implemented-bounded | `$f = function () use (&$a): int { return $a; };` | passed | passed | deferred | Concrete locals; lexical lifetime and transitive-copy checks; erased borrowing closures rejected |
@@ -95,15 +96,14 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 ### Reconciliation — 2026-10-09
 
-All 13 imported IDs now have a current decision: 11 are implemented within their
-stated positive/rejection bounds; two remain deferred (contextual signatures and
-empty callable storage). Concrete reference returns and borrowed receivers add two
+All 13 imported IDs now have a current decision: 12 are implemented within their
+stated positive/rejection bounds; empty callable storage remains deferred.
+Concrete reference returns and borrowed receivers add two
 implemented rows; callable returns/factories subsequently add a third. This is card reconciliation, not whole-chapter completion: imported
 prose and extensions contain further capabilities.
 
 | Remaining capability | Current boundary / owner |
 | --- | --- |
-| Contextual signatures | Explicit closure/arrow signatures required; CLOSURE-CALLABLE-001 |
 | Empty callable storage | Initialization required; SCOPE-VAR-003 |
 | Callable properties, wrappers and typed containers | Explicit preparation gates; shared storage/copy/lifetime admission still needed |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
@@ -115,8 +115,11 @@ Callable returns now use explicit `function<R(Args...)>` contracts across functi
 methods and closures. Existing erased conversion admits capture-free/copyable value
 environments and rejects direct/transitive borrows. Nested callable signatures and
 already-erased forwarding share that path; no new backend factory implementation.
-Next recommended discussion: contextual signature completion from explicit callable
-contracts, without body-based type inference.
+Contextual signatures now fill omitted types from explicit callable contracts through
+the shared expected-type consumer path. Authored annotations are not overwritten;
+no body-based inference or new erasure permissions are introduced. Cross-file contract
+edits preserve anonymous identity and rebuild semantic signatures, not source syntax.
+Next recommended discussion: empty callable storage and its invocation/presence rules.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
 `closure_model` checks, including added exact rejection shapes. No compiler semantics,
@@ -126,7 +129,7 @@ native compiler build or generated-program execution changed in this reconciliat
 
 **v0.2 decision / target C++:** Implemented with explicit signatures and ordinary copy/shared semantics.
 Concrete locals lower to native lambdas; explicit compatible `function<...>` boundaries
-use `std::function`. Omitted signatures/contextual completion remain deferred.
+use `std::function`. Explicit expected callable contracts may supply omitted types.
 
 Different source versions share this ID. Both remain below for provenance; the
 v0.2 decision above supersedes their differing inferred/erased signature behavior.
@@ -238,8 +241,10 @@ std::function<int_t()> f = [&a]() -> int_t { return a; };
 
 ## CLOSURE-CALLABLE-001
 
-**v0.2 decision / target C++:** Deferred: contextual signature completion is not enabled.
-The target type does not currently fill in an omitted closure return/parameter type.
+**v0.2 decision / target C++:** Implemented: the explicit expected callable contract
+supplies omitted return/parameter types. Shared prepared signatures retain the resolved
+types; syntax remains unchanged. Authored types must match exactly. Without context,
+omitted types reject. Body-based inference remains outside this contract.
 
 ### Imported version 1
 
@@ -353,7 +358,7 @@ std::function<vector_t<int_t>()> f = [a]() -> vector_t<int_t> { return vector_t<
 ## CLOSURE-REJECT-001
 
 **v0.2 decision / target C++:** Implemented rejection when the return signature is missing.
-No body inference is performed. Contextual completion is separately deferred under
+No body inference is performed. Contextual completion is separately implemented under
 CLOSURE-CALLABLE-001.
 
 ### Imported version 1

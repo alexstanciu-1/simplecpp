@@ -17,7 +17,7 @@ def verify_php(root, output, runner, jobs):
     """Run PHP suites independently, each with private temporary files and logs."""
     def suite(source):
         command = ['php', str(source)]
-        if source.stem in ('calls', 'llvm', 's2s', 'control_flow', 'closures', 'reference_captures'):
+        if source.stem in ('calls', 'llvm', 's2s', 'control_flow', 'closures', 'reference_captures', 'contextual_closures'):
             directory = output / source.stem
             directory.mkdir()
             command.append(str(directory))

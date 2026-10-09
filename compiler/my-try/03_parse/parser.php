@@ -1368,13 +1368,13 @@ final class Parser_Run
 	}
 
 	/** One parameter grammar for named declarations and anonymous expressions. */
-	private function callable_parameters(scope $parameter_scope, bool $member): Storage /** Storage<parameter_node> */
+	private function callable_parameters(scope $parameter_scope, bool $member, bool $allow_missing_type = false): Storage /** Storage<parameter_node> */
 	{
 		$parameters /** Storage<parameter_node> */ = new Storage();
 		$this->expect('(');
 		if ($this->text() !== ')') {
 			do {
-				$parameters->append($this->parameter($parameter_scope, $member));
+				$parameters->append($this->parameter($parameter_scope, $member, $allow_missing_type));
 				if ($this->text() !== ',') { break; }
 				$this->position++;
 			} while (true);
@@ -1399,7 +1399,7 @@ final class Parser_Run
 		$signature = $closure->signature_syntax;
 		$signature->returns_reference = $this->text() === '&';
 		if ($signature->returns_reference) { $this->position++; }
-		$signature->parameters = $this->callable_parameters($signature_scope, false);
+		$signature->parameters = $this->callable_parameters($signature_scope, false, true);
 		if ($this->text() === 'use') {
 			if ($arrow) { throw new \RuntimeException($this->error_message('Arrow functions do not accept use lists')); }
 			$this->position++;
@@ -1425,8 +1425,10 @@ final class Parser_Run
 			}
 			$this->expect(')');
 		}
-		$this->expect(':');
-		$signature->return_type = $this->type_syntax($signature_scope);
+		if ($this->text() === ':') {
+			$this->position++;
+			$signature->return_type = $this->type_syntax($signature_scope);
+		}
 		$body_scope = $closure->body_scope();
 		$this->retain_scope($body_scope);
 		if ($arrow) {
@@ -1450,7 +1452,7 @@ final class Parser_Run
 	}
 
 	/** Register a typed parameter as an explicit variable declaration in the body scope. */
-	private function parameter(scope $scope, bool $member = false): parameter_node
+	private function parameter(scope $scope, bool $member = false, bool $allow_missing_type = false): parameter_node
 	{
 		$start = $this->position;
 		$access = storage_access::writable;
@@ -1468,7 +1470,9 @@ final class Parser_Run
 			}
 			else { $this->position -= 1; }
 		}
-		if (!$property_backed) {
+		$missing_type = $allow_missing_type && (string_byte_starts_with($this->text(), '$')
+			|| ($this->text() === '&') || ($this->text() === '...'));
+		if (!$property_backed && !$missing_type) {
 			if ((!$this->identifier() && ($this->text() !== '?') && ($this->text() !== '\\')) || ($this->text() === 'return')
 				|| (($this->text() === 'function') && ($this->text_at_offset(1) !== '<'))) {
 				throw new \RuntimeException($this->error_message('Expected parameter type'));
