@@ -16,7 +16,7 @@ final class Tokenizer
 		$this->source = $file;
 	}
 
-	/** Scan the source into token spans, skipping whitespace without changing offsets. */
+	/** Scan source into token spans; trivia remains in source bytes, not syntax tokens. */
 	public function tokenize(?string $full_path = null): token_list
 	{
 		// Disk reads belong to this file's worker; in-memory callers supply their own bytes.
@@ -39,13 +39,7 @@ final class Tokenizer
 
 		while ($offset < $length)
 		{
-			while ($offset < $length) {
-				$byte = string_byte_at($this->content, $offset);
-				if (($byte !== 32) && ($byte !== 9) && ($byte !== 13) && ($byte !== 10)) {
-					break;
-				}
-				$offset++;
-			}
+			$offset = $this->trivia_end($offset);
 			if ($offset === $length) {
 				break;
 			}
@@ -59,6 +53,48 @@ final class Tokenizer
 
 		$result->end_token = q_count($tokens);
 		return $result;
+	}
+
+	/** Skip whitespace and comments without joining tokens across their original spans. */
+	private function trivia_end(int $offset): int
+	{
+		$length = string_byte_len($this->content);
+		while ($offset < $length) {
+			$byte = string_byte_at($this->content, $offset);
+			if (($byte === 32) || ($byte === 9) || ($byte === 13) || ($byte === 10)) {
+				$offset++;
+				continue;
+			}
+			$next = string_byte_at($this->content, $offset + 1);
+			if ((($byte === 35) && ($next !== 91)) || (($byte === 47) && ($next === 47))) {
+				while ($offset < $length) {
+					$line_byte = string_byte_at($this->content, $offset);
+					if (($line_byte === 13) || ($line_byte === 10)) { break; }
+					$offset++;
+				}
+				continue;
+			}
+			if (($byte === 47) && ($next === 42)) {
+				$offset = $this->block_comment_end($offset);
+				continue;
+			}
+			break;
+		}
+		return $offset;
+	}
+
+	/** Block comments are non-nesting; report an unfinished comment at its opener. */
+	private function block_comment_end(int $start): int
+	{
+		$length = string_byte_len($this->content);
+		$offset = $start + 2;
+		while ($offset < $length) {
+			if (string_byte_at($this->content, $offset) === 42) {
+				if (string_byte_at($this->content, $offset + 1) === 47) { return $offset + 2; }
+			}
+			$offset++;
+		}
+		throw new \RuntimeException('Unterminated block comment at ' . $this->source->path . ': byte ' . $start);
 	}
 
 	/** Recognize names, variables, decimal numbers and supported punctuation. */

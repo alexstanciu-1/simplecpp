@@ -1,6 +1,7 @@
 <?php
 namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
+require_once __DIR__ . '/cpp_probe.php';
 
 function token_scan(string $text): token_list
 {
@@ -23,7 +24,7 @@ $single = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789;(){}?
 for ($value = 0; $value < 256; $value++)
 {
 	$byte = chr($value);
-	if (str_contains(" \t\r\n", $byte)) {
+	if (str_contains(" \t\r\n#", $byte)) {
 		token_check(token_scan($byte)->tokens->is_empty());
 	}
 	elseif (str_contains($single, $byte)) {
@@ -136,6 +137,31 @@ foreach (["'", "'abc", "'abc" . "\\", '"', '"abc', '"abc' . "\\"] as $unterminat
 	token_check($failed);
 }
 token_check(token_scan('')->tokens->is_empty());
+foreach (["// ignored", "# ignored", "/** documentation */", "/* // # [ */", "/* outer /* inner */"] as $comment) {
+	token_check(token_scan($comment)->tokens->is_empty());
+}
+foreach (["\n", "\r", "\r\n"] as $ending) {
+	foreach (['//', '#'] as $prefix) {
+		$source = $prefix . ' ignored ' . $ending . '123';
+		$tokens = token_scan($source)->tokens;
+		token_check(count($tokens) === 1 && $tokens[0]->text() === '123' && $tokens[0]->offset === strlen($source) - 3);
+	}
+}
+$source = 'a/** doc */b/*gap*/#[Override] "// # /* */" \'# // /* */\' / 2';
+$scan = token_scan($source);
+$expected_text = ['a', 'b', '#[', 'Override', ']', '"// # /* */"', "'# // /* */'", '/', '2'];
+token_check($scan->content === $source && count($scan->tokens) === count($expected_text));
+foreach ($scan->tokens as $index => $token) {
+	token_check($token->text() === $expected_text[$index]);
+	token_check(substr($source, $token->offset, $token->length) === $token->text());
+}
+token_check(token_scan('1</*gap*/<2')->operator_text_at(1) === '<');
+foreach (['/*', '/**', '/* unfinished *'] as $comment) {
+	$failed = false;
+	try { token_scan('  ' . $comment); }
+	catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'Unterminated block comment at bytes.phs: byte 2'); }
+	token_check($failed);
+}
 for ($byte = 0; $byte < 256; $byte++) {
 	$text = chr($byte);
 	token_check(Source_Text::identifier($text) === (preg_match('/^[A-Za-z_]$/D', $text) === 1));
@@ -144,4 +170,26 @@ for ($byte = 0; $byte < 256; $byte++) {
 }
 token_check(!Source_Text::identifier('') && !Source_Text::digits(''));
 token_check(Source_Text::digits('00012') && !Source_Text::digits('12a'));
-echo "Tokenizer: every byte, exact spans, whitespace, EOF and rejection offsets passed\n";
+$directory = sys_get_temp_dir() . '/comment-source-' . bin2hex(random_bytes(6));
+mkdir($directory);
+$path = $directory . '/main.phs';
+try {
+	Compiler_Lifecycle::reset();
+	file_put_contents($path, 'function value(): int { return 7; } return value();');
+	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$before = CPP_Probe::text(Model::$cpp_files);
+	$commented = "/** function docs */ function /* name */ value(): int { // body\n return 7; # result\n } return value(); // EOF";
+	file_put_contents($path, $commented); $compiler->update_cpp([$path]);
+	token_check(CPP_Probe::text(Model::$cpp_files) === $before);
+	file_put_contents($path, $commented . "\n /* unfinished");
+	$failed = false;
+	try { $compiler->update_cpp([$path]); }
+	catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'Unterminated block comment'); }
+	token_check($failed);
+	file_put_contents($path, $commented); $compiler->update_cpp([$path]);
+	token_check(CPP_Probe::text(Model::$cpp_files) === $before);
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	token_check(CPP_Probe::text(Model::$cpp_files) === $before);
+}
+finally { Compiler_Lifecycle::reset(); unlink($path); rmdir($directory); }
+echo "Tokenizer: bytes, spans, comments, EOF, rejection and incremental recovery passed\n";

@@ -10,6 +10,17 @@ proposal; see the [migration audit](../archive/specialized_ast_migration_audit.m
 for implemented differences and the bounded native iterator checkpoint. Git history
 retains the former `03_parse/proposal/` snapshots when historical comparison is needed.
 
+## Source comments
+
+Tokenization skips `//` and `#` line comments (LF, CR, CRLF or EOF termination)
+and non-nesting `/* ... */` block comments, including documentation comments.
+`#[` remains an attribute opener. Quoted tokens retain comment-like contents.
+Comments remain in the exact source snapshot; token offsets are not compacted,
+and separated punctuation is not joined across a comment. Unterminated block
+comments reject at the opener before publishing a token list. This does not add
+semantic interpretation of documentation annotations. `tests/tokenizer.php` covers
+spans, spellings, comment-only inputs and incremental failure/repair/fresh agreement.
+
 ## Object type operations
 
 `object_type_node` owns an operand and literal target-type syntax, with a checked-cast
