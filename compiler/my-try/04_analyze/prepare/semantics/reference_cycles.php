@@ -94,8 +94,12 @@ final class Reference_Cycles
 						$target = weakref_get($facts->target);
 						if ($target instanceof callable_target_i) {
 							$callee = object_cast($target, callable_target_i::class);
-							if (!isset($by_definition[$callee])) { break; }
 							$vertex = $vertices[$by_scope[$current_scope]];
+							if ($callee instanceof callable_type_definition) {
+								$this->erased_targets($vertex, object_cast($callee, callable_type_definition::class));
+								break;
+							}
+							if (!isset($by_definition[$callee])) { break; }
 							$vertex->calls[] = $by_definition[$callee];
 							if (($callee instanceof collected_source_callable) && ($facts->receiver !== null)) {
 								if ($facts->receiver->dispatch_type === null) {
@@ -117,6 +121,18 @@ final class Reference_Cycles
 			}
 		}
 		return $this->cyclic;
+	}
+
+	/** Conservative alternatives also cover value-returning erased intermediaries. */
+	private function erased_targets(reference_cycle_vertex $caller, callable_type_definition $target): void
+	{
+		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
+		foreach ($vertices as $index => $vertex) {
+			if (!($vertex->target instanceof anonymous_callable_identity)) { continue; }
+			if (Callable_Contracts::matches_erased($vertex->target->signature(), $target->signature())) {
+				$caller->calls[] = $index;
+			}
+		}
 	}
 
 	/** Interface/trait contracts route to implementations, including inherited forwarding bindings. */

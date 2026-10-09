@@ -62,6 +62,31 @@ final class Runtime_Callables
 /** Structural admission shared by source and installed contracts; not runtime construction. */
 final class Callable_Contracts
 {
+	/** Exact erased contract, independent of source capture/copy admission. */
+	public static function matches_erased(callable_signature $provided, callable_signature $required): bool
+	{
+		if (!$provided->return_type->matches($required->return_type)) { return false; }
+		if (($provided->reference_return === null) !== ($required->reference_return === null)) { return false; }
+		if ($provided->reference_return !== null) {
+			if ($provided->reference_return->parameter_index() !== $required->reference_return->parameter_index()) { return false; }
+		}
+		$inputs /** Storage<callable_parameter> */ = $provided->parameters;
+		$expected /** Storage<callable_parameter> */ = $required->parameters;
+		if (q_count($inputs) !== q_count($expected)) { return false; }
+		foreach ($inputs as $index => $input) {
+			$required_input = $expected[$index];
+			if (($input->default_value !== null) || ($required_input->default_value !== null)) { return false; }
+			if (!$input->type->matches($required_input->type) || ($input->mode !== $required_input->mode)
+				|| ($input->access !== $required_input->access)) { return false; }
+			if (($input->element_type === null) !== ($required_input->element_type === null)) { return false; }
+			if ($input->element_type !== null) {
+				$element /** canonical_type_use */ = $input->element_type;
+				if (!$element->matches($required_input->element_type)) { return false; }
+			}
+		}
+		return true;
+	}
+
 	public static function validate(callable_signature $signature): void
 	{
 		self::validate_reference_return($signature);

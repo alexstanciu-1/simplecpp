@@ -194,6 +194,13 @@ including origin substitution, copy versus alias behavior and recursive-componen
 rejection. Captured storage is not caller-owned parameter storage and cannot be
 returned by reference. See [closures](language/closures.md#bounded-reference-returns).
 
+Explicit `function<R&(Args...)>` values preserve that same parameter-origin contract
+through copying, storage and invocation. Ordinary `function<R(Args...)>` cannot erase
+it. Erased calls conservatively connect to all prepared anonymous callables with the
+exact signature, including value-returning intermediaries. Assignment-sensitive target
+analysis is deferred; compatible but unused targets may cause a conservative cycle
+rejection. See the [explicit contract](language/closures.md#explicit-reference-return-contracts).
+
 ## Runtime note
 
 The current safe subset treats typed native-reference extraction from `mixed_t` as disabled runtime surface. The legacy `.as_*_ref()` helpers may remain present temporarily for transition purposes, but they are not part of the supported safe reference model.

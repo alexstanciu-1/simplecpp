@@ -11,25 +11,7 @@ final class Conversion_Relationships implements conversion_relationship_query
 		$identity = Model::$type_catalog->closures()->identity($source);
 		$this->context->worker->prepare_anonymous($identity, $this->context->owner);
 		if (!Capture_Preparation::borrowed_lifetimes($source, $this->context)->is_empty()) { return false; }
-		$provided = $identity->signature();
-		if ($provided->reference_return !== null) { return false; }
-		$required = $target->signature();
-		if (!$provided->return_type->matches($required->return_type)) { return false; }
-		$inputs /** Storage<callable_parameter> */ = $provided->parameters;
-		$expected /** Storage<callable_parameter> */ = $required->parameters;
-		if (q_count($inputs) !== q_count($expected)) { return false; }
-		foreach ($inputs as $index => $input) {
-			// Erasure preserves input modes and packing; defaults remain outside the contract.
-			$required_input = $expected[$index];
-			if ($input->default_value !== null) { return false; }
-			if (!$input->type->matches($required_input->type) || ($input->mode !== $required_input->mode)
-				|| ($input->access !== $required_input->access)) { return false; }
-			if (($input->element_type === null) !== ($required_input->element_type === null)) { return false; }
-			if ($input->element_type !== null) {
-				$element /** canonical_type_use */ = $input->element_type;
-				if (!$element->matches($required_input->element_type)) { return false; }
-			}
-		}
+		if (!Callable_Contracts::matches_erased($identity->signature(), $target->signature())) { return false; }
 		Capability_Preparation::require_copy($source, $this->context);
 		return true;
 	}

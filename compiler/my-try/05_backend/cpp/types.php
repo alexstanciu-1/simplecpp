@@ -46,6 +46,14 @@ final class CPP_Types
 		return $result;
 	}
 
+	/** Reference results have identical spelling for source and erased callables. */
+	public static function return_representation(callable_signature $signature, cpp_type_requirement $requirement): cpp_type
+	{
+		$result = self::representation_for($signature->return_type, $requirement);
+		if ($signature->reference_return !== null) { $result->spelling .= '&'; }
+		return $result;
+	}
+
 	/** Add every representation dependency to one generation context exactly once. */
 	public static function record_dependencies(cpp_type $type, cpp_generation_context $context): void
 	{
@@ -66,7 +74,7 @@ final class CPP_Types
 		$result = new cpp_type();
 		if ($definition instanceof callable_type_definition) {
 			$signature = object_cast($definition, callable_type_definition::class)->signature();
-			$return_mapping = self::representation($signature->return_type);
+			$return_mapping = self::return_representation($signature, cpp_type_requirement::complete);
 			self::merge_headers($result, $return_mapping);
 			$parts /** vector<string> */ = [];
 			$parameters /** Storage<callable_parameter> */ = $signature->parameters;

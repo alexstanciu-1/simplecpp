@@ -106,6 +106,12 @@ final class Reference_Preparation
 		if (!$syntax->returns_reference) {
 			return;
 		}
+		self::prepare_return_origin($signature);
+	}
+
+	/** The same whole-parameter origin selection serves source declarations and erased contracts. */
+	public static function prepare_return_origin(callable_signature $signature): void
+	{
 		$selected = -1;
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 		foreach ($parameters as $index => $parameter)

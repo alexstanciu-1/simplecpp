@@ -107,9 +107,39 @@ Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime
 obligations.
 
-Erased reference-return signatures and wrapper storage remain deferred in this slice. The C++ backend
+Wrapper storage remains deferred in this slice. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
 the concrete-lambda lowering of inferred locals.
+
+### Explicit reference-return contracts
+
+`function<R&(Args...)>` preserves a writable reference result. Exactly one fixed
+reference input supplies its whole storage, and its type must exactly match `R`.
+Other by-value inputs, including a trailing typed variadic, are permitted.
+
+```php
+$select function<int&(int&)> = fn&(&$value) => $value;
+$value = 3;
+$alias =& $select($value);
+$copy = $select($value);
+```
+
+The return marker and supplying parameter position are part of canonical callable
+identity. Conversion requires an exact origin contract, not just matching payload
+types. Context supplies omitted types but never invents `fn&` / `function &`.
+Invocation substitutes the supplying argument's place and lifetime, using ordinary
+reference argument, alias and return checks. Destroying the callable does not destroy
+that caller-owned storage. Normal assignment copies under ordinary copyability rules;
+`=&` aliases, including for noncopyable payloads. Captured/local/interior return origins,
+const-reference results, borrowed environments and defaulted inputs remain excluded.
+
+Reference-cycle checking conservatively treats every prepared concrete closure with
+an exact compatible signature as a possible target of an erased invocation. This
+includes by-value erased calls that could connect a reference-return cycle. It does
+not track assignments or prove that a compatible closure is unreachable; safe programs
+can therefore reject. Components containing only value returns remain permitted.
+This bounded policy preserves the existing recursive-reference-return restriction;
+more precise target-flow analysis is deferred, not delegated to C++ or runtime.
 
 ### Typed property and container storage
 
@@ -199,7 +229,7 @@ supply context to its returned closure through the ordinary return path.
 Without an expected callable contract, all parameter/return types must be authored.
 No types are inferred from the body, argument values, later calls or overload-candidate
 guessing. Named declarations retain their existing explicit-signature requirements.
-Defaults, reference returns and borrowing environments remain rejected across
+Defaults and borrowing environments remain rejected across
 erased boundaries. Omitted types remain absent in syntax; resolved types belong to
 prepared signature facts. A source occurrence retains one anonymous identity when
 its surrounding contract changes during incremental preparation.
@@ -227,7 +257,8 @@ preparation, even if a particular caller might keep their origins alive. Capturi
 a value from a reference parameter by value does not itself retain a borrow.
 Noncopyable captures and incompatible signatures remain rejected. No inferred
 anonymous return type, owning receiver capture,
-or extension of erased defaults/reference-return signatures is enabled here.
+or extension of erased defaults is enabled here. Reference-return contracts follow
+the explicit origin rules above.
 
 ## Forbidden usage (concrete closures)
 
@@ -305,8 +336,9 @@ by-value parameters may accompany the single reference parameter.
 
 The existing recursive-reference-return restriction includes concrete anonymous
 callables and cycles through by-value helpers. Merely creating an uninvoked closure
-does not call its body. Const-reference returns and erased reference-return signatures remain
-deferred: `function<R(Args...)>` must not silently erase this origin contract.
+does not call its body. Erased invocations additionally use the conservative compatible
+target rule above. Const-reference returns remain deferred; `function<R(Args...)>`
+must not silently erase an origin contract: use `function<R&(Args...)>` explicitly.
 
 ## Capture semantics
 

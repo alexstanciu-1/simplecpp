@@ -177,8 +177,9 @@ final class CPP_Declarations
 	public static function return_type(callable_signature $signature, cpp_generation_context $context, bool $prototype): string
 	{
 		$reference = $signature->reference_return !== null;
-		return self::type_for($signature->return_type, $context, self::signature_requirement($prototype, $reference))
-			. ($reference ? '&' : '');
+		$mapping = CPP_Types::return_representation($signature, self::signature_requirement($prototype, $reference));
+		CPP_Types::record_dependencies($mapping, $context);
+		return $mapping->spelling;
 	}
 
 	/** Property-backed inputs initialize members before the body, preserving parameter values. */

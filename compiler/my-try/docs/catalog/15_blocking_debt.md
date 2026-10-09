@@ -151,6 +151,20 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-CALLABLE-TARGETS-01 — precise erased-call target analysis
+
+Recorded with the approved CH12 reference-return prerequisite on 2026-10-09.
+The current reference-cycle audit connects an erased invocation to every prepared
+anonymous callable with an exact compatible signature. This includes value-returning
+intermediaries. It is conservative: an unused/unassigned compatible closure can make
+a safe program reject. No assignment-flow or points-to analysis is claimed.
+
+Review a more precise target model across assignments, parameters, returns, properties
+and containers, including incremental invalidation and unknown targets. Preserve the
+recursive-reference-return safety boundary until that analysis is proved. Reuse the
+shared signature comparison; do not introduce a backend-only exception or silently
+drop indirect edges. Non-blocking precision debt, not a new release gate.
+
 ### CH15-PROTECTED-01 — broader protected receiver access
 
 User decision: use C++-compatible protected access for the first CH11 inheritance

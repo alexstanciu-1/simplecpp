@@ -194,13 +194,36 @@ across syntax/collection, analysis lifecycle and backend consumers.
     remain authoritative. Existing calls own reference checks and packing; shared C++
     parameter spelling serves declarations and erased types.
 
+17. **Explicit reference-return contracts — implemented.** `function<R&(Args...)>`
+    retains the ordinary single-reference-parameter origin. Exact interning/conversion
+    includes that origin; invocation substitutes caller storage without a new lifetime
+    model. Shared signature matching drives conversion and conservative erased-call
+    cycle edges, including by-value intermediaries. C++ source/erased return spelling
+    is shared. Precise target-flow analysis is CH15 debt; captured borrows still cannot
+    cross erased boundaries.
+
 Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
-returns, erased reference-return signatures, named-call syntax, inferred callable returns,
+returns, named-call syntax, inferred callable returns,
 mixed/dynamic callable storage, callable wrappers, authored closure property defaults
 and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Explicit reference-return checkpoint (2026-10-09): 18 generated programs passed
+without PCH in `/tmp/my-try-callable-ref-return-20261009-final`. Coverage includes
+contextual markers, aliases versus copies, erased copies/reset, temporary factories,
+named forwarding, nonzero origin positions, variadics, vector/hash and class/struct
+property storage, container/noncopyable payload borrows, and value-only recursion.
+Fifteen invalid shapes reject in preparation, including erased cycles through
+reference/value callbacks and the documented conservative unused-target case.
+Return-marker edits and cycle insertion/retry/removal recover and agree with fresh
+compilation. Exact registry identity and no-op output are checked. Eleven focused
+PHP suites passed in `/tmp/my-try-callable-ref-checks-20261009-1`. Initial attempts
+corrected test-only use of unregistered `count` and unsupported `new unique<T>()`;
+no production workaround was needed. Shared runner used CLI fallback; no native
+compiler rebuild. Legacy review: `TypeMapper::mapFunctionType` supplies false to
+return-reference mapping; its emitted C++ does not supply this origin/lifetime model.
 
 Explicit-input checkpoint (2026-10-09): 15 generated C++ programs passed without
 PCH in `/tmp/my-try-callable-inputs-final`; 12 invalid shapes reject in preparation.

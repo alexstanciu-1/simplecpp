@@ -239,13 +239,20 @@ read-only access and a variadic marker. These are not parameter declarations and
 publish no names or occurrences. Preparation shares parameter-shape admission with
 ordinary declarations and produces existing `callable_parameter` contracts.
 Its structural `callable_type_definition` is interned by canonical return/input
-types, modifiers, passing/access modes and variadic element identity;
+types, modifiers, passing/access modes, variadic element identity and optional
+reference-return origin index. Syntax owns an explicit return-reference marker;
+analysis shares whole-parameter origin selection with ordinary source signatures;
 the registry-owned contract has no parameter names, defaults or source observers.
 Interning copies input records, never retaining mutable caller-owned parameter facts.
 Variadic storage is the ordinary vector type, but its element contract distinguishes
 it from a fixed vector input. Contextual completion supplies the element type for
 variadics without rewriting authored markers. C++ declarations and erased types
 share parameter spelling; invocation reuses reference admission and pack construction.
+Return spelling is shared too. `Callable_Contracts::matches_erased` compares exact
+signatures/origins independently of capture/copy admission. Conversion and the transient
+reference-cycle audit reuse it; erased calls conservatively add edges to compatible
+prepared anonymous targets, including value-returning intermediaries. There is no
+retained points-to graph or source link on an interned callable type.
 The existing call target interface lets value invocation reuse ordinary argument
 admission. Dependency-aware conversion preparation checks a concrete closure's
 signature before publishing `callable_wrap`; only the backend chooses `std::function`.

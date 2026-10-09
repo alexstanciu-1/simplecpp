@@ -81,10 +81,11 @@ final class Type_Preparation
 				$inputs[] = $input;
 				$contracts->append($input);
 			}
+			if ($callable->returns_reference) { Reference_Preparation::prepare_return_origin($signature); }
 			Callable_Contracts::validate($signature);
-			Capability_Preparation::require_concrete_value($result, $context);
+			if (!$callable->returns_reference) { Capability_Preparation::require_concrete_value($result, $context); }
 			$registry = Model::$type_catalog->registry();
-			$definition = $registry->define_callable($result, $inputs);
+			$definition = $registry->define_callable($result, $inputs, $signature->reference_return);
 			$callable->set_preparation($registry->use($registry->canonical($definition)->type_id()));
 		}
 		elseif ($node instanceof named_type_node) {

@@ -2535,6 +2535,7 @@ final class Parser_Run
 			$this->position += 2;
 			$callable = new callable_type_node();
 			$callable->result_type = $this->type_syntax($lookup_scope);
+			if ($this->text() === '&') { $callable->returns_reference = true; $this->position++; }
 			$this->expect('(');
 			$parameters /** Storage<callable_input_type_node> */ = $callable->inputs;
 			if ($this->text() !== ')') {

@@ -332,12 +332,14 @@ final class closure_type_definition extends abstract_nominal_type_definition
 final class callable_type_definition extends abstract_nominal_type_definition implements callable_target_i
 {
 	private callable_signature $call_contract;
-	public function __construct(int $id, string $name, canonical_type_use $result, array $inputs /** vector<callable_parameter> */)
+	public function __construct(int $id, string $name, canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
+		?reference_return_contract $reference_return = null)
 	{
 		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
 		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::callable_type, $capabilities);
 		$this->call_contract = new callable_signature();
 		$this->call_contract->return_type = $result;
+		$this->call_contract->reference_return = $reference_return;
 		$parameters /** Storage<callable_parameter> */ = $this->call_contract->parameters;
 		foreach ($inputs as $input) {
 			$parameter = new callable_parameter();
@@ -985,9 +987,11 @@ interface type_capability_query
 final class Type_Registry implements type_capability_query
 {
 	private array $callable_types /** hash<callable_type_definition> */ = [];
-	public function define_callable(canonical_type_use $result, array $inputs /** vector<callable_parameter> */): callable_type_definition
+	public function define_callable(canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
+		?reference_return_contract $reference_return = null): callable_type_definition
 	{
 		$key = $result->type_id() . ':' . ($result->by_value() ? 'v' : 'n');
+		if ($reference_return !== null) { $key .= '&' . $reference_return->parameter_index(); }
 		foreach ($inputs as $input) {
 			if ($input->default_value !== null) { throw new \InvalidArgumentException('Callable type defaults are deferred'); }
 			$key .= ',' . $input->type->type_id() . ':' . ($input->type->by_value() ? 'v' : 'n')
@@ -999,7 +1003,7 @@ final class Type_Registry implements type_capability_query
 			}
 		}
 		if (isset($this->callable_types[$key])) { return $this->callable_types[$key]; }
-		$definition = new callable_type_definition($this->allocate_definition_id(), '<function:' . $key . '>', $result, $inputs);
+		$definition = new callable_type_definition($this->allocate_definition_id(), '<function:' . $key . '>', $result, $inputs, $reference_return);
 		$this->register_definition($definition);
 		$this->callable_types[$key] = $definition;
 		return $definition;

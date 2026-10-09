@@ -1265,6 +1265,7 @@ final class callable_type_node extends type_node
 	use Preparation_Facts;
 	private ?canonical_type_use $prepared_facts = null;
 	public type_node $result_type;
+	public bool $returns_reference = false;
 	public Storage $inputs /** Storage<callable_input_type_node> */;
 	public function __construct() { $this->inputs = new Storage /** Storage<callable_input_type_node> */(); }
 	public function kind(): node_kind { return node_kind::callable_type; }
