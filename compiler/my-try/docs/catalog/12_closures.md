@@ -109,7 +109,6 @@ prose and extensions contain further capabilities.
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
 | Broader callable boundaries | Erased reference/default/variadic signatures, owning/escaping receivers and captured-field borrows remain outside the implemented slices |
 | Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
-| Void-valued return expressions | Shared return-owner debt recorded in the foundation plan; do not special-case arrows |
 
 Callable returns now use explicit `function<R(Args...)>` contracts across functions,
 methods and closures. Existing erased conversion admits capture-free/copyable value
@@ -124,8 +123,11 @@ ordinary construction, conversion, copy and invocation paths. Property defaults 
 absent; authored closure defaults remain deferred. Keyed presence tests observe the
 selected callable's state without changing lazy path evaluation. Parenthesized
 property invocation stays distinct from same-named methods. See `callable_storage.php`.
-Next recommended discussion: reconcile the remaining extensions above and select
-the next shared callable contract, without introducing closure-only exceptions.
+Void-valued return expressions now share ordinary return preparation across functions,
+methods, closures and arrows. Only void-to-void forwarding is admitted; values are
+never discarded implicitly. See `void_returns.php`.
+Next recommended discussion: authored callable property defaults, with explicit
+creation context and per-instance initialization semantics.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
 `closure_model` checks, including added exact rejection shapes. No compiler semantics,

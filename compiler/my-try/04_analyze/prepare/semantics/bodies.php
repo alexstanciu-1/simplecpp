@@ -272,11 +272,18 @@ final class Body_Preparation
 			expression_consumer::consuming_return);
 		if ($context->return_type !== null) {
 			$type /** canonical_type_use */ = $context->return_type;
+			if (Type_Queries::canonical($type)->family() === type_family::no_value) {
+				if (Type_Queries::canonical($value->type)->family() !== type_family::no_value) {
+					throw new \RuntimeException('Void return forwarding requires a void expression; values are not discarded');
+				}
+				// A return forwards completion, not a storable value. Ordinary value conversion still rejects void.
+				$facts->conversion = Conversion_Preparation::operation($value->type, $type,
+					conversion_context::return_value, conversion_operation::identity);
+				return $facts;
+			}
 			$facts->conversion = Conversion_Preparation::decide(
 				$value->type, $type, conversion_context::return_value, new Conversion_Relationships($context));
-			if (Type_Queries::canonical($type)->family() !== type_family::no_value) {
-				$facts->boundary = Value_Boundary_Preparation::decide_value($type, $facts->conversion, $context, $value);
-			}
+			$facts->boundary = Value_Boundary_Preparation::decide_value($type, $facts->conversion, $context, $value);
 		}
 		elseif (!Type_Preparation::entry_return_type($value->type)) {
 			throw new \RuntimeException('S2S entry return requires an integer, float or bool value');

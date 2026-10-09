@@ -74,6 +74,11 @@ become inherited lookup caches.
 
 ## Work and dispatch
 
+Shared return preparation permits void-to-void expression forwarding for every
+source callable, including arrows. It records identity forwarding in existing
+return facts without treating void as a storable value. Non-void-to-void, void-to-value
+and void program-entry returns still reject. C++ consumes the same return facts.
+
 `Preparation_Worker` selects typed declaration work: `source_callable_signature_work`,
 `record_definition_work`, `constant_definition_work` and `enum_definition_work`.
 Bodies use `source_callable_body_work` and `file_body_work`;

@@ -136,8 +136,6 @@ try {
 		'$f = fn(int &...$v): int => 0; return 0;',
 		'$f = fn(int $n = 1, int $required): int => $required; return 0;',
 		'$f = fn(int &$n = 1): int => $n; return 0;',
-		'function noop(): void { return; } $f = fn(): void => noop(); return 0;',
-		'function noop(): void { return; } function outer(): void { return noop(); } return 0;',
 		'$f = fn(): int => $missing; return 0;',
 		'$n = 1; $f = fn(): int => $n++; return 0;',
 		'$n = 1; $f = function (): int { return (fn(): int => $n)(); }; return 0;',

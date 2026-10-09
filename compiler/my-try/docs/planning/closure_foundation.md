@@ -116,9 +116,8 @@ across syntax/collection, analysis lifecycle and backend consumers.
    retained indexes or introduce an AST visitor. C++ consumes the body work's
    prepared capture fields for both spellings. Callable invocation is unchanged.
 
-   Remaining shared-return debt: a void-valued return expression is rejected by the
-   ordinary function return path, so void arrows are not independently enabled.
-   Revisit this in that owner rather than special-casing arrow body emission.
+   Shared void-return forwarding was subsequently completed in checkpoint 15;
+   arrows gain it through ordinary return preparation, not separate emission.
 
 7. **Parameter parity — implemented.** Anonymous signatures now use the ordinary
    parameter admission without an extra exact-arity/value-only gate. Defaults,
@@ -180,6 +179,13 @@ across syntax/collection, analysis lifecycle and backend consumers.
     Keyed probes reuse the prepared presence decision after lazy lookup; no new
     retained structure, per-container callable implementation or runtime carrier.
 
+15. **Shared void-return forwarding — implemented.** Return preparation admits
+    void expressions only for void return contracts and records identity forwarding
+    in existing return facts. This bypasses storable-value admission only at that
+    return boundary. Named functions, methods, closures and arrows share it; C++
+    already emits the valid direct return. No new AST, retained state or general
+    void conversion is introduced.
+
 Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
 returns, erased reference signatures, named-call syntax, inferred callable returns,
 mixed/dynamic callable storage, callable wrappers, authored closure property defaults
@@ -187,6 +193,14 @@ and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Void-forwarding checkpoint (2026-10-09): 15 generated C++ programs passed without
+PCH in `/tmp/my-try-void-returns-01`; eight invalid return/storage shapes reject.
+Effects execute once and forwarding returns immediately. Class/struct instance and
+static methods, borrowed receivers, contextual arrows and erased invocation share
+the rule. Cross-file callee return edits invalidate, reject, recover and agree with
+fresh output. Six related PHP suites passed in `/tmp/my-try-void-return-checks`.
+The shared runner used CLI fallback; no native compiler rebuild was performed.
 
 Typed-storage checkpoint (2026-10-09): 32 generated C++ programs passed **without
 PCH** in `/tmp/my-try-callable-storage-final`; 13 invalid shapes reject during

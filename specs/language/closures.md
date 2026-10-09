@@ -387,9 +387,8 @@ $f = fn(int $x): int => $x * $factor;
 The expression is its return expression; ordinary return checking and conversion
 apply. Parameter and return types must be explicit or supplied by an expected callable
 contract as described above.
-The current ordinary return path does not admit a void-valued return expression;
-consequently `fn(): void => void_call()` remains rejected rather than gaining an
-arrow-only exception. A block closure with a void call followed by `return;` works.
+The shared void-return rule below permits `fn(): void => void_call()`; contextual
+`function<void(...)>` contracts can supply the omitted return type as usual.
 An arrow has the same concrete closure identity and explicit callable-boundary
 conversion rules as an authored `function` closure. It has no explicit `use` list.
 
@@ -407,6 +406,26 @@ lifetime obligations. `$this` uses the borrowed receiver contract above, not an
 ordinary by-value object copy.
 
 ---
+
+## Shared void-return forwarding
+
+Functions, instance/static methods, explicit closures and arrows follow one rule:
+a callable declared `void` may use `return expression;` exactly when the expression
+also has type `void`. Evaluate the expression once, then return immediately. Any
+exception propagates normally; completed effects are not undone. A non-void value
+is rejected, not implicitly discarded. This is forwarding completion, not storing
+or converting a void value. Ordinary `return;` remains valid in a void callable.
+
+```php
+function notify(): void { /* effects */ }
+function forward(): void { return notify(); }
+$callback = fn(): void => notify();
+```
+
+Non-void callables cannot return void expressions or omit their required result.
+Program-entry returns retain their exit-value contract and cannot forward void.
+This rule adds no void variables, parameters, container elements or general-purpose
+void conversion. C++ lowering may directly emit `return void_expression;`.
 
 ## Lowering (C++)
 
