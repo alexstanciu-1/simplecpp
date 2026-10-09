@@ -301,7 +301,8 @@ try {
 	$registry = Model::$type_catalog->registry();
 	$integer = Language_Types::integer(Model::$language_scope);
 	$boolean = Language_Types::boolean(Model::$language_scope);
-	$inputs = [$integer];
+	$input = new callable_parameter(); $input->type = $integer; $input->mode = passing_mode::value;
+	$inputs = [$input];
 	$contract = $registry->define_callable($integer, $inputs);
 	if ($registry->define_callable($integer, $inputs) !== $contract
 		|| $registry->define_callable($boolean, $inputs) === $contract) { throw new \LogicException('Callable signature interning is not exact'); }

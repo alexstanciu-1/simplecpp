@@ -37,6 +37,15 @@ final class CPP_Types
 		return $result;
 	}
 
+	/** One parameter spelling for declarations and erased callable representations. */
+	public static function parameter_representation(callable_parameter $parameter, cpp_type_requirement $requirement): cpp_type
+	{
+		$result = self::representation_for($parameter->type, $requirement);
+		$result->spelling = ($parameter->access === storage_access::read_only ? 'const ' : '')
+			. $result->spelling . ($parameter->mode === passing_mode::reference ? '&' : '');
+		return $result;
+	}
+
 	/** Add every representation dependency to one generation context exactly once. */
 	public static function record_dependencies(cpp_type $type, cpp_generation_context $context): void
 	{
@@ -62,7 +71,7 @@ final class CPP_Types
 			$parts /** vector<string> */ = [];
 			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 			foreach ($parameters as $parameter) {
-				$mapping = self::representation($parameter->type);
+				$mapping = self::parameter_representation($parameter, cpp_type_requirement::complete);
 				self::merge_headers($result, $mapping);
 				$parts[] = $mapping->spelling;
 			}

@@ -59,21 +59,55 @@ cross that boundary. Inferred closure locals remain concrete; this conversion is
 not applied merely because a value is callable. Different closure expressions may
 initialize or replace the same explicitly typed callable storage.
 
-The current v0.2 slice requires exact canonical parameter and return types, with
-ordinary required by-value parameters. No variance or numeric signature adaptation is
+The current v0.2 slice requires exact canonical parameter and return types, input
+modes, read-only contracts and variadic shape. No variance or numeric signature adaptation is
 inferred. Explicit callable locals default to an absent callable. Copying and reassignment
 preserve the callable contract. Function and instance/static method parameters use
 the same rule, for classes and structs alike.
 
-Closures with defaulted, variadic or reference parameters cannot cross this erased
-boundary in the current slice: preparation rejects the conversion rather than losing
-their declaration contract. Concrete closure calls retain those parameter properties.
+Closures with defaulted parameters cannot cross this erased boundary: preparation
+rejects conversion rather than silently losing defaults. Fixed reference inputs and
+typed variadics use the explicit input contracts below.
+
+### Explicit reference and variadic inputs
+
+Callable input types use `T&` for a writable reference, `const T&` for a read-only
+reference and trailing `T...` for a typed variadic input. A fixed plain `T` is passed
+by value. These distinctions are part of the callable's canonical identity.
+
+```php
+$increment function<void(int&)> = function (&$n) { $n++; };
+$read function<int(const int&)> = fn(const &$n) => $n;
+$sum function<int(int...)> = function (...$values) {
+    $total = 0;
+    foreach ($values as $n) { $total += $n; }
+    return $total;
+};
+```
+
+An expected contract can supply omitted parameter types, but the closure must
+explicitly spell its reference, `const` and variadic markers. Preparation requires
+an exact match; it does not reinterpret a by-value closure as a reference closure.
+References use ordinary writable/read-only storage, type and lifetime checks;
+they do not acquire temporary binding or ownership extension through erasure.
+
+There is at most one variadic input, it is last, and it must be by value without a
+default. `const` requires a fixed reference, following ordinary parameter rules.
+Invocation packs trailing arguments into `vector<T>`, including an empty pack,
+using ordinary source-order evaluation and element conversion. A contract accepting
+one `vector<T>` is distinct from `T...`, despite their common C++ parameter storage.
+C++ callable representation uses the same parameter spelling rules as declarations.
+
+These contracts work at existing local, argument, return, property and typed-container
+boundaries. Reference **inputs** do not grant reference **returns**, permit captured
+borrows to escape, or enable reference/variadic parameters whose payload itself is
+an erased callable; the latter retain their existing ordinary-parameter gate.
 
 Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime
 obligations.
 
-Erased reference signatures and wrapper storage remain deferred in this slice. The C++ backend
+Erased reference-return signatures and wrapper storage remain deferred in this slice. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
 the concrete-lambda lowering of inferred locals.
 
@@ -165,7 +199,7 @@ supply context to its returned closure through the ordinary return path.
 Without an expected callable contract, all parameter/return types must be authored.
 No types are inferred from the body, argument values, later calls or overload-candidate
 guessing. Named declarations retain their existing explicit-signature requirements.
-This does not admit defaults, variadics, references or borrowing environments across
+Defaults, reference returns and borrowing environments remain rejected across
 erased boundaries. Omitted types remain absent in syntax; resolved types belong to
 prepared signature facts. A source occurrence retains one anonymous identity when
 its surrounding contract changes during incremental preparation.
@@ -193,7 +227,7 @@ preparation, even if a particular caller might keep their origins alive. Capturi
 a value from a reference parameter by value does not itself retain a borrow.
 Noncopyable captures and incompatible signatures remain rejected. No inferred
 anonymous return type, owning receiver capture,
-or extension of erased defaults/variadic/reference signatures is enabled here.
+or extension of erased defaults/reference-return signatures is enabled here.
 
 ## Forbidden usage (concrete closures)
 
@@ -271,7 +305,7 @@ by-value parameters may accompany the single reference parameter.
 
 The existing recursive-reference-return restriction includes concrete anonymous
 callables and cycles through by-value helpers. Merely creating an uninvoked closure
-does not call its body. Const-reference returns and erased reference signatures remain
+does not call its body. Const-reference returns and erased reference-return signatures remain
 deferred: `function<R(Args...)>` must not silently erase this origin contract.
 
 ## Capture semantics

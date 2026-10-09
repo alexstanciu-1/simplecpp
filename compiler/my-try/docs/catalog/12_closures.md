@@ -55,7 +55,7 @@ Erased callable conversion remains fixed, required and by-value: defaults, packs
 references reject rather than silently losing their contracts. Concrete reference
 returns now reuse the single caller-owned reference-parameter contract, including
 aliases, forwarding, copying and recursive-component rejection. Captured/local/interior
-storage cannot escape; erased reference signatures remain deferred. The imported rows below
+storage cannot escape; erased reference-return signatures remain deferred. The imported rows below
 are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
@@ -108,7 +108,6 @@ prose and extensions contain further capabilities.
 | Authored callable property defaults | Explicitly deferred by user on 2026-10-09; [CH15-CALLABLE-DEFAULTS-01](15_blocking_debt.md#ch15-callable-defaults-01--authored-callable-property-defaults); use constructor inputs or ordinary assignments |
 | Callable wrappers | Selected for CH12 follow-up on 2026-10-09; currently gated; discuss supported wrapper contracts, without assuming redundant nullable storage |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
-| Explicit reference parameters and variadics | Selected for CH12 follow-up; shared callable signature model and argument admission |
 | Explicit reference returns | Selected for CH12 follow-up; preserve whole-reference-parameter origin and lifetime contract |
 | Captured-field borrows | Selected for CH12 follow-up; establish stable field provenance and containing-storage lifetime checks |
 | Defaults across erased callable boundaries | User-deferred; [CH15-CALLABLE-PARAM-DEFAULTS-01](15_blocking_debt.md#ch15-callable-param-defaults-01--defaults-across-erased-callable-boundaries) |
@@ -139,8 +138,12 @@ User selection (2026-10-09): pursue explicit reference parameters, reference ret
 variadics, captured-field borrows and callable wrappers. Defer parameter defaults
 across erased boundaries and owning/escaping receivers to CH15. These are selected
 work items, not implemented capabilities or approval of unspecified type syntax.
-Recommended order: reference/variadic input contracts together, reference-return
-origin contracts, captured-field borrows, then wrapper integration. Preserve existing
+Reference/variadic input contracts are now implemented: `function<void(int&)>`,
+`function<int(const int&)>` and `function<int(int...)>` use name-free input syntax,
+exact contract interning and shared parameter admission/packing. Context supplies
+types but never invents reference/const/variadic markers. Defaults, borrowing
+environments and erased reference returns still reject; see `callable_inputs.php`.
+Next: reference-return origin contracts, captured-field borrows, then wrapper integration. Preserve existing
 rejection boundaries until each shared model and its proofs are in place.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and

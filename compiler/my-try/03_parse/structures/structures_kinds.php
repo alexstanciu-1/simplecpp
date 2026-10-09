@@ -18,6 +18,7 @@ enum node_category {
 enum node_kind
 {
 	case callable_type;
+	case callable_input_type;
 	case type_declaration;
 	case method_declaration;
 	case member_constant_declaration;

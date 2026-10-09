@@ -169,9 +169,9 @@ final class CPP_Declarations
 	public static function parameter_type(callable_parameter $parameter, cpp_generation_context $context, bool $prototype): string
 	{
 		$reference = $parameter->mode === passing_mode::reference;
-		return ($parameter->access === storage_access::read_only ? 'const ' : '')
-			. self::type_for($parameter->type, $context, self::signature_requirement($prototype, $reference))
-			. ($reference ? '&' : '');
+		$mapping = CPP_Types::parameter_representation($parameter, self::signature_requirement($prototype, $reference));
+		CPP_Types::record_dependencies($mapping, $context);
+		return $mapping->spelling;
 	}
 
 	public static function return_type(callable_signature $signature, cpp_generation_context $context, bool $prototype): string

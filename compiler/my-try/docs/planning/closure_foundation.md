@@ -186,13 +186,32 @@ across syntax/collection, analysis lifecycle and backend consumers.
     already emits the valid direct return. No new AST, retained state or general
     void conversion is introduced.
 
+16. **Explicit reference/variadic inputs — implemented.** Name-free input syntax
+    records distinguish type, mode, access and packing. Shared parameter-shape
+    preparation creates ordinary `callable_parameter` contracts; registry identity
+    includes all input distinctions and copies the records. Exact closure adaptation
+    preserves them. Contextual variadics receive their element type; authored markers
+    remain authoritative. Existing calls own reference checks and packing; shared C++
+    parameter spelling serves declarations and erased types.
+
 Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
-returns, erased reference signatures, named-call syntax, inferred callable returns,
+returns, erased reference-return signatures, named-call syntax, inferred callable returns,
 mixed/dynamic callable storage, callable wrappers, authored closure property defaults
 and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Explicit-input checkpoint (2026-10-09): 15 generated C++ programs passed without
+PCH in `/tmp/my-try-callable-inputs-final`; 12 invalid shapes reject in preparation.
+Coverage includes writable/read-only inputs, contextual types without invented
+markers, empty/nonempty packs, combined references/packs, local/argument/return/
+property/container boundaries, exact registry identity and copied registry inputs.
+Cross-file reference-mode edits reject, recover and agree with fresh output.
+Eleven related PHP suites passed in `/tmp/my-try-callable-input-checks`, including
+AST/lifecycle checks and ordinary method parameters. An initial fixture used
+unregistered `count`; the corrected tests use existing emptiness/index/iteration
+operations. Shared runner used CLI fallback; no native compiler rebuild.
 
 Void-forwarding checkpoint (2026-10-09): 15 generated C++ programs passed without
 PCH in `/tmp/my-try-void-returns-01`; eight invalid return/storage shapes reject.

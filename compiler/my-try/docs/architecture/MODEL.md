@@ -233,9 +233,19 @@ their own category and do not publish a named declaration fragment.
 They render as inline C++ lambdas with `auto` local storage. Anonymous changes
 conservatively invalidate executable C++ fragments in their owning source.
 
-Explicit `function<R(Args...)>` syntax uses `callable_type_node`. Its structural
-`callable_type_definition` is interned by canonical return/input types and modifiers;
+Explicit `function<R(Args...)>` syntax uses `callable_type_node`, with ordered
+name-free `callable_input_type_node` children owning type syntax, passing mode,
+read-only access and a variadic marker. These are not parameter declarations and
+publish no names or occurrences. Preparation shares parameter-shape admission with
+ordinary declarations and produces existing `callable_parameter` contracts.
+Its structural `callable_type_definition` is interned by canonical return/input
+types, modifiers, passing/access modes and variadic element identity;
 the registry-owned contract has no parameter names, defaults or source observers.
+Interning copies input records, never retaining mutable caller-owned parameter facts.
+Variadic storage is the ordinary vector type, but its element contract distinguishes
+it from a fixed vector input. Contextual completion supplies the element type for
+variadics without rewriting authored markers. C++ declarations and erased types
+share parameter spelling; invocation reuses reference admission and pack construction.
 The existing call target interface lets value invocation reuse ordinary argument
 admission. Dependency-aware conversion preparation checks a concrete closure's
 signature before publishing `callable_wrap`; only the backend chooses `std::function`.

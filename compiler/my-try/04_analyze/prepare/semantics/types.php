@@ -70,14 +70,18 @@ final class Type_Preparation
 		if ($node instanceof callable_type_node) {
 			$callable = object_cast($node, callable_type_node::class);
 			$result = self::type($callable->result_type, $context);
-			$inputs /** vector<canonical_type_use> */ = [];
-			$parameters /** Storage<type_node> */ = $callable->parameter_types;
+			$inputs /** vector<callable_parameter> */ = [];
+			$signature = new callable_signature();
+			$signature->return_type = $result;
+			$contracts /** Storage<callable_parameter> */ = $signature->parameters;
+			$parameters /** Storage<callable_input_type_node> */ = $callable->inputs;
 			foreach ($parameters as $parameter) {
-				$input = self::type($parameter, $context);
-				self::require_value_type($input);
-				Capability_Preparation::require_concrete_value($input, $context);
+				$input = Declaration_Preparation::parameter_contract(self::type($parameter->type_syntax, $context),
+					$parameter->mode, $parameter->access, $parameter->variadic, $context);
 				$inputs[] = $input;
+				$contracts->append($input);
 			}
+			Callable_Contracts::validate($signature);
 			Capability_Preparation::require_concrete_value($result, $context);
 			$registry = Model::$type_catalog->registry();
 			$definition = $registry->define_callable($result, $inputs);

@@ -19,9 +19,16 @@ final class Conversion_Relationships implements conversion_relationship_query
 		$expected /** Storage<callable_parameter> */ = $required->parameters;
 		if (q_count($inputs) !== q_count($expected)) { return false; }
 		foreach ($inputs as $index => $input) {
-			// Erasure must not silently discard defaults, packing or reference contracts.
-			if (($input->default_value !== null) || ($input->element_type !== null)) { return false; }
-			if (!$input->type->matches($expected[$index]->type) || ($input->mode !== passing_mode::value)) { return false; }
+			// Erasure preserves input modes and packing; defaults remain outside the contract.
+			$required_input = $expected[$index];
+			if ($input->default_value !== null) { return false; }
+			if (!$input->type->matches($required_input->type) || ($input->mode !== $required_input->mode)
+				|| ($input->access !== $required_input->access)) { return false; }
+			if (($input->element_type === null) !== ($required_input->element_type === null)) { return false; }
+			if ($input->element_type !== null) {
+				$element /** canonical_type_use */ = $input->element_type;
+				if (!$element->matches($required_input->element_type)) { return false; }
+			}
 		}
 		Capability_Preparation::require_copy($source, $this->context);
 		return true;

@@ -66,6 +66,9 @@ final class Declaration_Preparation
 			if ($expected !== null) {
 				$expected_parameters /** Storage<callable_parameter> */ = $expected->parameters;
 				$expected_parameter = $expected_parameters[$index]->type;
+				if ($parameter->variadic && ($expected_parameters[$index]->element_type !== null)) {
+					$expected_parameter = $expected_parameters[$index]->element_type;
+				}
 			}
 			self::prepare_parameter($parameter, $context, $expected_parameter);
 			$prepared = $parameter->require_preparation();
@@ -101,34 +104,52 @@ final class Declaration_Preparation
 	{
 		$facts = new prepared_parameter();
 		$facts->declaration = $node->occurrence();
-		$contract = new callable_parameter();
-		if ($node->type_syntax !== null) { $contract->type = Type_Preparation::type($node->type_syntax, $context); }
-		elseif ($expected_type !== null) { $contract->type = $expected_type; }
+		$type /** canonical_type_use */;
+		if ($node->type_syntax !== null) { $type = Type_Preparation::type($node->type_syntax, $context); }
+		elseif ($expected_type !== null) { $type = $expected_type; }
 		else { throw new \RuntimeException('Parameter requires an explicit type or expected callable contract'); }
-		if (Type_Queries::canonical($contract->type)->definition() instanceof callable_type_definition) {
-			if (($node->mode !== passing_mode::value) || $node->variadic || ($node->default_value !== null)) {
+		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) {
+			if ($node->default_value !== null) {
+				throw new \RuntimeException('Callable parameter defaults are deferred');
+			}
+		}
+		if ($node->variadic && ($node->default_value !== null)) {
+			throw new \RuntimeException('S2S variadic parameters cannot have an explicit default');
+		}
+		$contract = self::parameter_contract($type, $node->mode, $node->access, $node->variadic, $context);
+		if ($node->default_value !== null) {
+			$contract->default_value = Parameter_Defaults::prepare($node->default_value, $contract, $context);
+		}
+		$facts->contract = $contract;
+		$node->set_preparation($facts);
+	}
+
+	/** Shared input shape for named parameters and name-free callable contracts. */
+	public static function parameter_contract(canonical_type_use $type, passing_mode $mode,
+		storage_access $access, bool $variadic, preparation_context $context): callable_parameter
+	{
+		$contract = new callable_parameter();
+		$contract->type = $type;
+		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) {
+			if (($mode !== passing_mode::value) || $variadic) {
 				throw new \RuntimeException('Callable parameters currently require ordinary by-value inputs');
 			}
 		}
 		Type_Preparation::require_value_type($contract->type);
-		$contract->mode = $node->mode;
-		$contract->access = $node->access;
-		if ($node->mode === passing_mode::value) {
+		$contract->mode = $mode;
+		$contract->access = $access;
+		if ($mode === passing_mode::value) {
 			Capability_Preparation::require_concrete_value($contract->type, $context);
 		}
-		if ($node->variadic) {
-			if (($node->mode !== passing_mode::value) || ($node->default_value !== null)) {
+		if ($variadic) {
+			if ($mode !== passing_mode::value) {
 				throw new \RuntimeException('S2S variadic parameters must be by value without an explicit default');
 			}
 			Capability_Preparation::require_copy($contract->type, $context);
 			$contract->element_type = $contract->type;
 			$contract->type = Type_Preparation::vector_of($contract->type, $context);
 		}
-		if ($node->default_value !== null) {
-			$contract->default_value = Parameter_Defaults::prepare($node->default_value, $contract, $context);
-		}
-		$facts->contract = $contract;
-		$node->set_preparation($facts);
+		return $contract;
 	}
 
 	/** Fields belong to their record, never to the surrounding local-variable scope. */

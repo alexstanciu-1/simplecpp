@@ -1031,6 +1031,18 @@ final class namespace_body_children_iterator extends children_iterator
 	}
 }
 
+final class callable_input_type_children_iterator extends children_iterator
+{
+	private bool $pending = true;
+	public function __construct(private callable_input_type_node $source) {}
+	protected function read_next(): ?ast_node
+	{
+		if (!$this->pending) { return null; }
+		$this->pending = false;
+		return $this->source->type_syntax;
+	}
+}
+
 final class callable_type_children_iterator extends children_iterator
 {
 	private bool $result_pending = true;
@@ -1040,7 +1052,7 @@ final class callable_type_children_iterator extends children_iterator
 	{
 		if ($this->result_pending) { $this->result_pending = false; return $this->source->result_type; }
 		if ($this->parameters === null) {
-			$this->parameters = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->parameter_types));
+			$this->parameters = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->source->inputs));
 		}
 		else { $this->parameters->next(); }
 		if ($this->parameters->valid()) { return $this->parameters->current(); }

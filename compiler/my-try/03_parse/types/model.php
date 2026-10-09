@@ -332,7 +332,7 @@ final class closure_type_definition extends abstract_nominal_type_definition
 final class callable_type_definition extends abstract_nominal_type_definition implements callable_target_i
 {
 	private callable_signature $call_contract;
-	public function __construct(int $id, string $name, canonical_type_use $result, array $inputs /** vector<canonical_type_use> */)
+	public function __construct(int $id, string $name, canonical_type_use $result, array $inputs /** vector<callable_parameter> */)
 	{
 		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
 		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::callable_type, $capabilities);
@@ -341,8 +341,10 @@ final class callable_type_definition extends abstract_nominal_type_definition im
 		$parameters /** Storage<callable_parameter> */ = $this->call_contract->parameters;
 		foreach ($inputs as $input) {
 			$parameter = new callable_parameter();
-			$parameter->type = $input;
-			$parameter->mode = passing_mode::value;
+			$parameter->type = $input->type;
+			$parameter->mode = $input->mode;
+			$parameter->access = $input->access;
+			$parameter->element_type = $input->element_type;
 			$parameters->append($parameter);
 		}
 	}
@@ -983,10 +985,19 @@ interface type_capability_query
 final class Type_Registry implements type_capability_query
 {
 	private array $callable_types /** hash<callable_type_definition> */ = [];
-	public function define_callable(canonical_type_use $result, array $inputs /** vector<canonical_type_use> */): callable_type_definition
+	public function define_callable(canonical_type_use $result, array $inputs /** vector<callable_parameter> */): callable_type_definition
 	{
 		$key = $result->type_id() . ':' . ($result->by_value() ? 'v' : 'n');
-		foreach ($inputs as $input) { $key .= ',' . $input->type_id() . ':' . ($input->by_value() ? 'v' : 'n'); }
+		foreach ($inputs as $input) {
+			if ($input->default_value !== null) { throw new \InvalidArgumentException('Callable type defaults are deferred'); }
+			$key .= ',' . $input->type->type_id() . ':' . ($input->type->by_value() ? 'v' : 'n')
+				. ($input->mode === passing_mode::reference ? '&' : '=')
+				. ($input->access === storage_access::read_only ? 'c' : 'w');
+			if ($input->element_type !== null) {
+				$element /** canonical_type_use */ = $input->element_type;
+				$key .= '...' . $element->type_id() . ':' . ($element->by_value() ? 'v' : 'n');
+			}
+		}
 		if (isset($this->callable_types[$key])) { return $this->callable_types[$key]; }
 		$definition = new callable_type_definition($this->allocate_definition_id(), '<function:' . $key . '>', $result, $inputs);
 		$this->register_definition($definition);

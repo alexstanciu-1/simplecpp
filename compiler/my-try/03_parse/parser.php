@@ -2536,10 +2536,17 @@ final class Parser_Run
 			$callable = new callable_type_node();
 			$callable->result_type = $this->type_syntax($lookup_scope);
 			$this->expect('(');
-			$parameters /** Storage<type_node> */ = $callable->parameter_types;
+			$parameters /** Storage<callable_input_type_node> */ = $callable->inputs;
 			if ($this->text() !== ')') {
 				do {
-					$parameters->append($this->type_syntax($lookup_scope));
+					$input_start = $this->position;
+					$input = new callable_input_type_node();
+					if ($this->text() === 'const') { $input->access = storage_access::read_only; $this->position++; }
+					$input->type_syntax = $this->type_syntax($lookup_scope);
+					if ($this->text() === '&') { $input->mode = passing_mode::reference; $this->position++; }
+					if ($this->text() === '...') { $input->variadic = true; $this->position++; }
+					$this->finish_node($input, $input_start);
+					$parameters->append($input);
 					if ($this->text() !== ',') { break; }
 					$this->position++;
 				} while (true);
