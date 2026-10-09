@@ -65,7 +65,8 @@ Bounded reference captures now execute using the approved
 Collected name scopes do not represent ordinary block storage lifetimes; neutral
 semantic regions now own that proof. Whole locals/parameters and eligible aliases
 can be borrowed, with readonly access and transitive local-copy checks. Erasure of
-borrowing closures and captured-field borrowing remain rejected. Proof:
+borrowing closures remains rejected. Stable captured-field borrowing is now supported
+as described below. Earlier proof:
 25 reference-capture programs and 70 existing closure programs, plus focused lifetime,
 incremental and recovery checks; no native compiler rebuild.
 
@@ -82,6 +83,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLOSURE-001](#closure-001) | implemented-bounded | `$f = function (int $a): int { if ($a === 1) { return 2; } return $a; };` | passed | passed | deferred | Capture-free explicit signatures; concrete local types; `closures.php` |
 | [CLOSURE-CALL-001](#closure-call-001) | implemented-bounded | `$f(); $g(3); $h(3); $h(3, 9);` | passed | passed | deferred | Shared defaults, typed variadic packs and value/reference inputs; ordered arguments; generated execution |
 | Concrete reference returns | implemented-bounded | `$f = fn&(int &$v): int => $v; $alias =& $f($value);` | passed | passed | deferred | Shared origin contract; capture/local escape and cycles reject |
+| Captured-field borrows | implemented-bounded | `$slot =& $record->field; $f = function () use (&$slot): int { return $slot; };` | passed | passed | deferred | Stable inline projections and nested captures; root lifetime/access retained; `reference_captures.php` |
 | Explicit callable reference returns | implemented-bounded | `$f function<int&(int&)> = fn&(&$v) => $v;` | passed | passed | deferred | Exact origin contract, caller lifetime substitution and conservative erased-cycle audit; `callable_reference_returns.php` |
 | Borrowed receiver capture | implemented-bounded | `$f = function () use ($this): int { return $this->count; };` | passed | passed | deferred | Shared borrow lifetime; arrows, nested access and class/struct receivers; no owning capture |
 | Callable returns/factories | implemented-bounded | `function make(int $n): function<int()> { return fn(): int => $n; }` | passed | passed | deferred | Shared return conversion; exact erased signatures; owned environments only; `closures.php` |
@@ -111,7 +113,6 @@ prose and extensions contain further capabilities.
 | Authored callable property defaults | Explicitly deferred by user on 2026-10-09; [CH15-CALLABLE-DEFAULTS-01](15_blocking_debt.md#ch15-callable-defaults-01--authored-callable-property-defaults); use constructor inputs or ordinary assignments |
 | Callable wrappers | Selected for CH12 follow-up on 2026-10-09; currently gated; discuss supported wrapper contracts, without assuming redundant nullable storage |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
-| Captured-field borrows | Selected for CH12 follow-up; establish stable field provenance and containing-storage lifetime checks |
 | Defaults across erased callable boundaries | User-deferred; [CH15-CALLABLE-PARAM-DEFAULTS-01](15_blocking_debt.md#ch15-callable-param-defaults-01--defaults-across-erased-callable-boundaries) |
 | Owning/escaping receiver captures | User-deferred; [CH15-CALLABLE-RECEIVER-01](15_blocking_debt.md#ch15-callable-receiver-01--owning-and-escaping-receiver-captures) |
 | Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
@@ -150,8 +151,18 @@ factories, copying, aliases and noncopyable payload borrows. The shared cycle au
 conservatively connects erased calls to signature-compatible prepared closures, even
 through by-value intermediaries; precise target analysis is
 [CH15-CALLABLE-TARGETS-01](15_blocking_debt.md#ch15-callable-targets-01--precise-erased-call-target-analysis).
-Next: captured-field borrows, then wrapper integration. Preserve existing
+Captured-field borrows now reuse the existing place/lifetime model. Nested owned
+capture borrows stay read-only and invocation-local; nested reference captures
+preserve their original lifetime/access. Stable inline-field aliases are accepted;
+heap-backed projections, erased escape and captured-storage reference returns remain
+rejected. No new syntax, retained structure or C++ lowering is needed.
+Next: wrapper integration. Preserve existing
 rejection boundaries until each shared model and its proofs are in place.
+
+Captured-field evidence: 44 generated programs passed without PCH in
+`/tmp/my-try-captured-fields-20261009-final`; nine focused PHP regressions passed in
+`/tmp/my-try-captured-field-checks-20261009`. Includes provenance/lifetime assertions,
+readonly ownership-mode rejection and incremental repair/fresh agreement.
 
 Explicit reference-return evidence: 18 generated programs passed without PCH in
 `/tmp/my-try-callable-ref-return-20261009-final`, including marker/cycle recovery and

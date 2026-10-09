@@ -382,8 +382,8 @@ capture admission does not enable deferred callable signatures.
 
 ### v0.2 bounded reference captures
 
-`use (&$x)` borrows existing whole local or parameter storage. Value and reference
-captures may coexist. An eligible alias borrows its original whole-storage target,
+`use (&$x)` borrows existing stable local, parameter or captured storage. Value and reference
+captures may coexist. An eligible alias borrows its original storage target,
 not the alias name's lifetime:
 
 ```php
@@ -409,8 +409,36 @@ storage. Conversion to `function<R(Args...)>` rejects direct or transitive borro
 environments, even for synchronous-looking calls: that contract cannot yet guarantee
 nonescape.
 
-Field/interior references and borrowing another closure's captured fields are deferred,
-including attempts through aliases. Captured storage cannot supply a reference return
+Aliases to stable inline fields are also eligible: borrow provenance and lifetime
+follow the containing root, not the alias name. Capture syntax continues to name
+variables, not property expressions:
+
+```php
+struct Counter { public int $value = 0; }
+$counter = new Counter();
+$slot =& $counter->value;
+$increment = function () use (&$slot): void { $slot++; };
+$increment();
+```
+
+A nested closure may borrow an enclosing closure's capture. For an owned value
+capture, this borrows that closure's captured copy, remains read-only and is bounded
+by the enclosing invocation. For an existing reference capture, the nested borrow
+preserves the original origin's lifetime and access contract. Copying the borrowing
+closure copies its borrow; copying the outer closure does not retarget an existing
+inner borrow to the new outer copy. There is no heap promotion or ownership extension.
+
+```php
+$n = 10;
+$outer = function () use ($n): int {
+    $inner = function () use (&$n): int { return $n; };
+    return $inner();
+};
+```
+
+The same rules apply through aliases and stable inline projections of captures.
+Container elements, mixed/dynamic slots, temporary-derived fields and projections
+through resettable ownership handles remain excluded. Captured storage cannot supply a reference return
 under the current whole-reference-parameter contract. Returning borrowing closures
 is rejected; borrowing closures cannot enter erased property/container storage. This is a bounded lexical lifetime check, not
 general escape analysis, exclusive borrowing or PHP-style lifetime extension.

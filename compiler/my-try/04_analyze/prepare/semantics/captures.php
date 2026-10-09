@@ -44,10 +44,12 @@ final class Capture_Preparation
 			}
 			elseif ($mode === passing_mode::reference) {
 				$place = Reference_Preparation::storage_place($binding);
-				$storage = $place->storage();
-				if (($place->base() !== null) || !$place->borrowable()
-					|| (!($storage instanceof prepared_binding) && !($storage instanceof prepared_parameter))) {
-					throw new \RuntimeException('Reference capture requires whole local or parameter storage; captured fields and interiors are deferred');
+				// Stable projections retain their containing root; aliases introduce no new lifetime.
+				$storage = $place->root_storage();
+				if (!$place->borrowable()
+					|| (!($storage instanceof prepared_binding) && !($storage instanceof prepared_parameter)
+						&& !($storage instanceof prepared_capture))) {
+					throw new \RuntimeException('Reference capture requires stable local, parameter or captured storage');
 				}
 				$capture->borrow = new storage_borrow($place, Storage_Lifetimes::place($place, $context));
 				$capture->access = $place->access();

@@ -18,7 +18,7 @@ final class Storage_Lifetimes
 		}
 	}
 
-	/** An alias observes the target lifetime, not the lexical lifetime of its own name. */
+	/** Projections/aliases observe their root; owned captures are bounded by this invocation. */
 	public static function place(prepared_place $place, preparation_context $context): storage_lifetime
 	{
 		$storage = $place->root_storage();

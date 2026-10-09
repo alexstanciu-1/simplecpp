@@ -184,6 +184,15 @@ consumer path for storage, selected arguments and returns; no inferred syntax, e
 anonymous identity or backend type inference is introduced.
 
 Explicit callable returns reuse the ordinary return conversion and value boundary.
+
+Reference capture admission uses a borrowable place's root rather than requiring
+an unprojected local. Stable inline-field aliases and enclosing captures therefore
+share the ordinary `prepared_place`/`storage_borrow` path. Lifetime lookup follows
+the containing root: borrowed captures reuse their original lifetime; owned captures
+use their existing invocation-local environment membership. Access remains inherited,
+so borrowing an owned value capture never makes it writable. No new retained facts,
+capture syntax or backend lowering path are introduced.
+
 Recursive callable contracts can return other callable contracts; their canonical
 identity and C++ spelling already compose. Concrete-to-erased conversion observes
 the anonymous body, verifies exact signatures/copyability and rejects transitive

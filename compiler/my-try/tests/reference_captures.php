@@ -44,6 +44,16 @@ $cases = [
 	'dowhile' => ['$n = 0; do { $f = function () use (&$n): void { $n++; }; $f(); } while ($n < 3); return $n;', 3],
 	'invocation_local' => ['$outer = function (int $n): int { $f = function () use (&$n): int { return ++$n; }; $g = $f; return $g(); }; return $outer(3);', 4],
 	'borrow_callable' => ['$f = fn(): int => 4; $g = function () use (&$f): int { $copy = $f; return $copy(); }; return $g();', 4],
+	'owned_nested' => ['$n = 1; $f = function () use ($n): int { $g = function () use (&$n): int { return $n; }; $copy = $g; return $copy(); }; $n = 9; return $f();', 1],
+	'reborrow_nested' => ['$n = 1; $f = function () use (&$n): int { $g = function () use (&$n): int { return ++$n; }; return $g(); }; $copy = $f; $copy(); return $f();', 3],
+	'reborrow_three' => ['$n = 1; $f = function () use (&$n): int { $g = function () use (&$n): int { $h = function () use (&$n): int { return ++$n; }; return $h(); }; return $g(); }; return $f();', 2],
+	'owned_alias' => ['$n = 4; $f = function () use ($n): int { $a =& $n; $g = function () use (&$a): int { return $a; }; return $g(); }; return $f();', 4],
+	'field_alias' => ['struct Box { public int $n = 1; } $b = new Box(); $a =& $b->n; $f = function () use (&$a): int { return ++$a; }; $g = $f; $g(); return $f();', 3],
+	'nested_field' => ['struct Cell { public int $n = 1; } struct Box { public Cell $cell; } $b = new Box(); $a =& $b->cell->n; $f = function () use (&$a): void { $a = 7; }; $f(); return $b->cell->n;', 7],
+	'captured_field' => ['struct Box { public int $n = 4; } $b = new Box(); $f = function () use ($b): int { $a =& $b->n; $g = function () use (&$a): int { return $a; }; return $g(); }; $b->n = 9; return $f();', 4],
+	'borrowed_field' => ['struct Box { public int $n = 4; } $b = new Box(); $f = function () use (&$b): int { $a =& $b->n; $g = function () use (&$a): int { return ++$a; }; return $g(); }; $f(); return $b->n;', 5],
+	'parameter_field' => ['struct Box { public int $n = 4; } function run(Box &$b): void { $a =& $b->n; $f = function () use (&$a): void { $a++; }; $f(); } $b = new Box(); run($b); return $b->n;', 5],
+	'readonly_field' => ['struct Box { public int $n = 4; } function run(const Box &$b): int { $a =& $b->n; $f = function () use (&$a): int { return $a; }; return $f(); } $b = new Box(); return run($b);', 4],
 ];
 $invalid = [
 	'class Box { public function run(): void { $f = function () use (&$this): void {}; } } return 0;',
@@ -56,12 +66,15 @@ $invalid = [
 	'$n = 1; $f function<int()> = function () use (&$n): int { return $n; }; return 0;',
 	'$n = 1; $f = function () use (&$n): int { return $n; }; $g function<int()> = fn(): int => $f(); return 0;',
 	'function apply(function<int()> $f): int { return $f(); } $n = 1; $f = function () use (&$n): int { return $n; }; return apply($f);',
-	'$n = 1; $f = function () use ($n): int { $g = function () use (&$n): int { return $n; }; return $g(); }; return 0;',
-	'$n = 1; $f = function () use (&$n): int { $g = function () use (&$n): int { return $n; }; return $g(); }; return 0;',
+	'$n = 1; $f = function () use ($n): int { $g = function () use (&$n): int { return ++$n; }; return $g(); }; return 0;',
+	'$n = 1; $f = function () use ($n): function<int()> { return function () use (&$n): int { return $n; }; }; return 0;',
 	'function calc(const int &$n): void { $f = function () use (&$n): void { $n++; }; } return 0;',
 	'function calc(const vector<int> &$v): void { $f = function () use (&$v): void { $v[] = 7; }; } return 0;',
 	'class Box { public int $n = 1; } function calc(const Box &$b): void { $f = function () use (&$b): void { $b->n = 7; }; } return 0;',
-	'struct Box { public int $n = 1; } $b = new Box(); $a =& $b->n; $f = function () use (&$a): int { return $a; }; return 0;',
+	'class Box { public int $n = 1; } $b = new Box(); $a =& $b->n; $f = function () use (&$a): int { return $a; }; return 0;',
+	'struct Box { public int $n = 1; } $b = new Box(); $a =& $b->n; $f function<int()> = function () use (&$a): int { return $a; }; return 0;',
+	'struct Box { public int $n = 1; } $b = new Box(); $f = function () use ($b): void { $a =& $b->n; $g = function () use (&$a): void { $a++; }; $g(); }; return 0;',
+	'$v vector<int> = [1]; $a =& $v[0]; $f = function () use (&$a): int { return $a; }; return 0;',
 	'$n = 1; $f = function &(int &$v) use (&$n): int { return $n; }; return 0;',
 	'$n = 1; $f = function () use (&$n, $n): int { return $n; }; return 0;',
 	'$f = function () use (&$missing): void { return; }; return 0;',
@@ -83,6 +96,39 @@ try {
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		capture_check($rejected, 'Invalid borrow accepted: ' . $source);
 	}
+	// Owned fields have invocation-local origins; reborrowing preserves the original lifetime.
+	foreach (['owned_nested', 'reborrow_nested'] as $name) {
+		Compiler_Lifecycle::reset(); file_put_contents($path, $cases[$name][0]);
+		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$outer_capture = null; $inner_capture = null;
+		foreach (Model::collected_files()[0]->anonymous_callables as $identity) {
+			$candidate = $identity->syntax()->require_body()->work()->captures[0];
+			if ($outer_capture === null) { $outer_capture = $candidate; }
+			else { $inner_capture = $candidate; }
+		}
+		capture_check($inner_capture->borrow->place->root_storage() === $outer_capture, 'Nested borrow lost captured storage provenance');
+		if ($name === 'reborrow_nested') {
+			capture_check($inner_capture->borrow->lifetime === $outer_capture->borrow->lifetime, 'Reborrow shortened or extended original lifetime');
+		}
+		else {
+			capture_check($outer_capture->borrow === null, 'Owned capture became a borrow');
+			capture_check($inner_capture->access === storage_access::read_only, 'Owned capture borrow became writable');
+			$unrelated = new storage_lifetime(new storage_lifetime_region(null, 0), 0);
+			capture_check(!Storage_Lifetimes::outlives($inner_capture->borrow->lifetime, $unrelated), 'Captured field escaped invocation');
+		}
+	}
+	// Change the outer capture's ownership while retaining a nested reference capture.
+	$nested_source = $cases['reborrow_nested'][0];
+	Compiler_Lifecycle::reset(); file_put_contents($path, $nested_source);
+	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$nested_before = CPP_Probe::text(Model::$cpp_files);
+	file_put_contents($path, preg_replace('/use \(&\$n\)/', 'use ($n)', $nested_source, 1)); $rejected = false;
+	try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
+	capture_check($rejected, 'Owned capture edit retained writable nested borrow');
+	file_put_contents($path, $nested_source); $compiler->update_cpp([$path]);
+	capture_check(CPP_Probe::text(Model::$cpp_files) === $nested_before, 'Nested capture repair changed output');
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	capture_check(CPP_Probe::text(Model::$cpp_files) === $nested_before, 'Nested capture repair differs from fresh');
 	// Ordinary blocks share collected lookup scopes, but must have distinct semantic lifetimes.
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, 'if (true) { $n = 3; $f = function () use (&$n): int { return $n; }; $g = $f; } $later = 0; $h = function () use (&$later): int { return $later; }; return 0;');

@@ -202,13 +202,29 @@ across syntax/collection, analysis lifecycle and backend consumers.
     is shared. Precise target-flow analysis is CH15 debt; captured borrows still cannot
     cross erased boundaries.
 
-Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
+18. **Stable captured-field borrows — implemented.** Capture admission uses the
+    existing place's root and borrowability. Nested captures and inline-field aliases
+    share provenance, access and lifetime lookup. Owned captures use their enclosing
+    invocation's existing membership lifetime; reborrows reuse the original lifetime.
+    No new syntax, retained structure, backend path or heap lifetime extension.
+
+Non-goals: owning receiver captures, mutable by-value capture bindings, captured-storage reference
 returns, named-call syntax, inferred callable returns,
 mixed/dynamic callable storage, callable wrappers, authored closure property defaults
 and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Captured-field checkpoint (2026-10-09): 44 generated programs passed without PCH
+in `/tmp/my-try-captured-fields-20261009-final`, including ten new nested/field cases.
+Direct model assertions check captured-storage provenance, readonly owned captures
+and preserved reborrow lifetimes. Ownership-mode edits reject nested mutation and
+recover with fresh-output agreement. Erased escapes and unstable interiors remain
+rejected. Nine focused PHP suites passed in
+`/tmp/my-try-captured-field-checks-20261009`. Shared runner used CLI fallback;
+no native compiler rebuild. Existing native lambda reference capture lowers these
+cases without a separate emitter implementation.
 
 Explicit reference-return checkpoint (2026-10-09): 18 generated programs passed
 without PCH in `/tmp/my-try-callable-ref-return-20261009-final`. Coverage includes
