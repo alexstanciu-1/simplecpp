@@ -85,6 +85,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Concrete reference returns | implemented-bounded | `$f = fn&(int &$v): int => $v; $alias =& $f($value);` | passed | passed | deferred | Shared origin contract; capture/local escape and cycles reject |
 | Captured-field borrows | implemented-bounded | `$slot =& $record->field; $f = function () use (&$slot): int { return $slot; };` | passed | passed | deferred | Stable inline projections and nested captures; root lifetime/access retained; `reference_captures.php` |
 | Callable Result boundaries | implemented-bounded | `$r result<function<int()>> = $typed_callable;` | passed | passed | deferred | Exact construction/copy/extraction/take; absent success distinct from callable presence; `callable_results.php` |
+| Callable Result observations/selections | implemented-bounded | `isset($r); $r ?: $fallback; $r ?? $fallback;` | passed | passed | deferred | Wrapper-state presence versus callable truthiness; exact joins and lazy evaluation; boolable coalescing rejected |
 | Explicit callable reference returns | implemented-bounded | `$f function<int&(int&)> = fn&(&$v) => $v;` | passed | passed | deferred | Exact origin contract, caller lifetime substitution and conservative erased-cycle audit; `callable_reference_returns.php` |
 | Borrowed receiver capture | implemented-bounded | `$f = function () use ($this): int { return $this->count; };` | passed | passed | deferred | Shared borrow lifetime; arrows, nested access and class/struct receivers; no owning capture |
 | Callable returns/factories | implemented-bounded | `function make(int $n): function<int()> { return fn(): int => $n; }` | passed | passed | deferred | Shared return conversion; exact erased signatures; owned environments only; `closures.php` |
@@ -112,7 +113,7 @@ prose and extensions contain further capabilities.
 | Remaining capability | Current boundary / owner |
 | --- | --- |
 | Authored callable property defaults | Explicitly deferred by user on 2026-10-09; [CH15-CALLABLE-DEFAULTS-01](15_blocking_debt.md#ch15-callable-defaults-01--authored-callable-property-defaults); use constructor inputs or ordinary assignments |
-| Callable wrapper observations/joins | Result construction/copy/extraction/take implemented; conditions/probes and selection joins remain gated for separate discussion; nullable/ownership wrappers remain rejected |
+| Nullable/ownership callable wrappers | Remain rejected; explicit callables already have absence, and no ownership-wrapper extension is selected |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
 | Defaults across erased callable boundaries | User-deferred; [CH15-CALLABLE-PARAM-DEFAULTS-01](15_blocking_debt.md#ch15-callable-param-defaults-01--defaults-across-erased-callable-boundaries) |
 | Owning/escaping receiver captures | User-deferred; [CH15-CALLABLE-RECEIVER-01](15_blocking_debt.md#ch15-callable-receiver-01--owning-and-escaping-receiver-captures) |
@@ -161,11 +162,19 @@ Callable Results now share exact-payload construction, same-wrapper copies, chec
 extraction and take with existing payload families. First establish a typed callable;
 implicit closure erasure plus wrapping is not enabled. Successful value states may
 contain an absent callable; the legacy true-sentinel take exception is unchanged.
-Runtime observation support is independent of storage: callable Result conditions,
-probes and selection joins still reject during preparation. Nullable/ownership
+Callable Result conditions now delegate to callable presence; isset observes wrapper
+state. Exact ternary/Elvis joins preserve the wrapper, while structured/falseable
+coalescing returns the payload without testing callable presence. Both selection
+forms preserve lazy alternatives and single left evaluation. Nullable/ownership
 wrappers and borrowing environments remain excluded.
-Next: discuss Result/callable observations and remaining chapter boundaries. Preserve existing
+Next: reconcile remaining chapter boundaries. Preserve existing
 rejection boundaries until each shared model and its proofs are in place.
+
+Observation/selection evidence: 36 generated programs and one runtime probe passed
+without PCH in `/tmp/my-try-callable-result-joins-20261009-complete`; eight PHP
+regressions passed in `/tmp/my-try-callable-result-join-checks-20261009-final`.
+Includes non-invoking state observations, lazy/single evaluation, reference origins
+and incremental family-edit rejection/repair/fresh agreement. No native compiler rebuild.
 
 Callable Result evidence: 13 generated programs passed without PCH in
 `/tmp/my-try-callable-results-20261009-final2`; eight focused PHP suites passed in

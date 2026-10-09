@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "lang/php/support/php_common.hpp"
 #include "scpp/runtime_error.hpp"
 #include "scpp/error_t.hpp"
@@ -63,7 +65,10 @@ inline bool_t condition_truthy_string(const string_t &value) {
 template <typename Value>
 inline bool_t condition_truthy_impl(Value &&value, const char *component, const char *operation) {
 	using value_t = std::remove_cvref_t<Value>;
-	if constexpr (std::is_same_v<value_t, bool_t>) {
+	// Callable conditions observe presence, never invoke the stored function.
+	if constexpr (::scpp::detail::is_specialization_of_v<value_t, std::function>) {
+		return bool_t(static_cast<bool>(value));
+	} else if constexpr (std::is_same_v<value_t, bool_t>) {
 		return value;
 	} else if constexpr (std::is_same_v<value_t, error_t>) {
 		return value.has_error();

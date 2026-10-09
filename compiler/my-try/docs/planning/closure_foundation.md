@@ -215,14 +215,36 @@ across syntax/collection, analysis lifecycle and backend consumers.
     borrowing restrictions remain exact. Separate observation/selection admission
     prevents storage support from silently enabling unsupported runtime operations.
 
+20. **Callable Result observations and selections — implemented.** Shared runtime
+    truthiness explicitly recognizes erased callable presence; direct callable
+    conditions and wrapper delegation share that helper. Result isset retains its
+    state-only rule. Ternary/Elvis reuse exact wrapper joins; coalescing admits exact
+    Result payload fallback types without broadening ordinary direct-value joins.
+    Temporary observation/selection gates are removed. True sentinels, lazy branches,
+    absent successful payloads and boolable coalescing rejection remain distinct.
+
 Non-goals: owning receiver captures, mutable by-value capture bindings, captured-storage reference
 returns, named-call syntax, inferred callable returns,
-mixed/dynamic callable storage, nullable/ownership callable wrappers, callable Result
-observations/selection joins, authored closure property defaults
+mixed/dynamic callable storage, nullable/ownership callable wrappers, authored closure property defaults
 and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Callable Result observation/selection checkpoint (2026-10-09): 36 generated programs
+and one direct runtime probe passed without PCH in
+`/tmp/my-try-callable-result-joins-20261009-complete`. They prove all three families'
+present/absent observations, same-wrapper and exact payload joins, true-sentinel
+Elvis, falseable fallback, callable-reference origins, lazy/single evaluation and
+absent payload preservation under coalescing. The runtime probe covers structured
+failure, no invocation during observations, failed take output preservation and
+subsequent absent-success/error reset. Signature and boolable-family edits reject,
+recover and agree with fresh output. Eight PHP regressions passed in
+`/tmp/my-try-callable-result-join-checks-20261009-final`. Earlier attempts corrected
+an out-of-scope Result unary-not fixture, two changed rejection-message expectations
+and the runtime probe's integer template spelling. Shared runner used CLI fallback;
+no native compiler rebuild. Direct callable presence lowering now uses the same
+runtime authority as Result payload delegation.
 
 Callable Result checkpoint (2026-10-09): 13 generated programs passed without PCH
 in `/tmp/my-try-callable-results-20261009-final2`. Coverage includes factories,

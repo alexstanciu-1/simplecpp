@@ -407,7 +407,7 @@ uses the null identity. Source locals require an initializer in this slice. Exac
 payload required-value extraction at assignment/argument/return boundaries records
 `result_extract`; the backend copies the guarded payload. Non-value states throw,
 failed stores preserve targets and reference arguments never implicitly extract.
-Result conditions and probes admit the same scalar/mixed/dynamic payload domain through the existing
+Result conditions and probes admit scalar/mixed/dynamic and explicit callable payloads through the existing
 semantic role. `result_condition` facts use the shared runtime truthiness helper for
 all condition consumers, while probes keep their independent runtime authorities.
 Logical operators and explicit casts
@@ -420,9 +420,10 @@ exact payload/alternative types, existing locals/parameters and output distinctn
 Result payload admission is shared through `Result_Conversions::require_payload`:
 supported scalars, mixed/dynamic or explicit callable payloads, without nested wrappers or implicit two-step
 conversion. Outer Result ownership precedes boxed conversion/conditional routing;
-Observation and selection admission are separate: callable Result conditions/probes
-and joins remain gated. Exact typed callable construction, copying, checked extraction
-and take reuse existing decisions; concrete closure erasure must happen first.
+Callable Result observations and joins reuse the shared Result paths: wrapper-state
+isset differs from delegated callable truthiness; coalescing requires the exact payload
+fallback and preserves absent value payloads. No concrete closure erasure is chained
+with Result wrapping; establish the explicit callable first.
 typed container element boundaries reuse ordinary argument admission. Nullable
 payloads retain their separate scalar-only gate.
 Both take spellings retain one `take_expression_node` with named source/value/alternative

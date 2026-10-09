@@ -216,11 +216,27 @@ output and updates the applicable alternative output as before.
 The legacy boolable exception is unchanged: a true sentinel makes `take` return true
 without assigning the callable output, and sets the boolean alternative to true.
 
-Direct conditions/probes on callable-valued Results and their ternary/Elvis/coalescing
-joins remain preparation-time rejections in this bounded slice. Storage admission
-does not imply runtime observation support. Extract first to use the callable's own
-presence contract. Nullable and ownership-wrapped callables remain rejected; no second
-absence state, new error construction or implicit reference to wrapper payload is added.
+Callable-valued Results preserve the ordinary distinction between wrapper state and
+payload truthiness. `isset` is true for any value state, including an absent callable,
+and for a true sentinel; errors and false sentinels are absent. Conditions test callable
+presence for a value state, return false for errors/false sentinels and true for true
+sentinels. Neither operation invokes the callable. `empty` remains rejected.
+
+Ternary and Elvis joins accept the same wrapper type or its exact explicit callable
+payload on either side and produce the wrapper type. Elvis evaluates its left operand
+once and uses its condition truthiness: an absent callable payload selects the lazy
+fallback, while a true sentinel remains selected without creating a callable.
+
+For structured/falseable Results, `$result ?? $fallback_callable` produces the exact
+callable payload type. It selects any value state, including an absent callable;
+only failure selects the lazy fallback. This deliberately differs from Elvis.
+Boolable Results remain forbidden for `??` on either side. Results are owned copies,
+not references into wrapper storage, and retain the exact callable signature/origin.
+No bare-closure adaptation, cross-signature join or callable invocation is inferred.
+
+Nullable and ownership-wrapped callables remain rejected; no second absence state,
+new error construction or implicit reference to wrapper payload is added. Result
+unary/logical operators retain their existing separate admission limits.
 
 ### Callable presence and reset
 

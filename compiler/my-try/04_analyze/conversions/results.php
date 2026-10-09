@@ -34,26 +34,6 @@ final class Result_Conversions
 		return $payload;
 	}
 
-	/** Runtime observation support is independent of payload storage/extraction support. */
-	public static function require_observation_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
-	{
-		$payload = self::require_payload($type, $role);
-		if (Type_Queries::canonical($payload)->definition() instanceof callable_type_definition) {
-			throw new \RuntimeException('S2S callable Result conditions and probes are deferred; extract with take first');
-		}
-		return $payload;
-	}
-
-	/** Storage admission does not silently extend conditional/coalescing joins. */
-	public static function require_selection_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
-	{
-		$payload = self::require_payload($type, $role);
-		if (Type_Queries::canonical($payload)->definition() instanceof callable_type_definition) {
-			throw new \RuntimeException('S2S callable Result selection joins are deferred');
-		}
-		return $payload;
-	}
-
 	/** Route required extraction separately from wrapper construction and same-type copies. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context): conversion_decision

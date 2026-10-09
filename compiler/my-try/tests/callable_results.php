@@ -20,7 +20,24 @@ $cases = [
 	'bool_sentinel' => ['$r result_or_bool<function<int()>> = true_sentinel; $g function<int()> = fn() => 7; $state = false; if (!take($g, $state, $r)) { return 1; } return $state ? $g() : 2;', 7],
 	'absent_call' => ['$f function<int()>; $r result<function<int()>> = $f; $g function<int()> = $r; return $g();', 0],
 	'failed_extract' => ['$r result_or_false<function<int()>> = false_sentinel; $g function<int()> = $r; return 99;', 0],
+	'false_observe' => ['$r result_or_false<function<int()>> = false_sentinel; if (isset($r)) { return 1; } return $r ? 2 : 0;', 0],
+	'true_observe' => ['$r result_or_bool<function<int()>> = true_sentinel; if (!isset($r)) { return 1; } return $r ? 0 : 2;', 0],
+	'true_elvis' => ['$r result_or_bool<function<int()>> = true_sentinel; $f function<int()> = fn() => 9; $s = $r ?: $f; $g function<int()>; $state = false; take($g, $state) = $s; if (isset($g)) { return 1; } return $state ? 0 : 2;', 0],
+	'coalesce_false' => ['$r result_or_false<function<int()>> = false_sentinel; $f function<int()> = fn() => 7; $g = $r ?? $f; return $g();', 7],
+	'lazy' => ['function source(int &$calls): result<function<int()>> { $calls++; $f function<int()> = fn() => 7; return $f; } function fallback(int &$calls): function<int()> { $calls += 10; return fn() => 9; } $calls = 0; $r = source($calls) ?: fallback($calls); $f function<int()> = $r; $g = source($calls) ?? fallback($calls); return $calls;', 2],
+	'coalesce_reference' => ['$f function<int&(int&)> = fn&(&$n) => $n; $r result<function<int&(int&)>> = $f; $g = $r ?? $f; $n = 1; $a =& $g($n); $a++; return $n;', 2],
 ];
+foreach (['result', 'result_or_false', 'result_or_bool'] as $family) {
+	$prefix = '$f function<int()>; $fallback function<int()> = fn() => 7; $r ' . $family . '<function<int()>> = $f; ';
+	$cases[$family . '_absent_observe'] = [$prefix . 'if (!isset($r)) { return 1; } if ($r) { return 2; } return 0;', 0];
+	$cases[$family . '_present_observe'] = [str_replace('= $f;', '= $fallback;', $prefix) . 'if (!isset($r)) { return 1; } return $r ? 0 : 2;', 0];
+	$cases[$family . '_elvis'] = [$prefix . '$s = $r ?: $fallback; $g function<int()> = $s; return $g();', 7];
+	$cases[$family . '_ternary'] = [$prefix . '$s = false ? $r : $fallback; $g function<int()> = $s; return $g();', 7];
+	$cases[$family . '_same_wrapper'] = [$prefix . '$s = true ? $r : $r; $g function<int()> = $s; return isset($s) && !isset($g) ? 0 : 1;', 0];
+	if ($family !== 'result_or_bool') {
+		$cases[$family . '_coalesce_absent'] = [$prefix . '$g = $r ?? $fallback; return isset($g) ? 1 : 0;', 0];
+	}
+}
 try {
 	foreach ($cases as $name => [$source, $exit]) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
@@ -46,10 +63,10 @@ try {
 		'$f function<int()> = fn() => 1; $r result<function<string()>> = $f;',
 		'$f function<int()>; $r result<function<int()>> = $f; $g function<string()> = $r;',
 		'$f function<int()>; $r result<function<int()>> = $f; $s result_or_false<function<int()>> = $r;',
-		'$f function<int()>; $r result<function<int()>> = $f; $s = true ? $r : $r;',
-		'$f function<int()>; $r result<function<int()>> = $f; $s = $r ?? $f;',
-		'$f function<int()>; $r result<function<int()>> = $f; if ($r) {}',
-		'$f function<int()>; $r result<function<int()>> = $f; isset($r);',
+		'$f function<int()>; $r result_or_bool<function<int()>> = $f; $s = $r ?? $f;',
+		'$f function<int()>; $r result<function<int()>> = $f; $s = $r ?? fn(): int => 7;',
+		'$f function<int()>; $r result<function<int()>> = $f; $g function<int(int)>; $s = $r ?? $g;',
+		'$f function<int()>; $r result<function<int()>> = $f; empty($r);',
 		'$r result<function<int()>>;',
 	] as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source . ' return 0;');
@@ -66,6 +83,20 @@ try {
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Callable Result repair differs'); }
 	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Callable Result fresh output differs'); }
+	$join_source = $cases['lazy'][0]; file_put_contents($path, $join_source); $compiler->update_cpp([$path]);
+	$join_before = CPP_Probe::text(Model::$cpp_files);
+	file_put_contents($path, str_replace('result<', 'result_or_bool<', $join_source)); $rejected = false;
+	try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) {
+		$rejected = str_contains($error->getMessage(), 'coalesce does not permit result_or_bool');
+	}
+	if (!$rejected) { throw new \LogicException('Callable coalesce accepted boolable family edit'); }
+	file_put_contents($path, $join_source); $compiler->update_cpp([$path]);
+	if (CPP_Probe::text(Model::$cpp_files) !== $join_before) { throw new \LogicException('Callable join repair differs'); }
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	if (CPP_Probe::text(Model::$cpp_files) !== $join_before) { throw new \LogicException('Callable join fresh output differs'); }
+	$probe_path = $output . '/runtime_observation.cpp';
+	file_put_contents($probe_path, file_get_contents(__DIR__ . '/fixtures/callable_result_observation.cpp'));
+	$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	echo "Callable Results: PASS\n";
 }

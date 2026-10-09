@@ -129,10 +129,13 @@ Examples:
 
 ### Result wrapper states
 
-For supported scalar and boxed payloads, `isset` observes the Result state:
+For supported scalar, boxed and explicit callable payloads, `isset` observes the Result state:
 value payloads and the true sentinel are present; failure and false sentinels are
 absent. A successful Result carrying boxed null is still in its value state.
 Probing the extracted box directly instead reports null as absent.
+A successful Result carrying an absent callable is likewise present, whereas probing
+the extracted callable reports absence. Conditions instead delegate to callable
+presence for value states; neither observation invokes the callable.
 No Result family has an implicit `empty` contract. Payload emptiness requires
 explicit extraction and a supported resulting collection/string.
 Ordinary exceptions evaluating the operand propagate.

@@ -66,7 +66,7 @@ final class Conditional_Expression_Preparation
 		preparation_context $context): canonical_type_use
 	{
 		$role /** result_semantics */ = Result_Conversions::role($wrapper);
-		$payload = Result_Conversions::require_selection_payload($wrapper, $role);
+		$payload = Result_Conversions::require_payload($wrapper, $role);
 		if (!$other->matches($wrapper) && !$other->matches($payload)) {
 			throw new \RuntimeException('S2S conditional Result branches require the same wrapper or exact payload');
 		}
