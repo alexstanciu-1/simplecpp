@@ -70,7 +70,6 @@ final class Type_Preparation
 		if ($node instanceof callable_type_node) {
 			$callable = object_cast($node, callable_type_node::class);
 			$result = self::type($callable->result_type, $context);
-			if (Type_Queries::canonical($result)->definition() instanceof callable_type_definition) { throw new \RuntimeException('Callable returns are deferred'); }
 			$inputs /** vector<canonical_type_use> */ = [];
 			$parameters /** Storage<type_node> */ = $callable->parameter_types;
 			foreach ($parameters as $parameter) {

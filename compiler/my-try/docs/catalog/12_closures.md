@@ -80,6 +80,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLOSURE-CALL-001](#closure-call-001) | implemented-bounded | `$f(); $g(3); $h(3); $h(3, 9);` | passed | passed | deferred | Shared defaults, typed variadic packs and value/reference inputs; ordered arguments; generated execution |
 | Concrete reference returns | implemented-bounded | `$f = fn&(int &$v): int => $v; $alias =& $f($value);` | passed | passed | deferred | Shared origin contract; capture/local escape and cycles reject; erased signatures deferred |
 | Borrowed receiver capture | implemented-bounded | `$f = function () use ($this): int { return $this->count; };` | passed | passed | deferred | Shared borrow lifetime; arrows, nested access and class/struct receivers; no owning capture |
+| Callable returns/factories | implemented-bounded | `function make(int $n): function<int()> { return fn(): int => $n; }` | passed | passed | deferred | Shared return conversion; exact erased signatures; owned environments only; `closures.php` |
 | [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
 | [SCOPE-VAR-002](#scope-var-002) | implemented-bounded | `if (true) { $g = function (): int { return 1; }; } return $g();` | rejection passed | not emitted | deferred | Existing lexical scope; `closures.php` |
 | [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |
@@ -97,13 +98,12 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 All 13 imported IDs now have a current decision: 11 are implemented within their
 stated positive/rejection bounds; two remain deferred (contextual signatures and
 empty callable storage). Concrete reference returns and borrowed receivers add two
-implemented rows. This is card reconciliation, not whole-chapter completion: imported
+implemented rows; callable returns/factories subsequently add a third. This is card reconciliation, not whole-chapter completion: imported
 prose and extensions contain further capabilities.
 
 | Remaining capability | Current boundary / owner |
 | --- | --- |
 | Contextual signatures | Explicit closure/arrow signatures required; CLOSURE-CALLABLE-001 |
-| Callable returns/factories | Shared named/anonymous return gate; owned-value environments and borrowing environments need distinct admission |
 | Empty callable storage | Initialization required; SCOPE-VAR-003 |
 | Callable properties, wrappers and typed containers | Explicit preparation gates; shared storage/copy/lifetime admission still needed |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
@@ -111,10 +111,12 @@ prose and extensions contain further capabilities.
 | Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
 | Void-valued return expressions | Shared return-owner debt recorded in the foundation plan; do not special-case arrows |
 
-Recommended next discussion: callable returns through explicit `function<R(Args...)>`
-contracts, shared by functions/methods/closures, initially with capture-free or
-copyable owned-value environments only. Borrowing closures must remain rejected.
-This recommendation is not implementation approval or a new scope deferral.
+Callable returns now use explicit `function<R(Args...)>` contracts across functions,
+methods and closures. Existing erased conversion admits capture-free/copyable value
+environments and rejects direct/transitive borrows. Nested callable signatures and
+already-erased forwarding share that path; no new backend factory implementation.
+Next recommended discussion: contextual signature completion from explicit callable
+contracts, without body-based type inference.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
 `closure_model` checks, including added exact rejection shapes. No compiler semantics,
@@ -467,8 +469,9 @@ STAN ERROR
 ## CLOSURE-001
 
 **v0.2 decision / target C++:** Implemented for explicit signatures using the shared callable lifecycle,
-body checking and native lambda lowering. Callable-returning factories in the imported
-prose remain deferred; this bounded card does not claim their support.
+body checking and native lambda lowering. Callable-returning factories now work with
+strict explicit return contracts and copyable nonborrowing environments. Imported
+legacy comment-based signature spellings are not enabled by this support.
 
 ### Imported version 1
 

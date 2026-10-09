@@ -36,9 +36,6 @@ final class Declaration_Preparation
 			$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
 		}
 		else { $facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context); }
-		if (Type_Queries::canonical($facts->signature->return_type)->definition() instanceof callable_type_definition) {
-			throw new \RuntimeException('Callable returns are deferred');
-		}
 		if (!$syntax->signature_syntax->returns_reference) {
 			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		}
@@ -74,9 +71,6 @@ final class Declaration_Preparation
 	{
 		$facts = new prepared_source_callable();
 		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
-		if (Type_Queries::canonical($facts->signature->return_type)->definition() instanceof callable_type_definition) {
-			throw new \RuntimeException('Callable returns are deferred');
-		}
 		if (!$syntax->signature_syntax->returns_reference) {
 			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		}

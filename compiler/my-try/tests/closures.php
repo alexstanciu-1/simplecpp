@@ -8,6 +8,18 @@ $directory = sys_get_temp_dir() . '/closure-execution-' . bin2hex(random_bytes(6
 mkdir($directory);
 $path = $directory . '/main.phs';
 $cases = [
+	'typed_factory_free' => ['function make(int $base): function<int(int)> { return fn(int $n): int => $base + $n; } $f = make(3); return $f(4);', 7],
+	'typed_factory_empty' => ['function make(): function<int()> { return function (): int { return 8; }; } $f = make(); return $f();', 8],
+	'typed_factory_method' => ['class Maker { public int $n = 3; public function make(): function<int()> { $n = $this->n; return fn(): int => $n; } } $m = new Maker(); $f = $m->make(); unset($m); return $f();', 3],
+	'typed_factory_struct' => ['struct Maker { public function make(int $n): function<int()> { return fn(): int => $n; } } $m = new Maker(); $f = $m->make(5); return $f();', 5],
+	'typed_factory_static' => ['class Maker { public static function make(int $n): function<int()> { return fn(): int => $n; } } $f = Maker::make(6); return $f();', 6],
+	'typed_factory_closure' => ['$make = function (int $base): function<int(int)> { return fn(int $n): int => $base + $n; }; $f = $make(3); return $f(5);', 8],
+	'typed_factory_arrow' => ['$make = fn(int $base): function<int(int)> => fn(int $n): int => $base + $n; $f = $make(2); return $f(5);', 7],
+	'typed_factory_erased' => ['$make function<function<int(int)>(int)> = fn(int $base): function<int(int)> => fn(int $n): int => $base + $n; $f = $make(4); return $f(5);', 9],
+	'typed_factory_forward' => ['function copy(function<int()> $f): function<int()> { return $f; } $n = 7; $f = copy(fn(): int => $n); return $f();', 7],
+	'typed_factory_shared' => ['class Box { public int $n = 2; } function make(): function<int()> { $b = new Box(); return function () use ($b): int { return ++$b->n; }; } $f = make(); $g = $f; $f(); return $g();', 4],
+	'typed_factory_vector' => ['function make(): function<int()> { $v vector<int> = [6]; $f = fn(): int => $v[0]; $v[0] = 9; return $f; } $f = make(); return $f();', 6],
+	'typed_factory_transitive' => ['function make(): function<int()> { $n = 4; $f = fn(): int => $n; return fn(): int => $f(); } $f = make(); return $f();', 4],
 	'reference_return' => ['$f = function &(int &$n): int { return $n; }; $n = 3; $a =& $f($n); $a = 7; return $n;', 7],
 	'reference_return_alias_copy' => ['$f = function &(int &$n): int { $a =& $n; return $a; }; $g = $f; $n = 3; $a =& $g($n); $a = 8; return $n;', 8],
 	'reference_return_value_copy' => ['$f = fn&(int &$n): int => $n; $n = 3; $copy = $f($n); $copy = 8; return $n;', 3],
@@ -157,7 +169,12 @@ try {
 		'$f function<string()> = function (): int { return 1; }; return 0;',
 		'$f function<int(int)> = function (float $n): int { return 1; }; return 0;',
 		'$f function<int(int)> = function (): int { return 1; }; return 0;',
-		'function make(): function<int()> { return function (): int { return 1; }; } return 0;',
+		'function make(): function<int()> { $n = 1; return function () use (&$n): int { return $n; }; } return 0;',
+		'function make(): function<int()> { $n = 1; $f = function () use (&$n): int { return $n; }; return fn(): int => $f(); } return 0;',
+		'class Maker { public int $n = 1; public function make(): function<int()> { return fn(): int => $this->n; } } return 0;',
+		'function make(): function<string()> { return fn(): int => 1; } return 0;',
+		'function make(): function<int(int)> { return fn(int $n = 1): int => $n; } return 0;',
+		'function make(): function<int()> { return 1; } return 0;',
 	];
 	foreach ($invalid as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
@@ -270,6 +287,20 @@ try {
 	if (CPP_Probe::text(Model::$cpp_files) !== $default_output) { throw new \LogicException('Closure default edit disagrees with fresh output'); }
 	file_put_contents($output . '/closure_default_edit.cpp', $default_output);
 	$executions[] = ['path' => $output . '/closure_default_edit.cpp', 'exit_code' => 6];
+	$factory_source = $cases['typed_factory_free'][0];
+	file_put_contents($path, $factory_source); $compiler->update_cpp([$path]);
+	$factory_source = str_replace('$base + $n', '$base + $n + 1', $factory_source);
+	file_put_contents($path, $factory_source); $compiler->update_cpp([$path]);
+	$factory_output = CPP_Probe::text(Model::$cpp_files);
+	file_put_contents($path, str_replace('function<int(int)>', 'function<string(int)>', $factory_source)); $rejected = false;
+	try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
+	if (!$rejected) { throw new \LogicException('Factory signature edit retained incompatible return'); }
+	file_put_contents($path, $factory_source); $compiler->update_cpp([$path]);
+	if (CPP_Probe::text(Model::$cpp_files) !== $factory_output) { throw new \LogicException('Factory signature recovery changed output'); }
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	if (CPP_Probe::text(Model::$cpp_files) !== $factory_output) { throw new \LogicException('Factory fresh/incremental output differs'); }
+	file_put_contents($output . '/typed_factory_edit.cpp', $factory_output);
+	$executions[] = ['path' => $output . '/typed_factory_edit.cpp', 'exit_code' => 8];
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	$registry = Model::$type_catalog->registry();
 	$integer = Language_Types::integer(Model::$language_scope);

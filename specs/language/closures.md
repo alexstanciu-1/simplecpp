@@ -29,7 +29,7 @@ $ret = $f(10);
 
 ## Allowed usage
 
-Closures are supported in **local, concrete contexts only**:
+Inferred closure locals retain their concrete anonymous type:
 
 ```php
 $f = function (int $a): int {
@@ -54,7 +54,7 @@ function apply(function<int(int)> $operation, int $value): int {
 }
 ```
 
-An explicit local or parameter contract permits a compatible concrete closure to
+An explicit local, parameter or return contract permits a compatible concrete closure to
 cross that boundary. Inferred closure locals remain concrete; this conversion is
 not applied merely because a value is callable. Different closure expressions may
 initialize or replace the same explicitly typed callable storage.
@@ -73,11 +73,36 @@ Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime
 obligations.
 
-Empty callable storage, callable returns, erased reference signatures and
+Empty callable storage, erased reference signatures and
 contextual signature inference remain deferred in this slice. Properties and
 wrapper/container storage of callable values are also deferred. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
 the concrete-lambda lowering of inferred locals.
+
+### Callable returns and factories
+
+Functions, instance/static methods and anonymous callables may declare an explicit
+`function<R(Args...)>` return contract. Returning a compatible concrete closure uses
+the same conversion as an explicit callable local/parameter; returning an already
+erased callable preserves its exact contract. Nested callable result contracts are
+allowed, including an erased callable that itself returns an erased callable.
+
+```php
+function make_adder(int $base): function<int(int)> {
+    return fn(int $value): int => $base + $value;
+}
+$add = make_adder(3);
+$result = $add(4); // 7, after make_adder has returned
+```
+
+Capture-free and copyable by-value environments may cross the return boundary.
+Ordinary value/container-copy and shared-handle semantics apply; this is not deep
+copying. Direct or transitive reference captures and borrowed `$this` reject during
+preparation, even if a particular caller might keep their origins alive. Capturing
+a value from a reference parameter by value does not itself retain a borrow.
+Noncopyable captures and incompatible signatures remain rejected. No inferred
+anonymous return type, owning receiver capture, callable property/container storage,
+or extension of erased defaults/variadic/reference signatures is enabled here.
 
 ## Forbidden usage (concrete closures)
 
@@ -196,7 +221,7 @@ The syntax order is `function (parameters) use (captures): ReturnType { body }`.
 Mutable by-value capture bindings remain deferred. Receiver capture follows the
 separate borrowed-instance rule below.
 Parameter/return rules are shared with other source callables;
-capture admission does not enable deferred callable signatures or callable returns.
+capture admission does not enable deferred callable signatures.
 
 ### v0.2 bounded reference captures
 
@@ -229,8 +254,8 @@ nonescape.
 
 Field/interior references and borrowing another closure's captured fields are deferred,
 including attempts through aliases. Captured storage cannot supply a reference return
-under the current whole-reference-parameter contract. Callable returns and property/
-container storage remain deferred. This is a bounded lexical lifetime check, not
+under the current whole-reference-parameter contract. Returning borrowing closures
+is rejected; property/container storage remains deferred. This is a bounded lexical lifetime check, not
 general escape analysis, exclusive borrowing or PHP-style lifetime extension.
 
 ### v0.2 borrowed receiver captures

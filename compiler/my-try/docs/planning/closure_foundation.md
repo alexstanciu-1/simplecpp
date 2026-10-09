@@ -150,12 +150,28 @@ across syntax/collection, analysis lifecycle and backend consumers.
     preserve obligations; erased conversion and `use (&$this)` reject. No retained
     receiver-context structure or separate closure lowering path was introduced.
 
+11. **Explicit callable returns/factories — implemented.** Named/anonymous signature
+    preparation no longer blanket-rejects callable results. Recursive callable type
+    preparation admits callable results too. The existing return-value conversion,
+    exact erased-signature admission and transitive borrow checks own all validation;
+    C++ type spelling/conversion already supports nested `std::function` signatures.
+    No new retained model, factory path or ownership exception is needed.
+
 Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
-returns, erased reference signatures, named-call syntax, callable-return support,
+returns, erased reference signatures, named-call syntax, inferred callable returns,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Callable-return checkpoint (2026-10-09): all 83 generated C++ programs passed with
+PCH in `/tmp/my-try-ch12-factories-02` (70 existing cases plus 12 factory cases and
+one factory edit/recovery case). Seven focused PHP suites passed in
+`/tmp/my-try-ch12-factory-checks`. Proofs cover function/class/struct/static/anonymous
+factories, nested erased result signatures, exact forwarding, shared identity,
+value-container snapshots, direct/transitive borrow and receiver escape rejection,
+and fresh/incremental agreement after signature failure. No native compiler rebuild
+or converter run was performed.
 
 Borrowed receiver checkpoint (2026-10-09): 34 generated C++ programs passed with PCH
 in `/tmp/my-try-ch12-receiver-05`, including nine receiver execution/edit cases and

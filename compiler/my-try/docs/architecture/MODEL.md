@@ -174,6 +174,13 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ### Callable contracts
 
+Explicit callable returns reuse the ordinary return conversion and value boundary.
+Recursive callable contracts can return other callable contracts; their canonical
+identity and C++ spelling already compose. Concrete-to-erased conversion observes
+the anonymous body, verifies exact signatures/copyability and rejects transitive
+borrows. Returning an already-erased value preserves its contract. No factory-specific
+prepared result, retained environment owner or lowering path exists.
+
 Receiver captures reuse `prepared_capture::borrow` with an existing `prepared_receiver`
 origin; the typed `receiver()` query derives the role without a second kind flag.
 Instance-body local membership establishes the receiver's invocation lifetime, but
