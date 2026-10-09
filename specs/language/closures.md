@@ -107,7 +107,7 @@ Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime
 obligations.
 
-Wrapper storage remains deferred in this slice. The C++ backend
+Result storage follows the bounded contract below; other wrappers remain deferred. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
 the concrete-lambda lowering of inferred locals.
 
@@ -181,7 +181,46 @@ can be observed through conditions or copied to a local for `isset`.
 
 Direct/transitive borrowed environments and borrowed `$this` remain rejected at
 every erased boundary, including properties and collection entries. Callable
-wrappers and mixed/dynamic callable payloads remain deferred.
+ownership/nullable wrappers and mixed/dynamic callable payloads remain deferred.
+
+### Result-wrapped callables
+
+`result<function<R(Args...)>>` accepts an exact already-typed callable payload.
+The existing legacy `result_or_false` and `result_or_bool` families share the same
+payload admission without changing profile availability. Ordinary Result construction,
+same-wrapper copying, checked required extraction and `take` apply. Reference-return,
+reference-input and variadic contracts remain part of the exact payload identity.
+
+```php
+function make_operation(): result<function<int(int)>> {
+    $operation function<int(int)> = fn($n) => $n + 1;
+    return $operation;
+}
+$operation function<int(int)>;
+$error error;
+if (take($operation, $error) = make_operation()) {
+    $answer = $operation(4);
+}
+```
+
+Construction does not implicitly chain concrete-closure erasure and Result wrapping:
+first establish the explicit callable type, then wrap it. Borrowed environments remain
+rejected at that callable boundary. Result declarations still require an initializer.
+
+A successful Result may contain an absent callable. Taking its value state means the payload
+was extracted, not that it is invocable. It overwrites the output even with absence;
+check the extracted callable with `isset` or a condition when needed. Invoking an
+absent extracted callable throws the ordinary callable exception. Failed extraction
+throws under the existing Result contract; unsuccessful `take` preserves the value
+output and updates the applicable alternative output as before.
+The legacy boolable exception is unchanged: a true sentinel makes `take` return true
+without assigning the callable output, and sets the boolean alternative to true.
+
+Direct conditions/probes on callable-valued Results and their ternary/Elvis/coalescing
+joins remain preparation-time rejections in this bounded slice. Storage admission
+does not imply runtime observation support. Extract first to use the callable's own
+presence contract. Nullable and ownership-wrapped callables remain rejected; no second
+absence state, new error construction or implicit reference to wrapper payload is added.
 
 ### Callable presence and reset
 

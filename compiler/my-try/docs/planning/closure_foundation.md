@@ -208,13 +208,33 @@ across syntax/collection, analysis lifecycle and backend consumers.
     invocation's existing membership lifetime; reborrows reuse the original lifetime.
     No new syntax, retained structure, backend path or heap lifetime extension.
 
+19. **Result-wrapped explicit callables — implemented.** Existing Result payload
+    admission accepts exact explicit callable values. Construction, copies, checked
+    extraction and take reuse shared facts/emission/runtime templates for all three
+    families. Concrete closure erasure must happen first; source signatures and
+    borrowing restrictions remain exact. Separate observation/selection admission
+    prevents storage support from silently enabling unsupported runtime operations.
+
 Non-goals: owning receiver captures, mutable by-value capture bindings, captured-storage reference
 returns, named-call syntax, inferred callable returns,
-mixed/dynamic callable storage, callable wrappers, authored closure property defaults
+mixed/dynamic callable storage, nullable/ownership callable wrappers, callable Result
+observations/selection joins, authored closure property defaults
 and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Callable Result checkpoint (2026-10-09): 13 generated programs passed without PCH
+in `/tmp/my-try-callable-results-20261009-final2`. Coverage includes factories,
+argument construction, exact copying/extraction, reference/variadic signatures,
+owned captures, absent successful payloads and legacy false/bool sentinels. C++ entry
+probes verify failed required extraction and absent invocation throw. Invalid wrapper,
+borrow/signature, direct closure wrapping, observation and selection shapes reject;
+signature edits recover and match fresh output. Eight focused PHP suites passed in
+`/tmp/my-try-callable-result-checks-20261009`. Earlier fixture attempts corrected
+unsupported default Result construction and the expected true-sentinel take result;
+neither required a semantic change. Shared runner used CLI fallback; no native compiler
+rebuild or runtime-template change.
 
 Captured-field checkpoint (2026-10-09): 44 generated programs passed without PCH
 in `/tmp/my-try-captured-fields-20261009-final`, including ten new nested/field cases.

@@ -61,8 +61,12 @@ The experimental v0.2 compiler admits the assignment spelling and normalizes bot
 spellings to one AST node. Outputs currently reference existing local variables or
 parameters of the exact selected branch types; the two outputs must name distinct
 declarations (aliasing between reference parameters is not analyzed). Payloads are
-supported for scalars and exact `mixed`/`dynamic` Result payloads (nullable payloads
+supported for scalars, exact `mixed`/`dynamic` and explicit callable Result payloads (nullable payloads
 remain scalar-only). Wrapped null/false are successful payloads, not wrapper failure.
+Likewise, an absent callable is a successful payload: `take` returns true, replaces
+the callable output with absence and clears the structured error output. Presence
+and invocation are separate checks on that extracted callable. See
+[Result-wrapped callables](language/closures.md#result-wrapped-callables).
 Copied mixed containers retain value semantics; copied dynamic containers share
 identity. Inline declarations and bare
 tuple assignment `($value, $error) = source` are deferred. Nested eager operator

@@ -27,8 +27,29 @@ final class Result_Conversions
 		$application = object_cast(Type_Queries::canonical($type), applied_template_type::class);
 		$payload = $role->payload_type($application);
 		if ($type->by_value() || $payload->by_value()
-			|| (!Conversion_Preparation::is_scalar($payload) && !Boxed_Conversions::is_boxed($payload))) {
-			throw new \RuntimeException('S2S Result operations require an unmodified scalar, mixed or dynamic payload');
+			|| (!Conversion_Preparation::is_scalar($payload) && !Boxed_Conversions::is_boxed($payload)
+				&& !(Type_Queries::canonical($payload)->definition() instanceof callable_type_definition))) {
+			throw new \RuntimeException('S2S Result operations require an unmodified scalar, mixed, dynamic or explicit callable payload');
+		}
+		return $payload;
+	}
+
+	/** Runtime observation support is independent of payload storage/extraction support. */
+	public static function require_observation_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
+	{
+		$payload = self::require_payload($type, $role);
+		if (Type_Queries::canonical($payload)->definition() instanceof callable_type_definition) {
+			throw new \RuntimeException('S2S callable Result conditions and probes are deferred; extract with take first');
+		}
+		return $payload;
+	}
+
+	/** Storage admission does not silently extend conditional/coalescing joins. */
+	public static function require_selection_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
+	{
+		$payload = self::require_payload($type, $role);
+		if (Type_Queries::canonical($payload)->definition() instanceof callable_type_definition) {
+			throw new \RuntimeException('S2S callable Result selection joins are deferred');
 		}
 		return $payload;
 	}

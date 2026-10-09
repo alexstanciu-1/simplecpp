@@ -418,8 +418,11 @@ depends on chapter 13's reusable runtime construction/member-call paths. The run
 `Take_Preparation` owns wrapper-directed output binding: source snapshot copy capability,
 exact payload/alternative types, existing locals/parameters and output distinctness.
 Result payload admission is shared through `Result_Conversions::require_payload`:
-supported scalars or mixed/dynamic, without nested wrappers or implicit two-step
+supported scalars, mixed/dynamic or explicit callable payloads, without nested wrappers or implicit two-step
 conversion. Outer Result ownership precedes boxed conversion/conditional routing;
+Observation and selection admission are separate: callable Result conditions/probes
+and joins remain gated. Exact typed callable construction, copying, checked extraction
+and take reuse existing decisions; concrete closure erasure must happen first.
 typed container element boundaries reuse ordinary argument admission. Nullable
 payloads retain their separate scalar-only gate.
 Both take spellings retain one `take_expression_node` with named source/value/alternative

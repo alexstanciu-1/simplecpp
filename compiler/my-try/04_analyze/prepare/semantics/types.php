@@ -182,9 +182,10 @@ final class Type_Preparation
 	{
 		foreach ($arguments as $argument) {
 			if (Type_Queries::canonical($argument)->definition() instanceof callable_type_definition) {
-				// Typed collections carry owned erased values; wrappers remain a separate contract.
+				// Collections and Results carry owned erased values; other wrappers stay gated.
 				if (($definition !== Model::$type_catalog->definition('vector'))
-					&& ($definition !== Model::$type_catalog->definition('hash'))) {
+					&& ($definition !== Model::$type_catalog->definition('hash'))
+					&& !($definition instanceof result_semantics)) {
 					throw new \RuntimeException('Callable wrapper storage is deferred');
 				}
 			}

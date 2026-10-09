@@ -27,7 +27,7 @@ final class Coalesce_Expression_Preparation
 			}
 			$role = Result_Conversions::role($left->type);
 			if ($role !== null) {
-				$selected_type = Result_Conversions::require_payload($left->type, $role);
+				$selected_type = Result_Conversions::require_selection_payload($left->type, $role);
 				$facts->presence = coalesce_presence::wrapper_value;
 			}
 			$relationships = new Conversion_Relationships($context);
