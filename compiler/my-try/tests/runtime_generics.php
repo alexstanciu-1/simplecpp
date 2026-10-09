@@ -52,6 +52,7 @@ $bad = $schemas[0]; $bad['parameters'][0]['passing'] = 'reference'; $invalid_row
 foreach ($invalid_rows as $row) {
 	$invalid = $schema; $invalid['functions'][0] = $row;
 	$candidate = new runtime_catalog_input();
+	$candidate->modules->add('core', $input->modules['core']);
 	$candidate->modules->add('proof', Runtime_Catalog_Reader::decode(json_encode($invalid), 'bad.json'));
 	$failed = false;
 	try { Compiler_Lifecycle::configure_runtime($candidate); }
@@ -67,6 +68,7 @@ $invalid = $schema;
 $invalid['functions'][] = $duplicate;
 $invalid['cpp'][] = ['id' => 'proof.duplicate', 'symbol' => 'runtime_generic_test::identity', 'header' => 'runtime_generic_support.hpp'];
 $candidate = new runtime_catalog_input();
+$candidate->modules->add('core', $input->modules['core']);
 $candidate->modules->add('proof', Runtime_Catalog_Reader::decode(json_encode($invalid), 'duplicate.json'));
 $failed = false;
 try { Compiler_Lifecycle::configure_runtime($candidate); }

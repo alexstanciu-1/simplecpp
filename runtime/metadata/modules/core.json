@@ -2,6 +2,27 @@
   "version": 1,
   "module": "core",
   "dependencies": [],
+  "types": [
+    {
+      "id": "core.vector", "name": "vector", "kind": "class",
+      "capabilities": ["copyable_value", "value_storable", "result_payload"],
+      "parameters": [
+        {"name": "Value", "requires": ["value_storable"], "capability_dependencies": ["copyable_value"]}
+      ]
+    },
+    {
+      "id": "core.hash", "name": "hash", "kind": "class",
+      "capabilities": ["copyable_value", "value_storable", "result_payload"],
+      "parameters": [
+        {"name": "Value", "requires": ["value_storable"], "capability_dependencies": ["copyable_value"]},
+        {"name": "Key", "requires": ["hashable", "comparable"], "default": "string", "capability_dependencies": ["copyable_value"]}
+      ]
+    }
+  ],
+  "cpp_types": [
+    {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},
+    {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"}
+  ],
   "functions": [
     {"id":"core.getenv","name":"getenv","parameters":[{"name":"name","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
     {"id":"core.shell_exec","name":"shell_exec","parameters":[{"name":"command","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},

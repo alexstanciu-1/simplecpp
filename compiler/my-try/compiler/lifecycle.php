@@ -20,8 +20,13 @@ final class Compiler_Lifecycle
 			throw new \LogicException('Runtime catalogs must be configured before compilation');
 		}
 		$types = Type_Definition_Registration::install(new Type_Registry());
+		Runtime_Type_Registration::install($input, $types);
 		Runtime_Catalog_Registration::resolve($input, $types);
 		Runtime_Catalog_Registration::resolve_constants($input, $types);
+		// Validate existing protocol prerequisites against these privately installed types too.
+		Initialization_Registration::install($types);
+		Indexing_Registration::install($types);
+		Iteration_Registration::install($types);
 		CPP_Runtime_Catalog::validate($input);
 		Model::$runtime_metadata = $input;
 	}
@@ -142,7 +147,9 @@ final class Compiler_Lifecycle
 	{
 		$registry = new Type_Registry();
 		Model::$type_catalog = Type_Definition_Registration::install($registry);
+		Runtime_Type_Registration::install(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$cpp_type_bindings = CPP_Type_Binding_Registration::install(Model::$type_catalog);
+		CPP_Runtime_Catalog::install_types(Model::$runtime_metadata, Model::$type_catalog, Model::$cpp_type_bindings);
 		Model::$runtime_callables = Runtime_Catalog_Registration::resolve(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$runtime_constants = Runtime_Catalog_Registration::resolve_constants(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog);

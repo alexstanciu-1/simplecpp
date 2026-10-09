@@ -206,7 +206,7 @@ Do not fill this gap by enumerating concrete scalar/container overloads in metad
 | Contract-sensitive strings | strpos/strrpos, substr_replace, boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
 | Container-producing/consuming helpers | collection APIs | Audit by owning module; typed split/join now use existing application/generic contracts |
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
-| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Type/ownership/member registration is not yet represented by this function/constant metadata schema |
+| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Ordinary nominal/template declarations and capabilities now supported; audit actual APIs next; members/factories, specialized storage and handle lifetimes remain separate prerequisites |
 | Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Reuse existing callable models, but extend metadata decoding and selection under explicit contracts |
 | Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime/filesystem and ready regex signatures registered, automatic module linkage still separate |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
@@ -219,6 +219,21 @@ The old `php_builtins.json` manifest identifies itself as a planning scaffold an
 must not be treated as a complete ready-to-import catalog.
 
 ## Proof boundary
+
+Runtime-type foundation: `types`/`cpp_types` records decode directly into typed startup
+data. One transient registration worker installs ordinary nominal/template definitions
+and closed forward defaults before signatures. Vector/hash declarations and bindings
+moved out of PHP; source publication now enumerates the registry's exposed names.
+No parser, preparation or expression-emission family branches were added. The
+metadata-only receipt/parcel fixtures cover nominal and nested generic calls, defaults,
+Result transport, conditional copy capabilities, reset/recovery and operation opt-in
+boundaries. Specialized semantic roles remain compiler-owned; the CH15 metadata audit
+stays open for remaining owner/protocol registrations.
+
+Evidence: `/tmp/my-try-runtime-types-20261009-validated` passes 12 focused PHP suites
+(0.50–1.73s each) and five generated C++ compile/run tasks (3.94–5.01s each).
+FPM was unavailable under the socket sandbox, so the shared runner used its CLI
+fallback. No PCH, full regression sweep or native compiler rebuild was performed.
 
 Environment/shell evidence: `/tmp/runtime-environment-20261009-1` passes two PHP
 suites (0.71–0.72s) and five C++ build/run tasks (2.47–6.84s). Fixed commands prove

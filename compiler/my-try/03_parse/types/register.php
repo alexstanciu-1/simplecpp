@@ -1,6 +1,6 @@
 <?php
 
-/* Role: install the language and runtime definitions supported by the current compiler. */
+/* Role: install compiler-interpreted types; ordinary runtime definitions come from metadata. */
 namespace scpp\compiler;
 
 final class Type_Definition_Registration
@@ -85,30 +85,7 @@ final class Type_Definition_Registration
 		$value_storable /** vector<generic_contract> */ = [generic_contract::value_storable];
 		$copyable_storage /** vector<generic_contract> */ = [generic_contract::copyable_value,
 			generic_contract::value_storable];
-		$container_capabilities /** vector<generic_contract> */ = [generic_contract::copyable_value,
-			generic_contract::value_storable, generic_contract::result_payload];
 		$copy_dependencies /** vector<generic_contract> */ = [generic_contract::copyable_value];
-		$vector_parameters /** vector<template_type_parameter> */ = [
-			new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
-		];
-		$vector = $registry->define_template('vector', type_definition_origin::runtime,
-			nominal_type_kind::class_type, $vector_parameters,
-			$container_capabilities);
-		self::install_template($source, $providers, $vector, 'vector');
-
-		$string_type = $registry->canonical(object_cast(
-			$registry->definition($source->type('string')->definition_id()), concrete_type_definition_i::class));
-		$hash_key_contracts /** vector<generic_contract> */ = [generic_contract::hashable,
-			generic_contract::comparable];
-		$hash_parameters /** vector<template_type_parameter> */ = [
-				new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
-				new template_type_parameter('Key', $hash_key_contracts,
-					$registry->use($string_type->type_id()), $copy_dependencies),
-			];
-		$hash = $registry->define_template('hash', type_definition_origin::runtime,
-			nominal_type_kind::class_type, $hash_parameters, $container_capabilities);
-		self::install_template($source, $providers, $hash, 'hash');
-
 		$nullable_parameters /** vector<template_type_parameter> */ = [
 			new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
 		];

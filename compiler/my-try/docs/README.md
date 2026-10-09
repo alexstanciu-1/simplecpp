@@ -8,6 +8,11 @@ experiment retained for regressions, not a second semantic development path.
 
 ## Reading map
 
+Ordinary runtime type registration now uses the shared module metadata: `types` and
+separate `cpp_types` records, including vector/hash. The [catalog contract](../../../specs/runtime_module_metadata.md#ordinary-runtime-type-declarations)
+owns the shape; [focused tests](testing.md#reusing-the-runner) prove metadata-only
+providers. Specialized semantics and remaining protocol-registration debt stay explicit.
+
 | Need | Read |
 | --- | --- |
 | Operating rules and checks | [AGENTS](../AGENTS.md), [code style](code_style.md), [test runners](testing.md) |

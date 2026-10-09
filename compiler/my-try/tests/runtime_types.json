@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "module": "type_proof",
+  "dependencies": ["core"],
+  "types": [
+    {
+      "id": "proof.parcel", "name": "parcel", "kind": "struct",
+      "parameters": [{"name": "T", "requires": ["value_storable"], "default": "receipt", "capability_dependencies": ["copyable_value"]}],
+      "capabilities": ["value_storable", "copyable_value", "result_payload"]
+    },
+    {
+      "id": "proof.receipt", "name": "receipt", "kind": "struct",
+      "capabilities": ["value_storable", "copyable_value", "result_payload"]
+    }
+  ],
+  "cpp_types": [
+    {"id": "proof.parcel", "symbol": "runtime_type_test::parcel", "header": "runtime_type_support.hpp"},
+    {"id": "proof.receipt", "symbol": "runtime_type_test::receipt", "header": "runtime_type_support.hpp"}
+  ],
+  "functions": [
+    {"id": "proof.make_receipt", "name": "make_receipt", "parameters": [{"name": "number", "type": "int", "passing": "value"}], "returns": "receipt"},
+    {"id": "proof.receipt_number", "name": "receipt_number", "parameters": [{"name": "value", "type": "receipt", "passing": "observe"}], "returns": "int"},
+    {"id": "proof.pack", "name": "pack", "type_parameters": ["T"], "parameters": [{"name": "value", "type": {"parameter": "T"}, "passing": "value"}], "returns": {"name": "parcel", "arguments": [{"parameter": "T"}]}},
+    {"id": "proof.unpack", "name": "unpack", "type_parameters": ["T"], "parameters": [{"name": "value", "type": {"name": "parcel", "arguments": [{"parameter": "T"}]}, "passing": "observe"}], "returns": {"parameter": "T"}},
+    {"id": "proof.default_parcel", "name": "default_parcel", "parameters": [{"name": "number", "type": "int", "passing": "value"}], "returns": "parcel"}
+  ],
+  "cpp": [
+    {"id": "proof.make_receipt", "symbol": "runtime_type_test::make_receipt", "header": "runtime_type_support.hpp"},
+    {"id": "proof.receipt_number", "symbol": "runtime_type_test::receipt_number", "header": "runtime_type_support.hpp"},
+    {"id": "proof.pack", "symbol": "runtime_type_test::pack", "header": "runtime_type_support.hpp"},
+    {"id": "proof.unpack", "symbol": "runtime_type_test::unpack", "header": "runtime_type_support.hpp"},
+    {"id": "proof.default_parcel", "symbol": "runtime_type_test::default_parcel", "header": "runtime_type_support.hpp"}
+  ]
+}

@@ -120,6 +120,7 @@ $selected = Runtime_Catalog_Loader::load($root, ['filesystem', 'core', 'filesyst
 filesystem_check(count($selected->modules) === 2, 'Filesystem dependency deduplication failed');
 $types = Type_Definition_Registration::install(new Type_Registry());
 $core = Runtime_Catalog_Loader::load($root, ['core']);
+Runtime_Type_Registration::install($core, $types);
 $catalog = Runtime_Catalog_Registration::resolve($core, $types);
 $failed = false;
 try { $catalog->function_definition('filesystem.fs_get'); }

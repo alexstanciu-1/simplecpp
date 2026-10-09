@@ -118,7 +118,7 @@ final class CPP_Type_Bindings
 
 final class CPP_Type_Binding_Registration
 {
-	/** Bind every installed definition without consulting its source spelling during emission. */
+	/** Bind compiler-interpreted definitions; the coordinator adds ordinary metadata bindings. */
 	public static function install(registered_type_catalog $types): CPP_Type_Bindings
 	{
 		$bindings = new CPP_Type_Bindings();
@@ -150,10 +150,8 @@ final class CPP_Type_Binding_Registration
 	private static function bind_runtime_types(CPP_Type_Bindings $bindings,
 		registered_type_catalog $types): void
 	{
-		$bindings->bind_definition($types->definition('vector'), 'scpp::vector_t', 'scpp/vector_t.hpp');
 		$bindings->bind_definition($types->definition('mixed'), 'scpp::mixed_t', 'scpp/mixed_t.hpp');
 		$bindings->bind_definition($types->definition('dynamic'), 'scpp::dynamic_t<>', 'scpp/dynamic_t.hpp');
-		$bindings->bind_definition($types->definition('hash'), 'scpp::hash_t', 'scpp/hash_t.hpp');
 		$bindings->bind_definition($types->definition('nullable'), 'scpp::nullable', 'scpp/nullable.hpp');
 		$bindings->bind_definition($types->definition('result'), 'scpp::result', 'scpp/result.hpp');
 		$bindings->bind_definition($types->definition('result_or_false'), 'scpp::result_or_false', 'scpp/result_or_false.hpp');

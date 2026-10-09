@@ -9,6 +9,19 @@ final class CPP_Runtime_Catalog
 	{
 		foreach ($input->modules as $module)
 		{
+			$type_bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_types;
+			if (q_count($type_bindings) !== q_count($module->types)) {
+				throw new \RuntimeException('Runtime type binding count mismatch: ' . $module->file);
+			}
+			foreach ($module->types as $type_spec) {
+				if (!isset($type_bindings[$type_spec->identity])) {
+					throw new \RuntimeException('Missing runtime type binding: ' . $type_spec->identity);
+				}
+			}
+			foreach ($type_bindings as $type_binding) {
+				self::spelling($type_binding->symbol, false);
+				self::spelling($type_binding->header, true);
+			}
 			$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp;
 			if (q_count($bindings) !== q_count($module->functions)) {
 				throw new \RuntimeException('Runtime binding count mismatch: ' . $module->file);
@@ -51,6 +64,20 @@ final class CPP_Runtime_Catalog
 	}
 
 	/** Bind current identities after semantic installation, never during schema decoding. */
+	public static function install_types(runtime_catalog_input $input, registered_type_catalog $types,
+		CPP_Type_Bindings $bindings): void
+	{
+		foreach ($input->modules as $module)
+		{
+			$specs /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_types;
+			foreach ($module->types as $type_spec) {
+				$binding = $specs[$type_spec->identity];
+				$bindings->bind_definition($types->definition($type_spec->name), $binding->symbol, $binding->header);
+			}
+		}
+	}
+
+	/** Callable installation follows both semantic and type-binding installation. */
 	public static function install(runtime_catalog_input $input): void
 	{
 		foreach ($input->modules as $module) {

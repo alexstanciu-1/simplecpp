@@ -724,6 +724,20 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For ordinary runtime type metadata and the vector/hash registration migration:
+
+```bash
+python3 compiler/my-try/tests/runtime_types.py --results /tmp/FRESH_TYPE_RESULTS
+```
+
+The focused runner checks typed decoding, private rejection/recovery, forward defaults,
+registry capability dependencies, retained metadata across resets and existing catalog,
+generic, observation and Result paths. Five generated programs use metadata-only
+receipt/parcel providers plus production vector/hash, without parser/preparation/emitter
+special cases. C++ runs without PCH to check header completeness; this is not a native
+compiler rebuild. Methods, protocol registration and handle-lifetime contracts remain
+outside this proof.
+
 For environment and shell registrations:
 
 ```bash

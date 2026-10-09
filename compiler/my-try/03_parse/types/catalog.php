@@ -108,6 +108,14 @@ final class Source_Type_Exposures
 		return $this->types[$name];
 	}
 
+	public function type_or_null(string $name): ?source_type_exposure
+	{
+		if (!isset($this->types[$name])) {
+			return null;
+		}
+		return $this->types[$name];
+	}
+
 	public function modifier(string $name): source_type_modifier_exposure
 	{
 		if (!isset($this->modifiers[$name])) {
@@ -119,6 +127,11 @@ final class Source_Type_Exposures
 	public function type_count(): int
 	{
 		return q_count($this->types);
+	}
+
+	public function type_exposures(): array /** hash<source_type_exposure> */
+	{
+		return $this->types;
 	}
 
 	public function modifier_count(): int

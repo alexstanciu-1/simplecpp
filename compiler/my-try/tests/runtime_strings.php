@@ -153,6 +153,7 @@ foreach (['strtolower();', 'strtoupper("x", "y");', 'lcfirst(vector<int>::[1]);'
 $root = dirname(__DIR__, 3) . '/runtime/metadata/modules';
 $core = Runtime_Catalog_Loader::load($root, ['core']);
 $types = Type_Definition_Registration::install(new Type_Registry());
+Runtime_Type_Registration::install($core, $types);
 $catalog = Runtime_Catalog_Registration::resolve($core, $types);
 strings_check(Runtime_Catalog_Registration::resolve_constants($core, $types)->is_empty(), 'Unselected constants were installed');
 $failed = false;

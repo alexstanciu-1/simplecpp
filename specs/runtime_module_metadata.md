@@ -3,7 +3,7 @@ Doc Status: normative
 Status: bounded v0.2 catalog format
 
 Runtime-owned catalogs live in `runtime/metadata/modules/<module>.json`, outside any
-compiler implementation. They describe callable/constant semantics independently of C++
+compiler implementation. They describe type/callable/constant semantics independently of C++
 bindings. The consumer describes concrete and inferred generic free-function contracts; it is not
 a declaration of complete runtime coverage or a replacement of v0.1 metadata yet.
 
@@ -85,6 +85,86 @@ Unknown fields, wrong JSON kinds, duplicate decoded keys, unsupported versions,
 unresolved types, invalid template applications and duplicate contracts are errors.
 There is no silently ignored future-schema field.
 
+## Ordinary runtime type declarations
+
+Optional `types` and `cpp_types` arrays declare ordinary runtime definitions and
+their separate backend bindings. Omission means no declarations/bindings. This is
+plain JSON decoded directly into typed records, not an external schema language.
+For example, the core vector definition is:
+
+```json
+{
+  "types": [{
+    "id": "core.vector",
+    "name": "vector",
+    "kind": "class",
+    "parameters": [{
+      "name": "Value",
+      "requires": ["value_storable"],
+      "capability_dependencies": ["copyable_value"]
+    }],
+    "capabilities": ["copyable_value", "value_storable", "result_payload"]
+  }],
+  "cpp_types": [{
+    "id": "core.vector",
+    "symbol": "scpp::vector_t",
+    "header": "scpp/vector_t.hpp"
+  }]
+}
+```
+
+Each type requires `id`, `name`, `kind` and `capabilities`. `parameters` may be
+omitted or empty for an ordinary nominal type; a nonempty list declares an ordinary
+type template. No redundant template flag is needed. `kind` is `class` or `struct`,
+using the existing nominal/result-kind classification. This does not confer source
+record fields, constructors, inheritance or shared-pointer allocation: the backend
+binding represents the existing runtime carrier. Copy/storage capabilities are
+separate from kind, and the provider must truthfully describe its implementation.
+
+Type IDs are unique across selected modules, independently of function IDs. Source
+names and parameter names are ASCII identifiers (`[A-Za-z_][A-Za-z0-9_]*`), with
+unique parameters per definition. Type names cannot collide with selected types,
+language types/aliases or modifiers. Qualified declarations and aliases are deferred.
+Provider identity is the declaring module (`simple_cpp.runtime.<module>`) plus the
+type's `id`, separate from source and C++ spelling.
+
+The closed capability vocabulary is `copyable_value`, `value_storable`, `hashable`,
+`comparable`, `result_payload`; arrays must be unique. Each parameter requires
+`name` and explicit `requires` (including `[]` when unconstrained). Optional
+`capability_dependencies` defaults to `[]`. Formation requirements decide whether
+an application is valid. Dependencies instead gate the owner's declared capability
+on that argument's same capability, without prohibiting formation. A dependency
+must name an owner-declared capability. `result_payload` is an unconditional Result
+transport opt-in and cannot be an argument dependency. Copy operations still check
+effective copyability. These are registry contracts, never JSON callbacks or rules.
+
+An optional parameter `default` uses the ordinary type-reference shape above. It
+must be closed (no `parameter` variables), satisfy that parameter's requirements,
+and follow any required parameters. Forward references are supported across the
+selected declarations; cycles and unresolved names reject configuration. Defaults
+may be nested applications. Definitions are installed before callable signatures,
+and ordinary registry interning completes omitted arguments. The core hash recipe
+uses `Value` requiring storage, then `Key` requiring hashability/comparison and
+defaulting to `string`; both arguments gate hash copyability.
+
+Each type has exactly one `cpp_types` binding in its declaring module, using the
+same `id`/`symbol`/`header` fields as a function binding. No orphan entries, source
+fragments, baked-in template arguments or alternative parameter order are supported.
+The backend appends canonical type arguments in declaration order. The compiler
+does not verify C++ symbols exist; generated-program compilation proves that boundary.
+
+The core vector/hash definitions and their C++ bindings now come solely from this
+metadata. Source publication enumerates registered exposures rather than a second
+name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
+families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
+Methods, factory/initialization/indexing/iteration protocols, specialized storage,
+non-type parameters and handle-lifetime contracts are not granted by these records.
+Those protocols require their own shared model before additional runtime APIs can
+be enabled. The existing compiler composition selects core for its foundational
+container types; custom modules using them declare a core dependency.
+Configuration also validates existing protocol prerequisites privately, so an input
+missing foundational container types fails before retention, not on a later reset.
+
 ## Inferred generic runtime contracts
 
 A function may add a nonempty `type_parameters` array of unique names. A type
@@ -142,8 +222,9 @@ pull reader into typed metadata. No mixed/dynamic or generic document tree is bu
 Complete document/schema validation precedes publication; failed loading/configuration
 does not replace the previous configuration.
 
-Metadata is retained in memory as immutable-by-contract startup input. Resolve
-signatures and constants into separate private inventories against the current canonical type
+Metadata is retained in memory as immutable-by-contract startup input. Install ordinary
+type recipes into the private registry first, then resolve signatures and constants
+into separate private inventories against that canonical type
 registry; only validated identities enter language scope. C++ bindings are installed
 separately by the backend under coordinator sequencing. Ordinary compilation and
 incremental updates perform no metadata IO or JSON parsing.
@@ -255,8 +336,8 @@ The byte-length decision for `strlen` does not change `substr` or explicitly nam
 Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the
 separate portable-compiler framework's UTF-8-validation contract.
 
-New runtime type declarations, fixed-array non-type parameters, compiler-module
-Storage registration, optional/default
+Runtime member/protocol declarations, fixed-array non-type parameters, compiler-module
+Storage registration, optional/default callable
 and variadic arguments, reference-return lifetime contracts, static runtime factories,
 profile availability and the rest of the runtime inventory are not encoded by this
 version's bounded consumer yet. Extend the shared models before enabling these rows;

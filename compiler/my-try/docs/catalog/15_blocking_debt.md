@@ -190,17 +190,20 @@ container combinations. Identify language-intrinsic semantic roles separately an
 justify any compiler-owned exceptions; do not confuse runtime declaration data with
 the compiler algorithms that interpret it.
 
-Current gap: function/constant catalogs are JSON-driven, but runtime type definitions
-and their capability declarations still live in PHP registration code. The recent
-registry capability correction removes consumer whitelists; it does **not** complete
-metadata-driven type registration. Extend the shared metadata schema/model deliberately,
-not by adding another list of hardcoded families.
+Foundation implemented 2026-10-09: ordinary nominal/template definitions, formation
+requirements, defaults, capability dependencies and separate C++ bindings are JSON-driven.
+Vector/hash now use that path, and scope publication enumerates registered exposures.
+Language-interpreted types remain explicit compiler-owned exceptions. This does not
+close the audit: initialization/indexing/iteration protocol declarations, runtime
+members/factories, specialized storage and handle-lifetime facts still need review.
 
 Acceptance proof: introduce an unfamiliar runtime type and nested applications through
 metadata alone, with separate C++ bindings, and exercise admission/copy checks without
 editing parser, preparation or emitter logic. Verify selected-module isolation and
 reuse of decoded metadata across registry resets. This entry records review work,
-not a claim that the audit or migration is already complete.
+not a claim that the entire audit or migration is complete. The bounded foundation's
+metadata-only receipt/parcel proof lives in `tests/runtime_types.php` and its JSON/C++
+fixtures; broader owner/protocol migration remains open.
 
 ### CH15-RUNTIME-REGEX-01 — regex contracts and binding prerequisites
 

@@ -86,6 +86,7 @@ $selected = Runtime_Catalog_Loader::load($root, ['datetime', 'core', 'datetime']
 datetime_check(count($selected->modules) === 2, 'Datetime dependency deduplication failed');
 $types = Type_Definition_Registration::install(new Type_Registry());
 $core = Runtime_Catalog_Loader::load($root, ['core']);
+Runtime_Type_Registration::install($core, $types);
 $catalog = Runtime_Catalog_Registration::resolve($core, $types);
 $failed = false;
 try { $catalog->function_definition('datetime.dt_now'); }

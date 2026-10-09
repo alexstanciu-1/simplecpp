@@ -34,6 +34,7 @@ Compiler_Lifecycle::configure_runtime($input);
 $invalid = $schema;
 $invalid['functions'][0]['parameters'][] = ['name' => 'second', 'type' => 'int', 'passing' => 'value'];
 $candidate = new runtime_catalog_input();
+$candidate->modules->add('core', $input->modules['core']);
 $candidate->modules->add('observation', Runtime_Catalog_Reader::decode(json_encode($invalid), 'invalid.json'));
 $failed = false;
 try { Compiler_Lifecycle::configure_runtime($candidate); }
@@ -43,6 +44,7 @@ observation_check($failed && Model::$runtime_metadata === $input, 'Invalid obser
 $invalid = $schema;
 $invalid['functions'][1]['parameters'][0]['passing'] = 'value';
 $candidate = new runtime_catalog_input();
+$candidate->modules->add('core', $input->modules['core']);
 $candidate->modules->add('observation', Runtime_Catalog_Reader::decode(json_encode($invalid), 'mixed-mode.json'));
 $failed = false;
 try { Compiler_Lifecycle::configure_runtime($candidate); }

@@ -14,6 +14,29 @@ final class runtime_type_spec
 	}
 }
 
+/** Ordinary provider definitions reuse registry contracts, not language-role flags. */
+final class runtime_type_parameter_spec
+{
+	public string $name = '';
+	public array $formation_contracts /** vector<generic_contract> */ = [];
+	public array $capability_dependencies /** vector<generic_contract> */ = [];
+	public ?runtime_type_spec $default_type = null;
+}
+
+final class runtime_type_definition_spec
+{
+	public string $identity = '';
+	public string $name = '';
+	public nominal_type_kind $kind;
+	public array $capabilities /** vector<generic_contract> */ = [];
+	public Storage $parameters /** Storage<runtime_type_parameter_spec> */;
+
+	public function __construct()
+	{
+		$this->parameters = new Storage();
+	}
+}
+
 final class runtime_parameter_spec
 {
 	public string $name = '';
@@ -35,7 +58,7 @@ final class runtime_function_spec
 	}
 }
 
-/** Backend metadata is separate from function semantics, joined only by identity. */
+/** Backend metadata is separate from type/function semantics, joined only by identity. */
 final class runtime_cpp_spec
 {
 	public string $identity = '';
@@ -58,11 +81,15 @@ final class runtime_module_spec
 	public array $dependencies /** vector<string> */ = [];
 	public Storage $functions /** Storage<runtime_function_spec> */;
 	public Storage $constants /** Storage<runtime_constant_spec> */;
+	public Storage $types /** Storage<runtime_type_definition_spec> */;
+	public Keyed_Storage $cpp_types /** Keyed_Storage<runtime_cpp_spec> */;
 	public Keyed_Storage $cpp /** Keyed_Storage<runtime_cpp_spec> */;
 	public function __construct()
 	{
 		$this->functions = new Storage();
 		$this->constants = new Storage();
+		$this->types = new Storage();
+		$this->cpp_types = new Keyed_Storage();
 		$this->cpp = new Keyed_Storage();
 	}
 }

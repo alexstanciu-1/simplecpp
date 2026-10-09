@@ -125,7 +125,9 @@ foreach (['regex_match();', 'regex_match("/a/", 1);', 'regex_grep("/a/", vector<
 }
 
 $types = Type_Definition_Registration::install(new Type_Registry());
-$core = Runtime_Catalog_Registration::resolve(Runtime_Catalog_Loader::load($root, ['core']), $types);
+$core_input = Runtime_Catalog_Loader::load($root, ['core']);
+Runtime_Type_Registration::install($core_input, $types);
+$core = Runtime_Catalog_Registration::resolve($core_input, $types);
 $failed = false;
 try { $core->function_definition('regex.match.2'); }
 catch (\Exception $error) { $failed = true; }

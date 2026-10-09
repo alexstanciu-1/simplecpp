@@ -54,9 +54,20 @@ final class Runtime_Catalog_Reader
 					$constants->append(self::constant_spec($reader));
 				}
 			}
-			elseif ($key === 'cpp')
+			elseif ($key === 'types')
+			{
+				$types /** Storage<runtime_type_definition_spec> */ = $result->types;
+				$reader->begin_array();
+				while ($reader->next_element()) {
+					$types->append(self::definition_spec($reader));
+				}
+			}
+			elseif (($key === 'cpp') || ($key === 'cpp_types'))
 			{
 				$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $result->cpp;
+				if ($key === 'cpp_types') {
+					$bindings = $result->cpp_types;
+				}
 				$reader->begin_array();
 				while ($reader->next_element()) {
 					$binding = self::cpp_spec($reader);
@@ -65,7 +76,9 @@ final class Runtime_Catalog_Reader
 					}
 					$bindings->add($binding->identity, $binding);
 				}
-				$cpp = true;
+				if ($key === 'cpp') {
+					$cpp = true;
+				}
 			}
 			else {
 				$reader->reject('Unknown runtime module field: ' . $key);
@@ -75,6 +88,124 @@ final class Runtime_Catalog_Reader
 			$reader->reject('Missing runtime module field');
 		}
 		$reader->finish_document();
+		return $result;
+	}
+
+	/** Closed vocabulary mirrors the registry's named contracts; no executable rules. */
+	private static function capabilities(\scpp\Json_Reader $reader): array /** vector<generic_contract> */
+	{
+		$result /** vector<generic_contract> */ = [];
+		$seen /** hash<bool> */ = [];
+		$reader->begin_array();
+		while ($reader->next_element())
+		{
+			$name = self::name($reader);
+			if (isset($seen[$name])) {
+				$reader->reject('Duplicate runtime capability: ' . $name);
+			}
+			$seen[$name] = true;
+			if ($name === 'copyable_value') {
+				$result[] = generic_contract::copyable_value;
+			}
+			elseif ($name === 'value_storable') {
+				$result[] = generic_contract::value_storable;
+			}
+			elseif ($name === 'hashable') {
+				$result[] = generic_contract::hashable;
+			}
+			elseif ($name === 'comparable') {
+				$result[] = generic_contract::comparable;
+			}
+			elseif ($name === 'result_payload') {
+				$result[] = generic_contract::result_payload;
+			}
+			else {
+				$reader->reject('Unknown runtime capability: ' . $name);
+			}
+		}
+		return $result;
+	}
+
+	/** Decode explicit formation requirements separately from conditional capabilities. */
+	private static function type_parameter_spec(\scpp\Json_Reader $reader): runtime_type_parameter_spec
+	{
+		$result = new runtime_type_parameter_spec();
+		$has_requirements = false;
+		$reader->begin_object();
+		while ($reader->next_property())
+		{
+			$key = $reader->property_name();
+			if ($key === 'name') {
+				$result->name = self::name($reader);
+			}
+			elseif ($key === 'requires') {
+				$result->formation_contracts = self::capabilities($reader);
+				$has_requirements = true;
+			}
+			elseif ($key === 'capability_dependencies') {
+				$result->capability_dependencies = self::capabilities($reader);
+			}
+			elseif ($key === 'default') {
+				$result->default_type = self::type($reader);
+			}
+			else {
+				$reader->reject('Unknown runtime type parameter field: ' . $key);
+			}
+		}
+		if (($result->name === '') || !$has_requirements) {
+			$reader->reject('Missing runtime type parameter field');
+		}
+		return $result;
+	}
+
+	/** Ordinary type declarations have no language-role or backend interpretation here. */
+	private static function definition_spec(\scpp\Json_Reader $reader): runtime_type_definition_spec
+	{
+		$result = new runtime_type_definition_spec();
+		$kind = false;
+		$capabilities = false;
+		$reader->begin_object();
+		while ($reader->next_property())
+		{
+			$key = $reader->property_name();
+			if ($key === 'id') {
+				$result->identity = self::name($reader);
+			}
+			elseif ($key === 'name') {
+				$result->name = self::name($reader);
+			}
+			elseif ($key === 'kind')
+			{
+				$spelling = self::name($reader);
+				if ($spelling === 'class') {
+					$result->kind = nominal_type_kind::class_type;
+				}
+				elseif ($spelling === 'struct') {
+					$result->kind = nominal_type_kind::structure;
+				}
+				else {
+					$reader->reject('Unsupported runtime type kind: ' . $spelling);
+				}
+				$kind = true;
+			}
+			elseif ($key === 'capabilities') {
+				$result->capabilities = self::capabilities($reader);
+				$capabilities = true;
+			}
+			elseif ($key === 'parameters') {
+				$parameters /** Storage<runtime_type_parameter_spec> */ = $result->parameters;
+				$reader->begin_array();
+				while ($reader->next_element()) {
+					$parameters->append(self::type_parameter_spec($reader));
+				}
+			}
+			else {
+				$reader->reject('Unknown runtime type definition field: ' . $key);
+			}
+		}
+		if (($result->identity === '') || ($result->name === '') || !$kind || !$capabilities) {
+			$reader->reject('Missing runtime type definition field');
+		}
 		return $result;
 	}
 

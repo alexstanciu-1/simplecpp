@@ -17,6 +17,13 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+`Model::$runtime_metadata` also owns unresolved ordinary type/parameter/default records
+and separate `cpp_types` bindings. These immutable-by-contract inputs own neither
+canonical identities nor workers. The transient startup type worker indexes recipes
+and checks default dependencies, then expires. The normal type registry, source
+exposures and provider catalog own installed definitions; backend bindings remain
+separate. Type resets rebuild from retained metadata without reading JSON again.
+
 `Model::$runtime_constants` owns settled module constants and their typed values.
 Language scope indexes these identities; prepared constant references use the existing
 constant-target protocol. Type-root reset replaces this inventory together with runtime

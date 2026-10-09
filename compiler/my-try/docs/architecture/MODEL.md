@@ -29,8 +29,11 @@ from source records, not parallel retained indexes. `Compiler_Lifecycle` owns ro
 initialization/reset; Model does not call processing code.
 
 Runtime metadata loading is startup IO, not parse/collect/preparation work. The
-coordinator validates configuration privately before retention. Semantic registration
-resolves separate complete private callable/constant inventories; backend installation consumes separate
+coordinator validates configuration privately before retention. Ordinary runtime type
+recipes install through the existing registry before resolving separate private
+callable/constant inventories. Typed recipes own no canonical identities; a transient
+startup worker resolves forward defaults and rejects cycles. Source publication reads
+registered exposures, not a duplicate name list. Backend installation consumes separate
 binding records. Registry resets rebuild identities from the same immutable-by-contract
 metadata. Live replacement is rejected; see the [catalog contract](../../../../specs/runtime_module_metadata.md).
 
@@ -849,8 +852,10 @@ capability caches. Pure registry queries reject source facts they cannot establi
 not a parameter-dependent capability, copy permission or truthiness contract.
 Result admission reads that opt-in rather than naming payload families; individual
 copy operations separately query effective copyability. New runtime providers use
-the same registration protocol and separate backend bindings. This does not enable
-JSON type declarations or grant every source record Result support automatically.
+the same registration protocol and separate backend bindings. Ordinary nominal/template
+definitions now come from typed JSON records, including vector/hash. Language-semantic
+roles remain compiler-owned. Metadata registration does not grant every source record
+Result support automatically or confer initialization/indexing/iteration protocols.
 
 Template definitions share `abstract_template_type_definition` for ordered parameters,
 arity/defaults and result kind. The ordinary `template_type_definition` remains final;

@@ -26,7 +26,9 @@ function type_catalog_rejects(\Closure $operation): void
 
 $registry = new Type_Registry();
 $catalog = Type_Definition_Registration::install($registry);
+Runtime_Type_Registration::install(Model::$runtime_metadata, $catalog);
 $bindings = CPP_Type_Binding_Registration::install($catalog);
+CPP_Runtime_Catalog::install_types(Model::$runtime_metadata, $catalog, $bindings);
 
 type_catalog_check($registry->definition_count() === 28, 'Unexpected semantic definition count');
 type_catalog_check($registry->type_count() === 19, 'Concrete built-in type count changed');
