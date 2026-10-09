@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "module": "datetime",
+  "dependencies": ["core"],
+  "functions": [
+    {"id":"datetime.dt_now","name":"dt_now","parameters":[],"returns":"int"},
+    {"id":"datetime.dt_now_ms","name":"dt_now_ms","parameters":[],"returns":"int"},
+    {"id":"datetime.dt_monotonic_ms","name":"dt_monotonic_ms","parameters":[],"returns":"int"},
+    {"id":"datetime.dt_monotonic_us","name":"dt_monotonic_us","parameters":[],"returns":"uint64"},
+    {"id":"datetime.dt_monotonic_ns","name":"dt_monotonic_ns","parameters":[],"returns":"uint64"},
+    {"id":"datetime.dt_sleep_ms","name":"dt_sleep_ms","parameters":[{"name":"millis","type":"int","passing":"value"}],"returns":"void"},
+    {"id":"datetime.dt_format_iso_utc","name":"dt_format_iso_utc","parameters":[{"name":"timestamp","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"datetime.dt_parse_iso_utc","name":"dt_parse_iso_utc","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":{"name":"result","arguments":["int"]}},
+    {"id":"datetime.dt_format","name":"dt_format","parameters":[{"name":"format","type":"string","passing":"value"},{"name":"timestamp","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"datetime.dt_format_now","name":"dt_format_now","parameters":[{"name":"format","type":"string","passing":"value"}],"returns":"string"},
+    {"id":"datetime.dt_parse","name":"dt_parse","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":{"name":"result","arguments":["int"]}}
+  ],
+  "cpp": [
+    {"id":"datetime.dt_now","symbol":"scpp::dt::now_unix_seconds","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_now_ms","symbol":"scpp::dt::now_unix_millis","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_monotonic_ms","symbol":"scpp::dt::monotonic_millis","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_monotonic_us","symbol":"scpp::dt::monotonic_micros","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_monotonic_ns","symbol":"scpp::dt::monotonic_nanos","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_sleep_ms","symbol":"scpp::dt::sleep_millis","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_format_iso_utc","symbol":"scpp::dt::format_iso_utc","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_parse_iso_utc","symbol":"scpp::dt::parse_iso_utc","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_format","symbol":"scpp::dt::format_local","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_format_now","symbol":"scpp::dt::format_local_now","header":"modules/datetime/datetime.hpp"},
+    {"id":"datetime.dt_parse","symbol":"scpp::dt::parse_common_local","header":"modules/datetime/datetime.hpp"}
+  ]
+}

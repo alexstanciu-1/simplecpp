@@ -21,6 +21,8 @@ Supported functions:
 - `now_unix_seconds(): int`
 - `now_unix_millis(): int`
 - `monotonic_millis(): int`
+- `monotonic_micros(): uint64`
+- `monotonic_nanos(): uint64`
 - `sleep_millis(int $millis): void`
 - `format_iso_utc(int $unixSeconds): string`
 - `parse_iso_utc(string $value): result<int>`
@@ -40,6 +42,8 @@ Strict PHP++ exposes direct family-prefixed names:
 - `dt_now`
 - `dt_now_ms`
 - `dt_monotonic_ms`
+- `dt_monotonic_us`
+- `dt_monotonic_ns`
 - `dt_sleep_ms`
 - `dt_format_iso_utc`
 - `dt_parse_iso_utc`
@@ -53,6 +57,13 @@ Legacy PHP exposes thin wrappers for the same names and additionally exposes:
 - `date(string $format): string`
 - `date(string $format, int $timestamp): string`
 - `strtotime(string $value): result_or_false<int>`
+
+The v0.2 module catalog registers all eleven strict names above as fixed signatures,
+preserving scalar widths, `void` sleep and `result<int>` parsing. The finer monotonic
+counters follow their individual builtin specs; resolution is not a clock-precision
+guarantee. Catalog selection does not supply link objects: consumers must include
+the datetime provider in their runtime build. Legacy aliases remain outside the
+strict catalog.
 
 ## Platform Notes
 

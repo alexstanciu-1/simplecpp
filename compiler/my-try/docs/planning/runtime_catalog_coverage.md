@@ -22,9 +22,10 @@ do not request approval for each ordinary metadata row or populate speculative r
 | --- | --- | --- |
 | core | Byte `strlen`; `count` for vector/hash/mixed/dynamic | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
+| datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | strings | 29 source helpers / 45 signatures, plus three padding constants; inventory below | Fixed/generic signatures, value sequencing, settled constants and existing PHP adapters for false-result contracts |
 
-The host and native-driver startup lists select these three modules. Other consumers
+The host and native-driver startup lists select these four modules. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
 String registration adds metadata and tests, not parsing/preparation/backend handlers.
 
@@ -66,15 +67,51 @@ wrapper shape differs from the underlying shared helper.
 
 ## Remaining work, grouped by prerequisite
 
+### Datetime module inventory — 2026-10-09
+
+The whole current strict surface in `modules/datetime/datetime.hpp` is registered
+in `runtime/metadata/modules/datetime.json`:
+
+| Names | Result | Status |
+| --- | --- | --- |
+| dt_now, dt_now_ms, dt_monotonic_ms | int | Registered, zero arguments |
+| dt_monotonic_us, dt_monotonic_ns | uint64 | Registered, zero arguments; no narrowing to canonical int |
+| dt_sleep_ms | void | Registered, int milliseconds; nonpositive values return immediately |
+| dt_format_iso_utc | string | Registered, int Unix seconds |
+| dt_parse_iso_utc | result<int> | Registered, exact UTC input string |
+| dt_format | string | Registered, format string and int Unix seconds |
+| dt_format_now | string | Registered, format string |
+| dt_parse | result<int> | Registered, bounded local/common/ISO input string |
+
+Legacy `time`, `date` and `strtotime` are not strict aliases and remain unregistered.
+Timezone databases, calendar arithmetic and DateTime classes are outside the existing
+runtime contract, not missing JSON rows. There is no existing public math module or
+strict math-symbol inventory to migrate; a numeric-library extension would require
+its own contracts rather than speculative abs/round/etc. registrations.
+
+Datetime is not header-only: link `runtime/include/modules/datetime/datetime.cpp`
+alongside the core runtime. Metadata dependency `core` orders catalog loading only.
+The focused runner builds the provider once; the existing project build owns runtime
+module linkage. My-try's bounded native cache still does not infer optional module
+objects from catalog selection. That build-owner integration remains separate work.
+
+Known review limits: direct uint64 binary comparisons remain outside current compiler
+integer operations, so the fixture checks monotonic unsigned outputs in the host
+harness without changing the return type. The existing runtime's local mktime path
+treats timestamp -1 as failure, and host time_t range/DST normalization need review;
+this registration does not redefine those edge semantics. See CH15-RUNTIME-DATETIME-01.
+
+### Other module prerequisites
+
 | Group | Examples | Next prerequisite / check |
 | --- | --- | --- |
 | Boxed formatting | number_format(mixed/dynamic) | Deferred CH15-RUNTIME-FORMAT-01: explicit numeric-kind validation before registration |
 | Contract-sensitive strings | strpos/strrpos, substr_replace, boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
 | Container-producing/consuming helpers | collection APIs | Audit by owning module; typed split/join now use existing application/generic contracts |
-| Numeric and utility helpers | scalar math, formatting, predicates | Inventory authoritative signatures, supported widths and overload ambiguity; not every helper is a free function |
+| Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
 | Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Type/ownership/member registration is not yet represented by this function/constant metadata schema |
 | Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Reuse existing callable models, but extend metadata decoding and selection under explicit contracts |
-| Optional/linking modules | filesystem/IO, datetime, process, regex, curl, tasks, DB/UI | Pair validated public contracts with runtime type dependencies, module selection and build/link integration; metadata dependencies currently order loading only |
+| Optional/linking modules | filesystem/IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime signatures now registered, automatic module linkage still separate |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
 | Profile availability | strict versus legacy PHP surfaces | Add explicit availability rules; old symbol maps are not permission to expose legacy-only contracts |
 
@@ -119,3 +156,10 @@ types/arities. No PCH or native compiler rebuild. Metadata/schema/model changes 
 unnecessary; the runtime repair is the overflow-safe negative-limit magnitude.
 The final PHP check in `/tmp/runtime-strings-module-20261009-final` also proves the
 held search/replacement and builder names remain unavailable (1.18s).
+
+Datetime evidence: `runtime_datetime.py --results /tmp/runtime-datetime-module-20261009-3`
+passed three PHP suites, six generated-program builds/runs and the existing native
+datetime runtime regression. The separately linked provider compiled in 1.98s;
+PHP suites took 0.36–0.80s each and generated/runtime tasks 3.50–8.50s each under
+the shared pool. Local-format fixtures use explicit `TZ=UTC0`. No PCH, compiler
+native rebuild, runtime behavior change, or new preparation/emission path.

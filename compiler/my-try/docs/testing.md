@@ -724,6 +724,21 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For the complete strict datetime module catalog:
+
+```bash
+python3 compiler/my-try/tests/runtime_datetime.py --results /tmp/FRESH_DATETIME_RESULTS
+```
+
+Three PHP suites check registry selection/reset, strict-only names and argument
+rejection alongside catalog/generic regressions. Six generated programs cover all
+11 bindings: UTC epoch/leap-day output, local formats under explicit `TZ=UTC0`,
+parse-error Results, clocks/sleep, ordered argument snapshots and source shadowing.
+Unsigned monotonic outputs are checked in Python because source uint64 binary
+comparisons remain unsupported. The runner builds and links the datetime provider
+once, also runs the existing native runtime datetime regression, and uses no PCH.
+This is not a native compiler rebuild or automatic module-linker integration.
+
 For runtime-module string bindings:
 
 ```bash

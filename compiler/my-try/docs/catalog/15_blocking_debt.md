@@ -151,6 +151,21 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-DATETIME-01 — datetime edge/platform review
+
+The strict module catalog preserves all 11 existing datetime signatures, including
+uint64 monotonic micro/nanosecond counters. Generalize fixed-width integer operations
+in their shared compiler owner before claiming direct arithmetic/comparison support
+for these return values; catalog registration must not narrow them to int.
+
+Review the local parser's unconditional mktime `-1` failure check (that Unix second
+can represent a valid pre-epoch time), host time_t narrowing/formatting range, and DST
+normalization. These are inherited runtime edge limitations, not approved changes to
+the datetime contracts. Add focused timezone/platform proofs with the eventual repair.
+The module pass proves ordinary UTC/local forms and errors; it is not full calendar
+or timezone support. Automatic optional-runtime linkage in my-try's native cache also
+remains with the build owner, not the semantic catalog.
+
 ### CH15-RUNTIME-STRINGS-01 — unresolved string contracts and runtime types
 
 The 2026-10-09 [module inventory](../planning/runtime_catalog_coverage.md#strings-module-inventory--2026-10-09)

@@ -153,8 +153,8 @@ callable, constant and backend-binding identities. Old targets cannot reuse new 
 because their string IDs match. Catalog edits take effect in a new compiler session;
 live catalog replacement/hot reload is outside this slice.
 
-The current my-try host selects `core`, `json` and `strings`, preserving the previously
-enabled JSON API and implicitly available basic strings. Native validation snapshots
+The current my-try host selects `core`, `json`, `strings` and `datetime`, preserving the
+JSON/string APIs and enabling the established strict datetime surface. Native validation snapshots
 these same files and supplies their location
 explicitly; installed/distributed compiler packaging must likewise supply resources.
 Runtime-link/build-module policy remains with existing build owners. Catalog dependencies
@@ -168,6 +168,11 @@ order metadata loading; they do not yet configure linker inputs automatically.
   at runtime; statically unsupported carriers reject during preparation.
 - `json`: existing dynamic/mixed decode contracts and both encode overloads, preserving
   Result wrapping and family separation.
+- `datetime`: all eleven strict `dt_*` helpers from the datetime builtin contracts.
+  Monotonic microsecond/nanosecond results remain `uint64`; parsing returns `result<int>`;
+  sleep returns `void`. Legacy `time`, `date` and `strtotime` aliases are not enabled.
+  The build consumer must link the datetime provider object as well as core runtime;
+  successful semantic registration does not imply automatic native-module linkage.
 - `strings`: `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`,
   `str_starts_with`, `str_ends_with`, both arities of `trim`/`ltrim`/`rtrim`, `bin2hex`
   and three-string `str_replace`, plus `str_pad` (2/3/4 arguments) and `number_format`
