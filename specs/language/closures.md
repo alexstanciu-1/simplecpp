@@ -69,7 +69,11 @@ Closures with defaulted, variadic or reference parameters cannot cross this eras
 boundary in the current slice: preparation rejects the conversion rather than losing
 their declaration contract. Concrete closure calls retain those parameter properties.
 
-Empty callable storage, callable returns, erased reference signatures, reference captures and
+Borrowing closures also cannot cross this boundary, including when a borrowing
+closure is captured by value inside another closure. Erasure must not hide lifetime
+obligations.
+
+Empty callable storage, callable returns, erased reference signatures and
 contextual signature inference remain deferred in this slice. Properties and
 wrapper/container storage of callable values are also deferred. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
@@ -189,9 +193,44 @@ parameters, locals and explicit captures); it cannot bypass a missing outer capt
 Existing local initialization, lexical scope and shadowing rules apply unchanged.
 
 The syntax order is `function (parameters) use (captures): ReturnType { body }`.
-Reference captures, `$this` and mutable captured bindings
-remain deferred. Parameter/return rules are shared with other source callables;
+`$this` and mutable by-value capture bindings remain deferred.
+Parameter/return rules are shared with other source callables;
 capture admission does not enable deferred callable signatures or callable returns.
+
+### v0.2 bounded reference captures
+
+`use (&$x)` borrows existing whole local or parameter storage. Value and reference
+captures may coexist. An eligible alias borrows its original whole-storage target,
+not the alias name's lifetime:
+
+```php
+$count = 1;
+$increment = function () use (&$count): void { $count++; };
+$copy = $increment;
+$count = 4;
+$copy(); // count is 5
+```
+
+There is no heap promotion or lifetime extension. Reassigning the original variable
+is visible through the capture. Borrowing a unique/noncopyable value does not copy it;
+copying the closure copies the borrow, not its target. Existing explicit moves and
+reset semantics operate on the original storage. Readonly sources remain readonly.
+`clean` may reset supported values through the borrow; whole-variable `unset` on a
+reference capture rejects, as on an ordinary native alias, rather than detaching it.
+
+Every local destination must fit within all borrowed origins' lifetimes, respecting
+block boundaries and establishment order. These obligations propagate through closures
+captured by value. A closure invocation may use its captured borrows in invocation-local
+storage; that guarantee does not authorize copying them into external longer-lived
+storage. Conversion to `function<R(Args...)>` rejects direct or transitive borrowing
+environments, even for synchronous-looking calls: that contract cannot yet guarantee
+nonescape.
+
+Field/interior references and borrowing another closure's captured fields are deferred,
+including attempts through aliases. Captured storage cannot supply a reference return
+under the current whole-reference-parameter contract. Callable returns and property/
+container storage remain deferred. This is a bounded lexical lifetime check, not
+general escape analysis, exclusive borrowing or PHP-style lifetime extension.
 
 ## Arrow functions
 
@@ -219,7 +258,9 @@ provides the name. Explicit closures still require their own `use` list: neither
 their body locals nor undeclared body references become enclosing-arrow captures.
 An explicit nested closure's authored capture list does contribute creation-site
 requirements to its enclosing arrow. Unavailable names and noncopyable captures
-are preparation errors. Reference capture and automatic `$this` remain deferred.
+are preparation errors. Arrows remain by-value capture syntax; `fn&` marks a reference
+return, not reference capture. Capturing a borrowing closure preserves its existing
+lifetime obligations. Automatic `$this` remains deferred.
 
 ---
 

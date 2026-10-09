@@ -803,12 +803,15 @@ final class Preparation_Worker
 			Preparation_Cleanup::tree($owner->executable_body());
 			Body_Preparation::bind_parameters($signature->require_facts(), $context);
 			$captures /** Storage<prepared_capture> */ = $anonymous->captures;
+			$guarantees /** Storage<storage_lifetime> */ = $context->borrowed_lifetimes;
 			foreach ($captures as $capture) {
 				$name = weakref_get($capture->declaration)->name;
 				if (q_count($context->locals->local_named($name)) !== 0) {
 					throw new \RuntimeException('Capture collides with a parameter: ' . $name);
 				}
-				Capability_Preparation::require_copy($capture->type, $context);
+				if ($capture->borrow !== null) { $guarantees->append($capture->borrow->lifetime); }
+				else { Capability_Preparation::require_copy($capture->type, $context); }
+				foreach (Capture_Preparation::borrowed_lifetimes($capture->type, $context) as $origin) { $guarantees->append($origin); }
 				$context->locals->add($name, $capture);
 			}
 			Body_Preparation::prepare_callable_statements($owner->executable_body(), $signature->require_facts(), $context, 0, '<closure>');
@@ -971,6 +974,8 @@ final class Preparation_Worker
 			}
 		}
 		$context->locals = new local_environment(null);
+		$context->invocation_lifetime = $context->locals->region;
+		$context->borrowed_lifetimes = new Storage();
 		$context->integer = Language_Types::integer($this->language);
 		$context->boolean = Language_Types::boolean($this->language);
 		$context->floating = Language_Types::floating($this->language);

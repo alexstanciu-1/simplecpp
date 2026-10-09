@@ -33,13 +33,14 @@ final class CPP_Syntax
 			$body_work = object_cast($closure->require_body()->work(), anonymous_body_work::class);
 			$captures /** Storage<prepared_capture> */ = $body_work->captures;
 			foreach ($captures as $capture) {
-				$capture_parts[] = CPP_Generator::local_name(object_cast(weakref_get($capture->declaration), collected_name::class));
+				$capture_parts[] = ($capture->borrow === null ? '' : '&')
+					. CPP_Generator::local_name(object_cast(weakref_get($capture->declaration), collected_name::class));
 			}
 			$this->context->return_type = $facts->signature->return_type;
 			$body = '';
 			try { $body = CPP_Generator::generate_statements($closure->require_body(), $this->context); }
 			finally { $this->context->return_type = $previous_return; }
-			// Semantic capture bindings are read-only; mutable permits shared-payload APIs and nested callable invocation.
+			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
 			return '[' . implode(', ', $capture_parts) . '](' . implode(', ', $parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
 		}

@@ -9,8 +9,11 @@ final class Reference_Preparation
 	public static function contents_access(prepared_place $place, canonical_type_use $receiver): storage_access
 	{
 		if ($place->root_storage() instanceof prepared_capture) {
-			if ((Type_Queries::record_storage($receiver) === record_storage_kind::shared)
-				|| Boxed_Conversions::is_dynamic($receiver)) { return storage_access::writable; }
+			$capture = object_cast($place->root_storage(), prepared_capture::class);
+			if ($capture->borrow === null) {
+				if ((Type_Queries::record_storage($receiver) === record_storage_kind::shared)
+					|| Boxed_Conversions::is_dynamic($receiver)) { return storage_access::writable; }
+			}
 		}
 		return $place->access();
 	}

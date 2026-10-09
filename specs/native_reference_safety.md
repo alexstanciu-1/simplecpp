@@ -137,6 +137,15 @@ read-only flag is part of the callable contract; changing it invalidates depende
 callers and the affected body. C++ signatures, borrowed argument temporaries and
 local native aliases preserve `const T&` without taking an owning snapshot.
 
+## v0.2 bounded closure borrows — 2026-10-09
+
+Concrete closures additionally admit bounded whole-local/parameter reference captures
+under the [closure lifetime contract](language/closures.md#v02-bounded-reference-captures).
+They preserve storage origin and readonly access without extending target lifetime.
+Local copies preserve borrows; erased callable boundaries reject direct and transitive
+borrowing environments. Other closure capture fields and interior storage cannot be
+borrowed in this slice.
+
 ## v0.2 whole-storage reset and aliases — 2026-10-06
 
 `unset($variable)` and `clean($variable)` are storage resets, never symbol deletion,

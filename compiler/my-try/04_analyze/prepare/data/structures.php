@@ -146,7 +146,7 @@ final class prepared_place
 		if ($this->projected_access !== null) { return $this->projected_access; }
 		if ($this->base_place !== null) { return $this->base_place->access(); }
 		$root = $this->root_storage();
-		if ($root instanceof prepared_capture) { return storage_access::read_only; }
+		if ($root instanceof prepared_capture) { return object_cast($root, prepared_capture::class)->access; }
 		if ($root instanceof prepared_parameter) {
 			return object_cast($root, prepared_parameter::class)->contract->access;
 		}
@@ -435,9 +435,11 @@ abstract class prepared_storage {
 	abstract public function storage_type(): canonical_type_use;
 }
 
-/** An owned capture field, distinct from the outer storage it copies at creation. */
+/** A capture binding is distinct from its source, whether copied or borrowed. */
 final class prepared_capture extends prepared_storage {
 	public canonical_type_use $type;
+	public ?storage_borrow $borrow = null;
+	public storage_access $access = storage_access::read_only;
 	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
@@ -719,6 +721,9 @@ final class preparation_context
 	public collected_file $collection;
 	/** Invocation-local lookup of attached binding/parameter facts; does not mutate source scopes. */
 	public local_environment $locals;
+	/** Each callable invocation is independent of its lexical creation environment. */
+	public storage_lifetime_region $invocation_lifetime;
+	public Storage $borrowed_lifetimes /** Storage<storage_lifetime> */;
 	/** Nearest legal targets; restored when leaving a structured construct. */
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;
@@ -791,6 +796,8 @@ final class prepared_condition
 final class local_environment
 {
 	public ?local_environment $parent = null;
+	public storage_lifetime_region $region;
+	private \SplObjectStorage $lifetimes /** hash<storage_lifetime, shared<prepared_storage>> */;
 	public Key_Storage_List $bindings /** Key_Storage_List<prepared_storage> */;
 	/** A typed declaration reserves its name while preparing its initializer. */
 	public ?string $initializing_name = null;
@@ -798,6 +805,14 @@ final class local_environment
 	public function __construct(?local_environment $parent)
 	{
 		$this->parent = $parent;
+		$parent_region /** nullable<storage_lifetime_region> */ = null;
+		$entered_at = 0;
+		if ($parent !== null) {
+			$parent_region = $parent->region;
+			$entered_at = $parent_region->next_order++;
+		}
+		$this->region = new storage_lifetime_region($parent_region, $entered_at);
+		$this->lifetimes = new \SplObjectStorage /** hash<storage_lifetime, shared<prepared_storage>> */();
 		$this->bindings = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
 	}
 
@@ -826,8 +841,17 @@ final class local_environment
 
 	public function add(string $name, prepared_storage $storage): void
 	{
+		// Membership establishes storage order; signatures themselves retain no invocation facts.
+		$this->lifetimes[$storage] = new storage_lifetime($this->region, $this->region->next_order++);
 		$bindings /** Key_Storage_List<prepared_storage> */ = $this->bindings;
 		$bindings->add($name, $storage);
+	}
+
+	public function lifetime_of(prepared_storage $storage): storage_lifetime
+	{
+		if (isset($this->lifetimes[$storage])) { return $this->lifetimes[$storage]; }
+		if ($this->parent !== null) { return $this->parent->lifetime_of($storage); }
+		throw new \LogicException('Storage has no lifetime in the current invocation');
 	}
 }
 

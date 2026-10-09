@@ -32,6 +32,7 @@ enum node_kind
 	case import_binding;
 	case function_declaration;
 	case closure_expression;
+	case closure_capture;
 	case parameter_declaration;
 	case block;
 	case conditional;

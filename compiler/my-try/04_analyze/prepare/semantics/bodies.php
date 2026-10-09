@@ -229,6 +229,14 @@ final class Body_Preparation
 		if ($binding->resolved_kind === binding_kind::declaration) {
 			$locals->add($entry->name, $binding);
 		}
+		if ($value !== null) {
+			if (Type_Queries::canonical($value->type)->definition() instanceof closure_type_definition) {
+				$destination = $binding->resolved_kind === binding_kind::declaration
+					? $locals->lifetime_of($binding)
+					: Storage_Lifetimes::place(Reference_Preparation::storage_place($previous[0]), $context);
+				Storage_Lifetimes::require_destination(Capture_Preparation::borrowed_lifetimes($value->type, $context), $destination, $context);
+			}
+		}
 		return $binding;
 	}
 

@@ -1404,17 +1404,21 @@ final class Parser_Run
 			if ($arrow) { throw new \RuntimeException($this->error_message('Arrow functions do not accept use lists')); }
 			$this->position++;
 			$this->expect('(');
-			$captures /** Storage<variable_reference_node> */ = $closure->captures;
+			$captures /** Storage<closure_capture_node> */ = $closure->captures;
 			while ($this->text() !== ')') {
+				$capture_start = $this->position;
+				$capture = new closure_capture_node();
 				if ($this->text() === '&') {
-					throw new \RuntimeException($this->error_message('Reference captures are deferred'));
+					$capture->mode = passing_mode::reference;
+					$this->position++;
 				}
 				if (!string_byte_starts_with($this->text(), '$')) {
 					throw new \RuntimeException($this->error_message('Expected capture variable'));
 				}
-				$capture_start = $this->position++;
-				$capture = $this->variable_reference($capture_start);
-				$capture->collect($this->collector, $this->current_scope, $capture_start);
+				$variable_start = $this->position++;
+				$capture->variable = $this->variable_reference($variable_start);
+				$capture->variable->collect($this->collector, $this->current_scope, $variable_start);
+				$this->finish_node($capture, $capture_start);
 				$captures->append($capture);
 				if ($this->text() !== ',') { break; }
 				$this->position++;

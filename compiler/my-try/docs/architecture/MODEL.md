@@ -216,15 +216,34 @@ The existing call target interface lets value invocation reuse ordinary argument
 admission. Dependency-aware conversion preparation checks a concrete closure's
 signature before publishing `callable_wrap`; only the backend chooses `std::function`.
 
-Closure syntax owns an ordered capture-reference list between parameters and return
-syntax. Creation-site preparation resolves it using the enclosing local environment.
+Closure syntax owns ordered `closure_capture_node` entries between parameters and
+return syntax. Each owns value/reference passing mode and a variable-reference child;
+ordinary references do not acquire capture-only flags. Creation-site preparation
+resolves them using the enclosing local environment.
 Anonymous body work owns independent `prepared_capture` storage facts, observing the
-original collected names but not aliasing their storage. Captures are not parameters
+original collected names. Optional `storage_borrow` pairs a borrowed place with its
+required lifetime; absence denotes an owned value capture. Captures are not parameters
 and do not affect the public signature. Body preparation installs them alongside
 parameters; fresh creation-site inputs rebuild the body, while independent contract
 invalidation reuses established inputs. Retirement clears the captured environment.
-Capture bindings are read-only; prepared projection access distinguishes a shared
+Value capture bindings are read-only; prepared projection access distinguishes a shared
 pointee from its owning binding without changing ordinary const-parameter contracts.
+Reference captures preserve source access. Copyability and safe copy destination are
+separate checks; borrowing a noncopyable payload does not copy that payload.
+
+`local_environment` membership establishes `storage_lifetime` points in a neutral
+`storage_lifetime_region`, including parameters without mutating their shared signature
+facts. Entering a child environment records parent establishment order. Blocks, loop
+headers/bodies and switch groups use their existing environment boundaries; repeated
+runtime entries instantiate those lexical regions afresh. These regions are neither
+lookup scopes nor a runtime lifetime tracker, and never compare token generations.
+`Storage_Lifetimes` owns ancestry/order and destination checks. Aliases resolve to
+original places. Capture environments retain the needed lifetime points; membership
+indexes and worker environments remain transient. Every callable body gets an independent
+invocation root. Anonymous body contexts derive explicit lifetime guarantees from their
+captures (including transitive value-captured closures); these justify invocation-local
+copies only, never writes into external longer-lived storage. There is no artificial
+parent edge from an invocation to its creation scope or registry-owned lifetime cache.
 
 Arrow spelling is `closure_syntax_kind::arrow` on that same node. Its expression is
 normalized to an ordinary return inside the common body. Automatic capture discovery

@@ -1131,6 +1131,19 @@ enum callable_children_stage
 	case finished;
 }
 
+/** A capture owns exactly one ordinary variable-reference child. */
+final class closure_capture_children_iterator extends children_iterator
+{
+	private bool $visited = false;
+	public function __construct(private closure_capture_node $source) {}
+	protected function read_next(): ?ast_node
+	{
+		if ($this->visited) { return null; }
+		$this->visited = true;
+		return $this->source->variable;
+	}
+}
+
 /** Independent source owner plus explicit grammar stage and collection progress. */
 final class callable_children_iterator extends children_iterator
 {
@@ -1139,7 +1152,7 @@ final class callable_children_iterator extends children_iterator
 	private ?storage_children_iterator $sequence_cursor = null;
 
 	public function __construct(callable_syntax_owner_i $source,
-		private ?Storage $captures /** nullable<Storage<variable_reference_node>> */ = null)
+		private ?Storage $captures /** nullable<Storage<closure_capture_node>> */ = null)
 	{
 		$this->source = $source;
 	}
@@ -1168,7 +1181,7 @@ final class callable_children_iterator extends children_iterator
 				case callable_children_stage::captures:
 					if ($this->captures !== null) {
 						if ($this->sequence_cursor === null) {
-							$captures /** Storage<variable_reference_node> */ = $this->captures;
+							$captures /** Storage<closure_capture_node> */ = $this->captures;
 							$this->sequence_cursor = new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($captures));
 						}
 						else { $this->sequence_cursor->next(); }

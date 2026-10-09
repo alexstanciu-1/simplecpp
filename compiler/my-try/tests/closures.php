@@ -185,7 +185,7 @@ try {
 	$capture_body = $capture_identity->syntax()->require_body()->work();
 	$capture_version = $capture_body->version;
 	$capture_field = $capture_body->captures[0];
-	$source_place = $capture_identity->syntax()->captures[0]->require_preparation()->place;
+	$source_place = $capture_identity->syntax()->captures[0]->variable->require_preparation()->place;
 	if ($source_place->storage() === $capture_field || (new prepared_place($capture_field))->access() !== storage_access::read_only) {
 		throw new \LogicException('Capture aliases source storage or lost read-only access');
 	}
@@ -205,7 +205,7 @@ try {
 	if (CPP_Probe::text(Model::$cpp_files) !== $capture_output) { throw new \LogicException('Capture signature edit disagrees with fresh output'); }
 	file_put_contents($output . '/capture_signature_edit.cpp', $capture_output);
 	$executions[] = ['path' => $output . '/capture_signature_edit.cpp', 'exit_code' => 6];
-	foreach (['$n = 1; $f = function () use (&$n): int { return $n; };', '$f = function () use ($this): void { return; };',
+	foreach (['$f = function () use ($this): void { return; };',
 		'$n = 1; $f = fn() use ($n): int => $n;', '$f = fn() => 1;', '$f = fn($n): int => $n;'] as $deferred) {
 		file_put_contents($path, $deferred); $rejected = false;
 		try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }

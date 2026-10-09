@@ -28,6 +28,11 @@ final class Cleanup_Preparation
 			$locals = $context->locals;
 			$bindings /** vector<prepared_storage> */ = $locals->named($variable->occurrence()->name);
 			$storage = $bindings[0];
+			if ($storage instanceof prepared_capture) {
+				if (object_cast($storage, prepared_capture::class)->borrow !== null) {
+					throw new \RuntimeException('S2S unset cannot detach a native reference capture');
+				}
+			}
 			if ($storage instanceof prepared_binding) {
 				$binding = object_cast($storage, prepared_binding::class);
 				if ($binding->alias_target !== null) {

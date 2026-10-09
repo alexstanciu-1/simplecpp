@@ -44,8 +44,8 @@ invocation and native C++ lambda emission without type erasure;
 explicit `function<R(Args...)>` locals and by-value parameters additionally support
 exact signature conversion to `std::function`. Callable locals must be initialized.
 Explicit by-value `use ($name)` captures now preserve ordinary copy/sharing semantics
-and have read-only bindings. Shared object/dynamic contents remain mutable. Reference,
-`$this` and mutable-binding captures remain deferred. Arrows now reuse the same closure
+and have read-only bindings. Shared object/dynamic contents remain mutable.
+`$this` and mutable by-value bindings remain deferred. Arrows now reuse the same closure
 node and capture fields with scope-aware automatic value-capture discovery. Explicit
 parameter/return signatures remain required. Concrete closures and arrows now share
 function/method defaults, typed variadics and writable/read-only reference inputs.
@@ -57,10 +57,14 @@ storage cannot escape; erased reference signatures remain deferred. The imported
 are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
-Reference-capture behavior is now agreed, but implementation is paused on the
+Bounded reference captures now execute using the approved
 [lexical lifetime-region prerequisite](../planning/closure_foundation.md#reference-capture-prerequisite-discovered--2026-10-09).
-Collected name scopes do not represent ordinary block storage lifetimes. Reference
-captures remain rejected until that shared semantic owner and its lifecycle are agreed.
+Collected name scopes do not represent ordinary block storage lifetimes; neutral
+semantic regions now own that proof. Whole locals/parameters and eligible aliases
+can be borrowed, with readonly access and transitive local-copy checks. Erasure of
+borrowing closures, captured-field borrowing and `$this` remain rejected. Proof:
+25 reference-capture programs and 70 existing closure programs, plus focused lifetime,
+incremental and recovery checks; no native compiler rebuild.
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
@@ -76,7 +80,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLOSURE-CALLABLE-001](#closure-callable-001) | pending-discussion | `$f function<int()> = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-CALLABLE-002](#closure-callable-002) | implemented-bounded | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | passed | passed | deferred | Explicit signatures and captures; inferred storage remains concrete, unlike imported v0.1 erasure |
 | [ARROW-001](#arrow-001) | implemented-bounded | `$a = 10; $f = fn(int $x): int => $x + $a;` | passed | passed | deferred | Same closure node/body/capture pipeline; nested scope, snapshot, boundary and incremental proofs |
-| [CLOSURE-USE-002](#closure-use-002) | pending-discussion | `$f function<int()> = function () use (&$a): int { return $a; };` | unverified | unverified | deferred | — |
+| [CLOSURE-USE-002](#closure-use-002) | implemented-bounded | `$f = function () use (&$a): int { return $a; };` | passed | passed | deferred | Concrete locals; lexical lifetime and transitive-copy checks; erased borrowing closures rejected |
 | [CLOSURE-RETURN-001](#closure-return-001) | implemented-bounded | `$f = function () use ($a): vector<int> { return [$a, 2]; };` | passed | passed | deferred | Reuses ordinary function return/literal preparation; generated execution |
 | [CLOSURE-REJECT-001](#closure-reject-001) | pending-discussion | `$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-REJECT-002](#closure-reject-002) | pending-discussion | `$items[] = function (): int { return 1; };` | unverified | unverified | deferred | — |
@@ -153,7 +157,10 @@ auto f = [a]() { return a; };
 
 ## CLOSURE-USE-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Concrete local closures lower to native `&` captures
+after shared whole-storage/access/lifetime checks. Copies preserve borrowing obligations.
+The imported erased `function<...>` example below remains rejected in v0.2: erasure
+cannot hide borrows until a nonescape contract exists.
 
 ### Imported version 1
 

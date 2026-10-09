@@ -136,7 +136,14 @@ across syntax/collection, analysis lifecycle and backend consumers.
    without named lookup. This fixes missing graph edges and preserves lexical callable
    boundaries without adding a retained graph or capture escape analysis.
 
-Non-goals: reference/this captures, mutable capture bindings, captured-storage reference
+9. **Lexical lifetimes and bounded reference captures — implemented.** Shared local
+   environments establish neutral region identities and storage order. Aliases retain
+   their target origin; capture facts retain weak places and neutral lifetime snapshots.
+   Anonymous invocations have independent roots and explicit captured-borrow guarantees,
+   not artificial parentage under the creation environment. Shared destination checks
+   preserve transitive obligations; erased callable boundaries reject borrowing values.
+
+Non-goals: this/captured-field captures, mutable by-value capture bindings, captured-storage reference
 returns, erased reference signatures, named-call syntax, callable-return support,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
@@ -151,7 +158,7 @@ obligations through value-captured closures, and rejection at erased callable
 boundaries. Arrows stay by-value; captured fields, `$this`, callable returns and
 captured-storage reference returns are not enabled by this agreement.
 
-**Implementation paused for model approval.** Collected `scope` records describe
+**Historical blocker, now resolved by the approved prerequisite.** Collected `scope` records describe
 callable/name lookup boundaries, not every executable block's storage lifetime.
 `Body_Preparation::prepare_block` creates a transient `local_environment`; the parser
 does not create a matching collected scope for an ordinary `block_node`. Consequently,
@@ -175,15 +182,17 @@ lifetime proof. Incremental testing also showed that reparsed signatures and reu
 bodies can carry token indexes from different generations; physical token order
 across those boundaries is not lifetime order.
 
-**Proposed prerequisite, awaiting approval:** give shared semantic storage preparation
+**Approved and implemented prerequisite:** give shared semantic storage preparation
 an explicit lexical lifetime-region identity, independent of collected name scopes.
-Local storage records identify their region and establishment order; aliases preserve
+Transient local membership identifies region and establishment order; aliases preserve
 their target origin. Structured-body/loop/switch preparation supplies the appropriate
 region, and parameters use their callable invocation lifetime. Captures retain only
 neutral lifetime/origin facts, never transient environments or workers. Copy admission
 and erased-boundary checks consume the same borrowing obligations. Rebuild/retirement
-must refresh those facts and prevent stale origin observers. The exact region ownership
-and nested-callable context link must be settled before coding this prerequisite.
+refresh those facts and prevent stale origin observers. Regions retain only upward
+parent links, never storage, syntax, environments or workers. Parameter signature facts
+remain invocation-independent. Captured-borrow guarantees permit invocation-local
+copies but cannot authorize writes into external longer-lived destinations.
 
 This touches shared local/storage preparation, structured environments, anonymous
 work lifecycle and copy boundaries, rather than just capture parsing/lowering.
@@ -193,13 +202,24 @@ switch arms, parameter origins, aliases, transitive captures, no-op reuse, signa
 edits, failure recovery and retirement. No general escape analysis, heap promotion,
 exclusive borrowing, escaping callbacks or new callable storage forms are proposed.
 
-The incomplete implementation was removed; reference captures remain rejected on
-the committed compiler. The first experimental execution run passed 85 generated
+The original incomplete implementation was removed before the prerequisite was approved.
+The first experimental execution run passed 85 generated
 programs (`/tmp/my-try-ch12-reference-captures-01`) and 12 focused suites passed
 (`/tmp/my-try-ch12-reference-capture-checks-01`), but those results do not prove the
 missing lifetime model and are not claims of shipped support. Expanded runs `...-02`
 and `...-03` exposed the incremental-order issue and the block-lifetime counterexample.
 No native compiler rebuild was performed.
+
+Approved implementation evidence (2026-10-09): 25 generated C++ programs passed with
+PCH in `/tmp/my-try-ch12-region-captures-02`; all 70 existing closure programs passed
+in `/tmp/my-try-ch12-region-closure-regression-01`. Fourteen focused suites passed in
+`/tmp/my-try-ch12-region-checks-01`; six final suites passed in
+`/tmp/my-try-ch12-region-final-checks`, including the exact same-name-scope/different-
+storage-region counterexample, signature recovery, mode edits and retirement.
+The earlier foundation run used two nonexistent suite names; the corrected run uses
+`control_flow`. Capture run `...-01` rejected an order-dependent test expression;
+the fixture was rewritten to use an explicit temporary, preserving the language rule.
+These are PHP compiler and generated-program proofs, not a native compiler rebuild.
 
 The signature checkpoint must preserve AST child order, signature/parameter identity
 through incremental parsing, existing functions/methods/constructors, bodyless

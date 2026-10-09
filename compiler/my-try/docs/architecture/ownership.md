@@ -260,6 +260,16 @@ Nested closures have independently scheduled workers
 which own their facts. Shared callable inspection retains the syntax owner only for the
 cursor lifetime and follows the existing ordered children.
 
+Capture entries own a variable-reference child and passing mode. A prepared reference
+capture owns a `storage_borrow`: its place weakly observes original prepared storage,
+and its lifetime point retains only a neutral region/order. Region parents point upward;
+no region owns syntax, storage, local environments, workers or child regions. Local
+environment storage-to-lifetime indexes are transient. Parameter signature facts acquire
+no invocation lifetime fields. Rebuilt contexts create fresh regions; newly supplied
+capture inputs replace old origins, and retirement clears capture environments. Anonymous
+invocation guarantees are transient and derived from settled captures, not owning
+back-links to the creating environment or a second retained escape graph.
+
 Expression invocations share collected call occurrences with named calls but do not
 enter named lookup. Reference-cycle analysis builds an invocation-local graph over
 named and anonymous targets and their body scopes. Vertices temporarily retain target,

@@ -113,7 +113,7 @@ trait Callable_Syntax
 
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain_callable_children(node_maintenance_worker_i $worker,
-		?Storage $captures /** nullable<Storage<variable_reference_node>> */ = null): void
+		?Storage $captures /** nullable<Storage<closure_capture_node>> */ = null): void
 	{
 		$worker->enter($this);
 		$items /** Storage<parameter_node> */ = $this->signature_syntax->parameters;
@@ -165,6 +165,21 @@ abstract class callable_declaration_node extends declaration_node implements cal
 	}
 }
 
+/** Capture-only syntax owns its passing mode and ordinary variable-reference child. */
+final class closure_capture_node extends ast_node
+{
+	use Node_Source_Span;
+	public passing_mode $mode = passing_mode::value;
+	public variable_reference_node $variable;
+	public function kind(): node_kind { return node_kind::closure_capture; }
+	public function children(): child_iterator_i { return new closure_capture_children_iterator($this); }
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$worker->edge($this, $this->variable);
+	}
+}
+
 /** Anonymous expression syntax; semantic identity and executable preparation follow separately. */
 final class closure_node extends expression_node implements callable_syntax_owner_i
 {
@@ -172,7 +187,7 @@ final class closure_node extends expression_node implements callable_syntax_owne
 	use Callable_Syntax;
 	use Preparation_Facts;
 	private ?prepared_expression $prepared_facts = null;
-	public Storage $captures /** Storage<variable_reference_node> */;
+	public Storage $captures /** Storage<closure_capture_node> */;
 	public closure_syntax_kind $syntax_kind = closure_syntax_kind::explicit_closure;
 	public function require_preparation(): prepared_expression { return $this->prepared_facts; }
 	private ?anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */ = null;

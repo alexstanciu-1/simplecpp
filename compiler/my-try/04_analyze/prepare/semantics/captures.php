@@ -8,14 +8,17 @@ final class Capture_Preparation
 	public static function prepare(closure_node $syntax, preparation_context $context): Storage /** Storage<prepared_capture> */
 	{
 		$names /** vector<string> */ = [];
+		$modes /** hash<passing_mode> */ = [];
 		if ($syntax->syntax_kind === closure_syntax_kind::arrow) {
 			$names = self::discover($syntax, $syntax->anonymous_identity()->collection());
 		}
 		else {
-			$references /** Storage<variable_reference_node> */ = $syntax->captures;
+			$references /** Storage<closure_capture_node> */ = $syntax->captures;
 			foreach ($references as $reference) {
-				Expression_Preparation::prepare($reference, $context);
-				$names[] = $reference->name;
+				Expression_Preparation::prepare($reference->variable, $context);
+				$name = $reference->variable->name;
+				$names[] = $name;
+				$modes[$name] = $reference->mode;
 			}
 		}
 		$captures /** Storage<prepared_capture> */ = new Storage();
@@ -27,13 +30,40 @@ final class Capture_Preparation
 			$bindings /** vector<prepared_storage> */ = $context->locals->named($name);
 			if (q_count($bindings) !== 1) { throw new \RuntimeException('Capture requires an established local: ' . $name); }
 			$binding = $bindings[0];
-			Capability_Preparation::require_copy($binding->storage_type(), $context);
 			$capture = new prepared_capture();
 			$capture->declaration = $binding->declaration;
 			$capture->type = $binding->storage_type();
+			$mode = $modes[$name] ?? passing_mode::value;
+			if ($mode === passing_mode::reference) {
+				$place = Reference_Preparation::storage_place($binding);
+				$storage = $place->storage();
+				if (($place->base() !== null) || !$place->borrowable()
+					|| (!($storage instanceof prepared_binding) && !($storage instanceof prepared_parameter))) {
+					throw new \RuntimeException('Reference capture requires whole local or parameter storage; captured fields and interiors are deferred');
+				}
+				$capture->borrow = new storage_borrow($place, Storage_Lifetimes::place($place, $context));
+				$capture->access = $place->access();
+			}
+			else { Capability_Preparation::require_copy($capture->type, $context); }
 			$captures->append($capture);
 		}
 		return $captures;
+	}
+
+	/** Capture environments, not registry flags, own transitive borrowing obligations. */
+	public static function borrowed_lifetimes(canonical_type_use $type, preparation_context $context): Storage /** Storage<storage_lifetime> */
+	{
+		$result /** Storage<storage_lifetime> */ = new Storage();
+		if (!(Type_Queries::canonical($type)->definition() instanceof closure_type_definition)) { return $result; }
+		$identity = Model::$type_catalog->closures()->identity($type);
+		$context->worker->prepare_anonymous($identity, $context->owner);
+		$body = object_cast($identity->syntax()->require_body()->work(), anonymous_body_work::class);
+		$captures /** Storage<prepared_capture> */ = $body->captures;
+		foreach ($captures as $capture) {
+			if ($capture->borrow !== null) { $result->append($capture->borrow->lifetime); }
+			foreach (self::borrowed_lifetimes($capture->type, $context) as $origin) { $result->append($origin); }
+		}
+		return $result;
 	}
 
 	/** Existing occurrence/scope indexes supply free names, not a second AST traversal. */
