@@ -12,7 +12,7 @@ from cpp_fixture import CppFixtureCompiler
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', type=Path, required=True)
-parser.add_argument('--suite', choices=['callable_results', 'callable_reference_returns', 'callable_inputs', 'void_returns', 'callable_storage', 'empty_callables', 'contextual_closures', 'reference_captures', 'closures', 'records', 'property_defaults', 'data_records', 'derived_data', 'constructors', 'methods', 'static_members', 'static_redeclarations', 'late_static', 'method_parameters', 'method_returns', 'qualified_static_calls', 'qualified_static_members', 'destructors', 'nullable_handles', 'nullable_records', 'collection_probes', 'property_mutations', 'inheritance', 'abstract_dispatch', 'callable_variance', 'interfaces', 'shared_upcasts', 'shared_joins', 'object_types', 'interface_handles', 'traits'], default='records')
+parser.add_argument('--suite', choices=['echo', 'callable_results', 'callable_reference_returns', 'callable_inputs', 'void_returns', 'callable_storage', 'empty_callables', 'contextual_closures', 'reference_captures', 'closures', 'records', 'property_defaults', 'data_records', 'derived_data', 'constructors', 'methods', 'static_members', 'static_redeclarations', 'late_static', 'method_parameters', 'method_returns', 'qualified_static_calls', 'qualified_static_members', 'destructors', 'nullable_handles', 'nullable_records', 'collection_probes', 'property_mutations', 'inheritance', 'abstract_dispatch', 'callable_variance', 'interfaces', 'shared_upcasts', 'shared_joins', 'object_types', 'interface_handles', 'traits'], default='records')
 parser.add_argument('--no-pch', action='store_true', help='Verify emitted header dependencies without a PCH')
 args = parser.parse_args()
 output = args.results.resolve()
@@ -28,7 +28,9 @@ with CommandRunner(output / 'logs', APP.parents[1], jobs=12) as runner:
         source = Path(item['path'])
         executable = source.with_suffix('.program')
         compiler.compile(source.stem + '-compile', source, executable)
-        runner.run(source.stem + '-execute', [executable], expected=item['exit_code'])
+        stdout = runner.run(source.stem + '-execute', [executable], expected=item['exit_code'])
+        if 'stdout' in item and stdout != item['stdout'].encode():
+            raise RuntimeError(f'{source.stem}: unexpected stdout {stdout!r}')
     run_tasks([Task(Path(item['path']).stem, lambda item=item: execute(item))
                for item in fixtures], jobs=12)
 (output / 'summary.json').write_text(json.dumps(dict(

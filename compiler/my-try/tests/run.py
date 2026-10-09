@@ -17,7 +17,7 @@ def verify_php(root, output, runner, jobs):
     """Run PHP suites independently, each with private temporary files and logs."""
     def suite(source):
         command = ['php', str(source)]
-        if source.stem in ('calls', 'llvm', 's2s', 'control_flow', 'closures', 'reference_captures', 'contextual_closures', 'empty_callables', 'callable_storage', 'void_returns', 'callable_inputs', 'callable_results', 'callable_reference_returns'):
+        if source.stem in ('echo', 'calls', 'llvm', 's2s', 'control_flow', 'closures', 'reference_captures', 'contextual_closures', 'empty_callables', 'callable_storage', 'void_returns', 'callable_inputs', 'callable_results', 'callable_reference_returns'):
             directory = output / source.stem
             directory.mkdir()
             command.append(str(directory))
@@ -55,9 +55,11 @@ def verify_programs(root, output, runner, jobs, pch=True):
             runner.run(name + '-compile', command)
         else:
             compiler.compile(name + '-compile', source, executable)
-        runner.run(name + '-execute', [executable], expected=fixture['exit_code'])
+        stdout = runner.run(name + '-execute', [executable], expected=fixture['exit_code'])
+        if 'stdout' in fixture and stdout != fixture['stdout'].encode():
+            raise RuntimeError(f'{name}: unexpected stdout {stdout!r}')
 
-    for suite in ('llvm', 's2s', 'control_flow'):
+    for suite in ('llvm', 's2s', 'control_flow', 'echo'):
         fixtures = json.loads((output / suite / 'executions.json').read_text())
         counts[suite + '_executions'] = len(fixtures)
         tasks.extend(Task(suite + '-' + Path(fixture['path']).stem,

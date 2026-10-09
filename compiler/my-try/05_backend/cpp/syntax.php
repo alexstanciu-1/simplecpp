@@ -217,6 +217,16 @@ final class CPP_Syntax
 		if ($node instanceof expression_statement_node) {
 			return $this->generate_expression_statement(object_cast($node, expression_statement_node::class));
 		}
+		if ($node instanceof echo_node) {
+			$output = object_cast($node, echo_node::class);
+			$this->context->headers['lang/php/support/php_string.hpp'] = true;
+			$result = '';
+			$operands /** Storage<expression_node> */ = $output->operands;
+			foreach ($operands as $operand) {
+				$result .= "\t::scpp::php::echo_one(" . $this->expression($operand) . ");\n";
+			}
+			return $result;
+		}
 		if ($node instanceof return_node) {
 			return $this->generate_return(object_cast($node, return_node::class));
 		}

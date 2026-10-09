@@ -617,6 +617,19 @@ final class Parser_Run
 		if ($this->text() === 'return') {
 			return $this->return_statement();
 		}
+		if ($this->text() === 'echo') {
+			$start = $this->position++;
+			$output = new echo_node();
+			$operands /** Storage<expression_node> */ = $output->operands;
+			do {
+				$operands->append($this->expression());
+				if ($this->text() !== ',') { break; }
+				$this->position++;
+			} while (true);
+			$this->expect(';');
+			$this->finish_node($output, $start);
+			return $output;
+		}
 		if (string_byte_starts_with($this->text(), '$'))
 		{
 			$next = $this->text_at_offset(1);

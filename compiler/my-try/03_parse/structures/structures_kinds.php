@@ -88,6 +88,7 @@ enum node_kind
 	case assignment_expression;
 	case call_expression;
 	case expression_statement;
+	case echo_statement;
 	case return_statement;
 	case variable_declaration;
 }

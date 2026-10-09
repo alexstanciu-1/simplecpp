@@ -21,6 +21,14 @@ comments reject at the opener before publishing a token list. This does not add
 semantic interpretation of documentation annotations. `tests/tokenizer.php` covers
 spans, spellings, comment-only inputs and incremental failure/repair/fresh agreement.
 
+## Output statements
+
+`echo_node` is a statement owning `Storage<expression_node>` operands in source order.
+Its inspection/maintenance follows those operands. Body preparation validates each
+operand's output contract; C++ emits one runtime output call per operand. Output
+does not acquire a value type or a string-extraction conversion. See the
+[output contract](../../../../specs/output_v0_2.md).
+
 ## Property declarations
 
 Property declarations normalize type-first and name-first spelling into the same

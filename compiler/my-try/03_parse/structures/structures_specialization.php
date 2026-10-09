@@ -1110,6 +1110,33 @@ final class expression_statement_node extends statement_node
 	}
 }
 
+/** Ordered output operands; each is evaluated and written before the next starts. */
+final class echo_node extends statement_node
+{
+	use Node_Source_Span;
+
+	public Storage $operands /** Storage<expression_node> */;
+
+	public function __construct()
+	{
+		$this->operands = new Storage /** Storage<expression_node> */();
+	}
+
+	public function kind(): node_kind { return node_kind::echo_statement; }
+
+	public function children(): child_iterator_i
+	{
+		return new storage_children_iterator(new Storage_Cursor /** Storage_Cursor<ast_node> */($this->operands));
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void
+	{
+		$worker->enter($this);
+		$operands /** Storage<expression_node> */ = $this->operands;
+		foreach ($operands as $operand) { $worker->edge($this, $operand); }
+	}
+}
+
 final class return_node extends statement_node
 {
 	use Node_Source_Span;

@@ -8,6 +8,15 @@ final class Body_Preparation
 	/** Analysis owns statement dispatch, fact attachment and completion composition. */
 	public static function prepare_statement(statement_node $node, preparation_context $context): statement_completion
 	{
+		if ($node instanceof echo_node) {
+			$output = object_cast($node, echo_node::class);
+			$operands /** Storage<expression_node> */ = $output->operands;
+			foreach ($operands as $operand) {
+				$value = Expression_Preparation::prepare($operand, $context);
+				self::require_output_type($value->type);
+			}
+			return new statement_completion(true);
+		}
 		if ($node instanceof cleanup_node) {
 			$removal = object_cast($node, cleanup_node::class);
 			$removal->set_preparation(Cleanup_Preparation::prepare($removal, $context));
@@ -54,6 +63,21 @@ final class Body_Preparation
 			return new statement_completion(true);
 		}
 		throw new \RuntimeException('Preparation is not supported for this node');
+	}
+
+	/** Runtime output formats values directly; this is not a required string extraction. */
+	private static function require_output_type(canonical_type_use $type): void
+	{
+		if (Conversion_Preparation::is_scalar($type) || Nullable_Conversions::is_null($type)
+			|| Boxed_Conversions::is_boxed($type)) { return; }
+		$payload = Nullable_Conversions::payload($type);
+		if ($payload !== null) { self::require_output_type($payload); return; }
+		$role = Result_Conversions::role($type);
+		if ($role !== null) {
+			self::require_output_type(Result_Conversions::require_payload($type, $role));
+			return;
+		}
+		throw new \RuntimeException('Echo requires a scalar, null, mixed, dynamic or supported wrapper payload');
 	}
 
 	/** Prepare all syntax, including unreachable statements; compose only reachable normal exits. */

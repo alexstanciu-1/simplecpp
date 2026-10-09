@@ -11,6 +11,19 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Progress
 
+### Early output slice — 2026-10-09
+
+`echo` now has one ordered-operand statement node. Shared body preparation admits
+the [bounded runtime output domain](../../../../specs/output_v0_2.md); C++ emits
+sequential `php::echo_one` calls with its explicit header dependency. No implicit
+newline or eager multi-argument call is introduced. Unsupported operands reject
+before generation. This closes the test-enablement output gap, not all CH14 cards.
+`tests/echo.php` checks output bytes, side-effect ordering, methods/closures,
+wrapper states, rejection and incremental repair/fresh agreement. Run it with
+`python3 compiler/my-try/tests/records.py --suite echo --no-pch --results FRESH`.
+The shared generated-program runners check optional expected stdout as well as exit
+status. Native compiler rebuilding remains a separate requested checkpoint.
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
