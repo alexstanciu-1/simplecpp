@@ -32,6 +32,12 @@ Doc Status: normative
 - Implicitly available by project policy.
 
 ## Compile plan summary
+
+v0.2 registers this contract in [runtime strings metadata](../../../runtime/metadata/modules/strings.json),
+using `modules/strings/strings.hpp`. Ordinary shared argument conversions still
+apply; boxed conversion failures remain runtime checks. Older binding notes below
+describe the v0.1 implementation.
+
 - Implemented in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_strict.json`.
 

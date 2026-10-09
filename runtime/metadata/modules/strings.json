@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "module": "strings",
+  "dependencies": ["core"],
+  "functions": [
+    {"id": "strings.lower", "name": "strtolower", "parameters": [{"name": "value", "type": "string", "passing": "value"}], "returns": "string"},
+    {"id": "strings.upper", "name": "strtoupper", "parameters": [{"name": "value", "type": "string", "passing": "value"}], "returns": "string"},
+    {"id": "strings.lcfirst", "name": "lcfirst", "parameters": [{"name": "value", "type": "string", "passing": "value"}], "returns": "string"},
+    {"id": "strings.ucfirst", "name": "ucfirst", "parameters": [{"name": "value", "type": "string", "passing": "value"}], "returns": "string"},
+    {"id": "strings.contains", "name": "str_contains", "parameters": [{"name": "haystack", "type": "string", "passing": "value"}, {"name": "needle", "type": "string", "passing": "value"}], "returns": "bool"},
+    {"id": "strings.starts_with", "name": "str_starts_with", "parameters": [{"name": "haystack", "type": "string", "passing": "value"}, {"name": "needle", "type": "string", "passing": "value"}], "returns": "bool"},
+    {"id": "strings.ends_with", "name": "str_ends_with", "parameters": [{"name": "haystack", "type": "string", "passing": "value"}, {"name": "needle", "type": "string", "passing": "value"}], "returns": "bool"}
+  ],
+  "cpp": [
+    {"id": "strings.lower", "symbol": "scpp::str::lower", "header": "modules/strings/strings.hpp"},
+    {"id": "strings.upper", "symbol": "scpp::str::upper", "header": "modules/strings/strings.hpp"},
+    {"id": "strings.lcfirst", "symbol": "scpp::str::lcfirst", "header": "modules/strings/strings.hpp"},
+    {"id": "strings.ucfirst", "symbol": "scpp::str::ucfirst", "header": "modules/strings/strings.hpp"},
+    {"id": "strings.contains", "symbol": "scpp::str::contains", "header": "modules/strings/strings.hpp"},
+    {"id": "strings.starts_with", "symbol": "scpp::str::starts_with", "header": "modules/strings/strings.hpp"},
+    {"id": "strings.ends_with", "symbol": "scpp::str::ends_with", "header": "modules/strings/strings.hpp"}
+  ]
+}

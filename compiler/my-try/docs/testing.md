@@ -724,6 +724,17 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For runtime-module string bindings:
+
+```bash
+python3 compiler/my-try/tests/runtime_strings.py --results /tmp/FRESH_RUNTIME_STRING_RESULTS
+```
+
+Three PHP suites cover registration/rejection and catalog/generic regressions. Seven
+generated programs check exact bytes, empty/non-ASCII inputs, all three predicates,
+purity, shadowing, checked boxed conversion failure and ordered value snapshots. Uses the shared pool without PCH to
+check header completeness; does not rebuild the compiler natively.
+
 For runtime observation boundaries:
 
 ```bash

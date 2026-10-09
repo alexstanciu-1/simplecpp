@@ -135,8 +135,9 @@ callable and backend-binding identities. Old targets cannot reuse new bindings m
 because their string IDs match. Catalog edits take effect in a new compiler session;
 live catalog replacement/hot reload is outside this slice.
 
-The current my-try host selects `core` and `json`, preserving the previously enabled
-JSON API. Native validation snapshots these same files and supplies their location
+The current my-try host selects `core`, `json` and `strings`, preserving the previously
+enabled JSON API and implicitly available basic strings. Native validation snapshots
+these same files and supplies their location
 explicitly; installed/distributed compiler packaging must likewise supply resources.
 Runtime-link/build-module policy remains with existing build owners. Catalog dependencies
 order metadata loading; they do not yet configure linker inputs automatically.
@@ -149,6 +150,12 @@ order metadata loading; they do not yet configure linker inputs automatically.
   at runtime; statically unsupported carriers reject during preparation.
 - `json`: existing dynamic/mixed decode contracts and both encode overloads, preserving
   Result wrapping and family separation.
+- `strings`: `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`,
+  `str_starts_with`, `str_ends_with`, bound to the existing `scpp::str` implementations.
+  Case changes are ASCII/byte-oriented, not Unicode case folding. Predicates are
+  byte-oriented and accept an empty needle. These fixed contracts use ordinary
+  value arguments: ordered argument snapshots remain alive through the runtime call;
+  this does not enable multi-argument observation.
 
 New runtime type declarations, fixed-array non-type parameters, compiler-module
 Storage registration, optional/default
