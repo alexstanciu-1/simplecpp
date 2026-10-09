@@ -26,10 +26,13 @@ final class Result_Conversions
 	{
 		$application = object_cast(Type_Queries::canonical($type), applied_template_type::class);
 		$payload = $role->payload_type($application);
+		$definition = Type_Queries::canonical($payload)->definition();
+		$container = ($definition === Model::$type_catalog->definition('vector'))
+			|| ($definition === Model::$type_catalog->definition('hash'));
 		if ($type->by_value() || $payload->by_value()
 			|| (!Conversion_Preparation::is_scalar($payload) && !Boxed_Conversions::is_boxed($payload)
-				&& !(Type_Queries::canonical($payload)->definition() instanceof callable_type_definition))) {
-			throw new \RuntimeException('S2S Result operations require an unmodified scalar, mixed, dynamic or explicit callable payload');
+				&& !($definition instanceof callable_type_definition) && !$container)) {
+			throw new \RuntimeException('S2S Result operations require an unmodified scalar, mixed, dynamic, explicit callable or typed container payload');
 		}
 		return $payload;
 	}

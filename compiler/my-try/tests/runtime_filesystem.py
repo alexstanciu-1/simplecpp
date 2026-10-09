@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Filesystem catalog, private-directory generated proofs and snapshot regression."""
 import argparse
+import json
 import os
 from pathlib import Path
 import sys
@@ -16,14 +17,15 @@ parser.add_argument('--results', type=Path, required=True)
 args = parser.parse_args()
 output = args.results.resolve()
 output.mkdir(parents=True, exist_ok=False)
-expected = {'roundtrip': b'p||', 'paths': os.fsencode(output / 'data-paths/scan/A') + b'|a/b|c|',
-            'failures': b'', 'snapshot': b'payload||', 'shadow': b''}
+expected = {'roundtrip': b'p||', 'paths': b'A|a|b|0|' + os.fsencode(output / 'data-paths/scan/A') + b'|a/b|c|',
+            'failures': b'preserved', 'snapshot': b'payload||', 'shadow': b''}
 for name in expected:
     (output / ('data-' + name)).mkdir()
-for name in ('catalog', 'generics'):
+for name in ('catalog', 'generics', 'result-containers', 'callable-results'):
     (output / name).mkdir()
 paths = output / 'data-paths'
 (paths / 'scan').mkdir()
+(paths / 'empty').mkdir()
 for name in ('b', 'a', 'A'):
     (paths / 'scan' / name).write_bytes(b'x')
 (paths / 'link').symlink_to(paths / 'scan', target_is_directory=True)
@@ -39,6 +41,9 @@ with CommandRunner(output / 'logs', ROOT) as runner:
         Task('filesystem', lambda: runner.run('filesystem', ['php', APP / 'tests/runtime_filesystem.php', output])),
         Task('catalog', lambda: runner.run('catalog', ['php', APP / 'tests/runtime_catalog.php', output / 'catalog'])),
         Task('generics', lambda: runner.run('generics', ['php', APP / 'tests/runtime_generics.php', output / 'generics'])),
+        Task('results', lambda: runner.run('results', ['php', APP / 'tests/results.php'])),
+        Task('result-containers', lambda: runner.run('result-containers', ['php', APP / 'tests/result_containers.php', output / 'result-containers'])),
+        Task('callable-results', lambda: runner.run('callable-results', ['php', APP / 'tests/callable_results.php', output / 'callable-results'])),
     ])
     compiler = CppFixtureCompiler(runner, ROOT, output, pch=False, runtime=True)
     # core/runtime.cpp already bundles filesystem.cpp and snapshot.cpp.
@@ -46,8 +51,9 @@ with CommandRunner(output / 'logs', ROOT) as runner:
 
     def execute(name, wanted):
         executable = output / name
-        compiler.compile(name + '-compile', output / (name + '.cpp'), executable)
-        actual = runner.run(name + '-execute', [executable])
+        label = name.replace('/', '-')
+        compiler.compile(label + '-compile', output / (name + '.cpp'), executable)
+        actual = runner.run(label + '-execute', [executable])
         if actual != wanted:
             raise AssertionError(f'{name}: {actual!r} != {wanted!r}')
 
@@ -56,5 +62,7 @@ with CommandRunner(output / 'logs', ROOT) as runner:
         compiler.compile('runtime-snapshot-compile', ROOT / 'tests/runtime/native/test_snapshot.cpp', executable)
         runner.run('runtime-snapshot-execute', [executable])
 
+    expected.update({'result-containers/' + name: value.encode()
+                     for name, value in json.loads((output / 'result-containers/executions.json').read_text()).items()})
     run_tasks([Task(name, lambda name=name, wanted=wanted: execute(name, wanted))
                for name, wanted in expected.items()] + [Task('snapshot-regression', snapshot_regression)])

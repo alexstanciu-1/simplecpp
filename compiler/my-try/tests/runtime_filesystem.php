@@ -55,6 +55,12 @@ return 0;
 PHS,
 	'paths' => <<<'PHS'
 $problem error; $text string = "";
+$names vector<string> = [];
+if (take($names, $problem) = fs_scan($root . "/scan")) {} else { return 1; }
+foreach ($names as $name) { echo $name, "|"; }
+if (take($names, $problem) = fs_scan($root . "/empty")) {} else { return 7; }
+if ($problem) { return 8; }
+echo count($names), "|";
 if (take($text, $problem) = fs_realpath($root . "/scan/../scan/A")) {} else { return 2; }
 echo $text, "|";
 echo fs_dirname("a/b/c"), "|", fs_basename("a/b/c"), "|", fs_dirname("bare");
@@ -65,6 +71,10 @@ return 0;
 PHS,
 	'failures' => <<<'PHS'
 $missing = $root . "/missing"; $problem error; $text string = ""; $bytes int = 0;
+$names vector<string> = ["preserved"];
+if (take($names, $problem) = fs_scan($missing)) { return 11; }
+if (!$problem) { return 12; }
+echo $names[0];
 if (take($text, $problem) = fs_get($missing)) { return 1; }
 if (!$problem) { return 2; }
 if (take($bytes, $problem) = fs_put($missing . "/child", "x")) { return 3; }
@@ -97,7 +107,7 @@ foreach ($cases as $name => $source) {
 	file_put_contents($argv[1] . '/' . $name . '.cpp', CPP_Probe::text(Model::$cpp_files));
 }
 
-foreach (['fs_get(1);', 'fs_put("x");', 'fs_scan("x");', 'fs_read_snapshot("x", 1);',
+foreach (['fs_get(1);', 'fs_put("x");', 'fs_scan("x", 1);', 'fs_read_snapshot("x", 1);',
 	'fs_copy("x", 1);', 'fs_rmdir();', 'file_get_contents("x");', 'scandir("x");',
 	'scpp_output_root("x");', 'fs_lock_release(1);'] as $source) {
 	$failed = false;

@@ -3,6 +3,7 @@
   "module": "filesystem",
   "dependencies": ["core"],
   "functions": [
+    {"id":"filesystem.fs_scan","name":"fs_scan","parameters":[{"name":"path","type":"string","passing":"value"}],"returns":{"name":"result","arguments":[{"name":"vector","arguments":["string"]}]}},
     {"id":"filesystem.fs_is_file","name":"fs_is_file","parameters":[{"name":"path","type":"string","passing":"value"}],"returns":"bool"},
     {"id":"filesystem.fs_is_dir","name":"fs_is_dir","parameters":[{"name":"path","type":"string","passing":"value"}],"returns":"bool"},
     {"id":"filesystem.fs_is_link","name":"fs_is_link","parameters":[{"name":"path","type":"string","passing":"value"}],"returns":"bool"},
@@ -23,6 +24,7 @@
     {"id":"filesystem.fs_read_snapshot","name":"fs_read_snapshot","parameters":[{"name":"path","type":"string","passing":"value"},{"name":"expected_mtime","type":"int","passing":"value"},{"name":"expected_size","type":"int","passing":"value"}],"returns":{"name":"result","arguments":["string"]}}
   ],
   "cpp": [
+    {"id":"filesystem.fs_scan","symbol":"scpp::fs::scan","header":"modules/filesystem/filesystem.hpp"},
     {"id":"filesystem.fs_is_file","symbol":"scpp::fs::is_file","header":"modules/filesystem/filesystem.hpp"},
     {"id":"filesystem.fs_is_dir","symbol":"scpp::fs::is_dir","header":"modules/filesystem/filesystem.hpp"},
     {"id":"filesystem.fs_is_link","symbol":"scpp::fs::is_link","header":"modules/filesystem/filesystem.hpp"},

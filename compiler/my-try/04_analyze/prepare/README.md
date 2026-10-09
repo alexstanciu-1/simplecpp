@@ -399,7 +399,7 @@ normalization differs from mixed/mixed kind comparison. Nullable null comparison
 keep their separate presence-check path. Runtime table/weak-carrier comparison
 limits and the approved empty-carrier repair are recorded in chapter 05.
 
-`Result_Conversions` in `conversions/results.php` selects exact scalar or boxed payload wrapping,
+`Result_Conversions` in `conversions/results.php` selects exact scalar, boxed, callable or typed vector/hash payload wrapping,
 same-type copies and explicit legacy false/true state construction. The three Result
 families retain distinct identities. Boolean payloads are not sentinels; canonical
 singleton constant types distinguish `false_sentinel`/`true_sentinel`, while `nullopt`
@@ -407,8 +407,9 @@ uses the null identity. Source locals require an initializer in this slice. Exac
 payload required-value extraction at assignment/argument/return boundaries records
 `result_extract`; the backend copies the guarded payload. Non-value states throw,
 failed stores preserve targets and reference arguments never implicitly extract.
-Result conditions and probes admit scalar/mixed/dynamic and explicit callable payloads through the existing
-semantic role. `result_condition` facts use the shared runtime truthiness helper for
+Result probes admit these payloads through the existing semantic role. Conditions
+additionally require the payload's truthiness contract, rejecting vector/hash payloads.
+`result_condition` facts use the shared runtime truthiness helper for
 all condition consumers, while probes keep their independent runtime authorities.
 Logical operators and explicit casts
 remain deferred; structured error construction
@@ -418,8 +419,10 @@ depends on chapter 13's reusable runtime construction/member-call paths. The run
 `Take_Preparation` owns wrapper-directed output binding: source snapshot copy capability,
 exact payload/alternative types, existing locals/parameters and output distinctness.
 Result payload admission is shared through `Result_Conversions::require_payload`:
-supported scalars, mixed/dynamic or explicit callable payloads, without nested wrappers or implicit two-step
+supported scalars, mixed/dynamic, explicit callable or typed container payloads, without nested wrappers or implicit two-step
 conversion. Outer Result ownership precedes boxed conversion/conditional routing;
+`Capability_Preparation` recursively checks Result payloads and typed-container
+elements/keys for copies; source declarations remain observed preparation dependencies.
 Callable Result observations and joins reuse the shared Result paths: wrapper-state
 isset differs from delegated callable truthiness; coalescing requires the exact payload
 fallback and preserves absent value payloads. No concrete closure erasure is chained

@@ -113,12 +113,11 @@ try
 		['$a result<int> = 1; $b ?int = 2; $c = true ? $a : $b;', 'conditional Result branches require'],
 		['$a result<int> = 1; $b = true ? null : $a;', 'conditional Result branches require'],
 		['$a result_or_bool<int> = 1; $b = true ? $a : true_sentinel;', 'conditional Result branches require'],
-		['function f(result<vector<int>> $r): bool { return isset($r); }', 'unmodified scalar, mixed, dynamic or explicit callable payload'],
-		['function f(result<vector<int>> $r): bool { if ($r) { return true; } return false; }', 'unmodified scalar, mixed, dynamic or explicit callable payload'],
+		['function f(result<vector<int>> $r): bool { if ($r) { return true; } return false; }', 'condition truthiness requires'],
 		['$x = false_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x = true_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x result<int>;', 'Result construction requires an explicit initializer'],
-		['$x result<result<int>>;', 'Result operations require an unmodified scalar, mixed, dynamic or explicit callable payload'],
+		['$x result<result<int>>;', 'Result operations require an unmodified scalar'],
 		['function ref(result<int> &$v): void {} ref(1);', 'reference'],
 	];
 	foreach ($rejections as [$source, $diagnostic])

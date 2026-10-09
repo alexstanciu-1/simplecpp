@@ -23,7 +23,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 | core | Byte `strlen`; `count` for vector/hash/mixed/dynamic | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
-| filesystem | 18 strict fs_* helpers; inventory below | Existing scalar/Result calls; providers bundled in snippet runtime |
+| filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
 | strings | 29 source helpers / 45 signatures, plus three padding constants; inventory below | Fixed/generic signatures, value sequencing, settled constants and existing PHP adapters for false-result contracts |
 
 The host and native-driver startup lists select these five modules. Other consumers
@@ -111,7 +111,7 @@ false-wrapper names are not aliases of the strict Result APIs.
 | fs_is_file, fs_is_dir, fs_is_link, fs_exists | bool | Registered; is_link observes the link itself |
 | fs_get, fs_realpath | result<string> | Registered; empty file is a successful empty string |
 | fs_put, fs_size, fs_mtime | result<int> | Registered; put truncates/overwrites and returns bytes |
-| fs_scan | result<vector<string>> | Held for shared container-payload Result operations; contract remains sorted names without dot entries |
+| fs_scan | result<vector<string>> | Registered through shared Result operations; sorted names without dot entries |
 | fs_mkdir, fs_touch, fs_rmdir, fs_remove, fs_copy, fs_rename | bool | Registered; one directory, no recursive removal; copy overwrites |
 | fs_dirname, fs_basename | string | Registered; existing filesystem lexical semantics, no extra PHP normalization |
 | fs_read_snapshot | result<string> | Registered; checked Linux read, unsupported platforms return error |
@@ -119,7 +119,7 @@ false-wrapper names are not aliases of the strict Result APIs.
 | scpp_output_* | Intentionally excluded | Internal portability/output-owner protocol, not public source APIs |
 | io_* stream/resource helpers | Separate owner/prerequisite | Registered resource handle and lifetime contracts required |
 
-No schema, parser, preparation or emitter changes. Host/native startup select the
+No schema, parser or emitter changes. Host/native startup select the
 module; the focused runner links the snippet `core/runtime.cpp`, which already
 bundles `filesystem.cpp` and `snapshot.cpp`. Do not also link standalone copies.
 Automatic linkage for other optional modules remains build-owner work, not metadata loading.
@@ -128,9 +128,11 @@ previous ability to delete regular files without introducing a check/remove race
 Linux proofs cover file/symlink preservation; Windows `_wrmdir` is not tested here.
 Snapshot guarantees remain those in the authoritative fs_read_snapshot spec, not
 an atomic snapshot promise against same-size/same-mtime in-place edits.
-The attempted generated fs_scan proof exposed `Result_Conversions`' payload-family
-restriction. Do not flatten this result into a vector or add a filesystem special
-case: generalize shared Result payload operations/copy rules first, then register it.
+The initial generated fs_scan proof exposed `Result_Conversions`' payload-family
+restriction. The follow-up resolves it through shared exact vector/hash payload
+admission and recursive copy-capability preparation. It preserves failure/empty
+distinctions and rejects container Result conditions/Elvis, whose payloads have no
+truthiness contract. No flattening of the Result or filesystem-specific preparation.
 
 ## Remaining work, grouped by prerequisite
 
@@ -203,3 +205,12 @@ failure versus empty/zero success, and regular-file/directory-link preservation 
 rmdir. Earlier iterations corrected fixture bool/string assertions, PHS path quoting
 and duplicate provider linkage; the attempted fs_scan fixture exposed the recorded
 shared Result prerequisite. No PCH or native compiler rebuild; Windows remains untested.
+
+Container-Result follow-up: `/tmp/result-containers-20261009-final` passes six PHP
+suites, 15 generated-program builds/runs and the Linux snapshot regression. It
+enables fs_scan (including sorted/empty/failure outputs) and proves the reusable
+vector/hash Result matrix across all three wrapper families. PHP suites took
+0.51–2.06s; generated tasks took 2.70–12.71s under the shared pool. Copy-capability
+edit/reject/repair agrees with a clean build. Supplementary container-call,
+nullable-record and ownership PHP regressions pass in
+`/tmp/result-container-copy-review-20261009`. No native compiler rebuild or PCH.

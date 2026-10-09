@@ -61,7 +61,7 @@ The experimental v0.2 compiler admits the assignment spelling and normalizes bot
 spellings to one AST node. Outputs currently reference existing local variables or
 parameters of the exact selected branch types; the two outputs must name distinct
 declarations (aliasing between reference parameters is not analyzed). Payloads are
-supported for scalars, exact `mixed`/`dynamic` and explicit callable Result payloads (nullable payloads
+supported for scalars, exact `mixed`/`dynamic`, explicit callables and typed vector/hash Result payloads (nullable payloads
 remain scalar-only). Wrapped null/false are successful payloads, not wrapper failure.
 Likewise, an absent callable is a successful payload: `take` returns true, replaces
 the callable output with absence and clears the structured error output. Presence
@@ -84,3 +84,31 @@ getters, failure conversion `error -> result<T>`, broader error operators and
 `result<error>` disambiguation remain separately scoped. Runtime condition truthiness
 is the shared authority; this contract does not introduce an implicit or explicit
 boolean cast from error.
+
+## Typed-container Result boundaries — v0.2
+
+All three Result families admit exact `vector<T>` and `hash<T,K>` payloads for
+construction, same-wrapper copying, checked required extraction and existing-output
+`take`. The payload must first have its own concrete type; this does not introduce
+implicit literal-to-container-to-Result conversion. Element/key types remain exact.
+Copy operations require recursively copyable contents, including nested containers
+and completed inline-record declarations. Containers holding unique/noncopyable
+values do not become copyable merely because a Result wraps them.
+
+The copies retain normal container semantics; extracting or taking a container does
+not alias the wrapper's container storage. Contained shared/dynamic values retain
+their own sharing semantics. An empty container is a successful value: `take`
+succeeds, structured-error output clears, and `isset` observes the wrapper state.
+Failure preserves the existing value output. Required extraction of a non-value
+state throws under the existing Result contract.
+
+Full ternary joins preserve an exact wrapper identity against the same wrapper or
+exact payload. Result-left `??` accepts an exact container fallback and evaluates it
+only on a non-value state; successful empty containers do not select the fallback.
+The existing prohibition of `result_or_bool` in `??` remains.
+
+Value admission is distinct from truthiness: typed vector/hash payloads have no
+condition contract, so a Result containing one also rejects in conditions and Elvis
+during preparation. `empty` still does not unwrap any Result automatically. Extract
+first and then inspect the container. No new reference extraction, implicit family
+conversion, nullable-container support or direct-container selection rule is added.

@@ -49,7 +49,9 @@ final class Condition_Truthiness
 		}
 		$result_role = Result_Conversions::role($source);
 		if ($result_role !== null) {
-			Result_Conversions::require_payload($source, $result_role);
+			$payload = Result_Conversions::require_payload($source, $result_role);
+			// Value/state admission does not grant the payload a condition contract.
+			self::decide($payload);
 			$decision = new truthiness_decision();
 			$decision->source_type = $source;
 			$decision->operation = truthiness_operation::result_condition;

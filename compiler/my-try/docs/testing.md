@@ -730,13 +730,17 @@ For the strict filesystem module catalog:
 python3 compiler/my-try/tests/runtime_filesystem.py --results /tmp/FRESH_FILESYSTEM_RESULTS
 ```
 
-Three PHP suites cover catalog selection/reset, rejected types/arities and unavailable
-legacy/internal/handle APIs and the deferred fs_scan. Five generated programs exercise all 18 bindings using
-private fixture directories: overwrite/empty/error results, paths,
+Six PHP suites cover catalog selection/reset, rejected types/arities, unavailable
+legacy/internal/handle APIs and shared Result/callable regressions. Five generated programs exercise all 19 bindings using
+private fixture directories: overwrite/empty/error results, sorted scans, paths,
 mutations, wrong-kind rmdir preservation and checked snapshot reads. The runner uses
 filesystem/snapshot providers bundled in the snippet runtime and runs the existing Linux snapshot
 race/error regression. No PCH or native compiler rebuild; this is a Linux proof,
 not cross-platform validation or automatic module-linker integration.
+Ten additional generated programs cover all three Result families with vector/hash
+payloads, copy isolation, nested containers, full ternary joins, lazy coalescing and
+sentinel states, including throwing required extraction. PHP rejects unsupported truthiness/empty, mismatched payloads and
+noncopyable contents; incremental element-copy edits reject and recover to clean output.
 
 For the complete strict datetime module catalog:
 

@@ -9,6 +9,21 @@ Requires typed values and callable contracts. Review each conversion boundary an
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Typed-container Result extension — 2026-10-09
+
+The runtime catalog pass enables exact vector/hash payloads for all three Result
+families: construction, copying, required extraction, existing-output take, isset,
+full ternary joins and Result-left coalescing use the existing paths. Copy permission
+recurses through Result/container contents and completed source declarations.
+Container payload conditions and Elvis reject during preparation; value admission
+does not invent truthiness. Wrapper empty remains rejected and boolable coalescing
+remains forbidden. Nullable-container and direct-container joins are not added.
+
+The [authoritative contract](../../../../specs/error_values_and_take.md#typed-container-result-boundaries--v02)
+owns these distinctions. `tests/result_containers.php` supplies a shared three-family,
+two-container proof matrix and copy-capability invalidation/recovery checks;
+`tests/runtime_filesystem.py` runs it alongside fs_scan and existing wrapper regressions.
+
 ## Boxed Result payload extension — 2026-10-05
 
 The Chapter 06 separated-family integration extends the existing Result owner to

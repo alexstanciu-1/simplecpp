@@ -173,16 +173,15 @@ order metadata loading; they do not yet configure linker inputs automatically.
   sleep returns `void`. Legacy `time`, `date` and `strtotime` aliases are not enabled.
   The build consumer must link the datetime provider object as well as core runtime;
   successful semantic registration does not imply automatic native-module linkage.
-- `filesystem`: eighteen strict `fs_*` helpers: path probes, whole-file get/put,
-  directory creation/removal, size/mtime/touch, entry removal/copy/rename,
+- `filesystem`: nineteen strict `fs_*` helpers: path probes, whole-file get/put,
+  directory creation/scanning/removal, size/mtime/touch, entry removal/copy/rename,
   canonical/lexical paths and checked `fs_read_snapshot`. Fallible reads return
-  `result<string>` or `result<int>`; ordinary mutations
+  `result<string>`, `result<int>` or `result<vector<string>>`; ordinary mutations
   and probes retain their boolean contracts. The snippet `core/runtime.cpp` already
   bundles the filesystem and snapshot providers; do not link duplicate standalone
   objects beside it. File-lock handles require registered
-  runtime types and remain unregistered. `fs_scan` retains its established
-  `result<vector<string>>` contract but awaits shared container-payload Result
-  operations before registration. Internal `scpp_output_*` portability
+  runtime types and remain unregistered. `fs_scan` uses shared container-payload
+  Result operations without a module-specific extraction path. Internal `scpp_output_*` portability
   bindings are not public my-try source APIs; see [output ownership](portability/output_files.md).
 - `strings`: `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`,
   `str_starts_with`, `str_ends_with`, both arities of `trim`/`ltrim`/`rtrim`, `bin2hex`

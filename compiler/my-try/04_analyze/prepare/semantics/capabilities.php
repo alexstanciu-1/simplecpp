@@ -24,6 +24,27 @@ final class Capability_Preparation implements type_capability_query
 		if (($payload !== null) && ($capability === generic_contract::copyable_value)) {
 			return $this->has_capability($payload, $capability);
 		}
+		// Owned aggregate copies depend on their contents, not template registration alone.
+		if ($capability === generic_contract::copyable_value)
+		{
+			if ($definition instanceof result_semantics)
+			{
+				$role = object_cast($definition, result_semantics::class);
+				$application = object_cast(Type_Queries::canonical($type_use), applied_template_type::class);
+				return $this->has_capability($role->payload_type($application), $capability);
+			}
+			if (($definition === Model::$type_catalog->definition('vector'))
+				|| ($definition === Model::$type_catalog->definition('hash')))
+			{
+				$application = object_cast(Type_Queries::canonical($type_use), applied_template_type::class);
+				foreach ($application->arguments() as $argument) {
+					if (!$this->has_capability($argument, $capability)) {
+						return false;
+					}
+				}
+				return true;
+			}
+		}
 		// Handle copying/storage is independent of the pointee's fields or completeness.
 		if (Type_Queries::is_nominal_handle($type_use)) {
 			return ($capability === generic_contract::copyable_value)
