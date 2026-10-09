@@ -185,6 +185,25 @@ order metadata loading; they do not yet configure linker inputs automatically.
   non-overlapping with an empty-search no-op; array forms and a count output are not
   enabled. Multiple documented arities use separate fixed contracts, not optional
   metadata parameters or new default-argument lowering.
+  The module also registers `explode` (2/3 args, `vector<string>`), `implode`
+  (`vector<string>` or inferred `hash<string,K>`), code-point `substr` (2/3 args),
+  byte-based `substr_compare` (3/4/5 args), and `hex2bin` with its documented
+  `result_or_false<string>` contract through the existing PHP adapter.
+  Explicit byte helpers (`string_byte_len`, `string_byte_at`, `string_byte_find`,
+  `string_byte_slice`, `string_byte_slice_equals`), UTF-8 helpers
+  (`string_utf8_codepoint_count`, `string_utf8_codepoint_at`,
+  `string_utf8_slice_codepoints`) and conservative grapheme helpers
+  (`string_grapheme_count`, `string_grapheme_slice`) retain their existing units.
+  `string_byte_find` returns `result_or_false<int>`, preserving position zero as
+  success; internal nullable/Result helpers are not substituted for public adapters.
+  All these added parameters use ordinary value boundaries, not observation.
+
+The strings module's unresolved search-coordinate and replacement contracts, boxed
+joining/formatting, and unregistered builder types are excluded from executable JSON.
+See the [module inventory](../compiler/my-try/docs/planning/runtime_catalog_coverage.md#strings-module-inventory--2026-10-09).
+The byte-length decision for `strlen` does not change `substr` or explicitly named
+Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the
+separate portable-compiler framework's UTF-8-validation contract.
 
 New runtime type declarations, fixed-array non-type parameters, compiler-module
 Storage registration, optional/default

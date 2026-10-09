@@ -24,6 +24,8 @@ Doc Status: normative
 - Omitted length returns the remainder of the string.
 - Negative lengths trim the returned window from the end.
 - Current slicing follows the runtime string codepoint-slice policy used by `string_t`.
+- The v0.2 strings catalog registers both arities with that same code-point policy.
+  The byte-counting `strlen` decision does not change substring coordinates.
 
 ## Compatibility table
 

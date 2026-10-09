@@ -40,8 +40,9 @@ Doc Status: normative
 - Implicitly available by project policy.
 
 ## Compile plan summary
-- Implemented in `runtime/include/scpp/support/php.hpp`.
+- Implemented in `runtime/include/modules/strings/strings.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+- v0.2 registers all three fixed arities through the strings module catalog.
 
 ## Test matrix
 - positive offset compare

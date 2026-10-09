@@ -19,6 +19,15 @@ output.mkdir(parents=True, exist_ok=False)
 expected = {'case': 'abc-é中😀|ABC-é中😀|hELLO|Hello|ÉX|éx'.encode(), 'empty': b'[]',
             'predicates': b'', 'order': b'changed', 'purity': b'AbC|abc|ABC', 'shadow': b'', 'boxed_failure': b''}
 expected.update({
+    'split_join': b'a||b|;a|b,c;a,b,c;a|b;0;1;0;a/b/c;612d62',
+    'join_containers': b'a/b|last/first|eight/two||',
+    'split_order': b'a|b;:;1',
+    'slice_compare': '中😀|中|😀|é中||abc;abc|'.encode(),
+    'hex_decode': b'00ff41|0',
+    'byte_helpers': b'9|255|-1|-1|a9||',
+    'byte_search': b'0|5|2|3',
+    'unicode_helpers': '3|128512|-1|-1|中||2|é|'.encode(),
+    'split_empty': b'', 'byte_search_negative': b'', 'byte_search_outside': b'',
     'pad': b'[x   ]|xababa|abax|xaba|axab|abc|abc|aba|c3a9e4',
     'format': b'1,234|1,234.00|1_234,00|1,235|1,234.50|1_234,50|-1,234.50|1,200',
     'constant_shadow': b'', 'constant_use': b'', 'pad_empty': b'', 'pad_mode': b'',
@@ -42,10 +51,16 @@ with CommandRunner(output / 'logs', ROOT) as runner:
         actual = runner.run(name + '-execute', [executable])
         if actual != wanted:
             raise AssertionError(f'{name}: {actual!r} != {wanted!r}')
-    run_tasks([Task(name, lambda name=name, wanted=wanted: execute(name, wanted))
-               for name, wanted in expected.items()])
     def catalog_extremes():
         executable = output / 'catalog-extremes'
         compiler.compile('catalog-extremes-compile', output / 'catalog/length.cpp', executable)
         runner.run('catalog-extremes-execute', [executable])
-    run_tasks([Task('catalog-extremes', catalog_extremes)])
+    def split_limits():
+        executable = output / 'split-limits'
+        runner.run('split-limits-compile', [*compiler.flags, '-fsanitize=undefined',
+                   '-fno-sanitize-recover=undefined', ROOT / 'tests/runtime/native/test_string_split_limits.cpp',
+                   *compiler.link_flags, '-o', executable])
+        runner.run('split-limits-execute', [executable])
+    run_tasks([Task(name, lambda name=name, wanted=wanted: execute(name, wanted))
+               for name, wanted in expected.items()] +
+              [Task('catalog-extremes', catalog_extremes), Task('split-limits', split_limits)])

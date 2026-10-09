@@ -43,6 +43,10 @@ Doc Status: normative
 ## Compile plan summary
 - Implemented in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+- The bounded v0.2 module catalog registers vector<string> and hash<string,K>
+  (inferred key type) through shared `scpp::str::join`. Boxed mixed/dynamic joining
+  is not enabled: historical adapter casts must first be reconciled with the
+  string-only element contract. No coercing boxed behavior is implicitly adopted.
 
 ## Test matrix
 - packed hash join

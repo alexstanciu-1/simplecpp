@@ -730,11 +730,14 @@ For runtime-module string bindings:
 python3 compiler/my-try/tests/runtime_strings.py --results /tmp/FRESH_RUNTIME_STRING_RESULTS
 ```
 
-Four PHP suites cover registration/rejection and catalog/generic/source-constant regressions. Nineteen
+Four PHP suites cover registration/rejection and catalog/generic/source-constant regressions. Thirty
 generated programs check exact bytes, empty/non-ASCII inputs, all three predicates,
 purity, shadowing, checked boxed conversion failure, trim overloads/byte masks,
 binary-safe hex/replacement, ordered value snapshots, padding modes/errors/byte truncation,
-all int/float formatting arities, constant shadowing/labels and exact signed-64 limits.
+all int/float formatting arities, constant shadowing/labels and exact signed-64 limits,
+typed split/join, code-point slices, byte comparison, false-result adapters and explicit
+byte/Unicode helpers. One additional direct runtime test runs split limits under UBSan,
+including signed-minimum negative limits. All C++ tasks share the same bounded pool.
 Uses the shared pool without PCH to
 check header completeness; does not rebuild the compiler natively.
 

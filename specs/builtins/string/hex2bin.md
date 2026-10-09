@@ -40,6 +40,8 @@ Doc Status: normative
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 - Shared plain-name exposure in strict should preserve the same visible `string|false` contract rather than exposing the internal strict `result<string_t>` helper directly.
 - The visible PHP-facing carrier for this shared helper contract is `result_or_false<string_t>`, not `mixed_t`.
+- v0.2 registers that same adapter contract in the strings catalog; it does not
+  replace ordinary invalid-input false states with the internal decoder's errors.
 
 ## Test matrix
 - empty string

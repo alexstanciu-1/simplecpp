@@ -151,6 +151,24 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-STRINGS-01 — unresolved string contracts and runtime types
+
+The 2026-10-09 [module inventory](../planning/runtime_catalog_coverage.md#strings-module-inventory--2026-10-09)
+holds these symbols outside executable catalog JSON pending review:
+
+- `strpos`/`strrpos`: top-level byte-position contracts conflict with runtime and
+  subordinate catalog code-point positions. Agree reconciliation before registration;
+  do not extrapolate the `strlen` byte decision to every text operation.
+- `substr_replace`: omitted length and unusable negative windows disagree between
+  top-level specs and runtime. Do not silently choose insert versus suffix replacement.
+- Boxed `implode`: string-only element contract versus historical adapter casts;
+  establish dynamic admission explicitly without mixing boxed families.
+- String/text builders: model registered runtime types and ownership first; byte-span
+  append also needs the source module's span type. Do not flatten them into mixed.
+
+These gaps do not block the ready-contract module pass. Boxed formatting retains its
+separate debt below. No decisions to change these semantics are implied by this record.
+
 ### CH15-RUNTIME-FORMAT-01 — boxed number formatting
 
 The v0.2 runtime catalog intentionally registers `number_format` only for canonical

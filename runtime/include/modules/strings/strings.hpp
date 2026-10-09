@@ -665,7 +665,8 @@ inline vector_t<string_t> split(const string_t &separator, const string_t &value
 		cursor = found + needle.size();
 	}
 
-	const auto drop_count = static_cast<std::size_t>(-limit_value);
+	// Preserve the magnitude of INT64_MIN without signed negation overflow.
+	const auto drop_count = static_cast<std::uint64_t>(-(limit_value + 1)) + 1;
 	if (drop_count >= tokens.size()) {
 		return parts;
 	}

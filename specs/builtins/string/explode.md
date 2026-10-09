@@ -21,6 +21,8 @@ Doc Status: normative
 - Positive `limit` keeps at most that many result parts.
 - `limit == 0` is treated like a single-part result.
 - Negative `limit` drops that many trailing parts from the full split result.
+- This includes the signed-64 minimum limit: its magnitude exceeds any practical
+  part count, so the result is empty, without signed-negation overflow.
 - Behavior is byte-oriented and binary-safe.
 
 ## Compatibility table
@@ -44,6 +46,8 @@ Doc Status: normative
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 - Shared plain-name exposure in strict should preserve the same visible typed split contract.
 - The visible PHP-facing carrier for this shared helper contract is `vector_t<string_t>`, not `mixed_t`.
+- v0.2 registers both arities through the strings module catalog, bound directly to
+  shared `scpp::str::split`; it does not introduce nullable limit arguments.
 
 ## Test matrix
 - default split
