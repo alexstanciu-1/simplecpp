@@ -205,6 +205,9 @@ public:
 			throw runtime_error("source_line_index_line_column_to_offset", "source column is out of bounds");
 		}
 		const auto line_start = line_start_offsets_[static_cast<std::size_t>(line - 1U)];
+		if (column - 1U > source_byte_len_ - line_start) {
+			throw runtime_error("source_line_index_line_column_to_offset", "source column is out of bounds");
+		}
 		const auto offset = line_start + column - 1U;
 		check_offset(offset, "source_line_index_line_column_to_offset");
 		return offset;

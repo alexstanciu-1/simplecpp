@@ -9,6 +9,11 @@ a declaration of complete runtime coverage or a replacement of v0.1 metadata yet
 
 ## Shape
 
+The opt-in `source` catalog provides owning source-buffer, line-index and location
+types/calls under the [compiler-support contract](compiler_support_runtime_contract.md).
+Borrowed span results are outside the current metadata lifetime vocabulary and
+must not be advertised as ordinary copyable owned values.
+
 Every module object requires these fields:
 
 - `version`: integer `1`.

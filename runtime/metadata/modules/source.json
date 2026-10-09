@@ -1,0 +1,302 @@
+{
+  "version": 1,
+  "module": "source",
+  "dependencies": [
+    "core"
+  ],
+  "types": [
+    {
+      "id": "source.source_buffer",
+      "name": "source_buffer",
+      "kind": "struct",
+      "capabilities": [
+        "value_storable",
+        "copyable_value"
+      ]
+    },
+    {
+      "id": "source.source_line_index",
+      "name": "source_line_index",
+      "kind": "struct",
+      "capabilities": [
+        "value_storable",
+        "copyable_value"
+      ]
+    },
+    {
+      "id": "source.source_location",
+      "name": "source_location",
+      "kind": "struct",
+      "capabilities": [
+        "value_storable",
+        "copyable_value"
+      ]
+    }
+  ],
+  "cpp_types": [
+    {
+      "id": "source.source_buffer",
+      "symbol": "scpp::source::source_buffer",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_line_index",
+      "symbol": "scpp::source::source_line_index",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_location",
+      "symbol": "scpp::source::source_location",
+      "header": "modules/source/source.hpp"
+    }
+  ],
+  "functions": [
+    {
+      "id": "source.source_buffer_empty",
+      "name": "source_buffer_empty",
+      "parameters": [],
+      "returns": "source_buffer"
+    },
+    {
+      "id": "source.source_buffer_take",
+      "name": "source_buffer_take",
+      "parameters": [
+        {
+          "name": "text",
+          "type": "string",
+          "passing": "reference"
+        }
+      ],
+      "returns": "source_buffer"
+    },
+    {
+      "id": "source.source_buffer_release",
+      "name": "source_buffer_release",
+      "parameters": [
+        {
+          "name": "buffer",
+          "type": "source_buffer",
+          "passing": "reference"
+        }
+      ],
+      "returns": "string"
+    },
+    {
+      "id": "source.source_buffer_byte_len",
+      "name": "source_buffer_byte_len",
+      "parameters": [
+        {
+          "name": "buffer",
+          "type": "source_buffer",
+          "passing": "observe"
+        }
+      ],
+      "returns": "uint32"
+    },
+    {
+      "id": "source.source_buffer_byte_at",
+      "name": "source_buffer_byte_at",
+      "parameters": [
+        {
+          "name": "buffer",
+          "type": "source_buffer",
+          "passing": "readonly_reference"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "uint8"
+    },
+    {
+      "id": "source.source_buffer_slice",
+      "name": "source_buffer_slice",
+      "parameters": [
+        {
+          "name": "buffer",
+          "type": "source_buffer",
+          "passing": "readonly_reference"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "length",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "string"
+    },
+    {
+      "id": "source.source_line_index_build",
+      "name": "source_line_index_build",
+      "parameters": [
+        {
+          "name": "buffer",
+          "type": "source_buffer",
+          "passing": "observe"
+        }
+      ],
+      "returns": "source_line_index"
+    },
+    {
+      "id": "source.source_line_index_line_count",
+      "name": "source_line_index_line_count",
+      "parameters": [
+        {
+          "name": "index",
+          "type": "source_line_index",
+          "passing": "observe"
+        }
+      ],
+      "returns": "uint32"
+    },
+    {
+      "id": "source.source_line_index_offset_to_location",
+      "name": "source_line_index_offset_to_location",
+      "parameters": [
+        {
+          "name": "index",
+          "type": "source_line_index",
+          "passing": "readonly_reference"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "source_location"
+    },
+    {
+      "id": "source.source_line_index_line_column_to_offset",
+      "name": "source_line_index_line_column_to_offset",
+      "parameters": [
+        {
+          "name": "index",
+          "type": "source_line_index",
+          "passing": "readonly_reference"
+        },
+        {
+          "name": "line",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "column",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "uint32"
+    },
+    {
+      "id": "source.source_location_offset",
+      "name": "source_location_offset",
+      "parameters": [
+        {
+          "name": "location",
+          "type": "source_location",
+          "passing": "observe"
+        }
+      ],
+      "returns": "uint32"
+    },
+    {
+      "id": "source.source_location_line",
+      "name": "source_location_line",
+      "parameters": [
+        {
+          "name": "location",
+          "type": "source_location",
+          "passing": "observe"
+        }
+      ],
+      "returns": "uint32"
+    },
+    {
+      "id": "source.source_location_column",
+      "name": "source_location_column",
+      "parameters": [
+        {
+          "name": "location",
+          "type": "source_location",
+          "passing": "observe"
+        }
+      ],
+      "returns": "uint32"
+    }
+  ],
+  "cpp": [
+    {
+      "id": "source.source_buffer_empty",
+      "symbol": "scpp::source::source_buffer_empty",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_buffer_take",
+      "symbol": "scpp::source::source_buffer_take",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_buffer_release",
+      "symbol": "scpp::source::source_buffer_release",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_buffer_byte_len",
+      "symbol": "scpp::source::source_buffer_byte_len",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_buffer_byte_at",
+      "symbol": "scpp::source::source_buffer_byte_at",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_buffer_slice",
+      "symbol": "scpp::source::source_buffer_slice",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_line_index_build",
+      "symbol": "scpp::source::source_line_index_build",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_line_index_line_count",
+      "symbol": "scpp::source::source_line_index_line_count",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_line_index_offset_to_location",
+      "symbol": "scpp::source::source_line_index_offset_to_location",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_line_index_line_column_to_offset",
+      "symbol": "scpp::source::source_line_index_line_column_to_offset",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_location_offset",
+      "symbol": "scpp::source::source_location_offset",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_location_line",
+      "symbol": "scpp::source::source_location_line",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_location_column",
+      "symbol": "scpp::source::source_location_column",
+      "header": "modules/source/source.hpp"
+    }
+  ]
+}

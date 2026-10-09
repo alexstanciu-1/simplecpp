@@ -25,11 +25,40 @@ do not request approval for each ordinary metadata row or populate speculative r
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
 | regex (opt-in) | 10 helpers / 18 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
+| source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
 | strings | 49 source helpers / 65 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
 
-The host and native-driver startup lists select the five non-regex modules. Other consumers
+The host and native-driver startup lists select core, json, strings, datetime and filesystem. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
 String registration adds metadata and tests, not parsing/preparation/backend handlers.
+
+## Source module inventory — 2026-10-09
+
+Opt-in `source.json` registers three opaque value types and thirteen helpers:
+buffer empty/take/release/byte-len/byte-at/slice; index build/line-count/
+offset-to-location/line-column-to-offset; location offset/line/column.
+All use existing type and callable metadata, with reference mutation,
+non-retaining observation and readonly-reference reads. No compiler worker changes.
+Index data and slices own their storage independently of the buffer.
+
+Held: byte_span, source_buffer_span, byte_span_len/at/to_string and
+text_builder_append_byte_span require retained-borrow/invalidation support
+(CH15-RUNTIME-SOURCE-01). Span hashing additionally awaits stable-hash contract
+reconciliation. Internal source_text_vector_move_append is not promoted as a
+public API by this pass. Buffer replacement/move safety for existing C++ span
+consumers is not repaired by withholding frontend exposure.
+
+The provider reverse-map arithmetic now checks remaining file length before
+addition, preventing uint32 wraparound; existing cross-line column policy stays
+unchanged. Extreme uint32 coordinate representability remains a boundary review
+item under CH15-RUNTIME-SOURCE-01.
+
+Evidence: `runtime_source.py --results /tmp/my-try-runtime-source-20261009-final`
+passed six PHP tasks (0.48–2.58s) and nine generated-program builds/runs
+(3.19–6.43s), covering all thirteen bindings, source shadowing, unselected rejection,
+metadata retention/reset, independent copies, release, binary bytes, newline/EOF
+mapping and checked failures including the overflow. CLI fallback was used because
+the sandbox denied FPM sockets. No PCH or native compiler rebuild.
 
 ## Strings module inventory — 2026-10-09
 

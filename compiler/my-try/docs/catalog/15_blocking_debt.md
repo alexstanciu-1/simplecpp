@@ -259,6 +259,19 @@ The module pass proves ordinary UTC/local forms and errors; it is not full calen
 or timezone support. Automatic optional-runtime linkage in my-try's native cache also
 remains with the build owner, not the semantic catalog.
 
+### CH15-RUNTIME-SOURCE-01 — borrowed source views
+
+Open; prerequisite for enabling span APIs, not a blocker for owning source calls.
+The current byte_span stores a raw source_buffer pointer and a generation.
+Destruction leaves the pointer dangling; replacement/move is not uniformly
+invalidated. Do not register it as an ordinary owned value. Agree a reusable
+borrow-origin/escape/invalidation contract or a safe runtime view representation,
+then prove return, storage, temporary, release, replacement and move cases before
+enabling source_buffer_span, span queries, hashing and builder span append.
+Existing native consumers also need review. Separately review uint32 endpoint,
+column and line-count representability for maximum-size sources; this batch
+repairs reverse-map addition overflow but does not claim exhaustive 4-GiB proofs.
+
 ### CH15-RUNTIME-STRINGS-01 — unresolved string contracts and runtime types
 
 The 2026-10-09 [module inventory](../planning/runtime_catalog_coverage.md#strings-module-inventory--2026-10-09)

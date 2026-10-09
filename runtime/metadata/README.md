@@ -21,6 +21,11 @@ joins/formatting and builder byte-span append remain explicit gaps.
 Load selected modules once at startup, decode directly to typed records and retain
 them for registry installation/reset. Do not rescan these files during compilation.
 
+The opt-in `source` module depends on core and registers three owning value types
+and thirteen buffer/index/location helpers. Startup defaults are unchanged.
+Borrowed byte spans and their consumers remain held for lifetime/invalidation
+support; source metadata does not make raw views into owning values.
+
 Ordinary runtime type definitions use `types`, with separate `cpp_types` bindings.
 The core vector/hash recipes now live here, including constraints, defaults and
 capability dependencies; no duplicate PHP declarations are required. Definitions

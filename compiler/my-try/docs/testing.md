@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+Owning source-module registration and generated-program checks:
+`python3 compiler/my-try/tests/runtime_source.py --results FRESH_DIRECTORY`.
+This uses the shared runner and proves copying, transfer, index independence and
+checked ranges; it is not a native compiler rebuild or borrowed-span safety proof.
+
 `python3 compiler/my-try/tests/runtime_catalog.py --results FRESH` checks strict typed
 module decoding, dependency ordering/cycles, failed startup configuration preservation,
 reset reuse after catalog files are removed, stale-binding rejection, and byte-counting

@@ -68,6 +68,33 @@ Rules:
 - compiler metadata should treat both types as runtime-backed until a separate
   value-layout storage contract is accepted.
 
+### v0.2 owning source-module admission
+
+The opt-in `source` metadata module admits `source_buffer`,
+`source_line_index`, and `source_location` as opaque, copyable runtime value
+types, with the thirteen non-span helpers above. Copies are independent values,
+not implicitly shared class handles. No public field layout, automatic Result
+payload capability, or generic count/empty capability is exposed.
+
+`source_buffer_take` takes a writable string reference and leaves it empty;
+`source_buffer_release` takes a writable buffer reference and leaves it empty.
+Slices return owning strings. Unary queries observe without retaining a reference;
+multiargument reads use the ordinary readonly-reference boundary. These calls use
+the existing stable-place and readonly admission rules.
+
+A line index owns its mapping data, retaining no buffer borrow: it remains valid
+after the source buffer is released or destroyed. CR, LF and CRLF delimit lines;
+CRLF is one delimiter. EOF is an accepted offset. Reverse mapping preserves the
+existing file-range check (it does not impose a separate same-line column bound);
+arithmetic must not wrap to make an invalid column appear in range.
+
+`byte_span`, span-producing/consuming calls, and builder span append remain
+unavailable in this v0.2 catalog. The current runtime view retains a raw owner
+pointer: generation checks cannot establish safety after owner destruction and
+do not cover every replacement/move. Enabling these requires an agreed borrow
+and invalidation model, not merely a copyable type row. This does not remove
+the older provider API or assert that its existing lifetime limitations are solved.
+
 ## Stable Hash
 
 Simple C++ exposes:
