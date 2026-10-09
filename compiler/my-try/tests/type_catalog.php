@@ -3,11 +3,7 @@
 /* Prove built-in registration, separated identities and demand-only template interning. */
 namespace scpp\compiler;
 
-require_once dirname(__DIR__, 3) . '/tools/php_portability/runtime/bootstrap.php';
-require_once dirname(__DIR__) . '/03_parse/types/model.php';
-require_once dirname(__DIR__) . '/03_parse/types/catalog.php';
-require_once dirname(__DIR__) . '/03_parse/types/register.php';
-require_once dirname(__DIR__) . '/05_backend/cpp/type_bindings_catalog.php';
+require_once dirname(__DIR__) . '/boot.php';
 
 function type_catalog_check(bool $condition, string $message): void
 {
@@ -88,7 +84,7 @@ type_catalog_check($catalog->canonical('byte') === $catalog->canonical('uint8'),
 type_catalog_check($catalog->definition('byte')->name() === 'uint8',
 	'byte source spelling created a second semantic definition');
 type_catalog_check($string->definition()->capabilities() === [generic_contract::copyable_value,
-	generic_contract::value_storable, generic_contract::hashable, generic_contract::comparable],
+	generic_contract::value_storable, generic_contract::hashable, generic_contract::comparable, generic_contract::result_payload],
 	'String declarative capabilities changed');
 type_catalog_check($unique->capabilities() === [generic_contract::value_storable],
 	'Unique ownership was incorrectly declared copyable');

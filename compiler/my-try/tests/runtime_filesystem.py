@@ -38,6 +38,8 @@ for name, payload in (('data', b'payload'), ('empty', b'')):
 
 with CommandRunner(output / 'logs', ROOT) as runner:
     run_tasks([
+        Task('type-catalog', lambda: runner.run('type-catalog', ['php', APP / 'tests/type_catalog.php'])),
+        Task('type-capabilities', lambda: runner.run('type-capabilities', ['php', APP / 'tests/type_capabilities.php'])),
         Task('filesystem', lambda: runner.run('filesystem', ['php', APP / 'tests/runtime_filesystem.php', output])),
         Task('catalog', lambda: runner.run('catalog', ['php', APP / 'tests/runtime_catalog.php', output / 'catalog'])),
         Task('generics', lambda: runner.run('generics', ['php', APP / 'tests/runtime_generics.php', output / 'generics'])),

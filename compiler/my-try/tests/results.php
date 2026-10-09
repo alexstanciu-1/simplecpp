@@ -117,7 +117,7 @@ try
 		['$x = false_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x = true_sentinel;', 'sentinel requires an explicit Result destination'],
 		['$x result<int>;', 'Result construction requires an explicit initializer'],
-		['$x result<result<int>>;', 'Result operations require an unmodified scalar'],
+		['$x result<result<int>>;', 'registered for result_payload'],
 		['function ref(result<int> &$v): void {} ref(1);', 'reference'],
 	];
 	foreach ($rejections as [$source, $diagnostic])

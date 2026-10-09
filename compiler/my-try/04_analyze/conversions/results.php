@@ -21,18 +21,15 @@ final class Result_Conversions
 			|| $type->matches(Model::$type_catalog->boolean_sentinel_type(true));
 	}
 
-	/** One payload domain for all Result consumers; no implicit nested conversion. */
+	/** Exact transport admission comes from registration, not a list of payload families. */
 	public static function require_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
 	{
 		$application = object_cast(Type_Queries::canonical($type), applied_template_type::class);
 		$payload = $role->payload_type($application);
 		$definition = Type_Queries::canonical($payload)->definition();
-		$container = ($definition === Model::$type_catalog->definition('vector'))
-			|| ($definition === Model::$type_catalog->definition('hash'));
 		if ($type->by_value() || $payload->by_value()
-			|| (!Conversion_Preparation::is_scalar($payload) && !Boxed_Conversions::is_boxed($payload)
-				&& !($definition instanceof callable_type_definition) && !$container)) {
-			throw new \RuntimeException('S2S Result operations require an unmodified scalar, mixed, dynamic, explicit callable or typed container payload');
+			|| !$definition->declares_capability(generic_contract::result_payload)) {
+			throw new \RuntimeException('S2S Result operations require an unmodified type registered for result_payload');
 		}
 		return $payload;
 	}

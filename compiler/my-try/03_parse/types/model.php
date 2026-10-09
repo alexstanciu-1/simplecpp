@@ -68,6 +68,8 @@ enum generic_contract: int
 	case value_storable = 2;
 	case hashable = 3;
 	case comparable = 4;
+	// Provider opt-in for exact Result value transport; not truthiness or copyability.
+	case result_payload = 5;
 }
 
 /** Stable text for contracts; native enum reflection is not required by the model. */
@@ -86,6 +88,9 @@ final class Generic_Contract_Name
 		}
 		if ($contract === generic_contract::comparable) {
 			return 'comparable';
+		}
+		if ($contract === generic_contract::result_payload) {
+			return 'result_payload';
 		}
 		throw new \LogicException('Unknown generic contract');
 	}
@@ -335,7 +340,8 @@ final class callable_type_definition extends abstract_nominal_type_definition im
 	public function __construct(int $id, string $name, canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
 		?reference_return_contract $reference_return = null)
 	{
-		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value,
+			generic_contract::result_payload];
 		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::callable_type, $capabilities);
 		$this->call_contract = new callable_signature();
 		$this->call_contract->return_type = $result;
@@ -409,6 +415,7 @@ final class template_type_parameter
 {
 	private string $parameter_name;
 	private array $parameter_contracts /** vector<generic_contract> */;
+	private array $dependent_capabilities /** vector<generic_contract> */;
 	private ?canonical_type_use $default_type_data = null;
 
 	/**
@@ -417,7 +424,7 @@ final class template_type_parameter
 	 * capability requirement is currently known.
 	 */
 	public function __construct(string $name, ?array $contracts /** vector<generic_contract> */ = null,
-		?canonical_type_use $default_type = null)
+		?canonical_type_use $default_type = null, array $dependencies /** vector<generic_contract> */ = [])
 	{
 		if ($name === '') {
 			throw new \InvalidArgumentException('Template parameter name must not be empty');
@@ -446,6 +453,19 @@ final class template_type_parameter
 		$this->parameter_name = $name;
 		$this->parameter_contracts = $effective_contracts;
 		$this->default_type_data = $default_type;
+		$dependency_keys /** hash<bool> */ = [];
+		foreach ($dependencies as $position => $dependency)
+		{
+			$key = Generic_Contract_Name::text($dependency);
+			if ($dependency === generic_contract::result_payload) {
+				throw new \InvalidArgumentException('Result payload registration is an unconditional transport opt-in');
+			}
+			if (($position !== q_count($dependency_keys)) || isset($dependency_keys[$key])) {
+				throw new \InvalidArgumentException('Capability dependencies must be an ordered unique list');
+			}
+			$dependency_keys[$key] = true;
+		}
+		$this->dependent_capabilities = $dependencies;
 	}
 
 	public function name(): string
@@ -456,6 +476,12 @@ final class template_type_parameter
 	public function contracts(): array /** vector<generic_contract> */
 	{
 		return $this->parameter_contracts;
+	}
+
+	/** Unlike formation constraints, these gate the applied type's capabilities. */
+	public function capability_dependencies(): array /** vector<generic_contract> */
+	{
+		return $this->dependent_capabilities;
 	}
 
 	public function default_type(): ?canonical_type_use
@@ -491,6 +517,11 @@ abstract class abstract_template_type_definition extends semantic_type_definitio
 				throw new \InvalidArgumentException('Template parameters must use ordered zero-based positions');
 			}
 			$parameter_name = $parameter->name();
+			foreach ($parameter->capability_dependencies() as $dependency) {
+				if (!$this->declares_capability($dependency)) {
+					throw new \InvalidArgumentException('Capability dependency requires a declared template capability');
+				}
+			}
 			if (isset($names[$parameter_name])) {
 				throw new \InvalidArgumentException('Template parameter names must be unique');
 			}
@@ -1272,14 +1303,39 @@ final class Type_Registry implements type_capability_query
 		return (int)$this->applied_type_count;
 	}
 
-	/** Query only stored facts; this performs no structural or lifecycle inference. */
+	/** Evaluate registered facts/rules without inferring source structure or driving lifecycle. */
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
 	{
-		$definition = $this->type($type_use->type_id())->definition();
+		return $this->has_registered_capability($type_use, $capability, $this);
+	}
+
+	/** Read registered rules; the caller supplies argument facts without retaining a worker. */
+	public function has_registered_capability(canonical_type_use $type_use, generic_contract $capability,
+		type_capability_query $arguments): bool
+	{
+		$canonical = $this->type($type_use->type_id());
+		$definition = $canonical->definition();
 		if ($definition->origin() === type_definition_origin::source) {
 			throw new \LogicException('Source type capabilities require completed declaration preparation');
 		}
-		return $definition->declares_capability($capability);
+		if (!$definition->declares_capability($capability)) {
+			return false;
+		}
+		if ($canonical instanceof applied_template_type)
+		{
+			$application = object_cast($canonical, applied_template_type::class);
+			$recipe = $application->template_definition();
+			foreach ($application->arguments() as $position => $argument) {
+				foreach ($recipe->parameter($position)->capability_dependencies() as $dependency) {
+					if ($dependency === $capability) {
+						if (!$arguments->has_capability($argument, $dependency)) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 	private function register_definition(type_definition_i $definition): void

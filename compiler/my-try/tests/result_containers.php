@@ -4,9 +4,10 @@ require_once dirname(__DIR__) . '/boot.php';
 require_once __DIR__ . '/cpp_probe.php';
 
 /** Exercise ordinary shared preparation, not a runtime-call-specific entrypoint. */
-function result_container_compile(string $source): string
+function result_container_compile(string $source, bool $custom_type = false): string
 {
 	Compiler_Lifecycle::reset();
+	if ($custom_type) { result_container_register_provider(); }
 	$module = new module('/result-containers', '/result-containers', '/result-containers');
 	$file = new file();
 	$file->path = 'main.phs';
@@ -21,6 +22,32 @@ function result_container_compile(string $source): string
 		throw new \LogicException('Result container no-op output changed');
 	}
 	return $text;
+}
+
+/** A test-only provider proves Result admission is extensible by registration alone. */
+function result_container_register_provider(): void
+{
+	$registry = Model::$type_catalog->registry();
+	$storage = [generic_contract::value_storable];
+	$copy = [generic_contract::copyable_value];
+	$capabilities = [generic_contract::value_storable, generic_contract::copyable_value, generic_contract::result_payload];
+	$definition = $registry->define_template('parcel', type_definition_origin::runtime, nominal_type_kind::structure,
+		[new template_type_parameter('T', $storage, null, $copy)], $capabilities);
+	Model::$language_scope->register_type_as('parcel', $definition);
+	Model::$cpp_type_bindings->bind_definition($definition, 'scpp::vector_t', 'scpp/vector_t.hpp');
+	$string = Language_Types::string_type(Model::$language_scope);
+	$payload = $registry->use($registry->intern_application($definition, [$string])->type_id());
+	$result_definition = object_cast(Model::$type_catalog->definition('result'), abstract_template_type_definition::class);
+	$signature = new callable_signature();
+	$signature->return_type = $registry->use($registry->intern_application($result_definition, [$payload])->type_id());
+	$parameter = new callable_parameter();
+	$parameter->type = $string;
+	$parameter->name = 'path';
+	$parameter->mode = passing_mode::value;
+	$signature->parameters->append($parameter);
+	$target = Model::$runtime_callables->register_function('proof.scan_parcel', 'scan_parcel', $signature);
+	Model::$language_scope->register_function($target);
+	Model::$cpp_callable_bindings->bind_function($target, 'scpp::fs::scan', 'modules/filesystem/filesystem.hpp');
 }
 
 $cases = [];
@@ -72,10 +99,11 @@ $original vector<hash<int>> = $r; echo $original[0]["x"], "|", $copy[0]["x"];
 return 0;
 PHS, '3|7'];
 $executions = [];
+$cases['registered_parcel'] = ['$r = scan_parcel("."); $value parcel<string> = $r; $copy result<parcel<string>> = $value; $e error; if (!take($value, $e, $copy)) { return 1; } if ($e) { return 2; } echo isset($copy); return 0;', '1'];
 $cases['failed_extract'] = ['$r result_or_false<vector<int>> = false_sentinel; $out vector<int> = $r; return 99;', ''];
 foreach ($cases as $name => [$source, $expected])
 {
-	try { $text = result_container_compile($source); }
+	try { $text = result_container_compile($source, $name === 'registered_parcel'); }
 	catch (\RuntimeException $error) { throw new \RuntimeException($name . ': ' . $error->getMessage()); }
 	if ($name === 'failed_extract')
 	{

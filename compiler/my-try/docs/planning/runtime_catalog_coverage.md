@@ -214,3 +214,18 @@ vector/hash Result matrix across all three wrapper families. PHP suites took
 edit/reject/repair agrees with a clean build. Supplementary container-call,
 nullable-record and ownership PHP regressions pass in
 `/tmp/result-container-copy-review-20261009`. No native compiler rebuild or PCH.
+
+Registry-foundation correction (2026-10-09): Result transport now uses the registered
+`result_payload` opt-in; template parameters declare conditional capabilities
+separately from formation constraints. One registry evaluator replaces named
+Result/nullable/vector/hash copy branches and lets analysis supply observed source
+facts without caching them. `/tmp/registry-capabilities-20261009-2` passes eight PHP
+suites and 17 generated-C++/runtime checks, including an unfamiliar `parcel<T>`
+provider with no new preparation/lowering path. JSON type declarations remain out
+of scope; this repairs the existing type-registration foundation. No native compiler
+rebuild or PCH.
+
+Supplementary foundation checks in `/tmp/registry-capabilities-20261009-review`
+pass type-catalog, capability-rule validation, container calls, nullable records and
+ownership (0.39–2.11s per PHP suite). Registration rejects conditional transport
+opt-ins: transport support is unconditional; copying is checked independently.

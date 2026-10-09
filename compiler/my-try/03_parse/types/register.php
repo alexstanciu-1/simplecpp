@@ -40,7 +40,7 @@ final class Type_Definition_Registration
 		self::install_concrete($registry, $source, $no_value_definition);
 
 		$scalar_capabilities /** vector<generic_contract> */ = [generic_contract::copyable_value, generic_contract::value_storable,
-			generic_contract::hashable, generic_contract::comparable];
+			generic_contract::hashable, generic_contract::comparable, generic_contract::result_payload];
 		$boolean = $registry->define_boolean('bool', type_definition_origin::language, $scalar_capabilities);
 		self::install_concrete($registry, $source, $boolean);
 
@@ -71,7 +71,7 @@ final class Type_Definition_Registration
 		self::install_concrete($registry, $source, $error);
 
 		$copyable_storage /** vector<generic_contract> */ = [generic_contract::copyable_value,
-			generic_contract::value_storable];
+			generic_contract::value_storable, generic_contract::result_payload];
 		$mixed = $registry->define_mixed('mixed', type_definition_origin::language, $copyable_storage);
 		self::install_concrete($registry, $source, $mixed);
 		$dynamic = $registry->define_dynamic('dynamic', type_definition_origin::language, $copyable_storage);
@@ -85,12 +85,15 @@ final class Type_Definition_Registration
 		$value_storable /** vector<generic_contract> */ = [generic_contract::value_storable];
 		$copyable_storage /** vector<generic_contract> */ = [generic_contract::copyable_value,
 			generic_contract::value_storable];
+		$container_capabilities /** vector<generic_contract> */ = [generic_contract::copyable_value,
+			generic_contract::value_storable, generic_contract::result_payload];
+		$copy_dependencies /** vector<generic_contract> */ = [generic_contract::copyable_value];
 		$vector_parameters /** vector<template_type_parameter> */ = [
-			new template_type_parameter('Value', $value_storable),
+			new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
 		];
 		$vector = $registry->define_template('vector', type_definition_origin::runtime,
 			nominal_type_kind::class_type, $vector_parameters,
-			$copyable_storage);
+			$container_capabilities);
 		self::install_template($source, $providers, $vector, 'vector');
 
 		$string_type = $registry->canonical(object_cast(
@@ -98,16 +101,16 @@ final class Type_Definition_Registration
 		$hash_key_contracts /** vector<generic_contract> */ = [generic_contract::hashable,
 			generic_contract::comparable];
 		$hash_parameters /** vector<template_type_parameter> */ = [
-				new template_type_parameter('Value', $value_storable),
+				new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
 				new template_type_parameter('Key', $hash_key_contracts,
-					$registry->use($string_type->type_id())),
+					$registry->use($string_type->type_id()), $copy_dependencies),
 			];
 		$hash = $registry->define_template('hash', type_definition_origin::runtime,
-			nominal_type_kind::class_type, $hash_parameters, $copyable_storage);
+			nominal_type_kind::class_type, $hash_parameters, $container_capabilities);
 		self::install_template($source, $providers, $hash, 'hash');
 
 		$nullable_parameters /** vector<template_type_parameter> */ = [
-			new template_type_parameter('Value', $value_storable),
+			new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
 		];
 		$nullable = $registry->define_nullable('nullable', type_definition_origin::runtime,
 			nominal_type_kind::class_type, $nullable_parameters,
@@ -121,7 +124,7 @@ final class Type_Definition_Registration
 		];
 		foreach ($result_families as $name => $family_kind) {
 			$result_parameters /** vector<template_type_parameter> */ = [
-				new template_type_parameter('Value', $value_storable),
+				new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
 			];
 			$result_definition = $registry->define_result($name, type_definition_origin::runtime,
 				nominal_type_kind::class_type, $result_parameters, $copyable_storage, $family_kind);

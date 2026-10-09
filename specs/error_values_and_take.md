@@ -87,6 +87,14 @@ boolean cast from error.
 
 ## Typed-container Result boundaries — v0.2
 
+The compiler registry owns exact payload admission through the `result_payload`
+provider opt-in. This is not implied by storage, copying or truthiness support.
+Registered template copyability can depend on selected type parameters; Result
+operations use these effective capabilities, not container-name special cases.
+Registering transport support does not grant a condition contract or bypass
+operation-specific copy checks. Runtime type registrations remain separate from
+the current function-module JSON catalogs.
+
 All three Result families admit exact `vector<T>` and `hash<T,K>` payloads for
 construction, same-wrapper copying, checked required extraction and existing-output
 `take`. The payload must first have its own concrete type; this does not introduce

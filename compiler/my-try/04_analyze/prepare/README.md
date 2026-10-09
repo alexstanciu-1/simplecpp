@@ -399,7 +399,7 @@ normalization differs from mixed/mixed kind comparison. Nullable null comparison
 keep their separate presence-check path. Runtime table/weak-carrier comparison
 limits and the approved empty-carrier repair are recorded in chapter 05.
 
-`Result_Conversions` in `conversions/results.php` selects exact scalar, boxed, callable or typed vector/hash payload wrapping,
+`Result_Conversions` in `conversions/results.php` selects exact registered `result_payload` wrapping,
 same-type copies and explicit legacy false/true state construction. The three Result
 families retain distinct identities. Boolean payloads are not sentinels; canonical
 singleton constant types distinguish `false_sentinel`/`true_sentinel`, while `nullopt`
@@ -421,8 +421,10 @@ exact payload/alternative types, existing locals/parameters and output distinctn
 Result payload admission is shared through `Result_Conversions::require_payload`:
 supported scalars, mixed/dynamic, explicit callable or typed container payloads, without nested wrappers or implicit two-step
 conversion. Outer Result ownership precedes boxed conversion/conditional routing;
-`Capability_Preparation` recursively checks Result payloads and typed-container
-elements/keys for copies; source declarations remain observed preparation dependencies.
+`Capability_Preparation` delegates registered template capability dependencies to
+the registry's shared rule evaluator, supplying completed source facts through the
+same query. There are no Result/nullable/vector/hash identity branches in copy
+queries; source declarations remain observed preparation dependencies.
 Callable Result observations and joins reuse the shared Result paths: wrapper-state
 isset differs from delegated callable truthiness; coalescing requires the exact payload
 fallback and preserves absent value payloads. No concrete closure erasure is chained

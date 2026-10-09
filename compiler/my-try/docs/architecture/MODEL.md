@@ -835,6 +835,23 @@ for allocation/moves/weak access. Backend bindings and existing class-like stora
 classification remain unchanged. Named holders/container composition are not
 recursively prohibited; no worker or source-derived capability cache is added.
 
+Registered capabilities distinguish unconditional provider opt-ins from capabilities
+dependent on template arguments. `template_type_parameter::contracts()` constrains
+type formation; `capability_dependencies()` gates the applied owner's declared
+capabilities without preventing formation. For example, a vector's copyability
+depends on its Value argument's copyability, while a shared handle's does not.
+`Type_Registry::has_registered_capability()` evaluates those rules using a transient
+`type_capability_query`. Analysis supplies completed source facts through its normal
+dependency-aware query; the registry retains neither workers nor source-derived
+capability caches. Pure registry queries reject source facts they cannot establish.
+
+`result_payload` is an unconditional provider opt-in for exact Result transport,
+not a parameter-dependent capability, copy permission or truthiness contract.
+Result admission reads that opt-in rather than naming payload families; individual
+copy operations separately query effective copyability. New runtime providers use
+the same registration protocol and separate backend bindings. This does not enable
+JSON type declarations or grant every source record Result support automatically.
+
 Template definitions share `abstract_template_type_definition` for ordered parameters,
 arity/defaults and result kind. The ordinary `template_type_definition` remains final;
 its final sibling `nullable_type_definition` implements `nullable_semantics` with
