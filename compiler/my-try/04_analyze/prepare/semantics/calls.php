@@ -32,64 +32,16 @@ final class Call_Preparation
 			if ($target instanceof compiler_function_definition) {
 				return Compiler_Call_Preparation::prepare(object_cast($target, compiler_function_definition::class), $arguments, $context);
 			}
+			if ($target instanceof registered_generic_function) {
+				return Runtime_Call_Preparation::prepare($targets, $arguments, $context);
+			}
 			return self::prepare(object_cast($target, callable_target_i::class), $arguments, $context);
 		}
 		if (q_count($targets) === 0) {
 			throw new \RuntimeException('S2S named call has no resolved function');
 		}
 
-		$observing = false;
-		$by_value = false;
-		foreach ($targets as $candidate)
-		{
-			if (!($candidate instanceof registered_function)) {
-				throw new \RuntimeException('S2S source function overloads are deferred');
-			}
-			$registered = object_cast($candidate, registered_function::class);
-			$parameters /** Storage<callable_parameter> */ = $registered->signature()->parameters;
-			foreach ($parameters as $parameter)
-			{
-				if ((($parameter->mode !== passing_mode::value) && ($parameter->mode !== passing_mode::observation)) || ($parameter->default_value !== null)
-					|| ($parameter->element_type !== null)) {
-					throw new \RuntimeException('S2S runtime overloads require fixed required value or observation parameters');
-				}
-				if ($parameter->mode === passing_mode::observation) { $observing = true; }
-				else { $by_value = true; }
-			}
-		}
-		if ($observing && $by_value) {
-			throw new \RuntimeException('Runtime overloads cannot mix observation and consuming inputs');
-		}
-
-		// Prepare once without a candidate's contextual type; ambiguous literals need explicit targets.
-		foreach ($arguments as $argument) {
-			$consumer = $observing ? expression_consumer::value : expression_consumer::consuming_argument;
-			Expression_Preparation::prepare_for_consumer($argument, $context, null, $consumer);
-		}
-		$matches /** vector<callable_target_i> */ = [];
-		foreach ($targets as $candidate)
-		{
-			$registered_candidate = object_cast($candidate, registered_function::class);
-			$parameters /** Storage<callable_parameter> */ = $registered_candidate->signature()->parameters;
-			if (q_count($parameters) !== q_count($arguments)) {
-				continue;
-			}
-			$matched = true;
-			foreach ($arguments as $index => $argument)
-			{
-				if (!$argument->require_preparation()->type->matches($parameters[$index]->type)) {
-					$matched = false;
-					break;
-				}
-			}
-			if ($matched) {
-				$matches[] = $registered_candidate;
-			}
-		}
-		if (q_count($matches) !== 1) {
-			throw new \RuntimeException('S2S runtime call requires one exact signature; use explicit argument types');
-		}
-		return self::prepare($matches[0], $arguments, $context, true);
+		return Runtime_Call_Preparation::prepare($targets, $arguments, $context);
 	}
 
 	/** Admit one selected contract; exact-overload selection has already prepared its arguments. */
@@ -151,7 +103,7 @@ final class Call_Preparation
 			if ($index < $facts->fixed_count) { $parameter_index = $index; }
 			$parameter = $parameters[$parameter_index];
 			if ($parameter->mode === passing_mode::observation) {
-				if (!($target instanceof registered_function)) {
+				if (!($target instanceof runtime_function_definition)) {
 					throw new \RuntimeException('Observation parameters belong to registered runtime contracts');
 				}
 				Callable_Contracts::validate($signature);

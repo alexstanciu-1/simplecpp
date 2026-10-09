@@ -5,6 +5,8 @@ namespace scpp\compiler;
 final class runtime_type_spec
 {
 	public string $name = '';
+	/** Explicit variable spelling distinguishes a type parameter from a registered type. */
+	public string $parameter = '';
 	public Storage $arguments /** Storage<runtime_type_spec> */;
 	public function __construct()
 	{
@@ -24,6 +26,7 @@ final class runtime_function_spec
 {
 	public string $identity = '';
 	public string $name = '';
+	public array $type_parameters /** vector<string> */ = [];
 	public runtime_type_spec $return_type;
 	public Storage $parameters /** Storage<runtime_parameter_spec> */;
 	public function __construct()

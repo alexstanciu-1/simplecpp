@@ -24,7 +24,7 @@ final class scope
 	/** Member-callable index; never contributes to unqualified free-function lookup. */
 	private Key_Storage_List $methods /** Key_Storage_List<collected_method> */;
 	/** @storage.reference Model.runtime_callables @reference.weak */
-	private Key_Storage_List $runtime_functions /** Key_Storage_List<registered_function> */;
+	private Key_Storage_List $runtime_functions /** Key_Storage_List<runtime_function_definition> */;
 	/** Language scope owns compiler-provided function identities. */
 	private Keyed_Storage $compiler_functions /** Keyed_Storage<compiler_function_definition> */;
 	/** Definitions owned here; published scopes retain the same definition objects. */
@@ -39,7 +39,7 @@ final class scope
 		$this->preparation_lookups = new Key_Storage_List /** Key_Storage_List<preparation_lookup> */();
 		$this->functions = new Key_Storage_List /** Key_Storage_List<collected_function> */();
 		$this->methods = new Key_Storage_List /** Key_Storage_List<collected_method> */();
-		$this->runtime_functions = new Key_Storage_List /** Key_Storage_List<registered_function> */();
+		$this->runtime_functions = new Key_Storage_List /** Key_Storage_List<runtime_function_definition> */();
 		$this->compiler_functions = new Keyed_Storage /** Keyed_Storage<compiler_function_definition> */();
 		$this->types = new Key_Storage_List /** Key_Storage_List<type_definition_i> */();
 		$this->constants = new Key_Storage_List /** Key_Storage_List<constant_target_i> */();
@@ -234,9 +234,9 @@ final class scope
 		return $items->named($name);
 	}
 
-	public function register_function(registered_function $target): void
+	public function register_function(runtime_function_definition $target): void
 	{
-		$functions /** Key_Storage_List<registered_function> */ = $this->runtime_functions;
+		$functions /** Key_Storage_List<runtime_function_definition> */ = $this->runtime_functions;
 		$functions->add($target->name(), $target);
 	}
 
@@ -247,7 +247,7 @@ final class scope
 		foreach ($this->functions_named($name) as $source_function) {
 			$result[] = $source_function;
 		}
-		$functions /** Key_Storage_List<registered_function> */ = $this->runtime_functions;
+		$functions /** Key_Storage_List<runtime_function_definition> */ = $this->runtime_functions;
 		foreach ($functions->named($name) as $runtime_function) {
 			$result[] = $runtime_function;
 		}

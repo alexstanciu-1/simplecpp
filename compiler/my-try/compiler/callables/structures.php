@@ -22,22 +22,20 @@ final class compiler_function_definition implements callable_definition_i
 	public function kind(): compiler_function_kind { return $this->operation; }
 }
 
-/** Installed free-function identity; source spelling is separate from provider identity. */
-final class registered_function implements callable_target_i
+/** Catalog-owned runtime identity, independent of whether its signature needs inference. */
+abstract class runtime_function_definition implements callable_definition_i
 {
 	private string $registration_key;
 	private string $source_name;
-	private callable_signature $call_contract;
 
-	/** Catalog installation publishes a complete, immutable-by-contract signature. */
-	public function __construct(string $key, string $name, callable_signature $signature)
+	/** Provider keys and source lookup names are distinct nonempty identities. */
+	public function __construct(string $key, string $name)
 	{
 		if (($key === '') || ($name === '')) {
 			throw new \InvalidArgumentException('Runtime function identity and name must not be empty');
 		}
 		$this->registration_key = $key;
 		$this->source_name = $name;
-		$this->call_contract = $signature;
 	}
 
 	public function key(): string
@@ -49,11 +47,80 @@ final class registered_function implements callable_target_i
 	{
 		return $this->source_name;
 	}
+}
+
+/** Installed concrete free-function contract. */
+final class registered_function extends runtime_function_definition implements callable_target_i
+{
+	private callable_signature $call_contract;
+
+	public function __construct(string $key, string $name, callable_signature $signature)
+	{
+		parent::__construct($key, $name);
+		$this->call_contract = $signature;
+	}
 
 	public function signature(): callable_signature
 	{
 		return $this->call_contract;
 	}
+}
+
+enum runtime_pattern_kind { case variable; case concrete; case application; }
+
+/** Type patterns expose data identity, not source ASTs or executable matchers. */
+abstract class runtime_type_pattern
+{
+	abstract public function kind(): runtime_pattern_kind;
+}
+
+final class runtime_variable_pattern extends runtime_type_pattern
+{
+	public function __construct(public int $position) {}
+	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::variable; }
+}
+
+final class runtime_concrete_pattern extends runtime_type_pattern
+{
+	public function __construct(public canonical_type_use $type) {}
+	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::concrete; }
+}
+
+final class runtime_application_pattern extends runtime_type_pattern
+{
+	public Storage $arguments /** Storage<runtime_type_pattern> */;
+	public function __construct(public abstract_template_type_definition $definition)
+	{
+		$this->arguments = new Storage();
+	}
+	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::application; }
+}
+
+final class runtime_pattern_parameter
+{
+	public function __construct(public runtime_type_pattern $type, public passing_mode $mode,
+		public storage_access $access) {}
+}
+
+final class runtime_generic_contract
+{
+	public int $type_parameter_count = 0;
+	public runtime_type_pattern $return_type;
+	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
+	public function __construct()
+	{
+		$this->parameters = new Storage();
+	}
+}
+
+/** One provider identity; concrete signatures belong to prepared calls, not the catalog. */
+final class registered_generic_function extends runtime_function_definition
+{
+	public function __construct(string $key, string $name, private runtime_generic_contract $pattern_contract)
+	{
+		parent::__construct($key, $name);
+	}
+	public function contract(): runtime_generic_contract { return $this->pattern_contract; }
 }
 
 /** Published with its owning signature; never mutated after publication. */

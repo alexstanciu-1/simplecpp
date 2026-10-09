@@ -733,9 +733,23 @@ python3 compiler/my-try/tests/runtime_observation.py --results /tmp/FRESH_OBSERV
 Four PHP suites check metadata, shared admission and ordinary reference regressions.
 Five generated programs exercise local/readonly inputs, temporaries, temporary-owner
 fields, noncopyable vectors and both boxed families. Concrete test-only metadata
-isolates the boundary from pending generic registration. AddressSanitizer checks
+isolates the boundary independently of generic registration. AddressSanitizer checks
 invalid accesses; leak detection is disabled for sandbox compatibility. This does
-not rebuild the compiler natively or enable production `count` registration.
+not rebuild the compiler natively; production `count` has its separate proof below.
+
+For production `count` bindings and reusable generic runtime inference:
+
+```bash
+python3 compiler/my-try/tests/runtime_generics.py --results /tmp/FRESH_RUNTIME_GENERIC_RESULTS
+```
+
+The runner checks metadata failures, exact/repeated/defaulted pattern matching,
+ambiguous overlaps, inferred returns, provider identity across calls, stale bindings,
+source shadowing and incremental rejection/recovery. Generated programs cover typed
+and boxed counts, noncopyable payloads, temporary owners, argument effects, generic
+return applications and checked runtime kind errors. It also runs existing catalog,
+observation, JSON and callable PHP checks. AddressSanitizer is enabled without leak
+detection; this is generated-program validation, not a native compiler rebuild.
 
 Import from `tools/test_runner.py`; the scheduler is independent of test language:
 

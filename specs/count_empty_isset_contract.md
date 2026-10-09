@@ -106,6 +106,13 @@ Counting observes container membership without copying/consuming the container
 or its elements, including noncopyable elements. Runtime carrier support does not
 imply that every carrier already has source registration in the v0.2 compiler.
 
+The current v0.2 runtime catalog registers vector/hash generic count contracts and
+concrete mixed/dynamic contracts. Fixed arrays and compiler Storage registration
+remain deferred. An untyped data literal does not choose its own container family
+from this overload set; use a typed local or, for example,
+`count(vector<int>::[1, 2])`. The bare-list examples below describe cardinality once
+the carrier is established, not an additional literal-inference rule.
+
 Examples:
 - `count([])` -> `0`
 - `count([1, 2])` -> `2`

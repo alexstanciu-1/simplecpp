@@ -14,6 +14,32 @@
         }
       ],
       "returns": "int"
+    },
+    {
+      "id": "core.count.vector",
+      "name": "count",
+      "type_parameters": ["T"],
+      "parameters": [{"name": "value", "type": {"name": "vector", "arguments": [{"parameter": "T"}]}, "passing": "observe"}],
+      "returns": "int"
+    },
+    {
+      "id": "core.count.hash",
+      "name": "count",
+      "type_parameters": ["T", "K"],
+      "parameters": [{"name": "value", "type": {"name": "hash", "arguments": [{"parameter": "T"}, {"parameter": "K"}]}, "passing": "observe"}],
+      "returns": "int"
+    },
+    {
+      "id": "core.count.mixed",
+      "name": "count",
+      "parameters": [{"name": "value", "type": "mixed", "passing": "observe"}],
+      "returns": "int"
+    },
+    {
+      "id": "core.count.dynamic",
+      "name": "count",
+      "parameters": [{"name": "value", "type": "dynamic", "passing": "observe"}],
+      "returns": "int"
     }
   ],
   "cpp": [
@@ -21,6 +47,10 @@
       "id": "core.strlen",
       "symbol": "scpp::str::byte_length",
       "header": "modules/strings/strings.hpp"
-    }
+    },
+    {"id": "core.count.vector", "symbol": "scpp::count", "header": "operators/count/count.hpp"},
+    {"id": "core.count.hash", "symbol": "scpp::count", "header": "operators/count/count.hpp"},
+    {"id": "core.count.mixed", "symbol": "scpp::count", "header": "operators/count/count.hpp"},
+    {"id": "core.count.dynamic", "symbol": "scpp::count", "header": "operators/count/count.hpp"}
   ]
 }

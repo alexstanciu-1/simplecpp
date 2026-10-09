@@ -95,6 +95,9 @@ final class Runtime_Catalog_Reader
 			if ($key === 'name') {
 				$result->name = self::name($reader);
 			}
+			elseif ($key === 'parameter') {
+				$result->parameter = self::name($reader);
+			}
 			elseif ($key === 'arguments')
 			{
 				$items /** Storage<runtime_type_spec> */ = $result->arguments;
@@ -107,6 +110,12 @@ final class Runtime_Catalog_Reader
 			else {
 				$reader->reject('Unknown runtime type field: ' . $key);
 			}
+		}
+		if ($result->parameter !== '') {
+			if (($result->name !== '') || $arguments) {
+				$reader->reject('Type parameter cannot also name a type application');
+			}
+			return $result;
 		}
 		if (($result->name === '') || !$arguments) {
 			$reader->reject('Missing runtime type field');
@@ -179,6 +188,16 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'returns') {
 				$result->return_type = self::type($reader);
 				$returns = true;
+			}
+			elseif ($key === 'type_parameters')
+			{
+				$names /** vector<string> */ = [];
+				$reader->begin_array();
+				while ($reader->next_element()) {
+					$names[] = self::name($reader);
+				}
+				if ($names === []) { $reader->reject('Generic type parameter list must not be empty'); }
+				$result->type_parameters = $names;
 			}
 			elseif ($key === 'parameters')
 			{

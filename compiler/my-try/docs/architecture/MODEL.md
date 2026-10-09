@@ -336,6 +336,19 @@ contract. Runtime catalogs do not cache source declaration facts. Registered fac
 keys are provider-qualified semantic identities, independent of C++ names; their
 owner is the exact canonical constructed type and equals their return type.
 
+`runtime_function_definition` is the common catalog identity for concrete
+`registered_function` and argument-dependent `registered_generic_function`. The
+latter implements only `callable_definition_i`: its registry-resolved contract owns
+variable/concrete/application type patterns, not a dummy fixed signature. Startup
+validation resolves names and completes default type arguments. Scope and C++ binding
+indexes use the common identity without gaining semantic processing responsibilities.
+`Runtime_Call_Preparation` owns exact matching, call-local variable bindings and
+selected-signature materialization. Repeated variables require identical canonical
+uses. Only the selected contract forms types through `Capability_Preparation`, then
+uses ordinary argument admission. Prepared calls own their concrete signatures and
+reference the original provider identity. Overlaps reject; no conversion/specificity
+ranking, source parsing special cases or provider specialization cache is introduced.
+
 Free functions have provider-qualified keys and source names, but no fabricated
 receiver, AST or construction owner. Scope `runtime_functions` indexes catalog-owned
 identities; `functions` remains the source-only retirement inventory. `callables_named`
@@ -352,7 +365,8 @@ or requiring copyability. Ordinary reference admission is unchanged. C++ emits o
 full-expression const-reference call so temporary values and temporary property
 owners remain alive through observation. Provider metadata promises no mutation or
 borrow escape; multi-argument observation and source syntax remain disabled. Concrete
-test providers exercise this path; parameterized runtime registration is still next.
+test providers exercise this path; generic vector/hash count and concrete boxed count
+now use the same boundary through production module metadata.
 
 Compiler definitions describe an immutable operation kind, not a preselected
 signature. `Compiler_Call_Preparation` selects argument-dependent contracts and

@@ -197,6 +197,11 @@ immutable value snapshots; rebuilt construction defaults are conservatively uneq
 Calls weakly observe a `callable_definition_i` owned by source collection, the runtime
 callable catalog or the language scope. Fixed targets expose `callable_target_i`;
 compiler definitions acquire concrete signatures during argument-driven analysis.
+Generic runtime definitions likewise own immutable registry-resolved type patterns,
+while selected concrete signatures belong to prepared calls. Their inference maps
+are transient preparation data, not registry roots or source-derived capability
+caches. Backend bindings retain the provider identity, never a call-specific clone;
+semantic reset rebuilds patterns and bindings from retained startup metadata.
 Their declaration-independent signature shares parameter contracts
 with source parameter storage facts where applicable. Runtime free functions and factories have no
 source AST or collected-parameter requirement. C++ callable bindings retain their

@@ -6,12 +6,12 @@ namespace scpp\compiler;
 final class Runtime_Callables
 {
 	private Keyed_Storage $definitions /** Keyed_Storage<registered_static_factory> */;
-	private Keyed_Storage $functions /** Keyed_Storage<registered_function> */;
+	private Keyed_Storage $functions /** Keyed_Storage<runtime_function_definition> */;
 
 	public function __construct()
 	{
 		$this->definitions = new Keyed_Storage /** Keyed_Storage<registered_static_factory> */();
-		$this->functions = new Keyed_Storage /** Keyed_Storage<registered_function> */();
+		$this->functions = new Keyed_Storage /** Keyed_Storage<runtime_function_definition> */();
 	}
 
 	/** Own a free-function identity independently of scope indexing and backend binding. */
@@ -20,21 +20,31 @@ final class Runtime_Callables
 		$this->require_unused_key($key);
 		Callable_Contracts::validate($signature);
 		$target = new registered_function($key, $name, $signature);
-		$functions /** Keyed_Storage<registered_function> */ = $this->functions;
+		$functions /** Keyed_Storage<runtime_function_definition> */ = $this->functions;
 		$functions->add($key, $target);
 		return $target;
 	}
 
-	public function function_definition(string $key): registered_function
+	/** Install a validated generic recipe without inventing a placeholder signature. */
+	public function register_generic(string $key, string $name, runtime_generic_contract $contract): registered_generic_function
 	{
-		$functions /** Keyed_Storage<registered_function> */ = $this->functions;
+		$this->require_unused_key($key);
+		$target = new registered_generic_function($key, $name, $contract);
+		$functions /** Keyed_Storage<runtime_function_definition> */ = $this->functions;
+		$functions->add($key, $target);
+		return $target;
+	}
+
+	public function function_definition(string $key): runtime_function_definition
+	{
+		$functions /** Keyed_Storage<runtime_function_definition> */ = $this->functions;
 		return $functions[$key];
 	}
 
 	private function require_unused_key(string $key): void
 	{
 		$definitions /** Keyed_Storage<registered_static_factory> */ = $this->definitions;
-		$functions /** Keyed_Storage<registered_function> */ = $this->functions;
+		$functions /** Keyed_Storage<runtime_function_definition> */ = $this->functions;
 		if (isset($definitions[$key]) || isset($functions[$key])) {
 			throw new \LogicException('Duplicate runtime callable identity');
 		}

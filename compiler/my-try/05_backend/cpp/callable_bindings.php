@@ -6,12 +6,12 @@ namespace scpp\compiler;
 /** Free symbols have no fabricated receiver or construction owner. */
 final class cpp_function_binding
 {
-	private registered_function $semantic_target;
+	private runtime_function_definition $semantic_target;
 	private string $qualified_symbol;
 	private string $required_header;
 
 	/** Publish backend spelling separately from the installed semantic identity. */
-	public function __construct(registered_function $target, string $symbol, string $header)
+	public function __construct(runtime_function_definition $target, string $symbol, string $header)
 	{
 		if ($symbol === '') {
 			throw new \InvalidArgumentException('C++ function symbol must not be empty');
@@ -21,7 +21,7 @@ final class cpp_function_binding
 		$this->required_header = $header;
 	}
 
-	public function target(): registered_function
+	public function target(): runtime_function_definition
 	{
 		return $this->semantic_target;
 	}
@@ -73,14 +73,14 @@ final class CPP_Callable_Bindings
 		$this->functions = new Keyed_Storage /** Keyed_Storage<cpp_function_binding> */();
 	}
 
-	public function bind_function(registered_function $target, string $symbol, string $header): void
+	public function bind_function(runtime_function_definition $target, string $symbol, string $header): void
 	{
 		$functions /** Keyed_Storage<cpp_function_binding> */ = $this->functions;
 		$functions->add($target->key(), new cpp_function_binding($target, $symbol, $header));
 	}
 
 	/** Reject stale identities even when their provider keys have been reinstalled. */
-	public function function_binding(registered_function $target): cpp_function_binding
+	public function function_binding(runtime_function_definition $target): cpp_function_binding
 	{
 		$functions /** Keyed_Storage<cpp_function_binding> */ = $this->functions;
 		$key = $target->key();
@@ -187,7 +187,7 @@ final class CPP_Callables
 		return CPP_Generator::source_name('method', $method->name);
 	}
 	/** Backend-owned dispatch keeps callable identities independent of any output target. */
-	public static function reference(callable_target_i $target, cpp_generation_context $context): string
+	public static function reference(callable_definition_i $target, cpp_generation_context $context): string
 	{
 		if ($target instanceof collected_method) {
 			$method = object_cast($target, collected_method::class);
@@ -200,8 +200,8 @@ final class CPP_Callables
 			$context->headers[CPP_Artifacts::callable_header($function->qualified_name())] = true;
 			return self::source_reference($function);
 		}
-		if ($target instanceof registered_function) {
-			$binding = Model::$cpp_callable_bindings->function_binding(object_cast($target, registered_function::class));
+		if ($target instanceof runtime_function_definition) {
+			$binding = Model::$cpp_callable_bindings->function_binding(object_cast($target, runtime_function_definition::class));
 			$header = $binding->header();
 			if ($header !== '') {
 				$context->headers[$header] = true;
