@@ -118,6 +118,7 @@ prose and extensions contain further capabilities.
 | Defaults across erased callable boundaries | User-deferred; [CH15-CALLABLE-PARAM-DEFAULTS-01](15_blocking_debt.md#ch15-callable-param-defaults-01--defaults-across-erased-callable-boundaries) |
 | Owning/escaping receiver captures | User-deferred; [CH15-CALLABLE-RECEIVER-01](15_blocking_debt.md#ch15-callable-receiver-01--owning-and-escaping-receiver-captures) |
 | Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
+| Precise erased-call targets | Conservative signature-compatible cycle checking is implemented; precision remains [CH15-CALLABLE-TARGETS-01](15_blocking_debt.md#ch15-callable-targets-01--precise-erased-call-target-analysis) |
 
 Callable returns now use explicit `function<R(Args...)>` contracts across functions,
 methods and closures. Existing erased conversion admits capture-free/copyable value
@@ -141,8 +142,8 @@ is a discussion candidate only, not an approved implementation contract. Revisit
 creation context, initialization timing and constructor override rules when resumed.
 User selection (2026-10-09): pursue explicit reference parameters, reference returns,
 variadics, captured-field borrows and callable wrappers. Defer parameter defaults
-across erased boundaries and owning/escaping receivers to CH15. These are selected
-work items, not implemented capabilities or approval of unspecified type syntax.
+across erased boundaries and owning/escaping receivers to CH15. The selected bounded
+groups are now implemented as described below; unspecified extensions remain gated.
 Reference/variadic input contracts are now implemented: `function<void(int&)>`,
 `function<int(const int&)>` and `function<int(int...)>` use name-free input syntax,
 exact contract interning and shared parameter admission/packing. Context supplies
@@ -167,8 +168,25 @@ state. Exact ternary/Elvis joins preserve the wrapper, while structured/falseabl
 coalescing returns the payload without testing callable presence. Both selection
 forms preserve lazy alternatives and single left evaluation. Nullable/ownership
 wrappers and borrowing environments remain excluded.
-Next: reconcile remaining chapter boundaries. Preserve existing
-rejection boundaries until each shared model and its proofs are in place.
+Callable-valued writable/read-only reference and typed variadic parameters now use
+ordinary parameter contracts, stable-place checks and packing. Functions, class/struct
+methods, concrete closures and nested explicit callable contracts share the same path.
+No new AST/fact family or backend lowering was introduced. Read-only arguments alias
+rather than snapshot; writable references replace/reset the caller's callable.
+Temporary references, mismatched signatures and erased borrowing environments reject.
+Next: chapter closeout/native-validation discussion. The remaining-capability table
+distinguishes explicit CH15 deferrals from intentional unsupported wrappers.
+
+Callable-input evidence: 27 generated programs passed without PCH in
+`/tmp/my-try-callable-payload-inputs-20261009-final`; eight focused PHP regressions
+passed in `/tmp/my-try-callable-payload-regressions-20261009-final`. Includes exact
+reference admission, read-only alias observation, contextual/empty callable packs,
+class/struct methods and cross-file mode-edit rejection/repair/fresh agreement.
+No native compiler rebuild. Earlier fixture attempts hit the existing eager-expression
+ordering restriction; sequencing their invocation results explicitly preserved that
+contract. Legacy reference-marker preservation and vector packing are reused in
+concept, but v0.2 validates exact stable storage before emission rather than relying
+on type-blind C++ acceptance.
 
 Observation/selection evidence: 36 generated programs and one runtime probe passed
 without PCH in `/tmp/my-try-callable-result-joins-20261009-complete`; eight PHP
@@ -390,7 +408,7 @@ std::function<int_t(int_t, int_t)> add = [base](int_t x, int_t y) -> int_t { ret
 ## CLOSURE-RETURN-001
 
 **v0.2 decision / target C++:** Implemented through shared return and data-construction preparation.
-Returning a vector is supported; returning a callable is a separate deferred boundary.
+Returning a vector and returning an explicitly typed callable are supported.
 
 ### Imported version 1
 
@@ -711,7 +729,7 @@ std::function<int_t(int_t)> f; if (...) { f = [](int_t x) -> int_t { return (x +
 ordinary return body and scope-aware automatic value captures. Inferred locals remain
 concrete native lambdas; only explicit callable boundaries erase their types.
 Read-only captured bindings and ordinary shared-payload semantics apply. Void-valued
-return expressions remain shared-return debt, not an arrow-specific exception.
+return expressions use shared void-to-void forwarding; implicit value discard rejects.
 
 ### Imported version 1
 

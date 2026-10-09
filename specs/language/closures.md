@@ -99,9 +99,27 @@ one `vector<T>` is distinct from `T...`, despite their common C++ parameter stor
 C++ callable representation uses the same parameter spelling rules as declarations.
 
 These contracts work at existing local, argument, return, property and typed-container
-boundaries. Reference **inputs** do not grant reference **returns**, permit captured
-borrows to escape, or enable reference/variadic parameters whose payload itself is
-an erased callable; the latter retain their existing ordinary-parameter gate.
+boundaries. Reference **inputs** do not grant reference **returns** or permit captured
+borrows to escape.
+
+The input payload may itself be an explicit callable. Functions, instance/static
+methods and closures share the ordinary parameter contract:
+
+```php
+function replace(function<int()> &$callback): void {
+    $callback = fn() => 7;
+}
+function invoke(const function<int()> &$callback): int { return $callback(); }
+function count_callbacks(function<int()> ...$callbacks): int { return count($callbacks); }
+```
+
+Writable references replace/reset the caller's callable; read-only references observe
+the same storage without copying and cannot replace/reset it. Both require stable,
+borrowable storage of the exact callable type, not a temporary or implicit closure
+conversion. Variadics pack owned callable values into `vector<T>` through ordinary
+exact callable conversion, including contextual closure signatures and empty packs.
+Nested contracts such as `function<void(function<int()>&)>` use the same rules.
+Defaults, borrowed-environment erasure and signature variance remain excluded.
 
 Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime

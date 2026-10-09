@@ -7,6 +7,14 @@ $output = $argv[1];
 $directory = sys_get_temp_dir() . '/callable-inputs-' . bin2hex(random_bytes(6)); mkdir($directory);
 $path = $directory . '/main.phs';
 $cases = [
+	'callable_reference' => ['function replace(function<int()> &$f): void { $f = fn(): int => 9; } $f function<int()> = fn(): int => 2; $copy = $f; replace($f); $current = $f(); $old = $copy(); return $current + $old;', 11],
+	'callable_readonly' => ['function read(const function<int()> &$f): int { return $f(); } $f function<int()> = fn(): int => 7; return read($f);', 7],
+	'callable_readonly_alias' => ['function observe(const function<int()> &$view, function<int()> &$target): int { $target = fn() => 8; return $view(); } $f function<int()> = fn() => 1; return observe($f, $f);', 8],
+	'callable_pack' => ['function sum(function<int()> ...$callbacks): int { $sum = 0; foreach ($callbacks as $f) { $value = $f(); $sum += $value; } return $sum; } $f function<int()> = fn(): int => 3; $full = sum($f, fn() => 4); $empty = sum(); return $full + $empty;', 7],
+	'callable_nested_reference' => ['$replace function<void(function<int()>&)> = function (&$f) { $f = fn() => 8; }; $f function<int()>; $replace($f); return $f();', 8],
+	'callable_nested_readonly' => ['$read function<int(const function<int()>&)> = fn(const &$f) => $f(); $f function<int()> = fn() => 6; return $read($f);', 6],
+	'callable_nested_pack' => ['$sum function<int(function<int()>...)> = function (...$callbacks) { $sum = 0; foreach ($callbacks as $f) { $value = $f(); $sum += $value; } return $sum; }; $full = $sum(fn() => 2, fn() => 3); $empty = $sum(); return $full + $empty;', 5],
+	'callable_reference_reset' => ['function reset_callback(function<int()> &$f): void { clean($f); } $f function<int()> = fn() => 1; reset_callback($f); return isset($f) ? 1 : 0;', 0],
 	'reference' => ['$f function<void(int&)> = function (int &$n): void { $n++; }; $n = 4; $f($n); return $n;', 5],
 	'contextual_reference' => ['$f function<void(int&)> = function (&$n) { $n += 2; }; $n = 4; $f($n); return $n;', 6],
 	'readonly' => ['$f function<int(const int&)> = fn(const int &$n): int => $n; $n = 7; return $f($n);', 7],
@@ -21,6 +29,7 @@ $cases = [
 	'pack_container' => ['$items hash<function<int(int...)>> = {size: fn(...$n) => $n[1]}; return $items["size"](1, 2);', 2],
 ];
 foreach (['class', 'struct'] as $kind) {
+	$cases[$kind . '_callable_parameters'] = [$kind . ' C { public function replace(function<int()> &$f): void { $f = fn() => 4; } public static function sum(const function<int()> &$first, function<int()> ...$rest): int { $sum = $first(); foreach ($rest as $f) { $value = $f(); $sum += $value; } return $sum; } } $c = new C(); $f function<int()>; $c->replace($f); return C::sum($f, fn() => 3);', 7];
 	$cases[$kind] = [$kind . ' C { public function<void(int&)> $f; public static function<int(int...)> $sum; } $c = new C(); $c->f = function (&$n) { $n++; }; C::$sum = fn(...$v) => $v[1]; $n = 3; ($c->f)($n); $count = (C::$sum)(1, 2); return $n + $count;', 6];
 }
 $executions = [];
@@ -35,6 +44,12 @@ try {
 		$executions[] = ['path' => $output . '/' . $name . '.cpp', 'exit_code' => $exit];
 	}
 	foreach ([
+		'function bad(const function<int()> &$f): void { clean($f); } return 0;',
+		'function read(const function<int()> &$f): int { return $f(); } return read(fn(): int => 1);',
+		'function replace(function<int()> &$f): void {} $f function<string()>; replace($f); return 0;',
+		'function replace(function<int()> &$f): void {} $f = fn(): int => 1; replace($f); return 0;',
+		'function sum(function<int()> ...$f): int { return 0; } $n = 1; sum(function () use (&$n): int { return $n; }); return 0;',
+		'function sum(function<int()> ...$f): int { return 0; } sum(fn(): string => "bad"); return 0;',
 		'$f function<void(int&)> = function ($n) {}; return 0;',
 		'$f function<int(const int&)> = fn(&$n) => $n; return 0;',
 		'$f function<void(int&)> = function (&$n) {}; $f(1); return 0;',
@@ -69,6 +84,27 @@ try {
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Fresh reference mode output differs'); }
 	file_put_contents($output . '/recovery.cpp', $before);
 	$executions[] = ['path' => $output . '/recovery.cpp', 'exit_code' => 5];
+	$api = 'function replace(function<int()> &$f): void { $f = fn() => 8; }';
+	file_put_contents($provider, $api);
+	file_put_contents($path, '$f function<int()> = fn() => 1; replace($f); return $f();');
+	$compiler->update_cpp([$provider, $path]);
+	$reference_output = CPP_Probe::text(Model::$cpp_files);
+	file_put_contents($provider, str_replace(' &$f', ' $f', $api));
+	$compiler->update_cpp([$provider]);
+	$value_output = CPP_Probe::text(Model::$cpp_files);
+	if ($value_output === $reference_output) { throw new \LogicException('Callable payload mode edit did not invalidate output'); }
+	file_put_contents($output . '/payload_value_edit.cpp', $value_output);
+	$executions[] = ['path' => $output . '/payload_value_edit.cpp', 'exit_code' => 1];
+	file_put_contents($provider, str_replace('function<int()> &', 'const function<int()> &', $api));
+	$rejected = false;
+	try { $compiler->update_cpp([$provider]); } catch (\RuntimeException $error) { $rejected = true; }
+	if (!$rejected) { throw new \LogicException('Readonly callable replacement accepted'); }
+	file_put_contents($provider, $api); $compiler->update_cpp([$provider]);
+	if (CPP_Probe::text(Model::$cpp_files) !== $reference_output) { throw new \LogicException('Callable payload repair differs'); }
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	if (CPP_Probe::text(Model::$cpp_files) !== $reference_output) { throw new \LogicException('Fresh callable payload output differs'); }
+	file_put_contents($output . '/payload_reference_repair.cpp', $reference_output);
+	$executions[] = ['path' => $output . '/payload_reference_repair.cpp', 'exit_code' => 8];
 	unlink($provider);
 	$registry = Model::$type_catalog->registry(); $integer = Language_Types::integer(Model::$language_scope);
 	$input = new callable_parameter(); $input->type = $integer; $input->mode = passing_mode::value;

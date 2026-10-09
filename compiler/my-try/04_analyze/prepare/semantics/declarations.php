@@ -130,11 +130,6 @@ final class Declaration_Preparation
 	{
 		$contract = new callable_parameter();
 		$contract->type = $type;
-		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) {
-			if (($mode !== passing_mode::value) || $variadic) {
-				throw new \RuntimeException('Callable parameters currently require ordinary by-value inputs');
-			}
-		}
 		Type_Preparation::require_value_type($contract->type);
 		$contract->mode = $mode;
 		$contract->access = $access;
