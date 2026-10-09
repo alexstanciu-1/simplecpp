@@ -819,6 +819,10 @@ final class Parser_Run
 	private function conditional_arm(if_arm_kind $kind): if_node
 	{
 		$start = $this->position++;
+		if (($kind === if_arm_kind::else_arm) && ($this->text() === 'if')) {
+			$this->position++;
+			$kind = if_arm_kind::elseif_arm;
+		}
 		$arm = new if_node($kind);
 		if ($kind !== if_arm_kind::else_arm) {
 			$this->expect('(');

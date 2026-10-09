@@ -72,6 +72,11 @@ Shared workers accept the abstract body type.
 Algorithms remain worker-owned. This body abstraction is a named language concept,
 not a generic AST child/payload container.
 
+Conditional syntax accepts both `elseif (...) { ... }` and `else if (...) { ... }`.
+Whitespace/comments between the latter words are trivia. Both become the existing
+`if_node` elseif arm, preserving one chain, sibling scopes, lazy conditions and
+completion analysis. Braces remain required; this does not enable unbraced statements.
+
 `if_node` owns a block body, an explicit arm kind, an optional condition and an
 optional `next_arm`. Conditions are required on if/elseif and absent on else;
 else has no successor. Only the initial arm enters the enclosing statements.

@@ -142,6 +142,9 @@ try
 		'if_false' => ['$x = 1; if (false) { $x = 7; } return $x;', 1],
 		'else' => ['if (false) { return 7; } else { return 3; }', 3],
 		'elseif' => ['if (false) { return 1; } elseif (true) { return 2; } else { return 3; }', 2],
+		'else_if' => ['if (false) { return 1; } else if (true) { return 2; } else { return 3; }', 2],
+		'else_if_comments' => ["function f(): int { if (false) { return 1; } else /* comment */ if (false) { return 2; } elseif (false) { return 3; } else // line\n # another\n if (true) { return 4; } else { return 5; } } return f();", 4],
+		'else_if_lazy' => ['function probe(int &$n): bool { $n++; return true; } $n = 0; if (true) { $n = 7; } else if (probe($n)) { $n = 9; } return $n;', 7],
 		'chain_else' => ['if (false) { return 1; } elseif (false) { return 2; } else { return 3; }', 3],
 		'empty' => ['if (false) {} elseif (true) {} else {} return 4;', 4],
 		'explicit_cast' => ['if ((bool) 2) { return 5; } return 0;', 5],
@@ -197,6 +200,22 @@ try
 			file_put_contents($output, $first);
 			$executions[] = ['path' => $output, 'exit_code' => $expected];
 		}
+	}
+
+	// Spelling edits normalize to one arm chain, including retained/fresh compilation.
+	$joined = 'if (false) { return 1; } elseif (true) { return 2; } else { return 3; }';
+	$compiler = control_program($path, $joined); $compiler->prepare(); $compiler->cpp();
+	$joined_output = CPP_Probe::text(Model::$cpp_files);
+	$split = str_replace('elseif', 'else /* gap */ if', $joined);
+	file_put_contents($path, $split); $compiler->update_cpp([$path]);
+	control_check(CPP_Probe::text(Model::$cpp_files) === $joined_output, 'Split elseif changed incremental output');
+	$compiler = control_program($path, $split); $compiler->prepare(); $compiler->cpp();
+	control_check(CPP_Probe::text(Model::$cpp_files) === $joined_output, 'Split elseif changed fresh output');
+	foreach (['if (false) {} else if (true) return 1;', 'if (false) {} else if { return 1; }'] as $invalid) {
+		$rejected = false;
+		try { control_program($path, $invalid); }
+		catch (\RuntimeException $error) { $rejected = true; }
+		control_check($rejected, 'Malformed split elseif accepted');
 	}
 
 	// Explicit casts keep their distinct runtime rejection; the wrapper is test-only C++.
