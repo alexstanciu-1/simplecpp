@@ -23,6 +23,10 @@ Current narrowed result states:
 - the current PHP surface exposes `shell_exec()` as a PHP-like falseable string producer through `result_or_false<string_t>`
 - explicit `=== false` checks are preferred when failure handling matters
 - command interpretation is delegated to the host shell
+- output capture preserves bytes, including embedded NUL; child exit status is not
+  returned or converted into the false state
+- do not concatenate untrusted values into shell commands; this helper is not an
+  argument-vector process API
 - this first pass does not freeze cross-platform command syntax compatibility beyond the host shell behavior
 
 ## Runtime placement

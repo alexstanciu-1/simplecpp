@@ -724,6 +724,21 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For environment and shell registrations:
+
+```bash
+python3 compiler/my-try/tests/runtime_environment.py --results /tmp/FRESH_ENVIRONMENT_RESULTS
+```
+
+Two PHP suites check metadata call admission/rejection and catalog regressions.
+Generated programs distinguish missing/empty environment values, preserve failed
+take outputs, test coalescing and evaluation-once, and prove source shadowing.
+Fixed POSIX shell fixtures check text, empty, embedded-NUL and multi-buffer output,
+plus nonzero child exit. A direct runtime fixture substitutes a failing pipe opener
+without exhausting host resources. The child environment is supplied explicitly;
+no host environment values or user commands are used as expected data. This Linux/
+POSIX proof does not build the compiler natively or use PCH.
+
 For executable CLI startup and registered argument helpers:
 
 ```bash

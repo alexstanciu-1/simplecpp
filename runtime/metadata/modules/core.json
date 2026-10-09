@@ -3,6 +3,8 @@
   "module": "core",
   "dependencies": [],
   "functions": [
+    {"id":"core.getenv","name":"getenv","parameters":[{"name":"name","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
+    {"id":"core.shell_exec","name":"shell_exec","parameters":[{"name":"command","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
     {"id":"core.cli_argc","name":"cli_argc","parameters":[],"returns":"int"},
     {"id":"core.cli_argv","name":"cli_argv","parameters":[],"returns":"mixed"},
     {"id":"core.cli_args","name":"cli_args","parameters":[],"returns":"mixed"},
@@ -50,6 +52,8 @@
     }
   ],
   "cpp": [
+    {"id":"core.getenv","symbol":"scpp::php::getenv","header":"lang/php/php_process.hpp"},
+    {"id":"core.shell_exec","symbol":"scpp::php::shell_exec","header":"lang/php/php_process.hpp"},
     {"id":"core.cli_argc","symbol":"scpp::php::cli_argc","header":"lang/php/php_process.hpp"},
     {"id":"core.cli_argv","symbol":"scpp::php::cli_argv","header":"lang/php/php_process.hpp"},
     {"id":"core.cli_args","symbol":"scpp::php::cli_args","header":"lang/php/php_process.hpp"},

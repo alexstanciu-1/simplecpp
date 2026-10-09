@@ -151,6 +151,18 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-PROCESS-01 — environment/shell edge and resource review
+
+The core environment/shell catalog preserves the existing falseable-string contract:
+getenv absence and shell pipe-open failure are false; present empty values/output
+are success. Nonzero child exit is not a failure state in shell_exec. Byte capture
+now preserves embedded NULs. Review embedded-NUL input names/commands (currently
+passed through c_str), stream-read failures/partial output, ignored pclose status,
+unbounded capture, environment concurrency and Windows behavior before broader
+guarantees. Do not silently change failure states or introduce managed-process
+semantics into this helper. The separate managed-process APIs still need registered
+handle/output types. This follow-up does not block the bounded catalog pass.
+
 ### CH15-RUNTIME-HASH-01 — stable hashing implementation and persisted-key compatibility
 
 The core-utility audit found `scpp::stable_hash::string_u64` delegates to

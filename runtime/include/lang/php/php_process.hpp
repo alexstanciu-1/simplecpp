@@ -81,8 +81,9 @@ inline int shell_pclose(FILE* handle) {
 	std::string output;
 	char buffer[4096];
 
-	while (std::fgets(buffer, static_cast<int>(sizeof(buffer)), handle.get()) != nullptr) {
-		output += buffer;
+	std::size_t byte_count = 0;
+	while ((byte_count = std::fread(buffer, 1, sizeof(buffer), handle.get())) != 0) {
+		output.append(buffer, byte_count);
 	}
 
 	return string_t(std::move(output));

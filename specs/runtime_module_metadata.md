@@ -194,6 +194,13 @@ replacement remain outside this bounded catalog pending the
   empty strings and spaces. Each argument-container query returns an independent
   mixed-family value snapshot, not dynamic storage or a mutable view of native argv.
   This adds neither implicit source globals nor a public `set_cli_args` function.
+  `getenv(string): result_or_false<string>` reads one environment variable; absence
+  is false and a present empty value is successful. `shell_exec(string)` returns
+  the same wrapper family: failure means the command pipe could not be opened;
+  empty stdout and a nonzero child exit status are not false states. The host shell
+  interprets the command, so callers must not concatenate untrusted input into it.
+  Output is captured as bytes, including embedded NUL. These bindings use the
+  existing PHP process provider, not managed child-process handle APIs.
 - `json`: existing dynamic/mixed decode contracts and both encode overloads, preserving
   Result wrapping and family separation.
 - `datetime`: all eleven strict `dt_*` helpers from the datetime builtin contracts.

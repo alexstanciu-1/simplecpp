@@ -20,7 +20,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 
 | Module | Registered source surface | Shared path |
 | --- | --- | --- |
-| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args | Concrete and inferred generic contracts; non-retaining unary observation |
+| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args; getenv/shell_exec | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
@@ -176,7 +176,13 @@ separates this small ABI state from boxed/process helpers; no retained fragments
 are mutated by assembly. `cli_argc`, `cli_argv` and `cli_args` are ordinary core
 metadata registrations. No call-name dispatch, implicit source globals, or type
 declarations were added. Managed child-process handles remain gated on runtime-type
-metadata; environment/shell helpers are outside this approved CLI slice.
+metadata. The subsequent environment/shell pass registers `getenv` and `shell_exec`
+as ordinary core functions returning `result_or_false<string>`. Missing environment
+variables differ from present empty values; shell pipe-open failure differs from
+empty output or a nonzero child exit. Shell reads now use byte-counted fread rather
+than NUL-terminated fgets appends, preserving binary output. No compiler processing
+or type registration changed. Thread-safe environment mutation, bounded capture,
+stream-read failures and close-status policy are not added by this registration.
 
 Core-utility audit (2026-10-09): `memory_get_usage` and `memory_get_peak_usage`
 are registered together, each with zero arguments or one bool `real_usage` argument.
@@ -213,6 +219,13 @@ The old `php_builtins.json` manifest identifies itself as a planning scaffold an
 must not be treated as a complete ready-to-import catalog.
 
 ## Proof boundary
+
+Environment/shell evidence: `/tmp/runtime-environment-20261009-1` passes two PHP
+suites (0.71–0.72s) and five C++ build/run tasks (2.47–6.84s). Fixed commands prove
+empty/text/binary/multi-buffer output and nonzero exit semantics; an injected pipe
+opener deterministically proves false without resource exhaustion. Explicit child
+environment values prove missing versus empty, take preservation and coalescing.
+No PCH or native compiler rebuild; POSIX/Linux execution only.
 
 CLI evidence: `/tmp/runtime-cli-20261009-final` passes five PHP suites, including
 S2S goldens/incremental checks (28.53s; others 0.54–1.12s), and five C++ build/run
