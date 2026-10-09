@@ -90,8 +90,9 @@ across syntax/collection, analysis lifecycle and backend consumers.
    closure compatibility through the dependency-aware conversion query; C++ consumes
    a `callable_wrap` decision and emits `std::function` only at explicit boundaries.
    Initialized locals, copying/reassignment and by-value function/method parameters
-   share existing admission and lowering. Callable returns, empty storage, reference
-   signatures, properties and wrapper/container storage reject during preparation.
+   share existing admission and lowering. Later checkpoints below add returns,
+   empty storage, properties and typed containers. Erased reference signatures
+   and callable wrappers remain rejected during preparation.
 
 5. **Explicit value captures — implemented.** Creation-site preparation resolves
    capture references through the current local environment and requires ordinary
@@ -171,12 +172,33 @@ across syntax/collection, analysis lifecycle and backend consumers.
     callee/arguments before `std::function` checks absence. No parallel call path,
     definite-initialization state or new nullable permission is introduced.
 
+14. **Typed callable properties and containers — implemented.** Instance/static fields
+    and vector/hash elements use existing exact erased conversion, contextual input
+    and copy admission. Default construction recognizes callable absence. The member
+    parser distinguishes `function<...>` property types from method declarations;
+    invocation already distinguishes parenthesized property values from methods.
+    Keyed probes reuse the prepared presence decision after lazy lookup; no new
+    retained structure, per-container callable implementation or runtime carrier.
+
 Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
 returns, erased reference signatures, named-call syntax, inferred callable returns,
-dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
+mixed/dynamic callable storage, callable wrappers, authored closure property defaults
+and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Typed-storage checkpoint (2026-10-09): 32 generated C++ programs passed **without
+PCH** in `/tmp/my-try-callable-storage-final`; 13 invalid shapes reject during
+preparation. Coverage includes class/struct instance/static properties, same-named
+methods, ordinary/data constructors, omitted callbacks, vector/hash construction,
+writes/appends/copies, nested containers, iteration, keyed absence/laziness,
+callee snapshots and absent invocation. Cross-file property signature edits reject,
+recover and agree with fresh output. Eleven related PHP suites passed in
+`/tmp/my-try-callable-storage-checks`. Earlier runs exposed member-syntax dispatch,
+callable default admission and a missing boolean header hidden by PCH; those are
+repaired in their existing owners. The runner used CLI fallback; no native compiler
+rebuild was performed.
 
 Empty-storage checkpoint (2026-10-09): 12 generated C++ programs passed with PCH
 in `/tmp/my-try-ch12-empty-callables-final`, including ordered throwing invocation,

@@ -176,7 +176,13 @@ final class Type_Preparation
 		array $arguments /** vector<canonical_type_use> */, preparation_context $context): canonical_type_use
 	{
 		foreach ($arguments as $argument) {
-			if (Type_Queries::canonical($argument)->definition() instanceof callable_type_definition) { throw new \RuntimeException('Callable wrapper and container storage is deferred'); }
+			if (Type_Queries::canonical($argument)->definition() instanceof callable_type_definition) {
+				// Typed collections carry owned erased values; wrappers remain a separate contract.
+				if (($definition !== Model::$type_catalog->definition('vector'))
+					&& ($definition !== Model::$type_catalog->definition('hash'))) {
+					throw new \RuntimeException('Callable wrapper storage is deferred');
+				}
+			}
 		}
 		$registry = Model::$type_catalog->registry();
 		$registry->validate_application_arity($definition, q_count($arguments));

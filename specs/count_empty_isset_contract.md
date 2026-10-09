@@ -77,6 +77,9 @@ callable. `isset`, conditions and unary negation observe that state without
 copying the callable environment. Concrete inferred closures are always present.
 Neither callable form supports `empty` or `count`. Default construction and
 reset semantics follow the [closure contract](language/closures.md#callable-presence-and-reset).
+For typed callable collection entries, keyed `isset` requires both successful lookup
+and a present callable. A stored absent callable is not present merely because its
+key exists. The established lazy, non-creating path rules still apply.
 
 ## 3. `count(...)`
 

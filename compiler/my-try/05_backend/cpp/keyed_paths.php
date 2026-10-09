@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class CPP_Keyed_Path
 {
 	public static function generate(prepared_keyed_path $path, cpp_generation_context $context,
-		bool $removing, bool $emptiness = false): string
+		bool $removing, bool $emptiness = false, ?truthiness_decision $presence = null): string
 	{
 		$context->headers['scpp/keyed_path.hpp'] = true;
 		$id = $context->next_temporary;
@@ -42,7 +42,15 @@ final class CPP_Keyed_Path
 				$resolver = $next;
 			}
 			elseif (!$removing) {
-				$text .= 'return scpp::keyed_probe(' . $resolver . '(), ' . $key . ', ' . ($emptiness ? 'true' : 'false') . '); ';
+				if ($presence !== null) {
+					$leaf = 'keyed_leaf_' . $id;
+					$text .= 'const auto* ' . $leaf . ' = scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', false); ';
+					$text .= 'if (!' . $leaf . ') { return scpp::bool_t{false}; } return scpp::bool_t('
+						. CPP_Declarations::truthiness('(*' . $leaf . ')', $presence, $context) . '); ';
+				}
+				else {
+					$text .= 'return scpp::keyed_probe(' . $resolver . '(), ' . $key . ', ' . ($emptiness ? 'true' : 'false') . '); ';
+				}
 			}
 			else
 			{

@@ -245,7 +245,6 @@ final class Declaration_Preparation
 			$type = $prepared->default_value->conversion->target_type;
 		}
 		if ($type === null) { throw new \RuntimeException('Property without a default requires an explicit type'); }
-		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) { throw new \RuntimeException('Callable properties are deferred'); }
 		$prepared->type = $type;
 		Type_Lifecycle_Preparation::require_storage($type, $context);
 		if (($field->initializer === null) && (Type_Queries::canonical($type)->definition() instanceof enum_type_definition)) {

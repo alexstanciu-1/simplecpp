@@ -1029,7 +1029,7 @@ final class Parser_Run
 				continue;
 			}
 			$member_modifiers = $this->member_modifiers();
-			if ($this->text() === 'function') {
+			if (($this->text() === 'function') && ($this->text_at_offset(1) !== '<')) {
 				$methods->append(object_cast($this->callable_declaration(object_cast($record->occurrence(), collected_member_owner::class), $member_modifiers, $member_start), method_node::class));
 			}
 			elseif ($this->text() === 'const') {

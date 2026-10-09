@@ -105,7 +105,7 @@ prose and extensions contain further capabilities.
 
 | Remaining capability | Current boundary / owner |
 | --- | --- |
-| Callable properties, wrappers and typed containers | Explicit preparation gates; shared storage/copy/lifetime admission still needed |
+| Callable wrappers and authored property defaults | Remain gated; explicit properties and vector/hash elements now use shared callable conversion |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
 | Broader callable boundaries | Erased reference/default/variadic signatures, owning/escaping receivers and captured-field borrows remain outside the implemented slices |
 | Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
@@ -119,8 +119,13 @@ Contextual signatures now fill omitted types from explicit callable contracts th
 the shared expected-type consumer path. Authored annotations are not overwritten;
 no body-based inference or new erasure permissions are introduced. Cross-file contract
 edits preserve anonymous identity and rebuild semantic signatures, not source syntax.
-Next recommended discussion: callable properties and typed-container storage,
-sharing storage/copy/lifetime admission rather than adding per-container exceptions.
+Explicit callable instance/static properties and vector/hash elements now share
+ordinary construction, conversion, copy and invocation paths. Property defaults are
+absent; authored closure defaults remain deferred. Keyed presence tests observe the
+selected callable's state without changing lazy path evaluation. Parenthesized
+property invocation stays distinct from same-named methods. See `callable_storage.php`.
+Next recommended discussion: reconcile the remaining extensions above and select
+the next shared callable contract, without introducing closure-only exceptions.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
 `closure_model` checks, including added exact rejection shapes. No compiler semantics,
@@ -398,8 +403,8 @@ ERROR
 ## CLOSURE-REJECT-002
 
 **v0.2 decision / target C++:** Implemented rejection for callable values in mixed/dynamic
-entries. Typed callable containers/properties are also gated; enabling storage remains
-separate work, not a consequence of completing this rejection card.
+entries. Explicit typed properties and vector/hash elements are admitted by their
+separate shared storage slice; this does not enable boxed callable payloads.
 
 ### Imported version 1
 

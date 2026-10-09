@@ -54,7 +54,7 @@ function apply(function<int(int)> $operation, int $value): int {
 }
 ```
 
-An explicit local, parameter or return contract permits a compatible concrete closure to
+An explicit local, property, typed-container element, parameter or return contract permits a compatible concrete closure to
 cross that boundary. Inferred closure locals remain concrete; this conversion is
 not applied merely because a value is callable. Different closure expressions may
 initialize or replace the same explicitly typed callable storage.
@@ -73,10 +73,51 @@ Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime
 obligations.
 
-Erased reference signatures remain deferred in this slice. Properties and
-wrapper/container storage of callable values are also deferred. The C++ backend
+Erased reference signatures and wrapper storage remain deferred in this slice. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
 the concrete-lambda lowering of inferred locals.
+
+### Typed property and container storage
+
+Instance/static properties in classes and structs may explicitly declare
+`function<R(Args...)>`. They default to absent, and assignments and constructor/data
+inputs use the same exact conversion and contextual signature rules as callable
+locals. Authored closure-valued declaration defaults remain deferred; this includes
+closures nested inside a property's container default.
+
+`vector<function<...>>` and `hash<function<...>>` carry owned callable values.
+Construction, writes and appends obtain their expected signature from the element
+contract. Reads, iteration and copying retain ordinary container value semantics
+and callable-environment copy semantics; shared captured objects remain shared.
+Nested typed containers use these same rules. No concrete anonymous type is inferred
+as a heterogeneous container's common element type.
+
+```php
+class Handler {
+    public function<int(int)> $run;
+}
+$handler = new Handler();
+$handler->run = fn($n) => $n + 1;
+$result = ($handler->run)(4);
+$callbacks vector<function<int(int)>> = [fn($n) => $n * 2];
+$other = $callbacks[0](4);
+```
+
+`($object->name)(...)` invokes the property value; `$object->name(...)` selects a
+method. Those names may coexist. Static property values likewise support
+`(Type::$name)(...)`. Expression calls snapshot the selected callable before
+evaluating arguments; argument-side replacement does not change that invocation.
+Absent invocation retains the runtime exception contract below.
+
+Keyed `isset` requires both an existing element and a present callable. Missing
+paths remain lazy and non-creating. `empty` on the vector/hash itself tests its
+size; `empty` on a callable element rejects. General direct-property probes and
+property/indexed cleanup are not enabled by callable storage admission. A property
+can be observed through conditions or copied to a local for `isset`.
+
+Direct/transitive borrowed environments and borrowed `$this` remain rejected at
+every erased boundary, including properties and collection entries. Callable
+wrappers and mixed/dynamic callable payloads remain deferred.
 
 ### Callable presence and reset
 
@@ -107,7 +148,7 @@ null comparisons. `empty` and `count` do not apply to callable values.
 
 An explicit expected `function<R(Args...)>` contract may supply omitted closure or
 arrow parameter/return types at a typed local initializer, assignment to established
-callable storage, selected call argument, or explicit callable return boundary.
+callable storage, property/typed-container input, selected call argument, or explicit callable return boundary.
 
 ```php
 $add function<int(int)> = function ($value) { return $value + 1; };
@@ -151,7 +192,7 @@ copying. Direct or transitive reference captures and borrowed `$this` reject dur
 preparation, even if a particular caller might keep their origins alive. Capturing
 a value from a reference parameter by value does not itself retain a borrow.
 Noncopyable captures and incompatible signatures remain rejected. No inferred
-anonymous return type, owning receiver capture, callable property/container storage,
+anonymous return type, owning receiver capture,
 or extension of erased defaults/variadic/reference signatures is enabled here.
 
 ## Forbidden usage (concrete closures)
@@ -305,7 +346,7 @@ nonescape.
 Field/interior references and borrowing another closure's captured fields are deferred,
 including attempts through aliases. Captured storage cannot supply a reference return
 under the current whole-reference-parameter contract. Returning borrowing closures
-is rejected; property/container storage remains deferred. This is a bounded lexical lifetime check, not
+is rejected; borrowing closures cannot enter erased property/container storage. This is a bounded lexical lifetime check, not
 general escape analysis, exclusive borrowing or PHP-style lifetime extension.
 
 ### v0.2 borrowed receiver captures

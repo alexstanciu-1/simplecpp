@@ -114,7 +114,8 @@ final class Object_Construction_Preparation
 			return true;
 		}
 		$definition = Type_Queries::canonical($type)->definition();
-		return ($definition === Model::$type_catalog->definition('vector'))
+		return ($definition instanceof callable_type_definition)
+			|| ($definition === Model::$type_catalog->definition('vector'))
 			|| ($definition === Model::$type_catalog->definition('hash'))
 			|| $type->matches(Language_Types::error_type(Model::$language_scope));
 	}

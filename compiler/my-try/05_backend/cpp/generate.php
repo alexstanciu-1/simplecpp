@@ -669,6 +669,7 @@ final class CPP_Generator
 		self::record_operator_headers($decision, $context);
 		if ($decision->operation === operator_operation::condition_not)
 		{
+			$context->headers['scpp/bool_t.hpp'] = true;
 			$truthiness /** truthiness_decision */ = $decision->truthiness;
 			$operand = (new CPP_Syntax($context))->expression($syntax->operand);
 			return 'scpp::bool_t(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';

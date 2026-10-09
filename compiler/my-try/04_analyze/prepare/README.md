@@ -434,6 +434,13 @@ the shared path owner described above; property paths remain deferred. Emission
 uses separate runtime probe helpers, not condition truthiness: `empty("0")` is false.
 Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
 is introduced, and probes cannot establish new locals through nested assignment.
+Callable local and keyed presence reuse the same prepared `truthiness_decision`;
+the keyed backend first resolves the leaf lazily, then applies the selected operation.
+This is presence, not a general equivalence between `isset` and truthiness.
+Explicit callable properties and vector/hash elements use ordinary storage/copy
+admission and exact callable conversion. Borrowing closures still reject at every
+erased boundary. Property callable defaults are absent; authored closure defaults
+remain outside the constant-default owner.
 
 Nullable scalar and inline-record boundaries use `conversions/nullable.php`: typed null
 construction, exact-payload wrapping/copying and checked required-value extraction.

@@ -16,19 +16,21 @@ final class Value_Probe_Preparation
 			$facts = new prepared_value_probe();
 			$facts->type = $context->boolean;
 			$facts->operation = $syntax->probe_kind;
+			$probe_type /** canonical_type_use */;
 			if ($syntax->operand instanceof index_node) {
 				$facts->path = Keyed_Path_Preparation::prepare($syntax->operand, $context, false);
 				$steps /** Storage<prepared_keyed_step> */ = $facts->path->steps;
 				$leaf /** prepared_keyed_step */ = $steps[$steps->count() - 1];
-				self::require_type($leaf->element_type, $syntax->probe_kind);
+				$probe_type = $leaf->element_type;
 			}
 			else {
 				$operand = Expression_Preparation::prepare($syntax->operand, $context);
-				self::require_type($operand->type, $syntax->probe_kind);
-				$definition = Type_Queries::canonical($operand->type)->definition();
-				if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
-					$facts->presence = Condition_Truthiness::decide($operand->type);
-				}
+				$probe_type = $operand->type;
+			}
+			self::require_type($probe_type, $syntax->probe_kind);
+			$definition = Type_Queries::canonical($probe_type)->definition();
+			if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
+				$facts->presence = Condition_Truthiness::decide($probe_type);
 			}
 			return $facts;
 		}

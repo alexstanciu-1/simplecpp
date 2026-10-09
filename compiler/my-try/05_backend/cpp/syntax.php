@@ -471,12 +471,13 @@ final class CPP_Syntax
 	public function generate_value_probe(value_probe_node $node): string
 	{
 		$facts = $node->require_probe_preparation();
-		if ($facts->presence !== null) {
-			return 'scpp::bool_t(' . CPP_Declarations::truthiness($this->expression($node->operand), $facts->presence, $this->context) . ')';
-		}
 		$path = $facts->path;
 		if ($path !== null) {
-			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty);
+			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty, $facts->presence);
+		}
+		if ($facts->presence !== null) {
+			$this->context->headers['scpp/bool_t.hpp'] = true;
+			return 'scpp::bool_t(' . CPP_Declarations::truthiness($this->expression($node->operand), $facts->presence, $this->context) . ')';
 		}
 		$name = $facts->operation === value_probe_kind::isset ? 'isset' : 'empty';
 		$this->context->headers['lang/php/operators/' . $name . '/' . $name . '.hpp'] = true;
