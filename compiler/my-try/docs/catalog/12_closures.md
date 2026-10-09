@@ -105,7 +105,7 @@ prose and extensions contain further capabilities.
 
 | Remaining capability | Current boundary / owner |
 | --- | --- |
-| Authored callable property defaults | Explicitly deferred by user on 2026-10-09, including callable leaves in container defaults; use constructor inputs or ordinary assignments |
+| Authored callable property defaults | Explicitly deferred by user on 2026-10-09; [CH15-CALLABLE-DEFAULTS-01](15_blocking_debt.md#ch15-callable-defaults-01--authored-callable-property-defaults); use constructor inputs or ordinary assignments |
 | Callable wrappers | Remain gated; explicit properties and vector/hash elements use shared callable conversion |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
 | Broader callable boundaries | Erased reference/default/variadic signatures, owning/escaping receivers and captured-field borrows remain outside the implemented slices |

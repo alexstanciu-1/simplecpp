@@ -58,6 +58,23 @@ closure happened to initialize the value. Named-call implementation remains defe
 
 ## Deferred feature scope
 
+### CH15-CALLABLE-DEFAULTS-01 — authored callable property defaults
+
+Explicitly deferred by the user on 2026-10-09 from [Chapter 12](12_closures.md#reconciliation--2026-10-09).
+This covers closure/arrow defaults on instance and static callable properties, plus
+callable leaves in instance vector/hash property defaults. No new release-blocking
+classification is assigned. Existing absent defaults, constructor/data inputs and
+ordinary assignments remain supported; authored closure defaults remain rejected.
+
+The last proposal was capture-free defaults, explicit expected callable signatures,
+per-object creation for instance defaults and once-per-declaring-type static
+initialization. It was deferred before approval: treat these as discussion candidates,
+not normative semantics. Revisit creation context, access to static members, capture
+admission, constructor/data override behavior, copy semantics and initialization order.
+Static container literals and arbitrary factory-call defaults remain separately gated.
+Use the shared property-default and callable preparation/lifecycle owners; do not
+introduce separate closure, vector and hash initialization implementations.
+
 ### CH15-INHERITANCE-EXTENSIONS-01 — deferred CH11 extensions
 
 Explicit user decision on 2026-10-08: remove the following from the current CH11
