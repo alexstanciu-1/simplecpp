@@ -181,6 +181,12 @@ replacement remain outside this bounded catalog pending the
   `count(vector<T>)`, `count(hash<T,K>)`, `count(mixed)` and `count(dynamic)`, all
   observing inputs and returning `int` through `scpp::count`. Boxed kinds are checked
   at runtime; statically unsupported carriers reject during preparation.
+  `memory_get_usage` and `memory_get_peak_usage` each expose zero arguments or one
+  bool `real_usage` argument and return int process-memory byte observations. These
+  retain the [runtime catalog](../runtime/specs/catalog.md#54-processmemory-helpers)
+  contract, not PHP allocator accounting. Both bool values use the same measurement
+  policy; unavailable measurements may return zero. Stable hashing is not registered
+  pending algorithm/persisted-key compatibility review.
 - `json`: existing dynamic/mixed decode contracts and both encode overloads, preserving
   Result wrapping and family separation.
 - `datetime`: all eleven strict `dt_*` helpers from the datetime builtin contracts.

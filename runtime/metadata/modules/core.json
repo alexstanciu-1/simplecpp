@@ -3,6 +3,10 @@
   "module": "core",
   "dependencies": [],
   "functions": [
+    {"id":"core.memory_get_usage.0","name":"memory_get_usage","parameters":[],"returns":"int"},
+    {"id":"core.memory_get_usage.1","name":"memory_get_usage","parameters":[{"name":"real_usage","type":"bool","passing":"value"}],"returns":"int"},
+    {"id":"core.memory_get_peak_usage.0","name":"memory_get_peak_usage","parameters":[],"returns":"int"},
+    {"id":"core.memory_get_peak_usage.1","name":"memory_get_peak_usage","parameters":[{"name":"real_usage","type":"bool","passing":"value"}],"returns":"int"},
     {
       "id": "core.strlen",
       "name": "strlen",
@@ -43,6 +47,10 @@
     }
   ],
   "cpp": [
+    {"id":"core.memory_get_usage.0","symbol":"scpp::memory_get_usage","header":"operators/memory_usage/memory_usage.hpp"},
+    {"id":"core.memory_get_usage.1","symbol":"scpp::memory_get_usage","header":"operators/memory_usage/memory_usage.hpp"},
+    {"id":"core.memory_get_peak_usage.0","symbol":"scpp::memory_get_peak_usage","header":"operators/memory_usage/memory_usage.hpp"},
+    {"id":"core.memory_get_peak_usage.1","symbol":"scpp::memory_get_peak_usage","header":"operators/memory_usage/memory_usage.hpp"},
     {
       "id": "core.strlen",
       "symbol": "scpp::str::byte_length",

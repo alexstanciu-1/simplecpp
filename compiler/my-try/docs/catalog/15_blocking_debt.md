@@ -151,6 +151,23 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-HASH-01 — stable hashing implementation and persisted-key compatibility
+
+The core-utility audit found `scpp::stable_hash::string_u64` delegates to
+`hash_detail::key_ops<string_t>::hash`, which mixes `std::hash<std::string>`.
+This does not establish the stable-hash header's promise of repeatable output across
+processes and host standard-library versions. Existing golden tests establish only
+the tested toolchain's values, not the portable algorithm contract.
+
+Before registering `hash_string` / `stable_hash_string_u64` in my-try metadata,
+agree a fixed byte-hashing algorithm and a persisted-key/version migration policy,
+or explicitly revise the promised scope of stability. Do not silently change the
+runtime algorithm: current compiler caches and other consumers already use it.
+Prove string/span agreement, empty and binary/UTF-8 inputs, and cross-toolchain
+goldens under the chosen contract. `stable_hash_bytes_u64` additionally needs the
+registered source/byte-span type model. The existing providers remain unchanged;
+the new catalog intentionally leaves these helpers unavailable pending review.
+
 ### CH15-RUNTIME-TYPE-METADATA-01 — review metadata-driven types, not hardcoded families
 
 User-requested review (2026-10-09): verify that runtime types, template parameters,

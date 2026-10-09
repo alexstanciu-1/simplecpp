@@ -20,7 +20,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 
 | Module | Registered source surface | Shared path |
 | --- | --- | --- |
-| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic | Concrete and inferred generic contracts; non-retaining unary observation |
+| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
@@ -169,6 +169,22 @@ See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01
 
 ## Remaining work, grouped by prerequisite
 
+Core-utility audit (2026-10-09): `memory_get_usage` and `memory_get_peak_usage`
+are registered together, each with zero arguments or one bool `real_usage` argument.
+They report process resident/peak bytes, not PHP allocator internals; both bool
+values select the same measurement policy. Unsupported measurements may return zero.
+The narrow existing provider header owns behavior; no new runtime implementation,
+type registration or compiler dispatch is needed.
+
+Stable string hashing is **held**, not registered: its implementation mixes
+`std::hash<std::string>` despite a cross-process/standard-library stability promise.
+Algorithm changes require persisted-key migration review; see
+[CH15-RUNTIME-HASH-01](../catalog/15_blocking_debt.md#ch15-runtime-hash-01--stable-hashing-implementation-and-persisted-key-compatibility).
+Byte-span hashing also needs the source type model. Type predicates require a
+separate family-consistency audit: the existing PHP provider recognizes mixed numeric
+kinds but its generic fallback does not establish equivalent dynamic-kind behavior.
+Do not fill this gap by enumerating concrete scalar/container overloads in metadata.
+
 | Group | Examples | Next prerequisite / check |
 | --- | --- | --- |
 | Boxed formatting | number_format(mixed/dynamic) | Deferred CH15-RUNTIME-FORMAT-01: explicit numeric-kind validation before registration |
@@ -188,6 +204,13 @@ The old `php_builtins.json` manifest identifies itself as a planning scaffold an
 must not be treated as a complete ready-to-import catalog.
 
 ## Proof boundary
+
+Core-memory evidence: `/tmp/runtime-memory-module-20261009-1` passes three PHP
+suites (0.53–0.93s) and three generated-program builds/runs (1.83–6.11s).
+Both helpers and all four registered signatures execute; bool expressions are
+evaluated once and source declarations shadow runtime names normally. Linux /proc
+observations are positive; tests do not assert equality across changing samples.
+Stable-hash names remain rejected. No PCH or native compiler rebuild.
 
 `tests/runtime_strings.py` checks exact generated-program output for ASCII transforms,
 unchanged UTF-8 bytes, empty strings, byte predicates, source shadowing, input purity,

@@ -724,6 +724,19 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For the core process-memory utility catalog:
+
+```bash
+python3 compiler/my-try/tests/runtime_memory.py --results /tmp/FRESH_MEMORY_RESULTS
+```
+
+Three PHP suites check signatures, rejected/held utility calls, catalog reset and
+catalog/generic regressions. Three generated programs cover both memory helpers,
+all arities and bool choices, evaluation-once effects and source shadowing. Results
+are checked as nonnegative process-byte observations (positive on Linux with /proc),
+not equal across successive samples or equal to PHP allocator measurements. No PCH,
+native compiler rebuild or cross-platform proof is implied.
+
 For the opt-in strict regex catalog:
 
 ```bash
