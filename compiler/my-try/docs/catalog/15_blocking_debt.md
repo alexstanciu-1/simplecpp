@@ -151,6 +151,28 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-TYPE-METADATA-01 — review metadata-driven types, not hardcoded families
+
+User-requested review (2026-10-09): verify that runtime types, template parameters,
+capabilities/dependencies and backend bindings come from module metadata and reach
+consumers through the shared registry, rather than hardcoded type names or per-family
+branches. Audit registration, preparation and lowering, including nested Result and
+container combinations. Identify language-intrinsic semantic roles separately and
+justify any compiler-owned exceptions; do not confuse runtime declaration data with
+the compiler algorithms that interpret it.
+
+Current gap: function/constant catalogs are JSON-driven, but runtime type definitions
+and their capability declarations still live in PHP registration code. The recent
+registry capability correction removes consumer whitelists; it does **not** complete
+metadata-driven type registration. Extend the shared metadata schema/model deliberately,
+not by adding another list of hardcoded families.
+
+Acceptance proof: introduce an unfamiliar runtime type and nested applications through
+metadata alone, with separate C++ bindings, and exercise admission/copy checks without
+editing parser, preparation or emitter logic. Verify selected-module isolation and
+reuse of decoded metadata across registry resets. This entry records review work,
+not a claim that the audit or migration is already complete.
+
 ### CH15-RUNTIME-REGEX-01 — regex contracts and binding prerequisites
 
 The ready-contract module pass registers ten strict helpers (18 signatures), not
