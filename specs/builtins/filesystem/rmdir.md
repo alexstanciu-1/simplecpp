@@ -23,7 +23,9 @@ Doc Status: normative
 - Does not throw for ordinary remove failure.
 
 ## Runtime and wrapper split
-Runtime: call `std::filesystem::remove` with `std::error_code`.
+Runtime: use a directory-only removal operation (`rmdir` on POSIX, `_wrmdir`
+on Windows), not general `std::filesystem::remove`. A regular file must not be
+removed, including if substituted for a directory before the removal operation.
 - Wrapper: expose PHP-visible name only.
 
 ## Configuration visibility
@@ -37,3 +39,4 @@ Implemented in shared filesystem runtime support under `runtime/include/modules/
 ## Test matrix
 - non-empty directory returns false
 - empty directory removal succeeds
+- regular file removal fails and preserves the file

@@ -153,8 +153,8 @@ callable, constant and backend-binding identities. Old targets cannot reuse new 
 because their string IDs match. Catalog edits take effect in a new compiler session;
 live catalog replacement/hot reload is outside this slice.
 
-The current my-try host selects `core`, `json`, `strings` and `datetime`, preserving the
-JSON/string APIs and enabling the established strict datetime surface. Native validation snapshots
+The current my-try host selects `core`, `json`, `strings`, `datetime` and `filesystem`, preserving the
+JSON/string APIs and enabling the established strict datetime/filesystem surfaces. Native validation snapshots
 these same files and supplies their location
 explicitly; installed/distributed compiler packaging must likewise supply resources.
 Runtime-link/build-module policy remains with existing build owners. Catalog dependencies
@@ -173,6 +173,17 @@ order metadata loading; they do not yet configure linker inputs automatically.
   sleep returns `void`. Legacy `time`, `date` and `strtotime` aliases are not enabled.
   The build consumer must link the datetime provider object as well as core runtime;
   successful semantic registration does not imply automatic native-module linkage.
+- `filesystem`: eighteen strict `fs_*` helpers: path probes, whole-file get/put,
+  directory creation/removal, size/mtime/touch, entry removal/copy/rename,
+  canonical/lexical paths and checked `fs_read_snapshot`. Fallible reads return
+  `result<string>` or `result<int>`; ordinary mutations
+  and probes retain their boolean contracts. The snippet `core/runtime.cpp` already
+  bundles the filesystem and snapshot providers; do not link duplicate standalone
+  objects beside it. File-lock handles require registered
+  runtime types and remain unregistered. `fs_scan` retains its established
+  `result<vector<string>>` contract but awaits shared container-payload Result
+  operations before registration. Internal `scpp_output_*` portability
+  bindings are not public my-try source APIs; see [output ownership](portability/output_files.md).
 - `strings`: `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`,
   `str_starts_with`, `str_ends_with`, both arities of `trim`/`ltrim`/`rtrim`, `bin2hex`
   and three-string `str_replace`, plus `str_pad` (2/3/4 arguments) and `number_format`

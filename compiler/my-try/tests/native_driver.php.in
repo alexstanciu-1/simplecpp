@@ -1,7 +1,7 @@
 <?php
 namespace scpp\compiler;
 
-$runtime_modules /** vector<string> */ = ['core', 'json', 'strings', 'datetime'];
+$runtime_modules /** vector<string> */ = ['core', 'json', 'strings', 'datetime', 'filesystem'];
 Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(__RUNTIME_CATALOG_DIR__, $runtime_modules));
 
 if (__RUN_LLVM_PROOFS__)

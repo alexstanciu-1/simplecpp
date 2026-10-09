@@ -23,9 +23,10 @@ do not request approval for each ordinary metadata row or populate speculative r
 | core | Byte `strlen`; `count` for vector/hash/mixed/dynamic | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
+| filesystem | 18 strict fs_* helpers; inventory below | Existing scalar/Result calls; providers bundled in snippet runtime |
 | strings | 29 source helpers / 45 signatures, plus three padding constants; inventory below | Fixed/generic signatures, value sequencing, settled constants and existing PHP adapters for false-result contracts |
 
-The host and native-driver startup lists select these four modules. Other consumers
+The host and native-driver startup lists select these five modules. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
 String registration adds metadata and tests, not parsing/preparation/backend handlers.
 
@@ -65,9 +66,7 @@ No source aliases for internal `find`, `rfind`, `split`, `join`, `hex_decode` or
 `length` are invented. Existing profile adapters remain the owners where public
 wrapper shape differs from the underlying shared helper.
 
-## Remaining work, grouped by prerequisite
-
-### Datetime module inventory — 2026-10-09
+## Datetime module inventory — 2026-10-09
 
 The whole current strict surface in `modules/datetime/datetime.hpp` is registered
 in `runtime/metadata/modules/datetime.json`:
@@ -101,7 +100,39 @@ harness without changing the return type. The existing runtime's local mktime pa
 treats timestamp -1 as failure, and host time_t range/DST normalization need review;
 this registration does not redefine those edge semantics. See CH15-RUNTIME-DATETIME-01.
 
-### Other module prerequisites
+## Filesystem module inventory — 2026-10-09
+
+Audit boundary: strict names from the quick-learn contract and symbol map, the
+filesystem builtin specs, and `modules/filesystem/filesystem.hpp`. Legacy PHP
+false-wrapper names are not aliases of the strict Result APIs.
+
+| Names | Result | Status |
+| --- | --- | --- |
+| fs_is_file, fs_is_dir, fs_is_link, fs_exists | bool | Registered; is_link observes the link itself |
+| fs_get, fs_realpath | result<string> | Registered; empty file is a successful empty string |
+| fs_put, fs_size, fs_mtime | result<int> | Registered; put truncates/overwrites and returns bytes |
+| fs_scan | result<vector<string>> | Held for shared container-payload Result operations; contract remains sorted names without dot entries |
+| fs_mkdir, fs_touch, fs_rmdir, fs_remove, fs_copy, fs_rename | bool | Registered; one directory, no recursive removal; copy overwrites |
+| fs_dirname, fs_basename | string | Registered; existing filesystem lexical semantics, no extra PHP normalization |
+| fs_read_snapshot | result<string> | Registered; checked Linux read, unsupported platforms return error |
+| fs_lock_try, fs_lock_release, fs_lock_transfer | Deferred | Registered closeable file_lock handle/ownership prerequisite; no mixed surrogate |
+| scpp_output_* | Intentionally excluded | Internal portability/output-owner protocol, not public source APIs |
+| io_* stream/resource helpers | Separate owner/prerequisite | Registered resource handle and lifetime contracts required |
+
+No schema, parser, preparation or emitter changes. Host/native startup select the
+module; the focused runner links the snippet `core/runtime.cpp`, which already
+bundles `filesystem.cpp` and `snapshot.cpp`. Do not also link standalone copies.
+Automatic linkage for other optional modules remains build-owner work, not metadata loading.
+The ordinary rmdir provider now uses a directory-only OS primitive, correcting its
+previous ability to delete regular files without introducing a check/remove race.
+Linux proofs cover file/symlink preservation; Windows `_wrmdir` is not tested here.
+Snapshot guarantees remain those in the authoritative fs_read_snapshot spec, not
+an atomic snapshot promise against same-size/same-mtime in-place edits.
+The attempted generated fs_scan proof exposed `Result_Conversions`' payload-family
+restriction. Do not flatten this result into a vector or add a filesystem special
+case: generalize shared Result payload operations/copy rules first, then register it.
+
+## Remaining work, grouped by prerequisite
 
 | Group | Examples | Next prerequisite / check |
 | --- | --- | --- |
@@ -111,7 +142,7 @@ this registration does not redefine those edge semantics. See CH15-RUNTIME-DATET
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
 | Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Type/ownership/member registration is not yet represented by this function/constant metadata schema |
 | Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Reuse existing callable models, but extend metadata decoding and selection under explicit contracts |
-| Optional/linking modules | filesystem/IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime signatures now registered, automatic module linkage still separate |
+| Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime and ordinary filesystem signatures registered, automatic module linkage still separate |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
 | Profile availability | strict versus legacy PHP surfaces | Add explicit availability rules; old symbol maps are not permission to expose legacy-only contracts |
 
@@ -163,3 +194,12 @@ datetime runtime regression. The separately linked provider compiled in 1.98s;
 PHP suites took 0.36–0.80s each and generated/runtime tasks 3.50–8.50s each under
 the shared pool. Local-format fixtures use explicit `TZ=UTC0`. No PCH, compiler
 native rebuild, runtime behavior change, or new preparation/emission path.
+
+Filesystem evidence: `runtime_filesystem.py --results /tmp/runtime-filesystem-module-20261009-6`
+passed three PHP suites (0.46–0.86s), five generated-program builds/runs
+(2.41–4.83s), and the existing Linux snapshot race/error regression (6.53s).
+It covers all 18 registered bindings, source shadowing, selection/reset, operational
+failure versus empty/zero success, and regular-file/directory-link preservation by
+rmdir. Earlier iterations corrected fixture bool/string assertions, PHS path quoting
+and duplicate provider linkage; the attempted fs_scan fixture exposed the recorded
+shared Result prerequisite. No PCH or native compiler rebuild; Windows remains untested.

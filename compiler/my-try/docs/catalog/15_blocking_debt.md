@@ -151,6 +151,21 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-FILESYSTEM-01 — filesystem platform and edge review
+
+The eighteen-function strict catalog pass proves ordinary operations and the Linux
+snapshot contract, not comprehensive cross-platform filesystem behavior. Validate
+the directory-only `_wrmdir` branch on Windows, including directory-link behavior.
+Review `fs_mtime`'s file-clock/system-clock conversion near second boundaries before
+depending on exact round-tripping into `fs_read_snapshot`. Iterator increment and
+stream close failures also need a focused ordinary-filesystem error-path review;
+do not silently extend the checked snapshot protocol to ordinary get/put/scan.
+Registered file-lock/stream handle types and automatic optional-provider linkage
+remain separate prerequisites in the [module inventory](../planning/runtime_catalog_coverage.md).
+`fs_scan` is held outside executable metadata until shared Result operations accept
+container payloads (`result<vector<string>>`); retain the wrapper and copy contracts,
+not a module-specific extraction shortcut.
+
 ### CH15-RUNTIME-DATETIME-01 — datetime edge/platform review
 
 The strict module catalog preserves all 11 existing datetime signatures, including

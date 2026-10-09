@@ -9,6 +9,12 @@
 #include <utility>
 #include <vector>
 
+#if defined(_WIN32)
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
+
 namespace scpp::filesystem {
 namespace filesystem_detail {
 
@@ -150,9 +156,17 @@ bool_t touch(const string_t &path) {
 }
 
 bool_t rmdir(const string_t &path) {
-	std::error_code error;
-	const auto removed = std::filesystem::remove(scpp::filesystem::filesystem_detail::to_path(path), error);
-	return bool_t(!error && removed);
+	// Directory-only removal must not become a check-then-remove race that can
+	// delete a regular file substituted between the two operations.
+	if (path.native_value().find('\0') != std::string::npos) {
+		return bool_t(false);
+	}
+	const auto native_path = scpp::filesystem::filesystem_detail::to_path(path);
+#if defined(_WIN32)
+	return bool_t(::_wrmdir(native_path.c_str()) == 0);
+#else
+	return bool_t(::rmdir(native_path.c_str()) == 0);
+#endif
 }
 
 bool_t remove(const string_t &path) {

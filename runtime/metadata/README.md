@@ -4,7 +4,7 @@ Doc Status: supporting
 `modules/*.json` follows the [versioned module contract](../../specs/runtime_module_metadata.md).
 The files are runtime-owned, reusable compiler input, not generated C++ or my-try-local
 configuration. Current coverage includes core `strlen`/`count`, JSON free functions,
-all eleven strict datetime helpers,
+all eleven strict datetime helpers, eighteen strict filesystem helpers,
 and the ready strings surface (case/predicates/trimming, padding/constants,
 int/float formatting, split/typed join, slicing/comparison, hex conversion and
 explicit byte/Unicode helpers). Existing
@@ -22,3 +22,8 @@ them for registry installation/reset. Do not rescan these files during compilati
 
 Datetime bindings require the separately compiled `modules/datetime/datetime.cpp`
 provider. Catalog dependencies control metadata loading, not linker configuration.
+Filesystem providers (`modules/filesystem/filesystem.cpp` and `snapshot.cpp`) are
+already bundled into the snippet `core/runtime.cpp` object: do not link them twice.
+File-lock handle registration remains deferred; internal output-file
+portability bindings are intentionally not exposed as public source functions.
+`fs_scan` awaits shared Result operations for its `vector<string>` payload.
