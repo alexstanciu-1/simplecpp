@@ -60,12 +60,16 @@ not applied merely because a value is callable. Different closure expressions ma
 initialize or replace the same explicitly typed callable storage.
 
 The current v0.2 slice requires exact canonical parameter and return types, with
-ordinary by-value parameters. No variance or numeric signature adaptation is
+ordinary required by-value parameters. No variance or numeric signature adaptation is
 inferred. Explicit callable locals require initialization. Copying and reassignment
 preserve the callable contract. Function and instance/static method parameters use
 the same rule, for classes and structs alike.
 
-Empty callable storage, callable returns, reference signatures, reference captures and
+Closures with defaulted, variadic or reference parameters cannot cross this erased
+boundary in the current slice: preparation rejects the conversion rather than losing
+their declaration contract. Concrete closure calls retain those parameter properties.
+
+Empty callable storage, callable returns, erased reference signatures, reference captures and
 contextual signature inference remain deferred in this slice. Properties and
 wrapper/container storage of callable values are also deferred. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
@@ -95,6 +99,28 @@ $f = $cond
 ```
 
 ---
+
+## Shared parameter contracts
+
+Explicit closures and arrows use the same parameter preparation and invocation rules
+as functions and methods: supported scalar/enum defaults, trailing typed variadics,
+and writable/read-only reference parameters. Existing restrictions on default values,
+parameter ordering, exact reference storage and mutable borrowing apply unchanged.
+
+```php
+$f = function (int &$total, int ...$values): void {
+	foreach ($values as $value) { $total += $value; }
+};
+$g = fn(int $value = 4): int => $value + 1;
+```
+
+Omitted arguments are supplied by the shared call path. Variadic arguments become
+the ordinary `vector<T>` parameter storage. References alias the admitted caller
+storage; readonly references cannot be used to mutate it. Copying a concrete closure
+preserves its full parameter contract. Capturing a reference parameter by value still
+copies its current value; it does not introduce reference capture.
+
+Closure reference returns remain deferred and are distinct from reference inputs.
 
 ## Capture semantics
 

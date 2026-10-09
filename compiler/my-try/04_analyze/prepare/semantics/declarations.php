@@ -73,12 +73,6 @@ final class Declaration_Preparation
 	public static function prepare_anonymous(closure_node $syntax, preparation_context $context): prepared_source_callable
 	{
 		if ($syntax->signature_syntax->returns_reference) { throw new \RuntimeException('Closure reference returns are deferred'); }
-		$nodes /** Storage<parameter_node> */ = $syntax->signature_syntax->parameters;
-		foreach ($nodes as $parameter) {
-			if ($parameter->variadic || ($parameter->default_value !== null) || ($parameter->mode !== passing_mode::value)) {
-				throw new \RuntimeException('Closure parameters currently require exact-arity by-value inputs');
-			}
-		}
 		$facts = new prepared_source_callable();
 		$facts->signature->return_type = Type_Preparation::type($syntax->require_return_type(), $context);
 		if (Type_Queries::canonical($facts->signature->return_type)->definition() instanceof callable_type_definition) {

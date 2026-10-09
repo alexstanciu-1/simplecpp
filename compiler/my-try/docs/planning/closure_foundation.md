@@ -119,7 +119,14 @@ across syntax/collection, analysis lifecycle and backend consumers.
    ordinary function return path, so void arrows are not independently enabled.
    Revisit this in that owner rather than special-casing arrow body emission.
 
-Non-goals: reference/this captures, mutable capture bindings, escaping references, defaults/variadics and reference
+7. **Parameter parity — implemented.** Anonymous signatures now use the ordinary
+   parameter admission without an extra exact-arity/value-only gate. Defaults,
+   typed variadic packing and writable/read-only reference inputs reuse shared
+   callable contracts, call admission, storage access and C++ lowering unchanged.
+   Erased callable conversion explicitly rejects defaults, variadics and reference
+   signatures, preserving its current fixed required by-value contract.
+
+Non-goals: reference/this captures, mutable capture bindings, escaping references and reference
 returns on closures, named-call syntax, callable-return support,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
@@ -231,3 +238,15 @@ The final `closures`, `closure_model`, `ast` and `token_cleanup` suites passed i
 `/tmp/my-try-ch12-arrow-checks-final`; all 43 regenerated C++ artifacts are byte-identical
 to the executed ones. The shared runner used its expected FPM-to-CLI fallback.
 No native compiler rebuild or LLVM semantic change was performed.
+
+Parameter-parity proof (2026-10-09): 59 generated C++ programs passed with PCH in
+`/tmp/my-try-ch12-parameters-03`. New cases cover omitted/overridden/copied defaults,
+reference aliases, readonly observation of caller mutation, value/reference snapshots,
+container references, empty/nonempty variadic packs, ordered reference-plus-pack calls
+and arrows using the same contracts. Capturing a reference parameter remains a value
+snapshot. A default edit agrees with fresh compilation and executes the new value.
+Preparation rejects erased extended signatures, invalid reference arguments, readonly
+mutation and the same parameter-order/default/variadic violations as named functions.
+Ten focused suites passed in `/tmp/my-try-ch12-parameter-checks-01`, including method
+parameters, references, anonymous lifecycle/recovery and incremental C++. No native
+compiler rebuild was performed; the shared runner used CLI fallback.

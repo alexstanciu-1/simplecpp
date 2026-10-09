@@ -17,6 +17,8 @@ final class Conversion_Relationships implements conversion_relationship_query
 		$expected /** Storage<callable_parameter> */ = $required->parameters;
 		if (q_count($inputs) !== q_count($expected)) { return false; }
 		foreach ($inputs as $index => $input) {
+			// Erasure must not silently discard defaults, packing or reference contracts.
+			if (($input->default_value !== null) || ($input->element_type !== null)) { return false; }
 			if (!$input->type->matches($expected[$index]->type) || ($input->mode !== passing_mode::value)) { return false; }
 		}
 		Capability_Preparation::require_copy($source, $this->context);

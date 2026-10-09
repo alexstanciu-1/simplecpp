@@ -8,6 +8,21 @@ $directory = sys_get_temp_dir() . '/closure-execution-' . bin2hex(random_bytes(6
 mkdir($directory);
 $path = $directory . '/main.phs';
 $cases = [
+	'closure_default' => ['$f = function (int $n = 4): int { return $n; }; $g = $f; return $g();', 4],
+	'closure_default_override' => ['$f = function (int $n = 4): int { return $n; }; return $f(7);', 7],
+	'closure_reference' => ['$f = function (int &$n): void { $a =& $n; $a += 3; }; $n = 4; $f($n); return $n;', 7],
+	'closure_readonly_reference' => ['$f = function (const int &$read, int &$write): int { $write = 9; return $read; }; $n = 4; return $f($n, $n);', 9],
+	'closure_reference_snapshot' => ['$f = function (int $copy, int &$write): int { $write = 9; return $copy; }; $n = 4; return $f($n, $n);', 4],
+	'closure_capture_reference_parameter' => ['$f = function (int &$n): int { $g = fn(): int => $n; $n = 9; return $g(); }; $n = 4; return $f($n);', 4],
+	'closure_reference_container' => ['$f = function (vector<int> &$v): void { $v[] = 8; }; $v vector<int> = []; $f($v); return $v[0];', 8],
+	'closure_variadic' => ['$f = function (int $start = 2, int ...$values): int { foreach ($values as $v) { $start += $v; } return $start; }; return $f(1, 3, 5);', 9],
+	'closure_empty_variadic' => ['$f = function (int $start = 2, int ...$values): int { foreach ($values as $v) { $start += $v; } return $start; }; return $f();', 2],
+	'closure_ref_pack_order' => ['function bump(int &$n): int { $n++; return $n; } $f = function (int &$n, int ...$v): int { $n = 9; return $v[0] * 10 + $v[1]; }; $n = 0; return $f($n, bump($n), bump($n));', 12],
+	'arrow_default' => ['$base = 2; $f = fn(int $n = 4): int => $n + $base; return $f();', 6],
+	'arrow_reference' => ['$f = fn(int &$n): int => ++$n; $n = 4; $f($n); return $n;', 5],
+	'arrow_readonly_reference' => ['$f = fn(const int &$n): int => $n; $n = 5; return $f($n);', 5],
+	'arrow_variadic' => ['$f = fn(int ...$v): int => $v[0] + $v[1] + $v[2]; return $f(2, 3, 4);', 9],
+	'arrow_empty_variadic' => ['$f = fn(int $start = 2, int ...$v): int => empty($v) ? $start : 0; return $f();', 2],
 	'arrow_basic' => ['$factor = 3; $f = fn(int $x): int => $x * $factor; $factor = 8; return $f(2);', 6],
 	'arrow_repeat' => ['$n = 3; $f = fn(): int => $n + $n; return $f();', 6],
 	'arrow_callable' => ['$n = 2; $f = fn(): int => $n; $g = fn(): int => $f(); return $g();', 2],
@@ -68,6 +83,19 @@ try {
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('No-op changed closure output'); }
 	}
 	$invalid = [
+		'$f function<int(int)> = function (int $n = 4): int { return $n; }; return 0;',
+		'$f function<int(vector<int>)> = fn(int ...$v): int => 0; return 0;',
+		'$f function<int(int)> = fn(int &$n): int => $n; return 0;',
+		'$f function<int(int)> = fn(const int &$n): int => $n; return 0;',
+		'$f = fn(int &$n): int => $n; return $f(4);',
+		'$f = fn(const int &$n): int => $n; return $f(4);',
+		'$f = fn(int &$n): int => $n; $n = 1.0; return $f($n);',
+		'$f = fn(const int &$n): int => ++$n; return 0;',
+		'$f = function (const int &$n): void { $a =& $n; $a = 9; }; return 0;',
+		'$f = fn(int ...$v, int $n): int => $n; return 0;',
+		'$f = fn(int &...$v): int => 0; return 0;',
+		'$f = fn(int $n = 1, int $required): int => $required; return 0;',
+		'$f = fn(int &$n = 1): int => $n; return 0;',
 		'function noop(): void { return; } $f = fn(): void => noop(); return 0;',
 		'function noop(): void { return; } function outer(): void { return noop(); } return 0;',
 		'$f = fn(): int => $missing; return 0;',
@@ -175,6 +203,15 @@ try {
 	}
 	file_put_contents($output . '/arrow_capture_edit.cpp', $arrow_output);
 	$executions[] = ['path' => $output . '/arrow_capture_edit.cpp', 'exit_code' => 7];
+	$default_source = $cases['closure_default'][0];
+	Compiler_Lifecycle::reset(); file_put_contents($path, $default_source);
+	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	file_put_contents($path, str_replace('$n = 4', '$n = 6', $default_source)); $compiler->update_cpp([$path]);
+	$default_output = CPP_Probe::text(Model::$cpp_files);
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	if (CPP_Probe::text(Model::$cpp_files) !== $default_output) { throw new \LogicException('Closure default edit disagrees with fresh output'); }
+	file_put_contents($output . '/closure_default_edit.cpp', $default_output);
+	$executions[] = ['path' => $output . '/closure_default_edit.cpp', 'exit_code' => 6];
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	$registry = Model::$type_catalog->registry();
 	$integer = Language_Types::integer(Model::$language_scope);

@@ -140,12 +140,12 @@ try {
 	try { $compiler->prepare(); }
 	catch (\RuntimeException $error) { $missing_return = str_contains($error->getMessage(), 'can reach the end without returning'); }
 	closure_model_check($missing_return, 'Anonymous body bypassed shared return-path validation');
-	file_put_contents($path, '$f = function (int $value = 1): int { return $value; };');
+	file_put_contents($path, '$f = function (int &$value = 1): int { return $value; };');
 	$compiler->sync([$path]);
 	$unsupported_parameter = false;
 	try { $compiler->prepare(); }
-	catch (\RuntimeException $error) { $unsupported_parameter = str_contains($error->getMessage(), 'exact-arity by-value'); }
-	closure_model_check($unsupported_parameter, 'Deferred anonymous parameter contract was accepted');
+	catch (\RuntimeException $error) { $unsupported_parameter = str_contains($error->getMessage(), 'reference parameter defaults'); }
+	closure_model_check($unsupported_parameter, 'Anonymous parameters bypassed the shared default restriction');
 	$dependency_source = 'function external(int $n): int { return $n; } $f = function (): int { return external(1); };';
 	file_put_contents($path, $dependency_source); $compiler->sync([$path]);
 	try { $compiler->prepare(); } catch (\RuntimeException $expected) { }
