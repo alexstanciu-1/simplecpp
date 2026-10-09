@@ -164,12 +164,28 @@ across syntax/collection, analysis lifecycle and backend consumers.
     Query-only demands preserve inputs; changed inputs reschedule signature work;
     retirement clears them. Exact conversion and borrow gates are unchanged.
 
+13. **Empty explicit callable storage — implemented.** Default construction and
+    reset reuse existing storage lowering. Shared condition preparation publishes
+    callable-presence facts; `isset` consumes the same operation, while concrete
+    closures use the existing always-present operation. Invocation already evaluates
+    callee/arguments before `std::function` checks absence. No parallel call path,
+    definite-initialization state or new nullable permission is introduced.
+
 Non-goals: owning receiver/captured-field captures, mutable by-value capture bindings, captured-storage reference
 returns, erased reference signatures, named-call syntax, inferred callable returns,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
 
 ## Validation boundary
+
+Empty-storage checkpoint (2026-10-09): 12 generated C++ programs passed with PCH
+in `/tmp/my-try-ch12-empty-callables-final`, including ordered throwing invocation,
+absence through arguments/returns, independent copies and reset through a reference
+capture. Six invalid shapes reject; retained edits reject/recover and agree with
+fresh output. Seven related PHP suites passed in `/tmp/my-try-ch12-empty-checks`.
+Earlier attempts repaired unsupported test `echo`/effectful arithmetic and the
+exception harness's single-unit versus artifact transport handling. The shared
+runner used its expected CLI fallback. No native compiler rebuild was performed.
 
 Contextual checkpoint (2026-10-09): 12 generated C++ programs passed with PCH in
 `/tmp/my-try-ch12-contextual-04`. Ten focused PHP suites passed in

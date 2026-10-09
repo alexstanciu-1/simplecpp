@@ -145,7 +145,9 @@ final class Operator_Preparation
 		$expected = $context->integer;
 		if ($source_operator === operator_kind::logical_not)
 		{
+			$definition = Type_Queries::canonical($operands[0])->definition();
 			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope))
+				|| ($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)
 				|| Boxed_Conversions::is_boxed($operands[0]) || (Ownership_Conversions::role($operands[0]) !== null)
 				|| (Type_Queries::source_record($operands[0]) !== null)
 				|| (Nullable_Conversions::payload($operands[0]) !== null))

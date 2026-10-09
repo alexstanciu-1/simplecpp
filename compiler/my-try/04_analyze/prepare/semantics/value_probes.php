@@ -25,6 +25,10 @@ final class Value_Probe_Preparation
 			else {
 				$operand = Expression_Preparation::prepare($syntax->operand, $context);
 				self::require_type($operand->type, $syntax->probe_kind);
+				$definition = Type_Queries::canonical($operand->type)->definition();
+				if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
+					$facts->presence = Condition_Truthiness::decide($operand->type);
+				}
 			}
 			return $facts;
 		}
@@ -42,6 +46,8 @@ final class Value_Probe_Preparation
 			throw new \RuntimeException('S2S empty requires a collection or string; wrappers do not delegate emptiness');
 		}
 		if (Type_Queries::source_record($type) !== null) { return; }
+		$definition = Type_Queries::canonical($type)->definition();
+		if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) { return; }
 		if ($type->by_value()) {
 			throw new \RuntimeException('S2S probes do not support effective storage modifiers');
 		}

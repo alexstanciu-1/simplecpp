@@ -42,7 +42,8 @@ dependency scheduler, including retry and retirement. The capture-free vertical
 slice supports distinct concrete types, inferred locals/copies, ordinary
 invocation and native C++ lambda emission without type erasure;
 explicit `function<R(Args...)>` locals and by-value parameters additionally support
-exact signature conversion to `std::function`. Callable locals must be initialized.
+exact signature conversion to `std::function`. Explicit callable locals default to absent;
+presence checks and reset share the ordinary observation/cleanup paths.
 Explicit by-value `use ($name)` captures now preserve ordinary copy/sharing semantics
 and have read-only bindings. Shared object/dynamic contents remain mutable.
 Mutable by-value bindings remain deferred. Arrows now reuse the same closure
@@ -82,7 +83,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Concrete reference returns | implemented-bounded | `$f = fn&(int &$v): int => $v; $alias =& $f($value);` | passed | passed | deferred | Shared origin contract; capture/local escape and cycles reject; erased signatures deferred |
 | Borrowed receiver capture | implemented-bounded | `$f = function () use ($this): int { return $this->count; };` | passed | passed | deferred | Shared borrow lifetime; arrows, nested access and class/struct receivers; no owning capture |
 | Callable returns/factories | implemented-bounded | `function make(int $n): function<int()> { return fn(): int => $n; }` | passed | passed | deferred | Shared return conversion; exact erased signatures; owned environments only; `closures.php` |
-| [SCOPE-VAR-003](#scope-var-003) | deferred | `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);` | rejected-bounded | deferred | deferred | Empty callable storage deferred; current slice requires initialization |
+| [SCOPE-VAR-003](#scope-var-003) | implemented-bounded | `$f function<int(int)>; if (true) { $f = fn($x) => $x + 1; } return $f(5);` | passed | passed | deferred | Absent defaults, presence, assignment/copy/reset and throwing invocation; `empty_callables.php` |
 | [SCOPE-VAR-002](#scope-var-002) | implemented-bounded | `if (true) { $g = function (): int { return 1; }; } return $g();` | rejection passed | not emitted | deferred | Existing lexical scope; `closures.php` |
 | [CLOSURE-STAN-001](#closure-stan-001) | implemented-bounded | `$f function<string()> = function (): int { return 1; };` | rejection passed | not emitted | deferred | Exact signature mismatch rejected in shared preparation |
 | [CLOSURE-USE-001](#closure-use-001) | implemented-bounded | `$f function<int()> = function () use ($a): int { return $a; };` | passed | passed | deferred | Authored/contextual signature, copyable captures, read-only bindings |
@@ -96,15 +97,14 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 ### Reconciliation — 2026-10-09
 
-All 13 imported IDs now have a current decision: 12 are implemented within their
-stated positive/rejection bounds; empty callable storage remains deferred.
+All 13 imported IDs are implemented within their stated positive/rejection bounds,
+including empty explicitly typed callable storage.
 Concrete reference returns and borrowed receivers add two
 implemented rows; callable returns/factories subsequently add a third. This is card reconciliation, not whole-chapter completion: imported
 prose and extensions contain further capabilities.
 
 | Remaining capability | Current boundary / owner |
 | --- | --- |
-| Empty callable storage | Initialization required; SCOPE-VAR-003 |
 | Callable properties, wrappers and typed containers | Explicit preparation gates; shared storage/copy/lifetime admission still needed |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
 | Broader callable boundaries | Erased reference/default/variadic signatures, owning/escaping receivers and captured-field borrows remain outside the implemented slices |
@@ -119,7 +119,8 @@ Contextual signatures now fill omitted types from explicit callable contracts th
 the shared expected-type consumer path. Authored annotations are not overwritten;
 no body-based inference or new erasure permissions are introduced. Cross-file contract
 edits preserve anonymous identity and rebuild semantic signatures, not source syntax.
-Next recommended discussion: empty callable storage and its invocation/presence rules.
+Next recommended discussion: callable properties and typed-container storage,
+sharing storage/copy/lifetime admission rather than adding per-container exceptions.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
 `closure_model` checks, including added exact rejection shapes. No compiler semantics,
@@ -590,13 +591,17 @@ ERROR
 
 ## SCOPE-VAR-003
 
-**Strict-mode PHP input example:** `$f function<int(int)>; if (true) { $f = function (int $x): int { return $x + 1; }; } echo $f(5);`
+**Strict-mode PHP input example:** `$f function<int(int)>; if (true) { $f = fn($x) => $x + 1; } return $f(5);`
 
 This is the working source spelling. Imported examples and C++ expectations below remain reference material.
 
-**v0.2 decision / target C++:** Deferred empty callable storage. Current callable
-locals require initialization; the existing rejection is covered by `closures.php`.
-Empty invocation behavior or definite-initialization rules need a separate agreement.
+**v0.2 decision / target C++:** Explicit callable storage defaults to absent using
+ordinary `std::function` default construction. `isset`, conditions and `!` test
+presence; `clean`/`unset` reset through the existing whole-storage path. Concrete
+closures remain always present and nonresettable. Invocation throws after callee
+and argument evaluation; no definite-initialization analysis or nullable wrapper.
+See the [normative contract](../../../../specs/language/closures.md#callable-presence-and-reset)
+and `empty_callables.php` for state, copies, reset, rejection and ordering proofs.
 
 ### Imported version 1
 

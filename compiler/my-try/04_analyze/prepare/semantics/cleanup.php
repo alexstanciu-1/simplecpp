@@ -45,12 +45,13 @@ final class Cleanup_Preparation
 					throw new \RuntimeException('S2S unset cannot detach a native reference parameter');
 				}
 			}
-			if ((Nullable_Conversions::payload($value->type) === null) && (Ownership_Conversions::role($value->type) === null)) {
-				throw new \RuntimeException('S2S whole-variable unset requires nullable storage or an ownership handle; use clean for values');
+			if ((Nullable_Conversions::payload($value->type) === null) && (Ownership_Conversions::role($value->type) === null)
+				&& !(Type_Queries::canonical($value->type)->definition() instanceof callable_type_definition)) {
+				throw new \RuntimeException('S2S whole-variable unset requires nullable storage, an ownership handle or an explicit callable; use clean for values');
 			}
 		}
 		elseif (!self::supports_clean($value->type)) {
-			throw new \RuntimeException('S2S clean requires a supported scalar, vector, hash, mixed or dynamic storage type');
+			throw new \RuntimeException('S2S clean requires supported scalar, vector, hash, mixed, dynamic or explicit callable storage');
 		}
 		return new prepared_storage_reset($value->type);
 	}
@@ -65,7 +66,8 @@ final class Cleanup_Preparation
 			return true;
 		}
 		$definition = Type_Queries::canonical($type)->definition();
-		return ($definition === Model::$type_catalog->definition('vector'))
+		return ($definition instanceof callable_type_definition)
+			|| ($definition === Model::$type_catalog->definition('vector'))
 			|| ($definition === Model::$type_catalog->definition('hash'));
 	}
 }

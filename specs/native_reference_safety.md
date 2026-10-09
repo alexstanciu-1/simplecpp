@@ -152,7 +152,7 @@ borrowed in this slice.
 reference detachment or destruction of the variable's storage. The name remains
 usable and native aliases to that storage remain bound.
 
-- Whole-variable `unset` resets nullable storage or a shared/unique/weak handle to its absent state. Applying it
+- Whole-variable `unset` resets nullable storage, explicit callable storage or a shared/unique/weak handle to its absent state. Applying it
   directly to a native alias or reference parameter is rejected, not interpreted
   as PHP-style alias detachment. Resetting the original nullable owner while aliases
   exist is valid; all those aliases observe absence and can later assign a value.
@@ -160,6 +160,8 @@ usable and native aliases to that storage remain bound.
   alias. Supported scalar defaults are false, numeric zero and empty string;
   typed vectors/hashes become empty. This permission does not follow merely from
   a type being constructible, indexable or storable.
+- `clean` also resets explicit `function<R(Args...)>` storage to absent. Copies
+  retain independent callable values; concrete inferred closures cannot be reset.
 - `clean` resets mixed and dynamic storage to their own null values. In particular,
   cleaning dynamic storage does **not** clear the old shared container in place.
   Other copied dynamic bindings retain that object; native aliases to the reset

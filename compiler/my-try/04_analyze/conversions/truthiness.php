@@ -8,6 +8,14 @@ final class Condition_Truthiness
 	/** Wrapper conditions use their state/payload contract, never explicit bool casts. */
 	public static function decide(canonical_type_use $source): truthiness_decision
 	{
+		$definition = Type_Queries::canonical($source)->definition();
+		if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
+			$decision = new truthiness_decision();
+			$decision->source_type = $source;
+			$decision->operation = $definition instanceof callable_type_definition
+				? truthiness_operation::callable_presence : truthiness_operation::always_true;
+			return $decision;
+		}
 		if ((Type_Queries::source_record($source) !== null) && !Type_Queries::is_nominal_handle($source)) {
 			$decision = new truthiness_decision();
 			$decision->source_type = $source;

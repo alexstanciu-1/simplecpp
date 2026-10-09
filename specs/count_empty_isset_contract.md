@@ -70,6 +70,14 @@ null comparisons are rejected during preparation. Legacy runtime weak observers
 do not grant source-level permission or keep the observed object alive.
 Ownership handles do not acquire a `count` contract.
 
+### v0.2 callable presence
+
+Explicit `function<R(Args...)>` storage is present exactly when it contains a
+callable. `isset`, conditions and unary negation observe that state without
+copying the callable environment. Concrete inferred closures are always present.
+Neither callable form supports `empty` or `count`. Default construction and
+reset semantics follow the [closure contract](language/closures.md#callable-presence-and-reset).
+
 ## 3. `count(...)`
 
 `count(...)` returns the logical size only for countable carriers.

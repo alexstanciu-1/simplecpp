@@ -309,6 +309,8 @@ final class prepared_value_probe extends prepared_expression
 {
 	public value_probe_kind $operation;
 	public ?prepared_keyed_path $path = null;
+	/** Present when this type's isset contract is exactly its condition/presence operation. */
+	public ?truthiness_decision $presence = null;
 }
 
 /** Non-creating lookup recipe; workers select probing versus removal. */

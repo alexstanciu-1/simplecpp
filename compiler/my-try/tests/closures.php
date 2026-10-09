@@ -165,7 +165,6 @@ try {
 		'$items mixed = []; $items[] = function (): int { return 1; }; return 0;',
 		'$items dynamic = []; $items[] = function (): int { return 1; }; return 0;',
 		'$value = 1; return $value();',
-		'$f function<int()>; return 0;',
 		'$f function<string()> = function (): int { return 1; }; return 0;',
 		'$f function<int(int)> = function (float $n): int { return 1; }; return 0;',
 		'$f function<int(int)> = function (): int { return 1; }; return 0;',

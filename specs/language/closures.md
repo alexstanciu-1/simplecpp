@@ -61,7 +61,7 @@ initialize or replace the same explicitly typed callable storage.
 
 The current v0.2 slice requires exact canonical parameter and return types, with
 ordinary required by-value parameters. No variance or numeric signature adaptation is
-inferred. Explicit callable locals require initialization. Copying and reassignment
+inferred. Explicit callable locals default to an absent callable. Copying and reassignment
 preserve the callable contract. Function and instance/static method parameters use
 the same rule, for classes and structs alike.
 
@@ -73,10 +73,35 @@ Borrowing closures also cannot cross this boundary, including when a borrowing
 closure is captured by value inside another closure. Erasure must not hide lifetime
 obligations.
 
-Empty callable storage and erased reference signatures remain deferred in this slice. Properties and
+Erased reference signatures remain deferred in this slice. Properties and
 wrapper/container storage of callable values are also deferred. The C++ backend
 represents explicit callable contracts with `std::function`; this does not change
 the concrete-lambda lowering of inferred locals.
+
+### Callable presence and reset
+
+An explicit declaration such as `$f function<int(int)>;` creates valid absent
+storage, not an uninitialized value. `isset($f)` and conditions test whether it
+contains a callable; unary `!` negates that presence. Concrete inferred closures
+are always present. These observations evaluate the operand once without copying
+its environment and do not test the callable's return value.
+
+Assignment can establish or replace the callable under the same signature and
+borrow checks as initialization. Copying absent storage preserves absence; copying
+present storage copies its callable environment under ordinary capture semantics.
+Resetting either copy does not reset the other. `clean($f)` and `unset($f)` reset
+explicit callable storage to absent without removing its binding. Existing mutable
+storage and reference-detachment restrictions still apply. Concrete inferred
+closure storage cannot be reset this way.
+
+Invoking an absent callable throws a runtime exception. The callee is evaluated
+once, then the arguments in their established order, before invocation detects
+absence; completed side effects are not rolled back. The C++ backend uses
+`std::function`'s `std::bad_function_call`; structured error integration remains
+outside this slice. No definite-initialization analysis is required.
+
+Callable absence does not enable `nullable<function<...>>`, null assignment or
+null comparisons. `empty` and `count` do not apply to callable values.
 
 ### Contextual signature completion
 

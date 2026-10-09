@@ -100,6 +100,9 @@ final class CPP_Declarations
 		if ($decision->operation === truthiness_operation::value_presence) {
 			return 'static_cast<bool>((' . $expression . ').has_value())';
 		}
+		if ($decision->operation === truthiness_operation::callable_presence) {
+			return 'static_cast<bool>(' . $expression . ')';
+		}
 		if ($decision->operation === truthiness_operation::boolean_identity) {
 			return '(' . $expression . ').native_value()';
 		}
