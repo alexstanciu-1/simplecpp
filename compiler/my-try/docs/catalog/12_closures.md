@@ -105,7 +105,8 @@ prose and extensions contain further capabilities.
 
 | Remaining capability | Current boundary / owner |
 | --- | --- |
-| Callable wrappers and authored property defaults | Remain gated; explicit properties and vector/hash elements now use shared callable conversion |
+| Authored callable property defaults | Explicitly deferred by user on 2026-10-09, including callable leaves in container defaults; use constructor inputs or ordinary assignments |
+| Callable wrappers | Remain gated; explicit properties and vector/hash elements use shared callable conversion |
 | Callable payloads in mixed/dynamic | Rejection is implemented; extension remains [CH15-CALLABLE-01](15_blocking_debt.md#ch15-callable-01--callable-values-in-mixeddynamic-entries) |
 | Broader callable boundaries | Erased reference/default/variadic signatures, owning/escaping receivers and captured-field borrows remain outside the implemented slices |
 | Named arguments | Existing [CH15 debt](15_blocking_debt.md#ch15-named-args-01--named-arguments-across-source-callables); no new anonymous naming contract |
@@ -126,8 +127,12 @@ property invocation stays distinct from same-named methods. See `callable_storag
 Void-valued return expressions now share ordinary return preparation across functions,
 methods, closures and arrows. Only void-to-void forwarding is admitted; values are
 never discarded implicitly. See `void_returns.php`.
-Next recommended discussion: authored callable property defaults, with explicit
-creation context and per-instance initialization semantics.
+Authored callable property defaults are explicitly deferred (2026-10-09). The
+capture-free proposal, including callable leaves in instance-container defaults,
+is a discussion candidate only, not an approved implementation contract. Revisit
+creation context, initialization timing and constructor override rules when resumed.
+Next: select or defer the remaining extensions before chapter closeout; this
+decision does not itself defer all remaining CH12 work.
 
 Evidence: `/tmp/my-try-ch12-reconciliation-01` runs focused PHP `closures` and
 `closure_model` checks, including added exact rejection shapes. No compiler semantics,
