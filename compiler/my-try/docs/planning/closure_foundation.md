@@ -104,7 +104,22 @@ across syntax/collection, analysis lifecycle and backend consumers.
    inline and value-container storage; shared pointees/dynamic contents stay mutable.
    C++ uses value captures, with semantic read-only enforcement before emission.
 
-Non-goals: reference/this captures, mutable capture bindings, arrows, escaping references, defaults/variadics and reference
+6. **Arrows and automatic value capture — implemented.** `closure_syntax_kind`
+   distinguishes the two spellings on the existing concrete node. The parser
+   normalizes the arrow expression into the ordinary callable body/return node.
+   `Capture_Preparation` owns both capture admission paths; automatic discovery
+   uses existing collected references and a transient scope-to-callable map.
+   It treats signature/body scopes as one boundary, excludes parameters, propagates
+   nested-arrow requirements and stops at explicit closure bodies. It does not
+   rewrite source capture lists, attach outer bindings to inner references, add
+   retained indexes or introduce an AST visitor. C++ consumes the body work's
+   prepared capture fields for both spellings. Callable invocation is unchanged.
+
+   Remaining shared-return debt: a void-valued return expression is rejected by the
+   ordinary function return path, so void arrows are not independently enabled.
+   Revisit this in that owner rather than special-casing arrow body emission.
+
+Non-goals: reference/this captures, mutable capture bindings, escaping references, defaults/variadics and reference
 returns on closures, named-call syntax, callable-return support,
 dynamic/container storage and LLVM semantics. Mechanical adaptations to parked
 LLVM's shared syntax accesses preserve its existing shape only.
@@ -202,3 +217,17 @@ agreement are checked. Ten focused suites passed in `...capture-checks-01`; thir
 passed in `/tmp/my-try-ch12-capture-checks-02`, including reference, property mutation,
 indexing, cleanup and method-parameter regressions. The shared runner used CLI fallback.
 These are host compiler checks and generated-program execution, not a native compiler rebuild.
+
+Arrow proof (2026-10-09): 43 generated C++ programs passed with PCH in
+`/tmp/my-try-ch12-arrows-04`, including nested propagation, parameter shadowing,
+explicit-closure boundaries, repeated names, captured callable invocation, expression
+precedence, value snapshots, shared mutation and explicit callable conversion.
+Signature and capture-set edits agree with fresh compilation. Missing signatures,
+explicit arrow use lists and unsupported captures reject and recover on the same
+compiler instance. Nine focused compiler suites passed in
+`/tmp/my-try-ch12-arrow-checks-01`; that run's closure fixture initially assumed
+void-expression returns, and was corrected to assert the existing shared rejection.
+The final `closures`, `closure_model`, `ast` and `token_cleanup` suites passed in
+`/tmp/my-try-ch12-arrow-checks-final`; all 43 regenerated C++ artifacts are byte-identical
+to the executed ones. The shared runner used its expected FPM-to-CLI fallback.
+No native compiler rebuild or LLVM semantic change was performed.

@@ -30,9 +30,10 @@ final class CPP_Syntax
 			}
 			$previous_return = $this->context->return_type;
 			$capture_parts /** vector<string> */ = [];
-			$captures /** Storage<variable_reference_node> */ = $closure->captures;
+			$body_work = object_cast($closure->require_body()->work(), anonymous_body_work::class);
+			$captures /** Storage<prepared_capture> */ = $body_work->captures;
 			foreach ($captures as $capture) {
-				$capture_parts[] = $this->expression($capture);
+				$capture_parts[] = CPP_Generator::local_name(object_cast(weakref_get($capture->declaration), collected_name::class));
 			}
 			$this->context->return_type = $facts->signature->return_type;
 			$body = '';

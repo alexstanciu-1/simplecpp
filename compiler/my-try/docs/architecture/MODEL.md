@@ -226,6 +226,14 @@ invalidation reuses established inputs. Retirement clears the captured environme
 Capture bindings are read-only; prepared projection access distinguishes a shared
 pointee from its owning binding without changing ordinary const-parameter contracts.
 
+Arrow spelling is `closure_syntax_kind::arrow` on that same node. Its expression is
+normalized to an ordinary return inside the common body. Automatic capture discovery
+belongs to `Capture_Preparation`, which reads collected variable occurrences and
+lexical scopes using a transient callable-boundary index. It respects nested parameter
+bindings and explicit closure boundaries. Discovered names are semantic inputs, not
+synthetic source capture nodes. The C++ backend reads the same prepared capture fields
+for arrows and explicit closures; no separate callable type or emission path exists.
+
 Source functions and methods share `collected_source_callable`; final
 `collected_function` and `collected_method` preserve distinct lookup roles. Members
 observe their declaring type and are indexed separately from free functions and

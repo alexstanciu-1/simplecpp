@@ -131,9 +131,37 @@ parameters, locals and explicit captures); it cannot bypass a missing outer capt
 Existing local initialization, lexical scope and shadowing rules apply unchanged.
 
 The syntax order is `function (parameters) use (captures): ReturnType { body }`.
-Reference captures, `$this`, automatic arrow captures and mutable captured bindings
+Reference captures, `$this` and mutable captured bindings
 remain deferred. Parameter/return rules are shared with other source callables;
 capture admission does not enable deferred callable signatures or callable returns.
+
+## Arrow functions
+
+`fn(parameters): ReturnType => expression` is a closure with an expression body
+and automatic by-value capture:
+
+```php
+$factor = 3;
+$f = fn(int $x): int => $x * $factor;
+```
+
+The expression is its return expression; ordinary return checking and conversion
+apply. Parameter and return types remain explicit in the current v0.2 slice.
+The current ordinary return path does not admit a void-valued return expression;
+consequently `fn(): void => void_call()` remains rejected rather than gaining an
+arrow-only exception. A block closure with a void call followed by `return;` works.
+An arrow has the same concrete closure identity and explicit callable-boundary
+conversion rules as an authored `function` closure. It has no explicit `use` list.
+
+Referenced outer variables are captured once per name at creation, using the same
+copyability, read-only-binding and shared-payload rules as explicit value captures.
+Parameters are local and do not become captures. Nested arrows propagate their
+outer-variable requirements through enclosing arrows, stopping at a parameter that
+provides the name. Explicit closures still require their own `use` list: neither
+their body locals nor undeclared body references become enclosing-arrow captures.
+An explicit nested closure's authored capture list does contribute creation-site
+requirements to its enclosing arrow. Unavailable names and noncopyable captures
+are preparation errors. Reference capture and automatic `$this` remain deferred.
 
 ---
 

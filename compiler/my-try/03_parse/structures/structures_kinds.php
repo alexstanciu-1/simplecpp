@@ -3,6 +3,12 @@
 /* Syntax tags are independent of specialization operation and preparation types. */
 namespace scpp\compiler;
 
+enum closure_syntax_kind
+{
+	case explicit_closure;
+	case arrow;
+}
+
 enum node_category {
 	case syntax;
 	case expression;

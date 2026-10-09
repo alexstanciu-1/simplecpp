@@ -8,6 +8,20 @@ $directory = sys_get_temp_dir() . '/closure-execution-' . bin2hex(random_bytes(6
 mkdir($directory);
 $path = $directory . '/main.phs';
 $cases = [
+	'arrow_basic' => ['$factor = 3; $f = fn(int $x): int => $x * $factor; $factor = 8; return $f(2);', 6],
+	'arrow_repeat' => ['$n = 3; $f = fn(): int => $n + $n; return $f();', 6],
+	'arrow_callable' => ['$n = 2; $f = fn(): int => $n; $g = fn(): int => $f(); return $g();', 2],
+	'arrow_shadow' => ['$n = 99; $f = fn(int $n): int => $n + 1; return $f(4);', 5],
+	'arrow_nested' => ['$n = 5; $f = fn(): int => (fn(): int => $n)(); return $f();', 5],
+	'arrow_nested_parameter' => ['$n = 99; $f = fn(int $n): int => (fn(): int => $n)( ); return $f(7);', 7],
+	'arrow_inner_shadow' => ['$f = fn(): int => (fn(int $n): int => $n)(6); return $f();', 6],
+	'arrow_explicit_nested' => ['$n = 4; $f = fn(): int => (function () use ($n): int { return $n; })(); return $f();', 4],
+	'arrow_inside_explicit' => ['$n = 4; $f = function () use ($n): int { $g = fn(): int => $n; return $g(); }; return $f();', 4],
+	'arrow_inner_local' => ['$f = fn(): int => (function (): int { $n = 8; return (fn(): int => $n)(); })(); return $f();', 8],
+	'arrow_precedence' => ['$n = 2; $f = fn(int $x): int => $x > 0 ? $x + $n : 9; return $f(1);', 3],
+	'arrow_shared' => ['class Box { public int $n = 3; public function next(): int { $this->n++; return $this->n; } } $b = new Box(); $f = fn(): int => $b->next(); $f(); return $b->n;', 4],
+	'arrow_vector' => ['$v vector<int> = [3]; $f = fn(): int => $v[0]; $v[0] = 7; return $f();', 3],
+	'typed_arrow' => ['function apply(function<int(int)> $f): int { return $f(4); } $n = 2; return apply(fn(int $x): int => $x + $n);', 6],
 	'capture_snapshot' => ['$n = 3; $f = function (int $x) use ($n): int { return $x + $n; }; $n = 8; return $f(4);', 7],
 	'capture_copy' => ['$n = 3; $f = function () use ($n): int { return $n; }; $g = $f; return $g();', 3],
 	'capture_nested' => ['$n = 4; $f = function () use ($n): int { $g = function () use ($n): int { return $n + 1; }; return $g(); }; return $f();', 5],
@@ -54,6 +68,14 @@ try {
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('No-op changed closure output'); }
 	}
 	$invalid = [
+		'function noop(): void { return; } $f = fn(): void => noop(); return 0;',
+		'function noop(): void { return; } function outer(): void { return noop(); } return 0;',
+		'$f = fn(): int => $missing; return 0;',
+		'$n = 1; $f = fn(): int => $n++; return 0;',
+		'$n = 1; $f = function (): int { return (fn(): int => $n)(); }; return 0;',
+		'$n = 1; $f = fn(): int => (function (): int { return $n; })(); return 0;',
+		'class Box {} $b unique<Box> = new Box(); $f = fn(): bool => isset($b); return 0;',
+		'$f = fn(): int => $this->n; return 0;',
 		'$f = function () use ($absent): int { return 1; }; return 0;',
 		'$n = 1; $f = function () use ($n, $n): int { return $n; }; return 0;',
 		'$n = 1; $f = function (int $n) use ($n): int { return $n; }; return 0;',
@@ -127,13 +149,32 @@ try {
 	if (CPP_Probe::text(Model::$cpp_files) !== $capture_output) { throw new \LogicException('Capture signature edit disagrees with fresh output'); }
 	file_put_contents($output . '/capture_signature_edit.cpp', $capture_output);
 	$executions[] = ['path' => $output . '/capture_signature_edit.cpp', 'exit_code' => 6];
-	foreach (['$n = 1; $f = function () use (&$n): int { return $n; };', '$f = function () use ($this): void { return; };'] as $deferred) {
+	foreach (['$n = 1; $f = function () use (&$n): int { return $n; };', '$f = function () use ($this): void { return; };',
+		'$n = 1; $f = fn() use ($n): int => $n;', '$f = fn() => 1;', '$f = fn($n): int => $n;'] as $deferred) {
 		file_put_contents($path, $deferred); $rejected = false;
 		try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Deferred capture was accepted'); }
 		file_put_contents($path, $capture_changed); $compiler->update_cpp([$path]);
 		if (CPP_Probe::text(Model::$cpp_files) !== $capture_output) { throw new \LogicException('Capture failure did not recover'); }
 	}
+	$arrow_source = 'function calc(int $n): int { $m = 7; $f = fn(): int => (int)$n; return $f(); } return calc(4);';
+	Compiler_Lifecycle::reset(); file_put_contents($path, $arrow_source);
+	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	foreach (Model::collected_files()[0]->anonymous_callables as $identity) { $arrow_syntax = $identity->syntax(); }
+	if ($arrow_syntax->syntax_kind !== closure_syntax_kind::arrow || count($arrow_syntax->captures) !== 0
+		|| !($arrow_syntax->require_body()->statements[0] instanceof return_node)
+		|| count($arrow_syntax->require_body()->work()->captures) !== 1) {
+		throw new \LogicException('Arrow normalization or semantic capture ownership diverged');
+	}
+	foreach (['calc(int $n)' => 'calc(float $n)', '(int)$n' => '(int)$m'] as $before => $after) {
+		$arrow_source = str_replace([$before, 'calc(4)'], [$after, 'calc(4.0)'], $arrow_source);
+		file_put_contents($path, $arrow_source); $compiler->update_cpp([$path]);
+		$arrow_output = CPP_Probe::text(Model::$cpp_files);
+		Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		if (CPP_Probe::text(Model::$cpp_files) !== $arrow_output) { throw new \LogicException('Arrow capture edit disagrees with fresh output'); }
+	}
+	file_put_contents($output . '/arrow_capture_edit.cpp', $arrow_output);
+	$executions[] = ['path' => $output . '/arrow_capture_edit.cpp', 'exit_code' => 7];
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	$registry = Model::$type_catalog->registry();
 	$integer = Language_Types::integer(Model::$language_scope);

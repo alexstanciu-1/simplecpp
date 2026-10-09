@@ -27,7 +27,7 @@ cards below retain their original order and provenance.
 
 ## Progress
 
-### Current handoff — 2026-10-08
+### Current handoff — 2026-10-09
 
 The capture-free slice and coordinated callable prerequisite are agreed in the
 [closure foundation plan](../planning/closure_foundation.md). The first checkpoint
@@ -45,7 +45,9 @@ explicit `function<R(Args...)>` locals and by-value parameters additionally supp
 exact signature conversion to `std::function`. Callable locals must be initialized.
 Explicit by-value `use ($name)` captures now preserve ordinary copy/sharing semantics
 and have read-only bindings. Shared object/dynamic contents remain mutable. Reference,
-`$this`, arrow and mutable-binding captures remain deferred. The imported rows below
+`$this` and mutable-binding captures remain deferred. Arrows now reuse the same closure
+node and capture fields with scope-aware automatic value-capture discovery. Explicit
+parameter/return signatures remain required. The imported rows below
 are not implementation claims. Preserve parameter names for
 future named arguments without confusing them with anonymous callable identity.
 
@@ -61,7 +63,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CLOSURE-USE-001](#closure-use-001) | implemented-bounded | `$f function<int()> = function () use ($a): int { return $a; };` | passed | passed | deferred | Explicit signature, copyable captures, read-only bindings; omitted return/context inference remains deferred |
 | [CLOSURE-CALLABLE-001](#closure-callable-001) | pending-discussion | `$f function<int()> = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-CALLABLE-002](#closure-callable-002) | implemented-bounded | `$add = function (int $x, int $y) use ($base): int { return $base + $x + $y; };` | passed | passed | deferred | Explicit signatures and captures; inferred storage remains concrete, unlike imported v0.1 erasure |
-| [ARROW-001](#arrow-001) | pending-discussion | `$a = 10; $f = fn(int $x): int => $x + $a;` | unverified | unverified | deferred | — |
+| [ARROW-001](#arrow-001) | implemented-bounded | `$a = 10; $f = fn(int $x): int => $x + $a;` | passed | passed | deferred | Same closure node/body/capture pipeline; nested scope, snapshot, boundary and incremental proofs |
 | [CLOSURE-USE-002](#closure-use-002) | pending-discussion | `$f function<int()> = function () use (&$a): int { return $a; };` | unverified | unverified | deferred | — |
 | [CLOSURE-RETURN-001](#closure-return-001) | implemented-bounded | `$f = function () use ($a): vector<int> { return [$a, 2]; };` | passed | passed | deferred | Reuses ordinary function return/literal preparation; generated execution |
 | [CLOSURE-REJECT-001](#closure-reject-001) | pending-discussion | `$f = function () use ($a) { return $a; };` | unverified | unverified | deferred | — |
@@ -550,7 +552,11 @@ std::function<int_t(int_t)> f; if (...) { f = [](int_t x) -> int_t { return (x +
 
 ## ARROW-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented with explicit signatures, a normalized
+ordinary return body and scope-aware automatic value captures. Inferred locals remain
+concrete native lambdas; only explicit callable boundaries erase their types.
+Read-only captured bindings and ordinary shared-payload semantics apply. Void-valued
+return expressions remain shared-return debt, not an arrow-specific exception.
 
 ### Imported version 1
 

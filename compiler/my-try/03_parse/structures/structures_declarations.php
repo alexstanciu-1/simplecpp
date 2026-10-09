@@ -173,6 +173,7 @@ final class closure_node extends expression_node implements callable_syntax_owne
 	use Preparation_Facts;
 	private ?prepared_expression $prepared_facts = null;
 	public Storage $captures /** Storage<variable_reference_node> */;
+	public closure_syntax_kind $syntax_kind = closure_syntax_kind::explicit_closure;
 	public function require_preparation(): prepared_expression { return $this->prepared_facts; }
 	private ?anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */ = null;
 

@@ -1386,8 +1386,10 @@ final class Parser_Run
 	/** Anonymous syntax owns ordinary callable scopes without entering named lookup. */
 	private function closure_expression(): closure_node
 	{
-		$start = $this->expect('function');
+		$arrow = $this->text() === 'fn';
+		$start = $this->expect($arrow ? 'fn' : 'function');
 		$closure = new closure_node();
+		$closure->syntax_kind = $arrow ? closure_syntax_kind::arrow : closure_syntax_kind::explicit_closure;
 		$closure->set_span($start, $start);
 		$this->collector->collect_anonymous_callable($closure);
 		$signature_scope = $closure->signature_scope();
@@ -1399,6 +1401,7 @@ final class Parser_Run
 		if ($signature->returns_reference) { $this->position++; }
 		$signature->parameters = $this->callable_parameters($signature_scope, false);
 		if ($this->text() === 'use') {
+			if ($arrow) { throw new \RuntimeException($this->error_message('Arrow functions do not accept use lists')); }
 			$this->position++;
 			$this->expect('(');
 			$captures /** Storage<variable_reference_node> */ = $closure->captures;
@@ -1422,7 +1425,22 @@ final class Parser_Run
 		$signature->return_type = $this->type_syntax($signature_scope);
 		$body_scope = $closure->body_scope();
 		$this->retain_scope($body_scope);
-		$closure->set_parsed_body($this->block($body_scope));
+		if ($arrow) {
+			$this->expect('=>');
+			$body_start = $this->position;
+			$body = new function_body_node($body_scope);
+			$return_statement = new return_node();
+			$enclosing = $this->current_scope;
+			$this->current_scope = $body_scope;
+			try { $return_statement->expression = $this->expression(); }
+			finally { $this->current_scope = $enclosing; }
+			$this->finish_node($return_statement, $body_start);
+			$statements /** Storage<statement_node> */ = $body->statements;
+			$statements->append($return_statement);
+			$this->finish_node($body, $body_start);
+			$closure->set_parsed_body($body);
+		}
+		else { $closure->set_parsed_body($this->block($body_scope)); }
 		$this->finish_node($closure, $start);
 		return $closure;
 	}
@@ -1862,7 +1880,7 @@ final class Parser_Run
 	/** Parse literals, calls, variables and normalized grouping. */
 	private function primary_expression(): expression_node
 	{
-		if ($this->text() === 'function') {
+		if (($this->text() === 'function') || ($this->text() === 'fn')) {
 			return $this->closure_expression();
 		}
 		if ($this->text() === 'object_cast') {

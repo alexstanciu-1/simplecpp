@@ -1,0 +1,91 @@
+<?php
+
+/* Resolve creation-site environments; syntax and callable signatures stay separate. */
+namespace scpp\compiler;
+
+final class Capture_Preparation
+{
+	public static function prepare(closure_node $syntax, preparation_context $context): Storage /** Storage<prepared_capture> */
+	{
+		$names /** vector<string> */ = [];
+		if ($syntax->syntax_kind === closure_syntax_kind::arrow) {
+			$names = self::discover($syntax, $syntax->anonymous_identity()->collection());
+		}
+		else {
+			$references /** Storage<variable_reference_node> */ = $syntax->captures;
+			foreach ($references as $reference) {
+				Expression_Preparation::prepare($reference, $context);
+				$names[] = $reference->name;
+			}
+		}
+		$captures /** Storage<prepared_capture> */ = new Storage();
+		$seen /** hash<bool> */ = [];
+		foreach ($names as $name) {
+			if ($name === 'this') { throw new \RuntimeException('This capture is deferred'); }
+			if (isset($seen[$name])) { throw new \RuntimeException('Duplicate capture: ' . $name); }
+			$seen[$name] = true;
+			$bindings /** vector<prepared_storage> */ = $context->locals->named($name);
+			if (q_count($bindings) !== 1) { throw new \RuntimeException('Capture requires an established local: ' . $name); }
+			$binding = $bindings[0];
+			Capability_Preparation::require_copy($binding->storage_type(), $context);
+			$capture = new prepared_capture();
+			$capture->declaration = $binding->declaration;
+			$capture->type = $binding->storage_type();
+			$captures->append($capture);
+		}
+		return $captures;
+	}
+
+	/** Existing occurrence/scope indexes supply free names, not a second AST traversal. */
+	private static function discover(closure_node $target, collected_file $collection): array /** vector<string> */
+	{
+		$owners /** hash<closure_node, shared<scope>> */ = new \SplObjectStorage();
+		$anonymous /** Storage<anonymous_callable_identity> */ = $collection->anonymous_callables;
+		foreach ($anonymous as $identity) {
+			if (!$identity->deleted) {
+				$syntax = $identity->syntax();
+				$owners[$syntax->body_scope()] = $syntax;
+			}
+		}
+		$names /** vector<string> */ = [];
+		$seen /** hash<bool> */ = [];
+		$entries /** Storage<collected_name> */ = $collection->entries;
+		$indexes /** vector<int> */ = $collection->variable_references;
+		foreach ($indexes as $index) {
+			$entry = $entries[$index];
+			if ($entry->change_status === change_state::deleted) { continue; }
+			if (isset($seen[$entry->name])) { continue; }
+			$lookup_scope = object_cast(weakref_get($entry->scope), scope::class);
+			if (self::required_by($lookup_scope, $entry->name, $target, $owners)) {
+				$seen[$entry->name] = true;
+				$names[] = $entry->name;
+			}
+		}
+		return $names;
+	}
+
+	/** Parameters stop propagation; explicit nested bodies never contribute implicit captures. */
+	private static function required_by(scope $start, string $name, closure_node $target,
+		\SplObjectStorage $owners /** hash<closure_node, shared<scope>> */): bool
+	{
+		$current /** nullable<scope> */ = $start;
+		while ($current !== null) {
+			$lookup_scope /** scope */ = $current;
+			if ($lookup_scope->is_function()) {
+				if (!isset($owners[$lookup_scope])) { return false; }
+				$owner /** closure_node */ = $owners[$lookup_scope];
+				if (($owner !== $target) && ($owner->syntax_kind !== closure_syntax_kind::arrow)) { return false; }
+				$parameters /** Storage<parameter_node> */ = $owner->signature_syntax->parameters;
+				foreach ($parameters as $parameter) {
+					if ($parameter->name === $name) { return false; }
+				}
+				if ($owner === $target) { return true; }
+				// Body and signature scopes form one callable boundary, not two nested callables.
+				$current = $owner->signature_scope()->parent_scope();
+				continue;
+			}
+			$current = $lookup_scope->parent_scope();
+		}
+		return false;
+	}
+}
