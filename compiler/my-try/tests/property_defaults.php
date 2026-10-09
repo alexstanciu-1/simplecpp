@@ -23,6 +23,8 @@ function property_defaults_source(string $source): string
 $results = [];
 foreach (['class', 'struct'] as $kind) {
 	$cases = [
+		'name_first' => [$kind . ' C { public $n int = 7; public $items vector<int> = [2]; public $maybe ?int = null; public static $total int = 3; public $callback function<int()>; } $c = new C(); $items = $c->items; $n = $c->n; $t = C::$total; $c->callback = fn() => 4; $r = ($c->callback)(); return $items[0] + $n + $t + $r;', 16],
+		'name_first_nested' => ['struct Inner { $n int = 9; } ' . $kind . ' C { $inner \\Inner; $table hash<vector<int>> = {x: [2]}; } $c = new C(); return $c->inner->n;', 9],
 		'inferred' => ['const N = 7; ' . $kind . ' C { public $n = N; $f = 2.5; $b = true; $s = "8"; static $total = 3; } $c = new C(); $c->n++; C::$total += 2; $n = $c->n; $s = (int)$c->s; $f = (int)$c->f; $b = $c->b; $t = C::$total; if (!$b) { return 1; } return $n + $s + $f + $t;', 23],
 		'inferred_enum' => ['enum E { case First; case Second; } ' . $kind . ' C { $e = E::Second; static $other = E::First; } $c = new C(); $e = $c->e; return $e === E::Second ? 9 : 1;', 9],
 		'inferred_data' => [$kind . ' C { $v = vector<int>::[7, 2]; $d = dynamic::{x: 5}; } $c = new C(); $v = $c->v; $d = $c->d; $a int = $v[0]; $b int = $d["x"]; return $a + $b;', 12],
@@ -54,6 +56,9 @@ foreach (['class', 'struct'] as $kind) {
 		$results[] = ['path' => $path, 'exit_code' => 9];
 	}
 	foreach ([
+		'int $n int;',
+		'int $n string;',
+		'$n int string;',
 		'$n;',
 		'$n = null;',
 		'$n = [];',
@@ -118,7 +123,7 @@ try {
 	if (CPP_Output::encode(Model::$cpp_files) !== $changed) {
 		throw new \LogicException('Repair retained stale defaults');
 	}
-	foreach (['int $n = 4;', 'int $n;', 'int $n = LIMIT;'] as $property) {
+	foreach (['int $n = 4;', '$n int;', '$n int = LIMIT;', 'int $n = LIMIT;'] as $property) {
 		file_put_contents($types_path, 'namespace Types; use const Defaults\N as LIMIT; class C { ' . $property . ' }');
 		$compiler->update_cpp([$types_path]);
 	}

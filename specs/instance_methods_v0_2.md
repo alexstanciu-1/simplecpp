@@ -8,6 +8,17 @@ storage/copy differences remain unchanged. Availability is tracked in the
 
 ## Fixed instance calls
 
+### Property declaration spelling
+
+Class/struct instance and static properties accept both `public vector<int> $items;`
+and `public $items vector<int>;`. The type appears on exactly one side of the name;
+even identical types on both sides reject. Both spellings define the same property
+type, modifiers and initialization contract. Nullable, qualified, callable and nested
+generic types use the ordinary type grammar. Existing untyped declarations with an
+inferable initializer remain unchanged. This adds no parameter/property promotion.
+
+### Invocation
+
 The [concrete inheritance extension](inheritance_v0_2.md) enables inherited fixed
 methods and protected access with C++-compatible receiver restrictions. It supersedes
 the original slice's inheritance gate below, not its virtual-dispatch/overload gates.

@@ -21,6 +21,13 @@ comments reject at the opener before publishing a token list. This does not add
 semantic interpretation of documentation annotations. `tests/tokenizer.php` covers
 spans, spellings, comment-only inputs and incremental failure/repair/fresh agreement.
 
+## Property declarations
+
+Property declarations normalize type-first and name-first spelling into the same
+`property_node::type_syntax`, name, modifiers and initializer. Collection, preparation
+and lowering do not branch on spelling; a duplicated type is a parser diagnostic.
+The property-default suite covers both class/struct forms and spelling edits.
+
 ## Object type operations
 
 `object_type_node` owns an operand and literal target-type syntax, with a checked-cast

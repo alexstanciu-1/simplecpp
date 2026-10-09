@@ -1130,6 +1130,12 @@ final class Parser_Run
 		}
 		$name_index = $this->position++;
 		$name = $this->name_at($name_index);
+		if (($this->text() !== '=') && ($this->text() !== ';')) {
+			if ($type !== null) {
+				throw new \RuntimeException($this->error_message('Property type must appear only before or after its name'));
+			}
+			$type = $this->type_syntax($scope);
+		}
 		$previous = $this->collector->previous_field($scope, $name);
 		$field /** property_node */ = $previous ?? new property_node();
 		if ($previous === null) {
