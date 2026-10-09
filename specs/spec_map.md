@@ -81,6 +81,7 @@ The authority stack for the current project is:
    - `specs/metaprogramming_contract.md`
    - `specs/count_empty_isset_contract.md`
    - `specs/output_v0_2.md` (ordered echo statements and bounded output admission)
+   - `specs/runtime_module_metadata.md` (runtime-owned module catalogs and compiler ingestion boundaries)
    - `specs/error_values_and_take.md`
    - `specs/v0_2_preparation_diagnostics.md`
    - `specs/async_await.md`

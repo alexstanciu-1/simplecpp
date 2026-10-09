@@ -11,6 +11,8 @@ namespace scpp\compiler;
 
 final class Model
 {
+	/** Startup metadata survives semantic resets; no stage performs catalog IO. */
+	public static runtime_catalog_input $runtime_metadata;
 	/**
 	 * Modules in input order followed by deleted records; one store owns both key lookup and iteration.
 	 * @storage.owner

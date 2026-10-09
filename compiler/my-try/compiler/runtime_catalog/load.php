@@ -1,0 +1,67 @@
+<?php
+namespace scpp\compiler;
+
+/** Startup-only IO; dependency traversal reads each selected module exactly once. */
+final class Runtime_Catalog_Loader
+{
+	private runtime_catalog_input $input;
+	private array $active /** hash<bool> */ = [];
+	public function __construct(private string $directory)
+	{
+		$this->input = new runtime_catalog_input();
+	}
+
+	/** Return a complete dependency-ordered input or discard the private loader on failure. */
+	public static function load(string $directory, array $modules /** vector<string> */): runtime_catalog_input
+	{
+		$loader = new Runtime_Catalog_Loader($directory);
+		foreach ($modules as $name) {
+			$loader->visit($name);
+		}
+		return $loader->input;
+	}
+
+	/** Repeated requests share one row; active requests diagnose dependency cycles. */
+	private function visit(string $name): void
+	{
+		self::module_name($name);
+		$modules /** Keyed_Storage<runtime_module_spec> */ = $this->input->modules;
+		if (isset($modules[$name])) {
+			return;
+		}
+		if (isset($this->active[$name])) {
+			throw new \RuntimeException('Runtime module dependency cycle: ' . $name);
+		}
+		$this->active[$name] = true;
+		$file = $this->directory . '/' . $name . '.json';
+		$module = Runtime_Catalog_Reader::decode(fs_read_text($file), $file);
+		if ($module->name !== $name) {
+			throw new \RuntimeException('Runtime module identity mismatch: ' . $file);
+		}
+		$seen /** hash<bool> */ = [];
+		foreach ($module->dependencies as $dependency) {
+			if (isset($seen[$dependency])) {
+				throw new \RuntimeException('Duplicate runtime dependency: ' . $file);
+			}
+			$seen[$dependency] = true;
+			$this->visit($dependency);
+		}
+		unset($this->active[$name]);
+		$modules->add($name, $module);
+	}
+
+	/** Module identifiers cannot escape the explicitly supplied resource directory. */
+	private static function module_name(string $name): void
+	{
+		if ($name === '') {
+			throw new \RuntimeException('Empty runtime module name');
+		}
+		for ($index = 0; $index < string_byte_len($name); $index++) {
+			$byte = string_byte_at($name, $index);
+			if ((($byte >= 97) && ($byte <= 122)) || (($byte >= 48) && ($byte <= 57)) || ($byte === 95)) {
+				continue;
+			}
+			throw new \RuntimeException('Invalid runtime module name: ' . $name);
+		}
+	}
+}

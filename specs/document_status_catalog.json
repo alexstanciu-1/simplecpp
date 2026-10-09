@@ -4,6 +4,16 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path": "runtime/metadata/modules/core.json",
+                        "kind": "json",
+                        "doc_status": "normative"
+                    },
+                    {
+                        "path": "runtime/metadata/modules/json.json",
+                        "kind": "json",
+                        "doc_status": "normative"
+                    },
+                    {
                         "path": "specs/builtins/json/document.md",
                         "kind": "markdown",
                         "doc_status": "normative"

@@ -151,6 +151,15 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-TEXT-LENGTH-01 — Unicode length and cross-surface consistency
+
+User decision on 2026-10-09: v0.2 `strlen` counts bytes, using the existing runtime
+byte-length helper. Review a separately named Unicode/code-point length API and its
+performance, and reconcile older strict S2S metadata (`strlen -> str::length`) with
+the byte-oriented authoritative builtin contract. Preserve existing portable compiler
+managed-text helper behavior until its callers have been audited. This is non-blocking
+review debt; it does not authorize reverting v0.2 `strlen` to code-point counting.
+
 ### CH15-CALLABLE-TARGETS-01 — precise erased-call target analysis
 
 Recorded with the approved CH12 reference-return prerequisite on 2026-10-09.

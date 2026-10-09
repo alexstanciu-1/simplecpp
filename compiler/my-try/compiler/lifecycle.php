@@ -13,6 +13,18 @@ final class Compiler_Lifecycle
 		return self::$syntax_initialized;
 	}
 
+	/** Validate startup configuration privately before retaining it; hot reload is deferred. */
+	public static function configure_runtime(runtime_catalog_input $input): void
+	{
+		if (self::$syntax_initialized) {
+			throw new \LogicException('Runtime catalogs must be configured before compilation');
+		}
+		$types = Type_Definition_Registration::install(new Type_Registry());
+		Runtime_Catalog_Registration::resolve($input, $types);
+		CPP_Runtime_Catalog::validate($input);
+		Model::$runtime_metadata = $input;
+	}
+
 	/** Advance the shared run marker, clearing every participant before uint32 rollover. */
 	public static function next_revision(): int
 	{
@@ -74,9 +86,9 @@ final class Compiler_Lifecycle
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
-		JSON_Callable_Registration::install(Model::$language_scope);
+		Runtime_Catalog_Registration::publish(Model::$runtime_metadata, Model::$runtime_callables, Model::$language_scope);
 		Language_Callables::install(Model::$language_scope);
-		CPP_JSON_Registration::install();
+		CPP_Runtime_Catalog::install(Model::$runtime_metadata);
 		Model::$namespaces = new Namespace_Registry(Model::$language_scope);
 		Model::$global_scope = Model::$namespaces->register('')->published_scope();
 		self::reset_cpp();
@@ -113,9 +125,9 @@ final class Compiler_Lifecycle
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope);
-		JSON_Callable_Registration::install(Model::$language_scope);
+		Runtime_Catalog_Registration::publish(Model::$runtime_metadata, Model::$runtime_callables, Model::$language_scope);
 		Language_Callables::install(Model::$language_scope);
-		CPP_JSON_Registration::install();
+		CPP_Runtime_Catalog::install(Model::$runtime_metadata);
 		Model::$namespaces = new Namespace_Registry(Model::$language_scope);
 		Model::$global_scope = Model::$namespaces->register('')->published_scope();
 
@@ -128,7 +140,7 @@ final class Compiler_Lifecycle
 		$registry = new Type_Registry();
 		Model::$type_catalog = Type_Definition_Registration::install($registry);
 		Model::$cpp_type_bindings = CPP_Type_Binding_Registration::install(Model::$type_catalog);
-		Model::$runtime_callables = new Runtime_Callables();
+		Model::$runtime_callables = Runtime_Catalog_Registration::resolve(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog);
 		Model::$indexing_contracts = Indexing_Registration::install(Model::$type_catalog);
 		Model::$iteration_contracts = Iteration_Registration::install(Model::$type_catalog);

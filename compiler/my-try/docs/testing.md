@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_catalog.py --results FRESH` checks strict typed
+module decoding, dependency ordering/cycles, failed startup configuration preservation,
+reset reuse after catalog files are removed, stale-binding rejection, and byte-counting
+`strlen`/source shadowing through generated native programs. The existing `json_api.py`
+suite checks the migrated JSON signatures and executions. Neither rebuilds the compiler.
+
 `python3 compiler/my-try/tests/records.py --suite derived_data --no-pch --results FRESH`
 checks derived class/struct data construction through authored and inherited public
 constructors and composed synthesized inputs: parameter/property keys, base execution,

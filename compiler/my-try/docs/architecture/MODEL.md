@@ -13,6 +13,7 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 | `collected_file` | Canonical occurrences and semantic/generation handoffs for that source |
 | `language_scope`, `namespaces`, `global_scope` | Language definitions; canonical namespaces own published member scopes; global_scope aliases the registry's global member scope |
 | `runtime_callables`, `cpp_callable_bindings` | Installed free-function/static-factory identities/contracts and separate C++ bindings; reset with canonical types |
+| `runtime_metadata` | Typed startup module catalogs, independent of canonical identities; retained across resets without rereading JSON |
 | `initialization_contracts` | Runtime initialization declarations, internal input types and concrete bindings; reset with canonical types |
 | `indexing_contracts` | Registry-lifetime read/store/append contracts keyed by exact receiver definition; independent of construction opt-in |
 | `iteration_contracts` | Registry-lifetime key/value signatures keyed by exact receiver definition; independent of bracket/initialization capability |
@@ -25,6 +26,12 @@ owners. `Model` holds static roots shared by Compiler instances. Workers are tra
 `Model::tokens()`, `syntax_files()` and `collected_files()` are snapshots derived
 from source records, not parallel retained indexes. `Compiler_Lifecycle` owns root
 initialization/reset; Model does not call processing code.
+
+Runtime metadata loading is startup IO, not parse/collect/preparation work. The
+coordinator validates configuration privately before retention. Semantic registration
+resolves a complete private callable inventory; backend installation consumes separate
+binding records. Registry resets rebuild identities from the same immutable-by-contract
+metadata. Live replacement is rejected; see the [catalog contract](../../../../specs/runtime_module_metadata.md).
 
 ## Tagged boxed storage
 

@@ -83,7 +83,8 @@ def validate(args, target, results, logs, started, runner):
 
     # CH08 uses these APIs; excluding its sources would not prove the native compiler.
     required_runtime = ['runtime/include/modules/process/process.hpp',
-                        'runtime/include/modules/filesystem/file_lock.hpp']
+                        'runtime/include/modules/filesystem/file_lock.hpp',
+                        'runtime/include/modules/json/pull_reader.hpp']
     missing = [name for name in required_runtime if not (target / name).is_file()]
     # The schema facade must preserve JSON object/list shape and checked scalars.
     # Ordinary mixed/dynamic json_decode is not a substitute for this API.
@@ -93,7 +94,7 @@ def validate(args, target, results, logs, started, runner):
                      'json_node_int', 'json_node_boolean', 'json_node_member', 'json_node_at']
     missing.extend('strict runtime symbol ' + name for name in required_json if name not in symbols)
     if missing:
-        raise RuntimeError('Native CH08 runtime prerequisites missing: ' + ', '.join(missing)
+        raise RuntimeError('Native compiler runtime prerequisites missing: ' + ', '.join(missing)
                            + '; see compiler/my-try/docs/portability/conversion_review.md; select/integrate a compatible candidate')
 
     source = results / 'source'
@@ -109,9 +110,16 @@ def validate(args, target, results, logs, started, runner):
     (pipeline / 'a.phs').write_text('function ready(): int { return 1; }')
     (pipeline / 'b.phs').write_text('$')
     driver = (APP / 'tests/native_driver.php.in').read_text()
+    catalog_directory = results / 'runtime-catalogs'
+    shutil.copytree(ROOT / 'runtime/metadata/modules', catalog_directory, dirs_exist_ok=args.resume)
+    (results / 'runtime_catalog_hashes.json').write_text(json.dumps({
+        p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in sorted(catalog_directory.glob('*.json'))
+    }, indent=2) + '\n')
     shutil.copyfile(APP / 'tests/s2s_proof.php', source / 's2s_proof.php')
     shutil.copyfile(APP / 'tests/cpp_probe.php', source / 'cpp_probe.php')
     driver = (driver.replace('__REQUEST_FILE__', php_literal('request.txt'))
+              .replace('__RUNTIME_CATALOG_DIR__', php_literal(catalog_directory))
               .replace('__RECOVERY_DIR__', php_literal(recovery))
               .replace('__PIPELINE_DIR__', php_literal(pipeline))
               .replace('__RUN_LLVM_PROOFS__', 'false' if args.types_only else 'true'))

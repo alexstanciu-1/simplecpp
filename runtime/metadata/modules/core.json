@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "module": "core",
+  "dependencies": [],
+  "functions": [
+    {
+      "id": "core.strlen",
+      "name": "strlen",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": "int"
+    }
+  ],
+  "cpp": [
+    {
+      "id": "core.strlen",
+      "symbol": "scpp::str::byte_length",
+      "header": "modules/strings/strings.hpp"
+    }
+  ]
+}

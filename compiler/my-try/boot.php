@@ -39,7 +39,10 @@ require_once __DIR__ . '/03_parse/structures/iterators.php';
 require_once __DIR__ . '/03_parse/structures/structures.php';
 require_once __DIR__ . '/04_analyze/conversions/model.php';
 require_once __DIR__ . '/compiler/callables/catalog.php';
-require_once __DIR__ . '/compiler/callables/json.php';
+require_once __DIR__ . '/compiler/runtime_catalog/structures.php';
+require_once __DIR__ . '/compiler/runtime_catalog/reader.php';
+require_once __DIR__ . '/compiler/runtime_catalog/load.php';
+require_once __DIR__ . '/compiler/runtime_catalog/register.php';
 require_once __DIR__ . '/compiler/callables/language.php';
 require_once __DIR__ . '/compiler/types/contract_reference.php';
 require_once __DIR__ . '/compiler/indexing/contracts.php';
@@ -172,7 +175,7 @@ require_once __DIR__ . '/05_backend/cpp/literals.php';
 require_once __DIR__ . '/05_backend/cpp/declarations.php';
 require_once __DIR__ . '/05_backend/cpp/dispatch.php';
 require_once __DIR__ . '/05_backend/cpp/callable_bindings.php';
-require_once __DIR__ . '/05_backend/cpp/json_bindings.php';
+require_once __DIR__ . '/05_backend/cpp/runtime_catalog.php';
 require_once __DIR__ . '/05_backend/cpp/data_construction.php';
 require_once __DIR__ . '/05_backend/cpp/index_write.php';
 require_once __DIR__ . '/05_backend/cpp/keyed_paths.php';
@@ -208,3 +211,7 @@ require_once __DIR__ . '/compiler/publication.php';
 require_once __DIR__ . '/compiler/frontend.php';
 require_once __DIR__ . '/compiler/compile.php';
 require_once __DIR__ . '/compiler/host_report.php';
+
+// Host composition supplies the location once; native entrypoints do the same.
+Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(
+	dirname(__DIR__, 2) . '/runtime/metadata/modules', ['core', 'json']));

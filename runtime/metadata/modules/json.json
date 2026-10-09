@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "module": "json",
+  "dependencies": [
+    "core"
+  ],
+  "functions": [
+    {
+      "id": "json.decode.mixed",
+      "name": "json_decode_mixed",
+      "parameters": [
+        {
+          "name": "text",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "mixed"
+        ]
+      }
+    },
+    {
+      "id": "json.encode.mixed",
+      "name": "json_encode",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "mixed",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "json.decode.dynamic",
+      "name": "json_decode",
+      "parameters": [
+        {
+          "name": "text",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "dynamic"
+        ]
+      }
+    },
+    {
+      "id": "json.encode.dynamic",
+      "name": "json_encode",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "dynamic",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "string"
+        ]
+      }
+    }
+  ],
+  "cpp": [
+    {
+      "id": "json.decode.mixed",
+      "symbol": "scpp::json::decode_mixed",
+      "header": "modules/json/json.hpp"
+    },
+    {
+      "id": "json.encode.mixed",
+      "symbol": "scpp::json::encode",
+      "header": "modules/json/json.hpp"
+    },
+    {
+      "id": "json.decode.dynamic",
+      "symbol": "scpp::json::decode",
+      "header": "modules/json/json.hpp"
+    },
+    {
+      "id": "json.encode.dynamic",
+      "symbol": "scpp::json::encode",
+      "header": "modules/json/json.hpp"
+    }
+  ]
+}
