@@ -271,8 +271,9 @@ holds these symbols outside executable catalog JSON pending review:
   top-level specs and runtime. Do not silently choose insert versus suffix replacement.
 - Boxed `implode`: string-only element contract versus historical adapter casts;
   establish dynamic admission explicitly without mixing boxed families.
-- String/text builders: model registered runtime types and ownership first; byte-span
-  append also needs the source module's span type. Do not flatten them into mixed.
+- Builder byte-span append still needs the source module's span/view model; do not
+  flatten it into mixed. The two ordinary builder value types and their twenty other
+  helpers are now metadata-registered, using shared value/reference/observation rules.
 
 These gaps do not block the ready-contract module pass. Boxed formatting retains its
 separate debt below. No decisions to change these semantics are implied by this record.

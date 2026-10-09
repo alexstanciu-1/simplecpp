@@ -25,7 +25,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
 | regex (opt-in) | 10 helpers / 18 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
-| strings | 29 source helpers / 45 signatures, plus three padding constants; inventory below | Fixed/generic signatures, value sequencing, settled constants and existing PHP adapters for false-result contracts |
+| strings | 49 source helpers / 65 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
 
 The host and native-driver startup lists select the five non-regex modules. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
@@ -60,7 +60,7 @@ separate stable-hash owner and remain for that owner's module audit.
 | substr_replace | Held for semantic reconciliation | Spec says omitted length inserts and unusable negative window is a no-op; runtime replaces the suffix and inserts for some unusable windows |
 | implode(mixed/dynamic) | Held for contract review | Documented string-only elements versus adapter cast/coercion; dynamic admission not established |
 | strlen(nullable<string>) / runtime length overload | Not registered | Core's bounded v0.2 contract is string byte length; no implicit nullable overload |
-| string_parts_builder (10 free helpers), text_builder (11 free helpers) | Blocked on registered runtime types | Need truthful value/ownership/member contracts; text byte-span append additionally needs source::byte_span |
+| string_parts_builder (10 free helpers), text_builder (10 of 11 free helpers) | Registered value types and twenty helpers | Writable-reference mutation; non-retaining queries; only text byte-span append awaits source::byte_span |
 
 This completes the **ready-contract module pass**, not every runtime capability.
 No source aliases for internal `find`, `rfind`, `split`, `join`, `hex_decode` or
@@ -206,7 +206,7 @@ Do not fill this gap by enumerating concrete scalar/container overloads in metad
 | Contract-sensitive strings | strpos/strrpos, substr_replace, boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
 | Container-producing/consuming helpers | collection APIs | Audit by owning module; typed split/join now use existing application/generic contracts |
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
-| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Ordinary nominal/template declarations and capabilities now supported; audit actual APIs next; members/factories, specialized storage and handle lifetimes remain separate prerequisites |
+| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, source views | Ordinary type registration now supports the two string builders; shared storage, members/factories and handle lifetimes remain separate prerequisites |
 | Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Reuse existing callable models, but extend metadata decoding and selection under explicit contracts |
 | Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime/filesystem and ready regex signatures registered, automatic module linkage still separate |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
@@ -219,6 +219,30 @@ The old `php_builtins.json` manifest identifies itself as a planning scaffold an
 must not be treated as a complete ready-to-import catalog.
 
 ## Proof boundary
+
+Builder module batch (2026-10-09): both string builders and all twenty helpers that
+do not require byte_span now use strings-module metadata. Their existing C++ value
+carriers are copyable, while mutators receive stable writable references. Unary
+queries use non-retaining observation. No compiler worker, registry schema, backend
+or runtime implementation change was needed. The focused proof covers independent
+copies, explicit aliases, source value/reference boundaries, read-only/temporary
+queries, argument-induced replacement, byte preservation, negative reserve errors,
+selection/reset and rejected unsupported operations. Byte-span append stays held.
+
+Evidence: `/tmp/my-try-runtime-builders-20261009-2` passes six PHP suites
+(0.46–2.61s), ten generated C++ programs and two existing native runtime tests
+(6.85–10.74s per compile/run task under the shared pool). Exact output proves
+binary bytes, copy independence and single argument evaluation; capacity checks use
+lower bounds. FPM used CLI fallback because sandbox socket creation was unavailable.
+No PCH, native compiler rebuild or production runtime/compiler worker edits.
+
+Next prerequisite audit: JSON documents/nodes and file/process handles bind shared
+C++ payloads, not the ordinary inline carriers used by these builders. Source-default
+shared storage currently recognizes source declarations, and diagnostic/output fields
+need registered member facts. Do not label noncopyable payloads copyable or bake a
+shared wrapper into an opaque C++ binding to bypass that semantic distinction.
+Agree that shared-storage/member foundation before those module batches; builders
+provide a complete bounded use of the current ordinary-type foundation meanwhile.
 
 Runtime-type foundation: `types`/`cpp_types` records decode directly into typed startup
 data. One transient registration worker installs ordinary nominal/template definitions

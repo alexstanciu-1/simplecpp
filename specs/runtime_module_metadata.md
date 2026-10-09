@@ -329,8 +329,18 @@ replacement remain outside this bounded catalog pending the
   success; internal nullable/Result helpers are not substituted for public adapters.
   All these added parameters use ordinary value boundaries, not observation.
 
+  The strings catalog also declares the two ordinary value types
+  `string_parts_builder` and `text_builder`, with storage/copy capabilities and
+  separate C++ bindings. Twenty helper signatures cover creation, reservation,
+  queries, string/int/bool appends, materialization, clear and text take-string.
+  Mutators use writable-reference builder inputs; unary queries use non-retaining
+  observation. All use shared call admission/lowering, not builder-name dispatch.
+  The [builder contract](compiler_support_runtime_contract.md#v02-metadata-backed-builder-calls)
+  owns copy, mutation and lifetime semantics. Byte-span append remains unregistered
+  until the source module's span/view model is available.
+
 The strings module's unresolved search-coordinate and replacement contracts, boxed
-joining/formatting, and unregistered builder types are excluded from executable JSON.
+joining/formatting, and builder byte-span append are excluded from executable JSON.
 See the [module inventory](../compiler/my-try/docs/planning/runtime_catalog_coverage.md#strings-module-inventory--2026-10-09).
 The byte-length decision for `strlen` does not change `substr` or explicitly named
 Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the

@@ -724,6 +724,20 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For both metadata-registered string builder families:
+
+```bash
+python3 compiler/my-try/tests/runtime_builders.py --results /tmp/FRESH_BUILDER_RESULTS
+```
+
+Six focused PHP suites cover the builder contracts plus strings, runtime types,
+core registration, callables and references. Ten generated programs exercise all
+twenty registered helper signatures, independent copies, explicit aliases, mutable
+and readonly reference boundaries, temporary observations, replacement during argument
+evaluation, exact binary/UTF-8 bytes and negative-capacity errors. The two existing
+native runtime builder tests also run. No PCH or native compiler rebuild is implied;
+byte-span append is not admitted by this metadata slice.
+
 For ordinary runtime type metadata and the vector/hash registration migration:
 
 ```bash

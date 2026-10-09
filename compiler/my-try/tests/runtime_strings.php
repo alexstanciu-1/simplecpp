@@ -128,7 +128,7 @@ foreach (['pad_empty' => 'str_pad("abc", 1, "");', 'pad_mode' => 'str_pad("abc",
 }
 foreach (['strtolower();', 'strtoupper("x", "y");', 'lcfirst(vector<int>::[1]);',
 	'strpos("abc", "a");', 'strrpos("abc", "a");', 'substr_replace("abc", "x", 1);',
-	'string_parts_builder_create();', 'text_builder_create();',
+	'text_builder_append_byte_span();',
 	'explode(",");', 'explode(",", "abc", "2");', 'implode(vector<string>::[]);',
 	'implode(",", vector<int>::[1]);', 'implode(",", hash<int>::["a" => 1]);',
 	'$parts mixed = ["a"]; implode(",", $parts);', '$parts dynamic = ["a"]; implode(",", $parts);',

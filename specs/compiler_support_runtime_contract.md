@@ -141,6 +141,30 @@ Rules:
 - compiler metadata should keep source consumption blocked until builder
   storage, mutation, lifetime, and source-call consumers are accepted.
 
+### v0.2 metadata-backed builder calls
+
+The v0.2 strings catalog admits both builder value types and the helper surface
+above except `text_builder_append_byte_span`, whose source-view type remains a
+separate prerequisite. These are runtime carrier values, not implicitly shared
+source-class objects. Ordinary assignment and value parameters copy builder state;
+later mutation of a copy does not change the original. Explicit source reference
+aliases and reference parameters operate on the original storage.
+
+Mutating helpers (reserve, append, clear and take-string) receive the builder by
+writable reference. The remaining input, when present, uses the ordinary ordered
+value-argument boundary. Queries observe the builder without mutation, copying it,
+or retaining a reference; temporary query inputs live through the call. Returned
+strings own their bytes independently. Mutation requires an admitted stable writable
+place; temporary builders and read-only references cannot be mutation destinations.
+The existing general reference/lifetime rules apply, with no builder-specific escape
+policy. Capacity is a lower-bound reservation, not an exact allocation promise.
+
+This admission uses module type/callable metadata only. It adds no public properties,
+member-method syntax, data-literal initialization, automatic Result payload opt-in,
+generic `count` or `empty` capability. Use the explicit builder queries. Existing
+byte behavior and negative-capacity runtime errors remain unchanged. The older S2S
+metadata's source-consumption flags are not a v0.2 registry support matrix.
+
 ## Native Compiler Helpers
 
 The following native helpers are implementation-backed and may be used by

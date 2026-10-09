@@ -14,8 +14,9 @@ for remaining groups and prerequisites.
 
 Work proceeds module-by-module: audit public contracts, register the settled rows,
 validate the batch, and track blocked rows outside executable JSON. The strings
-inventory records 29 names/45 signatures; search-coordinate conflicts, replacement
-semantics, boxed joins/formatting and runtime builder types remain explicit gaps.
+inventory records 49 names/65 signatures, including two builder types and twenty
+builder helpers. Search-coordinate conflicts, replacement semantics, boxed
+joins/formatting and builder byte-span append remain explicit gaps.
 
 Load selected modules once at startup, decode directly to typed records and retain
 them for registry installation/reset. Do not rescan these files during compilation.
