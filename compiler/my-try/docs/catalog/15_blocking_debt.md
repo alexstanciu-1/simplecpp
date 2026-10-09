@@ -151,6 +151,30 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-REGEX-01 — regex contracts and binding prerequisites
+
+The ready-contract module pass registers ten strict helpers (18 signatures), not
+the entire regex surface. Held forms remain unavailable in executable metadata:
+
+- `regex_filter`: the builtin spec promises literal replacement, while the runtime
+  expands positional backreferences through `replace_impl`. Empty input skips
+  pattern/limit validation. Reconcile before exposing it; no behavior change is approved.
+- `regex_replace` with a limit: C++ overloads distinguish `const int_t& limit` from
+  `int_t& count`. The emitter's ordinary value snapshots are mutable lvalues and
+  can select count instead of limit. Use an unambiguous provider binding or a
+  general signature-aware backend binding model, not a regex-name branch or a
+  reference parameter pretending to be a value limit.
+- Count outputs require shared overloaded-reference admission; the current metadata
+  consumer intentionally rejects reference-bearing overload sets.
+- Callback APIs need explicit callable-type recipes in metadata, reusing the
+  callable registry and normal lifetime rules, not string/mixed placeholders.
+
+The module remains opt-in. Automatic optional-provider linkage and CLI selection
+remain with their build/composition owners. Current matching behavior, including
+UTF-8 zero-length advancement, warrants later edge review; registration is not a
+claim of new PCRE/PHP compatibility. These items do not block the registered subset.
+See the [inventory](../planning/runtime_catalog_coverage.md#regex-module-inventory--2026-10-09).
+
 ### CH15-RUNTIME-FILESYSTEM-01 — filesystem platform and edge review
 
 The nineteen-function strict catalog pass proves ordinary operations and the Linux

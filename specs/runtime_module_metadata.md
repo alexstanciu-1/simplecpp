@@ -162,6 +162,21 @@ order metadata loading; they do not yet configure linker inputs automatically.
 
 ## Initial contents and next boundary
 
+`regex` is available as a separately selected catalog; it is **not** added to the
+default module selection. It depends on core and preserves the existing opt-in
+PCRE2-8 requirement. Catalog selection does not install PCRE2 or link its provider:
+build consumers must supply `modules/regex/regex.cpp` and PCRE2-8. Its bounded
+contents are `regex_jit_available`, both `regex_quote` arities, two/three-argument
+forms of `regex_match`, `regex_match_named`, `regex_match_all`,
+`regex_match_all_pattern_order` and `regex_match_all_named`; two-argument
+`regex_grep`; three-argument `regex_replace`; and two/three/four-argument `regex_split`.
+It exposes `PREG_SPLIT_NO_EMPTY=1` and `PREG_SPLIT_DELIM_CAPTURE=2` as int constants.
+These are existing contracts from [regex intake](builtins/regex/first_pass.md), not
+new aliases or implicit container-to-bool conversions. Empty successful captures
+remain successful Result values. Filter, callbacks, count outputs and limited
+replacement remain outside this bounded catalog pending the
+[documented prerequisites](../compiler/my-try/docs/planning/runtime_catalog_coverage.md#regex-module-inventory--2026-10-09).
+
 - `core`: `strlen(string): int`, counting bytes through `scpp::str::byte_length`;
   `count(vector<T>)`, `count(hash<T,K>)`, `count(mixed)` and `count(dynamic)`, all
   observing inputs and returning `int` through `scpp::count`. Boxed kinds are checked

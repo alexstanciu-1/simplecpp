@@ -24,9 +24,10 @@ do not request approval for each ordinary metadata row or populate speculative r
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
+| regex (opt-in) | 10 helpers / 18 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
 | strings | 29 source helpers / 45 signatures, plus three padding constants; inventory below | Fixed/generic signatures, value sequencing, settled constants and existing PHP adapters for false-result contracts |
 
-The host and native-driver startup lists select these five modules. Other consumers
+The host and native-driver startup lists select the five non-regex modules. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
 String registration adds metadata and tests, not parsing/preparation/backend handlers.
 
@@ -134,6 +135,38 @@ admission and recursive copy-capability preparation. It preserves failure/empty
 distinctions and rejects container Result conditions/Elvis, whose payloads have no
 truthiness contract. No flattening of the Result or filesystem-specific preparation.
 
+## Regex module inventory — 2026-10-09
+
+The opt-in `regex.json` depends on core, but is deliberately absent from the host
+and native-driver default selections. Composition roots select it with
+`Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load($directory,
+['regex']))` before compilation. Existing programmatic selection is sufficient;
+this pass adds neither a CLI module option nor automatic native-cache linkage.
+Consumers link `modules/regex/regex.cpp` and PCRE2-8 explicitly. The host needs the
+PCRE2 development package; the focused runner queries pkg-config rather than
+installing anything or silently skipping execution.
+
+| Public surface | Status | Contract / remaining prerequisite |
+| --- | --- | --- |
+| regex_jit_available | Registered | bool; JIT is opportunistic, not required for matching |
+| regex_quote | Registered, 1/2 args | Escapes metacharacters and optional delimiter |
+| regex_match, regex_match_named | Registered, 2/3 args | Packed or named captures; optional byte offset |
+| regex_match_all, regex_match_all_pattern_order, regex_match_all_named | Registered, 2/3 args | Match-order, pattern-order or named nested containers |
+| regex_grep | Registered | Typed vector<string> input/output, input-order filtering |
+| regex_replace | Registered, 3 args only | Positional backreferences, unlimited replacements |
+| regex_split | Registered, 2/3/4 args | Optional limit/flags; PREG_SPLIT_NO_EMPTY=1 and PREG_SPLIT_DELIM_CAPTURE=2 |
+| regex_replace with limit; replacement/filter count outputs | Held | C++ const-limit/nonconst-count overloads collide for emitted value snapshots; need unambiguous provider bindings and shared reference-overload admission |
+| regex_filter | Held for semantic reconciliation | Its builtin spec says literal replacement; runtime replace_impl expands backreferences; empty inputs also bypass pattern/limit validation |
+| regex_replace_callback, regex_replace_callback_array | Held | Metadata cannot yet describe explicit callable signatures; no string or mixed substitute |
+| preg_* aliases, unsupported output-shape flags | Excluded | Legacy aliases are not strict APIs; runtime retains errors for unsupported split flags |
+
+Empty successful captures are not failure. `take`/`isset` observe Result state;
+container Result conditions and automatic wrapper `empty` remain rejected. Byte
+offsets and `/u` keep existing runtime semantics; registration does not promise new
+Unicode zero-length matching behavior. Scalar and nested container payloads use the
+same registry-driven Result transport/copy rules; no regex-specific type admission.
+See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01--regex-contracts-and-binding-prerequisites).
+
 ## Remaining work, grouped by prerequisite
 
 | Group | Examples | Next prerequisite / check |
@@ -144,7 +177,7 @@ truthiness contract. No flattening of the Result or filesystem-specific preparat
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
 | Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Type/ownership/member registration is not yet represented by this function/constant metadata schema |
 | Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Reuse existing callable models, but extend metadata decoding and selection under explicit contracts |
-| Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime and ordinary filesystem signatures registered, automatic module linkage still separate |
+| Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime/filesystem and ready regex signatures registered, automatic module linkage still separate |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
 | Profile availability | strict versus legacy PHP surfaces | Add explicit availability rules; old symbol maps are not permission to expose legacy-only contracts |
 
@@ -224,6 +257,13 @@ suites and 17 generated-C++/runtime checks, including an unfamiliar `parcel<T>`
 provider with no new preparation/lowering path. JSON type declarations remain out
 of scope; this repairs the existing type-registration foundation. No native compiler
 rebuild or PCH.
+
+Regex evidence: `/tmp/runtime-regex-module-20261009-final` passes five PHP suites
+(0.44–0.93s), nine generated-program builds/runs (4.01–10.32s), and the existing
+native regex regression (10.14s). PCRE2 10.42 is present; the separate provider
+compiled once in 2.50s. All 18 signatures execute, including the three nested
+capture shapes, without parser/preparation/emitter changes. Unselected calls reject
+before emission; startup defaults remain unchanged. No PCH or native compiler rebuild.
 
 Supplementary foundation checks in `/tmp/registry-capabilities-20261009-review`
 pass type-catalog, capability-rule validation, container calls, nullable records and

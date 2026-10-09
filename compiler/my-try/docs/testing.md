@@ -724,6 +724,21 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For the opt-in strict regex catalog:
+
+```bash
+python3 compiler/my-try/tests/runtime_regex.py --results /tmp/FRESH_REGEX_RESULTS
+```
+
+Five PHP suites cover explicit selection, rejection without selection, fresh
+identities with retained metadata, held signatures and catalog/generic/capability
+regressions. Nine generated programs exercise all 18 signatures, named/nested
+captures, byte offsets, UTF-8 matching, empty success versus failure, Result
+coalescing, split flags, source shadowing and ordered input snapshots. The runner
+also executes the existing native regex regression. PCRE2-8 development files and
+pkg-config are required; regex.cpp is compiled once and linked explicitly. This
+does not build the compiler natively, use PCH or enable regex by default.
+
 For the strict filesystem module catalog:
 
 ```bash

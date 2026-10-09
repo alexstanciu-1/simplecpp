@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "module": "regex",
+  "dependencies": ["core"],
+  "constants": [
+    {"name":"PREG_SPLIT_NO_EMPTY","type":"int","value":1},
+    {"name":"PREG_SPLIT_DELIM_CAPTURE","type":"int","value":2}
+  ],
+  "functions": [
+    {"id":"regex.jit_available.0","name":"regex_jit_available","parameters":[],"returns":"bool"},
+    {"id":"regex.quote.1","name":"regex_quote","parameters":[{"name":"text","type":"string","passing":"value"}],"returns":"string"},
+    {"id":"regex.quote.2","name":"regex_quote","parameters":[{"name":"text","type":"string","passing":"value"},{"name":"delimiter","type":"string","passing":"value"}],"returns":"string"},
+    {"id":"regex.match.2","name":"regex_match","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}},
+    {"id":"regex.match.3","name":"regex_match","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}},
+    {"id":"regex.match_named.2","name":"regex_match_named","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"hash","arguments":["string","string"]}]}},
+    {"id":"regex.match_named.3","name":"regex_match_named","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"hash","arguments":["string","string"]}]}},
+    {"id":"regex.match_all.2","name":"regex_match_all","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":[{"name":"vector","arguments":["string"]}]}]}},
+    {"id":"regex.match_all.3","name":"regex_match_all","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":[{"name":"vector","arguments":["string"]}]}]}},
+    {"id":"regex.match_all_pattern_order.2","name":"regex_match_all_pattern_order","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":[{"name":"vector","arguments":["string"]}]}]}},
+    {"id":"regex.match_all_pattern_order.3","name":"regex_match_all_pattern_order","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":[{"name":"vector","arguments":["string"]}]}]}},
+    {"id":"regex.match_all_named.2","name":"regex_match_all_named","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":[{"name":"hash","arguments":["string","string"]}]}]}},
+    {"id":"regex.match_all_named.3","name":"regex_match_all_named","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":[{"name":"hash","arguments":["string","string"]}]}]}},
+    {"id":"regex.grep.2","name":"regex_grep","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"input","type":{"name":"vector","arguments":["string"]},"passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}},
+    {"id":"regex.replace.3","name":"regex_replace","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
+    {"id":"regex.split.2","name":"regex_split","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}},
+    {"id":"regex.split.3","name":"regex_split","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"limit","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}},
+    {"id":"regex.split.4","name":"regex_split","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"limit","type":"int","passing":"value"},{"name":"flags","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}}
+  ],
+  "cpp": [
+    {"id":"regex.jit_available.0","symbol":"scpp::regex::jit_available","header":"modules/regex/regex.hpp"},
+    {"id":"regex.quote.1","symbol":"scpp::regex::quote","header":"modules/regex/regex.hpp"},
+    {"id":"regex.quote.2","symbol":"scpp::regex::quote","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match.2","symbol":"scpp::regex::match","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match.3","symbol":"scpp::regex::match","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_named.2","symbol":"scpp::regex::match_named","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_named.3","symbol":"scpp::regex::match_named","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_all.2","symbol":"scpp::regex::match_all","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_all.3","symbol":"scpp::regex::match_all","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_all_pattern_order.2","symbol":"scpp::regex::match_all_pattern_order","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_all_pattern_order.3","symbol":"scpp::regex::match_all_pattern_order","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_all_named.2","symbol":"scpp::regex::match_all_named","header":"modules/regex/regex.hpp"},
+    {"id":"regex.match_all_named.3","symbol":"scpp::regex::match_all_named","header":"modules/regex/regex.hpp"},
+    {"id":"regex.grep.2","symbol":"scpp::regex::grep","header":"modules/regex/regex.hpp"},
+    {"id":"regex.replace.3","symbol":"scpp::regex::replace","header":"modules/regex/regex.hpp"},
+    {"id":"regex.split.2","symbol":"scpp::regex::split","header":"modules/regex/regex.hpp"},
+    {"id":"regex.split.3","symbol":"scpp::regex::split","header":"modules/regex/regex.hpp"},
+    {"id":"regex.split.4","symbol":"scpp::regex::split","header":"modules/regex/regex.hpp"}
+  ]
+}
