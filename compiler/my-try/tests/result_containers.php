@@ -107,7 +107,7 @@ foreach ($cases as $name => [$source, $expected])
 	catch (\RuntimeException $error) { throw new \RuntimeException($name . ': ' . $error->getMessage()); }
 	if ($name === 'failed_extract')
 	{
-		$text = str_replace('int main()', 'int main() try', $text);
+		$text = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $text);
 		$end = strrpos($text, '// SCPP-END-ARTIFACT');
 		if ($end === false) { $end = strlen($text); }
 		$text = substr_replace($text, 'catch (const std::exception &) { return 0; }' . "\n", $end, 0);

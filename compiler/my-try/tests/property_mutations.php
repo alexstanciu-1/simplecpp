@@ -31,7 +31,7 @@ foreach (['class', 'struct'] as $kind) {
 		if ($name === 'failure') {
 			foreach (Model::$cpp_files as $artifact) {
 				if ($artifact->identity === 'entry') {
-					$text = str_replace('int main()', 'int main() try', $artifact->text)
+					$text = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $artifact->text)
 						. 'catch (const scpp::runtime_error &) { return record_C::field_total.native_value() == 2 ? 0 : 2; }' . "\n";
 					$output = str_replace($artifact->text, $text, $output);
 				}

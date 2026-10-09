@@ -243,8 +243,12 @@ final class CPP_Generator
 		}
 		$entry_owner = object_cast($entry_file->executable_body()->work(), preparation_owner::class);
 		$entry_fragment = $this->program->fragments[$entry_owner];
+		// Executable ABI initialization belongs to artifact assembly, not call preparation.
+		$entry_headers /** hash<bool> */ = $entry_fragment->headers;
+		$entry_headers['lang/php/cli_context.hpp'] = true;
 		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
-			CPP_Artifacts::preamble($entry_fragment->headers, $entry_fragment->forward_declarations, '') . "\nint main()\n{\n"
+			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . "\nint main(int argc, char** argv)\n{\n"
+			. "\tscpp::php::set_cli_args(argc, argv);\n"
 			. $entry_fragment->text . "\treturn 0;\n}\n"));
 		$helpers /** hash<prepared_compiler_call> */ = [];
 		foreach ($ordered as $owner) {

@@ -1073,7 +1073,7 @@ foreach ($cases as $name => [$source, $exit])
 			. ' catch (const scpp::runtime_error& error) { return error.code() == "' . $error_code
 			. '" && target.native_value() == 7 ? 0 : 91; } return 92; }';
 		$probe_path = $directory . '/' . $name . '_throw.cpp';
-		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', CPP_Probe::text(Model::$cpp_files)) . $probe);
+		file_put_contents($probe_path, str_replace('int main(int argc, char** argv)', 'int unused_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files)) . $probe);
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 
@@ -1096,7 +1096,7 @@ int main() { try { (void)function_fail(); } catch (const scpp::runtime_error& er
 			. ' return error.code() == "' . $error_code . '" ? 0 : 91; } return 92; }
 ';
 		$probe_path = $directory . '/' . $name . '_throw.cpp';
-		file_put_contents($probe_path, str_replace('int main()', 'int unused_entry()', CPP_Probe::text(Model::$cpp_files)) . $probe);
+		file_put_contents($probe_path, str_replace('int main(int argc, char** argv)', 'int unused_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files)) . $probe);
 		$executions[] = ['path' => $probe_path, 'exit_code' => 0];
 	}
 
@@ -1614,7 +1614,7 @@ foreach ($syntax->collection->entries as $entry) {
 	}
 }
 $compiler->cpp();
-$expected = "#include \"scpp/bool_t.hpp\"\n\nint main()\n{\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
+$expected = "#include \"scpp/bool_t.hpp\"\n#include \"lang/php/cli_context.hpp\"\n\nint main(int argc, char** argv)\n{\n\tscpp::php::set_cli_args(argc, argv);\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
 if (CPP_Probe::text(Model::$cpp_files) !== $expected) {
 	throw new \LogicException('Unexpected boolean C++ representation or includes');
 }

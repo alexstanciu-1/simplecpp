@@ -43,7 +43,7 @@ foreach (['class', 'struct'] as $kind) {
 		if (str_contains($name, 'failure')) {
 			foreach (Model::$cpp_files as $artifact) {
 				if ($artifact->identity === 'entry') {
-					$instrumented = str_replace('int main()', 'int main() try', $artifact->text)
+					$instrumented = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $artifact->text)
 						. 'catch (const scpp::runtime_error &e) { return e.code() == "invalid_object_cast" ? 9 : 102; }' . "\n";
 					$output = str_replace($artifact->text, $instrumented, $output);
 				}

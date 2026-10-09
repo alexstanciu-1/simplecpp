@@ -46,7 +46,7 @@ try {
 		$text = CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Callable Result no-op differs'); }
 		if (($name === 'absent_call') || ($name === 'failed_extract')) {
-			$text = str_replace('int main()', 'int main() try', $text);
+			$text = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $text);
 			$exception = $name === 'absent_call' ? 'std::bad_function_call' : 'std::exception';
 			$end = strrpos($text, '// SCPP-END-ARTIFACT');
 			if ($end === false) { $end = strlen($text); }

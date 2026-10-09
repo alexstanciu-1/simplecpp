@@ -25,7 +25,7 @@ foreach ($fixtures as $name => [$source, $predicate]) {
 		throw new \LogicException('Removed handle bridge returned to C++ output');
 	}
 	$headers = "#include \"scpp/memory.hpp\"\n#include \"scpp/hash_t.hpp\"\n";
-	$text = str_replace('int main()', 'int unused_entry()', $text);
+	$text = str_replace('int main(int argc, char** argv)', 'int unused_entry(int argc = 0, char** argv = nullptr)', $text);
 	$text = $headers . $text . "\nint main() { return (" . $predicate . ") ? 0 : 91; }\n";
 	$path = $output . '/' . $name . '.cpp';
 	file_put_contents($path, $text);

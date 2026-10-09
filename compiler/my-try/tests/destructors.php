@@ -83,11 +83,11 @@ foreach (['terminate', 'unwind'] as $name) {
 		if ($artifact->identity === 'entry') {
 			$instrumented = '';
 			if ($name === 'terminate') {
-				$probe = "#include <exception>\n#include <cstdlib>\nstatic const bool termination_probe = []() { std::set_terminate([]() { std::_Exit(record_C::field_count.native_value() == 1 ? 77 : 2); }); return true; }();\nint main()";
-				$instrumented = str_replace('int main()', $probe, $artifact->text);
+				$probe = "#include <exception>\n#include <cstdlib>\nstatic const bool termination_probe = []() { std::set_terminate([]() { std::_Exit(record_C::field_count.native_value() == 1 ? 77 : 2); }); return true; }();\nint main(int argc, char** argv)";
+				$instrumented = str_replace('int main(int argc, char** argv)', $probe, $artifact->text);
 			}
 			else {
-				$instrumented = str_replace('int main()', 'int main() try', $artifact->text)
+				$instrumented = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $artifact->text)
 					. 'catch (const scpp::runtime_error&) { return record_C::field_count.native_value() == 1 ? 0 : 2; }' . "\n";
 			}
 			$output = str_replace($artifact->text, $instrumented, $output);

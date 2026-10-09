@@ -724,6 +724,20 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For executable CLI startup and registered argument helpers:
+
+```bash
+python3 compiler/my-try/tests/runtime_cli.py --results /tmp/FRESH_CLI_RESULTS
+```
+
+The focused runner checks real argv with no user arguments, empty strings, spaces,
+UTF-8 and flag-like text; functions/methods in separate generated units observe the
+same startup state. It checks snapshot independence and exactly one initialization,
+source shadowing, rejected calls, S2S goldens and representative renamed/function-try
+entrypoint probes. The runtime process regression is also executed. Startup uses
+only the small CLI-context header; public helpers retain their ordinary binding
+header. No PCH or native compiler rebuild is implied.
+
 For the core process-memory utility catalog:
 
 ```bash

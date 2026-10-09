@@ -19,6 +19,13 @@ Current result shape:
 - index `0` is the program name
 - user arguments start at index `1`
 
+For v0.2 this is specifically a mixed-family list with mixed string entries, not
+a dynamic-family container. Each call returns an independent value snapshot;
+mutating it does not change the process arguments or another query's result.
+Empty arguments and spaces are preserved. Generated executable startup initializes
+the runtime context before authored entry code; calls inside functions and methods
+observe the same context across translation units.
+
 ## Current notes
 
 - intended for use inside functions and methods where `$argv` is not being passed explicitly

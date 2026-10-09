@@ -114,7 +114,7 @@ foreach ($cases as $name => $source) {
 	file_put_contents($argv[1] . '/' . $name . '.cpp', CPP_Probe::text(Model::$cpp_files));
 }
 strings_compile('$value dynamic = {a: 1}; $text = ucfirst($value); return 91;');
-$cpp = str_replace('int main()', 'int observed_entry()', CPP_Probe::text(Model::$cpp_files));
+$cpp = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
 $cpp = '#include <stdexcept>' . "\n" . $cpp
 	. "\nint main() { try { observed_entry(); } catch (const std::runtime_error&) { return 0; } return 92; }\n";
 file_put_contents($argv[1] . '/boxed_failure.cpp', $cpp);
@@ -122,7 +122,7 @@ foreach (['pad_empty' => 'str_pad("abc", 1, "");', 'pad_mode' => 'str_pad("abc",
 	'split_empty' => 'explode("", "abc");', 'byte_search_negative' => 'string_byte_find("abc", "a", -1);',
 	'byte_search_outside' => 'string_byte_find("abc", "a", 4);'] as $name => $source) {
 	strings_compile($source . ' return 91;');
-	$cpp = str_replace('int main()', 'int observed_entry()', CPP_Probe::text(Model::$cpp_files));
+	$cpp = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
 	$cpp .= "\nint main() { try { observed_entry(); } catch (const scpp::ValueError&) { return 0; } return 92; }\n";
 	file_put_contents($argv[1] . '/' . $name . '.cpp', $cpp);
 }

@@ -46,7 +46,7 @@ foreach ($fixtures as $name => [$source, $throws]) {
 		foreach (Model::$cpp_files as $artifact) {
 			if ($artifact->identity === 'entry') {
 				$check = str_ends_with($name, '_lazy') ? ' && record_Log::field_n.native_value() == 0' : '';
-				$instrumented = str_replace('int main()', 'int main() try', $artifact->text)
+				$instrumented = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $artifact->text)
 					. 'catch (const scpp::runtime_error &e) { return e.code() == "invalid_empty_operand"' . $check . ' ? 0 : 2; }' . "\n";
 				$output = str_replace($artifact->text, $instrumented, $output);
 			}

@@ -20,10 +20,10 @@ function interface_export(string $name, string $cpp, int $expected, bool $dispat
 	if (!isset($argv[1])) { return; }
 	if ($dispatch) {
 		// Native interface use proves the lowering without enabling source upcasts in this slice.
-		$cpp = str_replace("int main()\n{", "int main()\n{\n{ record_C value; record_I* view = &value; if (view->method_read().native_value() != 9) return 101; }", $cpp);
+		$cpp = str_replace("int main(int argc, char** argv)\n{", "int main(int argc, char** argv)\n{\n{ record_C value; record_I* view = &value; if (view->method_read().native_value() != 9) return 101; }", $cpp);
 	}
 	if ($name === 'interface_cleanup') {
-		$cpp = str_replace("int main()\n{", "int main()\n{\n{ record_I* view = new record_C(); delete view; }", $cpp);
+		$cpp = str_replace("int main(int argc, char** argv)\n{", "int main(int argc, char** argv)\n{\n{ record_I* view = new record_C(); delete view; }", $cpp);
 	}
 	$path = $argv[1] . '/' . $name . '.cpp'; file_put_contents($path, $cpp);
 	$results[] = ['path' => $path, 'exit_code' => $expected];

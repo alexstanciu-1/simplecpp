@@ -21,7 +21,7 @@ function handle_export(string $name, string $cpp, int $expected): void
 	if ($name === 'absent_call') {
 		foreach (Model::$cpp_files as $artifact) {
 			if ($artifact->identity === 'entry') {
-				$instrumented = str_replace('int main()', 'int main() try', $artifact->text)
+				$instrumented = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $artifact->text)
 					. 'catch (const scpp::runtime_error& error) { return std::string(error.what()).find("requires a present shared pointer") != std::string::npos ? 0 : 2; }' . "\n";
 				$cpp = str_replace($artifact->text, $instrumented, $cpp);
 			}

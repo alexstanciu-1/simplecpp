@@ -187,6 +187,13 @@ replacement remain outside this bounded catalog pending the
   contract, not PHP allocator accounting. Both bool values use the same measurement
   policy; unavailable measurements may return zero. Stable hashing is not registered
   pending algorithm/persisted-key compatibility review.
+  `cli_argc(): int`, `cli_argv(): mixed` and `cli_args(): mixed` expose executable
+  arguments through ordinary registered calls. The generated executable initializes
+  the runtime CLI context once before authored entry code, using native argc/argv.
+  Index zero is the program name; argument strings preserve their bytes, including
+  empty strings and spaces. Each argument-container query returns an independent
+  mixed-family value snapshot, not dynamic storage or a mutable view of native argv.
+  This adds neither implicit source globals nor a public `set_cli_args` function.
 - `json`: existing dynamic/mixed decode contracts and both encode overloads, preserving
   Result wrapping and family separation.
 - `datetime`: all eleven strict `dt_*` helpers from the datetime builtin contracts.

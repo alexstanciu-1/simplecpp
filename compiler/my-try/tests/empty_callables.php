@@ -30,7 +30,7 @@ try {
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Callable state no-op changed output'); }
 		if (($name === 'absent_call') || ($name === 'ordered_absent_call')) {
 			// Instrument only the fixture entrypoint to prove the runtime exception and effect order.
-			$text = str_replace('int main()', 'int main() try', $text);
+			$text = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $text);
 			$check = $name === 'absent_call' ? '0' : '(function_observed().native_value() == 12 ? 0 : 9)';
 			$end = strrpos($text, '// SCPP-END-ARTIFACT');
 			if ($end === false) { $end = strlen($text); }

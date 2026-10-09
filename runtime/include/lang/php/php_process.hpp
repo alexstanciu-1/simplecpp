@@ -1,9 +1,12 @@
 #pragma once
 
+#include "lang/php/cli_context.hpp"
+
 #include "scpp/bool_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/result_or_false.hpp"
 #include "scpp/string_t.hpp"
 
 #include <cstdio>
@@ -13,10 +16,7 @@
 
 namespace scpp::php {
 
-namespace detail {
-
-inline int g_cli_argc = 0;
-inline char** g_cli_argv = nullptr;
+namespace process_detail {
 
 #if defined(_WIN32)
 inline constexpr const char* shell_popen_mode() {
@@ -44,21 +44,16 @@ inline int shell_pclose(FILE* handle) {
 }
 #endif
 
-} // namespace detail
-
-inline void set_cli_args(int argc, char** argv) {
-	detail::g_cli_argc = argc;
-	detail::g_cli_argv = argv;
-}
+} // namespace process_detail
 
 [[nodiscard]] inline int_t<> cli_argc() {
-	return int_t<>(static_cast<std::int64_t>(detail::g_cli_argc));
+	return int_t<>(static_cast<std::int64_t>(cli_detail::g_cli_argc));
 }
 
 [[nodiscard]] inline mixed_t cli_argv() {
 	auto out = table_();
-	for (int index = 0; index < detail::g_cli_argc; ++index) {
-		const char* raw = detail::g_cli_argv == nullptr ? nullptr : detail::g_cli_argv[index];
+	for (int index = 0; index < cli_detail::g_cli_argc; ++index) {
+		const char* raw = cli_detail::g_cli_argv == nullptr ? nullptr : cli_detail::g_cli_argv[index];
 		static_cast<void>(out->append(mixed_t(string_t(raw == nullptr ? "" : raw))));
 	}
 	return mixed_t(std::move(out));
@@ -77,12 +72,12 @@ inline void set_cli_args(int argc, char** argv) {
 }
 
 [[nodiscard]] inline result_or_false<string_t> shell_exec(const string_t &command) {
-	FILE* raw = detail::shell_popen(command.native_value().c_str());
+	FILE* raw = process_detail::shell_popen(command.native_value().c_str());
 	if (raw == nullptr) {
 		return false_sentinel;
 	}
 
-	std::unique_ptr<FILE, int(*)(FILE*)> handle(raw, detail::shell_pclose);
+	std::unique_ptr<FILE, int(*)(FILE*)> handle(raw, process_detail::shell_pclose);
 	std::string output;
 	char buffer[4096];
 

@@ -42,7 +42,7 @@ try {
 		$text = CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Callable storage no-op changed output'); }
 		if (str_ends_with($name, '_absent_invoke')) {
-			$text = str_replace('int main()', 'int main() try', $text);
+			$text = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $text);
 			$end = strrpos($text, '// SCPP-END-ARTIFACT');
 			if ($end === false) { $end = strlen($text); }
 			$text = substr_replace($text, "catch (const std::bad_function_call &) { return 0; }\n", $end, 0);

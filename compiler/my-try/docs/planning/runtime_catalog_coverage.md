@@ -20,7 +20,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 
 | Module | Registered source surface | Shared path |
 | --- | --- | --- |
-| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak | Concrete and inferred generic contracts; non-retaining unary observation |
+| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
@@ -169,6 +169,15 @@ See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01
 
 ## Remaining work, grouped by prerequisite
 
+CLI prerequisite completed (2026-10-09): executable assembly emits
+`main(int argc, char** argv)` and initializes the PHP runtime CLI context once,
+before authored entry statements. The include-only `lang/php/cli_context.hpp`
+separates this small ABI state from boxed/process helpers; no retained fragments
+are mutated by assembly. `cli_argc`, `cli_argv` and `cli_args` are ordinary core
+metadata registrations. No call-name dispatch, implicit source globals, or type
+declarations were added. Managed child-process handles remain gated on runtime-type
+metadata; environment/shell helpers are outside this approved CLI slice.
+
 Core-utility audit (2026-10-09): `memory_get_usage` and `memory_get_peak_usage`
 are registered together, each with zero arguments or one bool `real_usage` argument.
 They report process resident/peak bytes, not PHP allocator internals; both bool
@@ -204,6 +213,17 @@ The old `php_builtins.json` manifest identifies itself as a planning scaffold an
 must not be treated as a complete ready-to-import catalog.
 
 ## Proof boundary
+
+CLI evidence: `/tmp/runtime-cli-20261009-final` passes five PHP suites, including
+S2S goldens/incremental checks (28.53s; others 0.54–1.12s), and five C++ build/run
+tasks (1.63–5.83s). Argument execution covers no user arguments and a second run
+with empty/spaced/UTF-8/flag-like arguments, cross-unit access and independent mixed
+snapshots. Representative function-try and renamed-entry exception probes and the
+existing runtime process regression pass. Generated builds exposed and repaired a
+missing direct Result include and internal namespace shadowing in php_process.hpp;
+public behavior is unchanged. Existing entrypoint instrumentation was mechanically
+adapted to argc/argv; not every affected historical suite was rerun. No PCH or native
+compiler rebuild.
 
 Core-memory evidence: `/tmp/runtime-memory-module-20261009-1` passes three PHP
 suites (0.53–0.93s) and three generated-program builds/runs (1.83–6.11s).

@@ -52,7 +52,7 @@ foreach (['qualifier_failure', 'rhs_failure'] as $name) {
 	$stage = $name === 'qualifier_failure' ? 1 : 2;
 	foreach (Model::$cpp_files as $artifact) {
 		if ($artifact->identity === 'entry') {
-			$instrumented = str_replace('int main()', 'int main() try', $artifact->text)
+			$instrumented = str_replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try', $artifact->text)
 				. 'catch (const scpp::runtime_error&) { return record_C::field_n.native_value() == 7 && record_C::field_stage.native_value() == ' . $stage . ' ? 0 : 2; }' . "\n";
 			$output = str_replace($artifact->text, $instrumented, $output);
 		}
