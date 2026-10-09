@@ -16,7 +16,7 @@ inventory of every internal C++ helper.
 | --- | --- | --- |
 | core | Byte `strlen`; `count` for vector/hash/mixed/dynamic | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
-| strings | Case conversion, contains/prefix/suffix, trim/ltrim/rtrim (both arities), bin2hex, string-only str_replace | Existing fixed signatures, exact overload selection and value-argument sequencing |
+| strings | Case conversion, contains/prefix/suffix, trim/ltrim/rtrim (both arities), bin2hex, string-only str_replace, str_pad (2/3/4), number_format (int/float, 1/2/4), three padding constants | Existing fixed signatures, exact overload selection, value-argument sequencing and settled constants |
 
 The host and native-driver startup lists select these three modules. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
@@ -26,11 +26,11 @@ String registration adds metadata and tests, not parsing/preparation/backend han
 
 | Group | Examples | Next prerequisite / check |
 | --- | --- | --- |
-| Further concrete string overloads | number_format, padding | Verify normative strict signatures and runtime bindings; documented finite arities can use ordinary overload rows |
+| Boxed formatting | number_format(mixed/dynamic) | Deferred CH15-RUNTIME-FORMAT-01: explicit numeric-kind validation before registration |
 | Contract-sensitive strings | strpos/strrpos, substr family, hex2bin | Reconcile older byte/falseable docs with strict runtime code-point/nullable/Result contracts before enabling; do not silently generalize the strlen decision |
 | Container-producing/consuming helpers | explode, implode, collection APIs | Audit exact element/key contracts and any mutating/reference requirements; generic registration itself is available |
 | Numeric and utility helpers | scalar math, formatting, predicates | Inventory authoritative signatures, supported widths and overload ambiguity; not every helper is a free function |
-| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Type/ownership/member registration is not yet represented by this callable-only metadata schema |
+| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, builders | Type/ownership/member registration is not yet represented by this function/constant metadata schema |
 | Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Reuse existing callable models, but extend metadata decoding and selection under explicit contracts |
 | Optional/linking modules | filesystem/IO, datetime, process, regex, curl, tasks, DB/UI | Pair validated public contracts with runtime type dependencies, module selection and build/link integration; metadata dependencies currently order loading only |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
@@ -55,3 +55,15 @@ range expansion), empty/all-trimmed inputs, unchanged non-ASCII whitespace, embe
 NUL/high bytes for hex encoding and replacement, and argument snapshots when a mask
 producer replaces the original string. These are metadata additions only; no parser,
 preparation, backend or runtime implementation changed for this group.
+
+Padding/formatting adds a reusable optional module-constant schema and separate
+type-lifetime constant inventory. Tests cover full signed-64 boundaries, schema/range
+failures, collisions, reset identities, source shadowing/constant aliases/labels, padding byte behavior
+and errors, and all six numeric formatting overloads. No parser, expression preparation,
+C++ emitter or runtime changes were needed. Boxed formatting remains explicitly deferred.
+
+2026-10-09 evidence: `runtime_strings.py --results /tmp/runtime-pad-format-20261009-3`
+passed four PHP suites and 19 generated-program builds/runs, without PCH or a native
+compiler rebuild. A final added cross-module collision assertion passed through the
+shared runner in `/tmp/runtime-pad-format-20261009-final-catalog` (0.39s PHP run).
+The runner used CLI fallback because sandbox socket creation prevented FPM startup.

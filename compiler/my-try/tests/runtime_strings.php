@@ -20,6 +20,10 @@ function strings_compile(string $source): void
 }
 
 $cases = [
+	'pad' => 'echo "[", str_pad("x", 4), "]|", str_pad("x", 6, "ab"), "|", str_pad("x", 4, "ab", STR_PAD_LEFT), "|", str_pad("x", 4, "ab", STR_PAD_RIGHT), "|", str_pad("x", 4, "ab", STR_PAD_BOTH), "|", str_pad("abc", -1), "|", str_pad("abc", 1), "|", str_pad("", 3, "ab"), "|", bin2hex(str_pad("é", 3, "中")); return 0;',
+	'format' => 'const NEG = -1234.5; echo number_format(1234), "|", number_format(1234, 2), "|", number_format(1234, 2, ",", "_"), "|", number_format(1234.5), "|", number_format(1234.5, 2), "|", number_format(1234.5, 2, ",", "_"), "|", number_format(NEG, 2), "|", number_format(1234, -2); return 0;',
+	'constant_shadow' => 'const STR_PAD_LEFT = 8; if (STR_PAD_LEFT !== 8 || STR_PAD_RIGHT !== 1 || STR_PAD_BOTH !== 2) { return 1; } return 0;',
+	'constant_use' => 'const MODE = STR_PAD_BOTH; $mode = MODE; switch ($mode) { case STR_PAD_BOTH: return 0; default: return 1; }',
 	'trim_default' => 'echo "[", trim(" \t\n\r\v\0abc \t\n\r\v\0"), "]|[", ltrim("  abc  "), "]|[", rtrim("  abc  "), "]|[", trim(" \t\0"), "]|[", trim(""), "]|[", trim(" x "), "]"; return 0;',
 	'trim_masks' => 'echo trim("xyabcxy", "xy"), "|", ltrim("xyabcxy", "xy"), "|", rtrim("xyabcxy", "xy"), "|", trim("abc", ""), "|", trim("a..b..z", "a..z"), "|", trim("xxx", "x"); return 0;',
 	'hex_bytes' => 'echo "[", bin2hex(""), "]|", bin2hex("Az"), "|", bin2hex("\0\xff"), "|", bin2hex("é中😀"); return 0;',
@@ -41,7 +45,16 @@ $cpp = str_replace('int main()', 'int observed_entry()', CPP_Probe::text(Model::
 $cpp = '#include <stdexcept>' . "\n" . $cpp
 	. "\nint main() { try { observed_entry(); } catch (const std::runtime_error&) { return 0; } return 92; }\n";
 file_put_contents($argv[1] . '/boxed_failure.cpp', $cpp);
+foreach (['pad_empty' => 'str_pad("abc", 1, "");', 'pad_mode' => 'str_pad("abc", 1, "x", 99);'] as $name => $source) {
+	strings_compile($source . ' return 91;');
+	$cpp = str_replace('int main()', 'int observed_entry()', CPP_Probe::text(Model::$cpp_files));
+	$cpp .= "\nint main() { try { observed_entry(); } catch (const scpp::ValueError&) { return 0; } return 92; }\n";
+	file_put_contents($argv[1] . '/' . $name . '.cpp', $cpp);
+}
 foreach (['strtolower();', 'strtoupper("x", "y");', 'lcfirst(vector<int>::[1]);',
+	'str_pad("x");', 'str_pad("x", "4");', 'str_pad("x", 4, " ", 1, 2);',
+	'number_format();', 'number_format(1, 2, ".");', 'number_format(true);', 'number_format("123");',
+	'$n mixed = 1; number_format($n);', '$n dynamic = 1; number_format($n);',
 	'ucfirst("x", "y");', 'str_contains("x");', 'str_starts_with("x", "y", "z");',
 	'str_ends_with(vector<int>::[], "x");', 'trim();', 'ltrim("x", "x", "x");',
 	'rtrim(vector<int>::[]);', 'trim("x", vector<int>::[]);', 'bin2hex("x", "y");',
@@ -58,6 +71,7 @@ $root = dirname(__DIR__, 3) . '/runtime/metadata/modules';
 $core = Runtime_Catalog_Loader::load($root, ['core']);
 $types = Type_Definition_Registration::install(new Type_Registry());
 $catalog = Runtime_Catalog_Registration::resolve($core, $types);
+strings_check(Runtime_Catalog_Registration::resolve_constants($core, $types)->is_empty(), 'Unselected constants were installed');
 $failed = false;
 try { $catalog->function_definition('strings.lower'); }
 catch (\Exception $error) { $failed = true; }

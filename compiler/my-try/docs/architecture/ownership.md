@@ -17,6 +17,12 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+`Model::$runtime_constants` owns settled module constants and their typed values.
+Language scope indexes these identities; prepared constant references use the existing
+constant-target protocol. Type-root reset replaces this inventory together with runtime
+callables, resolving the retained startup metadata without rereading JSON. Constants
+have no backend-symbol bindings; C++ consumes their settled values.
+
 Synthesized record initialization facts share the base's completed initialization
 contract in an acyclic ancestry graph and own only local input membership. The base
 link retains settled facts, never workers or copied source members. Normal declaration

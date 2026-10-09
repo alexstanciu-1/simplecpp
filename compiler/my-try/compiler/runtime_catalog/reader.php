@@ -46,6 +46,14 @@ final class Runtime_Catalog_Reader
 				}
 				$functions = true;
 			}
+			elseif ($key === 'constants')
+			{
+				$constants /** Storage<runtime_constant_spec> */ = $result->constants;
+				$reader->begin_array();
+				while ($reader->next_element()) {
+					$constants->append(self::constant_spec($reader));
+				}
+			}
 			elseif ($key === 'cpp')
 			{
 				$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $result->cpp;
@@ -67,6 +75,24 @@ final class Runtime_Catalog_Reader
 			$reader->reject('Missing runtime module field');
 		}
 		$reader->finish_document();
+		return $result;
+	}
+
+	/** The reader checks signed-64 range before conversion; no floating-point round trip. */
+	private static function constant_spec(\scpp\Json_Reader $reader): runtime_constant_spec
+	{
+		$result = new runtime_constant_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$key = $reader->property_name();
+			if ($key === 'name') { $result->name = self::name($reader); }
+			elseif ($key === 'type') { $result->type = self::name($reader); }
+			elseif ($key === 'value') { $result->decimal = (string)$reader->read_integer(); }
+			else { $reader->reject('Unknown runtime constant field: ' . $key); }
+		}
+		if (($result->name === '') || ($result->type === '') || ($result->decimal === '')) {
+			$reader->reject('Missing runtime constant field');
+		}
 		return $result;
 	}
 

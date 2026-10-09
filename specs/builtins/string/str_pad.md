@@ -40,8 +40,13 @@ Doc Status: normative
 - Implicitly available by project policy.
 
 ## Compile plan summary
-- Implemented in `runtime/include/scpp/support/php.hpp`.
+- Implemented in `runtime/include/modules/strings/strings.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+- v0.2 registers all three arities through `runtime/metadata/modules/strings.json`,
+  with module-owned integer constants `STR_PAD_LEFT = 0`, `STR_PAD_RIGHT = 1`,
+  `STR_PAD_BOTH = 2`. Invalid argument types/arity reject during preparation;
+  empty pad strings and invalid mode values throw `ValueError` at runtime, including
+  when the target length is not greater than the input length.
 
 ## Test matrix
 - default right padding

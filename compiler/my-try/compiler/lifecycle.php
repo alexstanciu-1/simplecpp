@@ -21,6 +21,7 @@ final class Compiler_Lifecycle
 		}
 		$types = Type_Definition_Registration::install(new Type_Registry());
 		Runtime_Catalog_Registration::resolve($input, $types);
+		Runtime_Catalog_Registration::resolve_constants($input, $types);
 		CPP_Runtime_Catalog::validate($input);
 		Model::$runtime_metadata = $input;
 	}
@@ -85,7 +86,8 @@ final class Compiler_Lifecycle
 		self::reset_types();
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
-		Language_Constants::install(Model::$language_scope);
+		Language_Constants::install(Model::$language_scope, Model::$type_catalog);
+		foreach (Model::$runtime_constants as $constant) { Model::$language_scope->register_constant($constant); }
 		Runtime_Catalog_Registration::publish(Model::$runtime_metadata, Model::$runtime_callables, Model::$language_scope);
 		Language_Callables::install(Model::$language_scope);
 		CPP_Runtime_Catalog::install(Model::$runtime_metadata);
@@ -124,7 +126,8 @@ final class Compiler_Lifecycle
 		self::reset_types();
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
-		Language_Constants::install(Model::$language_scope);
+		Language_Constants::install(Model::$language_scope, Model::$type_catalog);
+		foreach (Model::$runtime_constants as $constant) { Model::$language_scope->register_constant($constant); }
 		Runtime_Catalog_Registration::publish(Model::$runtime_metadata, Model::$runtime_callables, Model::$language_scope);
 		Language_Callables::install(Model::$language_scope);
 		CPP_Runtime_Catalog::install(Model::$runtime_metadata);
@@ -141,6 +144,7 @@ final class Compiler_Lifecycle
 		Model::$type_catalog = Type_Definition_Registration::install($registry);
 		Model::$cpp_type_bindings = CPP_Type_Binding_Registration::install(Model::$type_catalog);
 		Model::$runtime_callables = Runtime_Catalog_Registration::resolve(Model::$runtime_metadata, Model::$type_catalog);
+		Model::$runtime_constants = Runtime_Catalog_Registration::resolve_constants(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog);
 		Model::$indexing_contracts = Indexing_Registration::install(Model::$type_catalog);
 		Model::$iteration_contracts = Iteration_Registration::install(Model::$type_catalog);

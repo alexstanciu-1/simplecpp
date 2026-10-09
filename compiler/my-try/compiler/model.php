@@ -42,6 +42,8 @@ final class Model
 	public static CPP_Type_Bindings $cpp_type_bindings;
 	/** Installed callable contracts and independent backend bindings share the type-root lifetime. */
 	public static Runtime_Callables $runtime_callables;
+	/** Settled module constants share type-root lifetime; scopes only index them. */
+	public static Storage $runtime_constants /** Storage<registered_constant> */;
 	public static Initialization_Contracts $initialization_contracts;
 	public static Indexing_Contracts $indexing_contracts;
 	public static Iteration_Contracts $iteration_contracts;

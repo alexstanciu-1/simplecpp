@@ -2,7 +2,21 @@
   "version": 1,
   "module": "strings",
   "dependencies": ["core"],
+  "constants": [
+    {"name":"STR_PAD_LEFT","type":"int","value":0},
+    {"name":"STR_PAD_RIGHT","type":"int","value":1},
+    {"name":"STR_PAD_BOTH","type":"int","value":2}
+  ],
   "functions": [
+    {"id":"strings.pad.2","name":"str_pad","parameters":[{"name":"input","type":"string","passing":"value"},{"name":"length","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"strings.pad.3","name":"str_pad","parameters":[{"name":"input","type":"string","passing":"value"},{"name":"length","type":"int","passing":"value"},{"name":"padding","type":"string","passing":"value"}],"returns":"string"},
+    {"id":"strings.pad.4","name":"str_pad","parameters":[{"name":"input","type":"string","passing":"value"},{"name":"length","type":"int","passing":"value"},{"name":"padding","type":"string","passing":"value"},{"name":"mode","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"strings.number_format.int.1","name":"number_format","parameters":[{"name":"number","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"strings.number_format.int.2","name":"number_format","parameters":[{"name":"number","type":"int","passing":"value"},{"name":"decimals","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"strings.number_format.int.4","name":"number_format","parameters":[{"name":"number","type":"int","passing":"value"},{"name":"decimals","type":"int","passing":"value"},{"name":"decimal_separator","type":"string","passing":"value"},{"name":"thousands_separator","type":"string","passing":"value"}],"returns":"string"},
+    {"id":"strings.number_format.float.1","name":"number_format","parameters":[{"name":"number","type":"float","passing":"value"}],"returns":"string"},
+    {"id":"strings.number_format.float.2","name":"number_format","parameters":[{"name":"number","type":"float","passing":"value"},{"name":"decimals","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"strings.number_format.float.4","name":"number_format","parameters":[{"name":"number","type":"float","passing":"value"},{"name":"decimals","type":"int","passing":"value"},{"name":"decimal_separator","type":"string","passing":"value"},{"name":"thousands_separator","type":"string","passing":"value"}],"returns":"string"},
     {"id":"strings.trim.1","name":"trim","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":"string"},
     {"id":"strings.trim.2","name":"trim","parameters":[{"name":"value","type":"string","passing":"value"},{"name":"mask","type":"string","passing":"value"}],"returns":"string"},
     {"id":"strings.ltrim.1","name":"ltrim","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":"string"},
@@ -20,6 +34,15 @@
     {"id": "strings.ends_with", "name": "str_ends_with", "parameters": [{"name": "haystack", "type": "string", "passing": "value"}, {"name": "needle", "type": "string", "passing": "value"}], "returns": "bool"}
   ],
   "cpp": [
+    {"id":"strings.pad.2","symbol":"scpp::str::pad","header":"modules/strings/strings.hpp"},
+    {"id":"strings.pad.3","symbol":"scpp::str::pad","header":"modules/strings/strings.hpp"},
+    {"id":"strings.pad.4","symbol":"scpp::str::pad","header":"modules/strings/strings.hpp"},
+    {"id":"strings.number_format.int.1","symbol":"scpp::str::number_format","header":"modules/strings/strings.hpp"},
+    {"id":"strings.number_format.int.2","symbol":"scpp::str::number_format","header":"modules/strings/strings.hpp"},
+    {"id":"strings.number_format.int.4","symbol":"scpp::str::number_format","header":"modules/strings/strings.hpp"},
+    {"id":"strings.number_format.float.1","symbol":"scpp::str::number_format","header":"modules/strings/strings.hpp"},
+    {"id":"strings.number_format.float.2","symbol":"scpp::str::number_format","header":"modules/strings/strings.hpp"},
+    {"id":"strings.number_format.float.4","symbol":"scpp::str::number_format","header":"modules/strings/strings.hpp"},
     {"id":"strings.trim.1","symbol":"scpp::str::trim","header":"modules/strings/strings.hpp"},
     {"id":"strings.trim.2","symbol":"scpp::str::trim","header":"modules/strings/strings.hpp"},
     {"id":"strings.ltrim.1","symbol":"scpp::str::ltrim","header":"modules/strings/strings.hpp"},

@@ -1,9 +1,35 @@
 <?php
 namespace scpp\compiler;
 
-/** Resolve a complete private callable catalog before publishing any scope entries. */
+/** Resolve private callable and constant inventories before publishing scope entries. */
 final class Runtime_Catalog_Registration
 {
+	/** Resolve values privately, rejecting collisions before publishing any module. */
+	public static function resolve_constants(runtime_catalog_input $input, registered_type_catalog $types): Storage /** Storage<registered_constant> */
+	{
+		$result /** Storage<registered_constant> */ = new Storage();
+		$names = new scope();
+		Language_Constants::install($names, $types);
+		foreach ($input->modules as $module) {
+			$constants /** Storage<runtime_constant_spec> */ = $module->constants;
+			foreach ($constants as $constant) {
+				if ($constant->type !== 'int') {
+					throw new \RuntimeException('Runtime constants currently require int');
+				}
+				if (q_count($names->constants_named($constant->name)) !== 0) {
+					throw new \RuntimeException('Duplicate runtime constant: ' . $constant->name);
+				}
+				$value = new integer_constant_value();
+				$value->type = $types->registry()->use($types->canonical('int')->type_id());
+				$value->decimal = $constant->decimal;
+				$target = new registered_constant($constant->name, $value);
+				$result->append($target);
+				$names->register_constant($target);
+			}
+		}
+		return $result;
+	}
+
 	/** Resolve against caller-owned types; failure discards the private callable inventory. */
 	public static function resolve(runtime_catalog_input $input, registered_type_catalog $types): Runtime_Callables
 	{

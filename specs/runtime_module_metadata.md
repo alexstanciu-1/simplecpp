@@ -3,19 +3,37 @@ Doc Status: normative
 Status: bounded v0.2 catalog format
 
 Runtime-owned catalogs live in `runtime/metadata/modules/<module>.json`, outside any
-compiler implementation. They describe callable semantics independently of C++
+compiler implementation. They describe callable/constant semantics independently of C++
 bindings. The consumer describes concrete and inferred generic free-function contracts; it is not
 a declaration of complete runtime coverage or a replacement of v0.1 metadata yet.
 
 ## Shape
 
-Every module object requires exactly these fields:
+Every module object requires these fields:
 
 - `version`: integer `1`.
 - `module`: nonempty lowercase ASCII letters/digits/underscore name, matching its filename.
 - `dependencies`: ordered array of module names, without duplicates or cycles.
 - `functions`: ordered array of function contracts.
 - `cpp`: array of separate C++ bindings, joined to functions by `id`.
+
+An optional `constants` array contains module-owned scalar constants. Omission means
+no constants. The initial supported form is:
+
+```json
+{"name":"STR_PAD_LEFT","type":"int","value":0}
+```
+
+Each entry requires exactly `name`, `type`, and `value`. `name` is the nonempty,
+case-sensitive source spelling; `type` currently must be `int`. `value` is a JSON
+integer spelling in the signed-64 range, not a string, fractional number or exponent.
+The JSON reader checks the range without floating-point conversion; the settled
+value retains normalized decimal text. Other scalar constant types are deferred.
+Duplicate names across the selected modules or collisions with language constants
+reject the entire configuration. Nearer source declarations may still shadow them
+under ordinary lexical lookup. Constants use the existing settled constant model
+and value lowering, not function contracts or C++ symbol bindings. Their values are
+part of the trusted runtime contract and must agree with the provider implementation.
 
 A function requires `id`, `name`, `parameters`, and `returns`. Identities are globally
 unique across selected modules. Source names may repeat for overloads with different
@@ -125,13 +143,13 @@ Complete document/schema validation precedes publication; failed loading/configu
 does not replace the previous configuration.
 
 Metadata is retained in memory as immutable-by-contract startup input. Resolve
-signatures into a private callable inventory against the current canonical type
+signatures and constants into separate private inventories against the current canonical type
 registry; only validated identities enter language scope. C++ bindings are installed
 separately by the backend under coordinator sequencing. Ordinary compilation and
 incremental updates perform no metadata IO or JSON parsing.
 
 Semantic registry resets reuse retained typed metadata but recreate canonical type,
-callable and backend-binding identities. Old targets cannot reuse new bindings merely
+callable, constant and backend-binding identities. Old targets cannot reuse new bindings merely
 because their string IDs match. Catalog edits take effect in a new compiler session;
 live catalog replacement/hot reload is outside this slice.
 
@@ -152,7 +170,12 @@ order metadata loading; they do not yet configure linker inputs automatically.
   Result wrapping and family separation.
 - `strings`: `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`,
   `str_starts_with`, `str_ends_with`, both arities of `trim`/`ltrim`/`rtrim`, `bin2hex`
-  and three-string `str_replace`, bound to the existing `scpp::str` implementations.
+  and three-string `str_replace`, plus `str_pad` (2/3/4 arguments) and `number_format`
+  (int/float, 1/2/4 arguments), bound to the existing `scpp::str` implementations.
+  Padding constants are `STR_PAD_LEFT = 0`, `STR_PAD_RIGHT = 1`, `STR_PAD_BOTH = 2`.
+  Formatting does not admit bool/string/mixed/dynamic inputs in this slice; boxed
+  numeric-kind validation remains deferred. Padding validates empty padding and
+  invalid modes even when the requested length would otherwise be a no-op.
   Case changes are ASCII/byte-oriented, not Unicode case folding. Predicates are
   byte-oriented and accept an empty needle. These fixed contracts use ordinary
   value arguments: ordered argument snapshots remain alive through the runtime call;

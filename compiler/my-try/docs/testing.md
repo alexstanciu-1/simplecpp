@@ -730,10 +730,12 @@ For runtime-module string bindings:
 python3 compiler/my-try/tests/runtime_strings.py --results /tmp/FRESH_RUNTIME_STRING_RESULTS
 ```
 
-Three PHP suites cover registration/rejection and catalog/generic regressions. Twelve
+Four PHP suites cover registration/rejection and catalog/generic/source-constant regressions. Nineteen
 generated programs check exact bytes, empty/non-ASCII inputs, all three predicates,
 purity, shadowing, checked boxed conversion failure, trim overloads/byte masks,
-binary-safe hex/replacement and ordered value snapshots. Uses the shared pool without PCH to
+binary-safe hex/replacement, ordered value snapshots, padding modes/errors/byte truncation,
+all int/float formatting arities, constant shadowing/labels and exact signed-64 limits.
+Uses the shared pool without PCH to
 check header completeness; does not rebuild the compiler natively.
 
 For runtime observation boundaries:

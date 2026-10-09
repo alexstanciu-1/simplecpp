@@ -43,16 +43,26 @@ final class runtime_cpp_spec
 	public string $header = '';
 }
 
+/** Bounded scalar constants; values retain normalized exact decimal spelling. */
+final class runtime_constant_spec
+{
+	public string $name = '';
+	public string $type = '';
+	public string $decimal = '';
+}
+
 final class runtime_module_spec
 {
 	public string $name = '';
 	public string $file = '';
 	public array $dependencies /** vector<string> */ = [];
 	public Storage $functions /** Storage<runtime_function_spec> */;
+	public Storage $constants /** Storage<runtime_constant_spec> */;
 	public Keyed_Storage $cpp /** Keyed_Storage<runtime_cpp_spec> */;
 	public function __construct()
 	{
 		$this->functions = new Storage();
+		$this->constants = new Storage();
 		$this->cpp = new Keyed_Storage();
 	}
 }

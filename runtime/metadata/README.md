@@ -5,7 +5,7 @@ Doc Status: supporting
 The files are runtime-owned, reusable compiler input, not generated C++ or my-try-local
 configuration. Current coverage includes core `strlen`/`count`, JSON free functions,
 and string helpers (case conversion, byte predicates, trimming, hex encoding and
-string-only replacement). Existing
+string-only replacement, padding/constants, and int/float number formatting). Existing
 v0.1 symbol maps have not yet been replaced wholesale. See the
 [coverage roadmap](../../compiler/my-try/docs/planning/runtime_catalog_coverage.md)
 for remaining groups and prerequisites.

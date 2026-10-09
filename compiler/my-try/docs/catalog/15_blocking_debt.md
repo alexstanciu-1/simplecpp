@@ -151,6 +151,17 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-RUNTIME-FORMAT-01 — boxed number formatting
+
+The v0.2 runtime catalog intentionally registers `number_format` only for canonical
+int/float inputs (1/2/4 arguments). Before enabling mixed/dynamic formatting, establish
+explicit accepted numeric kinds and failure behavior. The historical mixed runtime
+overload currently falls back to formatting zero for unsupported kinds such as tables;
+that is not permission to expose this behavior through the new compiler. Reconcile
+null/bool admission as part of that review, preserve family separation and reject
+unsupported boxed kinds at runtime. Add focused kind/error tests before registration.
+This does not block concrete int/float formatting or current catalog progress.
+
 ### CH15-TEXT-LENGTH-01 — Unicode length and cross-surface consistency
 
 User decision on 2026-10-09: v0.2 `strlen` counts bytes, using the existing runtime
