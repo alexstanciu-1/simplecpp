@@ -181,6 +181,13 @@ failed RHS conversion cannot insert a placeholder key or append an element. Earl
 source-expression side effects are not rolled back. This is not a promise of strong
 transactional rollback on allocation/copy failures during storage mutation.
 
+An indexed receiver may be writable instance-field storage, using the same operation
+contract as a local container. The selected field is not copied for mutation. Shared
+owners along the field path are retained before keys/RHS; replacing the source handle
+during those expressions does not redirect the pending write to the replacement.
+Inline fields are borrowed in place. Property visibility and read-only restrictions
+apply normally; this grants no escaping native reference into heap storage.
+
 Vector indexed writes replace existing elements with checked bounds, never grow at
 index `count`; append explicitly adds one element. Typed hashes insert or replace,
 and only integer-keyed typed hashes append. Mixed/dynamic use existing integer/string

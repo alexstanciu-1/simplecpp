@@ -1562,7 +1562,7 @@ auto a = b["name"];
 
 ## ARR-WRITE-001
 
-**v0.2 decision / target C++:** Direct and nested stable local/parameter-rooted writes use prepared indexing contracts and sequenced runtime validation. See the write checkpoints for bounded paths and failure guarantees.
+**v0.2 decision / target C++:** Direct and nested stable local/parameter-rooted writes use prepared indexing contracts and sequenced runtime validation. The 2026-10-10 accounting follow-up generalizes that same receiver to writable instance-field chains: shared owners are retained across key/RHS effects, inline fields are borrowed, and container families reuse existing contracts. Probes/removal, indexed-object-to-field paths and unique/weak/value-wrapper owner lifetimes remain separate. Focused proof: `tests/field_container_writes.py`, `/tmp/field-writes-20261010-verified`; no native compiler rebuild.
 
 ### Imported version 1
 

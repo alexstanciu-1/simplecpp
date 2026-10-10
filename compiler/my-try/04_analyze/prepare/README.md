@@ -306,9 +306,15 @@ throw on absence; mixed/dynamic reads yield mixed, with null on absence and runt
 errors for invalid receiver/key kinds. Key conversions and result copy capability
 are prepared, including source-derived dependencies. Index facts are non-addressable.
 The same registry and signature binding select direct indexed-store/append operations
-on established local/parameter-rooted paths. `prepared_index_assignment` retains the
+on established local/parameter roots and writable instance-field chains.
+`prepared_index_assignment` retains the
 operation and `container_element` conversion; it never invents a variable binding or
 an addressable slot. RHS literals inherit the registered nested-construction target.
+Property roots reuse ordinary member/place preparation and mutable-content checks.
+C++ receiver binding retains each shared owner before keys/RHS and borrows inline
+storage; the remaining indexed-write algorithm is unchanged. Unique/weak or explicit
+value-wrapper owners, temporary roots and fields reached through indexed objects
+remain gated pending their lifetime contracts. Probes/removal are a separate slice.
 Construction and writes share element admission, including bounded dynamic boxing.
 Ordered path steps additionally retain key conversion and registered traversal type;
 they observe syntax without assigning value-read facts to intermediate brackets.

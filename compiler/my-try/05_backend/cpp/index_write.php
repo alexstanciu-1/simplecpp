@@ -18,7 +18,8 @@ final class CPP_Index_Write
 		$key = 'write_key_' . $id;
 		$value = 'write_value_' . $id;
 		$type = CPP_Declarations::type($facts->destination_type(), $context);
-		$text = '{ auto& ' . $receiver . ' = ' . $emitter->expression($facts->root) . '; ';
+		$root = CPP_Declarations::bind_storage_receiver($facts->root, $context);
+		$text = '{ ' . $root->statements . 'auto& ' . $receiver . ' = ' . $root->value . '; ';
 		$path /** Storage<prepared_index_path_step> */ = $facts->path;
 		$position = 0;
 		foreach ($path as $step)

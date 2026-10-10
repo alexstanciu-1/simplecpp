@@ -38,7 +38,7 @@ enum value_boundary_operation
 abstract class prepared_expression {
 	public canonical_type_use $type;
 	public expression_value_origin $value_origin = expression_value_origin::ordinary;
-	/** Absent for values; present only for whole storage or stable direct struct fields. */
+	/** Absent for values; present for whole storage and prepared property projections. */
 	public ?prepared_place $place = null;
 
 	/** Fresh construction can initialize exact storage without copying an existing object. */
@@ -947,7 +947,7 @@ final class prepared_property_assignment extends prepared_assignment_expression
 final class prepared_index_assignment extends prepared_assignment_expression
 {
 	/** @reference.source assignment_expression_node.target (syntax graph) */
-	public variable_reference_node $root;
+	public expression_node $root;
 	/** @storage.owner */
 	public Storage $path /** Storage<prepared_index_path_step> */;
 	public operator_decision $decision;

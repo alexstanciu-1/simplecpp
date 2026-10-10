@@ -158,17 +158,35 @@ final class Indexing_Preparation
 			$path->append($step);
 			return $step->element_type;
 		}
-		if (!($syntax instanceof variable_reference_node)) {
-			throw new \RuntimeException('S2S indexed assignment requires a direct local or parameter root');
-		}
-		$root = object_cast($syntax, variable_reference_node::class);
+		$root = $syntax;
 		$prepared = Expression_Preparation::prepare($root, $context);
+		self::require_storage_receiver($root);
 		if (!$prepared->addressable()) {
 			throw new \RuntimeException('S2S indexed assignment requires stable receiver storage');
 		}
 		Reference_Preparation::require_mutable_contents($prepared->place, $prepared->type);
 		$facts->root = $root;
 		return $prepared->type;
+	}
+
+	/** Select real storage, not a copied indexed read or a temporary receiver. */
+	private static function require_storage_receiver(expression_node $syntax): void
+	{
+		if ($syntax instanceof variable_reference_node) { return; }
+		if ($syntax instanceof field_access_node) {
+			$field = object_cast($syntax, field_access_node::class);
+			self::require_storage_receiver($field->base);
+			$facts = $field->require_field_access_preparation();
+			if (($facts->receiver_storage !== record_storage_kind::shared)
+				&& ($facts->receiver_storage !== record_storage_kind::inline_value)) {
+				throw new \RuntimeException('Indexed field writes require shared or inline receiver lifetime');
+			}
+			if ($field->base->require_preparation()->type->by_value()) {
+				throw new \RuntimeException('Indexed field writes through ownership-modified storage are deferred');
+			}
+			return;
+		}
+		throw new \RuntimeException('S2S indexed assignment requires local, parameter or field storage');
 	}
 
 	/** No PHP bool/float/null key coercion; unknown mixed payloads remain runtime checked. */

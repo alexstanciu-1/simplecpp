@@ -618,7 +618,7 @@ final class CPP_Declarations
 	}
 
 	/** Field identity comes from shared preparation, never a backend name lookup. */
-	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context): string
+	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context, ?string $bound_base = null): string
 	{
 		$facts = $syntax->require_field_access_preparation();
 		$name = '';
@@ -640,7 +640,29 @@ final class CPP_Declarations
 			$reference = object_cast($base, variable_reference_node::class)->require_variable_reference_preparation();
 			if (weakref_get($reference->declaration) instanceof collected_method) { $arrow = true; }
 		}
-		return '(' . (new CPP_Syntax($context))->expression($base) . ')'
+		return '(' . ($bound_base ?? (new CPP_Syntax($context))->expression($base)) . ')'
 			. ($arrow ? '->' : '.') . $name;
+	}
+
+	/** Bind storage projections while retaining each shared owner through later effects. */
+	public static function bind_storage_receiver(expression_node $syntax, cpp_generation_context $context): cpp_assignment_sequence
+	{
+		$result = new cpp_assignment_sequence();
+		if (!($syntax instanceof field_access_node)) {
+			$result->value = (new CPP_Syntax($context))->expression($syntax);
+			return $result;
+		}
+		$field = object_cast($syntax, field_access_node::class);
+		$base = self::bind_storage_receiver($field->base, $context);
+		$name = 'storage_owner_' . $context->next_temporary;
+		$context->next_temporary++;
+		$binding = $field->require_field_access_preparation()->receiver_storage === record_storage_kind::shared ? 'auto ' : 'auto& ';
+		if ($field->base instanceof variable_reference_node) {
+			$reference = object_cast($field->base, variable_reference_node::class)->require_variable_reference_preparation();
+			if (weakref_get($reference->declaration) instanceof collected_method) { $binding = 'auto '; }
+		}
+		$result->statements = $base->statements . $binding . $name . ' = ' . $base->value . '; ';
+		$result->value = self::generate_field_access($field, $context, $name);
+		return $result;
 	}
 }

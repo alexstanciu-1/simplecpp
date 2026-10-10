@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/field_container_writes.py --results FRESH_DIRECTORY`
+checks the generalized indexed receiver for vector/hash/mixed/dynamic fields,
+struct copy independence, retained shared owners, effect ordering and runtime failure
+boundaries. Existing indexing preparation checks run alongside generated programs.
+
 `python3 compiler/my-try/tests/runtime_assets.py --results FRESH_DIRECTORY`
 checks production JSON-document, file-lock and managed-process metadata, rejection
 boundaries, shared lifecycles and automatic provider linkage through the native
