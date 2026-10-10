@@ -76,27 +76,15 @@ final class Initialization_Contracts
 /** All built-in differences are declarations, not algorithms in the binder. */
 final class Initialization_Registration
 {
-	public static function install(registered_type_catalog $types): Initialization_Contracts
+	public static function install(registered_type_catalog $types, runtime_catalog_input $input): Initialization_Contracts
 	{
 		$registry = $types->registry();
 		$string_type = $registry->use($types->canonical('string')->type_id());
-		$integer = $registry->use($types->canonical('int')->type_id());
 		$mixed = $registry->use($types->canonical('mixed')->type_id());
 		$contracts = new Initialization_Contracts($registry, $string_type);
-		$value = contract_type_reference::argument(0);
-		$key = contract_type_reference::argument(1);
 		$boxed = contract_type_reference::concrete($mixed);
 		$unconstrained /** hash<canonical_type_use, int> */ = [];
-		$integer_key /** hash<canonical_type_use, int> */ = [1 => $integer];
-		$string_key /** hash<canonical_type_use, int> */ = [1 => $string_type];
-		$contracts->register(new initialization_declaration($types->definition('vector'), $value, null, $value,
-			$unconstrained, 'simple_cpp.vector.list'));
-		$contracts->register(new initialization_declaration($types->definition('hash'), $value, null, $value,
-			$integer_key, 'simple_cpp.hash.list'));
-		$contracts->register(new initialization_declaration($types->definition('hash'), $value, $key, $value,
-			$integer_key, 'simple_cpp.hash.keyed'));
-		$contracts->register(new initialization_declaration($types->definition('hash'), $value, $key, $value,
-			$string_key, 'simple_cpp.hash.keyed'));
+		Runtime_Protocol_Registration::initialization($input, $types, $contracts);
 		foreach (['mixed', 'dynamic'] as $name) {
 			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$contracts->register(new initialization_declaration($types->definition($name), $nested, null, $nested,

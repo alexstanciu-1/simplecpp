@@ -5,6 +5,7 @@
   "types": [
     {
       "id": "core.vector", "name": "vector", "kind": "class",
+      "initialization": [{"value": {"parameter":"Value"}, "nested": {"parameter":"Value"}}],
       "indexing": {
         "key": "int", "value": {"parameter": "Value"}, "nested": {"parameter": "Value"},
         "path": {"parameter": "Value"}, "write": true, "append": "allowed", "probes": true
@@ -17,6 +18,11 @@
     },
     {
       "id": "core.hash", "name": "hash", "kind": "class",
+      "initialization": [
+        {"value": {"parameter":"Value"}, "nested": {"parameter":"Value"}, "where": {"Key":"int"}},
+        {"key": {"parameter":"Key"}, "value": {"parameter":"Value"}, "nested": {"parameter":"Value"}, "where": {"Key":"int"}},
+        {"key": {"parameter":"Key"}, "value": {"parameter":"Value"}, "nested": {"parameter":"Value"}, "where": {"Key":"string"}}
+      ],
       "indexing": {
         "key": {"parameter": "Key"}, "value": {"parameter": "Value"}, "nested": {"parameter": "Value"},
         "path": {"parameter": "Value"}, "write": true, "append": "integer_key", "probes": true, "removal": true
@@ -28,6 +34,10 @@
         {"name": "Key", "requires": ["hashable", "comparable"], "default": "string", "capability_dependencies": ["copyable_value"]}
       ]
     }
+  ],
+  "cpp_initialization": [
+    {"id": "core.vector", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"},
+    {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"}
   ],
   "cpp_types": [
     {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},

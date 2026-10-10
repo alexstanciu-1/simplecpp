@@ -32,9 +32,9 @@ capability dependencies; no duplicate PHP declarations are required. Definitions
 install before function signatures. Language-specific type roles remain compiler-owned;
 type-owned static/instance callables use optional membership on ordinary function
 records. Property/constant members have separate contracts. Type records can opt
-into indexing and value iteration through generic recipes; core vector/hash use
-that same path. Construction protocols and borrowed lifetimes remain subsequent
-integration work.
+into initialization, indexing and value iteration through generic recipes; core
+vector/hash use that same path. Initialization C++ adapters use separate bindings.
+Borrowed lifetimes remain subsequent integration work.
 
 Datetime bindings require the separately compiled `modules/datetime/datetime.cpp`
 provider. Catalog dependencies control metadata loading, not linker configuration.

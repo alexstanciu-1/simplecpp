@@ -30,15 +30,10 @@ Runtime_Type_Registration::install($core_input, $core_types);
 runtime_type_check($core_types->source()->type_or_null('parcel') === null
 	&& $core_types->source()->type_or_null('receipt') === null, 'Unselected provider types leaked');
 
-$missing_foundation = false;
-try {
-	Compiler_Lifecycle::configure_runtime(new runtime_catalog_input());
-}
-catch (\OutOfBoundsException $error) {
-	$missing_foundation = str_contains($error->getMessage(), 'Unknown source type: vector');
-}
-runtime_type_check($missing_foundation && Model::$runtime_metadata === $input,
-	'Missing protocol prerequisite was accepted until reset');
+$empty_input = new runtime_catalog_input();
+Compiler_Lifecycle::configure_runtime($empty_input);
+runtime_type_check(Model::$runtime_metadata === $empty_input, 'Protocols still require unselected named containers');
+Compiler_Lifecycle::configure_runtime($input);
 
 $schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
 $invalids = [];

@@ -268,6 +268,11 @@ cross-platform linkage, full ownership/callable/protocol combinations, PCH/cache
 performance and the native compiler rebuild. Do not treat this deferral as
 permission to enable unsafe lifetime paths or skip representative rejection tests.
 
+2026-10-10 protocol checkpoint found a stale `tests/data_construction.php` parser
+expectation: it rejects `{a: function() {}}`, despite subsequent lambda syntax
+support. Reconcile that older negative inventory with current callable contracts;
+the initialization/model and data-preparation suites were used for this checkpoint.
+
 ### CH15-RUNTIME-SOURCE-01 — borrowed source views
 
 Open; prerequisite for enabling span APIs, not a blocker for owning source calls.

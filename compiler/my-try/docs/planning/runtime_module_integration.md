@@ -107,10 +107,19 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   limitation) and /tmp/runtime-protocols-20261010-2 (provider/type PHP suites and two
   generated C++ programs), plus /tmp/runtime-protocols-20261010-final (independent
   opt-in assertions). No native compiler rebuild.
-- Next: Phase 3 initialization recipes and C++ initialization adapters. Closed or
-  owner-parameter protocol references reuse the current bounded contract model;
-  nested open protocol references remain outside this checkpoint. Broader validation
-  remains CH15-RUNTIME-INTEGRATION-TESTS-01.
+- Phase 3 complete within the existing protocol model: initialization recipes and
+  separate C++ adapters now come from metadata too. Exact formal constraints retain
+  core hash shape/key policy; overlapping recipes and missing/orphan adapters fail
+  startup. The unfamiliar container proves list/keyed/empty/nested construction,
+  followed by ordinary indexing/iteration. Internal input lifetimes and boxed
+  language registrations remain unchanged. Closed or owner-parameter protocol
+  references reuse the current bounded model; nested open references remain deferred.
+  Evidence: /tmp/runtime-initialization-20261010-1 (initialization/runtime-types PHP),
+  /tmp/runtime-initialization-20261010-2 (protocol/data-preparation PHP and two generated
+  programs). The older data_construction parser suite fails its pre-lambda rejection
+  expectation; this is tracked with extended testing debt, not a protocol pass.
+- Next: Phase 4 richer callable signatures. Broader validation remains
+  CH15-RUNTIME-INTEGRATION-TESTS-01.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
   export through namespace import lookup. This is not covered by the member proof.

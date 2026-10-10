@@ -15,7 +15,7 @@ $input->modules->add('protocol_proof', Runtime_Catalog_Reader::decode(json_encod
 Compiler_Lifecycle::configure_runtime($input);
 
 // Neither opt-in implies the other; installation is independent of source compilation.
-foreach (['indexing', 'iteration'] as $omitted) {
+foreach (['initialization', 'indexing', 'iteration'] as $omitted) {
 	$independent = $schema;
 	unset($independent['types'][0][$omitted]);
 	$candidate = new runtime_catalog_input();
@@ -26,11 +26,22 @@ foreach (['indexing', 'iteration'] as $omitted) {
 	$definition = $types->definition('tray');
 	$indexing = Indexing_Registration::install($types, $candidate);
 	$iteration = Iteration_Registration::install($types, $candidate);
+	$initialization = Initialization_Registration::install($types, $candidate);
+	$has_initialization = false;
+	foreach ($initialization->candidates() as $recipe) {
+		if ($recipe->definition() === $definition) { $has_initialization = true; }
+	}
+	protocol_check($has_initialization === ($omitted !== 'initialization'), 'Construction opt-in was coupled');
 	protocol_check(($indexing->lookup($definition) === null) === ($omitted === 'indexing')
 		&& ($iteration->lookup($definition) === null) === ($omitted === 'iteration'), 'Protocol opt-ins were coupled');
 }
 
 $invalids = [];
+$bad = $schema; $bad['types'][0]['initialization'][] = $bad['types'][0]['initialization'][0]; $invalids[] = [$bad, 'Overlapping runtime initialization'];
+$bad = $schema; $bad['types'][0]['initialization'][0]['where'] = ['Missing'=>'int']; $invalids[] = [$bad, 'Unknown initialization constraint parameter'];
+$bad = $schema; $bad['types'][0]['initialization'][0]['where'] = ['Element'=>['parameter'=>'Element']]; $invalids[] = [$bad, 'requires a generic runtime contract'];
+$bad = $schema; $bad['cpp_initialization'] = []; $invalids[] = [$bad, 'Missing runtime initialization binding'];
+$bad = $schema; $bad['types'][0]['initialization'] = []; $invalids[] = [$bad, 'initialization binding count mismatch'];
 $bad = $schema; $bad['types'][0]['iteration']['value'] = ['parameter'=>'Unknown']; $invalids[] = [$bad, 'Unknown runtime protocol parameter'];
 $bad = $schema; $bad['types'][0]['iteration']['key'] = 'void'; $invalids[] = [$bad, 'requires a storable type'];
 $bad = $schema; unset($bad['types'][0]['iteration']['key']); $invalids[] = [$bad, 'Missing runtime iteration field'];
@@ -66,6 +77,19 @@ function protocol_compile(string $source): string
 }
 
 $source = <<<'PHS'
+$constructed tray<int> = [3, 5];
+$keyed tray<string> = [0 => "one", 1 => "two"];
+$nested tray<tray<int>> = [[4], [6]];
+$empty tray<int> = [];
+$constructed_sum = 0;
+foreach ($constructed as $value) { $constructed_sum += $value; }
+$text = $keyed[1];
+$text_size = strlen($text);
+$inner = $nested[1];
+$number = $inner[0];
+$empty_count = 0;
+foreach ($empty as $value) { $empty_count++; }
+if ($constructed_sum !== 8 || $text_size !== 3 || $number !== 6 || $empty_count !== 0) { return 2; }
 $numbers = make_tray(3);
 $numbers[] = 5;
 $copy = $numbers;
@@ -94,7 +118,7 @@ foreach ([
 	'$v = make_tray(1); $v[] = "wrong";',
 	'$v = make_tray(1); $present = isset($v[0]);',
 	'$v = make_tray(1); unset($v[0]);',
-	'$v tray<int> = [1, 2];',
+	'$v tray<int> = {wrong: 1};',
 ] as $invalid) {
 	$failed = false;
 	try { protocol_compile($invalid); }

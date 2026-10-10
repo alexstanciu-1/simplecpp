@@ -6,6 +6,10 @@
     "id": "proof.tray", "name": "tray", "kind": "struct",
     "capabilities": ["value_storable", "copyable_value"],
     "parameters": [{"name": "Element", "requires": ["value_storable"], "capability_dependencies": ["copyable_value"]}],
+    "initialization": [
+      {"value": {"parameter":"Element"}, "nested": {"parameter":"Element"}},
+      {"key": "int", "value": {"parameter":"Element"}, "nested": {"parameter":"Element"}}
+    ],
     "indexing": {
       "key": "int", "value": {"parameter": "Element"}, "nested": {"parameter": "Element"},
       "write": true, "append": "allowed"
@@ -13,6 +17,7 @@
     "iteration": {"key": "int", "value": {"parameter": "Element"}}
   }],
   "cpp_types": [{"id": "proof.tray", "symbol": "protocol_proof::tray", "header": "runtime_protocol_support.hpp"}],
+  "cpp_initialization": [{"id":"proof.tray", "symbol":"protocol_proof::initializer", "header":"runtime_protocol_support.hpp"}],
   "functions": [{
     "id": "proof.make_tray", "name": "make_tray", "type_parameters": ["T"],
     "parameters": [{"name": "value", "type": {"parameter": "T"}, "passing": "value"}],

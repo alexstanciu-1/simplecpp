@@ -25,7 +25,7 @@ final class Compiler_Lifecycle
 		$constants = Runtime_Catalog_Registration::resolve_constants($input, $types);
 		Runtime_Catalog_Registration::members($constants, $input, $types);
 		// Validate existing protocol prerequisites against these privately installed types too.
-		Initialization_Registration::install($types);
+		Initialization_Registration::install($types, $input);
 		Indexing_Registration::install($types, $input);
 		Iteration_Registration::install($types, $input);
 		CPP_Runtime_Catalog::validate($input, $types);
@@ -154,7 +154,7 @@ final class Compiler_Lifecycle
 		Model::$runtime_callables = Runtime_Catalog_Registration::resolve(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$runtime_constants = Runtime_Catalog_Registration::resolve_constants(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$runtime_members = Runtime_Catalog_Registration::members(Model::$runtime_constants, Model::$runtime_metadata, Model::$type_catalog);
-		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog);
+		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog, Model::$runtime_metadata);
 		Model::$indexing_contracts = Indexing_Registration::install(Model::$type_catalog, Model::$runtime_metadata);
 		Model::$iteration_contracts = Iteration_Registration::install(Model::$type_catalog, Model::$runtime_metadata);
 		Model::$cpp_callable_bindings = new CPP_Callable_Bindings();

@@ -4,6 +4,45 @@ namespace scpp\compiler;
 /** Resolve startup recipes into existing protocol contracts, never source-stage facts. */
 final class Runtime_Protocol_Registration
 {
+	public static function initialization(runtime_catalog_input $input, registered_type_catalog $types,
+		Initialization_Contracts $contracts): void
+	{
+		foreach ($input->modules as $module) {
+			foreach ($module->types as $definition_spec) {
+				$owner = $types->definition($definition_spec->name);
+				$positions = Runtime_Catalog_Patterns::owner_positions($owner);
+				foreach ($definition_spec->initialization as $spec) {
+					$key /** ?contract_type_reference */ = null;
+					if ($spec->key !== null) {
+						$key_spec /** runtime_type_spec */ = $spec->key;
+						$key = self::reference($key_spec, $owner, $types);
+					}
+					$constraints /** hash<canonical_type_use,int> */ = [];
+					foreach ($spec->where as $name => $constraint) {
+						if (!isset($positions[$name])) { throw new \RuntimeException('Unknown initialization constraint parameter: ' . $name); }
+						$constraints[$positions[$name]] = Runtime_Catalog_Registration::type($constraint, $types);
+					}
+					$declaration = new initialization_declaration($owner,
+						self::reference($spec->value, $owner, $types), $key, self::reference($spec->nested, $owner, $types),
+						$constraints, $definition_spec->identity . '.initialization');
+					// Two matching recipes would make source admission ambiguous, independent of payload types.
+					foreach ($contracts->candidates() as $existing) {
+						if (($existing->definition() !== $owner) || ($existing->is_keyed() !== $declaration->is_keyed())) { continue; }
+						$overlaps = true;
+						$other = $existing->constraints();
+						foreach ($constraints as $position => $required) {
+							if (isset($other[$position])) {
+								if (!$required->matches($other[$position])) { $overlaps = false; }
+							}
+						}
+						if ($overlaps) { throw new \RuntimeException('Overlapping runtime initialization recipes'); }
+					}
+					$contracts->register($declaration);
+				}
+			}
+		}
+	}
+
 	/** Protocols currently admit a closed type or one owner parameter, not nested open recipes. */
 	public static function reference(runtime_type_spec $spec, semantic_type_definition $owner,
 		registered_type_catalog $types): contract_type_reference

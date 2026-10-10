@@ -177,11 +177,53 @@ name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and own
 families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
 Type declaration alone grants no initialization/indexing/iteration protocol, borrowed
 storage, non-type parameters or handle-lifetime contract. Indexing and iteration
-require the independent opt-ins below; initialization metadata remains pending.
+require the independent opt-ins below, as does initialization.
 The existing compiler composition selects core for its foundational
 container types; custom modules using them declare a core dependency.
-Configuration also validates existing protocol prerequisites privately, so an input
-missing foundational container types fails before retention, not on a later reset.
+Protocol installation does not assume named core containers exist. Configuration
+resolves every declared protocol reference privately before retention; missing
+referenced types fail there, not on a later reset.
+
+### Initialization opt-in
+
+A type record may contain an `initialization` array of recipes:
+
+```json
+"initialization": [
+  {"value":{"parameter":"Value"}, "nested":{"parameter":"Value"}, "where":{"Key":"int"}},
+  {"key":{"parameter":"Key"}, "value":{"parameter":"Value"}, "nested":{"parameter":"Value"}, "where":{"Key":"int"}},
+  {"key":{"parameter":"Key"}, "value":{"parameter":"Value"}, "nested":{"parameter":"Value"}, "where":{"Key":"string"}}
+]
+```
+
+`value` and `nested` are required protocol type references. Omitted `key` selects
+list input; a present `key` selects typed entry input. Optional `where` maps owning
+parameter names to exact closed types. It expresses protocol constraints, not
+enumerated applications: the hash recipes above apply to every `Value`. Unknown
+parameters, unresolved types and overlapping same-shape recipes reject startup.
+Empty brackets retain the existing list-first/keyed-fallback rule; braces are keyed.
+No recipes means no construction opt-in.
+
+Each type with recipes requires exactly one entry in the module's separate
+`cpp_initialization` array, keyed by the type's `id`:
+
+```json
+{"id":"core.hash", "symbol":"scpp::data_initializer", "header":"scpp/data_initializer.hpp"}
+```
+
+The backend forms `Adapter<SelectedTarget>::from_list` or `from_key_value`, using
+the existing synchronous read-only `initializer_list<Value>` or
+`initializer_list<initializer_entry<Value,Key>>` input. The adapter returns the exact
+selected target. It may copy values, but must not retain the supplied sequence or
+references into its temporary backing. The provider owns empty-input behavior,
+key policy and duplicate-key rejection; no overwrite-on-duplicate policy is implied.
+The compiler retains existing ordered evaluation, input lifetime, contextual nested
+construction, copy checks and preparation diagnostics. These are initialization
+protocol factories, not extra source-visible methods or permission for arbitrary
+`new`. Missing/orphan adapter bindings reject before configuration publication.
+
+Core vector/hash use these recipes and bindings. Boxed mixed/dynamic initialization
+and internal input-sequence identities remain compiler-owned language contracts.
 
 ### Indexing and iteration opt-ins
 
@@ -223,7 +265,7 @@ does not verify C++ implementations or relax evaluation/lifetime rules. Generate
 C++ compilation tests this ABI. No arbitrary executable snippets are accepted.
 
 Core vector/hash indexing and iteration now use these metadata recipes. Mixed and
-dynamic retain language-owned registrations. Initialization remains a separate
+dynamic retain language-owned registrations. Initialization is a separate
 opt-in; indexing or iteration never silently enables literal construction.
 
 ## Type-owned callable membership
@@ -511,7 +553,7 @@ The byte-length decision for `strlen` does not change `substr` or explicitly nam
 Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the
 separate portable-compiler framework's UTF-8-validation contract.
 
-Runtime initialization metadata, fixed-array non-type parameters, compiler-module
+Fixed-array non-type parameters, compiler-module
 Storage registration, optional/default callable
 and variadic arguments, reference-return lifetime contracts,
 profile availability and the rest of the runtime inventory are not encoded by this

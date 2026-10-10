@@ -70,13 +70,14 @@ final class Runtime_Catalog_Reader
 					$properties->append(self::property_spec($reader));
 				}
 			}
-			elseif (($key === 'cpp') || ($key === 'cpp_types') || ($key === 'cpp_properties'))
+			elseif (($key === 'cpp') || ($key === 'cpp_types') || ($key === 'cpp_properties') || ($key === 'cpp_initialization'))
 			{
 				$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $result->cpp;
 				if ($key === 'cpp_types') {
 					$bindings = $result->cpp_types;
 				}
 				elseif ($key === 'cpp_properties') { $bindings = $result->cpp_properties; }
+				elseif ($key === 'cpp_initialization') { $bindings = $result->cpp_initialization; }
 				$reader->begin_array();
 				while ($reader->next_element()) {
 					$binding = self::cpp_spec($reader);
@@ -250,6 +251,11 @@ final class Runtime_Catalog_Reader
 			}
 			elseif ($key === 'indexing') { $result->indexing = self::indexing_spec($reader); }
 			elseif ($key === 'iteration') { $result->iteration = self::iteration_spec($reader); }
+			elseif ($key === 'initialization') {
+				$recipes /** Storage<runtime_initialization_spec> */ = $result->initialization;
+				$reader->begin_array();
+				while ($reader->next_element()) { $recipes->append(self::initialization_spec($reader)); }
+			}
 			else {
 				$reader->reject('Unknown runtime type definition field: ' . $key);
 			}
@@ -257,6 +263,31 @@ final class Runtime_Catalog_Reader
 		if (($result->identity === '') || ($result->name === '') || !$kind || !$capabilities) {
 			$reader->reject('Missing runtime type definition field');
 		}
+		return $result;
+	}
+
+	private static function initialization_spec(\scpp\Json_Reader $reader): runtime_initialization_spec
+	{
+		$result = new runtime_initialization_spec();
+		$value_seen = false;
+		$nested_seen = false;
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$name = $reader->property_name();
+			if ($name === 'value') { $result->value = self::type($reader); $value_seen = true; }
+			elseif ($name === 'key') { $result->key = self::type($reader); }
+			elseif ($name === 'nested') { $result->nested = self::type($reader); $nested_seen = true; }
+			elseif ($name === 'where') {
+				$constraints /** Keyed_Storage<runtime_type_spec> */ = $result->where;
+				$reader->begin_object();
+				while ($reader->next_property()) {
+					$parameter = $reader->property_name();
+					$constraints->add($parameter, self::type($reader));
+				}
+			}
+			else { $reader->reject('Unknown runtime initialization field: ' . $name); }
+		}
+		if (!$value_seen || !$nested_seen) { $reader->reject('Missing runtime initialization field'); }
 		return $result;
 	}
 

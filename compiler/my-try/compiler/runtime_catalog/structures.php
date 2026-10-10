@@ -25,6 +25,7 @@ final class runtime_type_parameter_spec
 
 final class runtime_type_definition_spec
 {
+	public Storage $initialization /** Storage<runtime_initialization_spec> */;
 	public ?runtime_indexing_spec $indexing = null;
 	public ?runtime_iteration_spec $iteration = null;
 	public string $identity = '';
@@ -37,7 +38,17 @@ final class runtime_type_definition_spec
 	public function __construct()
 	{
 		$this->parameters = new Storage();
+		$this->initialization = new Storage();
 	}
+}
+
+final class runtime_initialization_spec
+{
+	public runtime_type_spec $value;
+	public ?runtime_type_spec $key = null;
+	public runtime_type_spec $nested;
+	public Keyed_Storage $where /** Keyed_Storage<runtime_type_spec> */;
+	public function __construct() { $this->where = new Keyed_Storage(); }
 }
 
 /** Independent protocol opt-ins; type references use the owning definition's parameters. */
@@ -118,6 +129,7 @@ final class runtime_property_spec
 
 final class runtime_module_spec
 {
+	public Keyed_Storage $cpp_initialization /** Keyed_Storage<runtime_cpp_spec> */;
 	public string $name = '';
 	public string $file = '';
 	public array $dependencies /** vector<string> */ = [];
@@ -131,6 +143,7 @@ final class runtime_module_spec
 	public function __construct()
 	{
 		$this->functions = new Storage();
+		$this->cpp_initialization = new Keyed_Storage();
 		$this->constants = new Storage();
 		$this->properties = new Storage();
 		$this->cpp_properties = new Keyed_Storage();

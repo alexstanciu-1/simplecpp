@@ -9,6 +9,22 @@ final class CPP_Runtime_Catalog
 	{
 		foreach ($input->modules as $module)
 		{
+			$initializers /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_initialization;
+			$initializer_count = 0;
+			foreach ($module->types as $owner_spec) {
+				if ($owner_spec->initialization->is_empty()) { continue; }
+				$initializer_count++;
+				if (!isset($initializers[$owner_spec->identity])) {
+					throw new \RuntimeException('Missing runtime initialization binding');
+				}
+			}
+			if ($initializer_count !== q_count($initializers)) {
+				throw new \RuntimeException('Runtime initialization binding count mismatch');
+			}
+			foreach ($initializers as $initializer) {
+				self::spelling($initializer->symbol, false);
+				self::spelling($initializer->header, true);
+			}
 			$properties /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_properties;
 			if (q_count($properties) !== q_count($module->properties)) {
 				throw new \RuntimeException('Runtime property binding count mismatch');
