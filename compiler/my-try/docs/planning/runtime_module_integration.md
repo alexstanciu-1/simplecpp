@@ -127,7 +127,17 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   Evidence: /tmp/runtime-defaults-20261010-1 (three PHP suites) and
   /tmp/runtime-defaults-20261010-cpp (generated executable after fixture-only C++
   type corrections). No native compiler rebuild.
-- Next: Phase 4 variadics, callable inputs and reference overload admission.
+- Phase 4 variadic/reference checkpoint: fixed and inferred generic packs reuse
+  vector packing and source copy checks. Exact overload matching handles optional
+  prefixes and packs; ambiguous empty packs reject. Generic reference inputs and
+  concrete reference overloads use ordinary place/access/lifetime admission, without
+  pass-mode ranking. Shared admission rejects move syntax when a pre-prepared
+  argument resolves to a borrowing/copying consumer. Reference returns remain deferred.
+  Focused evidence: /tmp/runtime-signatures-20261010-2 (three PHP suites and a generated
+  executable); /tmp/runtime-signatures-20261010-final additionally covers an empty
+  generic pack inferred from a fixed argument and the existing method-parameter
+  suite, with another generated-program pass. No native compiler rebuild.
+- Next: Phase 4 callable inputs.
   Broader validation remains CH15-RUNTIME-INTEGRATION-TESTS-01.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime

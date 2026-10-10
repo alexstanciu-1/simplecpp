@@ -48,7 +48,6 @@ final class Runtime_Catalog_Registration
 		$result = new Runtime_Callables();
 		$registry = $types->registry();
 		$names /** hash<bool> */ = [];
-		$reference_names /** hash<bool> */ = [];
 		$observation_names /** hash<bool> */ = [];
 		foreach ($input->modules as $module)
 		{
@@ -77,7 +76,6 @@ final class Runtime_Catalog_Registration
 					$lookup_key = 'member:' . $definition_owner->definition_id() . ':' . $function->name;
 				}
 				$overload_key = $lookup_key;
-				$has_reference = false;
 				$has_observation = false;
 				foreach ($function->parameters as $index => $parameter)
 				{
@@ -85,11 +83,11 @@ final class Runtime_Catalog_Registration
 						throw new \RuntimeException('Duplicate runtime parameter name');
 					}
 					$parameter_names[$parameter->name] = true;
-					if ($parameter->mode === passing_mode::reference) { $has_reference = true; }
 					if ($parameter->mode === passing_mode::observation) { $has_observation = true; }
 					if ($generic !== null) {
 						$patterns /** Storage<runtime_pattern_parameter> */ = $generic->parameters;
 						$overload_key .= ':' . Runtime_Catalog_Patterns::key($patterns[$index]->type);
+						if ($parameter->variadic) { $overload_key .= ':pack'; }
 						continue;
 					}
 					$resolved = new callable_parameter();
@@ -100,6 +98,15 @@ final class Runtime_Catalog_Registration
 					}
 					$resolved->mode = $parameter->mode;
 					$resolved->access = $parameter->access;
+					if ($parameter->variadic) {
+						if (!$registry->has_capability($resolved->type, generic_contract::copyable_value)) {
+							throw new \RuntimeException('Runtime variadic elements must be copyable');
+						}
+						$resolved->element_type = $resolved->type;
+						$vector_definition = object_cast($types->definition('vector'), abstract_template_type_definition::class);
+						$elements /** vector<canonical_type_use> */ = [$resolved->type];
+						$resolved->type = $registry->use($registry->intern_application($vector_definition, $elements)->type_id());
+					}
 					if ($parameter->default_value !== null) {
 						$default_spec /** runtime_default_spec */ = $parameter->default_value;
 						$resolved->default_value = Runtime_Default_Registration::resolve($default_spec, $types);
@@ -107,14 +114,9 @@ final class Runtime_Catalog_Registration
 					}
 					$parameters->append($resolved);
 					$overload_key .= ':t' . $resolved->type->type_id();
+					if ($parameter->variadic) { $overload_key .= ':pack'; }
 				}
 				// Return type/pass mode alone cannot distinguish runtime overloads.
-				if (isset($reference_names[$lookup_key])) {
-					if ($has_reference || $reference_names[$lookup_key]) {
-						throw new \RuntimeException('Runtime reference overloads are deferred: ' . $function->name);
-					}
-				}
-				$reference_names[$lookup_key] = $has_reference;
 				if (isset($observation_names[$lookup_key])) {
 					if ($observation_names[$lookup_key] !== $has_observation) {
 						throw new \RuntimeException('Runtime overloads cannot mix observation and consuming inputs');

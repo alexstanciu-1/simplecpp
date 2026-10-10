@@ -73,6 +73,7 @@ final class runtime_indexing_spec
 
 final class runtime_parameter_spec
 {
+	public bool $variadic = false;
 	public ?runtime_default_spec $default_value = null;
 	public string $name = '';
 	public runtime_type_spec $type;

@@ -114,6 +114,9 @@ final class Call_Preparation
 			if (($parameter->mode === passing_mode::value) && ($parameter->element_type === null)) {
 				$consumer = expression_consumer::consuming_argument;
 			}
+			if ($arguments_prepared && ($consumer === expression_consumer::value) && ($argument instanceof move_expression_node)) {
+				throw new \RuntimeException('S2S move requires an approved consuming argument boundary');
+			}
 			$value /** prepared_expression */ = $arguments_prepared
 				? $argument->require_preparation() : Expression_Preparation::prepare_for_consumer($argument, $context, $argument_type, $consumer);
 			$prepared_argument = new prepared_call_argument();

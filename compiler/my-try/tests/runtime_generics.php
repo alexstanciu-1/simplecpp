@@ -48,7 +48,7 @@ $bad = $schemas[0]; $bad['type_parameters'] = ['U']; $invalid_rows[] = $bad;
 $bad = $schemas[0]; $bad['parameters'][0]['type'] = 'int'; $invalid_rows[] = $bad;
 $bad = $schemas[0]; $bad['parameters'][0]['type'] = ['name' => 'vector', 'arguments' => [$variable, $variable]]; $invalid_rows[] = $bad;
 $bad = $schemas[0]; $bad['returns'] = ['name' => 'vector', 'arguments' => ['void']]; $invalid_rows[] = $bad;
-$bad = $schemas[0]; $bad['parameters'][0]['passing'] = 'reference'; $invalid_rows[] = $bad;
+$bad = $schemas[0]; $bad['parameters'][0]['passing'] = 'reference'; $bad['parameters'][0]['default'] = ['int'=>0]; $invalid_rows[] = $bad;
 foreach ($invalid_rows as $row) {
 	$invalid = $schema; $invalid['functions'][0] = $row;
 	$candidate = new runtime_catalog_input();

@@ -58,8 +58,9 @@ unique across selected modules. Source names may repeat for overloads with diffe
 parameter types; return type or passing mode alone does not distinguish overloads.
 Each parameter requires a unique `name`, a `type`, and `passing` (`value`, `reference`,
 `readonly_reference`, or `observe`). These names are metadata, not named-argument support.
-Reference-bearing signatures must have an unoverloaded source name in this slice;
-ordinary call admission still checks reference places and access.
+Reference-bearing signatures participate in exact-type overload selection. Ordinary
+call admission still checks reference places, access and lifetime after selection.
+Reference/value or readonly/writable mode alone cannot distinguish overloads.
 
 ### Scalar parameter defaults
 
@@ -83,6 +84,32 @@ keeps each selected signature valid independently of one invocation's omissions.
 Backend generation uses the same default-value snapshots and ordered argument path
 as source functions. Providers need no C++ default arguments; all omitted values
 are materialized by the compiler. This applies to registered free and member calls.
+
+### Typed variadics and reference inputs
+
+A final value parameter may add `"variadic":true`. Its `type` describes each
+argument, not the pack; the installed callable stores `vector<type>` using the
+same ABI as source functions. Its provider receives one vector, never C varargs
+or a C++ parameter pack. Core must be selected for its vector definition. Packs
+may be empty; reference/observation packs and explicit pack defaults are rejected.
+The element must be copyable under ordinary source capability rules. Optional
+fixed scalar inputs may precede a variadic pack.
+
+Generic packs infer one exact element type from their supplied arguments. Repeated
+elements and occurrences in other inputs must agree. An empty pack is valid if
+other inputs or the owning application already bind its variables; an entirely
+uninferred variable is not filled from the return context or a guessed type.
+Fixed and variadic overloads receive no preference ranking: multiple exact
+candidates, including two empty-pack matches, are ambiguous.
+
+Concrete and generic `reference`/`readonly_reference` inputs reuse ordinary call
+admission after exact overload selection. They are non-owning, call-scoped inputs:
+metadata does not authorize retaining a reference after the call. Generic recipes
+do not clone registrations per application. References require admissible storage,
+and writable inputs reject readonly storage and temporaries. Pre-prepared overload
+arguments are still checked against the selected consumer: `move` is not permitted
+for references, observation or copying packs. Runtime reference-return contracts
+remain outside this metadata slice.
 
 ### Non-retaining observation
 
@@ -421,8 +448,8 @@ For example, the vector count contract is:
 }
 ```
 
-Generic inputs are fixed value parameters (including the scalar defaults above) or
-the bounded unary observation contract. Generic reference inputs, variadics, user-authored generics,
+Generic inputs support fixed value/reference parameters, typed variadics, scalar
+defaults and the bounded unary observation contract. User-authored generics,
 explicit source type arguments and explicit variable capability constraints remain
 outside this slice. Variables impose no implicit copyability constraint: the formed
 type and selected value boundary own storage/copy requirements.
@@ -577,8 +604,8 @@ Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the
 separate portable-compiler framework's UTF-8-validation contract.
 
 Fixed-array non-type parameters, compiler-module
-Storage registration, non-scalar defaults
-and variadic arguments, reference-return lifetime contracts,
+Storage registration, non-scalar defaults,
+reference-return lifetime contracts,
 profile availability and the rest of the runtime inventory are not encoded by this
 version's bounded consumer yet. Extend the shared models before enabling these rows;
 do not generate fake concrete overloads or function-name-specific preparation paths.

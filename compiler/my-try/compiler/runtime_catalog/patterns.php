@@ -35,9 +35,16 @@ final class Runtime_Catalog_Patterns
 		$result->owner_parameter_count = $owner_count;
 		$parameters /** Storage<runtime_pattern_parameter> */ = $result->parameters;
 		$optional_seen = false;
+		$variadic_seen = false;
 		foreach ($spec->parameters as $input) {
-			if ($input->mode === passing_mode::reference) {
-				throw new \RuntimeException('Generic runtime reference inputs are deferred');
+			if ($variadic_seen) { throw new \RuntimeException('Runtime variadic parameter must be last'); }
+			$variadic_seen = $input->variadic;
+			if ($input->variadic) {
+				// The language's packed-parameter ABI requires its registered vector definition.
+				object_cast($types->definition('vector'), abstract_template_type_definition::class);
+			}
+			if ($input->variadic && (($input->mode !== passing_mode::value) || ($input->default_value !== null))) {
+				throw new \RuntimeException('Runtime variadic parameters require value passing without an explicit default');
 			}
 			if ($input->mode === passing_mode::observation) {
 				if ((q_count($spec->parameters) !== 1) || ($input->access !== storage_access::read_only)) {
@@ -52,6 +59,7 @@ final class Runtime_Catalog_Patterns
 				}
 			}
 			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
+			$parameter->variadic = $input->variadic;
 			if ($input->default_value !== null) {
 				if ($input->mode !== passing_mode::value) { throw new \RuntimeException('Runtime defaults require value parameters'); }
 				$default_spec /** runtime_default_spec */ = $input->default_value;
@@ -64,7 +72,7 @@ final class Runtime_Catalog_Patterns
 				}
 				$optional_seen = true;
 			}
-			elseif ($optional_seen) { throw new \RuntimeException('Runtime required parameter cannot follow an optional parameter'); }
+			elseif ($optional_seen && !$input->variadic) { throw new \RuntimeException('Runtime required parameter cannot follow an optional parameter'); }
 			$parameters->append($parameter);
 		}
 		foreach ($positions as $position) {

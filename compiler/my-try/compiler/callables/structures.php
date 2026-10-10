@@ -107,6 +107,7 @@ final class runtime_application_pattern extends runtime_type_pattern
 
 final class runtime_pattern_parameter
 {
+	public bool $variadic = false;
 	public ?prepared_literal_parameter_default $default_value = null;
 	public function __construct(public runtime_type_pattern $type, public passing_mode $mode,
 		public storage_access $access) {}

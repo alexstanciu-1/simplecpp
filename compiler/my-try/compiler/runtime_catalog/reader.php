@@ -433,6 +433,7 @@ final class Runtime_Catalog_Reader
 				$typed = true;
 			}
 			elseif ($key === 'default') { $result->default_value = self::default_spec($reader); }
+			elseif ($key === 'variadic') { $result->variadic = $reader->read_boolean(); }
 			elseif ($key === 'passing')
 			{
 				$mode = $reader->read_string();

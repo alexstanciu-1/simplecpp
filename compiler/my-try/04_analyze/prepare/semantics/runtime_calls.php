@@ -65,10 +65,6 @@ final class Runtime_Call_Preparation
 		$signature = object_cast($target, registered_function::class)->signature();
 		$observing = false;
 		foreach ($signature->parameters as $input) {
-			if ((($input->mode !== passing_mode::value) && ($input->mode !== passing_mode::observation))
-				|| ($input->element_type !== null)) {
-				throw new \RuntimeException('S2S runtime overloads require fixed value or observation parameters');
-			}
 			if ($input->mode === passing_mode::observation) { $observing = true; }
 		}
 		return $observing;
@@ -92,12 +88,17 @@ final class Runtime_Call_Preparation
 				$result = Runtime_Pattern_Preparation::owner_arguments($runtime_owner);
 			}
 			$patterns /** Storage<runtime_pattern_parameter> */ = $contract->parameters;
-			if (q_count($arguments) > q_count($patterns)) { return null; }
-			for ($index = q_count($arguments); $index < q_count($patterns); $index++) {
+			$fixed_count = q_count($patterns);
+			$variadic = false;
+			if ($fixed_count > 0) { $variadic = $patterns[$fixed_count - 1]->variadic; }
+			if ($variadic) { $fixed_count--; }
+			if (!$variadic && (q_count($arguments) > $fixed_count)) { return null; }
+			for ($index = q_count($arguments); $index < $fixed_count; $index++) {
 				if ($patterns[$index]->default_value === null) { return null; }
 			}
 			foreach ($arguments as $index => $argument) {
-				if (!self::match_type($patterns[$index]->type, $argument->require_preparation()->type, $result)) { return null; }
+				$position = $index < $fixed_count ? $index : $fixed_count;
+				if (!self::match_type($patterns[$position]->type, $argument->require_preparation()->type, $result)) { return null; }
 			}
 			if (q_count($result->bindings) !== $contract->type_parameter_count) { return null; }
 			foreach ($patterns as $parameter) {
@@ -109,12 +110,19 @@ final class Runtime_Call_Preparation
 			return $result;
 		}
 		$parameters /** Storage<callable_parameter> */ = object_cast($target, registered_function::class)->signature()->parameters;
-		if (q_count($arguments) > q_count($parameters)) { return null; }
-		for ($index = q_count($arguments); $index < q_count($parameters); $index++) {
+		$fixed_count = q_count($parameters);
+		$variadic = false;
+		if ($fixed_count > 0) { $variadic = $parameters[$fixed_count - 1]->element_type !== null; }
+		if ($variadic) { $fixed_count--; }
+		if (!$variadic && (q_count($arguments) > $fixed_count)) { return null; }
+		for ($index = q_count($arguments); $index < $fixed_count; $index++) {
 			if ($parameters[$index]->default_value === null) { return null; }
 		}
 		foreach ($arguments as $index => $argument) {
-			if (!$parameters[$index]->type->matches($argument->require_preparation()->type)) { return null; }
+			$position = $index < $fixed_count ? $index : $fixed_count;
+			$parameter = $parameters[$position];
+			$type = $parameter->element_type ?? $parameter->type;
+			if (!$type->matches($argument->require_preparation()->type)) { return null; }
 		}
 		return $result;
 	}
@@ -158,13 +166,9 @@ final class Runtime_Call_Preparation
 		$result->return_type = Runtime_Pattern_Preparation::substitute($contract->return_type, $inference, $context);
 		$parameters /** Storage<callable_parameter> */ = $result->parameters;
 		foreach ($contract->parameters as $pattern) {
-			$parameter = new callable_parameter();
-			$parameter->type = Runtime_Pattern_Preparation::substitute($pattern->type, $inference, $context);
-			if (Model::$type_catalog->registry()->type($parameter->type->type_id()) instanceof no_value_type) {
-				throw new \RuntimeException('Void runtime argument');
-			}
-			$parameter->mode = $pattern->mode;
-			$parameter->access = $pattern->access;
+			$type = Runtime_Pattern_Preparation::substitute($pattern->type, $inference, $context);
+			$parameter = Declaration_Preparation::parameter_contract($type, $pattern->mode, $pattern->access,
+				$pattern->variadic, $context);
 			if ($pattern->default_value !== null) {
 				$default_value /** prepared_literal_parameter_default */ = $pattern->default_value;
 				if (!$default_value->result_type()->matches($parameter->type)) {
