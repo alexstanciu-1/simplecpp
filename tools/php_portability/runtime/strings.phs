@@ -108,10 +108,26 @@ function scpp_portability_byte_from_int(int $value): string {
         if (!scpp_portability_utf8_valid($value)) {
             throw new scpp_portability_json_exception('Malformed UTF-8 characters, possibly incorrectly encoded', 5);
         }
-        $out = '"';
-        $length = scpp_portability_strlen($value);
-        for ($i = 0; $i < $length; $i++) {
-            $code = scpp_portability_codepoint_at($value, $i);
+        // Scan bytes after one validation; never rescan a growing UTF-8 prefix.
+        // Join chunks once so escape-heavy inputs also avoid quadratic copying.
+        $parts vector<string> = ['"'];
+        $length int = string_byte_len($value);
+        $run int = 0;
+        for ($i int = 0; $i < $length; $i++) {
+            $code int = string_byte_at($value, $i);
+            if ($code >= 32 && $code < 128 && $code !== 34 && $code !== 92 && $code !== 47) {
+                continue;
+            }
+            if ($i > $run) { $parts[] = string_byte_slice($value, $run, $i - $run); }
+            if ($code >= 128) {
+                $width int = 2;
+                if ($code >= 240) { $width = 4; }
+                elseif ($code >= 224) { $width = 3; }
+                // The validated scalar slice is at most four bytes long.
+                $code = string_utf8_codepoint_at(string_byte_slice($value, $i, $width), 0);
+                $i += $width - 1;
+            }
+            $out string = '';
             if ($code === 34) { $out .= '\"'; }
             elseif ($code === 92) { $out .= '\\\\'; }
             elseif ($code === 47) { $out .= '\/'; }
@@ -126,8 +142,11 @@ function scpp_portability_byte_from_int(int $value): string {
                     $out .= '\u' . scpp_portability_json_hex4(55296 + (int)($scalar / 1024));
                     $out .= '\u' . scpp_portability_json_hex4(56320 + $scalar % 1024);
                 } else { $out .= '\u' . scpp_portability_json_hex4($code); }
-            } else { $out .= scpp_portability_substr($value, $i, 1); }
+            }
+            $parts[] = $out;
+            $run = $i + 1;
         }
-        return $out . '"';
+        if ($run < $length) { $parts[] = string_byte_slice($value, $run, $length - $run); }
+        $parts[] = '"';
+        return implode('', $parts);
     }
-

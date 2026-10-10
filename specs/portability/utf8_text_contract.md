@@ -122,3 +122,10 @@ valid UTF-8 including NUL, returns a complete quoted/escaped string, and throws
 JsonException (code 5) on malformed UTF-8. This preserves the JSON-specific exception
 contract rather than using the ordinary text-helper InvalidArgumentException. See
 [manifest snapshot export](compiler_manifest_record_slice.md) for native evidence.
+
+The native adapter validates once, scans byte offsets, and joins escaped chunks
+once; it must not repeatedly validate or count the whole input for each character.
+This implementation constraint preserves the spelling/error contract while avoiding
+quadratic serialization of generated source artifacts. `tests/portability/json_quote.py`
+checks exact PHP/native spelling, all control bytes, Unicode scalar boundaries,
+malformed input and large ASCII/escape-heavy strings.
