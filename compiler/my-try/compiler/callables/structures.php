@@ -66,7 +66,7 @@ final class registered_function extends runtime_function_definition implements c
 	}
 }
 
-enum runtime_pattern_kind { case variable; case concrete; case application; }
+enum runtime_pattern_kind { case variable; case concrete; case application; case callable_type; }
 
 /** A type-owned public callable, not a fabricated collected source declaration. */
 final class runtime_callable_member
@@ -111,6 +111,14 @@ final class runtime_pattern_parameter
 	public ?prepared_literal_parameter_default $default_value = null;
 	public function __construct(public runtime_type_pattern $type, public passing_mode $mode,
 		public storage_access $access) {}
+}
+
+final class runtime_callable_pattern extends runtime_type_pattern
+{
+	public runtime_type_pattern $return_type;
+	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
+	public function __construct() { $this->parameters = new Storage(); }
+	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::callable_type; }
 }
 
 final class runtime_generic_contract

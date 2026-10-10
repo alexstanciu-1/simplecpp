@@ -137,7 +137,20 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   executable); /tmp/runtime-signatures-20261010-final additionally covers an empty
   generic pack inferred from a fixed argument and the existing method-parameter
   suite, with another generated-program pass. No native compiler rebuild.
-- Next: Phase 4 callable inputs.
+- Phase 4 complete within the existing callable contract: structural callback
+  metadata interns ordinary function types; recursive patterns infer callback
+  input/results without combinations. Functions and callback types share signature
+  records and concrete parameter registration. Closed/contextual and generic/overloaded
+  callbacks reuse existing erased conversion, including copyability and borrowed
+  capture rejection. Callback reference inputs describe invocation, not capture
+  lifetime. Value callbacks may be retained as owning copies. Reference returns,
+  borrowed erased callbacks and speculative contextual overload typing stay outside
+  the established contract.
+  Evidence: /tmp/runtime-callbacks-20261010-1 (three PHP suites and generated C++);
+  /tmp/runtime-callbacks-20261010-final adds a contextual reference-parameter callback,
+  repeats the generated proof and checks runtime type registration. No native compiler
+  rebuild.
+- Next: Phase 5 module build composition and Phase 6 coverage/export audit.
   Broader validation remains CH15-RUNTIME-INTEGRATION-TESTS-01.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime

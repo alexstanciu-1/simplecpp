@@ -104,6 +104,15 @@ final class Runtime_Type_Registration
 	/** Ensure the named dependencies exist before the ordinary type resolver runs. */
 	private function require_default(runtime_type_spec $spec): void
 	{
+		if ($spec->callable !== null) {
+			$callable /** runtime_callable_spec */ = $spec->callable;
+			$this->require_default($callable->return_type);
+			foreach ($callable->parameters as $input) {
+				if ($input->variadic) { $this->define('vector'); }
+				$this->require_default($input->type);
+			}
+			return;
+		}
 		if ($spec->parameter !== '') {
 			throw new \RuntimeException('Runtime type defaults require closed types');
 		}

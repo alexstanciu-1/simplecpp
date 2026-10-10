@@ -390,6 +390,7 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'parameter') {
 				$result->parameter = self::name($reader);
 			}
+			elseif ($key === 'callable') { $result->callable = self::callable_spec($reader); }
 			elseif ($key === 'arguments')
 			{
 				$items /** Storage<runtime_type_spec> */ = $result->arguments;
@@ -403,6 +404,12 @@ final class Runtime_Catalog_Reader
 				$reader->reject('Unknown runtime type field: ' . $key);
 			}
 		}
+		if ($result->callable !== null) {
+			if (($result->name !== '') || ($result->parameter !== '') || $arguments) {
+				$reader->reject('Callable type cannot also name another type form');
+			}
+			return $result;
+		}
 		if ($result->parameter !== '') {
 			if (($result->name !== '') || $arguments) {
 				$reader->reject('Type parameter cannot also name a type application');
@@ -412,6 +419,33 @@ final class Runtime_Catalog_Reader
 		if (($result->name === '') || !$arguments) {
 			$reader->reject('Missing runtime type field');
 		}
+		return $result;
+	}
+
+	private static function callable_spec(\scpp\Json_Reader $reader): runtime_callable_spec
+	{
+		$result = new runtime_callable_spec();
+		$returns = false;
+		$parameters = false;
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$name = $reader->property_name();
+			if ($name === 'returns') { $result->return_type = self::type($reader); $returns = true; }
+			elseif ($name === 'parameters') {
+				$inputs /** Storage<runtime_parameter_spec> */ = $result->parameters;
+				$reader->begin_array();
+				while ($reader->next_element()) {
+					$parameter = self::parameter($reader);
+					if (($parameter->default_value !== null) || ($parameter->mode === passing_mode::observation)) {
+						$reader->reject('Callable type inputs do not support defaults or observation');
+					}
+					$inputs->append($parameter);
+				}
+				$parameters = true;
+			}
+			else { $reader->reject('Unknown runtime callable type field: ' . $name); }
+		}
+		if (!$returns || !$parameters) { $reader->reject('Missing runtime callable type field'); }
 		return $result;
 	}
 

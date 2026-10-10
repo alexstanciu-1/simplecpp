@@ -91,6 +91,7 @@ final class Runtime_Catalog_Patterns
 	public static function type(runtime_type_spec $spec, registered_type_catalog $types,
 		array $positions /** hash<int> */): runtime_type_pattern
 	{
+		if ($spec->callable !== null) { return self::callable_type($spec, $types, $positions); }
 		if ($spec->parameter !== '') {
 			if (!isset($positions[$spec->parameter])) { throw new \RuntimeException('Unknown runtime type parameter: ' . $spec->parameter); }
 			return new runtime_variable_pattern($positions[$spec->parameter]);
@@ -128,8 +129,51 @@ final class Runtime_Catalog_Patterns
 		return $result;
 	}
 
+	private static function callable_type(runtime_type_spec $spec, registered_type_catalog $types,
+		array $positions /** hash<int> */): runtime_type_pattern
+	{
+		$signature /** runtime_callable_spec */ = $spec->callable;
+		$result = new runtime_callable_pattern();
+		$result->return_type = self::type($signature->return_type, $types, $positions);
+		$closed = $result->return_type instanceof runtime_concrete_pattern;
+		$parameters /** Storage<runtime_pattern_parameter> */ = $result->parameters;
+		$names /** hash<bool> */ = [];
+		$variadic_seen = false;
+		foreach ($signature->parameters as $input) {
+			if (isset($names[$input->name])) { throw new \RuntimeException('Duplicate runtime callable parameter name'); }
+			$names[$input->name] = true;
+			if ($variadic_seen) { throw new \RuntimeException('Runtime variadic parameter must be last'); }
+			$variadic_seen = $input->variadic;
+			if ($input->variadic && ($input->mode !== passing_mode::value)) {
+				throw new \RuntimeException('Runtime callable variadic inputs must be by value');
+			}
+			if ($input->variadic) { object_cast($types->definition('vector'), abstract_template_type_definition::class); }
+			$pattern = self::type($input->type, $types, $positions);
+			if ($pattern instanceof runtime_concrete_pattern) {
+				$concrete = object_cast($pattern, runtime_concrete_pattern::class);
+				if ($types->registry()->type($concrete->type->type_id()) instanceof no_value_type) {
+					throw new \RuntimeException('Void runtime callable parameter');
+				}
+			}
+			else { $closed = false; }
+			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
+			$parameter->variadic = $input->variadic;
+			$parameters->append($parameter);
+		}
+		if ($closed) { return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types)); }
+		return $result;
+	}
+
 	private static function contains(runtime_type_pattern $pattern, int $position): bool
 	{
+		if ($pattern instanceof runtime_callable_pattern) {
+			$callable = object_cast($pattern, runtime_callable_pattern::class);
+			if (self::contains($callable->return_type, $position)) { return true; }
+			foreach ($callable->parameters as $parameter) {
+				if (self::contains($parameter->type, $position)) { return true; }
+			}
+			return false;
+		}
 		if ($pattern instanceof runtime_variable_pattern) {
 			return object_cast($pattern, runtime_variable_pattern::class)->position === $position;
 		}
@@ -145,6 +189,16 @@ final class Runtime_Catalog_Patterns
 	/** Alpha-equivalent recipes collide regardless of authored variable names. */
 	public static function key(runtime_type_pattern $pattern): string
 	{
+		if ($pattern instanceof runtime_callable_pattern) {
+			$callable = object_cast($pattern, runtime_callable_pattern::class);
+			$key = 'fn(';
+			foreach ($callable->parameters as $parameter) {
+				$key .= self::key($parameter->type) . ($parameter->mode === passing_mode::reference ? '&' : '=')
+					. ($parameter->access === storage_access::read_only ? 'c' : 'w')
+					. ($parameter->variadic ? '...' : '') . ',';
+			}
+			return $key . ')->' . self::key($callable->return_type);
+		}
 		if ($pattern instanceof runtime_variable_pattern) {
 			return '$' . object_cast($pattern, runtime_variable_pattern::class)->position;
 		}

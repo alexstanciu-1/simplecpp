@@ -122,7 +122,7 @@ final class Runtime_Call_Preparation
 			$position = $index < $fixed_count ? $index : $fixed_count;
 			$parameter = $parameters[$position];
 			$type = $parameter->element_type ?? $parameter->type;
-			if (!$type->matches($argument->require_preparation()->type)) { return null; }
+			if (!self::match_concrete($type, $argument->require_preparation()->type)) { return null; }
 		}
 		return $result;
 	}
@@ -132,13 +132,28 @@ final class Runtime_Call_Preparation
 		runtime_type_bindings $inference): bool
 	{
 		if ($pattern instanceof runtime_concrete_pattern) {
-			return object_cast($pattern, runtime_concrete_pattern::class)->type->matches($actual);
+			return self::match_concrete(object_cast($pattern, runtime_concrete_pattern::class)->type, $actual);
 		}
 		if ($pattern instanceof runtime_variable_pattern) {
 			$index = object_cast($pattern, runtime_variable_pattern::class)->position;
 			if (isset($inference->bindings[$index])) { return $inference->bindings[$index]->matches($actual); }
 			$inference->bindings[$index] = $actual;
 			return true;
+		}
+		if ($pattern instanceof runtime_callable_pattern) {
+			$callable_pattern = object_cast($pattern, runtime_callable_pattern::class);
+			$signature = self::callable_signature($actual);
+			if ($signature === null) { return false; }
+			if ($signature->reference_return !== null) { return false; }
+			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
+			if (q_count($parameters) !== q_count($callable_pattern->parameters)) { return false; }
+			foreach ($callable_pattern->parameters as $index => $parameter) {
+				$provided = $parameters[$index];
+				if (($provided->mode !== $parameter->mode) || ($provided->access !== $parameter->access)
+					|| ($provided->default_value !== null) || (($provided->element_type !== null) !== $parameter->variadic)) { return false; }
+				if (!self::match_type($parameter->type, $provided->element_type ?? $provided->type, $inference)) { return false; }
+			}
+			return self::match_type($callable_pattern->return_type, $signature->return_type, $inference);
 		}
 		if ($actual->by_value()) { return false; }
 		$type = Model::$type_catalog->registry()->type($actual->type_id());
@@ -152,6 +167,25 @@ final class Runtime_Call_Preparation
 			if (!self::match_type($child, $children[$index], $inference)) { return false; }
 		}
 		return true;
+	}
+
+	private static function match_concrete(canonical_type_use $expected, canonical_type_use $actual): bool
+	{
+		if ($expected->matches($actual)) { return true; }
+		$definition = Type_Queries::canonical($expected)->definition();
+		if (!($definition instanceof callable_type_definition)) { return false; }
+		$signature = self::callable_signature($actual);
+		if ($signature === null) { return false; }
+		return Callable_Contracts::matches_erased($signature, object_cast($definition, callable_type_definition::class)->signature());
+	}
+
+	/** Argument preparation already completed anonymous signatures; matching reads settled facts. */
+	private static function callable_signature(canonical_type_use $type): ?callable_signature
+	{
+		$definition = Type_Queries::canonical($type)->definition();
+		if ($definition instanceof callable_type_definition) { return object_cast($definition, callable_type_definition::class)->signature(); }
+		if ($definition instanceof closure_type_definition) { return Model::$type_catalog->closures()->identity($type)->signature(); }
+		return null;
 	}
 
 	/** Only the selected provider materializes types, with normal capability dependencies. */

@@ -46,7 +46,6 @@ final class Runtime_Catalog_Registration
 	public static function resolve(runtime_catalog_input $input, registered_type_catalog $types): Runtime_Callables
 	{
 		$result = new Runtime_Callables();
-		$registry = $types->registry();
 		$names /** hash<bool> */ = [];
 		$observation_names /** hash<bool> */ = [];
 		foreach ($input->modules as $module)
@@ -90,28 +89,7 @@ final class Runtime_Catalog_Registration
 						if ($parameter->variadic) { $overload_key .= ':pack'; }
 						continue;
 					}
-					$resolved = new callable_parameter();
-					$resolved->type = self::type($parameter->type, $types);
-					$parameter_type = $registry->type($resolved->type->type_id());
-					if ($parameter_type instanceof no_value_type) {
-						throw new \RuntimeException('Void runtime parameter');
-					}
-					$resolved->mode = $parameter->mode;
-					$resolved->access = $parameter->access;
-					if ($parameter->variadic) {
-						if (!$registry->has_capability($resolved->type, generic_contract::copyable_value)) {
-							throw new \RuntimeException('Runtime variadic elements must be copyable');
-						}
-						$resolved->element_type = $resolved->type;
-						$vector_definition = object_cast($types->definition('vector'), abstract_template_type_definition::class);
-						$elements /** vector<canonical_type_use> */ = [$resolved->type];
-						$resolved->type = $registry->use($registry->intern_application($vector_definition, $elements)->type_id());
-					}
-					if ($parameter->default_value !== null) {
-						$default_spec /** runtime_default_spec */ = $parameter->default_value;
-						$resolved->default_value = Runtime_Default_Registration::resolve($default_spec, $types);
-						Runtime_Default_Registration::require_type($resolved->default_value, $resolved->type);
-					}
+					$resolved = self::parameter($parameter, $types);
 					$parameters->append($resolved);
 					$overload_key .= ':t' . $resolved->type->type_id();
 					if ($parameter->variadic) { $overload_key .= ':pack'; }
@@ -148,7 +126,7 @@ final class Runtime_Catalog_Registration
 	/** Members belong to definitions, not enumerated concrete template applications. */
 	public static function member_definition(runtime_type_spec $spec, registered_type_catalog $types): semantic_type_definition
 	{
-		if (($spec->parameter !== '') || !$spec->arguments->is_empty()) {
+		if (($spec->parameter !== '') || ($spec->callable !== null) || !$spec->arguments->is_empty()) {
 			throw new \RuntimeException('Runtime member owner must name a definition, not an application');
 		}
 		$definition = $types->definition($spec->name);
@@ -203,6 +181,25 @@ final class Runtime_Catalog_Registration
 	/** Compose named/applied types through the existing registry formation rules. */
 	public static function type(runtime_type_spec $spec, registered_type_catalog $types): canonical_type_use
 	{
+		if ($spec->callable !== null) {
+			$callable /** runtime_callable_spec */ = $spec->callable;
+			$signature = new callable_signature();
+			$signature->return_type = self::type($callable->return_type, $types);
+			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
+			$inputs /** vector<callable_parameter> */ = [];
+			$names /** hash<bool> */ = [];
+			foreach ($callable->parameters as $input) {
+				if (isset($names[$input->name])) { throw new \RuntimeException('Duplicate runtime callable parameter name'); }
+				$names[$input->name] = true;
+				$parameter = self::parameter($input, $types);
+				$parameters->append($parameter);
+				$inputs[] = $parameter;
+			}
+			Callable_Contracts::validate($signature);
+			$registry = $types->registry();
+			$callable_definition = $registry->define_callable($signature->return_type, $inputs);
+			return $registry->use($registry->canonical($callable_definition)->type_id());
+		}
 		if ($spec->parameter !== '') { throw new \RuntimeException('Type parameter requires a generic runtime contract'); }
 		$definition = $types->definition($spec->name);
 		$registry = $types->registry();
@@ -220,6 +217,32 @@ final class Runtime_Catalog_Registration
 			throw new \RuntimeException('Type does not accept runtime catalog arguments: ' . $spec->name);
 		}
 		return $registry->use($types->canonical($spec->name)->type_id());
+	}
+
+	/** One installed parameter path for functions and structural callable inputs. */
+	public static function parameter(runtime_parameter_spec $spec, registered_type_catalog $types): callable_parameter
+	{
+		$registry = $types->registry();
+		$result = new callable_parameter();
+		$result->type = self::type($spec->type, $types);
+		if ($registry->type($result->type->type_id()) instanceof no_value_type) { throw new \RuntimeException('Void runtime parameter'); }
+		$result->mode = $spec->mode;
+		$result->access = $spec->access;
+		if ($spec->variadic) {
+			if (!$registry->has_capability($result->type, generic_contract::copyable_value)) {
+				throw new \RuntimeException('Runtime variadic elements must be copyable');
+			}
+			$result->element_type = $result->type;
+			$vector_definition = object_cast($types->definition('vector'), abstract_template_type_definition::class);
+			$elements /** vector<canonical_type_use> */ = [$result->type];
+			$result->type = $registry->use($registry->intern_application($vector_definition, $elements)->type_id());
+		}
+		if ($spec->default_value !== null) {
+			$default_spec /** runtime_default_spec */ = $spec->default_value;
+			$result->default_value = Runtime_Default_Registration::resolve($default_spec, $types);
+			Runtime_Default_Registration::require_type($result->default_value, $result->type);
+		}
+		return $result;
 	}
 
 	/** Index the installed identities without copying signatures or source declarations. */

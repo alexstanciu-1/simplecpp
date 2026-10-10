@@ -143,6 +143,42 @@ Arguments recursively use this same representation. Resolution delegates identit
 arity and formation checks to the type registry; JSON contains no canonical type IDs,
 source ASTs, C++ type spellings or compiler callbacks. Void is not a parameter type.
 
+### Structural callable types
+
+A type may instead be a structural callable signature:
+
+```json
+{"callable": {
+  "parameters": [{"name":"value", "type":"int", "passing":"value"}],
+  "returns":"int"
+}}
+```
+
+`callable` cannot be combined with `name`, `arguments` or `parameter`. Its body
+requires `parameters` and `returns`; parameter names must be unique. Inputs reuse
+the existing value/reference/readonly-reference and typed-variadic forms. Defaults
+and observation are not callable-type contracts. Callback reference returns are
+not enabled by this format. The result may be `void` or another supported type.
+
+The signature is interned through the same callable type registry as source
+`function<...>` types. These types can occur recursively in metadata; surrounding
+function/owner type parameters remain available inside their input and return
+types. One generic recipe can therefore describe a transformation taking
+`function<R(T)>`, without enumerating argument/result combinations. Fully typed
+lambda signatures and erased callable values supply structural inference facts.
+Single fixed signatures supply normal contextual lambda typing; overloaded or
+generic calls require enough explicit lambda typing (or a typed callable variable)
+to establish the arguments independently before exact selection.
+
+Admitting a closure uses the existing erased-callable conversion: exact signature,
+copyable captures and no borrowed capture lifetimes. Overload matching reads settled
+signatures but does not bypass that final admission. Providers receive the ordinary
+`std::function` representation; no C function-pointer or untracked raw closure ABI
+is introduced. A provider receiving a callable by value may retain an owning copy.
+Reference inputs retain their call-scoped, non-retaining contract. Mutable
+reference parameters *inside* a callback signature describe its invocation, not
+permission for the closure to capture borrowed storage or retain those references.
+
 A C++ binding requires `id`, `symbol`, and `header`. Each function has exactly one
 binding in its declaring module, and no orphan bindings are allowed. Symbols are
 qualified names, not C++ expressions; headers are include-path spellings, not source
@@ -512,7 +548,7 @@ It exposes `PREG_SPLIT_NO_EMPTY=1` and `PREG_SPLIT_DELIM_CAPTURE=2` as int const
 These are existing contracts from [regex intake](builtins/regex/first_pass.md), not
 new aliases or implicit container-to-bool conversions. Empty successful captures
 remain successful Result values. Filter, callbacks, count outputs and limited
-replacement remain outside this bounded catalog pending the
+  replacement remain outside this bounded catalog pending the
 [documented prerequisites](../compiler/my-try/docs/planning/runtime_catalog_coverage.md#regex-module-inventory--2026-10-09).
 
 - `core`: `strlen(string): int`, counting bytes through `scpp::str::byte_length`;

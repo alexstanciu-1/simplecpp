@@ -43,6 +43,19 @@ final class Runtime_Pattern_Preparation
 	public static function substitute(runtime_type_pattern $pattern, runtime_type_bindings $inference,
 		preparation_context $context): canonical_type_use
 	{
+		if ($pattern instanceof runtime_callable_pattern) {
+			$callable = object_cast($pattern, runtime_callable_pattern::class);
+			$result = self::substitute($callable->return_type, $inference, $context);
+			$inputs /** vector<callable_parameter> */ = [];
+			foreach ($callable->parameters as $parameter) {
+				$inputs[] = Declaration_Preparation::parameter_contract(self::substitute($parameter->type, $inference, $context),
+					$parameter->mode, $parameter->access, $parameter->variadic, $context);
+			}
+			Capability_Preparation::require_concrete_value($result, $context);
+			$registry = Model::$type_catalog->registry();
+			$definition = $registry->define_callable($result, $inputs);
+			return $registry->use($registry->canonical($definition)->type_id());
+		}
 		if ($pattern instanceof runtime_concrete_pattern) {
 			return object_cast($pattern, runtime_concrete_pattern::class)->type;
 		}

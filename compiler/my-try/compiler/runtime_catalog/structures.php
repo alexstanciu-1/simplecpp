@@ -4,6 +4,7 @@ namespace scpp\compiler;
 /** Unresolved metadata owns no canonical identities or stage workers. */
 final class runtime_type_spec
 {
+	public ?runtime_callable_spec $callable = null;
 	public string $name = '';
 	/** Explicit variable spelling distinguishes a type parameter from a registered type. */
 	public string $parameter = '';
@@ -88,18 +89,21 @@ final class runtime_default_spec
 	public string $text = '';
 }
 
-final class runtime_function_spec
+abstract class runtime_signature_spec
+{
+	public runtime_type_spec $return_type;
+	public Storage $parameters /** Storage<runtime_parameter_spec> */;
+	public function __construct() { $this->parameters = new Storage(); }
+}
+
+final class runtime_callable_spec extends runtime_signature_spec {}
+
+final class runtime_function_spec extends runtime_signature_spec
 {
 	public ?runtime_callable_member_spec $member = null;
 	public string $identity = '';
 	public string $name = '';
 	public array $type_parameters /** vector<string> */ = [];
-	public runtime_type_spec $return_type;
-	public Storage $parameters /** Storage<runtime_parameter_spec> */;
-	public function __construct()
-	{
-		$this->parameters = new Storage();
-	}
 }
 
 /** Membership is independent of the function signature and backend symbol. */
