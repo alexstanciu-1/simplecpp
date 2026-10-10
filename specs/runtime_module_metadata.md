@@ -531,15 +531,47 @@ The current my-try host selects `core`, `json`, `strings`, `datetime` and `files
 JSON/string APIs and enabling the established strict datetime/filesystem surfaces. Native validation snapshots
 these same files and supplies their location
 explicitly; installed/distributed compiler packaging must likewise supply resources.
-Runtime-link/build-module policy remains with existing build owners. Catalog dependencies
-order metadata loading; they do not yet configure linker inputs automatically.
+Runtime-link/build-module policy remains with build owners. The backend publishes
+the selected dependency closure's build requirements for the native consumer below.
+
+## C++ build requirements
+
+Modules may declare an optional `cpp_build` object; omitted arrays are empty:
+
+```json
+{"cpp_build": {
+  "sources": ["modules/regex/regex.cpp"],
+  "libraries": ["pcre2-8"],
+  "definitions": ["EXAMPLE_MODE=1"]
+}}
+```
+
+Sources are relative `.cpp` paths below the configured runtime include root, with
+no absolute paths or traversal. Libraries are logical linker names, not flags or
+shell commands. Definitions are `NAME=VALUE` tokens (identifier names and nonempty
+alphanumeric/underscore/dot/minus values); conflicting values reject configuration.
+Modules cannot override the PHP language-target definition. Arbitrary flags, build
+scripts, package installation and additional search roots are outside this contract.
+
+The selected closure contributes sources once in dependency-first order and libraries
+in consumer-before-dependency order. Repeated entries are deduplicated; identical
+definitions are shared. Requirements apply to the whole selected configuration,
+not only referenced functions. Headers remain per-symbol backend bindings.
+
+The coordinator publishes this resolved snapshot as `runtime_build` alongside the
+artifact manifest. Native builds consume that authenticated snapshot without reopening
+catalogs. Provider sources use ordinary object dependency tracking; libraries enter
+the link key. Definitions apply consistently to generated units, providers and the
+runtime PCH, and participate in their cache identities. Provider objects themselves
+do not consume the generated-program PCH. Old publications lacking the snapshot
+must be republished; there is no implicit core-source fallback.
 
 ## Initial contents and next boundary
 
 `regex` is available as a separately selected catalog; it is **not** added to the
 default module selection. It depends on core and preserves the existing opt-in
-PCRE2-8 requirement. Catalog selection does not install PCRE2 or link its provider:
-build consumers must supply `modules/regex/regex.cpp` and PCRE2-8. Its bounded
+PCRE2-8 requirement. Its metadata supplies `modules/regex/regex.cpp` and PCRE2-8 to
+the native builder; PCRE2 must already be installed. Its bounded
 contents are `regex_jit_available`, both `regex_quote` arities, two/three-argument
 forms of `regex_match`, `regex_match_named`, `regex_match_all`,
 `regex_match_all_pattern_order` and `regex_match_all_named`; two-argument
@@ -580,8 +612,8 @@ remain successful Result values. Filter, callbacks, count outputs and limited
 - `datetime`: all eleven strict `dt_*` helpers from the datetime builtin contracts.
   Monotonic microsecond/nanosecond results remain `uint64`; parsing returns `result<int>`;
   sleep returns `void`. Legacy `time`, `date` and `strtotime` aliases are not enabled.
-  The build consumer must link the datetime provider object as well as core runtime;
-  successful semantic registration does not imply automatic native-module linkage.
+  Metadata supplies the datetime provider source as well as the core dependency
+  to the native build consumer.
 - `filesystem`: nineteen strict `fs_*` helpers: path probes, whole-file get/put,
   directory creation/scanning/removal, size/mtime/touch, entry removal/copy/rename,
   canonical/lexical paths and checked `fs_read_snapshot`. Fallible reads return

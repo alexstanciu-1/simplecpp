@@ -2,6 +2,7 @@
   "version": 1,
   "module": "datetime",
   "dependencies": ["core"],
+  "cpp_build": {"sources": ["modules/datetime/datetime.cpp"]},
   "functions": [
     {"id":"datetime.dt_now","name":"dt_now","parameters":[],"returns":"int"},
     {"id":"datetime.dt_now_ms","name":"dt_now_ms","parameters":[],"returns":"int"},

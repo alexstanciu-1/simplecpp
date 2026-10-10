@@ -51,7 +51,7 @@ def main():
                 runner.run(name, [result['executable']], expected=code)
             publish('publish-first')
             first = build('cold')
-            if first['compiled'] != 3 or first['pch_built'] != 1 or first['linked'] != 1:
+            if first['compiled'] != 4 or first['pch_built'] != 1 or first['linked'] != 1:
                 raise RuntimeError('Cold build did not produce expected units/PCH/link: ' + repr(first))
             execute('cold-execute', first, 7)
             before = {p: (p.stat().st_ino, p.stat().st_mtime_ns) for p in (cache / 'artifacts').iterdir()}
@@ -70,7 +70,7 @@ def main():
             execute('no-pch-execute', nopch, 9)
             optimized = build('optimized', 0, '-O2')
             execute('optimized-execute', optimized, 9)
-            if optimized['pch_built'] != 1 or optimized['compiled'] != 3:
+            if optimized['pch_built'] != 1 or optimized['compiled'] != 4:
                 raise RuntimeError('Optimization did not invalidate native configuration')
             # Reuse O0 again, then check missing artifacts and executable permission repair.
             stable = build('stable-again')
@@ -83,7 +83,7 @@ def main():
             for obj in (cache / 'artifacts').glob('*.o'):
                 obj.unlink()
             rebuilt_objects = build('missing-objects')
-            if rebuilt_objects['compiled'] != 3:
+            if rebuilt_objects['compiled'] != 4:
                 raise RuntimeError('Missing object files were not rebuilt')
             execute('missing-objects-execute', rebuilt_objects, 9)
             # Removing a source removes its object from link membership, not by scanning cache files.

@@ -2,6 +2,7 @@
   "version": 1,
   "module": "regex",
   "dependencies": ["core"],
+  "cpp_build": {"sources": ["modules/regex/regex.cpp"], "libraries": ["pcre2-8"]},
   "constants": [
     {"name":"PREG_SPLIT_NO_EMPTY","type":"int","value":1},
     {"name":"PREG_SPLIT_DELIM_CAPTURE","type":"int","value":2}

@@ -150,7 +150,18 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   /tmp/runtime-callbacks-20261010-final adds a contextual reference-parameter callback,
   repeats the generated proof and checks runtime type registration. No native compiler
   rebuild.
-- Next: Phase 5 module build composition and Phase 6 coverage/export audit.
+- Phase 5 implemented: selected modules supply provider sources, ordered libraries
+  and conflict-checked definitions. The backend merges requirements; the coordinator
+  publishes them with artifact readiness; the native consumer reads that snapshot
+  without catalog IO. Core, datetime and optional regex declare their providers.
+  Evidence: /tmp/runtime-build-contract-20261010-1 (contract/runtime-types PHP) and
+  /tmp/runtime-module-build-20261010-1 (six native build/execution scenarios). Warm
+  reuse performs no builds; body/provider edits each rebuild one object; definitions
+  invalidate PCH/objects; library changes only relink. Sample cold/warm/body times:
+  16.54s/2.12s/3.52s, not a performance benchmark. Existing publication/recovery,
+  CLI and output-adapter proofs pass in /tmp/runtime-build-publication-20261010-1.
+  No native compiler rebuild.
+- Next: Phase 6 coverage/export audit.
   Broader validation remains CH15-RUNTIME-INTEGRATION-TESTS-01.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime

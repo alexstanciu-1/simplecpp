@@ -8,6 +8,7 @@ final class Native_CPP_Build
 	private string $root;
 	private string $tool_key;
 	private array $flags /** vector<string> */ = [];
+	private array $libraries /** vector<string> */ = [];
 	private native_cpp_result $report;
 	private bool $invoked = false;
 
@@ -46,8 +47,12 @@ final class Native_CPP_Build
 			fs_output_write($this->root, '.scpp-native.owner', "scpp-native-cache-v1\n");
 			fs_output_write($this->root, '.scpp-native.status', "pending\n");
 			$manifest = Output_Publication::require_ready($source_root);
+			$document = json_read($manifest);
+			if (!$document->has('runtime_build')) { throw new \RuntimeException('Publication lacks runtime build requirements; republish with the current compiler'); }
+			$build_inputs = self::runtime_inputs($document->member('runtime_build'));
+			$this->libraries = $build_inputs->libraries;
 			$units /** vector<string> */ = [];
-			$files = json_read($manifest)->member('files');
+			$files = $document->member('files');
 			for ($index = 0; $index < $files->size(); $index++) {
 				$row = $files->at($index);
 				$path = $row->member('path')->text();
@@ -59,6 +64,7 @@ final class Native_CPP_Build
 			$optimization = $this->config->optimization === 2 ? '-O2' : '-O0';
 			$flags /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
 				'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
+			foreach ($build_inputs->definitions as $definition) { $flags[] = '-D' . $definition; }
 			$this->flags = $flags;
 			$version_arguments /** vector<string> */ = ['--version'];
 			$version = $this->invoke($version_arguments);
@@ -83,11 +89,15 @@ final class Native_CPP_Build
 				$pch_args = ['-include-pch', $pch->path];
 			}
 			$objects /** vector<string> */ = [];
-			$runtime_command /** vector<string> */ = $this->flags;
-			$runtime_command[] = '-c'; $runtime_command[] = $runtime . '/core/runtime.cpp';
-			$runtime_object = $this->compile_action($runtime_command, 'o', false);
-			$this->record_object($runtime_object);
-			$objects[] = $runtime_object->path;
+			foreach ($build_inputs->sources as $provider) {
+				$provider_path = fs_require_realpath($runtime . '/' . $provider);
+				if (!string_byte_starts_with($provider_path, $runtime . '/')) { throw new \RuntimeException('Runtime provider source escapes its root'); }
+				$runtime_command /** vector<string> */ = $this->flags;
+				$runtime_command[] = '-c'; $runtime_command[] = $provider_path;
+				$runtime_object = $this->compile_action($runtime_command, 'o', false);
+				$this->record_object($runtime_object);
+				$objects[] = $runtime_object->path;
+			}
 			foreach ($units as $unit) {
 				$command /** vector<string> */ = $this->flags;
 				$command[] = '-I'; $command[] = $source_root;
@@ -112,6 +122,24 @@ final class Native_CPP_Build
 	{
 		if ($artifact->reused) { $this->report->reused++; }
 		else { $this->report->compiled++; }
+	}
+
+	/** Consume the authenticated publication, never reopen module catalogs during a build. */
+	private static function runtime_inputs(\scpp\Json_View $view): runtime_cpp_build_spec
+	{
+		if (($view->kind() !== 'object') || ($view->size() !== 3)) { throw new \RuntimeException('Invalid runtime build publication'); }
+		$result = new runtime_cpp_build_spec();
+		foreach (['sources', 'libraries', 'definitions'] as $name) {
+			$items = $view->member($name);
+			if ($items->kind() !== 'array') { throw new \RuntimeException('Runtime build entries require arrays'); }
+			$values /** vector<string> */ = [];
+			for ($index = 0; $index < $items->size(); $index++) { $values[] = $items->at($index)->text(); }
+			if ($name === 'sources') { $result->sources = $values; }
+			elseif ($name === 'libraries') { $result->libraries = $values; }
+			else { $result->definitions = $values; }
+		}
+		Runtime_Build_Contract::validate($result);
+		return $result;
 	}
 
 	/** Scan fresh dependencies (including system headers) so newly shadowing headers cannot be missed. */
@@ -142,6 +170,7 @@ final class Native_CPP_Build
 		$command /** vector<string> */ = $this->flags;
 		$command[] = '-fuse-ld=/usr/bin/ld';
 		foreach ($objects as $object_path) { $command[] = $object_path; }
+		foreach ($this->libraries as $library) { $command[] = '-l' . $library; }
 		$base = content_sha256($this->tool_key . self::arguments_key($command) . self::inputs_key($objects));
 		$dependencies_path = 'link-inputs/' . $base . '.d';
 		$previous = fs_output_read($this->root, $dependencies_path);

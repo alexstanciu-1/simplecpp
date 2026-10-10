@@ -7,6 +7,7 @@ final class CPP_Runtime_Catalog
 	/** Catalogs are trusted metadata, but bindings are names/paths, never C++ expressions. */
 	public static function validate(runtime_catalog_input $input, registered_type_catalog $types): void
 	{
+		CPP_Runtime_Build::requirements($input);
 		foreach ($input->modules as $module)
 		{
 			$initializers /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_initialization;

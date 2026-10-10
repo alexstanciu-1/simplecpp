@@ -142,6 +142,7 @@ final class runtime_property_spec
 
 final class runtime_module_spec
 {
+	public runtime_cpp_build_spec $cpp_build;
 	public Keyed_Storage $cpp_initialization /** Keyed_Storage<runtime_cpp_spec> */;
 	public string $name = '';
 	public string $file = '';
@@ -155,6 +156,7 @@ final class runtime_module_spec
 	public Keyed_Storage $cpp /** Keyed_Storage<runtime_cpp_spec> */;
 	public function __construct()
 	{
+		$this->cpp_build = new runtime_cpp_build_spec();
 		$this->functions = new Storage();
 		$this->cpp_initialization = new Keyed_Storage();
 		$this->constants = new Storage();
@@ -164,6 +166,14 @@ final class runtime_module_spec
 		$this->cpp_types = new Keyed_Storage();
 		$this->cpp = new Keyed_Storage();
 	}
+}
+
+/** Portable build requirements, independent of source AST and native cache state. */
+final class runtime_cpp_build_spec
+{
+	public array $sources /** vector<string> */ = [];
+	public array $libraries /** vector<string> */ = [];
+	public array $definitions /** vector<string> */ = [];
 }
 
 /** Immutable-by-contract startup input, retained across semantic registry resets. */

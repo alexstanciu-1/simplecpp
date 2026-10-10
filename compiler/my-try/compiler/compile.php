@@ -303,7 +303,7 @@ final class Compiler
 			$entry /** prepared_file */ = Model::$prepared_entry;
 			$output = (new CPP_Generator(Model::$cpp_output_program))->generate_program($prepared, $entry);
 			if ($publication !== null) {
-				$publication->publish($output);
+				$publication->publish($output, CPP_Runtime_Build::requirements(Model::$runtime_metadata));
 			}
 		}
 		catch (\RuntimeException $error) {

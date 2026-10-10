@@ -70,6 +70,7 @@ final class Runtime_Catalog_Reader
 					$properties->append(self::property_spec($reader));
 				}
 			}
+			elseif ($key === 'cpp_build') { $result->cpp_build = self::build_spec($reader); }
 			elseif (($key === 'cpp') || ($key === 'cpp_types') || ($key === 'cpp_properties') || ($key === 'cpp_initialization'))
 			{
 				$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $result->cpp;
@@ -98,6 +99,26 @@ final class Runtime_Catalog_Reader
 			$reader->reject('Missing runtime module field');
 		}
 		$reader->finish_document();
+		return $result;
+	}
+
+	private static function build_spec(\scpp\Json_Reader $reader): runtime_cpp_build_spec
+	{
+		$result = new runtime_cpp_build_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$name = $reader->property_name();
+			if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions')) {
+				$reader->reject('Unknown runtime build field: ' . $name);
+			}
+			$values /** vector<string> */ = [];
+			$reader->begin_array();
+			while ($reader->next_element()) { $values[] = self::name($reader); }
+			if ($name === 'sources') { $result->sources = $values; }
+			elseif ($name === 'libraries') { $result->libraries = $values; }
+			else { $result->definitions = $values; }
+		}
+		Runtime_Build_Contract::validate($result);
 		return $result;
 	}
 

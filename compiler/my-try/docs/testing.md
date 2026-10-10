@@ -1,6 +1,10 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_module_build.py --results FRESH_DIRECTORY`
+checks metadata provider publication, native object/link inputs and PCH invalidation
+with six ordered build/execution scenarios. It does not rebuild the compiler.
+
 Shared runtime-storage checkpoint:
 `python3 compiler/my-try/tests/runtime_handles.py --results FRESH_DIRECTORY`.
 The focused set covers noncopyable provider payloads behind copyable handles,

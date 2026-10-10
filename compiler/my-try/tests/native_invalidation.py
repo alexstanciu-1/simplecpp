@@ -72,7 +72,7 @@ def main():
                     native_other=native_seconds-sum(phases.values()), compiled=compiled, result=result))
                 (output / 'observations.json').write_text(json.dumps(observations, indent=2) + '\n')
 
-            all_units = ['runtime.cpp', 'entry.cpp', *[unit(n) for n in ['read.phs', 'forward.phs', 'identity.phs', 'unrelated.phs']]]
+            all_units = ['runtime.cpp', 'datetime.cpp', 'entry.cpp', *[unit(n) for n in ['read.phs', 'forward.phs', 'identity.phs', 'unrelated.phs']]]
             build('cold', all_units, 7, pch=1)
             before = {p: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
                       for p in published.rglob('*') if p.is_file() and not p.name.startswith('.scpp-')}

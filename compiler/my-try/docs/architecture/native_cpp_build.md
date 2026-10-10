@@ -46,6 +46,14 @@ historical executable path remains a historical artifact, not a freshness API.
 
 ## Dependencies and PCH
 
+The publication's required `runtime_build` snapshot supplies runtime provider sources,
+link libraries and global definitions. The builder never reopens catalogs. Relative
+provider paths resolve below the configured runtime root (including a resolved-path
+containment check). Each provider gets an ordinary cached object without PCH; generated
+units retain the runtime PCH. Definitions participate in all compile/PCH identities;
+ordered libraries participate in link identity. Publications made before this field
+was introduced must be republished. There is no hardcoded core-source fallback.
+
 Reuse is keyed by the compiler/linker/environment-launcher identities, compiler
 version, exact ordered arguments and content digests of inputs. The child environment
 is explicit (`env -i`, fixed PATH/locale/timezone/source-date epoch); inherited
@@ -71,7 +79,7 @@ without copying the executable. Permissions are checked before binary cache reus
 ## Bounded first implementation and next work
 
 This is Linux, Clang plus GNU ld with dependency-file support, ordinary core runtime
-linkage and `-O0`/`-O2`. It is not a replacement for the legacy `scpp`/Ninja project
+and metadata-declared provider linkage, and `-O0`/`-O2`. It is not a replacement for the legacy `scpp`/Ninja project
 system or a claim of every optional runtime module's linkage. No arbitrary user
 flags, cross-compilation, alternative linkers, runtime package-manager integration,
 distributed cache or native build of this compiler is claimed.
@@ -94,3 +102,7 @@ Reducing validation overhead without weakening dependency correctness is
 deferred by user request to [CH15-NATIVE-CACHE-PERF-01](../catalog/15_blocking_debt.md#ch15-native-cache-perf-01--native-cache-validation-overhead).
 Toolchain shared-library/search-environment completeness and optional runtime-module
 linkage require further acceptance work before claiming a hermetic/general cache.
+
+Focused module evidence: `tests/runtime_module_build.py` proves cold/warm reuse,
+one-unit body/provider edits, definition/PCH invalidation and library-only relinking.
+This validates generated executables, not a native rebuild of the compiler.

@@ -24,7 +24,7 @@ function publication_set(array $files): Storage
 function publication_write(string $root, array $files): void
 {
 	$worker = new Output_Publication($root);
-	try { $worker->publish(publication_set($files)); } finally { $worker->close(); }
+	try { $worker->publish(publication_set($files), new runtime_cpp_build_spec()); } finally { $worker->close(); }
 }
 function publication_stats(string $root, array $paths): array
 {
