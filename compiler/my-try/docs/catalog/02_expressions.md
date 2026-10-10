@@ -41,6 +41,28 @@ statuses remain authoritative for individual capabilities.
 
 ## Progress
 
+### Ordered eager operands — 2026-10-10
+
+The approved [language amendment](../../../../specs/expression_evaluation.md)
+replaces the historical effect-shape gate for eager binaries: evaluate/convert left,
+then right, then compute from saved values. Fields/calls use ordinary expression
+preparation. The common C++ renderer sequences arithmetic, power, bitwise/shift,
+comparisons, concatenation, xor and spaceship; logical/selection laziness remains.
+No AST node or per-field/per-call operator implementation was added. Compound RHS
+admission and numeric type restrictions are unchanged. Unsupported bool comparisons
+still reject for type reasons, rather than incidentally rejecting a call operand.
+
+`tests/eager_binary.py` checks the new behavior, former rejection cases, eight PHP
+suites and four generated programs. `/tmp/eager-binary-20261010-verified` passed;
+generated compile/run tasks took 7.39–10.15s concurrently without PCH. Initial checks
+exposed a null-sentinel spelling issue (fixed by materializing the already-converted
+C++ value with `auto`) and stale fixture assumptions; no runtime semantics were
+changed to satisfy tests. The S2S PHP regression also passed in
+`/tmp/eager-binary-s2s-20261010-final` (42.17s), including syntax purity,
+incremental reuse and updated ordered-output expectations. Native compiler
+rebuilding remains separate.
+
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
@@ -367,7 +389,8 @@ Native execution of the compiler itself was not rerun.
 
 Non-goals: division, modulus, exponentiation, compound assignment, unary operators,
 mixed-width or floating operands, broader effect analysis, runtime overflow changes
-and LLVM. Existing effectful-operand restrictions remain in force.
+and LLVM. The later ordered-eager amendment above supersedes this checkpoint's
+effectful-operand restrictions; compound RHS restrictions remain separate.
 
 ### Imported version 1
 

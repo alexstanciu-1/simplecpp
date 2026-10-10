@@ -267,8 +267,6 @@ try
 		['return match ($new = 1) { 1 => 2 };', 'established local declaration'],
 		['struct Box {} $a Box; $x = match (1) { 1 => $a };', 'match branches require supported scalar value types'],
 		['function f(): void {} $x = match (1) { 1 => f() };', 'match branches require supported scalar value types'],
-		['$n = 0; return match (1) { 1 => ($n = 1) } + $n;', 'order-independent operands'],
-		['$n = 0; return match ($n++) { 0 => 1 } + $n;', 'order-independent operands'],
 		['function f(int &$x): void {} $a = 1; f(match (1) { 1 => $a });', 'reference arguments require stable storage'],
 		['switch (true) {}', 'selector requires canonical int'],
 		['return true ? 1 : 1.0;', 'conditional branches require matching scalar types'],
@@ -277,7 +275,6 @@ try
 		['$x = true ? ($new = 1) : 2;', 'established local declaration'],
 		['struct Box {} $a Box; $x = true ? $a : $a;', 'conditional branches require supported scalar value types'],
 		['function f(): void {} $x = true ? f() : f();', 'conditional branches require supported scalar value types'],
-		['$n = 0; return (true ? ($n = 1) : 2) + $n;', 'order-independent operands'],
 		['function f(int &$x): void {} $a = 1; $b = 2; f(true ? $a : $b);', 'reference arguments require stable storage'],
 		['switch ("1") {}', 'selector requires canonical int'],
 		['switch (1) { case true: break; }', 'case requires canonical int'],
@@ -322,7 +319,6 @@ try
 		['function f(): int { return 1; if (false) { return $missing; } }', 'established local declaration'],
 		['if (true) {} else { return $missing; }', 'established local declaration'],
 		['if (($x = true)) {}', 'established local declaration'],
-		['function probe(int &$n): bool { $n++; return true; } $n = 0; if (false == probe($n)) {}', 'order-independent operands'],
 	] as [$source, $diagnostic]) {
 		$rejected_sources[] = $source;
 		$compiler = control_program($path, $source);

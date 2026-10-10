@@ -8,6 +8,13 @@ activate additional operand types or coercions.
 
 ## Current contracts
 
+The [2026-10-10 evaluation amendment](../../../specs/expression_evaluation.md)
+supersedes historical eager-operand restrictions in this guide: eager binaries
+evaluate and convert left, then right, into values before computation. The common
+renderer owns sequencing, including power/xor/spaceship; lazy logical/selection
+paths retain conditional evaluation. Fields, calls and other admitted expressions
+use the same path. Compound-assignment RHS admission remains independently bounded.
+
 | Source operation | Exact operand types | Result | Selected C++ lowering |
 | --- | --- | --- | --- |
 | `**` | canonical `int`, `int` | canonical `int` | Checked shared `scpp::pow` |
@@ -128,8 +135,8 @@ that selected operation through the existing runtime operators.
 Unary `+`, `-`, `~` accept canonical `int` and return canonical `int`; `!` accepts
 canonical `bool` and returns canonical `bool`. Results are values, not assignable
 storage. Explicit casts can establish the required type. Other numeric widths,
-floating operands and implicit truthiness remain rejected. The existing restriction
-on effectful operands remains in force, including beneath nested unary expressions.
+floating operands and implicit truthiness remain rejected in this scalar slice.
+Admitted effectful operands are now sequenced by their enclosing eager binary.
 
 Prefix operators nest right-to-left and bind above ordinary binary levels,
 but below exponentiation.
@@ -191,11 +198,9 @@ proofs stay inside representable bounds.
 Assignments and returns consume the snapshot normally. Existing call emission
 already evaluates value arguments into temporaries left-to-right, so multiple
 mutation arguments retain their individual values. Value parameters mutate only
-the local copy; reference parameters update caller storage. Binary operators retain
-their existing effect restriction, including mutations hidden under casts or unary
-expressions. Unary preparation now admits its single effectful operand (Chapter 05
-mixed-operation slice); it has no sibling evaluation-order ambiguity. This does not
-permit unary expressions to introduce new bindings or bypass an eager parent's checks.
+the local copy; reference parameters update caller storage. Binary operators now
+sequence mutations, including those beneath casts or unary expressions. Unary
+preparation admits its single effectful operand without introducing new bindings.
 
 [Mutation tests](../tests/mutations.php) verify selected operations/conversions,
 non-addressability, spans, single-child inspection, cleanup, rejected targets/types,
@@ -266,8 +271,9 @@ LLVM remains deferred.
 Added 2026-10-02: canonical `int` pairs now support `&`, `|`, `^`, `<<`, `>>` and
 compound forms `&=`, `|=`, `^=`, `<<=`, `>>=`. Result types remain canonical `int`.
 Existing binary/compound nodes, operator decisions and write-back conversions are
-reused; no AST structure or field was added. Non-int operands and effectful operands
-retain the existing rejections. Compound targets remain existing locals/parameters.
+reused; no AST structure or field was added. Non-int operands retain their type
+restrictions; eager value operations admit sequenced effects. Compound RHS admission
+is unchanged; stable property targets also follow the later CH10 contract.
 
 The agreed [runtime contract](../../../runtime/specs/spec.md) delegates to native
 C++20 integer behavior. Counts 0 through 63 are valid for the canonical signed

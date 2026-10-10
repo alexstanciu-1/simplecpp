@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/eager_binary.py --results FRESH_DIRECTORY` checks
+left-to-right eager operands/conversions, scalar and reference-return snapshots,
+lazy subexpressions, failure order and existing operator preparation regressions.
+It executes four generated programs, not a native compiler rebuild.
+
 `python3 compiler/my-try/tests/field_container_probes.py --results FRESH_DIRECTORY`
 checks keyed field-root `isset`/`empty`/`unset`, lazy keys, prefix re-resolution,
 shared-owner lifetime, inline/read-only fields and non-creating failures. It executes

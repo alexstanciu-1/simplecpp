@@ -43,7 +43,7 @@ foreach ($decision->operands as $operand) {
 	}
 }
 $text = CPP_Probe::text(Model::$cpp_files);
-if (!str_contains($text, 'auto local_b = (local_a + static_cast<scpp::int_t<>>(2LL));')
+if (!str_contains($text, 'operand_0 = local_a;') || !str_contains($text, 'return (operand_0 + operand_1);')
 || !str_contains($text, '#include "scpp/generated/operators.hpp"')) {
 	throw new \LogicException('C++ addition did not consume the prepared operator decision');
 }
@@ -57,7 +57,7 @@ $inner = object_cast($outer->left, binary_expression_node::class);
 if (($inner->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)
 || ($outer->require_binary_preparation()->decision->operation !== operator_operation::integer_addition)
 || !str_contains(CPP_Probe::text(Model::$cpp_files),
-'auto local_a = ((static_cast<scpp::int_t<>>(1LL) + static_cast<scpp::int_t<>>(2LL)) + static_cast<scpp::int_t<>>(3LL));')) {
+'return (operand_2 + operand_3);')) {
 	throw new \LogicException('Left-associative addition chain lost recursive operator decisions');
 }
 
@@ -80,7 +80,7 @@ foreach ($decision->operands as $operand) {
 		throw new \LogicException('Subtraction lost its ordered identity operand conversions');
 	}
 }
-if (!str_contains(CPP_Probe::text(Model::$cpp_files), 'auto local_b = (local_a - static_cast<scpp::int_t<>>(3LL));')) {
+if (!str_contains(CPP_Probe::text(Model::$cpp_files), 'return (operand_0 - operand_1);')) {
 	throw new \LogicException('Subtraction did not lower its selected operation');
 }
 
@@ -274,7 +274,6 @@ $rejections = [
 	'shift count type' => ['return 1 >> true;', 'canonical int operands'],
 	'bitwise comparison precedence' => ['return 1 & 1 == 1;', 'canonical int operands'],
 	'shift spaced punctuation' => ['return 1 < < 2;', 'Expected scalar literal'],
-	'shift effect' => ['$x = 1; return $x++ << 2;', 'order-independent operands'],
 	'unary positive float' => ['return +1.5;', 'unary operation requires'],
 	'unary float' => ['return -1.5;', 'unary operation requires'],
 	'unary bool' => ['return +true;', 'unary operation requires'],
@@ -282,38 +281,29 @@ $rejections = [
 	'unary not int' => ['return !1;', 'unary operation requires'],
 	'unary narrow' => ['$x uint8 = 1; return -$x;', 'unary operation requires'],
 	'unary oversized magnitude' => ['return -9223372036854775808;', 'exceeds signed 64-bit'],
-	'nested unary call' => ['function value(): int { return 1; } return 2 + -value();', 'order-independent operands'],
 
 	'boolean operand' => ['$value = 1 + true;', 'integer binary operation requires canonical int operands'],
 	'narrow operand' => ['$left uint8 = 1; $value = $left + 2;', 'integer binary operation requires canonical int operands'],
-	'effectful operand' => ['function value(): int { return 1; } $result = value() + 2;', 'binary operation requires order-independent operands'],
 	'subtraction boolean' => ['$value = 1 - true;', 'integer binary operation requires canonical int operands'],
 	'subtraction float' => ['$value = 3.0 - 1;', 'integer binary operation requires canonical int operands'],
 	'subtraction string' => ['$value = 3 - "1";', 'integer binary operation requires canonical int operands'],
 	'subtraction width' => ['$left uint8 = 3; $value = $left - 1;', 'integer binary operation requires canonical int operands'],
-	'subtraction call' => ['function value(): int { return 1; } $result = 2 - value();', 'binary operation requires order-independent operands'],
-	'nested subtraction call' => ['function value(): int { return 1; } $result = 2 + (3 - value());', 'binary operation requires order-independent operands'],
 	'multiplication boolean' => ['$value = true * 2;', 'integer binary operation requires canonical int operands'],
 	'multiplication float' => ['$value = 2 * 3.5;', 'integer binary operation requires canonical int operands'],
 	'multiplication string' => ['$value = "2" * 3;', 'integer binary operation requires canonical int operands'],
 	'multiplication width' => ['$x uint8 = 2; $value = $x * 3;', 'integer binary operation requires canonical int operands'],
-	'multiplication call' => ['function value(): int { return 2; } $result = 1 + 3 * value();', 'binary operation requires order-independent operands'],
 	'division float' => ['return 7 / 3.0;', 'integer binary operation requires canonical int operands'],
 	'remainder width' => ['$x uint8 = 7; return $x % 3;', 'integer binary operation requires canonical int operands'],
 	'comparison string' => ['return 3 == "3";', 'integer binary operation requires canonical int operands'],
 	'comparison bool' => ['return 1 === true;', 'integer binary operation requires canonical int operands'],
 	'comparison float' => ['return 1 < 2.0;', 'integer binary operation requires canonical int operands'],
-	'comparison call' => ['function value(): int { return 1; } return value() < 2;', 'binary operation requires order-independent operands'],
 	'relational chain' => ['return 1 < 2 < 3;', 'integer binary operation requires canonical int operands'],
 	'wrapper concatenation' => ['$n ?int = 1; $a = "x" . $n;', 'concatenation requires boxed'],
 	'cross-family concatenation' => ['$d dynamic; $m mixed; $a = $d . $m;', 'same boxed family'],
-	'concatenation call' => ['function value(): string { return "a"; } $a = "x" . value();', 'binary operation requires order-independent operands'],
 	'logical non-bool' => ['return false && 1;', 'logical operation requires canonical bool operands'],
 	'logical skipped unknown' => ['return false && $missing;', 'established local declaration for missing'],
 	'power float' => ['return 2.0 ** 3;', 'canonical int operands'],
 	'power narrow' => ['$x uint8 = 2; return $x ** 3;', 'canonical int operands'],
-	'power effect' => ['$x = 2; return $x++ ** 3;', 'order-independent operands'],
-	'power assignment' => ['$x = 2; return ($x = 3) ** 2;', 'order-independent operands'],
 	'power compound deferred' => ['$x = 2; $x **= 3;', 'Expected scalar literal'],
 ];
 foreach ($rejections as $name => [$source, $diagnostic])

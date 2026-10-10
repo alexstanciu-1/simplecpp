@@ -17,10 +17,10 @@ Power associates right-to-left and binds more tightly than prefix unary operator
 A signed exponent is syntactically valid: `2 ** -2` reaches the runtime domain check.
 Grouping overrides these defaults. `**=` is outside this contract.
 
-The current compiler admits the same order-independent operand shapes as its other
-integer arithmetic. Writes, mutations and calls cannot become power operands through
-grouping or casts. Each operand is evaluated once; relative ordering of independent
-operand failures is unspecified. Enclosing logical short circuiting may skip power.
+Power follows the [v0.2 eager binary evaluation contract](expression_evaluation.md):
+evaluate and convert the left operand, then the right, each once, before computing.
+Calls and other admitted value expressions may be operands. A left-side failure
+prevents right-side evaluation. Enclosing logical short circuiting may skip power.
 
 ## Values and errors
 

@@ -79,9 +79,6 @@ $rejections = [
 	['$x = 1; ++$x++;', 'existing local or parameter'],
 	['$x = 1; $x++++;', 'existing local or parameter'],
 	['$x = 1; ++$x[0];', 'operator[] with 1 argument(s) overload resolution is deferred'],
-	['$x = 1; return $x++ + $x;', 'order-independent operands'],
-	['$x = 1; return 1 + (int)$x++;', 'order-independent operands'],
-	['$x = 1; return 2 + -$x++;', 'order-independent operands'],
 	['function consume(int &$a): int { return $a; } $x = 1; return consume(++$x);', 'reference arguments require stable storage'],
 ];
 foreach ($rejections as [$source, $diagnostic])

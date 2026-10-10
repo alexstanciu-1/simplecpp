@@ -119,6 +119,11 @@
                         "doc_status": "normative"
                     },
                     {
+                        "path": "specs/expression_evaluation.md",
+                        "kind": "markdown",
+                        "doc_status": "normative"
+                    },
+                    {
                         "path": "specs/compiler_storage.md",
                         "kind": "markdown",
                         "doc_status": "normative"

@@ -373,10 +373,12 @@ use the same scalar rules as mixed. Boxed AND/OR admission belongs to `Boxed_Ope
 separately from general condition admission: peers are the same boxed family or
 bool/ordinary int/float, not strings or wrappers. Distinct boxed identities reject. Ordered
 operand truthiness facts drive native-bool short circuit. Logical contexts admit
-calls, mutations and compound assignments, while eager parents retain recursive
-effect checks. Mixed xor and wrapper logical contracts remain deferred.
+calls, mutations and compound assignments. Eager binaries now admit those same
+ordinary expressions, with left-conversion/right-conversion sequencing in the shared
+C++ operator renderer. Compound-assignment RHS admission remains conservative.
+Mixed xor and wrapper logical contracts remain deferred.
 Unary preparation permits one effectful operand, without introducing new bindings;
-eager parents still inspect its subtree for operand-order hazards. Runtime payload failure
+eager parents preserve its evaluation order using converted value snapshots. Runtime payload failure
 is not preparation failure. Reference arguments retain exact stable-storage rules.
 
 `Boxed_Operators` selects both families' unary signs and binary numeric arithmetic on

@@ -823,7 +823,7 @@ foreach ($cases as $name => [$source, $exit])
 		$binary_facts = $binary->require_binary_preparation();
 		$integer_type = Language_Types::integer(Model::$language_scope);
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
-			. "\tauto local_b = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
+			. "\tauto local_b = ([&]() -> scpp::int_t<> { auto operand_0 = local_a; auto operand_1 = static_cast<scpp::int_t<>>(1LL); return (operand_0 + operand_1); }());\n";
 		$text = CPP_Probe::text(Model::$cpp_files);
 		if (($binary_facts->decision->operation !== operator_operation::integer_addition)
 			|| (!$binary_facts->type->matches($integer_type)) ||
@@ -846,7 +846,7 @@ foreach ($cases as $name => [$source, $exit])
 		$binary_facts = $binary->require_binary_preparation();
 		$declaration = weakref_get($first_facts->binding->declaration);
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
-			. "\tlocal_a = (local_a + static_cast<scpp::int_t<>>(1LL));\n";
+			. "\tlocal_a = ([&]() -> scpp::int_t<> { auto operand_0 = local_a; auto operand_1 = static_cast<scpp::int_t<>>(1LL); return (operand_0 + operand_1); }());\n";
 		$text = CPP_Probe::text(Model::$cpp_files);
 		if (($first_facts->binding->resolved_kind !== binding_kind::declaration) ||
 			($second_facts->binding->resolved_kind !== binding_kind::assignment) ||
@@ -873,7 +873,7 @@ foreach ($cases as $name => [$source, $exit])
 		$right_facts = $right->require_variable_reference_preparation();
 		$declaration = weakref_get($first_facts->binding->declaration);
 		$expected = "\tauto local_a = static_cast<scpp::int_t<>>(1LL);\n"
-			. "\tlocal_a = (local_a + local_a);\n";
+			. "\tlocal_a = ([&]() -> scpp::int_t<> { auto operand_0 = local_a; auto operand_1 = local_a; return (operand_0 + operand_1); }());\n";
 		$text = CPP_Probe::text(Model::$cpp_files);
 		if (($first_facts->binding->resolved_kind !== binding_kind::declaration) ||
 			($second_facts->binding->resolved_kind !== binding_kind::assignment) ||
@@ -1290,8 +1290,6 @@ $integer_addition_rejections = [
 	'undeclared operand' => ['$b = $missing + 1;', 'established local declaration for missing'],
 	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer binary operation requires canonical int operands'],
 	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer binary operation requires canonical int operands'],
-	'effectful operand' => ['function value(): int { return 1; } $a = value() + 1;', 'binary operation requires order-independent operands'],
-	'grouped effectful operand' => ['function value(): int { return 1; } $a = (value()) + 1;', 'binary operation requires order-independent operands'],
 ];
 foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 {

@@ -851,38 +851,41 @@ final class CPP_Generator
 
 		$left = CPP_Declarations::conversion($left, $decision->operands[0], $context);
 		$right = CPP_Declarations::conversion($right, $decision->operands[1], $context);
-		if ($decision->operation === operator_operation::integer_power) {
-			$context->headers['operators/arithmetic/power.hpp'] = true;
-			return $spelling . '(' . $left . ', ' . $right . ')';
-		}
-		if ($decision->operation === operator_operation::boolean_xor) {
-			$left_name = 'operand_' . $context->next_temporary;
-			$context->next_temporary++;
-			$right_name = 'operand_' . $context->next_temporary;
-			$context->next_temporary++;
-			$result_type = CPP_Declarations::type($decision->result_type, $context);
-			return '([&]() -> ' . $result_type . ' { bool ' . $left_name . ' = static_cast<bool>(' . $left
-				. '); bool ' . $right_name . ' = static_cast<bool>(' . $right . '); return ' . $result_type
-				. '(' . $left_name . ' != ' . $right_name . '); }())';
-		}
-		if ($decision->operation === operator_operation::integer_three_way)
-		{
-			$context->headers['scpp/generated/operators.hpp'] = true;
-			$left_name = 'operand_' . $context->next_temporary;
-			$context->next_temporary++;
-			$right_name = 'operand_' . $context->next_temporary;
-			$context->next_temporary++;
-			$result_type = CPP_Declarations::type($decision->result_type, $context);
-			return '([&]() -> ' . $result_type . ' { auto ' . $left_name . ' = ' . $left
-				. '; auto ' . $right_name . ' = ' . $right . '; return ' . $result_type
-				. '(static_cast<bool>(' . $left_name . ' < ' . $right_name . ') ? -1 : '
-				. '(static_cast<bool>(' . $left_name . ' > ' . $right_name . ') ? 1 : 0)); }())';
-		}
 		if (($decision->operation === operator_operation::boolean_and)
 			|| ($decision->operation === operator_operation::boolean_or)) {
 			$context->headers['scpp/bool_t.hpp'] = true;
 			return 'scpp::bool_t(static_cast<bool>(' . $left . ') ' . $spelling
 				. ' static_cast<bool>(' . $right . '))';
+		}
+
+		// Materialize converted values, never aliases that the next operand can change.
+		$left_name = 'operand_' . $context->next_temporary;
+		$context->next_temporary++;
+		$right_name = 'operand_' . $context->next_temporary;
+		$context->next_temporary++;
+		$result_type = CPP_Declarations::type($decision->result_type, $context);
+		$prefix = '([&]() -> ' . $result_type . ' { '
+			. 'auto ' . $left_name . ' = ' . $left . '; '
+			. 'auto ' . $right_name . ' = ' . $right . '; return ';
+		return $prefix . self::render_eager_binary($decision, $spelling, $left_name, $right_name, $context) . '; }())';
+	}
+
+	/** Compute from already converted, ordered values; no source expression is repeated. */
+	private static function render_eager_binary(operator_decision $decision, string $spelling,
+		string $left, string $right, cpp_generation_context $context): string
+	{
+		if ($decision->operation === operator_operation::integer_power) {
+			$context->headers['operators/arithmetic/power.hpp'] = true;
+			return $spelling . '(' . $left . ', ' . $right . ')';
+		}
+		if ($decision->operation === operator_operation::boolean_xor) {
+			return 'scpp::bool_t(static_cast<bool>(' . $left . ') != static_cast<bool>(' . $right . '))';
+		}
+		if ($decision->operation === operator_operation::integer_three_way) {
+			$context->headers['scpp/generated/operators.hpp'] = true;
+			$result_type = CPP_Declarations::type($decision->result_type, $context);
+			return $result_type . '(static_cast<bool>(' . $left . ' < ' . $right . ') ? -1 : '
+				. '(static_cast<bool>(' . $left . ' > ' . $right . ') ? 1 : 0))';
 		}
 		if (($decision->operation === operator_operation::integer_identical)
 			|| ($decision->operation === operator_operation::integer_not_identical)

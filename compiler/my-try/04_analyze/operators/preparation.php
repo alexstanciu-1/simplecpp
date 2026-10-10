@@ -23,7 +23,7 @@ final class Operator_Preparation
 		elseif ($text !== '+') {
 			throw new \RuntimeException('S2S unary operator is not supported');
 		}
-		// One operand has no sibling ordering ambiguity. Its eager parent still checks the subtree.
+		// One operand has no sibling ordering ambiguity; it cannot introduce a local.
 		$statement_assignment = $context->statement_assignment;
 		$context->statement_assignment = false;
 		try {
@@ -44,24 +44,22 @@ final class Operator_Preparation
 	{
 		$text = $context->collection->token_snapshot()->operator_text_at($syntax->operator_token_index);
 		$source_operator = self::binary_kind($text);
-		$sequenced = ($source_operator === operator_kind::logical_and)
-			|| ($source_operator === operator_kind::logical_or) || ($source_operator === operator_kind::logical_xor);
-		// One null literal has no effects; the other operand may be evaluated once without order ambiguity.
-		$null_comparison = (($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical))
-			&& (($syntax->left instanceof null_literal_node) || ($syntax->right instanceof null_literal_node));
-		if (!$null_comparison) {
-			self::require_operand($syntax->left, $sequenced);
-			self::require_operand($syntax->right, $sequenced);
+		// Every binary owns sequencing; operands remain expressions, not declaration sites.
+		$previous = $context->statement_assignment;
+		$context->statement_assignment = false;
+		try
+		{
+			$left = Expression_Preparation::prepare($syntax->left, $context);
+			$right = Expression_Preparation::prepare($syntax->right, $context);
+			$decision = self::decide($source_operator, [$left->type, $right->type], operator_context::expression, $context);
+			$facts = new prepared_binary_expression();
+			$facts->decision = $decision;
+			$facts->type = $decision->result_type;
+			return $facts;
 		}
-
-		$left = Expression_Preparation::prepare($syntax->left, $context);
-		$right = Expression_Preparation::prepare($syntax->right, $context);
-		$decision = self::decide($source_operator, [$left->type, $right->type], operator_context::expression, $context);
-
-		$facts = new prepared_binary_expression();
-		$facts->decision = $decision;
-		$facts->type = $decision->result_type;
-		return $facts;
+		finally {
+			$context->statement_assignment = $previous;
+		}
 	}
 
 	/** Receiver first, then the optional explicit argument; empty brackets imply no special role. */
@@ -317,101 +315,77 @@ final class Operator_Preparation
 		throw new \RuntimeException('S2S binary operator is not supported yet');
 	}
 
-	/** Keep C++ operand-order freedom harmless until general effect facts are available. */
+	/** Compound updates retain their bounded RHS admission independently of value binaries. */
 	public static function require_order_independent_operand(expression_node $node): void
 	{
-		self::require_operand($node, false);
+		self::require_operand($node);
 	}
 
-	/** Sequenced logical operands admit writes; eager parents inspect the entire subtree. */
-	private static function require_operand(expression_node $node, bool $sequenced): void
+	/** Recursive conservative check used only by compound-assignment RHS admission. */
+	private static function require_operand(expression_node $node): void
 	{
 		if ($node instanceof index_node)
 		{
 			$indexed = object_cast($node, index_node::class);
-			self::require_operand($indexed->base, $sequenced);
+			self::require_operand($indexed->base);
 			if ($indexed->index !== null) {
 				$argument /** expression_node */ = $indexed->index;
-				self::require_operand($argument, $sequenced);
+				self::require_operand($argument);
 			}
 			return;
 		}
-		if ($sequenced) {
-			if (($node instanceof call_node) || ($node instanceof mutation_expression_node)
-				|| ($node instanceof compound_assignment_expression_node)) {
-				return;
-			}
-		}
-		if ($node instanceof take_expression_node)
-		{
-			if ($sequenced) {
-				return;
-			}
+		if ($node instanceof take_expression_node) {
 			throw new \RuntimeException('S2S take requires a sequenced expression context');
 		}
 		if ($node instanceof interpolated_string_node) {
 			// The admitted grammar contains only literal parts and ordinary variable reads.
 			return;
 		}
-		if ($node instanceof assignment_expression_node) {
-			if ($sequenced) {
-				return;
-			}
-		}
 		if ($node instanceof binary_expression_node) {
-			if (!$sequenced) {
-				$binary = object_cast($node, binary_expression_node::class);
-				self::require_operand($binary->left, false);
-				self::require_operand($binary->right, false);
-			}
+			$binary = object_cast($node, binary_expression_node::class);
+			self::require_operand($binary->left);
+			self::require_operand($binary->right);
 			return;
 		}
 		if ($node instanceof match_expression_node)
 		{
-			if (!$sequenced)
-			{
-				$match_expression = object_cast($node, match_expression_node::class);
-				self::require_operand($match_expression->selector, false);
-				$arms /** Storage<match_arm_node> */ = $match_expression->arms;
-				foreach ($arms as $arm) {
-					self::require_operand($arm->result, false);
-				}
+			$match_expression = object_cast($node, match_expression_node::class);
+			self::require_operand($match_expression->selector);
+			$arms /** Storage<match_arm_node> */ = $match_expression->arms;
+			foreach ($arms as $arm) {
+				self::require_operand($arm->result);
 			}
 			return;
 		}
 		if ($node instanceof conditional_expression_node) {
-			if (!$sequenced) {
-				$selection = object_cast($node, conditional_expression_node::class);
-				self::require_operand($selection->condition, false);
-				if ($selection->true_branch !== null) {
-					$branch /** expression_node */ = $selection->true_branch;
-					self::require_operand($branch, false);
-				}
-				self::require_operand($selection->fallback, false);
+			$selection = object_cast($node, conditional_expression_node::class);
+			self::require_operand($selection->condition);
+			if ($selection->true_branch !== null) {
+				$branch /** expression_node */ = $selection->true_branch;
+				self::require_operand($branch);
 			}
+			self::require_operand($selection->fallback);
 			return;
 		}
 		if ($node instanceof coalesce_expression_node) {
-			if (!$sequenced) {
-				$coalesce = object_cast($node, coalesce_expression_node::class);
-				self::require_operand($coalesce->left, false);
-				self::require_operand($coalesce->fallback, false);
-			}
+			$coalesce = object_cast($node, coalesce_expression_node::class);
+			self::require_operand($coalesce->left);
+			self::require_operand($coalesce->fallback);
 			return;
 		}
 		if ($node instanceof unary_expression_node) {
 			$unary = object_cast($node, unary_expression_node::class);
-			self::require_operand($unary->operand, $sequenced);
+			self::require_operand($unary->operand);
 			return;
 		}
 		if ($node instanceof value_probe_node) {
 			$probe = object_cast($node, value_probe_node::class);
-			self::require_operand($probe->operand, $sequenced);
+			self::require_operand($probe->operand);
 			return;
 		}
 		if ($node instanceof cast_expression_node) {
 			$cast = object_cast($node, cast_expression_node::class);
-			self::require_operand($cast->operand, $sequenced);
+			self::require_operand($cast->operand);
 			return;
 		}
 		if (($node instanceof null_literal_node) || ($node instanceof integer_literal_node) || ($node instanceof float_literal_node) ||
