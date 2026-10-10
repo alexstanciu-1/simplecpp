@@ -16,9 +16,7 @@ final class Keyed_Path_Preparation
 			$path = new prepared_keyed_path();
 			self::step(object_cast($syntax, index_node::class), $path, $context, $removing, true);
 			if ($removing) {
-				if (!($path->root instanceof variable_reference_node)) {
-					throw new \RuntimeException('S2S unset requires a local or parameter root');
-				}
+				Indexing_Preparation::require_storage_receiver($path->root);
 				if (!$path->root->require_preparation()->addressable()) {
 					throw new \RuntimeException('S2S unset requires stable storage');
 				}
@@ -79,10 +77,14 @@ final class Keyed_Path_Preparation
 		if ($syntax instanceof index_node) {
 			return self::step(object_cast($syntax, index_node::class), $path, $context, $removing, false);
 		}
-		if ($syntax instanceof field_access_node) {
-			throw new \RuntimeException('S2S property-path probes/removal are deferred');
-		}
 		$path->root = $syntax;
-		return Expression_Preparation::prepare($syntax, $context)->type;
+		$prepared = Expression_Preparation::prepare($syntax, $context);
+		if ($syntax instanceof field_access_node) {
+			Indexing_Preparation::require_storage_receiver($syntax);
+			if (!$prepared->addressable()) {
+				throw new \RuntimeException('S2S keyed field probes/removal require stable storage');
+			}
+		}
+		return $prepared->type;
 	}
 }

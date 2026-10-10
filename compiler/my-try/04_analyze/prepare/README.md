@@ -450,7 +450,11 @@ Emptiness admits strings and built-in vector/hash collections; boxed values requ
 a runtime string/table kind. Wrappers do not delegate emptiness to their payload.
 Statically unsupported operands reject in preparation; unsupported boxed kinds and
 missing keyed emptiness targets throw at runtime. Keyed paths use
-the shared path owner described above; property paths remain deferred. Emission
+the shared path owner described above. Keyed field roots reuse
+`Indexing_Preparation::require_storage_receiver` and ordinary prepared property places;
+only removal requires mutable contents. C++ binding reuses shared-owner retention
+from indexed writes before lazy keys and prefix re-resolution. Standalone property
+probes and temporary/indexed-object field roots remain deferred. Emission
 uses separate runtime probe helpers, not condition truthiness: `empty("0")` is false.
 Operand evaluation/errors remain ordinary; no undeclared-name or missing-path bypass
 is introduced, and probes cannot establish new locals through nested assignment.

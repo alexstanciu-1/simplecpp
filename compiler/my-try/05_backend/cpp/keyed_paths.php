@@ -20,8 +20,9 @@ final class CPP_Keyed_Path
 		$stop = 'return;';
 		if (!$removing) { $stop = 'return scpp::bool_t{' . ($emptiness ? 'true' : 'false') . '};'; }
 		if (!$removing && $emptiness) { $stop = 'scpp::detail::throw_invalid_empty();'; }
-		$text = '([&]() -> ' . $result_type . ' { ' . ($removing ? 'auto& ' : 'const auto& ')
-			. $root . ' = ' . $emitter->expression($path->root) . '; ';
+		$binding = CPP_Declarations::bind_storage_receiver($path->root, $context);
+		$text = '([&]() -> ' . $result_type . ' { ' . $binding->statements . ($removing ? 'auto& ' : 'const auto& ')
+			. $root . ' = ' . $binding->value . '; ';
 		$resolver = 'keyed_resolve_' . $id . '_0';
 		$text .= 'auto ' . $resolver . ' = [&]() -> const ' . $root_type . '* { return &' . $root . '; }; ';
 		$position = 0;

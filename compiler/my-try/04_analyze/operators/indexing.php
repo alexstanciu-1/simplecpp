@@ -170,7 +170,7 @@ final class Indexing_Preparation
 	}
 
 	/** Select real storage, not a copied indexed read or a temporary receiver. */
-	private static function require_storage_receiver(expression_node $syntax): void
+	public static function require_storage_receiver(expression_node $syntax): void
 	{
 		if ($syntax instanceof variable_reference_node) { return; }
 		if ($syntax instanceof field_access_node) {
@@ -179,14 +179,14 @@ final class Indexing_Preparation
 			$facts = $field->require_field_access_preparation();
 			if (($facts->receiver_storage !== record_storage_kind::shared)
 				&& ($facts->receiver_storage !== record_storage_kind::inline_value)) {
-				throw new \RuntimeException('Indexed field writes require shared or inline receiver lifetime');
+				throw new \RuntimeException('Indexed field storage requires shared or inline receiver lifetime');
 			}
 			if ($field->base->require_preparation()->type->by_value()) {
-				throw new \RuntimeException('Indexed field writes through ownership-modified storage are deferred');
+				throw new \RuntimeException('Indexed field storage through ownership-modified storage is deferred');
 			}
 			return;
 		}
-		throw new \RuntimeException('S2S indexed assignment requires local, parameter or field storage');
+		throw new \RuntimeException('S2S indexed storage requires local, parameter or field storage');
 	}
 
 	/** No PHP bool/float/null key coercion; unknown mixed payloads remain runtime checked. */

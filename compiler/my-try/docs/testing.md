@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/field_container_probes.py --results FRESH_DIRECTORY`
+checks keyed field-root `isset`/`empty`/`unset`, lazy keys, prefix re-resolution,
+shared-owner lifetime, inline/read-only fields and non-creating failures. It executes
+four generated C++ programs; this is not a native compiler rebuild.
+
 `python3 compiler/my-try/tests/field_container_writes.py --results FRESH_DIRECTORY`
 checks the generalized indexed receiver for vector/hash/mixed/dynamic fields,
 struct copy independence, retained shared owners, effect ordering and runtime failure

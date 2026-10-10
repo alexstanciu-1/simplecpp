@@ -192,8 +192,17 @@ Cross-family mixed-table/dynamic paths are excluded by the approved
 Runtime/compiler migration remains a Chapter 06 implementation gate.
 
 This replaces the earlier eager-key proposal for probes; writes keep their separate
-keys/RHS/validation/commit ordering. Multiple probe operands, property paths and
-zero-argument bracket probes remain outside the bounded implementation slice.
+keys/RHS/validation/commit ordering. Keyed roots may also be instance fields reached
+from local/parameter storage through shared or inline owners. Bind the actual field
+without a container copy and retain shared owners before evaluating keys. Replacing
+an owner handle does not redirect the selected field; changing that field's contents
+is observed by subsequent prefix re-resolution. Property visibility applies, and
+read-only fields may be probed. An absent object owner throws during ordinary field
+access before any keys run; it is not a missing container entry.
+
+Multiple probe operands, standalone property probes, temporary/indexed-object field
+roots, additional ownership-wrapper roots and zero-argument bracket probes remain
+outside this bounded implementation slice.
 
 Generator lowering must preserve the runtime contract above.
 

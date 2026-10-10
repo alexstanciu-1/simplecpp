@@ -631,11 +631,24 @@ The following checkpoint implements keyed probes/removal; value iteration follow
 
 ### Lazy keyed probes and removal — 2026-10-05
 
+Field-root follow-up (2026-10-10): keyed probes/removal now share indexed storage
+admission and C++ owner binding with field writes. Shared owners are retained before
+lazy keys; inline fields are borrowed. Read-only probes, mutable-only removal,
+visibility, null-owner errors and non-creating traversal retain their ordinary
+contracts. Standalone property probes, temporary/indexed-object field roots and
+vector-element removal remain deferred. Focused proof:
+`tests/field_container_probes.py`, `/tmp/field-probes-20261010-1` (two PHP checks,
+four generated programs). Field-write regression passed in
+`/tmp/field-probes-writes-regression-20261010`; existing value-probe and S2S PHP
+checks passed in `/tmp/field-probes-php-regression-20261010` (0.74s / 41.28s).
+New generated-program compile/run tasks took 8.62–11.10s with four concurrent tasks,
+without PCH. No native compiler rebuild is claimed.
+
 The user's final decision **replaces eager key evaluation with lazy traversal** for
 `isset`, `empty` and keyed `unset`. Existing write/append ordering is unchanged.
 The top-level probe and array contracts now describe reached-key evaluation, missing/
 null early stops, exceptions and re-resolution after key effects. Invalid probe
-shapes return false/true; wrong-kind removal intermediates and runtime-invalid removal
+shapes return false for `isset` and throw for collection-only `empty`; wrong-kind removal intermediates and runtime-invalid removal
 keys throw. Missing removal targets are no-ops, with no creation or parent pruning.
 Vector-element removal remains deferred because the old runtime shifts later indexes
 while associative removal preserves remaining key identities.
@@ -660,7 +673,7 @@ reduce to membership, and legacy unset lowering/runtime may mutate nested access
 or shift vector indexes. The new path uses non-creating lookup plus the established
 **plain-value** PHP presence/emptiness helpers; it does not broadly catch exceptions.
 The PHP experiment on eager nested keys was evidence, not authority: the user chose
-lazy behavior explicitly. Multiple operands, property/bare-variable unset, weak paths,
+lazy behavior explicitly. Multiple operands, direct property unset, weak paths,
 native references and cross-family paths remain gated.
 
 Evidence: `/tmp/my-try-keyed-paths-20261005-1` passed five PHP suites and 36 PCH-backed
@@ -1710,7 +1723,7 @@ a.remove("name");
 
 ## ARR-EMPTY-001
 
-**v0.2 decision / target C++:** Bounded support through [lazy keyed paths](#lazy-keyed-probes-and-removal--2026-10-05); missing paths are empty, string `"0"` is not.
+**v0.2 decision / target C++:** Bounded support through [lazy keyed paths](#lazy-keyed-probes-and-removal--2026-10-05); missing paths throw under collection-only emptiness, string `"0"` is not empty.
 
 ### Imported version 1
 

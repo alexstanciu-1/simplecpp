@@ -454,11 +454,17 @@ Only a present final slot is removed, including a slot whose value is null.
 No COW detachment is needed for a no-op; actual removal preserves mixed value semantics
 and dynamic shared identity. Remaining associative keys retain their identities.
 
-The first v0.2 slice admits one keyed target per statement rooted in an established
-local/parameter. Hash, mixed-table and dynamic removal are supported. Vector-element
+The bounded v0.2 slice admits one keyed target per statement rooted in an established
+local/parameter or writable instance field. Field-root binding uses the same shared
+owner retention and inline borrowing as writes, before lazy key evaluation. Replacing
+the source handle cannot redirect removal; changing the selected field is observed
+by prefix re-resolution. Visibility and mutable-content access rules apply. An absent
+object owner throws during field access, before keys, rather than acting as a missing
+container parent. Hash, mixed-table and dynamic removal are supported. Vector-element
 removal is deferred pending a decision on shifting versus preserving index identity;
-vectors may still appear as existing intermediate containers. Properties,
-intermediate append, native interior references and cross-family paths remain gated.
+vectors may still appear as existing intermediate containers. Temporary/indexed-object
+field roots, additional ownership-wrapper roots, intermediate append, native interior
+references and cross-family paths remain gated.
 Whole-variable reset is separately governed by the
 [v0.2 reset/alias contract](native_reference_safety.md#v02-whole-storage-reset-and-aliases--2026-10-06).
 An established local alias may supply the root of keyed removal; this grants no

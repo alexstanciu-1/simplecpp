@@ -107,7 +107,7 @@ foreach ([
 	['$v vector<int> = [1]; $x = isset($v[]);', 'explicit keys'],
 	['$v vector<int> = [1]; unset($v[0]);', 'keyed removal'],
 	['$v mixed = {}; unset($v);', 'requires nullable storage'],
-	['function make(): dynamic { return {}; } unset(make()["a"]);', 'local or parameter root'],
+	['function make(): dynamic { return {}; } unset(make()["a"]);', 'local, parameter or field storage'],
 	['$v vector<int> = [1]; $x = $v[$new = 0];', 'established local declaration for new'],
 ] as [$source, $diagnostic])
 {
