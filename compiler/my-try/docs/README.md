@@ -8,9 +8,10 @@ experiment retained for regressions, not a second semantic development path.
 
 ## Reading map
 
-The approved [runtime module integration plan](planning/runtime_module_integration.md)
-groups remaining storage, members, protocols, signatures and build work into
-reusable checkpoints; extended testing is explicit Chapter 15 debt.
+The completed bounded [runtime module integration plan](planning/runtime_module_integration.md)
+covers storage, members, protocols, signatures and build composition. Its
+[closeout audit](planning/runtime_module_closeout.md) separates supported foundations
+from deferred APIs and residual operation allowlists; extended testing is Chapter 15 debt.
 
 Ordinary runtime type registration now uses the shared module metadata: `types` and
 separate `cpp_types` records, including vector/hash. The [catalog contract](../../../specs/runtime_module_metadata.md#ordinary-runtime-type-declarations)

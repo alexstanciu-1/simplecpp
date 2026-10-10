@@ -182,6 +182,16 @@ the new catalog intentionally leaves these helpers unavailable pending review.
 
 ### CH15-RUNTIME-TYPE-METADATA-01 — review metadata-driven types, not hardcoded families
 
+2026-10-10 audit: definitions, storage, copy dependencies, members and existing
+initialization/indexing/iteration recipes are now metadata-driven. Four named
+vector/hash operation gates remain: `Object_Construction::supports_default`,
+`Cleanup_Preparation::supports_clean`, value-probe emptiness admission, and
+`Type_Preparation::application` callable-wrapper admission. Replace them with
+explicit registered capabilities/protocols when extending those operation families;
+do not infer default construction/cleanup/emptiness from indexing or copying.
+Variadic vector packing is a language ABI, not an accidental provider allowlist.
+See the [current audit](../planning/runtime_module_closeout.md).
+
 User-requested review (2026-10-09): verify that runtime types, template parameters,
 capabilities/dependencies and backend bindings come from module metadata and reach
 consumers through the shared registry, rather than hardcoded type names or per-family
@@ -218,10 +228,10 @@ the entire regex surface. Held forms remain unavailable in executable metadata:
   can select count instead of limit. Use an unambiguous provider binding or a
   general signature-aware backend binding model, not a regex-name branch or a
   reference parameter pretending to be a value limit.
-- Count outputs require shared overloaded-reference admission; the current metadata
-  consumer intentionally rejects reference-bearing overload sets.
-- Callback APIs need explicit callable-type recipes in metadata, reusing the
-  callable registry and normal lifetime rules, not string/mixed placeholders.
+- Shared overloaded-reference admission and structural callback metadata are now
+  implemented. Count/limit bindings still require the unambiguous adapter above;
+  callback/callback-array registration still needs provider ABI/retention and
+  owning-contract validation, not string/mixed placeholders.
 
 The module remains opt-in. Automatic optional-provider linkage and CLI selection
 remain with their build/composition owners. Current matching behavior, including
@@ -238,11 +248,11 @@ Review `fs_mtime`'s file-clock/system-clock conversion near second boundaries be
 depending on exact round-tripping into `fs_read_snapshot`. Iterator increment and
 stream close failures also need a focused ordinary-filesystem error-path review;
 do not silently extend the checked snapshot protocol to ordinary get/put/scan.
-Registered file-lock/stream handle types and automatic optional-provider linkage
-remain separate prerequisites in the [module inventory](../planning/runtime_catalog_coverage.md).
+File-lock handles and metadata-driven provider linkage are now registered/proved;
+stream handle APIs remain a separate prerequisite in the [module inventory](../planning/runtime_catalog_coverage.md).
 The `fs_scan` prerequisite is resolved: shared Result operations now accept typed
-container payloads with recursive copy checks. This does not resolve handle types
-or filesystem platform/error-path debt above.
+container payloads with recursive copy checks. This does not resolve filesystem
+platform/error-path debt above.
 
 ### CH15-RUNTIME-DATETIME-01 — datetime edge/platform review
 
@@ -256,8 +266,8 @@ can represent a valid pre-epoch time), host time_t narrowing/formatting range, a
 normalization. These are inherited runtime edge limitations, not approved changes to
 the datetime contracts. Add focused timezone/platform proofs with the eventual repair.
 The module pass proves ordinary UTC/local forms and errors; it is not full calendar
-or timezone support. Automatic optional-runtime linkage in my-try's native cache also
-remains with the build owner, not the semantic catalog.
+or timezone support. Optional-runtime linkage now uses metadata requirements published
+to the native build owner, not execution by the semantic catalog.
 
 ### CH15-RUNTIME-INTEGRATION-TESTS-01 — extended module validation
 
@@ -272,6 +282,30 @@ permission to enable unsafe lifetime paths or skip representative rejection test
 expectation: it rejects `{a: function() {}}`, despite subsequent lambda syntax
 support. Reconcile that older negative inventory with current callable contracts;
 the initialization/model and data-preparation suites were used for this checkpoint.
+
+### CH15-RUNTIME-REMAINDER-01 — remaining public API/provider batches
+
+Non-blocking follow-up to the bounded metadata integration foundation. The
+[closeout inventory](../planning/runtime_module_closeout.md) records every current
+module owner and unregistered strict-map group. Generic metadata support is not a
+claim that all these runtime APIs have been enabled. Continue whole-module batches:
+
+- Core debug/profile helpers and microtime; boxed-family predicates; vector capacity,
+  resize/fill/clear helpers with explicit mutable-container contracts.
+- Regex callback/callback-array and count/limit adapters after provider contract/ABI
+  checks; structural callback and reference-overload metadata no longer block them.
+- IO resource APIs and tokenizer compact-column/diagnostic source facade.
+- Curl optional-library packaging, boxed getinfo and enabled/disabled/network proofs.
+- UI/WebView platform backend/resources and event-lifetime contracts.
+- Binary codec source facade and compiler Storage/cursor exposure only with honest
+  retained-reference/borrow contracts; native implementation helpers stay internal.
+
+Tasks/MySQL and boxed library redesign retain CH15-LIB-DYN-01; source borrowed views,
+string semantic conflicts and stable hashing retain their more specific debts.
+Legacy-only aliases remain excluded, not automatically imported from old maps.
+None of this authorizes speculative metadata, unsafe enabled paths or a claim that
+an optional native library is installed. Profile filtering and additional build
+roots/package-manager support need separate contracts if introduced.
 
 ### CH15-RUNTIME-SOURCE-01 — borrowed source views
 

@@ -161,7 +161,8 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   16.54s/2.12s/3.52s, not a performance benchmark. Existing publication/recovery,
   CLI and output-adapter proofs pass in /tmp/runtime-build-publication-20261010-1.
   No native compiler rebuild.
-- Next: Phase 6 coverage/export audit.
+- Phase 6 coverage/export audit completed within the planned boundary; see the
+  [requirement/evidence and remaining API inventory](runtime_module_closeout.md).
   Broader validation remains CH15-RUNTIME-INTEGRATION-TESTS-01.
 - Phase 6 export/import repair: root-qualified lookup and import validation now
   reach language-scope types/functions/constants after checking source shadows.
@@ -180,7 +181,15 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   plus repeated combined native execution). Initial fixture failures corrected
   Compiler::init array usage and moved string comparison assertions to host output
   checks, without changing unrelated operator support.
-  Remaining: overall module inventory, residual hardcoding audit and operator guide.
+  Overall module inventory and residual hardcoding audit are recorded in the closeout;
+  runtime/metadata/README.md now owns operator selection/registration/build guidance.
+- Final composition check: /tmp/runtime-inventory-20261010-final proves all eight
+  production catalogs configure/reset together and supply the expected deduplicated
+  source/library closure. The saved focused journals for phases 1–6 were reviewed
+  for unexpected exits; none were present. This is not a new broad regression run.
+  Deferred API/provider batches remain CH15-RUNTIME-REMAINDER-01; residual operation
+  allowlists remain CH15-RUNTIME-TYPE-METADATA-01; extended tests remain the existing
+  testing debt. No native compiler rebuild or v0.1 map replacement is claimed.
 - Deferred borrowed source views retain CH15-RUNTIME-SOURCE-01.
 - Provider semantic conflicts retain their existing debts; no silent contract changes.
 
