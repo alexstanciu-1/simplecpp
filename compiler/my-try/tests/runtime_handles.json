@@ -22,6 +22,16 @@
       "header": "runtime_handles.hpp"
     }
   ],
+  "properties": [
+    {"id":"proof.ticket.value", "owner":"ticket", "name":"value", "type":"int"},
+    {"id":"proof.ticket.read", "owner":"ticket", "name":"read", "type":"int", "access":"read_only"},
+    {"id":"proof.ticket.total", "owner":"ticket", "name":"total", "type":"int", "static":true}
+  ],
+  "cpp_properties": [
+    {"id":"proof.ticket.value", "symbol":"value", "header":"runtime_handles.hpp"},
+    {"id":"proof.ticket.read", "symbol":"value", "header":"runtime_handles.hpp"},
+    {"id":"proof.ticket.total", "symbol":"handle_proof::ticket::total", "header":"runtime_handles.hpp"}
+  ],
   "functions": [
     {
       "id": "proof.open_ticket",

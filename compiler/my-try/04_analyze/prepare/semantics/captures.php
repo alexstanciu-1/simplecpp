@@ -27,7 +27,7 @@ final class Capture_Preparation
 		foreach ($names as $name) {
 			if (isset($seen[$name])) { throw new \RuntimeException('Duplicate capture: ' . $name); }
 			$seen[$name] = true;
-			$bindings /** vector<prepared_storage> */ = $context->locals->named($name);
+			$bindings /** vector<prepared_source_storage> */ = $context->locals->named($name);
 			if (q_count($bindings) !== 1) { throw new \RuntimeException('Capture requires an established local: ' . $name); }
 			$binding = $bindings[0];
 			$capture = new prepared_capture();

@@ -40,6 +40,7 @@ require_once __DIR__ . '/03_parse/structures/structures.php';
 require_once __DIR__ . '/04_analyze/conversions/model.php';
 require_once __DIR__ . '/compiler/callables/catalog.php';
 require_once __DIR__ . '/compiler/runtime_catalog/structures.php';
+require_once __DIR__ . '/compiler/runtime_catalog/members.php';
 require_once __DIR__ . '/compiler/runtime_catalog/reader.php';
 require_once __DIR__ . '/compiler/runtime_catalog/load.php';
 require_once __DIR__ . '/compiler/runtime_catalog/register.php';

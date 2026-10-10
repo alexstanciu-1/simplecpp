@@ -416,9 +416,13 @@ final class CPP_Declarations
 
 	public static function static_property(prepared_static_property $facts, cpp_generation_context $context): string
 	{
+		if ($facts->field instanceof registered_property) {
+			return CPP_Runtime_Catalog::property(object_cast($facts->field, registered_property::class), $context);
+		}
+		$field = object_cast($facts->field, prepared_field::class);
 		$record = Type_Queries::source_record($facts->record_type);
 		$context->headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
-		$entry = object_cast(weakref_get($facts->field->declaration), collected_name::class);
+		$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 		return CPP_Generator::source_name('record', $record->qualified_name()) . '::' . CPP_Generator::source_name('field', $entry->name);
 	}
 
@@ -619,7 +623,15 @@ final class CPP_Declarations
 	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_field_access_preparation();
-		$entry = object_cast(weakref_get($facts->field->declaration), collected_name::class);
+		$name = '';
+		if ($facts->field instanceof registered_property) {
+			$name = CPP_Runtime_Catalog::property(object_cast($facts->field, registered_property::class), $context);
+		}
+		else {
+			$field = object_cast($facts->field, prepared_field::class);
+			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
+			$name = CPP_Generator::source_name('field', $entry->name);
+		}
 		$base = $syntax->base;
 		// A reference declaration does not supply the layout needed by member access.
 		$payload = CPP_Types::payload($facts->record_type);
@@ -631,6 +643,6 @@ final class CPP_Declarations
 			if (weakref_get($reference->declaration) instanceof collected_method) { $arrow = true; }
 		}
 		return '(' . (new CPP_Syntax($context))->expression($base) . ')'
-			. ($arrow ? '->' : '.') . CPP_Generator::source_name('field', $entry->name);
+			. ($arrow ? '->' : '.') . $name;
 	}
 }

@@ -105,14 +105,14 @@ final class prepared_place
 					throw new \LogicException('An alias must reuse its original storage place');
 				}
 			}
-			elseif ($storage instanceof prepared_field) {
-				if (!object_cast($storage, prepared_field::class)->static_member) { throw new \LogicException('A field storage root requires type-owned storage'); }
+			elseif ($storage instanceof prepared_property_storage) {
+				if (!object_cast($storage, prepared_property_storage::class)->static_member) { throw new \LogicException('A field storage root requires type-owned storage'); }
 			}
 			elseif (!($storage instanceof prepared_parameter) && !($storage instanceof prepared_receiver) && !($storage instanceof prepared_capture)) {
 				throw new \LogicException('A storage root requires a local or parameter');
 			}
 		}
-		elseif (!($storage instanceof prepared_field)) {
+		elseif (!($storage instanceof prepared_property_storage)) {
 			throw new \LogicException('A storage projection requires a direct struct field');
 		}
 		$this->selected_storage = $storage;
@@ -144,6 +144,12 @@ final class prepared_place
 	/** Aliases share this place; field projections preserve access from the original root. */
 	public function access(): storage_access
 	{
+		$selected = $this->storage();
+		if ($selected instanceof prepared_property_storage) {
+			if (object_cast($selected, prepared_property_storage::class)->access === storage_access::read_only) {
+				return storage_access::read_only;
+			}
+		}
 		if ($this->projected_access !== null) { return $this->projected_access; }
 		if ($this->base_place !== null) { return $this->base_place->access(); }
 		$root = $this->root_storage();
@@ -433,13 +439,17 @@ final class prepared_binary_expression extends prepared_expression {
 
 /** Typed storage identity shared by bindings, parameters and fields; never an owning AST link. */
 abstract class prepared_storage {
-	/** @storage.reference collected_file.entries @reference.weak */
-	public collected_name $declaration /** weak<collected_name> */;
 	abstract public function storage_type(): canonical_type_use;
 }
 
+/** Only source-owned storage carries a collected declaration. */
+abstract class prepared_source_storage extends prepared_storage {
+	/** @storage.reference collected_file.entries @reference.weak */
+	public collected_name $declaration /** weak<collected_name> */;
+}
+
 /** A capture binding is distinct from its source, whether copied or borrowed. */
-final class prepared_capture extends prepared_storage {
+final class prepared_capture extends prepared_source_storage {
 	public canonical_type_use $type;
 	public ?storage_borrow $borrow = null;
 	public storage_access $access = storage_access::read_only;
@@ -454,8 +464,8 @@ final class prepared_capture extends prepared_storage {
 	}
 }
 
-/** A local binding or member write retains its resolved storage declaration and canonical type. */
-final class prepared_binding extends prepared_storage {
+/** A local declaration or reassignment retains its source identity and canonical type. */
+final class prepared_binding extends prepared_source_storage {
 	public ?value_boundary_operation $boundary = null;
 	/** Alias declarations retain the original place, never a second owning root. */
 	public ?prepared_place $alias_target = null;
@@ -467,14 +477,14 @@ final class prepared_binding extends prepared_storage {
 }
 
 /** Source storage refers to the same contract consumed by calls, without duplicating its type. */
-final class prepared_parameter extends prepared_storage {
+final class prepared_parameter extends prepared_source_storage {
 	public callable_parameter $contract;
 	public ?prepared_field $initialized_property = null;
 	public function storage_type(): canonical_type_use { return $this->contract->type; }
 }
 
 /** An instance receiver is not a source parameter or an owned local copy. */
-final class prepared_receiver extends prepared_storage
+final class prepared_receiver extends prepared_source_storage
 {
 	public canonical_type_use $type;
 	public function storage_type(): canonical_type_use { return $this->type; }
@@ -537,13 +547,27 @@ final class prepared_source_callable
 	}
 }
 
-/** Field identity is scoped by its owning prepared record. */
-final class prepared_field extends prepared_storage {
+/** Property storage has a type and location independently of source syntax. */
+abstract class prepared_property_storage extends prepared_storage {
 	public bool $static_member = false;
 	public canonical_type_use $type;
+	public storage_access $access = storage_access::writable;
+	public function storage_type(): canonical_type_use { return $this->type; }
+}
+
+/** Registry-owned provider property; no source declaration or backend spelling. */
+final class registered_property extends prepared_property_storage
+{
+	public function __construct(public string $identity, public string $source_name,
+		public canonical_type_use $owner_type) {}
+}
+
+/** Source field identity is scoped by its owning prepared record. */
+final class prepared_field extends prepared_property_storage {
+	/** @storage.reference collected_file.entries @reference.weak */
+	public collected_name $declaration /** weak<collected_name> */;
 	public member_visibility $visibility = member_visibility::public_access;
 	public ?prepared_property_default $default_value = null;
-	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
 /** Declaration-owned typed default boundary; concrete forms distinguish constants from construction. */
@@ -606,14 +630,14 @@ final class prepared_record {
 /** Member access references the declaration facts without copying its field schema. */
 final class prepared_field_access extends prepared_expression {
 	/** @reference.source property_node.prepared_facts */
-	public prepared_field $field;
+	public prepared_property_storage $field;
 	public canonical_type_use $record_type;
 	public record_storage_kind $receiver_storage;
 }
 
 final class prepared_static_property extends prepared_expression
 {
-	public prepared_field $field;
+	public prepared_property_storage $field;
 	public canonical_type_use $record_type;
 }
 
@@ -808,8 +832,8 @@ final class local_environment
 {
 	public ?local_environment $parent = null;
 	public storage_lifetime_region $region;
-	private \SplObjectStorage $lifetimes /** hash<storage_lifetime, shared<prepared_storage>> */;
-	public Key_Storage_List $bindings /** Key_Storage_List<prepared_storage> */;
+	private \SplObjectStorage $lifetimes /** hash<storage_lifetime, shared<prepared_source_storage>> */;
+	public Key_Storage_List $bindings /** Key_Storage_List<prepared_source_storage> */;
 	/** A typed declaration reserves its name while preparing its initializer. */
 	public ?string $initializing_name = null;
 
@@ -823,23 +847,23 @@ final class local_environment
 			$entered_at = $parent_region->next_order++;
 		}
 		$this->region = new storage_lifetime_region($parent_region, $entered_at);
-		$this->lifetimes = new \SplObjectStorage /** hash<storage_lifetime, shared<prepared_storage>> */();
-		$this->bindings = new Key_Storage_List /** Key_Storage_List<prepared_storage> */();
+		$this->lifetimes = new \SplObjectStorage /** hash<storage_lifetime, shared<prepared_source_storage>> */();
+		$this->bindings = new Key_Storage_List /** Key_Storage_List<prepared_source_storage> */();
 	}
 
-	public function local_named(string $name): array /** vector<prepared_storage> */
+	public function local_named(string $name): array /** vector<prepared_source_storage> */
 	{
-		$bindings /** Key_Storage_List<prepared_storage> */ = $this->bindings;
+		$bindings /** Key_Storage_List<prepared_source_storage> */ = $this->bindings;
 		return $bindings->named($name);
 	}
 
 	/** Nearest membership wins; a reserved declaration hides its outer names immediately. */
-	public function named(string $name): array /** vector<prepared_storage> */
+	public function named(string $name): array /** vector<prepared_source_storage> */
 	{
 		if ($this->initializing_name === $name) {
 			throw new \RuntimeException('S2S local ' . $name . ' cannot read or write itself in its initializer');
 		}
-		$result /** vector<prepared_storage> */ = $this->local_named($name);
+		$result /** vector<prepared_source_storage> */ = $this->local_named($name);
 		if (q_count($result) !== 0) {
 			return $result;
 		}
@@ -850,15 +874,15 @@ final class local_environment
 		return $result;
 	}
 
-	public function add(string $name, prepared_storage $storage): void
+	public function add(string $name, prepared_source_storage $storage): void
 	{
 		// Membership establishes storage order; signatures themselves retain no invocation facts.
 		$this->lifetimes[$storage] = new storage_lifetime($this->region, $this->region->next_order++);
-		$bindings /** Key_Storage_List<prepared_storage> */ = $this->bindings;
+		$bindings /** Key_Storage_List<prepared_source_storage> */ = $this->bindings;
 		$bindings->add($name, $storage);
 	}
 
-	public function lifetime_of(prepared_storage $storage): storage_lifetime
+	public function lifetime_of(prepared_source_storage $storage): storage_lifetime
 	{
 		if (isset($this->lifetimes[$storage])) { return $this->lifetimes[$storage]; }
 		if ($this->parent !== null) { return $this->parent->lifetime_of($storage); }
@@ -902,6 +926,18 @@ final class prepared_assignment extends prepared_assignment_expression
 	public function destination_type(): canonical_type_use
 	{
 		return $this->binding->storage_type();
+	}
+}
+
+/** A property write observes actual storage, never a fabricated local declaration. */
+final class prepared_property_assignment extends prepared_assignment_expression
+{
+	public prepared_place $destination;
+	public conversion_decision $conversion;
+	public ?value_boundary_operation $boundary = null;
+	public function destination_type(): canonical_type_use
+	{
+		return $this->destination->storage()->storage_type();
 	}
 }
 

@@ -84,6 +84,16 @@ final class runtime_constant_spec
 	public string $decimal = '';
 }
 
+final class runtime_property_spec
+{
+	public string $identity = '';
+	public string $name = '';
+	public runtime_type_spec $owner;
+	public runtime_type_spec $type;
+	public bool $static_member = false;
+	public storage_access $access = storage_access::writable;
+}
+
 final class runtime_module_spec
 {
 	public string $name = '';
@@ -91,6 +101,8 @@ final class runtime_module_spec
 	public array $dependencies /** vector<string> */ = [];
 	public Storage $functions /** Storage<runtime_function_spec> */;
 	public Storage $constants /** Storage<runtime_constant_spec> */;
+	public Storage $properties /** Storage<runtime_property_spec> */;
+	public Keyed_Storage $cpp_properties /** Keyed_Storage<runtime_cpp_spec> */;
 	public Storage $types /** Storage<runtime_type_definition_spec> */;
 	public Keyed_Storage $cpp_types /** Keyed_Storage<runtime_cpp_spec> */;
 	public Keyed_Storage $cpp /** Keyed_Storage<runtime_cpp_spec> */;
@@ -98,6 +110,8 @@ final class runtime_module_spec
 	{
 		$this->functions = new Storage();
 		$this->constants = new Storage();
+		$this->properties = new Storage();
+		$this->cpp_properties = new Keyed_Storage();
 		$this->types = new Storage();
 		$this->cpp_types = new Keyed_Storage();
 		$this->cpp = new Keyed_Storage();

@@ -8,6 +8,8 @@ final class Reference_Preparation
 	/** A capture freezes its binding, not a shared pointee or dynamic container. */
 	public static function contents_access(prepared_place $place, canonical_type_use $receiver): storage_access
 	{
+		// A projected property's explicit access cannot be relaxed by its capture root.
+		if ($place->base() !== null) { return $place->access(); }
 		if ($place->root_storage() instanceof prepared_capture) {
 			$capture = object_cast($place->root_storage(), prepared_capture::class);
 			if ($capture->borrow === null) {
@@ -56,7 +58,7 @@ final class Reference_Preparation
 			throw new \RuntimeException('S2S reference binding requires an initializer');
 		}
 		$locals = $context->locals;
-		$existing /** vector<prepared_storage> */ = $type_syntax === null
+		$existing /** vector<prepared_source_storage> */ = $type_syntax === null
 			? $locals->named($entry->name) : $locals->local_named($entry->name);
 		if (q_count($existing) !== 0) {
 			throw new \RuntimeException('S2S reference binding requires a new local; rebinding is not supported');

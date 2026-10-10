@@ -46,14 +46,23 @@ catch (\Throwable $error) {
 	$failed = str_contains($error->getMessage(), 'Unsupported runtime storage');
 }
 handle_check($failed, 'Unknown storage policy accepted');
-foreach (['duplicate', 'owner'] as $invalid_kind)
+foreach (['duplicate', 'owner', 'property_duplicate', 'property_type', 'property_binding'] as $invalid_kind)
 {
 	$candidate_schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
 	if ($invalid_kind === 'duplicate') {
 		$candidate_schema['constants'][] = $candidate_schema['constants'][0];
 	}
-	else {
+	elseif ($invalid_kind === 'owner') {
 		$candidate_schema['constants'][0]['owner'] = 'int';
+	}
+	elseif ($invalid_kind === 'property_duplicate') {
+		$candidate_schema['properties'][] = $candidate_schema['properties'][0];
+	}
+	elseif ($invalid_kind === 'property_type') {
+		$candidate_schema['properties'][0]['type'] = 'void';
+	}
+	else {
+		$candidate_schema['cpp_properties'][0]['symbol'] = 'not::a_field';
 	}
 	$candidate = new runtime_catalog_input();
 	$candidate->modules->add('core', $core->modules['core']);
@@ -68,6 +77,21 @@ foreach (['duplicate', 'owner'] as $invalid_kind)
 	handle_check($failed && (Model::$runtime_metadata === $input), 'Invalid member constant configuration was published');
 }
 $cases = [
+	'properties' => <<<'PHS'
+struct Plain { public int $value = 3; }
+function update_plain(int &$value): void { $value = 9; }
+$plain = new Plain();
+$plain->value = 7;
+update_plain($plain->value);
+$a = ticket::open(7);
+$copy = $a;
+$a->value = 23;
+ticket::$total = 31;
+$empty ticket = null;
+$empty::$total = 43;
+echo $copy->value, "|", $a->read, "|", $a->read(), "|", ticket::read, "|", ticket::$total, "|", $plain->value;
+return 0;
+PHS,
 	'constants' => <<<'PHS'
 const COPY = ticket::LIMIT;
 function qualifier(int &$calls): ticket {
@@ -144,6 +168,13 @@ $null_cpp .= "\nint main() { try { observed_entry(); } catch (const scpp::runtim
 file_put_contents($directory . '/null_receiver.cpp', $null_cpp);
 foreach ([
 	'$a = new ticket();',
+	'$a = ticket::open(1); $a->read = 2;',
+	'$a = ticket::open(1); $alias =& $a->value;',
+	'function update(int &$v): void { $v = 2; } $a = ticket::open(1); update($a->value);',
+	'$a = ticket::open(1); $a->value = "wrong";',
+	'$a = ticket::open(1); echo $a->total;',
+	'echo ticket::$value;',
+	'$a = ticket::open(1); echo $a->missing;',
 	'echo ticket::MISSING;',
 	'echo read;',
 	'ticket::LIMIT = 2;',

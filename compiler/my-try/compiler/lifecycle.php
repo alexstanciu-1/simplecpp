@@ -22,7 +22,8 @@ final class Compiler_Lifecycle
 		$types = Type_Definition_Registration::install(new Type_Registry());
 		Runtime_Type_Registration::install($input, $types);
 		Runtime_Catalog_Registration::resolve($input, $types);
-		Runtime_Catalog_Registration::resolve_constants($input, $types);
+		$constants = Runtime_Catalog_Registration::resolve_constants($input, $types);
+		Runtime_Catalog_Registration::members($constants, $input, $types);
 		// Validate existing protocol prerequisites against these privately installed types too.
 		Initialization_Registration::install($types);
 		Indexing_Registration::install($types);
@@ -152,7 +153,7 @@ final class Compiler_Lifecycle
 		CPP_Runtime_Catalog::install_types(Model::$runtime_metadata, Model::$type_catalog, Model::$cpp_type_bindings);
 		Model::$runtime_callables = Runtime_Catalog_Registration::resolve(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$runtime_constants = Runtime_Catalog_Registration::resolve_constants(Model::$runtime_metadata, Model::$type_catalog);
-		Model::$runtime_members = Runtime_Catalog_Registration::members(Model::$runtime_constants);
+		Model::$runtime_members = Runtime_Catalog_Registration::members(Model::$runtime_constants, Model::$runtime_metadata, Model::$type_catalog);
 		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog);
 		Model::$indexing_contracts = Indexing_Registration::install(Model::$type_catalog);
 		Model::$iteration_contracts = Iteration_Registration::install(Model::$type_catalog);

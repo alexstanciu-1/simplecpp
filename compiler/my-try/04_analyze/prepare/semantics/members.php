@@ -123,6 +123,14 @@ final class Member_Preparation
 		else { $type = self::owner($syntax->require_type_owner(), $context); }
 		$record = Type_Queries::source_record($type);
 		$property = string_byte_starts_with($syntax->member_name, '$');
+		if ($property && (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
+			$property_name = string_byte_slice($syntax->member_name, 1, string_byte_len($syntax->member_name) - 1);
+			$runtime_property = Model::$runtime_members->property($type, $property_name);
+			if ($runtime_property !== null) {
+				if (!$runtime_property->static_member) { throw new \RuntimeException('Qualified property access requires one static property'); }
+				return self::static_property($runtime_property, $type);
+			}
+		}
 		if (!$property && (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
 			$runtime_constant = Model::$runtime_members->constant($type, $syntax->member_name);
 			if ($runtime_constant === null) { throw new \RuntimeException('Unknown runtime member constant: ' . $syntax->member_name); }
@@ -131,6 +139,7 @@ final class Member_Preparation
 		if ($record === null) {
 			if (!$property) { return Enum_Preparation::reference($syntax, $context); }
 			// Installed readonly constants such as error::$no_error keep their registered contract.
+			if ($syntax->qualifier !== null) { throw new \RuntimeException('Unknown runtime static property'); }
 			$owner = $syntax->require_type_owner();
 			$lookup_scope = object_cast(weakref_get($owner->occurrence()->scope), scope::class);
 			$installed = Observed_Lookup::constants($lookup_scope, $owner->name . '::' . $syntax->member_name, $context);
@@ -157,10 +166,15 @@ final class Member_Preparation
 		$field = object_cast($selected_field->member, collected_field::class)->syntax()->require_preparation();
 		if (!$field->static_member) { throw new \RuntimeException('Qualified property access requires one static property'); }
 		self::require_access($field->visibility, $selected_field->declaring_type, $context);
+		$declaring_type = Model::$type_catalog->registry()->canonical(Source_Types::definition($selected_field->declaring_type));
+		return self::static_property($field, Model::$type_catalog->registry()->use($declaring_type->type_id()));
+	}
+
+	private static function static_property(prepared_property_storage $field, canonical_type_use $owner): prepared_static_property
+	{
 		$facts = new prepared_static_property();
 		$facts->field = $field;
-		$declaring_type = Model::$type_catalog->registry()->canonical(Source_Types::definition($selected_field->declaring_type));
-		$facts->record_type = Model::$type_catalog->registry()->use($declaring_type->type_id());
+		$facts->record_type = $owner;
 		$facts->type = $field->type;
 		// Static storage is stable, but native-reference escape is outside this bounded slice.
 		$facts->place = new prepared_place($field, null, true);

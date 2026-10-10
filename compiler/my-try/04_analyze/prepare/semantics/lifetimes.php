@@ -26,7 +26,10 @@ final class Storage_Lifetimes
 			$capture = object_cast($storage, prepared_capture::class);
 			if ($capture->borrow !== null) { return $capture->borrow->lifetime; }
 		}
-		return $context->locals->lifetime_of($storage);
+		if (!($storage instanceof prepared_source_storage)) {
+			throw new \RuntimeException('Property storage has no invocation-local lifetime');
+		}
+		return $context->locals->lifetime_of(object_cast($storage, prepared_source_storage::class));
 	}
 
 	/** Guarantees justify invocation-local use, never writes into external borrowed storage. */

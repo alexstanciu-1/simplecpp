@@ -68,24 +68,28 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
 - Focused constant evidence: /tmp/runtime-member-constants-20261010-final (four PHP
   suites and six generated programs). Includes source constant initializers,
   expression qualifier effects, same-named methods and failed configuration recovery.
-- Phase 2 remains in progress: registered properties and owner-template
+- Phase 2 property checkpoint implemented after explicit approval: source-independent
+  property storage and property-write facts, source-local lifetime membership, and
+  metadata instance/static fields with backend-only bindings. Read-only access and
+  heap-reference restrictions share the ordinary property path. No fake source AST.
+- Focused evidence: /tmp/runtime-properties-20261010-final (four PHP suites, seven
+  generated programs) and /tmp/storage-foundation-20261010-final (four affected PHP
+  suites). Broad/native-compiler validation remains the existing testing debt.
+- Phase 2 remains in progress: owner-template
   member recipes are still required. Do not replace owner recipes with enumerated
-  concrete applications. Next checkpoint starts with shared property/storage facts.
+  concrete applications. Next checkpoint addresses owner-template member recipes.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
   export through namespace import lookup. This is not covered by the member proof.
 - Deferred borrowed source views retain CH15-RUNTIME-SOURCE-01.
 - Provider semantic conflicts retain their existing debts; no silent contract changes.
 
-## Property prerequisite — approval boundary
+## Property prerequisite — approved and implemented
 
-Inspection found that `prepared_storage` requires a `collected_name`, property writes
-manufacture a `prepared_binding` carrying that source declaration, and lifetime and
-C++ field paths consume those facts. A metadata property has no source declaration.
-Making that field optional or fabricating source AST would conceal the mismatch.
+Inspection found a source-declaration assumption in storage, property-write and
+backend facts. The user approved its removal on 2026-10-10, preserving semantics.
 
-Before implementing registered properties, approve a coordinated refactor across
-preparation storage/assignment facts, lifetime consumers and C++ field bindings:
+The implemented separation spans preparation, lifetime consumers and C++ bindings:
 
 - Introduce a source-independent storage/property contract; source fields and
   registered properties provide real identities through it.
@@ -95,10 +99,7 @@ preparation storage/assignment facts, lifetime consumers and C++ field bindings:
 - Let lifetime analysis consume storage provenance; backend-owned bindings supply
   runtime property spelling. No fake source declaration and no type-name cases.
 
-The recommended option is this shared foundation, then runtime properties. The
-smaller alternative is to defer property support explicitly and finish other phases;
-it does not complete the originally planned property functionality. Existing source
-field writes, reference/lifetime rejection and runtime field reads/writes need focused
-proofs because the refactor touches established source behavior. Broad/native-compiler
-validation remains deferred under the existing testing debt. This prerequisite is
-pending approval, not implemented and not counted as phase completion.
+Existing source field writes and runtime properties now use those common facts.
+The provider fixture proves same-named properties/methods/constants, shared identity,
+static storage through empty handles, source inline-field borrowing, and preparation
+rejections. This completes the property prerequisite, not the overall phase or goal.

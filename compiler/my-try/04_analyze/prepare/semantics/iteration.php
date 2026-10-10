@@ -41,7 +41,7 @@ final class Iteration_Preparation
 	private static function bind(variable_reference_node $syntax, canonical_type_use $source,
 		bool $fresh, preparation_context $context): prepared_binding
 	{
-		$existing /** vector<prepared_storage> */ = [];
+		$existing /** vector<prepared_source_storage> */ = [];
 		if (!$fresh) {
 			$existing = $context->locals->named($syntax->name);
 		}

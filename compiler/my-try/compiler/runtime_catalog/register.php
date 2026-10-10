@@ -147,12 +147,27 @@ final class Runtime_Catalog_Registration
 	}
 
 	/** Index retained identities; no metadata IO or duplicate value snapshots. */
-	public static function members(Storage $constants /** Storage<registered_constant> */): Runtime_Members
+	public static function members(Storage $constants /** Storage<registered_constant> */,
+		runtime_catalog_input $input, registered_type_catalog $types): Runtime_Members
 	{
 		$result = new Runtime_Members();
 		foreach ($constants as $constant) {
 			if ($constant->owner() !== null) {
 				$result->register_constant($constant);
+			}
+		}
+		foreach ($input->modules as $module) {
+			foreach ($module->properties as $spec)
+			{
+				$owner = self::member_owner($spec->owner, $types);
+				$property = new registered_property($spec->identity, $spec->name, $owner);
+				$property->type = self::type($spec->type, $types);
+				if (!$types->registry()->has_capability($property->type, generic_contract::value_storable)) {
+					throw new \RuntimeException('Runtime property requires a storable type');
+				}
+				$property->static_member = $spec->static_member;
+				$property->access = $spec->access;
+				$result->register_property($property);
 			}
 		}
 		return $result;

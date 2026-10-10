@@ -9,6 +9,18 @@ final class CPP_Runtime_Catalog
 	{
 		foreach ($input->modules as $module)
 		{
+			$properties /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_properties;
+			if (q_count($properties) !== q_count($module->properties)) {
+				throw new \RuntimeException('Runtime property binding count mismatch');
+			}
+			foreach ($module->properties as $property)
+			{
+				if (!isset($properties[$property->identity])) { throw new \RuntimeException('Missing runtime property binding'); }
+				$property_binding = $properties[$property->identity];
+				self::spelling($property_binding->symbol, false);
+				self::spelling($property_binding->header, true);
+				if (!$property->static_member) { self::member_identifier($property_binding->symbol); }
+			}
 			$type_bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_types;
 			if (q_count($type_bindings) !== q_count($module->types)) {
 				throw new \RuntimeException('Runtime type binding count mismatch: ' . $module->file);
@@ -54,6 +66,17 @@ final class CPP_Runtime_Catalog
 		}
 	}
 
+	private static function member_identifier(string $symbol): void
+	{
+		if (str_contains($symbol, ':') || ($symbol === '')) {
+			throw new \RuntimeException('Runtime property binding requires an unqualified identifier');
+		}
+		$first = string_byte_at($symbol, 0);
+		if (($first >= 48) && ($first <= 57)) {
+			throw new \RuntimeException('Runtime property binding requires an identifier');
+		}
+	}
+
 	/** Reject expression/source fragments; the C++ toolchain still proves symbol existence. */
 	private static function spelling(string $text, bool $header): void
 	{
@@ -96,11 +119,26 @@ final class CPP_Runtime_Catalog
 	/** Callable installation follows both semantic and type-binding installation. */
 	public static function install(runtime_catalog_input $input): void
 	{
+		Model::$cpp_property_bindings = new \SplObjectStorage();
 		foreach ($input->modules as $module) {
+			foreach ($module->cpp_properties as $property_binding) {
+				$property = Model::$runtime_members->property_identity($property_binding->identity);
+				Model::$cpp_property_bindings[$property] = $property_binding;
+			}
 			foreach ($module->cpp as $binding) {
 				$target = Model::$runtime_callables->function_definition($binding->identity);
 				Model::$cpp_callable_bindings->bind_function($target, $binding->symbol, $binding->header);
 			}
 		}
+	}
+
+	public static function property(registered_property $property, cpp_generation_context $context): string
+	{
+		if (!isset(Model::$cpp_property_bindings[$property])) {
+			throw new \LogicException('Missing or stale runtime property binding');
+		}
+		$binding /** runtime_cpp_spec */ = Model::$cpp_property_bindings[$property];
+		$context->headers[$binding->header] = true;
+		return $binding->symbol;
 	}
 }

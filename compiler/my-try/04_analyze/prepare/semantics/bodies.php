@@ -152,7 +152,7 @@ final class Body_Preparation
 		if ($entry->name === 'this') { throw new \RuntimeException('$this cannot be declared or rebound'); }
 		$binding = new prepared_binding();
 		$locals = $context->locals;
-		$before_initializer /** vector<prepared_storage> */ = $locals->local_named($entry->name);
+		$before_initializer /** vector<prepared_source_storage> */ = $locals->local_named($entry->name);
 		if (($type_syntax !== null) && (q_count($before_initializer) !== 0)) {
 			throw new \RuntimeException('S2S local ' . $entry->name . ' is already declared in this scope');
 		}
@@ -164,7 +164,7 @@ final class Body_Preparation
 		}
 		else {
 			// Only an already established destination supplies context to a literal.
-			$existing /** vector<prepared_storage> */ = $locals->named($entry->name);
+			$existing /** vector<prepared_source_storage> */ = $locals->named($entry->name);
 			if (q_count($existing) === 1) { $expected_type = $existing[0]->storage_type(); }
 		}
 
@@ -188,7 +188,7 @@ final class Body_Preparation
 			$locals->initializing_name = $previous_initializing;
 		}
 
-		$previous /** vector<prepared_storage> */ = $type_syntax === null
+		$previous /** vector<prepared_source_storage> */ = $type_syntax === null
 			? $locals->named($entry->name)
 			: $before_initializer;
 		if (($type_syntax !== null) || (q_count($previous) === 0))

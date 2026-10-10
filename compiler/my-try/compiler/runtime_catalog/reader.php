@@ -62,12 +62,21 @@ final class Runtime_Catalog_Reader
 					$types->append(self::definition_spec($reader));
 				}
 			}
-			elseif (($key === 'cpp') || ($key === 'cpp_types'))
+			elseif ($key === 'properties')
+			{
+				$properties /** Storage<runtime_property_spec> */ = $result->properties;
+				$reader->begin_array();
+				while ($reader->next_element()) {
+					$properties->append(self::property_spec($reader));
+				}
+			}
+			elseif (($key === 'cpp') || ($key === 'cpp_types') || ($key === 'cpp_properties'))
 			{
 				$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $result->cpp;
 				if ($key === 'cpp_types') {
 					$bindings = $result->cpp_types;
 				}
+				elseif ($key === 'cpp_properties') { $bindings = $result->cpp_properties; }
 				$reader->begin_array();
 				while ($reader->next_element()) {
 					$binding = self::cpp_spec($reader);
@@ -88,6 +97,33 @@ final class Runtime_Catalog_Reader
 			$reader->reject('Missing runtime module field');
 		}
 		$reader->finish_document();
+		return $result;
+	}
+
+	private static function property_spec(\scpp\Json_Reader $reader): runtime_property_spec
+	{
+		$result = new runtime_property_spec();
+		$owner = false;
+		$type = false;
+		$reader->begin_object();
+		while ($reader->next_property())
+		{
+			$key = $reader->property_name();
+			if ($key === 'id') { $result->identity = self::name($reader); }
+			elseif ($key === 'name') { $result->name = self::name($reader); }
+			elseif ($key === 'owner') { $result->owner = self::type($reader); $owner = true; }
+			elseif ($key === 'type') { $result->type = self::type($reader); $type = true; }
+			elseif ($key === 'static') { $result->static_member = $reader->read_boolean(); }
+			elseif ($key === 'access') {
+				$access = $reader->read_string();
+				if ($access === 'read_only') { $result->access = storage_access::read_only; }
+				elseif ($access !== 'writable') { $reader->reject('Unknown runtime property access'); }
+			}
+			else { $reader->reject('Unknown runtime property field: ' . $key); }
+		}
+		if (!$owner || !$type || ($result->identity === '') || ($result->name === '')) {
+			$reader->reject('Missing runtime property field');
+		}
 		return $result;
 	}
 

@@ -29,4 +29,5 @@ with CommandRunner(output / 'logs', ROOT) as runner:
     run_tasks([Task(name, lambda name=name, expected=expected: execute(name, expected))
                for name, expected in {'identity': b'9|9|9', 'result': b'13|13', 'container': b'19',
                                       'members': b'23|99|yes|42|31|51', 'null_receiver': b'',
-                                      'constants': b'37|41|53|37|1'}.items()])
+                                      'constants': b'37|41|53|37|1',
+                                      'properties': b'23|23|23|41|43|9'}.items()])

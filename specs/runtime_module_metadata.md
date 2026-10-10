@@ -172,7 +172,7 @@ The core vector/hash definitions and their C++ bindings now come solely from thi
 metadata. Source publication enumerates registered exposures rather than a second
 name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
 families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
-Property members, initialization/indexing/iteration protocols, borrowed storage,
+Initialization/indexing/iteration protocols, borrowed storage,
 non-type parameters and handle-lifetime contracts are not granted by these records.
 Those protocols require their own shared model before additional runtime APIs can
 be enabled. The existing compiler composition selects core for its foundational
@@ -213,6 +213,36 @@ currently have the same mutable receiver admission as source methods. Expression
 qualified static calls evaluate the qualifier once without dereferencing it.
 Non-retaining observed inputs stay alive for the call, including temporary inputs.
 Member properties and constants are separate contracts, not callable metadata.
+
+## Registered properties
+
+An optional `properties` array declares public provider-owned storage:
+
+```json
+{"id":"ticket.value", "owner":"ticket", "name":"value", "type":"int",
+ "static":false, "access":"writable"}
+```
+
+`id`, `owner`, `name` (without `$`) and `type` are required. `static` defaults to
+false; `access` defaults to `writable` and also accepts `read_only`. Owners must be
+registered nominal runtime types and property types must be value-storable. Names
+are unique per owner within the property namespace, independently of methods and
+constants; property IDs are unique across selected modules. Owner-template recipes
+remain pending rather than being enumerated as concrete combinations.
+
+Every property requires a separate `cpp_properties` binding with `id`, `symbol`
+and `header`. Instance symbols are unqualified field identifiers; static symbols
+name provider-owned static storage. No getters, setters, source fragments or synthesized
+provider definitions are implied. Providers own initialization and storage lifetime.
+
+Reads and plain writes share source-property preparation and conversion boundaries.
+`read_only` rejects mutation through that property path. Shared receiver interiors
+cannot escape as native references; stable inline receiver projections retain existing
+borrow rules. Static-property reference escape remains deferred. Wrong types, unknown
+members and instance/static mismatches reject during preparation; null-handle checks
+remain runtime behavior. Expression-qualified static access evaluates its qualifier
+once without requiring a present handle. This grants no source construction or
+inheritance semantics to the provider type.
 
 ## Registered storage policy
 

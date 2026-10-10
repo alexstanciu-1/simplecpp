@@ -431,6 +431,13 @@ in the shared parameter contract and signature equivalence observes changes.
 contract (no duplicated type/mode/default state). `prepared_storage::storage_type()`
 provides the common local/field/parameter storage query. Contracts are populated
 before publication and treated as immutable afterward, like other prepared facts.
+`prepared_source_storage` owns source-local declaration links; invocation environments
+retain only that family. `prepared_property_storage` instead describes typed instance
+or static storage. Its source-field and registered-property implementations retain
+their actual identities, without invented collected declarations. Property assignments
+own `prepared_property_assignment` with a destination place and conversion/boundary
+facts, not a local `prepared_binding`. Registry-owned runtime members and backend-owned
+property bindings are rebuilt together on reset from retained metadata.
 
 An optional `reference_return_contract` identifies a whole reference parameter by
 its immutable index; absence denotes a value return. Structural validation requires

@@ -105,6 +105,14 @@ must follow the existing declaration-fact identity and retirement protocol. Symb
 reference-return contracts retain only a parameter index, never caller storage. These
 records describe origin, not permission to escape or ownership of the runtime value.
 
+Property places may observe registry-owned `registered_property` facts, which have
+no collected declaration. Property writes share the destination place and conversion
+facts rather than creating a local binding identity. Source-local storage alone
+participates in invocation lifetime membership. Static-property roots remain gated
+from escaping borrows; projecting an instance property follows the receiver's root
+lifetime and existing heap restriction. Backend property bindings index exact current
+property identities, so old facts cannot silently acquire a new configuration's symbol.
+
 Plain class/struct properties share that place model. A heap projection marks its
 path non-borrowable; nested inline projections inherit this restriction. Writability
 still follows the root access contract. No native alias/reference argument may expose

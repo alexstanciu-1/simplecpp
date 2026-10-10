@@ -519,7 +519,6 @@ final class CPP_Generator
 			$source->value = (new CPP_Syntax($context))->expression($value_node);
 		}
 
-		$binding = $syntax->require_assignment_preparation()->binding;
 		$target /** nullable<assignable_expression_node> */ = $syntax->target;
 		if ($target instanceof variable_reference_node) {
 			$target = null;
@@ -533,9 +532,24 @@ final class CPP_Generator
 			}
 			$name = CPP_Declarations::static_property(object_cast($member->require_preparation(), prepared_static_property::class), $context);
 		}
-		else { $name = self::storage_name($binding, $target, $context); }
+		elseif ($target !== null) {
+			$name = (new CPP_Syntax($context))->expression($target);
+		}
+		else {
+			$name = self::storage_name($syntax->require_assignment_preparation()->binding, null, $context);
+		}
 		$statements .= $source->statements;
-		$statements .= "\t" . self::generate_storage_value($binding, $name, $source->value, false, $context) . ";\n";
+		$write_facts = $syntax->require_write_preparation();
+		if ($write_facts instanceof prepared_property_assignment) {
+			$property_write = object_cast($write_facts, prepared_property_assignment::class);
+			CPP_Declarations::type($property_write->destination_type(), $context);
+			$statements .= "\t" . $name . ' = '
+				. CPP_Declarations::conversion($source->value, $property_write->conversion, $context) . ";\n";
+		}
+		else {
+			$binding = $syntax->require_assignment_preparation()->binding;
+			$statements .= "\t" . self::generate_storage_value($binding, $name, $source->value, false, $context) . ";\n";
+		}
 
 		$result = new cpp_assignment_sequence();
 		$result->statements = $statements;

@@ -7,6 +7,7 @@ namespace handle_proof {
 class ticket final {
 public:
 	scpp::int_t<> value;
+	inline static scpp::int_t<> total{0};
 	explicit ticket(scpp::int_t<> input) : value(input) {}
 	ticket(const ticket&) = delete;
 	ticket& operator=(const ticket&) = delete;

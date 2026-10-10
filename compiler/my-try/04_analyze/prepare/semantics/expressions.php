@@ -182,6 +182,9 @@ final class Expression_Preparation
 			if ($target instanceof index_node) {
 				return Indexing_Preparation::prepare_write($node, object_cast($target, index_node::class), $context);
 			}
+			if ($statement_assignment && (($target instanceof field_access_node) || ($target instanceof static_member_reference_node))) {
+				return self::prepare_field_write($target, $node->value, $context);
+			}
 			$facts = new prepared_assignment();
 			if ($target instanceof variable_reference_node) {
 				$variable = object_cast($target, variable_reference_node::class);
@@ -190,9 +193,6 @@ final class Expression_Preparation
 					self::prepare_reference($variable, $context);
 				}
 				$facts->binding = Body_Preparation::prepare_local_storage($variable->occurrence(), null, $node->value, $context);
-			}
-			elseif ($statement_assignment && (($target instanceof field_access_node) || ($target instanceof static_member_reference_node))) {
-				$facts->binding = self::prepare_field_write($target, $node->value, $context);
 			}
 			else {
 				throw new \RuntimeException('S2S assignment target is not supported in this context');
@@ -209,7 +209,7 @@ final class Expression_Preparation
 	}
 
 	/** Member assignment requires an addressable prepared field and never introduces a local. */
-	private static function prepare_field_write(expression_node $target, expression_node $initializer, preparation_context $context): prepared_binding
+	private static function prepare_field_write(expression_node $target, expression_node $initializer, preparation_context $context): prepared_property_assignment
 	{
 		$statement_assignment = $context->statement_assignment;
 		$context->statement_assignment = false;
@@ -220,18 +220,16 @@ final class Expression_Preparation
 			$context->statement_assignment = $statement_assignment;
 		}
 		$place = $target->require_preparation();
-		$field /** prepared_field */;
-		if ($place instanceof prepared_field_access) { $field = object_cast($place, prepared_field_access::class)->field; }
-		elseif ($place instanceof prepared_static_property) { $field = object_cast($place, prepared_static_property::class)->field; }
-		else { throw new \RuntimeException('Assignment requires mutable property storage, not a constant'); }
+		if (!($place instanceof prepared_field_access) && !($place instanceof prepared_static_property)) {
+			throw new \RuntimeException('Assignment requires mutable property storage, not a constant');
+		}
 		if (!$place->addressable()) {
 			throw new \RuntimeException('S2S assignment requires stable storage');
 		}
 		Reference_Preparation::require_writable($place->place);
-		$binding = new prepared_binding();
+		$binding = new prepared_property_assignment();
 		$binding->type = $place->type;
-		$binding->resolved_kind = binding_kind::assignment;
-		$binding->declaration = $field->declaration;
+		$binding->destination = $place->place;
 		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment, new Conversion_Relationships($context));
@@ -369,7 +367,7 @@ final class Expression_Preparation
 		if ($node->name === 'this') { throw new \RuntimeException('$this is only a member receiver or explicit receiver capture'); }
 		$entry = $node->occurrence();
 		$locals = $context->locals;
-		$targets /** vector<prepared_storage> */ = $locals->named($entry->name);
+		$targets /** vector<prepared_source_storage> */ = $locals->named($entry->name);
 		if (q_count($targets) !== 1) {
 			throw new \RuntimeException('S2S needs an established local declaration for ' . $entry->name);
 		}
@@ -448,27 +446,8 @@ final class Expression_Preparation
 			throw new \RuntimeException('S2S weak member access requires an explicit lock');
 		}
 		$payload = Type_Queries::record_payload($value->type);
-		$declaration = Type_Queries::source_record($payload);
-		if ($declaration === null) {
-			throw new \RuntimeException('S2S member access requires a class or struct record');
-		}
-
-		$context->worker->require_record($payload, $context);
-		$record_entry /** collected_record */ = $declaration;
-		$matches = Inherited_Lookup::members($record_entry, $syntax->occurrence()->name, preparation_lookup_kind::property_name, $context);
-		if (q_count($matches) !== 1) {
-			throw new \RuntimeException('S2S needs one resolved record property');
-		}
-		$selected = $matches[0];
-		$context->worker->require_declaration($context->owner, $selected->declaring_type);
-		$field = object_cast($selected->member, collected_field::class)->syntax()->require_preparation();
-		if ($field->static_member) { throw new \RuntimeException('S2S needs one resolved record property'); }
-		if (!Member_Preparation::accessible($field->visibility, $selected->declaring_type, $context)) {
-			if ($field->visibility === member_visibility::protected_access) { throw new \RuntimeException('Protected property is not accessible here'); }
-			throw new \RuntimeException('S2S private property is not accessible here: ' . $syntax->name);
-		}
-		Member_Preparation::require_instance_access($field->visibility, $selected->declaring_type, $record_entry, $context);
-
+		$field = self::resolve_property($payload, $syntax->occurrence()->name, $context);
+		if ($field->static_member) { throw new \RuntimeException('Instance access requires an instance property'); }
 		$facts = new prepared_field_access();
 		$facts->record_type = $payload;
 		$facts->receiver_storage = $storage;
@@ -479,7 +458,38 @@ final class Expression_Preparation
 			$facts->place = new prepared_place($field, $base_place, $storage !== record_storage_kind::inline_value,
 				Reference_Preparation::contents_access($base_place, $value->type));
 		}
-
 		return $facts;
+	}
+
+	private static function resolve_property(canonical_type_use $payload, string $name,
+		preparation_context $context): prepared_property_storage
+	{
+		if (Type_Queries::canonical($payload)->definition()->origin() === type_definition_origin::runtime) {
+			$runtime_property = Model::$runtime_members->property($payload, $name);
+			if ($runtime_property === null) { throw new \RuntimeException('Unknown runtime property: ' . $name); }
+			return $runtime_property;
+		}
+		$declaration = Type_Queries::source_record($payload);
+		if ($declaration === null) {
+			throw new \RuntimeException('S2S member access requires a class or struct record');
+		}
+
+		$context->worker->require_record($payload, $context);
+		$record_entry /** collected_record */ = $declaration;
+		$matches = Inherited_Lookup::members($record_entry, $name, preparation_lookup_kind::property_name, $context);
+		if (q_count($matches) !== 1) {
+			throw new \RuntimeException('S2S needs one resolved record property');
+		}
+		$selected = $matches[0];
+		$context->worker->require_declaration($context->owner, $selected->declaring_type);
+		$field = object_cast($selected->member, collected_field::class)->syntax()->require_preparation();
+		if ($field->static_member) { throw new \RuntimeException('S2S needs one resolved record property'); }
+		if (!Member_Preparation::accessible($field->visibility, $selected->declaring_type, $context)) {
+			if ($field->visibility === member_visibility::protected_access) { throw new \RuntimeException('Protected property is not accessible here'); }
+			throw new \RuntimeException('S2S private property is not accessible here: ' . $name);
+		}
+		Member_Preparation::require_instance_access($field->visibility, $selected->declaring_type, $record_entry, $context);
+
+		return $field;
 	}
 }
