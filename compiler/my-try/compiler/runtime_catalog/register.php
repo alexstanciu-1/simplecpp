@@ -153,16 +153,6 @@ final class Runtime_Catalog_Registration
 		return $definition;
 	}
 
-	/** Constant/property specialization remains a subsequent checkpoint. */
-	public static function member_owner(runtime_type_spec $spec, registered_type_catalog $types): canonical_type_use
-	{
-		$definition = self::member_definition($spec, $types);
-		if (!($definition instanceof abstract_nominal_type_definition)) {
-			throw new \RuntimeException('Runtime member requires a registered nominal owner');
-		}
-		return self::type($spec, $types);
-	}
-
 	/** Index retained identities; no metadata IO or duplicate value snapshots. */
 	public static function members(Storage $constants /** Storage<registered_constant> */,
 		runtime_catalog_input $input, registered_type_catalog $types): Runtime_Members
@@ -176,11 +166,14 @@ final class Runtime_Catalog_Registration
 		foreach ($input->modules as $module) {
 			foreach ($module->properties as $spec)
 			{
-				$owner = self::member_owner($spec->owner, $types);
-				$property = new registered_property($spec->identity, $spec->name, $owner);
-				$property->type = self::type($spec->type, $types);
-				if (!$types->registry()->has_capability($property->type, generic_contract::value_storable)) {
-					throw new \RuntimeException('Runtime property requires a storable type');
+				$owner = self::member_definition($spec->owner, $types);
+				$pattern = Runtime_Catalog_Patterns::type($spec->type, $types, Runtime_Catalog_Patterns::owner_positions($owner));
+				$property = new runtime_property_definition($spec->identity, $spec->name, $owner, $pattern);
+				if ($pattern instanceof runtime_concrete_pattern) {
+					$concrete = object_cast($pattern, runtime_concrete_pattern::class);
+					if (!$types->registry()->has_capability($concrete->type, generic_contract::value_storable)) {
+						throw new \RuntimeException('Runtime property requires a storable type');
+					}
 				}
 				$property->static_member = $spec->static_member;
 				$property->access = $spec->access;

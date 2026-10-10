@@ -1,8 +1,8 @@
 <?php
 namespace scpp\compiler;
 
-/** Call-local inference; never published into the provider or canonical type registry. */
-final class runtime_call_inference
+/** Selection-local type bindings shared by callable and property recipes; never retained in the provider. */
+final class runtime_type_bindings
 {
 	public array $bindings /** hash<canonical_type_use, int> */ = [];
 }

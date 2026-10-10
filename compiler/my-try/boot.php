@@ -55,6 +55,7 @@ require_once __DIR__ . '/compiler/initialization/catalog.php';
 require_once __DIR__ . '/04_analyze/prepare/data/structures.php';
 require_once __DIR__ . '/04_analyze/prepare/data/runtime_calls.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/runtime_calls.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/runtime_patterns.php';
 require_once __DIR__ . '/04_analyze/prepare/data/lifetimes.php';
 require_once __DIR__ . '/04_analyze/prepare/data/instance_requests.php';
 require_once __DIR__ . '/04_analyze/prepare/data/relationships.php';

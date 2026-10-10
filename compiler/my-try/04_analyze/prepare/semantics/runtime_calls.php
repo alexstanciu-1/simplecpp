@@ -25,7 +25,7 @@ final class Runtime_Call_Preparation
 			Expression_Preparation::prepare_for_consumer($argument, $context, null, $consumer);
 		}
 		$selected /** ?runtime_function_definition */ = null;
-		$inference /** ?runtime_call_inference */ = null;
+		$inference /** ?runtime_type_bindings */ = null;
 		foreach ($targets as $candidate) {
 			$runtime = object_cast($candidate, runtime_function_definition::class);
 			$match = self::match($runtime, $arguments, $runtime_owner);
@@ -76,9 +76,9 @@ final class Runtime_Call_Preparation
 
 	/** Pure structural matching cannot publish specializations or prepare source capabilities. */
 	private static function match(runtime_function_definition $target, Storage $arguments /** Storage<expression_node> */,
-		?canonical_type_use $runtime_owner): ?runtime_call_inference
+		?canonical_type_use $runtime_owner): ?runtime_type_bindings
 	{
-		$result = new runtime_call_inference();
+		$result = new runtime_type_bindings();
 		if ($target instanceof registered_generic_function) {
 			$contract = object_cast($target, registered_generic_function::class)->contract();
 			if ($contract->owner_parameter_count > 0) {
@@ -89,9 +89,7 @@ final class Runtime_Call_Preparation
 				$member = Model::$runtime_callables->member_for($target);
 				if ($member === null) { return null; }
 				if ($application->definition() !== $member->owner) { return null; }
-				foreach ($application->arguments() as $index => $argument_type) {
-					$result->bindings[$index] = $argument_type;
-				}
+				$result = Runtime_Pattern_Preparation::owner_arguments($runtime_owner);
 			}
 			$patterns /** Storage<runtime_pattern_parameter> */ = $contract->parameters;
 			if (q_count($patterns) !== q_count($arguments)) { return null; }
@@ -110,7 +108,7 @@ final class Runtime_Call_Preparation
 
 	/** Match canonical identities recursively; repeated variables must preserve exact storage. */
 	private static function match_type(runtime_type_pattern $pattern, canonical_type_use $actual,
-		runtime_call_inference $inference): bool
+		runtime_type_bindings $inference): bool
 	{
 		if ($pattern instanceof runtime_concrete_pattern) {
 			return object_cast($pattern, runtime_concrete_pattern::class)->type->matches($actual);
@@ -136,7 +134,7 @@ final class Runtime_Call_Preparation
 	}
 
 	/** Only the selected provider materializes types, with normal capability dependencies. */
-	private static function instantiate(registered_generic_function $target, runtime_call_inference $inference,
+	private static function instantiate(registered_generic_function $target, runtime_type_bindings $inference,
 		preparation_context $context): callable_signature
 	{
 		$contract = $target->contract();
@@ -144,11 +142,11 @@ final class Runtime_Call_Preparation
 			throw new \LogicException('Incomplete runtime type inference');
 		}
 		$result = new callable_signature();
-		$result->return_type = self::substitute($contract->return_type, $inference, $context);
+		$result->return_type = Runtime_Pattern_Preparation::substitute($contract->return_type, $inference, $context);
 		$parameters /** Storage<callable_parameter> */ = $result->parameters;
 		foreach ($contract->parameters as $pattern) {
 			$parameter = new callable_parameter();
-			$parameter->type = self::substitute($pattern->type, $inference, $context);
+			$parameter->type = Runtime_Pattern_Preparation::substitute($pattern->type, $inference, $context);
 			if (Model::$type_catalog->registry()->type($parameter->type->type_id()) instanceof no_value_type) {
 				throw new \RuntimeException('Void runtime argument');
 			}
@@ -160,24 +158,4 @@ final class Runtime_Call_Preparation
 		return $result;
 	}
 
-	/** Materialize selected types using the ordinary registry's capability checks. */
-	private static function substitute(runtime_type_pattern $pattern, runtime_call_inference $inference,
-		preparation_context $context): canonical_type_use
-	{
-		if ($pattern instanceof runtime_concrete_pattern) {
-			return object_cast($pattern, runtime_concrete_pattern::class)->type;
-		}
-		if ($pattern instanceof runtime_variable_pattern) {
-			return $inference->bindings[object_cast($pattern, runtime_variable_pattern::class)->position];
-		}
-		$application = object_cast($pattern, runtime_application_pattern::class);
-		$arguments /** vector<canonical_type_use> */ = [];
-		foreach ($application->arguments as $child) { $arguments[] = self::substitute($child, $inference, $context); }
-		$registry = Model::$type_catalog->registry();
-		try {
-			$type = $registry->intern_application($application->definition, $arguments, new Capability_Preparation($context));
-			return $registry->use($type->type_id());
-		}
-		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }
-	}
 }

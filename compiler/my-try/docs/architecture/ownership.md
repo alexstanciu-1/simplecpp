@@ -111,7 +111,12 @@ facts rather than creating a local binding identity. Source-local storage alone
 participates in invocation lifetime membership. Static-property roots remain gated
 from escaping borrows; projecting an instance property follows the receiver's root
 lifetime and existing heap restriction. Backend property bindings index exact current
-property identities, so old facts cannot silently acquire a new configuration's symbol.
+property-definition identities, so old facts cannot silently acquire a new configuration's symbol.
+The catalog owns each definition recipe and the lazily materialized storage inventory.
+Storage instances share their recipe and selected canonical owner, without syntax or
+worker backlinks. Selection-local `runtime_type_bindings` are transient; property and
+callable substitution share them without retaining invocation contexts. Registry resets
+discard both recipes and storage; dependency checks still run on cached storage access.
 
 Plain class/struct properties share that place model. A heap projection marks its
 path non-borrowable; nested inline projections inherit this restriction. Writability

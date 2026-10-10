@@ -438,6 +438,11 @@ their actual identities, without invented collected declarations. Property assig
 own `prepared_property_assignment` with a destination place and conversion/boundary
 facts, not a local `prepared_binding`. Registry-owned runtime members and backend-owned
 property bindings are rebuilt together on reset from retained metadata.
+`runtime_property_definition` retains the single owner-definition/type-pattern recipe.
+`Runtime_Pattern_Preparation` substitutes it using the same worker as callable
+signatures. `Runtime_Members` retains stable `registered_property` storage per selected
+owner application; each access still checks capabilities and observes dependencies.
+Backend bindings key the recipe identity, not these materialized storage instances.
 Runtime callable membership indexes semantic definition identity, not concrete
 applications. Generic contracts reserve leading variable positions for owner
 parameters; preparation seeds these from the selected application and then runs

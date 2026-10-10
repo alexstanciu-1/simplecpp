@@ -19,7 +19,10 @@ final class CPP_Runtime_Catalog
 				$property_binding = $properties[$property->identity];
 				self::spelling($property_binding->symbol, false);
 				self::spelling($property_binding->header, true);
-				if (!$property->static_member) { self::member_identifier($property_binding->symbol); }
+				$property_owner = $types->definition($property->owner->name);
+				if (!$property->static_member || ($property_owner instanceof abstract_template_type_definition)) {
+					self::member_identifier($property_binding->symbol);
+				}
 			}
 			$type_bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_types;
 			if (q_count($type_bindings) !== q_count($module->types)) {
@@ -135,11 +138,17 @@ final class CPP_Runtime_Catalog
 
 	public static function property(registered_property $property, cpp_generation_context $context): string
 	{
-		if (!isset(Model::$cpp_property_bindings[$property])) {
+		$definition = $property->definition;
+		if (!isset(Model::$cpp_property_bindings[$definition])) {
 			throw new \LogicException('Missing or stale runtime property binding');
 		}
-		$binding /** runtime_cpp_spec */ = Model::$cpp_property_bindings[$property];
+		$binding /** runtime_cpp_spec */ = Model::$cpp_property_bindings[$definition];
 		$context->headers[$binding->header] = true;
+		if ($definition->static_member && ($definition->owner instanceof abstract_template_type_definition)) {
+			$mapping = CPP_Types::payload($property->owner_type);
+			CPP_Types::record_dependencies($mapping, $context);
+			return $mapping->spelling . '::' . $binding->symbol;
+		}
 		return $binding->symbol;
 	}
 }

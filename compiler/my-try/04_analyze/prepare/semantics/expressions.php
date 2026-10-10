@@ -465,7 +465,7 @@ final class Expression_Preparation
 		preparation_context $context): prepared_property_storage
 	{
 		if (Type_Queries::canonical($payload)->definition()->origin() === type_definition_origin::runtime) {
-			$runtime_property = Model::$runtime_members->property($payload, $name);
+			$runtime_property = Runtime_Pattern_Preparation::property($payload, $name, $context);
 			if ($runtime_property === null) { throw new \RuntimeException('Unknown runtime property: ' . $name); }
 			return $runtime_property;
 		}

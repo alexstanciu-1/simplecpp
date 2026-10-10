@@ -5,6 +5,7 @@ namespace runtime_type_test {
 struct receipt { scpp::int_t<> number; };
 template<class T> struct parcel {
 	T value;
+	inline static T last{};
 	static parcel make(T input) { return {input}; }
 	T read() const { return value; }
 	void replace(T input) { value = input; }

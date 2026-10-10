@@ -241,14 +241,20 @@ An optional `properties` array declares public provider-owned storage:
 
 `id`, `owner`, `name` (without `$`) and `type` are required. `static` defaults to
 false; `access` defaults to `writable` and also accepts `read_only`. Owners must be
-registered nominal runtime types and property types must be value-storable. Names
+registered nominal or template runtime definitions and property types must be value-storable. Names
 are unique per owner within the property namespace, independently of methods and
-constants; property IDs are unique across selected modules. Owner-template recipes
-remain pending rather than being enumerated as concrete combinations.
+constants; property IDs are unique across selected modules. Property type patterns
+may reference owner parameters, for example `"type":{"parameter":"T"}` for owner
+`parcel`. Nested type applications use the same patterns as callable signatures.
+Preparation substitutes the selected owner's arguments and checks storage capability;
+neither JSON nor backend bindings enumerate concrete applications.
 
 Every property requires a separate `cpp_properties` binding with `id`, `symbol`
 and `header`. Instance symbols are unqualified field identifiers; static symbols
-name provider-owned static storage. No getters, setters, source fragments or synthesized
+name provider-owned static storage for nominal owners. For template owners, static
+symbols are unqualified identifiers; the backend supplies the selected payload
+application qualifier, preserving separate C++ static storage per application.
+No getters, setters, source fragments or synthesized
 provider definitions are implied. Providers own initialization and storage lifetime.
 
 Reads and plain writes share source-property preparation and conversion boundaries.

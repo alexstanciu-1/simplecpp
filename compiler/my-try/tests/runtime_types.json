@@ -21,6 +21,16 @@
     {"owner":"parcel", "name":"LIMIT", "type":"int", "value":37},
     {"owner":"receipt", "name":"LIMIT", "type":"int", "value":41}
   ],
+  "properties": [
+    {"id":"proof.parcel.value", "owner":"parcel", "name":"value", "type":{"parameter":"T"}},
+    {"id":"proof.parcel.read", "owner":"parcel", "name":"read", "type":{"parameter":"T"}, "access":"read_only"},
+    {"id":"proof.parcel.last", "owner":"parcel", "name":"last", "type":{"parameter":"T"}, "static":true}
+  ],
+  "cpp_properties": [
+    {"id":"proof.parcel.value", "symbol":"value", "header":"runtime_type_support.hpp"},
+    {"id":"proof.parcel.read", "symbol":"value", "header":"runtime_type_support.hpp"},
+    {"id":"proof.parcel.last", "symbol":"last", "header":"runtime_type_support.hpp"}
+  ],
   "functions": [
     {"id":"proof.parcel.make", "name":"make", "member":{"owner":"parcel","dispatch":"static"}, "parameters":[{"name":"value","type":{"parameter":"T"},"passing":"value"}], "returns":{"name":"parcel","arguments":[{"parameter":"T"}]}},
     {"id":"proof.parcel.read", "name":"read", "member":{"owner":"parcel","dispatch":"instance"}, "parameters":[], "returns":{"parameter":"T"}},

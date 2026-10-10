@@ -4,6 +4,17 @@ namespace scpp\compiler;
 /** Install registry-resolved recipes; matching source arguments belongs to preparation. */
 final class Runtime_Catalog_Patterns
 {
+	public static function owner_positions(semantic_type_definition $owner): array /** hash<int> */
+	{
+		$positions /** hash<int> */ = [];
+		if ($owner instanceof abstract_template_type_definition) {
+			$recipe = object_cast($owner, abstract_template_type_definition::class);
+			for ($index = 0; $index < $recipe->arity(); $index++) {
+				$positions[$recipe->parameter($index)->name()] = $index;
+			}
+		}
+		return $positions;
+	}
 	/** Every variable must be declared once and inferable from an input pattern. */
 	public static function contract(runtime_function_spec $spec, registered_type_catalog $types): runtime_generic_contract
 	{
@@ -12,13 +23,8 @@ final class Runtime_Catalog_Patterns
 		if ($spec->member !== null) {
 			$membership /** runtime_callable_member_spec */ = $spec->member;
 			$owner = Runtime_Catalog_Registration::member_definition($membership->owner, $types);
-			if ($owner instanceof abstract_template_type_definition) {
-				$recipe = object_cast($owner, abstract_template_type_definition::class);
-				$owner_count = $recipe->arity();
-				for ($index = 0; $index < $owner_count; $index++) {
-					$positions[$recipe->parameter($index)->name()] = $index;
-				}
-			}
+			$positions = self::owner_positions($owner);
+			$owner_count = q_count($positions);
 		}
 		foreach ($spec->type_parameters as $name) {
 			if (isset($positions[$name])) { throw new \RuntimeException('Duplicate runtime type parameter'); }
@@ -59,7 +65,7 @@ final class Runtime_Catalog_Patterns
 	}
 
 	/** Resolve explicit variables, closed types and application structure without dummy types. */
-	private static function type(runtime_type_spec $spec, registered_type_catalog $types,
+	public static function type(runtime_type_spec $spec, registered_type_catalog $types,
 		array $positions /** hash<int> */): runtime_type_pattern
 	{
 		if ($spec->parameter !== '') {

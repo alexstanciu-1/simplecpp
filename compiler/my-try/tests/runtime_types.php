@@ -42,6 +42,8 @@ runtime_type_check($missing_foundation && Model::$runtime_metadata === $input,
 
 $schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
 $invalids = [];
+$bad = $schema; $bad['properties'][0]['type'] = ['parameter'=>'Missing']; $invalids[] = [$bad, 'Unknown runtime type parameter'];
+$bad = $schema; $bad['cpp_properties'][2]['symbol'] = 'parcel::last'; $invalids[] = [$bad, 'unqualified identifier'];
 $bad = $schema; $bad['constants'][] = $bad['constants'][0]; $invalids[] = [$bad, 'Duplicate runtime member constant'];
 $bad = $schema; $bad['constants'][0]['owner'] = ['name'=>'parcel','arguments'=>['int']]; $invalids[] = [$bad, 'owner must name a definition'];
 $bad = $schema; $bad['functions'][0]['type_parameters'] = ['T']; $invalids[] = [$bad, 'Duplicate runtime type parameter'];
@@ -127,6 +129,26 @@ function runtime_type_compile(string $source): string
 }
 
 $cases = [
+	'owner_properties' => <<<'PHS'
+function update(int &$value): void { $value = 19; }
+$a = pack(7);
+$b = pack("ok");
+$a->value = 11;
+update($a->value);
+$b->value = "hello";
+$nested = pack($b);
+$inner = $nested->value;
+$text = $inner->value;
+$n = $a->read;
+parcel<int>::$last = 23;
+parcel<string>::$last = "last";
+$static_number = $a::$last;
+$static_text = parcel<string>::$last;
+$length = strlen($text);
+$static_length = strlen($static_text);
+if ($n !== 19 || $static_number !== 23 || $length !== 5 || $static_length !== 4) { return 1; }
+return 0;
+PHS,
 	'owner_constants' => <<<'PHS'
 const INTEGER_LIMIT = parcel<int>::LIMIT;
 const NESTED_LIMIT = parcel<parcel<string>>::LIMIT;
@@ -164,8 +186,27 @@ PHS,
 ];
 foreach ($cases as $name => $source) {
 	file_put_contents($directory . '/type_' . $name . '.cpp', runtime_type_compile($source));
+	if ($name === 'owner_properties') {
+		$property_registry = Model::$type_catalog->registry();
+		$property_owner = object_cast(Model::$type_catalog->definition('parcel'), abstract_template_type_definition::class);
+		$int_owner = $property_registry->use($property_registry->intern_application($property_owner,
+			[$property_registry->use(Model::$type_catalog->canonical('int')->type_id())])->type_id());
+		$text_owner = $property_registry->use($property_registry->intern_application($property_owner,
+			[$property_registry->use(Model::$type_catalog->canonical('string')->type_id())])->type_id());
+		$property_definition = Model::$runtime_members->property($int_owner, 'value');
+		$int_storage = Model::$runtime_members->stored_property($int_owner, $property_definition);
+		$text_storage = Model::$runtime_members->stored_property($text_owner, $property_definition);
+		runtime_type_check($int_storage !== null && $text_storage !== null && $int_storage !== $text_storage,
+			'Property applications lost distinct typed storage');
+		runtime_type_check($int_storage->definition === $text_storage->definition
+			&& !$int_storage->type->matches($text_storage->type), 'Property recipes were enumerated or lost substitution');
+	}
 }
 foreach ([
+	'$a = pack(1); $a->value = "wrong";',
+	'$a = pack(1); $a->read = 2;',
+	'$a = pack(1); $alias =& $a->read; $alias = 2;',
+	'parcel<int>::$last = "wrong";',
 	'echo parcel<int>::MISSING;',
 	'parcel<int>::LIMIT = 2;',
 	'echo LIMIT;',

@@ -89,9 +89,14 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   values are not introduced. Focused evidence: /tmp/runtime-owner-constants-20261010-final
   (two PHP suites, two generated programs), including nested/defaulted owner use,
   qualifier effects, identity sharing, duplicate rejection and no free-name leakage.
-- Phase 2 remains in progress: property owner-template
-  member recipes are still required. Do not replace owner recipes with enumerated
-  concrete applications. Next checkpoint addresses property owner recipes.
+- Phase 2 complete within its bounded contract: generic property recipes share
+  callable type substitution, stable storage identities are materialized per owner,
+  and backend bindings remain definition-owned. No enumerated registrations.
+  Focused evidence: /tmp/runtime-owner-properties-20261010-final (four PHP suites,
+  three generated programs): generic/nominal reads and writes, inline borrowing,
+  read-only rejection, nested types, static application isolation and recipe identity.
+- Next: Phase 3 protocol metadata (initialization, indexing and iteration), preserving
+  the existing shared protocol models and postponing broader validation under CH15 debt.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
   export through namespace import lookup. This is not covered by the member proof.

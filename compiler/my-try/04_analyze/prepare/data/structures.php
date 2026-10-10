@@ -555,10 +555,10 @@ abstract class prepared_property_storage extends prepared_storage {
 	public function storage_type(): canonical_type_use { return $this->type; }
 }
 
-/** Registry-owned provider property; no source declaration or backend spelling. */
+/** Materialized provider property storage; retains its one registered recipe. */
 final class registered_property extends prepared_property_storage
 {
-	public function __construct(public string $identity, public string $source_name,
+	public function __construct(public runtime_property_definition $definition,
 		public canonical_type_use $owner_type) {}
 }
 

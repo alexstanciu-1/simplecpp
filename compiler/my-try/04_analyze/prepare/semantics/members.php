@@ -139,7 +139,7 @@ final class Member_Preparation
 		$property = string_byte_starts_with($syntax->member_name, '$');
 		if ($property && (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
 			$property_name = string_byte_slice($syntax->member_name, 1, string_byte_len($syntax->member_name) - 1);
-			$runtime_property = Model::$runtime_members->property($type, $property_name);
+			$runtime_property = Runtime_Pattern_Preparation::property($type, $property_name, $context);
 			if ($runtime_property !== null) {
 				if (!$runtime_property->static_member) { throw new \RuntimeException('Qualified property access requires one static property'); }
 				return self::static_property($runtime_property, $type);
