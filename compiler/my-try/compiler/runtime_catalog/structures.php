@@ -25,6 +25,8 @@ final class runtime_type_parameter_spec
 
 final class runtime_type_definition_spec
 {
+	public ?runtime_indexing_spec $indexing = null;
+	public ?runtime_iteration_spec $iteration = null;
 	public string $identity = '';
 	public string $name = '';
 	public nominal_type_kind $kind;
@@ -36,6 +38,26 @@ final class runtime_type_definition_spec
 	{
 		$this->parameters = new Storage();
 	}
+}
+
+/** Independent protocol opt-ins; type references use the owning definition's parameters. */
+final class runtime_iteration_spec
+{
+	public runtime_type_spec $key;
+	public runtime_type_spec $value;
+}
+
+final class runtime_indexing_spec
+{
+	public runtime_type_spec $key;
+	public runtime_type_spec $value;
+	public runtime_type_spec $nested;
+	public ?runtime_type_spec $path = null;
+	public operator_operation $read_operation = operator_operation::index_checked_read;
+	public bool $write = false;
+	public index_append_policy $append = index_append_policy::unsupported;
+	public bool $probes = false;
+	public bool $removal = false;
 }
 
 final class runtime_parameter_spec

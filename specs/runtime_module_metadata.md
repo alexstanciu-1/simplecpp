@@ -175,13 +175,56 @@ The core vector/hash definitions and their C++ bindings now come solely from thi
 metadata. Source publication enumerates registered exposures rather than a second
 name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
 families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
-Initialization/indexing/iteration protocols, borrowed storage,
-non-type parameters and handle-lifetime contracts are not granted by these records.
-Those protocols require their own shared model before additional runtime APIs can
-be enabled. The existing compiler composition selects core for its foundational
+Type declaration alone grants no initialization/indexing/iteration protocol, borrowed
+storage, non-type parameters or handle-lifetime contract. Indexing and iteration
+require the independent opt-ins below; initialization metadata remains pending.
+The existing compiler composition selects core for its foundational
 container types; custom modules using them declare a core dependency.
 Configuration also validates existing protocol prerequisites privately, so an input
 missing foundational container types fails before retention, not on a later reset.
+
+### Indexing and iteration opt-ins
+
+A type record may contain `indexing` and/or `iteration`. Each declares one recipe
+for its definition, not registrations for each concrete application. For example:
+
+```json
+"indexing": {
+  "key": "int", "value": {"parameter":"Value"},
+  "nested": {"parameter":"Value"}, "path": {"parameter":"Value"},
+  "write": true, "append": "allowed", "probes": true
+},
+"iteration": {"key":"int", "value":{"parameter":"Value"}}
+```
+
+Indexing requires `key`, `value` and `nested` (the contextual nested literal type).
+Optional `path` permits descent through an element; omission does not authorize it.
+`read` is `checked` (default) or `null_on_miss`. `write`, `probes` and `removal` are
+independent booleans defaulting to false. `append` is `unsupported` (default),
+`allowed`, or `integer_key`; append requires write support. The integer-key rule
+uses the selected key type, allowing integer-keyed hash append but not string-keyed
+hash append. Iteration requires `key` and `value`; it grants value iteration only,
+not reference iteration or mutation-during-iteration semantics.
+
+Each protocol type reference is a closed registered type or an explicit owning
+parameter (`{"parameter":"Value"}`). Unknown parameters and non-storable closed
+types reject configuration. Nested open recipes are not yet supported by the
+existing bounded protocol-reference model and reject instead of using placeholders.
+The selected application substitutes the references through ordinary preparation.
+Metadata supplies no per-application rows or provider-name processing branches.
+
+The C++ type binding's header must expose the runtime helper overloads for every
+promised operation: `scpp::checked_index_read`/`null_index_read`, `index_store`,
+`index_append`, and the existing probe/removal/path helpers where enabled. Custom
+write-key types also require `scpp::require_write_key`. Iteration supplies
+`scpp::value_iteration`, whose entry view provides `key()` and `value_copy()`.
+The provider owns checks, copy/storage behavior and helper implementations; metadata
+does not verify C++ implementations or relax evaluation/lifetime rules. Generated
+C++ compilation tests this ABI. No arbitrary executable snippets are accepted.
+
+Core vector/hash indexing and iteration now use these metadata recipes. Mixed and
+dynamic retain language-owned registrations. Initialization remains a separate
+opt-in; indexing or iteration never silently enables literal construction.
 
 ## Type-owned callable membership
 
@@ -468,9 +511,9 @@ The byte-length decision for `strlen` does not change `substr` or explicitly nam
 Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the
 separate portable-compiler framework's UTF-8-validation contract.
 
-Runtime member/protocol declarations, fixed-array non-type parameters, compiler-module
+Runtime initialization metadata, fixed-array non-type parameters, compiler-module
 Storage registration, optional/default callable
-and variadic arguments, reference-return lifetime contracts, static runtime factories,
+and variadic arguments, reference-return lifetime contracts,
 profile availability and the rest of the runtime inventory are not encoded by this
 version's bounded consumer yet. Extend the shared models before enabling these rows;
 do not generate fake concrete overloads or function-name-specific preparation paths.

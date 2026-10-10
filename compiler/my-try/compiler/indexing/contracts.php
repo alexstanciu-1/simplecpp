@@ -93,18 +93,12 @@ final class Indexing_Contracts
 final class Indexing_Registration
 {
 	/** Family differences are installed signatures, not separate preparation paths. */
-	public static function install(registered_type_catalog $types): Indexing_Contracts
+	public static function install(registered_type_catalog $types, runtime_catalog_input $input): Indexing_Contracts
 	{
 		$registry = $types->registry();
-		$integer = contract_type_reference::concrete($registry->use($types->canonical('int')->type_id()));
 		$mixed = contract_type_reference::concrete($registry->use($types->canonical('mixed')->type_id()));
-		$value = contract_type_reference::argument(0);
-		$key = contract_type_reference::argument(1);
 		$declarations /** Storage<indexing_declaration> */ = new Storage();
-		$declarations->append(new indexing_declaration($types->definition('vector'), $integer, $value,
-			operator_operation::index_checked_read, operator_operation::index_store, index_append_policy::allowed, $value, $value, true, false));
-		$declarations->append(new indexing_declaration($types->definition('hash'), $key, $value,
-			operator_operation::index_checked_read, operator_operation::index_store, index_append_policy::integer_key, $value, $value, true, true));
+		Runtime_Protocol_Registration::indexing($input, $types, $declarations);
 		foreach (['mixed', 'dynamic'] as $name) {
 			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$declarations->append(new indexing_declaration($types->definition($name), $mixed, $nested,

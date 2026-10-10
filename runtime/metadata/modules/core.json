@@ -5,6 +5,11 @@
   "types": [
     {
       "id": "core.vector", "name": "vector", "kind": "class",
+      "indexing": {
+        "key": "int", "value": {"parameter": "Value"}, "nested": {"parameter": "Value"},
+        "path": {"parameter": "Value"}, "write": true, "append": "allowed", "probes": true
+      },
+      "iteration": {"key": "int", "value": {"parameter": "Value"}},
       "capabilities": ["copyable_value", "value_storable", "result_payload"],
       "parameters": [
         {"name": "Value", "requires": ["value_storable"], "capability_dependencies": ["copyable_value"]}
@@ -12,6 +17,11 @@
     },
     {
       "id": "core.hash", "name": "hash", "kind": "class",
+      "indexing": {
+        "key": {"parameter": "Key"}, "value": {"parameter": "Value"}, "nested": {"parameter": "Value"},
+        "path": {"parameter": "Value"}, "write": true, "append": "integer_key", "probes": true, "removal": true
+      },
+      "iteration": {"key": {"parameter": "Key"}, "value": {"parameter": "Value"}},
       "capabilities": ["copyable_value", "value_storable", "result_payload"],
       "parameters": [
         {"name": "Value", "requires": ["value_storable"], "capability_dependencies": ["copyable_value"]},

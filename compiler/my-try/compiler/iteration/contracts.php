@@ -46,17 +46,13 @@ final class Iteration_Contracts
 
 final class Iteration_Registration
 {
-	/** Built-in families differ in signatures, not in frontend processing paths. */
-	public static function install(registered_type_catalog $types): Iteration_Contracts
+	/** Ordinary providers come from metadata; boxed language semantics remain explicit. */
+	public static function install(registered_type_catalog $types, runtime_catalog_input $input): Iteration_Contracts
 	{
 		$registry = $types->registry();
-		$integer = contract_type_reference::concrete($registry->use($types->canonical('int')->type_id()));
 		$mixed = contract_type_reference::concrete($registry->use($types->canonical('mixed')->type_id()));
-		$value = contract_type_reference::argument(0);
-		$key = contract_type_reference::argument(1);
 		$declarations /** Storage<iteration_declaration> */ = new Storage();
-		$declarations->append(new iteration_declaration($types->definition('vector'), $integer, $value));
-		$declarations->append(new iteration_declaration($types->definition('hash'), $key, $value));
+		Runtime_Protocol_Registration::iteration($input, $types, $declarations);
 		foreach (['mixed', 'dynamic'] as $name) {
 			$element = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$declarations->append(new iteration_declaration($types->definition($name), $mixed, $element));

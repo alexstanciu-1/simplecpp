@@ -95,8 +95,22 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   Focused evidence: /tmp/runtime-owner-properties-20261010-final (four PHP suites,
   three generated programs): generic/nominal reads and writes, inline borrowing,
   read-only rejection, nested types, static application isolation and recipe identity.
-- Next: Phase 3 protocol metadata (initialization, indexing and iteration), preserving
-  the existing shared protocol models and postponing broader validation under CH15 debt.
+- Phase 3 indexing/iteration checkpoint: core vector/hash declarations moved into
+  their type metadata; one startup reference resolver installs the existing protocol
+  records. A distinct provider `tray<T>` exercises int/string applications, copied
+  reads, writes/appends, value iteration and copy isolation without named compiler
+  branches. Independent opt-ins, malformed metadata, reset/no-op and unsupported
+  probes/removal/construction have focused PHP proofs. Provider headers implement
+  the existing helper ABI; metadata does not prove C++ implementations.
+  Evidence: /tmp/runtime-protocols-20261010-1 (existing indexing/iteration/type PHP
+  suites; initial provider test corrected to avoid an unrelated compound-expression
+  limitation) and /tmp/runtime-protocols-20261010-2 (provider/type PHP suites and two
+  generated C++ programs), plus /tmp/runtime-protocols-20261010-final (independent
+  opt-in assertions). No native compiler rebuild.
+- Next: Phase 3 initialization recipes and C++ initialization adapters. Closed or
+  owner-parameter protocol references reuse the current bounded contract model;
+  nested open protocol references remain outside this checkpoint. Broader validation
+  remains CH15-RUNTIME-INTEGRATION-TESTS-01.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
   export through namespace import lookup. This is not covered by the member proof.

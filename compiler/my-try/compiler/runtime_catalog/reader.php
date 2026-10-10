@@ -248,12 +248,66 @@ final class Runtime_Catalog_Reader
 					$parameters->append(self::type_parameter_spec($reader));
 				}
 			}
+			elseif ($key === 'indexing') { $result->indexing = self::indexing_spec($reader); }
+			elseif ($key === 'iteration') { $result->iteration = self::iteration_spec($reader); }
 			else {
 				$reader->reject('Unknown runtime type definition field: ' . $key);
 			}
 		}
 		if (($result->identity === '') || ($result->name === '') || !$kind || !$capabilities) {
 			$reader->reject('Missing runtime type definition field');
+		}
+		return $result;
+	}
+
+	private static function iteration_spec(\scpp\Json_Reader $reader): runtime_iteration_spec
+	{
+		$result = new runtime_iteration_spec();
+		$key_seen = false;
+		$value_seen = false;
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$name = $reader->property_name();
+			if ($name === 'key') { $result->key = self::type($reader); $key_seen = true; }
+			elseif ($name === 'value') { $result->value = self::type($reader); $value_seen = true; }
+			else { $reader->reject('Unknown runtime iteration field: ' . $name); }
+		}
+		if (!$key_seen || !$value_seen) { $reader->reject('Missing runtime iteration field'); }
+		return $result;
+	}
+
+	private static function indexing_spec(\scpp\Json_Reader $reader): runtime_indexing_spec
+	{
+		$result = new runtime_indexing_spec();
+		$key_seen = false;
+		$value_seen = false;
+		$nested_seen = false;
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$name = $reader->property_name();
+			if ($name === 'key') { $result->key = self::type($reader); $key_seen = true; }
+			elseif ($name === 'value') { $result->value = self::type($reader); $value_seen = true; }
+			elseif ($name === 'nested') { $result->nested = self::type($reader); $nested_seen = true; }
+			elseif ($name === 'path') { $result->path = self::type($reader); }
+			elseif ($name === 'write') { $result->write = $reader->read_boolean(); }
+			elseif ($name === 'probes') { $result->probes = $reader->read_boolean(); }
+			elseif ($name === 'removal') { $result->removal = $reader->read_boolean(); }
+			elseif ($name === 'read') {
+				$read = self::name($reader);
+				if ($read === 'null_on_miss') { $result->read_operation = operator_operation::index_null_read; }
+				elseif ($read !== 'checked') { $reader->reject('Unknown runtime indexing read policy'); }
+			}
+			elseif ($name === 'append') {
+				$append = self::name($reader);
+				if ($append === 'allowed') { $result->append = index_append_policy::allowed; }
+				elseif ($append === 'integer_key') { $result->append = index_append_policy::integer_key; }
+				elseif ($append !== 'unsupported') { $reader->reject('Unknown runtime indexing append policy'); }
+			}
+			else { $reader->reject('Unknown runtime indexing field: ' . $name); }
+		}
+		if (!$key_seen || !$value_seen || !$nested_seen) { $reader->reject('Missing runtime indexing field'); }
+		if (!$result->write && ($result->append !== index_append_policy::unsupported)) {
+			$reader->reject('Runtime append requires indexed write support');
 		}
 		return $result;
 	}
