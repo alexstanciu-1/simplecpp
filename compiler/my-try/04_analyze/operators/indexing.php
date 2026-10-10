@@ -181,8 +181,16 @@ final class Indexing_Preparation
 				&& ($facts->receiver_storage !== record_storage_kind::inline_value)) {
 				throw new \RuntimeException('Indexed field storage requires shared or inline receiver lifetime');
 			}
-			if ($field->base->require_preparation()->type->by_value()) {
-				throw new \RuntimeException('Indexed field storage through ownership-modified storage is deferred');
+			$base = $field->base->require_preparation();
+			if ($base->type->by_value()) {
+				// Class $this is a borrowed instance, not authored value<T> storage.
+				if ($base->place === null) {
+					throw new \RuntimeException('Indexed field storage through ownership-modified storage is deferred');
+				}
+				$place /** prepared_place */ = $base->place;
+				if (!($place->storage() instanceof prepared_receiver)) {
+					throw new \RuntimeException('Indexed field storage through ownership-modified storage is deferred');
+				}
 			}
 			return;
 		}

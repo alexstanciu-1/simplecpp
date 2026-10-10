@@ -631,6 +631,24 @@ The following checkpoint implements keyed probes/removal; value iteration follow
 
 ### Lazy keyed probes and removal — 2026-10-05
 
+Class `$this` repair (2026-10-10): shared receiver admission now distinguishes
+the existing `prepared_receiver` borrowed-instance identity from authored `value<T>`
+storage. The internal by-value marker on class `$this` must not reject ordinary
+field writes/appends or keyed probes/removal. Struct `$this` continues through the
+same path; visibility, readonly checks and explicit ownership-modifier restrictions
+are unchanged. Existing C++ binding already handles the borrowed current instance;
+no new backend path or semantic contract is introduced.
+
+Proof: `tests/field_container_writes.py` and `tests/field_container_probes.py`
+pass in `/tmp/this-writes-20261010-1` and `/tmp/this-probes-20261010-1`: four PHP
+tasks and ten generated programs, including class private fields, ordered key/RHS
+effects, lazy skipped keys, struct methods and rejection of readonly/explicit
+`value<T>` receivers. Compile/run tasks took 11.84–15.90s with both suites running.
+The unchanged accounting preparation retry at `/tmp/accounting-this-20261010`
+no longer reports ownership-modified receiver errors. String strict identity,
+compound RHS effects and indexed compound mutation still block full emission.
+No native compiler rebuild or full accounting execution is claimed.
+
 Field-root follow-up (2026-10-10): keyed probes/removal now share indexed storage
 admission and C++ owner binding with field writes. Shared owners are retained before
 lazy keys; inline fields are borrowed. Read-only probes, mutable-only removal,

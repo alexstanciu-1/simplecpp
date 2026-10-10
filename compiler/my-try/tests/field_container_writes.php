@@ -18,6 +18,27 @@ function field_write_compile(string $source): string
 }
 
 $cases = [
+'class_receiver' => <<<'PHS'
+class Bag {
+    private $items vector<int> = [1];
+    private $map hash<int> = {};
+    private $nested vector<vector<int>> = [[2]];
+    public int $order = 0;
+    public function key(): string { $this->order = $this->order * 10 + 1; return "x"; }
+    public function value(): int { $this->order = $this->order * 10 + 2; return 7; }
+    public function fill(): int {
+        $this->items[] = 3;
+        $this->items[0] = 4;
+        $this->map[$this->key()] = $this->value();
+        $this->nested[0][] = 5;
+        return $this->items[0] + $this->items[1] + $this->map["x"] + $this->nested[0][1];
+    }
+}
+$bag = new Bag();
+$sum = $bag->fill();
+if ($sum !== 19 || $bag->order !== 12) { return 1; }
+return 0;
+PHS,
 'families' => <<<'PHS'
 struct Values {
     public $items vector<int> = [];
@@ -117,6 +138,8 @@ int main() {
 CPP;
 file_put_contents($argv[1] . '/failures.cpp', $failure_cpp);
 foreach ([
+    'class A { public $v vector<int> = []; } $a value<A>; $a->v[] = 1;',
+    'class A { public readonly $v vector<int> = []; public function f(): void { $this->v[] = 1; } }',
     'class A { private $v vector<int> = []; } $a = new A(); $a->v[] = 1;',
     'struct A { public $v vector<int> = []; } function f(const A &$a): void { $a->v[] = 1; }',
     'class A { public $v vector<int> = []; } function make(): A { return new A(); } make()->v[] = 1;',

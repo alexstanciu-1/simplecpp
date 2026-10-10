@@ -19,6 +19,26 @@ function field_probe_compile(string $source): string
 }
 
 $cases = [
+'class_receiver' => <<<'PHS'
+class Bag {
+    private $map hash<string> = {x: ""};
+    private $nested mixed = {};
+    public int $effects = 0;
+    public function later(): string { $this->effects++; return "leaf"; }
+    public function check(): bool {
+        $present = isset($this->map["x"]);
+        $blank = empty($this->map["x"]);
+        unset($this->map["x"]);
+        $removed = !isset($this->map["x"]);
+        $missing = isset($this->nested["missing"][$this->later()]);
+        unset($this->nested["missing"][$this->later()]);
+        return $present && $blank && $removed && !$missing;
+    }
+}
+$bag = new Bag();
+if (!$bag->check() || $bag->effects !== 0) { return 1; }
+return 0;
+PHS,
 'families' => <<<'PHS'
 struct Values {
     public $items vector<string> = ["", "0"];
@@ -112,6 +132,8 @@ int main() {
 CPP;
 file_put_contents($argv[1] . '/failures.cpp', $cpp);
 foreach ([
+    'class A { public $v hash<int> = {}; } $a value<A>; $b = isset($a->v["x"]);',
+    'class A { public readonly $v hash<int> = {}; public function f(): void { unset($this->v["x"]); } }',
     'class A { private $v hash<int> = {}; } $a = new A(); $b = isset($a->v["x"]);',
     'struct A { public $v hash<int> = {}; } function f(const A &$a): void { unset($a->v["x"]); }',
     'class A { public $v hash<int> = {}; } function make(): A { return new A(); } $b = isset(make()->v["x"]);',
