@@ -20,7 +20,7 @@ final class Constructor_Preparation
 				if ($expression instanceof call_node) {
 					$call = object_cast($expression, call_node::class);
 					if ($call->owner_type !== null) {
-						if (($call->owner_type->name === 'parent') && ($call->name === '__construct')) { $source_call = $call; }
+						if (Member_Preparation::named_owner_is($call->owner_type, 'parent') && ($call->name === '__construct')) { $source_call = $call; }
 					}
 				}
 			}

@@ -8,12 +8,25 @@ final class Runtime_Catalog_Patterns
 	public static function contract(runtime_function_spec $spec, registered_type_catalog $types): runtime_generic_contract
 	{
 		$positions /** hash<int> */ = [];
-		foreach ($spec->type_parameters as $index => $name) {
+		$owner_count = 0;
+		if ($spec->member !== null) {
+			$membership /** runtime_callable_member_spec */ = $spec->member;
+			$owner = Runtime_Catalog_Registration::member_definition($membership->owner, $types);
+			if ($owner instanceof abstract_template_type_definition) {
+				$recipe = object_cast($owner, abstract_template_type_definition::class);
+				$owner_count = $recipe->arity();
+				for ($index = 0; $index < $owner_count; $index++) {
+					$positions[$recipe->parameter($index)->name()] = $index;
+				}
+			}
+		}
+		foreach ($spec->type_parameters as $name) {
 			if (isset($positions[$name])) { throw new \RuntimeException('Duplicate runtime type parameter'); }
-			$positions[$name] = $index;
+			$positions[$name] = q_count($positions);
 		}
 		$result = new runtime_generic_contract();
 		$result->type_parameter_count = q_count($positions);
+		$result->owner_parameter_count = $owner_count;
 		$parameters /** Storage<runtime_pattern_parameter> */ = $result->parameters;
 		foreach ($spec->parameters as $input) {
 			if ($input->mode === passing_mode::reference) {
@@ -34,6 +47,7 @@ final class Runtime_Catalog_Patterns
 			$parameters->append(new runtime_pattern_parameter($pattern, $input->mode, $input->access));
 		}
 		foreach ($positions as $position) {
+			if ($position < $owner_count) { continue; }
 			$found = false;
 			foreach ($parameters as $parameter) {
 				if (self::contains($parameter->type, $position)) { $found = true; }

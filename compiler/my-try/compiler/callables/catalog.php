@@ -19,7 +19,7 @@ final class Runtime_Callables
 	}
 
 	/** Membership observes the already owned callable; it does not copy its contract. */
-	public function register_member(canonical_type_use $owner, runtime_function_definition $target, bool $static_member): void
+	public function register_member(semantic_type_definition $owner, runtime_function_definition $target, bool $static_member): void
 	{
 		$members /** Keyed_Storage<runtime_callable_member> */ = $this->members;
 		if ($this->function_definition($target->key()) !== $target) {
@@ -28,7 +28,7 @@ final class Runtime_Callables
 		$member = new runtime_callable_member($owner, $target, $static_member);
 		$members->add($target->key(), $member);
 		$names /** Key_Storage_List<runtime_callable_member> */ = $this->member_names;
-		$names->add($owner->type_id() . ':' . $target->name(), $member);
+		$names->add($owner->definition_id() . ':' . $target->name(), $member);
 	}
 
 	public function member_for(runtime_function_definition $target): ?runtime_callable_member
@@ -42,8 +42,9 @@ final class Runtime_Callables
 	{
 		$result /** vector<callable_definition_i> */ = [];
 		$names /** Key_Storage_List<runtime_callable_member> */ = $this->member_names;
-		foreach ($names->named($owner->type_id() . ':' . $name) as $member) {
-			if ($member->owner->matches($owner) && ($member->target->name() === $name)
+		$definition = Type_Queries::canonical($owner)->definition();
+		foreach ($names->named($definition->definition_id() . ':' . $name) as $member) {
+			if (($member->owner === $definition) && ($member->target->name() === $name)
 				&& ($member->static_member === $static_member)) {
 				$result[] = $member->target;
 			}

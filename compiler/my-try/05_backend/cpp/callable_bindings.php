@@ -187,6 +187,24 @@ final class CPP_Callables
 		return CPP_Generator::source_name('method', $method->name);
 	}
 	/** Backend-owned dispatch keeps callable identities independent of any output target. */
+	public static function call_reference(prepared_call $facts, cpp_generation_context $context): string
+	{
+		$target = weakref_get($facts->target);
+		$reference = self::reference($target, $context);
+		if ($facts->runtime_owner !== null) {
+			$owner /** canonical_type_use */ = $facts->runtime_owner;
+			$member = Model::$runtime_callables->member_for(object_cast($target, runtime_function_definition::class));
+			if ($member !== null) {
+				if ($member->static_member && ($member->owner instanceof abstract_template_type_definition)) {
+					$mapping = CPP_Types::payload($owner);
+					CPP_Types::record_dependencies($mapping, $context);
+					return $mapping->spelling . '::' . $reference;
+				}
+			}
+		}
+		return $reference;
+	}
+
 	public static function reference(callable_definition_i $target, cpp_generation_context $context): string
 	{
 		if ($target instanceof collected_method) {

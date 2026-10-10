@@ -56,21 +56,25 @@ final class Runtime_Catalog_Registration
 			foreach ($functions as $function)
 			{
 				$generic /** ?runtime_generic_contract */ = null;
-				if ($function->type_parameters !== []) {
+				$member_owner /** ?semantic_type_definition */ = null;
+				if ($function->member !== null) {
+					$membership /** runtime_callable_member_spec */ = $function->member;
+					$member_owner = self::member_definition($membership->owner, $types);
+				}
+				if (($function->type_parameters !== []) || ($member_owner instanceof abstract_template_type_definition)) {
 					$generic = Runtime_Catalog_Patterns::contract($function, $types);
 				}
 				$parameters /** Storage<callable_parameter> */ = new Storage();
 				$parameter_names /** hash<bool> */ = [];
 				$lookup_key = $function->name;
-				$member_owner /** ?canonical_type_use */ = null;
 				if ($function->member !== null)
 				{
 					$membership /** runtime_callable_member_spec */ = $function->member;
-					$member_owner = self::member_owner($membership->owner, $types);
 					if (string_byte_starts_with($function->name, '__')) {
 						throw new \RuntimeException('Runtime magic member names are not callable metadata');
 					}
-					$lookup_key = 'member:' . $member_owner->type_id() . ':' . $function->name;
+					$definition_owner /** semantic_type_definition */ = $member_owner;
+					$lookup_key = 'member:' . $definition_owner->definition_id() . ':' . $function->name;
 				}
 				$overload_key = $lookup_key;
 				$has_reference = false;
@@ -134,16 +138,29 @@ final class Runtime_Catalog_Registration
 		return $result;
 	}
 
-	/** All type-scoped exports resolve their owner through one registry check. */
+	/** Members belong to definitions, not enumerated concrete template applications. */
+	public static function member_definition(runtime_type_spec $spec, registered_type_catalog $types): semantic_type_definition
+	{
+		if (($spec->parameter !== '') || !$spec->arguments->is_empty()) {
+			throw new \RuntimeException('Runtime member owner must name a definition, not an application');
+		}
+		$definition = $types->definition($spec->name);
+		if (($definition->origin() !== type_definition_origin::runtime)
+			|| (!($definition instanceof abstract_nominal_type_definition)
+				&& !($definition instanceof abstract_template_type_definition))) {
+			throw new \RuntimeException('Runtime member requires a registered nominal or template owner');
+		}
+		return $definition;
+	}
+
+	/** Constant/property specialization remains a subsequent checkpoint. */
 	public static function member_owner(runtime_type_spec $spec, registered_type_catalog $types): canonical_type_use
 	{
-		$owner = self::type($spec, $types);
-		$definition = $types->registry()->type($owner->type_id())->definition();
-		if (($definition->origin() !== type_definition_origin::runtime)
-			|| !($definition instanceof abstract_nominal_type_definition)) {
+		$definition = self::member_definition($spec, $types);
+		if (!($definition instanceof abstract_nominal_type_definition)) {
 			throw new \RuntimeException('Runtime member requires a registered nominal owner');
 		}
-		return $owner;
+		return self::type($spec, $types);
 	}
 
 	/** Index retained identities; no metadata IO or duplicate value snapshots. */

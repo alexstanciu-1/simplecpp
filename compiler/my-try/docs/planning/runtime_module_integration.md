@@ -75,9 +75,18 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
 - Focused evidence: /tmp/runtime-properties-20261010-final (four PHP suites, seven
   generated programs) and /tmp/storage-foundation-20261010-final (four affected PHP
   suites). Broad/native-compiler validation remains the existing testing debt.
-- Phase 2 remains in progress: owner-template
+- Phase 2 template-callable checkpoint: memberships index definition identities;
+  owner arguments seed the existing generic matcher before input inference. One
+  provider identity serves every application, including defaults and independent
+  method type parameters. Static factories qualify the backend payload application.
+  Type-qualified syntax now shares the existing type parser/AST, with contextual
+  self/parent/static handling remaining analysis-owned.
+- Focused proof: /tmp/runtime-owner-methods-20261010-final (four PHP suites and two
+  generated programs). Covers exact owner/argument agreement, registration identity,
+  invalid recipe rejection, defaulted owners, nominal member and free-generic regression.
+- Phase 2 remains in progress: property/constant owner-template
   member recipes are still required. Do not replace owner recipes with enumerated
-  concrete applications. Next checkpoint addresses owner-template member recipes.
+  concrete applications. Next checkpoint addresses property/constant owner recipes.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
   export through namespace import lookup. This is not covered by the member proof.

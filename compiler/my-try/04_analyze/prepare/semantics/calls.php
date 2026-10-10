@@ -25,7 +25,8 @@ final class Call_Preparation
 
 	/** Bounded installed overload selection: exact fixed signatures, without conversion ranking. */
 	public static function prepare_named(array $targets /** vector<callable_definition_i> */,
-		Storage $arguments /** Storage<expression_node> */, preparation_context $context): prepared_call
+		Storage $arguments /** Storage<expression_node> */, preparation_context $context,
+		?canonical_type_use $runtime_owner = null): prepared_call
 	{
 		if (q_count($targets) === 1) {
 			$target = $targets[0];
@@ -33,7 +34,7 @@ final class Call_Preparation
 				return Compiler_Call_Preparation::prepare(object_cast($target, compiler_function_definition::class), $arguments, $context);
 			}
 			if ($target instanceof registered_generic_function) {
-				return Runtime_Call_Preparation::prepare($targets, $arguments, $context);
+				return Runtime_Call_Preparation::prepare($targets, $arguments, $context, $runtime_owner);
 			}
 			return self::prepare(object_cast($target, callable_target_i::class), $arguments, $context);
 		}
@@ -41,7 +42,7 @@ final class Call_Preparation
 			throw new \RuntimeException('S2S named call has no resolved function');
 		}
 
-		return Runtime_Call_Preparation::prepare($targets, $arguments, $context);
+		return Runtime_Call_Preparation::prepare($targets, $arguments, $context, $runtime_owner);
 	}
 
 	/** Admit one selected contract; exact-overload selection has already prepared its arguments. */

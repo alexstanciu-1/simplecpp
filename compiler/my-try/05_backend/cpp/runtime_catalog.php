@@ -5,7 +5,7 @@ namespace scpp\compiler;
 final class CPP_Runtime_Catalog
 {
 	/** Catalogs are trusted metadata, but bindings are names/paths, never C++ expressions. */
-	public static function validate(runtime_catalog_input $input): void
+	public static function validate(runtime_catalog_input $input, registered_type_catalog $types): void
 	{
 		foreach ($input->modules as $module)
 		{
@@ -44,7 +44,8 @@ final class CPP_Runtime_Catalog
 				}
 				if ($function->member !== null) {
 					$member /** runtime_callable_member_spec */ = $function->member;
-					if (!$member->static_member) {
+					$owner = $types->definition($member->owner->name);
+					if (!$member->static_member || ($owner instanceof abstract_template_type_definition)) {
 						$symbol = $bindings[$function->identity]->symbol;
 						if (str_contains($symbol, ':')) {
 							throw new \RuntimeException('Runtime instance binding requires an unqualified member name');

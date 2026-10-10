@@ -700,7 +700,7 @@ final class call_node extends expression_node
 	/** Expression qualification uses :: rather than the instance -> spelling. */
 	public bool $static_qualification = false;
 	/** Type-qualified calls own a type spelling instead of an expression qualifier. */
-	public ?named_type_node $owner_type = null;
+	public ?type_node $owner_type = null;
 	/** Current frontend accepts only named explicit template type arguments. */
 	public Storage $template_arguments /** Storage<named_type_node> */;
 	public Storage $arguments /** Storage<expression_node> */;

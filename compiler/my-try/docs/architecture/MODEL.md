@@ -438,6 +438,12 @@ their actual identities, without invented collected declarations. Property assig
 own `prepared_property_assignment` with a destination place and conversion/boundary
 facts, not a local `prepared_binding`. Registry-owned runtime members and backend-owned
 property bindings are rebuilt together on reset from retained metadata.
+Runtime callable membership indexes semantic definition identity, not concrete
+applications. Generic contracts reserve leading variable positions for owner
+parameters; preparation seeds these from the selected application and then runs
+ordinary argument matching. Concrete signatures remain call-owned. `prepared_call`
+retains the selected runtime owner for backend qualification of static template
+members, without retaining metadata specs or backend spellings in semantic facts.
 
 An optional `reference_return_contract` identifies a whole reference parameter by
 its immutable index; absence denotes a value return. Structural validation requires

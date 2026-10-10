@@ -63,7 +63,7 @@ final class static_member_reference_node extends assignable_expression_node
 	use Node_Source_Span;
 	use Preparation_Facts;
 
-	public ?named_type_node $owner_type = null;
+	public ?type_node $owner_type = null;
 	public ?expression_node $qualifier = null;
 	/** Includes the source $ prefix for a property; constants/cases have no prefix. */
 	public string $member_name;
@@ -85,7 +85,7 @@ final class static_member_reference_node extends assignable_expression_node
 	}
 
 	/** Compile-time type consumers must not discard an expression qualifier's effects. */
-	public function require_type_owner(): named_type_node
+	public function require_type_owner(): type_node
 	{
 		if ($this->owner_type === null) { throw new \RuntimeException('Expression-qualified member is not a compile-time type or constant expression'); }
 		return $this->owner_type;

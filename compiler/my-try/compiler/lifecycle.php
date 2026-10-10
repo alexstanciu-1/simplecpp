@@ -28,7 +28,7 @@ final class Compiler_Lifecycle
 		Initialization_Registration::install($types);
 		Indexing_Registration::install($types);
 		Iteration_Registration::install($types);
-		CPP_Runtime_Catalog::validate($input);
+		CPP_Runtime_Catalog::validate($input, $types);
 		Model::$runtime_metadata = $input;
 	}
 

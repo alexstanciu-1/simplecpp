@@ -2006,19 +2006,15 @@ final class Parser_Run
 			return $this->data_construction($this->position, null);
 		}
 		if ($this->identifier() || ($this->text() === '\\')) {
-			if ($this->text_at_offset($this->source_name_end(0)) === '::')
+			$type_end = $this->type_syntax_end(0);
+			if (($type_end >= 0) && ($this->text_at_offset($type_end) === '::'))
 			{
 				$start = $this->position;
-				$name = $this->source_name();
-				$owner_end = $this->position;
+				$owner_type = $this->type_syntax($this->current_scope);
 				$this->expect('::');
 				if (!$this->identifier() && !string_byte_starts_with($this->text(), '$')) {
 					throw new \RuntimeException($this->error_message('Expected static member name'));
 				}
-				$owner_type = new named_type_node();
-				$owner_type->name = $name;
-				$owner_type->set_span($start, $owner_end);
-				$owner_type->collect($this->collector, $this->current_scope, $start);
 				if ($this->identifier() && ($this->text_at_offset(1) === '(')) {
 					$call = $this->call_expression();
 					$call->owner_type = $owner_type;

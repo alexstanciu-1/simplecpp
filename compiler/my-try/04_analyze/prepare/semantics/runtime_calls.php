@@ -5,7 +5,8 @@ namespace scpp\compiler;
 final class Runtime_Call_Preparation
 {
 	public static function prepare(array $targets /** vector<callable_definition_i> */,
-		Storage $arguments /** Storage<expression_node> */, preparation_context $context): prepared_call
+		Storage $arguments /** Storage<expression_node> */, preparation_context $context,
+		?canonical_type_use $runtime_owner = null): prepared_call
 	{
 		$observing = false;
 		$consuming = false;
@@ -27,7 +28,7 @@ final class Runtime_Call_Preparation
 		$inference /** ?runtime_call_inference */ = null;
 		foreach ($targets as $candidate) {
 			$runtime = object_cast($candidate, runtime_function_definition::class);
-			$match = self::match($runtime, $arguments);
+			$match = self::match($runtime, $arguments, $runtime_owner);
 			if ($match === null) { continue; }
 			if ($selected !== null) {
 				throw new \RuntimeException('S2S runtime call requires one exact signature; ambiguous matching contracts');
@@ -46,7 +47,9 @@ final class Runtime_Call_Preparation
 		else {
 			$signature = object_cast($selected, registered_function::class)->signature();
 		}
-		return Call_Preparation::admit($selected, $signature, $arguments, $context, true);
+		$facts = Call_Preparation::admit($selected, $signature, $arguments, $context, true);
+		$facts->runtime_owner = $runtime_owner;
+		return $facts;
 	}
 
 	/** Determine expression consumption before visiting any argument. */
@@ -72,11 +75,24 @@ final class Runtime_Call_Preparation
 	}
 
 	/** Pure structural matching cannot publish specializations or prepare source capabilities. */
-	private static function match(runtime_function_definition $target, Storage $arguments /** Storage<expression_node> */): ?runtime_call_inference
+	private static function match(runtime_function_definition $target, Storage $arguments /** Storage<expression_node> */,
+		?canonical_type_use $runtime_owner): ?runtime_call_inference
 	{
 		$result = new runtime_call_inference();
 		if ($target instanceof registered_generic_function) {
 			$contract = object_cast($target, registered_generic_function::class)->contract();
+			if ($contract->owner_parameter_count > 0) {
+				if ($runtime_owner === null) { return null; }
+				$owner = Type_Queries::canonical($runtime_owner);
+				if (!($owner instanceof applied_template_type)) { return null; }
+				$application = object_cast($owner, applied_template_type::class);
+				$member = Model::$runtime_callables->member_for($target);
+				if ($member === null) { return null; }
+				if ($application->definition() !== $member->owner) { return null; }
+				foreach ($application->arguments() as $index => $argument_type) {
+					$result->bindings[$index] = $argument_type;
+				}
+			}
 			$patterns /** Storage<runtime_pattern_parameter> */ = $contract->parameters;
 			if (q_count($patterns) !== q_count($arguments)) { return null; }
 			foreach ($arguments as $index => $argument) {

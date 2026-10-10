@@ -71,7 +71,7 @@ enum runtime_pattern_kind { case variable; case concrete; case application; }
 /** A type-owned public callable, not a fabricated collected source declaration. */
 final class runtime_callable_member
 {
-	public function __construct(public canonical_type_use $owner, public runtime_function_definition $target,
+	public function __construct(public semantic_type_definition $owner, public runtime_function_definition $target,
 		public bool $static_member)
 	{
 	}
@@ -113,6 +113,7 @@ final class runtime_pattern_parameter
 
 final class runtime_generic_contract
 {
+	public int $owner_parameter_count = 0;
 	public int $type_parameter_count = 0;
 	public runtime_type_pattern $return_type;
 	public Storage $parameters /** Storage<runtime_pattern_parameter> */;

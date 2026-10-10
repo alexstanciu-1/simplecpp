@@ -42,6 +42,9 @@ runtime_type_check($missing_foundation && Model::$runtime_metadata === $input,
 
 $schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
 $invalids = [];
+$bad = $schema; $bad['functions'][0]['type_parameters'] = ['T']; $invalids[] = [$bad, 'Duplicate runtime type parameter'];
+$bad = $schema; $bad['functions'][0]['member']['owner'] = ['name'=>'parcel','arguments'=>['int']]; $invalids[] = [$bad, 'owner must name a definition'];
+$bad = $schema; $bad['functions'][1]['returns'] = ['parameter'=>'Unknown']; $invalids[] = [$bad, 'Unknown runtime type parameter'];
 $bad = $schema; $bad['types'][0]['kind'] = 'nullable'; $invalids[] = [$bad, 'Unsupported runtime type kind'];
 $bad = $schema; $bad['types'][0]['capabilities'][] = 'invented'; $invalids[] = [$bad, 'Unknown runtime capability'];
 $bad = $schema; $bad['types'][0]['capabilities'][] = 'value_storable'; $invalids[] = [$bad, 'Duplicate runtime capability'];
@@ -83,6 +86,12 @@ $registry = Model::$type_catalog->registry();
 $parcel = object_cast(Model::$type_catalog->definition('parcel'), abstract_template_type_definition::class);
 $receipt = $registry->use(Model::$type_catalog->canonical('receipt')->type_id());
 $defaulted = $registry->intern_application($parcel, []);
+$integer_owner = $registry->use($registry->intern_application($parcel, [$registry->use(Model::$type_catalog->canonical('int')->type_id())])->type_id());
+$string_owner = $registry->use($registry->intern_application($parcel, [$registry->use(Model::$type_catalog->canonical('string')->type_id())])->type_id());
+$integer_members = Model::$runtime_callables->methods_named($integer_owner, 'read', false);
+$string_members = Model::$runtime_callables->methods_named($string_owner, 'read', false);
+runtime_type_check(count($integer_members) === 1 && $integer_members[0] === $string_members[0],
+	'Owner applications allocated separate runtime method registrations');
 runtime_type_check($defaulted === $registry->intern_application($parcel, [$receipt]), 'Forward default changed identity');
 $identity = Model::$type_catalog->providers()->provider_for($parcel->definition_id())->identity();
 runtime_type_check($identity->provider() === 'simple_cpp.runtime.type_proof' && $identity->family() === 'proof.parcel', 'Provider identity conflated with source/C++ name');
@@ -113,6 +122,23 @@ function runtime_type_compile(string $source): string
 }
 
 $cases = [
+	'owner_members' => <<<'PHS'
+$a = parcel<int>::make(7);
+$b = parcel<string>::make("ok");
+$a->replace(11);
+$n = $a->read();
+$s = $b->read();
+$echo = $a->echo_value("yes");
+$copy = $a::make(17);
+$c = $copy->read();
+$default = default_parcel(23);
+$receipt = $default->read();
+$d = receipt_number($receipt);
+$length = strlen($s);
+$echo_length = strlen($echo);
+if ($n !== 11 || $length !== 2 || $echo_length !== 3 || $c !== 17 || $d !== 23) { return 1; }
+return 0;
+PHS,
 	'nominal' => '$v receipt = make_receipt(42); $copy = $v; $n = receipt_number($copy); if ($n !== 42) { return 1; } return 0;',
 	'generic' => '$a parcel<int> = pack(7); $b parcel<string> = pack("ok"); $nested = pack($a); $n = unpack(unpack($nested)); $s = unpack($b); $length = strlen($s); if ($n !== 7 || $length !== 2) { return 1; } return 0;',
 	'default' => '$p = default_parcel(9); $n = receipt_number(unpack($p)); if ($n !== 9) { return 1; } return 0;',
@@ -123,6 +149,10 @@ foreach ($cases as $name => $source) {
 	file_put_contents($directory . '/type_' . $name . '.cpp', runtime_type_compile($source));
 }
 foreach ([
+	'$a = parcel<int>::make("wrong");',
+	'$a = pack(1); $a->replace("wrong");',
+	'$a = pack(1); $a->make(2);',
+	'$a = parcel<int>::read();',
 	'function bad(const parcel<unique<int>> &$p): void { $copy = $p; }',
 	'function bad(parcel<void> $p): void {}',
 	'$p parcel<int> = [1];', // copy/storage/Result opt-in does not grant initialization.

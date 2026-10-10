@@ -44,7 +44,21 @@ final class Member_Preparation
 	}
 
 	/** Qualified lookup needs nominal identity, not completion of the record's instance layout. */
-	public static function owner(named_type_node $syntax, preparation_context $context): canonical_type_use
+	public static function owner(type_node $syntax, preparation_context $context): canonical_type_use
+	{
+		if ($syntax instanceof named_type_node) {
+			return self::named_owner(object_cast($syntax, named_type_node::class), $context);
+		}
+		return Type_Preparation::type($syntax, $context);
+	}
+
+	public static function named_owner_is(?type_node $syntax, string $name): bool
+	{
+		if (!($syntax instanceof named_type_node)) { return false; }
+		return object_cast($syntax, named_type_node::class)->name === $name;
+	}
+
+	private static function named_owner(named_type_node $syntax, preparation_context $context): canonical_type_use
 	{
 		if ($syntax->name === 'static') {
 			if ($context->called_type === null) { throw new \RuntimeException('static requires a concrete called-type context'); }
@@ -140,7 +154,9 @@ final class Member_Preparation
 			if (!$property) { return Enum_Preparation::reference($syntax, $context); }
 			// Installed readonly constants such as error::$no_error keep their registered contract.
 			if ($syntax->qualifier !== null) { throw new \RuntimeException('Unknown runtime static property'); }
-			$owner = $syntax->require_type_owner();
+			$owner_syntax = $syntax->require_type_owner();
+			if (!($owner_syntax instanceof named_type_node)) { throw new \RuntimeException('Unknown installed static member'); }
+			$owner = object_cast($owner_syntax, named_type_node::class);
 			$lookup_scope = object_cast(weakref_get($owner->occurrence()->scope), scope::class);
 			$installed = Observed_Lookup::constants($lookup_scope, $owner->name . '::' . $syntax->member_name, $context);
 			if (q_count($installed) !== 1) { throw new \RuntimeException('Unknown installed static member'); }

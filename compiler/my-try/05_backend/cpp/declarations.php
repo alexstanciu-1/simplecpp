@@ -591,8 +591,7 @@ final class CPP_Declarations
 				$reference = CPP_Compiler_Functions::reference($specialization, $context);
 			}
 			else {
-				$target = weakref_get($facts->target);
-				$reference = CPP_Callables::reference($target, $context);
+				$reference = CPP_Callables::call_reference($facts, $context);
 			}
 		}
 		$text .= "\treturn " . $reference . '(' . $names . ");\n}())";
@@ -611,8 +610,7 @@ final class CPP_Declarations
 		$argument = $prepared_arguments[0];
 		$value = (new CPP_Syntax($context))->expression($arguments[$argument->source_index]);
 		$type = self::type($parameters[0]->type, $context);
-		$target = object_cast(weakref_get($facts->target), runtime_function_definition::class);
-		$reference = $callee !== '' ? $callee : CPP_Callables::reference($target, $context);
+		$reference = $callee !== '' ? $callee : CPP_Callables::call_reference($facts, $context);
 		$call = $reference . '(static_cast<const ' . $type . '&>(' . $value . '))';
 		if ($prefix === '') { return $call; }
 		return '([&]() -> ' . self::type($facts->type, $context) . " {\n"

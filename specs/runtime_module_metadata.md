@@ -194,17 +194,30 @@ Function records may add a `member` object:
 }
 ```
 
-Omission declares a free function. Membership requires a registered runtime nominal
+Omission declares a free function. Membership requires a registered runtime nominal or template
 owner and explicit `static` or `instance` dispatch. These are public exported
 contracts; no source AST, private provider implementation or inheritance is fabricated.
 Names are indexed by owner separately from free-function lookup. A static factory
 is an ordinary static callable returning its owner, not permission for arbitrary
 source `new`. Special double-underscore method names are not admitted here.
-Owner-template member recipes remain a subsequent integration step; do not enumerate
-concrete owner applications as a substitute. Generic method parameters already use
-the ordinary inferred signature mechanism.
+The owner names a definition, never an enumerated concrete application. Template
+owner parameters are available by their declared names in the method's type patterns.
+The selected owner application binds them before argument inference; defaulted owner
+arguments are already resolved by the type registry. Method `type_parameters` declare
+additional input-inferred variables and must not shadow owner parameter names.
+A zero-argument method may therefore return its owner's `T`. Repeated occurrences
+must agree exactly; an argument cannot re-infer an already selected owner argument.
 
-Static bindings name their qualified C++ callable (including a free factory adapter).
+For example, `"member":{"owner":"parcel","dispatch":"instance"}` with no
+parameters and `"returns":{"parameter":"T"}` describes `read()` once for every
+`parcel<T>`. Both type-qualified `parcel<int>::make(7)` and expression-qualified
+`$parcel::make(7)` use the selected application. The syntax qualifier reuses the
+ordinary type AST/parser, independently of metadata.
+
+For nominal owners, static bindings name their qualified C++ callable (including a free factory adapter).
+For template owners, static bindings name an unqualified member identifier; the
+backend qualifies it with the selected owner's C++ payload application. Arbitrary
+template-expression bindings or free-factory template adapters are not implied.
 Instance bindings name an unqualified C++ member identifier, not a source fragment.
 All calls use ordinary argument boundaries and overload admission. Shared receivers
 are evaluated/retained once and checked before argument evaluation; stable inline

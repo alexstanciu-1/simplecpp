@@ -644,6 +644,8 @@ final class prepared_static_property extends prepared_expression
 /** Resolved call target and signature; evaluation order remains with the process workers. */
 final class prepared_call extends prepared_expression
 {
+	/** Selected runtime owner application supplies template arguments without enumerated registrations. */
+	public ?canonical_type_use $runtime_owner = null;
 	/** Evaluate the expression qualifier for effects, without binding an instance. */
 	public bool $evaluates_qualifier = false;
 	public ?prepared_method_receiver $receiver = null;

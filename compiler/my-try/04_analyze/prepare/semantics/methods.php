@@ -102,11 +102,11 @@ final class Method_Preparation
 			$type = Member_Preparation::owner($syntax->owner_type, $context);
 			if (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime) {
 				return Call_Preparation::prepare_named(Model::$runtime_callables->methods_named($type, $syntax->name, true),
-					$syntax->arguments, $context);
+					$syntax->arguments, $context, $type);
 			}
 			$static_record = Type_Queries::source_record($type);
 			if ($static_record === null) { throw new \RuntimeException('Static call requires a source class or struct'); }
-			if ($syntax->owner_type->name === 'parent') {
+			if (Member_Preparation::named_owner_is($syntax->owner_type, 'parent')) {
 				return self::select($syntax, $static_record, true, $context, true);
 			}
 			return self::select($syntax, $static_record, true, $context);
@@ -118,13 +118,13 @@ final class Method_Preparation
 		$runtime = Type_Queries::canonical($payload)->definition()->origin() === type_definition_origin::runtime;
 		if ($runtime && $syntax->static_qualification) {
 			$qualified = Call_Preparation::prepare_named(Model::$runtime_callables->methods_named($payload, $syntax->name, true),
-				$syntax->arguments, $context);
+				$syntax->arguments, $context, $payload);
 			$qualified->evaluates_qualifier = true;
 			return $qualified;
 		}
 		if ($runtime) {
 			$facts = Call_Preparation::prepare_named(Model::$runtime_callables->methods_named($payload, $syntax->name, false),
-				$syntax->arguments, $context);
+				$syntax->arguments, $context, $payload);
 			$facts->receiver = self::instance_receiver($value, $payload);
 			return $facts;
 		}
@@ -211,7 +211,8 @@ final class Method_Preparation
 		if ($static_call) {
 			$called = object_cast($record, collected_record::class);
 			if (($syntax->owner_type !== null) && ($context->called_type !== null)) {
-				if (($syntax->owner_type->name === 'self') || ($syntax->owner_type->name === 'parent')) {
+				if (Member_Preparation::named_owner_is($syntax->owner_type, 'self')
+					|| Member_Preparation::named_owner_is($syntax->owner_type, 'parent')) {
 					$called = $context->called_type;
 				}
 			}

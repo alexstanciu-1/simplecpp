@@ -18,6 +18,10 @@
     {"id": "proof.receipt", "symbol": "runtime_type_test::receipt", "header": "runtime_type_support.hpp"}
   ],
   "functions": [
+    {"id":"proof.parcel.make", "name":"make", "member":{"owner":"parcel","dispatch":"static"}, "parameters":[{"name":"value","type":{"parameter":"T"},"passing":"value"}], "returns":{"name":"parcel","arguments":[{"parameter":"T"}]}},
+    {"id":"proof.parcel.read", "name":"read", "member":{"owner":"parcel","dispatch":"instance"}, "parameters":[], "returns":{"parameter":"T"}},
+    {"id":"proof.parcel.replace", "name":"replace", "member":{"owner":"parcel","dispatch":"instance"}, "parameters":[{"name":"value","type":{"parameter":"T"},"passing":"value"}], "returns":"void"},
+    {"id":"proof.parcel.echo", "name":"echo_value", "member":{"owner":"parcel","dispatch":"instance"}, "type_parameters":["U"], "parameters":[{"name":"value","type":{"parameter":"U"},"passing":"value"}], "returns":{"parameter":"U"}},
     {"id": "proof.make_receipt", "name": "make_receipt", "parameters": [{"name": "number", "type": "int", "passing": "value"}], "returns": "receipt"},
     {"id": "proof.receipt_number", "name": "receipt_number", "parameters": [{"name": "value", "type": "receipt", "passing": "observe"}], "returns": "int"},
     {"id": "proof.pack", "name": "pack", "type_parameters": ["T"], "parameters": [{"name": "value", "type": {"parameter": "T"}, "passing": "value"}], "returns": {"name": "parcel", "arguments": [{"parameter": "T"}]}},
@@ -25,6 +29,10 @@
     {"id": "proof.default_parcel", "name": "default_parcel", "parameters": [{"name": "number", "type": "int", "passing": "value"}], "returns": "parcel"}
   ],
   "cpp": [
+    {"id":"proof.parcel.make", "symbol":"make", "header":"runtime_type_support.hpp"},
+    {"id":"proof.parcel.read", "symbol":"read", "header":"runtime_type_support.hpp"},
+    {"id":"proof.parcel.replace", "symbol":"replace", "header":"runtime_type_support.hpp"},
+    {"id":"proof.parcel.echo", "symbol":"echo_value", "header":"runtime_type_support.hpp"},
     {"id": "proof.make_receipt", "symbol": "runtime_type_test::make_receipt", "header": "runtime_type_support.hpp"},
     {"id": "proof.receipt_number", "symbol": "runtime_type_test::receipt_number", "header": "runtime_type_support.hpp"},
     {"id": "proof.pack", "symbol": "runtime_type_test::pack", "header": "runtime_type_support.hpp"},
