@@ -10,7 +10,8 @@ final class Conversion_Relationships implements conversion_relationship_query
 		if (!(Type_Queries::canonical($source)->definition() instanceof closure_type_definition)) { return false; }
 		$identity = Model::$type_catalog->closures()->identity($source);
 		$this->context->worker->prepare_anonymous($identity, $this->context->owner);
-		if (!Capture_Preparation::borrowed_lifetimes($source, $this->context)->is_empty()) { return false; }
+		$borrowed /** Storage<storage_lifetime> */ = Capture_Preparation::borrowed_lifetimes($source, $this->context);
+		if (!$borrowed->is_empty()) { return false; }
 		if (!Callable_Contracts::matches_erased($identity->signature(), $target->signature())) { return false; }
 		Capability_Preparation::require_copy($source, $this->context);
 		return true;

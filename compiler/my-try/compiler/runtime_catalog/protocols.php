@@ -9,10 +9,10 @@ final class Runtime_Protocol_Registration
 	{
 		foreach ($input->modules as $module) {
 			foreach ($module->types as $definition_spec) {
-				$owner = $types->definition($definition_spec->name);
+				$owner = object_cast($types->definition($definition_spec->name), semantic_type_definition::class);
 				$positions = Runtime_Catalog_Patterns::owner_positions($owner);
 				foreach ($definition_spec->initialization as $spec) {
-					$key /** ?contract_type_reference */ = null;
+					$key /** nullable<contract_type_reference> */ = null;
 					if ($spec->key !== null) {
 						$key_spec /** runtime_type_spec */ = $spec->key;
 						$key = self::reference($key_spec, $owner, $types);
@@ -68,13 +68,13 @@ final class Runtime_Protocol_Registration
 			foreach ($module->types as $definition_spec) {
 				if ($definition_spec->indexing === null) { continue; }
 				$spec /** runtime_indexing_spec */ = $definition_spec->indexing;
-				$owner = $types->definition($definition_spec->name);
-				$path /** ?contract_type_reference */ = null;
+				$owner = object_cast($types->definition($definition_spec->name), semantic_type_definition::class);
+				$path /** nullable<contract_type_reference> */ = null;
 				if ($spec->path !== null) {
 					$path_spec /** runtime_type_spec */ = $spec->path;
 					$path = self::reference($path_spec, $owner, $types);
 				}
-				$write /** ?operator_operation */ = null;
+				$write /** nullable<operator_operation> */ = null;
 				if ($spec->write) { $write = operator_operation::index_store; }
 				$declarations->append(new indexing_declaration($owner,
 					self::reference($spec->key, $owner, $types), self::reference($spec->value, $owner, $types),
@@ -91,7 +91,7 @@ final class Runtime_Protocol_Registration
 			foreach ($module->types as $definition_spec) {
 				if ($definition_spec->iteration === null) { continue; }
 				$spec /** runtime_iteration_spec */ = $definition_spec->iteration;
-				$owner = $types->definition($definition_spec->name);
+				$owner = object_cast($types->definition($definition_spec->name), semantic_type_definition::class);
 				$declarations->append(new iteration_declaration($owner,
 					self::reference($spec->key, $owner, $types), self::reference($spec->value, $owner, $types)));
 			}

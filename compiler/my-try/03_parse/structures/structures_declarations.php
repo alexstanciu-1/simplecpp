@@ -103,17 +103,9 @@ trait Callable_Syntax
 		return $this->owned_signature_scope;
 	}
 
-	/**
-	 * Create an independent iterator retaining this node for lazy inspection.
-	 */
-	public function children(): child_iterator_i
-	{
-		return new callable_children_iterator($this);
-	}
-
 	/** Offer this node and its owned syntax in grammar order; the worker selects recursion. */
 	public function maintain_callable_children(node_maintenance_worker_i $worker,
-		?Storage $captures /** nullable<Storage<closure_capture_node>> */ = null): void
+		?Storage $captures /** Storage<closure_capture_node> */ = null): void
 	{
 		$worker->enter($this);
 		$items /** Storage<parameter_node> */ = $this->signature_syntax->parameters;
@@ -121,7 +113,8 @@ trait Callable_Syntax
 			$worker->edge($this, $child);
 		}
 		if ($captures !== null) {
-			foreach ($captures as $capture) { $worker->edge($this, $capture); }
+			$capture_items /** Storage<closure_capture_node> */ = $captures;
+			foreach ($capture_items as $capture) { $worker->edge($this, $capture); }
 		}
 		if ($this->signature_syntax->return_type !== null) {
 			$worker->edge($this, $this->signature_syntax->return_type);
@@ -153,6 +146,12 @@ abstract class callable_declaration_node extends declaration_node implements cal
 	public function require_preparation(): prepared_source_callable
 	{
 		return $this->prepared_facts;
+	}
+
+	/** Named callables have no captures; both syntax owners share the iterator. */
+	public function children(): child_iterator_i
+	{
+		return new callable_children_iterator($this);
 	}
 
 	public function maintain(node_maintenance_worker_i $worker): void
@@ -211,7 +210,7 @@ final class closure_node extends expression_node implements callable_syntax_owne
 	public function __construct()
 	{
 		$this->initialize_callable_syntax();
-		$this->captures = new Storage();
+		$this->captures = new Storage /** Storage<closure_capture_node> */();
 		$this->owned_body_scope = new scope();
 		$this->owned_body_scope->set_parent($this->signature_scope());
 		$this->owned_body_scope->mark_function();

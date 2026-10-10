@@ -104,8 +104,10 @@ final class Preparation_Worker
 		}
 		while (q_count($this->callable_bodies) !== 0) {
 			foreach ($this->callable_bodies as $owner /** @object-key */) {
-				unset($this->callable_bodies[$owner]);
-				$this->body($owner);
+				// Native iteration borrows the key slot; retain the work before erasing it.
+				$selected_body /** body_work */ = $owner;
+				unset($this->callable_bodies[$selected_body]);
+				$this->body($selected_body);
 				break;
 			}
 		}
@@ -354,7 +356,7 @@ final class Preparation_Worker
 
 	/** Signature and implementation remain independent work identities. */
 	public function prepare_anonymous(anonymous_callable_identity $identity, preparation_owner $consumer,
-		?Storage $captures /** nullable<Storage<prepared_capture>> */ = null, ?canonical_type_use $expected_type = null): void
+		?Storage $captures /** Storage<prepared_capture> */ = null, ?canonical_type_use $expected_type = null): void
 	{
 		if ($identity->signature_work === null) { $identity->signature_work = new anonymous_signature_work($identity); }
 		$signature /** anonymous_signature_work */ = $identity->signature_work;
@@ -994,7 +996,7 @@ final class Preparation_Worker
 		}
 		$context->locals = new local_environment(null);
 		$context->invocation_lifetime = $context->locals->region;
-		$context->borrowed_lifetimes = new Storage();
+		$context->borrowed_lifetimes = new Storage /** Storage<storage_lifetime> */();
 		$context->integer = Language_Types::integer($this->language);
 		$context->boolean = Language_Types::boolean($this->language);
 		$context->floating = Language_Types::floating($this->language);
@@ -1190,9 +1192,10 @@ final class Preparation_Worker
 			$this->retire_file_body(object_cast($owner, file_body_work::class));
 		}
 		elseif ($owner instanceof anonymous_body_work) {
-			unset($this->callable_bodies[$owner]);
-			object_cast($owner, anonymous_body_work::class)->captures = new Storage();
-			Preparation_Cleanup::tree(object_cast($owner, anonymous_body_work::class)->executable_body());
+			$anonymous_body = object_cast($owner, anonymous_body_work::class);
+			unset($this->callable_bodies[$anonymous_body]);
+			$anonymous_body->captures = new Storage /** Storage<prepared_capture> */();
+			Preparation_Cleanup::tree($anonymous_body->executable_body());
 		}
 		else { throw new \LogicException('Unsupported preparation work role'); }
 		$this->detach_dependencies($owner);

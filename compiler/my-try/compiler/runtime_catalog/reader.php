@@ -373,7 +373,7 @@ final class Runtime_Catalog_Reader
 			$key = $reader->property_name();
 			if ($key === 'name') { $result->name = self::name($reader); }
 			elseif ($key === 'type') { $result->type = self::name($reader); }
-			elseif ($key === 'value') { $result->decimal = (string)$reader->read_integer(); }
+			elseif ($key === 'value') { $result->decimal = '' . $reader->read_integer(); }
 			elseif ($key === 'owner') { $result->owner = self::type($reader); }
 			else { $reader->reject('Unknown runtime constant field: ' . $key); }
 		}
@@ -525,7 +525,7 @@ final class Runtime_Catalog_Reader
 		while ($reader->next_property()) {
 			if ($result->type_name !== '') { $reader->reject('Runtime default requires one scalar tag'); }
 			$result->type_name = $reader->property_name();
-			if ($result->type_name === 'int') { $result->text = (string)$reader->read_integer(); }
+			if ($result->type_name === 'int') { $result->text = '' . $reader->read_integer(); }
 			elseif ($result->type_name === 'float') { $result->text = $reader->read_number(); }
 			elseif ($result->type_name === 'string') { $result->text = $reader->read_string(); }
 			elseif ($result->type_name === 'bool') { $result->text = $reader->read_boolean() ? 'true' : 'false'; }

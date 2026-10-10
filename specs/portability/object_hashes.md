@@ -47,6 +47,13 @@ Important authoring boundaries:
   the converter emits a native key/value foreach with an unused generated value
   binding. This is explicit syntax intent, not inferred receiver typing. Do not
   mutate membership while continuing that iteration.
+- A native foreach key binding can borrow the hash's key slot. For a queue that
+  removes one entry and immediately breaks, first copy the object handle into an
+  explicitly typed local; use that retained local for removal and subsequent work.
+  Erasing the entry and then reading the original foreach binding can observe a
+  cleared handle. The 2026-10-10 my-try native type proof exposed this in callable
+  scheduling; `Preparation_Worker::prepare` retains `selected_body` before removal.
+  This does not permit continuing traversal after arbitrary membership mutation.
 - Do not use null keys/values, SplObjectStorage-specific methods, weak keys, or
   assignment that relies on shared map membership. Those require a separate contract.
 - PHP arrays cannot carry object keys. Keep object-keyed maps in the explicit

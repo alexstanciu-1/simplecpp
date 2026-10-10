@@ -353,12 +353,16 @@ final class Source_Closure_Types
 	}
 	public function identity(canonical_type_use $type): anonymous_callable_identity
 	{
-		if (!isset($this->associations[$type->type_id()])) { throw new \RuntimeException('Expression is not a concrete callable value'); }
-		return $this->associations[$type->type_id()]->identity();
+		$key = $type->type_id();
+		if (!isset($this->associations[$key])) { throw new \RuntimeException('Expression is not a concrete callable value'); }
+		return $this->associations[$key]->identity();
 	}
 	public function retire(anonymous_callable_identity $identity): void
 	{
-		if ($identity->value_type !== null) { unset($this->associations[$identity->value_type->type_id()]); }
+		if ($identity->value_type !== null) {
+			$key = $identity->value_type->type_id();
+			unset($this->associations[$key]);
+		}
 	}
 }
 

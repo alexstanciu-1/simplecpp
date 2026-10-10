@@ -24,8 +24,8 @@ final class Runtime_Call_Preparation
 		foreach ($arguments as $argument) {
 			Expression_Preparation::prepare_for_consumer($argument, $context, null, $consumer);
 		}
-		$selected /** ?runtime_function_definition */ = null;
-		$inference /** ?runtime_type_bindings */ = null;
+		$selected /** nullable<runtime_function_definition> */ = null;
+		$inference /** nullable<runtime_type_bindings> */ = null;
 		foreach ($targets as $candidate) {
 			$runtime = object_cast($candidate, runtime_function_definition::class);
 			$match = self::match($runtime, $arguments, $runtime_owner);
@@ -91,13 +91,14 @@ final class Runtime_Call_Preparation
 			$fixed_count = q_count($patterns);
 			$variadic = false;
 			if ($fixed_count > 0) { $variadic = $patterns[$fixed_count - 1]->variadic; }
-			if ($variadic) { $fixed_count--; }
+			if ($variadic) { $fixed_count -= 1; }
 			if (!$variadic && (q_count($arguments) > $fixed_count)) { return null; }
 			for ($index = q_count($arguments); $index < $fixed_count; $index++) {
 				if ($patterns[$index]->default_value === null) { return null; }
 			}
 			foreach ($arguments as $index => $argument) {
-				$position = $index < $fixed_count ? $index : $fixed_count;
+				$position /** int */ = $fixed_count;
+				if ($index < $fixed_count) { $position = $index; }
 				if (!self::match_type($patterns[$position]->type, $argument->require_preparation()->type, $result)) { return null; }
 			}
 			if (q_count($result->bindings) !== $contract->type_parameter_count) { return null; }
@@ -113,13 +114,14 @@ final class Runtime_Call_Preparation
 		$fixed_count = q_count($parameters);
 		$variadic = false;
 		if ($fixed_count > 0) { $variadic = $parameters[$fixed_count - 1]->element_type !== null; }
-		if ($variadic) { $fixed_count--; }
+		if ($variadic) { $fixed_count -= 1; }
 		if (!$variadic && (q_count($arguments) > $fixed_count)) { return null; }
 		for ($index = q_count($arguments); $index < $fixed_count; $index++) {
 			if ($parameters[$index]->default_value === null) { return null; }
 		}
 		foreach ($arguments as $index => $argument) {
-			$position = $index < $fixed_count ? $index : $fixed_count;
+			$position /** int */ = $fixed_count;
+			if ($index < $fixed_count) { $position = $index; }
 			$parameter = $parameters[$position];
 			$type = $parameter->element_type ?? $parameter->type;
 			if (!self::match_concrete($type, $argument->require_preparation()->type)) { return null; }
@@ -142,7 +144,7 @@ final class Runtime_Call_Preparation
 		}
 		if ($pattern instanceof runtime_callable_pattern) {
 			$callable_pattern = object_cast($pattern, runtime_callable_pattern::class);
-			$signature = self::callable_signature($actual);
+			$signature = self::signature_for_type($actual);
 			if ($signature === null) { return false; }
 			if ($signature->reference_return !== null) { return false; }
 			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
@@ -174,13 +176,13 @@ final class Runtime_Call_Preparation
 		if ($expected->matches($actual)) { return true; }
 		$definition = Type_Queries::canonical($expected)->definition();
 		if (!($definition instanceof callable_type_definition)) { return false; }
-		$signature = self::callable_signature($actual);
+		$signature = self::signature_for_type($actual);
 		if ($signature === null) { return false; }
 		return Callable_Contracts::matches_erased($signature, object_cast($definition, callable_type_definition::class)->signature());
 	}
 
 	/** Argument preparation already completed anonymous signatures; matching reads settled facts. */
-	private static function callable_signature(canonical_type_use $type): ?callable_signature
+	private static function signature_for_type(canonical_type_use $type): ?callable_signature
 	{
 		$definition = Type_Queries::canonical($type)->definition();
 		if ($definition instanceof callable_type_definition) { return object_cast($definition, callable_type_definition::class)->signature(); }

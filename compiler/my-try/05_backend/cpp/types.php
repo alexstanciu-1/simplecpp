@@ -76,14 +76,16 @@ final class CPP_Types
 			$signature = object_cast($definition, callable_type_definition::class)->signature();
 			$return_mapping = self::return_representation($signature, cpp_type_requirement::complete);
 			self::merge_headers($result, $return_mapping);
-			$parts /** vector<string> */ = [];
+			$parts = '';
+			$separator = '';
 			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 			foreach ($parameters as $parameter) {
 				$mapping = self::parameter_representation($parameter, cpp_type_requirement::complete);
 				self::merge_headers($result, $mapping);
-				$parts[] = $mapping->spelling;
+				$parts .= $separator . $mapping->spelling;
+				$separator = ', ';
 			}
-			$result->spelling = 'std::function<' . $return_mapping->spelling . '(' . implode(', ', $parts) . ')>';
+			$result->spelling = 'std::function<' . $return_mapping->spelling . '(' . $parts . ')>';
 			self::add_header($result, 'functional');
 			$result->literal = cpp_literal_kind::none;
 			return $result;

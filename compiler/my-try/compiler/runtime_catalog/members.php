@@ -20,17 +20,18 @@ final class Runtime_Members
 
 	public function __construct()
 	{
-		$this->constant_names = new Keyed_Storage();
-		$this->property_names = new Keyed_Storage();
-		$this->property_ids = new Keyed_Storage();
-		$this->property_storage = new Keyed_Storage();
+		$this->constant_names = new Keyed_Storage /** Keyed_Storage<registered_constant> */();
+		$this->property_names = new Keyed_Storage /** Keyed_Storage<runtime_property_definition> */();
+		$this->property_ids = new Keyed_Storage /** Keyed_Storage<runtime_property_definition> */();
+		$this->property_storage = new Keyed_Storage /** Keyed_Storage<registered_property> */();
 	}
 
 	public function stored_property(canonical_type_use $owner, runtime_property_definition $definition): ?registered_property
 	{
 		$items /** Keyed_Storage<registered_property> */ = $this->property_storage;
 		$key = $owner->type_id() . ':' . $definition->identity;
-		return isset($items[$key]) ? $items[$key] : null;
+		if (!isset($items[$key])) { return null; }
+		return $items[$key];
 	}
 
 	public function retain_property(registered_property $property): void
@@ -55,7 +56,8 @@ final class Runtime_Members
 	{
 		$names /** Keyed_Storage<runtime_property_definition> */ = $this->property_names;
 		$key = Type_Queries::canonical($owner)->definition()->definition_id() . ':' . $name;
-		return isset($names[$key]) ? $names[$key] : null;
+		if (!isset($names[$key])) { return null; }
+		return $names[$key];
 	}
 
 	public function property_identity(string $identity): runtime_property_definition
@@ -80,6 +82,7 @@ final class Runtime_Members
 	{
 		$constants /** Keyed_Storage<registered_constant> */ = $this->constant_names;
 		$key = Type_Queries::canonical($owner)->definition()->definition_id() . ':' . $name;
-		return isset($constants[$key]) ? $constants[$key] : null;
+		if (!isset($constants[$key])) { return null; }
+		return $constants[$key];
 	}
 }

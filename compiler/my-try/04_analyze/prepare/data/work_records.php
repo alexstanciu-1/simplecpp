@@ -283,7 +283,7 @@ final class anonymous_body_work extends body_work
 	public function __construct(anonymous_callable_identity $identity)
 	{
 		parent::__construct($identity->collection(), $identity->syntax()->require_body());
-		$this->captures = new Storage();
+		$this->captures = new Storage /** Storage<prepared_capture> */();
 		$this->source_identity = $identity;
 	}
 	public function anonymous_identity(): anonymous_callable_identity

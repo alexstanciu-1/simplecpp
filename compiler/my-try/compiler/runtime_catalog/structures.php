@@ -11,7 +11,7 @@ final class runtime_type_spec
 	public Storage $arguments /** Storage<runtime_type_spec> */;
 	public function __construct()
 	{
-		$this->arguments = new Storage();
+		$this->arguments = new Storage /** Storage<runtime_type_spec> */();
 	}
 }
 
@@ -38,8 +38,8 @@ final class runtime_type_definition_spec
 
 	public function __construct()
 	{
-		$this->parameters = new Storage();
-		$this->initialization = new Storage();
+		$this->parameters = new Storage /** Storage<runtime_type_parameter_spec> */();
+		$this->initialization = new Storage /** Storage<runtime_initialization_spec> */();
 	}
 }
 
@@ -49,7 +49,7 @@ final class runtime_initialization_spec
 	public ?runtime_type_spec $key = null;
 	public runtime_type_spec $nested;
 	public Keyed_Storage $where /** Keyed_Storage<runtime_type_spec> */;
-	public function __construct() { $this->where = new Keyed_Storage(); }
+	public function __construct() { $this->where = new Keyed_Storage /** Keyed_Storage<runtime_type_spec> */(); }
 }
 
 /** Independent protocol opt-ins; type references use the owning definition's parameters. */
@@ -93,7 +93,7 @@ abstract class runtime_signature_spec
 {
 	public runtime_type_spec $return_type;
 	public Storage $parameters /** Storage<runtime_parameter_spec> */;
-	public function __construct() { $this->parameters = new Storage(); }
+	public function __construct() { $this->parameters = new Storage /** Storage<runtime_parameter_spec> */(); }
 }
 
 final class runtime_callable_spec extends runtime_signature_spec {}
@@ -157,14 +157,14 @@ final class runtime_module_spec
 	public function __construct()
 	{
 		$this->cpp_build = new runtime_cpp_build_spec();
-		$this->functions = new Storage();
-		$this->cpp_initialization = new Keyed_Storage();
-		$this->constants = new Storage();
-		$this->properties = new Storage();
-		$this->cpp_properties = new Keyed_Storage();
-		$this->types = new Storage();
-		$this->cpp_types = new Keyed_Storage();
-		$this->cpp = new Keyed_Storage();
+		$this->functions = new Storage /** Storage<runtime_function_spec> */();
+		$this->cpp_initialization = new Keyed_Storage /** Keyed_Storage<runtime_cpp_spec> */();
+		$this->constants = new Storage /** Storage<runtime_constant_spec> */();
+		$this->properties = new Storage /** Storage<runtime_property_spec> */();
+		$this->cpp_properties = new Keyed_Storage /** Keyed_Storage<runtime_cpp_spec> */();
+		$this->types = new Storage /** Storage<runtime_type_definition_spec> */();
+		$this->cpp_types = new Keyed_Storage /** Keyed_Storage<runtime_cpp_spec> */();
+		$this->cpp = new Keyed_Storage /** Keyed_Storage<runtime_cpp_spec> */();
 	}
 }
 
@@ -182,6 +182,6 @@ final class runtime_catalog_input
 	public Keyed_Storage $modules /** Keyed_Storage<runtime_module_spec> */;
 	public function __construct()
 	{
-		$this->modules = new Keyed_Storage();
+		$this->modules = new Keyed_Storage /** Keyed_Storage<runtime_module_spec> */();
 	}
 }

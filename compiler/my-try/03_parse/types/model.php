@@ -340,9 +340,7 @@ final class callable_type_definition extends abstract_nominal_type_definition im
 	public function __construct(int $id, string $name, canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
 		?reference_return_contract $reference_return = null)
 	{
-		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value,
-			generic_contract::result_payload];
-		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::callable_type, $capabilities);
+		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::callable_type, self::callable_capabilities());
 		$this->call_contract = new callable_signature();
 		$this->call_contract->return_type = $result;
 		$this->call_contract->reference_return = $reference_return;
@@ -357,6 +355,10 @@ final class callable_type_definition extends abstract_nominal_type_definition im
 		}
 	}
 	public function signature(): callable_signature { return $this->call_contract; }
+	private static function callable_capabilities(): array /** vector<generic_contract> */
+	{
+		return [generic_contract::value_storable, generic_contract::copyable_value, generic_contract::result_payload];
+	}
 }
 
 /** Enum identity is nominal; backing syntax, case values and storage selection are not registry facts. */
@@ -424,7 +426,7 @@ final class template_type_parameter
 	 * capability requirement is currently known.
 	 */
 	public function __construct(string $name, ?array $contracts /** vector<generic_contract> */ = null,
-		?canonical_type_use $default_type = null, array $dependencies /** vector<generic_contract> */ = [])
+		?canonical_type_use $default_type = null, ?array $dependencies /** vector<generic_contract> */ = null)
 	{
 		if ($name === '') {
 			throw new \InvalidArgumentException('Template parameter name must not be empty');
@@ -453,8 +455,10 @@ final class template_type_parameter
 		$this->parameter_name = $name;
 		$this->parameter_contracts = $effective_contracts;
 		$this->default_type_data = $default_type;
+		$effective_dependencies /** vector<generic_contract> */ = [];
+		if ($dependencies !== null) { $effective_dependencies = $dependencies; }
 		$dependency_keys /** hash<bool> */ = [];
-		foreach ($dependencies as $position => $dependency)
+		foreach ($effective_dependencies as $position => $dependency)
 		{
 			$key = Generic_Contract_Name::text($dependency);
 			if ($dependency === generic_contract::result_payload) {
@@ -465,7 +469,7 @@ final class template_type_parameter
 			}
 			$dependency_keys[$key] = true;
 		}
-		$this->dependent_capabilities = $dependencies;
+		$this->dependent_capabilities = $effective_dependencies;
 	}
 
 	public function name(): string
@@ -1037,7 +1041,9 @@ final class Type_Registry implements type_capability_query
 
 	public function runtime_storage(type_definition_i $definition): ?record_storage_kind
 	{
-		return $this->runtime_storage_policies[$definition->definition_id()] ?? null;
+		$key = $definition->definition_id();
+		if (!isset($this->runtime_storage_policies[$key])) { return null; }
+		return $this->runtime_storage_policies[$key];
 	}
 
 	private array $callable_types /** hash<callable_type_definition> */ = [];

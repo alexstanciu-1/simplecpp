@@ -11,7 +11,7 @@ final class Runtime_Type_Registration
 
 	public function __construct(private registered_type_catalog $types)
 	{
-		$this->recipes = new Keyed_Storage();
+		$this->recipes = new Keyed_Storage /** Keyed_Storage<runtime_type_definition_spec> */();
 	}
 
 	/** Caller owns this private catalog; failure never publishes it into Model. */
@@ -63,7 +63,7 @@ final class Runtime_Type_Registration
 				throw new \RuntimeException('Duplicate runtime type parameter: ' . $parameter->name);
 			}
 			$names[$parameter->name] = true;
-			$default_type /** ?canonical_type_use */ = null;
+			$default_type /** nullable<canonical_type_use> */ = null;
 			if ($parameter->default_type !== null)
 			{
 				$default_spec /** runtime_type_spec */ = $parameter->default_type;

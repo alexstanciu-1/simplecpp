@@ -1164,7 +1164,7 @@ final class callable_children_iterator extends children_iterator
 	private ?storage_children_iterator $sequence_cursor = null;
 
 	public function __construct(callable_syntax_owner_i $source,
-		private ?Storage $captures /** nullable<Storage<closure_capture_node>> */ = null)
+		private ?Storage $captures /** Storage<closure_capture_node> */ = null)
 	{
 		$this->source = $source;
 	}

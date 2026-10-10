@@ -100,7 +100,7 @@ final class runtime_application_pattern extends runtime_type_pattern
 	public Storage $arguments /** Storage<runtime_type_pattern> */;
 	public function __construct(public abstract_template_type_definition $definition)
 	{
-		$this->arguments = new Storage();
+		$this->arguments = new Storage /** Storage<runtime_type_pattern> */();
 	}
 	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::application; }
 }
@@ -117,7 +117,7 @@ final class runtime_callable_pattern extends runtime_type_pattern
 {
 	public runtime_type_pattern $return_type;
 	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
-	public function __construct() { $this->parameters = new Storage(); }
+	public function __construct() { $this->parameters = new Storage /** Storage<runtime_pattern_parameter> */(); }
 	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::callable_type; }
 }
 
@@ -129,16 +129,18 @@ final class runtime_generic_contract
 	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
 	public function __construct()
 	{
-		$this->parameters = new Storage();
+		$this->parameters = new Storage /** Storage<runtime_pattern_parameter> */();
 	}
 }
 
 /** One provider identity; concrete signatures belong to prepared calls, not the catalog. */
 final class registered_generic_function extends runtime_function_definition
 {
-	public function __construct(string $key, string $name, private runtime_generic_contract $pattern_contract)
+	private runtime_generic_contract $pattern_contract;
+	public function __construct(string $key, string $name, runtime_generic_contract $pattern_contract)
 	{
 		parent::__construct($key, $name);
+		$this->pattern_contract = $pattern_contract;
 	}
 	public function contract(): runtime_generic_contract { return $this->pattern_contract; }
 }

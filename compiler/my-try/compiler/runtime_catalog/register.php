@@ -17,7 +17,7 @@ final class Runtime_Catalog_Registration
 				if ($constant->type !== 'int') {
 					throw new \RuntimeException('Runtime constants currently require int');
 				}
-				$owner /** ?semantic_type_definition */ = null;
+				$owner /** nullable<semantic_type_definition> */ = null;
 				if ($constant->owner !== null)
 				{
 					$owner_spec /** runtime_type_spec */ = $constant->owner;
@@ -53,8 +53,8 @@ final class Runtime_Catalog_Registration
 			$functions /** Storage<runtime_function_spec> */ = $module->functions;
 			foreach ($functions as $function)
 			{
-				$generic /** ?runtime_generic_contract */ = null;
-				$member_owner /** ?semantic_type_definition */ = null;
+				$generic /** nullable<runtime_generic_contract> */ = null;
+				$member_owner /** nullable<semantic_type_definition> */ = null;
 				if ($function->member !== null) {
 					$membership /** runtime_callable_member_spec */ = $function->member;
 					$member_owner = self::member_definition($membership->owner, $types);
@@ -126,7 +126,8 @@ final class Runtime_Catalog_Registration
 	/** Members belong to definitions, not enumerated concrete template applications. */
 	public static function member_definition(runtime_type_spec $spec, registered_type_catalog $types): semantic_type_definition
 	{
-		if (($spec->parameter !== '') || ($spec->callable !== null) || !$spec->arguments->is_empty()) {
+		$arguments /** Storage<runtime_type_spec> */ = $spec->arguments;
+		if (($spec->parameter !== '') || ($spec->callable !== null) || !$arguments->is_empty()) {
 			throw new \RuntimeException('Runtime member owner must name a definition, not an application');
 		}
 		$definition = $types->definition($spec->name);
@@ -135,7 +136,7 @@ final class Runtime_Catalog_Registration
 				&& !($definition instanceof abstract_template_type_definition))) {
 			throw new \RuntimeException('Runtime member requires a registered nominal or template owner');
 		}
-		return $definition;
+		return object_cast($definition, semantic_type_definition::class);
 	}
 
 	/** Index retained identities; no metadata IO or duplicate value snapshots. */

@@ -13,7 +13,8 @@ final class CPP_Runtime_Catalog
 			$initializers /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_initialization;
 			$initializer_count = 0;
 			foreach ($module->types as $owner_spec) {
-				if ($owner_spec->initialization->is_empty()) { continue; }
+				$initializations /** Storage<runtime_initialization_spec> */ = $owner_spec->initialization;
+				if ($initializations->is_empty()) { continue; }
 				$initializer_count++;
 				if (!isset($initializers[$owner_spec->identity])) {
 					throw new \RuntimeException('Missing runtime initialization binding');
@@ -67,7 +68,7 @@ final class CPP_Runtime_Catalog
 					$owner = $types->definition($member->owner->name);
 					if (!$member->static_member || ($owner instanceof abstract_template_type_definition)) {
 						$symbol = $bindings[$function->identity]->symbol;
-						if (str_contains($symbol, ':')) {
+						if (q_strpos($symbol, ':') !== false) {
 							throw new \RuntimeException('Runtime instance binding requires an unqualified member name');
 						}
 						if (string_byte_len($symbol) === 0) {
@@ -89,7 +90,7 @@ final class CPP_Runtime_Catalog
 
 	private static function member_identifier(string $symbol): void
 	{
-		if (str_contains($symbol, ':') || ($symbol === '')) {
+		if ((q_strpos($symbol, ':') !== false) || ($symbol === '')) {
 			throw new \RuntimeException('Runtime property binding requires an unqualified identifier');
 		}
 		$first = string_byte_at($symbol, 0);
@@ -140,7 +141,7 @@ final class CPP_Runtime_Catalog
 	/** Callable installation follows both semantic and type-binding installation. */
 	public static function install(runtime_catalog_input $input): void
 	{
-		Model::$cpp_property_bindings = new \SplObjectStorage();
+		Model::$cpp_property_bindings = new \SplObjectStorage /** hash<runtime_cpp_spec, shared<runtime_property_definition>> */();
 		foreach ($input->modules as $module) {
 			foreach ($module->cpp_properties as $property_binding) {
 				$property = Model::$runtime_members->property_identity($property_binding->identity);

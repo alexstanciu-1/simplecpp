@@ -30,7 +30,8 @@ final class CPP_Initialization_Registration
 		foreach (Model::$runtime_metadata->modules as $module) {
 			$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_initialization;
 			foreach ($module->types as $spec) {
-				if ($spec->initialization->is_empty()) { continue; }
+				$initializations /** Storage<runtime_initialization_spec> */ = $spec->initialization;
+				if ($initializations->is_empty()) { continue; }
 				$binding = $bindings[$spec->identity];
 				Model::$cpp_callable_bindings->bind_initialization_definition(Model::$type_catalog->definition($spec->name),
 					$binding->symbol, $binding->header);

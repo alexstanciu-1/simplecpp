@@ -136,8 +136,9 @@ $record_application = $registry->intern_application($copy_template, [$registry->
 type_catalog_check($registry->use($record_application->type_id(), true)->matches(
 	$registry->use($record_application->type_id())),
 	'Registered struct template result did not use value storage');
-type_catalog_check($registry->use($vector_int->type_id(), true)->by_value(),
-	'Registered class template result lost its effective modifier');
+type_catalog_check($registry->runtime_storage($vector) === record_storage_kind::inline_value
+	&& $registry->use($vector_int->type_id(), true)->matches($registry->use($vector_int->type_id())),
+	'Metadata-defined inline vector storage did not normalize its redundant modifier');
 
 // Names are not storage policy: a custom integer is a value, a class named int is not.
 $custom_registry = new Type_Registry();

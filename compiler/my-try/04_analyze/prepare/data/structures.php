@@ -730,7 +730,7 @@ final class prepared_file {
 final class reference_cycle_vertex
 {
 	public callable_target_i $target;
-	public ?function_body_node $body;
+	public ?function_body_node $body = null;
 	public string $label;
 	public array $calls /** vector<int> */ = [];
 	public int $visit_index;

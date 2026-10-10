@@ -18,7 +18,7 @@ final class Runtime_Build_Contract
 
 	public static function definition_name(string $text): string
 	{
-		$parts /** vector<string> */ = explode('=', $text);
+		$parts /** vector<string> */ = self::split_byte($text, 61);
 		if (q_count($parts) !== 2) { throw new \RuntimeException('Runtime build definition requires NAME=VALUE'); }
 		if (!self::identifier($parts[0]) || ($parts[1] === '')) {
 			throw new \RuntimeException('Runtime build definition requires NAME=VALUE');
@@ -37,7 +37,7 @@ final class Runtime_Build_Contract
 	{
 		foreach ($spec->sources as $source) {
 			if (!string_byte_ends_with($source, '.cpp')) { throw new \RuntimeException('Runtime provider source requires .cpp'); }
-			foreach (explode('/', $source) as $component) {
+			foreach (self::split_byte($source, 47) as $component) {
 				if (($component === '') || ($component === '.') || ($component === '..')) { throw new \RuntimeException('Invalid relative runtime provider path'); }
 				self::token($component);
 			}
@@ -62,6 +62,22 @@ final class Runtime_Build_Contract
 				|| (($byte >= 97) && ($byte <= 122)) || ($byte === 95) || ($byte === 45) || ($byte === 46) || ($byte === 43)) { continue; }
 			throw new \RuntimeException('Invalid runtime build token');
 		}
+	}
+
+	/** Preserve empty components so validation rejects malformed wire spellings. */
+	private static function split_byte(string $text, int $separator): array /** vector<string> */
+	{
+		$result /** vector<string> */ = [];
+		$start = 0;
+		$length = string_byte_len($text);
+		for ($index = 0; $index < $length; $index++) {
+			if (string_byte_at($text, $index) === $separator) {
+				$result[] = string_byte_slice($text, $start, $index - $start);
+				$start = $index + 1;
+			}
+		}
+		$result[] = string_byte_slice($text, $start, $length - $start);
+		return $result;
 	}
 
 	public static function encode(runtime_cpp_build_spec $spec): string

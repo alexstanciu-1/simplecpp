@@ -11,6 +11,54 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Native checkpoint — 2026-10-10
+
+Candidate base `e6dad0db97ce1b629608bb772d6529917a45b151` plus authored portability
+repairs; evidence `/tmp/my-try-native-20261010/`. Conversion first passes on attempt
+16 (211 PHP files). Attempt 18 builds/links the native compiler (407.204s with
+reused objects). Attempt 20 passes all 23 host prerequisites, native
+emission/type/control-flow proofs, 1,114 source comparisons/generated executions,
+44 partitioned projects, 997 supplementary programs, two control-flow error and
+two ownership-lifetime probes, 366 rejection/recovery comparisons and the final
+incremental native rebuild. Its elapsed time is 1,858.695s, including a 17.825s
+native rebuild with reused objects; this is not a cold-build benchmark.
+The run uses `--no-stan --types-only --jobs 12` and preserves each attempt's
+logs; a keep-going Ninja diagnostic pass gathers independent C++ failures together.
+
+Repairs use the existing portable profile: explicit generic construction and nullable
+annotations, typed collection boundaries, base construction before field assignment,
+checked nominal narrowing, explicit null branches and block-owned integer selection.
+Named callable nodes own their capture-free iterator entrypoint while sharing the
+same iterator with closures. Backend comma-list rendering and metadata byte splitting
+avoid unregistered host-only PHP helpers. No language semantics are intentionally changed.
+Native execution also exposed a borrowed foreach key erased before use in the
+callable-work queue. The scheduler now retains the selected work handle before
+removal; the native type proof passes without changing queue ownership or policy.
+
+Six focused PHP suites pass in `/tmp/my-try-native-20261010-portable-validation/`:
+closure model/behavior, runtime catalog/build contract, constructed types and indexing.
+Generated PHP++/C++ remains diagnostic output, never the repaired source.
+Resource reports from instrumented attempts record maximum per-process RSS, not
+the sum of concurrent compiler-process memory. Attempt 20 records 637,472 KiB.
+
+An additional accounting check exposed quadratic portable `json_quote` work and
+timed out after 240s. The approved framework repair validates UTF-8 once, scans
+bytes and joins escaped chunks once, preserving exact JSON spelling/error behavior.
+`tests/portability/json_quote.py` passes 15 independent PHP/native parity cases,
+including malformed UTF-8 and 2,163,442 output bytes, in 1.235s native execution.
+Evidence: `/tmp/my-try-json-quote-20261010-2/`; repair commit `35bff901`.
+
+The cumulative run above used the pre-optimization helper. The repaired helper is
+then installed and the native compiler rebuilt in 12.639s. Follow-up evidence under
+`/tmp/my-try-json-followup-20261010/` records both executable hashes and checks
+emission/type/control-flow parity plus closure and indexed-write program execution.
+Accounting artifact generation now takes 2.331s natively (host PHP: 4.311s) and
+matches the PHP artifact bundle. Generated C++ compilation/linking takes 40.250s
+with fixture PCH; execution passes all 998 checks in 0.016s. The final incremental
+compiler build passes in 1.216s. The follow-up summary records a complete pass.
+These targeted post-repair checks supplement, rather than claim a repeat of, the
+full cumulative sweep. Both runs bypass legacy STAN and parked LLVM execution.
+
 ## Latest native checkpoint — 2026-10-08 Chapter 11
 
 Candidate base `65d96f7e6bd0af0c6a5420eb49447266d4c1fcd4`, with the current

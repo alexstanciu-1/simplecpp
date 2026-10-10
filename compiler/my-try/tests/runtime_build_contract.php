@@ -4,6 +4,8 @@ require_once dirname(__DIR__) . '/boot.php';
 
 $schema = ['version'=>1,'module'=>'build','dependencies'=>[], 'functions'=>[], 'cpp'=>[]];
 foreach ([['sources'=>['../escape.cpp']], ['libraries'=>['-bad']], ['definitions'=>['NAME']],
+	['sources'=>['folder//file.cpp']], ['sources'=>['/file.cpp']],
+	['definitions'=>['NAME=']], ['definitions'=>['=1']], ['definitions'=>['NAME=1=2']],
 	['definitions'=>['NAME=1','NAME=2']], ['definitions'=>['SCPP_LANGUAGE_TARGET_PHP=0']]] as $invalid) {
 	$failed = false;
 	try { Runtime_Catalog_Reader::decode(json_encode($schema + ['cpp_build'=>$invalid]), 'bad.json'); }

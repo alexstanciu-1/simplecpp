@@ -14,8 +14,8 @@ final class Runtime_Callables
 	{
 		$this->definitions = new Keyed_Storage /** Keyed_Storage<registered_static_factory> */();
 		$this->functions = new Keyed_Storage /** Keyed_Storage<runtime_function_definition> */();
-		$this->members = new Keyed_Storage();
-		$this->member_names = new Key_Storage_List();
+		$this->members = new Keyed_Storage /** Keyed_Storage<runtime_callable_member> */();
+		$this->member_names = new Key_Storage_List /** Key_Storage_List<runtime_callable_member> */();
 	}
 
 	/** Membership observes the already owned callable; it does not copy its contract. */
@@ -34,7 +34,9 @@ final class Runtime_Callables
 	public function member_for(runtime_function_definition $target): ?runtime_callable_member
 	{
 		$members /** Keyed_Storage<runtime_callable_member> */ = $this->members;
-		return isset($members[$target->key()]) ? $members[$target->key()] : null;
+		$key = $target->key();
+		if (!isset($members[$key])) { return null; }
+		return $members[$key];
 	}
 
 	/** Keep member names out of the free-function scope; signatures still share selection. */
