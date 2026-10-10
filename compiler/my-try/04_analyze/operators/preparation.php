@@ -131,26 +131,29 @@ final class Operator_Preparation
 			}
 		}
 		if (($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical)) {
-			if ((q_count($operands) === 2) && String_Conversions::is_string($operands[0])
-				&& String_Conversions::is_string($operands[1])) {
-				return self::decide_string_identity($source_operator, $operands, $context);
+			if (q_count($operands) === 2) {
+				$same_string = String_Conversions::is_string($operands[0]) && String_Conversions::is_string($operands[1]);
+				$same_bool = $operands[0]->matches($context->boolean) && $operands[1]->matches($context->boolean);
+				if ($same_string || $same_bool) {
+					return self::decide_scalar_identity($source_operator, $operands, $context);
+				}
 			}
 		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
 	}
 
-	/** Same-type string identity compares contents without a text/coercion boundary. */
-	private static function decide_string_identity(operator_kind $source_operator,
+	/** Admitted same-type scalars compare values without text or truthiness coercion. */
+	private static function decide_scalar_identity(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
 		$decision->operation = $source_operator === operator_kind::identical
-			? operator_operation::string_identical : operator_operation::string_not_identical;
+			? operator_operation::scalar_identical : operator_operation::scalar_not_identical;
 		$decision->result_type = $context->boolean;
 		foreach ($operands as $operand) {
 			$decision->operands[] = Conversion_Preparation::decide(
-				$operand, $context->string_type, conversion_context::operator_operand);
+				$operand, $operands[0], conversion_context::operator_operand);
 		}
 		return $decision;
 	}

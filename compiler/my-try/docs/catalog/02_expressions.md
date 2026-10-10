@@ -17,8 +17,19 @@ copying or declaration validity.
 
 ## String strict identity — 2026-10-10
 
+Boolean follow-up: the selector and prepared operations are now shared scalar
+identity for admitted same-type strings and booleans. Boolean identity is eager
+value equality, not truthiness or short circuiting. The same focused runner also
+checks all boolean input pairs, field-comparison results, ordered calls and RHS
+mutation of the left source. Cross-type comparison remains rejected. Existing
+canonical-int, enum and boxed paths are unchanged.
+Evidence: `/tmp/scalar-identity-20261010-final` passes three PHP tasks and two
+generated programs (7.23s/7.24s compile/run). The unchanged accounting retry at
+`/tmp/accounting-bool-20261010` reports only compound RHS and indexed mutation
+restrictions; comparison errors are gone. No native compiler rebuild was performed.
+
 String identity follow-up: same-type `string === string` and `!==` now have
-dedicated prepared operation identities, ordinary identity conversions and the
+shared scalar prepared operation identities, ordinary identity conversions and the
 shared ordered binary/helper lowering. Byte-exact contents include NUL and do
 not normalize Unicode. Cross-type and ordinary/ordered string comparisons remain
 outside this slice. Contract: [strict identity](../../../../specs/operator_matrix/profile_semantics_v1.md#v02-same-type-strings--2026-10-10).

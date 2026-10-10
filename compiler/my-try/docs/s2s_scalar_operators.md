@@ -22,6 +22,7 @@ use the same path. Compound-assignment RHS admission remains independently bound
 | `==`, `!=`, `<`, `<=`, `>`, `>=` | same-signedness integers | canonical `bool` | Prepared common-domain conversions, existing runtime wrapper comparisons |
 | `===`, `!==` | canonical `int`, `int` | canonical `bool` | `scpp::php::identical` / `not_identical` |
 | `===`, `!==` | `string`, `string` | canonical `bool` | Same strict helpers; byte-exact contents, no coercion |
+| `===`, `!==` | `bool`, `bool` | canonical `bool` | Same strict helpers; equal boolean values, no truthiness conversion |
 | `<=>` | same-signedness integers | canonical `int`, exactly -1/0/1 | Snapshot each converted operand once, compare with `<` and `>` |
 | `.` | mixed, ordinary scalar or literal null | canonical `string` | Prepared text conversion then string-wrapper `+` |
 | `&&`, `\|\|`, `and`, `or` | canonical `bool`, `bool` | canonical `bool` | Convert each operand explicitly to native bool around native lazy operators, wrap result |

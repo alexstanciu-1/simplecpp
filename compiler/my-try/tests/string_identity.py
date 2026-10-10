@@ -1,4 +1,4 @@
-"""Same-type strict string identity and ordered generated execution."""
+"""Same-type strict string/boolean identity and ordered generated execution."""
 import argparse
 from pathlib import Path
 import sys

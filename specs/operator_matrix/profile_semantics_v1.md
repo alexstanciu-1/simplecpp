@@ -425,6 +425,15 @@ The bounded my-try slice routes these operations through the existing strict
 identity helpers. It does not enable string ordering, ordinary string `==`/`!=`,
 or new cross-type comparisons. Existing boxed/wrapper contracts are unchanged.
 
+#### v0.2 same-type booleans — 2026-10-10
+
+Two statically typed `bool` values support `===` and `!==`, returning `bool`.
+Identity is true exactly when both values are true or both are false; nonidentity
+is its negation. Both operands are evaluated once, left then right, with the left
+value preserved before right-side effects. This is eager identity, not logical
+short circuiting or truthiness conversion. It does not add cross-type comparison,
+boolean ordering or ordinary `==`/`!=` admission to the bounded my-try slice.
+
 This family covers:
 - `identical`
 - `not_identical`
