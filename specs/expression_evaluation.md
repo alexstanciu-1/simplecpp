@@ -41,9 +41,32 @@ Placing them inside an eager operand does not evaluate skipped branches. Both
 operands/branches remain subject to compile-time validation even when unreachable
 under a constant condition.
 
-Assignment, compound updates, calls, construction, indexing and removal retain
+Assignment, calls, construction, indexing and removal retain
 their separately documented receiver/argument/key/store contracts. This amendment
-does not lift compound-assignment RHS admission restrictions.
+does not change their admission rules.
+
+## Compound updates — 2026-10-10
+
+For an admitted compound assignment, resolve the writable destination once and
+retain any required object owners. Read and preserve its old value, including
+the selected left operand conversion, before evaluating the RHS once. Compute
+with those values, complete the write-back conversion/check, then store into the
+original destination. The expression returns a value snapshot of the updated
+destination, not a reference. A destination/null-owner failure precedes RHS effects.
+
+For example, if `$x` is 10 and `change($x)` sets it to 100 and returns 3,
+`$x += change($x)` stores 13. On RHS/computation/conversion failure, no compound
+write-back occurs; earlier RHS effects remain. Numeric mixed/dynamic stored-kind
+validation uses the preserved left value's kind, not a kind substituted by the
+RHS. Existing kind-change errors remain; text concatenation keeps its text contract.
+
+Ordinary admitted value expressions, including fields, calls, nested updates and
+lazy expressions, may be RHS operands. They may not introduce implicit locals.
+This does not admit indexed destinations or fixed-width compound updates.
+
+The AST and prepared facts retain compound-assignment intent and its selected
+operator/conversions. Direct C++ `+=` is permitted only when equivalent ordering,
+conversion and lifetime are established; it is not the general lowering contract.
 
 ## Lowering
 

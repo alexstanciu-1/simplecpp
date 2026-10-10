@@ -768,6 +768,12 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For compound RHS effects, run
+`python3 compiler/my-try/tests/compound_effects.py --results /tmp/FRESH_COMPOUND_RESULTS`.
+The shared pool checks compound/operator/logical/boxed preparation and three
+generated programs for ordered snapshots, owner retention and failure preservation.
+No PCH or native compiler rebuild is involved.
+
 For same-type strict string and boolean comparisons, run
 `python3 compiler/my-try/tests/string_identity.py --results /tmp/FRESH_STRING_IDENTITY_RESULTS`.
 The shared pool checks preparation/rejections and existing operator, conversion and

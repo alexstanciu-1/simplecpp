@@ -15,6 +15,22 @@ fallthrough are repaired. Duplicate declarations are explicitly deferred debt (P
 alongside conditional runtime capability debt. The proved rows below describe bounded examples, not unrestricted
 copying or declaration validity.
 
+## Compound RHS effects — 2026-10-10
+
+The [compound contract](../../../../specs/expression_evaluation.md#compound-updates--2026-10-10)
+now accepts ordinary prepared RHS values without the old recursive effect-shape
+gate. Implicit locals remain forbidden. C++ reuses the ordered binary renderer
+and shared field-owner binding; boxed numeric write-back checks the preserved
+left kind before storing. Existing compound syntax/operation/conversion facts
+remain intact, allowing future proven-equivalent direct `+=` lowering.
+
+`tests/compound_effects.py` passed four PHP tasks (including the compound suite)
+and three generated programs at `/tmp/compound-effects-20261010-1` (5.11–5.75s
+compile/run). Proof includes RHS replacement of the destination/last field owner,
+nested updates, lazy expressions, mixed/dynamic values and failure side effects.
+The accounting retry at `/tmp/accounting-compound-20261010` now reports only indexed
+compound mutation. No full application execution or native compiler rebuild yet.
+
 ## String strict identity — 2026-10-10
 
 Boolean follow-up: the selector and prepared operations are now shared scalar
@@ -107,9 +123,10 @@ replaces the historical effect-shape gate for eager binaries: evaluate/convert l
 then right, then compute from saved values. Fields/calls use ordinary expression
 preparation. The common C++ renderer sequences arithmetic, power, bitwise/shift,
 comparisons, concatenation, xor and spaceship; logical/selection laziness remains.
-No AST node or per-field/per-call operator implementation was added. Compound RHS
-admission and numeric type restrictions are unchanged. Unsupported bool comparisons
-still reject for type reasons, rather than incidentally rejecting a call operand.
+No AST node or per-field/per-call operator implementation was added. The subsequent
+compound RHS and scalar identity checkpoints above supersede this checkpoint's
+former compound and same-type boolean restrictions; numeric type admission remains
+separately defined.
 
 `tests/eager_binary.py` checks the new behavior, former rejection cases, eight PHP
 suites and four generated programs. `/tmp/eager-binary-20261010-verified` passed;

@@ -67,7 +67,6 @@ $rejections = [
 	['return true or 1;', 'canonical bool operands'],
 	['return true xor 1;', 'canonical bool operands'],
 	['return true or $missing;', 'established local declaration for missing'],
-	['$a = false; $b = 0; $b += (int)(true and ($a = true));', 'order-independent operands'],
 	['function f(int &$x): int { return $x; } $a = 0; return f($a = 1);', 'reference arguments require stable storage'],
 	['struct Box { int $x; } $b Box; return $b->x = 1;', 'assignment target is not supported'],
 	['return 1 = 2;', 'Assignment requires an assignable target'],

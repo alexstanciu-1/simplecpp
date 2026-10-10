@@ -229,7 +229,6 @@ try
 		['$x mixed = 7; $d dynamic; $x .= $d;', 'same boxed family'],
 		['$x = false; $x .= "x";', 'compound concatenation requires string or boxed storage'],
 		['$x = 1.5; $x .= "x";', 'compound concatenation requires string or boxed storage'],
-		['$x mixed = 7; $x .= $x++;', 'order-independent operands'],
 		['$x mixed = 7; $n result<int> = 1; $y = $x . $n;', 'concatenation requires boxed'],
 		['$x mixed = 7; $n uint8 = 1; $y = $x . $n;', 'concatenation requires boxed'],
 		['$x mixed = 7; $x %= 1.5;', 'boxed remainder requires'],

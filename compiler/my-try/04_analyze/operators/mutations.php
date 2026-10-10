@@ -54,8 +54,7 @@ final class Mutation_Preparation
 		preparation_context $context): prepared_compound_assignment_expression
 	{
 		$target = self::prepare_target($syntax->target, $context);
-		Operator_Preparation::require_order_independent_operand($syntax->value);
-		$value = Expression_Preparation::prepare($syntax->value, $context);
+		$value = self::prepare_compound_value($syntax->value, $context);
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
 		$facts = new prepared_compound_assignment_expression();
@@ -90,6 +89,20 @@ final class Mutation_Preparation
 			$facts->decision->result_type, $target->type, conversion_context::assignment);
 		$facts->type = $target->type;
 		return $facts;
+	}
+
+	/** A compound RHS is an ordinary value context, never an implicit-local declaration site. */
+	private static function prepare_compound_value(expression_node $syntax,
+		preparation_context $context): prepared_expression
+	{
+		$statement_assignment = $context->statement_assignment;
+		$context->statement_assignment = false;
+		try {
+			return Expression_Preparation::prepare($syntax, $context);
+		}
+		finally {
+			$context->statement_assignment = $statement_assignment;
+		}
 	}
 
 	/** Mutate established integer or boxed storage; boxed payload validity remains runtime-owned. */

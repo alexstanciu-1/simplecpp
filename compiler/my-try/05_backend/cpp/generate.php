@@ -666,20 +666,28 @@ final class CPP_Generator
 		cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_compound_assignment_preparation();
-		$target = (new CPP_Syntax($context))->expression($syntax->target);
+		$target = CPP_Declarations::bind_storage_receiver($syntax->target, $context);
 		$place = 'target_' . $context->next_temporary;
 		$context->next_temporary++;
+		$previous = $place;
+		$prefix = $target->statements . 'auto& ' . $place . ' = ' . $target->value . '; ';
+		if ($facts->write_back_mode === compound_write_back::boxed_stored_kind) {
+			$previous = 'previous_' . $context->next_temporary;
+			$context->next_temporary++;
+			$prefix .= 'auto ' . $previous . ' = ' . $place . '; ';
+		}
 		$right = (new CPP_Syntax($context))->expression($syntax->value);
-		$value = self::render_binary_decision($facts->decision, $place, $right, $context);
+		$value = self::render_binary_decision($facts->decision, $previous, $right, $context);
 		$value = CPP_Declarations::conversion($value, $facts->write_back, $context);
 		$result_type = CPP_Declarations::type($facts->type, $context);
 		if ($facts->write_back_mode === compound_write_back::boxed_stored_kind) {
 			$context->headers['operators/arithmetic/boxed_numeric.hpp'] = true;
-			return '([&]() -> ' . $result_type . ' { auto& ' . $place . ' = ' . $target
-				. '; scpp::detail::assign_numeric_result(' . $place . ', ' . $value . '); return ' . $place . '; }())';
+			return '([&]() -> ' . $result_type . ' { ' . $prefix
+				. 'scpp::detail::assign_numeric_result(' . $previous . ', ' . $value . '); '
+				. $place . ' = ' . $previous . '; return ' . $place . '; }())';
 		}
-		return '([&]() -> ' . $result_type . ' { auto& ' . $place . ' = ' . $target
-			. '; ' . $place . ' = ' . $value . '; return ' . $place . '; }())';
+		return '([&]() -> ' . $result_type . ' { ' . $prefix
+			. $place . ' = ' . $value . '; return ' . $place . '; }())';
 	}
 
 	/** Mutate the resolved place once and copy the selected old/new result into a value. */

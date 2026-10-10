@@ -13,7 +13,9 @@ supersedes historical eager-operand restrictions in this guide: eager binaries
 evaluate and convert left, then right, into values before computation. The common
 renderer owns sequencing, including power/xor/spaceship; lazy logical/selection
 paths retain conditional evaluation. Fields, calls and other admitted expressions
-use the same path. Compound-assignment RHS admission remains independently bounded.
+use the same path. The [compound amendment](../../../specs/expression_evaluation.md#compound-updates--2026-10-10)
+also admits ordinary RHS values, snapshots the old destination before RHS effects
+and retains field owners until write-back. Indexed/fixed-width updates remain deferred.
 
 | Source operation | Exact operand types | Result | Selected C++ lowering |
 | --- | --- | --- | --- |
@@ -275,8 +277,8 @@ Added 2026-10-02: canonical `int` pairs now support `&`, `|`, `^`, `<<`, `>>` an
 compound forms `&=`, `|=`, `^=`, `<<=`, `>>=`. Result types remain canonical `int`.
 Existing binary/compound nodes, operator decisions and write-back conversions are
 reused; no AST structure or field was added. Non-int operands retain their type
-restrictions; eager value operations admit sequenced effects. Compound RHS admission
-is unchanged; stable property targets also follow the later CH10 contract.
+restrictions; eager values and compound RHS now admit sequenced effects. Stable
+property targets follow CH10 with owner retention across RHS evaluation.
 
 The agreed [runtime contract](../../../runtime/specs/spec.md) delegates to native
 C++20 integer behavior. Counts 0 through 63 are valid for the canonical signed
@@ -347,10 +349,10 @@ does not introduce branch-sensitive initialization or conditional declarations.
 Logical operands are prepared left-to-right and both must be valid, including a
 statically skipped RHS. `and`/`or` use native bool short circuiting. `xor` snapshots the
 left bool, then the right bool, and compares those snapshots. This preserves results
-when both operands write the same local. Assignment inside ordinary arithmetic,
-comparison, concatenation, unary operators or compound RHS remains rejected, including
-writes hidden inside a nested logical expression. Calls, mutation and compound-update
-operands retain their earlier binary restrictions; general effect analysis is deferred.
+when both operands write the same local. The later eager/compound amendments admit
+ordinary value expressions in these positions, including writes to established
+locals, calls and nested updates; they do not permit implicit-local declarations.
+General effect analysis remains deferred.
 
 [Logical tests](../tests/logical.php) cover AST precedence, assignment facts, grouped
 write collection, diagnostics, cleanup, incremental edits, token compaction and failed
