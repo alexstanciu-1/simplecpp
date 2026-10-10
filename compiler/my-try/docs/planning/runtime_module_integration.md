@@ -52,7 +52,17 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
 - Focused evidence: /tmp/runtime-handles-20261010-3 (three PHP suites and three
   generated-program executions). The unfamiliar C++ payload deletes its copy
   operations; identity, slot replacement, Result and vector transport are proved.
-- Next: phase 2 member/factory model inspection and the smallest reusable
-  registered member contract integrated with ordinary lookup/admission.
+- Phase 2 callable checkpoint: type-owned static/instance callables now use
+  optional membership metadata and the existing concrete/generic signatures.
+  Indexed membership is separate from free-function publication. Ordinary
+  receiver retention/inline borrowing, argument admission and C++ binding paths
+  are reused. Static factories need no special construction implementation.
+- Focused callable evidence: /tmp/runtime-members-20261010-final; affected PHP
+  handle/type/source-method/static-member suites plus five generated programs.
+  Receiver replacement, generic inputs, observed temporary inputs, null-before-
+  arguments and static qualification are covered.
+- Phase 2 remains in progress: registered properties/constants and owner-template
+  member recipes are still required. Do not replace owner recipes with enumerated
+  concrete applications. Next checkpoint starts with shared property/storage facts.
 - Deferred borrowed source views retain CH15-RUNTIME-SOURCE-01.
 - Provider semantic conflicts retain their existing debts; no silent contract changes.

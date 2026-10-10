@@ -469,7 +469,13 @@ final class CPP_Declarations
 				// Check before evaluating arguments; the retained handle owns the selected object.
 				$prefix .= '(void)' . $name . ".operator->();\n";
 			}
-			$method = object_cast(weakref_get($facts->target), collected_method::class);
+			$target = weakref_get($facts->target);
+			if ($target instanceof runtime_function_definition) {
+				$member_name = CPP_Callables::reference($target, $context);
+				$callee = $name . ($arrow ? '->' : '.') . $member_name;
+				return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
+			}
+			$method = object_cast($target, collected_method::class);
 			$qualification = '';
 			if ($receiver->dispatch_type !== null) {
 				$mapping = CPP_Types::payload($receiver->dispatch_type);
@@ -593,7 +599,7 @@ final class CPP_Declarations
 	private static function observed_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type, string $prefix): string
 	{
-		if (($callee !== '') || ($constructed_type !== null) || ($prefix !== '') || ($facts->signature->reference_return !== null)) {
+		if (($constructed_type !== null) || ($facts->signature->reference_return !== null)) {
 			throw new \LogicException('Observation requires a direct non-retaining runtime call');
 		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
@@ -602,7 +608,11 @@ final class CPP_Declarations
 		$value = (new CPP_Syntax($context))->expression($arguments[$argument->source_index]);
 		$type = self::type($parameters[0]->type, $context);
 		$target = object_cast(weakref_get($facts->target), runtime_function_definition::class);
-		return CPP_Callables::reference($target, $context) . '(static_cast<const ' . $type . '&>(' . $value . '))';
+		$reference = $callee !== '' ? $callee : CPP_Callables::reference($target, $context);
+		$call = $reference . '(static_cast<const ' . $type . '&>(' . $value . '))';
+		if ($prefix === '') { return $call; }
+		return '([&]() -> ' . self::type($facts->type, $context) . " {\n"
+			. $prefix . 'return ' . $call . ";\n}())";
 	}
 
 	/** Field identity comes from shared preparation, never a backend name lookup. */

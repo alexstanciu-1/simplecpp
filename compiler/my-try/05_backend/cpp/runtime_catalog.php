@@ -30,6 +30,22 @@ final class CPP_Runtime_Catalog
 				if (!isset($bindings[$function->identity])) {
 					throw new \RuntimeException('Missing runtime binding: ' . $function->identity);
 				}
+				if ($function->member !== null) {
+					$member /** runtime_callable_member_spec */ = $function->member;
+					if (!$member->static_member) {
+						$symbol = $bindings[$function->identity]->symbol;
+						if (str_contains($symbol, ':')) {
+							throw new \RuntimeException('Runtime instance binding requires an unqualified member name');
+						}
+						if (string_byte_len($symbol) === 0) {
+							throw new \RuntimeException('Empty runtime instance member binding');
+						}
+						$first = string_byte_at($symbol, 0);
+						if (($first >= 48) && ($first <= 57)) {
+							throw new \RuntimeException('Runtime instance binding requires an identifier');
+						}
+					}
+				}
 			}
 			foreach ($module->cpp as $binding) {
 				self::spelling($binding->symbol, false);

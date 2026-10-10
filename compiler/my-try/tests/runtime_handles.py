@@ -17,7 +17,7 @@ with CommandRunner(output / 'logs', ROOT) as runner:
         directory.mkdir()
         runner.run(name, ['php', APP / 'tests' / (name + '.php'), directory])
     run_tasks([Task(name, lambda name=name: check(name)) for name in
-               ['runtime_handles', 'runtime_types', 'ownership']])
+               ['runtime_handles', 'runtime_types', 'methods', 'static_members']])
     compiler = CppFixtureCompiler(runner, ROOT, output, pch=False, runtime=True)
     compiler.flags.extend(['-I', APP / 'tests'])
     def execute(name, expected):
@@ -27,4 +27,5 @@ with CommandRunner(output / 'logs', ROOT) as runner:
         if actual != expected:
             raise AssertionError(f'{name}: {actual!r} != {expected!r}')
     run_tasks([Task(name, lambda name=name, expected=expected: execute(name, expected))
-               for name, expected in {'identity': b'9|9|9', 'result': b'13|13', 'container': b'19'}.items()])
+               for name, expected in {'identity': b'9|9|9', 'result': b'13|13', 'container': b'19',
+                                      'members': b'23|99|yes|42|31|51', 'null_receiver': b''}.items()])

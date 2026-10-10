@@ -47,6 +47,20 @@ catch (\Throwable $error) {
 }
 handle_check($failed, 'Unknown storage policy accepted');
 $cases = [
+	'members' => <<<'PHS'
+function replacement(ticket &$slot): int {
+    $slot = ticket::open(99);
+    return 23;
+}
+$a = ticket::open(7);
+$copy = $a;
+$a->change(replacement($a));
+echo $copy->read(), "|", $a->read(), "|", $a->echo_value("yes"), "|", $a->echo_value(42), "|";
+$empty ticket = null;
+$b = $empty::open(31);
+echo $b->read(), "|", $b->read_other(ticket::open(51));
+return 0;
+PHS,
 	'identity' => <<<'PHS'
 $a = open_ticket(7);
 $b = $a;
@@ -91,8 +105,17 @@ PHS,
 foreach ($cases as $name => $source) {
 	file_put_contents($directory . '/' . $name . '.cpp', handle_compile($source));
 }
+$null_source = 'function argument(): int { echo "unexpected"; return 1; } $a ticket = null; $a->change(argument()); return 91;';
+$null_cpp = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)',
+	handle_compile($null_source));
+$null_cpp .= "\nint main() { try { observed_entry(); } catch (const scpp::runtime_error&) { return 0; } return 92; }\n";
+file_put_contents($directory . '/null_receiver.cpp', $null_cpp);
 foreach ([
 	'$a = new ticket();',
+	'$a = ticket::read();',
+	'$a = ticket::open(1); $a->open(2);',
+	'$a = ticket::open(1); read();',
+	'$a = ticket::open(1); $a->missing();',
 	'$a value<ticket>;',
 	'$a shared<ticket>;',
 	'$a unique<ticket>;',

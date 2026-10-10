@@ -30,8 +30,9 @@ Ordinary runtime type definitions use `types`, with separate `cpp_types` binding
 The core vector/hash recipes now live here, including constraints, defaults and
 capability dependencies; no duplicate PHP declarations are required. Definitions
 install before function signatures. Language-specific type roles remain compiler-owned;
-methods, construction/indexing/iteration protocols and handle lifetimes are not yet
-part of these records.
+type-owned static/instance callables use optional membership on ordinary function
+records. Property/constant members, construction/indexing/iteration protocols and
+borrowed lifetimes remain subsequent integration work.
 
 Datetime bindings require the separately compiled `modules/datetime/datetime.cpp`
 provider. Catalog dependencies control metadata loading, not linker configuration.

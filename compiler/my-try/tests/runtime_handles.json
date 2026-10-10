@@ -75,6 +75,87 @@
         }
       ],
       "returns": "void"
+    },
+    {
+      "id": "proof.ticket.open",
+      "name": "open",
+      "member": {
+        "owner": "ticket",
+        "dispatch": "static"
+      },
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "ticket"
+    },
+    {
+      "id": "proof.ticket.read",
+      "name": "read",
+      "member": {
+        "owner": "ticket",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "proof.ticket.change",
+      "name": "change",
+      "member": {
+        "owner": "ticket",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "proof.ticket.echo",
+      "name": "echo_value",
+      "member": {
+        "owner": "ticket",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "parameter": "T"
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "parameter": "T"
+      },
+      "type_parameters": [
+        "T"
+      ]
+    },
+    {
+      "id": "proof.ticket.read_other",
+      "name": "read_other",
+      "member": {
+        "owner": "ticket",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "other",
+          "type": "ticket",
+          "passing": "observe"
+        }
+      ],
+      "returns": "int"
     }
   ],
   "cpp": [
@@ -96,6 +177,31 @@
     {
       "id": "proof.ticket_clear",
       "symbol": "handle_proof::ticket_clear",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket.open",
+      "symbol": "handle_proof::open_ticket",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket.read",
+      "symbol": "read",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket.change",
+      "symbol": "change",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket.echo",
+      "symbol": "echo_value",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket.read_other",
+      "symbol": "read_other",
       "header": "runtime_handles.hpp"
     }
   ]

@@ -49,7 +49,23 @@ final class Runtime_Catalog_Registration
 				}
 				$parameters /** Storage<callable_parameter> */ = new Storage();
 				$parameter_names /** hash<bool> */ = [];
-				$overload_key = $function->name;
+				$lookup_key = $function->name;
+				$member_owner /** ?canonical_type_use */ = null;
+				if ($function->member !== null)
+				{
+					$membership /** runtime_callable_member_spec */ = $function->member;
+					$member_owner = self::type($membership->owner, $types);
+					$owner_definition = $registry->type($member_owner->type_id())->definition();
+					if (($owner_definition->origin() !== type_definition_origin::runtime)
+						|| !($owner_definition instanceof abstract_nominal_type_definition)) {
+						throw new \RuntimeException('Runtime callable member requires a registered nominal owner');
+					}
+					if (string_byte_starts_with($function->name, '__')) {
+						throw new \RuntimeException('Runtime magic member names are not callable metadata');
+					}
+					$lookup_key = 'member:' . $member_owner->type_id() . ':' . $function->name;
+				}
+				$overload_key = $lookup_key;
 				$has_reference = false;
 				$has_observation = false;
 				foreach ($function->parameters as $index => $parameter)
@@ -77,18 +93,18 @@ final class Runtime_Catalog_Registration
 					$overload_key .= ':t' . $resolved->type->type_id();
 				}
 				// Return type/pass mode alone cannot distinguish runtime overloads.
-				if (isset($reference_names[$function->name])) {
-					if ($has_reference || $reference_names[$function->name]) {
+				if (isset($reference_names[$lookup_key])) {
+					if ($has_reference || $reference_names[$lookup_key]) {
 						throw new \RuntimeException('Runtime reference overloads are deferred: ' . $function->name);
 					}
 				}
-				$reference_names[$function->name] = $has_reference;
-				if (isset($observation_names[$function->name])) {
-					if ($observation_names[$function->name] !== $has_observation) {
+				$reference_names[$lookup_key] = $has_reference;
+				if (isset($observation_names[$lookup_key])) {
+					if ($observation_names[$lookup_key] !== $has_observation) {
 						throw new \RuntimeException('Runtime overloads cannot mix observation and consuming inputs');
 					}
 				}
-				$observation_names[$function->name] = $has_observation;
+				$observation_names[$lookup_key] = $has_observation;
 				if (isset($names[$overload_key])) {
 					throw new \RuntimeException('Duplicate runtime overload: ' . $function->name);
 				}
@@ -101,6 +117,10 @@ final class Runtime_Catalog_Registration
 					$signature->return_type = self::type($function->return_type, $types);
 					$signature->parameters = $parameters;
 					$result->register_function($function->identity, $function->name, $signature);
+				}
+				if ($member_owner !== null) {
+					$membership /** runtime_callable_member_spec */ = $function->member;
+					$result->register_member($member_owner, $result->function_definition($function->identity), $membership->static_member);
 				}
 			}
 		}
@@ -134,7 +154,9 @@ final class Runtime_Catalog_Registration
 	{
 		foreach ($input->modules as $module) {
 			foreach ($module->functions as $function) {
-				$language->register_function($catalog->function_definition($function->identity));
+				if ($function->member === null) {
+					$language->register_function($catalog->function_definition($function->identity));
+				}
 			}
 		}
 	}

@@ -10,6 +10,10 @@ public:
 	explicit ticket(scpp::int_t<> input) : value(input) {}
 	ticket(const ticket&) = delete;
 	ticket& operator=(const ticket&) = delete;
+	scpp::int_t<> read() const { return value; }
+	void change(scpp::int_t<> input) { value = input; }
+	template<class T> T echo_value(T input) { return input; }
+	scpp::int_t<> read_other(const scpp::shared_p<ticket>& other) { return other->value; }
 };
 inline scpp::shared_p<ticket> open_ticket(scpp::int_t<> value) {
 	return scpp::shared<ticket>(value);

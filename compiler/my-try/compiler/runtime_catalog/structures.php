@@ -48,6 +48,7 @@ final class runtime_parameter_spec
 
 final class runtime_function_spec
 {
+	public ?runtime_callable_member_spec $member = null;
 	public string $identity = '';
 	public string $name = '';
 	public array $type_parameters /** vector<string> */ = [];
@@ -57,6 +58,13 @@ final class runtime_function_spec
 	{
 		$this->parameters = new Storage();
 	}
+}
+
+/** Membership is independent of the function signature and backend symbol. */
+final class runtime_callable_member_spec
+{
+	public runtime_type_spec $owner;
+	public bool $static_member;
 }
 
 /** Backend metadata is separate from type/function semantics, joined only by identity. */

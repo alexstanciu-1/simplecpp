@@ -100,6 +100,10 @@ final class Method_Preparation
 	{
 		if ($syntax->owner_type !== null) {
 			$type = Member_Preparation::owner($syntax->owner_type, $context);
+			if (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime) {
+				return Call_Preparation::prepare_named(Model::$runtime_callables->methods_named($type, $syntax->name, true),
+					$syntax->arguments, $context);
+			}
 			$static_record = Type_Queries::source_record($type);
 			if ($static_record === null) { throw new \RuntimeException('Static call requires a source class or struct'); }
 			if ($syntax->owner_type->name === 'parent') {
@@ -109,9 +113,21 @@ final class Method_Preparation
 		}
 		$base /** expression_node */ = $syntax->receiver;
 		$value = self::base($base, $context);
-		$storage = Type_Queries::record_storage($value->type);
 		$payload = Type_Queries::record_payload($value->type);
 		$declaration = Type_Queries::source_declaration($payload);
+		$runtime = Type_Queries::canonical($payload)->definition()->origin() === type_definition_origin::runtime;
+		if ($runtime && $syntax->static_qualification) {
+			$qualified = Call_Preparation::prepare_named(Model::$runtime_callables->methods_named($payload, $syntax->name, true),
+				$syntax->arguments, $context);
+			$qualified->evaluates_qualifier = true;
+			return $qualified;
+		}
+		if ($runtime) {
+			$facts = Call_Preparation::prepare_named(Model::$runtime_callables->methods_named($payload, $syntax->name, false),
+				$syntax->arguments, $context);
+			$facts->receiver = self::instance_receiver($value, $payload);
+			return $facts;
+		}
 		if (!($declaration instanceof collected_member_owner)) { throw new \RuntimeException('Instance call requires a class, struct or interface receiver'); }
 		$record = object_cast($declaration, collected_member_owner::class);
 		if ($syntax->static_qualification) {
@@ -119,6 +135,16 @@ final class Method_Preparation
 			$qualified->evaluates_qualifier = true;
 			return $qualified;
 		}
+		$receiver = self::instance_receiver($value, $payload);
+		$facts = self::select($syntax, $record, false, $context);
+		$facts->receiver = $receiver;
+		return $facts;
+	}
+
+	/** Source and provider methods retain/borrow receivers under the same lifetime rules. */
+	private static function instance_receiver(prepared_expression $value, canonical_type_use $payload): prepared_method_receiver
+	{
+		$storage = Type_Queries::record_storage($value->type);
 		if ($value->place !== null) { Reference_Preparation::require_mutable_contents($value->place, $value->type); }
 		$lifetime = method_receiver_lifetime::retain_shared;
 		if ($storage !== record_storage_kind::shared)
@@ -137,9 +163,7 @@ final class Method_Preparation
 				$lifetime = method_receiver_lifetime::borrow_inline;
 			}
 		}
-		$facts = self::select($syntax, $record, false, $context);
-		$facts->receiver = new prepared_method_receiver($payload, $lifetime);
-		return $facts;
+		return new prepared_method_receiver($payload, $lifetime);
 	}
 
 	private static function select(call_node $syntax, collected_member_owner $record, bool $static_call, preparation_context $context,

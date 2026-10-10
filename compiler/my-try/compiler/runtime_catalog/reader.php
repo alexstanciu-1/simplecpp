@@ -355,6 +355,9 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'name') {
 				$result->name = self::name($reader);
 			}
+			elseif ($key === 'member') {
+				$result->member = self::callable_member($reader);
+			}
 			elseif ($key === 'returns') {
 				$result->return_type = self::type($reader);
 				$returns = true;
@@ -384,6 +387,38 @@ final class Runtime_Catalog_Reader
 		}
 		if (($result->identity === '') || ($result->name === '') || !$returns || !$parameters) {
 			$reader->reject('Missing runtime function field');
+		}
+		return $result;
+	}
+
+	/** Decode source-level membership without inventing a source declaration. */
+	private static function callable_member(\scpp\Json_Reader $reader): runtime_callable_member_spec
+	{
+		$result = new runtime_callable_member_spec();
+		$owner = false;
+		$dispatch = false;
+		$reader->begin_object();
+		while ($reader->next_property())
+		{
+			$key = $reader->property_name();
+			if ($key === 'owner') {
+				$result->owner = self::type($reader);
+				$owner = true;
+			}
+			elseif ($key === 'dispatch') {
+				$name = self::name($reader);
+				if (($name !== 'static') && ($name !== 'instance')) {
+					$reader->reject('Runtime member dispatch requires static or instance');
+				}
+				$result->static_member = $name === 'static';
+				$dispatch = true;
+			}
+			else {
+				$reader->reject('Unknown runtime callable member field: ' . $key);
+			}
+		}
+		if (!$owner || !$dispatch) {
+			$reader->reject('Missing runtime callable member field');
 		}
 		return $result;
 	}

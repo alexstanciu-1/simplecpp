@@ -49,7 +49,7 @@ abstract class runtime_function_definition implements callable_definition_i
 	}
 }
 
-/** Installed concrete free-function contract. */
+/** Installed concrete callable contract; optional type membership lives in the catalog. */
 final class registered_function extends runtime_function_definition implements callable_target_i
 {
 	private callable_signature $call_contract;
@@ -67,6 +67,15 @@ final class registered_function extends runtime_function_definition implements c
 }
 
 enum runtime_pattern_kind { case variable; case concrete; case application; }
+
+/** A type-owned public callable, not a fabricated collected source declaration. */
+final class runtime_callable_member
+{
+	public function __construct(public canonical_type_use $owner, public runtime_function_definition $target,
+		public bool $static_member)
+	{
+	}
+}
 
 /** Type patterns expose data identity, not source ASTs or executable matchers. */
 abstract class runtime_type_pattern

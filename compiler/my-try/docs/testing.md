@@ -3,8 +3,9 @@ Doc Status: supporting
 
 Shared runtime-storage checkpoint:
 `python3 compiler/my-try/tests/runtime_handles.py --results FRESH_DIRECTORY`.
-Three affected PHP suites and three generated programs cover noncopyable provider
-payloads behind copyable handles; extended matrices are Chapter 15 testing debt.
+The focused set covers noncopyable provider payloads behind copyable handles,
+registered static/instance calls and existing source-method regressions. Extended
+matrices are Chapter 15 testing debt.
 
 Owning source-module registration and generated-program checks:
 `python3 compiler/my-try/tests/runtime_source.py --results FRESH_DIRECTORY`.

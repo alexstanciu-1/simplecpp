@@ -162,13 +162,47 @@ The core vector/hash definitions and their C++ bindings now come solely from thi
 metadata. Source publication enumerates registered exposures rather than a second
 name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
 families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
-Methods, factory/initialization/indexing/iteration protocols, borrowed storage,
+Property/constant members, initialization/indexing/iteration protocols, borrowed storage,
 non-type parameters and handle-lifetime contracts are not granted by these records.
 Those protocols require their own shared model before additional runtime APIs can
 be enabled. The existing compiler composition selects core for its foundational
 container types; custom modules using them declare a core dependency.
 Configuration also validates existing protocol prerequisites privately, so an input
 missing foundational container types fails before retention, not on a later reset.
+
+## Type-owned callable membership
+
+Function records may add a `member` object:
+
+```json
+{
+  "id": "example.ticket.open",
+  "name": "open",
+  "member": {"owner": "ticket", "dispatch": "static"},
+  "parameters": [{"name": "value", "type": "int", "passing": "value"}],
+  "returns": "ticket"
+}
+```
+
+Omission declares a free function. Membership requires a registered runtime nominal
+owner and explicit `static` or `instance` dispatch. These are public exported
+contracts; no source AST, private provider implementation or inheritance is fabricated.
+Names are indexed by owner separately from free-function lookup. A static factory
+is an ordinary static callable returning its owner, not permission for arbitrary
+source `new`. Special double-underscore method names are not admitted here.
+Owner-template member recipes remain a subsequent integration step; do not enumerate
+concrete owner applications as a substitute. Generic method parameters already use
+the ordinary inferred signature mechanism.
+
+Static bindings name their qualified C++ callable (including a free factory adapter).
+Instance bindings name an unqualified C++ member identifier, not a source fragment.
+All calls use ordinary argument boundaries and overload admission. Shared receivers
+are evaluated/retained once and checked before argument evaluation; stable inline
+receivers are borrowed under existing source-method restrictions. Instance methods
+currently have the same mutable receiver admission as source methods. Expression-
+qualified static calls evaluate the qualifier once without dereferencing it.
+Non-retaining observed inputs stay alive for the call, including temporary inputs.
+Member properties and constants are separate contracts, not callable metadata.
 
 ## Registered storage policy
 

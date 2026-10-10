@@ -39,6 +39,12 @@ metadata. Live replacement is rejected; see the [catalog contract](../../../../s
 
 ## Tagged boxed storage
 
+Runtime callable membership observes installed callable identities and canonical
+owners; it does not create collected declarations. The callable catalog indexes
+owner/name overload pools separately from free names. Metadata membership never
+owns C++ spelling. Source and registered instance calls share prepared receiver
+lifetimes and argument admission; static factories are ordinary callable contracts.
+
 Runtime definition storage policies are registry-owned facts, installed once from
 typed metadata before publication. Inline/shared selection is independent of nominal
 kind and payload capabilities. Shared values reuse the ordinary nominal-handle

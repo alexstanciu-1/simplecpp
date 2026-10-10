@@ -7,11 +7,48 @@ final class Runtime_Callables
 {
 	private Keyed_Storage $definitions /** Keyed_Storage<registered_static_factory> */;
 	private Keyed_Storage $functions /** Keyed_Storage<runtime_function_definition> */;
+	private Keyed_Storage $members /** Keyed_Storage<runtime_callable_member> */;
+	private Key_Storage_List $member_names /** Key_Storage_List<runtime_callable_member> */;
 
 	public function __construct()
 	{
 		$this->definitions = new Keyed_Storage /** Keyed_Storage<registered_static_factory> */();
 		$this->functions = new Keyed_Storage /** Keyed_Storage<runtime_function_definition> */();
+		$this->members = new Keyed_Storage();
+		$this->member_names = new Key_Storage_List();
+	}
+
+	/** Membership observes the already owned callable; it does not copy its contract. */
+	public function register_member(canonical_type_use $owner, runtime_function_definition $target, bool $static_member): void
+	{
+		$members /** Keyed_Storage<runtime_callable_member> */ = $this->members;
+		if ($this->function_definition($target->key()) !== $target) {
+			throw new \LogicException('Runtime member target belongs to another catalog');
+		}
+		$member = new runtime_callable_member($owner, $target, $static_member);
+		$members->add($target->key(), $member);
+		$names /** Key_Storage_List<runtime_callable_member> */ = $this->member_names;
+		$names->add($owner->type_id() . ':' . $target->name(), $member);
+	}
+
+	public function member_for(runtime_function_definition $target): ?runtime_callable_member
+	{
+		$members /** Keyed_Storage<runtime_callable_member> */ = $this->members;
+		return isset($members[$target->key()]) ? $members[$target->key()] : null;
+	}
+
+	/** Keep member names out of the free-function scope; signatures still share selection. */
+	public function methods_named(canonical_type_use $owner, string $name, bool $static_member): array /** vector<callable_definition_i> */
+	{
+		$result /** vector<callable_definition_i> */ = [];
+		$names /** Key_Storage_List<runtime_callable_member> */ = $this->member_names;
+		foreach ($names->named($owner->type_id() . ':' . $name) as $member) {
+			if ($member->owner->matches($owner) && ($member->target->name() === $name)
+				&& ($member->static_member === $static_member)) {
+				$result[] = $member->target;
+			}
+		}
+		return $result;
 	}
 
 	/** Own a free-function identity independently of scope indexing and backend binding. */
