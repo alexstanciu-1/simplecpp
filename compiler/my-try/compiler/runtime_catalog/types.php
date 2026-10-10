@@ -80,6 +80,7 @@ final class Runtime_Type_Registration
 				$default_type, $parameter->capability_dependencies);
 		}
 		$definition = $this->register_definition($recipe, $parameters);
+		$this->types->registry()->register_runtime_storage($definition, $recipe->storage);
 		$this->types->source()->expose_type($name, $definition);
 		$this->types->providers()->register($definition, 'simple_cpp.runtime.' . $this->owners[$name], $recipe->identity);
 		unset($this->active[$name]);

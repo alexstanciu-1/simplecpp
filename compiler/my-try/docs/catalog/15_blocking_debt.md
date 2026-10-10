@@ -259,6 +259,15 @@ The module pass proves ordinary UTC/local forms and errors; it is not full calen
 or timezone support. Automatic optional-runtime linkage in my-try's native cache also
 remains with the build owner, not the semantic catalog.
 
+### CH15-RUNTIME-INTEGRATION-TESTS-01 — extended module validation
+
+Non-blocking testing debt requested 2026-10-10. The runtime integration plan uses
+focused positive/negative and generated-C++ boundary proofs. After foundations
+settle, review large catalogs, malformed-input fuzzing, all provider API edges,
+cross-platform linkage, full ownership/callable/protocol combinations, PCH/cache
+performance and the native compiler rebuild. Do not treat this deferral as
+permission to enable unsafe lifetime paths or skip representative rejection tests.
+
 ### CH15-RUNTIME-SOURCE-01 — borrowed source views
 
 Open; prerequisite for enabling span APIs, not a blocker for owning source calls.

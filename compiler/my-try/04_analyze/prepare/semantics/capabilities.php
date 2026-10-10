@@ -20,7 +20,7 @@ final class Capability_Preparation implements type_capability_query
 			return $definition->declares_capability($capability);
 		}
 		// Handle copying/storage is independent of the pointee's fields or completeness.
-		if (Type_Queries::is_nominal_handle($type_use)) {
+		if (Type_Queries::is_nominal_handle($type_use) && ($definition->origin() === type_definition_origin::source)) {
 			return ($capability === generic_contract::copyable_value)
 				|| ($capability === generic_contract::value_storable);
 		}

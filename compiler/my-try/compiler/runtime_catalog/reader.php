@@ -188,6 +188,19 @@ final class Runtime_Catalog_Reader
 				}
 				$kind = true;
 			}
+			elseif ($key === 'storage')
+			{
+				$storage_name = self::name($reader);
+				if ($storage_name === 'inline') {
+					$result->storage = record_storage_kind::inline_value;
+				}
+				elseif ($storage_name === 'shared') {
+					$result->storage = record_storage_kind::shared;
+				}
+				else {
+					$reader->reject('Unsupported runtime storage: ' . $storage_name);
+				}
+			}
 			elseif ($key === 'capabilities') {
 				$result->capabilities = self::capabilities($reader);
 				$capabilities = true;

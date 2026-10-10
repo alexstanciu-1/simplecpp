@@ -1017,6 +1017,29 @@ interface type_capability_query
 /** Own numeric identities, canonical concrete types and exact template application reuse. */
 final class Type_Registry implements type_capability_query
 {
+	/** Explicit provider storage is independent of nominal kind and payload capabilities. */
+	private array $runtime_storage_policies /** hash<record_storage_kind, int> */ = [];
+
+	/** Install once with the definition; never derive provider representation from its name. */
+	public function register_runtime_storage(type_definition_i $definition, record_storage_kind $storage): void
+	{
+		$id = $definition->definition_id();
+		if (($definition->origin() !== type_definition_origin::runtime)
+			|| !isset($this->definitions[$id]) || ($this->definitions[$id] !== $definition)
+			|| isset($this->runtime_storage_policies[$id])) {
+			throw new \LogicException('Runtime storage requires an owned, unconfigured runtime definition');
+		}
+		if (($storage !== record_storage_kind::inline_value) && ($storage !== record_storage_kind::shared)) {
+			throw new \InvalidArgumentException('Runtime storage supports inline or shared');
+		}
+		$this->runtime_storage_policies[$id] = $storage;
+	}
+
+	public function runtime_storage(type_definition_i $definition): ?record_storage_kind
+	{
+		return $this->runtime_storage_policies[$definition->definition_id()] ?? null;
+	}
+
 	private array $callable_types /** hash<callable_type_definition> */ = [];
 	public function define_callable(canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
 		?reference_return_contract $reference_return = null): callable_type_definition
@@ -1243,6 +1266,9 @@ final class Type_Registry implements type_capability_query
 	{
 		$type = $this->type($type_id);
 		$definition = $type->definition();
+		if ($by_value && ($this->runtime_storage($definition) === record_storage_kind::shared)) {
+			throw new \InvalidArgumentException('Opaque runtime shared payload does not permit value storage');
+		}
 		if ($by_value && ($definition->origin() === type_definition_origin::source)) {
 			if ($definition instanceof abstract_nominal_type_definition) {
 				if (object_cast($definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::interface_type) {
@@ -1274,6 +1300,10 @@ final class Type_Registry implements type_capability_query
 			return true;
 		}
 		$definition = $type->definition();
+		$registered_storage = $this->runtime_storage($definition);
+		if ($registered_storage !== null) {
+			return $registered_storage === record_storage_kind::inline_value;
+		}
 		if ($definition instanceof abstract_nominal_type_definition) {
 			$nominal = object_cast($definition, abstract_nominal_type_definition::class);
 			return ($nominal->nominal_kind() === nominal_type_kind::structure)
@@ -1317,6 +1347,11 @@ final class Type_Registry implements type_capability_query
 		$definition = $canonical->definition();
 		if ($definition->origin() === type_definition_origin::source) {
 			throw new \LogicException('Source type capabilities require completed declaration preparation');
+		}
+		if (!$type_use->by_value() && ($this->runtime_storage($definition) === record_storage_kind::shared)) {
+			if (($capability === generic_contract::copyable_value) || ($capability === generic_contract::value_storable)) {
+				return true;
+			}
 		}
 		if (!$definition->declares_capability($capability)) {
 			return false;
@@ -1409,6 +1444,9 @@ final class Type_Registry implements type_capability_query
 				throw new \InvalidArgumentException('Ownership wrappers require an unmodified payload type');
 			}
 			$payload_definition = $this->type($complete[0]->type_id())->definition();
+			if ($this->runtime_storage($payload_definition) === record_storage_kind::shared) {
+				throw new \InvalidArgumentException('Opaque runtime handle ownership transformations are not registered');
+			}
 			if ($payload_definition->origin() === type_definition_origin::source) {
 				if ($payload_definition instanceof abstract_nominal_type_definition) {
 					if ((object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::interface_type)

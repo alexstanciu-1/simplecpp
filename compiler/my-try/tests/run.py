@@ -18,7 +18,7 @@ def verify_php(root, output, runner, jobs):
     def suite(source):
         command = ['php', str(source)]
         if source.stem in ('echo', 'calls', 'llvm', 's2s', 'control_flow', 'closures', 'reference_captures', 'contextual_closures', 'empty_callables', 'callable_storage', 'void_returns', 'callable_inputs', 'callable_results', 'callable_reference_returns',
-                          'runtime_catalog', 'runtime_observation', 'runtime_generics', 'runtime_strings', 'runtime_datetime', 'runtime_filesystem', 'result_containers', 'runtime_types', 'runtime_builders', 'runtime_source'):
+                          'runtime_catalog', 'runtime_observation', 'runtime_generics', 'runtime_strings', 'runtime_datetime', 'runtime_filesystem', 'result_containers', 'runtime_types', 'runtime_builders', 'runtime_source', 'runtime_handles'):
             directory = output / source.stem
             directory.mkdir()
             command.append(str(directory))

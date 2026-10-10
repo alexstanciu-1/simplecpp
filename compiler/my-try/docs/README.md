@@ -8,6 +8,10 @@ experiment retained for regressions, not a second semantic development path.
 
 ## Reading map
 
+The approved [runtime module integration plan](planning/runtime_module_integration.md)
+groups remaining storage, members, protocols, signatures and build work into
+reusable checkpoints; extended testing is explicit Chapter 15 debt.
+
 Ordinary runtime type registration now uses the shared module metadata: `types` and
 separate `cpp_types` records, including vector/hash. The [catalog contract](../../../specs/runtime_module_metadata.md#ordinary-runtime-type-declarations)
 owns the shape; [focused tests](testing.md#reusing-the-runner) prove metadata-only

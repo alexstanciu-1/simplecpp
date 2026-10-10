@@ -3,6 +3,10 @@ Doc Status: planning
 
 ## Direction
 
+The [approved completion plan](runtime_module_integration.md) now groups remaining
+foundations and records checkpoint status. Shared runtime storage is implemented;
+member/factory and protocol integration remain subsequent checkpoints.
+
 Migrate the runtime's source-facing symbols by owning module, not by adding special
 cases to expression preparation. Runtime metadata is loaded once into typed startup
 records, then installed against each semantic registry. The
@@ -270,8 +274,9 @@ C++ payloads, not the ordinary inline carriers used by these builders. Source-de
 shared storage currently recognizes source declarations, and diagnostic/output fields
 need registered member facts. Do not label noncopyable payloads copyable or bake a
 shared wrapper into an opaque C++ binding to bypass that semantic distinction.
-Agree that shared-storage/member foundation before those module batches; builders
-provide a complete bounded use of the current ordinary-type foundation meanwhile.
+The shared-storage prerequisite is now implemented and proved with an unfamiliar
+provider. Registered members remain a prerequisite for diagnostic/output fields;
+real module lifecycle contracts still require their own focused integration proofs.
 
 Runtime-type foundation: `types`/`cpp_types` records decode directly into typed startup
 data. One transient registration worker installs ordinary nominal/template definitions

@@ -162,13 +162,34 @@ The core vector/hash definitions and their C++ bindings now come solely from thi
 metadata. Source publication enumerates registered exposures rather than a second
 name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
 families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
-Methods, factory/initialization/indexing/iteration protocols, specialized storage,
+Methods, factory/initialization/indexing/iteration protocols, borrowed storage,
 non-type parameters and handle-lifetime contracts are not granted by these records.
 Those protocols require their own shared model before additional runtime APIs can
 be enabled. The existing compiler composition selects core for its foundational
 container types; custom modules using them declare a core dependency.
 Configuration also validates existing protocol prerequisites privately, so an input
 missing foundational container types fails before retention, not on a later reset.
+
+## Registered storage policy
+
+Ordinary type records may specify `"storage": "inline"` (the default) or
+`"storage": "shared"`. The policy is registered per definition and applies to
+all its template applications; no concrete argument combinations are enumerated.
+Nominal kind alone does not select runtime storage. C++ bindings always name the
+provider payload/carrier; shared storage adds the existing shared-handle wrapper.
+
+Shared stored values copy handle identity, never the payload. Storage and copying
+of the handle are available independently of payload capabilities; declarations
+and conditional capability dependencies continue to describe the payload.
+`result_payload` remains an explicit transport opt-in. Existing null checks,
+reference-slot updates, value arguments and Result transport reuse ordinary paths.
+Reference to a handle slot is distinct from mutation through a copied handle.
+
+Opaque shared provider types currently reject explicit `value<T>` and ownership
+rewrapping, including `shared<T>`, `unique<T>` and `weak<T>`. Those transformations
+need a separate supported payload/ownership contract. Storage does not enable
+source `new`, public members, data initialization, or inheritance. This bounded
+restriction does not change source-declared class/struct ownership forms.
 
 ## Inferred generic runtime contracts
 

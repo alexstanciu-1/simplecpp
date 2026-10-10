@@ -47,6 +47,10 @@ final class Type_Queries
 	public static function is_nominal_handle(canonical_type_use $type): bool
 	{
 		if ($type->by_value()) { return false; }
+		$definition = self::canonical($type)->definition();
+		if (Model::$type_catalog->registry()->runtime_storage($definition) === record_storage_kind::shared) {
+			return true;
+		}
 		if (self::is_source_class($type)) { return true; }
 		return self::source_declaration($type) instanceof collected_interface;
 	}

@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "module": "handles",
+  "dependencies": [
+    "core"
+  ],
+  "types": [
+    {
+      "id": "proof.ticket",
+      "name": "ticket",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    }
+  ],
+  "cpp_types": [
+    {
+      "id": "proof.ticket",
+      "symbol": "handle_proof::ticket",
+      "header": "runtime_handles.hpp"
+    }
+  ],
+  "functions": [
+    {
+      "id": "proof.open_ticket",
+      "name": "open_ticket",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "ticket"
+    },
+    {
+      "id": "proof.ticket_read",
+      "name": "ticket_read",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "ticket",
+          "passing": "observe"
+        }
+      ],
+      "returns": "int"
+    },
+    {
+      "id": "proof.ticket_write",
+      "name": "ticket_write",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "ticket",
+          "passing": "value"
+        },
+        {
+          "name": "value",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "proof.ticket_clear",
+      "name": "ticket_clear",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "ticket",
+          "passing": "reference"
+        }
+      ],
+      "returns": "void"
+    }
+  ],
+  "cpp": [
+    {
+      "id": "proof.open_ticket",
+      "symbol": "handle_proof::open_ticket",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket_read",
+      "symbol": "handle_proof::ticket_read",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket_write",
+      "symbol": "handle_proof::ticket_write",
+      "header": "runtime_handles.hpp"
+    },
+    {
+      "id": "proof.ticket_clear",
+      "symbol": "handle_proof::ticket_clear",
+      "header": "runtime_handles.hpp"
+    }
+  ]
+}

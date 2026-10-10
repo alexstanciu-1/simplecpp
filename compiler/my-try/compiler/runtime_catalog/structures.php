@@ -28,6 +28,7 @@ final class runtime_type_definition_spec
 	public string $identity = '';
 	public string $name = '';
 	public nominal_type_kind $kind;
+	public record_storage_kind $storage = record_storage_kind::inline_value;
 	public array $capabilities /** vector<generic_contract> */ = [];
 	public Storage $parameters /** Storage<runtime_type_parameter_spec> */;
 

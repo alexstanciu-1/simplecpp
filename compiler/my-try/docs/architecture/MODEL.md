@@ -39,6 +39,13 @@ metadata. Live replacement is rejected; see the [catalog contract](../../../../s
 
 ## Tagged boxed storage
 
+Runtime definition storage policies are registry-owned facts, installed once from
+typed metadata before publication. Inline/shared selection is independent of nominal
+kind and payload capabilities. Shared values reuse the ordinary nominal-handle
+query and backend representation; copying them copies identity, not payload state.
+Registry reset rebuilds policies with definitions. Opaque payload ownership
+transformations remain unavailable without their own contracts.
+
 The mixed and dynamic semantic roles remain distinct nominal definitions. Both are
 registered as value-stored tagged bindings; dynamic's shared container identity is
 a payload-copy contract, not class-like storage for every value. The registry's
