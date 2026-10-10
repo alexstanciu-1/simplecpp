@@ -18,10 +18,10 @@ use the same path. Compound-assignment RHS admission remains independently bound
 | Source operation | Exact operand types | Result | Selected C++ lowering |
 | --- | --- | --- | --- |
 | `**` | canonical `int`, `int` | canonical `int` | Checked shared `scpp::pow` |
-| `+`, `-`, `*`, `/`, `%` | canonical `int`, `int` | canonical `int` | Existing runtime wrapper arithmetic |
-| `==`, `!=`, `<`, `<=`, `>`, `>=` | canonical `int`, `int` | canonical `bool` | Existing runtime wrapper comparisons |
+| `+`, `-`, `*`, `/`, `%` | same-signedness integers | Wider type; canonical `int` wins when present | Prepared common-domain conversions, existing runtime wrapper arithmetic |
+| `==`, `!=`, `<`, `<=`, `>`, `>=` | same-signedness integers | canonical `bool` | Prepared common-domain conversions, existing runtime wrapper comparisons |
 | `===`, `!==` | canonical `int`, `int` | canonical `bool` | `scpp::php::identical` / `not_identical` |
-| `<=>` | canonical `int`, `int` | canonical `int`, exactly -1/0/1 | Snapshot each operand once, compare with `<` and `>` |
+| `<=>` | same-signedness integers | canonical `int`, exactly -1/0/1 | Snapshot each converted operand once, compare with `<` and `>` |
 | `.` | mixed, ordinary scalar or literal null | canonical `string` | Prepared text conversion then string-wrapper `+` |
 | `&&`, `\|\|`, `and`, `or` | canonical `bool`, `bool` | canonical `bool` | Convert each operand explicitly to native bool around native lazy operators, wrap result |
 | `xor` | canonical `bool`, `bool` | canonical `bool` | Snapshot native bools left-to-right, compare with `!=`, wrap result |
@@ -38,8 +38,9 @@ operands; wrappers, direct dynamic and fixed-width peers remain deferred. It reu
 text domain with string/mixed targets. See [chapter 05](catalog/05_dynamic_boundaries.md#text-concatenation-write-back--2026-10-04).
 Strict comparison
 helpers preserve the distinction from ordinary comparison, even though the current
-exact same-type integer slice produces the same truth values. No cross-type equality
-or implicit numeric promotion is admitted.
+exact canonical-int identity slice produces the same truth values. Ordinary numeric
+comparison and arithmetic now follow the [2026-10-10 width contract](../../../specs/compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons).
+Signed/unsigned pairs reject; fixed-width compound updates remain deferred.
 
 `&&`, `||`, `and` and `or` evaluate the RHS lazily; `xor` evaluates both sides
 left-to-right. Both sides are still prepared and typechecked;

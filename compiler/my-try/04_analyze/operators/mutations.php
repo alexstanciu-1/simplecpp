@@ -75,6 +75,15 @@ final class Mutation_Preparation
 			}
 		}
 		$operands /** vector<canonical_type_use> */ = [$target->type, $value->type];
+		// Widened binary arithmetic does not yet extend the stored-value update contract.
+		if ($source_operator !== operator_kind::concatenation) {
+			foreach ($operands as $operand) {
+				if ((Type_Queries::canonical($operand)->family() === type_family::integer)
+					&& !$operand->matches($context->integer)) {
+					throw new \RuntimeException('S2S fixed-width compound assignment is deferred');
+				}
+			}
+		}
 		$facts->decision = Operator_Preparation::decide(
 			$source_operator, $operands, operator_context::expression, $context);
 		$facts->write_back = Conversion_Preparation::decide(

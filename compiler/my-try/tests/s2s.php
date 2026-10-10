@@ -1288,8 +1288,8 @@ foreach ($variable_copy_rejections as $name => [$source, $diagnostic])
 
 $integer_addition_rejections = [
 	'undeclared operand' => ['$b = $missing + 1;', 'established local declaration for missing'],
-	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer binary operation requires canonical int operands'],
-	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer binary operation requires canonical int operands'],
+	'boolean operand' => ['$a = 1; $b = $a + true;', 'integer binary operation requires integer operands'],
+	'narrow integer operand' => ['$a uint8 = 1; $b = $a + 1;', 'integer binary operation requires matching signedness'],
 ];
 foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 {

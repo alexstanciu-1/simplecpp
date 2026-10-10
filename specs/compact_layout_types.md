@@ -421,7 +421,38 @@ Layout probes are compile-time generated-layout observations. They are intended
 for tests, assertions, diagnostics, and compact-row validation inside generated
 Simple C++ projects. They are not a portable external ABI promise.
 
-## 7. Deferred Compact Layout Features
+## 7. v0.2 integer arithmetic and numeric comparisons
+
+Agreed 2026-10-10. For `+`, `-`, `*`, `/`, `%`, `==`, `!=`, `<`, `<=`,
+`>` and `>=`, integer operands must have the same signedness. Both operands
+convert to the wider declared integer type before computation. Equal widths
+retain that type; `byte` is the `uint8` alias. Canonical `int` is signed 64-bit
+and wins the result identity when either operand is canonical `int`.
+
+Arithmetic returns the selected integer type; comparisons return `bool`.
+Spaceship (`<=>`) uses the same operand selection but returns canonical `int`
+with value -1, 0 or 1; it must compare, not subtract.
+
+Examples: `int32 + int64 -> int64`, `uint16 + uint32 -> uint32`,
+`int32 + int -> int`. Signed/unsigned combinations are preparation errors,
+including `uint32 + 1`, because ordinary integer literals have type `int`.
+An explicit conversion, such as `uint32 + (uint32)1`, establishes a common
+signedness; there is no value-dependent literal exception.
+
+Evaluation and conversions follow [ordered eager evaluation](expression_evaluation.md).
+Division/remainder retain existing zero-divisor runtime errors and native integer
+behavior. No new checked overflow, saturation or universal wrapping guarantee is
+introduced; native signed-overflow limitations remain. Assignment, argument and
+return conversions are unchanged by this amendment.
+
+This slice does not extend fixed-width unary/mutation/compound operators, bitwise
+operators, shifts, strict identity, floating arithmetic or [power](integer_power.md).
+The my-try frontend keeps their existing admission rules. It selects domains from
+registered integer width/signedness facts; backend representation does not decide
+source promotion. Remaining signed/unsigned, overflow and literal ergonomics are
+[CH15 review debt](../compiler/my-try/docs/catalog/15_blocking_debt.md#ch15-integer-domains-01--integer-interoperability-and-overflow).
+
+## 8. Deferred Compact Layout Features
 
 The following are not current first-slice semantics:
 

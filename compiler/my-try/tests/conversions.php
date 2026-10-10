@@ -175,7 +175,8 @@ if (!($value_cast->operand instanceof call_node) || !($sum->left instanceof cast
 $text = CPP_Probe::text(Model::$cpp_files);
 if ((substr_count($text, 'return function_source();') !== 1)
 	|| !str_contains($text, 'scpp::cast<scpp::string_t>(scpp::cast<scpp::float_t>(local_value))')
-	|| !str_contains($text, '(scpp::cast<scpp::int_t<>>(static_cast<scpp::float_t>(2.5)) + static_cast<scpp::int_t<>>(1LL))')) {
+	|| !str_contains($text, 'auto operand_0 = scpp::cast<scpp::int_t<>>(static_cast<scpp::float_t>(2.5));')
+	|| !str_contains($text, 'auto operand_1 = static_cast<scpp::int_t<>>(1LL); return (operand_0 + operand_1);')) {
 	throw new \LogicException('Explicit cast lowering lost single evaluation, nesting or precedence');
 }
 

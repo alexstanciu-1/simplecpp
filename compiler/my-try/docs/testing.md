@@ -768,6 +768,17 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For same-signedness fixed-width integer arithmetic and comparisons:
+
+```bash
+python3 compiler/my-try/tests/integer_widths.py --results /tmp/FRESH_INTEGER_RESULTS
+```
+
+Checks prepared result/conversion identities, rejection boundaries, existing
+operator/conversion/compound/power regressions, and two generated programs for
+field/call arithmetic, unsigned range, ordering and zero-divisor failures.
+Uses the shared pool without PCH; does not rebuild the compiler natively.
+
 For both metadata-registered string builder families:
 
 ```bash

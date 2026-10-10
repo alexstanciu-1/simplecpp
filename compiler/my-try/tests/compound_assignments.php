@@ -72,9 +72,9 @@ foreach ([['&=', '7', '3', operator_operation::integer_bitwise_and],
 compound_test_source('struct Box { int $value; } $box Box; ($box->value) += 1;');
 $rejections = [
 	['$x += 1;', 'established local declaration'],
-	['$x = true; $x += 1;', 'canonical int operands'],
-	['$x uint8 = 3; $x += 1;', 'canonical int operands'],
-	['$x = 3; $x /= 1.5;', 'canonical int operands'],
+	['$x = true; $x += 1;', 'integer binary operation requires integer operands'],
+	['$x uint8 = 3; $x += 1;', 'fixed-width compound assignment is deferred'],
+	['$x = 3; $x /= 1.5;', 'integer binary operation requires integer operands'],
 	['$x = "x"; $n ?int = 1; $x .= $n;', 'concatenation requires boxed'],
 	['$x = 3; $x .= "x";', 'concatenation requires string'],
 	['1 += 2;', 'existing local or parameter'],

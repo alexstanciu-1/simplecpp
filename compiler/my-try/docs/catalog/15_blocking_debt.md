@@ -151,6 +151,23 @@ Trait adaptation syntax is separate deferred work, not enabled by this debt.
 
 ## Non-blocking follow-ups
 
+### CH15-INTEGER-DOMAINS-01 — integer interoperability and overflow
+
+Deferred after the 2026-10-10 same-signedness binary slice. Review checked
+arithmetic/overflow, signed/unsigned interoperability (including the proposed
+checked `uint64 + int64 -> int64`), and integer-literal ergonomics. Current unsigned
+arithmetic requires explicit unsigned operands even for small positive literals.
+Do not silently admit lossy conversions or assume overflow is checked today.
+Review fixed-width unary/compound mutation, bitwise/shifts and strict identity
+separately; power retains its exact canonical-int contract. Broader boundary
+conversion/range checks and exhaustive width/limit testing remain follow-ups.
+The focused probe also found that the existing string-to-`uint64` cast rejects
+`"18446744073709551615"`; review full-range unsigned parsing separately. Arithmetic
+and comparison were proved at that value by constructing it from unsigned arithmetic,
+without changing the cast contract in this slice.
+This is non-blocking debt; the [current contract](../../../../specs/compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons)
+is deliberately bounded.
+
 ### CH15-RUNTIME-PROCESS-01 — environment/shell edge and resource review
 
 The core environment/shell catalog preserves the existing falseable-string contract:

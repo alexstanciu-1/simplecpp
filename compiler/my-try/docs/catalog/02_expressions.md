@@ -15,6 +15,36 @@ fallthrough are repaired. Duplicate declarations are explicitly deferred debt (P
 alongside conditional runtime capability debt. The proved rows below describe bounded examples, not unrestricted
 copying or declaration validity.
 
+## Fixed-width binary follow-up — 2026-10-10
+
+The [agreed integer-domain contract](../../../../specs/compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons)
+extends ordinary arithmetic and numeric comparisons to same-signedness widths.
+`Integer_Operators` selects the wider registered operand domain and publishes
+ordinary conversion decisions; existing ordered C++ lowering and runtime helpers
+are reused without type-name/pair tables. Canonical `int` wins when present;
+spaceship always returns canonical signed -1/0/1. Mixed signedness rejects.
+
+Legacy runtime `generated/operator_detail.hpp` already selects the wider
+same-signedness representation; `runtime_core_values_010_fixed_width_ints.cpp`
+proves that behavior. This slice brings preparation into line with that bounded
+policy, not with general C++ signed/unsigned promotions. No runtime rewrite or
+native compiler rebuild is part of this checkpoint.
+
+Proof: `tests/integer_widths.py` checks prepared type identities/conversions,
+rejections, actual field/call arithmetic, full-range unsigned comparison,
+sequencing and zero-divisor errors. Compound/unary updates, bitwise/shifts,
+strict identity and power retain their old admission; broader work is
+[CH15 debt](15_blocking_debt.md#ch15-integer-domains-01--integer-interoperability-and-overflow).
+
+Evidence: `/tmp/integer-widths-20261010-final` passed four PHP tasks (including
+the existing operator suite) and two generated programs, 5.04s/7.61s compile/run.
+FPM was unavailable in the sandbox; the shared runner used its CLI fallback.
+An initial run exposed an old conversion-test spelling expectation from the eager
+sequencing change; that assertion now checks the ordered snapshots. Fixture fixes
+removed an out-of-scope full-range string cast and a missing test-only error header.
+The supplementary S2S PHP regression passed in 39.00s at
+`/tmp/integer-widths-s2s-20261010`; its exported programs were not additionally built.
+
 ## Positive pass conclusion — 2026-10-02
 
 **Status: positive pass complete for the agreed bounded frontend + C++ S2S scope.**
@@ -236,12 +266,10 @@ lowering consumes that decision and preserves:
 auto local_a = (static_cast<scpp::int_t<>>(1LL) + static_cast<scpp::int_t<>>(2LL));
 ```
 
-Non-canonical operands are hard errors. An explicit cast may establish canonical
-`int` before this operator, but explicit-cast permission does not become an implicit
-operator conversion. Calls remain rejected as operands until effect analysis can
-prove that target-language evaluation order preserves source behavior. Mixed-width
-integer promotion requires a normative contract before implementation; see the
-[operator plan](../planning/operators.md).
+This initial canonical-only checkpoint is superseded by the 2026-10-10
+same-signedness width contract above and ordered eager evaluation. Calls are
+admitted through ordinary expression preparation; explicit casts do not imply
+permission for otherwise unsupported operator combinations.
 
 ### Imported version 1
 
