@@ -411,6 +411,20 @@ For the ordering subset (`less_than`, `less_than_or_equal`, `greater_than`, `gre
 
 ### 6.6 `operators_identity_strict`
 
+#### v0.2 same-type strings — 2026-10-10
+
+For two statically typed `string` operands, `===` compares the complete byte
+contents and returns `bool`; `!==` is its negation. Equal bytes compare equal
+regardless of storage identity. Comparison is case-sensitive, includes embedded
+NUL bytes, and performs no numeric coercion, Unicode normalization or locale-aware
+comparison. Empty strings compare equal. Operands use the
+[ordered eager evaluation contract](../expression_evaluation.md), preserving the
+left value before right-side effects.
+
+The bounded my-try slice routes these operations through the existing strict
+identity helpers. It does not enable string ordering, ordinary string `==`/`!=`,
+or new cross-type comparisons. Existing boxed/wrapper contracts are unchanged.
+
 This family covers:
 - `identical`
 - `not_identical`

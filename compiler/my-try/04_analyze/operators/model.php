@@ -107,6 +107,8 @@ enum operator_operation {
 	case integer_equal;
 	case integer_not_equal;
 	case integer_identical;
+	case string_identical;
+	case string_not_identical;
 	case integer_not_identical;
 	case integer_less;
 	case integer_less_equal;

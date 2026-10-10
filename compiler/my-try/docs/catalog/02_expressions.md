@@ -15,6 +15,24 @@ fallthrough are repaired. Duplicate declarations are explicitly deferred debt (P
 alongside conditional runtime capability debt. The proved rows below describe bounded examples, not unrestricted
 copying or declaration validity.
 
+## String strict identity — 2026-10-10
+
+String identity follow-up: same-type `string === string` and `!==` now have
+dedicated prepared operation identities, ordinary identity conversions and the
+shared ordered binary/helper lowering. Byte-exact contents include NUL and do
+not normalize Unicode. Cross-type and ordinary/ordered string comparisons remain
+outside this slice. Contract: [strict identity](../../../../specs/operator_matrix/profile_semantics_v1.md#v02-same-type-strings--2026-10-10).
+Focused runner: `tests/string_identity.py` (prepared facts, operator/conversion/
+boxed regressions, two generated programs for bytes, calls and snapshot ordering).
+
+Evidence: `/tmp/string-identity-20261010-final` passes three PHP tasks and both
+generated programs (6.32s/6.36s compile/run). An initial runner attempt named a
+nonexistent strings suite; the corrected runner uses the existing conversions
+suite. No runtime implementation change or native compiler rebuild was needed.
+The accounting retry at `/tmp/accounting-string-20261010` now exposes boolean
+strict identity in `GeneralLedger::validate`, alongside the previously recorded
+compound-update restrictions. Full accounting emission/execution remains blocked.
+
 ## Fixed-width binary follow-up — 2026-10-10
 
 The [agreed integer-domain contract](../../../../specs/compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons)

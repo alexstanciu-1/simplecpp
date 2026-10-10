@@ -768,6 +768,12 @@ Reducing cold compilation cost through compiler-selected runtime headers remains
 
 ## Reusing the runner
 
+For same-type strict string comparisons, run
+`python3 compiler/my-try/tests/string_identity.py --results /tmp/FRESH_STRING_IDENTITY_RESULTS`.
+The shared pool checks preparation/rejections and existing operator, conversion and
+boxed regressions, then builds two programs without PCH: ordered value comparisons
+and embedded-NUL comparisons. This does not rebuild the compiler natively.
+
 For same-signedness fixed-width integer arithmetic and comparisons:
 
 ```bash

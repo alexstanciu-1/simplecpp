@@ -850,10 +850,12 @@ final class CPP_Generator
 			$spelling = '!=';
 		}
 		elseif (($decision->operation === operator_operation::integer_identical)
+			|| ($decision->operation === operator_operation::string_identical)
 			|| ($decision->operation === operator_operation::boxed_identical)) {
 			$spelling = 'scpp::php::identical';
 		}
 		elseif (($decision->operation === operator_operation::integer_not_identical)
+			|| ($decision->operation === operator_operation::string_not_identical)
 			|| ($decision->operation === operator_operation::boxed_not_identical)) {
 			$spelling = 'scpp::php::not_identical';
 		}
@@ -922,6 +924,8 @@ final class CPP_Generator
 				. '(static_cast<bool>(' . $left . ' > ' . $right . ') ? 1 : 0))';
 		}
 		if (($decision->operation === operator_operation::integer_identical)
+			|| ($decision->operation === operator_operation::string_identical)
+			|| ($decision->operation === operator_operation::string_not_identical)
 			|| ($decision->operation === operator_operation::integer_not_identical)
 			|| ($decision->operation === operator_operation::boxed_identical)
 			|| ($decision->operation === operator_operation::boxed_not_identical)) {
