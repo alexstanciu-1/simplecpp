@@ -47,15 +47,15 @@ final class Runtime_Members
 		if ($optional_owner === null) {
 			throw new \InvalidArgumentException('Member constant requires a type owner');
 		}
-		$owner /** canonical_type_use */ = $optional_owner;
+		$owner /** semantic_type_definition */ = $optional_owner;
 		$constants /** Keyed_Storage<registered_constant> */ = $this->constant_names;
-		$constants->add($owner->type_id() . ':' . $constant->constant_name(), $constant);
+		$constants->add($owner->definition_id() . ':' . $constant->constant_name(), $constant);
 	}
 
 	public function constant(canonical_type_use $owner, string $name): ?registered_constant
 	{
 		$constants /** Keyed_Storage<registered_constant> */ = $this->constant_names;
-		$key = $owner->type_id() . ':' . $name;
+		$key = Type_Queries::canonical($owner)->definition()->definition_id() . ':' . $name;
 		return isset($constants[$key]) ? $constants[$key] : null;
 	}
 }

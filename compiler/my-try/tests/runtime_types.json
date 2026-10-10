@@ -17,6 +17,10 @@
     {"id": "proof.parcel", "symbol": "runtime_type_test::parcel", "header": "runtime_type_support.hpp"},
     {"id": "proof.receipt", "symbol": "runtime_type_test::receipt", "header": "runtime_type_support.hpp"}
   ],
+  "constants": [
+    {"owner":"parcel", "name":"LIMIT", "type":"int", "value":37},
+    {"owner":"receipt", "name":"LIMIT", "type":"int", "value":41}
+  ],
   "functions": [
     {"id":"proof.parcel.make", "name":"make", "member":{"owner":"parcel","dispatch":"static"}, "parameters":[{"name":"value","type":{"parameter":"T"},"passing":"value"}], "returns":{"name":"parcel","arguments":[{"parameter":"T"}]}},
     {"id":"proof.parcel.read", "name":"read", "member":{"owner":"parcel","dispatch":"instance"}, "parameters":[], "returns":{"parameter":"T"}},

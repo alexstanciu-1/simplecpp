@@ -17,12 +17,12 @@ final class Runtime_Catalog_Registration
 				if ($constant->type !== 'int') {
 					throw new \RuntimeException('Runtime constants currently require int');
 				}
-				$owner /** ?canonical_type_use */ = null;
+				$owner /** ?semantic_type_definition */ = null;
 				if ($constant->owner !== null)
 				{
 					$owner_spec /** runtime_type_spec */ = $constant->owner;
-					$owner = self::member_owner($owner_spec, $types);
-					$key = $owner->type_id() . ':' . $constant->name;
+					$owner = self::member_definition($owner_spec, $types);
+					$key = $owner->definition_id() . ':' . $constant->name;
 					if (isset($member_names[$key])) {
 						throw new \RuntimeException('Duplicate runtime member constant: ' . $constant->name);
 					}

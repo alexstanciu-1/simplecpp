@@ -84,9 +84,14 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
 - Focused proof: /tmp/runtime-owner-methods-20261010-final (four PHP suites and two
   generated programs). Covers exact owner/argument agreement, registration identity,
   invalid recipe rejection, defaulted owners, nominal member and free-generic regression.
-- Phase 2 remains in progress: property/constant owner-template
+- Phase 2 template constants implemented: lookup/duplicate checks use definition
+  identity. Every application shares the same exact integer constant; type-dependent
+  values are not introduced. Focused evidence: /tmp/runtime-owner-constants-20261010-final
+  (two PHP suites, two generated programs), including nested/defaulted owner use,
+  qualifier effects, identity sharing, duplicate rejection and no free-name leakage.
+- Phase 2 remains in progress: property owner-template
   member recipes are still required. Do not replace owner recipes with enumerated
-  concrete applications. Next checkpoint addresses property/constant owner recipes.
+  concrete applications. Next checkpoint addresses property owner recipes.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
   export through namespace import lookup. This is not covered by the member proof.

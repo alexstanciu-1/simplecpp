@@ -40,15 +40,18 @@ under ordinary lexical lookup. Constants use the existing settled constant model
 and value lowering, not function contracts or C++ symbol bindings. Their values are
 part of the trusted runtime contract and must agree with the provider implementation.
 
-An optional `owner` selects a registered nominal runtime type, for example
+An optional `owner` selects a registered nominal or template runtime definition, for example
 `{"owner":"ticket","name":"LIMIT","type":"int","value":37}`.
 These public immutable constants use `ticket::LIMIT` and are not published as free
 names. Constants and methods have separate name spaces. Duplicate constants on the
 same owner reject configuration before publication; ownerless constants retain the
 global collision rules above. Expression-qualified access evaluates its qualifier
 once, including an empty shared handle, under the ordinary static-member contract.
-Owner-template recipes remain pending; concrete applications must not be enumerated
-as a substitute. No C++ binding is needed for settled constant values.
+All applications of a template owner share the same constant identity and exact
+value: `parcel<int>::LIMIT` and `parcel<string>::LIMIT` use a single `parcel` owner
+registration. Owner applications in metadata are rejected, not enumerated. Constant
+values remain literal integers, not type-dependent expressions. No C++ binding is
+needed for settled constant values.
 
 A function requires `id`, `name`, `parameters`, and `returns`. Identities are globally
 unique across selected modules. Source names may repeat for overloads with different

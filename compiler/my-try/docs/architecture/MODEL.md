@@ -796,10 +796,12 @@ Type definitions live under `compiler/types/`; constant identities and value rec
 live under `compiler/constants/`. Built-ins use `registered_constant`; source constants
 use `collected_constant`. Both implement `constant_target_i`, exposing a source name
 and read-only settled-value query. The interface invokes no processing or backend.
-Registered constants may retain a canonical runtime owner. `Model::$runtime_members`
+Registered constants may retain a runtime definition owner. `Model::$runtime_members`
 indexes those same identities by owner and member name; ownerless constants alone
 enter language scope. Type resets rebuild the index without rereading JSON. Member
 constants reuse settled values, not synthetic source declarations or backend names.
+All template applications share the definition's constant identity and value;
+lookup does not allocate a constant per application.
 `constant_declaration_node` owns its initializer and attached `constant_value` facts.
 `constant_definition_work` reuses the existing declaration scheduler, dependency
 graph, failure/retry and retirement protocol. Analysis requires completion before

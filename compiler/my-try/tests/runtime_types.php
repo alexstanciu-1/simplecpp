@@ -42,6 +42,8 @@ runtime_type_check($missing_foundation && Model::$runtime_metadata === $input,
 
 $schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
 $invalids = [];
+$bad = $schema; $bad['constants'][] = $bad['constants'][0]; $invalids[] = [$bad, 'Duplicate runtime member constant'];
+$bad = $schema; $bad['constants'][0]['owner'] = ['name'=>'parcel','arguments'=>['int']]; $invalids[] = [$bad, 'owner must name a definition'];
 $bad = $schema; $bad['functions'][0]['type_parameters'] = ['T']; $invalids[] = [$bad, 'Duplicate runtime type parameter'];
 $bad = $schema; $bad['functions'][0]['member']['owner'] = ['name'=>'parcel','arguments'=>['int']]; $invalids[] = [$bad, 'owner must name a definition'];
 $bad = $schema; $bad['functions'][1]['returns'] = ['parameter'=>'Unknown']; $invalids[] = [$bad, 'Unknown runtime type parameter'];
@@ -92,6 +94,9 @@ $integer_members = Model::$runtime_callables->methods_named($integer_owner, 'rea
 $string_members = Model::$runtime_callables->methods_named($string_owner, 'read', false);
 runtime_type_check(count($integer_members) === 1 && $integer_members[0] === $string_members[0],
 	'Owner applications allocated separate runtime method registrations');
+$integer_constant = Model::$runtime_members->constant($integer_owner, 'LIMIT');
+runtime_type_check($integer_constant !== null && $integer_constant === Model::$runtime_members->constant($string_owner, 'LIMIT'),
+	'Owner applications allocated separate constant registrations');
 runtime_type_check($defaulted === $registry->intern_application($parcel, [$receipt]), 'Forward default changed identity');
 $identity = Model::$type_catalog->providers()->provider_for($parcel->definition_id())->identity();
 runtime_type_check($identity->provider() === 'simple_cpp.runtime.type_proof' && $identity->family() === 'proof.parcel', 'Provider identity conflated with source/C++ name');
@@ -122,6 +127,18 @@ function runtime_type_compile(string $source): string
 }
 
 $cases = [
+	'owner_constants' => <<<'PHS'
+const INTEGER_LIMIT = parcel<int>::LIMIT;
+const NESTED_LIMIT = parcel<parcel<string>>::LIMIT;
+function qualifier(int &$calls): parcel<int> { $calls++; return pack(9); }
+$calls = 0;
+$value = qualifier($calls)::LIMIT;
+$default_owner = default_parcel(1);
+$defaulted = $default_owner::LIMIT;
+if (INTEGER_LIMIT !== 37 || NESTED_LIMIT !== 37 || $value !== 37 || $defaulted !== 37 || $calls !== 1) { return 1; }
+if (receipt::LIMIT !== 41) { return 2; }
+return 0;
+PHS,
 	'owner_members' => <<<'PHS'
 $a = parcel<int>::make(7);
 $b = parcel<string>::make("ok");
@@ -149,6 +166,9 @@ foreach ($cases as $name => $source) {
 	file_put_contents($directory . '/type_' . $name . '.cpp', runtime_type_compile($source));
 }
 foreach ([
+	'echo parcel<int>::MISSING;',
+	'parcel<int>::LIMIT = 2;',
+	'echo LIMIT;',
 	'$a = parcel<int>::make("wrong");',
 	'$a = pack(1); $a->replace("wrong");',
 	'$a = pack(1); $a->make(2);',

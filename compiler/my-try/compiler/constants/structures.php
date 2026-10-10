@@ -13,8 +13,8 @@ interface constant_target_i extends preparation_lookup_candidate_i
 final class registered_constant implements constant_target_i
 {
 	public function __construct(private string $source_name, private constant_value $stored_value,
-		private ?canonical_type_use $owner_type = null) {}
-	public function owner(): ?canonical_type_use { return $this->owner_type; }
+		private ?semantic_type_definition $owner_type = null) {}
+	public function owner(): ?semantic_type_definition { return $this->owner_type; }
 	public function constant_name(): string { return $this->source_name; }
 	public function value(): constant_value { return $this->stored_value; }
 }
