@@ -9,6 +9,7 @@ final class Runtime_Catalog_Registration
 	{
 		$result /** Storage<registered_constant> */ = new Storage();
 		$names = new scope();
+		$member_names /** hash<bool> */ = [];
 		Language_Constants::install($names, $types);
 		foreach ($input->modules as $module) {
 			$constants /** Storage<runtime_constant_spec> */ = $module->constants;
@@ -16,15 +17,26 @@ final class Runtime_Catalog_Registration
 				if ($constant->type !== 'int') {
 					throw new \RuntimeException('Runtime constants currently require int');
 				}
-				if (q_count($names->constants_named($constant->name)) !== 0) {
+				$owner /** ?canonical_type_use */ = null;
+				if ($constant->owner !== null)
+				{
+					$owner_spec /** runtime_type_spec */ = $constant->owner;
+					$owner = self::member_owner($owner_spec, $types);
+					$key = $owner->type_id() . ':' . $constant->name;
+					if (isset($member_names[$key])) {
+						throw new \RuntimeException('Duplicate runtime member constant: ' . $constant->name);
+					}
+					$member_names[$key] = true;
+				}
+				elseif (q_count($names->constants_named($constant->name)) !== 0) {
 					throw new \RuntimeException('Duplicate runtime constant: ' . $constant->name);
 				}
 				$value = new integer_constant_value();
 				$value->type = $types->registry()->use($types->canonical('int')->type_id());
 				$value->decimal = $constant->decimal;
-				$target = new registered_constant($constant->name, $value);
+				$target = new registered_constant($constant->name, $value, $owner);
 				$result->append($target);
-				$names->register_constant($target);
+				if ($owner === null) { $names->register_constant($target); }
 			}
 		}
 		return $result;
@@ -54,12 +66,7 @@ final class Runtime_Catalog_Registration
 				if ($function->member !== null)
 				{
 					$membership /** runtime_callable_member_spec */ = $function->member;
-					$member_owner = self::type($membership->owner, $types);
-					$owner_definition = $registry->type($member_owner->type_id())->definition();
-					if (($owner_definition->origin() !== type_definition_origin::runtime)
-						|| !($owner_definition instanceof abstract_nominal_type_definition)) {
-						throw new \RuntimeException('Runtime callable member requires a registered nominal owner');
-					}
+					$member_owner = self::member_owner($membership->owner, $types);
 					if (string_byte_starts_with($function->name, '__')) {
 						throw new \RuntimeException('Runtime magic member names are not callable metadata');
 					}
@@ -125,6 +132,40 @@ final class Runtime_Catalog_Registration
 			}
 		}
 		return $result;
+	}
+
+	/** All type-scoped exports resolve their owner through one registry check. */
+	public static function member_owner(runtime_type_spec $spec, registered_type_catalog $types): canonical_type_use
+	{
+		$owner = self::type($spec, $types);
+		$definition = $types->registry()->type($owner->type_id())->definition();
+		if (($definition->origin() !== type_definition_origin::runtime)
+			|| !($definition instanceof abstract_nominal_type_definition)) {
+			throw new \RuntimeException('Runtime member requires a registered nominal owner');
+		}
+		return $owner;
+	}
+
+	/** Index retained identities; no metadata IO or duplicate value snapshots. */
+	public static function members(Storage $constants /** Storage<registered_constant> */): Runtime_Members
+	{
+		$result = new Runtime_Members();
+		foreach ($constants as $constant) {
+			if ($constant->owner() !== null) {
+				$result->register_constant($constant);
+			}
+		}
+		return $result;
+	}
+
+	/** Only ownerless constants participate in global language lookup. */
+	public static function publish_constants(Storage $constants /** Storage<registered_constant> */, scope $language): void
+	{
+		foreach ($constants as $constant) {
+			if ($constant->owner() === null) {
+				$language->register_constant($constant);
+			}
+		}
 	}
 
 	/** Compose named/applied types through the existing registry formation rules. */

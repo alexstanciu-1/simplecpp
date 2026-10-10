@@ -78,6 +78,7 @@ final class runtime_cpp_spec
 /** Bounded scalar constants; values retain normalized exact decimal spelling. */
 final class runtime_constant_spec
 {
+	public ?runtime_type_spec $owner = null;
 	public string $name = '';
 	public string $type = '';
 	public string $decimal = '';

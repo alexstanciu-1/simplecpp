@@ -12,9 +12,41 @@ interface constant_target_i extends preparation_lookup_candidate_i
 
 final class registered_constant implements constant_target_i
 {
-	public function __construct(private string $source_name, private constant_value $stored_value) {}
+	public function __construct(private string $source_name, private constant_value $stored_value,
+		private ?canonical_type_use $owner_type = null) {}
+	public function owner(): ?canonical_type_use { return $this->owner_type; }
 	public function constant_name(): string { return $this->source_name; }
 	public function value(): constant_value { return $this->stored_value; }
+}
+
+/** Type-scoped exports index settled identities; free constants remain in language scope. */
+final class Runtime_Members
+{
+	private Keyed_Storage $constant_names /** Keyed_Storage<registered_constant> */;
+
+	public function __construct()
+	{
+		$this->constant_names = new Keyed_Storage();
+	}
+
+	/** Registration validates collisions before the index can be published. */
+	public function register_constant(registered_constant $constant): void
+	{
+		$optional_owner = $constant->owner();
+		if ($optional_owner === null) {
+			throw new \InvalidArgumentException('Member constant requires a type owner');
+		}
+		$owner /** canonical_type_use */ = $optional_owner;
+		$constants /** Keyed_Storage<registered_constant> */ = $this->constant_names;
+		$constants->add($owner->type_id() . ':' . $constant->constant_name(), $constant);
+	}
+
+	public function constant(canonical_type_use $owner, string $name): ?registered_constant
+	{
+		$constants /** Keyed_Storage<registered_constant> */ = $this->constant_names;
+		$key = $owner->type_id() . ':' . $name;
+		return isset($constants[$key]) ? $constants[$key] : null;
+	}
 }
 
 /** Values are immutable after publication and contain no syntax/definition backlinks. */

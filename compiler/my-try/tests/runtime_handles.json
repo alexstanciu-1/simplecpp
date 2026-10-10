@@ -204,5 +204,24 @@
       "symbol": "read_other",
       "header": "runtime_handles.hpp"
     }
+  ],
+  "constants": [
+    {
+      "owner": "ticket",
+      "name": "LIMIT",
+      "type": "int",
+      "value": 37
+    },
+    {
+      "owner": "ticket",
+      "name": "read",
+      "type": "int",
+      "value": 41
+    },
+    {
+      "name": "LIMIT",
+      "type": "int",
+      "value": 53
+    }
   ]
 }

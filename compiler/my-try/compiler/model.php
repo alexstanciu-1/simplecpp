@@ -44,6 +44,8 @@ final class Model
 	public static Runtime_Callables $runtime_callables;
 	/** Settled module constants share type-root lifetime; scopes only index them. */
 	public static Storage $runtime_constants /** Storage<registered_constant> */;
+	/** Type-scoped exports index the same registered identities. */
+	public static Runtime_Members $runtime_members;
 	public static Initialization_Contracts $initialization_contracts;
 	public static Indexing_Contracts $indexing_contracts;
 	public static Iteration_Contracts $iteration_contracts;

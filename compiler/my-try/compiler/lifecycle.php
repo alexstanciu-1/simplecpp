@@ -92,7 +92,7 @@ final class Compiler_Lifecycle
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope, Model::$type_catalog);
-		foreach (Model::$runtime_constants as $constant) { Model::$language_scope->register_constant($constant); }
+		Runtime_Catalog_Registration::publish_constants(Model::$runtime_constants, Model::$language_scope);
 		Runtime_Catalog_Registration::publish(Model::$runtime_metadata, Model::$runtime_callables, Model::$language_scope);
 		Language_Callables::install(Model::$language_scope);
 		CPP_Runtime_Catalog::install(Model::$runtime_metadata);
@@ -132,7 +132,7 @@ final class Compiler_Lifecycle
 		Model::$language_scope = new scope();
 		Language_Types::install(Model::$language_scope);
 		Language_Constants::install(Model::$language_scope, Model::$type_catalog);
-		foreach (Model::$runtime_constants as $constant) { Model::$language_scope->register_constant($constant); }
+		Runtime_Catalog_Registration::publish_constants(Model::$runtime_constants, Model::$language_scope);
 		Runtime_Catalog_Registration::publish(Model::$runtime_metadata, Model::$runtime_callables, Model::$language_scope);
 		Language_Callables::install(Model::$language_scope);
 		CPP_Runtime_Catalog::install(Model::$runtime_metadata);
@@ -152,6 +152,7 @@ final class Compiler_Lifecycle
 		CPP_Runtime_Catalog::install_types(Model::$runtime_metadata, Model::$type_catalog, Model::$cpp_type_bindings);
 		Model::$runtime_callables = Runtime_Catalog_Registration::resolve(Model::$runtime_metadata, Model::$type_catalog);
 		Model::$runtime_constants = Runtime_Catalog_Registration::resolve_constants(Model::$runtime_metadata, Model::$type_catalog);
+		Model::$runtime_members = Runtime_Catalog_Registration::members(Model::$runtime_constants);
 		Model::$initialization_contracts = Initialization_Registration::install(Model::$type_catalog);
 		Model::$indexing_contracts = Indexing_Registration::install(Model::$type_catalog);
 		Model::$iteration_contracts = Iteration_Registration::install(Model::$type_catalog);

@@ -46,7 +46,39 @@ catch (\Throwable $error) {
 	$failed = str_contains($error->getMessage(), 'Unsupported runtime storage');
 }
 handle_check($failed, 'Unknown storage policy accepted');
+foreach (['duplicate', 'owner'] as $invalid_kind)
+{
+	$candidate_schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
+	if ($invalid_kind === 'duplicate') {
+		$candidate_schema['constants'][] = $candidate_schema['constants'][0];
+	}
+	else {
+		$candidate_schema['constants'][0]['owner'] = 'int';
+	}
+	$candidate = new runtime_catalog_input();
+	$candidate->modules->add('core', $core->modules['core']);
+	$candidate->modules->add('handles', Runtime_Catalog_Reader::decode(json_encode($candidate_schema), 'bad-members.json'));
+	$failed = false;
+	try {
+		Compiler_Lifecycle::configure_runtime($candidate);
+	}
+	catch (\RuntimeException $error) {
+		$failed = true;
+	}
+	handle_check($failed && (Model::$runtime_metadata === $input), 'Invalid member constant configuration was published');
+}
 $cases = [
+	'constants' => <<<'PHS'
+const COPY = ticket::LIMIT;
+function qualifier(int &$calls): ticket {
+    $calls++;
+    $empty ticket = null;
+    return $empty;
+}
+$calls = 0;
+echo COPY, "|", ticket::read, "|", LIMIT, "|", qualifier($calls)::LIMIT, "|", $calls;
+return 0;
+PHS,
 	'members' => <<<'PHS'
 function replacement(ticket &$slot): int {
     $slot = ticket::open(99);
@@ -112,6 +144,9 @@ $null_cpp .= "\nint main() { try { observed_entry(); } catch (const scpp::runtim
 file_put_contents($directory . '/null_receiver.cpp', $null_cpp);
 foreach ([
 	'$a = new ticket();',
+	'echo ticket::MISSING;',
+	'echo read;',
+	'ticket::LIMIT = 2;',
 	'$a = ticket::read();',
 	'$a = ticket::open(1); $a->open(2);',
 	'$a = ticket::open(1); read();',

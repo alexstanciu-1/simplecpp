@@ -29,7 +29,7 @@ no constants. The initial supported form is:
 {"name":"STR_PAD_LEFT","type":"int","value":0}
 ```
 
-Each entry requires exactly `name`, `type`, and `value`. `name` is the nonempty,
+Each entry requires `name`, `type`, and `value`, and may specify `owner`. `name` is the nonempty,
 case-sensitive source spelling; `type` currently must be `int`. `value` is a JSON
 integer spelling in the signed-64 range, not a string, fractional number or exponent.
 The JSON reader checks the range without floating-point conversion; the settled
@@ -39,6 +39,16 @@ reject the entire configuration. Nearer source declarations may still shadow the
 under ordinary lexical lookup. Constants use the existing settled constant model
 and value lowering, not function contracts or C++ symbol bindings. Their values are
 part of the trusted runtime contract and must agree with the provider implementation.
+
+An optional `owner` selects a registered nominal runtime type, for example
+`{"owner":"ticket","name":"LIMIT","type":"int","value":37}`.
+These public immutable constants use `ticket::LIMIT` and are not published as free
+names. Constants and methods have separate name spaces. Duplicate constants on the
+same owner reject configuration before publication; ownerless constants retain the
+global collision rules above. Expression-qualified access evaluates its qualifier
+once, including an empty shared handle, under the ordinary static-member contract.
+Owner-template recipes remain pending; concrete applications must not be enumerated
+as a substitute. No C++ binding is needed for settled constant values.
 
 A function requires `id`, `name`, `parameters`, and `returns`. Identities are globally
 unique across selected modules. Source names may repeat for overloads with different
@@ -162,7 +172,7 @@ The core vector/hash definitions and their C++ bindings now come solely from thi
 metadata. Source publication enumerates registered exposures rather than a second
 name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
 families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
-Property/constant members, initialization/indexing/iteration protocols, borrowed storage,
+Property members, initialization/indexing/iteration protocols, borrowed storage,
 non-type parameters and handle-lifetime contracts are not granted by these records.
 Those protocols require their own shared model before additional runtime APIs can
 be enabled. The existing compiler composition selects core for its foundational

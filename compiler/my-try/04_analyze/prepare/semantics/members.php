@@ -115,13 +115,19 @@ final class Member_Preparation
 		if ($syntax->qualifier !== null) {
 			$value = Method_Preparation::base($syntax->qualifier, $context);
 			$type = Type_Queries::record_payload($value->type);
-			if (Type_Queries::source_record($type) === null) {
+			if ((Type_Queries::source_record($type) === null)
+				&& (Type_Queries::canonical($type)->definition()->origin() !== type_definition_origin::runtime)) {
 				throw new \RuntimeException('Expression qualification requires a concrete class or struct');
 			}
 		}
 		else { $type = self::owner($syntax->require_type_owner(), $context); }
 		$record = Type_Queries::source_record($type);
 		$property = string_byte_starts_with($syntax->member_name, '$');
+		if (!$property && (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
+			$runtime_constant = Model::$runtime_members->constant($type, $syntax->member_name);
+			if ($runtime_constant === null) { throw new \RuntimeException('Unknown runtime member constant: ' . $syntax->member_name); }
+			return self::constant_reference($runtime_constant);
+		}
 		if ($record === null) {
 			if (!$property) { return Enum_Preparation::reference($syntax, $context); }
 			// Installed readonly constants such as error::$no_error keep their registered contract.

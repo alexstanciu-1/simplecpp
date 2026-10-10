@@ -232,6 +232,7 @@ final class Runtime_Catalog_Reader
 			if ($key === 'name') { $result->name = self::name($reader); }
 			elseif ($key === 'type') { $result->type = self::name($reader); }
 			elseif ($key === 'value') { $result->decimal = (string)$reader->read_integer(); }
+			elseif ($key === 'owner') { $result->owner = self::type($reader); }
 			else { $reader->reject('Unknown runtime constant field: ' . $key); }
 		}
 		if (($result->name === '') || ($result->type === '') || ($result->decimal === '')) {

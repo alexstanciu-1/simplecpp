@@ -61,8 +61,44 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   handle/type/source-method/static-member suites plus five generated programs.
   Receiver replacement, generic inputs, observed temporary inputs, null-before-
   arguments and static qualification are covered.
-- Phase 2 remains in progress: registered properties/constants and owner-template
+- Phase 2 constant checkpoint: optional owner resolves through the registry;
+  type-owned constants reuse settled-value facts and ordinary constant lowering.
+  Their index does not publish member names into free scope. Methods and constants
+  may share a name. Invalid owners/duplicates reject configuration transactionally.
+- Focused constant evidence: /tmp/runtime-member-constants-20261010-final (four PHP
+  suites and six generated programs). Includes source constant initializers,
+  expression qualifier effects, same-named methods and failed configuration recovery.
+- Phase 2 remains in progress: registered properties and owner-template
   member recipes are still required. Do not replace owner recipes with enumerated
   concrete applications. Next checkpoint starts with shared property/storage facts.
+- Phase 6 export/import audit must address runtime type aliases: direct language-scope
+  lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
+  export through namespace import lookup. This is not covered by the member proof.
 - Deferred borrowed source views retain CH15-RUNTIME-SOURCE-01.
 - Provider semantic conflicts retain their existing debts; no silent contract changes.
+
+## Property prerequisite — approval boundary
+
+Inspection found that `prepared_storage` requires a `collected_name`, property writes
+manufacture a `prepared_binding` carrying that source declaration, and lifetime and
+C++ field paths consume those facts. A metadata property has no source declaration.
+Making that field optional or fabricating source AST would conceal the mismatch.
+
+Before implementing registered properties, approve a coordinated refactor across
+preparation storage/assignment facts, lifetime consumers and C++ field bindings:
+
+- Introduce a source-independent storage/property contract; source fields and
+  registered properties provide real identities through it.
+- Keep source declaration ownership on source records, not on every storage target.
+- Separate property-write facts from local-declaration binding facts while retaining
+  the shared assignment conversion and value-boundary checks.
+- Let lifetime analysis consume storage provenance; backend-owned bindings supply
+  runtime property spelling. No fake source declaration and no type-name cases.
+
+The recommended option is this shared foundation, then runtime properties. The
+smaller alternative is to defer property support explicitly and finish other phases;
+it does not complete the originally planned property functionality. Existing source
+field writes, reference/lifetime rejection and runtime field reads/writes need focused
+proofs because the refactor touches established source behavior. Broad/native-compiler
+validation remains deferred under the existing testing debt. This prerequisite is
+pending approval, not implemented and not counted as phase completion.
