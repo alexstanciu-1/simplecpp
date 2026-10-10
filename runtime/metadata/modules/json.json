@@ -1,10 +1,27 @@
 {
   "version": 1,
   "module": "json",
+  "cpp_build": {"sources":["modules/json/document.cpp"]},
+  "types": [{"id":"json.json_document","name":"json_document","kind":"class","storage":"shared","capabilities":["result_payload"]},{"id":"json.json_node","name":"json_node","kind":"class","storage":"shared","capabilities":["result_payload"]},{"id":"json.json_parse_error","name":"json_parse_error","kind":"class","storage":"shared","capabilities":["result_payload"]}],
+  "cpp_types": [{"id":"json.json_document","symbol":"scpp::json::document","header":"modules/json/document.hpp"},{"id":"json.json_node","symbol":"scpp::json::node","header":"modules/json/document.hpp"},{"id":"json.json_parse_error","symbol":"scpp::json::parse_error","header":"modules/json/document.hpp"}],
+  "properties": [{"id":"json.diagnostic.category","owner":"json_parse_error","name":"category","type":"string"},{"id":"json.diagnostic.byte_offset","owner":"json_parse_error","name":"byte_offset","type":"int"},{"id":"json.diagnostic.message","owner":"json_parse_error","name":"message","type":"string"}],
+  "cpp_properties": [{"id":"json.diagnostic.category","symbol":"category","header":"modules/json/document.hpp"},{"id":"json.diagnostic.byte_offset","symbol":"byte_offset","header":"modules/json/document.hpp"},{"id":"json.diagnostic.message","symbol":"message","header":"modules/json/document.hpp"}],
   "dependencies": [
     "core"
   ],
   "functions": [
+    {"id":"json.json_document_parse","name":"json_document_parse","parameters":[{"name":"text","type":"string","passing":"value"},{"name":"diagnostic","type":"json_parse_error","passing":"reference"},{"name":"max_depth","type":"int","passing":"value","default":{"int":128}}],"returns":{"name":"result","arguments":["json_document"]}},
+    {"id":"json.json_document_root","name":"json_document_root","parameters":[{"name":"document","type":"json_document","passing":"value"}],"returns":{"name":"result","arguments":["json_node"]}},
+    {"id":"json.json_node_kind","name":"json_node_kind","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["string"]}},
+    {"id":"json.json_node_size","name":"json_node_size","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["int"]}},
+    {"id":"json.json_node_string","name":"json_node_string","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["string"]}},
+    {"id":"json.json_node_boolean","name":"json_node_boolean","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["bool"]}},
+    {"id":"json.json_node_number","name":"json_node_number","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["string"]}},
+    {"id":"json.json_node_int","name":"json_node_int","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["int"]}},
+    {"id":"json.json_node_at","name":"json_node_at","parameters":[{"name":"node","type":"json_node","passing":"value"},{"name":"index","type":"int","passing":"value"}],"returns":{"name":"result","arguments":["json_node"]}},
+    {"id":"json.json_node_key","name":"json_node_key","parameters":[{"name":"node","type":"json_node","passing":"value"},{"name":"index","type":"int","passing":"value"}],"returns":{"name":"result","arguments":["string"]}},
+    {"id":"json.json_node_has","name":"json_node_has","parameters":[{"name":"node","type":"json_node","passing":"value"},{"name":"key","type":"string","passing":"value"}],"returns":{"name":"result","arguments":["bool"]}},
+    {"id":"json.json_node_member","name":"json_node_member","parameters":[{"name":"node","type":"json_node","passing":"value"},{"name":"key","type":"string","passing":"value"}],"returns":{"name":"result","arguments":["json_node"]}},
     {
       "id": "json.decode.mixed",
       "name": "json_decode_mixed",
@@ -75,6 +92,18 @@
     }
   ],
   "cpp": [
+    {"id":"json.json_document_parse","symbol":"scpp::json::document_parse","header":"modules/json/document.hpp"},
+    {"id":"json.json_document_root","symbol":"scpp::json::document_root","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_kind","symbol":"scpp::json::node_kind","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_size","symbol":"scpp::json::node_size","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_string","symbol":"scpp::json::node_string","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_boolean","symbol":"scpp::json::node_boolean","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_number","symbol":"scpp::json::node_number","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_int","symbol":"scpp::json::node_int","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_at","symbol":"scpp::json::node_at","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_key","symbol":"scpp::json::node_key","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_has","symbol":"scpp::json::node_has","header":"modules/json/document.hpp"},
+    {"id":"json.json_node_member","symbol":"scpp::json::node_member","header":"modules/json/document.hpp"},
     {
       "id": "json.decode.mixed",
       "symbol": "scpp::json::decode_mixed",

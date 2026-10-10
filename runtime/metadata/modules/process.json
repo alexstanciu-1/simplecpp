@@ -1,0 +1,256 @@
+{
+  "version": 1,
+  "module": "process",
+  "dependencies": [
+    "core"
+  ],
+  "cpp_build": {
+    "sources": [
+      "modules/process/process.cpp"
+    ]
+  },
+  "types": [
+    {
+      "id": "process.process_handle",
+      "name": "process_handle",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    },
+    {
+      "id": "process.process_output",
+      "name": "process_output",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    }
+  ],
+  "cpp_types": [
+    {
+      "id": "process.process_handle",
+      "symbol": "scpp::process::handle",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.process_output",
+      "symbol": "scpp::process::output",
+      "header": "modules/process/process.hpp"
+    }
+  ],
+  "properties": [
+    {
+      "id": "process.output.stdout_text",
+      "owner": "process_output",
+      "name": "stdout_text",
+      "type": "string"
+    },
+    {
+      "id": "process.output.stderr_text",
+      "owner": "process_output",
+      "name": "stderr_text",
+      "type": "string"
+    },
+    {
+      "id": "process.output.exit_code",
+      "owner": "process_output",
+      "name": "exit_code",
+      "type": "int"
+    },
+    {
+      "id": "process.output.signal",
+      "owner": "process_output",
+      "name": "signal",
+      "type": "int"
+    },
+    {
+      "id": "process.output.timed_out",
+      "owner": "process_output",
+      "name": "timed_out",
+      "type": "bool"
+    },
+    {
+      "id": "process.output.stopped",
+      "owner": "process_output",
+      "name": "stopped",
+      "type": "bool"
+    }
+  ],
+  "cpp_properties": [
+    {
+      "id": "process.output.stdout_text",
+      "symbol": "stdout_text",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.output.stderr_text",
+      "symbol": "stderr_text",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.output.exit_code",
+      "symbol": "exit_code",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.output.signal",
+      "symbol": "signal",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.output.timed_out",
+      "symbol": "timed_out",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.output.stopped",
+      "symbol": "stopped",
+      "header": "modules/process/process.hpp"
+    }
+  ],
+  "functions": [
+    {
+      "id": "process.start",
+      "name": "process_start",
+      "parameters": [
+        {
+          "name": "executable",
+          "type": "string",
+          "passing": "value"
+        },
+        {
+          "name": "args",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              "string"
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "input",
+          "type": "string",
+          "passing": "value"
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "cwd",
+          "type": "string",
+          "passing": "value",
+          "default": {
+            "string": ""
+          }
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "process_handle"
+        ]
+      }
+    },
+    {
+      "id": "process.poll",
+      "name": "process_poll",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "process_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "bool"
+        ]
+      }
+    },
+    {
+      "id": "process.result",
+      "name": "process_result",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "process_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "process_output"
+        ]
+      }
+    },
+    {
+      "id": "process.stop",
+      "name": "process_stop",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "process_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "bool"
+        ]
+      }
+    },
+    {
+      "id": "process.close",
+      "name": "process_close",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "process_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result",
+        "arguments": [
+          "bool"
+        ]
+      }
+    }
+  ],
+  "cpp": [
+    {
+      "id": "process.start",
+      "symbol": "scpp::process::start",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.poll",
+      "symbol": "scpp::process::poll",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.result",
+      "symbol": "scpp::process::collect",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.stop",
+      "symbol": "scpp::process::stop",
+      "header": "modules/process/process.hpp"
+    },
+    {
+      "id": "process.close",
+      "symbol": "scpp::process::close",
+      "header": "modules/process/process.hpp"
+    }
+  ]
+}

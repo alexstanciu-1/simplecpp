@@ -624,9 +624,10 @@ remain successful Result values. Filter, callbacks, count outputs and limited
   canonical/lexical paths and checked `fs_read_snapshot`. Fallible reads return
   `result<string>`, `result<int>` or `result<vector<string>>`; ordinary mutations
   and probes retain their boolean contracts. The snippet `core/runtime.cpp` already
-  bundles the filesystem and snapshot providers; do not link duplicate standalone
-  objects beside it. File-lock handles require registered
-  runtime types and remain unregistered. `fs_scan` uses shared container-payload
+  bundles the filesystem, snapshot and file-lock providers; do not link duplicate standalone
+  objects beside it. `file_lock_handle` and `fs_lock_try/release/transfer` use
+  shared storage, reference-slot output, scalar defaults and Result transport.
+  `fs_scan` uses shared container-payload
   Result operations without a module-specific extraction path. Internal `scpp_output_*` portability
   bindings are not public my-try source APIs; see [output ownership](portability/output_files.md).
 - `strings`: `strtolower`, `strtoupper`, `lcfirst`, `ucfirst`, `str_contains`,
@@ -675,6 +676,28 @@ See the [module inventory](../compiler/my-try/docs/planning/runtime_catalog_cove
 The byte-length decision for `strlen` does not change `substr` or explicitly named
 Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the
 separate portable-compiler framework's UTF-8-validation contract.
+
+### Shared runtime assets
+
+The JSON module also declares `json_document`, `json_node` and `json_parse_error`,
+the twelve [document/navigation calls](builtins/json/document.md), and writable
+diagnostic fields `category`, `byte_offset`, `message`. Its build requirements add
+`modules/json/document.cpp`. Nodes retain immutable storage independently of document
+handles. Reference diagnostic outputs and checked Result extraction use ordinary
+call boundaries; no JSON-specific compiler processing is introduced.
+
+Opt-in `process` declares `process_handle`, `process_output`, all five
+[managed process calls](builtins/process.md), and the six writable output fields.
+Its build requirement is `modules/process/process.cpp`. The default selection does
+not enable process. Handles alias one application-owned lifecycle; result calls
+produce independent output snapshots. Copying a returned output handle aliases that
+snapshot. Registering these APIs adds no concurrent lifecycle guarantees.
+
+All six asset types use shared storage and unconditional Result transport without
+claiming payload copying. They do not enable source constructors, ownership rewrapping,
+inheritance or data initialization. Provider factories and published members define
+the available source surface. File-lock and process OS/platform restrictions and
+JSON checked access remain runtime responsibilities under their owning contracts.
 
 Fixed-array non-type parameters, compiler-module
 Storage registration, non-scalar defaults,

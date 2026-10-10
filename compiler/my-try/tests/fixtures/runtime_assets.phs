@@ -1,0 +1,80 @@
+use json_node as Node;
+$diagnostic json_parse_error;
+$document json_document = json_document_parse('{"items":[17,true,"ok"],"nothing":null}', $diagnostic);
+if (isset($diagnostic)) { return 1; }
+$root Node = json_document_root($document);
+$items Node = json_node_member($root, "items");
+$kind string = json_node_kind($items);
+$size int = json_node_size($items);
+$key string = json_node_key($root, 0);
+$has bool = json_node_has($root, "nothing");
+echo $kind, ":", $key, "|";
+if ($size !== 3 || !$has) { return 2; }
+$number Node = json_node_at($items, 0);
+$boolean Node = json_node_at($items, 1);
+$text Node = json_node_at($items, 2);
+$document = null;
+$root = null;
+$items = null;
+$n int = json_node_int($number);
+$spelling string = json_node_number($number);
+$b bool = json_node_boolean($boolean);
+$s string = json_node_string($text);
+echo $spelling, ":", $s, "|";
+if ($n !== 17 || !$b) { return 3; }
+$bad = json_document_parse('{"x":1,"x":2}', $diagnostic, 128);
+if (isset($bad) || !isset($diagnostic)) { return 4; }
+$category = $diagnostic->category;
+$offset = $diagnostic->byte_offset;
+echo $category, "|";
+if ($offset !== 7) { return 5; }
+$diagnostic->message = "updated";
+$recovered json_document = json_document_parse("null", $diagnostic);
+if (isset($diagnostic)) { return 6; }
+
+$lock file_lock_handle;
+$acquired bool = fs_lock_try($lock, LOCK_PATH);
+if (!$acquired) { return 7; }
+$alias = $lock;
+$second file_lock_handle;
+$contended bool = fs_lock_try($second, LOCK_PATH, false);
+if ($contended) { return 8; }
+$moved file_lock_handle = fs_lock_transfer($lock);
+$released_old bool = fs_lock_release($alias);
+$still_held bool = fs_lock_try($second, LOCK_PATH);
+if (!$released_old || $still_held) { return 9; }
+$released bool = fs_lock_release($moved);
+$retry bool = fs_lock_try($second, LOCK_PATH);
+$done bool = fs_lock_release($second);
+if (!$released || !$retry || !$done) { return 10; }
+
+$args vector<string> = [];
+$child process_handle = process_start("/bin/cat", $args, "hello", 5000);
+$child_alias = $child;
+$finished = false;
+for ($i = 0; $i < 1000; $i++) {
+    $finished = process_poll($child);
+    if ($finished) { break; }
+    dt_sleep_ms(1);
+}
+if (!$finished) { return 11; }
+$output process_output = process_result($child);
+$output->stdout_text = "changed";
+$snapshot process_output = process_result($child_alias);
+$closed bool = process_close($child);
+$after = process_poll($child_alias);
+if (!$closed || isset($after)) { return 12; }
+$stdout = $snapshot->stdout_text;
+$stderr = $snapshot->stderr_text;
+$exit = $snapshot->exit_code;
+$signal = $snapshot->signal;
+$timed = $snapshot->timed_out;
+$stopped = $snapshot->stopped;
+echo $stdout, ":", $stderr;
+if ($exit !== 0 || $signal !== 0 || $timed || $stopped) { return 13; }
+$missing = process_start("/definitely-missing-scpp-executable", $args, "", 0, "");
+if (isset($missing)) { return 14; }
+$empty process_handle;
+$invalid_stop = process_stop($empty);
+if (isset($invalid_stop)) { return 15; }
+return 0;

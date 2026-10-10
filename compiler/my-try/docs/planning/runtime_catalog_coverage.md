@@ -26,9 +26,10 @@ do not request approval for each ordinary metadata row or populate speculative r
 | Module | Registered source surface | Shared path |
 | --- | --- | --- |
 | core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args; getenv/shell_exec | Concrete and inferred generic contracts; non-retaining unary observation |
-| json | `json_decode`, `json_decode_mixed`, both `json_encode` families | Concrete overloads and Result returns |
+| json | Decode/encode families; twelve document/navigation calls, three shared types and diagnostic fields | Concrete overloads, shared storage, reference output and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
-| filesystem | 19 strict fs_* helpers; inventory below | Shared scalar/container Result calls; providers bundled in snippet runtime |
+| filesystem | 22 strict fs_* helpers including lock try/release/transfer and file_lock_handle | Shared scalar/container/handle Result calls; providers bundled in snippet runtime |
+| process (opt-in) | Five lifecycle calls, process_handle/process_output and six output fields | Shared storage/Result transport; metadata-declared provider linkage |
 | regex (opt-in) | 10 helpers / 18 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
 | source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
 | strings | 49 source helpers / 65 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
@@ -148,7 +149,7 @@ false-wrapper names are not aliases of the strict Result APIs.
 | fs_mkdir, fs_touch, fs_rmdir, fs_remove, fs_copy, fs_rename | bool | Registered; one directory, no recursive removal; copy overwrites |
 | fs_dirname, fs_basename | string | Registered; existing filesystem lexical semantics, no extra PHP normalization |
 | fs_read_snapshot | result<string> | Registered; checked Linux read, unsupported platforms return error |
-| fs_lock_try, fs_lock_release, fs_lock_transfer | Deferred | Registered closeable file_lock handle/ownership prerequisite; no mixed surrogate |
+| fs_lock_try, fs_lock_release, fs_lock_transfer | Registered | Shared file_lock_handle; reference-slot output, false default, Result<bool>/Result<handle>; aliases share release/transfer invalidation |
 | scpp_output_* | Intentionally excluded | Internal portability/output-owner protocol, not public source APIs |
 | io_* stream/resource helpers | Separate owner/prerequisite | Registered resource handle and lifetime contracts required |
 
@@ -200,6 +201,21 @@ same registry-driven Result transport/copy rules; no regex-specific type admissi
 See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01--regex-contracts-and-binding-prerequisites).
 
 ## Remaining work, grouped by prerequisite
+
+Shared asset batch (2026-10-10): JSON documents/nodes/diagnostics, filesystem locks
+and managed processes now use production metadata only. No compiler worker or
+runtime behavior changes. This enables six shared types, twenty ordinary callable
+contracts (12 JSON, 3 lock, 5 process) and nine writable output fields. Providers
+own OS checks, resource cleanup and immutable arena retention. Direct source `new`
+and unsupported member/type boundaries remain preparation errors. Process remains
+opt-in; JSON and filesystem remain in the default selection.
+
+Focused combined proof: `tests/runtime_assets.py` publishes selected-module artifacts
+and builds them with the native cache/PCH consumer. It exercises all twenty bindings,
+lock contention/transfer/alias release, JSON duplicate-key diagnostics and node
+survival, child output snapshot independence/alias close, plus invalid source calls.
+This is integration evidence, not repetition of the full native process/lock race,
+fork, timeout or platform matrix; those remain extended testing debt.
 
 CLI prerequisite completed (2026-10-09): executable assembly emits
 `main(int argc, char** argv)` and initializes the PHP runtime CLI context once,

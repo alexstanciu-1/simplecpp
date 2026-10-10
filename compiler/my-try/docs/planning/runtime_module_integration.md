@@ -170,7 +170,17 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   observes the root miss so adding/removing a source shadow invalidates consumers.
   Evidence: /tmp/runtime-exports-20261010-final (runtime exports/types and namespace PHP
   suites, two generated programs including unfamiliar nominal/generic aliases).
-  Inventory reconciliation and real module batches remain outstanding.
+  Inventory reconciliation and real module batches follow below.
+- Phase 6 production asset batch: JSON documents/nodes/diagnostics, file locks and
+  managed processes now register six shared types, twenty functions and nine fields.
+  Scalar defaults, reference outputs, Result transport and provider linking require
+  metadata only; no new compiler/runtime processing. Process is opt-in. Focused
+  evidence: /tmp/runtime-assets-20261010-3 (combined generated executable through
+  the native cache/PCH) and /tmp/runtime-assets-20261010-final (asset/catalog PHP
+  plus repeated combined native execution). Initial fixture failures corrected
+  Compiler::init array usage and moved string comparison assertions to host output
+  checks, without changing unrelated operator support.
+  Remaining: overall module inventory, residual hardcoding audit and operator guide.
 - Deferred borrowed source views retain CH15-RUNTIME-SOURCE-01.
 - Provider semantic conflicts retain their existing debts; no silent contract changes.
 

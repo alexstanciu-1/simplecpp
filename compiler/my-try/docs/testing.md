@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_assets.py --results FRESH_DIRECTORY`
+checks production JSON-document, file-lock and managed-process metadata, rejection
+boundaries, shared lifecycles and automatic provider linkage through the native
+builder. Linux integration proof; not a native compiler rebuild or full race matrix.
+
 `python3 compiler/my-try/tests/runtime_exports.py --results FRESH_DIRECTORY`
 checks root runtime aliases, namespace isolation and incremental source shadowing,
 plus two generated programs. No native compiler rebuild.
