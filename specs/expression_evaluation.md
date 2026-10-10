@@ -62,7 +62,9 @@ RHS. Existing kind-change errors remain; text concatenation keeps its text contr
 
 Ordinary admitted value expressions, including fields, calls, nested updates and
 lazy expressions, may be RHS operands. They may not introduce implicit locals.
-This does not admit indexed destinations or fixed-width compound updates.
+Indexed destinations follow the existing-element path contract in
+[array semantics](array_semantics.md#v02-indexed-compound-updates).
+Fixed-width compound updates remain deferred.
 
 The AST and prepared facts retain compound-assignment intent and its selected
 operator/conversions. Direct C++ `+=` is permitted only when equivalent ordering,

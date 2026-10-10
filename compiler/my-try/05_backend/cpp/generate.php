@@ -666,28 +666,34 @@ final class CPP_Generator
 		cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_compound_assignment_preparation();
+		if ($facts->indexed_target !== null) {
+			return CPP_Index_Write::generate_compound($syntax, $facts, $context);
+		}
 		$target = CPP_Declarations::bind_storage_receiver($syntax->target, $context);
 		$place = 'target_' . $context->next_temporary;
 		$context->next_temporary++;
-		$previous = $place;
+		$previous = 'previous_' . $context->next_temporary;
+		$context->next_temporary++;
 		$prefix = $target->statements . 'auto& ' . $place . ' = ' . $target->value . '; ';
-		if ($facts->write_back_mode === compound_write_back::boxed_stored_kind) {
-			$previous = 'previous_' . $context->next_temporary;
-			$context->next_temporary++;
-			$prefix .= 'auto ' . $previous . ' = ' . $place . '; ';
-		}
+		$prefix .= 'auto ' . $previous . ' = ' . $place . '; ';
 		$right = (new CPP_Syntax($context))->expression($syntax->value);
+		$prefix .= self::compute_compound($facts, $previous, $right, $context);
+		$result_type = CPP_Declarations::type($facts->type, $context);
+		return '([&]() -> ' . $result_type . ' { ' . $prefix
+			. $place . ' = ' . $previous . '; return ' . $place . '; }())';
+	}
+
+	/** Compute/validate into an owned old-value snapshot before either destination protocol commits. */
+	public static function compute_compound(prepared_compound_assignment_expression $facts,
+		string $previous, string $right, cpp_generation_context $context): string
+	{
 		$value = self::render_binary_decision($facts->decision, $previous, $right, $context);
 		$value = CPP_Declarations::conversion($value, $facts->write_back, $context);
-		$result_type = CPP_Declarations::type($facts->type, $context);
 		if ($facts->write_back_mode === compound_write_back::boxed_stored_kind) {
 			$context->headers['operators/arithmetic/boxed_numeric.hpp'] = true;
-			return '([&]() -> ' . $result_type . ' { ' . $prefix
-				. 'scpp::detail::assign_numeric_result(' . $previous . ', ' . $value . '); '
-				. $place . ' = ' . $previous . '; return ' . $place . '; }())';
+			return 'scpp::detail::assign_numeric_result(' . $previous . ', ' . $value . '); ';
 		}
-		return '([&]() -> ' . $result_type . ' { ' . $prefix
-			. $place . ' = ' . $value . '; return ' . $place . '; }())';
+		return $previous . ' = ' . $value . '; ';
 	}
 
 	/** Mutate the resolved place once and copy the selected old/new result into a value. */

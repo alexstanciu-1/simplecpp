@@ -1036,3 +1036,8 @@ This reused the existing native binary; it is not a new native portability check
 The [CLI/FPM comparison](portability/php_cli_fpm.md) records measured PHP-only benefits
 and limitations. `tools/benchmark_php.py` preserves explicit benchmark modes independent
 of the runner default.
+
+`python3 compiler/my-try/tests/index_compound.py --results FRESH` checks shared
+indexed compound preparation and generated C++: key/RHS sequencing, vector resize
+and replacement, nested COW/shared identity, and missing/deleted/wrong-kind paths.
+It does not rebuild the compiler natively.

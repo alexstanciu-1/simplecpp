@@ -48,7 +48,7 @@ This consolidates existing deferrals; it does not transfer new blockers to Chapt
 | Function-valued entries | Chapter 12 callable/capture model and CH15-CALLABLE-01 review |
 | Legacy `array`/`?array` admission and entry guards; `(array)` casts | Explicit legacy-profile/conversion slice; strict typed/mixed equivalents do not prove the old table-only guard |
 | Boxing existing typed containers into mixed/dynamic | ARR-VALUE-001; separate conversion/copy contract, not contextual nested literal construction |
-| Vector-element unset; indexed compound updates; wider append/path forms | Explicit mutation slices; current reads/writes do not imply these capabilities |
+| Vector-element unset; indexed increment/decrement; wider append/path forms | Explicit mutation slices; existing-element compound updates now supported below |
 | Effective storage modifiers, weak containers, indexed aliases/reference returns | Ownership/lifetime model in Chapter 07; no unstable native interior references |
 | Expected-type propagation through untyped selection branches | Preparation slice; unknown literal targets still reject |
 | Deep-path probe/removal cost | CH06-PATH-01: existing O(depth²) traversal performance debt; no semantic relaxation |
@@ -648,6 +648,28 @@ The unchanged accounting preparation retry at `/tmp/accounting-this-20261010`
 no longer reports ownership-modified receiver errors. String strict identity,
 compound RHS effects and indexed compound mutation still block full emission.
 No native compiler rebuild or full accounting execution is claimed.
+
+### Existing-element compound updates — 2026-10-10
+
+Plain and compound indexed writes share `prepared_index_target`, root admission,
+registered key/element types and owner binding. Compound updates additionally copy
+the existing leaf before RHS evaluation, then revalidate and commit without creation.
+One computation/write-back policy serves ordinary and indexed compounds; one path
+lowering serves vector/hash/mixed/dynamic. See the authoritative
+[contract](../../../../specs/array_semantics.md#v02-indexed-compound-updates).
+This supersedes earlier indexed-compound deferrals; indexed `++/--`, compound
+append and fixed-width compound arithmetic remain deferred.
+
+Proof: `tests/index_compound.py`, `/tmp/index-compound-20261010-3`: two PHP
+checks and two generated programs pass (6.78–8.77s compile/run without PCH).
+Field-write regression: two PHP checks and five generated programs pass in
+`/tmp/index-compound-field-20261010`. Ordinary compound regression also passes in
+`/tmp/index-compound-foundation-20261010`. The unchanged accounting workload now
+completes preparation and C++ artifact emission in
+`/tmp/accounting-index-compound-20261010`. Its generated application also builds
+with PCH (19 units, cold build 75.082s) and runs unchanged: `CHECKS passed=998 failed=0`
+and `ACCOUNTING_WORKLOAD_PASS`. This validates generated application execution,
+not a native compiler rebuild.
 
 Field-root follow-up (2026-10-10): keyed probes/removal now share indexed storage
 admission and C++ owner binding with field writes. Shared owners are retained before

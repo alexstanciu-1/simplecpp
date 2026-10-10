@@ -214,8 +214,9 @@ Nested writes extend the same operation contract. Bind the local/parameter root;
 evaluate, convert and validate all explicit keys left-to-right; evaluate and convert
 the RHS; validate the complete destination path without mutation; then commit.
 Each source expression executes once. Final append is supported; intermediate
-append (`$rows[][0] = 1`) is deferred. Properties, call-result roots, indexed compound
-updates and native element references remain outside this bounded slice.
+append (`$rows[][0] = 1`) is deferred. Call-result roots and native element
+references remain outside this bounded slice. Stable properties and indexed
+compound updates are admitted by the subsequent amendments below.
 
 Path resolution observes the root's current state **after** key/RHS effects. For
 example, an RHS that replaces the root changes the object/container subsequently
@@ -528,6 +529,26 @@ Important distinction:
 - any rule that would require exposing native interior references or pointers from dynamic storage
 - nested write that silently overwrites a wrong-kind existing intermediate into a table/hash
 - any special typed-context read rule that changes missing-key semantics only because the destination is typed
+
+## v0.2 indexed compound updates
+
+Indexed compound assignment uses existing elements only, including nested paths
+and stable container fields. Bind the root and retain field owners, then evaluate,
+convert and validate keys once, root-to-leaf. Read a value snapshot of the existing
+leaf before evaluating the RHS once. Compute and convert using the ordinary
+compound contract, then re-resolve the complete saved path and store only if every
+segment still exists and has a compatible container kind.
+
+Missing entries fail before the RHS. RHS deletion or wrong-kind replacement fails
+at write-back without recreation; RHS effects remain. A replacement leaving a valid
+path receives the result computed from the old leaf. Vector keys denote positions,
+not stable element identities. No interior element reference survives RHS execution.
+Validation precedes mutable descent/COW; allocation failures are not transactional.
+
+This shared protocol applies to vector/hash and mixed/dynamic tables. Numeric boxed
+updates preserve the old leaf's stored-kind checks. Compound append, indexed
+increment/decrement, fixed-width compound arithmetic and native element aliases
+remain deferred. Ordinary assignment's creation policy is unchanged.
 
 ## 13. Wording convention
 

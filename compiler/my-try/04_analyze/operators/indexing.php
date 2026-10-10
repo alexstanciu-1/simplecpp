@@ -73,9 +73,29 @@ final class Indexing_Preparation
 	{
 		$previous = $context->statement_assignment;
 		$context->statement_assignment = false;
+		try {
+			$facts = new prepared_index_assignment();
+			$facts->target = self::prepare_target($target, $context);
+			$value = Expression_Preparation::prepare($assignment->value, $context, $facts->target->nested_type);
+			$facts->type = $facts->target->decision->result_type;
+			$facts->value_conversion = Conversion_Preparation::decide($value->type, $facts->type, conversion_context::container_element,
+				new Conversion_Relationships($context));
+			return $facts;
+		}
+		finally {
+			$context->statement_assignment = $previous;
+		}
+	}
+
+	/** Resolve keys and writable root once, independently of the assigned/computed value. */
+	public static function prepare_target(index_node $target,
+		preparation_context $context): prepared_index_target
+	{
+		$previous = $context->statement_assignment;
+		$context->statement_assignment = false;
 		try
 		{
-			$facts = new prepared_index_assignment();
+			$facts = new prepared_index_target();
 			$receiver = self::prepare_receiver($target->base, $facts, $context);
 			$declaration = Model::$indexing_contracts->lookup(Type_Queries::canonical($receiver)->definition());
 			if ($declaration === null) {
@@ -115,11 +135,8 @@ final class Indexing_Preparation
 				self::require_key_domain($key->type, $context);
 				$decision->operands[] = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument);
 			}
-			$value = Expression_Preparation::prepare($assignment->value, $context, $signature->nested);
-			$facts->type = $signature->value;
 			$facts->decision = $decision;
-			$facts->value_conversion = Conversion_Preparation::decide($value->type, $signature->value, conversion_context::container_element,
-				new Conversion_Relationships($context));
+			$facts->nested_type = $signature->nested;
 			return $facts;
 		}
 		finally {
@@ -128,7 +145,7 @@ final class Indexing_Preparation
 	}
 
 	/** Keys are prepared root-to-leaf; traversal does not prepare value-read facts. */
-	private static function prepare_receiver(expression_node $syntax, prepared_index_assignment $facts,
+	private static function prepare_receiver(expression_node $syntax, prepared_index_target $facts,
 		preparation_context $context): canonical_type_use
 	{
 		if ($syntax instanceof index_node)

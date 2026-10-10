@@ -102,7 +102,7 @@ foreach ([
 	['$v dynamic = {}; $v[true] = 1;', 'indexed access keys require'],
 	['$v dynamic = {}; $v["a"] = $new = 1;', 'established local declaration for new'],
 	['$v vector<int> = [1]; $v[0]++;', 'mutation requires'],
-	['$v vector<int> = [1]; $v[0] += 2;', 'mutation requires'],
+	['$v vector<int> = [1]; $v[] += 2;', 'compound append'],
 	['function accept(int &$v): void {} $v vector<int> = [1]; accept($v[0]);', 'stable storage'],
 	['$v vector<int> = [1]; $x = isset($v[]);', 'explicit keys'],
 	['$v vector<int> = [1]; unset($v[0]);', 'keyed removal'],
@@ -141,7 +141,7 @@ $write = Model::$global_scope->functions_named('put')[0]->syntax()->body->statem
 $facts = $write->require_write_preparation();
 if (!($facts instanceof prepared_index_assignment) || $facts->addressable()
 	|| !$facts->destination_type()->matches(Language_Types::integer(Model::$language_scope))
-	|| $facts->decision->operation !== operator_operation::index_append
+	|| $facts->target->decision->operation !== operator_operation::index_append
 	|| str_contains(CPP_Probe::text(Model::$cpp_files), '([&]()')) {
 	throw new \LogicException('Statement append lost operation facts or introduced an unused value lambda');
 }
@@ -162,15 +162,15 @@ if (!$ordinary_write->require_write_preparation()->destination_type()->matches(
 indexing_prepare('function put(vector<vector<int>> &$v): void { $v[0][] = 1; }');
 $write = Model::$global_scope->functions_named('put')[0]->syntax()->body->statements[0]->expression;
 $facts = $write->require_write_preparation();
-if (!($facts instanceof prepared_index_assignment) || $facts->path->count() !== 1
-	|| $facts->path[0]->syntax !== $write->target->base
-	|| $facts->root !== $write->target->base->base
-	|| $facts->path[0]->syntax->preparation() !== null) {
+if (!($facts instanceof prepared_index_assignment) || $facts->target->path->count() !== 1
+	|| $facts->target->path[0]->syntax !== $write->target->base
+	|| $facts->target->root !== $write->target->base->base
+	|| $facts->target->path[0]->syntax->preparation() !== null) {
 	throw new \LogicException('Nested target lost path facts or was prepared as a copied read');
 }
 Preparation_Cleanup::tree($write);
-if ($write->preparation() !== null || $facts->root->preparation() !== null
-	|| $facts->path[0]->syntax->index->preparation() !== null) {
+if ($write->preparation() !== null || $facts->target->root->preparation() !== null
+	|| $facts->target->path[0]->syntax->index->preparation() !== null) {
 	throw new \LogicException('Nested write facts survived cleanup');
 }
 

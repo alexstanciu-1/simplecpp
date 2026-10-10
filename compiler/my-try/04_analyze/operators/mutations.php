@@ -53,27 +53,37 @@ final class Mutation_Preparation
 	public static function prepare_compound(compound_assignment_expression_node $syntax,
 		preparation_context $context): prepared_compound_assignment_expression
 	{
-		$target = self::prepare_target($syntax->target, $context);
+		$facts = new prepared_compound_assignment_expression();
+		if ($syntax->target instanceof index_node) {
+			$index = object_cast($syntax->target, index_node::class);
+			$destination = Indexing_Preparation::prepare_target($index, $context);
+			if ($index->index === null) { throw new \RuntimeException('S2S compound append is not supported'); }
+			$facts->indexed_target = $destination;
+			$facts->type = $destination->decision->result_type;
+		}
+		else {
+			$facts->type = self::prepare_target($syntax->target, $context)->type;
+		}
+		$target_type = $facts->type;
 		$value = self::prepare_compound_value($syntax->value, $context);
 		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
-		$facts = new prepared_compound_assignment_expression();
 		$facts->write_back_mode = compound_write_back::converted_assignment;
 		if ($source_operator === operator_kind::concatenation) {
 			// Text replacement may change a boxed payload kind; numeric stored-kind checks do not apply.
-			if (!String_Conversions::is_string($target->type) && !Boxed_Conversions::is_boxed($target->type)) {
+			if (!String_Conversions::is_string($target_type) && !Boxed_Conversions::is_boxed($target_type)) {
 				throw new \RuntimeException('S2S compound concatenation requires string or boxed storage');
 			}
 		}
 		else {
-			if (Boxed_Conversions::is_boxed($target->type)) {
+			if (Boxed_Conversions::is_boxed($target_type)) {
 				$facts->write_back_mode = compound_write_back::boxed_stored_kind;
 			}
 			elseif (Boxed_Conversions::is_boxed($value->type)) {
 				throw new \RuntimeException('S2S boxed compound assignment into native storage is deferred');
 			}
 		}
-		$operands /** vector<canonical_type_use> */ = [$target->type, $value->type];
+		$operands /** vector<canonical_type_use> */ = [$target_type, $value->type];
 		// Widened binary arithmetic does not yet extend the stored-value update contract.
 		if ($source_operator !== operator_kind::concatenation) {
 			foreach ($operands as $operand) {
@@ -86,8 +96,7 @@ final class Mutation_Preparation
 		$facts->decision = Operator_Preparation::decide(
 			$source_operator, $operands, operator_context::expression, $context);
 		$facts->write_back = Conversion_Preparation::decide(
-			$facts->decision->result_type, $target->type, conversion_context::assignment);
-		$facts->type = $target->type;
+			$facts->decision->result_type, $target_type, conversion_context::assignment);
 		return $facts;
 	}
 

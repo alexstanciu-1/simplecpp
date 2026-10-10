@@ -417,6 +417,7 @@ final class prepared_cast_expression extends prepared_expression
 
 /** Compound updates retain computation and the conversion back into resolved storage. */
 final class prepared_compound_assignment_expression extends prepared_expression {
+	public ?prepared_index_target $indexed_target = null;
 	public operator_decision $decision;
 	public conversion_decision $write_back;
 	public compound_write_back $write_back_mode;
@@ -946,17 +947,8 @@ final class prepared_property_assignment extends prepared_assignment_expression
 /** Element writes select operations rather than pretending to declare native storage. */
 final class prepared_index_assignment extends prepared_assignment_expression
 {
-	/** @reference.source assignment_expression_node.target (syntax graph) */
-	public expression_node $root;
-	/** @storage.owner */
-	public Storage $path /** Storage<prepared_index_path_step> */;
-	public operator_decision $decision;
+	public prepared_index_target $target;
 	public conversion_decision $value_conversion;
-
-	public function __construct()
-	{
-		$this->path = new Storage /** Storage<prepared_index_path_step> */();
-	}
 
 	public function destination_type(): canonical_type_use
 	{
@@ -964,10 +956,26 @@ final class prepared_index_assignment extends prepared_assignment_expression
 	}
 }
 
+/** Indexed storage protocol shared by plain and read-modify-write assignments. */
+final class prepared_index_target
+{
+	/** @reference.source indexed target syntax graph */
+	public expression_node $root;
+	/** @storage.owner */
+	public Storage $path /** Storage<prepared_index_path_step> */;
+	public operator_decision $decision;
+	public canonical_type_use $nested_type;
+
+	public function __construct()
+	{
+		$this->path = new Storage /** Storage<prepared_index_path_step> */();
+	}
+}
+
 /** Ordered semantic traversal facts; no copied read or native slot binding. */
 final class prepared_index_path_step
 {
-	/** @reference.source assignment_expression_node.target (syntax graph) */
+	/** @reference.source indexed assignment target (syntax graph) */
 	public index_node $syntax;
 	public conversion_decision $key_conversion;
 	public canonical_type_use $element_type;

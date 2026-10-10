@@ -678,7 +678,9 @@ while indexed writes read their prepared value-conversion target. This meaningfu
 abstract query also makes the assignment fact family natively polymorphic for
 checked specialization access; it is not a stage-processing hook. Its storage
 specialization retains `prepared_binding`; `prepared_index_assignment` instead owns
-a selected store/append decision and element conversion. Registry signatures bind
+a `prepared_index_target` and element conversion. The target owns root, ordered
+path, selected store/append decision and nested construction type; compound updates
+reuse it without inventing an addressable interior element. Registry signatures bind
 key, value, nested-literal target and optional write-path element type for bracket operations.
 Writes require stable local/parameter root storage, not an exposed interior reference. One CPP
 write handler emits ordered receiver/key/value temporaries and a runtime operation;
