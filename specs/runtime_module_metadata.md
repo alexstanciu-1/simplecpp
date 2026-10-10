@@ -61,6 +61,29 @@ Each parameter requires a unique `name`, a `type`, and `passing` (`value`, `refe
 Reference-bearing signatures must have an unoverloaded source name in this slice;
 ordinary call admission still checks reference places and access.
 
+### Scalar parameter defaults
+
+A value parameter may add `default` with exactly one typed scalar member:
+`{"int":7}`, `{"float":2.5}`, `{"bool":true}`, or `{"string":"text"}`.
+The explicit tag preserves integer versus floating intent, including an integral
+floating value. Integers use checked signed-64 JSON integer spellings; floating
+spellings retain their decimal text, and strings preserve decoded bytes.
+Null, enum, container and expression defaults are not enabled in this catalog slice.
+
+The default must have the exact parameter type; metadata does not ask the source
+preparation worker to infer conversions. Required inputs cannot follow optional
+inputs. Reference and observation defaults are rejected. Defaults do not distinguish
+otherwise identical overloads. Overload selection admits omitted optional inputs,
+still requires one exact candidate and does not rank candidates by defaults used.
+
+Generic defaults do not infer variables: explicit arguments or the owner application
+must first bind every variable. The default is then checked against its substituted
+parameter type, including when the caller explicitly supplies that parameter. This
+keeps each selected signature valid independently of one invocation's omissions.
+Backend generation uses the same default-value snapshots and ordered argument path
+as source functions. Providers need no C++ default arguments; all omitted values
+are materialized by the compiler. This applies to registered free and member calls.
+
 ### Non-retaining observation
 
 `observe` describes a runtime-only, read-only input boundary, not an ordinary source
@@ -398,8 +421,8 @@ For example, the vector count contract is:
 }
 ```
 
-Generic inputs are fixed required value parameters or the bounded unary observation
-contract. Generic reference inputs, defaults, variadics, user-authored generics,
+Generic inputs are fixed value parameters (including the scalar defaults above) or
+the bounded unary observation contract. Generic reference inputs, variadics, user-authored generics,
 explicit source type arguments and explicit variable capability constraints remain
 outside this slice. Variables impose no implicit copyability constraint: the formed
 type and selected value boundary own storage/copy requirements.
@@ -554,7 +577,7 @@ Unicode APIs. Explicit UTF-8 helpers reuse runtime behavior; they do not add the
 separate portable-compiler framework's UTF-8-validation contract.
 
 Fixed-array non-type parameters, compiler-module
-Storage registration, optional/default callable
+Storage registration, non-scalar defaults
 and variadic arguments, reference-return lifetime contracts,
 profile availability and the rest of the runtime inventory are not encoded by this
 version's bounded consumer yet. Extend the shared models before enabling these rows;

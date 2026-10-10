@@ -34,6 +34,7 @@ final class Runtime_Catalog_Patterns
 		$result->type_parameter_count = q_count($positions);
 		$result->owner_parameter_count = $owner_count;
 		$parameters /** Storage<runtime_pattern_parameter> */ = $result->parameters;
+		$optional_seen = false;
 		foreach ($spec->parameters as $input) {
 			if ($input->mode === passing_mode::reference) {
 				throw new \RuntimeException('Generic runtime reference inputs are deferred');
@@ -50,7 +51,21 @@ final class Runtime_Catalog_Patterns
 					throw new \RuntimeException('Void runtime parameter');
 				}
 			}
-			$parameters->append(new runtime_pattern_parameter($pattern, $input->mode, $input->access));
+			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
+			if ($input->default_value !== null) {
+				if ($input->mode !== passing_mode::value) { throw new \RuntimeException('Runtime defaults require value parameters'); }
+				$default_spec /** runtime_default_spec */ = $input->default_value;
+				$parameter->default_value = Runtime_Default_Registration::resolve($default_spec, $types);
+				if ($pattern instanceof runtime_concrete_pattern) {
+					Runtime_Default_Registration::require_type($parameter->default_value, object_cast($pattern, runtime_concrete_pattern::class)->type);
+				}
+				elseif (!($pattern instanceof runtime_variable_pattern)) {
+					throw new \RuntimeException('Runtime scalar default cannot initialize a type application');
+				}
+				$optional_seen = true;
+			}
+			elseif ($optional_seen) { throw new \RuntimeException('Runtime required parameter cannot follow an optional parameter'); }
+			$parameters->append($parameter);
 		}
 		foreach ($positions as $position) {
 			if ($position < $owner_count) { continue; }

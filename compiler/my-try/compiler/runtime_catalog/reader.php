@@ -432,6 +432,7 @@ final class Runtime_Catalog_Reader
 				$result->type = self::type($reader);
 				$typed = true;
 			}
+			elseif ($key === 'default') { $result->default_value = self::default_spec($reader); }
 			elseif ($key === 'passing')
 			{
 				$mode = $reader->read_string();
@@ -458,6 +459,23 @@ final class Runtime_Catalog_Reader
 		if (($result->name === '') || !$typed || !$passing) {
 			$reader->reject('Missing runtime parameter field');
 		}
+		return $result;
+	}
+
+	private static function default_spec(\scpp\Json_Reader $reader): runtime_default_spec
+	{
+		$result = new runtime_default_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			if ($result->type_name !== '') { $reader->reject('Runtime default requires one scalar tag'); }
+			$result->type_name = $reader->property_name();
+			if ($result->type_name === 'int') { $result->text = (string)$reader->read_integer(); }
+			elseif ($result->type_name === 'float') { $result->text = $reader->read_number(); }
+			elseif ($result->type_name === 'string') { $result->text = $reader->read_string(); }
+			elseif ($result->type_name === 'bool') { $result->text = $reader->read_boolean() ? 'true' : 'false'; }
+			else { $reader->reject('Unsupported runtime default scalar tag'); }
+		}
+		if ($result->type_name === '') { $reader->reject('Runtime default requires one scalar tag'); }
 		return $result;
 	}
 

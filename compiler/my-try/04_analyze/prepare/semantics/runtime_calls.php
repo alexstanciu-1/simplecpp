@@ -66,8 +66,8 @@ final class Runtime_Call_Preparation
 		$observing = false;
 		foreach ($signature->parameters as $input) {
 			if ((($input->mode !== passing_mode::value) && ($input->mode !== passing_mode::observation))
-				|| ($input->default_value !== null) || ($input->element_type !== null)) {
-				throw new \RuntimeException('S2S runtime overloads require fixed required value or observation parameters');
+				|| ($input->element_type !== null)) {
+				throw new \RuntimeException('S2S runtime overloads require fixed value or observation parameters');
 			}
 			if ($input->mode === passing_mode::observation) { $observing = true; }
 		}
@@ -92,14 +92,27 @@ final class Runtime_Call_Preparation
 				$result = Runtime_Pattern_Preparation::owner_arguments($runtime_owner);
 			}
 			$patterns /** Storage<runtime_pattern_parameter> */ = $contract->parameters;
-			if (q_count($patterns) !== q_count($arguments)) { return null; }
+			if (q_count($arguments) > q_count($patterns)) { return null; }
+			for ($index = q_count($arguments); $index < q_count($patterns); $index++) {
+				if ($patterns[$index]->default_value === null) { return null; }
+			}
 			foreach ($arguments as $index => $argument) {
 				if (!self::match_type($patterns[$index]->type, $argument->require_preparation()->type, $result)) { return null; }
+			}
+			if (q_count($result->bindings) !== $contract->type_parameter_count) { return null; }
+			foreach ($patterns as $parameter) {
+				if ($parameter->default_value !== null) {
+					$default_value /** prepared_literal_parameter_default */ = $parameter->default_value;
+					if (!self::match_type($parameter->type, $default_value->result_type(), $result)) { return null; }
+				}
 			}
 			return $result;
 		}
 		$parameters /** Storage<callable_parameter> */ = object_cast($target, registered_function::class)->signature()->parameters;
-		if (q_count($parameters) !== q_count($arguments)) { return null; }
+		if (q_count($arguments) > q_count($parameters)) { return null; }
+		for ($index = q_count($arguments); $index < q_count($parameters); $index++) {
+			if ($parameters[$index]->default_value === null) { return null; }
+		}
 		foreach ($arguments as $index => $argument) {
 			if (!$parameters[$index]->type->matches($argument->require_preparation()->type)) { return null; }
 		}
@@ -152,6 +165,13 @@ final class Runtime_Call_Preparation
 			}
 			$parameter->mode = $pattern->mode;
 			$parameter->access = $pattern->access;
+			if ($pattern->default_value !== null) {
+				$default_value /** prepared_literal_parameter_default */ = $pattern->default_value;
+				if (!$default_value->result_type()->matches($parameter->type)) {
+					throw new \RuntimeException('Runtime default must have the exact parameter type');
+				}
+				$parameter->default_value = $default_value;
+			}
 			$parameters->append($parameter);
 		}
 		Callable_Contracts::validate($result);

@@ -118,8 +118,17 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   /tmp/runtime-initialization-20261010-2 (protocol/data-preparation PHP and two generated
   programs). The older data_construction parser suite fails its pre-lambda rejection
   expectation; this is tracked with extended testing debt, not a protocol pass.
-- Next: Phase 4 richer callable signatures. Broader validation remains
-  CH15-RUNTIME-INTEGRATION-TESTS-01.
+- Phase 4 scalar defaults checkpoint: typed scalar metadata resolves to the existing
+  source-independent callable default snapshots, with no fabricated AST or call
+  to preparation from registration. Fixed and inferred-generic calls accept omitted
+  optional inputs; exact default types, optional ordering and ambiguity are checked.
+  Defaults never infer missing generic variables. Provider C++ functions without
+  native defaults prove that ordinary lowering materializes the supplied values.
+  Evidence: /tmp/runtime-defaults-20261010-1 (three PHP suites) and
+  /tmp/runtime-defaults-20261010-cpp (generated executable after fixture-only C++
+  type corrections). No native compiler rebuild.
+- Next: Phase 4 variadics, callable inputs and reference overload admission.
+  Broader validation remains CH15-RUNTIME-INTEGRATION-TESTS-01.
 - Phase 6 export/import audit must address runtime type aliases: direct language-scope
   lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
   export through namespace import lookup. This is not covered by the member proof.

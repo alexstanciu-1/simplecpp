@@ -73,10 +73,18 @@ final class runtime_indexing_spec
 
 final class runtime_parameter_spec
 {
+	public ?runtime_default_spec $default_value = null;
 	public string $name = '';
 	public runtime_type_spec $type;
 	public passing_mode $mode = passing_mode::value;
 	public storage_access $access = storage_access::writable;
+}
+
+/** Explicit scalar tag avoids JSON integer/float ambiguity and host numeric rounding. */
+final class runtime_default_spec
+{
+	public string $type_name = '';
+	public string $text = '';
 }
 
 final class runtime_function_spec

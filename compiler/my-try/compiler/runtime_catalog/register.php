@@ -100,6 +100,11 @@ final class Runtime_Catalog_Registration
 					}
 					$resolved->mode = $parameter->mode;
 					$resolved->access = $parameter->access;
+					if ($parameter->default_value !== null) {
+						$default_spec /** runtime_default_spec */ = $parameter->default_value;
+						$resolved->default_value = Runtime_Default_Registration::resolve($default_spec, $types);
+						Runtime_Default_Registration::require_type($resolved->default_value, $resolved->type);
+					}
 					$parameters->append($resolved);
 					$overload_key .= ':t' . $resolved->type->type_id();
 				}

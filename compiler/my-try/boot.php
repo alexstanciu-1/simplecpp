@@ -47,6 +47,7 @@ require_once __DIR__ . '/compiler/runtime_catalog/register.php';
 require_once __DIR__ . '/compiler/runtime_catalog/types.php';
 require_once __DIR__ . '/compiler/runtime_catalog/patterns.php';
 require_once __DIR__ . '/compiler/runtime_catalog/protocols.php';
+require_once __DIR__ . '/compiler/runtime_catalog/defaults.php';
 require_once __DIR__ . '/compiler/callables/language.php';
 require_once __DIR__ . '/compiler/types/contract_reference.php';
 require_once __DIR__ . '/compiler/indexing/contracts.php';
