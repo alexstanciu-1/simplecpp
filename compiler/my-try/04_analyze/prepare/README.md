@@ -337,6 +337,12 @@ vector/hash and mixed/dynamic clean operations. Native alias/reference-parameter
 unset rejects; clean writes through them. The selected type/reset fact authorizes
 default-value replacement, not arbitrary C++ constructibility or shared-object mutation.
 
+Plain property assignment retains selected property storage independently of native
+place eligibility. An indexed shared record may supply its receiver: the backend
+retains the handle before RHS evaluation and returns a stored-value snapshot, without
+exposing a borrowable place. Indexed inline records and compound/native-reference
+uses stay gated. Field-rooted index reads reuse owner binding across key effects.
+
 `String_Conversions::decide_text` owns the bounded concatenation context: boxed,
 ordinary scalar and literal-null operands normalize to string using identity or
 `text_conversion`. This dispatch precedes wrapper/null conversion routing, without

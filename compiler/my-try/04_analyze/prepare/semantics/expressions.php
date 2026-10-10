@@ -208,7 +208,7 @@ final class Expression_Preparation
 		}
 	}
 
-	/** Member assignment requires an addressable prepared field and never introduces a local. */
+	/** Writes select property storage; indexed shared values need retention, not a native place. */
 	private static function prepare_field_write(expression_node $target, expression_node $initializer, preparation_context $context): prepared_property_assignment
 	{
 		$statement_assignment = $context->statement_assignment;
@@ -223,13 +223,35 @@ final class Expression_Preparation
 		if (!($place instanceof prepared_field_access) && !($place instanceof prepared_static_property)) {
 			throw new \RuntimeException('Assignment requires mutable property storage, not a constant');
 		}
-		if (!$place->addressable()) {
-			throw new \RuntimeException('S2S assignment requires stable storage');
+		if ($place->addressable()) {
+			Reference_Preparation::require_writable($place->place);
 		}
-		Reference_Preparation::require_writable($place->place);
+		else {
+			if (!($target instanceof field_access_node) || !($place instanceof prepared_field_access)) {
+				throw new \RuntimeException('S2S assignment requires stable storage');
+			}
+			$field_target = object_cast($target, field_access_node::class);
+			$field_value = object_cast($place, prepared_field_access::class);
+			if (!($field_target->base instanceof index_node)
+				|| ($field_value->receiver_storage !== record_storage_kind::shared)) {
+				throw new \RuntimeException('S2S assignment requires stable storage or an indexed shared receiver');
+			}
+			if ($field_value->field->access === storage_access::read_only) {
+				throw new \RuntimeException('S2S mutation through read-only property storage is not allowed');
+			}
+			if ($initializer instanceof assignment_expression_node) {
+				throw new \RuntimeException('S2S chained assignment through indexed receivers is deferred');
+			}
+			Capability_Preparation::require_copy($field_value->type, $context);
+		}
 		$binding = new prepared_property_assignment();
 		$binding->type = $place->type;
-		$binding->destination = $place->place;
+		if ($place instanceof prepared_field_access) {
+			$binding->destination = object_cast($place, prepared_field_access::class)->field;
+		}
+		else {
+			$binding->destination = object_cast($place, prepared_static_property::class)->field;
+		}
 		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(
 			$value->type, $binding->type, conversion_context::assignment, new Conversion_Relationships($context));

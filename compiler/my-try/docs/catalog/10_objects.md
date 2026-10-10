@@ -1,6 +1,23 @@
 # 10. Classes, properties, construction and methods
 Doc Status: planning
 
+### Accounting follow-up: indexed shared property writes — 2026-10-10
+
+Plain `$entry->lines[1]->credit = value` now admits shared record results from
+ordinary indexed reads. Property-write facts retain selected storage rather than
+requiring a native-reference place. Existing property lookup/access/conversion and
+backend owner binding are reused; no container-family branch is added. Owners stay
+alive across key/RHS replacement, bounds/null failures precede the RHS, and inline
+elements/compound updates/native borrows remain rejected. RHS assignment chains on
+the new target remain deferred; outer assignment chains consume its value snapshot.
+The [authoritative contract](../../../../specs/instance_methods_v0_2.md#plain-property-writes-through-indexed-shared-values--2026-10-10)
+records the boundary. Focused runner: `tests/indexed_properties.py`.
+Evidence: `/tmp/indexed-properties-20261010-final` (three PHP checks, three generated
+programs). Field write/probe regression evidence is in
+`/tmp/field_container_writes-20261010-indexed-verified` and
+`/tmp/field_container_probes-20261010-indexed-verified` (eight generated programs).
+These are generated-program checks, not a native compiler rebuild.
+
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)

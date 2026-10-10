@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/indexed_properties.py --results FRESH_DIRECTORY`
+checks plain indexed shared-object property writes, reference/place boundaries,
+key/RHS replacement lifetime and bounds/null failures. Three generated programs
+execute alongside preparation-dispatch and indexing regressions.
+
 `python3 compiler/my-try/tests/eager_binary.py --results FRESH_DIRECTORY` checks
 left-to-right eager operands/conversions, scalar and reference-return snapshots,
 lazy subexpressions, failure order and existing operator preparation regressions.

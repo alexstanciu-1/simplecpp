@@ -435,9 +435,12 @@ before publication and treated as immutable afterward, like other prepared facts
 retain only that family. `prepared_property_storage` instead describes typed instance
 or static storage. Its source-field and registered-property implementations retain
 their actual identities, without invented collected declarations. Property assignments
-own `prepared_property_assignment` with a destination place and conversion/boundary
+own `prepared_property_assignment` with selected property storage and conversion/boundary
 facts, not a local `prepared_binding`. Registry-owned runtime members and backend-owned
 property bindings are rebuilt together on reset from retained metadata.
+Stable receiver places supply ordinary access checks. Plain writes may also select
+a property on an indexed shared value, whose runtime handle is retained during the
+write; this does not manufacture a place for that value or make it borrowable.
 `runtime_property_definition` retains the single owner-definition/type-pattern recipe.
 `Runtime_Pattern_Preparation` substitutes it using the same worker as callable
 signatures. `Runtime_Members` retains stable `registered_property` storage per selected

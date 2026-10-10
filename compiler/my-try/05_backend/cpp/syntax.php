@@ -173,10 +173,10 @@ final class CPP_Syntax
 		$receiver = 'index_receiver_' . $id;
 		$key = 'index_key_' . $id;
 		$argument /** expression_node */ = $node->index;
-		$base = $this->expression($node->base);
+		$base = CPP_Declarations::bind_storage_receiver($node->base, $this->context);
 		$converted_key = CPP_Declarations::conversion($this->expression($argument), $decision->operands[1], $this->context);
 		return '([&]() -> ' . CPP_Declarations::type($decision->result_type, $this->context) . ' { '
-			. 'const auto& ' . $receiver . ' = ' . $base . '; '
+			. $base->statements . 'const auto& ' . $receiver . ' = ' . $base->value . '; '
 			. CPP_Declarations::type($decision->operands[1]->target_type, $this->context) . ' ' . $key . ' = ' . $converted_key . '; '
 			. 'return ' . $helper . '(' . $receiver . ', ' . $key . '); }())';
 	}

@@ -41,7 +41,7 @@ foreach ([false, true] as $nested)
 	$repeat = object_cast(object_cast($statements[2], expression_statement_node::class)->expression, assignment_expression_node::class);
 	$field = object_cast($member->target, field_access_node::class)->require_field_access_preparation();
 	$property_write = object_cast($member->require_write_preparation(), prepared_property_assignment::class);
-	dispatch_check($property_write->destination->storage() === $field->field, 'Field write lost its storage identity');
+	dispatch_check($property_write->destination === $field->field, 'Field write lost its storage identity');
 	dispatch_check($property_write->destination_type()->matches($field->type), 'Field write lost its destination type');
 	dispatch_check($local->require_assignment_preparation()->binding->resolved_kind === binding_kind::declaration, 'First variable assignment did not declare storage');
 	dispatch_check($repeat->require_assignment_preparation()->binding->resolved_kind === binding_kind::assignment, 'Repeated assignment redeclared storage');

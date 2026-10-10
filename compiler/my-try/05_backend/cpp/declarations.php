@@ -656,7 +656,8 @@ final class CPP_Declarations
 		$base = self::bind_storage_receiver($field->base, $context);
 		$name = 'storage_owner_' . $context->next_temporary;
 		$context->next_temporary++;
-		$binding = $field->require_field_access_preparation()->receiver_storage === record_storage_kind::shared ? 'auto ' : 'auto& ';
+		// Nonshared reads may start at a temporary inline value; extend its lifetime without copying.
+		$binding = $field->require_field_access_preparation()->receiver_storage === record_storage_kind::shared ? 'auto ' : 'auto&& ';
 		if ($field->base instanceof variable_reference_node) {
 			$reference = object_cast($field->base, variable_reference_node::class)->require_variable_reference_preparation();
 			if (weakref_get($reference->declaration) instanceof collected_method) { $binding = 'auto '; }

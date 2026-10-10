@@ -934,12 +934,12 @@ final class prepared_assignment extends prepared_assignment_expression
 /** A property write observes actual storage, never a fabricated local declaration. */
 final class prepared_property_assignment extends prepared_assignment_expression
 {
-	public prepared_place $destination;
+	public prepared_property_storage $destination;
 	public conversion_decision $conversion;
 	public ?value_boundary_operation $boundary = null;
 	public function destination_type(): canonical_type_use
 	{
-		return $this->destination->storage()->storage_type();
+		return $this->destination->storage_type();
 	}
 }
 

@@ -17,6 +17,33 @@ type, modifiers and initialization contract. Nullable, qualified, callable and n
 generic types use the ordinary type grammar. Existing untyped declarations with an
 inferable initializer remain unchanged. This adds no parameter/property promotion.
 
+### Plain property writes through indexed shared values — 2026-10-10
+
+An ordinary checked indexed read returning a shared class/record handle may serve
+as the receiver of plain property assignment, for example
+`$entry->lines[1]->credit = 100`. This is object-property mutation, not replacement
+of a container element. The indexing contract supplies the value; no vector/hash
+specific property-assignment rule or container writeback is involved.
+
+Evaluate the receiver path and key once, check the indexed read, retain the selected
+shared handle and resolve the destination property before evaluating/converting the
+RHS. Bounds/missing-key/null-owner failures therefore prevent RHS execution. Removal
+or replacement of the original element/container during the RHS does not redirect
+the selected object write. The retained receiver is released after the write's
+value snapshot is obtained. Shared field owners are likewise retained across keys.
+
+Visibility, property mutability and assignment conversions remain ordinary rules.
+A copied shared handle preserves object identity; copying it from read-only container
+storage does not imply deep freezing of that object. A read-only property itself
+remains unwritable. Inline element values cannot be mutated through this form: a
+copied record would not update the container. No native reference or alias into
+container/object storage is exposed.
+
+This bounded extension admits plain statement writes and their use in existing
+assignment chains as a value. RHS assignment chains on this new destination,
+compound/increment updates, inline-element mutation and new ownership-transfer
+contracts remain deferred.
+
 ### Invocation
 
 The [concrete inheritance extension](inheritance_v0_2.md) enables inherited fixed

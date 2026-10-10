@@ -494,7 +494,27 @@ final class CPP_Generator
 		if ($facts instanceof prepared_index_assignment) {
 			return "\t" . CPP_Index_Write::generate($syntax, object_cast($facts, prepared_index_assignment::class), $context, false) . "\n";
 		}
+		if (($facts instanceof prepared_property_assignment) && ($syntax->target instanceof field_access_node)) {
+			$field = object_cast($syntax->target, field_access_node::class);
+			if (!$field->require_preparation()->addressable()) {
+				return "\t" . self::generate_retained_property_write($field, object_cast($facts, prepared_property_assignment::class),
+					(new CPP_Syntax($context))->expression($syntax->value), $context) . ";\n";
+			}
+		}
 		return self::generate_assignment_sequence($syntax, $context)->statements;
+	}
+
+	/** Retain an evaluated receiver for one write; no heap-interior reference escapes it. */
+	private static function generate_retained_property_write(field_access_node $target, prepared_property_assignment $facts,
+		string $value, cpp_generation_context $context): string
+	{
+		$receiver = CPP_Declarations::bind_storage_receiver($target, $context);
+		$name = 'property_target_' . $context->next_temporary;
+		$context->next_temporary++;
+		return '([&]() -> ' . CPP_Declarations::type($facts->destination_type(), $context) . ' { '
+			. $receiver->statements . 'auto& ' . $name . ' = ' . $receiver->value . '; '
+			. $name . ' = ' . CPP_Declarations::conversion($value, $facts->conversion, $context)
+			. '; return ' . $name . '; }())';
 	}
 
 	/** Emit inner writes first and return their stored value to the enclosing assignment. */
@@ -533,7 +553,9 @@ final class CPP_Generator
 			$name = CPP_Declarations::static_property(object_cast($member->require_preparation(), prepared_static_property::class), $context);
 		}
 		elseif ($target !== null) {
-			$name = (new CPP_Syntax($context))->expression($target);
+			if ($target->require_preparation()->addressable()) {
+				$name = (new CPP_Syntax($context))->expression($target);
+			}
 		}
 		else {
 			$name = self::storage_name($syntax->require_assignment_preparation()->binding, null, $context);
@@ -543,6 +565,18 @@ final class CPP_Generator
 		if ($write_facts instanceof prepared_property_assignment) {
 			$property_write = object_cast($write_facts, prepared_property_assignment::class);
 			CPP_Declarations::type($property_write->destination_type(), $context);
+			if ($target instanceof field_access_node) {
+				$field_target = object_cast($target, field_access_node::class);
+				if (!$field_target->require_preparation()->addressable()) {
+					$result_name = 'property_result_' . $context->next_temporary;
+					$context->next_temporary++;
+					$result = new cpp_assignment_sequence();
+					$result->statements = "\tauto " . $result_name . ' = '
+						. self::generate_retained_property_write($field_target, $property_write, $source->value, $context) . ";\n";
+					$result->value = $result_name;
+					return $result;
+				}
+			}
 			$statements .= "\t" . $name . ' = '
 				. CPP_Declarations::conversion($source->value, $property_write->conversion, $context) . ";\n";
 		}
