@@ -1,6 +1,10 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_exports.py --results FRESH_DIRECTORY`
+checks root runtime aliases, namespace isolation and incremental source shadowing,
+plus two generated programs. No native compiler rebuild.
+
 `python3 compiler/my-try/tests/runtime_module_build.py --results FRESH_DIRECTORY`
 checks metadata provider publication, native object/link inputs and PCH invalidation
 with six ordered build/execution scenarios. It does not rebuild the compiler.

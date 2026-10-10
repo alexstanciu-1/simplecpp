@@ -522,6 +522,11 @@ registry; only validated identities enter language scope. C++ bindings are insta
 separately by the backend under coordinator sequencing. Ordinary compilation and
 incremental updates perform no metadata IO or JSON parsing.
 
+Exported names support root-qualified lookup and ordinary body-local imports,
+including aliases of generic type definitions. Root source declarations shadow
+runtime exports per symbol kind; imports neither copy nor re-export identities.
+Metadata module names do not create source namespaces.
+
 Semantic registry resets reuse retained typed metadata but recreate canonical type,
 callable, constant and backend-binding identities. Old targets cannot reuse new bindings merely
 because their string IDs match. Catalog edits take effect in a new compiler session;

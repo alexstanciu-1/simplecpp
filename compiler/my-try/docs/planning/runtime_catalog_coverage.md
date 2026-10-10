@@ -4,8 +4,9 @@ Doc Status: planning
 ## Direction
 
 The [approved completion plan](runtime_module_integration.md) now groups remaining
-foundations and records checkpoint status. Shared runtime storage is implemented;
-member/factory and protocol integration remain subsequent checkpoints.
+foundations and records checkpoint status. Storage, members/factories, protocols,
+richer signatures and build composition are implemented within their documented
+contracts. The remaining phase reconciles exports and real module inventories.
 
 Migrate the runtime's source-facing symbols by owning module, not by adding special
 cases to expression preparation. Runtime metadata is loaded once into typed startup
@@ -122,11 +123,9 @@ runtime contract, not missing JSON rows. There is no existing public math module
 strict math-symbol inventory to migrate; a numeric-library extension would require
 its own contracts rather than speculative abs/round/etc. registrations.
 
-Datetime is not header-only: link `runtime/include/modules/datetime/datetime.cpp`
-alongside the core runtime. Metadata dependency `core` orders catalog loading only.
-The focused runner builds the provider once; the existing project build owns runtime
-module linkage. My-try's bounded native cache still does not infer optional module
-objects from catalog selection. That build-owner integration remains separate work.
+Datetime is not header-only. Its `cpp_build` metadata now supplies
+`modules/datetime/datetime.cpp`; the core dependency supplies `core/runtime.cpp`.
+The artifact publication carries these requirements to the native cache consumer.
 
 Known review limits: direct uint64 binary comparisons remain outside current compiler
 integer operations, so the fixture checks monotonic unsigned outputs in the host
@@ -156,7 +155,7 @@ false-wrapper names are not aliases of the strict Result APIs.
 No schema, parser or emitter changes. Host/native startup select the
 module; the focused runner links the snippet `core/runtime.cpp`, which already
 bundles `filesystem.cpp` and `snapshot.cpp`. Do not also link standalone copies.
-Automatic linkage for other optional modules remains build-owner work, not metadata loading.
+Optional-module linkage is now supplied through `cpp_build` publication, not loader execution.
 The ordinary rmdir provider now uses a directory-only OS primitive, correcting its
 previous ability to delete regular files without introducing a check/remove race.
 Linux proofs cover file/symlink preservation; Windows `_wrmdir` is not tested here.
@@ -174,8 +173,8 @@ The opt-in `regex.json` depends on core, but is deliberately absent from the hos
 and native-driver default selections. Composition roots select it with
 `Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load($directory,
 ['regex']))` before compilation. Existing programmatic selection is sufficient;
-this pass adds neither a CLI module option nor automatic native-cache linkage.
-Consumers link `modules/regex/regex.cpp` and PCRE2-8 explicitly. The host needs the
+there is no CLI module option yet. Metadata now supplies
+`modules/regex/regex.cpp` and PCRE2-8 to the native builder. The host needs the
 PCRE2 development package; the focused runner queries pkg-config rather than
 installing anything or silently skipping execution.
 
@@ -190,7 +189,7 @@ installing anything or silently skipping execution.
 | regex_split | Registered, 2/3/4 args | Optional limit/flags; PREG_SPLIT_NO_EMPTY=1 and PREG_SPLIT_DELIM_CAPTURE=2 |
 | regex_replace with limit; replacement/filter count outputs | Held | C++ const-limit/nonconst-count overloads collide for emitted value snapshots; need unambiguous provider bindings and shared reference-overload admission |
 | regex_filter | Held for semantic reconciliation | Its builtin spec says literal replacement; runtime replace_impl expands backreferences; empty inputs also bypass pattern/limit validation |
-| regex_replace_callback, regex_replace_callback_array | Held | Metadata cannot yet describe explicit callable signatures; no string or mixed substitute |
+| regex_replace_callback, regex_replace_callback_array | Pending module re-audit | Structural callable metadata is now available; verify provider callback/container ABI and contracts before registration |
 | preg_* aliases, unsupported output-shape flags | Excluded | Legacy aliases are not strict APIs; runtime retains errors for unsupported split flags |
 
 Empty successful captures are not failure. `take`/`isset` observe Result state;
@@ -239,9 +238,9 @@ Do not fill this gap by enumerating concrete scalar/container overloads in metad
 | Contract-sensitive strings | strpos/strrpos, substr_replace, boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
 | Container-producing/consuming helpers | collection APIs | Audit by owning module; typed split/join now use existing application/generic contracts |
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
-| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, source views | Ordinary type registration now supports the two string builders; shared storage, members/factories and handle lifetimes remain separate prerequisites |
-| Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Reuse existing callable models, but extend metadata decoding and selection under explicit contracts |
-| Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Pair public contracts with runtime type dependencies and build/link integration; datetime/filesystem and ready regex signatures registered, automatic module linkage still separate |
+| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, source views | Shared storage and registered members/factories are available; real provider lifecycle contracts still need integration proofs; borrowed source views remain deferred |
+| Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Scalar defaults, variadics, callbacks and reference inputs are available; reference returns/non-scalar defaults remain deferred |
+| Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Build metadata is available; audit public contracts and type/lifetime requirements by whole module |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
 | Profile availability | strict versus legacy PHP surfaces | Add explicit availability rules; old symbol maps are not permission to expose legacy-only contracts |
 
@@ -269,14 +268,13 @@ binary bytes, copy independence and single argument evaluation; capacity checks 
 lower bounds. FPM used CLI fallback because sandbox socket creation was unavailable.
 No PCH, native compiler rebuild or production runtime/compiler worker edits.
 
-Next prerequisite audit: JSON documents/nodes and file/process handles bind shared
-C++ payloads, not the ordinary inline carriers used by these builders. Source-default
-shared storage currently recognizes source declarations, and diagnostic/output fields
-need registered member facts. Do not label noncopyable payloads copyable or bake a
+Next module audit: JSON documents/nodes and file/process handles bind shared
+C++ payloads, not the ordinary inline carriers used by these builders. Their metadata
+must declare shared storage and appropriate diagnostic/output fields.
+Do not label noncopyable payloads copyable or bake a
 shared wrapper into an opaque C++ binding to bypass that semantic distinction.
-The shared-storage prerequisite is now implemented and proved with an unfamiliar
-provider. Registered members remain a prerequisite for diagnostic/output fields;
-real module lifecycle contracts still require their own focused integration proofs.
+Shared storage and registered members are now implemented and proved with unfamiliar
+providers; real module lifecycle contracts still require focused integration proofs.
 
 Runtime-type foundation: `types`/`cpp_types` records decode directly into typed startup
 data. One transient registration worker installs ordinary nominal/template definitions

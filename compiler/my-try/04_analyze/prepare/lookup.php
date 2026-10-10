@@ -24,7 +24,15 @@ final class Observed_Lookup
 	{
 		if (Source_Name_Path::separator($name) >= 0) {
 			$members = self::qualified_pool($start, $name, preparation_lookup_kind::constant, $context);
-			return $members->constants_named(Source_Name_Path::member($name));
+			$qualified = $members->constants_named(Source_Name_Path::member($name));
+			if (q_count($qualified) !== 0) { return $qualified; }
+			$fallback = Scope_Lookup::qualified_parent($members);
+			if ($fallback !== null) {
+				$language /** scope */ = $fallback;
+				$context->worker->observe($language, Source_Name_Path::member($name), preparation_lookup_kind::constant, $context->owner);
+				return $language->constants_named(Source_Name_Path::member($name));
+			}
+			return $qualified;
 		}
 		$current_scope = $start;
 		$result /** vector<constant_target_i> */ = [];
@@ -59,7 +67,15 @@ final class Observed_Lookup
 	{
 		if (Source_Name_Path::separator($name) >= 0) {
 			$members = self::qualified_pool($start, $name, preparation_lookup_kind::type, $context);
-			return $members->types_named(Source_Name_Path::member($name));
+			$qualified = $members->types_named(Source_Name_Path::member($name));
+			if (q_count($qualified) !== 0) { return $qualified; }
+			$fallback = Scope_Lookup::qualified_parent($members);
+			if ($fallback !== null) {
+				$language /** scope */ = $fallback;
+				$context->worker->observe($language, Source_Name_Path::member($name), preparation_lookup_kind::type, $context->owner);
+				return $language->types_named(Source_Name_Path::member($name));
+			}
+			return $qualified;
 		}
 		$current_scope = $start;
 		$result /** vector<type_definition_i> */ = [];
@@ -94,7 +110,15 @@ final class Observed_Lookup
 	{
 		if (Source_Name_Path::separator($name) >= 0) {
 			$members = self::qualified_pool($start, $name, preparation_lookup_kind::function_name, $context);
-			return $members->callables_named(Source_Name_Path::member($name));
+			$qualified = $members->callables_named(Source_Name_Path::member($name));
+			if (q_count($qualified) !== 0) { return $qualified; }
+			$fallback = Scope_Lookup::qualified_parent($members);
+			if ($fallback !== null) {
+				$language /** scope */ = $fallback;
+				$context->worker->observe($language, Source_Name_Path::member($name), preparation_lookup_kind::function_name, $context->owner);
+				return $language->callables_named(Source_Name_Path::member($name));
+			}
+			return $qualified;
 		}
 		$current_scope = $start;
 		$result /** vector<callable_definition_i> */ = [];

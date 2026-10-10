@@ -24,6 +24,10 @@ Project module names do not introduce source namespaces.
   namespace does not gain implicit user-symbol fallback through parent namespaces.
 - Registered builtins retain their explicit language-scope availability; this is
   not fallback to arbitrary global source definitions.
+- Root-qualified names also expose registered language/runtime symbols when no
+  root source declaration of that kind shadows them. Imports may alias these
+  existing type, function and constant identities. Named namespace qualification
+  remains exact: `Missing\\vector` does not expose the runtime `vector`.
 - The requested symbol kind remains significant: types, functions and constants
   retain their own lookup/validation rules.
 

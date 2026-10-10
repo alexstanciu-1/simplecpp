@@ -124,6 +124,18 @@ function runtime_type_compile(string $source): string
 }
 
 $cases = [
+	'imports' => <<<'PHS'
+namespace App;
+use parcel as Package;
+use receipt as Receipt;
+use function pack as package_value;
+$item Package<int> = package_value(17);
+$receipt Receipt = \make_receipt(23);
+$a = $item->read();
+$b = \receipt_number($receipt);
+if ($a !== 17 || $b !== 23) { return 1; }
+return 0;
+PHS,
 	'owner_properties' => <<<'PHS'
 function update(int &$value): void { $value = 19; }
 $a = pack(7);

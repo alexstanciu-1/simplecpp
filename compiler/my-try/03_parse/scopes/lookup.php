@@ -45,6 +45,15 @@ final class Source_Name_Path
 /** Deletion cleanup precedes resolution; lookups see only active index membership. */
 final class Scope_Lookup
 {
+	/** Only the source root exposes the language/runtime parent through rooted names. */
+	public static function qualified_parent(scope $members): ?scope
+	{
+		$identity = $members->source_namespace();
+		if ($identity === null) { return null; }
+		if ($identity->path() !== '') { return null; }
+		return $members->parent_scope();
+	}
+
 	/** Resolve the nearest exact constant pool in its independent namespace. */
 	public static function constants(scope $start, string $name): array /** vector<constant_target_i> */
 	{
@@ -53,7 +62,15 @@ final class Scope_Lookup
 			if ($identity === null) {
 				return /** vector<constant_target_i> */ [];
 			}
-			return $identity->published_scope()->constants_named(Source_Name_Path::member($name));
+			$members = $identity->published_scope();
+			$qualified = $members->constants_named(Source_Name_Path::member($name));
+			if (q_count($qualified) !== 0) { return $qualified; }
+			$fallback = self::qualified_parent($members);
+			if ($fallback !== null) {
+				$language /** scope */ = $fallback;
+				return $language->constants_named(Source_Name_Path::member($name));
+			}
+			return $qualified;
 		}
 		$current_scope = $start;
 		$result /** vector<constant_target_i> */ = [];
@@ -87,7 +104,15 @@ final class Scope_Lookup
 			if ($identity === null) {
 				return /** vector<type_definition_i> */ [];
 			}
-			return $identity->published_scope()->types_named(Source_Name_Path::member($name));
+			$members = $identity->published_scope();
+			$qualified = $members->types_named(Source_Name_Path::member($name));
+			if (q_count($qualified) !== 0) { return $qualified; }
+			$fallback = self::qualified_parent($members);
+			if ($fallback !== null) {
+				$language /** scope */ = $fallback;
+				return $language->types_named(Source_Name_Path::member($name));
+			}
+			return $qualified;
 		}
 		$current_scope = $start;
 		$result /** vector<type_definition_i> */ = [];
@@ -121,7 +146,15 @@ final class Scope_Lookup
 			if ($identity === null) {
 				return /** vector<callable_definition_i> */ [];
 			}
-			return $identity->published_scope()->callables_named(Source_Name_Path::member($name));
+			$members = $identity->published_scope();
+			$qualified = $members->callables_named(Source_Name_Path::member($name));
+			if (q_count($qualified) !== 0) { return $qualified; }
+			$fallback = self::qualified_parent($members);
+			if ($fallback !== null) {
+				$language /** scope */ = $fallback;
+				return $language->callables_named(Source_Name_Path::member($name));
+			}
+			return $qualified;
 		}
 		$current_scope = $start;
 		$result /** vector<callable_definition_i> */ = [];

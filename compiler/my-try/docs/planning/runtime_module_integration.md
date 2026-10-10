@@ -163,9 +163,14 @@ Memory-safety or false type admission is not deferrable for enabled behavior.
   No native compiler rebuild.
 - Next: Phase 6 coverage/export audit.
   Broader validation remains CH15-RUNTIME-INTEGRATION-TESTS-01.
-- Phase 6 export/import audit must address runtime type aliases: direct language-scope
-  lookup works, but `use ticket as TicketAlias;` currently cannot resolve the runtime
-  export through namespace import lookup. This is not covered by the member proof.
+- Phase 6 export/import repair: root-qualified lookup and import validation now
+  reach language-scope types/functions/constants after checking source shadows.
+  Named namespaces remain exact; aliases remain body-local and are not re-exported.
+  Both observed and non-observed lookup share the root-parent rule, and analysis
+  observes the root miss so adding/removing a source shadow invalidates consumers.
+  Evidence: /tmp/runtime-exports-20261010-final (runtime exports/types and namespace PHP
+  suites, two generated programs including unfamiliar nominal/generic aliases).
+  Inventory reconciliation and real module batches remain outstanding.
 - Deferred borrowed source views retain CH15-RUNTIME-SOURCE-01.
 - Provider semantic conflicts retain their existing debts; no silent contract changes.
 
