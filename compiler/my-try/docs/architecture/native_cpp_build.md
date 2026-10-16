@@ -1,4 +1,4 @@
-# Incremental native C++ build
+# Native C++ build consumers
 Doc Status: supporting
 
 `06_native/Native_CPP_Build` consumes a ready disk publication, not syntax or semantic
@@ -18,7 +18,94 @@ threads and `-O0`. It emits a JSON result only after success, with executable pa
 counts for compiled/reused objects, PCH creation and linking. It does not execute the
 program or rebuild the compiler itself. Programmatic callers use `native_cpp_config`.
 
-## Ownership and ordering
+
+## Shared commands and optional Ninja execution
+
+`Native_CPP_Commands` owns ordered compiler flags, runtime PCH contents/creation,
+runtime-provider compilation, generated-unit compilation, linking and the controlled
+child environment. Its methods return argument arrays; they do not execute tools or
+make freshness decisions. Both consumers share `native_cpp_toolchain`; their cache
+and directory settings stay in separate derived configuration records. The existing
+`native_cpp_config` constructor and cached-builder behavior are preserved.
+`Native_CPP_Publication` decodes the same validated runtime-build contract for both.
+
+The first Ninja entrypoint consumes a complete ready publication:
+
+```bash
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/new-build --jobs=8
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/new-build --jobs=8 --reuse
+```
+
+Without `--reuse`, use a fresh empty dedicated directory. An already owned directory
+is rejected rather than deleted. `--reuse` permits Ninja to reuse that directory's
+outputs, including across separate compiler processes. No content-addressed native
+cache runs underneath Ninja. This is ordinary Ninja timestamp/command freshness,
+not historical content-addressed reuse after a Git revert. Use the entrypoint for
+every build so publication validation, tool identity observation and reservations run;
+invoking the saved graph directly is a diagnostic operation, not a readiness API.
+
+Options are `--no-pch`, `-O0`/`-O2`, `--jobs=N`, `--compiler=ABSOLUTE_PATH`,
+`--runtime=ABSOLUTE_PATH` and `--ninja=ABSOLUTE_PATH`. Defaults preserve C++23,
+PHP target, pthread, `-O0`, the runtime PCH and `/usr/bin/ld`. There is no Mold
+selection/tuning change in this slice. `--jobs` limits Ninja commands; it does not
+configure compiler-internal MT or linker-internal thread counts.
+
+The graph contains the current runtime PCH, one object per published translation
+unit, one object per selected runtime provider, and one executable. Object names
+use source-path identities, not traversal positions or content digests. Removed
+units disappear from the link inputs even if their old objects remain on disk.
+Providers do not depend on the PCH; generated objects have a real PCH prerequisite.
+No object depends on the whole publication manifest. Compilation collects full
+header dependencies with `-MD -MF -MQ`; linking uses the existing GNU ld dependency
+file facility. No separate `-M` discovery pass or PCH syntax-only validation command
+is scheduled. Clang's normal PCH validation remains enabled.
+
+Graph/umbrella/identity files are written only when their bytes change. Compiler
+and environment-launcher content identity is separate from linker identity; replacing
+the linker does not itself invalidate objects. Keep the surrounding toolchain/include
+search installation fixed during retained reuse; after changing search layout or
+adding a shadowing external header, choose a fresh directory. This first slice does
+not implement include-search inventory or historical artifact corruption recovery.
+
+The worker holds a shared publication reservation and exclusive Ninja-directory
+reservation throughout execution. It verifies all publication digests before invoking
+Ninja. Ninja owns its direct external outputs and completion log (unlike the cached
+consumer's per-action staged promotion). `.scpp-ninja.status` is pending before an
+admitted attempt and ready only after successful Ninja completion and executable
+hashing. A stale executable after failure is not the requested build's result.
+The CLI returns JSON containing the executable path and captured Ninja output.
+
+Ninja graph escaping and POSIX shell quoting are separate. Relative object/executable
+paths avoid GNU ld's unescaped absolute-output-path depfile limitation. Build and
+publication directories containing spaces, dollar signs and colons are covered.
+Quotes, backslashes, pipes, tabs and newlines in dependency paths are rejected in
+this first integration. The standard system library search paths are assumed;
+broader depfile path handling and long link response files remain
+[CH15 debt](../catalog/15_blocking_debt.md#ch15-ninja-01--ninja-adapter-follow-ups).
+
+The implementation follows the upstream [Ninja manual](https://ninja-build.org/manual.html)
+for command freshness, compilation depfiles, explicit dependencies and escaping.
+This integration changes neither C++ grouping/emission nor compiler incremental/MT
+internals. Automatic splitting and multi-file classes remain deferred.
+
+Focused evidence: `python3 compiler/my-try/tests/ninja_build.py --results FRESH`.
+This runs the PHP-hosted builder and real Clang/Ninja-generated executables, not a
+native compiler rebuild or a performance benchmark. The existing
+`tests/runtime_module_build.py` separately covers the refactored cached consumer.
+
+### Focused checkpoint — 2026-10-16
+
+The Ninja suite passed 13 successful build/execution scenarios plus four rejection
+checks (reuse admission, unsupported path, compile failure, publication tampering).
+Observed action counts: cold 6; unchanged 0; body edit 2; added unit 3; removed unit 2;
+provider edit 2; library-list edit 1; provider-header edit 3; no-PCH fresh 5; O2 fresh 6;
+PCH-header edit 6; unchanged after PCH rebuild 0; retry after compile failure 2.
+Each count includes linking where required. The existing cached-consumer suite also
+passed its six scenarios. Evidence: `/tmp/scpp-ninja-final-20261016/` and
+`/tmp/scpp-recipes-existing-20261016/`. These are correctness observations, not
+performance claims. Test sources preserve the checks if temporary logs expire.
+
+## Cached consumer: ownership and ordering
 
 Hold the source publication's shared reservation for the whole build, then a stable
 exclusive cache reservation. Contention is nonblocking and leaves readiness alone.

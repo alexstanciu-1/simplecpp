@@ -43,7 +43,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Chapter 08 implementation roadmap | [Multi-file artifacts, staged migration, incremental native builds and runtime PCH](planning/incremental_cpp_artifacts.md) |
 | C++ implementation-group assembly | [Structure and exact-output proof](planning/implementation_group_assembly_20261016.md) |
 | Persistent generated output | [Coordinator publication, ownership, locking and recovery](architecture/output_publication.md) |
-| Persistent native cache | [Staged outputs, dependencies, runtime PCH and bounded native build](architecture/native_cpp_build.md) |
+| Native build consumers | [Shared command recipes, optional Ninja execution, and staged native cache](architecture/native_cpp_build.md) |
 | Namespace/import implementation | [Agreed language rules](../../../specs/namespaces_v0_2.md), [approved identity/body migration and current checkpoints](planning/namespace_identity_migration.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
 | Value storage modifier semantics | [Registry normalization and AST spelling](../../../specs/type_use_modifiers.md) |

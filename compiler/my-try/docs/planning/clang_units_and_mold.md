@@ -181,9 +181,13 @@ aggregate memory alongside largest-process RSS. Keep profiles separate from norm
 latency runs. Development optimization levels and optimized runtime reuse should be
 compared without silently using release settings for only one candidate.
 
-Only the implementation-group assembly extraction and focused PHP/output parity
-checks have been completed. No scheduler, unit splitter, linker integration,
-shared-library packaging, or performance benchmark is implemented by this slice. LLVM/IR caching,
+Implementation-group assembly extraction and exact-output checks are complete.
+The first [Ninja consumer](../architecture/native_cpp_build.md#shared-commands-and-optional-ninja-execution)
+now shares the existing native command recipes, keeps source grouping/flags unchanged,
+and offers explicit optional directory reuse. Focused generated-program checks cover
+its graph and execution boundary. Compiler incremental/MT internals remain untouched.
+No unit splitter, Mold configuration/tuning, shared-library packaging, or performance
+benchmark is implemented by these slices. LLVM/IR caching,
 direct LLVM lowering, LTO, and hot replacement of libraries in a running process
 are outside this slice.
 

@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/ninja_build.py --results FRESH_DIRECTORY` checks
+published-program builds through the shared command recipes and Ninja: fresh/warm,
+body/provider/header edits, source-unit addition/removal, link-only configuration,
+PCH dependency rebuild, no-PCH/O2, failure/retry, path escaping and readiness guards.
+It uses the shared runner and executes generated programs. It does not rebuild the
+compiler natively or test its incremental/MT internals.
+
 `python3 compiler/my-try/tests/indexed_properties.py --results FRESH_DIRECTORY`
 checks plain indexed shared-object property writes, reference/place boundaries,
 key/RHS replacement lifetime and bounds/null failures. Three generated programs

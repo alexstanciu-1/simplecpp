@@ -940,3 +940,23 @@ and the relation to CH15-SHAPE-01. Callable values do not automatically imply me
 binding; coordinate with CH15-CALLABLE-01. Completion requires an agreed normative
 contract plus preparation, generated-program and failure-state proofs. This debt
 does not defer ordinary typed class/struct member work in its owning chapter.
+
+
+### CH15-NINJA-01 — Ninja adapter follow-ups
+
+The first Ninja consumer shares Clang recipes and consumes ready publications with
+optional directory reuse. Keep compiler incremental/MT internals outside this work.
+Before widening this bounded adapter, address:
+
+- General dependency-path escaping: Clang/Ninja quote parsing and GNU ld depfiles
+  limit accepted paths. Relative link inputs/outputs handle spaces in build roots;
+  quotes, backslashes, pipes and control whitespace in dependency paths reject.
+- Response files for very large object inventories, with independently proved
+  escaping and unchanged argument/library order.
+- Toolchain/include-search installation changes during retained reuse: use a fresh
+  build directory for now; ordinary depfiles do not discover newly shadowing headers.
+- Native portability proof for the new adapter/configuration records. PHP-hosted
+  Clang/Ninja execution is not evidence that the compiler itself was rebuilt natively.
+
+Mold selection/thread tuning remains CH15-MOLD-01. Automatic grouping and multi-file
+classes remain CH15-CPP-GROUP-SPLIT-01 and CH15-PARTIAL-TYPE-01.
