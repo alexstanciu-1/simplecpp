@@ -6,7 +6,8 @@ Doc Status: planning
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)
 
 Requires calls, control flow and lifetime. Bounded throw/catch and exceptional cleanup
-are implemented below; finally and its transfer interactions remain to be discussed.
+and scalar/void-return finally are implemented below. General transfer replay and
+non-scalar return transport remain deferred.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
@@ -59,8 +60,7 @@ Non-goals remain `new error(...)`, general runtime constructor metadata, broader
 receiver lifetimes, new Result payload families, `result<error>`, bare error sentinel
 exposure, new error operators and thrown exceptions. An `error` is an in-band value;
 it is not a Throwable. [The authoritative contract](../../../../specs/error_values_and_take.md)
-owns its semantics. **The bounded exception slice below follows this work.** Finally remains a separate
-discussion of its interactions with returns and other exits.
+owns its semantics. **The bounded exception and finally slices below follow this work.**
 
 ## Bounded Exception transport and cleanup — 2026-10-16
 
@@ -98,10 +98,54 @@ creation failed. Final host exception/AST checks passed after consolidation in
 run was performed.
 
 [The normative contract](../../../../specs/exceptions_v0_2.md) owns semantics.
-Non-goals: finally, multiple/union catches, subclasses and source-to-runtime inheritance,
+The following finally slice supersedes the original finally deferral. Other
+non-goals remain multiple/union catches, subclasses and source-to-runtime inheritance,
 `new Exception`, arbitrary runtime/std exception catches, throw expressions, bare
 rethrow, chaining, runtime-handle ownership extensions, static effect analysis and LLVM.
-Next: discuss finally and its interaction with returns and other transfers.
+The original two finally-syntax rejection cases in `exceptions.php` are retired by
+the positive finally proofs below; the historical 22-case evidence above is unchanged.
+
+## Bounded finally — 2026-10-16
+
+ERR-FINALLY-001 is implemented for normal completion, exception propagation and
+scalar/void returns. `try_node` owns optional catch and finally edges; syntax requires
+at least one. Shared exception preparation owns the finally boundary, return admission,
+local transfer targets and settled completion facts. Return conversion stays in the
+existing return owner. Finally locals form a sibling lifetime region; source closures
+retain independent callable return contexts.
+
+The backend's `CPP_Finally` captures the whole protected try/catch in a native lambda,
+stores pending returns/exceptions, runs finally outside exception capture, then replays
+the exit. This also covers exceptions from catch handlers, which a sibling catch-all
+would miss. Native lambda return avoids statement-suffix guards and loop rewrites:
+a protected return skips subsequent statements and `for` updates automatically.
+Non-fallthrough facts supply an explicit impossible-path invariant for C++ return
+analysis. No runtime library API or source exception family is added.
+
+Proof owner: [finally.php](../../tests/finally.php). The focused set covers normal/empty
+finally, all scalar/void and entry return forms, value snapshots, single evaluation,
+failed return conversion/evaluation, catch returns/throws, nested return/exception
+replacement, same-object exception transport, runtime guard propagation, reverse
+cleanup with outer survivors, finalizer cleanup failures, local loop/switch transfers,
+closure/method contexts, rejected crossing transfers and scope leaks. Valid edits,
+rejection/repair, no-op and fresh output agreement are checked. The native identity
+probe observes the emitted callable without adding source identity operations.
+
+Evidence: `/tmp/scpp-ch13-finally-03/summary.json`: 34 generated programs compiled
+without PCH with native return-type errors enabled; 19 rejection cases and incremental
+checks passed. `/tmp/scpp-ch13-finally-regressions-01/summary.json` records eleven
+focused PHP suites and 25 generated regression programs: the full bounded exception
+set plus selected void/reference-return and destructor cleanup/termination probes.
+The runner uses 12 slots and PHP CLI here; FPM sockets were unavailable in the preceding
+workspace runs. These are host-PHP and generated-C++ proofs, not a native compiler rebuild.
+
+Non-goals remain reference and non-scalar/non-void return transport through finally,
+return/break/continue escaping finally, break/continue crossing protected regions,
+multiple/union catches, source exception subclasses, chaining, static effect analysis
+and LLVM. Internal loop/switch transfers remain allowed in both protected and finally
+bodies. [The normative contract](../../../../specs/exceptions_v0_2.md#finally-and-delayed-exits--v02)
+owns exit precedence and cleanup order. Next: reconcile NOTE-047 and the Chapter 13
+bounded closeout; do not infer that the deferred transfer/return extensions are done.
 
 ## Progress
 
@@ -111,8 +155,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | --- | --- | --- | --- | --- | --- | --- |
 | RSL-ERROR-01 | implemented-bounded | `error::make("bad", 12, "input.phs")`, getters and `error -> result<T>` | proved | proved | deferred | 17 generated programs, 13 preparation rejections and incremental repair; `tests/error_values.php`; general runtime `new` remains excluded |
 | [ERR-THROW-001](#err-throw-001) | implemented-bounded | `throw Exception::make("x");` | proved | proved | deferred | Single canonical shared Exception; identity, absence and unwind proofs in `tests/exceptions.php`; runtime `new` excluded |
-| [ERR-TRY-001](#err-try-001) | implemented-bounded | `try { f(); } catch (Exception $e) { }` | proved | proved | deferred | One handler, nested/callee propagation, handler scope, RAII cleanup and outer reporting; finally excluded |
-| [ERR-FINALLY-001](#err-finally-001) | pending-discussion | `try { return 1; } finally { g(); }` | unverified | unverified | deferred | — |
+| [ERR-TRY-001](#err-try-001) | implemented-bounded | `try { f(); } catch (Exception $e) { }` | proved | proved | deferred | One handler, nested/callee propagation, handler scope, RAII cleanup and outer reporting; bounded finally added below |
+| [ERR-FINALLY-001](#err-finally-001) | implemented-bounded | `try { return 1; } finally { g(); }` | proved | proved | deferred | Scalar/void pending returns, exception precedence and RAII cleanup; `tests/finally.php`; crossing loop transfers and other return families deferred |
 | [NOTE-047](#note-047) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## ERR-THROW-001
 
@@ -190,7 +234,7 @@ try { f(); } catch (const ::scpp::php::thrown_object& __t) { if (auto __caught =
 
 ## ERR-FINALLY-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented within the [bounded finally slice](#bounded-finally--2026-10-16). The imported v1 lowering below is historical; v0.2 uses prepared regions and native lambda exits, with internal finalizer loop transfers allowed.
 
 ### Imported version 1
 

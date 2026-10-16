@@ -747,9 +747,19 @@ final class reference_cycle_vertex
 	}
 }
 
+/** Settled exit facts for one finally region; return values keep ordinary prepared conversions. */
+final class prepared_finally
+{
+	public bool $captures_return = false;
+	public bool $can_fall_through = true;
+}
+
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {
+	/** Current protected region; nested callable preparation starts with a fresh context. */
+	public ?prepared_finally $finally_region = null;
+	public bool $finally_return_forbidden = false;
 	public ?collected_member_owner $member_owner = null;
 	/** Concrete implementation context, independent of lexical access/receiver ownership. */
 	public ?collected_record $called_type = null;

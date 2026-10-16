@@ -74,9 +74,17 @@ enum cpp_record_state {
 	case complete;
 }
 
+/** Invocation-local pending return transport for one emitted protected lambda. */
+final class cpp_finally_return
+{
+	public string $flag;
+	public ?string $value = null;
+}
+
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	public ?cpp_finally_return $finally_return = null;
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;

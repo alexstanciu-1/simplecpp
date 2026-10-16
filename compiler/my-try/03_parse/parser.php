@@ -606,7 +606,7 @@ final class Parser_Run
 			return $this->try_statement();
 		}
 		if (($this->text() === 'catch') || ($this->text() === 'finally')) {
-			throw new \RuntimeException('Only one typed catch is supported; finally is deferred');
+			throw new \RuntimeException('Unexpected clause: only one catch followed by one finally is supported');
 		}
 		if ($this->text() === 'switch') { return $this->switch_statement(); }
 		if ($this->text() === 'while') { return $this->while_statement(); }
@@ -1628,12 +1628,29 @@ final class Parser_Run
 		return $return_statement;
 	}
 
-	/** One required typed handler; handler bindings use ordinary local storage facts. */
+	/** A protected body requires a catch, a finally, or both in that order. */
 	private function try_statement(): try_node
 	{
 		$start = $this->position++;
 		$protected_statement = new try_node();
 		$protected_statement->body = $this->statement_block();
+		if ($this->text() === 'catch') {
+			$protected_statement->handler = $this->catch_clause();
+		}
+		if ($this->text() === 'finally') {
+			$this->position++;
+			$protected_statement->finalizer = $this->statement_block();
+		}
+		if (($protected_statement->handler === null) && ($protected_statement->finalizer === null)) {
+			throw new \RuntimeException('Try requires catch or finally');
+		}
+		$this->finish_node($protected_statement, $start);
+		return $protected_statement;
+	}
+
+	/** Handler bindings use ordinary local storage facts. */
+	private function catch_clause(): catch_node
+	{
 		$catch_start = $this->position;
 		$this->expect('catch');
 		$this->expect('(');
@@ -1652,9 +1669,7 @@ final class Parser_Run
 		$handler->binding = $binding;
 		$handler->body = $this->statement_block();
 		$this->finish_node($handler, $catch_start);
-		$protected_statement->handler = $handler;
-		$this->finish_node($protected_statement, $start);
-		return $protected_statement;
+		return $handler;
 	}
 
 	/** Explicit type syntax declares storage; plain writes use the expression grammar. */

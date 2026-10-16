@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite finally --no-pch --results FRESH`
+checks scalar/void delayed returns, nested exception propagation/replacement, cleanup
+order, local versus crossing transfers, source closure isolation and incremental
+rejection/repair. It compiles generated programs; no native compiler rebuild is implied.
+
 `python3 compiler/my-try/tests/records.py --suite exceptions --no-pch --results FRESH`
 checks the bounded Exception factory, canonical throw/catch admission, shared identity,
 handler lifetime, reverse exceptional cleanup, partial construction, outer reporting

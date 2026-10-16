@@ -54,9 +54,18 @@ final class catch_node extends ast_node
 final class try_node extends statement_node
 {
 	use Node_Source_Span;
+	use Preparation_Facts;
 
 	public block_node $body;
-	public catch_node $handler;
+	public ?catch_node $handler = null;
+	public ?block_node $finalizer = null;
+
+	private ?prepared_finally $prepared_facts = null;
+
+	public function require_preparation(): prepared_finally
+	{
+		return $this->prepared_facts;
+	}
 
 	public function kind(): node_kind
 	{
@@ -65,13 +74,18 @@ final class try_node extends statement_node
 
 	public function children(): child_iterator_i
 	{
-		return new pair_children_iterator($this->body, $this->handler);
+		return new try_children_iterator($this);
 	}
 
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
 		$worker->edge($this, $this->body);
-		$worker->edge($this, $this->handler);
+		if ($this->handler !== null) {
+			$worker->edge($this, $this->handler);
+		}
+		if ($this->finalizer !== null) {
+			$worker->edge($this, $this->finalizer);
+		}
 	}
 }

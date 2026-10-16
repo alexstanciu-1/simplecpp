@@ -1365,3 +1365,34 @@ final class throw_children_iterator extends children_iterator
 		return $this->source->expression;
 	}
 }
+
+/** Read the protected body and present clauses lazily, in grammar order. */
+final class try_children_iterator extends children_iterator
+{
+	private try_node $source;
+	private int $next_field = 0;
+
+	public function __construct(try_node $source)
+	{
+		$this->source = $source;
+	}
+
+	protected function read_next(): ?ast_node
+	{
+		if ($this->next_field === 0) {
+			$this->next_field = 1;
+			return $this->source->body;
+		}
+		if ($this->next_field === 1) {
+			$this->next_field = 2;
+			if ($this->source->handler !== null) {
+				return $this->source->handler;
+			}
+		}
+		if ($this->next_field === 2) {
+			$this->next_field = 3;
+			return $this->source->finalizer;
+		}
+		return null;
+	}
+}

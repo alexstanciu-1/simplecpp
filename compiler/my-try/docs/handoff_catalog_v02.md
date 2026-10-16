@@ -15,8 +15,10 @@ unclaimed. Deferred extensions keep their existing owners. Chapter 13's
 is implemented with focused generated-program proofs. The following
 [bounded Exception/throw/catch slice](catalog/13_errors.md#bounded-exception-transport-and-cleanup--2026-10-16)
 adds canonical single-type transport, handler-local bindings, exceptional RAII cleanup
-and outer executable reporting. Next: discuss finally and its interaction with returns
-and other transfers. Full native compiler validation remains unclaimed.
+and outer executable reporting. [Bounded finally](catalog/13_errors.md#bounded-finally--2026-10-16)
+now supports scalar/void returns and exception propagation with cleanup/transfer proofs.
+Next: reconcile NOTE-047 and the Chapter 13 bounded closeout. Crossing transfers and
+other return families remain deferred; full native compiler validation remains unclaimed.
 
 ## Agreed v0.2 scope
 

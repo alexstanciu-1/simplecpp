@@ -436,20 +436,30 @@ final class CPP_Generator
 	/** Function returns retain their declared value type; entry returns become native exit codes. */
 	public static function generate_return(return_node $syntax, cpp_generation_context $context): string
 	{
-		if ($syntax->expression === null) {
-			return $context->return_type === null ? "\treturn 0;\n" : "\treturn;\n";
+		$value = self::return_value($syntax, $context);
+		if ($context->finally_return !== null) {
+			$pending /** cpp_finally_return */ = $context->finally_return;
+			return CPP_Finally::capture_return($pending, $value);
 		}
+		return "\treturn" . ($value === '' ? '' : ' ' . $value) . ";\n";
+	}
 
+	/** Evaluate the ordinary prepared conversion once, before any delayed-exit storage. */
+	public static function return_value(return_node $syntax, cpp_generation_context $context): string
+	{
+		if ($syntax->expression === null) {
+			return $context->return_type === null ? '0' : '';
+		}
 		$expression /** expression_node */ = $syntax->expression;
 		$value = (new CPP_Syntax($context))->expression($expression);
 		if ($context->return_type !== null) {
 			if ($syntax->require_preparation()->reference_target !== null) {
-				return "\treturn " . $value . ";\n";
+				return $value;
 			}
 			$decision = $syntax->require_preparation()->require_conversion();
-			return "\treturn " . CPP_Declarations::conversion($value, $decision, $context) . ";\n";
+			return CPP_Declarations::conversion($value, $decision, $context);
 		}
-		return "\treturn static_cast<int>((" . $value . ").native_value());\n";
+		return 'static_cast<int>((' . $value . ').native_value())';
 	}
 
 	public static function generate_expression_statement(expression_statement_node $syntax, cpp_generation_context $context): string

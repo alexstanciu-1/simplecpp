@@ -39,7 +39,6 @@ $rejections = [
 	'try { $local = 1; } catch (Exception $e) { echo $local; }',
 	'function fail(): int { try { throw Exception::make("x"); } catch (Exception $e) {} } $n = fail();',
 	'try {} catch (Exception $e) {} catch (Exception $f) {}',
-	'try {} finally {}', 'try {} catch (Exception $e) {} finally {}',
 	'try {} catch (Exception|error $e) {}', 'throw;', '$x = throw Exception::make("x");',
 	'$e = new Exception("x");', 'class Child extends Exception {}',
 ];

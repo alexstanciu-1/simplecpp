@@ -282,6 +282,7 @@ final class Body_Preparation
 	/** Function returns use the signature; program-entry returns remain scalar exit values. */
 	public static function prepare_return(return_node $syntax, preparation_context $context): prepared_return
 	{
+		Exception_Preparation::require_return($context);
 		if ($context->reference_return_parameter !== null) {
 			return Reference_Preparation::prepare_return($syntax, $context);
 		}

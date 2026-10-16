@@ -89,8 +89,9 @@ Its 13 imported cards and selected extensions have focused evidence; full CH12
 native parity/rejection/incremental coverage is not claimed. Existing CH15 deferrals
 remain unchanged. Chapter 13's [structured error-value slice](13_errors.md#structured-error-factory-slice--2026-10-16)
 is now implemented and proved within its bounds. The [bounded Exception/throw/catch slice](13_errors.md#bounded-exception-transport-and-cleanup--2026-10-16)
-also implements exceptional cleanup and outer reporting. Next: discuss finally and
-its interaction with returns and other transfers. Reconcile Chapter 14 against existing
+also implements exceptional cleanup and outer reporting. [Bounded finally](13_errors.md#bounded-finally--2026-10-16)
+now supports scalar/void returns and exception propagation. Next: reconcile NOTE-047
+and the Chapter 13 bounded closeout; crossing transfers and other return families remain deferred. Reconcile Chapter 14 against existing
 artifact/runtime work before treating its imported rows as missing functionality.
 Chapter 15 remains the final debt review; LLVM stays deferred.
 

@@ -29,6 +29,8 @@ final class CPP_Syntax
 					. CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
 			}
 			$previous_return = $this->context->return_type;
+			$previous_finally = $this->context->finally_return;
+			$this->context->finally_return = null;
 			$capture_parts /** vector<string> */ = [];
 			$body_work = object_cast($closure->require_body()->work(), anonymous_body_work::class);
 			$captures /** Storage<prepared_capture> */ = $body_work->captures;
@@ -40,7 +42,10 @@ final class CPP_Syntax
 			$this->context->return_type = $facts->signature->return_type;
 			$body = '';
 			try { $body = CPP_Generator::generate_statements($closure->require_body(), $this->context); }
-			finally { $this->context->return_type = $previous_return; }
+			finally {
+				$this->context->return_type = $previous_return;
+				$this->context->finally_return = $previous_finally;
+			}
 			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
 			return '[' . self::comma_list($capture_parts) . '](' . self::comma_list($parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
@@ -264,12 +269,25 @@ final class CPP_Syntax
 	/** Catch only language transport, retaining the prepared shared binding through the handler. */
 	private function generate_try(try_node $node): string
 	{
+		if ($node->finalizer !== null) {
+			return CPP_Finally::generate($node, $this->context);
+		}
+		return $this->generate_protected($node);
+	}
+
+	/** The whole source try/catch is enclosed by the finally worker's exception capture. */
+	public function generate_protected(try_node $node): string
+	{
+		if ($node->handler === null) {
+			return $this->generate_block($node->body);
+		}
+		$handler /** catch_node */ = $node->handler;
 		$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$caught = 'caught_exception_' . $id;
 		$value = 'caught_value_' . $id;
-		$binding = $node->handler->binding->require_preparation();
+		$binding = $handler->binding->require_preparation();
 		$payload = CPP_Types::payload($binding->type);
 		CPP_Types::record_dependencies($payload, $this->context);
 		return 'try ' . $this->generate_block($node->body)
@@ -277,7 +295,7 @@ final class CPP_Syntax
 			. 'auto ' . $value . ' = ::scpp::php::catch_as<' . $payload->spelling . '>(' . $caught . ");\n"
 			. 'if (!' . $value . ") { throw; }\n"
 			. $this->initialized_binding($binding, 'std::move(' . $value . ')')
-			. CPP_Generator::generate_statements($node->handler->body, $this->context) . "}\n";
+			. CPP_Generator::generate_statements($handler->body, $this->context) . "}\n";
 	}
 
 	public function generate_block(statement_body_node $node): string
