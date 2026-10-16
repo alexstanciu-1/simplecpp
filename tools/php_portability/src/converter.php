@@ -126,6 +126,19 @@ final class Converter {
 		if ($token[1] !== $text) { $this->fail($token[2], 'expected ' . $text); }
 	}
 
+	/** Integer defaults share one literal grammar, not arbitrary constant expressions. */
+	private function integerLiteral(array $first, string $context): string {
+		if ($first[0] === T_LNUMBER) { return $first[1]; }
+		if ($first[1] === '+' || $first[1] === '-') {
+			$magnitude = $this->significant();
+			if ($magnitude[0] === T_LNUMBER && preg_match('/^(0|[1-9][0-9]*)$/D', $magnitude[1])) {
+				return $first[1] . $magnitude[1];
+			}
+			$this->fail($magnitude[2], 'signed integer ' . $context . ' requires a decimal integer literal');
+		}
+		$this->fail($first[2], 'integer ' . $context . ' requires an integer literal');
+	}
+
 	/** Check literal bytes locally before handing spelling to the selected target. */
 	private function stringLiteral(array $token): string {
 		[, $text, $line] = $token;
@@ -332,8 +345,10 @@ final class Converter {
 						$declaration .= ' = null';
 					} elseif ($type === 'bool' && in_array(strtolower($value[1]), ['true', 'false'], true)) {
 						$declaration .= ' = ' . strtolower($value[1]);
+					} elseif ($type === 'int') {
+						$declaration .= ' = ' . $this->integerLiteral($value, 'method parameter default');
 					} else {
-						$this->fail($value[2], 'method parameter defaults require nullable null or a matching boolean literal');
+						$this->fail($value[2], 'method parameter defaults require nullable null or a matching boolean or integer literal');
 					}
 					$optionalSeen = true;
 					$separator = $this->significant();
@@ -757,22 +772,24 @@ final class Converter {
 			}
 			$this->expect('=');
 			$value = $this->significant();
+			$integerDefault = $type[1] === 'int' && !($nullable && $value[1] === 'null')
+				? $this->integerLiteral($value, 'field default') : null;
 			if ($nullable) {
 				$valid = $value[1] === 'null' || match ($type[1]) {
 					'bool' => in_array(strtolower($value[1]), ['true', 'false'], true),
-					'int' => $value[0] === T_LNUMBER,
+					'int' => $integerDefault !== null,
 					'string' => $value[0] === T_CONSTANT_ENCAPSED_STRING,
 					default => false,
 				};
 				if (!$valid || in_array(strtolower($type[1]), ['mixed', 'object', 'iterable', 'void', 'never', 'self', 'parent', 'static'], true)) { $this->fail($at, 'nullable property requires null or a matching scalar literal'); }
 				if ($value[1] !== 'null' && $type[1] === 'string') { $value[1] = $this->stringLiteral($value); }
 				$this->expect(';');
-				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' nullable<' . Exception_Policy::name($type[1]) . '> = ' . $value[1] . ';', $at);
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' nullable<' . Exception_Policy::name($type[1]) . '> = ' . ($integerDefault ?? $value[1]) . ';', $at);
 				continue;
 			}
 			$valid = match ($type[1]) {
 				'bool' => in_array(strtolower($value[1]), ['true', 'false'], true),
-				'int' => $value[0] === T_LNUMBER,
+				'int' => $integerDefault !== null,
 				'string' => $value[0] === T_CONSTANT_ENCAPSED_STRING,
 				default => false,
 			};
@@ -783,7 +800,7 @@ final class Converter {
 			if (!$valid) { $this->fail($value[2], 'property default must be a matching scalar literal'); }
 			if ($type[1] === 'string') { $value[1] = $this->stringLiteral($value); }
 			$this->expect(';');
-			$fields[] = new Node('property', $visibility . ' ' . $type[1] . ' ' . $field[1] . ' = ' . $value[1] . ';', $at);
+			$fields[] = new Node('property', $visibility . ' ' . $type[1] . ' ' . $field[1] . ' = ' . ($integerDefault ?? $value[1]) . ';', $at);
 		}
 		$this->fail($line, 'unclosed class');
 	}
@@ -1233,7 +1250,7 @@ final class Converter {
 				continue;
 			}
 			$allowed = [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_VARIABLE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING,
-				T_COALESCE, T_MATCH, T_SWITCH, T_CASE, T_DEFAULT, T_DOUBLE_ARROW, T_DO, T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_PLUS_EQUAL, T_MINUS_EQUAL, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_IS_SMALLER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
+				T_COALESCE, T_MATCH, T_SWITCH, T_CASE, T_DEFAULT, T_DOUBLE_ARROW, T_DO, T_TRY, T_THROW, T_FOR, T_WHILE, T_INC, T_DEC, T_PLUS_EQUAL, T_MINUS_EQUAL, T_CONCAT_EQUAL, T_INT_CAST, T_RETURN, T_IS_GREATER_OR_EQUAL, T_IS_SMALLER_OR_EQUAL, T_ECHO, T_IF, T_ELSE, T_ELSEIF, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_BOOLEAN_AND, T_BOOLEAN_OR];
 			if ($id === T_STRING && in_array(strtolower($text), ['true', 'false', 'null'], true)) {
 				// Literal keywords only; arbitrary calls/names are outside this slice.
 			} elseif (!in_array($id, $allowed, true) && !($id === 0 && in_array($text, ['=', ';', ',', '?', ':', '!', '.', '+', '-', '*', '/', '%', '<', '>'], true))) {

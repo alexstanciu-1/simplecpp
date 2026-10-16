@@ -37,6 +37,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Collection and preparation | [Analysis](../04_analyze/README.md), [preparation](../04_analyze/prepare/README.md) |
 | Collection APIs | [Storage](storage/STORAGE.md) |
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
+| Conversion quality and portable-PHP frontend discussion | [PHS elegance, native costs, lookup review and shared-model options](planning/conversion_quality.md) (planning only) |
 | Preparation / C++ emission boundary audit | [Findings, evidence and open repair gates](planning/preparation_emission_audit.md) |
 | Stage dependency and ownership audit | [Forward dependencies, shared structures and discussion groups](planning/stage_boundary_audit.md) |
 | Stage-owned processing refactor | [Agreed no-visitor boundary, implementation batches and open questions](planning/stage_owned_processing.md) |

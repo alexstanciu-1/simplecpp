@@ -1,0 +1,37 @@
+<?php
+namespace scpp\compiler;
+
+try {
+	$mode = fs_read_text('mode.txt');
+	$root = fs_read_text('output.txt');
+	$publication = new Output_Publication($root);
+	try {
+		if ($mode === 'provider') {
+			$modules /** vector<string> */ = ['build_proof'];
+			Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(__CATALOG__, $modules));
+			$paths /** vector<string> */ = [fs_read_text('request.txt')];
+			$compiler = new Compiler();
+			$compiler->init($paths);
+			$compiler->select_entry('main', 'main.phs');
+			$compiler->exec_cpp($publication);
+		}
+		else {
+			$artifacts = new Storage /** Storage<cpp_artifact> */();
+			$entry = 'second';
+			if ($mode === 'first') { $entry = 'first'; }
+			$artifacts->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp', $entry));
+			$artifacts->append(new cpp_artifact('decl', cpp_artifact_kind::header, 'decl.hpp', 'stable'));
+			if ($mode === 'first') {
+				$artifacts->append(new cpp_artifact('old', cpp_artifact_kind::translation_unit, 'old.cpp', 'obsolete'));
+			} else {
+				$artifacts->append(new cpp_artifact('new', cpp_artifact_kind::translation_unit, 'new.cpp', 'added'));
+			}
+			if ($mode === 'collision') {
+				$artifacts->append(new cpp_artifact('collision', cpp_artifact_kind::translation_unit, 'collision.cpp', 'ours'));
+			}
+			$publication->publish($artifacts, new runtime_cpp_build_spec());
+		}
+	} finally { $publication->close(); }
+	Output_Publication::require_ready($root);
+	echo "OK\n";
+} catch (\RuntimeException $error) { echo 'ERROR:', $error->getMessage(), "\n"; }

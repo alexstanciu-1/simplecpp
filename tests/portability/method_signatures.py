@@ -83,7 +83,7 @@ echo $row->value, ":", $other->value, ":", $returned === $row ? "same" : "differ
     with tempfile.TemporaryDirectory(prefix='scpp-signature-reject-') as temp:
         src = Path(temp) / 'php'; src.mkdir()
         for signature in ['f($x): int', 'f(array $x): int', 'f(int &$x): int',
-                          'f(int ...$x): int', 'f(int $x = 1): int',
+                          'f(int ...$x): int', 'f(int $x = 1 + 2): int',
                           'f(int|string $x): int',
                           'f(int $x): mixed', 'f(int $x): self']:
             (src / 'bad.php').write_text('<?php\nclass Bad { public function ' + signature + ' { return 1; } }\n')

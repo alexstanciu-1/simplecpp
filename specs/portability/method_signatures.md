@@ -26,6 +26,8 @@ Later slices add annotated concrete container parameters/returns and
 [nullable concrete returns and ordinary constructors](compiler_token_store_slice.md).
 The [nullable-parameter slice](nullable_parameters.md) adds explicit nullable scalar/named
 parameters, with optional null defaults, including interface declarations.
+Nonnullable [integer method defaults](integer_method_defaults.md) are also supported,
+with a documented matching-default requirement across overrides.
 The remaining list below describes this original slice only.
 
 Originally outside this slice: untyped parameters, nullable/union/intersection types,

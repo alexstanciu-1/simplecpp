@@ -114,3 +114,6 @@ with generate_global_functions.php; --check verifies its signatures.
 
 Aggregate lifecycle composition is now proved: 36 shared PHP/native outcomes plus
 eight host checks; active coverage is 89 files, including native layout, resource obligations and record materialization. See `specs/portability/aggregate_lifecycles.md`.
+
+[Typed string joining](../../specs/portability/string_join.md) exposes `q_implode`
+for explicit string vectors through the existing target `implode` binding.
