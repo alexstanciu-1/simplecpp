@@ -651,6 +651,89 @@ reuse or silently trust stale dependencies. Require measured cold/no-op/edit pha
 and the Chapter 08 acceptance matrix before closing; broader toolchain/search and
 parallel-action work retain their own scope. No optimization is implemented by deferral.
 
+A bounded follow-up on 2026-10-10 integrated template instantiation during PCH
+creation, with command-key invalidation and old/new cache migration proved in the
+historical dev002 accounting run. Benchmark artifacts are outside this compiler-only
+recovery (2026-10-16); the recovery itself reruns no tests or benchmarks.
+This reduces validation/compilation work but does not remove scans or standalone
+validation; this broader cache-validation debt remains open.
+
+### CH15-NATIVE-RUNTIME-IDENTITY-01 — automatic runtime change invalidation
+
+Recorded by user request on 2026-10-10. For the next dependency-scan optimization,
+the runtime may be treated as unchanged until explicit manual invalidation. Automatic
+runtime edit detection is deferred here; this is a bounded development assumption,
+not a claim that arbitrary runtime changes are safely discovered by the fast path.
+At recording time the builder still scanned/hashed dependencies. The recovered
+implementation now offers opt-in `--runtime-snapshot`; use a fresh cache after a
+runtime change. Automatic refresh remains deferred.
+
+Reuse the generator's existing fragment header sets and publication artifact hashes
+for application changes. Runtime stability must not suppress generated-header/body
+invalidation, tool/flag/module-configuration changes or publication/recovery checks.
+The user did not thereby declare external/system headers or linked libraries immutable;
+their validation remains a separate native-consumer responsibility.
+
+For the initial bounded implementation, document a manual runtime refresh boundary.
+A fresh native cache directory is already supported and forces fresh PCH, provider
+objects, application objects and linking. A future explicit runtime generation/token
+may provide the same logical invalidation without deleting artifacts. If runtime
+catalog semantics change, also reload/reconfigure the retained source compiler;
+rebuilding native artifacts alone does not refresh its startup metadata.
+
+Existing identity evidence:
+
+- `Native_CPP_Build::inputs_key()` hashes discovered dependency contents today;
+  `save_ready()` records produced-artifact hashes. These are useful primitives,
+  but there is no published aggregate runtime-content identity in this consumer.
+- `runtime_cpp_build_spec` carries sources, libraries and definitions; its manifest
+  representation describes composition, not runtime header/source contents.
+- Legacy `bin/project_services.php::compute_runtime_build_signature()` produces
+  the value written to `runtime_signature.txt`. It hashes configuration (compiler
+  command/kind, mode, modules, profile and related options), not runtime file contents.
+  Do not adopt that stamp as proof that runtime bytes have not changed.
+
+The native-build owner should define the runtime input snapshot/cache identity;
+a runtime build or packaging producer can later supply its content fingerprint.
+Prefer existing content-hash primitives, computing a covered runtime identity when
+establishing or manually refreshing the snapshot, rather than rescanning it per edit.
+Before closing the debt, define fingerprint coverage and its refresh owner, including
+selected headers, provider sources, relevant catalog metadata and configuration.
+Prove runtime header/provider edits, additions/removals and lookup changes, catalog
+reload, manual/automatic refresh, PCH/object/link invalidation and failed refresh
+recovery. A stored digest without a refresh protocol cannot detect later edits.
+
+This is the explicit temporary runtime exception to CH15-NATIVE-CACHE-PERF-01;
+that item's generated-input and recovery requirements remain in force.
+
+### CH15-MOLD-01 — configurable Mold linking
+
+Recorded by user request on 2026-10-10 as deferred native-build integration debt.
+This is a performance/tooling follow-up, not a new v0.2 release gate. Mold has been
+benchmarked externally; the compiler's native-build path does not yet select it.
+
+The historical accounting measurements used the same 20 objects, warm OS caches
+and Clang's normal link driver on WSL. Their benchmark artifacts are outside this
+compiler-only recovery (2026-10-16).
+Median driver times were 614.505 ms for GNU BFD, 104.965 ms for Mold 3 with two
+threads and 172.775 ms with eight threads. These results establish a useful local
+option, not a universal thread count or demonstrated scaling on larger workloads.
+
+The native-build consumer owns this integration. Provide explicit linker selection
+and thread/argument configuration; fingerprint the actual selected linker and its
+configuration in link-cache identity. Replacing the invocation while retaining the
+hard-coded `/usr/bin/ld` identity is insufficient. Preserve object/PCH reuse,
+dependency-file handling, failure reporting and executable publication/recovery.
+Keep the existing linker usable through explicit configuration.
+
+Before closing, prove selected-tool invocation, executable behavior, no-op and
+revert reuse, linker/flag change invalidation and failed-link recovery. Measure
+request-to-executable-ready separately from cleanup, with cold and warm runs and
+CPU/peak RSS. Mold's default fork behavior requires separately labelled resource
+measurements using `--no-fork`; do not mistake parent-only usage for total cost.
+Thread tuning remains workload/host dependent. No integration is implemented by
+this debt entry; cache-validation optimization remains CH15-NATIVE-CACHE-PERF-01.
+
 ### Chapter 07 closeout debt — 2026-10-06
 
 Transferred for final review by user approval; these do not require expanding the

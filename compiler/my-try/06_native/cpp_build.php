@@ -11,6 +11,7 @@ final class Native_CPP_Build
 	private array $libraries /** vector<string> */ = [];
 	private native_cpp_result $report;
 	private bool $invoked = false;
+	private ?Native_Dependency_Inputs $dependency_inputs = null;
 
 	public function __construct(native_cpp_config $config)
 	{
@@ -42,7 +43,7 @@ final class Native_CPP_Build
 				if ((fs_output_read($this->root, '.scpp-native.status') !== null)
 					|| (fs_output_read($this->root, 'runtime-pch.hpp') !== null)
 					|| fs_is_dir($this->root . '/actions') || fs_is_dir($this->root . '/artifacts')
-					|| fs_is_dir($this->root . '/link-inputs')) { throw new \RuntimeException('Unowned native cache contents'); }
+					|| fs_is_dir($this->root . '/link-inputs') || fs_is_dir($this->root . '/dependencies')) { throw new \RuntimeException('Unowned native cache contents'); }
 			}
 			fs_output_write($this->root, '.scpp-native.owner', "scpp-native-cache-v1\n");
 			fs_output_write($this->root, '.scpp-native.status', "pending\n");
@@ -75,9 +76,22 @@ final class Native_CPP_Build
 				. '#include "scpp/cast.hpp"' . "\n" . '#include "lang/php/operators/conditional/condition_truthiness.hpp"' . "\n"
 				. '#include "scpp/generated/operators.hpp"' . "\n";
 			fs_output_write($this->root, 'runtime-pch.hpp', $header);
+			if ($this->config->runtime_snapshot) {
+				$inputs = new Native_Dependency_Inputs($this->root, $runtime, $source_root, $files);
+				if ($inputs->complete) {
+					$search /** vector<string> */ = $this->flags;
+					foreach (['-E', '-v', '-x', 'c++', '/dev/null'] as $argument) { $search[] = $argument; }
+					$search_result = $this->invoke($search);
+					self::require_success($search_result);
+					$inputs->observe_search($search_result->stderr);
+					$this->dependency_inputs = $inputs;
+				}
+			}
 			$pch_args /** vector<string> */ = [];
 			if ($this->config->pch) {
 				$pch_command /** vector<string> */ = $this->flags;
+				// Creation policy belongs in the action arguments so old PCH/object keys cannot match.
+				$pch_command[] = '-fpch-instantiate-templates';
 				$pch_command[] = '-x'; $pch_command[] = 'c++-header'; $pch_command[] = $this->root . '/runtime-pch.hpp';
 				$pch = $this->compile_action($pch_command, 'pch', false);
 				$validation /** vector<string> */ = $this->flags;
@@ -142,9 +156,20 @@ final class Native_CPP_Build
 		return $result;
 	}
 
-	/** Scan fresh dependencies (including system headers) so newly shadowing headers cannot be missed. */
+	/** Reuse described dependency discovery, otherwise scan through Clang. */
 	private function compile_action(array $command /** vector<string> */, string $suffix, bool $force): native_cpp_artifact
 	{
+		$inputs /** nullable<Native_Dependency_Inputs> */ = $this->dependency_inputs;
+		$discovery = '';
+		if ($inputs !== null) {
+			$source = $command[q_count($command) - 1];
+			$discovery = $inputs->discovery_key($this->tool_key . self::arguments_key($command), $source);
+			$previous = $inputs->previous($discovery);
+			if ($previous !== '') {
+				$key = content_sha256($this->tool_key . self::arguments_key($command) . $inputs->inputs_key($previous));
+				return $this->action($command, $key, $suffix, $force, false);
+			}
+		}
 		$scan /** vector<string> */ = [];
 		$pch_inputs /** vector<string> */ = [];
 		$skip = false;
@@ -160,7 +185,10 @@ final class Native_CPP_Build
 		self::require_success($observed);
 		$paths /** vector<string> */ = Native_Depfiles::paths($observed->stdout, $this->root);
 		foreach ($pch_inputs as $path) { $paths[] = $path; }
-		$key = content_sha256($this->tool_key . self::arguments_key($command) . self::inputs_key($paths));
+		$input_key = '';
+		if ($inputs !== null) { $input_key = $inputs->inputs_key($inputs->remember($discovery, $paths)); }
+		else { $input_key = self::inputs_key($paths); }
+		$key = content_sha256($this->tool_key . self::arguments_key($command) . $input_key);
 		return $this->action($command, $key, $suffix, $force, false);
 	}
 

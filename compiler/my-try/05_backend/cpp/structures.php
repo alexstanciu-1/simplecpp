@@ -42,6 +42,9 @@ final class cpp_artifact {
 	private cpp_artifact_kind $artifact_kind;
 	public readonly string $file_name;
 	public readonly string $text;
+	/** Explicit preamble dependencies; unknown adapters retain the scanning fallback. */
+	public array $includes /** vector<string> */ = [];
+	public bool $includes_complete = false;
 
 	public function __construct(string $identity, cpp_artifact_kind $artifact_kind, string $file_name, string $text)
 	{

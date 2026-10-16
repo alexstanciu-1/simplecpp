@@ -8,6 +8,8 @@ final class native_cpp_config
 	public string $runtime_include;
 	public string $cache_directory;
 	public bool $pch = true;
+	/** Explicit opt-in: runtime changes require a fresh cache directory. */
+	public bool $runtime_snapshot = false;
 	public int $optimization = 0;
 	public function __construct(string $compiler, string $runtime_include, string $cache_directory)
 	{
@@ -38,4 +40,11 @@ final class native_cpp_artifact
 		$this->digest = $digest;
 		$this->reused = $reused;
 	}
+}
+
+/** Published generated input, not an AST or semantic dependency. */
+final class native_cpp_input
+{
+	public string $digest = '';
+	public array $includes /** vector<string> */ = [];
 }

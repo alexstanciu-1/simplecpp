@@ -182,8 +182,8 @@ final class CPP_Generator
 				$identity = 'callable:' . $definition->qualified_name();
 				$text = $fragment->prototype_text . ";\n";
 			}
-			$result->append(new cpp_artifact($identity, cpp_artifact_kind::header, $path,
-				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text));
+			$result->append(CPP_Artifacts::described($identity, cpp_artifact_kind::header, $path,
+				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text, $artifact_headers));
 		}
 		foreach ($files as $prepared)
 		{
@@ -237,8 +237,8 @@ final class CPP_Generator
 			foreach ($dispatch_context->forward_declarations as $name => $used) { $declarations[$name] = true; }
 			if ($body_text !== '') {
 				$path = CPP_Artifacts::unit_path($prepared->source);
-				$result->append(new cpp_artifact('implementation:' . $path, cpp_artifact_kind::translation_unit,
-					$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text));
+				$result->append(CPP_Artifacts::described('implementation:' . $path, cpp_artifact_kind::translation_unit,
+					$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text, $headers));
 			}
 		}
 		$entry_owner = object_cast($entry_file->executable_body()->work(), preparation_owner::class);
@@ -246,10 +246,10 @@ final class CPP_Generator
 		// Executable ABI initialization belongs to artifact assembly, not call preparation.
 		$entry_headers /** hash<bool> */ = $entry_fragment->headers;
 		$entry_headers['lang/php/cli_context.hpp'] = true;
-		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
+		$result->append(CPP_Artifacts::described('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
 			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . "\nint main(int argc, char** argv)\n{\n"
 			. "\tscpp::php::set_cli_args(argc, argv);\n"
-			. $entry_fragment->text . "\treturn 0;\n}\n"));
+			. $entry_fragment->text . "\treturn 0;\n}\n", $entry_headers));
 		$helpers /** hash<prepared_compiler_call> */ = [];
 		foreach ($ordered as $owner) {
 			foreach ($this->program->fragments[$owner]->compiler_helpers as $key => $request) {

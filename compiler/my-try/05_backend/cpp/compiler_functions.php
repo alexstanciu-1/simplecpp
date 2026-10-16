@@ -53,12 +53,12 @@ final class CPP_Compiler_Functions
 		$return_type = CPP_Declarations::type($facts->result_type, $context);
 		$input_type = CPP_Declarations::type($facts->input_type, $context);
 		$signature = $return_type . ' ' . CPP_Generator::source_name($kind, $name) . '(' . $input_type . ' value)';
-		$artifacts->append(new cpp_artifact('helper:' . $kind . ':' . $name . ':header', cpp_artifact_kind::header,
-			$path . '.hpp', "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . $signature . ";\n"));
+		$artifacts->append(CPP_Artifacts::described('helper:' . $kind . ':' . $name . ':header', cpp_artifact_kind::header,
+			$path . '.hpp', "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . $signature . ";\n", $context->headers));
 		$text = $signature . " {\n" . self::body($facts, $context) . "}\n";
 		$context->headers[$path . '.hpp'] = true;
-		$artifacts->append(new cpp_artifact('helper:' . $kind . ':' . $name . ':implementation', cpp_artifact_kind::translation_unit,
-			$path . '.cpp', CPP_Artifacts::includes($context->headers, '') . $text));
+		$artifacts->append(CPP_Artifacts::described('helper:' . $kind . ':' . $name . ':implementation', cpp_artifact_kind::translation_unit,
+			$path . '.cpp', CPP_Artifacts::includes($context->headers, '') . $text, $context->headers));
 	}
 
 	private static function body(prepared_enum_call $facts, cpp_generation_context $context): string

@@ -29,7 +29,8 @@ final class CPP_Output
 			$rows .= $separator . '{"id":' . json_quote($artifact->identity)
 				. ',"kind":' . json_quote($artifact->kind_name())
 				. ',"path":' . json_quote($artifact->file_name)
-				. ',"text":' . json_quote($artifact->text) . '}';
+				. ',"text":' . json_quote($artifact->text)
+				. ',"includes":' . CPP_Artifacts::includes_json($artifact) . '}';
 			$separator = ',';
 		}
 		return '{"format":"scpp-cpp-artifacts-v1","artifacts":[' . $rows . "]}\n";

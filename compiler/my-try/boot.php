@@ -208,6 +208,7 @@ require_once __DIR__ . '/06_native/structures.php';
 require_once __DIR__ . '/06_native/run.php';
 require_once __DIR__ . '/06_native/cpp_structures.php';
 require_once __DIR__ . '/06_native/depfiles.php';
+require_once __DIR__ . '/06_native/dependency_inputs.php';
 require_once __DIR__ . '/06_native/cpp_build.php';
 require_once __DIR__ . '/compiler/model.php';
 require_once __DIR__ . '/compiler/sources.php';
