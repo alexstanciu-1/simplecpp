@@ -765,6 +765,8 @@ Median driver times were 614.505 ms for GNU BFD, 104.965 ms for Mold 3 with two
 threads and 172.775 ms with eight threads. These results establish a useful local
 option, not a universal thread count or demonstrated scaling on larger workloads.
 
+The [2026-10-16 native Ninja/Mold checkpoint](../planning/native_ninja_mold_20261016.md) extends evidence to the 93-unit accounting fixture on WSL and dev002, including eight simultaneous body edits with 12 Ninja jobs. Mold selection is still an external benchmark wrapper with pinned tools and separate build directories; it does not close the production configuration/cache-identity debt below.
+
 The native-build consumer owns this integration. Provide explicit linker selection
 and thread/argument configuration; fingerprint the actual selected linker and its
 configuration in link-cache identity. Replacing the invocation while retaining the
