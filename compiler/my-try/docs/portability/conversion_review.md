@@ -755,8 +755,14 @@ remains separate from this native pass; style/full PHP suites remain on demand.
   native vector contract; the reference-cycle checker keeps its active length
   separate from allocated scratch entries.
 - Keep base-constructor calls first; compute their arguments through typed helpers
-  when setup would otherwise precede the call. Negative integer field sentinels
-  use explicit constructor assignments; nullable optional fields initialize to null.
+  when setup would otherwise precede the call. Ordinary integer fields now support
+  [signed decimal defaults](../../../../specs/portability/signed_integer_fields.md);
+  audit initialization ordering before moving assignments across base construction.
+  Nullable optional fields initialize to null.
+- [Integer decrement](../../../../specs/portability/decrement.md) is now admitted
+  through the ordinary expression-token path. Earlier postfix-decrement repairs
+  describe historical converter limits; only the two for-condition counters have
+  migrated in this slice.
 - Enum-valued method defaults remain outside the converter subset. Use named entry
   methods that select the default and delegate to one explicitly parameterized worker
   (`prepare_for_consumer`, `decide_value`); do not make required enum contracts nullable

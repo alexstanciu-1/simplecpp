@@ -110,8 +110,8 @@ not admit the other compound operators or model PHP dynamic numeric coercion.
 wide source lengths before narrowing. Mixed-width compound runtime overloads are
 not added by this converter feature.
 
-Use `$count -= 1` for a decrement statement. The current portability converter
-rejects postfix `--`; ordinary PHP acceptance is not evidence of native support.
+Integer decrement statements can use `--$count` or `$count--` under the
+[decrement contract](decrement.md); prefer prefix when the old value is unused.
 
 ## Supported forms and their limits
 
@@ -121,7 +121,7 @@ rejects postfix `--`; ordinary PHP acceptance is not evidence of native support.
 | Explicit named locals | Literal class/interface names pass through without resolution; [type-reference proof](compiler_type_references_slice.md). No unions, arbitrary generics or named wrapper payloads. |
 | Scalar wrapper locals and `take_nullable`, `take_false`, `take_bool` | Fixed supported wrapper spellings, not arbitrary result types; bool payloads in false/bool-sentinel wrappers are rejected. [Executable fixture](../../tests/portability/fixtures/take.php). |
 | Classes, fields, literal construction and fixed member calls | Supported scalar/named/container field forms, including private/protected initialized scalars and separately declared [readonly scalar fields initialized in constructors](compiler_native_project_slice.md); not arbitrary PHP declarations or inheritance. [Context](compiler_context_slice.md), [token vocabulary](compiler_token_slice.md). |
-| Explicit public/private/protected instance/static methods | Explicit scalar/named types, concrete nullable returns and `void`, plus [annotated container returns](container_returns.md) on class/trait methods; [explicit nullable parameters with optional null defaults](nullable_parameters.md) are supported; explicit object-hash method parameters and matching boolean literal defaults are also supported; generic/reference parameters and other ordinary-method defaults remain outside this slice. [Signature proof](method_signatures.md). |
+| Explicit public/private/protected instance/static methods | Explicit scalar/named types, concrete nullable returns and `void`, plus [annotated container returns](container_returns.md) on class/trait methods; [explicit nullable parameters with optional null defaults](nullable_parameters.md) are supported; explicit object-hash method parameters and matching boolean and [integer literal defaults](integer_method_defaults.md) are also supported; keep matching defaults across overrides. Generic/reference parameters and other ordinary-method defaults remain outside this slice. [Signature proof](method_signatures.md). |
 | Constructors | Public constructors accept explicit ordinary or promoted parameters and supported statements. Container defaults require nullable null; bare empty-container defaults remain rejected. Named constants as promoted-parameter defaults are also rejected; pass the constant explicitly at construction. [Token storage](compiler_token_store_slice.md). |
 | Explicit vectors of supported elements | Annotated PHP arrays; a PHP `array` alone does not select a native container. Nullable list fields/promoted parameters are now supported with explicit element annotations; see [discovery records](compiler_discovery_records_slice.md). Recursive vectors and typed maps now use [explicit container annotations](container_annotations.md); see its native access limitation. [Cursors](compiler_cursor_slice.md), [storage](compiler_storage_slice.md). |
 | Unit/integer enums and declaration-only interfaces | Narrow declaration forms; literal class `implements` lists now pass through ([Source_Set proof](compiler_source_set_slice.md)); do not assume enum reflection or general polymorphic bodies follow from declaration support. [Steps](compiler_step_slice.md). |
@@ -142,6 +142,13 @@ Ordinary method signatures now preserve explicit scalar and named types, with
 `void` returns. This removes a temporary converter limitation; Simple C++ methods
 were never restricted to the earlier scalar-only vocabulary. See the
 [signature contract](method_signatures.md) for remaining converter boundaries.
+
+Integer locals and fields support [prefix/postfix decrement](decrement.md).
+The converter preserves the operator; target checks still own operand validity.
+
+Ordinary `int`/`?int` fields also support
+[signed decimal literal defaults](signed_integer_fields.md), including static
+fields. This does not extend parameter, readonly, uint32 or value-record defaults.
 
 Static fields now support the same initialized scalar, named-enum, nullable and
 annotated container forms as instance fields, with literal `Type::$field` and
@@ -201,6 +208,12 @@ the field exists. Same-namespace files can split these declarations without alia
 - Use managed text functions for UTF-8 text; use explicit `string_byte_*` operations
   for lexer offsets and binary data. `string_byte_at` returns an integer, not a
   one-byte PHP string. Code-point counts do not count graphemes or normalize text.
+- Use [typed string splitting](string_split.md) with `q_explode($separator, $text)`
+  and explicit `vector<string>` result intent. This two-argument byte operation
+  preserves empty components; portable typed `ValueError` catches remain unsupported.
+- For a missing entry in a locally typed `hash<string>`, use `$map[$key] ?? $fallback`.
+  The [bounded coalescing rule](hash_coalesce.md) preserves empty strings, laziness
+  and owned results; it is not general nested/mixed path support.
 - Keep null, false and errors distinct. Test numeric limits and lifetime behavior
   on the native target when PHP cannot model them faithfully.
 - Use explicit typed contract comparison when migrating PHP object equality. A
