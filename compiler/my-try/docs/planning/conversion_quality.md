@@ -4,8 +4,11 @@ Doc Status: planning
 Started: 2026-10-16. Typed string-join slice implemented and focused proofs passed.
 Other proposals remain discussion-only; see the implementation checkpoint below.
 
-Current focus: improve the existing PHP→PHS converter. The shared my-try frontend
-proposal is parked, possibly for v0.3; that version is not a commitment.
+Current direction: pause further converter slices and define convertible-PHP as a
+well-defined profile, with stricter validation and an explicit mapping to Simple C++
+concepts. The completed slices and their proofs remain evidence for that design.
+The shared my-try frontend proposal is still parked, possibly for v0.3; that version
+is not a commitment.
 
 ## Scope and user questions
 
@@ -1462,6 +1465,179 @@ adaptation, not an added converter feature. Fixture scope checks still exercise
 separate method/main local metadata. No benchmark or generic coalescer ownership
 optimization was performed; the possible extra owned-string copy remains explicit.
 
+## Parked recommendation: empty typed-vector constructor defaults (2026-10-16)
+
+Status: parked by user pending the broader convertible-PHP design. Analysis only
+at clone revision `2cd77da7`. No converter probes, builds,
+benchmarks or implementation edits were performed for this review.
+
+### Concrete workaround and recommendation
+
+Recommend **empty defaults for explicitly typed vector constructor parameters**,
+with compiler migration restricted to `template_type_parameter::$dependencies`
+in `03_parse/types/model.php:429` (paths here are relative to `compiler/my-try/`
+unless rooted at the repository's tooling/spec folders).
+
+History establishes the workaround: commit `84716579` replaced
+
+```php
+array $dependencies /** vector<generic_contract> */ = []
+```
+
+with `?array ... = null`, then introduced `$effective_dependencies`, initialized
+it to an empty typed vector and conditionally copied the supplied nullable vector
+into it. Validation iterates that normalized local and the field stores it.
+The constructor's real data is a vector of capability dependencies; this null state
+only supplies an empty default. Restoring the original nonnullable signature removes
+that artificial state and the normalization local/branch.
+
+**Do not change `$contracts`.** Its null value means the source-language bare-T
+formation default (`copyable_value`); an explicit empty list means no formation
+requirements. That distinction is intentional and tested in `tests/type_catalog.php`.
+The third argument, nullable `$default_type`, also retains its current meaning.
+
+The audited direct call sites either omit dependencies or pass a typed vector:
+`03_parse/types/register.php`, `compiler/initialization/catalog.php`,
+`compiler/runtime_catalog/types.php`, and retained type/capability/Result tests.
+No direct call found passes explicit null as the fourth argument. This is a
+repository call-site audit, not proof about external or dynamically constructed
+callers. Restoring `array ... = []` deliberately stops accepting explicit null for
+that argument in PHP. Record that boundary; do not describe it as preserving every
+call accepted by the temporary nullable API.
+
+This is more useful than another scalar-default spelling extension: it removes an
+artificial nullable container and makes the constructor's domain truthful. Other
+nullable inputs, parent-constructor helper extraction, enum-default factories and
+Storage aliases should not be swept into this change. Their semantics or target
+constraints differ. The preceding native publication `??` blocker is already
+closed and is not a reason to widen this slice.
+
+### Owner, exact changes and native feasibility gate
+
+`tools/php_portability/src/converter.php::constructorDeclaration()` already parses
+ordinary/promoted constructor parameters, `array` plus explicit container annotation,
+and nullable-null defaults. It currently rejects every other array default with
+`constructor containers require explicit arguments; only nullable defaults may be null`.
+The constructor parameter's own annotation is the truthful type owner; no callee
+lookup, destination inference or whole-program type analysis is needed.
+
+Proposed supported form: nonnullable `array` annotated `vector<T>`, with exact empty
+literal `[]`. Use the existing container annotation parser for `T`; do not add a
+second type grammar or infer element type from PHP values. Support ordinary and
+promoted constructor inputs through the same default parser and existing promotion
+expansion, with focused proof of both. Compiler migration uses only an ordinary input.
+
+Emit an explicitly typed construction expression in PHS:
+
+```php
+$dependencies vector<generic_contract> = new vector<generic_contract>()
+```
+
+Do **not** emit a bare `[]` default. `sequence()` already uses typed `new vector<T>()`
+for prefix-annotated empty container expressions. The generator's `renderExpr(NEW)`
+recognizes explicit vector construction and emits a concrete vector value; parameter
+rendering emits default expressions at declaration sites when `includeDefaults` is
+true. Reuse those concepts, rather than making the S2S generator infer an empty
+literal's type from the destination parameter.
+
+There is an important feasibility gate: the existing
+[constructor portability note](../../../../specs/portability/compiler_token_store_slice.md)
+records incorrect native empty-vector default lowering on its earlier target.
+Source inspection suggests explicit typed construction can avoid that ambiguity,
+but **this review has not proved it works in a default argument**. First compile a
+small two-file constructor fixture with an omitted typed-vector argument, using the
+current target and emitted headers. Prove the concrete default, declaration/definition
+placement and object lifetime before migrating the compiler. If typed construction
+still fails in the parameter/default pipeline, identify that owner and report the
+required expansion instead of adding a generator hack or patching emitted C++.
+
+Expected implementation shape if approved:
+
+- In `constructorDeclaration`, recognize this nonnullable vector case before the
+  existing blanket array-default rejection. Consume exactly `[` then `]`, allowing
+  normal insignificant whitespace/comments; then resume existing comma/`)` parsing.
+  Render the typed empty construction using the already parsed vector type.
+- Prefer a small named helper for typed empty-default parsing/rendering if needed;
+  keep ordinary/promoted construction on one path. Do not broaden ordinary method,
+  closure/interface defaults, scalar defaults or signature inference while here.
+- Keep existing `?array ... = null` behavior. Reject `?array ... = []`, bare/untyped
+  arrays, hash/Storage defaults, nonempty arrays, `array()` spelling, calls/constants,
+  null on nonnullable vectors and malformed/missing annotations in this slice.
+  Target type support for an element still belongs to the target; parsing a type
+  annotation is not proof of every element representation's native support.
+- In `template_type_parameter`, restore nonnullable `$dependencies = []`, remove
+  `$effective_dependencies` and its normalization branch, and use `$dependencies`
+  directly for the existing validation loop and field assignment. Keep validation
+  order, messages and all other fields/parameters unchanged. No call-site migration
+  is expected after the audit.
+- Update the constructor row in `specs/portability/authoring_guide.md`, the current
+  constraint summary in `specs/portability/debt.md`, and add a focused supporting
+  contract/proof note. Mark the older token-store observation as historical with a
+  link to the newly proved bounded form; do not imply its other gaps are repaired.
+
+Non-goals: general array defaults, nonempty typed literals, hashes, Storage/object
+hashes, ordinary method/interface defaults, nested-container-default guarantees,
+shared mutable defaults, nullable-container redesign, user-language v0.2 default
+semantics or unrelated `compiler/src` migrations. Any additional generator/runtime
+owner repair must be made concrete and discussed before expanding this slice.
+
+### Focused proofs required
+
+1. **Baseline and native gate.** Retain the converter's current rejection with file/
+   line attribution. Capture PHP compiler model outcomes before migration. Prove
+   explicitly typed empty construction in a default across two generated translation
+   units, with a named enum element as used by the compiler; do not infer native
+   support from PHP execution or conversion alone.
+2. **Constructor behavior.** Omitted argument and explicitly supplied empty vector
+   produce independent empty values; supplied nonempty vectors retain order/content.
+   Exercise ordinary and promoted constructors, construction from another file,
+   earlier optional arguments followed by the vector default, and repeated omitted
+   calls. Assign constructed objects to locals so constructor behavior is observable.
+   Mutating one object's vector must not affect another or a supplied caller vector;
+   do not accidentally demand deep cloning of object elements.
+3. **Default placement and C++ shape.** Require typed PHS `new vector<T>()`, a concrete
+   native vector default in declarations, no duplicated default on definitions, no
+   `mixed` carrier or nullable vector for this parameter, and no reference retained
+   to a destroyed default temporary. A const-reference input is acceptable only if
+   stored state owns its copy. Verify concrete runtime sizes/content after the call.
+4. **Rejections/regressions.** Nonempty, nullable-empty, hash/Storage, unannotated,
+   malformed and nonliteral defaults reject with source diagnostics and preserve
+   previous output/cache. Repeated conversion reuses unchanged output. Retain existing
+   nullable-null, scalar/named constructor and ordinary integer-method default cases;
+   the new grammar must not leak into those parameter sites. Explicit null at the
+   restored nonnullable dependencies call must fail in PHP and at the native typed
+   boundary; the structural converter need not infer remote argument types.
+5. **Compiler model.** Run `tests/type_catalog.php`, `tests/type_capabilities.php` and
+   the relevant `tests/result_model.php`/`tests/ownership_model.php` checks before
+   and after. Add direct portable/native witnesses for omitted/empty/nonempty
+   `capability_dependencies()`, ordering, duplicate rejection, and forbidden
+   `result_payload` dependency. Preserve the intentionally distinct omitted/null
+   versus explicitly empty **contracts** input and unchanged default-type behavior.
+   Sparse PHP-array rejection is host evidence; do not pretend typed native vectors
+   can represent sparse PHP keys.
+6. **Rebuilt compiler integration.** Copy the migrated source and verify only this
+   constructor/normalization changed. Rebuild natively, run the direct constructor
+   witnesses there, and compare selected existing type-capability/container consumers
+   through PHP/native compiler emission and generated-program execution. Use retained
+   fixtures with independent expected capability/results, including explicit nonempty
+   dependency lists; omission alone would not prove the existing capability gate.
+
+Use the shared 12-slot runner, FPM/default fallback and explicit CLI reasons for
+build/exit contracts. Native proofs use `--no-stan`; LLVM stays parked. Retain
+baseline/current source and toolchain hashes, generated signatures, rejection logs,
+native executable hash and exact command timings. No cumulative native sweep.
+
+### PHS elegance and potential runtime costs
+
+The desired PHS expresses an empty vector as the default instead of manufacturing a
+nullable state and normalizing it in the constructor body. This is a real readability
+and type-domain improvement. Native code can lose a nullable wrapper, branch and
+normalization assignment, but the field still stores an owned vector and explicit
+inputs can still require copies. An empty default is constructed per invocation;
+it must not become a shared static container. No measured allocation, memory or
+runtime improvement is established by this analysis. Inspect generated signatures
+and copy/lifetime behavior before making a performance claim.
+
 ## Decision log
 
 - 2026-10-16: user requests analysis of the compiler conversion flow and explicitly
@@ -1521,3 +1697,15 @@ optimization was performed; the possible extra owned-string copy remains explici
 
 - 2026-10-16: user authorizes the bounded native publication coalescing repair and
   focused proofs, keeping all compiler implementation source unchanged.
+
+- 2026-10-16: next design-only recommendation is an explicitly typed empty-vector
+  constructor default, migrating only `template_type_parameter::$dependencies`.
+  Preserve semantic null contracts and prove the historical native default boundary
+  before removing the normalization workaround.
+
+- 2026-10-16: user parks further slices in favor of designing the convertible-PHP
+  concept, stricter validation, and a well-defined mapping to Simple C++. The empty
+  typed-vector default proposal remains unimplemented. A proposed design framework
+  is source concept → admission/validation rules → PHS/native meaning → parity
+  proofs; validator implementation and the custom-parser proposal are not authorized
+  by this direction-setting discussion.
