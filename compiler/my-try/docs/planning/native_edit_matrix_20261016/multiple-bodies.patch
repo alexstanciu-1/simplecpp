@@ -1,0 +1,22 @@
+diff --git a/src/customer_profile.phs b/src/customer_profile.phs
+index aadec6b..921563d 100644
+--- a/src/customer_profile.phs
++++ b/src/customer_profile.phs
+@@ -60,7 +60,7 @@ class CustomerProfile {
+     }
+ 
+     public function available_credit(): int {
+-        return $this->credit_limit - $this->exposure;
++        return $this->credit_limit - $this->exposure + 0;
+     }
+ 
+     public function copy(): CustomerProfile {
+@@ -71,7 +71,7 @@ class CustomerProfile {
+         $snapshot->currency = $this->currency;
+         $snapshot->collector = $this->collector;
+         $snapshot->payment_reference = $this->payment_reference;
+-        $snapshot->credit_limit = $this->credit_limit;
++        $snapshot->credit_limit = $this->credit_limit + 0;
+         $snapshot->exposure = $this->exposure;
+         $snapshot->term_days = $this->term_days;
+         $snapshot->grace_days = $this->grace_days;

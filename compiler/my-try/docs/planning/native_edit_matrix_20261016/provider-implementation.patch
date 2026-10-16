@@ -1,0 +1,13 @@
+diff --git a/include/scpp/support/var_dump.cpp b/include/scpp/support/var_dump.cpp
+index 9bd0ee8..47c37a6 100644
+--- a/include/scpp/support/var_dump.cpp
++++ b/include/scpp/support/var_dump.cpp
+@@ -8,7 +8,7 @@ static void dump_value(const mixed_t& v, int indent_lvl, std::unordered_set<cons
+ static void dump_value(const detail::dynamic_value& v, int indent_lvl, std::unordered_set<const void*>& seen);
+ 
+ static void print_indent(int n) {
+-    for (int i = 0; i < n; ++i) std::cout << "  ";
++    for (int i = 0; i < n; i += 1) std::cout << "  ";
+ }
+ 
+ static std::string float_to_php_string(double value) {

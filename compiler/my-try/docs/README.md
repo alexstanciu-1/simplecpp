@@ -46,6 +46,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Native Ninja accounting measurements | [O2 native compiler, full/unchanged/body-edit timings and memory](planning/native_ninja_accounting_20261016.md) |
 | Ninja/Mold comparison and eight-edit scaling | [Mold 8 threads, Ninja 12 jobs, WSL and dev002 timings/memory](planning/native_ninja_mold_20261016.md) |
 | Configurable native linker acceptance | [Production Mold selection, link-only invalidation and native dev002 verification](planning/native_linker_configuration_20261016.md) |
+| Complex edits and PCH integration experiment | [dev002 signature/layout/shared-header/runtime edits: rebuild sets, timing and memory](planning/native_edit_matrix_20261016.md) |
 | Native build consumers | [Shared command recipes, optional Ninja execution, and staged native cache](architecture/native_cpp_build.md) |
 | Namespace/import implementation | [Agreed language rules](../../../specs/namespaces_v0_2.md), [approved identity/body migration and current checkpoints](planning/namespace_identity_migration.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
