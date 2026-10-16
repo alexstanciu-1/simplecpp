@@ -211,6 +211,9 @@ the field exists. Same-namespace files can split these declarations without alia
 - Use [typed string splitting](string_split.md) with `q_explode($separator, $text)`
   and explicit `vector<string>` result intent. This two-argument byte operation
   preserves empty components; portable typed `ValueError` catches remain unsupported.
+- For a missing entry in a locally typed `hash<string>`, use `$map[$key] ?? $fallback`.
+  The [bounded coalescing rule](hash_coalesce.md) preserves empty strings, laziness
+  and owned results; it is not general nested/mixed path support.
 - Keep null, false and errors distinct. Test numeric limits and lifetime behavior
   on the native target when PHP cannot model them faithfully.
 - Use explicit typed contract comparison when migrating PHP object equality. A

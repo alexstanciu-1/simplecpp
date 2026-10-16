@@ -52,8 +52,9 @@ inside PHP and native drivers, compares emitted artifacts and encoded build requ
 and builds/runs a custom runtime provider consumer using those declared inputs. It accepts
 `--resume` after a failed attempt, retaining separate logs. The probes use the shared
 runner, bypass legacy STAN and leave LLVM parked. They are not a cumulative sweep.
-Native filesystem publication is not proved: an attempted fresh publication hit
-the existing missing-hash-key `??` lowering issue in `Output_Publication`. The
-focused emission/build proof does not repair or depend on that separate path.
+The split review exposed a missing-hash-key `??` lowering issue in native
+`Output_Publication`. The subsequent [local hash coalescing slice](hash_coalesce.md)
+repairs and proves that path. The split-specific emission proof remains separate
+from the native publication lifecycle proof.
 Dated evidence lives in the
 [conversion-quality plan](../../compiler/my-try/docs/planning/conversion_quality.md).

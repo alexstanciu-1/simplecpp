@@ -1230,6 +1230,238 @@ No timing/allocation benchmark was run. Both paths retain owning string/vector
 materialization; direct builtin spelling establishes code quality, not a measured
 runtime or memory improvement. Legacy STAN was bypassed and LLVM left parked.
 
+## Native publication missing-key coalescing (2026-10-16)
+
+Initial design review at clone revision `e8296160` read source and the previous
+split-proof evidence only. The user subsequently approved this bounded repair
+with compiler source unchanged. Implementation evidence follows the original plan.
+
+### Failure and correct owner
+
+`compiler/output_publication.php:120` constructs journal entries with
+`$current[$path] ?? ''` and `$hashes[$path] ?? ''`. Both containers are explicitly
+local `hash<string>` values. On first publication, `$current` has no previous
+artifact digest. On retirement, `$hashes` has no next artifact digest. Absence is
+intentional: the empty string is the wire representation of no before/after digest.
+A warm unchanged-output check alone would miss both important boundaries.
+
+The existing trace is retained at
+`/tmp/scpp-string-split-20261016/integration/debug-logs/backtrace.stdout`.
+It reaches `Output_Publication::publish`, then the left lambda of `coalesce_eval`,
+then `hash_t::at`. The split-related native contract assertions had already passed.
+The PHP publication/provider build passed, but native fresh publication failed.
+
+The precise chain is:
+
+1. `tools/php_portability/src/converter.php::sequence()` already admits
+   `T_COALESCE` and preserves the operator. Its grouped bracket syntax becomes the
+   same indexed expression in PHS. There is no missing PHP-to-PHS token/binding.
+2. `generators/php/src/Generator/Generator.php::renderCoalesceExpr()` renders the
+   left operand with the ordinary `renderExpr()` path. `DIM` delegates to
+   `renderDimAccess()`, yielding `current.at(cast<string_t>(path))`.
+3. `runtime/include/operators/coalesce/coalesce.hpp::coalesce_eval()` calls the
+   left thunk once **before** testing whether it contains a usable value. A thrown
+   missing-key read is not a nullable result, so fallback cannot be selected.
+
+This is a **PHS-to-C++ generator access-context defect** for the needed source
+shape, not a `q_explode` regression or a PHP-to-PHS converter extension. Do not
+rewrite publication into `isset` ternaries, patch generated C++, or catch arbitrary
+`out_of_range` exceptions around the left thunk. A key expression can itself throw;
+that exception must propagate rather than masquerade as a missing map entry.
+
+### Recommended bounded repair
+
+Keep both authored expressions and their generated PHS unchanged. Repair the
+coalescing-left read in the legacy generator, using a named local helper such as
+`tryRenderCoalesceLookup()` invoked by `renderCoalesceExpr()`.
+
+Initial admission: one nonempty `DIM` whose receiver is a simple variable with a
+locally recorded exact `hash<string>` type (string keys, string payloads). Both
+publication locals meet this rule. Reuse the generator's existing local type
+metadata, type mapping and hash-type decomposition; do not add remote member,
+return-type, alias or whole-program inference. Document this narrow structural
+exception in the generator rules catalog. The supported authoring guarantee is
+an explicitly typed local; do not promise general inference from PHP arrays.
+
+The helper should produce a **presence-bearing read**, not an entire second
+conditional implementation. Reuse `hash_t::find()` and the existing coalescer:
+
+```cpp
+php::coalesce_eval(
+    [&]() -> auto { return current.find(cast<string_t>(path)); },
+    [&]() -> decltype(auto) { return string_t(""); });
+```
+
+`hash_t::find()` already performs a non-mutating lookup and returns an owned
+`nullable<string_t>`: absent for a missing key, present even for an empty string.
+The existing `nullable<string_t> ?? string_t` normalization produces an owned
+`string_t` and evaluates the fallback only on absence. No new runtime helper,
+function-map binding, host facade or compiler preparation model is needed.
+
+Implementation details to preserve:
+
+- Recognize the left operand's shape before ordinary indexed rendering; never
+  render `.at()` and attempt to repair its emitted text afterward.
+- Normalize/check the recorded hash type with existing type utilities. Do not
+  match variable names, source filenames, PHP spelling fragments or empty-string
+  fallback literals. The rule must also work for a nonempty/computed string RHS.
+- Reuse ordinary hash key conversion/rendering. If that logic is embedded in
+  `renderDimAccess()`, extract a small shared key-rendering helper within the same
+  owner rather than duplicating a subtly different conversion rule.
+- Evaluate the key once, keep fallback lazy, do not copy the hash or return a
+  borrowed element. Use an explicit value-returning left lambda for the nullable
+  lookup. Do not infer RHS types; existing C++ coalescer rules still govern joins.
+- For nonmatching forms, preserve the existing coalescing path. This is a bounded
+  repair, not a claim that all previously accepted indexed `??` forms are correct.
+  Record the unproved forms in portability guidance rather than masking them.
+
+Changes expected if approved:
+
+| Owner | Change |
+| --- | --- |
+| `generators/php/src/Generator/Generator.php` | Named coalescing lookup renderer and, only if needed, shared local hash-key rendering extraction. |
+| `generators/php/specs/rules_catalog.md` | Explicit narrow local-type/structural rule, non-throwing lookup, evaluation and ownership boundaries. |
+| `specs/conditional_expression_matrix.md` | Bounded keyed-absence amendment: missing typed string-hash entry supplies absence to the existing nullable/string coalescer; present empty string is usable. The current matrix describes selected values, not a universal missing-index protocol. |
+| `specs/portability/authoring_guide.md` and focused supporting note | Supported source form, remaining unsupported/unproved forms and actual evidence. |
+| Focused tests | Standalone PHP→PHS→C++ lookup cases plus native compiler publication integration. Keep publication cases separate from the split helper's standalone tests. |
+| `tools/php_portability/src/converter.php`, runtime, `Output_Publication` | No production changes expected. Converter behavior is exercised as part of the pipeline proof. |
+
+Non-goals: `??=`, nested index paths, uninitialized variables/properties, nullsafe
+receivers, arbitrary receiver calls, hash fields, vectors, mixed/dynamic containers,
+object-key hashes, nullable/wrapper/object hash payloads, general exception bridging,
+STAN repair or v0.2 semantic preparation changes. In particular, blindly changing
+all hash reads to `find()` would create nested-nullable/wrapper selection questions
+and alter ordinary missing-index behavior. Do not generalize that way in this slice.
+If the narrow declaration metadata cannot truthfully distinguish this shape, or
+native publication exposes a second owner defect, report the blocker before
+expanding the implementation.
+
+### Required focused proofs
+
+1. **Retain the failing baseline.** A minimal portable fixture with an empty
+   `hash<string>`, an indexed `??` and nonempty fallback must pass in PHP, convert
+   successfully, and fail natively with the current missing-key read. Capture the
+   generated PHS/C++ and source/toolchain hashes. Reuse the existing publication
+   trace as supporting evidence, not as a substitute for a minimal regression.
+2. **Independent values and effects.** Missing key selects fallback; present
+   nonempty string, empty string and string `'0'` retain their values. Use a counted
+   key expression to prove exactly one evaluation. Use counted/throwing RHS methods
+   to prove skipped fallback when present and exactly one call when absent.
+   A throwing key expression must propagate, not select fallback. Compare exact
+   outputs and counters, not just successful exits or PHP/native equality.
+3. **Purity and ownership.** Missing lookup must not insert a key or change count;
+   present lookup must not mutate data. The selected string must remain valid and
+   independent after subsequent hash mutation. A fallback that intentionally changes
+   the hash may have those explicit effects; the lookup itself must add none.
+   Mutations of the receiver from within the key expression are not implicitly
+   covered by ordinary single-evaluation tests; investigate separately before
+   promising that additional evaluation-order contract.
+4. **Shape, joins and scope.** Check preserved `??` in generated PHS, `.find()` only
+   in the admitted coalescing-left context, `nullable<string_t>` intermediate and
+   `string_t` result without mixed boxing/map copying. Ordinary `$map[$key]` must
+   still use checked access and throw on absence. Test nonempty/computed fallback,
+   a coalesce chain of admitted reads, method/function scopes and an unrelated
+   same-named variable in another scope. Reuse focused existing nullable/mixed/
+   wrapper coalescing cases to show their old lowering and behavior are unchanged.
+   Incompatible typed fallback remains a target type failure, not a new converter
+   inference task. Keep excluded shapes explicitly unproved.
+5. **Converter regression.** Assert unchanged source files, PHS spellings,
+   content-aware reuse and published output/cache after any existing rejected-input
+   case used by the fixture. No new PHP parser acceptance or arity rule is expected.
+6. **Native publication lifecycle.** Rebuild my-try with its unchanged publication
+   source. Use a retained native driver to publish real compiler artifacts and run
+   the same scenario in PHP: fresh output (missing before hash), unchanged warm
+   publication, changed artifact, added artifact, retired artifact (missing after
+   hash), and missing owned file restored. Compare exact artifacts, manifest and
+   ready-status bytes; no-op publication must preserve file identity/mtime where
+   the existing contract promises it. Observe journal before/after digest semantics
+   via retained pending-state recovery cases; do not add production test hooks.
+7. **Ownership protection and real provider consumer.** Reuse relevant cases from
+   `tests/fixtures/output_publication.php` for unowned collision, edited owned output,
+   retry and persisted pending-journal recovery. Keep the host suite as regression
+   evidence, but adapt a bounded typed driver for native execution rather than
+   assuming the host fixture itself is convertible. Restore the runtime provider
+   scenario that failed in the split review: publish from PHP and native compilers,
+   compare manifests including ordered build requirements, use the existing managed
+   native-cache driver to build each publication, and execute with expected exit 8.
+   Remove the split integration's documented publication exclusion only after this
+   independent evidence passes; the split-specific emission proof can stay focused.
+
+Use the shared 12-slot runner (FPM by default, explicit CLI reasons for build/exit
+contracts). Bypass legacy STAN and leave LLVM parked. No cumulative native sweep.
+Save failed baseline and later passing attempts separately, including copied-source
+hashes, rebuilt executable hash, emitted shapes, manifests and build/run commands.
+Do not report native publication repaired from a PHP suite or an emitted-program
+execution alone.
+
+### PHS quality and runtime costs
+
+The authored PHP and generated PHS are already concise and communicate absence
+correctly. The gain is faithful lowering and removal of a native execution blocker,
+not shorter source. `find()` uses one hash lookup and does not allocate/copy an
+entire hash or insert a missing entry. It does materialize an owned nullable string.
+Inspection suggests a present value may be copied into that nullable and again
+when the existing coalescer normalizes its lvalue into an owned string. Do not
+promise fewer string allocations or faster present-key execution. Missing-key
+execution avoids the current exception/failure; that is correctness evidence, not
+a benchmark. Measure copies/allocations only if making a performance claim; any
+coalescer-wide move/lifetime optimization is a separate slice.
+
+### Coalescing implementation evidence (2026-10-16)
+
+Candidate: `e8296160` plus this slice. `tryRenderCoalesceLookup()` in the legacy
+PHP generator recognizes the admitted single-level local string hash and reuses
+`renderHashKeyExpr()` and existing `hash_t::find()`. Its nullable value goes through
+unchanged `coalesce_eval()` normalization. No PHP-to-PHS converter, runtime or
+compiler implementation file was changed. The [portable guide](../../../../specs/portability/hash_coalesce.md)
+and bounded conditional/rule-catalog amendments record this exact surface.
+
+Evidence root: `/tmp/scpp-publication-coalesce-20261016/`.
+
+- `baseline/`: minimal empty typed hash with nonempty fallback executes in PHP,
+  converts, builds, then fails natively with `hash_t::at: not found`. The original
+  generated PHS/C++ and command logs remain available.
+- `standalone-2/`: independent value/effect transcript matches in PHP/native.
+  Empty strings and `'0'` remain present; key calls occur once; fallback is lazy;
+  exceptions propagate; missing lookup does not insert; selected result survives
+  later hash mutation. Scope/vector and nullable cases remain valid. Ordinary
+  missing access still fails; incompatible fallback is rejected by the target.
+  The existing runtime wrapper-normalization proof also passes. Converter reuse,
+  preserved PHS operators and rejected-input output/cache preservation pass.
+- `standalone-final/`: final fixture adds a compile-time assertion that the actual
+  emitted selection has `string_t` type and passes (`logs-2/`). The first syntax-only
+  assertion command omitted the generated portable exception declarations; adding
+  that test include fixed the harness without changing production code.
+- `mixed-regressions/`: the two retained direct-PHS mixed coalescing fixtures pass
+  generation, native build and their independent expected transcripts (basic and
+  chained cases). These checks also run from the retained standalone proof helper.
+- `integration/summary.json`: native compiler rebuild passes in 573.378s; all
+  copied compiler implementation sources match the clone byte-for-byte. The native
+  driver and PHP driver agree on fresh, warm, changed/added/retired publication,
+  restoration of missing owned output, and two persisted pending-journal recovery
+  states (with/without manifest replacement). Warm artifact/manifest inode and
+  mtime are preserved. Unowned collisions and edited owned outputs are rejected,
+  including retry, without overwriting user bytes. Ready-state/manifest/artifact
+  snapshots match exactly between runtimes.
+- Both real provider publications have identical bytes and ordered runtime build
+  requirements. The existing managed cache driver builds directly from each
+  published manifest, and both programs exit with the expected 8. Provider builds
+  take 19.275s (PHP publication) and 27.163s (native publication); these are proof
+  command timings, not comparative performance measurements.
+
+`provenance.json` records baseline/current generator and touched proof/runtime
+hashes; `toolchain/` records Clang 18.1.3 and PHP 8.5.7. Each attempt retains its
+logs. The native executable hash and 209 copied PHP source hashes are retained in
+integration evidence. This closes the missing-key native publication blocker
+recorded by the preceding split slice. LLVM remained parked and legacy STAN was
+bypassed; no cumulative suite or performance benchmark was run.
+
+The initial fixture used a free named PHP function, outside this converter's
+supported authoring forms; it was changed to a static method. This was test-source
+adaptation, not an added converter feature. Fixture scope checks still exercise
+separate method/main local metadata. No benchmark or generic coalescer ownership
+optimization was performed; the possible extra owned-string copy remains explicit.
+
 ## Decision log
 
 - 2026-10-16: user requests analysis of the compiler conversion flow and explicitly
@@ -1282,3 +1514,10 @@ runtime or memory improvement. Legacy STAN was bypassed and LLVM left parked.
 
 - 2026-10-16: user authorizes typed string splitting, restricted to the two
   `Runtime_Build_Contract` calls and removal of `split_byte()`; focused proofs only.
+
+- 2026-10-16: user requests design-only analysis of the native publication `??`
+  failure. The proposed repair belongs to the legacy PHS-to-C++ generator, with
+  no compiler-source migration or PHP-to-PHS converter change expected.
+
+- 2026-10-16: user authorizes the bounded native publication coalescing repair and
+  focused proofs, keeping all compiler implementation source unchanged.

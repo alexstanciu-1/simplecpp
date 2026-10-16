@@ -112,8 +112,8 @@ echo $first;
             outputs.append(artifacts)
             encoded_requirements.append(encoded)
             # Consume the actual native/host artifact bundle and declared provider inputs.
-            # Native Output_Publication is deliberately not used: its preexisting
-            # absent-key ?? lowering throws before it can publish a fresh output.
+            # Native publication lifecycle is covered separately by hash_coalesce_compiler.py.
+            # This proof stays focused on splitting and emitted provider requirements.
             directory = out / (mode + '-artifacts-' + logs.name)
             units = materialize_artifacts(artifacts, directory)
             program = out / (mode + '-program')
@@ -129,7 +129,7 @@ echo $first;
         (out / 'summary.json').write_text(json.dumps(dict(passed=True, direct_invalid_cases=15,
             exact_encoding=True, ordered_merge=True, native_compiler_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
             provider_execution_exit=8, identical_artifacts=True, identical_build_encoding=True,
-            native_publication='excluded: existing absent-hash-key coalesce lowering failure',
+            native_publication='covered separately by hash_coalesce_compiler.py',
             stan='skipped', llvm='skipped'), indent=2))
     print('Typed string split compiler integration: PASS')
 
