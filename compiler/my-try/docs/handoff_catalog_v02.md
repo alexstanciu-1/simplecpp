@@ -14,8 +14,12 @@ proofs. NOTE-047 is reconciled; uniform source-location diagnostics and the othe
 [explicit extensions](catalog/15_blocking_debt.md#chapter-13-deferred-work) remain deferred.
 This is focused chapter evidence, not a full cumulative native sweep.
 
-Next: reconcile Chapter 14 against existing artifact/runtime work, then agree its next
-bounded slice. The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
+[Chapter 14 is reconciled](catalog/14_output_runtime.md#reconciliation--2026-10-16)
+against existing artifacts, publication, native caching and runtime-module linkage.
+Its first proposed slice is [CH14-EMIT-01](catalog/14_output_runtime.md#first-slice):
+warning-enabled artifact/lookup acceptance using `-Wshadow`, preserving legal source
+shadowing. Four host suites and six optional-provider build/execution scenarios pass.
+The slice awaits agreement; no new implementation or chapter closeout is claimed. The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
 retains its separate evidence limits; this CH13 gate does not retroactively certify
 complete CH12 native coverage. LLVM remains parked.
 

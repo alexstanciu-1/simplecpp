@@ -90,8 +90,10 @@ native parity/rejection/incremental coverage is not claimed. Existing CH15 defer
 remain unchanged. [Chapter 13 is finalized within its implemented bounds](13_errors.md#bounded-closeout-and-native-gate--2026-10-16)
 after PHS conversion, native compiler build and the focused native feature/rejection/edit
 gate. NOTE-047 is reconciled and Chapter 15 retains explicit diagnostic, return/transfer
-and exception-family extensions. Reconcile Chapter 14 against existing
-artifact/runtime work before treating its imported rows as missing functionality.
+and exception-family extensions. [Chapter 14 reconciliation](14_output_runtime.md#reconciliation--2026-10-16)
+maps its imported rows to existing work and explicit gaps. Proposed next:
+[CH14-EMIT-01](14_output_runtime.md#first-slice), warning-enabled generated-artifact
+and lookup acceptance; discuss before implementation.
 Chapter 15 remains the final debt review; LLVM stays deferred.
 
 ## Prerequisite gates
