@@ -41,8 +41,9 @@ final class CPP_Lowering_Report
 			$name = '';
 			$kind = 'file_body';
 			$unit = 'entry.cpp';
-			if ($declaration instanceof collected_name) {
-				$name = object_cast($declaration, collected_name::class)->qualified_name();
+			if ($declaration !== null) {
+				$named /** collected_definition */ = $declaration;
+				$name = $named->qualified_name();
 				$unit = CPP_Artifacts::unit_path($owner->source);
 				$kind = 'declaration';
 			}

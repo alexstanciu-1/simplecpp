@@ -1,0 +1,200 @@
+[
+  {
+    "name": "workflow_checks",
+    "optimization": 0,
+    "variant": "outlined",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O0-outlined-trial1",
+      "-include-pch",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/build-O0-outlined-trial1/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O0-outlined-trial1/units/n6d61696e/n7372632f776f726b666c6f775f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/profiles/O0-outlined-workflow_checks.o"
+    ],
+    "wall_s": 0.7,
+    "peak_rss_kib": 178176,
+    "stages": {
+      "Total ExecuteCompiler": 0.688408,
+      "Total Frontend": 0.452192,
+      "Total InstantiateClass": 0.237477,
+      "Total Backend": 0.22865,
+      "Total InstantiateFunction": 0.043918
+    }
+  },
+  {
+    "name": "closing_checks",
+    "optimization": 0,
+    "variant": "outlined",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O0-outlined-trial1",
+      "-include-pch",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/build-O0-outlined-trial1/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O0-outlined-trial1/units/n6d61696e/n7372632f636c6f73696e675f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/profiles/O0-outlined-closing_checks.o"
+    ],
+    "wall_s": 0.53,
+    "peak_rss_kib": 168960,
+    "stages": {
+      "Total ExecuteCompiler": 0.510128,
+      "Total Frontend": 0.357457,
+      "Total InstantiateClass": 0.194561,
+      "Total Backend": 0.145756,
+      "Total InstantiateFunction": 0.065947
+    }
+  },
+  {
+    "name": "warehouse_desk",
+    "optimization": 0,
+    "variant": "outlined",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O0-outlined-trial1",
+      "-include-pch",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/build-O0-outlined-trial1/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O0-outlined-trial1/units/n6d61696e/n7372632f77617265686f7573655f6465736b2e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/profiles/O0-outlined-warehouse_desk.o"
+    ],
+    "wall_s": 0.98,
+    "peak_rss_kib": 196076,
+    "stages": {
+      "Total ExecuteCompiler": 0.962873,
+      "Total Frontend": 0.747462,
+      "Total InstantiateFunction": 0.393525,
+      "Total InstantiateClass": 0.259247,
+      "Total Backend": 0.207265
+    }
+  },
+  {
+    "name": "workflow_checks",
+    "optimization": 1,
+    "variant": "outlined",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O1",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O1-outlined-trial1",
+      "-include-pch",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/build-O1-outlined-trial1/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O1-outlined-trial1/units/n6d61696e/n7372632f776f726b666c6f775f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/profiles/O1-outlined-workflow_checks.o"
+    ],
+    "wall_s": 3.2,
+    "peak_rss_kib": 189008,
+    "stages": {
+      "Total ExecuteCompiler": 3.174067,
+      "Total Backend": 2.698263,
+      "Total Frontend": 0.46543,
+      "Total InstantiateClass": 0.239302,
+      "Total InstantiateFunction": 0.043936
+    }
+  },
+  {
+    "name": "closing_checks",
+    "optimization": 1,
+    "variant": "outlined",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O1",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O1-outlined-trial1",
+      "-include-pch",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/build-O1-outlined-trial1/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O1-outlined-trial1/units/n6d61696e/n7372632f636c6f73696e675f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/profiles/O1-outlined-closing_checks.o"
+    ],
+    "wall_s": 1.84,
+    "peak_rss_kib": 185856,
+    "stages": {
+      "Total ExecuteCompiler": 1.814925,
+      "Total Backend": 1.447692,
+      "Total Frontend": 0.357525,
+      "Total InstantiateClass": 0.190214,
+      "Total InstantiateFunction": 0.064789
+    }
+  },
+  {
+    "name": "warehouse_desk",
+    "optimization": 1,
+    "variant": "outlined",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O1",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O1-outlined-trial1",
+      "-include-pch",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/build-O1-outlined-trial1/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/published-O1-outlined-trial1/units/n6d61696e/n7372632f77617265686f7573655f6465736b2e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-opt-policy-20261016/initialization/profiles/O1-outlined-warehouse_desk.o"
+    ],
+    "wall_s": 1.87,
+    "peak_rss_kib": 201152,
+    "stages": {
+      "Total ExecuteCompiler": 1.853062,
+      "Total Backend": 1.086211,
+      "Total Frontend": 0.75876,
+      "Total InstantiateFunction": 0.393683,
+      "Total InstantiateClass": 0.259766
+    }
+  }
+]

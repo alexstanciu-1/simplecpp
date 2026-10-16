@@ -17,7 +17,9 @@ report API for completed output. It reads final artifacts and existing fragments
 it performs no preparation, emission, publication, cache validation or native builds.
 Call it only after successful generation with the corresponding program and policy.
 The host owns file I/O. No report collection/traversal executes when flags are absent.
-The native benchmark executable has not been rebuilt with this API or new arguments.
+The [native report checkpoint](../planning/native_lowering_report_20261016.md)
+validates the API through a rebuilt O2 compiler and an experiment `request.json`
+driver on dev002. It does not add these PHP CLI flags to a production native CLI.
 
 ## Schema and interpretation
 
@@ -73,6 +75,6 @@ The shared runner used CLI fallback because sandbox FPM socket binding was unava
 
 All 292 accounting artifacts at each of O0 and O2 match the previous initializer-header
 checkpoint byte-for-byte. Portable compiler source conversion passes with the new
-report owner. Conversion is not native execution proof; no native compiler rebuild
-or performance benchmark was run for this slice. Evidence is in
+report owner. Conversion alone is not native execution proof; the subsequent native checkpoint
+is linked above. No new application performance benchmark was run. PHP evidence is in
 [the checkpoint directory](../planning/lowering_report_20261016/).

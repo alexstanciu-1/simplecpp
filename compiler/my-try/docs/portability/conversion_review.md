@@ -11,6 +11,16 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Native lowering-report checkpoint — 2026-10-16
+
+The [report checkpoint](../planning/native_lowering_report_20261016.md) rebuilds
+`779f6f39` plus a declared-type correction at O2. Six accounting invocations cover
+reports off/on at O0/O1/O2; both report modes match PHP and all 292 generated artifacts
+match the previous checkpoint. The report uses a required `collected_definition`
+local for its qualified name, preserving the method's actual declaring type.
+The experiment driver uses JSON requests; this is not production native CLI coverage.
+No new application benchmark or broad compiler regression was performed.
+
 ## Native Ninja/accounting checkpoint — 2026-10-16
 
 Base `03cf89a0` plus the authored portability fixes in the accompanying
