@@ -18,7 +18,11 @@ This is focused chapter evidence, not a full cumulative native sweep.
 The requested compiler PHS conversion/native build and focused native artifact,
 publication, runtime-linkage and incremental gate pass. Legal source shadowing and
 visible warnings remain intentional. [Deferred extensions](catalog/15_blocking_debt.md#chapter-14-closeout-deferrals)
-keep their owners. Next: prioritize Chapter 15 and agree its first bounded slice.
+keep their owners. [Chapter 15 review](catalog/15_review.md) now provides the full
+52-group decision list and dependency ordering. Only the two iteration debts retain
+explicit final-catalog blocker status. Proposed next: CH15-ITER-DESIGN-01 policy and
+guard-ownership design, before any cross-owner implementation; user prioritization
+is pending. A checked current-build reader is an independent workflow alternative.
 
 The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
 retains its separate evidence limits; this CH13 gate does not retroactively certify

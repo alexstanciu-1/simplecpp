@@ -93,7 +93,9 @@ gate. NOTE-047 is reconciled and Chapter 15 retains explicit diagnostic, return/
 and exception-family extensions. [Chapter 14 bounded closeout](14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16)
 now passes compiler PHS conversion/native build and focused native artifact, publication,
 runtime-linkage and incremental proofs. Remaining diagnostic/runtime/cache extensions
-are explicit. Next: prioritize Chapter 15 before agreeing another bounded slice.
+are explicit. [Chapter 15 now has a compact reconciled inventory](15_review.md) with
+52 selectable groups, recommended priorities and dependencies. Proposed first slice:
+iteration-policy/guard-ownership design; implementation awaits prioritization.
 Chapter 15 remains the final debt review; LLVM stays deferred.
 
 ## Prerequisite gates
