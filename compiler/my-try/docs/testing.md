@@ -1,11 +1,16 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite exceptions --no-pch --results FRESH`
+checks the bounded Exception factory, canonical throw/catch admission, shared identity,
+handler lifetime, reverse exceptional cleanup, partial construction, outer reporting
+and incremental rejection/repair. It compiles generated programs, not the compiler.
+
 `python3 compiler/my-try/tests/records.py --suite error_values --no-pch --results FRESH`
 checks metadata error factory/defaults/getters, Result failure boundaries, state and
 copy behavior, no-error rejection with assignment preservation, preparation rejections
 and incremental repair/fresh agreement. It compiles generated programs; it does not
-rebuild the compiler or enable source exceptions.
+rebuild the compiler.
 
 `python3 compiler/my-try/tests/indexed_properties.py --results FRESH_DIRECTORY`
 checks plain indexed shared-object property writes, reference/place boundaries,

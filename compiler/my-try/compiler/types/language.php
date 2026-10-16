@@ -42,6 +42,11 @@ final class Language_Types
 		return self::canonical($language_scope, 'error');
 	}
 
+	public static function exception_type(scope $language_scope): canonical_type_use
+	{
+		return self::canonical($language_scope, 'Exception');
+	}
+
 	public static function no_value(scope $language_scope): canonical_type_use
 	{
 		return self::canonical($language_scope, 'void');

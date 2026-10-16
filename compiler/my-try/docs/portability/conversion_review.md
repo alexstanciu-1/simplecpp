@@ -11,6 +11,11 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+The subsequent [Chapter 13 slices](../catalog/13_errors.md) have focused host-PHP
+and generated-C++ evidence only. The checkpoints below predate error factories,
+Exception transport and the new generated executable exception boundary; they do
+not certify native portability of those changes.
+
 ## Workspace smoke — 2026-10-16
 
 Revision `8c7ac0e5b10faf8217cb31916da3d988d4e86ddc` passes a fresh native compiler

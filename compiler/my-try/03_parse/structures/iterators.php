@@ -308,8 +308,8 @@ final class if_children_iterator extends children_iterator
 	}
 }
 
-/** Two named loop edges in source order, without a temporary child collection. */
-final class loop_pair_children_iterator extends children_iterator
+/** Two named syntax edges in source order, without a temporary child collection. */
+final class pair_children_iterator extends children_iterator
 {
 	private ast_node $first;
 	private ast_node $second;
@@ -1334,6 +1334,28 @@ final class interpolation_value_children_iterator extends children_iterator
 	}
 
 	/** Read the next named field only when requested. */
+	protected function read_next(): ?ast_node
+	{
+		if ($this->consumed) {
+			return null;
+		}
+		$this->consumed = true;
+		return $this->source->expression;
+	}
+}
+
+/** One required throw operand, distinct from the optional return operand. */
+final class throw_children_iterator extends children_iterator
+{
+	private bool $consumed = false;
+	private throw_node $source;
+
+	public function __construct(throw_node $source)
+	{
+		$this->source = $source;
+	}
+
+	/** Inspect the required operand once without creating a child collection. */
 	protected function read_next(): ?ast_node
 	{
 		if ($this->consumed) {

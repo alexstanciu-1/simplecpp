@@ -39,6 +39,33 @@ def rejection_checks(output):
             raise RuntimeError('Unknown transport accepted')
 
 
+def entry_boundary_checks():
+    """Instrumentation may bypass the outer boundary, never a source handler."""
+    entry = ('int main(int argc, char** argv)\n{\n'
+             '// SCPP-ENTRY-TRY\n\ttry {\n'
+             'try { throw 1; } catch (int) {}\n'
+             '// SCPP-ENTRY-CATCH\n} catch (...) { return 1; }\n'
+             '// SCPP-ENTRY-END\n}\n')
+    for partitioned in (False, True):
+        artifacts = [{'id': 'entry', 'kind': 'translation_unit', 'path': 'entry.cpp', 'text': entry}]
+        if partitioned:
+            artifacts.insert(0, {'id': 'header', 'kind': 'header', 'path': 'empty.hpp', 'text': '#pragma once\n'})
+        text = probe_text(json.dumps({'format': 'scpp-cpp-artifacts-v1', 'artifacts': artifacts}))
+        production = probe_bundle(text, instrumented=True)
+        if production is not None and '// SCPP-ENTRY-CATCH' not in production:
+            raise RuntimeError('Ordinary entry lost its production handler')
+        instrumented = text.replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try')
+        if partitioned:
+            unchanged = probe_bundle(instrumented)
+            if '// SCPP-ENTRY-CATCH' not in unchanged:
+                raise RuntimeError('Uninstrumented transport removed the production handler')
+        elif probe_bundle(instrumented) is not None:
+            raise RuntimeError('Uninstrumented single source changed')
+        recovered = decode_artifacts(probe_bundle(instrumented, instrumented=True))[-1]['text']
+        if '// SCPP-ENTRY-CATCH' in recovered or 'catch (int)' not in recovered:
+            raise RuntimeError('Function-try probe failed to isolate the outer boundary')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', type=Path, required=True)
@@ -58,6 +85,7 @@ def main():
                           ['php', ROOT / 'tests/cpp_artifacts.php', fixture])))
         run_tasks(tasks, jobs=12)
         rejection_checks(output)
+        entry_boundary_checks()
         payload = runner.run('artifact-cli', ['php', ROOT / 'main.php', '--s2s', source],
                              cli_reason='Tests the artifact CLI delivery contract')
         if 'function_answer' not in probe_text(payload):

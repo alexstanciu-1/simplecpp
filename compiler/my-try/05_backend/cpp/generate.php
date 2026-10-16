@@ -246,10 +246,13 @@ final class CPP_Generator
 		// Executable ABI initialization belongs to artifact assembly, not call preparation.
 		$entry_headers /** hash<bool> */ = $entry_fragment->headers;
 		$entry_headers['lang/php/cli_context.hpp'] = true;
+		$entry_headers['scpp/runtime_error.hpp'] = true;
 		$result->append(CPP_Artifacts::described('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
 			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . "\nint main(int argc, char** argv)\n{\n"
-			. "\tscpp::php::set_cli_args(argc, argv);\n"
-			. $entry_fragment->text . "\treturn 0;\n}\n", $entry_headers));
+			. "// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n"
+			. $entry_fragment->text . "\treturn 0;\n// SCPP-ENTRY-CATCH\n"
+			. "\t} catch (const std::exception& failure) {\n"
+			. "\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n", $entry_headers));
 		$helpers /** hash<prepared_compiler_call> */ = [];
 		foreach ($ordered as $owner) {
 			foreach ($this->program->fragments[$owner]->compiler_helpers as $key => $request) {

@@ -88,8 +88,9 @@ Chapter 12's [bounded positive pass is closed](12_closures.md#bounded-closeout-a
 Its 13 imported cards and selected extensions have focused evidence; full CH12
 native parity/rejection/incremental coverage is not claimed. Existing CH15 deferrals
 remain unchanged. Chapter 13's [structured error-value slice](13_errors.md#structured-error-factory-slice--2026-10-16)
-is now implemented and proved within its bounds. Next: discuss throw/catch and
-exceptional cleanup, followed by finally. Reconcile Chapter 14 against existing
+is now implemented and proved within its bounds. The [bounded Exception/throw/catch slice](13_errors.md#bounded-exception-transport-and-cleanup--2026-10-16)
+also implements exceptional cleanup and outer reporting. Next: discuss finally and
+its interaction with returns and other transfers. Reconcile Chapter 14 against existing
 artifact/runtime work before treating its imported rows as missing functionality.
 Chapter 15 remains the final debt review; LLVM stays deferred.
 

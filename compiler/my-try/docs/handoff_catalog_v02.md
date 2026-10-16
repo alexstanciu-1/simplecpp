@@ -12,8 +12,11 @@ The closeout maps retained proof owners to completed work and distinguishes hist
 native evidence from the current workspace smoke; full CH12 native coverage remains
 unclaimed. Deferred extensions keep their existing owners. Chapter 13's
 [bounded error-value slice](catalog/13_errors.md#structured-error-factory-slice--2026-10-16)
-is implemented with focused generated-program proofs. Next: discuss throw/catch
-and exceptional cleanup before finally.
+is implemented with focused generated-program proofs. The following
+[bounded Exception/throw/catch slice](catalog/13_errors.md#bounded-exception-transport-and-cleanup--2026-10-16)
+adds canonical single-type transport, handler-local bindings, exceptional RAII cleanup
+and outer executable reporting. Next: discuss finally and its interaction with returns
+and other transfers. Full native compiler validation remains unclaimed.
 
 ## Agreed v0.2 scope
 

@@ -5,7 +5,8 @@ Doc Status: planning
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)
 
-Requires calls, control flow and lifetime. Discuss throw/catch before finally and exit-path cleanup.
+Requires calls, control flow and lifetime. Bounded throw/catch and exceptional cleanup
+are implemented below; finally and its transfer interactions remain to be discussed.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
@@ -58,8 +59,49 @@ Non-goals remain `new error(...)`, general runtime constructor metadata, broader
 receiver lifetimes, new Result payload families, `result<error>`, bare error sentinel
 exposure, new error operators and thrown exceptions. An `error` is an in-band value;
 it is not a Throwable. [The authoritative contract](../../../../specs/error_values_and_take.md)
-owns its semantics. **Next:** discuss bounded throw/catch and exceptional cleanup;
-finally follows only after its interactions with returns and other exits are agreed.
+owns its semantics. **The bounded exception slice below follows this work.** Finally remains a separate
+discussion of its interactions with returns and other exits.
+
+## Bounded Exception transport and cleanup — 2026-10-16
+
+ERR-THROW-001 and ERR-TRY-001 are implemented within the agreed single-type bounds.
+Core metadata owns the opaque shared `Exception`, static `make(string)` factory and
+instance `get_message()`. Named throw/try/catch syntax edges feed shared preparation;
+canonical admission rejects unrelated spelling matches and in-band errors. The catch
+binding uses ordinary local storage facts in its own lifetime region. Explicit throws
+have no normal fallthrough; try completion conservatively includes the handler path.
+
+C++ consumes the prepared operand and binding types, transports the same shared object
+through `make_thrown`/`catch_as`, and relies on RAII for reverse exceptional cleanup.
+Absent throws fail explicitly. The generated executable reports uncaught standard or
+language exceptions at its outer boundary after local unwinding, returning 1. Runtime
+guards bypass source catch. Existing function-try native probes deliberately remove
+only that marked executable boundary through the shared test artifact transport.
+
+[exceptions.php](../../tests/exceptions.php) owns focused construction/message,
+canonical alias, single evaluation, callee propagation, nested rethrow, handler scope,
+completion, reverse cleanup, outer survivors, partial construction, handler/loop exits,
+object identity/release, absent throws and uncaught reporting proofs. Pointer identity
+and final release use a native harness around the emitted callable; no source handle
+comparison or weak-handle extension is implied. Incremental invalid throw/type/syntax
+edits reject and repair to fresh output. Validation passed: 17 generated programs without PCH and 22 rejection cases,
+including no-op and rejection/repair/fresh agreement, in
+`/tmp/scpp-ch13-exceptions-04/summary.json`. Eleven focused PHP regression suites
+passed in `/tmp/scpp-ch13-exception-regressions-01/logs/`; 19 of 21 existing generated
+error/destructor probes passed there. The two single-file function-try probes exposed
+a transport adaptation gap, repaired and proved in
+`/tmp/scpp-ch13-exception-final-01/summary.json`, alongside both artifact transport
+modes and a final host exception-suite pass. Thus all 21 selected regression programs
+passed across the original and repair runs. CLI fallback was used after FPM socket
+creation failed. Final host exception/AST checks passed after consolidation in
+`/tmp/scpp-ch13-exception-review-01/logs/`. No native compiler rebuild or full regression
+run was performed.
+
+[The normative contract](../../../../specs/exceptions_v0_2.md) owns semantics.
+Non-goals: finally, multiple/union catches, subclasses and source-to-runtime inheritance,
+`new Exception`, arbitrary runtime/std exception catches, throw expressions, bare
+rethrow, chaining, runtime-handle ownership extensions, static effect analysis and LLVM.
+Next: discuss finally and its interaction with returns and other transfers.
 
 ## Progress
 
@@ -68,13 +110,13 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | RSL-ERROR-01 | implemented-bounded | `error::make("bad", 12, "input.phs")`, getters and `error -> result<T>` | proved | proved | deferred | 17 generated programs, 13 preparation rejections and incremental repair; `tests/error_values.php`; general runtime `new` remains excluded |
-| [ERR-THROW-001](#err-throw-001) | pending-discussion | `throw new Exception("x");` | unverified | unverified | deferred | — |
-| [ERR-TRY-001](#err-try-001) | pending-discussion | `try { f(); } catch (Exception $e) { }` | unverified | unverified | deferred | — |
+| [ERR-THROW-001](#err-throw-001) | implemented-bounded | `throw Exception::make("x");` | proved | proved | deferred | Single canonical shared Exception; identity, absence and unwind proofs in `tests/exceptions.php`; runtime `new` excluded |
+| [ERR-TRY-001](#err-try-001) | implemented-bounded | `try { f(); } catch (Exception $e) { }` | proved | proved | deferred | One handler, nested/callee propagation, handler scope, RAII cleanup and outer reporting; finally excluded |
 | [ERR-FINALLY-001](#err-finally-001) | pending-discussion | `try { return 1; } finally { g(); }` | unverified | unverified | deferred | — |
 | [NOTE-047](#note-047) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
 ## ERR-THROW-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented within the [bounded exception slice](#bounded-exception-transport-and-cleanup--2026-10-16). Imported examples below retain their historical scope; runtime `new` and general inheritance are not enabled.
 
 ### Imported version 1
 
@@ -111,7 +153,7 @@ throw ::scpp::php::make_thrown(create<Exception>(string_t("x")));
 
 ## ERR-TRY-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 decision / target C++:** Implemented within the [bounded exception slice](#bounded-exception-transport-and-cleanup--2026-10-16). Imported examples below retain their historical scope; runtime `new` and general inheritance are not enabled.
 
 ### Imported version 1
 
