@@ -22,6 +22,8 @@ $source_directory = '';
 $entry_path = '';
 $output_directory = '';
 $optimization = 2;
+$lowering_report = '';
+$lowering_explain = '';
 $usage_error = false;
 if (PHP_SAPI === 'cli')
 {
@@ -37,6 +39,8 @@ if (PHP_SAPI === 'cli')
 			for ($index = 3; $index < $argc; $index += 2) {
 				if (($argv[$index] === '--entry') && ($entry_path === '')) { $entry_path = $argv[$index + 1]; }
 				elseif (($argv[$index] === '--optimization') && preg_match('/^[0-3]$/D', $argv[$index + 1])) { $optimization = (int)$argv[$index + 1]; }
+				elseif (($argv[$index] === '--lowering-report') && ($lowering_report === '')) { $lowering_report = $argv[$index + 1]; }
+				elseif (($argv[$index] === '--lowering-explain') && ($lowering_explain === '')) { $lowering_explain = $argv[$index + 1]; }
 				elseif (($argv[$index] === '--output') && ($output_directory === '')) { $output_directory = $argv[$index + 1]; }
 				else { $usage_error = true; }
 				if ($argv[$index + 1] === '') { $usage_error = true; }
@@ -60,10 +64,11 @@ else
 		$usage_error = true;
 	}
 }
+if (($lowering_report !== '') && ($lowering_report === $lowering_explain)) { $usage_error = true; }
 if ($usage_error)
 {
 	if (PHP_SAPI === 'cli') {
-		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY] [--optimization 0|1|2|3]]\n");
+		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY] [--optimization 0|1|2|3] [--lowering-report PATH] [--lowering-explain PATH]]\n");
 	}
 	else {
 		http_response_code(400);
@@ -81,7 +86,19 @@ if ($s2s)
 		$compiler = new Compiler();
 		$compiler->init([$source_directory]);
 		if ($entry_path !== '') { $compiler->select_entry('main', $entry_path); }
-		$compiler->exec_cpp($publication, new cpp_lowering_policy($optimization));
+		$policy = new cpp_lowering_policy($optimization);
+		$compiler->exec_cpp($publication, $policy);
+		foreach ([$lowering_report => false, $lowering_explain => true] as $report_path => $explain) {
+			if ($report_path === '') { continue; }
+			// Exclusive creation prevents a diagnostic path from overwriting source/build inputs.
+			$handle = fopen($report_path, 'xb');
+			if ($handle === false) { throw new \RuntimeException('Cannot create lowering report: ' . $report_path); }
+			try {
+				$report = CPP_Lowering_Report::encode(Model::$cpp_files, Model::$cpp_output_program, $policy, $explain);
+				if (fwrite($handle, $report) !== strlen($report)) { throw new \RuntimeException('Incomplete lowering report write'); }
+			}
+			finally { fclose($handle); }
+		}
 		echo CPP_Output::encode(Model::$cpp_files);
 	}
 	catch (\Throwable $error)

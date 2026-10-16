@@ -1,0 +1,97 @@
+<?php
+namespace scpp\compiler;
+
+/** Optional read-only diagnostics over completed lowering, never a cache or build input. */
+final class CPP_Lowering_Report
+{
+	public static function encode(Storage $artifacts /** Storage<cpp_artifact> */, cpp_program $program,
+		cpp_lowering_policy $policy, bool $explain = false): string
+	{
+		if ($program->policy_identity !== $policy->identity()) {
+			throw new \LogicException('Lowering report policy does not match completed output');
+		}
+		$consumers /** hash<string> */ = [];
+		$paths /** hash<bool> */ = [];
+		foreach ($artifacts as $consumer) {
+			$paths[$consumer->file_name] = true;
+			foreach ($consumer->includes as $header) {
+				if (!isset($consumers[$header])) { $consumers[$header] = ''; }
+				$existing = $consumers[$header];
+				$consumers[$header] = $existing . ($existing === '' ? '' : ',') . json_quote($consumer->file_name);
+			}
+		}
+		$rows = '';
+		$separator = '';
+		foreach ($artifacts as $artifact) {
+			$users = '';
+			if (isset($consumers[$artifact->file_name])) { $users = $consumers[$artifact->file_name]; }
+			$rows .= $separator . '{"id":' . json_quote($artifact->identity)
+				. ',"path":' . json_quote($artifact->file_name) . ',"kind":' . json_quote($artifact->kind_name())
+				. ',"bytes":' . string_byte_len($artifact->text)
+				. ',"direct_includes":' . CPP_Artifacts::includes_json($artifact)
+				. ',"direct_generated_consumers":' . ('[' . $users . ']') . '}';
+			$separator = ',';
+		}
+		$fragments = '';
+		$separator = '';
+		foreach ($program->fragments as $owner /** @object-key */) {
+			if ($owner->change_status === change_state::deleted || $owner->source->deleted) { continue; }
+			$fragment = $program->fragments[$owner];
+			$declaration = $owner->declaration();
+			$name = '';
+			$kind = 'file_body';
+			$unit = 'entry.cpp';
+			if ($declaration instanceof collected_name) {
+				$name = object_cast($declaration, collected_name::class)->qualified_name();
+				$unit = CPP_Artifacts::unit_path($owner->source);
+				$kind = 'declaration';
+			}
+			if ($declaration instanceof collected_source_callable) {
+				$unit = CPP_Artifacts::unit_path(CPP_Implementation_Groups::callable_source(
+					object_cast($declaration, collected_source_callable::class)));
+			}
+			if ($owner instanceof source_callable_body_work) { $kind = 'function_body'; }
+			$fragments .= $separator . '{"owner":' . json_quote($name) . ',"kind":' . json_quote($kind)
+				. ',"source":' . json_quote($owner->source->source_file()->path)
+				. ',"implementation_path":' . (isset($paths[$unit]) ? json_quote($unit) : 'null')
+				. ',"fragment_bytes":' . string_byte_len($fragment->text)
+				. ',"prototype_bytes":' . string_byte_len($fragment->prototype_text)
+				. ',"initializer_bytes":' . string_byte_len($fragment->initializer_text)
+				. ',"type_owned_definition_bytes":' . string_byte_len($fragment->record_definition_text);
+			if ($declaration instanceof collected_record) {
+				$fragments .= ',"default_constructor_decision":' . json_quote(CPP_Default_Constructors::decision(
+					object_cast($declaration, collected_record::class), $policy))
+					. ',"shared_allocation_outlined":' . (isset($program->outlined_shared_allocations[$name]) ? 'true' : 'false');
+			}
+			if ($explain) {
+				$fragments .= ',"fragment_headers":' . self::keys($fragment->headers)
+					. ',"definition_headers":' . self::keys($fragment->definition_headers)
+					. ',"forward_declarations":' . self::keys($fragment->forward_declarations);
+			}
+			$fragments .= '}';
+			$separator = ',';
+		}
+		return '{"format":"scpp-lowering-report-v1","optimization":' . $policy->optimization
+			. ',"policy":' . json_quote($program->policy_identity)
+			. ',"explanation_granularity":"fragment-contribution","operation_reasons_available":false'
+			. ',"artifacts":[' . $rows . '],"fragments":[' . $fragments . "]}\n";
+	}
+
+	private static function keys(array $values /** hash<bool> */): string
+	{
+		$names /** vector<string> */ = [];
+		foreach ($values as $name => $present) { $names[] = $name; }
+		return self::strings($names);
+	}
+
+	private static function strings(array $values /** vector<string> */): string
+	{
+		$text = '[';
+		$separator = '';
+		foreach ($values as $value) {
+			$text .= $separator . json_quote($value);
+			$separator = ',';
+		}
+		return $text . ']';
+	}
+}

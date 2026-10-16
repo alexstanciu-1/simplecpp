@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/lowering_report.py --results FRESH_DIRECTORY` checks
+optional lowering-report correctness, output equivalence and retained-generation
+purity at O0/O1/O2. See the [report schema](architecture/lowering_report.md).
+This is PHP-hosted behavior, not a native compiler rebuild.
+
 `python3 compiler/my-try/tests/ninja_build.py --results FRESH_DIRECTORY` checks
 published-program builds through the shared command recipes and Ninja: fresh/warm,
 body/provider/header edits, source-unit addition/removal, link-only configuration,

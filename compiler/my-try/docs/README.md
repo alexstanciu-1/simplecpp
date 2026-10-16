@@ -1,6 +1,9 @@
 # my-try compiler
 Doc Status: supporting
 
+Optional [lowering diagnostics](architecture/lowering_report.md) expose artifact
+sizes, direct consumers, fragment header contributions and outlining decisions.
+
 PHP is the implementation source. The active v0.2 path is strict PHS/PHP++ → typed
 syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked

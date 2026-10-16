@@ -4,6 +4,15 @@ namespace scpp\compiler;
 /** Assemble rendered fragments and dispatch definitions without retaining semantic work. */
 final class CPP_Implementation_Groups
 {
+	/** Shared placement query for assembly and optional diagnostics. */
+	public static function callable_source(collected_source_callable $definition): collected_file
+	{
+		if ($definition instanceof collected_method) {
+			return object_cast($definition, collected_method::class)->declaring_type()->collection;
+		}
+		return $definition->collection;
+	}
+
 	/** Existing file order and source membership remain the grouping policy. */
 	public static function assemble(Storage $files /** Storage<prepared_file> */,
 		Storage $ordered /** Storage<preparation_owner> */, cpp_program $program): Storage /** Storage<cpp_implementation_group> */
@@ -41,10 +50,7 @@ final class CPP_Implementation_Groups
 			}
 			if (!($callable_owner instanceof source_callable_signature_work)) { continue; }
 			$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
-			$implementation_source = $definition->collection;
-			if ($definition instanceof collected_method) {
-				$implementation_source = object_cast($definition, collected_method::class)->declaring_type()->collection;
-			}
+			$implementation_source = self::callable_source($definition);
 			if ($implementation_source !== $source) { continue; }
 			$function = $definition->callable_syntax();
 			if (!$function->has_parsed_body()) { continue; }
