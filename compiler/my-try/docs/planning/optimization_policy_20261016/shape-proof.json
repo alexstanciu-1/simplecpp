@@ -1,0 +1,31 @@
+{
+  "release_unchanged_artifacts": 292,
+  "outlined_classes": [
+    "SalesService",
+    "BankReconciliationReport",
+    "BankReconciliation",
+    "PaymentProposal",
+    "PurchasingBook",
+    "CreditDesk",
+    "ProjectDesk",
+    "TreasuryDesk",
+    "WorkloadChecks",
+    "BudgetReport",
+    "BudgetBook",
+    "GeneralLedger",
+    "AllocationDesk",
+    "AllocationResult",
+    "ProcurementDesk",
+    "StockItem",
+    "InventoryBook",
+    "PayrollDesk",
+    "WarehouseDesk",
+    "AssetRegister",
+    "PrepaymentSchedule",
+    "AdjustmentBook",
+    "ExpenseDesk",
+    "JournalEntry",
+    "TrialBalance"
+  ],
+  "outlined_count": 25
+}

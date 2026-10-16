@@ -1073,3 +1073,12 @@ tokens, failure and deletion policy. [Ownership](ownership.md) owns reference in
 The [LLVM experiment](../../05_backend/llvm/README.md) retains separate token-indexed
 name/template preparation only for regressions. Its maps and native type choices
 must not define shared semantics. Future LLVM development must consume shared facts.
+
+### C++ lowering policy identity
+
+`cpp_program::policy_identity` identifies the backend lowering profile/version.
+A profile change replaces its fragment table before generation even if semantic
+preparation versions are unchanged. It introduces no semantic dependency or MT
+scheduling owner. The invocation-local `cpp_lowering_policy` is supplied by the
+coordinator; no native builder reads or mutates Model. Publication records the
+profile under its ready digest for native compatibility checks.

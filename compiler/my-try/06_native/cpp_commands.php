@@ -10,13 +10,11 @@ final class Native_CPP_Commands
 		if (!string_byte_starts_with($config->compiler, '/')) {
 			throw new \RuntimeException('Native compiler must be absolute');
 		}
-		if (($config->optimization !== 0) && ($config->optimization !== 2)) {
-			throw new \RuntimeException('Native optimization must be 0 or 2');
-		}
+		$policy = new cpp_lowering_policy($config->optimization);
 		if (!string_byte_starts_with($config->linker, '/') || ($config->linker_threads < 0)) {
 			throw new \RuntimeException('Native linker must be absolute and linker threads nonnegative');
 		}
-		$optimization = $config->optimization === 2 ? '-O2' : '-O0';
+		$optimization = '-O' . $policy->optimization;
 		$result /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
 			'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
 		foreach ($definitions as $definition) {

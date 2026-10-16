@@ -121,8 +121,8 @@ final class cpp_fragment
 	public string $prototype_text = '';
 	/** Constructor initialization depends on executable body facts, not only the signature. */
 	public string $initializer_text = '';
-	/** Type-owned storage definitions belong to the declaring source implementation unit. */
-	public string $storage_text = '';
+	/** Type-owned storage and constructor definitions belong to the declaring source unit. */
+	public string $record_definition_text = '';
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
 	/** Definition signatures can need layouts that their public prototypes do not. */
@@ -138,6 +138,7 @@ final class cpp_fragment
 
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
+	public string $policy_identity = '';
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()

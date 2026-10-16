@@ -19,6 +19,47 @@ counts for compiled/reused objects, PCH creation and linking. It does not execut
 program or rebuild the compiler itself. Programmatic callers use `native_cpp_config`.
 
 
+## Application optimization and C++ lowering
+
+Application levels 0, 1, 2 and 3 are admitted explicitly by both native consumers.
+`cpp_lowering_policy` is the backend-owned lowering input; coordinators pass it to
+`Compiler::exec_cpp`, `update_cpp` or `cpp` alongside the publication. The host S2S
+CLI accepts `--optimization 0|1|2|3`. Standalone emission defaults to execution
+spelling (level 2) to preserve existing output. This is independent of the
+optimization used to build the compiler executable.
+
+For a latency-oriented two-step build, select the level at both boundaries:
+
+```bash
+php compiler/my-try/main.php --s2s /absolute/source --entry main.phs --output /absolute/published --optimization 1
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/build --reuse -O1 --jobs=8
+```
+
+A combined coordinator constructs `new cpp_lowering_policy($config->optimization)`
+and passes it to emission before invoking its native consumer. Optional directory
+reuse still belongs to Ninja.
+
+Levels 0/1 share `cpp-lowering-v1:latency`; levels 2/3 share
+`cpp-lowering-v1:execution`. A profile change clears retained backend fragments,
+without changing prepared semantic facts or source-unit membership. The publication
+records `cpp_policy` under the ready digest. Native consumers reject latency output
+at O2/O3 and unknown policy identities; regenerate first. Execution spelling,
+including pre-policy publications, may deliberately be compiled at O0/O1 as a
+baseline. Native consumers never invoke lowering themselves. Optimization flags
+remain in compile/PCH command identity, so O0 to O1 rebuilds native inputs even
+though the emitted C++ profile is identical.
+
+The first latency pattern outlines default constructors for ordinary non-inherited
+classes without authored constructors, data initialization, abstract/virtual lifecycle
+or authored destructors. Every instance field must have an explicit constant default
+or an empty typed vector/hash construction, with at least one container default.
+Keep the original expressions and order in a member-initializer list; emit the
+constructor in the declaring source's existing implementation group. Uninitialized
+fields are excluded to preserve C++ value-initialization behavior. Authored methods,
+allocation wrappers, copy/move/destruction and source contracts are unchanged.
+O2/O3 keep the previous generated form. `record_definition_text` holds type-owned
+static storage and outlined constructor definitions. Automatic splitting is deferred.
+
 ## Shared commands and optional Ninja execution
 
 `Native_CPP_Commands` owns ordered compiler flags, runtime PCH contents/creation,
@@ -44,7 +85,7 @@ not historical content-addressed reuse after a Git revert. Use the entrypoint fo
 every build so publication validation, tool identity observation and reservations run;
 invoking the saved graph directly is a diagnostic operation, not a readiness API.
 
-Options are `--no-pch`, `-O0`/`-O2`, `--jobs=N`, `--compiler=ABSOLUTE_PATH`,
+Options are `--no-pch`, `-O0`/`-O1`/`-O2`/`-O3`, `--jobs=N`, `--compiler=ABSOLUTE_PATH`,
 `--runtime=ABSOLUTE_PATH`, `--ninja=ABSOLUTE_PATH`, `--linker=ABSOLUTE_PATH` and
 `--linker-threads=N`. Defaults preserve C++23, PHP target, pthread, `-O0`, the runtime
 PCH and `/usr/bin/ld`. `--jobs` limits Ninja commands; `--linker-threads` independently

@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/boot.php';
 try
 {
 	if ($argc < 3) {
-		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--no-pch] [-O0|-O2] [--linker=PATH] [--linker-threads=N] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
+		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--no-pch] [-O0|-O1|-O2|-O3] [--linker=PATH] [--linker-threads=N] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
 	}
 	$config = new native_ninja_config('/usr/bin/clang++', dirname(__DIR__, 3) . '/runtime/include', $argv[2]);
 	for ($index = 3; $index < $argc; $index++)
@@ -21,6 +21,8 @@ try
 		elseif ($option === '-O0') {
 			$config->optimization = 0;
 		}
+		elseif ($option === '-O1') { $config->optimization = 1; }
+		elseif ($option === '-O3') { $config->optimization = 3; }
 		elseif ($option === '-O2') {
 			$config->optimization = 2;
 		}

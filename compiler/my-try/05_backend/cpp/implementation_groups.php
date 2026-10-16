@@ -32,11 +32,11 @@ final class CPP_Implementation_Groups
 			}
 			if (($callable_owner instanceof record_definition_work) && ($callable_owner->source === $source)) {
 				$layout = $program->fragments[$callable_owner];
-				if ($layout->storage_text !== '') {
+				if ($layout->record_definition_text !== '') {
 					$record = object_cast($callable_owner, record_definition_work::class)->record_definition();
 					$group->headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
 					foreach ($layout->definition_headers as $header => $used) { $group->headers[$header] = true; }
-					$group->text .= $layout->storage_text;
+					$group->text .= $layout->record_definition_text;
 				}
 			}
 			if (!($callable_owner instanceof source_callable_signature_work)) { continue; }

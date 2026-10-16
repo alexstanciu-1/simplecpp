@@ -284,7 +284,7 @@ final class CPP_Declarations
 	}
 
 	/** Render only this layout; nested representations contribute header dependencies. */
-	public static function generate_record(type_declaration_node $syntax, cpp_generation_context $context): string
+	public static function generate_record(type_declaration_node $syntax, cpp_generation_context $context, bool $outline = false): string
 	{
 		$definition = object_cast($syntax->occurrence(), collected_record::class);
 		$key = $definition->qualified_name();
@@ -312,7 +312,7 @@ final class CPP_Declarations
 			$text .= self::visibility($field->visibility);
 			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
 			$default_value = $field->default_value;
-			if ($default_value !== null) {
+			if (($default_value !== null) && !$outline) {
 				$text .= ' = ' . self::property_default($default_value, $context);
 			}
 			$text .= ";\n";
@@ -327,6 +327,7 @@ final class CPP_Declarations
 				. CPP_Generator::source_name('field', $entry->name) . ";\n";
 		}
 		$text .= "public:\n";
+		if ($outline) { $text .= "\t" . CPP_Generator::source_name('record', $key) . "();\n"; }
 		$constructor = weakref_get($syntax->require_preparation()->constructor);
 		if ($constructor !== null) {
 			if ($constructor->declaring_type() !== $syntax->occurrence()) {

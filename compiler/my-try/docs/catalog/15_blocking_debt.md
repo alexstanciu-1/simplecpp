@@ -708,36 +708,17 @@ that item's generated-input and recovery requirements remain in force.
 
 ### CH15-CPP-OPT-POLICY-01 — optimization-aware C++ lowering
 
-Recorded by user request on 2026-10-16. Non-blocking future debt: prioritize
-edit/build latency for application O0 and O1; prioritize execution speed for O2
-and higher. This refers to the application's requested optimization, not the
-optimization used to build the native compiler executable. Preserve language,
-ownership, lifetime and diagnostic behavior in every mode.
+Recorded by user request on 2026-10-16. The first policy flow and bounded default
+constructor outlining are implemented; see the [native validation and timings](../planning/optimization_policy_20261016.md). Application O0/O1 prioritize compile latency; O2/O3 retain
+execution-oriented output. The compiler executable's own optimization is independent.
+See the [configuration and publication contract](../architecture/native_cpp_build.md#application-optimization-and-c-lowering).
 
-Current implementation accepts only O0/O2 in native command recipes and has no
-optimization-policy input to C++ generation. Proposed first consumer: eligible
-constructor/default-initializer outlining into the type's existing source unit
-for O0/O1, retaining the current header form for O2+ until execution measurements
-justify a different choice. No unit splitting or allocation-factory change is
-included. See the [refreshed traces and controlled experiment](../planning/constructor_traces_20261016.md).
-
-Before implementation, define one explicit backend lowering policy, selected by
-the coordinator from application build options and shared consistently with native
-recipes. Do not let emission inspect native flags or use scattered optimization
-checks. Add O1 support deliberately; define admission for higher levels rather
-than silently mapping them to O2. Standalone C++ emission also needs an explicit,
-documented policy/default and publication metadata so the later native build
-cannot silently consume an incompatible lowering mode.
-
-Policy identity/version must invalidate retained C++ fragments and published
-output when switching modes without source edits. Native commands already carry
-optimization flags, but that alone cannot invalidate cached generated C++.
-Prove O0/O1/O2 switching and reversal, equivalent observable behavior, exact
-PCH/object rebuild sets, full/edited-build timings and runtime cost at each mode.
-Measure the owning unit as well as its callers to detect displaced compile cost.
-The policy belongs to C++ lowering/build configuration, not semantic preparation;
-compiler incremental/MT redesign remains outside scope. This entry records the
-design direction, not an implemented policy or a demonstrated speedup.
+Remaining non-blocking debt: broaden eligible construction only after ownership,
+initialization/lifecycle and execution-cost proofs; use measured execution performance
+to select future O2+ patterns. Levels beyond 0/1/2/3 are not silently mapped. Retain
+policy versioning and generated-fragment invalidation as patterns evolve. Native
+flag identity alone is not generated-code invalidation. Automatic splitting,
+multi-file classes and compiler incremental/MT redesign remain deferred.
 
 ### CH15-CPP-GROUP-SPLIT-01 — automatic implementation-unit splitting
 

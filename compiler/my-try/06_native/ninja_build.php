@@ -49,6 +49,7 @@ final class Native_Ninja_Build
 
 			$manifest = Output_Publication::require_ready($source);
 			$document = json_read($manifest);
+			Native_CPP_Publication::require_policy($document, $this->config->optimization);
 			if (!$document->has('runtime_build')) {
 				throw new \RuntimeException('Publication lacks runtime build requirements; republish');
 			}

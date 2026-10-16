@@ -20,7 +20,7 @@ final class Native_CPP_Build
 		$this->report = new native_cpp_result();
 		$this->root = fs_output_root($config->cache_directory);
 		if (!string_byte_starts_with($config->compiler, '/')) { throw new \RuntimeException('Native compiler must be absolute'); }
-		if (($config->optimization !== 0) && ($config->optimization !== 2)) { throw new \RuntimeException('Native optimization must be 0 or 2'); }
+		$policy = new cpp_lowering_policy($config->optimization);
 	}
 
 	public function build(string $published): native_cpp_result
@@ -50,6 +50,7 @@ final class Native_CPP_Build
 			fs_output_write($this->root, '.scpp-native.status', "pending\n");
 			$manifest = Output_Publication::require_ready($source_root);
 			$document = json_read($manifest);
+			Native_CPP_Publication::require_policy($document, $this->config->optimization);
 			if (!$document->has('runtime_build')) { throw new \RuntimeException('Publication lacks runtime build requirements; republish with the current compiler'); }
 			$build_inputs = Native_CPP_Publication::runtime_inputs($document->member('runtime_build'));
 			$this->libraries = $build_inputs->libraries;

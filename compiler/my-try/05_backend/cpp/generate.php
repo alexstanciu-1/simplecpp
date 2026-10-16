@@ -6,11 +6,13 @@ namespace scpp\compiler;
 final class CPP_Generator
 {
 	private cpp_program $program;
+	private cpp_lowering_policy $policy;
 
 	/** Standalone callers get private storage; Compiler supplies the retained program. */
-	public function __construct(?cpp_program $program = null)
+	public function __construct(?cpp_program $program = null, ?cpp_lowering_policy $policy = null)
 	{
 		$this->program = $program ?? new cpp_program();
+		$this->policy = $policy ?? new cpp_lowering_policy();
 	}
 
 	/** Assemble output without acknowledging shared changes; publication belongs to the caller. */
@@ -24,6 +26,11 @@ final class CPP_Generator
 	/** One partitioning path for single-source and multi-source programs. */
 	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
 	{
+		// Policy changes invalidate only backend fragments, even with unchanged preparation.
+		if ($this->program->policy_identity !== $this->policy->identity()) {
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+			$this->program->policy_identity = $this->policy->identity();
+		}
 		$ordered /** Storage<preparation_owner> */ = new Storage();
 		$found_entry = false;
 		foreach ($files as $prepared)
@@ -263,10 +270,14 @@ final class CPP_Generator
 			else
 			{
 				$syntax = object_cast($entry, collected_record::class)->syntax();
-				CPP_Declarations::generate_record($syntax, $context);
+				$outline = CPP_Default_Constructors::eligible(object_cast($entry, collected_record::class), $this->policy);
+				CPP_Declarations::generate_record($syntax, $context, $outline);
 				$next->text = $context->records;
 				$definition_context = new cpp_generation_context();
-				$next->storage_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
+				$next->record_definition_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
+				if ($outline) {
+					$next->record_definition_text .= CPP_Default_Constructors::definition(object_cast($entry, collected_record::class), $definition_context);
+				}
 				$next->definition_headers = $definition_context->headers;
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 				$records /** Storage<collected_record> */ = $next->records;
