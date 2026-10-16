@@ -611,6 +611,202 @@ not publish `.cpp` files. Correcting these checks required no production change.
 Final retained scripts pass. Cleaner PHP/PHS is established; no speedup or memory
 reduction is claimed. Inherited-field migration remains deferred.
 
+## Integer decrement syntax: plan and implementation (2026-10-16)
+
+Design baseline: clone revision `a62a9689`. The initial review was analysis only.
+The user subsequently approved decrement support and focused proofs, limiting
+compiler migration to the two for-condition counters. Execution evidence is
+recorded below; the original recommendation follows for context.
+
+### Why this is a real converter workaround
+
+`Converter::sequence()` in `tools/php_portability/src/converter.php` admits
+`T_INC`, `T_PLUS_EQUAL` and `T_MINUS_EQUAL`, but not `T_DEC`. Ordinary `--` therefore
+falls through to `unsupported syntax`. A pair of separate `-` punctuation tokens
+is not PHP's decrement token. This is structural admission asymmetry; the
+converter does not need to infer an operand type or rewrite an expression.
+
+History identifies two exact compiler adaptations in `bc76b7d5` (control-flow
+portability repair):
+
+| Current source under `compiler/my-try/` | Historical change | Current purpose |
+| --- | --- | --- |
+| `04_analyze/prepare/semantics/loops.php`, `Loop_Preparation::for_header()` | `$remaining--;` became `$remaining -= 1;` | Prepare only the final condition as the loop's boolean test; earlier conditions are evaluated for effects. |
+| `05_backend/cpp/syntax.php`, `CPP_Syntax::generate_for()` | `$remaining--;` became `$remaining -= 1;` | Emit earlier conditions as discarded values and the final condition as the native test. |
+
+Both sites still contain the workaround. Each starts with `q_count($conditions)`,
+decrements once per condition, then tests for zero. The count cannot become
+negative on this traversal. This is stronger evidence than treating every `-= 1`
+in the compiler as an accidental workaround.
+
+A separate confirmed example is `Parser_Run`'s `$this->position -= 1;` in
+`03_parse/parser.php`: repair `feab90db` replaced `$this->position--;`. Leave that
+parser migration out of the first slice. Other decrements in runtime-call arity,
+cycle stacks and reverse traversal have not all been traced to conversion repairs;
+do not bulk-rewrite them.
+
+### Recommendation and alternatives
+
+Prioritize **decrement admission plus the two for-condition counters**. The benefit
+is modest but concrete: complete an already-supported scalar mutation family and
+remove two history-proven accommodations without changing an API or model.
+
+| Alternative | Why not first |
+| --- | --- |
+| Integer method-parameter defaults | `methodSignature()` still admits only nullable-null and matching bool defaults. `4a8aa89c` confirms parser diagnostics were split because of integer defaults. However, current `error_message()` / `error_message_at()` names usefully distinguish current and explicit positions; restoring a negative-sentinel API is not automatically an improvement. A future slice should identify a consumer that benefits without undoing that distinction. |
+| Enum method defaults | `prepare` / `prepare_for_consumer` and `decide_value` / `decide` are proven accommodations, but also communicate meaningful modes. Constant/name emission and default-argument declarations need separate proof. |
+| Eliminate typed receiver locals or traversal-state records | These can encode target typing, aliasing and ownership contracts. Removing them is not a lexical converter extension. |
+| More signed field migrations | Capability already implemented; remaining migrations are consumer cleanup, and inherited initialization ordering remains a separate risk. |
+
+### Exact proposed change and ownership
+
+1. Add `T_DEC` beside `T_INC` in the ordinary `sequence()` token admission list.
+   Preserve the token's text/order through existing token-node emission. Do not
+   lower decrement to assignment: postfix must return the old value, prefix the
+   new one, and a receiver must not be duplicated.
+2. Change only the two listed `$remaining -= 1;` statements to `--$remaining;`.
+   Prefix is intentional because neither site consumes the old value. Keep the
+   subsequent zero comparison, traversal order and prepared facts unchanged.
+3. Add a retained `tests/portability/decrement.py` focused proof and a small
+   compiler integration driver, following the existing signed-field proof pattern.
+   Update the portability authoring/operator guidance and this evidence section
+   only after actual support is demonstrated.
+
+The existing structural boundary admits the operator token in both prefix and
+postfix positions. It cannot honestly promise an integer-only admission filter
+without type analysis. The proved authoring domain should be explicit ordinary
+integer locals and integer fields, with integer loop updates. Leave strings,
+mixed/nullable values, unsigned-width boundaries, container element mutation,
+overloaded targets and compound side-effect ordering outside the demonstrated
+contract. Do not claim the converter rejects all those forms. Invalid typed
+operands belong to the target type/operator checks, as with existing `++`.
+
+The downstream anchors already exist: `Generator::renderExpr()` handles
+`AstKind::PRE_DEC` and `POST_DEC` through `renderAssignmentTarget()` and emits
+`(--target)` / `(target--)`. Native integer operators delegate to `prefix_dec` /
+`postfix_dec` in `runtime/include/scpp/generated/operator_detail.hpp`; postfix
+copies the previous integer value. The operator profile also distinguishes valid
+assignable targets from plain values/temporaries. These source observations are
+not a completed PHP/native proof. No runtime, backend, semantic-model or generic
+operator framework change is expected. Report any newly discovered cross-owner
+requirement before expanding the slice.
+
+### Proofs needed if approved
+
+- **Conversion shape and checker agreement:** prefix/postfix locals, explicitly
+  typed integer fields, discarded statements and a `for` update. Preserve operator
+  position and distinguish decrement from `- -1` and a negative literal. Check
+  successful reuse and unchanged generated-file timestamps on a second conversion.
+- **PHP/native values:** independent expected pairs for prefix result/new value
+  and postfix result/new value; positive, zero and modest negative starting values.
+  Prove field mutation and fresh-object independence. Include one supported
+  receiver-producing call with a counter to prove single receiver evaluation;
+  keep sequencing explicit rather than combining competing mutations in one call.
+  Exclude overflow boundaries from PHP/native equivalence claims.
+- **Failure boundaries:** invalid mutation targets must fail at their owning
+  PHP parse or target type-check boundary. Retain a native invalid typed-operand
+  witness rather than pretending the converter validates types. Confirm malformed
+  input reports source context and preserves previously published output/cache.
+  Re-run signed-field rejection cases so admitting `T_DEC` in expressions does
+  not admit `--1` as a field initializer through its separate literal reader.
+- **Generated C++:** prefix/postfix retain correct value semantics and one target
+  evaluation. The two migrated counters should use native prefix decrement, with
+  the same integer type and no helper allocation or synthetic temporary in PHS.
+- **Compiler consumer proof:** capture the existing `tests/control_flow.php`
+  artifacts before migration, run it after, and require byte parity for unchanged
+  user-program emission. Add independent empty/single/multiple-condition `for`
+  cases, including observable effects in earlier conditions and a false final
+  condition. Prove that only the last condition controls continuation and that an
+  empty header has the existing behavior. Execute the generated programs.
+- **Rebuilt compiler:** rebuild my-try with exactly the two source edits, retain
+  source/toolchain hashes, and run those same focused cases through PHP and native
+  compilers. Compare artifacts and independent execution results; include repeated
+  no-op preparation. A standalone generated decrement fixture is insufficient to
+  claim the compiler itself works natively. Use the shared 12-slot runner,
+  PHP-FPM/default fallback and `--no-stan`; leave LLVM and broad native_validate
+  outside this slice.
+
+### PHS elegance and runtime costs
+
+`--$remaining` directly states the counter operation and is carried unchanged into
+PHS. `-= 1` is already readable, so this is a small improvement rather than a major
+simplification. Both operate on the same scalar with the same object layout and no
+heap allocation. Prefix avoids requesting the postfix old-value snapshot; an
+optimizer may already make discarded postfix, prefix and subtraction equivalent.
+No speedup or memory reduction is established. Inspect optimized output only if a
+cost difference is suspected; no benchmark campaign is warranted by spelling alone.
+
+Documentation follow-up: the current adaptation summary in
+`docs/portability/conversion_review.md` still says negative integer field sentinels
+must use constructors. The signed-field capability now makes that blanket advice
+stale. This review only records the drift; a future implementation closeout should
+link the supported signed-field contract while retaining the inherited-ordering
+caution. Do not reinterpret historical checkpoint descriptions as current limits.
+
+### Decrement implementation and evidence (2026-10-16)
+
+Completed on the clone based on `a62a9689`. `T_DEC` is admitted beside `T_INC`;
+existing token emission preserves both operator positions. Only
+`Loop_Preparation::for_header()` and `CPP_Syntax::generate_for()` migrated from
+`$remaining -= 1;` to `--$remaining;`. No runtime, backend-generation rule, semantic
+model, API or other compiler counter changed. The current authoring boundary is
+recorded in [the decrement contract](../../../../specs/portability/decrement.md).
+The current portability adaptation summary now links this capability and corrects
+its stale signed-field advice, retaining the base-constructor ordering caution.
+
+Evidence root: `/tmp/scpp-decrement-20261016/`.
+
+- `operators-final/summary.json`: standalone PHP/native proof passes. Six local
+  value cases cover prefix/postfix at positive, zero and negative starting values.
+  Independent assertions also cover integer fields, fresh objects, both forms on
+  receiver-producing calls with exact invocation counts, discarded statements,
+  loop updates, negative literals and subtraction of a negative literal.
+- Checker/converter agreement and unchanged conversion reuse pass. Four malformed
+  mutation/field-initializer cases reject with source context and leave all
+  published output/cache bytes and timestamps intact. Invalid string decrement
+  passes structural checking/conversion and fails native compilation with
+  `cannot decrement value of type 'string_t'`, demonstrating the intended boundary.
+- `operators-final/valid-generated.phs` and `valid-generated.cpp` retain prefix/
+  postfix shape and one receiver expression. Both migrated compiler `.cpp` files
+  are checked for `(--remaining)`; authored files match the copied native-build
+  inputs. No synthetic PHS assignment or operand duplication is introduced.
+- `operators-final/signed-fields/summary.json`: the retained signed-integer-field
+  proof passes, including its 39 rejections, PHP/native fixture, nullable regression
+  suite and output preservation checks. Decrement admission does not broaden the
+  separate field-literal reader.
+- `baseline/` and `baseline-logs/` retain the pre-migration control-flow suite.
+  Post-migration `control_flow.php` passes and all **137** C++ artifacts match
+  byte-for-byte. This comparison does not mean every baseline artifact was executed
+  anew; independent native execution in this slice is the four cases below.
+- `integration/summary.json`: compiler itself rebuilt and four focused cases pass
+  PHP/native compiler artifact parity plus emitted-program execution: empty
+  conditions → **3**, single condition → **2**, multiple conditions → **43**,
+  false final condition → **10**. Earlier false/effect expressions do not determine
+  continuation; the final condition does. The existing native driver also verifies
+  repeated no-op preparation produces unchanged artifacts.
+- Native compiler SHA-256: `85c246f134b199a6f08f5391adc1d251f8a04e20a862dda349cea14d347f3ac2`.
+  `integration/source_hashes.json` records all build inputs;
+  `candidate_hashes.json` identifies the converter, two migrated sources and proof
+  scripts. Commands, executor modes and outcomes are journaled in each `logs/`
+  directory. Clang 18 is recorded in `operators-final/logs/toolchain.stdout`.
+- The cold compiler build took **1004.267 seconds**; it overlapped standalone
+  proof work initially. This is an observed duration, not a benchmark or evidence
+  of a decrement-related performance change. Builds used `--no-stan`; LLVM and
+  broad native_validate remained excluded. No speedup or memory reduction is claimed.
+
+Final commands:
+
+```sh
+python3 tests/portability/decrement.py --results /tmp/scpp-decrement-20261016/operators-final
+python3 tests/portability/decrement_compiler.py --results /tmp/scpp-decrement-20261016/integration --baseline /tmp/scpp-decrement-20261016/baseline
+```
+
+The initial standalone attempt exposed the checker's process-exit contract under
+FPM. Its two checker calls now explicitly use CLI execution through the shared
+runner. That harness correction required no production change; final retained
+proofs pass. The original design-only findings above remain provenance, not an
+outstanding implementation request.
+
 ## Decision log
 
 - 2026-10-16: user requests analysis of the compiler conversion flow and explicitly
@@ -638,3 +834,11 @@ reduction is claimed. Inherited-field migration remains deferred.
 - 2026-10-16: user approves signed integer field defaults and focused proofs, with
   compiler migration limited to `prepared_data_entry::$input_position`. Completed
   with standalone PHP/native and rebuilt-compiler evidence above.
+
+- 2026-10-16: user requests the next limitation review, analysis only. Recommend
+  decrement-token admission with only the two for-condition counter migrations;
+  source/history findings, alternatives and future proof gates recorded above.
+
+- 2026-10-16: user approves decrement support with migration limited to the two
+  for-condition counters. Completed with focused PHP/native, signed-field
+  regression and rebuilt-compiler proofs recorded above.

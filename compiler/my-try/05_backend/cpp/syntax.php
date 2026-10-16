@@ -395,7 +395,7 @@ final class CPP_Syntax
 		foreach ($conditions as $condition)
 		{
 			if ($test !== '') { $test .= ', '; }
-			$remaining -= 1;
+			--$remaining;
 			if ($remaining === 0) {
 				$facts /** prepared_condition */ = $node->require_preparation()->condition;
 				$test .= $this->native_condition($condition, $facts);

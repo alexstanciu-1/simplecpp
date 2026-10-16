@@ -143,6 +143,9 @@ Ordinary method signatures now preserve explicit scalar and named types, with
 were never restricted to the earlier scalar-only vocabulary. See the
 [signature contract](method_signatures.md) for remaining converter boundaries.
 
+Integer locals and fields support [prefix/postfix decrement](decrement.md).
+The converter preserves the operator; target checks still own operand validity.
+
 Ordinary `int`/`?int` fields also support
 [signed decimal literal defaults](signed_integer_fields.md), including static
 fields. This does not extend parameter, readonly, uint32 or value-record defaults.
