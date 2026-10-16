@@ -104,7 +104,7 @@ echo json_encode($result);
         rejections += ['class Bad { public int $value /** uint32 */ = -1; }',
                        'class Bad { public readonly int $value = -1; }',
                        'class Bad { public function __construct(public int $value = -1) {} }',
-                       'class Bad { public function f(int $value = -1): void {} }',
+                       'class Bad { public function f(?int $value = -1): void {} }',
                        '/** @scpp-struct */ class Bad { public int $value = -1; }']
         for i, body in enumerate(rejections):
             (source / 'bad.php').write_text('<?php\n' + body + '\n')

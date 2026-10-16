@@ -126,17 +126,17 @@ final class Converter {
 		if ($token[1] !== $text) { $this->fail($token[2], 'expected ' . $text); }
 	}
 
-	/** Integer field defaults are literals, not arbitrary constant expressions. */
-	private function integerFieldDefault(array $first): string {
+	/** Integer defaults share one literal grammar, not arbitrary constant expressions. */
+	private function integerLiteral(array $first, string $context): string {
 		if ($first[0] === T_LNUMBER) { return $first[1]; }
 		if ($first[1] === '+' || $first[1] === '-') {
 			$magnitude = $this->significant();
 			if ($magnitude[0] === T_LNUMBER && preg_match('/^(0|[1-9][0-9]*)$/D', $magnitude[1])) {
 				return $first[1] . $magnitude[1];
 			}
-			$this->fail($magnitude[2], 'signed integer field default requires a decimal integer literal');
+			$this->fail($magnitude[2], 'signed integer ' . $context . ' requires a decimal integer literal');
 		}
-		$this->fail($first[2], 'integer field default requires an integer literal');
+		$this->fail($first[2], 'integer ' . $context . ' requires an integer literal');
 	}
 
 	/** Check literal bytes locally before handing spelling to the selected target. */
@@ -345,8 +345,10 @@ final class Converter {
 						$declaration .= ' = null';
 					} elseif ($type === 'bool' && in_array(strtolower($value[1]), ['true', 'false'], true)) {
 						$declaration .= ' = ' . strtolower($value[1]);
+					} elseif ($type === 'int') {
+						$declaration .= ' = ' . $this->integerLiteral($value, 'method parameter default');
 					} else {
-						$this->fail($value[2], 'method parameter defaults require nullable null or a matching boolean literal');
+						$this->fail($value[2], 'method parameter defaults require nullable null or a matching boolean or integer literal');
 					}
 					$optionalSeen = true;
 					$separator = $this->significant();
@@ -771,7 +773,7 @@ final class Converter {
 			$this->expect('=');
 			$value = $this->significant();
 			$integerDefault = $type[1] === 'int' && !($nullable && $value[1] === 'null')
-				? $this->integerFieldDefault($value) : null;
+				? $this->integerLiteral($value, 'field default') : null;
 			if ($nullable) {
 				$valid = $value[1] === 'null' || match ($type[1]) {
 					'bool' => in_array(strtolower($value[1]), ['true', 'false'], true),

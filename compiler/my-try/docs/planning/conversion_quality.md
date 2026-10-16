@@ -807,6 +807,217 @@ runner. That harness correction required no production change; final retained
 proofs pass. The original design-only findings above remain provenance, not an
 outstanding implementation request.
 
+## Integer method defaults for body preparation: plan and implementation (2026-10-16)
+
+Design baseline: clone revision `2e819bae`. The initial review was analysis only;
+the user subsequently approved integer method defaults and focused proofs, with
+compiler edits limited to `prepare_statements()` and its two local default-zero
+calls. The prior decrement, signed-field and typed-join slices remain complete.
+Implementation evidence is recorded separately below.
+
+### Concrete remaining workaround
+
+`Body_Preparation::prepare_statements()` in
+`04_analyze/prepare/semantics/bodies.php` currently requires `int $start`.
+Portability repair **`d5cc41c4`** removed its original `= 0` and added explicit zero
+arguments in both `prepare_statement()`'s function-body branch and
+`prepare_block()`. Those exact accommodations remain in the current source.
+
+The parameter has an ordinary, meaningful default: visit the body from its first
+statement. The implementation skips indexes less than `$start`, then composes
+statement completion. It has a real nondefault caller too:
+`prepare_callable_statements()` passes a computed `$start`, which can be **1**
+after `Constructor_Preparation::prepare_base()` processes an explicit parent
+constructor call. That call must stay explicit; restoring a default must not
+reprepare the already-handled base-call statement.
+
+There is also an explicit-zero call in `04_analyze/prepare/worker.php`'s
+`prepare_file_body()`. Leave it unchanged in the first slice: explicit zero remains
+valid, and that entrypoint need not migrate to prove the new capability.
+
+The cause remains `Converter::methodSignature()`: after `=`, only nullable `null`
+and matching nonnullable boolean literals are accepted. `int $start = 0` fails
+with the method-parameter-default diagnostic. Constructor parameters have a
+separate parser; field defaults now have their own integer literal reader. This
+is a missing declaration grammar case, not missing semantic preparation.
+
+### Recommended scope
+
+**Add nonnullable integer method-parameter literal defaults and restore this one
+body-preparation default.** Compiler edits should be confined to `bodies.php`:
+
+1. Restore `int $start = 0` on `prepare_statements()`.
+2. Omit the trailing zero in the two local calls identified above.
+3. Preserve the explicit `$start` forwarding call and the worker's explicit zero.
+
+This is a better first consumer than undoing the parser diagnostic split:
+`error_message()` and `error_message_at()` now express useful current-position
+versus explicit-position modes. Keep that API. Likewise, enum-default wrappers
+`prepare_for_consumer` and `decide_value` communicate modes and stay out of scope.
+String/float defaults, enum/constants, expressions, nullable integer non-null
+defaults, constructor/promoted parameters and callable-reference adaptation are
+not part of this proposal. Other already-supported zero defaults/arguments are
+not a reason for repository-wide cleanup.
+
+### Converter owner and downstream considerations
+
+- Generalize `integerFieldDefault()` to a truthfully named private integer-literal
+  reader shared by fields and the new method branch. Preserve existing field
+  acceptance and diagnostics; pass a small diagnostic context or retain a thin
+  field wrapper rather than duplicating sign/magnitude parsing. Do not turn this
+  into a generic constant-expression parser.
+- Recommend reusing the exact field lexical contract: an unsigned `T_LNUMBER`
+  keeps its spelling; one optional sign is accepted only before a plain decimal
+  magnitude that is also `T_LNUMBER`. Consequently positive base-prefixed and
+  digit-separated forms inherit the existing field rule and need explicit method
+  proofs; signed variants remain rejected. This asymmetry must be documented,
+  not silently advertised as arbitrary PHP integer constant syntax.
+- In `methodSignature()`, add the explicitly nonnullable `int` branch after
+  existing nullable-null/bool handling. Use the shared reader, then the existing
+  separator and `$optionalSeen` logic. Preserve rejection of a required parameter
+  following an optional one. Do not widen `?int` beyond its current `null` default.
+- This signature owner is shared by ordinary instance/static methods, expanded
+  traits, abstract declarations and interfaces. Do not pretend a change there
+  affects only the selected static compiler method. The proof must cover those
+  admitted declaration forms; do not misuse the existing container-return flag
+  as a new default-policy switch.
+- Existing generator anchors are `renderParams(..., $includeDefaults, ...)` and
+  the method declaration/definition emitters. Declarations pass `true`; out-of-line
+  definitions pass `false`. Expect one typed C++ default in the declaration, no
+  duplicate definition default and no synthetic forwarding overload. This needs
+  actual native proof, especially across files.
+- Virtual defaults have a known language-boundary risk: C++ defaults are selected
+  using the static declaration, while PHP method invocation can differ when an
+  override supplies a different default. Prove ordinary calls and representative
+  interface/abstract calls with matching defaults. Include a mismatched-default
+  probe to expose the actual target boundary; do not claim general PHP override
+  equivalence or add symbol inference. If honest support requires a new cross-owner
+  dispatch/default protocol, stop and report the blocker before widening scope.
+
+No change to my-try's user-language default semantics, runtime, function map or
+native argument binder is expected. Its own compiler implementation merely starts
+using a capability in the existing PHP→PHS conversion path. Do not patch generated
+C++ if a downstream mismatch appears.
+
+### Required focused proofs if approved
+
+| Proof | Independent acceptance criteria |
+| --- | --- |
+| Literal conversion/checking | Zero, positive, signed positive/negative and signed zero defaults retain intended PHS. Check unsigned hex/octal/binary/separator forms because the proposed shared grammar admits them. Required argument followed by multiple optional integer arguments is preserved. |
+| Omitted versus explicit calls | PHP/native results for omitted arguments, explicit zero, nonzero and negative replacements, and partial omission. Exercise instance/static visibility, expanded trait and declaration-only forms; use matching defaults for the basic polymorphic witness. |
+| Cross-file generated declarations | A caller in a separate file can omit the argument; inspect header default and definition without a repeated default. No added wrapper, nullable box or helper call. Verify the method's required nondefault parameters remain required. |
+| Rejections and stability | Wrong bool/string/float/null operand for `int`, constants/calls/arithmetic, repeated signs, signed nondecimal spelling and out-of-range magnitude reject. Required-after-optional still rejects. Existing nullable-null/bool defaults and constructor rules stay unchanged; rerun signed-field and relevant method/nullable signature proofs. Failed conversions preserve prior output/cache and source diagnostics; unchanged conversion reuses output. |
+| Numeric bounds | Record PHP width and host property/parameter acceptance at maximum magnitude and out-of-range magnitude. Keep `T_DNUMBER` rejected; do not introduce a minimum-integer float coercion. The shared field reader's previously proved boundary must not regress. |
+| Real body-preparation behavior | Compare omitted start with explicit 0 on a small known statement body. Exercise explicit start 1 separately and assert the first statement is skipped while later statements and completion facts are handled. Use a deliberately unsuitable first statement or observable preparation facts so a broken skip cannot pass unnoticed. |
+| Compiler regression and native integration | Capture pre-change `control_flow.php`, `constructors.php` and `inheritance.php` focused artifacts; compare after migration where emitted user-program bytes should be unchanged. Rebuild the compiler and run ordinary body/block cases plus an explicit-parent-constructor case through PHP/native compilers. Compare artifacts and execute programs against independent results, including exactly-once parent initialization and child-body effects. Retain no-op preparation and fresh/incremental agreement in the relevant existing suites. |
+
+Use the shared 12-slot runner, PHP-FPM with documented CLI exceptions, isolated
+results and source/toolchain hashes. Native checks use my-try's `--no-stan` policy;
+LLVM and cumulative native_validate stay outside this slice. A standalone default
+fixture does not establish that the compiler itself was rebuilt successfully.
+Existing broad-suite baseline failures remain separate from new regressions.
+
+### PHS elegance and cost assessment
+
+A default belongs at the declaration when it expresses the usual operation. Here
+`prepare_statements($body, $context)` says “prepare the whole body”, while an
+explicit start preserves the exceptional skip. This removes repeated zero literals
+without adding another entrypoint or obscuring the meaningful offset.
+
+PHS should retain the default directly. C++ is expected to pass the same integer
+zero at omitted calls; default arguments do not themselves add a runtime branch,
+allocation or field. No speedup, object-size reduction or memory improvement is
+claimed. The value is source/API clarity and removing a documented converter
+restriction. Inspect emitted code for unexpected wrappers; benchmark only if
+inspection identifies a real new cost.
+
+### Integer method defaults: implementation and evidence (2026-10-16)
+
+Completed on the clone based on `2e819bae`. `integerLiteral()` now owns the shared
+field/method literal grammar with site-specific diagnostic context; existing field
+diagnostic wording is preserved. `methodSignature()` adds only the nonnullable
+`int` branch. Compiler changes are exactly the restored `int $start = 0` and its
+two local omitted-zero calls in `bodies.php`. Explicit computed constructor skips
+and the worker's explicit zero are unchanged. No runtime, dispatch protocol or
+backend implementation changed.
+
+The [current contract](../../../../specs/portability/integer_method_defaults.md)
+documents the admitted declaration families, numeric spellings and matching-default
+requirement across overrides. Signature/nullable/field guides now link it. The
+already-touched authoring guide also had an overlooked sentence claiming postfix
+decrement was rejected; that stale advice now links the completed decrement slice.
+
+Evidence root: `/tmp/scpp-method-defaults-20261016/`.
+
+- `methods/summary.json`: standalone PHP/native proof passes for **12** literal
+  forms, omitted/explicit/partially omitted arguments, visibility, static/instance
+  methods, expanded traits, matching-default interface/abstract declarations and
+  separate-file callers. **19** structural rejections preserve prior output/cache
+  and source attribution. A missing required argument passes structural conversion
+  and fails native compilation, preserving the existing validation boundary.
+- `methods/model.hpp` and `model.cpp`: typed defaults occur in declarations and
+  are absent from definitions. The compiler header similarly declares
+  `int_t<> start = static_cast<int_t<> >(0)` once; the implementation takes an
+  ordinary `int_t<> start`. The two local generated calls omit it, and the computed
+  offset call still supplies `start`. No new forwarding overload/box is introduced.
+- `methods/virtual-default-boundary.json`: **PHP returns 9, native returns 4** for
+  a base default of 4 and overriding default of 9 through a base-typed caller.
+  This is a deliberately retained nonportable case, not a parity success.
+  Matching defaults across the override/interface chain are required for omitted
+  polymorphic calls. The converter remains type-blind and does not validate that
+  requirement. Supporting differing defaults with PHP dispatch semantics would
+  require separate cross-owner work and was not attempted. The migrated compiler
+  method is static and does not encounter this boundary.
+- `methods/logs/php-minimum.stderr` records PHP rejecting the minimum-integer
+  spelling as a typed parameter default because its magnitude is a float token.
+  The nested signed-field proof records the 64-bit host/token boundary; no numeric
+  evaluation or float-to-int coercion was added to the converter.
+- `methods/signed_integer_fields/summary.json` passes the retained PHP/native field
+  proof, **39** rejections and nullable-field regression suite.
+  `methods/method_signatures/` and `methods/nullable_parameters/` pass their PHP and
+  conversion regressions; these two older runners were not rerun against their
+  historical pinned native checkout. Relevant current native declaration forms
+  are covered by the new standalone fixture.
+- Two obsolete rejection expectations were updated deliberately: the method-signature
+  suite now rejects `int $x = 1 + 2` rather than the newly supported literal `1`;
+  the field regression's method case rejects `?int $value = -1` rather than the
+  newly supported nonnullable form. Both new accepted forms have positive proof.
+- Pre-migration `baseline/` and post-migration integration artifacts match exactly:
+  **137 control-flow + 60 constructor + 59 inheritance = 256 C++ artifacts**.
+  Existing suites include their semantic/recovery/incremental checks. This does
+  not claim fresh native execution of all 256 programs.
+- `fixtures/method_default_body.php` (under `tests/portability/`) is injected into
+  the native proof driver and also executed directly in PHP. Omitted start and
+  explicit zero prepare the first transfer and return break completion. Start 1
+  skips an invalid first continue, leaves its facts absent, and prepares the later
+  break. Omitted/zero calls on that same invalid-first body fail as expected.
+  This is a targeted transfer-preparation witness, not whole-AST validation.
+- `integration/summary.json`: the compiler itself rebuilt. Three focused cases
+  match PHP/native artifacts and emitted programs return **7** (ordinary body),
+  **9** (block), and **12** (parent initialization once, then child effect).
+  The direct witness runs inside each native invocation; the existing driver also
+  checks no-op preparation. Final copied compiler source equals authored source.
+- Native compiler SHA-256: `4ef6480eb73d1d4321de822440f0a6cd332f108d7eb122f7809f756e1f71fc8f`.
+  `integration/source_hashes.json` includes compiler and injected driver inputs;
+  `candidate_hashes.json` identifies the changed converter/compiler source,
+  retained proof scripts/fixture and adjusted regression scripts. Commands and
+  outcomes live under each `logs/commands.json` (legacy runners use their own
+  journals). Clang 18 is recorded in `methods/logs/toolchain.stdout`.
+- Cold native compiler build: **662.251 seconds**, an observation rather than a
+  benchmark. Builds used `--no-stan`; LLVM and broad native_validate stayed out of
+  scope. No runtime speedup, object-size or memory reduction is claimed.
+
+Final proof commands:
+
+```sh
+python3 tests/portability/integer_method_defaults.py --results /tmp/scpp-method-defaults-20261016/methods
+python3 tests/portability/integer_method_defaults_compiler.py --results /tmp/scpp-method-defaults-20261016/integration --baseline /tmp/scpp-method-defaults-20261016/baseline
+```
+
+Both new proof runners passed on their first run. No native-support repair outside
+the converter owner was required. The virtual-default mismatch remains documented
+as the explicit portability boundary identified by the design probe.
+
 ## Decision log
 
 - 2026-10-16: user requests analysis of the compiler conversion flow and explicitly
@@ -842,3 +1053,13 @@ outstanding implementation request.
 - 2026-10-16: user approves decrement support with migration limited to the two
   for-condition counters. Completed with focused PHP/native, signed-field
   regression and rebuilt-compiler proofs recorded above.
+
+- 2026-10-16: user requests the next workaround review, analysis only. Recommend
+  nonnullable integer method defaults, with compiler migration confined to
+  `Body_Preparation::prepare_statements` and its two local default-zero calls.
+  History, shared-signature implications and proposed proof gates recorded above.
+
+- 2026-10-16: user approves integer method defaults with compiler migration
+  confined to `prepare_statements()` and its two local zero calls. Completed with
+  focused PHP/native and rebuilt-compiler proofs; differing virtual defaults are
+  recorded as an explicit nonportable boundary.

@@ -26,8 +26,10 @@ an `int` property default. The converter rejects it rather than coercing a float
 This is not a portable integer-width emulation facility.
 
 Signed nondecimal literals, digit separators, repeated signs, parentheses,
-constants, calls and arithmetic are outside this grammar. This extension does not
-change `uint32` annotations, readonly fields, value records, or parameter defaults.
+constants, calls and arithmetic are outside this grammar. This field extension does not
+change `uint32` annotations, readonly fields or value records. Method parameters
+now have a separate [integer-default contract](integer_method_defaults.md);
+constructor/promoted-parameter defaults remain unchanged.
 
 A declaration default is visible before that class's constructor body. Replacing
 an assignment after a base-constructor call can change observable ordering; audit
