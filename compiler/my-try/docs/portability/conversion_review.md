@@ -29,6 +29,17 @@ source hashes, executable identity and the archived harness are linked from the 
 No PHP publication workaround is used. This bounded native integration proof does not
 claim a repeat of the comprehensive language, retained incremental or MT checks below.
 
+## Native linker configuration checkpoint — 2026-10-16
+
+Base `86aed366` plus the shared linker configuration slice is rebuilt at `-O2 -g`
+with `--no-stan` and executed on dev002. The [acceptance report](../planning/native_linker_configuration_20261016.md)
+records native source/binary identities, full/unchanged/body-edit and eight-edit
+accounting measurements, and 14 native Ninja linker-configuration/recovery cases.
+The 26 focused real-tool cases cover both consumers with PHP-hosted orchestration;
+that is distinct from native execution of the Ninja consumer. The production recipe
+selects Mold directly, and link-only tool/configuration changes preserve objects/PCH.
+No new whole-language, retained incremental or compiler-MT coverage is claimed.
+
 ## Native checkpoint — 2026-10-10
 
 Candidate base `e6dad0db97ce1b629608bb772d6529917a45b151` plus authored portability

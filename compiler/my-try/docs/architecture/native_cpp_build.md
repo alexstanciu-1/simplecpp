@@ -45,10 +45,10 @@ every build so publication validation, tool identity observation and reservation
 invoking the saved graph directly is a diagnostic operation, not a readiness API.
 
 Options are `--no-pch`, `-O0`/`-O2`, `--jobs=N`, `--compiler=ABSOLUTE_PATH`,
-`--runtime=ABSOLUTE_PATH` and `--ninja=ABSOLUTE_PATH`. Defaults preserve C++23,
-PHP target, pthread, `-O0`, the runtime PCH and `/usr/bin/ld`. There is no Mold
-selection/tuning change in this slice. `--jobs` limits Ninja commands; it does not
-configure compiler-internal MT or linker-internal thread counts.
+`--runtime=ABSOLUTE_PATH`, `--ninja=ABSOLUTE_PATH`, `--linker=ABSOLUTE_PATH` and
+`--linker-threads=N`. Defaults preserve C++23, PHP target, pthread, `-O0`, the runtime
+PCH and `/usr/bin/ld`. `--jobs` limits Ninja commands; `--linker-threads` independently
+configures linker-internal parallelism. Neither changes compiler-internal MT.
 
 The graph contains the current runtime PCH, one object per published translation
 unit, one object per selected runtime provider, and one executable. Object names
@@ -57,7 +57,7 @@ units disappear from the link inputs even if their old objects remain on disk.
 Providers do not depend on the PCH; generated objects have a real PCH prerequisite.
 No object depends on the whole publication manifest. Compilation collects full
 header dependencies with `-MD -MF -MQ`; linking uses the existing GNU ld dependency
-file facility. No separate `-M` discovery pass or PCH syntax-only validation command
+file facility (also supported by Mold). No separate `-M` discovery pass or PCH syntax-only validation command
 is scheduled. Clang's normal PCH validation remains enabled.
 
 Graph/umbrella/identity files are written only when their bytes change. Compiler
@@ -137,6 +137,41 @@ digest/path. A future run/current-build reader must check both current source
 readiness and this association while holding the relevant reservations. A raw
 historical executable path remains a historical artifact, not a freshness API.
 
+## Linker selection and identity
+
+Both entrypoints accept `--linker=/absolute/path/to/mold --linker-threads=8`.
+Programmatic callers set `native_cpp_toolchain::linker` and `linker_threads`.
+The default is `/usr/bin/ld` with zero threads, meaning no thread option is sent;
+the selected linker retains its default. A positive count emits `-Xlinker --threads=N`
+and requires a linker supporting that option (tested with Mold 3). GNU BFD should
+use zero. Relative linker paths and negative thread counts are rejected. Unsupported
+linker options fail through normal tool diagnostics; there is no silent fallback.
+
+```bash
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/build --reuse --jobs=12 --linker=/absolute/path/to/mold --linker-threads=8
+php compiler/my-try/tools/build_cpp.php /absolute/published /absolute/cache --linker=/absolute/path/to/mold --linker-threads=8
+```
+
+Only the link recipe receives these settings. Each build observes the selected
+executable's resolved path and SHA-256, including same-path content replacement and
+symlink retargeting. Ninja records that in its link-only identity input and observes
+thread/path changes through the command hash. The content-addressed consumer keeps
+linker identity in the link key, separate from compilation/dependency-discovery keys.
+Objects/PCH survive linker-only changes. The latter consumer uses compilation key
+namespace v2, causing a one-time miss for older v1 entries; Ninja directories need no reset.
+A revert may reuse a historical executable in the content-addressed consumer, whereas
+Ninja relinks when its latest recorded command/identity changes.
+
+Existing link depfiles, pending/ready publication, error propagation and recovery
+remain in force. Configure the actual linker binary: scripts or wrappers that invoke
+other mutable tools do not establish transitive tool identity. Toolchain files must
+remain quiescent during a build. Selected linker shared-library dependencies retain
+the documented toolchain-installation limitation below.
+
+Focused proof: `tests/linker_configuration.py --mold /absolute/path/to/mold --results FRESH`
+checks both consumers, configuration changes, binary replacement with preserved mtime,
+same-byte symlink retargeting, no-op/revert behavior and failed-link recovery.
+
 ## Dependencies and PCH
 
 The opt-in `--runtime-snapshot` option reuses Clang dependency discovery when the
@@ -165,8 +200,9 @@ units retain the runtime PCH. Definitions participate in all compile/PCH identit
 ordered libraries participate in link identity. Publications made before this field
 was introduced must be republished. There is no hardcoded core-source fallback.
 
-Reuse is keyed by the compiler/linker/environment-launcher identities, compiler
-version, exact ordered arguments and content digests of inputs. The child environment
+Compilation reuse is keyed by compiler/environment-launcher identities, compiler
+version, exact ordered arguments and content digests of inputs; link reuse additionally
+includes the selected linker identity. The child environment
 is explicit (`env -i`, fixed PATH/locale/timezone/source-date epoch); inherited
 CPATH/CXXFLAGS and other ambient settings cannot silently influence reuse.
 
@@ -182,17 +218,17 @@ cache identity. Clang's normal PCH validation remains enabled; an invalid retain
 PCH is rebuilt, never silently replaced with an uncached/no-PCH fallback. Object
 keys include the PCH artifact digest. `--no-pch` is an explicit separate configuration.
 
-The exact ordered object set determines link identity. GNU ld emits its dependency
+The exact ordered object set determines link identity. GNU ld or Mold emits its dependency
 file; cached linking rechecks those library/startup/script inputs as well. First-link
 metadata associates the completed artifact with the discovered dependency key,
 without copying the executable. Permissions are checked before binary cache reuse.
 
 ## Bounded first implementation and next work
 
-This is Linux, Clang plus GNU ld with dependency-file support, ordinary core runtime
+This is Linux, Clang plus GNU ld or Mold with dependency-file support, ordinary core runtime
 and metadata-declared provider linkage, and `-O0`/`-O2`. It is not a replacement for the legacy `scpp`/Ninja project
 system or a claim of every optional runtime module's linkage. No arbitrary user
-flags, cross-compilation, alternative linkers, runtime package-manager integration,
+flags, cross-compilation, other linkers, runtime package-manager integration,
 distributed cache or native build of this compiler is claimed.
 
 Toolchain/runtime inputs must remain quiescent during one build. Reuse assumes an

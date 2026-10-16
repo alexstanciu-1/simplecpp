@@ -747,40 +747,31 @@ or automatic splitting is authorized by recording this debt.
 
 ### CH15-MOLD-01 — configurable Mold linking
 
-The agreed [Clang unit and Mold experiment plan](../planning/clang_units_and_mold.md)
-adds thread tuning and a comparison of many small objects linked into one executable
-versus up to 20 stable application shared libraries. This is planning only; no
-split policy or shared-library layout is selected or implemented yet. Optional
-between-run reuse belongs to Ninja in that exploration and must not block lowering
-work; compiler incremental/MT internals are outside its scope.
+The bounded linker-selection slice is implemented in the shared native-build
+configuration and recipes. Both consumers accept an absolute linker executable and
+an independent thread count; GNU ld remains the default. Selected-linker resolved
+path/content identity and link-only arguments invalidate linking without invalidating
+objects/PCH. See the [native build contract](../architecture/native_cpp_build.md#linker-selection-and-identity)
+and [native dev002 acceptance](../planning/native_linker_configuration_20261016.md).
 
-Recorded by user request on 2026-10-10 as deferred native-build integration debt.
-This is a performance/tooling follow-up, not a new v0.2 release gate. Mold has been
-benchmarked externally; the compiler's native-build path does not yet select it.
+The focused consumer proof covers GNU/Mold selection, thread changes, same-path
+replacement with preserved mtime, same-byte symlink retargeting, no-op/revert reuse
+and failed-link recovery. Native accounting acceptance replaces the former benchmark
+wrapper's hidden linker substitution with production configuration. Earlier
+[WSL/dev002 measurements](../planning/native_ninja_mold_20261016.md) remain historical
+comparison evidence, not the current configuration mechanism.
 
-The historical accounting measurements used the same 20 objects, warm OS caches
-and Clang's normal link driver on WSL. Their benchmark artifacts are outside this
-compiler-only recovery (2026-10-16).
-Median driver times were 614.505 ms for GNU BFD, 104.965 ms for Mold 3 with two
-threads and 172.775 ms with eight threads. These results establish a useful local
-option, not a universal thread count or demonstrated scaling on larger workloads.
+Remaining performance exploration follows the [Clang unit and Mold plan](../planning/clang_units_and_mold.md):
+larger inputs, thread-count tuning and one executable versus up to 20 stable shared
+libraries. These are not release gates. No split policy or shared-library layout is
+selected. Automatic grouping and multi-file classes remain deferred; compiler
+incremental/MT internals stay outside this slice. Optional between-run reuse belongs
+to Ninja in that exploration and must not block lowering work.
 
-The [2026-10-16 native Ninja/Mold checkpoint](../planning/native_ninja_mold_20261016.md) extends evidence to the 93-unit accounting fixture on WSL and dev002, including eight simultaneous body edits with 12 Ninja jobs. Mold selection is still an external benchmark wrapper with pinned tools and separate build directories; it does not close the production configuration/cache-identity debt below.
-
-The native-build consumer owns this integration. Provide explicit linker selection
-and thread/argument configuration; fingerprint the actual selected linker and its
-configuration in link-cache identity. Replacing the invocation while retaining the
-hard-coded `/usr/bin/ld` identity is insufficient. Preserve object/PCH reuse,
-dependency-file handling, failure reporting and executable publication/recovery.
-Keep the existing linker usable through explicit configuration.
-
-Before closing, prove selected-tool invocation, executable behavior, no-op and
-revert reuse, linker/flag change invalidation and failed-link recovery. Measure
-request-to-executable-ready separately from cleanup, with cold and warm runs and
-CPU/peak RSS. Mold's default fork behavior requires separately labelled resource
-measurements using `--no-fork`; do not mistake parent-only usage for total cost.
-Thread tuning remains workload/host dependent. No integration is implemented by
-this debt entry; cache-validation optimization remains CH15-NATIVE-CACHE-PERF-01.
+Toolchain shared-library/search-environment completeness remains the native build
+contract's existing limitation. Do not mistake parent-only resource measurements
+under Mold's default fork mode for total CPU/RSS; use separately labelled
+`--no-fork` replays for that purpose. Thread tuning remains workload/host dependent.
 
 ### Chapter 07 closeout debt — 2026-10-06
 

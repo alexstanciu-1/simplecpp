@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/boot.php';
 try
 {
 	if ($argc < 3) {
-		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--no-pch] [-O0|-O2] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
+		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--no-pch] [-O0|-O2] [--linker=PATH] [--linker-threads=N] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
 	}
 	$config = new native_ninja_config('/usr/bin/clang++', dirname(__DIR__, 3) . '/runtime/include', $argv[2]);
 	for ($index = 3; $index < $argc; $index++)
@@ -35,6 +35,12 @@ try
 		}
 		elseif (str_starts_with($option, '--ninja=')) {
 			$config->ninja = substr($option, 8);
+		}
+		elseif (str_starts_with($option, '--linker=')) {
+			$config->linker = substr($option, 9);
+		}
+		elseif (preg_match('/^--linker-threads=(0|[1-9][0-9]*)$/D', $option, $match) === 1) {
+			$config->linker_threads = (int)$match[1];
 		}
 		else {
 			throw new \RuntimeException('Unknown Ninja build option: ' . $option);

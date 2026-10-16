@@ -75,7 +75,7 @@ final class Native_Ninja_Build
 			$flags = Native_CPP_Commands::flags($this->config, $runtime, $requirements->definitions);
 			// Separate identities: replacing a linker must not dirty compile commands.
 			$this->write_changed('compiler.identity', self::identity($this->config->compiler) . self::identity('/usr/bin/env'));
-			$this->write_changed('linker.identity', self::identity('/usr/bin/ld'));
+			$this->write_changed('linker.identity', self::identity($this->config->linker));
 
 			$graph = "# Generated from a ready C++ publication. Do not edit.\nninja_required_version = 1.3\n\n"
 				. "rule compile\n  command = \$command\n  depfile = \$depfile\n  deps = gcc\n  description = CXX \$out\n\n"
@@ -107,7 +107,7 @@ final class Native_Ninja_Build
 			}
 
 			$executable = 'app';
-			$link = Native_CPP_Commands::link($flags, $objects, $requirements->libraries);
+			$link = Native_CPP_Commands::link($this->config, $flags, $objects, $requirements->libraries);
 			$link[] = '-Xlinker'; $link[] = '--dependency-file'; $link[] = '-Xlinker'; $link[] = $executable . '.d';
 			$link[] = '-o'; $link[] = $executable;
 			$graph .= $this->edge('link', $link, $executable, $objects, [$this->root . '/compiler.identity', $this->root . '/linker.identity']);

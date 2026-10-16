@@ -7,6 +7,7 @@ final class Native_CPP_Build
 	private native_cpp_config $config;
 	private string $root;
 	private string $tool_key;
+	private string $linker_key;
 	private array $flags /** vector<string> */ = [];
 	private array $libraries /** vector<string> */ = [];
 	private native_cpp_result $report;
@@ -66,8 +67,10 @@ final class Native_CPP_Build
 			$version_arguments /** vector<string> */ = ['--version'];
 			$version = $this->invoke($version_arguments);
 			self::require_success($version);
-			$this->tool_key = "scpp-native-actions-v1\n" . self::file_digest($this->config->compiler) . self::file_digest('/usr/bin/ld')
+			$this->tool_key = "scpp-native-actions-v2\n" . self::file_digest($this->config->compiler)
 				. self::file_digest('/usr/bin/env') . $version->stdout;
+			// Linker replacement must not invalidate compilation or dependency discovery.
+			$this->linker_key = fs_require_realpath($this->config->linker) . ':' . self::file_digest($this->config->linker);
 			fs_output_write($this->root, 'runtime-pch.hpp', Native_CPP_Commands::pch_header());
 			if ($this->config->runtime_snapshot) {
 				$inputs = new Native_Dependency_Inputs($this->root, $runtime, $source_root, $files);
@@ -163,8 +166,8 @@ final class Native_CPP_Build
 	/** Link state records actual linker dependencies in addition to exact ordered object membership. */
 	private function link(array $objects /** vector<string> */): native_cpp_artifact
 	{
-		$command = Native_CPP_Commands::link($this->flags, $objects, $this->libraries);
-		$base = content_sha256($this->tool_key . self::arguments_key($command) . self::inputs_key($objects));
+		$command = Native_CPP_Commands::link($this->config, $this->flags, $objects, $this->libraries);
+		$base = content_sha256($this->tool_key . $this->linker_key . self::arguments_key($command) . self::inputs_key($objects));
 		$dependencies_path = 'link-inputs/' . $base . '.d';
 		$previous = fs_output_read($this->root, $dependencies_path);
 		$dependencies /** vector<string> */ = [];

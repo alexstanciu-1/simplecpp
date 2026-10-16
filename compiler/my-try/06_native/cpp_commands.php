@@ -13,6 +13,9 @@ final class Native_CPP_Commands
 		if (($config->optimization !== 0) && ($config->optimization !== 2)) {
 			throw new \RuntimeException('Native optimization must be 0 or 2');
 		}
+		if (!string_byte_starts_with($config->linker, '/') || ($config->linker_threads < 0)) {
+			throw new \RuntimeException('Native linker must be absolute and linker threads nonnegative');
+		}
 		$optimization = $config->optimization === 2 ? '-O2' : '-O0';
 		$result /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
 			'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
@@ -56,11 +59,14 @@ final class Native_CPP_Commands
 		return $result;
 	}
 
-	/** Preserve object/library order and the current system-linker selection. */
-	public static function link(array $flags /** vector<string> */, array $objects /** vector<string> */, array $libraries /** vector<string> */): array /** vector<string> */
+	/** Link-only configuration: preserve object/library order and compile/PCH recipes. */
+	public static function link(native_cpp_toolchain $config, array $flags /** vector<string> */, array $objects /** vector<string> */, array $libraries /** vector<string> */): array /** vector<string> */
 	{
 		$result /** vector<string> */ = $flags;
-		$result[] = '-fuse-ld=/usr/bin/ld';
+		$result[] = '-fuse-ld=' . $config->linker;
+		if ($config->linker_threads > 0) {
+			$result[] = '-Xlinker'; $result[] = '--threads=' . $config->linker_threads;
+		}
 		foreach ($objects as $path) {
 			$result[] = $path;
 		}

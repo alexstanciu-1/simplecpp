@@ -1,0 +1,119 @@
+[
+  {
+    "name": "default-gnu",
+    "counts": {
+      "object_compile": 5,
+      "pch_creation": 1,
+      "link": 1
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "default-warm",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 0
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "mold-eight",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 1
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "mold-warm",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 0
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "threads-two",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 1
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "threads-eight-revert",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 0
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "replace-same-path-preserved-mtime",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 1
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "replacement-warm",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 0
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "retarget-same-bytes",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 1
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "failed-link",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 1
+    },
+    "failed_as_expected": true
+  },
+  {
+    "name": "recover",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 0
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "gnu-revert",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 0
+    },
+    "failed_as_expected": false
+  },
+  {
+    "name": "final-warm",
+    "counts": {
+      "object_compile": 0,
+      "pch_creation": 0,
+      "link": 0
+    },
+    "failed_as_expected": false
+  }
+]

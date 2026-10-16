@@ -6,6 +6,9 @@ abstract class native_cpp_toolchain
 {
 	public string $compiler;
 	public string $runtime_include;
+	/** Explicit linker executable; zero threads leaves its own default unchanged. */
+	public string $linker = '/usr/bin/ld';
+	public int $linker_threads = 0;
 	public bool $pch = true;
 	public int $optimization = 0;
 	public function __construct(string $compiler, string $runtime_include)
