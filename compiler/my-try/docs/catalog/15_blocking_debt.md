@@ -955,8 +955,10 @@ Before widening this bounded adapter, address:
   escaping and unchanged argument/library order.
 - Toolchain/include-search installation changes during retained reuse: use a fresh
   build directory for now; ordinary depfiles do not discover newly shadowing headers.
-- Native portability proof for the new adapter/configuration records. PHP-hosted
-  Clang/Ninja execution is not evidence that the compiler itself was rebuilt natively.
+- Extended native adapter coverage beyond the bounded
+  [O2 accounting checkpoint](../planning/native_ninja_accounting_20261016.md), which
+  now proves native full/no-op/body-edit builds and publication addition/removal.
+  Broader path, configuration and failure matrices remain separate follow-up work.
 
 Mold selection/thread tuning remains CH15-MOLD-01. Automatic grouping and multi-file
 classes remain CH15-CPP-GROUP-SPLIT-01 and CH15-PARTIAL-TYPE-01.

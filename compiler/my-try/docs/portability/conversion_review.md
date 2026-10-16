@@ -11,6 +11,24 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Native Ninja/accounting checkpoint — 2026-10-16
+
+Base `03cf89a0` plus the authored portability fixes in the accompanying
+[measurement report](../planning/native_ninja_accounting_20261016.md). All 214 PHP
+compiler/driver files convert; the compiler and Ninja worker build natively at `-O2`
+with existing debug information and `--no-stan`. New Ninja code uses a non-keyword
+byte-local name and supported integer-to-text concatenation. The measurement driver
+passes an explicitly typed empty vector. The publication journal uses guarded typed
+map reads instead of missing-key coalescing that the legacy S2S lowers through `at()`.
+
+Three full/unchanged/body-edit trials pass on the 528,088-byte accounting fixture.
+Each full native publication matches all 292 PHP reference artifacts; the application
+passes 94 CLI cases plus its self-tests. Native publication addition/removal and the
+existing PHP publication/recovery fixture pass. Detailed timings, memory observations,
+source hashes, executable identity and the archived harness are linked from the report.
+No PHP publication workaround is used. This bounded native integration proof does not
+claim a repeat of the comprehensive language, retained incremental or MT checks below.
+
 ## Native checkpoint — 2026-10-10
 
 Candidate base `e6dad0db97ce1b629608bb772d6529917a45b151` plus authored portability

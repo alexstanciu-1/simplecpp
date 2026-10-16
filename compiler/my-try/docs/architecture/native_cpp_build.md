@@ -105,6 +105,12 @@ passed its six scenarios. Evidence: `/tmp/scpp-ninja-final-20261016/` and
 `/tmp/scpp-recipes-existing-20261016/`. These are correctness observations, not
 performance claims. Test sources preserve the checks if temporary logs expire.
 
+The subsequent [O2 native accounting checkpoint](../planning/native_ninja_accounting_20261016.md)
+executes this builder natively on the 515.7 KiB fixture: three full/unchanged/body-edit
+trials, exact PHP/native artifact agreement and 94 CLI cases. It also proves direct
+native publication after explicit missing-digest guards replaced the legacy S2S
+coalescing form. This bounded checkpoint does not replace broad native language tests.
+
 ## Cached consumer: ownership and ordering
 
 Hold the source publication's shared reservation for the whole build, then a stable

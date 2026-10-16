@@ -117,7 +117,7 @@ final class Native_Ninja_Build
 			$args = Native_CPP_Commands::environment($this->config->ninja);
 			$args[] = '-f'; $args[] = 'build.ninja';
 			if ($this->config->jobs > 0) {
-				$args[] = '-j'; $args[] = (string)$this->config->jobs;
+				$args[] = '-j'; $args[] = '' . $this->config->jobs;
 			}
 			$handle = process_spawn('/usr/bin/env', $args, '', 3600000, $this->root);
 			$result = new native_ninja_result();
@@ -237,14 +237,14 @@ final class Native_Ninja_Build
 		$result = '';
 		for ($index = 0; $index < string_byte_len($value); $index++)
 		{
-			$char = string_byte_slice($value, $index, 1);
-			if (($char === '|') || ($char === "'") || ($char === '"') || ($char === '\\') || ($char === "\t") || ($char === "\r") || ($char === "\n")) {
+			$byte_text = string_byte_slice($value, $index, 1);
+			if (($byte_text === '|') || ($byte_text === "'") || ($byte_text === '"') || ($byte_text === '\\') || ($byte_text === "\t") || ($byte_text === "\r") || ($byte_text === "\n")) {
 				throw new \RuntimeException('Unsupported Ninja path character');
 			}
-			if (($char === '$') || ($char === ' ') || ($char === ':')) {
+			if (($byte_text === '$') || ($byte_text === ' ') || ($byte_text === ':')) {
 				$result .= '$';
 			}
-			$result .= $char;
+			$result .= $byte_text;
 		}
 		return $result;
 	}
@@ -255,14 +255,14 @@ final class Native_Ninja_Build
 		$result = '';
 		for ($index = 0; $index < string_byte_len($value); $index++)
 		{
-			$char = string_byte_slice($value, $index, 1);
-			if (($char === "\n") || ($char === "\r")) {
+			$byte_text = string_byte_slice($value, $index, 1);
+			if (($byte_text === "\n") || ($byte_text === "\r")) {
 				throw new \RuntimeException('Multiline Ninja value');
 			}
-			if ($char === '$') {
+			if ($byte_text === '$') {
 				$result .= '$';
 			}
-			$result .= $char;
+			$result .= $byte_text;
 		}
 		return $result;
 	}
@@ -272,8 +272,8 @@ final class Native_Ninja_Build
 	{
 		$result = "'";
 		for ($index = 0; $index < string_byte_len($value); $index++) {
-			$char = string_byte_slice($value, $index, 1);
-			$result .= $char === "'" ? "'\"'\"'" : $char;
+			$byte_text = string_byte_slice($value, $index, 1);
+			$result .= $byte_text === "'" ? "'\"'\"'" : $byte_text;
 		}
 		return $result . "'";
 	}

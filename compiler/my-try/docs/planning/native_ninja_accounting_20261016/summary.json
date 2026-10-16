@@ -1,0 +1,671 @@
+{
+  "trials": [
+    {
+      "name": "full",
+      "exit": 0,
+      "wall_s": 47.484002768,
+      "tree_peak_rss_kib": 1607992,
+      "compiler_peak_rss_kib": 72340,
+      "start_ns": 93296219541674,
+      "end_ns": 93343703544442,
+      "marks": {
+        "04-prepare": 1792131020807743321,
+        "03-sync": 1792131019719743169,
+        "01-start": 1792131019479743138,
+        "02-setup": 1792131019499743142,
+        "06-build-done": 1792131066927744058,
+        "05-cpp-ready": 1792131021331743395
+      },
+      "request_to_ready_s": 47.451372576,
+      "stages_s": {
+        "setup": 0.020000004,
+        "sync_parse": 0.220000027,
+        "prepare": 1.088000152,
+        "emit_publish": 0.524000074,
+        "native_build": 45.596000663,
+        "request_to_cpp_ready": 1.855371913
+      },
+      "actions": {
+        "pch": 1,
+        "runtime": 3,
+        "object": 93,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 7.200377926,
+        "runtime": 30.137400687,
+        "object": 207.025953427,
+        "link": 1.319598034
+      },
+      "clang_peak_rss_kib": {
+        "pch": 250244,
+        "runtime": 353748,
+        "object": 300772,
+        "link": 191496
+      },
+      "request_to_link_complete_s": 47.398796752,
+      "last_clang_to_process_exit_s": 0.085206016,
+      "clang_active_wall_s": 45.292085897,
+      "native_other_wall_s": 0.30391476599999834,
+      "php_artifact_parity": true,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 1,
+      "generated_object_p80_s": 3.136990646,
+      "generated_objects_within_3s": 74,
+      "generated_object_max_s": 10.145619797
+    },
+    {
+      "name": "unchanged",
+      "exit": 0,
+      "wall_s": 1.643559275,
+      "tree_peak_rss_kib": 78108,
+      "compiler_peak_rss_kib": 72860,
+      "start_ns": 93343752675043,
+      "end_ns": 93345396234318,
+      "marks": {
+        "04-prepare": 1792131068059744094,
+        "03-sync": 1792131067195744073,
+        "01-start": 1792131067007744060,
+        "02-setup": 1792131067031744060,
+        "06-build-done": 1792131068619744111,
+        "05-cpp-ready": 1792131068491744107
+      },
+      "request_to_ready_s": 1.61023782,
+      "stages_s": {
+        "setup": 0.024,
+        "sync_parse": 0.164000013,
+        "prepare": 0.864000021,
+        "emit_publish": 0.432000013,
+        "native_build": 0.128000004,
+        "request_to_cpp_ready": 1.482237816
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "request_to_link_complete_s": null,
+      "last_clang_to_process_exit_s": null,
+      "clang_active_wall_s": 0.0,
+      "native_other_wall_s": 0.128000004,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 1
+    },
+    {
+      "name": "body-edit",
+      "exit": 0,
+      "wall_s": 6.328810774,
+      "tree_peak_rss_kib": 349964,
+      "compiler_peak_rss_kib": 72600,
+      "start_ns": 93346492699477,
+      "end_ns": 93352821510251,
+      "marks": {
+        "04-prepare": 1792131070743744177,
+        "03-sync": 1792131069939744152,
+        "01-start": 1792131069751744145,
+        "02-setup": 1792131069779744145,
+        "06-build-done": 1792131076047744404,
+        "05-cpp-ready": 1792131071199744189
+      },
+      "request_to_ready_s": 6.298213509,
+      "stages_s": {
+        "setup": 0.028,
+        "sync_parse": 0.160000007,
+        "prepare": 0.804000025,
+        "emit_publish": 0.456000012,
+        "native_build": 4.848000215,
+        "request_to_cpp_ready": 1.450213294
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 1,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 3.423954729,
+        "link": 1.184267624
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 187556,
+        "link": 191348
+      },
+      "request_to_link_complete_s": 6.245583191,
+      "last_clang_to_process_exit_s": 0.083227583,
+      "clang_active_wall_s": 4.608222353,
+      "native_other_wall_s": 0.2397778619999995,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 1
+    },
+    {
+      "name": "full",
+      "exit": 0,
+      "wall_s": 40.050049912,
+      "tree_peak_rss_kib": 1601512,
+      "compiler_peak_rss_kib": 72436,
+      "start_ns": 93501709363515,
+      "end_ns": 93541759413427,
+      "marks": {
+        "04-prepare": 1792131225859754326,
+        "03-sync": 1792131225099754297,
+        "01-start": 1792131224967754293,
+        "02-setup": 1792131224983754293,
+        "06-build-done": 1792131264983755300,
+        "05-cpp-ready": 1792131226319754344
+      },
+      "request_to_ready_s": 40.017560167,
+      "stages_s": {
+        "setup": 0.016,
+        "sync_parse": 0.116000004,
+        "prepare": 0.760000029,
+        "emit_publish": 0.460000018,
+        "native_build": 38.664000956,
+        "request_to_cpp_ready": 1.353559211
+      },
+      "actions": {
+        "pch": 1,
+        "runtime": 3,
+        "object": 93,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 4.535651685,
+        "runtime": 20.332545824,
+        "object": 183.923421929,
+        "link": 1.059838083
+      },
+      "clang_peak_rss_kib": {
+        "pch": 248540,
+        "runtime": 352240,
+        "object": 300968,
+        "link": 191292
+      },
+      "request_to_link_complete_s": 39.965573063,
+      "last_clang_to_process_exit_s": 0.084476849,
+      "clang_active_wall_s": 38.465095285,
+      "native_other_wall_s": 0.19890567100000567,
+      "php_artifact_parity": true,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 2,
+      "generated_object_p80_s": 2.850334147,
+      "generated_objects_within_3s": 77,
+      "generated_object_max_s": 9.311563021
+    },
+    {
+      "name": "unchanged",
+      "exit": 0,
+      "wall_s": 1.479695446,
+      "tree_peak_rss_kib": 77408,
+      "compiler_peak_rss_kib": 72992,
+      "start_ns": 93541811911709,
+      "end_ns": 93543291607155,
+      "marks": {
+        "04-prepare": 1792131265971755304,
+        "03-sync": 1792131265223755302,
+        "01-start": 1792131265067755300,
+        "02-setup": 1792131265095755300,
+        "06-build-done": 1792131266519755305,
+        "05-cpp-ready": 1792131266407755305
+      },
+      "request_to_ready_s": 1.451012578,
+      "stages_s": {
+        "setup": 0.028,
+        "sync_parse": 0.128000002,
+        "prepare": 0.748000002,
+        "emit_publish": 0.436000001,
+        "native_build": 0.112,
+        "request_to_cpp_ready": 1.339012578
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "request_to_link_complete_s": null,
+      "last_clang_to_process_exit_s": null,
+      "clang_active_wall_s": 0.0,
+      "native_other_wall_s": 0.112,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 2
+    },
+    {
+      "name": "body-edit",
+      "exit": 0,
+      "wall_s": 4.977063684,
+      "tree_peak_rss_kib": 350324,
+      "compiler_peak_rss_kib": 73236,
+      "start_ns": 93544375247729,
+      "end_ns": 93549352311413,
+      "marks": {
+        "04-prepare": 1792131268643755311,
+        "03-sync": 1792131267795755309,
+        "01-start": 1792131267631755308,
+        "02-setup": 1792131267655755308,
+        "06-build-done": 1792131272571755322,
+        "05-cpp-ready": 1792131269079755312
+      },
+      "request_to_ready_s": 4.939676095,
+      "stages_s": {
+        "setup": 0.024,
+        "sync_parse": 0.140000001,
+        "prepare": 0.848000002,
+        "emit_publish": 0.436000001,
+        "native_build": 3.49200001,
+        "request_to_cpp_ready": 1.447676085
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 1,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 1.817412061,
+        "link": 1.460206931
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 187740,
+        "link": 191268
+      },
+      "request_to_link_complete_s": 4.875635669,
+      "last_clang_to_process_exit_s": 0.101428015,
+      "clang_active_wall_s": 3.277618992,
+      "native_other_wall_s": 0.2143810180000001,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 2
+    },
+    {
+      "name": "full",
+      "exit": 0,
+      "wall_s": 40.539613691,
+      "tree_peak_rss_kib": 1598220,
+      "compiler_peak_rss_kib": 72320,
+      "start_ns": 93549406212692,
+      "end_ns": 93589945826383,
+      "marks": {
+        "04-prepare": 1792131274103755324,
+        "03-sync": 1792131272915755323,
+        "01-start": 1792131272663755323,
+        "02-setup": 1792131272683755323,
+        "06-build-done": 1792131313175751354,
+        "05-cpp-ready": 1792131274619755326
+      },
+      "request_to_ready_s": 40.512708104,
+      "stages_s": {
+        "setup": 0.02,
+        "sync_parse": 0.232,
+        "prepare": 1.188000001,
+        "emit_publish": 0.516000002,
+        "native_build": 38.555996028,
+        "request_to_cpp_ready": 1.956712076
+      },
+      "actions": {
+        "pch": 1,
+        "runtime": 3,
+        "object": 93,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 4.294015271,
+        "runtime": 22.189895514,
+        "object": 194.276582786,
+        "link": 1.155788179
+      },
+      "clang_peak_rss_kib": {
+        "pch": 249428,
+        "runtime": 352168,
+        "object": 300732,
+        "link": 191416
+      },
+      "request_to_link_complete_s": 40.460421538,
+      "last_clang_to_process_exit_s": 0.079192153,
+      "clang_active_wall_s": 38.309618481,
+      "native_other_wall_s": 0.24637754700000158,
+      "php_artifact_parity": true,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 3,
+      "generated_object_p80_s": 2.734821616,
+      "generated_objects_within_3s": 77,
+      "generated_object_max_s": 9.292148604
+    },
+    {
+      "name": "unchanged",
+      "exit": 0,
+      "wall_s": 1.534673235,
+      "tree_peak_rss_kib": 77216,
+      "compiler_peak_rss_kib": 73120,
+      "start_ns": 93589991385264,
+      "end_ns": 93591526058499,
+      "marks": {
+        "04-prepare": 1792131314199751812,
+        "03-sync": 1792131313431751427,
+        "01-start": 1792131313247751354,
+        "02-setup": 1792131313275751354,
+        "06-build-done": 1792131314751752090,
+        "05-cpp-ready": 1792131314631752028
+      },
+      "request_to_ready_s": 1.503534868,
+      "stages_s": {
+        "setup": 0.028,
+        "sync_parse": 0.156000073,
+        "prepare": 0.768000385,
+        "emit_publish": 0.432000216,
+        "native_build": 0.120000062,
+        "request_to_cpp_ready": 1.383534806
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "request_to_link_complete_s": null,
+      "last_clang_to_process_exit_s": null,
+      "clang_active_wall_s": 0.0,
+      "native_other_wall_s": 0.120000062,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 3
+    },
+    {
+      "name": "body-edit",
+      "exit": 0,
+      "wall_s": 4.527002175,
+      "tree_peak_rss_kib": 351280,
+      "compiler_peak_rss_kib": 73376,
+      "start_ns": 93592625399739,
+      "end_ns": 93597152401914,
+      "marks": {
+        "04-prepare": 1792131316887753164,
+        "03-sync": 1792131316039752738,
+        "01-start": 1792131315883752660,
+        "02-setup": 1792131315907752673,
+        "06-build-done": 1792131320379754123,
+        "05-cpp-ready": 1792131317319753380
+      },
+      "request_to_ready_s": 4.497522766,
+      "stages_s": {
+        "setup": 0.024000013,
+        "sync_parse": 0.132000065,
+        "prepare": 0.848000426,
+        "emit_publish": 0.432000216,
+        "native_build": 3.060000743,
+        "request_to_cpp_ready": 1.437522023
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 1,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 1.793267793,
+        "link": 1.042962844
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 187604,
+        "link": 191060
+      },
+      "request_to_link_complete_s": 4.446569906,
+      "last_clang_to_process_exit_s": 0.080432269,
+      "clang_active_wall_s": 2.836230637,
+      "native_other_wall_s": 0.2237701059999999,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 3
+    }
+  ],
+  "representative_median_total_runs": {
+    "full": {
+      "name": "full",
+      "exit": 0,
+      "wall_s": 40.539613691,
+      "tree_peak_rss_kib": 1598220,
+      "compiler_peak_rss_kib": 72320,
+      "start_ns": 93549406212692,
+      "end_ns": 93589945826383,
+      "marks": {
+        "04-prepare": 1792131274103755324,
+        "03-sync": 1792131272915755323,
+        "01-start": 1792131272663755323,
+        "02-setup": 1792131272683755323,
+        "06-build-done": 1792131313175751354,
+        "05-cpp-ready": 1792131274619755326
+      },
+      "request_to_ready_s": 40.512708104,
+      "stages_s": {
+        "setup": 0.02,
+        "sync_parse": 0.232,
+        "prepare": 1.188000001,
+        "emit_publish": 0.516000002,
+        "native_build": 38.555996028,
+        "request_to_cpp_ready": 1.956712076
+      },
+      "actions": {
+        "pch": 1,
+        "runtime": 3,
+        "object": 93,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 4.294015271,
+        "runtime": 22.189895514,
+        "object": 194.276582786,
+        "link": 1.155788179
+      },
+      "clang_peak_rss_kib": {
+        "pch": 249428,
+        "runtime": 352168,
+        "object": 300732,
+        "link": 191416
+      },
+      "request_to_link_complete_s": 40.460421538,
+      "last_clang_to_process_exit_s": 0.079192153,
+      "clang_active_wall_s": 38.309618481,
+      "native_other_wall_s": 0.24637754700000158,
+      "php_artifact_parity": true,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 3,
+      "generated_object_p80_s": 2.734821616,
+      "generated_objects_within_3s": 77,
+      "generated_object_max_s": 9.292148604
+    },
+    "unchanged": {
+      "name": "unchanged",
+      "exit": 0,
+      "wall_s": 1.534673235,
+      "tree_peak_rss_kib": 77216,
+      "compiler_peak_rss_kib": 73120,
+      "start_ns": 93589991385264,
+      "end_ns": 93591526058499,
+      "marks": {
+        "04-prepare": 1792131314199751812,
+        "03-sync": 1792131313431751427,
+        "01-start": 1792131313247751354,
+        "02-setup": 1792131313275751354,
+        "06-build-done": 1792131314751752090,
+        "05-cpp-ready": 1792131314631752028
+      },
+      "request_to_ready_s": 1.503534868,
+      "stages_s": {
+        "setup": 0.028,
+        "sync_parse": 0.156000073,
+        "prepare": 0.768000385,
+        "emit_publish": 0.432000216,
+        "native_build": 0.120000062,
+        "request_to_cpp_ready": 1.383534806
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 0,
+        "link": 0
+      },
+      "request_to_link_complete_s": null,
+      "last_clang_to_process_exit_s": null,
+      "clang_active_wall_s": 0.0,
+      "native_other_wall_s": 0.120000062,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 3
+    },
+    "body-edit": {
+      "name": "body-edit",
+      "exit": 0,
+      "wall_s": 4.977063684,
+      "tree_peak_rss_kib": 350324,
+      "compiler_peak_rss_kib": 73236,
+      "start_ns": 93544375247729,
+      "end_ns": 93549352311413,
+      "marks": {
+        "04-prepare": 1792131268643755311,
+        "03-sync": 1792131267795755309,
+        "01-start": 1792131267631755308,
+        "02-setup": 1792131267655755308,
+        "06-build-done": 1792131272571755322,
+        "05-cpp-ready": 1792131269079755312
+      },
+      "request_to_ready_s": 4.939676095,
+      "stages_s": {
+        "setup": 0.024,
+        "sync_parse": 0.140000001,
+        "prepare": 0.848000002,
+        "emit_publish": 0.436000001,
+        "native_build": 3.49200001,
+        "request_to_cpp_ready": 1.447676085
+      },
+      "actions": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 1,
+        "link": 1
+      },
+      "clang_sum_wall_s": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 1.817412061,
+        "link": 1.460206931
+      },
+      "clang_peak_rss_kib": {
+        "pch": 0,
+        "runtime": 0,
+        "object": 187740,
+        "link": 191268
+      },
+      "request_to_link_complete_s": 4.875635669,
+      "last_clang_to_process_exit_s": 0.101428015,
+      "clang_active_wall_s": 3.277618992,
+      "native_other_wall_s": 0.2143810180000001,
+      "published_files": 292,
+      "translation_units": 93,
+      "generated_bytes": 2389172,
+      "executable_bytes": 9842056,
+      "trial": 2
+    }
+  },
+  "trace_replay": {
+    "frontend_s": 1.381735,
+    "backend_s": 0.306868,
+    "execute_compiler_s": 1.708446,
+    "compiler_unclassified_s": 0.019843,
+    "optimizer_subset_s": 0.019218,
+    "codegen_passes_subset_s": 0.284946
+  },
+  "validation": {
+    "native_publication_add_remove": true,
+    "cli_checks": 94,
+    "all_passed": true
+  }
+}
