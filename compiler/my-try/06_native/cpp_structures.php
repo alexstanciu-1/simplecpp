@@ -22,6 +22,8 @@ final class native_cpp_config
 final class native_cpp_result
 {
 	public string $executable = '';
+	/** Diagnostics from actions executed in this invocation; cached actions are not replayed. */
+	public string $diagnostics = '';
 	public int $compiled = 0;
 	public int $reused = 0;
 	public int $pch_built = 0;

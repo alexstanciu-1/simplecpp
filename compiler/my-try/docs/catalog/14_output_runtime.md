@@ -101,8 +101,8 @@ No native compiler rebuild or Chapter 14 closeout is claimed by this review.
 
 ### Remaining work
 
-1. NOTE-024: add bounded `-Wshadow` acceptance to generated artifacts and the existing
-   build paths. Current `tools/cpp_fixture.py` and `06_native/cpp_build.php` omit it.
+1. NOTE-024 is implemented by [CH14-EMIT-01](#first-slice) below. Chapter-level
+   closeout and any additional native-compiler evidence remain a separate decision.
 2. Source-origin/category diagnostics remain **CH13-DIAG-01**, already recorded in
    [Chapter 15](15_blocking_debt.md#chapter-13-deferred-work). Do not hide that gap by
    treating an arbitrary C++ diagnostic as a complete source diagnostic.
@@ -117,31 +117,54 @@ No native compiler rebuild or Chapter 14 closeout is claimed by this review.
 
 ### First slice
 
-**Proposed, not implemented: CH14-EMIT-01 — warning-enabled artifact and lookup proof.**
+**CH14-EMIT-01 implemented within its agreed bounds — 2026-10-16.**
 
-Use the existing artifact, name and compile-action owners. Enable `-Wshadow` in the
-shared generated-fixture compiler and the native C++ consumer's coherent compile/PCH
-flag set. Keep warning diagnostics visible and include flags in existing cache keys;
-do not add a second naming registry or alter shared semantic identities.
+The shared `CppFixtureCompiler` and snippet runtime compilation now enable `-Wshadow`.
+`Native_CPP_Build` includes it in its common compilation/PCH flags. Existing ordered
+argument keys invalidate prior actions naturally; no cache schema change or deletion
+is needed. Successful compile/link stderr is returned in invocation-local
+`native_cpp_result::diagnostics` and delivered by the build CLI on stderr, leaving its
+JSON stdout intact. Cache hits do not replay historical warnings. Failed actions retain
+the existing exception path. This is raw compiler diagnostic delivery, not CH13-DIAG-01
+source-location enrichment.
 
-Prove a small multi-file strict-PHS matrix: source/runtime name collisions, qualified
-cross-file calls, type/callable headers, local/parameter/foreach/catch shadowing and
-closure capture. Compile unmodified published units separately, check standalone
-headers without PCH, link and run expected results, then compare PCH/no-PCH behavior.
-Add one body-edit/no-op publication/build check so the flag change cannot bypass
-existing cache/publication guarantees. Reuse current fixtures where they already
-express the contract instead of inventing another compiler harness.
+Legal source shadowing remains accepted. The added project cases execute qualified
+cross-file calls to a source function named `strlen`, source type/callable headers,
+arrow parameter shadowing, closure capture, explicit block-local shadowing, foreach
+key shadowing and catch shadowing. Foreach values retain the existing assignment
+semantics; this work does not change them into fresh loop-local bindings. Reviewed
+Clang shadow warnings identify the intended block, key and catch declarations. A
+pre-existing runtime explicit-instantiation warning also remains. No naming or lookup
+fault required a backend rename, and no warning is promoted to an error.
 
-Success means correct lookup and execution with `-Wshadow` enabled, with diagnostics
-reviewed. Legal source shadowing remains legal; this proposal does **not** silently
-upgrade the historical flag requirement into `-Werror=shadow` or a zero-warning promise.
-Fix only demonstrated backend naming/qualification faults through the current naming
-owner. A required cross-owner redesign would be reported before implementation.
+Evidence at base `f0d6dd60` plus this slice:
 
-Non-goals: new language/runtime APIs, global symbol renaming, broad warning cleanup,
-formatter work, diagnostic-origin redesign, template dependency optimization,
-new run orchestration, legacy generator changes, STAN, LLVM or a full compiler-native
-rebuild. Agree this bounded slice before implementation; chapter finalization is separate.
+- `/tmp/scpp-ch14-emit-artifacts-04/summary.json`: five host suites, 16 unmodified
+  artifact bundles compiled/linked/run both with and without PCH (32 executions),
+  34 standalone header checks without PCH, three Clang transitive-dependency checks,
+  relocation and missing-entry rejection. The editable probe roundtrip assertion now
+  compares its actual identity/path/source-byte contract, excluding publication-only
+  include metadata; production bundles are compiled intact.
+- `/tmp/scpp-ch14-emit-incremental-02/summary.json` and `observations.json`: ten
+  native build/execution scenarios covering cold/warm, body/default/signature/layout,
+  insertion/deletion, relocation and compiler identity. Warm publication preserves
+  bytes/inode/mtime. Body edits rebuild only their implementation unit and retain PCH.
+  The compiler proxy verifies `-Wshadow` on scan/PCH/object paths; successful-build
+  stderr must contain the intentionally legal foreach-key shadow diagnostic.
+- `/tmp/scpp-ch14-emit-flag-transition-01/summary.json`: the prior review's real
+  no-`-Wshadow` optional-provider cache rebuilds three objects, PCH and executable
+  after the flag is added, then reuses everything on a second build. Both executions
+  retain exit 12. This local transition check supplements the retained runners.
+
+The shared runner used PHP CLI and its bounded task pool. These proofs compile
+**generated programs**, not the compiler itself. No compiler PHS/native rebuild,
+full chapter closeout or warning-free certification is claimed.
+
+Non-goals remain new language/runtime APIs, global symbol renaming, broad warning
+cleanup, formatting, structured source diagnostics, template dependency optimization,
+new run orchestration, legacy generator changes, STAN and LLVM. Next: review Chapter 14
+for bounded closeout against these owners and remaining deferrals; further extensions
+require their own agreed slice.
 
 ## Progress
 
@@ -182,7 +205,7 @@ Governance rows do not require frontend/backend implementation.
 | [NOTE-014](#note-014) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | PHP-semantic adapters and registered runtime bindings already select runtime behavior; constants are settled metadata. |
 | [NOTE-020](#note-020) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Historical rejection list is not the current feature matrix; CH02/03/06/07 own the implemented operations and deferrals. |
 | [NOTE-023](#note-023) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Bounded numeric division/comparisons/spaceship and switch contracts already supersede the old incompatibility list. |
-| [NOTE-024](#note-024) | proposed-slice | — (policy/provenance) | owner-linked | flag gap | deferred | -Wshadow is absent from the shared fixture and native builder flags; propose bounded warning-enabled artifact acceptance. |
+| [NOTE-024](#note-024) | implemented-bounded | — (policy/provenance) | owner-linked | proved | deferred | `-Wshadow` enabled in fixture/native compilation; artifact, lookup, diagnostics and incremental proofs pass; legal shadowing preserved. |
 | [NOTE-026](#note-026) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Partitioned declarations, precise dependencies and source implementation groups replace the imported file-pair policy. |
 | [NOTE-028](#note-028) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | CH08 owns canonical namespace bodies and selected entry; CH05/09 own handle normalization, not deferred intent metadata. |
 | [NOTE-030](#note-030) | reconciled | — (policy/provenance) | owner-linked | owner-linked | deferred | Use specs/spec_map.md authority order; imported catalog status cannot define semantics. |
@@ -765,7 +788,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:375](../../../../generators/php/specs/rules.md)
 
-**v0.2 reconciliation:** -Wshadow is absent from the shared fixture and native builder flags; propose bounded warning-enabled artifact acceptance. See [current ownership](#first-slice). Imported content below is historical.
+**v0.2 reconciliation:** `-Wshadow` enabled in fixture/native compilation; artifact, lookup, diagnostics and incremental proofs pass; legal shadowing preserved. See [current ownership](#first-slice). Imported content below is historical.
 
 > ## 13. Compilation Constraints
 >

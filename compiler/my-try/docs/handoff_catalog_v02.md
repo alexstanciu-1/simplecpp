@@ -16,10 +16,13 @@ This is focused chapter evidence, not a full cumulative native sweep.
 
 [Chapter 14 is reconciled](catalog/14_output_runtime.md#reconciliation--2026-10-16)
 against existing artifacts, publication, native caching and runtime-module linkage.
-Its first proposed slice is [CH14-EMIT-01](catalog/14_output_runtime.md#first-slice):
-warning-enabled artifact/lookup acceptance using `-Wshadow`, preserving legal source
-shadowing. Four host suites and six optional-provider build/execution scenarios pass.
-The slice awaits agreement; no new implementation or chapter closeout is claimed. The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
+[CH14-EMIT-01](catalog/14_output_runtime.md#first-slice) now enables `-Wshadow`,
+preserves legal source shadowing and delivers successful native-build warnings.
+Artifact/lookup, standalone-header, PCH/no-PCH and incremental proofs pass.
+Next: review Chapter 14 for bounded closeout with remaining deferrals explicit;
+this slice does not claim a native compiler rebuild or chapter finalization.
+
+The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
 retains its separate evidence limits; this CH13 gate does not retroactively certify
 complete CH12 native coverage. LLVM remains parked.
 

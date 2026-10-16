@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+CH14-EMIT-01 enables `-Wshadow` in shared fixture compilation (including runtime/PCH)
+and native build actions. `tests/project_cpp.py` covers qualified lookup and legal
+block/parameter/foreach-key/catch shadowing with PCH/no-PCH execution and standalone
+headers. `tests/native_invalidation.py` checks the flag on compile/PCH paths and
+successful warning delivery alongside its existing exact rebuild matrix. Warnings
+remain diagnostics, not errors; these runners do not rebuild the compiler itself.
+
 Chapter 13 native closeout uses the shared candidate validator:
 
 ```sh

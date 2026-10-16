@@ -36,6 +36,19 @@ function project_snapshot(): array
 }
 
 $cases = [
+	'lookup_collisions' => [[
+		'main.phs' => 'namespace App; use function Lib\strlen as length; $v LibBox; $v->value = length(4); return $v->value;',
+		'type.phs' => 'namespace App; struct LibBox { int $value; }',
+		'lib.phs' => 'namespace Lib; function strlen(int $value): int { return $value + 3; }',
+	], 7],
+	'legal_shadowing' => [[
+		'main.phs' => 'return check();',
+		'lib.phs' => 'function check(): int { $n = 99; $f = fn(int $n): int => $n + 1; $captured = 3; $g = fn(): int => $captured; { $captured int = 12; } $items vector<int> = [2, 3]; $sum = 0; foreach ($items as $n => $item) { $sum += $item; } if ($n !== 99) { return 1; } return $f(4) + $g() + $sum; }',
+	], 13],
+	'catch_shadowing' => [[
+		'main.phs' => 'return check();',
+		'lib.phs' => 'function check(): int { $e = 7; try { throw Exception::make("shadow"); } catch (Exception $e) { $m = $e->get_message(); if ($m !== "shadow") { return 2; } } return $e; }',
+	], 7],
 	'calls' => [[
 		'main.phs' => 'return caller();',
 		'caller.phs' => 'function caller(): int { return target(); }',

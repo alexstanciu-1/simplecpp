@@ -14,9 +14,15 @@ php compiler/my-try/tools/build_cpp.php /absolute/published /absolute/cache --no
 ```
 
 The CLI defaults to `/usr/bin/clang++`, the checkout runtime headers, C++23, PHP target,
-threads and `-O0`. It emits a JSON result only after success, with executable path and
+threads, `-Wshadow` and `-O0`. It emits a JSON result only after success, with executable path and
 counts for compiled/reused objects, PCH creation and linking. It does not execute the
 program or rebuild the compiler itself. Programmatic callers use `native_cpp_config`.
+
+Successful compile/link diagnostics are returned in `native_cpp_result::diagnostics`;
+the CLI writes them to stderr while preserving JSON stdout. Only actions executed in
+this invocation contribute diagnostics; cached warnings are not replayed. Legal source
+shadowing is accepted, and `-Wshadow` is not promoted to an error. The flag participates
+in the ordinary action/PCH keys, so caches from before its introduction rebuild once.
 
 ## Ownership and ordering
 

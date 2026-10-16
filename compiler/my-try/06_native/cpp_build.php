@@ -63,7 +63,7 @@ final class Native_CPP_Build
 			if (q_count($units) === 0) { throw new \RuntimeException('No published translation units'); }
 			$runtime = fs_require_realpath($this->config->runtime_include);
 			$optimization = $this->config->optimization === 2 ? '-O2' : '-O0';
-			$flags /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
+			$flags /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization, '-Wshadow',
 				'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
 			foreach ($build_inputs->definitions as $definition) { $flags[] = '-D' . $definition; }
 			$this->flags = $flags;
@@ -267,6 +267,7 @@ final class Native_CPP_Build
 			$execution_command[] = '-o'; $execution_command[] = $stage->path();
 			$execution = $this->invoke($execution_command);
 			self::require_success($execution);
+			$this->report->diagnostics .= $execution->stderr;
 			$stage->promote($relative, $expected, $executable);
 			$digest = fs_output_digest($this->root, $relative);
 			$this->save_ready($key, $this->root . '/' . $relative, $digest);

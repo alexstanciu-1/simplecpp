@@ -16,6 +16,7 @@ try {
 		else { throw new \RuntimeException('Unknown native build option'); }
 	}
 	$result = (new Native_CPP_Build($config))->build($argv[1]);
+	fwrite(STDERR, $result->diagnostics);
 	echo json_encode(['executable' => $result->executable, 'compiled' => $result->compiled,
 		'reused' => $result->reused, 'pch_built' => $result->pch_built, 'linked' => $result->linked], JSON_THROW_ON_ERROR), "\n";
 } catch (\Throwable $error) { fwrite(STDERR, $error->getMessage() . "\n"); exit(1); }
