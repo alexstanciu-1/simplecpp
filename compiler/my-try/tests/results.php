@@ -66,6 +66,22 @@ try
 		=== conversion_operation::result_wrap, 'Construction policy depends on Result spelling');
 	result_check(Conversion_Preparation::decide($catalog->boolean_sentinel_type(true), $target,
 		conversion_context::argument)->operation === conversion_operation::result_true, 'Sentinel policy ignored the role');
+	$failure_definition = $registry->define_result('RenamedFailure', type_definition_origin::runtime,
+		nominal_type_kind::class_type, $parameters, [generic_contract::value_storable], result_kind::structured_error);
+	$failure_application = $registry->intern_application($failure_definition, [$bool_type]);
+	$failure_target = $registry->use($failure_application->type_id());
+	result_check(Conversion_Preparation::decide(Language_Types::error_type(Model::$language_scope),
+		$failure_target, conversion_context::return_value)->operation === conversion_operation::result_error,
+		'Structured error conversion depends on Result spelling');
+	$impostor = $registry->define_nominal('error', type_definition_origin::source,
+		nominal_type_kind::structure, [generic_contract::copyable_value, generic_contract::value_storable]);
+	$impostor_rejected = false;
+	try {
+		Conversion_Preparation::decide($registry->use($registry->canonical($impostor)->type_id()),
+			$failure_target, conversion_context::assignment);
+	}
+	catch (\RuntimeException $error) { $impostor_rejected = true; }
+	result_check($impostor_rejected, 'Source error spelling granted failure semantics');
 	$ordinary = $registry->define_template('result', type_definition_origin::source,
 		nominal_type_kind::class_type, $parameters, [generic_contract::value_storable]);
 	$ordinary_type = $registry->intern_application($ordinary, [$bool_type]);

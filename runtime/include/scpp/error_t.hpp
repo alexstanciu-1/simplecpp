@@ -20,6 +20,10 @@ public:
 	error_t(const string_t &message, const int_t<> &line = static_cast<int_t<>>(0), const string_t &file = string_t(""))
 		: present_(true), message_(message), line_(line), file_(file) {}
 
+	[[nodiscard]] static error_t make(const string_t &message, const int_t<> &line, const string_t &file) {
+		return error_t(message, line, file);
+	}
+
 	[[nodiscard]] bool_t has_error() const noexcept { return bool_t(present_); }
 
 	[[nodiscard]] const string_t &get_message() const noexcept { return message_; }

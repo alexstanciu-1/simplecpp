@@ -21,18 +21,45 @@ readonly `error::$no_error`, condition truthiness and logical negation. Runtime
 failures reject no-error values and expose readonly error inspection. This is the
 minimal prerequisite for a nonnullable take error output, not full error authoring.
 
-Still pending: follow the Simple C++ contract for message, line and file and the
-`get_message()`, `get_line()`, `get_file()` inspection surface. Establish source
-construction signatures through a reusable runtime-type construction path and
-prepare member calls through their proper owner, not an error-specific AST or emitter
-spelling checks. The runtime constructor currently offers message plus optional line
-and file; confirm source admission against the owning specs when implementing.
+### Structured error factory slice — 2026-10-16
 
-An `error` payload is an in-band value, not a thrown exception. Do not merge this
-work with Throwable/throw/catch semantics or require all exception handling first.
-Once the value support exists, complete chapter 05's structured Result failure
-conversion and its source-to-native proof. Keep `result<error>` disambiguation,
-the bare runtime error sentinel and broader Result operations separately scoped.
+**RSL-ERROR-01 is implemented within the agreed factory/getter/failure-transport bounds.**
+Core metadata registers `error::make(string message, int line = 0, string file = "")`
+and the value-returning `get_message()`, `get_line()`, `get_file()` methods. The existing
+runtime nominal identity remains the owner; no new type, AST or member-call path was
+introduced. The static factory delegates to `error_t` construction and metadata supplies
+ordinary scalar defaults. Empty messages still produce real errors; default/no-error
+values retain empty details and false condition truthiness.
+
+Shared `Result_Conversions` selects a distinct `result_error` operation by canonical
+error identity and structured Result role, retaining the existing payload admission.
+C++ lowering consumes that decision and uses the checked runtime constructor.
+No-error rejection remains value-dependent and preserves the old Result on rejected
+assignment. Source getters return snapshots and keep the existing stable mutable
+inline receiver restriction.
+
+Proof: [error_values.php](../../tests/error_values.php) produced 17 generated programs
+executed without PCH, 13 preparation rejections, no-op stability and incremental
+rejection/repair/fresh agreement. Cases cover defaults/details/copying, empty-message
+presence, getter snapshots, argument order, initialization/assignment/argument/return
+failure transport, take clearing/preservation, existing payload families and no-error
+runtime rejection. A native fixture harness catches the exception around an emitted
+assignment to verify old-value preservation; this does not enable source catch syntax.
+[results.php](../../tests/results.php) additionally proves renamed Result-role admission
+and rejection of an unrelated source type named `error`.
+
+Evidence: `/tmp/scpp-ch13-errors-01/summary.json` (17 generated executions) and
+`/tmp/scpp-ch13-regressions-01/summary.json` (seven focused PHP suites). Final
+preparation-only rejection checks, including initialized `result<error>` rejection,
+passed under `/tmp/scpp-ch13-errors-final-host/logs/`. The shared runner used CLI fallback because
+FPM socket creation was unavailable. No native compiler rebuild was performed.
+
+Non-goals remain `new error(...)`, general runtime constructor metadata, broader
+receiver lifetimes, new Result payload families, `result<error>`, bare error sentinel
+exposure, new error operators and thrown exceptions. An `error` is an in-band value;
+it is not a Throwable. [The authoritative contract](../../../../specs/error_values_and_take.md)
+owns its semantics. **Next:** discuss bounded throw/catch and exceptional cleanup;
+finally follows only after its interactions with returns and other exits are agreed.
 
 ## Progress
 
@@ -40,7 +67,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| RSL-ERROR-01 | deferred | Error constructors/getters and `error -> result<T>` | partial | partial | deferred | Default/copy/no-error/truthiness proved by chapter 05 take; reusable runtime-type construction/member-call prerequisite remains |
+| RSL-ERROR-01 | implemented-bounded | `error::make("bad", 12, "input.phs")`, getters and `error -> result<T>` | proved | proved | deferred | 17 generated programs, 13 preparation rejections and incremental repair; `tests/error_values.php`; general runtime `new` remains excluded |
 | [ERR-THROW-001](#err-throw-001) | pending-discussion | `throw new Exception("x");` | unverified | unverified | deferred | — |
 | [ERR-TRY-001](#err-try-001) | pending-discussion | `try { f(); } catch (Exception $e) { }` | unverified | unverified | deferred | — |
 | [ERR-FINALLY-001](#err-finally-001) | pending-discussion | `try { return 1; } finally { g(); }` | unverified | unverified | deferred | — |

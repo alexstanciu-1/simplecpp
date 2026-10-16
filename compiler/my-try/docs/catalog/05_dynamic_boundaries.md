@@ -99,7 +99,8 @@ Existing type preparation, registry contracts and conversion workers own these r
 - **CH05-PROFILE-01 — legacy availability.** The Result kind model preserves all
   three families, but strict-vs-legacy availability enforcement remains deferred.
 - **RSL-ERROR-01** stays in [chapter 13](13_errors.md#structured-error-value-debt-from-chapter-05).
-  Error construction/members are not invented by take or Result preparation.
+  Its bounded factory/getter/failure-transport slice is now implemented (2026-10-16);
+  see the CH13 checkpoint. General runtime constructors remain excluded.
 - **MIXED-TRUTH-001 / MIXED-COMPARE-001** remain runtime-contract reconciliation:
   broader table/object truthiness, weak equality wording versus implementation,
   and recursive/cyclic table comparison hardening. Nullable/null generic identity
@@ -636,9 +637,8 @@ Debt/non-goals:
 
 - **RSL-ERROR-01:** structured `error` construction and getters belong
   to [chapter 13](13_errors.md#structured-error-value-debt-from-chapter-05).
-  `error -> result<T>` failure construction is blocked on that prerequisite. Use a
-  reusable runtime-type construction/member-call path, not an error-specific AST.
-  Do not fabricate an empty error to bypass this dependency.
+  Resolved on 2026-10-16 through core factory/member metadata and shared failure
+  conversion. No general runtime-constructor syntax was added.
 - Explicit casts, logical/arithmetic operators, broader selection/coalescing joins and
   profile-availability changes remain follow-up work.
 - Implicit default construction, cross-payload/family conversion, non-scalar/nested
@@ -698,9 +698,9 @@ Source exceptions propagate, not turn into false.
 The registered nominal `error` has default/copy semantics and readonly
 `error::$no_error`. Conditions and `!$error` use explicit presence. A real empty-message
 error stays true. Runtime Result failure construction/assignment rejects no-error;
-const inspection prevents bypassing that invariant. Source constructors/getters and
-`error -> result<T>` remain chapter 13 debt. Qualified constant lookup is not general
-static-member support.
+const inspection prevents bypassing that invariant. Chapter 13 now adds the bounded
+`error::make`/getter surface and `error -> result<T>` conversion; general runtime
+constructor syntax remains excluded.
 
 Deferred: inline typed/inferred take declarations and their branch availability/scope,
 tuple spelling, aggregate payloads, fields/index outputs, reference-alias analysis and
@@ -2068,9 +2068,9 @@ chapter 02; indexed/property/call interpolation needs the corresponding access o
 **v0.2 decision / examples:** Explicit Result family identities, scalar payload/sentinel
 distinctions and existing-output take are covered. Main v0.2 syntax is
 `take($value, $error) = source();`; helper spelling shares its node. Output declaration
-and profile availability remain CH05-TAKE-01/CH05-PROFILE-01. General error members/
-construction remain RSL-ERROR-01 in chapter 13; imported member examples are not
-current my-try support claims.
+and profile availability remain CH05-TAKE-01/CH05-PROFILE-01. Chapter 13 resolves
+RSL-ERROR-01 through the bounded factory/getter/failure-transport slice; imported
+Result member examples are not current my-try support claims.
 
 > ## Explicit result_or_false<T> and result<T> type intent
 >

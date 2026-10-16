@@ -32,6 +32,7 @@ enum conversion_operation
 	case nullable_wrap;
 	case nullable_extract;
 	case result_wrap;
+	case result_error;
 	case result_false;
 	case result_true;
 	case result_extract;

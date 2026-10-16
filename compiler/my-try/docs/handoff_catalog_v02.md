@@ -10,9 +10,10 @@ the [original handoff](archive/handoff_catalog_v02.md) is historical.
 [Chapter 12 is closed within its selected bounds](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16).
 The closeout maps retained proof owners to completed work and distinguishes historical
 native evidence from the current workspace smoke; full CH12 native coverage remains
-unclaimed. Deferred extensions keep their existing owners. Next: agree a bounded
-Chapter 13 error-value slice using the runtime metadata foundation, separately from
-throw/catch and finally. No Chapter 13 implementation is authorized by this handoff.
+unclaimed. Deferred extensions keep their existing owners. Chapter 13's
+[bounded error-value slice](catalog/13_errors.md#structured-error-factory-slice--2026-10-16)
+is implemented with focused generated-program proofs. Next: discuss throw/catch
+and exceptional cleanup before finally.
 
 ## Agreed v0.2 scope
 
