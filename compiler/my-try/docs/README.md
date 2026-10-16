@@ -48,6 +48,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Configurable native linker acceptance | [Production Mold selection, link-only invalidation and native dev002 verification](planning/native_linker_configuration_20261016.md) |
 | Complex edits and PCH integration experiment | [dev002 signature/layout/shared-header/runtime edits: rebuild sets, timing and memory](planning/native_edit_matrix_20261016.md) |
 | Shared-handle dependency refinement | [Implementation and dev002 application edit comparison](planning/shared_handle_completeness_20261016.md) |
+| Initialization header boundaries | [Typed/mixed/dynamic separation, compatibility umbrella and dev002 proof](planning/initialization_headers_20261016.md) |
 | Optimization-aware lowering | [Constructor outlining](planning/optimization_policy_20261016.md), [shared-allocation outlining and dev002 measurements](planning/allocation_outlining_20261016.md) |
 | Native build consumers | [Shared command recipes, optional Ninja execution, and staged native cache](architecture/native_cpp_build.md) |
 | Namespace/import implementation | [Agreed language rules](../../../specs/namespaces_v0_2.md), [approved identity/body migration and current checkpoints](planning/namespace_identity_migration.md) |

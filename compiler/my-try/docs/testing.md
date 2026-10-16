@@ -1069,3 +1069,13 @@ preservation, and eligibility changes refreshing untouched callers. This is a PH
 compiler proof with compiled generated programs; native compiler and dev002 timing
 evidence are recorded in the [constructor checkpoint](planning/optimization_policy_20261016.md)
 and [allocation checkpoint](planning/allocation_outlining_20261016.md).
+
+## Initialization header isolation
+
+`python3 compiler/my-try/tests/initialization_headers.py --results FRESH` checks all
+five initializer headers without a PCH, both include orders, typed-only exclusion
+of the mixed adapter, and input lifetime/unwinding through both narrow typed and
+compatibility umbrella headers. `data_initialization.py --no-pch` exercises the
+existing typed/mixed/dynamic source-construction and runtime-observation fixtures.
+See the [dev002 header-split checkpoint](planning/initialization_headers_20261016.md)
+for native compiler, build timing, memory and runtime evidence.

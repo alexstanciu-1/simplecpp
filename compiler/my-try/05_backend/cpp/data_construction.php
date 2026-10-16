@@ -21,11 +21,11 @@ final class CPP_Initialization_Registration
 	public static function install(): void
 	{
 		$contracts = Model::$initialization_contracts;
-		Model::$cpp_type_bindings->bind_definition($contracts->sequence(), 'scpp::initializer_list', 'scpp/data_initializer.hpp');
-		Model::$cpp_type_bindings->bind_definition($contracts->entry(), 'scpp::initializer_entry', 'scpp/data_initializer.hpp');
+		Model::$cpp_type_bindings->bind_definition($contracts->sequence(), 'scpp::initializer_list', 'scpp/data_initializer_input.hpp');
+		Model::$cpp_type_bindings->bind_definition($contracts->entry(), 'scpp::initializer_entry', 'scpp/data_initializer_input.hpp');
 		foreach (['mixed', 'dynamic'] as $name) {
 			Model::$cpp_callable_bindings->bind_initialization_definition(Model::$type_catalog->definition($name),
-				'scpp::data_initializer', 'scpp/data_initializer.hpp');
+				'scpp::data_initializer', 'scpp/data_initializer_' . $name . '.hpp');
 		}
 		foreach (Model::$runtime_metadata->modules as $module) {
 			$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_initialization;

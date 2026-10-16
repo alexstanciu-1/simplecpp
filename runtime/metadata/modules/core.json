@@ -37,8 +37,8 @@
     }
   ],
   "cpp_initialization": [
-    {"id": "core.vector", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"},
-    {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"}
+    {"id": "core.vector", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer_typed.hpp"},
+    {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer_typed.hpp"}
   ],
   "cpp_types": [
     {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},
