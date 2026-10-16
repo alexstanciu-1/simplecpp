@@ -706,6 +706,45 @@ recovery. A stored digest without a refresh protocol cannot detect later edits.
 This is the explicit temporary runtime exception to CH15-NATIVE-CACHE-PERF-01;
 that item's generated-input and recovery requirements remain in force.
 
+### CH15-CPP-GROUP-SPLIT-01 — automatic implementation-unit splitting
+
+Deferred by user decision on 2026-10-16. Prepare an explicit implementation-group
+assembly boundary in the C++ backend, but preserve today's source-based membership
+and artifact paths. Automatic size/cost-based splitting, hash buckets, persistent
+assignment maps, rebalancing, and one-function-per-unit policies are not part of the
+immediate work. This debt must not block Ninja/Clang/Mold integration.
+
+The C++ backend owns any future grouping policy, using existing prepared fragments;
+shared semantic preparation must not acquire native compilation policy. Before
+resuming, agree stable group/member identities and rules for add/delete/move edits.
+Evaluate individual Clang latency against the 2–3 second p80 target, duplicated
+header/template work, clean-build throughput, rebuild spread, and application
+performance. One expensive function may remain slow even after its group is split.
+See the [lowering and toolchain plan](../planning/clang_units_and_mold.md).
+
+### CH15-PARTIAL-TYPE-01 — multi-file class declarations
+
+Deferred by user decision on 2026-10-16. Multi-file/partial classes could eventually
+let users control implementation grouping through source parts, but no syntax or
+semantics are adopted now. Do not introduce this feature merely to prepare the
+C++ assembly structure. It is not a prerequisite for lowering/toolchain work.
+
+This is a language/model feature: the top-level semantic spec, collection, and shared
+preparation must define one type assembled from multiple source contributions. Agree
+module/type identity, explicit opt-in, member visibility, duplicates/conflicts,
+inheritance/contracts, field layout/initialization order, and constructor/destructor
+ownership. A primary declaration plus method-only parts was discussed as a bounded
+option, not selected as the language contract.
+
+The backend would preserve both semantic type ownership and physical source-part
+placement: one consistent type declaration with implementations emitted into stable
+part-specific units. Current method placement follows the declaring type's source;
+merging declarations without changing that placement would not split Clang work.
+Future acceptance must cover cross-part private access, diagnostics, stable output,
+body-only versus signature/layout changes, and equivalent runtime behavior. Runtime
+library grouping is independent of partial-class source grouping. No implementation
+or automatic splitting is authorized by recording this debt.
+
 ### CH15-MOLD-01 — configurable Mold linking
 
 The agreed [Clang unit and Mold experiment plan](../planning/clang_units_and_mold.md)

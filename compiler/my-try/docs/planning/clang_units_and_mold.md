@@ -54,25 +54,43 @@ machine as the intended hardware class. Historical dev002 results are useful
 comparison evidence, not proof of this hardware-specific target. Let the OS cache
 files normally; distinguish cold artifact caches from cold filesystem caches.
 
-## Future compilation-unit splitting
+## Immediate architecture: explicit implementation-group assembly
 
-Keep current source-unit grouping as the starting point. Consider splitting costly
-units into smaller, stable implementation groups when measurements justify it.
-An authored source file need not map to exactly one C++ translation unit.
+Agreed scope on 2026-10-16: prepare a proper split structure in C++ lowering so
+Ninja, Clang, and Mold can consume clear artifact boundaries. Preserve current
+source-based grouping; do not change it to one group per class or namespace now.
+Automatic splitting and multi-file classes are separately deferred in
+[CH15-CPP-GROUP-SPLIT-01](../catalog/15_blocking_debt.md#ch15-cpp-group-split-01--automatic-implementation-unit-splitting)
+and [CH15-PARTIAL-TYPE-01](../catalog/15_blocking_debt.md#ch15-partial-type-01--multi-file-class-declarations).
+Neither deferred feature blocks the immediate structure or toolchain integration.
 
-- The C++ backend owns grouping, stable artifact identity, and declaration/body
-  placement. Shared semantic preparation does not acquire C++ scheduling policy.
-- Preserve unrelated group names and membership across local edits; avoid global
-  repartitioning that invalidates otherwise reusable objects.
-- Keep ordinary bodies out of broadly shared headers where practical. Preserve
-  required template definitions and useful inlining opportunities deliberately.
-- Measure frontend/header/template cost separately from LLVM optimization/codegen.
-  Smaller units can duplicate expensive frontend work and add process overhead.
-- Do not default to one object per function or select a source-line threshold before
-  measurement. Splitting around one expensive function cannot split that function's
-  own compilation cost; such outliers need separate investigation.
-- Compare rebuild scope, object/header counts, cache size, total CPU/memory, and
-  application execution performance as well as per-invocation latency.
+The proposed local backend separation is:
+
+1. Render existing prepared declaration/body fragments with their C++ requirements.
+2. Assemble named implementation groups containing the appropriate body fragments,
+   storage definitions, dispatch definitions, and their header/forward-declaration
+   requirements. Initially retain today's source membership, ordering, and paths.
+3. Materialize declaration headers, group translation units, entry, and helper
+   artifacts through the existing artifact/publication protocol.
+4. Let the build integration consume artifact paths, kinds, and dependencies to
+   describe PCH, object, and link actions. Keep commands and scheduling out of
+   semantic preparation and expression rendering.
+
+Group records should be simple backend-owned data; assembly behavior belongs to a
+backend worker. Reuse existing signature/body fragments and dependency facts rather
+than building a second semantic model or an additional cache. Keep declaration/header
+assembly separate from implementation-body assembly, and keep entry/helper identities
+explicit. Do not require a generalized partitioning framework for this first slice.
+
+Preserve generated semantics, output identities, source grouping, and the publication
+contract. The intended initial change is a clear owner for group assembly, not an
+increase in compilation units or a promised timing improvement. No group should
+imply a shared-library boundary: future link groups may collect many object units.
+
+The 2–3 second p80 target remains a performance goal. Automatic splitting is one
+future way to approach it, not an immediate acceptance gate. Header/template exposure
+and expression complexity remain discussion candidates, not part of this structural
+slice by default. No implementation is performed by this planning update.
 
 ## Parallel orchestration to evaluate
 
@@ -142,8 +160,8 @@ cleanup from work that must finish before readiness.
    runtime/PCH exposure without entering compiler incremental or MT internals.
 2. Establish per-unit latency distributions and build throughput on existing grouping
    when measurements are separately authorized; cross-run Ninja reuse is optional.
-3. Prototype stable splitting only for identified costly units; verify invalidation
-   scope, cache reuse, behavior, and application performance.
+3. Prepare explicit implementation-group assembly while preserving existing output
+   grouping. Automatic splitting and multi-file classes remain CH15 debt.
 4. Compare Mold's single-executable layout against grouped shared libraries using
    the same application and comparable small-unit inputs; tune link threads per layout.
 5. Record the chosen scheduler, grouping policy, optimization profile, link layout,
@@ -192,7 +210,7 @@ Read-only inspection of the recovered compiler at `d6ac157c`; no new timing clai
   alternative, not permission to remove sequencing or introduce semantic analysis in
   the emitter; its size and compile/runtime benefit remain unmeasured.
 
-Discussion priority: preserve existing boundaries; isolate implementation-group
-assembly as the future splitting owner; investigate header/template exposure and
-expression complexity before picking split thresholds. Defer broad runtime changes
-and shared-library packaging until their concrete costs and boundaries are understood.
+Immediate direction: preserve existing boundaries and isolate implementation-group
+assembly as a clear backend owner. Defer automatic split policies and multi-file
+classes to CH15; no split thresholds are selected now. Toolchain integration should
+not depend on those features, broad runtime changes, or shared-library packaging.
