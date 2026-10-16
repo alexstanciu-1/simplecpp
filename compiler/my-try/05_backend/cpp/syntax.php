@@ -43,7 +43,7 @@ final class CPP_Syntax
 			finally { $this->context->return_type = $previous_return; }
 			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
-			return '[' . self::comma_list($capture_parts) . '](' . self::comma_list($parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
+			return '[' . q_implode(', ', $capture_parts) . '](' . q_implode(', ', $parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
 		}
 		if ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);
@@ -651,16 +651,5 @@ final class CPP_Syntax
 	public function generate_assignment_expression(assignment_expression_node $node): string
 	{
 		return CPP_Generator::generate_assignment_expression($node, $this->context);
-	}
-
-	private static function comma_list(array $parts /** vector<string> */): string
-	{
-		$result = '';
-		$separator = '';
-		foreach ($parts as $part) {
-			$result .= $separator . $part;
-			$separator = ', ';
-		}
-		return $result;
 	}
 }
