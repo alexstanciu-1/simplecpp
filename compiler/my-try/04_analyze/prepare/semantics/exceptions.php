@@ -33,9 +33,11 @@ final class Exception_Preparation
 			throw new \RuntimeException('Reference returns through finally are deferred');
 		}
 		$type = $context->return_type;
-		if (($type !== null) && !Conversion_Preparation::is_scalar($type)
-			&& (Type_Queries::canonical($type)->family() !== type_family::no_value)) {
-			throw new \RuntimeException('Finally supports only scalar or void return transport');
+		if ($type !== null) {
+			if (!Conversion_Preparation::is_scalar($type)
+				&& (Type_Queries::canonical($type)->family() !== type_family::no_value)) {
+				throw new \RuntimeException('Finally supports only scalar or void return transport');
+			}
 		}
 		$region /** prepared_finally */ = $context->finally_region;
 		$region->captures_return = true;

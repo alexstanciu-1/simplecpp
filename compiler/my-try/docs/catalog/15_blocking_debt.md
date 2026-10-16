@@ -894,3 +894,23 @@ and the relation to CH15-SHAPE-01. Callable values do not automatically imply me
 binding; coordinate with CH15-CALLABLE-01. Completion requires an agreed normative
 contract plus preparation, generated-program and failure-state proofs. This debt
 does not defer ordinary typed class/struct member work in its owning chapter.
+
+## Chapter 13 deferred work
+
+The [Chapter 13](13_errors.md) closeout is bounded by its implemented language surface
+and explicit native validation gate. These extensions are not implied by its closeout:
+
+- **CH13-DIAG-01:** structured diagnostic origins and uniform file/line/column delivery,
+  with stable unsupported-feature versus language-invalid categorization. Owners:
+  shared preparation failure records, token/source provenance and CLI presentation.
+  Existing message-based rejection/publication guards remain valid; do not widen the
+  chapter closeout into a cross-stage diagnostic redesign.
+- Finally transport for reference, record/container/wrapper and owning-handle returns;
+  break/continue crossing protected regions; transfers escaping finally.
+- Multiple/union catches, source exception subclasses/runtime inheritance, runtime
+  constructor metadata (`new Exception`), bare rethrow, throw expressions and chaining.
+- Static exception-effect analysis, expanded runtime-handle ownership/identity APIs,
+  broader error getter receivers and Result payload families, `result<error>`, and LLVM.
+
+Each extension needs its own bounded contract and lifetime/transfer proofs. Native
+chapter proofs do not certify exhaustive lifetime combinations or all deferred paths.

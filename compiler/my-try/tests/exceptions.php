@@ -8,6 +8,7 @@ $directory = sys_get_temp_dir() . '/exceptions-' . bin2hex(random_bytes(6));
 mkdir($directory);
 $path = $directory . '/main.phs';
 $executions = [];
+$native_cases = [];
 $log = 'class Log { static int $n = 0; } data struct Item { int $id; function __destruct() { $id = $this->id; Log::$n = Log::$n * 10 + $id; } } ';
 $cases = [
 	'factory_identity' => ['$original = Exception::make("bad"); try { throw $original; } catch (Exception $caught) { $m = $caught->get_message(); return $m === "bad" ? 0 : 3; }', 0],
@@ -51,6 +52,7 @@ try {
 		try { $compiler->exec_cpp(); }
 		catch (\Throwable $error) { throw new \RuntimeException($name . ': ' . $error->getMessage(), 0, $error); }
 		$text = CPP_Probe::text(Model::$cpp_files);
+		$native_cases[$name] = ['source' => $fixture[0], 'raw' => $text];
 		$compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Exception no-op changed output'); }
 		if ($name === 'identity_transport') {
@@ -95,6 +97,7 @@ try {
 	$compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Exception fresh output differs'); }
 	file_put_contents($output . '/executions.json', json_encode($executions));
+	file_put_contents($output . '/native_cases.json', json_encode(['valid' => $native_cases, 'rejected' => $rejections]));
 	echo 'Exceptions: ' . count($cases) . ' programs, ' . count($rejections) . " rejections, repair/fresh agreement PASS\n";
 }
 finally {

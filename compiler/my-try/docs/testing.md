@@ -1,6 +1,25 @@
 # Test runners
 Doc Status: supporting
 
+Chapter 13 native closeout uses the shared candidate validator:
+
+```sh
+python3 compiler/my-try/tools/native_validate.py --target-checkout "$PWD" \
+  --candidate-revision "$(git rev-parse HEAD)" --results /tmp/ch13-native-FRESH \
+  --types-only --no-stan --chapter13
+```
+
+This converts the compiler to PHS, installs the existing portable framework, builds
+it natively and compares all exported error-value/exception/finally fixtures against
+PHP before compiling and running their C++. It also checks rejection/recovery,
+retained-session edits, production CLI failures and a no-change native rebuild.
+The mode uses no fixture PCH; the native compiler build retains its normal cache.
+`--resume` refreshes the source snapshot while preserving native objects and prior
+attempt logs. `source_hashes.json`, `harness_hashes.json`, `candidate.json` and the
+executable hash distinguish the tested source/overlay from an earlier revision.
+Test-owned native instrumentation executes only after byte equality of its complete
+uninstrumented base. A missing successful summary keeps the closeout gate open.
+
 `python3 compiler/my-try/tests/records.py --suite finally --no-pch --results FRESH`
 checks scalar/void delayed returns, nested exception propagation/replacement, cleanup
 order, local versus crossing transfers, source closure isolation and incremental

@@ -59,7 +59,7 @@ final class Runtime_Catalog_Registration
 					$membership /** runtime_callable_member_spec */ = $function->member;
 					$member_owner = self::member_definition($membership->owner, $types);
 				}
-				if (($function->type_parameters !== []) || ($member_owner instanceof abstract_template_type_definition)) {
+				if ((q_count($function->type_parameters) > 0) || ($member_owner instanceof abstract_template_type_definition)) {
 					$generic = Runtime_Catalog_Patterns::contract($function, $types);
 				}
 				$parameters /** Storage<callable_parameter> */ = new Storage();

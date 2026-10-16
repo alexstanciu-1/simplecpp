@@ -33,8 +33,15 @@ final class CPP_Finally
 		{
 			$text .= 'bool ' . $pending->flag . " = false;\n";
 			$type = $context->return_type;
-			if (($type === null) || (Type_Queries::canonical($type)->family() !== type_family::no_value)) {
-				$spelling = $type === null ? 'int' : CPP_Declarations::type($type, $context);
+			// Entry returns use native int; only callable returns have a semantic type.
+			$spelling = 'int';
+			if ($type !== null) {
+				$spelling = '';
+				if (Type_Queries::canonical($type)->family() !== type_family::no_value) {
+					$spelling = CPP_Declarations::type($type, $context);
+				}
+			}
+			if ($spelling !== '') {
 				$pending->value = 'finally_value_' . $id;
 				$context->headers['optional'] = true;
 				$context->headers['utility'] = true;

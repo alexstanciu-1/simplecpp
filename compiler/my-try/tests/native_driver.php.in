@@ -151,6 +151,12 @@ elseif ($path === 'types-proof') {
 elseif ($path === 'control-proof') {
 	echo S2S_Proof::control_flow();
 }
+elseif (string_byte_starts_with($path, 's2s-edit:'))
+{
+	$directory = string_byte_slice($path, 9, string_byte_len($path) - 9);
+	echo S2S_Proof::edited_source(fs_read_text($directory . '/valid.txt'),
+		fs_read_text($directory . '/invalid.txt'), fs_read_text($directory . '/changed.txt'));
+}
 elseif (string_byte_starts_with($path, 's2s:'))
 {
 	$paths /** vector<string> */ = [string_byte_slice($path, 4, string_byte_len($path) - 4)];

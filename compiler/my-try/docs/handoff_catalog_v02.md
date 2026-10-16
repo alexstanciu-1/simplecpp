@@ -7,18 +7,17 @@ the [original handoff](archive/handoff_catalog_v02.md) is historical.
 
 ## Current chapter handoff — 2026-10-16
 
-[Chapter 12 is closed within its selected bounds](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16).
-The closeout maps retained proof owners to completed work and distinguishes historical
-native evidence from the current workspace smoke; full CH12 native coverage remains
-unclaimed. Deferred extensions keep their existing owners. Chapter 13's
-[bounded error-value slice](catalog/13_errors.md#structured-error-factory-slice--2026-10-16)
-is implemented with focused generated-program proofs. The following
-[bounded Exception/throw/catch slice](catalog/13_errors.md#bounded-exception-transport-and-cleanup--2026-10-16)
-adds canonical single-type transport, handler-local bindings, exceptional RAII cleanup
-and outer executable reporting. [Bounded finally](catalog/13_errors.md#bounded-finally--2026-10-16)
-now supports scalar/void returns and exception propagation with cleanup/transfer proofs.
-Next: reconcile NOTE-047 and the Chapter 13 bounded closeout. Crossing transfers and
-other return families remain deferred; full native compiler validation remains unclaimed.
+[Chapter 13 is finalized within its implemented bounds](catalog/13_errors.md#bounded-closeout-and-native-gate--2026-10-16).
+Its gate passed PHS conversion and native compiler compilation, 68 feature-program
+parity/execution proofs, 52 rejection/recovery comparisons and four native edit/repair
+proofs. NOTE-047 is reconciled; uniform source-location diagnostics and the other
+[explicit extensions](catalog/15_blocking_debt.md#chapter-13-deferred-work) remain deferred.
+This is focused chapter evidence, not a full cumulative native sweep.
+
+Next: reconcile Chapter 14 against existing artifact/runtime work, then agree its next
+bounded slice. The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
+retains its separate evidence limits; this CH13 gate does not retroactively certify
+complete CH12 native coverage. LLVM remains parked.
 
 ## Agreed v0.2 scope
 

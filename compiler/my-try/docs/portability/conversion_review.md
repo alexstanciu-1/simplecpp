@@ -3,7 +3,8 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers the implemented Chapter 05–11 slices, including
+The latest focused gate covers Chapter 13, as detailed below. The historical
+cumulative checkpoint covers the implemented Chapter 05–11 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
 partitioned namespace/constant/enum programs, bounded class/struct behavior,
 inheritance, traits, interface dispatch and shared callable variance.
@@ -11,10 +12,29 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-The subsequent [Chapter 13 slices](../catalog/13_errors.md) have focused host-PHP
-and generated-C++ evidence only. The checkpoints below predate error factories,
-Exception transport, bounded finally and the new generated executable exception boundary; they do
-not certify native portability of those changes.
+## Chapter 13 native gate — 2026-10-16
+
+The [bounded Chapter 13 closeout](../catalog/13_errors.md#bounded-closeout-and-native-gate--2026-10-16)
+now passes compiler PHP-to-PHS conversion and native build, plus all 68 chapter
+programs with byte-identical PHP/native output and successful generated execution,
+52 rejection/recovery comparisons, four native edit/repair/fresh proofs and three
+PHP production CLI failure checks. The final no-change native rebuild passes.
+
+Evidence: `/tmp/scpp-ch13-native-20261016/summary.json` and `logs-5/`, with source,
+harness, runtime-catalog and candidate hashes plus the executable hash. Candidate
+base `b0e1d278` includes a portability/proof overlay captured by those hashes. All
+215 compiler/proof PHP files converted. Resumed builds included the added edit-proof
+driver and corrected the baseline emission proof to expect the implemented outer
+exception handler. Native fixtures additionally required explicit nullable branches in
+finally preparation/emission and a count-based generic-parameter check in metadata
+registration. Those authored PHP repairs preserve the existing language contract.
+The native validation driver is substituted for the normal entrypoint.
+Legacy STAN and LLVM were skipped explicitly; the shared runner used CLI and 12 slots.
+Generated fixtures ran without PCH. Build warnings remain.
+
+This is the latest focused chapter-native evidence. It does not repeat the historical
+cumulative checkpoint below, prove every incremental/lifetime combination, or close
+CH12's broader native coverage gap. Chapter 13 deferrals remain explicit in Chapter 15.
 
 ## Workspace smoke — 2026-10-16
 
@@ -90,7 +110,9 @@ compiler build passes in 1.216s. The follow-up summary records a complete pass.
 These targeted post-repair checks supplement, rather than claim a repeat of, the
 full cumulative sweep. Both runs bypass legacy STAN and parked LLVM execution.
 
-## Latest native checkpoint — 2026-10-08 Chapter 11
+<a id="latest-native-checkpoint--2026-10-08-chapter-11"></a>
+
+## Earlier native checkpoint — 2026-10-08 Chapter 11
 
 Candidate base `65d96f7e6bd0af0c6a5420eb49447266d4c1fcd4`, with the current
 portability overlay. Evidence: `/tmp/my-try-ch11-native-20261008/`.

@@ -11,6 +11,62 @@ non-scalar return transport remain deferred.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Bounded closeout and native gate — 2026-10-16
+
+**Chapter 13 is finalized within its implemented frontend + C++ S2S bounds.**
+RSL-ERROR-01, ERR-THROW-001, ERR-TRY-001, ERR-FINALLY-001 and NOTE-047 are reconciled.
+The required PHS conversion, native compilation and test gate passed; this closeout
+is not based only on host PHP or generated programs from the PHP compiler.
+
+| Implemented group | Retained proof owner | Native fixture gate |
+| --- | --- | --- |
+| Error factory/getters and `error -> result<T>` | [error_values.php](../../tests/error_values.php) | 17 programs, 13 rejections |
+| Canonical Exception construction, throw/catch and cleanup | [exceptions.php](../../tests/exceptions.php) | 17 programs, 20 rejections |
+| Scalar/void finally returns, exception precedence and cleanup | [finally.php](../../tests/finally.php) | 34 programs, 19 rejections |
+| Failure/publication policy (NOTE-047) | CLI boundary and native driver recovery checks | 3 CLI failures; rejection and incremental recovery below |
+
+The prior feature summaries and logs were rechecked: 17 + 17 + 34 generated programs
+passed, along with the recorded focused regressions. The exception slice's historical
+22 rejections included two finally exclusions subsequently retired; the current native
+gate correctly uses 20, not 22. Earlier evidence remains dated rather than rewritten.
+
+Native evidence: `/tmp/scpp-ch13-native-20261016/summary.json`, final attempt `logs-5/`,
+`source_hashes.json`, `harness_hashes.json`, `runtime_catalog_hashes.json`, `candidate.json`
+and the summary's executable SHA-256. Candidate base is `b0e1d278` plus the retained
+portability/proof overlay in this closeout. The compiler's 215 PHP files were converted
+to PHS and compiled/linked against this workspace's converter/framework/runtime with
+legacy STAN and LLVM explicitly skipped. The first native build passed; its driver
+snapshot preceded the added edit proofs, so validation deliberately required a resumed
+build of that final driver. The next attempt exposed a stale exact-output assertion in
+`S2S_Proof::run`; it was updated to include the implemented outer exception handler,
+then rebuilt and tested. Native fixtures then exposed eager nullable-dependent guards
+in finally preparation/emission and untyped-empty-array comparison during callable
+metadata registration. Authored PHP now uses explicit nullable branches and a count
+check respectively; the final run includes those bounded portability repairs.
+
+The final gate passes all 68 PHP/native artifact-byte comparisons and generated-program
+executions without fixture PCH, all 52 rejection/recovery comparisons, three production
+PHP CLI failure checks, and four native retained-session edit/rejection/repair/fresh
+comparisons whose repaired programs also compile and execute. Every successful source
+request repeats preparation/emission to check no-op stability. Test-owned native
+instrumentation is used only after equality of its complete uninstrumented base.
+A final no-change native compiler rebuild also passes. The shared runner used 12 slots
+and PHP CLI; warnings remain, so this is not warning-clean certification.
+Focused host regressions for callable contracts, runtime catalogs and runtime types
+also pass in `/tmp/scpp-ch13-portability-regressions-final/logs/`.
+
+The retained [Chapter 13 native mode](../testing.md) reproduces this gate. It uses a
+converted validation driver to exercise the native compiler; it does not certify a
+new native production CLI or a full cumulative CH01–13 sweep. The four native edit
+cases supplement the broader host incremental checks, not every possible edit path.
+
+Deferred work is explicitly owned by [Chapter 15](15_blocking_debt.md#chapter-13-deferred-work):
+CH13-DIAG-01 source-location/category diagnostics; reference/non-scalar return transport
+through finally; crossing or finalizer-escaping transfers; expanded catch/exception
+families; runtime constructors; chaining/rethrow expressions; effect analysis; broader
+error/Result/handle APIs; and LLVM. Next: reconcile Chapter 14 against existing artifact
+and runtime work before selecting its next bounded slice.
+
 ## Structured error value debt from chapter 05
 
 **RSL-ERROR-01 — deferred by agreement, 2026-10-03.** Chapter 05 implements Result
@@ -54,7 +110,7 @@ Evidence: `/tmp/scpp-ch13-errors-01/summary.json` (17 generated executions) and
 `/tmp/scpp-ch13-regressions-01/summary.json` (seven focused PHP suites). Final
 preparation-only rejection checks, including initialized `result<error>` rejection,
 passed under `/tmp/scpp-ch13-errors-final-host/logs/`. The shared runner used CLI fallback because
-FPM socket creation was unavailable. No native compiler rebuild was performed.
+FPM socket creation was unavailable. No native compiler rebuild was performed at that slice checkpoint.
 
 Non-goals remain `new error(...)`, general runtime constructor metadata, broader
 receiver lifetimes, new Result payload families, `result<error>`, bare error sentinel
@@ -94,7 +150,7 @@ a transport adaptation gap, repaired and proved in
 modes and a final host exception-suite pass. Thus all 21 selected regression programs
 passed across the original and repair runs. CLI fallback was used after FPM socket
 creation failed. Final host exception/AST checks passed after consolidation in
-`/tmp/scpp-ch13-exception-review-01/logs/`. No native compiler rebuild or full regression
+`/tmp/scpp-ch13-exception-review-01/logs/`. At that slice checkpoint, no native compiler rebuild or full regression
 run was performed.
 
 [The normative contract](../../../../specs/exceptions_v0_2.md) owns semantics.
@@ -144,8 +200,8 @@ return/break/continue escaping finally, break/continue crossing protected region
 multiple/union catches, source exception subclasses, chaining, static effect analysis
 and LLVM. Internal loop/switch transfers remain allowed in both protected and finally
 bodies. [The normative contract](../../../../specs/exceptions_v0_2.md#finally-and-delayed-exits--v02)
-owns exit precedence and cleanup order. Next: reconcile NOTE-047 and the Chapter 13
-bounded closeout; do not infer that the deferred transfer/return extensions are done.
+owns exit precedence and cleanup order. The [native closeout](#bounded-closeout-and-native-gate--2026-10-16) finalizes these
+implemented bounds; deferred transfer/return extensions remain with Chapter 15.
 
 ## Progress
 
@@ -157,7 +213,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ERR-THROW-001](#err-throw-001) | implemented-bounded | `throw Exception::make("x");` | proved | proved | deferred | Single canonical shared Exception; identity, absence and unwind proofs in `tests/exceptions.php`; runtime `new` excluded |
 | [ERR-TRY-001](#err-try-001) | implemented-bounded | `try { f(); } catch (Exception $e) { }` | proved | proved | deferred | One handler, nested/callee propagation, handler scope, RAII cleanup and outer reporting; bounded finally added below |
 | [ERR-FINALLY-001](#err-finally-001) | implemented-bounded | `try { return 1; } finally { g(); }` | proved | proved | deferred | Scalar/void pending returns, exception precedence and RAII cleanup; `tests/finally.php`; crossing loop transfers and other return families deferred |
-| [NOTE-047](#note-047) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [NOTE-047](#note-047) | closed-bounded | `throw 3;`, `try {} finally { return 1; }` | proved | publication blocked on rejection | deferred | Static rejection/recovery proved; uniform file/line/column delivery remains CH13-DIAG-01 |
 ## ERR-THROW-001
 
 **v0.2 decision / target C++:** Implemented within the [bounded exception slice](#bounded-exception-transport-and-cleanup--2026-10-16). Imported examples below retain their historical scope; runtime `new` and general inheritance are not enabled.
@@ -273,7 +329,29 @@ try { return 1; } finally { g(); }
 
 **Source:** [generators/php/specs/rules.md:1072](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 decision:** Reconciled as an error-policy rule, not an additional language
+construct. [Preparation diagnostics](../../../../specs/v0_2_preparation_diagnostics.md)
+requires statically invalid type/structure combinations to fail before emission;
+valid operations with value-dependent failures keep runtime guards.
+
+- `throw 3;` and returning out of finally reject before executable publication.
+  The chapter suites verify rejection, repair and continued compilation. Unsupported
+  bounded features remain explicit diagnostics rather than placeholder C++.
+- `Compiler::sync`, `prepare` and `cpp` clear unpublished C++ at their boundaries;
+  failed work cannot be returned as successful output. The CLI catches compiler
+  failures, writes stderr and exits nonzero. Incremental publication is governed by
+  the existing [output publication protocol](../architecture/output_publication.md),
+  not a promise to delete the last successfully published executable.
+- Runtime failures still throw in process. Source catch handles only language
+  Exception transport; finally also propagates runtime failures. The outer executable
+  boundary reports uncaught standard/language exceptions and returns 1.
+- **CH13-DIAG-01 remains deferred:** a uniform structured diagnostic with source
+  file/line/column, originating syntax and stable unsupported-versus-invalid category.
+  AST/token provenance exists, but `Preparation_Worker::failure` currently retains
+  messages and `require_success` deduplicates text. This does not prove uniform
+  source-location enrichment. See [Chapter 15](15_blocking_debt.md#chapter-13-deferred-work).
+
+Imported prose follows; its authority labels are historical source text.
 
 > ## 18. Error handling policy
 >

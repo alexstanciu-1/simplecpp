@@ -8,6 +8,7 @@ $directory = sys_get_temp_dir() . '/error-values-' . bin2hex(random_bytes(6));
 mkdir($directory);
 $path = $directory . '/main.phs';
 $executions = [];
+$native_cases = [];
 $cases = [
 	'defaults' => '$e = error::make("bad"); $m = $e->get_message(); $l = $e->get_line(); $f = $e->get_file(); if (!$e) { return 1; } if ($m !== "bad") { return 2; } if ($l !== 0) { return 3; } return $f === "" ? 0 : 4;',
 	'details_copy' => '$e = error::make("bad", 12, "input.phs"); $copy = $e; $e = error::$no_error; $m = $copy->get_message(); $l = $copy->get_line(); $f = $copy->get_file(); if ($e) { return 1; } if (!$copy) { return 2; } if ($m !== "bad") { return 3; } if ($l !== 12) { return 4; } return $f === "input.phs" ? 0 : 5;',
@@ -49,6 +50,7 @@ try {
 		try { $compiler->exec_cpp(); }
 		catch (\RuntimeException $error) { throw new \RuntimeException($name . ': ' . $error->getMessage()); }
 		$text = CPP_Probe::text(Model::$cpp_files);
+		$native_cases[$name] = ['source' => $source, 'raw' => $text];
 		$compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Error no-op changed output'); }
 		if (str_starts_with($name, 'no_error_') && ($name !== 'no_error_getters')) {
@@ -95,6 +97,7 @@ try {
 	$compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Error fresh output differs'); }
 	file_put_contents($output . '/executions.json', json_encode($executions));
+	file_put_contents($output . '/native_cases.json', json_encode(['valid' => $native_cases, 'rejected' => $rejections]));
 	echo 'Structured errors: ' . count($cases) . ' programs, ' . count($rejections) . " rejections, repair/fresh agreement PASS\n";
 }
 finally {
