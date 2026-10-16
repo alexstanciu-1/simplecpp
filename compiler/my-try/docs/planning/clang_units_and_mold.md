@@ -2,7 +2,8 @@
 Doc Status: planning
 
 Recorded: 2026-10-16. Implementation-group assembly is implemented as described
-below; splitting, partial classes, and toolchain integration remain deferred.
+below; initial Ninja integration and configurable Mold selection are also implemented.
+Automatic splitting, partial classes, and shared-library layouts remain deferred.
 This extends the [compilation performance task](compile_performance.md) and
 [Chapter 08 artifact roadmap](incremental_cpp_artifacts.md). It is not a language
 spec or a claim that the performance targets are achieved.
@@ -31,6 +32,62 @@ content cache and does not promise reuse of every prior version after Git revert
 Stable output paths, unchanged bytes/timestamps, stable commands, accurate dependencies,
 and a persistent build directory enable this optional path. If integration is costly,
 defer it and continue reviewing generated C++ using the existing compilation flow.
+
+## Next focus after the complex-edit experiment — 2026-10-16
+
+The next performance focus is **application-header fan-out and expensive individual
+Clang units, particularly the 89-object shared-declaration case**. The
+[accounting edit matrix](native_edit_matrix_20261016.md) measured that case at
+9.450 seconds total on dev002, with the runtime PCH reused. This is the next
+analysis/discussion step, not authorization to implement a new splitting policy.
+
+Treat the Simple C++ runtime as fixed during ordinary application builds. Runtime
+header/PCH and implementation edits are toolchain-maintenance invalidation checks;
+their recorded timings are not ordinary application-edit performance targets.
+Keep those measurements as evidence, without prioritizing their optimization.
+
+Read the pre-my-try [September assessment](../../../../specs/planning/s2s_common_edit_compile_latency_assessment.md),
+[lessons](../../../../specs/planning/s2s_compile_latency_lessons.md),
+[final coverage/attribution](../../../../specs/planning/s2s_compile_latency_minimal_coverage.md),
+and [next-S2S technical handoff](../../../../specs/planning/s2s_next_generator_technical_handoff.md)
+as prior experimental evidence. They establish output feasibility on another
+workload; their timings and assumed 1.5-second frontend budget are not current
+accounting measurements or proof that my-try implements every proposed rule.
+
+The bounded next investigation is:
+
+1. Explain the include paths from the changed AccountingCheck definition to all
+   89 rebuilt objects. Separate required complete-type/layout uses from declaration-only
+   uses and incidental transitive dependencies. A large rebuild count alone does
+   not establish waste; preserve inferred results, nested field access, templates,
+   copy/destruction and ABI dependencies.
+2. Rank existing application units by Clang duration and critical-path contribution.
+   Retain the 2–3 second p80 target below; distinguish isolated compile cost from
+   parallel contention. Use separate diagnostic traces to attribute frontend,
+   template and LLVM work without biasing ordinary build timings.
+3. Compare observed output with the historical per-type/per-callable publication
+   rules before proposing changes. Keep application declarations out of the runtime
+   PCH. Investigate unnecessary exposure to unchanged runtime headers only where
+   traces justify it; this is distinct from benchmarking runtime modifications.
+4. Discuss the smallest change in the existing lowering/artifact owner supported
+   by the evidence. Preserve execution semantics and report runtime tradeoffs.
+   Automatic splitting, multi-file classes and compiler incremental/MT internals
+   remain deferred/outside scope. Ninja continues to own optional cross-run reuse.
+
+Historical lessons to retain: narrowing dependencies preceded successful partitioning;
+more partitions with broad dependencies sometimes increased cost. The final study
+measured twelve runnable historical edits at 1.593–4.815 seconds native, while an
+accepted broad 28-source edit took 32.680 seconds in one successful screen. Two
+isolated traces spent roughly 85–90% in the Clang frontend. Those results motivate
+inspection; they do not predict a speedup for this accounting fixture. Header
+narrowing should preserve representations before considering accessor indirection,
+which had a measured runtime cost in an earlier debug microbenchmark.
+
+The [completed first investigation](accounting_header_fanout_20261016.md) finds
+69 of the 89 units compile with an AccountingCheck forward declaration; 20 require
+the definition. The [shared-handle use-site completeness refinement](shared_handle_completeness_20261016.md)
+is now implemented in the existing backend. Grouping is unchanged and splitting
+remains deferred.
 
 ## Priority and target
 

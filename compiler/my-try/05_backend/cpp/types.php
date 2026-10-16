@@ -21,6 +21,12 @@ final class CPP_Types
 	public static function representation_for(canonical_type_use $type_use,
 		cpp_type_requirement $requirement): cpp_type
 	{
+		// Passing/copying the stored handle does not inspect its payload. Other
+		// representations retain their complete-type requirements.
+		if ($requirement === cpp_type_requirement::stored_value) {
+			$requirement = Type_Queries::is_nominal_handle($type_use)
+				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+		}
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
 		$result = self::unmodified_representation($type_use, $payload_requirement);

@@ -1,0 +1,46 @@
+{
+  "wrapper": "#!/usr/bin/python3\nimport os,sys\nargs=[\"-O2\" if a in (\"-O0\",\"-O3\") else a for a in sys.argv[1:]]\nos.execv(\"/usr/bin/clang++-18\",[\"/usr/bin/clang++-18\",*args])\n",
+  "wrapper_sha256": "3d979c8c5b4af0c1ad1d726aa424803f264875a750b2c50739aadc4683570ba5",
+  "prism": {
+    "config_version": 1,
+    "project_name": "phpp",
+    "entrypoint": "main.phs",
+    "build_dir": ".prism/build",
+    "generated_dir": ".prism/generated",
+    "cache_dir": ".prism/cache",
+    "native_cpp_dir": "native_cpp",
+    "dependencies": [],
+    "libraries": [],
+    "build": {
+      "backend": "ninja",
+      "mode": "debug",
+      "cxx": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/clang-o2"
+    },
+    "fastcgi": {
+      "enabled": false,
+      "workers": 1,
+      "max_body_size": 4194304,
+      "max_requests": 0
+    },
+    "runtime": {
+      "languages": {
+        "php": {
+          "profile": "strict"
+        }
+      },
+      "modules": [
+        "compiler",
+        "filesystem",
+        "tasks",
+        "process",
+        "datetime",
+        "json"
+      ]
+    }
+  },
+  "ninja_flags": [
+    "cxx = /home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/clang-o2",
+    "cxxflags = -std=c++23 -fPIC -O0 -g -pipe -I../../../../repo/runtime/include -I../generated -pthread -DSCPP_LANGUAGE_TARGET_PHP=1 -DSCPP_HAS_MYSQLI=0 -DSCPP_HAS_REGEX=0 -DSCPP_HAS_CURL=0 -DSCPP_HAS_TASKS=1 -DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0 -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -DSCPP_ENABLE_CALL_DEPTH_GUARD=1 -DSCPP_MAX_CALL_DEPTH=4096",
+    "ldflags = -fuse-ld=lld -Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/phpp/.prism/runtime/project/php-strict/0aab642c519835d4"
+  ]
+}

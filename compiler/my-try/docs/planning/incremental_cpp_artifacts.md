@@ -244,6 +244,9 @@ At this checkpoint, slice 3's dependency precision was next; its completion is b
 
 ## Bounded type-dependency precision — 2026-10-06
 
+The later shared-handle refinement below narrows stored nominal-handle uses;
+this dated checkpoint describes the original conservative behavior.
+
 Slice 3 distinguishes declaration-only bare-record uses from complete-definition
 uses inside the C++ backend. Callable headers forward-declare bare records, including
 by-value prototype parameters/results. Implementation signatures require definitions
@@ -281,6 +284,25 @@ Evidence (local temporary paths):
 The implementation follows the portable-PHP authoring constraints; enum requirements
 use explicit typed entrypoints rather than introducing enum-valued parameter defaults.
 The compiler itself was not rebuilt natively in this slice.
+
+### Stored shared-handle completeness refinement — 2026-10-16
+
+`cpp_type_requirement::stored_value` now distinguishes a complete stored representation
+from its payload layout. `CPP_Types::representation_for()` maps this requirement to
+`declaration` for nominal shared handles and `complete` for other representations.
+Implementation signatures, call-result/argument temporaries, default arguments and
+local materialization use this role. Existing explicit layout operations still ask
+for complete definitions: field/method access, construction and ancestry-sensitive
+conversions retain their dependencies. Runtime template arguments, by-value modifiers
+and callable payload representations remain conservative.
+
+The change belongs wholly to the C++ backend's existing requirement model. It does
+not change spelling, expressions, shared ownership, source grouping, ABI or Ninja's
+freshness policy. No unit splitting or semantic incremental/MT work is included.
+`tests/shared_handle_completeness.py` proves cross-file handle aliasing and last-owner
+destruction, required layout/ancestry/value/template dependencies, and stable generated
+units across a payload-layout edit. Its generated programs run before and after the
+edit. Native compiler/benchmark evidence is recorded separately in the dated report.
 
 The following checkpoint completes slice 4. Native object/link/runtime-PCH caching
 is next; namespaces/imports retain their later group.

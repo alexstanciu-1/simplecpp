@@ -160,7 +160,7 @@ final class CPP_Declarations
 
 	private static function signature_requirement(bool $prototype, bool $reference): cpp_type_requirement
 	{
-		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::stored_value;
 	}
 
 	/** Shared by authored signatures and declaration-independent dispatch entries. */
@@ -574,7 +574,7 @@ final class CPP_Declarations
 			$default_value /** prepared_parameter_default */ = $parameters[$index]->default_value;
 			$name = 'default_argument_' . $context->next_temporary;
 			$context->next_temporary++;
-			$text .= self::type($parameters[$index]->type, $context) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
+			$text .= self::type_for($parameters[$index]->type, $context, cpp_type_requirement::stored_value) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
 			$context->headers['utility'] = true;
 			$names .= $separator . 'std::move(' . $name . ')';
 			$separator = ', ';

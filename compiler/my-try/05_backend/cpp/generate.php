@@ -335,7 +335,7 @@ final class CPP_Generator
 
 		// Typed declarations without initializers retain their normal C++ default construction.
 		if ($initializer === null) {
-			return CPP_Declarations::type($binding->type, $context) . ' ' . $name;
+			return CPP_Declarations::type_for($binding->type, $context, cpp_type_requirement::stored_value) . ' ' . $name;
 		}
 
 		$initializer /** expression_node */ = $initializer;
@@ -357,8 +357,8 @@ final class CPP_Generator
 	/** Render one declaration or assignment from an already evaluated value expression. */
 	public static function generate_storage_value(prepared_binding $binding, string $name, string $value, bool $explicit_type, cpp_generation_context $context): string
 	{
-		// Even an inferred `auto` copy or replacement needs its concrete value definition.
-		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+		// An inferred copy needs the stored representation, not necessarily a shared payload layout.
+		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::stored_value;
 		$type_name = 'auto';
 		if (!(Type_Queries::canonical($binding->type)->definition() instanceof closure_type_definition)) {
 			$type_name = CPP_Declarations::type_for($binding->type, $context, $requirement);

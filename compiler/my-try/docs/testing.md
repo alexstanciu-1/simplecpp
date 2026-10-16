@@ -1048,3 +1048,12 @@ of the runner default.
 indexed compound preparation and generated C++: key/RHS sequencing, vector resize
 and replacement, nested COW/shared identity, and missing/deleted/wrong-kind paths.
 It does not rebuild the compiler natively.
+
+## Shared-handle completeness
+
+`python3 compiler/my-try/tests/shared_handle_completeness.py --results FRESH` runs
+a focused PHP-hosted lowering proof and compiles/executes separate generated C++
+units before and after a class-layout edit. It verifies declaration-only handle
+transfer, shared identity/last-owner cleanup, and complete payload dependencies
+for construction, member access, upcasts, value copies and template arguments.
+It does not rebuild the compiler itself.

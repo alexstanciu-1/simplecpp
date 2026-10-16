@@ -14,6 +14,8 @@ enum cpp_literal_kind {
 /** Required visibility at a C++ use site, not a semantic type capability. */
 enum cpp_type_requirement {
 	case declaration;
+	// A complete stored value need not expose the payload of a nominal shared handle.
+	case stored_value;
 	case complete;
 }
 

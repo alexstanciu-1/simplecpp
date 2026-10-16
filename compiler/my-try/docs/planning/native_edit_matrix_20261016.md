@@ -90,3 +90,15 @@ Localized class edits remain below eight seconds on this host. A widely used cla
 All exact dependency-set checks, executable self-tests (998 baseline + 857 large-fixture checks per build), full-publication PHP parity checks, no-op checks and Git restoration checks passed. Peak tree RSS is sampled at nominal 10 ms, double-counts shared pages and can miss short peaks; it is not PSS. Marker timestamps have filesystem quantization. Mold retains its normal fork behavior, so its parent-only wait4 memory/CPU is not used as total linker resource usage. Tool identity is still fully hashed on each invocation, including Mold; that existing cost remains in Other.
 
 No compiler, Ninja scheduler, grouping, PCH-composition or linker settings were changed. Results are integration evidence for the next discussion, not an instruction to broaden compiler incremental/MT work.
+
+## Agreed follow-up scope — 2026-10-16
+
+Runtime-header/PCH and runtime-implementation changes are toolchain-maintenance
+cases, excluded from ordinary application-edit performance targets. The runtime
+is expected to remain unchanged during normal application builds; retain these
+rows only as maintenance/invalidation evidence.
+
+The next focus is application-header fan-out and expensive individual Clang units,
+particularly the 89-object shared-declaration case. See the
+[updated lowering plan](clang_units_and_mold.md#next-focus-after-the-complex-edit-experiment--2026-10-16)
+for the bounded investigation and lessons from the pre-my-try September study.
