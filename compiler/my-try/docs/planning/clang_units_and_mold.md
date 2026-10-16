@@ -1,10 +1,11 @@
 # Clang unit latency, parallel builds, and Mold link layouts
 Doc Status: planning
 
-Recorded: 2026-10-16. User-approved planning direction; implementation deferred.
+Recorded: 2026-10-16. Implementation-group assembly is implemented as described
+below; splitting, partial classes, and toolchain integration remain deferred.
 This extends the [compilation performance task](compile_performance.md) and
 [Chapter 08 artifact roadmap](incremental_cpp_artifacts.md). It is not a language
-spec, an implementation authorization, or a claim that the targets are achieved.
+spec or a claim that the performance targets are achieved.
 
 ## Scope clarification — 2026-10-16
 
@@ -54,7 +55,7 @@ machine as the intended hardware class. Historical dev002 results are useful
 comparison evidence, not proof of this hardware-specific target. Let the OS cache
 files normally; distinguish cold artifact caches from cold filesystem caches.
 
-## Immediate architecture: explicit implementation-group assembly
+## Implemented structure: explicit implementation-group assembly
 
 Agreed scope on 2026-10-16: prepare a proper split structure in C++ lowering so
 Ninja, Clang, and Mold can consume clear artifact boundaries. Preserve current
@@ -64,7 +65,7 @@ Automatic splitting and multi-file classes are separately deferred in
 and [CH15-PARTIAL-TYPE-01](../catalog/15_blocking_debt.md#ch15-partial-type-01--multi-file-class-declarations).
 Neither deferred feature blocks the immediate structure or toolchain integration.
 
-The proposed local backend separation is:
+The local backend separation is:
 
 1. Render existing prepared declaration/body fragments with their C++ requirements.
 2. Assemble named implementation groups containing the appropriate body fragments,
@@ -90,7 +91,10 @@ imply a shared-library boundary: future link groups may collect many object unit
 The 2–3 second p80 target remains a performance goal. Automatic splitting is one
 future way to approach it, not an immediate acceptance gate. Header/template exposure
 and expression complexity remain discussion candidates, not part of this structural
-slice by default. No implementation is performed by this planning update.
+slice by default. The assembly extraction now uses `cpp_implementation_group`,
+`CPP_Implementation_Groups::assemble()`, and `CPP_Artifacts::implementation()`.
+[Focused output-equivalence evidence](implementation_group_assembly_20261016.md)
+records the proof and its limits; this is not a native-compiler rebuild claim.
 
 ## Parallel orchestration to evaluate
 
@@ -160,8 +164,8 @@ cleanup from work that must finish before readiness.
    runtime/PCH exposure without entering compiler incremental or MT internals.
 2. Establish per-unit latency distributions and build throughput on existing grouping
    when measurements are separately authorized; cross-run Ninja reuse is optional.
-3. Prepare explicit implementation-group assembly while preserving existing output
-   grouping. Automatic splitting and multi-file classes remain CH15 debt.
+3. Implementation-group assembly is extracted with existing output grouping
+   preserved. Automatic splitting and multi-file classes remain CH15 debt.
 4. Compare Mold's single-executable layout against grouped shared libraries using
    the same application and comparable small-unit inputs; tune link threads per layout.
 5. Record the chosen scheduler, grouping policy, optimization profile, link layout,
@@ -177,8 +181,9 @@ aggregate memory alongside largest-process RSS. Keep profiles separate from norm
 latency runs. Development optimization levels and optimized runtime reuse should be
 compared without silently using release settings for only one candidate.
 
-No compiler, scheduler, unit splitter, linker integration, shared-library packaging,
-test, or benchmark is implemented or run by recording this plan. LLVM/IR caching,
+Only the implementation-group assembly extraction and focused PHP/output parity
+checks have been completed. No scheduler, unit splitter, linker integration,
+shared-library packaging, or performance benchmark is implemented by this slice. LLVM/IR caching,
 direct LLVM lowering, LTO, and hot replacement of libraries in a running process
 are outside this slice.
 

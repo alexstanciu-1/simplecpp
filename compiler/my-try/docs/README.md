@@ -41,6 +41,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Mandatory performance task once operational | [PCH findings, incremental builds and LLVM/IR investigation](planning/compile_performance.md) |
 | Planned Clang latency and link-layout experiments | [2–3 s p80 target, future unit splitting, parallel scheduling, and Mold executable/shared-library comparison](planning/clang_units_and_mold.md) |
 | Chapter 08 implementation roadmap | [Multi-file artifacts, staged migration, incremental native builds and runtime PCH](planning/incremental_cpp_artifacts.md) |
+| C++ implementation-group assembly | [Structure and exact-output proof](planning/implementation_group_assembly_20261016.md) |
 | Persistent generated output | [Coordinator publication, ownership, locking and recovery](architecture/output_publication.md) |
 | Persistent native cache | [Staged outputs, dependencies, runtime PCH and bounded native build](architecture/native_cpp_build.md) |
 | Namespace/import implementation | [Agreed language rules](../../../specs/namespaces_v0_2.md), [approved identity/body migration and current checkpoints](planning/namespace_identity_migration.md) |

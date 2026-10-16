@@ -24,8 +24,8 @@ implementation group may follow a source file; neither that mapping nor one C++ 
 per function is a permanent requirement. No combined all-project declaration header
 or application PCH should become a dependency of every unit.
 
-The [2026-10-16 lowering/toolchain plan](clang_units_and_mold.md#immediate-architecture-explicit-implementation-group-assembly)
-narrows the next structural work to explicit implementation-group assembly with
+The [2026-10-16 lowering/toolchain plan](clang_units_and_mold.md#implemented-structure-explicit-implementation-group-assembly)
+now has explicit implementation-group assembly with
 existing membership and paths preserved. Automatic unit splitting and multi-file
 classes are CH15 debt, not prerequisites for Ninja/Clang/Mold integration.
 

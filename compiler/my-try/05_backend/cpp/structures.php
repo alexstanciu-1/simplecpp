@@ -68,6 +68,18 @@ final class cpp_artifact {
 	}
 }
 
+/** Transient assembled implementation unit; no semantic owners or scheduling/cache state. */
+final class cpp_implementation_group
+{
+	public string $text = '';
+	public array $headers /** hash<bool> */ = [];
+	public array $forward_declarations /** hash<bool> */ = [];
+
+	public function __construct(public readonly string $identity, public readonly string $file_name)
+	{
+	}
+}
+
 /** Invocation-local progress for ordering complete by-value struct definitions. */
 enum cpp_record_state {
 	case visiting;
