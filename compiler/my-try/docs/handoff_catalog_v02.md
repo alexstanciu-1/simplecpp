@@ -14,13 +14,11 @@ proofs. NOTE-047 is reconciled; uniform source-location diagnostics and the othe
 [explicit extensions](catalog/15_blocking_debt.md#chapter-13-deferred-work) remain deferred.
 This is focused chapter evidence, not a full cumulative native sweep.
 
-[Chapter 14 is reconciled](catalog/14_output_runtime.md#reconciliation--2026-10-16)
-against existing artifacts, publication, native caching and runtime-module linkage.
-[CH14-EMIT-01](catalog/14_output_runtime.md#first-slice) now enables `-Wshadow`,
-preserves legal source shadowing and delivers successful native-build warnings.
-Artifact/lookup, standalone-header, PCH/no-PCH and incremental proofs pass.
-Next: review Chapter 14 for bounded closeout with remaining deferrals explicit;
-this slice does not claim a native compiler rebuild or chapter finalization.
+[Chapter 14 is closed within its implemented bounds](catalog/14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16).
+The requested compiler PHS conversion/native build and focused native artifact,
+publication, runtime-linkage and incremental gate pass. Legal source shadowing and
+visible warnings remain intentional. [Deferred extensions](catalog/15_blocking_debt.md#chapter-14-closeout-deferrals)
+keep their owners. Next: prioritize Chapter 15 and agree its first bounded slice.
 
 The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
 retains its separate evidence limits; this CH13 gate does not retroactively certify

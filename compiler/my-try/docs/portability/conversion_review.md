@@ -3,7 +3,7 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest focused gate covers Chapter 13, as detailed below. The historical
+The latest focused gate covers Chapter 14, as detailed below. The historical
 cumulative checkpoint covers the implemented Chapter 05–11 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
 partitioned namespace/constant/enum programs, bounded class/struct behavior,
@@ -11,6 +11,24 @@ inheritance, traits, interface dispatch and shared callable variance.
 The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
+
+## Chapter 14 native gate — 2026-10-16
+
+The [bounded closeout](../catalog/14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16)
+passes conversion of 215 compiler/proof PHP files to PHS and native compilation,
+14 multi-file artifact parity comparisons, 28 PCH/no-PCH executions and
+27 standalone header checks. The converted native publisher and native builder
+also pass publication parity, no-op/body-edit reuse, failed-publication repair,
+successful shadow-warning delivery and optional provider source/definition/library
+invalidation (5 incremental and 7 module build/execution scenarios).
+The final no-change native compiler build passes.
+
+Evidence: `/tmp/scpp-ch14-native-20261016/summary.json`, `logs-5/` and source/harness/
+runtime-catalog/candidate hashes plus the executable hash. Base `29efc8ad` has the
+retained validation overlay captured by those hashes. The converted driver replaces
+the normal entrypoint. STAN and LLVM were skipped explicitly; PHP used CLI. Warnings
+remain. The chapter page records the bounded scope and explicit deferrals; this is
+not a cumulative CH01–14 sweep or expanded CH12 native certification.
 
 ## Chapter 13 native gate — 2026-10-16
 
@@ -32,7 +50,7 @@ The native validation driver is substituted for the normal entrypoint.
 Legacy STAN and LLVM were skipped explicitly; the shared runner used CLI and 12 slots.
 Generated fixtures ran without PCH. Build warnings remain.
 
-This is the latest focused chapter-native evidence. It does not repeat the historical
+This is the Chapter 13 focused native evidence. It does not repeat the historical
 cumulative checkpoint below, prove every incremental/lifetime combination, or close
 CH12's broader native coverage gap. Chapter 13 deferrals remain explicit in Chapter 15.
 

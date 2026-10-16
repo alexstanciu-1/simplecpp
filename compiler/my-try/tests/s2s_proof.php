@@ -5,6 +5,45 @@ namespace scpp\compiler;
 
 final class S2S_Proof
 {
+	/** Exercise production publication and native build owners through a portable request. */
+	public static function chapter14(string $directory): string
+	{
+		try
+		{
+			$published = fs_read_text($directory . '/published.txt');
+			if (fs_read_text($directory . '/mode.txt') === 'publish')
+			{
+				$modules /** vector<string> */ = [fs_read_text($directory . '/module.txt')];
+				Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(fs_read_text($directory . '/catalog.txt'), $modules));
+				$publication = new Output_Publication($published);
+				try
+				{
+					$paths /** vector<string> */ = [fs_read_text($directory . '/source.txt')];
+					$compiler = new Compiler();
+					$compiler->init($paths);
+					$compiler->select_entry('main', 'main.phs');
+					$compiler->exec_cpp($publication);
+					$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+					return CPP_Output::encode($outputs);
+				}
+				finally
+				{
+					$publication->close();
+				}
+			}
+			$config = new native_cpp_config('/usr/bin/clang++', fs_read_text($directory . '/runtime.txt'), fs_read_text($directory . '/cache.txt'));
+			$config->pch = fs_read_text($directory . '/pch.txt') === 'yes';
+			$result = (new Native_CPP_Build($config))->build($published);
+			return '{"executable":' . json_quote($result->executable) . ',"compiled":' . $result->compiled
+				. ',"reused":' . $result->reused . ',"pch_built":' . $result->pch_built . ',"linked":' . $result->linked
+				. ',"diagnostics":' . json_quote($result->diagnostics) . '}';
+		}
+		catch (\Throwable $error)
+		{
+			return "ERROR\n" . $error->getMessage();
+		}
+	}
+
 	/** Run bounded feature edits through the same retained compiler in PHP and native form. */
 	public static function edited_source(string $valid, string $invalid, string $changed): string
 	{

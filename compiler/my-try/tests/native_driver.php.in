@@ -1,6 +1,13 @@
 <?php
 namespace scpp\compiler;
 
+// Dedicated disk-publication/build proofs use the same converted compiler owners.
+$request = fs_read_text(__REQUEST_FILE__);
+if (string_byte_starts_with($request, 'chapter14:')) {
+	echo S2S_Proof::chapter14(string_byte_slice($request, 10, string_byte_len($request) - 10));
+}
+else
+{
 $runtime_modules /** vector<string> */ = ['core', 'json', 'strings', 'datetime', 'filesystem'];
 Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(__RUNTIME_CATALOG_DIR__, $runtime_modules));
 
@@ -270,4 +277,5 @@ else
 		}
 		echo "ERROR\n", $message;
 	}
+}
 }

@@ -106,6 +106,9 @@ $cases = [
 	], 23],
 ];
 $manifest = [];
+if (isset($argv[1])) {
+	file_put_contents($argv[1] . '/native_projects.json', json_encode($cases, JSON_THROW_ON_ERROR));
+}
 foreach ($cases as $name => [$sources, $exit]) {
 	$compiler = project_input($sources);
 	$compiler->exec_cpp();

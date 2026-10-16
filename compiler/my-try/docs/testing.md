@@ -8,6 +8,24 @@ headers. `tests/native_invalidation.py` checks the flag on compile/PCH paths and
 successful warning delivery alongside its existing exact rebuild matrix. Warnings
 remain diagnostics, not errors; these runners do not rebuild the compiler itself.
 
+Chapter 14 native closeout uses the same conversion/build setup:
+
+```sh
+python3 compiler/my-try/tools/native_validate.py --target-checkout "$PWD" \
+  --candidate-revision "$(git rev-parse HEAD)" --results /tmp/ch14-native-FRESH \
+  --types-only --no-stan --chapter14
+```
+
+The converted driver compares exported multi-file projects with PHP, compiles native
+artifact bundles with and without PCH, and checks standalone headers. It also invokes
+the native compiler's actual publication and native-build workers for byte-identical
+manifests, no-op/body-edit reuse, failure/repair, successful warning delivery and an
+optional provider's source/definition/library invalidation. Build consumption is tested
+with the source catalog removed. These bounded checks do not sweep every historical
+publication interruption, locking or toolchain case. `--resume` retains attempt logs
+and objects; a successful summary is required before closeout. Source, harness,
+runtime-catalog and candidate hashes identify the exact tested overlay.
+
 Chapter 13 native closeout uses the shared candidate validator:
 
 ```sh

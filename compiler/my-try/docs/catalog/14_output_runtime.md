@@ -9,9 +9,66 @@ Cross-cutting: use a minimal output skeleton from the first runnable example; gr
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Bounded closeout and native gate — 2026-10-16
+
+**Chapter 14 is closed within its implemented frontend + C++ S2S bounds.** Its 32
+imported rows are reconciled to current owners, superseded policies, supporting
+guidance or explicit limits. CH14-EMIT-01 and NOTE-024 retain legal source shadowing
+with `-Wshadow`; no warning-free or complete legacy-PHP compatibility claim is made.
+
+Native execution exposed an arrow-capture portability defect: PHP's absent-key
+`??` fallback became a throwing native hash read. `Capture_Preparation` now defaults
+the mode to value capture and reads an explicit mode only after a membership check.
+The legal-shadowing artifact parity/execution proof covers this path. Publication
+journal generation needed the same explicit membership checks for absent before/after
+digests; native cold publication and failure/repair cover that adaptation. Four focused
+host closure/capture suites also pass (`/tmp/scpp-ch14-capture-host-20261016/commands.json`).
+The test driver
+also avoids a top-level early return unsupported by the legacy entrypoint lowering.
+
+The compiler/proof sources (215 PHP files) converted to PHS and compiled/linked
+natively. The converted driver exercises the compiler's real artifact, publication
+and native-build workers; it does not substitute host PHP for those native operations.
+The gate passes:
+
+- 14 multi-file PHP/native artifact-byte comparisons and 28 generated executions
+  across PCH/no-PCH, including runtime-name collisions, qualification, source headers,
+  reference/ownership ABI and legal block/parameter/foreach-key/catch shadowing.
+- 27 standalone native-generated header checks without PCH and four host contract suites.
+- Native/PHP publication bundle and manifest parity; no-op byte/inode/mtime stability,
+  entry-body rebuild isolation, failed-publication readiness refusal and repaired reuse.
+- 5 incremental-program and 7 optional-provider native build/execution scenarios,
+  including PCH/no-PCH, successful warning delivery, provider-source edits,
+  definition/PCH invalidation and library-only relinking. Removing the source catalog
+  before building proves consumption of the published runtime requirements.
+- A final no-change native compiler rebuild.
+
+Evidence: `/tmp/scpp-ch14-native-20261016/summary.json`, final attempt `logs-5/`,
+its native publication/build `observations.json` files, `source_hashes.json`,
+`harness_hashes.json`, `runtime_catalog_hashes.json`, `candidate.json`, and the executable
+SHA-256 in the summary. Candidate base is `29efc8ad` plus the retained validation
+harness/portability overlay captured by those hashes. The driver replaces the normal
+entrypoint; this does not certify a new native production CLI. Legacy STAN and LLVM
+were explicitly skipped. The shared runner used PHP CLI. Warnings remain visible.
+
+The earlier CH14-EMIT-01 proof below retains its broader ten-case host-driven native
+cache matrix and actual old-cache flag-transition check. This focused native gate
+supplements it; it does not repeat every historical locking/interruption scenario,
+every optional module, or the cumulative CH01–14 suite. CH12's separate native coverage
+limits remain unchanged. The retained [native gate command](../testing.md) reproduces
+this scope; a missing successful summary cannot establish closeout.
+
+Deferred work remains explicit in [remaining work](#remaining-work) and
+[Chapter 15](15_blocking_debt.md#chapter-14-closeout-deferrals): structured diagnostic
+origins, broader template incomplete-type contracts, optional-module/toolchain
+acceptance, a checked current-build/run reader, automatic runtime refresh, cache cost,
+parallel native actions, garbage collection and LLVM. Formatting and broad warning
+cleanup are not silently added to the completed slice. Next: prioritize Chapter 15
+by user value and dependencies before agreeing its first bounded slice.
+
 ## Reconciliation — 2026-10-16
 
-Chapter 14 is open, but its 32 imported rows are not 32 missing features. This review
+At reconciliation, the 32 imported rows were not 32 missing features. This review
 maps them to current owners and separates legacy policies from implementation gaps.
 `superseded` means the imported policy is replaced, not that its old spelling was
 implemented. `reconciled-bounded` inherits the linked owner's limits. Imported source
@@ -97,12 +154,13 @@ The builder successfully consumes published requirements with the source catalog
 removed. These are generated executable proofs, not a native compiler rebuild.
 Historical CH08 checkpoints are recorded in the roadmap; their old temporary evidence
 is not present in this workspace and was not rerun as a full acceptance sweep.
-No native compiler rebuild or Chapter 14 closeout is claimed by this review.
+That reconciliation did not claim a native compiler rebuild; the closeout gate above
+now supplies focused native evidence.
 
 ### Remaining work
 
-1. NOTE-024 is implemented by [CH14-EMIT-01](#first-slice) below. Chapter-level
-   closeout and any additional native-compiler evidence remain a separate decision.
+1. NOTE-024 is implemented by [CH14-EMIT-01](#first-slice) below. The requested native
+   closeout gate above now passes; its coverage remains explicitly bounded.
 2. Source-origin/category diagnostics remain **CH13-DIAG-01**, already recorded in
    [Chapter 15](15_blocking_debt.md#chapter-13-deferred-work). Do not hide that gap by
    treating an arbitrary C++ diagnostic as a complete source diagnostic.
@@ -162,9 +220,8 @@ full chapter closeout or warning-free certification is claimed.
 
 Non-goals remain new language/runtime APIs, global symbol renaming, broad warning
 cleanup, formatting, structured source diagnostics, template dependency optimization,
-new run orchestration, legacy generator changes, STAN and LLVM. Next: review Chapter 14
-for bounded closeout against these owners and remaining deferrals; further extensions
-require their own agreed slice.
+new run orchestration, legacy generator changes, STAN and LLVM. The native closeout
+above completes the chapter within these bounds; extensions need their own agreed slice.
 
 ## Progress
 

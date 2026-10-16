@@ -118,7 +118,11 @@ final class Output_Publication
 		$journal = '{"format":"scpp-output-journal-v1","files":[';
 		$separator = '';
 		foreach ($owned as $path => $authorization) {
-			$journal .= $separator . self::inventory_entry($path, $current[$path] ?? '', $hashes[$path] ?? '');
+			$before = '';
+			$after = '';
+			if (isset($current[$path])) { $before = $current[$path]; }
+			if (isset($hashes[$path])) { $after = $hashes[$path]; }
+			$journal .= $separator . self::inventory_entry($path, $before, $after);
 			$separator = ',';
 		}
 		$journal .= "]}\n";

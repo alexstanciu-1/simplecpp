@@ -914,3 +914,22 @@ and explicit native validation gate. These extensions are not implied by its clo
 
 Each extension needs its own bounded contract and lifetime/transfer proofs. Native
 chapter proofs do not certify exhaustive lifetime combinations or all deferred paths.
+
+## Chapter 14 closeout deferrals
+
+[Chapter 14](14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16) closes
+its existing artifact/runtime contracts and warning-enabled acceptance. Its native
+proof does not implement the following extensions or transfer ownership away from
+their current guides:
+
+- Structured source-origin/category diagnostics: existing **CH13-DIAG-01**.
+- More permissive template/handle incomplete-type dependencies: C++ type/declaration
+  requirements and per-runtime binding proofs; conservative includes remain valid.
+- Broader optional-module and toolchain coverage, a checked current-build/run reader,
+  parallel native actions and garbage collection: native build/publication owners.
+- Automatic runtime refresh: **CH15-NATIVE-RUNTIME-IDENTITY-01**; validation cost:
+  **CH15-NATIVE-CACHE-PERF-01**. Their existing boundaries remain in force.
+- Formatting, broad warning cleanup and LLVM remain outside the completed slice.
+
+Prioritize a bounded contract before implementation. The closeout is not a promise
+of a hermetic cache, replayed cached warnings, or exhaustive publication crash recovery.

@@ -33,7 +33,8 @@ final class Capture_Preparation
 			$capture = new prepared_capture();
 			$capture->declaration = $binding->declaration;
 			$capture->type = $binding->storage_type();
-			$mode = $modes[$name] ?? passing_mode::value;
+			$mode = passing_mode::value;
+			if (isset($modes[$name])) { $mode = $modes[$name]; }
 			if ($name === 'this') {
 				if ($mode === passing_mode::reference) { throw new \RuntimeException('Receiver capture uses $this, not &$this'); }
 				$receiver = $context->receiver;
