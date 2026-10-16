@@ -208,6 +208,9 @@ the field exists. Same-namespace files can split these declarations without alia
 - Use managed text functions for UTF-8 text; use explicit `string_byte_*` operations
   for lexer offsets and binary data. `string_byte_at` returns an integer, not a
   one-byte PHP string. Code-point counts do not count graphemes or normalize text.
+- Use [typed string splitting](string_split.md) with `q_explode($separator, $text)`
+  and explicit `vector<string>` result intent. This two-argument byte operation
+  preserves empty components; portable typed `ValueError` catches remain unsupported.
 - Keep null, false and errors distinct. Test numeric limits and lifetime behavior
   on the native target when PHP cannot model them faithfully.
 - Use explicit typed contract comparison when migrating PHP object equality. A

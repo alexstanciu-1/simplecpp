@@ -899,7 +899,7 @@ native argument binder is expected. Its own compiler implementation merely start
 using a capability in the existing PHP→PHS conversion path. Do not patch generated
 C++ if a downstream mismatch appears.
 
-### Required focused proofs if approved
+### Required focused proofs
 
 | Proof | Independent acceptance criteria |
 | --- | --- |
@@ -1018,6 +1018,218 @@ Both new proof runners passed on their first run. No native-support repair outsi
 the converter owner was required. The virtual-default mismatch remains documented
 as the explicit portability boundary identified by the design probe.
 
+## Typed string splitting for build contracts (2026-10-16)
+
+Initial review: analysis only at clone revision `da34f4c8`. The user subsequently
+approved this bounded implementation; implementation evidence follows the original
+plan below.
+
+### History-proven workaround and recommendation
+
+Recommend **two-argument typed `q_explode()`**, migrating only the two calls to
+`Runtime_Build_Contract::split_byte()` in `compiler/runtime_catalog/build.php`
+(paths in this section are relative to `compiler/my-try/` unless noted).
+
+Portability repair **`84716579`** replaced:
+
+- `explode('=', $text)` in `definition_name()` with `self::split_byte($text, 61)`;
+- `explode('/', $source)` in `validate()` with `self::split_byte($source, 47)`;
+
+and introduced the private byte-scanning helper. Both calls and the helper remained
+in the reviewed source. The helper scans every byte, appends a slice at each matching
+byte and always appends the trailing slice. Its comment explicitly requires empty
+components to survive so malformed wire spellings are rejected.
+
+At the review baseline, `tools/php_portability/function_map.php` had no
+`explode`/`q_explode` binding.
+This is a missing portable builtin exposure, not a need for semantic inference or
+a new string algorithm. The strict target already registers `explode` as
+`php::explode`; its two-argument overload delegates to `scpp::str::split` with the
+maximum positive limit. The normative
+[explode contract](../../../../specs/builtins/string/explode.md) specifies a typed
+string vector, byte semantics, full separators and an empty-separator error.
+`tests/runtime_strings.php` contains existing user-PHS split cases; those are
+supporting target evidence, not proof that authored compiler PHP can convert the
+unmapped function today.
+
+This removes more source machinery than another punctuation/default extension:
+explicit separators replace numeric byte codes, and one standard operation replaces
+a private loop. It also avoids undoing meaningful enum-default entrypoint names.
+The constructor empty-vector default workaround in `template_type_parameter`
+(`?array $dependencies = null` plus a normalized vector, also introduced in
+`84716579`) is another real candidate, but requires separate container-default and
+construction proofs. Leave it for a later slice.
+
+### Proposed bounded contract and changes
+
+Authored PHP: `q_explode(string $separator, string $string): array`, used with
+explicit `vector<string>` intent. PHS: `explode($separator, $string)`, returning
+`vector<string>`. Exactly two arguments, separator first; no limit overload yet.
+
+- Split on the full, nonempty separator byte sequence, consuming nonoverlapping
+  matches from left to right. Preserve leading, trailing and adjacent empty parts.
+- An absent separator yields one part containing the original string; an empty
+  input with a nonempty separator yields one empty string, not an empty vector.
+- Preserve arbitrary bytes, including NUL and invalid UTF-8. Do not normalize
+  paths, trim components, filter empties or interpret the separator as a regex.
+- Empty separator retains the builtin's `ValueError` behavior. See the exception
+  boundary below; do not silently substitute an empty-vector result or another
+  error family. This is distinct from the valid empty-input case.
+- Supported callers supply strings. The structural converter checks arity, not
+  remote operand types; no PHP coercion compatibility or runtime type inference
+  is added by this binding.
+
+| Owner/file | Proposed change |
+| --- | --- |
+| `tools/php_portability/function_map.php` | Add `q_explode` with `php => explode`, `target => explode`, `arity => 2`. |
+| `tools/php_portability/runtime/global_functions.php` | Regenerate through `generate_global_functions.php`; verify exactly two required string parameters and array return. The generator already reflects only the mapped maximum arity. |
+| `compiler/my-try/compiler/runtime_catalog/build.php` | Use `q_explode('=', $text)` and `q_explode('/', $source)`; retain the typed local in `definition_name()` and remove the now-unused private `split_byte()`. Leave all validation and encoding logic unchanged. |
+| Retained focused tests and portability guide/contract | Add split behavior/boundary proofs and the narrowly scoped compiler integration driver, then record actual evidence here. |
+
+A host adapter in `runtime/strings.php` is **not currently needed**: unlike join,
+two string inputs do not require validating packed-array membership or element
+coercions, and PHP `explode` already returns a packed array of strings. The
+existing facade generator can expose its first two parameters directly. Confirm
+this through reflection/facade checks rather than adding a redundant wrapper.
+No parser special case, native runtime change or new preparation protocol is
+expected. The function map participates in conversion fingerprints already.
+
+Do not add the three-argument limit surface, change other split/join loops, or
+rewrite runtime build publication. In particular, do not introduce a limit of two
+for definitions: full splitting and the exact existing validation path/diagnostics
+must remain intact for `NAME=1=2`.
+
+### Exception boundary to prove explicitly
+
+The native builtin throws `scpp::ValueError`, and PHP throws `\ValueError`.
+The portability `Exception_Policy::TYPES` currently has no `ValueError` entry.
+Therefore native builtin availability does **not** establish that convertible PHP
+can write a typed `catch (\ValueError ...)` or that the generic exception bridge
+preserves its family. This limitation must be documented, not hidden by a passing
+valid-input fixture. Both selected compiler call sites use fixed nonempty literals,
+so they do not encounter this error path.
+
+Use host-only PHP and a small native runtime exception probe to establish the
+builtin empty-separator behavior without extending portable catch syntax. Inspect
+and record the generated-program uncaught-error behavior if exercised; do not
+claim exact exit-code or portable typed-catch parity from a raw C++ catch test.
+If completing the agreed portable error contract would require a general exception
+bridge change, report that as a separate blocker rather than adding a `ValueError`
+family silently. This slice should not promise a new portable typed catch form.
+
+### Required focused proofs if approved
+
+1. **Independent split expectations:** empty input, separator absent, singleton,
+   leading/trailing/repeated separators, separator-only input, multi-byte separator
+   and overlapping candidates. Include UTF-8 byte strings plus runtime-constructed
+   NUL/invalid-UTF-8 input and separator. Compare exact part counts, per-part lengths
+   and bytes; a joined string alone cannot distinguish missing empty elements.
+2. **Facade/conversion:** reflection and generated-facade freshness, two-argument
+   mapping to `explode`, explicit string-vector output, unchanged inputs, repeated
+   conversion reuse, and zero/one/three-argument rejection. Preserve previously
+   published output/cache and source diagnostics after rejection. Native typed
+   rejection of an incompatible operand proves the target boundary; the converter
+   need not reject every invalid type.
+3. **Native shape/error:** execute the converted valid fixture and compare against
+   independently specified PHP results. Inspect direct typed `php::explode` use
+   and vector output, without mixed boxing or a handwritten byte loop. Prove empty
+   separator errors at the explicitly stated layers above.
+4. **Build-contract behavior:** capture and rerun `tests/runtime_build_contract.php`.
+   Retain its checks for `NAME`, `NAME=`, `=1`, `NAME=1=2`, leading slash, doubled
+   slash, traversal, conflicting definitions and forbidden target override.
+   Add focused exact-result/diagnostic cases for valid nested paths and definitions,
+   separator-only definitions, repeated equals, `./file.cpp`, `folder/../file.cpp`,
+   and path trailing separators (which may fail the existing `.cpp` suffix check
+   before splitting). Assert the existing validation order, not a newly chosen error.
+5. **Encoding and merge parity:** independently assert valid encoded build JSON,
+   duplicate handling and ordered source/library/definition merges. Rejection
+   witnesses must fail, not merely produce the same empty output in two runtimes.
+6. **Rebuilt compiler integration:** retain the original helper's PHP outcomes,
+   rebuild the compiler with only the two-call migration, and run the contract
+   cases inside a native driver. Verify the built source contains the migrated
+   calls and lacks `split_byte()`. Compare valid encoded specs and error messages
+   with PHP. Run a small runtime-module consumer through PHP/native compiler
+   emission, compare artifacts and compile/execute it to prove provider-build
+   requirements remain usable. Use the existing focused runtime-build fixtures;
+   no full catalogue or cumulative native_validate run is required.
+
+Use the shared 12-slot runner and PHP-FPM/default fallback, with explicit CLI
+exceptions for build/process-exit commands; native checks use `--no-stan` and
+exclude LLVM. Retain source/toolchain hashes, commands, precise evidence limits
+and any baseline failures separately. A compiled split fixture is not proof that
+the compiler itself was rebuilt.
+
+### PHS elegance and potential runtime costs
+
+`explode('=', $text)` and `explode('/', $source)` state the operation and delimiter
+directly. The generated PHS no longer needs the private byte loop. This is a clearer
+improvement than renaming an API that already conveys meaningful modes.
+
+The old helper scans bytes and copies each output slice once; it is not the
+repeated-prefix-concatenation pattern found in the earlier join review. The native
+splitter uses string search and substring construction, which may reduce per-byte
+wrapper/check overhead. Both return owning strings in a vector and retain empty
+parts; neither is a zero-copy view. No asymptotic speedup, allocation-count
+reduction, peak-memory reduction or whole-compiler speedup is established.
+Inspect emitted code first. A focused microbenchmark is optional only if a
+performance claim is sought; it is not necessary to prove this code-quality slice.
+
+### Implementation evidence (2026-10-16)
+
+Candidate: `da34f4c8` plus this slice. Added the function-map binding and regenerated
+facade, changed only the two `Runtime_Build_Contract` calls, and removed
+`split_byte()`. No runtime, parser, preparation or exception-policy changes.
+The [portable contract](../../../../specs/portability/string_split.md) records the
+supported surface and proof commands.
+
+Evidence root: `/tmp/scpp-string-split-20261016/`. `provenance.json` records source,
+converter and runtime hashes; compiler integration retains its copied PHP hashes.
+Toolchain: Ubuntu Clang 18.1.3 and PHP 8.5.7 (`toolchain/` logs).
+
+- `baseline-2/`: unchanged compiler passes the retained build-contract test and
+  independent direct assertions for 15 invalid specs, valid exact JSON, ordered
+  deduplicated requirements, and a cross-module definition conflict.
+- `standalone-2/`: `tests/portability/string_split.py` passes 12 exact split cases
+  in PHP and native execution, including full multibyte separators, overlapping
+  candidates, empty parts and runtime binary bytes. Checks compare counts, lengths
+  and bytes against independent expectations, and verify unchanged inputs.
+  Facade reflection/freshness, direct typed PHS/C++ shape, conversion reuse and
+  source/output/cache preservation pass. Zero/one/three arguments fail with source
+  diagnostics; a vector operand converts structurally and is rejected natively.
+- Empty separator: two host-only PHP cases and two raw C++ runtime cases throw
+  the expected ValueError family/message. No portable typed-catch or uncaught-exit
+  behavior is claimed.
+- The native compiler rebuilt successfully in 617.655s. The direct contract
+  assertions passed natively, but the additional fresh-publication attempt failed
+  later in `Output_Publication::publish()`. `integration/debug-logs/backtrace.stdout`
+  locates `hash_t::at: not found` in the generated `$current[$path] ?? ''` expression
+  (`compiler/output_publication.php:120`). This unchanged source lowers to
+  `coalesce_eval` with a throwing `current.at(...)` left operand. It is outside the
+  two-call split migration; no publication or coalescing repair was made.
+  The PHP publication and its managed provider build/execution passed before this
+  failure. This does **not** prove native filesystem publication.
+- Integration now uses the originally planned emission boundary: compare emitted
+  artifacts and encoded `CPP_Runtime_Build::requirements()` from PHP/native, then
+  materialize those artifacts and compile using the declared sources, definitions
+  and libraries. This avoids expanding the slice into publication lowering.
+  `integration/logs-3/` and `integration/summary.json` record the passing result:
+  all 15 invalid-spec diagnostics, exact valid encoding, ordered/deduplicated merge,
+  cross-module conflict, repeated no-op emission, byte-identical PHP/native artifact
+  bundles and exact build-requirement encoding. Both independently built provider
+  consumers exit with the expected 8. The driver-only incremental rebuild took
+  19.46 seconds; both compiler builds used `--no-stan` and left LLVM parked.
+
+Proof development corrections were confined to fixtures: expected JSON needed the
+existing escaped slash spelling; the host ValueError message uses “must not be
+empty”; nonempty container expressions needed supported typed locals. The first
+baseline attempt used the runner's documented CLI fallback because sandboxed FPM
+socket startup failed; subsequent authorized runs used FPM. Attempt logs remain.
+These are not product failures or requests to expand converter support.
+
+No timing/allocation benchmark was run. Both paths retain owning string/vector
+materialization; direct builtin spelling establishes code quality, not a measured
+runtime or memory improvement. Legacy STAN was bypassed and LLVM left parked.
+
 ## Decision log
 
 - 2026-10-16: user requests analysis of the compiler conversion flow and explicitly
@@ -1063,3 +1275,10 @@ as the explicit portability boundary identified by the design probe.
   confined to `prepare_statements()` and its two local zero calls. Completed with
   focused PHP/native and rebuilt-compiler proofs; differing virtual defaults are
   recorded as an explicit nonportable boundary.
+
+- 2026-10-16: user requests another analysis-only workaround review. Recommend
+  two-argument typed splitting for the two `Runtime_Build_Contract` calls; preserve
+  empty components and explicitly retain the existing ValueError catch boundary.
+
+- 2026-10-16: user authorizes typed string splitting, restricted to the two
+  `Runtime_Build_Contract` calls and removal of `split_byte()`; focused proofs only.
