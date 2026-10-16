@@ -73,6 +73,16 @@ final class CPP_Record_Construction
 		if ($storage === record_storage_kind::inline_value) { return CPP_Declarations::type($type, $context); }
 		$payload = CPP_Types::payload($payload_type);
 		CPP_Types::record_dependencies($payload, $context);
+		if ($storage === record_storage_kind::shared) {
+			$source_record = Type_Queries::source_record($payload_type);
+			if ($source_record !== null) {
+				$record /** collected_record */ = $source_record;
+				$allocation_name = $record->qualified_name();
+				if (isset($context->outlined_shared_allocations[$allocation_name])) {
+					return CPP_Shared_Allocations::name($record);
+				}
+			}
+		}
 		$context->headers['scpp/memory.hpp'] = true;
 		$helper = $storage === record_storage_kind::unique ? 'unique' : 'shared';
 		return '::scpp::' . $helper . '<' . $payload->spelling . '>';

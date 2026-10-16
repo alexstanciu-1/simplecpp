@@ -1058,12 +1058,14 @@ transfer, shared identity/last-owner cleanup, and complete payload dependencies
 for construction, member access, upcasts, value copies and template arguments.
 It does not rebuild the compiler itself.
 
-## Optimization-policy and constructor outlining proof
+## Optimization-policy and construction outlining proof
 
 `python3 compiler/my-try/tests/optimization_policy.py --results FRESH` exercises
 O0/O1/O2/O3 generated programs, six retained policy switches without source edits,
 execution-spelling byte preservation, independent containers/shared aliases,
 ineligible constructor/value/inheritance cases, release-policy mismatch rejection,
-and a default edit confined to the owning implementation unit. This is a PHP-hosted
+a default edit confined to the owning implementation unit, unique-allocation
+preservation, and eligibility changes refreshing untouched callers. This is a PHP-hosted
 compiler proof with compiled generated programs; native compiler and dev002 timing
-evidence are recorded in the [optimization-policy checkpoint](planning/optimization_policy_20261016.md).
+evidence are recorded in the [constructor checkpoint](planning/optimization_policy_20261016.md)
+and [allocation checkpoint](planning/allocation_outlining_20261016.md).

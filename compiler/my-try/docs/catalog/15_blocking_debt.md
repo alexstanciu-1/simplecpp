@@ -709,7 +709,10 @@ that item's generated-input and recovery requirements remain in force.
 ### CH15-CPP-OPT-POLICY-01 — optimization-aware C++ lowering
 
 Recorded by user request on 2026-10-16. The first policy flow and bounded default
-constructor outlining are implemented; see the [native validation and timings](../planning/optimization_policy_20261016.md). Application O0/O1 prioritize compile latency; O2/O3 retain
+constructor and no-argument shared-allocation outlining are implemented; see the
+[constructor measurements](../planning/optimization_policy_20261016.md) and
+[allocation measurements](../planning/allocation_outlining_20261016.md).
+Application O0/O1 prioritize compile latency; O2/O3 retain
 execution-oriented output. The compiler executable's own optimization is independent.
 See the [configuration and publication contract](../architecture/native_cpp_build.md#application-optimization-and-c-lowering).
 

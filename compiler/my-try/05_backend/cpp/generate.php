@@ -88,6 +88,13 @@ final class CPP_Generator
 		}
 		if (!$found_entry) { throw new \RuntimeException('Prepared entry is outside the program'); }
 		$ordered->append(object_cast($entry_file->executable_body()->work(), preparation_owner::class));
+		$allocations = CPP_Shared_Allocations::select($ordered, $this->policy);
+		// Eligibility is a backend placement decision, not a semantic body dependency.
+		// Re-render on shape changes so cached callers cannot reference retired helpers.
+		if (CPP_Shared_Allocations::changed($this->program->outlined_shared_allocations, $allocations)) {
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+		}
+		$this->program->outlined_shared_allocations = $allocations;
 		$definitions /** Storage<preparation_owner> */ = new Storage();
 		$bodies /** Storage<preparation_owner> */ = new Storage();
 		foreach ($ordered as $owner)
@@ -177,7 +184,7 @@ final class CPP_Generator
 					$text .= CPP_Declarations::lifecycle_special_members(object_cast($record, collected_record::class), $contract);
 				}
 				else { $text .= "public:\n\tvirtual ~" . self::source_name('record', $record->qualified_name()) . "() noexcept = default;\n"; }
-				$text .= "};\n\n";
+				$text .= "};\n\n" . $fragment->allocation_declaration_text;
 			}
 			elseif ($definition instanceof collected_enum) {
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
@@ -237,6 +244,7 @@ final class CPP_Generator
 			throw new \LogicException('C++ generation requires successfully prepared work');
 		}
 		$context = new cpp_generation_context();
+		$context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
 		$next = new cpp_fragment();
 		if ($owner instanceof body_work) {
 			$body_owner = object_cast($owner, body_work::class);
@@ -256,6 +264,7 @@ final class CPP_Generator
 			if ($entry instanceof collected_source_callable) {
 				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
 				$definition_context = new cpp_generation_context();
+				$definition_context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;
 				$next->prototype_text = CPP_Declarations::signature($function_syntax, $context, true);
@@ -274,9 +283,17 @@ final class CPP_Generator
 				CPP_Declarations::generate_record($syntax, $context, $outline);
 				$next->text = $context->records;
 				$definition_context = new cpp_generation_context();
+				$definition_context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
 				$next->record_definition_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
 				if ($outline) {
 					$next->record_definition_text .= CPP_Default_Constructors::definition(object_cast($entry, collected_record::class), $definition_context);
+				}
+				$allocation_record = object_cast($entry, collected_record::class);
+				$allocation_name = $allocation_record->qualified_name();
+				if (isset($this->program->outlined_shared_allocations[$allocation_name])) {
+					$next->allocation_declaration_text = CPP_Shared_Allocations::signature($allocation_record) . ";\n\n";
+					$context->headers['scpp/shared_p.hpp'] = true;
+					$next->record_definition_text .= CPP_Shared_Allocations::definition($allocation_record, $definition_context);
 				}
 				$next->definition_headers = $definition_context->headers;
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;

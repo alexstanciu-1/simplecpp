@@ -20,6 +20,8 @@ class Incomplete { public $items hash<Item> = []; public int $unset; }
 ''')
     (src / 'main.phs').write_text('''$a = new Bag(); $b = new Bag(); $alias = $a;
 $item = new Item(); $alias->items["x"] = $item;
+$owned unique<Bag> = new Bag();
+if (count($owned->items) !== 0 || $owned->marker !== 3) { return 6; }
 if (count($b->items) !== 0) { return 1; }
 if ($a->items["x"]->number !== 7) { return 2; }
 if ($a->marker !== 3) { return 3; }
@@ -52,6 +54,18 @@ foreach (Model::$cpp_files as $artifact) {
  if ($before[$artifact->file_name] !== $artifact->text) { $changed[] = $artifact->file_name; }
 }
 if ($changed !== ['units/n6d61696e/n74797065732e706873.cpp']) { throw new \\Exception('Default edit escaped owning unit'); }
+// Eligibility changes must refresh callers even when their source is untouched.
+file_put_contents($source_path, str_replace('public int $marker = 4;', 'public int $marker = 4; public function __construct() {}', file_get_contents($source_path)));
+$compiler->update_cpp([$source_path], null, new cpp_lowering_policy(0));
+$ineligible = CPP_Output::encode(Model::$cpp_files);
+if (str_contains($ineligible, 'allocate_shared_Bag')) { throw new \\Exception('Stale outlined allocation'); }
+file_put_contents($source_path, str_replace('public int $marker = 4; public function __construct() {}', 'public int $marker = 4;', file_get_contents($source_path)));
+$compiler->update_cpp([$source_path], null, new cpp_lowering_policy(0));
+$restored = CPP_Output::encode(Model::$cpp_files);
+if (!str_contains($restored, 'allocate_shared_Bag')) { throw new \\Exception('Missing restored allocation'); }
+Compiler_Lifecycle::reset_cpp();
+$compiler->cpp(null, new cpp_lowering_policy(0));
+if (CPP_Output::encode(Model::$cpp_files) !== $restored) { throw new \\Exception('Retained and fresh allocation output differ'); }
 $view = json_read('{"cpp_policy":"cpp-lowering-v1:latency"}');
 Native_CPP_Publication::require_policy($view, 0);
 Native_CPP_Publication::require_policy($view, 1);
@@ -70,6 +84,10 @@ if (!$rejected) { throw new \\Exception('Release accepted latency output'); }
                 artifacts=decode_artifacts(payload)
                 text=''.join(a['text'] for a in artifacts)
                 assert ('record_Bag::record_Bag()' in text)==(level<2)
+                assert ('allocate_shared_Bag()' in text)==(level<2)
+                assert '::scpp::unique<record_Bag>()' in text
+                for excluded in ['Authored','Derived','ValueBag','Incomplete','Item']:
+                    assert f'allocate_shared_{excluded}()' not in text
                 for name in ['Derived','ValueBag','Incomplete']:
                     assert f'record_{name}::record_{name}()' not in text
                 if i < 4:
@@ -77,7 +95,7 @@ if (!$rejected) { throw new \\Exception('Release accepted latency output'); }
                     cpp.compile_artifacts(f'mode-{level}',payload,out/f'app-{level}')
                     runner.run(f'execute-{level}',[out/f'app-{level}'])
             assert (out/'1.json').read_bytes()==(out/'2.json').read_bytes()==(out/'4.json').read_bytes()
-            (out/'summary.json').write_text(json.dumps(dict(passed=True,levels=[0,1,2,3],retained_switches=6,default_edit_changed_units=1),indent=2))
+            (out/'summary.json').write_text(json.dumps(dict(passed=True,levels=[0,1,2,3],retained_switches=6,default_edit_changed_units=1,allocation_eligibility_switches=2),indent=2))
         run_tasks([Task('optimization-policy',proof)])
 
 if __name__=='__main__': main()

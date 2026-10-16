@@ -11,7 +11,7 @@ final class Native_CPP_Publication
 		if (!$document->has('cpp_policy')) { return; } // Pre-policy publications used execution spelling.
 		$identity = $document->member('cpp_policy')->text();
 		if ($identity === 'cpp-lowering-v1:execution') { return; }
-		if (($identity === 'cpp-lowering-v1:latency') && $policy->outline_defaults()) { return; }
+		if ((($identity === 'cpp-lowering-v1:latency') || ($identity === 'cpp-lowering-v2:latency')) && $policy->outline_defaults()) { return; }
 		throw new \RuntimeException('C++ lowering policy is incompatible with native optimization; regenerate output');
 	}
 

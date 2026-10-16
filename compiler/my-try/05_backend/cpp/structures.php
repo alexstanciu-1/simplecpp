@@ -91,6 +91,8 @@ enum cpp_record_state {
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	/** Invocation selection of backend-owned, no-argument shared allocation functions. */
+	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;
@@ -123,6 +125,7 @@ final class cpp_fragment
 	public string $initializer_text = '';
 	/** Type-owned storage and constructor definitions belong to the declaring source unit. */
 	public string $record_definition_text = '';
+	public string $allocation_declaration_text = '';
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
 	/** Definition signatures can need layouts that their public prototypes do not. */
@@ -139,6 +142,7 @@ final class cpp_fragment
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
 	public string $policy_identity = '';
+	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()

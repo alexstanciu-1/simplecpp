@@ -39,11 +39,12 @@ A combined coordinator constructs `new cpp_lowering_policy($config->optimization
 and passes it to emission before invoking its native consumer. Optional directory
 reuse still belongs to Ninja.
 
-Levels 0/1 share `cpp-lowering-v1:latency`; levels 2/3 share
+Levels 0/1 share `cpp-lowering-v2:latency`; levels 2/3 share
 `cpp-lowering-v1:execution`. A profile change clears retained backend fragments,
 without changing prepared semantic facts or source-unit membership. The publication
 records `cpp_policy` under the ready digest. Native consumers reject latency output
-at O2/O3 and unknown policy identities; regenerate first. Execution spelling,
+at O2/O3 and unknown policy identities; regenerate first. Earlier
+`cpp-lowering-v1:latency` publications remain valid at O0/O1. Execution spelling,
 including pre-policy publications, may deliberately be compiled at O0/O1 as a
 baseline. Native consumers never invoke lowering themselves. Optimization flags
 remain in compile/PCH command identity, so O0 to O1 rebuilds native inputs even
@@ -56,9 +57,25 @@ or an empty typed vector/hash construction, with at least one container default.
 Keep the original expressions and order in a member-initializer list; emit the
 constructor in the declaring source's existing implementation group. Uninitialized
 fields are excluded to preserve C++ value-initialization behavior. Authored methods,
-allocation wrappers, copy/move/destruction and source contracts are unchanged.
+copy/move/destruction and source contracts are unchanged.
 O2/O3 keep the previous generated form. `record_definition_text` holds type-owned
-static storage and outlined constructor definitions. Automatic splitting is deferred.
+static storage, outlined constructors and allocation definitions. Automatic splitting
+is deferred.
+
+The second latency pattern emits a no-argument shared-allocation function for the
+same eligible classes, declared after the type and defined in its existing `.cpp`.
+Shared construction calls it; its body calls the unchanged `scpp::shared<T>()`
+runtime allocator. Unique/value construction and classes outside that eligibility
+retain their previous path. No argument forwarding or new source-visible factory
+is introduced. O2/O3 emit neither the helper nor calls to it.
+
+`CPP_Shared_Allocations` selects helpers from settled declarations. The selected
+qualified names belong to `cpp_program`, and rendering contexts receive the current
+selection. A changed selection clears backend fragments before rendering, including
+unchanged callers; this prevents stale helper references when a field or constructor
+edit changes eligibility. Stable selection preserves ordinary fragment reuse.
+Content-aware publication still avoids rewriting unchanged artifacts. This bounded
+invalidation is backend-owned and does not add semantic dependencies or alter MT.
 
 ## Shared commands and optional Ninja execution
 
