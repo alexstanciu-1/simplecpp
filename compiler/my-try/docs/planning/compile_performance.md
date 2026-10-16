@@ -12,7 +12,9 @@ language milestone. No backend switch or broad refactor is authorized now.
 The [Clang unit latency and Mold plan](clang_units_and_mold.md) records the 2–3 second
 p80 compilation target, future stable unit splitting, parallel orchestration, and
 one executable versus up to 20 application shared libraries. Implementation and
-benchmark execution remain deferred.
+benchmark execution remain deferred. That focused plan treats compiler incremental/MT
+internals as external assumptions and makes Ninja-owned between-run reuse optional
+and non-blocking; broader historical acceptance work below is not its prerequisite.
 
 ## Findings and evidence
 

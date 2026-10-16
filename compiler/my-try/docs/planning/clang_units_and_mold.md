@@ -6,6 +6,31 @@ This extends the [compilation performance task](compile_performance.md) and
 [Chapter 08 artifact roadmap](incremental_cpp_artifacts.md). It is not a language
 spec, an implementation authorization, or a claim that the targets are achieved.
 
+## Scope clarification — 2026-10-16
+
+This work owns C++ lowering architecture and the shape of the generated build inputs:
+fast full compilation, short individual Clang invocations, and small native rebuild
+sets after edits. Treat compiler incremental processing and multithreading as
+will-be-working capabilities owned elsewhere. Reviewing, repairing, or proving those
+internals is not a prerequisite for this work. The previously observed retained
+compiler crash remains an external issue, not a gate on lowering design discussion.
+
+Cross-run object/PCH reuse is optional and must not materially slow this work or block
+progress. If pursued here, **Ninja alone owns native output freshness and reuse between
+runs**. Our side supplies stable generated files, commands, and dependency edges.
+Do not develop a competing content-addressed object cache or cache-validity layer for
+this exploration. The existing native consumer/cache is an implementation fact;
+this plan neither removes it nor layers its reuse decisions beneath Ninja. A later
+integration decision must keep the two paths' responsibilities explicit.
+
+Distinguish a fresh compiler process using a retained build directory from a clean
+build with no artifacts. Ninja can reuse the former's current valid outputs; an empty
+build directory has nothing to reuse. Ordinary Ninja bookkeeping is not a historical
+content cache and does not promise reuse of every prior version after Git revert.
+Stable output paths, unchanged bytes/timestamps, stable commands, accurate dependencies,
+and a persistent build directory enable this optional path. If integration is costly,
+defer it and continue reviewing generated C++ using the existing compilation flow.
+
 ## Priority and target
 
 Prioritize the latency of a single Clang object-compilation invocation. Parallel
@@ -58,13 +83,12 @@ independent PCHs can build concurrently, while dependent PCH chains must wait.
 Do not add a global header/PCH barrier where only a particular branch depends on it.
 Initially complete source publication before launching object compilations.
 
-Evaluate Ninja as an execution scheduler versus a bounded worker pool in the native
-builder. Scheduler selection is not settled by this plan. The native-build owner
-retains authoritative action/cache identities and publication/recovery policy.
-Define Ninja's timestamp/dependency bookkeeping boundary explicitly if selected;
-do not introduce two competing cache-validity decisions. Workers use separate
-staging outputs, atomically publish success, and cannot mark a mixed or failed
-revision ready. Reused objects remain inputs to the final link.
+Ninja is the intended owner if optional between-run reuse is pursued, not merely a
+scheduler under a second cache authority. A future adapter would describe commands,
+outputs, and dependencies; Ninja would determine freshness and schedule necessary
+actions. No new worker-pool implementation or concurrency correctness audit belongs
+to this slice. Artifact publication must still provide consistent inputs and completed
+outputs, but redesigning its recovery protocol is outside scope.
 
 Measure compile-job counts 1, 2, 4, 8, and 16, with a declared memory budget.
 Control linker thread count independently: a Ninja job is a command, not a CPU
@@ -103,7 +127,8 @@ and maintenance costs. No runtime regression budget has yet been agreed.
 
 Mold integration belongs to the native-build owner and
 [CH15-MOLD-01](../catalog/15_blocking_debt.md#ch15-mold-01--configurable-mold-linking).
-Fingerprint the selected linker and relevant configuration in link-cache identity.
+Represent the selected linker and relevant configuration in the chosen build path's
+inputs/commands so a change triggers the necessary link; do not add a new cache layer.
 Tune 1, 2, 4, 8, 16 threads and the installed version's default using identical
 object inputs within each layout. Do not assume more threads are faster for small
 links. Keep normal executable-ready measurements distinct from `--no-fork` resource
@@ -113,9 +138,10 @@ cleanup from work that must finish before readiness.
 
 ## Future experiment sequence and decision gates
 
-1. Resolve the observed retained-native repeated-body-edit crash and establish
-   correct repeated edit/revert behavior before claiming sustained incremental success.
-2. Establish per-unit latency distributions and parallel scaling on existing grouping.
+1. Review current grouping, header visibility, generated expression structure, and
+   runtime/PCH exposure without entering compiler incremental or MT internals.
+2. Establish per-unit latency distributions and build throughput on existing grouping
+   when measurements are separately authorized; cross-run Ninja reuse is optional.
 3. Prototype stable splitting only for identified costly units; verify invalidation
    scope, cache reuse, behavior, and application performance.
 4. Compare Mold's single-executable layout against grouped shared libraries using
@@ -123,8 +149,10 @@ cleanup from work that must finish before readiness.
 5. Record the chosen scheduler, grouping policy, optimization profile, link layout,
    and measured tradeoffs before authorizing production integration.
 
-Cover cold/no-op, one and multiple body edits, header/signature/layout edits, unit
-addition/removal, Git revert, and failure/retry. Report request-to-C++ publication,
+For future lowering comparisons, cover clean builds, fresh processes with retained
+artifacts when available, and representative body/header/signature/layout edits.
+Measure changed native inputs and rebuild spread; do not turn these experiments into
+a compiler incremental/MT correctness campaign or make such a campaign a prerequisite. Report request-to-C++ publication,
 individual compilation and queue time, request-to-runnable-output, process completion,
 startup, and steady-state runtime separately. Report object/PCH/link reuse and
 aggregate memory alongside largest-process RSS. Keep profiles separate from normal
@@ -135,3 +163,36 @@ No compiler, scheduler, unit splitter, linker integration, shared-library packag
 test, or benchmark is implemented or run by recording this plan. LLVM/IR caching,
 direct LLVM lowering, LTO, and hot replacement of libraries in a running process
 are outside this slice.
+
+## Initial lowering review — 2026-10-16
+
+Read-only inspection of the recovered compiler at `d6ac157c`; no new timing claims.
+
+- `05_backend/cpp/artifacts.php` derives stable callable/type paths from qualified
+  names and implementation paths from module/source identity. `generate.php` emits
+  narrow callable/type headers, per-source implementation units, separate entry,
+  and specialized helper artifacts. Preserve this foundation.
+- `generate_program()` already holds separate signature/body fragments, but combines
+  all bodies for a source into one unit and unions their include sets. A future named
+  implementation-group assembly step could reuse those fragments and compute includes
+  per group. Large source files currently have no explicit compilation-cost bound.
+- `types.php` distinguishes declaration from complete-definition requirements, while
+  template arguments and callable payload types conservatively request completeness.
+  Review representative dependency expansion before proposing narrower runtime binding
+  contracts; do not blindly replace complete includes with forward declarations.
+- Ordinary operator lowering and the runtime PCH include the broad generated
+  `scpp/generated/operators.hpp` (1,366 lines at this checkpoint, with scalar, mixed,
+  wrapper, and container dependencies). Narrow runtime surfaces are a candidate;
+  the runtime generator owns changes to that generated header. PCH coverage already
+  amortizes some work, so source inspection alone does not establish the net saving.
+- Eager binary operations and calls use immediately invoked lambdas and temporaries
+  to preserve evaluation order, value snapshots, references, and lifetime. Consider
+  a backend-owned expression result plus ordered statements as a future shape, with
+  lazy branches and expression-only contexts handled explicitly. This is a conceptual
+  alternative, not permission to remove sequencing or introduce semantic analysis in
+  the emitter; its size and compile/runtime benefit remain unmeasured.
+
+Discussion priority: preserve existing boundaries; isolate implementation-group
+assembly as the future splitting owner; investigate header/template exposure and
+expression complexity before picking split thresholds. Defer broad runtime changes
+and shared-library packaging until their concrete costs and boundaries are understood.

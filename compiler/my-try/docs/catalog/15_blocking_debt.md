@@ -711,7 +711,9 @@ that item's generated-input and recovery requirements remain in force.
 The agreed [Clang unit and Mold experiment plan](../planning/clang_units_and_mold.md)
 adds thread tuning and a comparison of many small objects linked into one executable
 versus up to 20 stable application shared libraries. This is planning only; no
-scheduler, split policy, or shared-library layout is selected or implemented yet.
+split policy or shared-library layout is selected or implemented yet. Optional
+between-run reuse belongs to Ninja in that exploration and must not block lowering
+work; compiler incremental/MT internals are outside its scope.
 
 Recorded by user request on 2026-10-10 as deferred native-build integration debt.
 This is a performance/tooling follow-up, not a new v0.2 release gate. Mold has been
