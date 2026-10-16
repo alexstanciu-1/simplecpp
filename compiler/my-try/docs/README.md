@@ -39,6 +39,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Stage-owned processing refactor | [Agreed no-visitor boundary, implementation batches and open questions](planning/stage_owned_processing.md) |
 | v0.2 early rejection versus runtime guards | [Preparation diagnostic policy](../../../specs/v0_2_preparation_diagnostics.md) |
 | Mandatory performance task once operational | [PCH findings, incremental builds and LLVM/IR investigation](planning/compile_performance.md) |
+| Planned Clang latency and link-layout experiments | [2–3 s p80 target, future unit splitting, parallel scheduling, and Mold executable/shared-library comparison](planning/clang_units_and_mold.md) |
 | Chapter 08 implementation roadmap | [Multi-file artifacts, staged migration, incremental native builds and runtime PCH](planning/incremental_cpp_artifacts.md) |
 | Persistent generated output | [Coordinator publication, ownership, locking and recovery](architecture/output_publication.md) |
 | Persistent native cache | [Staged outputs, dependencies, runtime PCH and bounded native build](architecture/native_cpp_build.md) |
