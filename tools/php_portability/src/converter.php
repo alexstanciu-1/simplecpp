@@ -126,6 +126,19 @@ final class Converter {
 		if ($token[1] !== $text) { $this->fail($token[2], 'expected ' . $text); }
 	}
 
+	/** Integer field defaults are literals, not arbitrary constant expressions. */
+	private function integerFieldDefault(array $first): string {
+		if ($first[0] === T_LNUMBER) { return $first[1]; }
+		if ($first[1] === '+' || $first[1] === '-') {
+			$magnitude = $this->significant();
+			if ($magnitude[0] === T_LNUMBER && preg_match('/^(0|[1-9][0-9]*)$/D', $magnitude[1])) {
+				return $first[1] . $magnitude[1];
+			}
+			$this->fail($magnitude[2], 'signed integer field default requires a decimal integer literal');
+		}
+		$this->fail($first[2], 'integer field default requires an integer literal');
+	}
+
 	/** Check literal bytes locally before handing spelling to the selected target. */
 	private function stringLiteral(array $token): string {
 		[, $text, $line] = $token;
@@ -757,22 +770,24 @@ final class Converter {
 			}
 			$this->expect('=');
 			$value = $this->significant();
+			$integerDefault = $type[1] === 'int' && !($nullable && $value[1] === 'null')
+				? $this->integerFieldDefault($value) : null;
 			if ($nullable) {
 				$valid = $value[1] === 'null' || match ($type[1]) {
 					'bool' => in_array(strtolower($value[1]), ['true', 'false'], true),
-					'int' => $value[0] === T_LNUMBER,
+					'int' => $integerDefault !== null,
 					'string' => $value[0] === T_CONSTANT_ENCAPSED_STRING,
 					default => false,
 				};
 				if (!$valid || in_array(strtolower($type[1]), ['mixed', 'object', 'iterable', 'void', 'never', 'self', 'parent', 'static'], true)) { $this->fail($at, 'nullable property requires null or a matching scalar literal'); }
 				if ($value[1] !== 'null' && $type[1] === 'string') { $value[1] = $this->stringLiteral($value); }
 				$this->expect(';');
-				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' nullable<' . Exception_Policy::name($type[1]) . '> = ' . $value[1] . ';', $at);
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' nullable<' . Exception_Policy::name($type[1]) . '> = ' . ($integerDefault ?? $value[1]) . ';', $at);
 				continue;
 			}
 			$valid = match ($type[1]) {
 				'bool' => in_array(strtolower($value[1]), ['true', 'false'], true),
-				'int' => $value[0] === T_LNUMBER,
+				'int' => $integerDefault !== null,
 				'string' => $value[0] === T_CONSTANT_ENCAPSED_STRING,
 				default => false,
 			};
@@ -783,7 +798,7 @@ final class Converter {
 			if (!$valid) { $this->fail($value[2], 'property default must be a matching scalar literal'); }
 			if ($type[1] === 'string') { $value[1] = $this->stringLiteral($value); }
 			$this->expect(';');
-			$fields[] = new Node('property', $visibility . ' ' . $type[1] . ' ' . $field[1] . ' = ' . $value[1] . ';', $at);
+			$fields[] = new Node('property', $visibility . ' ' . $type[1] . ' ' . $field[1] . ' = ' . ($integerDefault ?? $value[1]) . ';', $at);
 		}
 		$this->fail($line, 'unclosed class');
 	}

@@ -424,6 +424,193 @@ memory reduction is claimed. Runtime join reservation tuning stays outside scope
 Reproduction commands for the two focused proofs are in the portable contract.
 No cumulative native suite was run. The new frontend remains parked.
 
+## Signed integer field defaults: plan and implementation (2026-10-16)
+
+Design baseline: clone revision `cd14f71022816b55eaeff010c0bae427bd30fa85`.
+The initial analysis was documentation-only. The user subsequently approved this
+slice and its focused proofs, limiting compiler migration to
+`prepared_data_entry::$input_position`. Implementation evidence is recorded below;
+the shared-frontend idea remains parked.
+
+### Observed owner and failure
+
+`tools/php_portability/src/converter.php`, `Converter::referenceClass()`, consumes
+one significant token after a plain scalar field's `=`. Both the ordinary `int`
+and nullable `?int` branches require that token to be `T_LNUMBER`. A sign is a
+separate token, so `-1` fails before its magnitude is read. Static fields pass
+through the same scalar-default branches. This is a local structural grammar gap,
+not missing compiler type inference or a missing runtime integer operation.
+
+The downstream generator already routes property defaults through
+`renderInitializerExpr()` and emits ordinary defaults as C++ in-class member
+initializers (`generators/php/src/Generator/Generator.php`, class property loop).
+Its unary-expression renderer has plus and minus cases. Static fields use a
+separate definition path. These are implementation anchors, not a native proof
+that every newly accepted initializer works, especially nullable/static cases.
+
+Concrete compiler workarounds:
+
+| Source under `compiler/my-try/` | Sentinel assignment | Migration judgment |
+| --- | --- | --- |
+| `04_analyze/prepare/data/structures.php`, `prepared_data_entry` | `input_position = -1` in its only constructor statement | Recommended first consumer: declare the default and remove this constructor. |
+| `03_parse/structures/structures_construction.php`, `object_construction_children_iterator` | `next_argument = -1` | Later analogous consumer; retain the constructor and promoted source parameter. Prove target-type-first traversal. |
+| `04_analyze/prepare/data/structures.php`, `reference_cycle_vertex` | `visit_index = -1`, `low_link = -1` | Later analogous consumer; retain actual target/body/label initialization. Prove fresh graph-visit state. |
+| `04_analyze/prepare/data/work_records.php`, `type_semantic_work` | `source_revision = -1` after `parent::__construct(...)` | Defer: declaration initialization changes its position relative to the base constructor; audit base construction and observable reads first. |
+
+Historical change `480b2543` also records moving negative initializers into
+constructors for the iterator and cycle vertex. This supports identifying those
+assignments as portability workarounds, rather than guessing from their spelling.
+
+### Proposed grammar and exact converter change
+
+Recommend adding one private, field-specific integer-literal reader in
+`Converter`, used by both ordinary and nullable integer defaults. It takes the
+already-read first token and returns initializer text; callers keep ownership of
+`null`, field type/visibility, the terminating `;`, and property-node emission.
+Do not manufacture a fake integer token containing a unary expression.
+
+1. An existing unsigned `T_LNUMBER` remains accepted with its existing spelling.
+   Do not silently tighten existing positive literals while adding signs.
+2. For a first token `+` or `-`, consume exactly one following significant token.
+   Require `T_LNUMBER` and decimal spelling matching `^(0|[1-9][0-9]*)$`.
+   Return sign plus magnitude, without numeric evaluation or a float conversion.
+   Whitespace/comments between the sign and magnitude follow existing significant
+   token handling. Preserve `+` and `-0` text; their values must be proved.
+3. Reject every other first token or signed operand with a source-located
+   integer-field-default diagnostic. Keep the existing semicolon check so a
+   trailing expression cannot become an accepted prefix.
+4. Route only explicit `int` initializers through this helper, including `?int`
+   when the initializer is not `null`. Leave bool/string/named defaults on their
+   existing validation paths. This removes the duplicated integer-literal rule
+   from the two scalar branches without redesigning the whole class parser.
+
+The new signed domain deliberately excludes hex/octal/binary, digit separators,
+parenthesized literals, repeated signs, constants, calls and arithmetic. Existing
+unsigned-token acceptance is unchanged; broader numeric spelling is separate debt.
+On a 64-bit host, the intended new domain is decimal magnitudes representable as
+`T_LNUMBER`, including `9223372036854775807` and its negative. Do not claim that
+`-9223372036854775808` is covered: tokenization of its positive magnitude and PHP
+property type compatibility must be recorded in the boundary proof. Reject a
+`T_DNUMBER` operand rather than special-casing it into an integer. The proof must
+record `PHP_INT_SIZE`; this slice adds no cross-host integer-width emulation.
+
+No change is proposed to function bindings, the runtime, my-try semantic
+preparation, or C++ emission. Keep the separate `uint32` annotated-field branch,
+`@scpp-struct` value-record rules, readonly fields, constructor/promoted parameter
+defaults and method defaults unchanged. If the focused native proof exposes a
+required change in another owner, report that blocker before expanding the slice.
+
+### First compiler consumer and expected quality/cost
+
+Change only `prepared_data_entry::$input_position` to `public int $input_position = -1;`
+and remove its assignment-only constructor. Keep its explanatory field comment.
+The intended PHS is `public int $input_position = -1;`, using the converter's
+existing ordinary nonnullable property form, with no synthetic constructor or
+helper call. Other negative-sentinel migrations are not part of this first slice.
+
+This makes the default visible at its declaration and eliminates boilerplate in
+PHP and PHS. The C++ expectation is the same integer member with a direct default
+initializer. It does not reduce object size or introduce new storage. Optimized
+constructor assignment may already cost the same; do not claim a measurable
+speedup, allocation reduction, or peak-memory reduction. Inspect generated code
+for an unexpected conversion/boxing/helper, but do not add a benchmark without
+such evidence. Existing nullable representation costs are not caused by the sign.
+
+### Focused proofs required before acceptance
+
+Add a retained `tests/portability/signed_integer_fields.py` proof with independent
+expected values and output-shape assertions; reuse the shared runner (12 slots,
+PHP-FPM by default, documented CLI exceptions for process-exit/build commands).
+Run dependency chains in order. Suggested proof groups:
+
+| Group | Required evidence |
+| --- | --- |
+| Converter positives | Instance/static `int` and `?int`; `-1`, `-17`, `+17`, `-0`, `+0`; public/protected/private coverage; sign separated by whitespace/comment. Exact field text and no injected constructor. |
+| Unchanged paths | Positive/zero defaults, required uninitialized int, nullable null, bool/string/named defaults, valid uint32 defaults. Run existing `nullable_fields.py` alongside the focused proof. |
+| Rejections | Missing magnitude, double signs, signed float/exponent, signed nondecimal/separated digits, parentheses, constants/calls, and trailing arithmetic. Negative uint32 and unchanged parameter/readonly/value-record restrictions remain rejected. Keep checks about this grammar, not broad PHP validation. |
+| Boundaries | Record host tokenization and PHP property acceptance, then conversion for positive/negative maximum decimal magnitude and out-of-range magnitude including the minimum-integer spelling. Verify no overflow or implicit float coercion is introduced. |
+| Failure publication | Source filename/line on rejection; pre-existing generated output/cache stays intact. Successful output must not be partially replaced by a rejected initializer. |
+| PHP versus native fixture | Build converted fixture with `--no-stan`; independently assert signed values, nullable null versus present zero/negative, static initial value/shared mutation, fresh-instance reset, default visible in constructor body and explicit constructor override. Compare PHP and native results. |
+| Generated C++ | Direct integer default, unchanged mapped member type, no mixed box/allocation/helper. Inspect both nullable construction and the static definition, not only PHS output. |
+| Compiler integration | Construct `prepared_data_entry` and assert `input_position === -1`, then set/read a nonnegative index and create a fresh entry. Exercise record/sequence preparation consumers and compare expected results before/after migration. Rebuild the compiler itself for the native version of this proof; a compiled standalone fixture alone is insufficient. |
+
+For compiler integration, retain a focused driver using the existing compiler
+bootstrap/native build path, verify the native build input contains the migrated
+class, and save source/toolchain hashes and commands. Check generated program
+behavior for a record initializer and a sequence initializer with independently
+specified results; compare compiler artifacts where stable. Do not require the
+compiler's own generated C++ to be byte-identical: moving a constructor assignment
+to a declaration intentionally changes it. Do not run cumulative native_validate.
+
+The older broad `run.py`/`check.py` suites have known baseline rejection-expectation
+failures recorded in the typed-join section. Keep those distinct from new failures;
+this slice does not include repairing them.
+
+Implementation closeout would update the portable authoring guide (and its linked
+contract if needed), retain the focused proof/fixtures, and replace this proposed
+status with measured evidence and explicit limitations. Stop if removing the
+constructor exposes target construction semantics requiring cross-owner work.
+The initial design entry used source/history inspection only. Subsequent
+implementation and execution evidence is recorded separately below.
+
+### Implemented and proved (2026-10-16)
+
+The approved slice is complete on the clone based on `cd14f710`. The converter
+now owns signed integer field literal parsing in `integerFieldDefault()`, shared
+by ordinary and nullable integer fields. Only
+`prepared_data_entry::$input_position` migrated in compiler code; its assignment-only
+constructor was removed. Other sentinel sites and all deferred grammar remain
+unchanged. The current supported boundary and reproduction command live in
+[the portability contract](../../../../specs/portability/signed_integer_fields.md).
+
+Evidence root: `/tmp/scpp-signed-fields-20261016/`.
+
+- `fields-final/summary.json`: focused PHP/native fixture passes; 39 converter
+  rejections, output/cache preservation, unchanged neighboring defaults and the
+  existing nullable-field regression suite pass. The host is 64-bit PHP.
+  `tokens.json` records the minimum-integer magnitude as `T_DNUMBER`;
+  `logs/php-minimum.stderr` independently records PHP's typed-property rejection.
+- `fields-final/generated.txt`: plain fields use `int_t<>` and direct signed
+  integer initialization. Nullable fields retain `nullable<int_t<>>`; static
+  definitions use the same direct literal construction. No new helper or box is
+  introduced. The compiler header similarly emits
+  `int_t<> input_position = (-static_cast<int_t<> >(1));`, with no declared
+  `prepared_data_entry` constructor. No runtime/backend change was needed.
+- `baseline/` and `baseline-logs/` retain pre-migration consumer results.
+  Both `data_preparation` and `data_records` pass after migration. All 28 record
+  C++ artifacts match the baseline byte-for-byte. The preparation suite checks
+  semantic facts/recovery internally and does not publish comparison artifacts.
+- `integration/summary.json`: compiler itself rebuilt; its driver checks initial
+  `-1`, mutation to `4`, and an independent fresh entry at `-1`. Two focused
+  record/sequence cases match PHP compiler artifacts byte-for-byte and execute
+  with independently specified exit codes **21** and **12**. Record input order
+  differs from field declaration order; sequence evaluation order is observable.
+  The existing native driver also checks repeated no-op preparation.
+- Native compiler SHA-256: `b58dc693fdd0b20c0f207df8934e4b658d53254b744174a153fdbfa8cc879593`.
+  `integration/source_hashes.json` records the build input, including the migrated
+  class and proof driver; the copied class matches the final authored source.
+  `candidate_hashes.json` identifies the converter, migrated source and retained
+  proof scripts. `review-logs/toolchain.stdout` records Clang 18. The cold compiler
+  build took 602.086 seconds, an observation rather than a benchmark.
+- All proof commands/results are journaled under their `logs*/commands.json`.
+  Native builds used `--no-stan`; LLVM stayed parked. Baseline execution fell back
+  to PHP CLI because the sandbox prevented FPM socket binding; final focused
+  execution used the shared runner's FPM pool, with explicit CLI build/rejection
+  exceptions. No broad native validation or performance benchmark was run.
+
+Commands used for the final focused runs:
+
+```sh
+python3 tests/portability/signed_integer_fields.py --results /tmp/scpp-signed-fields-20261016/fields-final
+python3 tests/portability/signed_integer_fields_compiler.py --results /tmp/scpp-signed-fields-20261016/integration --baseline /tmp/scpp-signed-fields-20261016/baseline --resume
+```
+
+The initial proof attempts exposed two harness assumptions: the generated native
+integer type is `int_t<>` with explicit literal casts, and `data_preparation` does
+not publish `.cpp` files. Correcting these checks required no production change.
+Final retained scripts pass. Cleaner PHP/PHS is established; no speedup or memory
+reduction is claimed. Inherited-field migration remains deferred.
+
 ## Decision log
 
 - 2026-10-16: user requests analysis of the compiler conversion flow and explicitly
@@ -443,3 +630,11 @@ No cumulative native suite was run. The new frontend remains parked.
 
 - 2026-10-16: user approves implementation and focused proofs for typed joining,
   confined to the two closure-emission joins. Slice completed as recorded above.
+
+- 2026-10-16: user selects signed integer field defaults for design-only analysis.
+  Proposed shared field-literal reader, one initial compiler consumer, explicit
+  numeric grammar boundaries and PHP/native acceptance proofs recorded above.
+
+- 2026-10-16: user approves signed integer field defaults and focused proofs, with
+  compiler migration limited to `prepared_data_entry::$input_position`. Completed
+  with standalone PHP/native and rebuilt-compiler evidence above.

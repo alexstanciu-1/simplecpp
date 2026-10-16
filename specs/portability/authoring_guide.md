@@ -143,6 +143,10 @@ Ordinary method signatures now preserve explicit scalar and named types, with
 were never restricted to the earlier scalar-only vocabulary. See the
 [signature contract](method_signatures.md) for remaining converter boundaries.
 
+Ordinary `int`/`?int` fields also support
+[signed decimal literal defaults](signed_integer_fields.md), including static
+fields. This does not extend parameter, readonly, uint32 or value-record defaults.
+
 Static fields now support the same initialized scalar, named-enum, nullable and
 annotated container forms as instance fields, with literal `Type::$field` and
 class-local `self::$field` access. See [static fields](static_properties.md) for
