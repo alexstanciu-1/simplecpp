@@ -11,6 +11,32 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Workspace smoke — 2026-10-16
+
+Revision `8c7ac0e5b10faf8217cb31916da3d988d4e86ddc` passes a fresh native compiler
+build using the existing validator's source snapshot/conversion/framework/build
+setup, with `--no-stan` and parked LLVM excluded. Build time was 421.764 seconds;
+the final no-change build took 1.188 seconds. Three focused proofs (`s2s-proof`,
+`types-proof`, `control-proof`) produced byte-identical PHP/native output and their
+generated programs exited with expected codes 10, 0 and 8. The control proof includes
+its retained identity and dependency failure/retry/repair checks. Total elapsed time
+was 431.715 seconds; this is an observed run, not a benchmark.
+
+Evidence: `/tmp/scpp-v02-workspace-smoke-20261016/summary.json`, `commands.json`,
+`source_hashes.json`, `candidate.json` and `logs/`; focused orchestration script:
+`/tmp/scpp-v02-workspace-smoke.py`. These local artifacts were available during CH12
+reconciliation. The generated validation driver intentionally replaces `main.php`;
+other snapshotted compiler/proof PHP files matched the checkout. FPM socket creation
+was unavailable and the shared runner used its CLI fallback. Native build warnings
+remain; this is not warning-clean certification.
+
+This run rebuilds the compiler itself but does not sweep CH12 fixtures. The
+[CH12 closeout](../catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
+combines its recorded focused feature proofs with this limited workspace proof;
+complete chapter-native parity, rejection and incremental coverage remains unclaimed.
+The older 2026-10-10 result directories were absent here, so their recorded summaries
+below were reviewed without rechecking their raw logs or overlay hashes.
+
 ## Native checkpoint — 2026-10-10
 
 Candidate base `e6dad0db97ce1b629608bb772d6529917a45b151` plus authored portability

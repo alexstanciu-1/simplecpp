@@ -5,6 +5,15 @@ The active feature roadmap is [docs/catalog](catalog/README.md), including its f
 examples, rule cards, progress and decisions. This entry retains the agreed direction;
 the [original handoff](archive/handoff_catalog_v02.md) is historical.
 
+## Current chapter handoff — 2026-10-16
+
+[Chapter 12 is closed within its selected bounds](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16).
+The closeout maps retained proof owners to completed work and distinguishes historical
+native evidence from the current workspace smoke; full CH12 native coverage remains
+unclaimed. Deferred extensions keep their existing owners. Next: agree a bounded
+Chapter 13 error-value slice using the runtime metadata foundation, separately from
+throw/catch and finally. No Chapter 13 implementation is authorized by this handoff.
+
 ## Agreed v0.2 scope
 
 Progress the frontend and C++ S2S first. General validation/STAN follows in a second
