@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite ownership_targets --no-pch --results FRESH_DIRECTORY`
+checks shared/unique void target rejection across source contexts, retry/recovery,
+and generated shared/unique controls plus unchanged weak<void> admission.
+See [the bounded DR-02 proof](planning/ownership_void_targets_2026_10_18/README.md).
+
 `python3 compiler/my-try/tests/records.py --suite constructor_parameters --no-pch --results FRESH_DIRECTORY`
 checks abstract inline constructor input rejection before emission, inherited
 signature invalidation/recovery, and four generated concrete/shared input controls.

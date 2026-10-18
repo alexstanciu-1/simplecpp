@@ -81,6 +81,25 @@ $ordinary_use = $registry->use($registry->intern_application($ordinary, [$intege
 ownership_check(!($ordinary instanceof ownership_semantics), 'Spelling conferred ownership');
 $registry->intern_application($shared, [$ordinary_use]);
 
+// Admission follows resolved families, including renamed definitions, before interning.
+$no_value = $registry->define_no_value('NoValueAlias', type_definition_origin::runtime);
+$void_targets = [$registry->use($catalog->canonical('void')->type_id()),
+	$registry->use($registry->canonical($no_value)->type_id())];
+foreach ([$shared, $catalog->definition('unique'), $renamed, $alias_definition] as $owner_definition)
+{
+	foreach ($void_targets as $target)
+	{
+		$before = $registry->application_count();
+		ownership_rejects(fn() => $registry->intern_application($owner_definition, [$target]), 'non-void target');
+		ownership_rejects(fn() => $registry->intern_application($owner_definition, [$target]), 'non-void target');
+		ownership_check($registry->application_count() === $before, 'Rejected void ownership was interned');
+	}
+}
+$weak = object_cast($catalog->definition('weak'), ownership_type_definition::class);
+$weak_void = $registry->intern_application($weak, [$void_targets[0]]);
+ownership_check($registry->intern_application($weak, [$void_targets[0]]) === $weak_void, 'Weak void behavior changed');
+$registry->intern_application($ordinary, [$void_targets[0]]);
+
 // The restriction is immediate, not a recursive ban on useful compositions.
 $vector = object_cast($catalog->definition('vector'), abstract_template_type_definition::class);
 $vector_handles = $registry->intern_application($vector, [$registry->use($applications['shared']->type_id())]);
