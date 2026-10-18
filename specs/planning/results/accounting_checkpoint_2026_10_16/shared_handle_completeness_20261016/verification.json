@@ -1,0 +1,10 @@
+{
+  "builds": 54,
+  "php_native_parity": 3,
+  "dependency_set_checks": 51,
+  "self_tests_per_build": 1855,
+  "prior_runtime_files_unchanged": 195,
+  "additional_metadata_hashes": 9,
+  "native_source_hashes_verified": 214,
+  "shared_declaration_rebuild_count": 20
+}
