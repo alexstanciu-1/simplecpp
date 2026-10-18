@@ -1,0 +1,119 @@
+{
+  "nullable_abstract": {
+    "stage": "prepare",
+    "error": "Template type argument does not declare required capability value_storable for nullable\n"
+  },
+  "result_abstract": {
+    "stage": "prepare",
+    "error": "Template type argument does not declare required capability value_storable for result\n"
+  },
+  "hash_abstract": {
+    "stage": "prepare",
+    "error": "Template type argument does not declare required capability value_storable for hash\n"
+  },
+  "unique_void": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch2/unique_void/cpp/entry.cpp:1:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:64:4: error: cannot form a reference to 'void'\n   64 |         T &deref() const {\n      |           ^\n/tmp/mytry-diagnostic-review/batch2/unique_void/cpp/entry.cpp:8:23: note: in instantiation of template class 'scpp::unique_p<void>' requested here\n    8 |         scpp::unique_p<void> local_s;\n      |                              ^\nIn file included from /tmp/mytry-diagnostic-review/batch2/unique_void/cpp/entry.cpp:1:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:77:4: error: cannot form a reference to 'void'\n   77 |         T &operator*() const { return deref(); }\n      |           ^\nIn file included from /tmp/mytry-diagnostic-review/batch2/unique_void/cpp/entry.cpp:1:\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:3:\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/detail.hpp:5:\nIn file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/memory:78:\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/unique_ptr.h:95:16: error: static assertion failed due to requirement '!is_void<void>::value': can't delete pointer to incomplete type\n   95 |         static_assert(!is_void<_Tp>::value,\n      |                       ^~~~~~~~~~~~~~~~~~~~\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/unique_ptr.h:404:4: note: in instantiation of member function 'std::default_delete<void>::operator()' requested here\n  404 |           get_deleter()(std::move(__ptr));\n      |           ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:22:2: note: in instantiation of member function 'std::unique_ptr<void>::~unique_ptr' requested here\n   22 |         unique_p() = default;\n      |         ^\nIn file included from /tmp/mytry-diagnostic-review/batch2/unique_void/cpp/entry.cpp:1:\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/unique_p.hpp:3:\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/detail.hpp:5:\nIn file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/memory:78:\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/unique_ptr.h:97:16: error: invalid application of 'sizeof' to an incomplete type 'void'\n   97 |         static_assert(sizeof(_Tp)>0,\n      |                       ^~~~~~~~~~~\n4 errors generated.\n"
+    ]
+  },
+  "shared_void": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch2/shared_void/cpp/entry.cpp:1:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/shared_p.hpp:91:4: error: cannot form a reference to 'void'\n   91 |         T &deref() const {\n      |           ^\n/tmp/mytry-diagnostic-review/batch2/shared_void/cpp/entry.cpp:8:23: note: in instantiation of template class 'scpp::shared_p<void>' requested here\n    8 |         scpp::shared_p<void> local_s;\n      |                              ^\nIn file included from /tmp/mytry-diagnostic-review/batch2/shared_void/cpp/entry.cpp:1:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/shared_p.hpp:104:4: error: cannot form a reference to 'void'\n  104 |         T &operator*() const { return deref(); }\n      |           ^\n2 errors generated.\n"
+    ]
+  },
+  "weak_void": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "hash_bad_key": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch2/hash_bad_key/cpp/entry.cpp:3:\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/hash_t.hpp:3:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:248:16: error: static assertion failed: hash_t<T, T_KEY> requires a supported typed key family\n  248 |         static_assert(hash_detail::typed_hash_key<T_KEY>, \"hash_t<T, T_KEY> requires a supported typed key family\");\n      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n/tmp/mytry-diagnostic-review/batch2/hash_bad_key/cpp/entry.cpp:9:45: note: in instantiation of template class 'scpp::hash_t<scpp::int_t<>, scpp::float_t>' requested here\n    9 |         scpp::hash_t<scpp::int_t<>, scpp::float_t> local_s;\n      |                                                    ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:248:16: note: because 'scpp::float_t' does not satisfy 'typed_hash_key'\n  248 |         static_assert(hash_detail::typed_hash_key<T_KEY>, \"hash_t<T, T_KEY> requires a supported typed key family\");\n      |                       ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:240:26: note: because 'scpp::float_t' does not satisfy 'hash_key'\n  240 | concept typed_hash_key = hash_key<T_KEY>;\n      |                          ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:235:4: note: because 'key_ops<T_KEY>::hash(left)' would be invalid: implicit instantiation of undefined template 'scpp::hash_detail::key_ops<scpp::float_t>'\n  235 |         { key_ops<T_KEY>::hash(left) } -> std::convertible_to<std::uint64_t>;\n      |           ^\n1 error generated.\n"
+    ]
+  },
+  "vector_unique_copy": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "nullable_unique_copy": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "property_abstract": {
+    "stage": "prepare",
+    "error": "Template type argument does not declare required capability value_storable for nullable\n"
+  },
+  "private_dtor_value": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "private_dtor_vector": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "protected_dtor_vector": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "unique_private_dtor": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "private_dtor_field": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "duplicate_interface": {
+    "stage": "emit",
+    "error": "Duplicate C++ artifact identity or path"
+  },
+  "duplicate_constants": {
+    "stage": "parse",
+    "error": "main.phs: Expected '=' at main.phs: byte 10\n"
+  },
+  "method_const": {
+    "stage": "parse",
+    "error": "main.phs: Expected '=' at main.phs: byte 20\n"
+  },
+  "float_overflow": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "int_overflow": {
+    "stage": "prepare",
+    "error": "S2S integer literal exceeds signed 64-bit representation\n"
+  },
+  "readonly_property": {
+    "stage": "parse",
+    "error": "main.phs: Expected '=' at main.phs: byte 20\n"
+  },
+  "nested_static_void": {
+    "stage": "prepare",
+    "error": "S2S struct field type does not declare value_storable\n"
+  },
+  "virtual_private_dtor": {
+    "stage": "prepare",
+    "error": "Private base destructor is not accessible to descendant cleanup\n"
+  },
+  "duplicate_trait": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "zero_div_const": {
+    "stage": "parse",
+    "error": "main.phs: Expected '=' at main.phs: byte 10\n"
+  },
+  "switch_scope": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  }
+}

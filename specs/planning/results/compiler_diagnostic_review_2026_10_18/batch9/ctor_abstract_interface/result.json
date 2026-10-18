@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Interface storage requires its default shared handle\n"
+}

@@ -1,0 +1,1 @@
+{"base": {"main.phs": "return f(1);", "a.phs": "function f(int $x): int { return $x; }"}, "edit": {"a.phs": "function f(int $x): int { return $x; } function f(int $x): int { return $x; }"}}

@@ -1,0 +1,1 @@
+function f(hash<int, float> $s): void {} return 0;

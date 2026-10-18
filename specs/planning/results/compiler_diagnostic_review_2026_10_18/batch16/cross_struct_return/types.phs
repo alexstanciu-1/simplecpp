@@ -1,0 +1,1 @@
+namespace Lib; struct S { int $n = 1; }

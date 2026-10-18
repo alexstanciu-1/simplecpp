@@ -1,0 +1,1 @@
+namespace Lib; function make(): function<int()> { return fn(): int => 1; }

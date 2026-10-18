@@ -1,0 +1,1 @@
+class B { protected function __construct() {} } class C extends B {} $c = new C(); return 0;

@@ -1,0 +1,1 @@
+function f(): void {} if (f()) {} return 0;

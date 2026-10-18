@@ -1,0 +1,1 @@
+interface I { function f(): int; } class B { final function f(): int { return 1; } } class C extends B implements I {} $c = new C(); $i I = $c; return $i->f();

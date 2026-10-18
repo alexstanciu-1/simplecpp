@@ -1,0 +1,1 @@
+class C { private function __construct() {} } $c = new C(); return 0;

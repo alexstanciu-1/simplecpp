@@ -1,0 +1,499 @@
+[
+  {
+    "name": "control-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/control"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.639,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "void_local-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/void_local"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.64,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "void_field-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/void_field"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.645,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "self_struct-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/self_struct"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.645,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "duplicate_type-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/duplicate_type"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.654,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "void_parameter-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/void_parameter"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.657,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "void_vector-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/void_vector"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.67,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "method_field-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/method_field"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.677,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "duplicate_method-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/duplicate_method"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.684,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "duplicate_local-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/duplicate_local"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.69,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "void_nullable-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/void_nullable"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.697,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "recursive_vector-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/recursive_vector"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.721,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "partial_return-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/partial_return"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.342,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "duplicate_static-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/duplicate_static"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.354,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "break_outside-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/break_outside"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.369,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "const_default-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/const_default"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.399,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "continue_outside-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/continue_outside"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.384,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "switch_partial-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/switch_partial"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.353,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "do_continue-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/do_continue"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.395,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "unused_bad_method-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/unused_bad_method"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.365,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "unused_bad_static-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/unused_bad_static"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.379,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "abstract_local-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/abstract_local"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.367,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "reference_temp-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/reference_temp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.309,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "default_order-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/default_order"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.298,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "default_ref-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/default_ref"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.316,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "duplicate_constructor-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/duplicate_constructor"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.304,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "const_method_collision-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/const_method_collision"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.306,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "private_destructor-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch1/private_destructor"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.314,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [17-Oct-2026 08:05:34] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[17-Oct-2026 08:05:34] WARNING: failed to change socket attribute\n[17-Oct-2026 08:05:34] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-ylel2jfe/0.sock': Operation not permitted (1)\n[17-Oct-2026 08:05:34] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "control-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch1/control/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch1/control/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.425,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "unused_bad_static-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch1/unused_bad_static/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch1/unused_bad_static/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.987,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "method_field-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch1/method_field/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch1/method_field/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.39,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "control-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch1/control/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch1/control/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.663,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "method_field-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch1/method_field/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch1/method_field/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.667,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

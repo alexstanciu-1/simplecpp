@@ -1,0 +1,1 @@
+class C { int $f; function f(): int { return 1; } } return 0;

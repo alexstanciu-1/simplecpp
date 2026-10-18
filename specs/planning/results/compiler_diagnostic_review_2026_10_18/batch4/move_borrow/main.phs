@@ -1,0 +1,1 @@
+struct S { int $n = 1; } $p unique<S> = new S(); $r =& $p->n; $q = move($p); return $r;

@@ -1,0 +1,1 @@
+namespace B; function g(int $n): int { return $n > 0 ? \A\f($n - 1) : 0; }

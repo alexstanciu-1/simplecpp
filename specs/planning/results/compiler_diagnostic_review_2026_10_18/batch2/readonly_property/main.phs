@@ -1,0 +1,1 @@
+class C { const int $x = 1; } $c = new C(); $c->x = 2; return 0;

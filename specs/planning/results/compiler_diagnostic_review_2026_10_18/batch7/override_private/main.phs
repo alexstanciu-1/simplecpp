@@ -1,0 +1,1 @@
+abstract class B { abstract function f(): int; } class C extends B { private function f(): int { return 1; } } return 0;

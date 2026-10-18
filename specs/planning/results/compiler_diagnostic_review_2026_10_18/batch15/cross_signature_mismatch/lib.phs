@@ -1,0 +1,1 @@
+namespace Lib; function f(int $n): int { return $n; }

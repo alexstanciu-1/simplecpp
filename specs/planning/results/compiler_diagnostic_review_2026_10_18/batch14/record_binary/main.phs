@@ -1,0 +1,1 @@
+struct S {} $s = new S(); $t = $s + $s; return 0;

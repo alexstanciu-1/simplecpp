@@ -1,0 +1,1 @@
+$f function<int()> = fn(): int => 1; $v vector<result<function<int()>>> = [$f]; $r = $v[0]; $g function<int()> = $r; return $g();

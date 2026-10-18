@@ -1,0 +1,1 @@
+enum E : uint8 { case A = 1; } $n int = E::A; return 0;

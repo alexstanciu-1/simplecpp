@@ -1,0 +1,1 @@
+$s hash<int, vector<int>>; return 0;

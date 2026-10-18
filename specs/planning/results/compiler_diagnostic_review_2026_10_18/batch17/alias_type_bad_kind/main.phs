@@ -1,0 +1,1 @@
+use function Lib\f as T; $x T; return 0;

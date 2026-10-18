@@ -1,0 +1,252 @@
+{
+  "missing_type": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "return_string": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "param_string": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "extra_parameter": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "removed_symbol": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "delete_file": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "body_unknown": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "body_wrong_return": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "parse_error": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "token_error": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "duplicate_function": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "missing_method": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "private_method": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "method_param": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "abstract_class": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "method_return": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "constructor_param": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "base_final": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "interface_extra": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "field_type": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "field_private": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "add_bad_file": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "duplicate_class": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "delete_entry": {
+    "base": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    }
+  },
+  "known_hash_gap": {
+    "base": {
+      "stage": "sync",
+      "error": "main.phs: Expected ';' at main.phs: byte 8\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    }
+  }
+}

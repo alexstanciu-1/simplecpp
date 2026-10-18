@@ -1,0 +1,1 @@
+$a unique<int>; $b unique<int>; $c = ($a = move($b)); return 0;

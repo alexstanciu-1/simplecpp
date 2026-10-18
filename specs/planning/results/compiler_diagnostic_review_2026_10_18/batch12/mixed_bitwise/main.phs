@@ -1,0 +1,1 @@
+$v mixed = 1; $n = $v & 1; return 0;

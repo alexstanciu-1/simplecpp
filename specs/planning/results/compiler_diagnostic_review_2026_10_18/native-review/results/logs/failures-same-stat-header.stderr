@@ -1,0 +1,5 @@
+Native compilation failed: In file included from /tmp/mytry-diagnostic-review/native-review/results/failures/published/entry.cpp:1:
+/tmp/mytry-diagnostic-review/native-review/results/failures/runtime/ordinary.hpp:1:27: error: use of undeclared identifier 'x'
+    1 | inline int value(){return x;}
+      |                           ^
+1 error generated.

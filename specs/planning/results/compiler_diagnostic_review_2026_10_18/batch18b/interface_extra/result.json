@@ -1,0 +1,40 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "19fa3b3346b051ab94a36874fd0b4dd08946e55fba445118e4003646a1e99175",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "stage": "prepare",
+    "error": "Concrete type has unimplemented abstract methods\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Concrete type has unimplemented abstract methods\n"
+  },
+  "retry": {
+    "stage": "prepare",
+    "error": "Concrete type has unimplemented abstract methods\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Concrete type has unimplemented abstract methods\n"
+  },
+  "fresh_invalid": {
+    "stage": "prepare",
+    "error": "Concrete type has unimplemented abstract methods\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Concrete type has unimplemented abstract methods\n"
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "19fa3b3346b051ab94a36874fd0b4dd08946e55fba445118e4003646a1e99175",
+    "empty": false,
+    "ready": true
+  }
+}

@@ -1,0 +1,1 @@
+class C { function __construct(unique<int> $p) {} } $p unique<int>; $c = new C(move($p)); return 0;

@@ -1,0 +1,1 @@
+function &f(int &$n): int { return $n; } $n = 1; clean(f($n)); return $n;

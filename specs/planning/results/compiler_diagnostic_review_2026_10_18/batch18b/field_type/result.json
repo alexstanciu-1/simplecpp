@@ -1,0 +1,40 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "003226a87f3d8e17bc15b58e0f3b15a82fb15c4e2527ebf53e0237e7a3fc7c98",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "retry": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "fresh_invalid": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "003226a87f3d8e17bc15b58e0f3b15a82fb15c4e2527ebf53e0237e7a3fc7c98",
+    "empty": false,
+    "ready": true
+  }
+}

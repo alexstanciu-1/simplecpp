@@ -1,0 +1,1 @@
+function f(): int { for (;;) { break; } } return 0;

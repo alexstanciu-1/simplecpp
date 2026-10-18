@@ -1,0 +1,1 @@
+function f(const vector<int> &$x): void { $x[0] = 1; } return 0;

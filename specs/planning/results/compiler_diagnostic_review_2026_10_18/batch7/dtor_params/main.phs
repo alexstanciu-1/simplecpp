@@ -1,0 +1,1 @@
+class C { function __destruct(int $n) {} } return 0;

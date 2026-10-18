@@ -1,0 +1,1 @@
+$v vector<mixed> = [1]; $v[0] = 'x'; $s string = $v[0]; return 0;

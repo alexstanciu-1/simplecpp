@@ -1,0 +1,10 @@
+In file included from /tmp/mytry-diagnostic-review/batch9/ctor_self_value/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:
+/tmp/mytry-diagnostic-review/batch9/ctor_self_value/cpp/types/n53.hpp:6:20: error: copy constructor must pass its first argument by reference
+    6 |         record_S(record_S local_other);
+      |                           ^
+      |                           const &
+/tmp/mytry-diagnostic-review/batch9/ctor_self_value/cpp/units/n6d61696e/n6d61696e2e706873.cpp:2:29: error: copy constructor must pass its first argument by reference
+    2 | record_S::record_S(record_S local_other)
+      |                             ^
+      |                             const &
+2 errors generated.

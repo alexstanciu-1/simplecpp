@@ -1,0 +1,1 @@
+$s hash<int, float>; return 0;

@@ -1,0 +1,1 @@
+$n = 1; $f = function (int ...$xs) use ($n): int { return $n; }; return $f(1, 2);

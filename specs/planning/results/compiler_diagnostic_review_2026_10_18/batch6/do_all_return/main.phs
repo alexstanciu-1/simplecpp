@@ -1,0 +1,1 @@
+function f(): int { do { return 1; } while (false); } return f();

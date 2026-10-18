@@ -1,0 +1,1 @@
+$f = Lib\make(); return $f();

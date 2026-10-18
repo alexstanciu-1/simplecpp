@@ -1,0 +1,1 @@
+class C { private function __destruct() {} } $c = new C(); return 0;

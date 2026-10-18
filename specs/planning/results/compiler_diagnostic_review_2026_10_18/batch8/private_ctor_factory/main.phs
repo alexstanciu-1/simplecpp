@@ -1,0 +1,1 @@
+class C { private function __construct() {} static function make(): C { return new C(); } } $c = C::make(); return 0;

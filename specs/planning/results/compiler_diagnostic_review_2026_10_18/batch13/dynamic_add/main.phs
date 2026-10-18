@@ -1,0 +1,1 @@
+$x dynamic = 1; $z = $x + $x; return 0;

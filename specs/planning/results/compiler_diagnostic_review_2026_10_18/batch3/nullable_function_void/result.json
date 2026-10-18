@@ -1,0 +1,4 @@
+{
+  "stage": "parse",
+  "error": "main.phs: Assignment requires an assignable target at main.phs: byte 22\n"
+}

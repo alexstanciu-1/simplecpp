@@ -1,0 +1,1 @@
+class A { vector<A> $as; } $a = new A(); return 0;

@@ -1,0 +1,1 @@
+$v vector<int> = [1]; return isset($v[0]['x']) ? 1 : 0;

@@ -1,0 +1,1 @@
+struct S { int $n = 1; } $v vector<nullable<S>> = [new S(), null]; $v[1] = new S(); $s S = $v[0]; return $s->n;

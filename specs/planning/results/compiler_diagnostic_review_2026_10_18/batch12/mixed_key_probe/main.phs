@@ -1,0 +1,1 @@
+$v vector<int> = [1]; $k mixed = 0; return isset($v[$k]) ? 1 : 0;

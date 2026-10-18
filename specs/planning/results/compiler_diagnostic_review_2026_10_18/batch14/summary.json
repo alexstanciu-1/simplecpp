@@ -1,0 +1,139 @@
+{
+  "value_class_vector": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "value_class_nullable": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "value_class_hash": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "container_implicit_upcast": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "container_implicit_bad_downcast": {
+    "stage": "prepare",
+    "error": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\n"
+  },
+  "vector_result_function": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_nullable_record": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_nullable_unique": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_mixed_write": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_mixed_dynamic": {
+    "stage": "prepare",
+    "error": "S2S mixed/dynamic family conversion requires an explicit scalar/null cast without storage modifiers\n"
+  },
+  "dynamic_mixed_element": {
+    "stage": "prepare",
+    "error": "S2S mixed/dynamic family conversion requires an explicit scalar/null cast without storage modifiers\n"
+  },
+  "vector_index_compound": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_i8_compound": {
+    "stage": "prepare",
+    "error": "S2S fixed-width compound assignment is deferred\n"
+  },
+  "nested_index_compound": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "hash_string_compound": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "string_index_read": {
+    "stage": "prepare",
+    "error": "S2S string operator[] with 1 argument(s) is deferred; no string overload is defined\n"
+  },
+  "string_index_write": {
+    "stage": "prepare",
+    "error": "S2S string operator[] with 1 argument(s) is deferred; no string overload is defined\n"
+  },
+  "hash_append_int": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "hash_append_string": {
+    "stage": "prepare",
+    "error": "S2S receiver does not support append\n"
+  },
+  "index_foreach_ref": {
+    "stage": "parse",
+    "error": "main.phs: foreach requires a simple value binding; references and destructuring are deferred at main.phs: byte 37\n"
+  },
+  "index_ref_return": {
+    "stage": "prepare",
+    "error": "S2S reference binding requires stable storage\n"
+  },
+  "nested_wrong_probe": {
+    "stage": "prepare",
+    "error": "S2S receiver has no keyed probe/removal contract\n"
+  },
+  "result_vector_condition": {
+    "stage": "prepare",
+    "error": "S2S condition truthiness requires a supported scalar type\n"
+  },
+  "result_function_condition": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "result_function_coalesce": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "nullable_record_ternary": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "weak_truth": {
+    "stage": "prepare",
+    "error": "S2S weak presence/truthiness requires an explicit lock\n"
+  },
+  "handle_equal_null": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "record_truth": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "record_binary": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  }
+}

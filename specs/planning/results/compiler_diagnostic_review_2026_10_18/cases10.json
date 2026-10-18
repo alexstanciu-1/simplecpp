@@ -1,0 +1,10 @@
+{
+"ctor_void_return":"function cleanup(): void {} class C { function __construct() { return cleanup(); } } $c = new C(); return 0;",
+"dtor_void_minimal":"function cleanup(): void {} class C { function __destruct() { return cleanup(); } } return 0;",
+"ctor_bare_control":"function cleanup(): void {} class C { function __construct() { cleanup(); return; } } $c = new C(); return 0;",
+"dtor_bare_control":"function cleanup(): void {} class C { function __destruct() { cleanup(); return; } } $c = new C(); return 0;",
+"ctor_struct_void":"function cleanup(): void {} struct C { function __construct() { return cleanup(); } } $c = new C(); return 0;",
+"dtor_struct_void":"function cleanup(): void {} struct C { function __destruct() { return cleanup(); } } $c = new C(); return 0;",
+"ctor_self_second":"struct S { function __construct(int $n, S $other) {} } return 0;",
+"ctor_empty_abstract_control":"abstract struct A {} function f(A $a): void {} return 0;"
+}

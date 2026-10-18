@@ -1,0 +1,1 @@
+class S { function __construct(value<S> $other) {} } return 0;

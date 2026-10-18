@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Private base destructor is not accessible to descendant cleanup\n"
+}

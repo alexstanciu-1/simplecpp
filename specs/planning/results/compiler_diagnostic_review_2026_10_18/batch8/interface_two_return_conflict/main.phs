@@ -1,0 +1,1 @@
+interface I { function f(): int; } interface J { function f(): string; } class C implements I, J { function f(): int { return 1; } } return 0;

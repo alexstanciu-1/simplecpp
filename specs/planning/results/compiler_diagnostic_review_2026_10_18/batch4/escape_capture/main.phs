@@ -1,0 +1,1 @@
+function f(): function<int()> { $n = 1; return function () use (&$n): int { return $n; }; } return 0;

@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Template type argument does not declare required capability hashable for hash\n"
+}

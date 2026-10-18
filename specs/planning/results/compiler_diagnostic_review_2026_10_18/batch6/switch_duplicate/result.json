@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S switch has duplicate case value integer:1\n"
+}

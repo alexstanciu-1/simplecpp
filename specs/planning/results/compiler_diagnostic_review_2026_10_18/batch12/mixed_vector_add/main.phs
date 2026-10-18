@@ -1,0 +1,1 @@
+$v mixed = 1; $a vector<int> = [1]; $n = $v + $a; return 0;

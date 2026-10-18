@@ -1,0 +1,1 @@
+function f(const int $n): int { return $n; } return f(1);

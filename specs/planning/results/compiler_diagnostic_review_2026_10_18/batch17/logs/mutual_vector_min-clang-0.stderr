@@ -1,0 +1,6 @@
+In file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_min/cpp/entry.cpp:1:
+In file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_min/cpp/types/n41.hpp:2:
+/tmp/mytry-diagnostic-review/batch17/mutual_vector_min/cpp/types/n42.hpp:8:34: error: use of undeclared identifier 'record_A'
+    8 |         scpp::vector_t<::scpp::shared_p<record_A>> field_as;
+      |                                         ^
+1 error generated.

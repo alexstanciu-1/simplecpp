@@ -1,0 +1,1 @@
+$a unique<int>; $a = move($a); return 0;

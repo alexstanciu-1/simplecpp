@@ -1,0 +1,1 @@
+namespace App; use const Lib\N as X; return X;

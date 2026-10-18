@@ -1,0 +1,1 @@
+struct S { private function __destruct() {} } function f(S $s): void {} return 0;

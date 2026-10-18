@@ -1,0 +1,1 @@
+namespace Lib; class C { public static int $n = 1; }

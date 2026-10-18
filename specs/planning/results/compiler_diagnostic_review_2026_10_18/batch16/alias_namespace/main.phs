@@ -1,0 +1,1 @@
+use Lib as L; return L\f();

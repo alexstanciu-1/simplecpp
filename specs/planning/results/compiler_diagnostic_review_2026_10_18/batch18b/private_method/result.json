@@ -1,0 +1,40 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "stage": "prepare",
+    "error": "Private method is not accessible here: f\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Private method is not accessible here: f\n"
+  },
+  "retry": {
+    "stage": "prepare",
+    "error": "Private method is not accessible here: f\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Private method is not accessible here: f\n"
+  },
+  "fresh_invalid": {
+    "stage": "prepare",
+    "error": "Private method is not accessible here: f\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Private method is not accessible here: f\n"
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+    "empty": false,
+    "ready": true
+  }
+}

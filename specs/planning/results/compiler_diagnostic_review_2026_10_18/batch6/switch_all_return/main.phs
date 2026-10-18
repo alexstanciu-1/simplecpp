@@ -1,0 +1,1 @@
+function f(int $n): int { switch ($n) { default: return 1; case 1: return 2; } } return f(1);

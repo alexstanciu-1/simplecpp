@@ -1,0 +1,90 @@
+{
+  "has_include": {
+    "cold": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include/cache/artifacts/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin",
+      "compiled": 1,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include\\/cache\\/artifacts\\/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin\",\"sha256\":\"617e381f4b8d8d4e212db934da602a9ebfadf5a2be3b1ab7fdaf16f2ff6e4ddb\"}\n"
+    },
+    "warm": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include/cache/artifacts/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin",
+      "compiled": 0,
+      "reused": 1,
+      "pch_built": 0,
+      "linked": 0,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include\\/cache\\/artifacts\\/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin\",\"sha256\":\"617e381f4b8d8d4e212db934da602a9ebfadf5a2be3b1ab7fdaf16f2ff6e4ddb\"}\n"
+    },
+    "added-file": {
+      "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/include-results/has_include/published/entry.cpp:2:15: error: static assertion failed: newly selected invalid code\n    2 | static_assert(false, \"newly selected invalid code\");\n      |               ^~~~~\n1 error generated.\n",
+      "status": "pending\n"
+    },
+    "fresh-invalid": {
+      "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/include-results/has_include/published/entry.cpp:2:15: error: static assertion failed: newly selected invalid code\n    2 | static_assert(false, \"newly selected invalid code\");\n      |               ^~~~~\n1 error generated.\n",
+      "status": "pending\n"
+    },
+    "repair": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include/cache/artifacts/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin",
+      "compiled": 0,
+      "reused": 1,
+      "pch_built": 0,
+      "linked": 0,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include\\/cache\\/artifacts\\/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin\",\"sha256\":\"617e381f4b8d8d4e212db934da602a9ebfadf5a2be3b1ab7fdaf16f2ff6e4ddb\"}\n"
+    }
+  },
+  "has_include_pch": {
+    "cold": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/cache/artifacts/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin",
+      "compiled": 1,
+      "reused": 0,
+      "pch_built": 1,
+      "linked": 1,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include_pch\\/cache\\/artifacts\\/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin\",\"sha256\":\"e9cf4784146ef165d21039785fc4cc7e363bee9e607e08e6f82adc43ea09e43f\"}\n"
+    },
+    "warm": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/cache/artifacts/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin",
+      "compiled": 0,
+      "reused": 1,
+      "pch_built": 0,
+      "linked": 0,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include_pch\\/cache\\/artifacts\\/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin\",\"sha256\":\"e9cf4784146ef165d21039785fc4cc7e363bee9e607e08e6f82adc43ea09e43f\"}\n"
+    },
+    "added-file": {
+      "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/published/entry.cpp:2:15: error: static assertion failed: newly selected invalid code\n    2 | static_assert(false, \"newly selected invalid code\");\n      |               ^~~~~\n1 error generated.\n",
+      "status": "pending\n"
+    },
+    "fresh-invalid": {
+      "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/published/entry.cpp:2:15: error: static assertion failed: newly selected invalid code\n    2 | static_assert(false, \"newly selected invalid code\");\n      |               ^~~~~\n1 error generated.\n",
+      "status": "pending\n"
+    },
+    "repair": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/cache/artifacts/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin",
+      "compiled": 0,
+      "reused": 1,
+      "pch_built": 0,
+      "linked": 0,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include_pch\\/cache\\/artifacts\\/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin\",\"sha256\":\"e9cf4784146ef165d21039785fc4cc7e363bee9e607e08e6f82adc43ea09e43f\"}\n"
+    },
+    "corrupt-pch": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/cache/artifacts/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin",
+      "compiled": 0,
+      "reused": 1,
+      "pch_built": 1,
+      "linked": 0,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include_pch\\/cache\\/artifacts\\/cbf5d264302163d48870e7c20d599718d6473775eb2eb0802cd83743b74ea32d.bin\",\"sha256\":\"e9cf4784146ef165d21039785fc4cc7e363bee9e607e08e6f82adc43ea09e43f\"}\n"
+    },
+    "invalid-pch-input": {
+      "error": "Native compilation failed: In file included from /tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/cache/runtime-pch.hpp:1:\n/tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/runtime/scpp/int_t.hpp:54:15: error: static assertion failed: broken PCH input\n   54 | static_assert(false, \"broken PCH input\");\n      |               ^~~~~\n1 error generated.\n",
+      "status": "pending\n"
+    },
+    "pch-repair": {
+      "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/cache/artifacts/c0190464a7638cd07442698681cf0ac52565bbb388915358791a249e0d9616b5.bin",
+      "compiled": 1,
+      "reused": 0,
+      "pch_built": 1,
+      "linked": 1,
+      "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include_pch\\/cache\\/artifacts\\/c0190464a7638cd07442698681cf0ac52565bbb388915358791a249e0d9616b5.bin\",\"sha256\":\"e9cf4784146ef165d21039785fc4cc7e363bee9e607e08e6f82adc43ea09e43f\"}\n"
+    }
+  }
+}

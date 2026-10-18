@@ -1,0 +1,1 @@
+class C { function __construct() {} function __construct() {} } return 0;

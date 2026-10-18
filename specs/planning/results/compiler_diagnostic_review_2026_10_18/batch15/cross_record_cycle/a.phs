@@ -1,0 +1,1 @@
+namespace A; struct S { \B\T $t; }

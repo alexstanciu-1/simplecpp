@@ -1,0 +1,1 @@
+$v vector<vector<int>> = [[1]]; $v[0][0] += 2; return 0;

@@ -1,0 +1,40 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved type for Missing\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S needs one resolved type for Missing\n"
+  },
+  "retry": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved type for Missing\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S needs one resolved type for Missing\n"
+  },
+  "fresh_invalid": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved type for Missing\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S needs one resolved type for Missing\n"
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+    "empty": false,
+    "ready": true
+  }
+}

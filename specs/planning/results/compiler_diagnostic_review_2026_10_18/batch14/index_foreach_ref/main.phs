@@ -1,0 +1,1 @@
+$v vector<int> = [1]; foreach ($v as &$x) { $x++; } return 0;
