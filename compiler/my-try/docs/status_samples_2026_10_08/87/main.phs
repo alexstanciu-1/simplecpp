@@ -1,0 +1,3 @@
+$values vector<int> = [1, 2];
+foreach ($values as $value) { $values = [3, 4]; }
+return $values[0];

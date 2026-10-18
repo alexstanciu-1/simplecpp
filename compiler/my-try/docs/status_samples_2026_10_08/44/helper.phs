@@ -1,0 +1,1 @@
+function helper(int $value): int { return $value + 2; }

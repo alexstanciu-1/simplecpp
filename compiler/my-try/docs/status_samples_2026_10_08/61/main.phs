@@ -1,0 +1,5 @@
+interface Reader { public function read(): int; }
+abstract class Base implements Reader { abstract public function read(): int; }
+class Child extends Base { public function read(): int { return 7; } }
+$reader Reader = new Child();
+return $reader->read();

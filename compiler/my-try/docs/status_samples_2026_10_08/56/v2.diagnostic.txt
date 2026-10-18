@@ -1,0 +1,2 @@
+S2S generation failed: Member requires public, protected or private visibility and supported modifiers
+

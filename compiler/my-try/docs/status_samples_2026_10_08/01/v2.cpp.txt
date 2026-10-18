@@ -1,0 +1,18 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "scpp/float_t.hpp"
+#include "scpp/bool_t.hpp"
+#include "scpp/string_t.hpp"
+
+int main()
+{
+	scpp::int_t<> local_number = static_cast<scpp::int_t<>>(7LL);
+	scpp::float_t local_fraction = static_cast<scpp::float_t>(1.5);
+	scpp::bool_t local_ready = static_cast<scpp::bool_t>(true);
+	scpp::string_t local_text = scpp::string_t("sample");
+	auto local_inferred = local_number;
+	return static_cast<int>((local_inferred).native_value());
+	return 0;
+}

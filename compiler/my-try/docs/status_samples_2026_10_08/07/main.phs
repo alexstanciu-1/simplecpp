@@ -1,0 +1,6 @@
+$value bool = true;
+$other bool = false;
+$both = ($value and $other);
+$either = ($value or $other);
+$different = ($value xor $other);
+return $different ? 1 : 0;

@@ -1,0 +1,5 @@
+enum Code: uint16 { case Ok = 0; case Failed = 1; }
+$name = enum_name(Code::Ok);
+$value = enum_value(Code::Ok);
+$parsed = enum_from_value(Code::class, 0);
+return $parsed === Code::Ok ? 0 : 1;

@@ -1,0 +1,37 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === callables/n77726170706564.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+#include "scpp/result.hpp"
+scpp::result<scpp::int_t<>> function_wrapped();
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "callables/n77726170706564.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/result.hpp"
+scpp::result<scpp::int_t<>> function_wrapped()
+{
+	return scpp::result<scpp::int_t<>>{static_cast<scpp::int_t<>>(7LL)};
+}
+
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "scpp/error_t.hpp"
+#include "lang/php/support/php_take.hpp"
+#include "scpp/result.hpp"
+#include "callables/n77726170706564.hpp"
+
+int main()
+{
+	scpp::int_t<> local_value = static_cast<scpp::int_t<>>(0LL);
+	scpp::error_t local_failure;
+if ((([&]() -> scpp::bool_t { auto take_source_0 = ([&]() -> scpp::result<scpp::int_t<>> {
+	return function_wrapped();
+}()); return scpp::php::take(local_value, local_failure, take_source_0); }())).native_value()) {
+	return static_cast<int>((local_value).native_value());
+}
+	return static_cast<int>((static_cast<scpp::int_t<>>(1LL)).native_value());
+	return 0;
+}

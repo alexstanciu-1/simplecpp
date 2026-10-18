@@ -1,0 +1,3 @@
+enum Mode: string { case Ready = "ready"; }
+$cases = Mode::cases();
+return count($cases);

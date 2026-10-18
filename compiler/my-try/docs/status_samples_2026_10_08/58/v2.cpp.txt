@@ -1,0 +1,27 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n506f696e74.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Point
+{
+public:
+	scpp::int_t<std::int32_t> field_x;
+public:
+};
+
+
+// === entry.cpp ===
+#include "scpp/null_t.hpp"
+#include "types/n506f696e74.hpp"
+#include "scpp/nullable.hpp"
+#include "scpp/int_t.hpp"
+#include "lang/php/operators/isset/isset.hpp"
+
+int main()
+{
+	scpp::nullable<record_Point> local_point = scpp::nullable<record_Point>{scpp::null};
+	local_point = scpp::nullable<record_Point>{record_Point{}};
+	return static_cast<int>((([&]() -> scpp::int_t<> { if ((scpp::php::isset(local_point)).native_value()) { return static_cast<scpp::int_t<>>(0LL); } return static_cast<scpp::int_t<>>(1LL); }())).native_value());
+	return 0;
+}

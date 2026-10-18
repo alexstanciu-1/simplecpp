@@ -1,0 +1,4 @@
+$rows vector<vector<int>> = [[1, 2]];
+$rows[0][1] = 7;
+$rows[] = [3, 4];
+return $rows[0][1];

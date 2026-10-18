@@ -1,0 +1,52 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+
+enum class Mode : std::uint8_t {
+	Ready,
+	Busy
+};
+
+enum class Code : std::uint16_t {
+	Ok = 0,
+	Failed = 1
+};
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/51/main.phs", 0);
+	auto mode = Mode::Ready;
+	auto code = Code::Ok;
+	return php::ternary_eval([&]() -> decltype(auto) { return (php::identical(mode, Mode::Ready) && php::identical(code, Code::Ok)); }, [&]() -> decltype(auto) { return static_cast<int_t<> >(0); }, [&]() -> decltype(auto) { return static_cast<int_t<> >(1); });
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

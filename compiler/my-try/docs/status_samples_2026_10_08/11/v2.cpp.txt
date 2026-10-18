@@ -1,0 +1,23 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+
+int main()
+{
+	scpp::int_t<> local_value = static_cast<scpp::int_t<>>(2LL);
+switch ((local_value).native_value()) {
+case 1LL:
+{
+	local_value = static_cast<scpp::int_t<>>(3LL);
+break;
+}
+default:
+{
+	local_value = static_cast<scpp::int_t<>>(4LL);
+}
+}
+	auto local_result = ([&]() -> scpp::int_t<> { const auto match_subject_0 = (local_value).native_value(); if ((match_subject_0 == 4LL)) { return static_cast<scpp::int_t<>>(7LL); } return static_cast<scpp::int_t<>>(0LL); }());
+	return static_cast<int>((local_result).native_value());
+	return 0;
+}

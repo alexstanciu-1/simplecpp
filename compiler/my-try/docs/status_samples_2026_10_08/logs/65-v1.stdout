@@ -1,0 +1,101 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+class Base;
+class Child;
+
+class Base : public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+	static int_t<> __scpp_static_call_number();
+
+	static int_t<> value();
+	static int_t<> number();
+};
+
+class Child : public Base, public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+	static int_t<> number();
+};
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+bool_t Base::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Base::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	else if (__scpp_token == Child::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+int_t<> Base::__scpp_static_call_number() {
+	if (::scpp::php::current_static_token_for<Base>() == Base::__scpp_static_token()) {
+		return Base::number();
+	}
+	else if (::scpp::php::current_static_token_for<Base>() == Child::__scpp_static_token()) {
+		return Child::number();
+	}
+	return Base::number();
+}
+
+int_t<> Base::value() {
+	SCPP_CALL_DEPTH_GUARD("Base::value", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/65/main.phs", 1);
+	return ::scpp::php::_static<Base, Base>([&]() -> decltype(auto) { return Base::__scpp_static_call_number(); });
+}
+
+int_t<> Base::number() {
+	SCPP_CALL_DEPTH_GUARD("Base::number", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/65/main.phs", 1);
+	return static_cast<int_t<> >(1);
+}
+
+bool_t Child::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Child::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+int_t<> Child::number() {
+	SCPP_CALL_DEPTH_GUARD("Child::number", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/65/main.phs", 2);
+	return static_cast<int_t<> >(7);
+}
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/65/main.phs", 0);
+	return ::scpp::php::_static<Child, Child>([&]() -> decltype(auto) { return Child::value(); });
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

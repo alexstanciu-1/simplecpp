@@ -1,0 +1,115 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+class Leaf;
+class Leaf_Provider;
+class Node;
+class Provider;
+
+class Node : public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+	int_t<> value = static_cast<int_t<> >(1);
+};
+
+class Leaf : public Node, public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+};
+
+class Provider : public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+	shared_p<Node> node() { return __scpp_return_node(std::type_identity<shared_p<Node>>{}); }
+	virtual shared_p<Node> __scpp_return_node(std::type_identity<shared_p<Node>>) = 0;
+};
+
+class Leaf_Provider : public Provider, public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+	shared_p<Leaf> node() { return __scpp_return_node(std::type_identity<shared_p<Leaf>>{}); }
+	virtual shared_p<Leaf> __scpp_return_node(std::type_identity<shared_p<Leaf>>);
+	shared_p<Node> __scpp_return_node(std::type_identity<shared_p<Node>>) override;
+};
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+bool_t Node::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Node::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	else if (__scpp_token == Leaf::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+bool_t Leaf::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Leaf::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+bool_t Provider::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Provider::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	else if (__scpp_token == Leaf_Provider::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+shared_p<Node> Leaf_Provider::__scpp_return_node(std::type_identity<shared_p<Node>>) { return __scpp_return_node(std::type_identity<shared_p<Leaf>>{}); }
+bool_t Leaf_Provider::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Leaf_Provider::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+shared_p<Leaf> Leaf_Provider::__scpp_return_node(std::type_identity<shared_p<Leaf>>) {
+	SCPP_CALL_DEPTH_GUARD("Leaf_Provider::node", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/64/main.phs", 4);
+	return create<Leaf>();
+}
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/64/main.phs", 0);
+	shared_p<Provider> provider = create<Leaf_Provider>();
+	return provider->node()->value;
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

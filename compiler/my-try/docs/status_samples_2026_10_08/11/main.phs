@@ -1,0 +1,4 @@
+$value int = 2;
+switch ($value) { case 1: $value = 3; break; default: $value = 4; }
+$result = match ($value) { 4 => 7, default => 0 };
+return $result;

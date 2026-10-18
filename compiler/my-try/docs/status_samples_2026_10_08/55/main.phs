@@ -1,0 +1,4 @@
+class Item { public int $value = 1; }
+$left = new Item();
+$right = $left;
+return $left === $right ? 0 : 1;

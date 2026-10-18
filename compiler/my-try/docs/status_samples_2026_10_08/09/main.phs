@@ -1,0 +1,3 @@
+$text string = "abc";
+$first = $text[0];
+return $first === "a" ? 0 : 1;

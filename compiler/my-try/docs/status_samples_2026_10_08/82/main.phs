@@ -1,0 +1,7 @@
+$document json_document;
+$diagnostic json_parse_error = null;
+$failure error;
+if (!take($document, $failure, json_document_parse("{}", $diagnostic, 128))) { return 1; }
+$node json_node;
+if (!take($node, $failure, json_document_root($document))) { return 2; }
+return 0;

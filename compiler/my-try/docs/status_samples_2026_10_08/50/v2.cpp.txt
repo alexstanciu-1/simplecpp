@@ -1,0 +1,26 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n506f696e74.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Point
+{
+public:
+	scpp::int_t<std::int32_t> field_x;
+public:
+};
+
+
+// === entry.cpp ===
+#include "types/n506f696e74.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/cast.hpp"
+
+int main()
+{
+	auto local_point = record_Point{};
+	(local_point).field_x = static_cast<scpp::int_t<std::int32_t>>((static_cast<scpp::int_t<>>(7LL)).native_value());
+	auto local_copy = local_point;
+	return static_cast<int>((scpp::cast<scpp::int_t<>>((local_copy).field_x)).native_value());
+	return 0;
+}

@@ -1,0 +1,14 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/string_t.hpp"
+#include "scpp/generated/operators.hpp"
+#include "scpp/int_t.hpp"
+
+int main()
+{
+	scpp::string_t local_name = scpp::string_t("compiler");
+	scpp::string_t local_text = (([&]() -> scpp::string_t { scpp::string_t interpolation_0; interpolation_0.append(scpp::string_t("Hello ")); interpolation_0.append(local_name); return interpolation_0; }()) + scpp::string_t("!"));
+	return static_cast<int>((static_cast<scpp::int_t<>>(0LL)).native_value());
+	return 0;
+}

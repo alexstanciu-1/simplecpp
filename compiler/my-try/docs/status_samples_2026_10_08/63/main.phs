@@ -1,0 +1,5 @@
+abstract class Base { abstract public function value(): int; }
+class Child extends Base { public function value(): int { return 7; } }
+$base Base = new Child();
+$child = object_cast($base, Child::class);
+return $child instanceof Child ? $child->value() : 0;

@@ -1,0 +1,1 @@
+Scpp\S2S\Support\GenerationException: Unsupported expression lowering for AST kind 549 at line 2. Category: generator lowering gap. Requirement: add an explicit lowering rule for this expression shape or rewrite the source to a supported form.

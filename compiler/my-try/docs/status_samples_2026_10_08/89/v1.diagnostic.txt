@@ -1,0 +1,1 @@
+RuntimeException: Only literal int-backed enum case values are supported in the current enum lowering

@@ -1,0 +1,5 @@
+struct Point { public int32 $x; }
+$point = new Point();
+$point->x = 7;
+$copy = $point;
+return (int) $copy->x;

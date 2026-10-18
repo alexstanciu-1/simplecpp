@@ -1,0 +1,6 @@
+class Node { public int $value = 1; }
+class Leaf extends Node {}
+abstract class Provider { abstract public function node(): Node; }
+class Leaf_Provider extends Provider { public function node(): Leaf { return new Leaf(); } }
+$provider Provider = new Leaf_Provider();
+return $provider->node()->value;

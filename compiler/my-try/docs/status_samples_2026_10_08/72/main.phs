@@ -1,0 +1,6 @@
+function cleanup(): int {
+    $value int = 1;
+    try { return $value; }
+    finally { $value = 2; }
+}
+return cleanup();

@@ -1,0 +1,16 @@
+{
+  "v1": {
+    "exit_code": 0,
+    "error": null,
+    "stdout_bytes": 1142,
+    "stderr_bytes": 0,
+    "source_sha256": "9350ea0d2c7bbed5ce996e990afd5e06791367a733a05188fb68a85fe9a9cea5"
+  },
+  "v2": {
+    "exit_code": 1,
+    "error": null,
+    "stdout_bytes": 0,
+    "stderr_bytes": 78,
+    "source_sha256": "9350ea0d2c7bbed5ce996e990afd5e06791367a733a05188fb68a85fe9a9cea5"
+  }
+}

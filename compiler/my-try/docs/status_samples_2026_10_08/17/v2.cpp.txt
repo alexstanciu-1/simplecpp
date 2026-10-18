@@ -1,0 +1,16 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "scpp/mixed_t.hpp"
+#include "scpp/cast.hpp"
+#include "scpp/string_t.hpp"
+
+int main()
+{
+	scpp::mixed_t local_boxed = scpp::mixed_t{static_cast<scpp::int_t<>>(7LL)};
+	scpp::int_t<> local_number = scpp::required_cast<scpp::int_t<>>(local_boxed);
+	scpp::string_t local_text = scpp::cast<scpp::string_t>(local_number);
+	return static_cast<int>((scpp::cast<scpp::int_t<>>(local_text)).native_value());
+	return 0;
+}

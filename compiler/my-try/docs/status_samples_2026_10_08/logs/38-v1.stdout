@@ -1,0 +1,71 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+template <typename T_value>
+int_t<>& _norm_identity__value(T_value&& _value) {
+	using _norm_arg_t = std::remove_cv_t<std::remove_reference_t<T_value>>;
+	if constexpr (std::is_same_v<_norm_arg_t, int_t<>>) {
+		return _value;
+	}
+	else if constexpr (std::is_same_v<_norm_arg_t, mixed_t>) {
+		if (static_cast<bool>(_value.is_int())) {
+			throw std::runtime_error("Unsupported runtime kind for normalized parameter $value");
+		}
+		throw std::runtime_error("Unsupported runtime kind for normalized parameter $value");
+	} else {
+		static_assert(!std::is_same_v<_norm_arg_t, _norm_arg_t>, "Unsupported type for normalized parameter");
+	}
+}
+
+int_t<>& identity__exec(int_t<>& value);
+
+template <typename T_value>
+int_t<>& identity(T_value&& _value) {
+int_t<>& value = _norm_identity__value(std::forward<T_value>(_value));
+	return identity__exec(value);
+}
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+int_t<>& identity__exec(int_t<>& value) {
+	SCPP_CALL_DEPTH_GUARD("identity__exec", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/38/main.phs", 1);
+	return value;
+}
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/38/main.phs", 0);
+	int_t<> value = required_cast<int_t<>>(static_cast<int_t<> >(1));
+	auto& alias = identity(value);
+	alias = static_cast<int_t<> >(8);
+	return value;
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

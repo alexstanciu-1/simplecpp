@@ -1,0 +1,36 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === callables/n666163746f7269616c.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+scpp::int_t<> function_factorial(scpp::int_t<> local_n);
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "callables/n666163746f7269616c.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/generated/operators.hpp"
+scpp::int_t<> function_factorial(scpp::int_t<> local_n)
+{
+if (((local_n < static_cast<scpp::int_t<>>(2LL))).native_value()) {
+	return static_cast<scpp::int_t<>>(1LL);
+}
+	auto local_previous = ([&]() -> scpp::int_t<> {
+	scpp::int_t<> argument_0 = (local_n - static_cast<scpp::int_t<>>(1LL));
+	return function_factorial(argument_0);
+}());
+	return (local_n * local_previous);
+}
+
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "callables/n666163746f7269616c.hpp"
+
+int main()
+{
+	return static_cast<int>((([&]() -> scpp::int_t<> {
+	scpp::int_t<> argument_0 = static_cast<scpp::int_t<>>(4LL);
+	return function_factorial(argument_0);
+}())).native_value());
+	return 0;
+}
