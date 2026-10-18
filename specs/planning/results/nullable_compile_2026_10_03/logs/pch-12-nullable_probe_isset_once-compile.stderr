@@ -1,0 +1,4 @@
+/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_probe_isset_once.cpp:7:2: warning: expression result unused [-Wunused-value]
+    7 |         static_cast<scpp::int_t<>>(local_n++);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated.

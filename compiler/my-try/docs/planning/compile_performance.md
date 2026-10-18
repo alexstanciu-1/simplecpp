@@ -39,7 +39,7 @@ The 5,000-line row is a fresh baseline in the scaling run, not the earlier stand
 Compact raw timings are retained in [compile_scaling_20261003.json](compile_scaling_20261003.json).
 Full local artifacts (temporary, not guaranteed to survive) were:
 `/tmp/scpp-scaling-20261003-t0xihivq/` and
-`compiler/my-try/temp/compile-probe-20261003/`.
+[nullable compile archive](../../../../specs/planning/results/nullable_compile_2026_10_03/ARCHIVE.md).
 
 ## PCH constraints and proposed cache boundary
 
