@@ -77,6 +77,14 @@ Validate at the smallest layer that proves the change:
 
 See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation guide.
 
+## Focused Tool Use and Daybreak Blocks
+
+- Keep tool calls and messages narrowly scoped to the task. Use precise compiler terminology and state the purpose of an operation when context is needed.
+- Prefer targeted searches, bounded file reads, and relevant diagnostic excerpts over broad dumps. Return enough evidence to diagnose and verify changes without exposing unrelated or sensitive content.
+- Do not assume compiler development caused a Daybreak block. Base explanations on the actual rejection and distinguish known reasons from uncertainty.
+- When blocked, report the action and stated reason, continue unaffected work, and use an authorized alternative only when it respects the safeguard. If no such path exists, explain what remains blocked and what approval or clarification is needed.
+- Do not disguise, encode, split, or reroute requests or outputs to evade Daybreak or other safeguards. Narrowing scope must genuinely reduce the operation or data involved, not conceal the same blocked action.
+
 ## Planning Notes
 
 - Temporary planning notes for active tasks should default to `specs/planning/` unless a more specific owning folder is clearly better.
