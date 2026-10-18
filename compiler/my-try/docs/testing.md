@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite duplicate_types --no-pch --results FRESH_DIRECTORY`
+checks duplicate type admission before emission, all source type kinds, cross-file
+retry/rename/removal recovery and valid namespace/import controls. See
+[the DR-03 proof](planning/duplicate_type_admission_2026_10_18/README.md).
+
 `python3 compiler/my-try/tests/records.py --suite ownership_targets --no-pch --results FRESH_DIRECTORY`
 checks shared/unique void target rejection across source contexts, retry/recovery,
 and generated shared/unique controls plus unchanged weak<void> admission.

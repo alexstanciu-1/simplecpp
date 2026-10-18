@@ -5,6 +5,18 @@ namespace scpp\compiler;
 
 final class Declaration_Preparation
 {
+	/** Admit unused declarations too; all source type kinds share one namespace pool. */
+	public static function type_name(collected_type_definition $entry,
+		?preparation_context $context): type_definition_i
+	{
+		$declaring_scope = object_cast(weakref_get($entry->scope), scope::class);
+		$candidates = Observed_Lookup::declared_types($declaring_scope, $entry->name, $context);
+		if (q_count($candidates) !== 1) {
+			throw new \RuntimeException('Duplicate type declaration: ' . $entry->qualified_name());
+		}
+		return $candidates[0];
+	}
+
 	/** Publish a complete signature before any body so calls do not depend on source order. */
 	public static function prepare_callable(callable_declaration_node $syntax, preparation_context $context): void
 	{

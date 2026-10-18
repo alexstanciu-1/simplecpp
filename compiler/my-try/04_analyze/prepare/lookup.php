@@ -6,6 +6,20 @@ namespace scpp\compiler;
 /** Deletion cleanup precedes resolution; lookups see only active index membership. */
 final class Observed_Lookup
 {
+	/**
+	 * Exact declaration pool: imports and language fallback do not add declarations.
+	 * Traits have invocation-local admission rather than retained preparation work.
+	 */
+	public static function declared_types(scope $declaring_scope, string $name,
+		?preparation_context $context): array /** vector<type_definition_i> */
+	{
+		$members = Scope_Lookup::visible($declaring_scope);
+		if ($context !== null) {
+			$context->worker->observe($members, $name, preparation_lookup_kind::type, $context->owner);
+		}
+		return $members->types_named($name);
+	}
+
 	/** Preparation runs after the parse join; intern misses in the existing registry.
 	 * Empty namespaces are identity/pool owners, not declarations. Later publication
 	 * fills that same pool, so ordinary membership observations detect additions.
