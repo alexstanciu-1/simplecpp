@@ -4,12 +4,13 @@ require_once dirname(__DIR__) . '/boot.php';
 
 // Host CLI only; all build policy is in the portable native-build worker.
 try {
-	if ($argc < 3 || $argc > 5) {
-		throw new \RuntimeException('Usage: php build_cpp.php PUBLISHED_DIRECTORY CACHE_DIRECTORY [--no-pch] [-O0|-O2]');
+	if ($argc < 3 || $argc > 6) {
+		throw new \RuntimeException('Usage: php build_cpp.php PUBLISHED_DIRECTORY CACHE_DIRECTORY [--no-pch] [-O0|-O2] [--native-debug]');
 	}
 	$config = new native_cpp_config('/usr/bin/clang++', dirname(__DIR__, 3) . '/runtime/include', $argv[2]);
 	for ($index = 3; $index < $argc; $index++) {
 		if ($argv[$index] === '--no-pch') { $config->pch = false; }
+		elseif ($argv[$index] === '--native-debug') { $config->native_debug = true; }
 		elseif ($argv[$index] === '-O0') { $config->optimization = 0; }
 		elseif ($argv[$index] === '-O2') { $config->optimization = 2; }
 		else { throw new \RuntimeException('Unknown native build option'); }

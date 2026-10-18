@@ -14,7 +14,14 @@ php compiler/my-try/tools/build_cpp.php /absolute/published /absolute/cache --no
 ```
 
 The CLI defaults to `/usr/bin/clang++`, the checkout runtime headers, C++23, PHP target,
-threads and `-O0`. It emits a JSON result only after success, with executable path and
+threads and `-O0`, without native debug information. Pass `--native-debug` (or set
+`$config->native_debug = true`) to request full Clang `-g` information for
+PCH, generated units and runtime provider objects. Debug selection is independent
+of optimization and participates in the existing action cache keys; returning to
+the default configuration reuses its prior artifacts. This does not disable
+source-language diagnostics or runtime checks.
+
+The builder emits a JSON result only after success, with executable path and
 counts for compiled/reused objects, PCH creation and linking. It does not execute the
 program or rebuild the compiler itself. Programmatic callers use `native_cpp_config`.
 
@@ -106,3 +113,8 @@ linkage require further acceptance work before claiming a hermetic/general cache
 Focused module evidence: `tests/runtime_module_build.py` proves cold/warm reuse,
 one-unit body/provider edits, definition/PCH invalidation and library-only relinking.
 This validates generated executables, not a native rebuild of the compiler.
+
+The native-debug cache proof in `tests/native_cache.py` checks actual ELF debug
+sections, execution, cold/warm debug builds and reuse when returning to the default.
+This option does not implement source-language stepping, variable inspection or
+source-mapped runtime stacks; those require a compiler-owned debugging design.

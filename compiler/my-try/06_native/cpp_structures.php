@@ -8,6 +8,7 @@ final class native_cpp_config
 	public string $runtime_include;
 	public string $cache_directory;
 	public bool $pch = true;
+	public bool $native_debug = false;
 	public int $optimization = 0;
 	public function __construct(string $compiler, string $runtime_include, string $cache_directory)
 	{

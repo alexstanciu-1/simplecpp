@@ -64,6 +64,7 @@ final class Native_CPP_Build
 			$optimization = $this->config->optimization === 2 ? '-O2' : '-O0';
 			$flags /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
 				'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
+			if ($this->config->native_debug) { $flags[] = '-g'; }
 			foreach ($build_inputs->definitions as $definition) { $flags[] = '-D' . $definition; }
 			$this->flags = $flags;
 			$version_arguments /** vector<string> */ = ['--version'];
