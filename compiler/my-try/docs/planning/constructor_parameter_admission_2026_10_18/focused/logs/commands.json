@@ -1,0 +1,369 @@
+[
+  {
+    "name": "constructor_parameters",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructor_parameters.php",
+      "/tmp/constructor-abstract-green-02/programs"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.909,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "cpp-runtime-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-pthread",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/core/runtime.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/fixture-runtime.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 12.567,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_concrete_inherited-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.051,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_concrete_inherited-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.098,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_abstract_handle-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.444,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_abstract_handle-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.466,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_concrete_inherited-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources/entry.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.405,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_concrete_inherited-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources/entry.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.727,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_concrete_inherited-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program.artifacts-2577yzjp/sources/entry.o",
+      "/tmp/constructor-abstract-green-02/fixture-runtime.o",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.377,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_concrete_inherited-execute",
+    "command": [
+      "/tmp/constructor-abstract-green-02/programs/struct_concrete_inherited.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 9,
+    "expected": 9,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_abstract_handle-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources/entry.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.643,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_concrete_inherited-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program.artifacts-bxrese0k/sources/entry.o",
+      "/tmp/constructor-abstract-green-02/fixture-runtime.o",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.368,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_concrete_inherited-execute",
+    "command": [
+      "/tmp/constructor-abstract-green-02/programs/class_concrete_inherited.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 9,
+    "expected": 9,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_abstract_handle-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources",
+      "-c",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources/entry.cpp",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.739,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_abstract_handle-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program.artifacts-36b4hfmo/sources/entry.o",
+      "/tmp/constructor-abstract-green-02/fixture-runtime.o",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.346,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "struct_abstract_handle-execute",
+    "command": [
+      "/tmp/constructor-abstract-green-02/programs/struct_abstract_handle.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 9,
+    "expected": 9,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_abstract_handle-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program.artifacts-nructodf/sources/entry.o",
+      "/tmp/constructor-abstract-green-02/fixture-runtime.o",
+      "-o",
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.301,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "class_abstract_handle-execute",
+    "command": [
+      "/tmp/constructor-abstract-green-02/programs/class_abstract_handle.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 9,
+    "expected": 9,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

@@ -91,9 +91,9 @@ final class Constructor_Preparation
 			}
 			$parameter = new prepared_parameter();
 			$parameter->declaration = $node->occurrence();
-			$parameter->contract = new callable_parameter();
-			$parameter->contract->mode = passing_mode::value;
 			if ($node->property_backed) {
+				$parameter->contract = new callable_parameter();
+				$parameter->contract->mode = passing_mode::value;
 				$matches /** vector<prepared_field> */ = $fields->named($node->name);
 				if (q_count($matches) !== 1) { throw new \RuntimeException('set: requires an existing instance property: ' . $node->name); }
 				$field = $matches[0];
@@ -107,8 +107,9 @@ final class Constructor_Preparation
 				Capability_Preparation::require_copy($field->type, $context);
 			}
 			else {
-				$parameter->contract->type = Type_Preparation::type($node->require_type_syntax(), $context);
-				Type_Preparation::require_value_type($parameter->contract->type);
+				$type = Type_Preparation::type($node->require_type_syntax(), $context);
+				$parameter->contract = Declaration_Preparation::parameter_contract(
+					$type, $node->mode, $node->access, $node->variadic, $context);
 			}
 			if ($node->default_value !== null) {
 				$parameter->contract->default_value = new prepared_property_parameter_default(

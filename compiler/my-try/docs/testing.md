@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/records.py --suite constructor_parameters --no-pch --results FRESH_DIRECTORY`
+checks abstract inline constructor input rejection before emission, inherited
+signature invalidation/recovery, and four generated concrete/shared input controls.
+See [the bounded DR-04 repair proof](planning/constructor_parameter_admission_2026_10_18/README.md).
+
 `python3 compiler/my-try/tests/indexed_properties.py --results FRESH_DIRECTORY`
 checks plain indexed shared-object property writes, reference/place boundaries,
 key/RHS replacement lifetime and bounds/null failures. Three generated programs
