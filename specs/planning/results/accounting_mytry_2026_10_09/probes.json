@@ -1,0 +1,146 @@
+[
+  {
+    "name": "comment",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: main.phs: Expected scalar literal or variable reference at main.phs: byte 1",
+    "source": "// account comment\nreturn 0;\n"
+  },
+  {
+    "name": "echo",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: main.phs: Expected ';' at main.phs: byte 5",
+    "source": "echo \"hello\";\n"
+  },
+  {
+    "name": "property_postfix",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: main.phs: Expected ';' at main.phs: byte 24",
+    "source": "class A { public $items vector<int> = []; } return 0;\n"
+  },
+  {
+    "name": "property_prefix",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "class A { public vector<int> $items = []; } return 0;\n"
+  },
+  {
+    "name": "else_if",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: main.phs: Expected '{' at main.phs: byte 30",
+    "source": "if (false) { return 1; } else if (true) { return 0; } return 2;\n"
+  },
+  {
+    "name": "elseif",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "if (false) { return 1; } elseif (true) { return 0; } return 2;\n"
+  },
+  {
+    "name": "count_local",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S needs one resolved function for count",
+    "source": "$items vector<int> = [1,2]; return count($items);\n"
+  },
+  {
+    "name": "count_field",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S needs one resolved function for count",
+    "source": "class A { public vector<int> $items = [1]; } $a = new A(); return count($a->items);\n"
+  },
+  {
+    "name": "strlen",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S needs one resolved function for strlen",
+    "source": "return strlen(\"abc\");\n"
+  },
+  {
+    "name": "field_append",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S indexed assignment requires a direct local or parameter root",
+    "source": "class A { public vector<int> $items = []; } $a = new A(); $a->items[] = 1; return 0;\n"
+  },
+  {
+    "name": "field_index_write",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S indexed assignment requires a direct local or parameter root",
+    "source": "class A { public hash<int> $items = []; } $a = new A(); $a->items[\"x\"] = 1; return 0;\n"
+  },
+  {
+    "name": "field_isset",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S property-path probes/removal are deferred",
+    "source": "class A { public hash<int> $items = []; } $a = new A(); if (isset($a->items[\"x\"])) { return 1; } return 0;\n"
+  },
+  {
+    "name": "field_unset",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S property-path probes/removal are deferred",
+    "source": "class A { public hash<int> $items = []; } $a = new A(); unset($a->items[\"x\"]); return 0;\n"
+  },
+  {
+    "name": "local_isset",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "$items hash<int> = []; if (isset($items[\"x\"])) { return 1; } return 0;\n"
+  },
+  {
+    "name": "field_arithmetic",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S binary operation requires order-independent operands",
+    "source": "class A { public int $value = 2; } $a = new A(); return $a->value + 1;\n"
+  },
+  {
+    "name": "field_comparison",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S binary operation requires order-independent operands",
+    "source": "class A { public int $value = 2; } $a = new A(); if ($a->value === 2) { return 0; } return 1;\n"
+  },
+  {
+    "name": "call_comparison",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S binary operation requires order-independent operands",
+    "source": "function value(): int { return 2; } if (value() === 2) { return 0; } return 1;\n"
+  },
+  {
+    "name": "stabilized_call",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "function value(): int { return 2; } $v int = value(); if ($v === 2) { return 0; } return 1;\n"
+  },
+  {
+    "name": "int64_compare",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S integer binary operation requires canonical int operands",
+    "source": "$x int64 = 2; if ($x === 2) { return 0; } return 1;\n"
+  },
+  {
+    "name": "int64_cast_compare",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "$x int64 = 2; $v int = (int)$x; if ($v === 2) { return 0; } return 1;\n"
+  },
+  {
+    "name": "field_assignment",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "class A { public int $value = 2; } $a = new A(); $a->value = 3; return 0;\n"
+  },
+  {
+    "name": "indexed_handle_field_assignment",
+    "exit": 1,
+    "diagnostic": "S2S generation failed: S2S assignment requires stable storage",
+    "source": "class A { public int $value = 2; } $items vector<A> = [new A()]; $items[0]->value = 3; return 0;\n"
+  },
+  {
+    "name": "field_compound",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "class A { public int $value = 2; } $a = new A(); $a->value += 3; return 0;\n"
+  },
+  {
+    "name": "closure",
+    "exit": 0,
+    "diagnostic": "",
+    "source": "$expected int = 5; $matches = function (int $actual) use ($expected): bool { return $actual === $expected; }; if ($matches(5)) { return 0; } return 1;\n"
+  }
+]

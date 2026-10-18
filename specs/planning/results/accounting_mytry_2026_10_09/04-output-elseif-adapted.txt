@@ -1,0 +1,7 @@
+S2S generation failed: S2S binary operation requires order-independent operands
+S2S property-path probes/removal are deferred
+S2S needs one resolved function for count
+S2S indexed assignment requires a direct local or parameter root
+S2S assignment requires stable storage
+S2S integer binary operation requires canonical int operands
+
