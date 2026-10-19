@@ -75,9 +75,10 @@ the installed recipes in the ordinary backend. Automatic template selection and
 nested substitution now consume the recipe, including nominal source types whose
 native representation is a closed template. The [source-demand proof](results/prelower_runtime_template_demand_2026_10_19/README.md)
 passes for inline and shared storage, including retirement/replay and zero measured
-boundary allocations. Next route the implicit shared-storage wrapper spelling
-through its installed binding, preserving source forward-declaration requirements.
-Then review required runtime interface/trait contracts; representation metadata
+boundary allocations. Implicit shared-storage wrapper spelling now consumes its
+installed binding, preserving source forward-declaration requirements. Default and
+alternate binding proofs compile mutually referring source classes.
+Next review required runtime interface/trait contracts; representation metadata
 alone does not complete all operations.
 
 ## Active integration sequence: concrete type substitution

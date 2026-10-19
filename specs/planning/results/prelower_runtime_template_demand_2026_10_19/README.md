@@ -49,9 +49,28 @@ inline-only proof; `source2` caught a fixture string syntax error before compila
 
 ## Remaining integration
 
-Implicit shared storage still spells its runtime wrapper directly in the renderer;
-consume the installed binding while preserving incomplete source-payload requirements.
 Structural callables retain their existing representation owner. Runtime operations,
 trait interoperability and accounting output remain separate coverage work. This
 proof does not establish a template-free preprocessed application or complete runtime
 metadata for every internal helper.
+
+## Implicit storage binding follow-up
+
+Base `1eb6241b` plus this follow-up. The existing semantic shared-storage policy now
+selects the installed `shared` recipe instead of spelling its native wrapper/header.
+The recipe renderer accepts already resolved payload mappings so declaration-only
+requirements survive; it does not resolve them again as complete definitions.
+
+The source-demand fixture now includes mutually referring `Left`/`Right` classes.
+It asserts that declaration-only storage retains the `Left` forward declaration
+without adding its complete type header. `--alternate-storage` replaces only the
+binding symbol/header with `fixture::Handle`/`binding_shared.hpp`; both ordinary
+and concrete builds must consume it. This test alias has the same runtime behavior.
+
+Both default and alternate runs pass O0/O2 and ASan/UBSan, all six measured counter
+lines per run remain zero, and warm builds compile/link nothing. Demand/replay and
+option-switch checks remain enabled. The ordinary spelling/header parity plus eight
+metadata/type suites also pass. Evidence is in `/tmp/prelower-shared-binding/`:
+`default2`, `alternate3`, `check1`. Initial runs caught an invalid fixture enum and
+an uninitialized literal fact on the new stored mapping; both were corrected before
+the final native proofs. No native compiler rebuild was performed.

@@ -54,7 +54,8 @@ identities. The older matrix below remains the family review; the audit includes
 
 The [first migration proof](results/prelower_runtime_type_bindings_2026_10_19/README.md)
 records the implemented schema, core binding migration and ordinary-output/native
-checks. [Automatic preparation selection](results/prelower_runtime_template_demand_2026_10_19/README.md) now consumes the recipe for ordinary and nested uses; implicit shared-storage spelling remains the next cleanup.
+checks. [Automatic preparation selection](results/prelower_runtime_template_demand_2026_10_19/README.md) now consumes the recipe for ordinary and nested uses. Implicit shared storage also
+consumes the installed binding, retaining incomplete source-payload requirements.
 
 Extend the existing `cpp_types` input and `CPP_Type_Bindings`, rather than create a
 second registry. Preserve `id` joins for ordinary metadata types. Add an exclusive

@@ -49,8 +49,7 @@ final class CPP_Types
 		// A selected concrete representation already owns the complete stored type.
 		if ($result->opaque) { return $result; }
 		if (Type_Queries::is_nominal_handle($type_use)) {
-			$result->spelling = '::scpp::shared_p<' . $result->spelling . '>';
-			self::add_header($result, 'scpp/shared_p.hpp');
+			$result = self::shared_storage($type_use, $result, $context, $argument_engine);
 		}
 		if ($type_use->by_value()) {
 			$modifier = Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value);
@@ -58,6 +57,21 @@ final class CPP_Types
 			$result = self::native_recipe($modifier->recipe(), $no_arguments, $result, $context, $argument_engine);
 			$result->literal = cpp_literal_kind::none;
 		}
+		return $result;
+	}
+
+	/** The storage policy selects a semantic owner; its runtime binding supplies the wrapper. */
+	private static function shared_storage(canonical_type_use $type_use, cpp_type $payload,
+		?cpp_generation_context $context, ?CPP_Specializations $engine): cpp_type
+	{
+		$owner = Model::$type_catalog->definition('shared');
+		$recipe = Model::$cpp_type_bindings->definition($owner->definition_id())->recipe();
+		$arguments /** vector<canonical_type_use> */ = [$type_use];
+		// Keep the payload's existing complete/forward requirement; do not resolve it again.
+		$payloads /** hash<cpp_type,int> */ = [0 => $payload];
+		$result = self::native_recipe($recipe, $arguments, null, $context, $engine, $payloads);
+		$result->literal = cpp_literal_kind::none;
+		if (q_strpos($result->spelling, '::') !== 0) { $result->spelling = '::' . $result->spelling; }
 		return $result;
 	}
 
@@ -172,7 +186,8 @@ final class CPP_Types
 
 	/** Render structured runtime binding data; argument interpretation never depends on family names. */
 	private static function native_recipe(cpp_type_recipe $recipe, array $arguments /** vector<canonical_type_use> */,
-		?cpp_type $modified, ?cpp_generation_context $context, ?CPP_Specializations $engine): cpp_type
+		?cpp_type $modified, ?cpp_generation_context $context, ?CPP_Specializations $engine,
+		array $payloads /** hash<cpp_type,int> */ = []): cpp_type
 	{
 		$result = new cpp_type();
 		$result->spelling = $recipe->symbol;
@@ -188,6 +203,10 @@ final class CPP_Types
 				elseif ($argument->kind === cpp_type_argument_kind::modified_type) {
 					if ($modified === null) { throw new \LogicException('C++ modifier recipe requires its payload'); }
 					$mapping = $modified;
+				}
+				elseif (isset($payloads[$argument->position])) {
+					if (!$argument->payload) { throw new \RuntimeException('Implicit storage requires a payload argument recipe'); }
+					$mapping = $payloads[$argument->position];
 				}
 				else {
 					$type_argument = $arguments[$argument->position];

@@ -13,6 +13,7 @@ from test_runner import CommandRunner, Task, run_tasks
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', type=Path, required=True)
+    parser.add_argument('--alternate-storage', action='store_true')
     args = parser.parse_args()
     out = args.results.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -23,7 +24,7 @@ def main():
                 folder = out / mode
                 cache = out / ('cache-' + mode)
                 runner.run(mode + '-emit', ['php', APP / 'tests/runtime_template_demand.php',
-                    out / ('source-' + mode), folder, mode])
+                    out / ('source-' + mode), folder, mode, 'alternate' if args.alternate_storage else 'default'])
                 for optimization in ['-O0', '-O2']:
                     label = mode + optimization
                     command = ['php', APP / 'tools/build_cpp.php', folder, cache, '--no-pch', optimization]

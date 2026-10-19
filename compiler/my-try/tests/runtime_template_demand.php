@@ -5,12 +5,23 @@ require_once dirname(__DIR__) . '/boot.php';
 // Host integration proof: ordinary source demand, physical recipes and incremental fragments.
 [$script,$source,$output,$mode]=$argv;
 $composed=$mode==='composed';
+$alternate=($argv[5]??'')==='alternate';
 $metadata=new runtime_catalog_input();
-foreach(Model::$runtime_metadata->modules as $module){$metadata->modules->add($module->name,$module);}
+foreach(Model::$runtime_metadata->modules as $module){
+	if($alternate && $module->name==='core'){
+		$module=Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__,3).'/runtime/metadata/modules/core.json'),'core.json');
+		$binding=$module->cpp_types['core.representation.shared'];
+		$binding->symbol='fixture::Handle'; $binding->header='binding_shared.hpp';
+	}
+	$metadata->modules->add($module->name,$module);
+}
 $metadata->modules->add('binding_proof',Runtime_Catalog_Reader::decode(file_get_contents(__DIR__.'/runtime_type_bindings.json'),'binding_proof.json'));
 Compiler_Lifecycle::configure_runtime($metadata);
 mkdir($source,0777,true);
 $program=<<<'PHS'
+class Left { public Right $other; public int $number; }
+class Right { public Left $other; public int $number; }
+function copy_left(const Left &$value): Left { return $value; }
 function copy_shared(const shared_closed &$value): shared_closed { return $value; }
 function copy_closed(const closed &$value): closed { return $value; }
 function &borrow_closed(closed &$value): closed { return $value; }
@@ -29,6 +40,11 @@ function demand_snapshot(): array {
 function concrete_headers(): array {
 	$rows=[];foreach(Model::$cpp_files as $artifact){if(str_starts_with($artifact->file_name,'specializations/concrete_')){$rows[$artifact->file_name]=$artifact->text;}}return $rows;
 }
+$left=Model::$global_scope->functions_named('copy_left')[0]->syntax()->require_preparation()->signature->return_type;
+$forward=CPP_Types::representation_for($left,cpp_type_requirement::declaration);
+$expected_wrapper=$alternate?'::fixture::Handle<':'::scpp::shared_p<';
+if(!str_starts_with($forward->spelling,$expected_wrapper) || !isset($forward->forward_declarations['Left'])
+	|| isset($forward->headers[CPP_Artifacts::type_header('Left')])){throw new \LogicException('Implicit storage lost its binding or incomplete payload requirement');}
 $before=demand_snapshot();
 $headers=concrete_headers();
 if(count($headers)!==($composed?4:0)){throw new \LogicException('Source demand prepared the wrong type closure');}
@@ -93,6 +109,7 @@ $names=[];foreach(['copy_shared','copy_closed','copy_nested','borrow_closed','ov
 $main='#include "proof.hpp"'."\n".'#include "instrument.hpp"'."\nint main(){ Nested value; seed(value); Shared shared; seed_shared(shared); begin(); { auto shared_copy=".$names['copy_shared'].'(shared); require(same_shared(shared,shared_copy)); auto copied='.$names['copy_nested'].'(value); auto& slot=element(copied); auto& alias='.$names['borrow_closed'].'(slot); require(&slot==&alias); auto old='.$names['copy_closed'].'(alias); '.$names['overwrite'].'(alias,old); require(check(copied,7) && check(value,7)); } report("recipe-boundary"); }'."\n";
 $artifacts=new Storage /** Storage<cpp_artifact> */();
 foreach(Model::$cpp_files as $artifact){if($artifact->file_name!=='entry.cpp'){$artifacts->append($artifact);}}
+if($alternate){$artifacts->append(new cpp_artifact('proof:storage-binding',cpp_artifact_kind::header,'binding_shared.hpp',"#pragma once\n#include <scpp/shared_p.hpp>\nnamespace fixture { template<class T> using Handle=scpp::shared_p<T>; }\n"));}
 $artifacts->append(new cpp_artifact('proof:header',cpp_artifact_kind::header,'proof.hpp',$declarations));
 $artifacts->append(new cpp_artifact('proof:support',cpp_artifact_kind::translation_unit,'support.cpp',$support));
 $artifacts->append(new cpp_artifact('proof:main',cpp_artifact_kind::translation_unit,'entry.cpp',$main));

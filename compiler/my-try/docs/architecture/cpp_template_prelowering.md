@@ -37,9 +37,10 @@ recipe mode retains its bounded selection rule in `CPP_Concrete_Recipes`.
 The [source-demand proof](../../../../specs/planning/results/prelower_runtime_template_demand_2026_10_19/README.md)
 checks nested use, shared pointee identity, borrowed references, request retirement,
 replay and option switching. Runtime operation/trait coverage remains separate,
-including accounting's integer-output gap. Implicit shared storage still has a
-compiler-spelled runtime wrapper; route that spelling through its installed binding
-next. See also the [migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
+including accounting's integer-output gap. Implicit shared storage consumes the
+installed `shared` binding while preserving the payload's declaration/completeness
+requirement. The alternate-storage proof changes its native symbol and header without
+changing the renderer or semantic identity. See also the [migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
 
 ## Concrete mutation interfaces
 
