@@ -38,6 +38,12 @@ final class CPP_Specializations
 		return $this->intern(CPP_Opaque_Representation::entry($type, $this));
 	}
 
+	/** Integration entry for concrete physical arguments; no additional retained engine or registry. */
+	public function request_composed(canonical_type_use $type): cpp_specialization_ref
+	{
+		return $this->intern(CPP_Opaque_Representation::entry($type, $this, true));
+	}
+
 	public function request_observation(prepared_call $call): cpp_specialization_ref
 	{
 		$parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
@@ -111,28 +117,57 @@ final class CPP_Specializations
 		return $order;
 	}
 
+	/** Topological layout batches; dependency identities come from physical type bindings. */
+	private function layout_depths(): array /** hash<int> */
+	{
+		$depths /** hash<int> */ = [];
+		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
+		while (q_count($depths) < $entries->count()) {
+			$before = q_count($depths);
+			foreach ($entries as $entry) {
+				if (isset($depths[$entry->name])) { continue; }
+				$ready = true;
+				$depth = 0;
+				foreach ($entry->layout_dependencies as $dependency => $used) {
+					if (!isset($depths[$dependency])) { $ready = false; break; }
+					$required = $depths[$dependency] + 1;
+					if ($required > $depth) { $depth = $required; }
+				}
+				if ($ready) { $depths[$entry->name] = $depth; }
+			}
+			if (q_count($depths) === $before) { throw new \RuntimeException('Concrete layout dependencies contain a cycle or missing request'); }
+		}
+		return $depths;
+	}
+
 	/** Group implementation work, as in the accounting proof; headers remain per representation. */
 	public function append_artifacts(Storage $artifacts /** Storage<cpp_artifact> */): void
 	{
 		$artifacts->append(new cpp_artifact('specializations:base-header', cpp_artifact_kind::header, 'specializations/base.hpp', CPP_Concrete_Recipes::base_header()));
 		$artifacts->append(new cpp_artifact('specializations:base', cpp_artifact_kind::translation_unit, 'specializations/base.cpp', CPP_Concrete_Recipes::base_body()));
 		$implementation = '';
-		$layout_declarations = '';
-		$layout_statements = '';
+		$layout_declarations /** hash<string,int> */ = [];
+		$layout_statements /** hash<string,int> */ = [];
+		$depths = $this->layout_depths();
+		$maximum_depth = 0;
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
 		foreach ($this->emission_order() as $id) {
 			$entry = $entries[$id];
-			$layout_declarations .= $entry->layout_declarations;
-			$layout_statements .= $entry->layout_statements;
+			$depth = $depths[$entry->name];
+			if ($depth > $maximum_depth) { $maximum_depth = $depth; }
+			$layout_declarations[$depth] = ($layout_declarations[$depth] ?? '') . $entry->layout_declarations;
+			$layout_statements[$depth] = ($layout_statements[$depth] ?? '') . $entry->layout_statements;
 			$artifacts->append(new cpp_artifact('specialization:' . $entry->name, cpp_artifact_kind::header,
 			$entry->header, $entry->declaration));
 			$implementation .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
 		}
-		if ($layout_statements !== '') {
-			$probe = '#include <cstdio>' . "\n" . '#include <type_traits>' . "\n" . $layout_declarations
-				. 'int main() { std::printf("// scpp-native-layout-v1\\n");' . "\n" . $layout_statements . "}\n";
-			$artifacts->append(new cpp_artifact('specializations:layout', cpp_artifact_kind::layout_probe,
-				'specializations/layout.cpp', $probe));
+		for ($depth = 0; $depth <= $maximum_depth; $depth++) {
+			$statements = $layout_statements[$depth] ?? '';
+			if ($statements === '') { continue; }
+			$probe = '#include <cstdio>' . "\n" . '#include <type_traits>' . "\n" . $layout_declarations[$depth]
+				. 'int main() { std::printf("// scpp-native-layout-v1\\n");' . "\n" . $statements . "}\n";
+			$artifacts->append(new cpp_artifact('specializations:layout' . ($depth === 0 ? '' : ':' . $depth), cpp_artifact_kind::layout_probe,
+				'specializations/layout' . ($depth === 0 ? '' : '_' . $depth) . '.cpp', $probe));
 		}
 		if ($implementation !== '') {
 			$artifacts->append(new cpp_artifact('specializations:implementation', cpp_artifact_kind::translation_unit,

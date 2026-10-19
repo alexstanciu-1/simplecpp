@@ -4,14 +4,15 @@ namespace scpp\compiler;
 /** Physical representation only: canonical identities/capabilities remain in their existing owners. */
 final class CPP_Opaque_Representation
 {
-	public static function representation(canonical_type_use $type, CPP_Specializations $engine): cpp_type
+	public static function representation(canonical_type_use $type, CPP_Specializations $engine, bool $compose_arguments = false): cpp_type
 	{
-		$entry = $engine->entry($engine->request_opaque($type));
+		$entry = $engine->entry($compose_arguments ? $engine->request_composed($type) : $engine->request_opaque($type));
 		$mapping = new cpp_type();
 		$mapping->spelling = 'scpp::internal::' . $entry->name;
 		$mapping->headers[$entry->header] = true;
 		$mapping->specialization = $type;
 		$mapping->opaque = true;
+		if ($compose_arguments) { $mapping->layout_dependencies[$entry->name] = true; }
 		$mapping->literal = CPP_Types::representation($type)->literal;
 		return $mapping;
 	}
@@ -90,19 +91,21 @@ final class CPP_Opaque_Representation
 			. $signature . ' { ::new(destination) ' . $output->spelling . '(' . $binding->symbol()
 			. '(*std::launder(static_cast<const ' . $input->spelling . "*>(input)))); }\n}\n";
 		return new cpp_specialization_entry($name, $header,
-			"#pragma once\nnamespace scpp::internal { " . $signature . "; }\n", $implementation);
+			"#pragma once\nnamespace scpp::internal { " . $signature . "; }\n", $implementation, []);
 	}
 
-	public static function entry(canonical_type_use $type, CPP_Specializations $engine): cpp_specialization_entry
+	public static function entry(canonical_type_use $type, CPP_Specializations $engine, bool $compose_arguments = false): cpp_specialization_entry
 	{
 		self::require_native_type($type);
 		$capabilities = new Capability_Facts();
 		if (!$capabilities->has_capability($type, generic_contract::value_storable)) {
 			throw new \RuntimeException('Opaque representation requires a storable type');
 		}
-		// The ordinary mapping supplies the original runtime spelling and dependencies.
-		$mapping = CPP_Types::representation($type);
-		$name = 'opaque_' . CPP_Artifacts::component(self::identity($type) . ':' . $mapping->spelling);
+		// Both mappings consume the existing registry; composition substitutes physical arguments.
+		$mapping = $compose_arguments ? CPP_Types::implementation_representation($type, $engine) : CPP_Types::representation($type);
+		$identity = self::identity($type);
+		$name = $compose_arguments ? 'concrete_' . CPP_Artifacts::bounded_component($identity, $identity . ':' . $mapping->spelling)
+			: 'opaque_' . CPP_Artifacts::component($identity . ':' . $mapping->spelling);
 		$existing = $engine->find($name);
 		if ($existing !== null) { return $existing; }
 		$native = 'native_' . $name;
@@ -171,6 +174,6 @@ final class CPP_Opaque_Representation
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
 			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
-			$declaration, $implementation, $aliases, $probe);
+			$declaration, $implementation, $mapping->layout_dependencies, $aliases, $probe);
 	}
 }

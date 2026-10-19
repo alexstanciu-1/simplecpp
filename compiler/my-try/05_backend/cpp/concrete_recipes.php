@@ -98,7 +98,7 @@ public:
 };
 }
 ');
-		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $header, '');
+		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $header, '', []);
 	}
 
 	/** Emit the admitted vector protocol over its resolved element representation. */
@@ -187,7 +187,7 @@ const @E@& @N@::at(@K@ index) const {
 }
 }
 ');
-		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $header, $body);
+		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $header, $body, []);
 	}
 
 	/** Expose a small nontemplate bridge to existing CLI and error contracts. */

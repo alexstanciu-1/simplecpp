@@ -31,9 +31,24 @@ final class CPP_Types
 				}
 			}
 		}
+		return self::native_representation_for($type_use, $requirement, $context, null);
+	}
+
+	/** Native outer implementation with concrete physical arguments, using the same registry bindings. */
+	public static function implementation_representation(canonical_type_use $type_use, CPP_Specializations $engine): cpp_type
+	{
+		if (Type_Queries::source_declaration($type_use) instanceof collected_member_owner) {
+			throw new \RuntimeException('Concrete substitution: source payload field bindings are not integrated yet');
+		}
+		return self::native_representation_for($type_use, cpp_type_requirement::complete, null, $engine);
+	}
+
+	private static function native_representation_for(canonical_type_use $type_use, cpp_type_requirement $requirement,
+		?cpp_generation_context $context, ?CPP_Specializations $argument_engine): cpp_type
+	{
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
-		$result = self::unmodified_representation($type_use, $payload_requirement, $context);
+		$result = self::unmodified_representation($type_use, $payload_requirement, $context, $argument_engine);
 		if (Type_Queries::is_nominal_handle($type_use)) {
 			$result->spelling = '::scpp::shared_p<' . $result->spelling . '>';
 			self::add_header($result, 'scpp/shared_p.hpp');
@@ -80,7 +95,8 @@ final class CPP_Types
 
 	/** Resolve the canonical core; recursive arguments contribute their own direct headers. */
 	private static function unmodified_representation(canonical_type_use $type_use,
-		cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
+		cpp_type_requirement $requirement, ?cpp_generation_context $context = null,
+		?CPP_Specializations $argument_engine = null): cpp_type
 	{
 		$type = Type_Queries::canonical($type_use);
 		$definition = $type->definition();
@@ -118,8 +134,10 @@ final class CPP_Types
 					$arguments .= ', ';
 				}
 				// Template bindings do not yet promise incomplete-payload support.
-				$argument_type = $definition instanceof ownership_semantics
-					? self::payload($argument, $context) : self::representation($argument, $context);
+				$argument_type = $argument_engine !== null
+					? self::implementation_argument($argument, $definition instanceof ownership_semantics, $argument_engine)
+					: ($definition instanceof ownership_semantics
+						? self::payload($argument, $context) : self::representation($argument, $context));
 				$arguments .= $argument_type->spelling;
 				self::merge_headers($result, $argument_type);
 			}
@@ -165,6 +183,19 @@ final class CPP_Types
 		return $result;
 	}
 
+	/** Physical substitution does not invent semantic types or grant new capabilities. */
+	private static function implementation_argument(canonical_type_use $argument, bool $payload, CPP_Specializations $engine): cpp_type
+	{
+		if (Type_Queries::source_declaration($argument) instanceof collected_member_owner) {
+			throw new \RuntimeException('Concrete substitution: source payload field bindings are not integrated yet');
+		}
+		$canonical = Type_Queries::canonical($argument);
+		if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type) || $argument->by_value()) {
+			return CPP_Opaque_Representation::representation($argument, $engine, true);
+		}
+		return $payload ? self::payload($argument) : self::representation($argument);
+	}
+
 	private static function add_header(cpp_type $type, string $header): void
 	{
 		if ($header !== '') {
@@ -180,6 +211,7 @@ final class CPP_Types
 		foreach ($source->forward_declarations as $name => $used) {
 			$destination->forward_declarations[$name] = true;
 		}
+		foreach ($source->layout_dependencies as $name => $used) { $destination->layout_dependencies[$name] = true; }
 	}
 
 	/** Literal families are semantic; exact target spelling remains in the binding catalog. */

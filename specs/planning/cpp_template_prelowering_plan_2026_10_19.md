@@ -5,6 +5,32 @@ Date: 2026-10-19
 Status: first bounded integer/vector slice implemented; remaining work follows the [agreed decision](cpp_template_prelowering_decision_2026_10_19.md).
 This document records the implementation sequence. The [current coverage guide](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md) distinguishes implemented behavior from remaining work.
 
+## Active integration sequence: concrete type substitution
+
+1. Reuse the type-binding owner to spell native implementations with recursively
+   selected concrete arguments. Reuse the existing lifecycle generator and engine.
+   Resolve dependent layout probes in publication order through the native cache.
+   First prove nested runtime applications with real registry/prepared types; this
+   foundation does not yet switch ordinary application emission.
+2. Integrate concrete source fields and signatures in the existing declaration
+   emitter. Publish one source payload definition and resolve its layout dependencies.
+   Preserve ordinary field/reference access and evaluate recursive source-type graphs
+   explicitly. No new AST, semantic pass or parallel registry.
+3. Bind ordinary operations/members to concrete interfaces from existing prepared
+   decisions and runtime bindings. Prove nested mutation, constructors, references,
+   providers and allocation/copy parity before enabling broader application coverage.
+4. Consolidate the lowering setting around the proven substitution path. Keep
+   ordinary C++ as the baseline; remove superseded experimental routing rather than
+   maintaining an expanding matrix of permanent flags.
+
+Cleanup is incremental and proof-gated. Keep specialization identity/demand, native
+lifecycle generation, layout probes/cache, publication and reusable tests. Retire
+source-call/constructor opaque transport once ordinary emission with substituted
+types passes equivalent tests. Retire handwritten accounting recipes after the
+general path covers their workload. Keep native-address transport only for interfaces
+that still require original native storage. Archive historical performance evidence;
+rewrite current guidance so it describes one intended architecture.
+
 ## First-slice checkpoint
 
 The [integer/vector proof](results/prelower_first_slice_2026_10_19/README.md) covers
@@ -74,7 +100,9 @@ The [concrete-composition proof](results/prelower_composition_2026_10_19/README.
 supports the user's preferred next direction: define source fields as real concrete
 owners, allowing ordinary member calls/references. Integration must consistently
 select physical template arguments and resolve dependent layouts through existing
-bindings/build owners. This is proved natively, not yet integrated in compiler emission.
+bindings/build owners. The [backend binding foundation](results/prelower_substitution_2026_10_19/README.md)
+now integrates concrete physical arguments and dependent layout caching. Source-field
+and ordinary operation emission remain the next steps.
 The [native-place proposal](prelower_native_places_2026_10_19.md) is deferred for
 source fields and retained for boundaries that still expose original native storage.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)

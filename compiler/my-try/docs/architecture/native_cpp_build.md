@@ -100,11 +100,14 @@ edits. `layouts_built`/`layouts_reused` report resolved headers; ordinary object
 counts exclude probe actions. Probe compilation/linking still performs its normal
 cache validation on warm builds.
 
-This first protocol is host-executed, Linux/Clang only, and uses one grouped probe.
-It does not support cross-compilation or a probe that depends on generated opaque
-source-record layouts. One grouped header conservatively couples consumers when its
-contents change; finer dependency partitioning remains follow-up work. Runtime
-provider objects do not receive application layout macros.
+This protocol is host-executed and Linux/Clang only. Probes run in manifest order;
+each receives all previously resolved layout headers. The specialization engine groups
+concrete layout requests by dependency depth, allowing outer native templates to
+contain concrete inner owners. Prior header contents participate in the existing
+dependency scan/cache; source publication remains immutable. Grouped headers and
+all-prior-batch inclusion conservatively couple consumers; finer partitioning remains
+follow-up work. Cross-compilation and composed source-record layout graphs are not
+covered. Runtime provider objects do not receive application layout macros.
 
 ## Bounded first implementation and next work
 

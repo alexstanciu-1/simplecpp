@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --results FRESH_DIRECTORY`
+proves production type-binding and lifecycle generation with concrete runtime
+arguments, including nested containers and an independently registered template.
+It checks direct/composed allocation/copy parity, actual nested references, throwing
+copy cleanup, request-order replay, layered layout caching and edit restoration at
+`-O0`, `-O2` and ASan/UBSan. The source record and operation adapters are fixture C++;
+this does not prove ordinary source-field emission or a native compiler rebuild.
+See the [binding integration checkpoint](../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_composition.py --results FRESH_DIRECTORY`
 compares a source record containing actual concrete fields against original native
 template fields. It checks field/reference identity, record and nested-container

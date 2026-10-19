@@ -88,6 +88,6 @@ final class CPP_Initializer_Buffer
 				. $native . '*>(input))->view())); }, storage_)';
 		}
 		$implementation .= $mapping->spelling . ' ' . $name . '::finish() { return ' . $finish . "; }\n}\n";
-		return new cpp_specialization_entry($name, $header, $declaration, $implementation, $aliases, $probe);
+		return new cpp_specialization_entry($name, $header, $declaration, $implementation, [], $aliases, $probe);
 	}
 }

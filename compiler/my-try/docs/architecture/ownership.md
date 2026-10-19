@@ -419,3 +419,13 @@ handles as current compiler data. Collection positions are not live counts.
 [Storage](../storage/STORAGE.md) defines shared membership and snapshots.
 [AST layout](ast_layout.md) defines typed ownership and inspection.
 [Portability review](../portability/REVIEW.md) tracks lifetime/publication proof gaps.
+
+## Concrete specialization layout dependencies
+
+The C++ binding owner selects physical implementation arguments from existing
+canonical types and runtime bindings. `cpp_type::layout_dependencies` carries direct
+specialization names; the lifecycle worker copies these into immutable engine-owned
+`cpp_specialization_entry` records. These invocation-local links describe native
+layout prerequisites, not new semantic identities or prepared facts. The existing
+engine orders probe batches; the native builder resolves/cache-validates them in
+publication order. Neither mutates preparation or adds a retained registry.

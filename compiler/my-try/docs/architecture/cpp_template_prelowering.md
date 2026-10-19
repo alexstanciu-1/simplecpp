@@ -12,6 +12,34 @@ through the existing registry and bindings, using original runtime templates beh
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
 
+## Concrete argument substitution foundation
+
+The agreed target is `runtime → pretemplate support → application`: recursively
+substitute demanded concrete types while preserving ordinary source fields, member
+calls and references. The existing AST, prepared facts and registry remain the owners.
+The older ABI transport below remains a tested comparison path until equivalent
+ordinary emission replaces it; it is not the target for source-field access.
+
+`CPP_Specializations::request_composed` now reuses the lifecycle worker with
+`CPP_Types::implementation_representation`: the outer runtime implementation keeps
+its registered spelling, while its template arguments use concrete physical bindings.
+Thus a nested container actually contains concrete inner owners. No family algorithm,
+semantic type or registry is copied into the engine. Names have a bounded readable
+semantic label and stable digest of semantic identity plus physical spelling.
+
+Physical bindings and immutable specialization entries carry direct layout dependency
+names. The existing engine publishes topological probe batches; the native cache
+resolves them in publication order, forcing prior layout headers into later probes.
+This conservatively includes all earlier batches, not just exact per-entry prerequisites.
+The original single-batch path retains its identity and artifact path.
+
+This is a backend API foundation, not a new public lowering mode or completed
+application substitution. Source payload arguments reject explicitly until the
+existing declaration emitter supplies consistent concrete field/signature bindings.
+Original native provider signatures cannot accept substituted types based on layout
+similarity alone. Ordinary operation/member interfaces and source declaration adoption
+remain the next integration work. See the [production-binding proof](../../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
+
 ## Runtime ABI expression integration
 
 The engine now exposes `request_opaque(canonical_type_use)` and
@@ -139,8 +167,8 @@ The [concrete-composition experiment](../../../../specs/planning/results/prelowe
 supports the preferred next source-field direction: actual concrete fields with
 ordinary member calls/references, including containers of those records and concrete
 nested elements. It preserves tested allocations/copies and lifecycle traits.
-This is not yet production lowering: physical argument bindings, dependent layout
-resolution and existing provider compatibility must be integrated deliberately.
+Physical argument bindings and dependent layout resolution now have the backend API
+foundation above. Source declaration adoption and provider compatibility remain open.
 The proposed [native-place contract](../../../../specs/planning/prelower_native_places_2026_10_19.md)
 is deferred for source fields, remaining relevant to original native storage boundaries.
 

@@ -2,7 +2,8 @@
 Doc Status: planning
 
 Date: 2026-10-19
-Status: agreed architectural direction; first bounded integer/vector slice implemented.
+Status: agreed architectural direction, refined to concrete type substitution;
+implementation is incremental and coverage remains bounded.
 See [current coverage](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md).
 
 ## Decision
@@ -43,6 +44,34 @@ records current facts and proposed extensions without installing another registr
 
 ## Ownership and request contract
 
+### Concrete type substitution refinement
+
+The agreed target is `runtime library -> pretemplate support library -> application`.
+Resolve demanded template applications (including nested applications) to reusable
+concrete C++ types, compile their implementations separately, and substitute their
+bindings in ordinary C++ emission. Source fields, parameters and returns use those
+same concrete types. Preserve ordinary field access, calls, constructors, references
+and sequencing wherever substitution suffices; do not route all application
+operations through a new generic opaque ABI.
+
+Source payload definitions are published once in shared generated headers, with
+concrete field types. Container implementations must use the selected physical
+argument types consistently. Do not reinterpret native template objects as facades
+or add conversion copies to disguise an incompatible runtime provider signature.
+Runtime templates may remain inside reusable support. The logical support library
+may contain independently cached objects; it need not be one compilation unit.
+
+Reuse canonical identities, registry capabilities, prepared decisions, C++ bindings,
+specialization references, publication and native caching. Layout dependencies are
+physical backend dependencies, not new source types or another semantic stage.
+The [composition proof](results/prelower_composition_2026_10_19/README.md) validates
+the mechanism and records provider, layout-bootstrap and coverage limits.
+
+The earlier generic opaque call/property route is an experimental comparison and
+can remain for genuinely native runtime boundaries. It is not the main architecture
+for source-defined fields/methods. Retire superseded routing after replacement proofs;
+do not accumulate permanent modes or duplicate registries.
+
 | Owner | Responsibility |
 |---|---|
 | Shared preparation | Source type identity, capabilities and settled semantic decisions |
@@ -52,14 +81,16 @@ records current facts and proposed extensions without installing another registr
 | Existing publication coordinator | Publish the complete consistent artifact set and acknowledge changes only after success |
 | Existing native builder | Compile generated implementation units with Clang; cache objects and link |
 
-A request conceptually says: “I need this canonical vector type with these
-operations.” Recipes are family-based and consume canonical arguments; `vector<int>` is a test,
-not a hard-coded implementation. Concrete integer representations derived from
+A request conceptually says: “I need this canonical type with these operations.”
+Representation workers consume existing capabilities and bindings; the engine has
+no family-specific algorithms. `vector<int>` is a test, not a hard-coded implementation.
+Concrete integer representations derived from
 registered width/signedness are included from the start. Review all runtime template
 families early and record explicit implementation/discussion/retention decisions.
 
-Initially every admitted specialization generates all methods in its
-supported family; selective methods are deferred.
+Initially a concrete interface can expose all admitted operations available through
+its existing bindings. Selective-method dependency optimization is deferred; no
+handwritten family registry should be introduced to supply those operations.
 
 Return a dedicated small-footprint specialization-reference structure, ideally a
 single engine entry ID. The engine entry owns the C++ name, artifact dependencies,

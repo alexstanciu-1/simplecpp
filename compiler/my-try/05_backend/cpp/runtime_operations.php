@@ -117,7 +117,7 @@ final class CPP_Runtime_Operations
 			. 'namespace scpp::internal { ' . $prototype . "; }\n";
 		$implementation = CPP_Artifacts::includes($native_context->headers, '') . "#include <memory>\n#include <new>\n"
 			. 'namespace scpp::internal { ' . $prototype . ' { ' . $body . " } }\n";
-		return new cpp_specialization_entry($name, $header, $declaration, $implementation);
+		return new cpp_specialization_entry($name, $header, $declaration, $implementation, []);
 	}
 
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool

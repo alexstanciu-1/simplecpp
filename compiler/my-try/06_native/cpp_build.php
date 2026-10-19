@@ -78,7 +78,7 @@ final class Native_CPP_Build
 				. self::file_digest('/usr/bin/env') . $version->stdout;
 			$layout_headers /** vector<string> */ = [];
 			foreach ($layout_probes as $probe) {
-				$layout = $this->layout($probe, $source_root);
+				$layout = $this->layout($probe, $source_root, $layout_headers);
 				$layout_headers[] = $layout->path;
 				if ($layout->reused) { $this->report->layouts_reused++; }
 				else { $this->report->layouts_built++; }
@@ -268,10 +268,11 @@ final class Native_CPP_Build
 	}
 
 	/** Resolve layouts inside the native owner; never mutate the published source bundle. */
-	private function layout(string $probe, string $source_root): native_cpp_artifact
+	private function layout(string $probe, string $source_root, array $prerequisites /** vector<string> */): native_cpp_artifact
 	{
 		$command /** vector<string> */ = $this->flags;
 		$command[] = '-I'; $command[] = $source_root;
+		foreach ($prerequisites as $header) { $command[] = '-include'; $command[] = $header; }
 		$command[] = '-c'; $command[] = $probe;
 		$object_file = $this->compile_action($command, 'o', false);
 		$objects /** vector<string> */ = [$object_file->path];
