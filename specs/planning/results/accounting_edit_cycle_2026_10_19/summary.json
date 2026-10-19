@@ -1,0 +1,54 @@
+{
+  "edit_medians": {
+    "ordinary-gnu": {
+      "frontend_sync": 0.132468416,
+      "preparation": 0.834164131,
+      "emission_publication": 0.374506564,
+      "build_wall": 10.272813058,
+      "build_other": 4.242213403134954,
+      "measured_total": 11.588543654,
+      "observer_gap": 0.000465086,
+      "version": 0.032377391995396465,
+      "dependency_scan": 2.4202761448686942,
+      "object_compile": 3.0067249340354465,
+      "link": 0.51544028299395,
+      "pch_validation": 0.05913812498329207,
+      "total_excluding_observer": 11.588039377000001
+    },
+    "prepared-gnu": {
+      "frontend_sync": 0.148294955,
+      "preparation": 0.81727653,
+      "emission_publication": 1.545781704,
+      "build_wall": 5.934354664,
+      "build_other": 3.575917004101667,
+      "measured_total": 8.451374226,
+      "observer_gap": 0.002355789,
+      "version": 0.031770901987329125,
+      "dependency_scan": 1.572405683924444,
+      "object_compile": 0.27157714701024815,
+      "link": 0.48955319001106545,
+      "pch_validation": 0,
+      "total_excluding_observer": 8.448960405000001
+    },
+    "prepared-mold": {
+      "frontend_sync": 0.148603557,
+      "preparation": 0.807333722,
+      "emission_publication": 1.498105791,
+      "build_wall": 5.561737548,
+      "build_other": 3.5752781811392005,
+      "measured_total": 7.992316185,
+      "observer_gap": 0.002254645,
+      "version": 0.033167710003908724,
+      "dependency_scan": 1.5694517548545264,
+      "object_compile": 0.2742301360121928,
+      "link": 0.10922085103811696,
+      "pch_validation": 0,
+      "total_excluding_observer": 7.99006154
+    }
+  },
+  "isolated_link_medians": {
+    "gnu": 0.4901192950201221,
+    "mold": 0.10867901204619557,
+    "lld": 0.12266042298870161
+  }
+}
