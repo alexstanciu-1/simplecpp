@@ -108,6 +108,13 @@ Default `new` without a selected constructor call replays its settled constructi
 facts through the existing operation request. Original runtime allocation helpers
 construct directly into the result owner. Copy/transfer/destruction remain original
 runtime operations; source classes and structs can now be container arguments.
+Selected positional constructors also reuse these construction facts and the
+existing prepared call. `CPP_Source_Calls` shares argument categories and native
+transport with instance methods; the ordinary call emitter still sequences explicit
+arguments and defaults. The native allocation selector remains in
+`CPP_Record_Construction`. Constructor results are built in final owner storage.
+The current semantic constructor scope remains fixed by-value parameters. See the
+[constructor transport proof](../../../../specs/planning/results/prelower_constructors_2026_10_19/README.md).
 Factory helper output identities use resolved native bindings rather than registry
 keys containing transient source type IDs, preserving deletion/restoration stability.
 
@@ -124,10 +131,12 @@ new AST or argument registry is involved. See the
 
 This slice does not implement static method/property/static-property crossings,
 method reference results, variadic/observation parameters, runtime-provider methods,
-selected constructors/named construction, weak derivation/lock or calls from
+named construction, weak derivation/lock or calls from
 native methods back into application functions. These crossings reject explicitly.
 Recursive payload graphs, callback crossings and full inheritance operation coverage
 remain follow-up proofs. See the [source-payload checkpoint](../../../../specs/planning/results/prelower_source_payloads_2026_10_19/README.md).
+The proposed [native-place contract](../../../../specs/planning/prelower_native_places_2026_10_19.md)
+describes the additional physical distinction required for field mutation.
 
 ## Accounting recipe baseline: invocation
 

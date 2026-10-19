@@ -5,7 +5,8 @@ require_once dirname(__DIR__, 2) . '/boot.php';
 $source = $argv[1];
 $output = $argv[2];
 $opaque = $argv[3] === 'opaque';
-$source_proof = ($argv[4] ?? '') === 'source-types';
+$constructor_proof = ($argv[4] ?? '') === 'constructors';
+$source_proof = (($argv[4] ?? '') === 'source-types') || $constructor_proof;
 $initializer_proof = ($argv[4] ?? '') === 'initializers';
 if ($initializer_proof) { require __DIR__ . '/prelower_initializer_cases.php'; }
 $metadata = new runtime_catalog_input();
@@ -61,6 +62,7 @@ if ($initializer_proof) { $program = $initializer_program; }
 if ($source_proof) {
     require __DIR__ . '/prelower_source_cases.php';
     $program = $source_program;
+    if ($constructor_proof) { require __DIR__ . '/prelower_constructor_cases.php'; }
     if (($argv[5] ?? '') === 'method-edit') {
         $program = str_replace('function __destruct() { $this->touch(); }',
             'function __destruct() { $this->touch(); $this->touch(); }', $program);
@@ -165,8 +167,7 @@ if ($opaque) {
 }
 if ($source_proof && $opaque) {
     $unsupported = [
-        'selected source constructors' => 'class C { function __construct(int $x) {} } $c = new C(1);',
-        'method reference returns and variadic packs' => 'class C { function ping(int ...$values): int { return 1; } } $c = new C(); $x = $c->ping(1);',
+        'source call reference returns and variadic packs' => 'class C { function ping(int ...$values): int { return 1; } } $c = new C(); $x = $c->ping(1);',
         'property access' => 'class C { public int $x = 1; } $c = new C(); $x = $c->x;',
         'static property access' => 'class C { public static int $x = 1; } $x = C::$x;',
         'native source calls' => 'function app(): int { return 1; } class C { function ping(): int { return app(); } }',
@@ -207,7 +208,7 @@ if ($source_proof) {
     $instrumented = new Storage();
     foreach ($artifacts as $artifact) {
         $text = $artifact->text;
-        foreach (['Invoice', 'Row'] as $name) {
+        foreach (['Invoice', 'Row', 'Constructed'] as $name) {
             if ($artifact->file_name !== CPP_Artifacts::type_header($name)) { continue; }
             $opening = 'struct ' . CPP_Generator::source_name('record', $name) . "\n{\n";
             $text = '#include "instrument.hpp"' . "\n" . str_replace($opening, $opening . "Tracked proof_payload;\n", $text);
@@ -226,6 +227,17 @@ if ($source_proof) {
         . CPP_Generator::source_name('function', 'failure')
         . '(); require(false); } catch(const CopyFailure&) {} copies_before_throw=-1; require(live_values==0); '
         . 'report("parameter-failure"); source_identity_proof(); }', $header);
+}
+if ($constructor_proof) {
+    $failure_name = CPP_Generator::source_name('function', 'constructor_failure');
+    $header = 'void ' . $failure_name . "();\n" . $header;
+    $checks = '';
+    for ($limit = 0; $limit < 3; $limit++) {
+        $checks .= 'begin(); copies_before_throw=' . $limit . '; try { ' . $failure_name
+            . '(); require(false); } catch(const CopyFailure&) {} copies_before_throw=-1; require(live_values==0); '
+            . 'report("constructor-failure-' . $limit . '"); ';
+    }
+    $header = str_replace('source_identity_proof(); }', $checks . 'source_identity_proof(); }', $header);
 }
 if ($initializer_proof) {
     // Replace only instrumentation hooks; application initializer code is emitted from source.

@@ -180,6 +180,7 @@ enum cpp_runtime_operation_kind {
 	case method_call;
 	case receiver_check;
 	case construct_default;
+	case construct_call;
 	case observation;
 	case initialize_empty;
 	case initialize_buffer;

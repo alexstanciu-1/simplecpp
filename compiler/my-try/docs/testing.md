@@ -34,6 +34,12 @@ construction, methods, destruction and application operations are compiler-gener
 Direct/ABI counters are compared within each build configuration: disabling optional
 elision may add a return move equally in both modes.
 
+`python3 compiler/my-try/tests/prelower_expressions.py --constructors --results FRESH_DIRECTORY`
+extends that proof with ordered positional constructor arguments, explicit/default
+parameters, shared/unique/inline class storage, struct property-backed parameters,
+and injected copy failures at argument, native parameter and constructor-body stages.
+It retains the same replay, cache, allocation/copy and sanitizer checks.
+
 `python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
 checks real prepared observation/type bindings through opaque lifecycle generation,
 publication and native layout caching, including provider dependency edits, recovery,

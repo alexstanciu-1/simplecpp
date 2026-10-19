@@ -252,9 +252,9 @@ and converted input types, not entries or literal length. Their generated inline
 buffer owns the original runtime initializer buffer for one synchronous call. It
 cannot be copied or moved; entry snapshots remain in the ordinary emitter's scopes.
 Native RAII releases partial contents on append/conversion/factory failure.
-Default source construction requests retain settled construction facts with no
-selected call, together with the canonical result. They reuse fragment retirement
-and replay. Source payload declarations and methods remain in their existing
+Source construction requests retain settled construction facts and, when selected,
+the existing prepared constructor call, together with the canonical result. They
+reuse fragment retirement and replay. Source payload declarations and methods remain in their existing
 fragments; a transient native-source context selects ordinary physical bindings.
 Assembly separates native method/static/dispatch implementation units from
 application functions. No alternate retained payload graph or specialization cache

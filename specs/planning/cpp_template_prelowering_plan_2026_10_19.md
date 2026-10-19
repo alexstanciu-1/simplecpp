@@ -66,9 +66,12 @@ default construction and source payload container arguments. Only requested form
 and their dependencies are generated; do not eagerly produce every ownership form.
 Fixed-parameter source instance calls now reuse existing prepared calls and the
 ordinary argument-sequencing emitter, including retained shared/borrowed inline
-receivers and owned results. Property crossings, selected constructor arguments,
+receivers and owned results. Selected positional constructors reuse this call
+transport, existing allocation selection and final result storage. Property crossings,
 static/provider methods, reference results and variadic/observation transport remain
 follow-ups using the same prepared call/place owners.
+The [native-place proposal](prelower_native_places_2026_10_19.md) records the missing
+borrowed-address distinction and bounded field-mutation integration for agreement.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
 details the missing backend request replay and native-address transport, and the
 prepared nested-read/write distinction. Its retained contract is agreed; the linked expression checkpoint records implemented coverage.

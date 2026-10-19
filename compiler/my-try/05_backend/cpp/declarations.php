@@ -465,7 +465,7 @@ final class CPP_Declarations
 			return self::selected_call($facts, $syntax->arguments, $context, '', null, $evaluation);
 		}
 		if ($facts->receiver !== null) {
-			if ($context->runtime_abi()) { return CPP_Method_Calls::generate($syntax, $context); }
+			if ($context->runtime_abi()) { return CPP_Source_Calls::method($syntax, $context); }
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
 			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
 			$value = 'this';
@@ -559,7 +559,7 @@ final class CPP_Declarations
 		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
 		$text .= $prefix;
 		$physical_arguments /** vector<string> */ = [];
-		if ($transport !== null) { $physical_arguments[] = $callee; }
+		if (($transport !== null) && ($constructed_type === null)) { $physical_arguments[] = $callee; }
 		$names = '';
 		$separator = '';
 		if ($constructed_type !== null) {

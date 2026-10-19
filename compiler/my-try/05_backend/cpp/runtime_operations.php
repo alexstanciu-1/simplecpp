@@ -15,7 +15,7 @@ final class CPP_Runtime_Operations
 	public static function name(cpp_runtime_operation $request): string
 	{
 		$key = $request->kind_name() . ':' . $request->spelling . ':' . ($request->append ? 'append' : 'store');
-		if ($request->call !== null) { $key .= ':' . CPP_Method_Calls::identity($request->call); }
+		if ($request->call !== null) { $key .= ':' . CPP_Source_Calls::identity($request->call); }
 		if ($request->construction !== null) {
 			$key .= ':payload=' . CPP_Opaque_Representation::identity($request->construction->constructed_type)
 				. ':storage=' . enum_name($request->construction->storage);
@@ -122,15 +122,16 @@ final class CPP_Runtime_Operations
 
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool
 	{
-		if ($request->call !== null) { return CPP_Method_Calls::mutable_input($request->call, $position); }
+		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, $request->construction === null); }
 		return ($position === 0) && ($request->kind === cpp_runtime_operation_kind::index_write);
 	}
 
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::construct_call) { return CPP_Source_Calls::native_construction($request, $arguments, $context); }
 		if ($request->kind === cpp_runtime_operation_kind::receiver_check) { return '(void)' . $arguments[0] . '.operator->()'; }
-		if ($request->kind === cpp_runtime_operation_kind::method_call) { return CPP_Method_Calls::native_call($request, $arguments, $context); }
+		if ($request->kind === cpp_runtime_operation_kind::method_call) { return CPP_Source_Calls::native_call($request, $arguments, $context); }
 		if ($request->kind === cpp_runtime_operation_kind::construct_default) {
 			$facts /** prepared_object_construction */ = $request->construction;
 			return CPP_Record_Construction::object($facts, new Storage /** Storage<expression_node> */(), $context);
@@ -197,7 +198,7 @@ final class CPP_Runtime_Operations
 	public static function construct_default(prepared_object_construction $facts, cpp_generation_context $context): string
 	{
 		if ($facts->constructor_call !== null) {
-			throw new \RuntimeException('runtime template ABI: selected source constructors need argument transport');
+			throw new \LogicException('Selected constructor requires source-call transport');
 		}
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::construct_default);
 		$request->construction = $facts;

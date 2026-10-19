@@ -14,6 +14,7 @@ def main():
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument('--initializers', action='store_true')
     modes.add_argument('--source-types', action='store_true')
+    modes.add_argument('--constructors', action='store_true')
     parser.add_argument('--results', required=True, type=Path)
     args = parser.parse_args()
     out = args.results.resolve()
@@ -30,7 +31,7 @@ def main():
                 results[label] = runner.run(label + '-run', [*environment, executable]).decode()
             for mode in ['direct', 'opaque']:
                 folder = out / mode
-                runner.run(mode + '-emit', ['php', APP / 'tests/fixtures/prelower_expressions.php', out / ('source-' + mode), folder, mode, 'initializers' if args.initializers else ('source-types' if args.source_types else 'expressions')])
+                runner.run(mode + '-emit', ['php', APP / 'tests/fixtures/prelower_expressions.php', out / ('source-' + mode), folder, mode, 'initializers' if args.initializers else ('constructors' if args.constructors else ('source-types' if args.source_types else 'expressions'))])
                 for optimization in ['-O0', '-O2']:
                     label = mode + optimization
                     built = json.loads(runner.run(label + '-build', ['php', APP / 'tools/build_cpp.php', folder, out / ('cache-' + mode), '--no-pch', optimization], cli_reason='Native build process'))
@@ -59,7 +60,7 @@ def main():
                     return '\n'.join(lines)
                 assert len({without_diagnostic_allocations(value) for value in unfiltered.values()}) == 1, unfiltered
                 (out / 'unfiltered-summary.json').write_text(json.dumps(unfiltered, indent=2) + '\n')
-            if args.source_types:
+            if args.source_types or args.constructors:
                 # Returning a named value permits NRVO; sanitizer mode deliberately disables it.
                 for suffix in ['-O0', '-O2', '-sanitized']:
                     assert results['direct' + suffix] == results['opaque' + suffix], results
@@ -67,12 +68,12 @@ def main():
                 assert len(set(results.values())) == 1, results
             assert int(results['direct-O0'].split()[5]) > 0, results
             (out / 'summary.json').write_text(json.dumps(results, indent=2) + '\n')
-            if args.source_types:
+            if args.source_types or args.constructors:
                 records = []
                 folder, cache = out / 'opaque', out / 'cache-opaque'
                 for revision in ['method-edit', 'layout-edit']:
                     runner.run(revision + '-emit', ['php', APP / 'tests/fixtures/prelower_expressions.php',
-                        out / 'source-opaque', folder, 'opaque', 'source-types', revision])
+                        out / 'source-opaque', folder, 'opaque', 'constructors' if args.constructors else 'source-types', revision])
                     built = json.loads(runner.run(revision + '-build', ['php', APP / 'tools/build_cpp.php',
                         folder, cache, '--no-pch', '-O0'], cli_reason='Native build process'))
                     assert built['layouts_reused' if revision == 'method-edit' else 'layouts_built'] == 1, built
