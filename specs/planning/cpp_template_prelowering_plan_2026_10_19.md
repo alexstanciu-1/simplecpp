@@ -40,6 +40,26 @@ general path covers their workload. Keep native-address transport only for inter
 that still require original native storage. Archive historical performance evidence;
 rewrite current guidance so it describes one intended architecture.
 
+## Future optimization: ThinLTO (non-blocking)
+
+Evaluate optional ThinLTO for `-O2` and higher release builds after the concrete
+substitution path has representative application coverage. This is not a prerequisite
+for prelowering implementation, correctness, or acceptance, and does not change
+current build defaults. Configuration belongs to the native builder, separately
+from lowering options.
+
+The hypothesis is that cross-module optimization can inline concrete forwarding
+methods across the application/support boundary while preserving the frontend
+savings of prelowering. Participating support and application objects must carry
+compatible LLVM bitcode into the same final link; an already-linked shared-library
+boundary is outside this experiment. Runtime gains are not yet measured.
+
+Compare matched builds with and without `-flto=thin`: runtime performance, binary
+size, clean build/link time, peak memory, and warm incremental rebuild/link time
+with ThinLTO caching enabled. Keep correctness and allocation/copy proofs active.
+Use the results to decide whether to offer an opt-in release profile.
+See [LLVM's ThinLTO documentation](https://clang.llvm.org/docs/ThinLTO.html).
+
 ## First-slice checkpoint
 
 The [integer/vector proof](results/prelower_first_slice_2026_10_19/README.md) covers
