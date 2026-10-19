@@ -247,6 +247,11 @@ bindings. These backend requests are immutable after publication, contain no syn
 workers or compact engine IDs, and add no semantic registry. Fragment replacement
 or removal drops them; assembly replays live requests into an invocation-local engine.
 Transient physical operand records do not retain source owners or lifetime analysis.
+Nonempty initializer requests reuse this ownership, retaining the selected factory
+and converted input types, not entries or literal length. Their generated inline
+buffer owns the original runtime initializer buffer for one synchronous call. It
+cannot be copied or moved; entry snapshots remain in the ordinary emitter's scopes.
+Native RAII releases partial contents on append/conversion/factory failure.
 
 Runtime argument facts retain source positions, not syntax backlinks. Compiler-call
 preparation may consume type-marker syntax before admitting runtime arguments;

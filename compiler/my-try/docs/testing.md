@@ -9,6 +9,17 @@ provider/source-function boundaries, cached-fragment replay, edit/removal recove
 configuration switching, fresh-output equivalence and warm native reuse. See the
 [expression checkpoint](../../../specs/planning/results/prelower_expressions_2026_10_19/README.md).
 
+`python3 compiler/my-try/tests/prelower_expressions.py --initializers --results FRESH_DIRECTORY`
+uses the same harness for nonempty list/keyed/nested initialization, heap-backed
+inputs, per-entry lifecycle traces, copy-failure sweeps, allocation-before-evaluation,
+key/value conversion failures and duplicate-key factory cleanup. It also verifies
+that literal-length edits do not change specialization support.
+The initializer fixture runs with native stack capture and with a test-only
+`backtrace` interposition returning no frames. It retains unfiltered counters;
+exact allocation parity is asserted with capture isolated, while unfiltered
+conversion failures must preserve payload lifetimes and evaluation traces.
+Runtime error stack-frame allocations depend on bridge depth and optimization.
+
 `python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
 checks real prepared observation/type bindings through opaque lifecycle generation,
 publication and native layout caching, including provider dependency edits, recovery,

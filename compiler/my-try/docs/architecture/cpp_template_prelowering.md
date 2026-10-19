@@ -46,7 +46,7 @@ headers are forced into generated units at native compilation. Requests deduplic
 inside the existing engine, and generated names distinguish semantic type identity
 from coincident native spelling without embedding invocation-local IDs.
 
-The expression path emits registered integer literals, default/empty initialization,
+The expression path emits registered integer literals, default/empty and nonempty list/keyed initialization,
 readonly runtime observations and zero-argument provider calls, ordinary unary/eager
 binary computations, conversions, copied indexed reads and nested indexed assignment.
 `CPP_Runtime_Operations` reuses existing native operation renderers and callable
@@ -62,8 +62,23 @@ body removal drops unused operation artifacts. `cpp_runtime_operand` is transien
 and supplies physical address transport through the `cpp_type::opaque` binding.
 Layout/action caching remains unchanged.
 
-This is bounded expression integration, not full backend coverage. Nonempty data
-initializers need initializer-buffer transport. Iteration, mutation expressions,
+Nonempty initialization uses the original runtime `initializer_buffer<Element>` in
+layout-probed inline storage. The helper is noncopyable and nonmovable because the
+native buffer can point into its own local storage. `CPP_Data_Construction` shares
+one entry loop across ordinary and ABI emission: allocate the buffer first, evaluate
+and convert each key before its value, append, destroy that entry's snapshots, then
+call the existing selected factory. List entries keep lvalue copy semantics; keyed
+entries keep aggregate-prvalue semantics. Native RAII owns partial-buffer cleanup.
+The buffer recipe replays as an ordinary operation request and does not depend on
+literal length. No new semantic type or registry entry describes this backend helper.
+See the [initializer proof](../../../../specs/planning/results/prelower_initializers_2026_10_19/README.md).
+Checked conversion failures still capture native stack traces in the runtime.
+Bridge frames can increase diagnostic allocations even with `-g0`; disabling
+debug symbols does not disable that capture. The initializer transport itself
+preserves payload copies/moves and buffer allocations. Diagnostic capture policy
+is a separate runtime concern, not changed by this slice.
+
+This is bounded expression integration, not full backend coverage. Iteration, mutation expressions,
 indexed compound updates, broader runtime call boundaries (defaults, multiple inputs,
 value/consume/reference parameters, receiver calls and reference results), and the
 remaining wrapper/property/callback operations are not covered by this proof.

@@ -5,12 +5,20 @@ require_once dirname(__DIR__, 2) . '/boot.php';
 $source = $argv[1];
 $output = $argv[2];
 $opaque = $argv[3] === 'opaque';
+$initializer_proof = ($argv[4] ?? '') === 'initializers';
+if ($initializer_proof) { require __DIR__ . '/prelower_initializer_cases.php'; }
 $metadata = new runtime_catalog_input();
 foreach (Model::$runtime_metadata->modules as $module) { $metadata->modules->add($module->name, $module); }
 $module_data = json_decode(file_get_contents(dirname(__DIR__) . '/runtime_types.json'), true);
 foreach (['measure_begin', 'measure_end'] as $name) {
     $module_data['functions'][] = ['id' => 'proof.' . $name, 'name' => $name, 'parameters' => [], 'returns' => 'void'];
     $module_data['cpp'][] = ['id' => 'proof.' . $name, 'symbol' => $name, 'header' => 'runtime_type_support.hpp'];
+}
+if ($initializer_proof) {
+    foreach (['init_step' => 'receipt', 'init_allocations' => 'int', 'init_number' => 'int'] as $name => $returns) {
+        $module_data['functions'][] = ['id' => 'proof.' . $name, 'name' => $name, 'parameters' => [], 'returns' => $returns];
+        $module_data['cpp'][] = ['id' => 'proof.' . $name, 'symbol' => $name, 'header' => 'runtime_type_support.hpp'];
+    }
 }
 $metadata->modules->add('type_proof', Runtime_Catalog_Reader::decode(json_encode($module_data), 'type_proof.json'));
 Compiler_Lifecycle::configure_runtime($metadata);
@@ -48,6 +56,7 @@ $answer = work();
 measure_end();
 return $answer;
 PHS;
+if ($initializer_proof) { $program = $initializer_program; }
 file_put_contents($source . '/main.phs', $program);
 $compiler = new Compiler();
 $compiler->cpp_lowering->prelower_templates = $opaque;
@@ -78,6 +87,17 @@ $compiler->update_cpp([$source . '/main.phs']);
 if (Model::$cpp_output_program->fragments[$work_owner] !== $work_fragment) { throw new \LogicException('Entry edit regenerated unchanged work body'); }
 $edited_snapshot = snapshot();
 if ($edited_snapshot === $before) { throw new \LogicException('Entry edit did not change output'); }
+if ($initializer_proof) {
+    $short = str_replace('$list vector<receipt> = [$payload, $payload];', '$list vector<receipt> = [$payload];', $program);
+    file_put_contents($source . '/main.phs', $short);
+    $compiler->update_cpp([$source . '/main.phs']);
+    $length_edit = snapshot();
+    foreach ($before as $path => $text) {
+        if (str_starts_with($path, 'specializations/') && ($length_edit[$path] ?? null) !== $text) {
+            throw new \LogicException('Literal length changed specialization support');
+        }
+    }
+}
 // Removing every call must drop every operation request, including dead support headers.
 file_put_contents($source . '/main.phs', 'return 0;');
 $compiler->update_cpp([$source . '/main.phs']);
@@ -116,10 +136,33 @@ $artifacts = Model::$cpp_files;
 $header = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $header = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $header);
 $header .= "\nvoid " . CPP_Generator::source_name('function', 'failure') . "();\ninline void measure_begin() { begin(); }\ninline void measure_end() { report(\"expressions\"); begin(); copies_before_throw=0; try { " . CPP_Generator::source_name('function', 'failure') . "(); require(false); } catch(const CopyFailure&) {} copies_before_throw=-1; require(live_values==0); report(\"failure\"); }\n";
+if ($initializer_proof) {
+    // Replace only instrumentation hooks; application initializer code is emitted from source.
+    $header = substr($header, 0, strpos($header, "\nvoid " . CPP_Generator::source_name('function', 'failure')));
+    $header .= $initializer_provider;
+}
 $artifacts->append(new cpp_artifact('proof:provider', cpp_artifact_kind::header, 'runtime_type_support.hpp', $header));
 foreach (['instrument.hpp', 'instrument.cpp'] as $name) {
+    $instrument = file_get_contents(__DIR__ . '/prelower_boundary/' . $name);
+    if ($initializer_proof && $name === 'instrument.cpp') {
+        // Test-only isolation of stack-trace allocation from initializer transport.
+        // Unfiltered runs still call libc and retain their complete counters.
+        $instrument .= <<<'CPP'
+
+#include <dlfcn.h>
+extern "C" int backtrace(void** frames, int count) noexcept {
+    if (std::getenv("SCPP_PROOF_NO_TRACE") != nullptr) { return 0; }
+    using capture = int (*)(void**, int);
+    static auto original = reinterpret_cast<capture>(dlsym(RTLD_NEXT, "backtrace"));
+    if (original == nullptr) { std::abort(); }
+    return original(frames, count);
+}
+CPP;
+        $instrument = str_replace('Counters counts;', 'bool init_fail_allocation = false; Counters counts;', $instrument);
+        $instrument = str_replace('void* p = nullptr;', 'if(init_fail_allocation) { init_fail_allocation=false; throw std::bad_alloc(); } void* p = nullptr;', $instrument);
+    }
     $artifacts->append(new cpp_artifact('proof:' . $name, $name === 'instrument.hpp' ? cpp_artifact_kind::header : cpp_artifact_kind::translation_unit,
-        $name, file_get_contents(__DIR__ . '/prelower_boundary/' . $name)));
+        $name, $instrument));
 }
 (new Output_Publication($output))->publish($artifacts, CPP_Runtime_Build::requirements(Model::$runtime_metadata));
 echo "expression emission and cached replay passed\n";

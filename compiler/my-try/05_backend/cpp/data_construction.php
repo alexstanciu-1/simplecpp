@@ -118,20 +118,35 @@ final class CPP_Data_Construction
 			if ($context->runtime_abi()) { return CPP_Runtime_Operations::initialize($node, $binding, $context); }
 			return CPP_Concrete_Operations::initialize($node, $binding->target(), $context);
 		}
-		$factory = self::reference($binding, $context);
-		$entries /** Storage<data_entry_node> */ = $node->entries;
-		$signature = $binding->factory()->signature();
-		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
-		$input_type = CPP_Declarations::type($parameters[0]->type, $context);
-		if ($entries->is_empty()) { return $factory . '(' . $input_type . '{})'; }
+		return self::sequence($node, $binding, $context);
+	}
 
-		// The input signature already identifies the complete entry/element type.
+	/** Both representations use the same source sequencing and entry lifetimes. */
+	public static function sequence(data_construction_node $node, initialization_binding $binding,
+		cpp_generation_context $context): string
+	{
+		if ($context->runtime_abi()) {
+			return self::emit_sequence($node, $binding, $context, CPP_Initializer_Buffer::reference($node, $binding, $context), '', '');
+		}
+		$factory = self::reference($binding, $context);
+		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
+		$input_type = CPP_Declarations::type($parameters[0]->type, $context);
+		if ($node->entries->is_empty()) { return $factory . '(' . $input_type . '{})'; }
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
 		$element = CPP_Declarations::type($input->arguments()[0], $context);
+		return self::emit_sequence($node, $binding, $context, 'scpp::initializer_buffer<' . $element . '>', $element, $factory);
+	}
+
+	/** Only physical buffer operations vary; source evaluation and lifetime scopes are shared. */
+	private static function emit_sequence(data_construction_node $node, initialization_binding $binding,
+		cpp_generation_context $context, string $buffer_type, string $element, string $factory): string
+	{
+		$entries /** Storage<data_entry_node> */ = $node->entries;
+
 		$buffer = 'initializer_' . $context->next_temporary;
 		$context->next_temporary++;
 		$text = '([&]() -> ' . CPP_Declarations::type($binding->target(), $context) . " {\n";
-		$text .= 'scpp::initializer_buffer<' . $element . '> ' . $buffer . '(' . q_count($entries) . ");\n";
+		$text .= $buffer_type . ' ' . $buffer . '(' . q_count($entries) . ");\n";
 		$emitter = new CPP_Syntax($context);
 		foreach ($entries as $entry) {
 			$facts = $entry->require_preparation();
@@ -148,11 +163,16 @@ final class CPP_Data_Construction
 			$context->next_temporary++;
 			$value = CPP_Declarations::conversion($emitter->expression($entry->value), $facts->value_conversion, $context);
 			$text .= CPP_Declarations::type($facts->value_conversion->target_type, $context) . ' ' . $value_name . ' = ' . $value . ";\n";
+			if ($context->runtime_abi()) {
+				$text .= CPP_Initializer_Buffer::append($facts, $buffer, $key_name, $value_name, $context) . ";\n}\n";
+				continue;
+			}
 			$argument = $value_name;
 			if ($entry->key !== null) { $argument = $element . '{' . $key_name . ', ' . $value_name . '}'; }
 			$text .= $buffer . '.append(' . $argument . ");\n}\n";
 		}
-		return $text . 'return ' . $factory . '(' . $buffer . ".view());\n}())";
+		$finish = $context->runtime_abi() ? $buffer . '.finish()' : $factory . '(' . $buffer . '.view())';
+		return $text . 'return ' . $finish . ";\n}())";
 	}
 
 	/** Snapshot supplied inputs first, then omitted defaults; invoke the settled typed constructor. */

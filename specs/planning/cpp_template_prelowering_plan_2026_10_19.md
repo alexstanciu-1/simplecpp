@@ -57,7 +57,9 @@ copy. The [first ABI integration slice](results/prelower_layout_integration_2026
 now consumes prepared observation signatures and existing bindings, publishes grouped
 layout probes, and resolves/cache-validates them in the native builder. The [ordinary-expression checkpoint](results/prelower_expressions_2026_10_19/README.md)
 now adds opt-in runtime ABI emission, operation replay and shared prepared-path lowering.
-Nonempty initialization and broader call/iteration/reference transports remain deferred.
+The [nonempty-initializer checkpoint](results/prelower_initializers_2026_10_19/README.md)
+adds the existing runtime buffer through the same request/layout owners. Broader
+call/iteration/reference transports remain deferred.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
 details the missing backend request replay and native-address transport, and the
 prepared nested-read/write distinction. Its retained contract is agreed; the linked expression checkpoint records implemented coverage.

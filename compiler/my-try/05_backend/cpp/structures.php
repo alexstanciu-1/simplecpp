@@ -177,6 +177,7 @@ final class cpp_program {
 enum cpp_runtime_operation_kind {
 	case observation;
 	case initialize_empty;
+	case initialize_buffer;
 	case binary;
 	case unary;
 	case conversion;

@@ -29,10 +29,7 @@ final class CPP_Runtime_Operations
 	public static function invoke(cpp_runtime_operation $request, array $expressions /** vector<string> */,
 		cpp_generation_context $context): string
 	{
-		$engine /** CPP_Specializations */ = $context->specialization_engine;
-		$entry = $engine->entry($engine->request_operation($request));
-		$context->runtime_operations[$entry->name] = $request;
-		$context->headers[$entry->header] = true;
+		$entry = self::reference($request, $context);
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$parts /** vector<string> */ = [];
 		foreach ($inputs as $position => $input) {
@@ -42,7 +39,17 @@ final class CPP_Runtime_Operations
 		return 'scpp::internal::' . $entry->name . '(' . self::join($parts) . ')';
 	}
 
-	private static function address(cpp_runtime_operand $operand, cpp_generation_context $context): string
+	/** Record every helper use with its fragment, including a reused engine entry. */
+	public static function reference(cpp_runtime_operation $request, cpp_generation_context $context): cpp_specialization_entry
+	{
+		$engine /** CPP_Specializations */ = $context->specialization_engine;
+		$entry = $engine->entry($engine->request_operation($request));
+		$context->runtime_operations[$entry->name] = $request;
+		$context->headers[$entry->header] = true;
+		return $entry;
+	}
+
+	public static function address(cpp_runtime_operand $operand, cpp_generation_context $context): string
 	{
 		$mapping = CPP_Types::representation($operand->type, $context);
 		CPP_Types::record_dependencies($mapping, $context);
@@ -54,6 +61,9 @@ final class CPP_Runtime_Operations
 		$name = self::name($request);
 		$existing = $engine->find($name);
 		if ($existing !== null) { return $existing; }
+		if ($request->kind === cpp_runtime_operation_kind::initialize_buffer) {
+			return CPP_Initializer_Buffer::entry($request, $engine);
+		}
 		$native_context = new cpp_generation_context();
 		$signature = '';
 		$unpack = '';
@@ -168,7 +178,7 @@ final class CPP_Runtime_Operations
 		cpp_generation_context $context): string
 	{
 		if (!$node->entries->is_empty()) {
-			throw new \RuntimeException('runtime template ABI: nonempty initialization needs initializer-buffer transport');
+			return CPP_Data_Construction::sequence($node, $binding, $context);
 		}
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::initialize_empty);
 		$request->initialization = $binding;
