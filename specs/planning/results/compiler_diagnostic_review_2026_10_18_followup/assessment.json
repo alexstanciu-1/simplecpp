@@ -1,0 +1,238 @@
+[
+  {
+    "id": "TYPE-01",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-01"
+    ]
+  },
+  {
+    "id": "TYPE-02",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-01"
+    ]
+  },
+  {
+    "id": "TYPE-03",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-02"
+    ]
+  },
+  {
+    "id": "TYPE-04",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-02"
+    ]
+  },
+  {
+    "id": "NAME-01",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-03"
+    ]
+  },
+  {
+    "id": "NAME-02",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "NAME-03",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "NAME-04",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "CALL-01",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "CALL-02",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "CALL-03",
+    "behavior": "matches expected phase/outcome",
+    "location": "not applicable: accepted valid source",
+    "issues": []
+  },
+  {
+    "id": "REF-01",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "REF-02",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "REF-03",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "OP-01",
+    "behavior": "matches expected phase/outcome",
+    "location": "not applicable: accepted valid source",
+    "issues": []
+  },
+  {
+    "id": "OP-02",
+    "behavior": "matches expected phase/outcome",
+    "location": "not applicable: accepted valid source",
+    "issues": []
+  },
+  {
+    "id": "OP-03",
+    "behavior": "matches expected phase/outcome",
+    "location": "not applicable: accepted valid source",
+    "issues": []
+  },
+  {
+    "id": "OP-04",
+    "behavior": "matches expected phase/outcome",
+    "location": "not applicable: accepted valid source",
+    "issues": []
+  },
+  {
+    "id": "OP-05",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "CONT-01",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "CONT-02",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "CONT-03",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "OBJ-01",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-04"
+    ]
+  },
+  {
+    "id": "OBJ-02",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "OBJ-03",
+    "behavior": "matches expected phase/outcome",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "LOW-01",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-05"
+    ]
+  },
+  {
+    "id": "LOW-03",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-06"
+    ]
+  },
+  {
+    "id": "LOW-04",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-06"
+    ]
+  },
+  {
+    "id": "LOW-05",
+    "behavior": "mismatch",
+    "location": "expected source diagnostic absent or downstream only",
+    "issues": [
+      "DR-07"
+    ]
+  },
+  {
+    "id": "REC-01",
+    "behavior": "passed failure withholding/retry/fresh/repair checks",
+    "location": "missing source location",
+    "issues": [
+      "DR-08"
+    ]
+  },
+  {
+    "id": "REC-02",
+    "behavior": "passed failure withholding/retry/fresh/repair checks",
+    "location": "source filename and byte offset reported; syntax error is missing closing brace at EOF, not return-expression error",
+    "issues": []
+  }
+]

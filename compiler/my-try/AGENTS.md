@@ -16,6 +16,13 @@ when historical context is needed; their former plans are not current instructio
 
 ## Scope and workflow
 
+- Develop my-try as a semantic compiler for the supported language, with C++ as
+  a backend target. Source-language validity and source-located diagnostics belong
+  to shared frontend/semantic analysis; Clang is not the source-language checker.
+  Static analysis (STAN) should reuse that semantic model, not duplicate its rules.
+  This direction does not resume legacy STAN or authorize new analysis machinery.
+  Follow the [diagnostic review plan](docs/planning/diagnostic_review.md) for review
+  scope, evidence, issue classification and separately authorized repair goals.
 - Default development is frontend + C++ S2S. LLVM is parked; change its semantics
   only on explicit request. New semantics extend shared preparation and attached
   facts. LLVM must first be adapted to that model if development resumes.

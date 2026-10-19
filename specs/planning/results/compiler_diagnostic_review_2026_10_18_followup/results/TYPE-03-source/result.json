@@ -1,0 +1,7 @@
+{
+  "stage": "emitted",
+  "compile": "failed",
+  "compile_logs": [
+    "TYPE-03-source-compile-0.stderr"
+  ]
+}

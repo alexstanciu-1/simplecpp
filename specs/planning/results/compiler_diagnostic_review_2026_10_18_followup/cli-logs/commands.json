@@ -1,0 +1,36 @@
+[
+  {
+    "name": "REF-03",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/main.php",
+      "--s2s",
+      "/tmp/diagnostic-review-20261018-current/results/REF-03-source",
+      "--entry",
+      "main.phs"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.23,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "NAME-04",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/main.php",
+      "--s2s",
+      "/tmp/diagnostic-review-20261018-current/results/NAME-04-source",
+      "--entry",
+      "main.phs"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.231,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  }
+]

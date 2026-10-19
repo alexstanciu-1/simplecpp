@@ -1,0 +1,12 @@
+{
+  "control": {
+    "stage": "emitted",
+    "compile": "passed",
+    "compile_logs": [],
+    "link": "passed"
+  },
+  "source": {
+    "stage": "prepare",
+    "error": "S2S reference binding requires stable storage\n"
+  }
+}

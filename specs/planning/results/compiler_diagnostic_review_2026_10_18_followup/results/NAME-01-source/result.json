@@ -1,0 +1,4 @@
+{
+  "stage": "emit",
+  "error": "Duplicate C++ artifact identity or path"
+}
