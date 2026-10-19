@@ -27,6 +27,9 @@ final class CPP_Specializations
 		if ($request->kind === cpp_runtime_operation_kind::concrete_iteration) {
 			return $this->intern(CPP_Concrete_Iteration::entry($request, $this));
 		}
+		if ($request->kind === cpp_runtime_operation_kind::concrete_mutation) {
+			return $this->intern(CPP_Concrete_Mutations::entry($request, $this));
+		}
 		return $this->intern(CPP_Runtime_Operations::entry($request, $this));
 	}
 

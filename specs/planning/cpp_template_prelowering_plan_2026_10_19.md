@@ -53,10 +53,15 @@ unmodified accounting retry still emits 285/285 fragments and fails at the same
 concrete integer `year++` / `month++` operations. The shared decisions now use
 `scalar_pre_increment` / `scalar_post_increment` and the corresponding decrement
 forms; ordinary C++ emission still expects the represented object to implement
-those operators. The next prelowering slice should supply that physical interface
-using the existing prepared mutation decisions and runtime operators, without
-reimplementing the imported semantic/operator work. This merge does not establish
-whole-accounting native compilation.
+those operators. The [mutation interface slice](results/prelower_concrete_mutations_2026_10_19/README.md)
+now supplies that physical interface using existing prepared decisions, member
+assembly and runtime operators. Prefix/postfix and incremental proofs pass without
+extra measured boundary allocations or tracked payload copies; stock O2 allocation
+delta is zero for this fixture. Earlier compound/iteration O2 differences remain
+unresolved. Accounting publishes and passes the calendar increments, then stops at
+concrete integer `echo_one` / `to_string` output conversion. That representation
+adapter is the next gap; no accounting source workaround was introduced. Full
+numeric-carrier coverage and whole-accounting native compilation remain unproved.
 
 Full runtime coverage is **deferred**. Later, expand the metadata supplied by the
 runtime through the existing registry. Do not turn this accounting slice into that

@@ -16,6 +16,7 @@ def main():
     modes.add_argument('--indexing', action='store_true')
     modes.add_argument('--initializers', action='store_true')
     modes.add_argument('--binary', action='store_true')
+    modes.add_argument('--mutations', action='store_true')
     modes.add_argument('--iteration', action='store_true')
     modes.add_argument('--observations', action='store_true')
     modes.add_argument('--compound', action='store_true')
@@ -36,7 +37,7 @@ def main():
                 nonlocal emission
                 emission += 1
                 runner.run(f'{mode}-emit-{emission}-{revision}-{alignment}', ['php', APP / 'tests/fixtures/prelower_substitution.php',
-                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'iteration' if args.iteration else 'observations' if args.observations else 'compound' if args.compound else 'casts' if args.casts else ('binary' if args.binary else ('initializers' if args.initializers else ('indexing' if args.indexing else 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings')))))])
+                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'mutations' if args.mutations else 'iteration' if args.iteration else 'observations' if args.observations else 'compound' if args.compound else 'casts' if args.casts else ('binary' if args.binary else ('initializers' if args.initializers else ('indexing' if args.indexing else 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings')))))])
             def build(mode, label, optimization='-O0'):
                 result = json.loads(runner.run(label, ['php', APP / 'tools/build_cpp.php', out / mode,
                     out / ('cache-' + mode), '--no-pch', optimization], cli_reason='Native builder process'))
@@ -68,7 +69,7 @@ def main():
                     '-I' + str(ROOT / 'runtime/include'), '-I' + str(folder), *flags, *units, '-o', out / (mode + '-sanitized')])
                 results[mode + '-sanitized'] = runner.run(mode + '-sanitized-run',
                     ['env', 'ASAN_OPTIONS=detect_leaks=0', out / (mode + '-sanitized')]).decode()
-                if args.compound or args.observations or args.iteration:
+                if args.compound or args.observations or args.iteration or args.mutations:
                     # Allocation elision across inline runtime code can differ from an
                     # out-of-line bridge. Keep stock O2 results, and separately make
                     # allocator effects observable for the boundary parity proof.
@@ -78,7 +79,7 @@ def main():
                         '-o', out / (mode + '-observable')])
                     results[mode + '-observable'] = runner.run(mode + '-observable-run',
                         [out / (mode + '-observable')]).decode()
-            if args.compound or args.observations or args.iteration:
+            if args.compound or args.observations or args.iteration or args.mutations:
                 for variant in ['-O0', '-sanitized', '-observable']:
                     assert results['direct' + variant] == results['composed' + variant], variant
                 assert results['direct-O0'].splitlines()[0] == results['direct-observable'].splitlines()[0]
@@ -86,13 +87,17 @@ def main():
                 composed = results['composed-O2'].splitlines()
                 assert direct[1:] == composed[1:], 'Inherited O2 counter mismatch'
                 assert direct[0].split()[4:] == composed[0].split()[4:], 'O2 payload lifecycle mismatch'
-            elif args.indexing or args.initializers or args.binary or args.casts:
+            elif args.mutations or args.indexing or args.initializers or args.binary or args.casts:
                 for variant in ['-O0', '-O2', '-sanitized']:
                     assert results['direct' + variant] == results['composed' + variant], results
                 assert results['direct-O0'] == results['direct-O2'], results
                 assert 'indexed-references 0 0 0 0 0 0 0' in results['composed-O0'], results
             else:
                 assert len(set(results.values())) == 1, results
+            if args.mutations:
+                for mode in ['direct', 'composed']:
+                    for variant in ['-O0', '-O2', '-sanitized', '-observable']:
+                        assert 'mutations 0 0 0 0 0 0 0' in results[mode + variant]
             if args.iteration:
                 for mode in ['direct', 'composed']:
                     for variant in ['-O0', '-O2', '-sanitized', '-observable']:
@@ -118,7 +123,7 @@ def main():
             assert restored['layouts_reused'] == batches and restored['compiled'] == 0 and restored['linked'] == 0, restored
             runner.run('restore-run', [restored['executable']])
             summary = {'counters': results, 'builds': builds}
-            if args.compound or args.observations or args.iteration:
+            if args.compound or args.observations or args.iteration or args.mutations:
                 baseline = [int(n) for n in results['direct-O2'].splitlines()[0].split()[1:4]]
                 concrete = [int(n) for n in results['composed-O2'].splitlines()[0].split()[1:4]]
                 summary['stock_O2_allocation_delta'] = dict(zip(['allocations', 'bytes', 'frees'],

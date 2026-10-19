@@ -831,6 +831,10 @@ final class CPP_Generator
 		else {
 			throw new \LogicException('Unsupported prepared mutation operation');
 		}
+		if ($context->concrete_types()) {
+			CPP_Concrete_Mutations::require_interface($decision, $syntax->target->require_preparation()->type,
+				$prefix === '' ? $suffix : $prefix, $context);
+		}
 		$target = (new CPP_Syntax($context))->expression($syntax->target);
 		$result_type = CPP_Declarations::type($decision->result_type, $context);
 		if ($context->specialization_engine === null) {

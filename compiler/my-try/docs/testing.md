@@ -1,6 +1,14 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --mutations --results FRESH_DIRECTORY`
+compares ordinary and concrete prefix/postfix increments and decrements, local
+aliases, field receiver evaluation, ordered expressions, native float passthrough
+and nullable-float success/empty failure. It checks request removal/replay, option
+switching and body/layout cache reuse at O0, O2, ASan/UBSan and controlled O2.
+Mutation counters must be zero in both paths. Primitive integer copies are not
+instrumented payload copies; see the [dated evidence](../../../specs/planning/results/prelower_concrete_mutations_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --iteration --results FRESH_DIRECTORY`
 compares ordinary and concrete iteration over vectors, hashes, nested containers and
 an independently metadata-registered `tray<T>` provider. It covers source evaluation

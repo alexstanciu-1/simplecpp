@@ -213,6 +213,7 @@ enum cpp_runtime_operation_kind {
 	case concrete_member;
 	case concrete_index;
 	case concrete_iteration;
+	case concrete_mutation;
 	case receiver_check;
 	case construct_default;
 	case construct_call;

@@ -12,6 +12,26 @@ through the existing registry and bindings, using original runtime templates beh
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
 
+## Concrete mutation interfaces
+
+`CPP_Concrete_Mutations` requests `operator++` / `operator--` members from the
+existing prepared mutation decision. Existing member assembly and fragment request
+replay own generation and reuse. No family dispatch, semantic admission changes or
+additional layout/storage protocol is introduced.
+
+Prefix forwarding returns the concrete receiver by reference after invoking the
+native operator; ordinary emission retains the source result snapshot. Postfix
+forwarding constructs the native old value directly in the existing concrete result
+storage. Target evaluation and expression sequencing remain with ordinary emission.
+Native scalar representations continue using their existing operators.
+
+The [mutation proof](../../../../specs/planning/results/prelower_concrete_mutations_2026_10_19/README.md)
+covers integer aliases/fields, prefix/postfix sequencing and nullable-float success
+and failure, with no extra measured boundary allocations or tracked payload copies.
+It does not establish every numeric carrier with a substituted template payload.
+Accounting now passes the calendar increments and stops at concrete integer output
+conversion (`echo_one` / `to_string`); whole-accounting compilation remains unproved.
+
 ## Concrete iteration adapter
 
 `CPP_Concrete_Iteration` supplies concrete range/iterator/sentinel/entry interfaces

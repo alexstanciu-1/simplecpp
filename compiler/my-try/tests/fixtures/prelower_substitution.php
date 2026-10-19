@@ -8,10 +8,11 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
+$mutations = ($argv[6] ?? '') === 'mutations';
 $iteration = ($argv[6] ?? '') === 'iteration';
 $observations = ($argv[6] ?? '') === 'observations';
 $compound = ($argv[6] ?? '') === 'compound';
-$casts = $iteration || $observations || $compound || ($argv[6] ?? '') === 'casts';
+$casts = $mutations || $iteration || $observations || $compound || ($argv[6] ?? '') === 'casts';
 $binary = $casts || ($argv[6] ?? '') === 'binary';
 $initializers = $binary || ($argv[6] ?? '') === 'initializers';
 $indexing = $initializers || ($argv[6] ?? '') === 'indexing';
@@ -140,6 +141,27 @@ function cast_key_failure(vector<int> &$trace): void { $map hash<int,int> = [(ui
 function cast_value_failure(vector<int> &$trace): void { $map hash<int,int> = [index_key($trace,1) => (uint8)cast_number($trace,256), index_inner_key($trace,7) => 1]; }
 ';
 }
+if ($mutations) {
+    $program .= <<<'PHS'
+struct MutationState { public int $number; public int $visits; }
+function &mutation_receiver(MutationState &$state): MutationState { ++$state->visits; return $state; }
+function mutation_work(vector<int> &$trace): int {
+ $value = 10; $alias =& $value;
+ $a = $alias++; $b = ++$value; $c = $alias--; $d = --$value;
+ if ($a !== 10 || $b !== 12 || $c !== 12 || $d !== 10 || $alias !== 10) { return 1; }
+ $result = $value++ + ++$value;
+ if ($result !== 22 || $value !== 12) { return 2; }
+ $state MutationState; $state->number = 5; $state->visits = 0;
+ $old = mutation_receiver($state)->number++; $trace[] = $state->visits;
+ $new = --mutation_receiver($state)->number; $trace[] = $state->visits;
+ if ($old !== 5 || $new !== 5 || $state->number !== 5) { return 3; }
+ $f float = 1.5; $before = $f++; $after = --$f;
+ if ($before != 1.5 || $after != 1.5 || $f != 1.5) { return 4; }
+ return 0;
+}
+function mutation_carrier(?float &$value): ?float { return $value++; }
+PHS;
+}
 if ($iteration) {
     $program .= <<<'PHS'
 function iteration_source(vector<int> &$trace): vector<int> { $trace[] = 9; return [2,3,4]; }
@@ -248,6 +270,7 @@ $types['Int'] = $body->statements[4]->expression->value->require_call_preparatio
         $parameters = Model::$global_scope->functions_named('index_demand')[0]->syntax()->require_preparation()->signature->parameters;
         foreach (['TrackedRows', 'TrackedHash', 'NestedHash'] as $index => $name) { $types[$name] = $parameters[$index]->type; }
     }
+    if ($mutations) { $types['NullableFloat'] = Model::$global_scope->functions_named('mutation_carrier')[0]->syntax()->require_preparation()->signature->parameters[0]->type; }
     $snapshot = static function () { $r=[]; foreach(Model::$cpp_files as $a) {$r[$a->file_name]=$a->text;} return $r; };
     $before = $snapshot();
     $fragments=[]; foreach(Model::$cpp_output_program->fragments as $owner) {$fragments[] = Model::$cpp_output_program->fragments[$owner];}
@@ -314,6 +337,7 @@ function cast_text'));
                 if ($request->kind === cpp_runtime_operation_kind::conversion) {
                     throw new \LogicException('Removed casts retained a conversion helper');
                 }
+                if ($mutations && $request->kind === cpp_runtime_operation_kind::concrete_mutation) { throw new \LogicException('Removed mutation retained a helper'); }
                 if ($iteration && $request->kind === cpp_runtime_operation_kind::concrete_iteration) { throw new \LogicException('Removed iteration retained a helper'); }
                 if ($observations && ($request->kind === cpp_runtime_operation_kind::observation || $request->kind === cpp_runtime_operation_kind::runtime_call)) {
                     throw new \LogicException('Removed observations retained a helper');
@@ -734,6 +758,28 @@ if ($iteration) {
       require(' . $tracked_function . '(values).native_value()==2);
     }';
     $main = str_replace('verify();', 'verify(); iteration_proof();', $main);
+}
+if ($mutations) {
+    $header .= "\nvoid mutation_proof();\n";
+    foreach (['mutation_work','mutation_carrier'] as $name) {
+        $support .= "\n" . '#include "' . CPP_Artifacts::callable_header($name) . "\"\n";
+    }
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('mutation_work')[0]);
+    $carrier = CPP_Callables::source_reference(Model::$global_scope->functions_named('mutation_carrier')[0]);
+    $support .= 'void mutation_proof() {
+      Vector trace; unwrap(trace).reserve(8);
+      NullableFloat wrapper; unwrap(wrapper)=scpp::float_t{2.5};
+      begin(); { require(' . $function . '(trace).native_value()==0);
+        require(unwrap(trace).size()==2 && unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==2);
+        auto old=' . $carrier . '(wrapper);
+        require(unwrap(old).require_value("old").native_value()==2.5);
+        require(unwrap(wrapper).require_value("new").native_value()==3.5);
+      } report("mutations");
+      NullableFloat absent; bool caught=false;
+      try { (void)' . $carrier . '(absent); } catch(const std::exception&) { caught=true; }
+      require(caught && !unwrap(absent).has_value().native_value());
+    }';
+    $main = str_replace('verify();', 'verify(); mutation_proof();', $main);
 }
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);
