@@ -88,6 +88,16 @@ exposure and runtime-interface coverage before claiming full prelowering. The
 measures this partial implementation: application compile/link is about 2.16× faster
 at O0 and 1.91× at O2 with PCH on both paths; initial preparation costs remain explicit.
 
+## Current optimization measurement policy
+
+At the user's request, use O0 only for further timing/profiling until optimizations
+are complete. Retain historical O2 evidence; do not rerun O2 as a routine measurement.
+The [handmade-baseline gap assessment](results/prelower_accounting_gap_2026_10_19/README.md)
+identifies remaining runtime-header/template exposure first, then source ownership
+interfaces and prepared-expression emission overhead. Current application compilation
+is about 10.03 s versus the handmade no-debug baseline's 2.47 s; the production path
+has not yet achieved that experimental compilation boundary.
+
 ## Active integration sequence: concrete type substitution
 
 1. Reuse the type-binding owner to spell native implementations with recursively
