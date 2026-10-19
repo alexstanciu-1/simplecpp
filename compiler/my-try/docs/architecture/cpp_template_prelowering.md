@@ -11,7 +11,7 @@ through the existing registry and bindings, using original runtime templates beh
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
 
-## Generic runtime ABI integration checkpoint
+## Runtime ABI expression integration
 
 The engine now exposes `request_opaque(canonical_type_use)` and
 `request_observation(prepared_call)`. `CPP_Opaque_Representation` consumes existing
@@ -19,9 +19,11 @@ read-only type/capability queries and C++ type/callable bindings. Its storage an
 lifecycle generation has no family branches. The existing integer/vector recipe
 selection lives in `CPP_Concrete_Recipes`, outside engine bookkeeping.
 
-This is an API-level integration slice, exercised from real settled preparation.
-The ordinary expression emitter and `--prelower-templates` still use the measured
-first-slice recipes; they do **not** automatically select opaque storage yet.
+Ordinary expression emission can now select this protocol through the API:
+set both `cpp_lowering_options::prelower_templates` and `runtime_template_abi` to
+`true`. The CLI's existing `--prelower-templates` and the default API setting retain
+the accounting recipe baseline while this bounded runtime ABI path grows.
+Switching either effective setting invalidates C++ fragments without repreparation.
 No new AST, semantic registry or prepared-fact cache was added.
 
 Opaque owners contain the original runtime object in aligned bytes. A grouped
@@ -44,11 +46,31 @@ headers are forced into generated units at native compilation. Requests deduplic
 inside the existing engine, and generated names distinguish semantic type identity
 from coincident native spelling without embedding invocation-local IDs.
 
-Remaining work: select this protocol through ordinary expression emission and replay
-its operation requests in cached fragments; map prepared nested places and reference
-returns; extend beyond observation calls and prove source-record layout dependencies.
-The integration fixture's nested projection helpers are test code, not production
-index lowering. See the [integration evidence](../../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
+The expression path emits registered integer literals, default/empty initialization,
+readonly runtime observations and zero-argument provider calls, ordinary unary/eager
+binary computations, conversions, copied indexed reads and nested indexed assignment.
+`CPP_Runtime_Operations` reuses existing native operation renderers and callable
+bindings. Both ordinary code and bridges use `CPP_Index_Write::resolve_path` for
+probe-before-descent handling after key/RHS evaluation. Source functions can pass
+whole opaque owners by reference; no facade reference is fabricated for an interior
+native element.
+
+Fragments retain `cpp_runtime_operation` requests containing canonical types and
+settled decisions/bindings, without source expressions or invocation-local engine
+IDs. They are immutable after publication. Assembly replays only live fragments;
+body removal drops unused operation artifacts. `cpp_runtime_operand` is transient
+and supplies physical address transport through the `cpp_type::opaque` binding.
+Layout/action caching remains unchanged.
+
+This is bounded expression integration, not full backend coverage. Nonempty data
+initializers need initializer-buffer transport. Iteration, mutation expressions,
+indexed compound updates, broader runtime call boundaries (defaults, multiple inputs,
+value/consume/reference parameters, receiver calls and reference results), and the
+remaining wrapper/property/callback operations are not covered by this proof.
+Source-derived template arguments still reject pending layout bootstrap. Existing
+accounting recipes remain available; do not silently fall back between representations.
+See the [generated-expression evidence](../../../../specs/planning/results/prelower_expressions_2026_10_19/README.md)
+and the earlier [API/layout proof](../../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
 
 ## Invocation
 

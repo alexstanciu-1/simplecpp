@@ -122,7 +122,8 @@ now passes for direct versus opaque storage at O0/O2, with sanitizers and option
 copy elision disabled. It validates the native mechanism, including partial-copy
 cleanup and a negative control. The subsequent [API integration](results/prelower_layout_integration_2026_10_19/README.md)
 adds native layout actions and a bounded prepared-observation bridge through existing
-bindings. Ordinary expression and nested-place emission remain to be integrated.
+bindings. The [ordinary-expression checkpoint](results/prelower_expressions_2026_10_19/README.md)
+now adds operation replay and shared nested-path lowering for the bounded runtime ABI mode.
 
 ## Integration proof, before broader implementation
 

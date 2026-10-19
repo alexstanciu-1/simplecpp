@@ -21,6 +21,15 @@ final class CPP_Types
 	public static function representation_for(canonical_type_use $type_use,
 		cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
+		if ($context !== null) {
+			if ($context->runtime_abi()) {
+				$canonical = Type_Queries::canonical($type_use);
+				if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type) || $type_use->by_value()) {
+					$engine /** CPP_Specializations */ = $context->specialization_engine;
+					return $engine->representation($type_use, $context);
+				}
+			}
+		}
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
 		$result = self::unmodified_representation($type_use, $payload_requirement, $context);

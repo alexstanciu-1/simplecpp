@@ -21,6 +21,8 @@ enum cpp_type_requirement {
 final class cpp_lowering_options
 {
 	public bool $prelower_templates = false;
+	/** Opt-in runtime ABI integration; accounting recipes remain a comparison baseline. */
+	public bool $runtime_template_abi = false;
 }
 
 /** Engine-owned representation; references only carry the entry position. */
@@ -42,6 +44,7 @@ final class cpp_specialization_ref
 
 final class cpp_type {
 	public ?canonical_type_use $specialization = null;
+	public bool $opaque = false;
 	public string $spelling;
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
@@ -101,8 +104,14 @@ enum cpp_record_state {
 final class cpp_generation_context
 {
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
+	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];
 	public function __construct(public ?CPP_Specializations $specialization_engine = null)
 	{
+	}
+	public function runtime_abi(): bool
+	{
+		if ($this->specialization_engine === null) { return false; }
+		return $this->specialization_engine->runtime_abi();
 	}
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
@@ -125,6 +134,7 @@ final class cpp_generation_context
 final class cpp_fragment
 {
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
+	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];
 	/** Used helper requests survive cached body reuse; assembly deduplicates live fragments. */
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public change_state $change_status = change_state::added;
@@ -153,10 +163,50 @@ final class cpp_fragment
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
 	public bool $prelower_templates = false;
+	/** Opt-in runtime ABI integration; accounting recipes remain a comparison baseline. */
+	public bool $runtime_template_abi = false;
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()
 	{
 		$this->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
 	}
+}
+
+/** Backend recipes retain settled identities, never syntax or generation workers. */
+enum cpp_runtime_operation_kind {
+	case observation;
+	case initialize_empty;
+	case binary;
+	case unary;
+	case conversion;
+	case index_read;
+	case index_write;
+	case write_key;
+}
+
+final class cpp_runtime_operation
+{
+	public function kind_name(): string { return enum_name($this->kind); }
+	public Storage $inputs /** Storage<canonical_type_use> */;
+	public ?canonical_type_use $result = null;
+	public ?cpp_function_binding $binding = null;
+	public ?initialization_binding $initialization = null;
+	public ?operator_decision $decision = null;
+	public ?conversion_decision $conversion = null;
+	public string $spelling = '';
+	public bool $append = false;
+	/** Path element types, without the source key syntax retained by prepared paths. */
+	public Storage $path /** Storage<canonical_type_use> */;
+	public function __construct(public cpp_runtime_operation_kind $kind)
+	{
+		$this->inputs = new Storage /** Storage<canonical_type_use> */();
+		$this->path = new Storage /** Storage<canonical_type_use> */();
+	}
+}
+
+/** Invocation-local physical operand; this record has no source ownership semantics. */
+final class cpp_runtime_operand
+{
+	public function __construct(public canonical_type_use $type, public string $expression) {}
 }

@@ -1,0 +1,125 @@
+<?php
+namespace scpp\compiler;
+require_once dirname(__DIR__, 2) . '/boot.php';
+
+$source = $argv[1];
+$output = $argv[2];
+$opaque = $argv[3] === 'opaque';
+$metadata = new runtime_catalog_input();
+foreach (Model::$runtime_metadata->modules as $module) { $metadata->modules->add($module->name, $module); }
+$module_data = json_decode(file_get_contents(dirname(__DIR__) . '/runtime_types.json'), true);
+foreach (['measure_begin', 'measure_end'] as $name) {
+    $module_data['functions'][] = ['id' => 'proof.' . $name, 'name' => $name, 'parameters' => [], 'returns' => 'void'];
+    $module_data['cpp'][] = ['id' => 'proof.' . $name, 'symbol' => $name, 'header' => 'runtime_type_support.hpp'];
+}
+$metadata->modules->add('type_proof', Runtime_Catalog_Reader::decode(json_encode($module_data), 'type_proof.json'));
+Compiler_Lifecycle::configure_runtime($metadata);
+if (!is_dir($source)) { mkdir($source, 0777, true); }
+$program = <<<'PHS'
+function replace(vector<vector<int>> &$root): int {
+ $row vector<int>; $row[] = 11;
+ $next vector<vector<int>>; $next[] = $row; $next[] = $row;
+ $root = $next;
+ return 9;
+}
+function failure(): void { $p parcel<receipt>; $copy = unpack($p); }
+function work(): int {
+ $row vector<int> = []; $row[] = 3; $row[] = 4;
+ $root vector<vector<int>>; $root[] = $row;
+ $root[0][0] = replace($root);
+ if ($root[0][0] !== 9) { return 1; }
+ if (count($root) !== 2) { return 2; }
+ if (count($root[1]) !== 1) { return 3; }
+ $table hash<int> = []; $table["key"] = 7;
+ if ($table["key"] !== 7) { return 4; }
+ $small int8 = (int8)7;
+ if ((int)$small !== 7) { return 5; }
+ $parcel parcel<receipt>;
+ $payload = unpack($parcel);
+ $items vector<receipt>; $items[] = $payload;
+ $nested vector<vector<receipt>>; $nested[] = $items;
+ $nested[0][0] = $payload;
+ $copied = $nested[0][0];
+ if (receipt_number($copied) !== 0) { return 6; }
+ return 0;
+}
+measure_begin();
+$answer = work();
+measure_end();
+return $answer;
+PHS;
+file_put_contents($source . '/main.phs', $program);
+$compiler = new Compiler();
+$compiler->cpp_lowering->prelower_templates = $opaque;
+$compiler->cpp_lowering->runtime_template_abi = $opaque;
+$compiler->init([$source]);
+$compiler->exec_cpp();
+function snapshot(): array {
+    $result = [];
+    foreach (Model::$cpp_files as $artifact) { $result[$artifact->file_name] = $artifact->text; }
+    ksort($result);
+    return $result;
+}
+$before = snapshot();
+$fragments = [];
+foreach (Model::$cpp_output_program->fragments as $owner) { $fragments[] = Model::$cpp_output_program->fragments[$owner]; }
+$compiler->cpp();
+if (snapshot() !== $before) { throw new \LogicException('Cached operation replay changed output'); }
+$index = 0;
+foreach (Model::$cpp_output_program->fragments as $owner) {
+    if (Model::$cpp_output_program->fragments[$owner] !== $fragments[$index++]) { throw new \LogicException('No-op regenerated a fragment'); }
+}
+$work_owner = Model::$global_scope->functions_named('work')[0]->syntax()->body->work();
+$work_fragment = Model::$cpp_output_program->fragments[$work_owner];
+// A changed entry body must replay requests from the unchanged function body.
+$edited = str_replace('return $answer;', 'return $answer + 0;', $program);
+file_put_contents($source . '/main.phs', $edited);
+$compiler->update_cpp([$source . '/main.phs']);
+if (Model::$cpp_output_program->fragments[$work_owner] !== $work_fragment) { throw new \LogicException('Entry edit regenerated unchanged work body'); }
+$edited_snapshot = snapshot();
+if ($edited_snapshot === $before) { throw new \LogicException('Entry edit did not change output'); }
+// Removing every call must drop every operation request, including dead support headers.
+file_put_contents($source . '/main.phs', 'return 0;');
+$compiler->update_cpp([$source . '/main.phs']);
+foreach (array_keys(snapshot()) as $path) {
+    if (str_starts_with($path, 'specializations/runtime_')) { throw new \LogicException('Removed body retained operation artifact'); }
+}
+if ($opaque) {
+    file_put_contents($source . '/main.phs', '$r = make_receipt(1); return 0;');
+    $failed = false;
+    try { $compiler->update_cpp([$source . '/main.phs']); }
+    catch (\RuntimeException $error) { $failed = true; }
+    if (!$failed || !Model::$cpp_files->is_empty()) { throw new \LogicException('Unsupported call published incomplete ABI output'); }
+}
+file_put_contents($source . '/main.phs', $program);
+$compiler->update_cpp([$source . '/main.phs']);
+if (snapshot() !== $before) { throw new \LogicException('Remove/restore changed operation artifacts'); }
+// Representation switches invalidate fragments without re-running semantic work.
+$work_owner = Model::$global_scope->functions_named('work')[0]->syntax()->body->work();
+$work_version = $work_owner->version;
+$compiler->cpp_lowering->prelower_templates = !$opaque;
+$compiler->cpp_lowering->runtime_template_abi = !$opaque;
+$compiler->cpp();
+if ($work_owner->version !== $work_version) { throw new \LogicException('Representation switch changed preparation'); }
+$compiler->cpp_lowering->prelower_templates = $opaque;
+$compiler->cpp_lowering->runtime_template_abi = $opaque;
+$compiler->cpp();
+if (snapshot() !== $before) { throw new \LogicException('Representation switch did not recover'); }
+Compiler_Lifecycle::reset();
+$fresh = new Compiler();
+$fresh->cpp_lowering->prelower_templates = $opaque;
+$fresh->cpp_lowering->runtime_template_abi = $opaque;
+$fresh->init([$source]);
+$fresh->exec_cpp();
+if (snapshot() !== $before) { throw new \LogicException('Fresh/incremental output differs'); }
+$artifacts = Model::$cpp_files;
+$header = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
+$header = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $header);
+$header .= "\nvoid " . CPP_Generator::source_name('function', 'failure') . "();\ninline void measure_begin() { begin(); }\ninline void measure_end() { report(\"expressions\"); begin(); copies_before_throw=0; try { " . CPP_Generator::source_name('function', 'failure') . "(); require(false); } catch(const CopyFailure&) {} copies_before_throw=-1; require(live_values==0); report(\"failure\"); }\n";
+$artifacts->append(new cpp_artifact('proof:provider', cpp_artifact_kind::header, 'runtime_type_support.hpp', $header));
+foreach (['instrument.hpp', 'instrument.cpp'] as $name) {
+    $artifacts->append(new cpp_artifact('proof:' . $name, $name === 'instrument.hpp' ? cpp_artifact_kind::header : cpp_artifact_kind::translation_unit,
+        $name, file_get_contents(__DIR__ . '/prelower_boundary/' . $name)));
+}
+(new Output_Publication($output))->publish($artifacts, CPP_Runtime_Build::requirements(Model::$runtime_metadata));
+echo "expression emission and cached replay passed\n";

@@ -50,6 +50,8 @@ interface conversion_relationship_query
 /** Retained semantic result of comparing one produced value with its consumer. */
 final class conversion_decision
 {
+	/** Stable descriptive tag; enum-name lowering stays beside its declaration. */
+	public function operation_name(): string { return enum_name($this->operation); }
 	public canonical_type_use $source_type;
 	public canonical_type_use $target_type;
 	public canonical_type_use $result_type;

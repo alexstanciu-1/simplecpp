@@ -1,6 +1,14 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_expressions.py --results FRESH_DIRECTORY`
+compares ordinary generated source with the runtime ABI mode at O0/O2 and under
+ASan/UBSan with optional copy elision disabled. It checks payload allocation/copy
+counters, throwing-copy cleanup, nested mutation across RHS root replacement,
+provider/source-function boundaries, cached-fragment replay, edit/removal recovery,
+configuration switching, fresh-output equivalence and warm native reuse. See the
+[expression checkpoint](../../../specs/planning/results/prelower_expressions_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
 checks real prepared observation/type bindings through opaque lifecycle generation,
 publication and native layout caching, including provider dependency edits, recovery,

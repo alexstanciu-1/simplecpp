@@ -50,13 +50,13 @@ final class CPP_Index_Write
 	public static function generate(assignment_expression_node $node, prepared_index_assignment $facts,
 		cpp_generation_context $context, bool $value_required = true): string
 	{
-		if ($context->specialization_engine !== null) {
+		if (($context->specialization_engine !== null) && !$context->runtime_abi()) {
 			return CPP_Concrete_Operations::write($node, $facts, $context, $value_required);
 		}
 		$target = object_cast($node->target, index_node::class);
 		$destination = $facts->target;
 		$emitter = new CPP_Syntax($context);
-		$context->headers['scpp/index_write.hpp'] = true;
+		if (!$context->runtime_abi()) { $context->headers['scpp/index_write.hpp'] = true; }
 		$id = $context->next_temporary;
 		$context->next_temporary++;
 		$receiver = 'write_receiver_' . $id;
@@ -67,6 +67,7 @@ final class CPP_Index_Write
 		$text = '{ ' . $root->statements . 'auto& ' . $receiver . ' = ' . $root->value . '; ';
 		$path /** Storage<prepared_index_path_step> */ = $destination->path;
 		$position = 0;
+		$keys /** vector<string> */ = [];
 		foreach ($path as $step)
 		{
 			$path_key = 'write_path_key_' . $id . '_' . $position;
@@ -74,7 +75,8 @@ final class CPP_Index_Write
 			$path_conversion = $step->key_conversion;
 			$text .= CPP_Declarations::type($path_conversion->target_type, $context) . ' ' . $path_key . ' = '
 				. CPP_Declarations::conversion($emitter->expression($key_syntax), $path_conversion, $context) . '; ';
-			$text .= 'scpp::require_write_key(' . $path_key . '); ';
+			$keys[] = $path_key;
+			$text .= self::key_check($path_conversion->target_type, $path_key, $context) . '; ';
 			$position++;
 		}
 		$helper = 'scpp::index_append';
@@ -85,7 +87,8 @@ final class CPP_Index_Write
 			$conversion = $destination->decision->operands[1];
 			$text .= CPP_Declarations::type($conversion->target_type, $context) . ' ' . $key . ' = '
 				. CPP_Declarations::conversion($emitter->expression($key_node), $conversion, $context) . '; ';
-			$text .= 'scpp::require_write_key(' . $key . '); ';
+			$keys[] = $key;
+			$text .= self::key_check($conversion->target_type, $key, $context) . '; ';
 			$helper = 'scpp::index_store';
 			$arguments .= $key . ', ';
 		}
@@ -94,42 +97,58 @@ final class CPP_Index_Write
 		}
 		$text .= $type . ' ' . $value . ' = '
 			. CPP_Declarations::conversion($emitter->expression($node->value), $facts->value_conversion, $context) . '; ';
-		if (!$path->is_empty())
-		{
-			$context->headers['scpp/index_write_path.hpp'] = true;
-			$probe = $receiver;
-			$mutable_receiver = $receiver;
-			$checks = '{ ';
-			$descent = '';
-			$position = 0;
-			foreach ($path as $step)
-			{
-				$path_key = 'write_path_key_' . $id . '_' . $position;
-				$probe_name = 'write_probe_' . $id . '_' . $position;
-				$mutable_name = 'write_target_' . $id . '_' . $position;
-				$element = CPP_Declarations::type($step->element_type, $context);
-				$checks .= 'const ' . $element . '& ' . $probe_name . ' = scpp::index_path_probe(' . $probe . ', ' . $path_key . '); ';
-				$descent .= $element . '& ' . $mutable_name . ' = scpp::index_path_descend(' . $mutable_receiver . ', ' . $path_key . '); ';
-				$probe = $probe_name;
-				$mutable_receiver = $mutable_name;
-				$position++;
-			}
-			$check_helper = 'scpp::index_path_check_append';
-			$leaf_arguments = $value;
-			if ($destination->decision->operation === operator_operation::index_store) {
-				$check_helper = 'scpp::index_path_check_store';
-				$leaf_arguments = $key . ', ' . $value;
-			}
-			$text .= $checks . $check_helper . '(' . $probe . ', ' . $leaf_arguments . '); } ' . $descent;
-			$arguments = $mutable_receiver . ', ';
-			if ($destination->decision->operation === operator_operation::index_store) {
-				$arguments .= $key . ', ';
-			}
+		if ($context->runtime_abi()) {
+			$text .= CPP_Runtime_Operations::write($facts, $receiver, $keys, $value, $context) . '; ';
+			return $value_required ? '([&]() -> ' . $type . ' ' . $text . 'return ' . $value . '; }())' : $text . '}';
 		}
+		if (!$path->is_empty()) {
+			$elements /** Storage<canonical_type_use> */ = new Storage();
+			foreach ($path as $step) { $elements->append($step->element_type); }
+			$resolved = self::resolve_path($elements, $keys, $receiver, $key, $value,
+				$destination->decision->operation === operator_operation::index_append, $context);
+			$text .= $resolved->statements;
+			$arguments = $resolved->value . ', ';
+			if ($destination->decision->operation === operator_operation::index_store) { $arguments .= $key . ', '; }
+		}
+
 		$text .= $helper . '(' . $arguments . $value . '); ';
 		if (!$value_required) {
 			return $text . '}';
 		}
 		return '([&]() -> ' . $type . ' ' . $text . 'return ' . $value . '; }())';
 	}
+	/** Shared prepared-path lowering for ordinary code and native ABI bridges. */
+	public static function resolve_path(Storage $elements /** Storage<canonical_type_use> */,
+		array $keys /** vector<string> */, string $root, string $key, string $value, bool $append,
+		cpp_generation_context $context): cpp_assignment_sequence
+	{
+		$result = new cpp_assignment_sequence();
+		$result->value = $root;
+		if ($elements->is_empty()) { return $result; }
+		$context->headers['scpp/index_write_path.hpp'] = true;
+		$id = $context->next_temporary++;
+		$probe = $root;
+		$checks = '';
+		$descent = '';
+		foreach ($elements as $position => $element) {
+			$type = CPP_Declarations::type($element, $context);
+			$probe_name = 'write_probe_' . $id . '_' . $position;
+			$mutable_name = 'write_target_' . $id . '_' . $position;
+			$checks .= 'const ' . $type . '& ' . $probe_name . ' = scpp::index_path_probe(' . $probe . ', ' . $keys[$position] . '); ';
+			$descent .= $type . '& ' . $mutable_name . ' = scpp::index_path_descend(' . $result->value . ', ' . $keys[$position] . '); ';
+			$probe = $probe_name;
+			$result->value = $mutable_name;
+		}
+		$leaf = $append ? $value : $key . ', ' . $value;
+		$result->statements = '{ ' . $checks . 'scpp::index_path_check_' . ($append ? 'append' : 'store')
+			. '(' . $probe . ', ' . $leaf . '); } ' . $descent;
+		return $result;
+	}
+
+	private static function key_check(canonical_type_use $type, string $key, cpp_generation_context $context): string
+	{
+		if ($context->runtime_abi()) { return CPP_Runtime_Operations::write_key($type, $key, $context); }
+		return 'scpp::require_write_key(' . $key . ')';
+	}
+
 }

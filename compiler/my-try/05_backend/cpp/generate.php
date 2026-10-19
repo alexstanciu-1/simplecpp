@@ -13,12 +13,15 @@ final class CPP_Generator
 	{
 		$this->program = $program ?? new cpp_program();
 		$enabled = false;
+		$runtime_abi = false;
 		if ($options !== null) {
 			$enabled = $options->prelower_templates;
+			$runtime_abi = $enabled && $options->runtime_template_abi;
 		}
-		if ($this->program->prelower_templates !== $enabled) {
+		if (($this->program->prelower_templates !== $enabled) || ($this->program->runtime_template_abi !== $runtime_abi)) {
 			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
 			$this->program->prelower_templates = $enabled;
+			$this->program->runtime_template_abi = $runtime_abi;
 		}
 	}
 
@@ -33,7 +36,7 @@ final class CPP_Generator
 	/** One partitioning path for single-source and multi-source programs. */
 	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
 	{
-		$this->specializations = $this->program->prelower_templates ? new CPP_Specializations() : null;
+		$this->specializations = $this->program->prelower_templates ? new CPP_Specializations($this->program->runtime_template_abi) : null;
 		$ordered /** Storage<preparation_owner> */ = new Storage();
 		$found_entry = false;
 		foreach ($files as $prepared)
@@ -275,6 +278,9 @@ final class CPP_Generator
 		foreach ($helpers as $request) { CPP_Compiler_Functions::append_artifacts($request, $result); }
 		if ($this->specializations !== null) {
 			foreach ($ordered as $owner) {
+				foreach ($this->program->fragments[$owner]->runtime_operations as $request) {
+					$this->specializations->request_operation($request);
+				}
 				foreach ($this->program->fragments[$owner]->specializations as $type) {
 					$this->specializations->request($type);
 				}
@@ -327,6 +333,7 @@ final class CPP_Generator
 				$definition_context = new cpp_generation_context($this->specializations);
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;
+				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
 				foreach ($definition_context->specializations as $id => $type) {
 					$context->specializations[$id] = $type;
 				}
@@ -347,6 +354,7 @@ final class CPP_Generator
 				$definition_context = new cpp_generation_context($this->specializations);
 				$next->storage_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
 				$next->definition_headers = $definition_context->headers;
+				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
 				foreach ($definition_context->specializations as $id => $type) {
 					$context->specializations[$id] = $type;
 				}
@@ -365,6 +373,7 @@ final class CPP_Generator
 			}
 		}
 		$next->specializations = $context->specializations;
+		$next->runtime_operations = $context->runtime_operations;
 		$next->headers = $context->headers;
 		$next->compiler_helpers = $context->compiler_helpers;
 		$next->forward_declarations = $context->forward_declarations;
@@ -730,6 +739,7 @@ final class CPP_Generator
 	/** Mutate the resolved place once and copy the selected old/new result into a value. */
 	public static function generate_mutation(mutation_expression_node $syntax, cpp_generation_context $context): string
 	{
+		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: mutation result transport is not yet implemented'); }
 		$decision = $syntax->require_mutation_preparation()->decision;
 		if ($context->specialization_engine === null) {
 			self::record_operator_headers($decision, $context);
@@ -799,6 +809,7 @@ final class CPP_Generator
 		$operand = CPP_Declarations::conversion(
 			$worker->expression($syntax->operand), $decision->operands[0], $context);
 		if ($context->specialization_engine !== null) {
+			if ($context->runtime_abi()) { return CPP_Runtime_Operations::unary($decision, $spelling, $operand, $context); }
 			return CPP_Concrete_Operations::unary($decision, $spelling, $operand, $context);
 		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
@@ -963,10 +974,11 @@ final class CPP_Generator
 	}
 
 	/** Compute from already converted, ordered values; no source expression is repeated. */
-	private static function render_eager_binary(operator_decision $decision, string $spelling,
+	public static function render_eager_binary(operator_decision $decision, string $spelling,
 		string $left, string $right, cpp_generation_context $context): string
 	{
 		if ($context->specialization_engine !== null) {
+			if ($context->runtime_abi()) { return CPP_Runtime_Operations::binary($decision, $spelling, $left, $right, $context); }
 			return CPP_Concrete_Operations::binary($decision, $spelling, $left, $right, $context);
 		}
 		if ($decision->operation === operator_operation::integer_power) {
@@ -1001,7 +1013,7 @@ final class CPP_Generator
 	}
 
 	/** Runtime includes follow the prepared operation, not source spelling or boxed family. */
-	private static function record_operator_headers(operator_decision $decision, cpp_generation_context $context): void
+	public static function record_operator_headers(operator_decision $decision, cpp_generation_context $context): void
 	{
 		$operation /** operator_operation */ = $decision->operation;
 		switch ($operation) {

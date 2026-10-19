@@ -241,6 +241,13 @@ retirement membership. Call-owned specialization facts share immutable prepared 
 metadata; they never retain workers or syntax. C++ fragments may retain those same
 read-only helper requests across body reuse. Only live fragments contribute to
 artifact assembly, so unused helper artifacts disappear without a new semantic root.
+C++ fragments also own runtime ABI operation requests: canonical input/result/path
+types and settled operation/conversion decisions or runtime callable/initializer
+bindings. These backend requests are immutable after publication, contain no syntax,
+workers or compact engine IDs, and add no semantic registry. Fragment replacement
+or removal drops them; assembly replays live requests into an invocation-local engine.
+Transient physical operand records do not retain source owners or lifetime analysis.
+
 Runtime argument facts retain source positions, not syntax backlinks. Compiler-call
 preparation may consume type-marker syntax before admitting runtime arguments;
 the ordinary call owns the complete source argument list and its type occurrences.

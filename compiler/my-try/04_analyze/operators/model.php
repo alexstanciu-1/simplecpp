@@ -118,6 +118,8 @@ enum operator_operation {
 
 /** Selected operation, result type and ordered conversions or condition truthiness. */
 final class operator_decision {
+	/** Stable descriptive tag; enum-name lowering stays beside its declaration. */
+	public function operation_name(): string { return enum_name($this->operation); }
 	public ?truthiness_decision $truthiness = null;
 	public array $operand_truthiness /** vector<truthiness_decision> */ = [];
 	public operator_kind $source_operator;

@@ -7,14 +7,22 @@ final class CPP_Specializations
 	private Storage $entries /** Storage<cpp_specialization_entry> */;
 	private array $names /** hash<int> */ = [];
 
-	public function __construct()
+	public function __construct(private bool $use_runtime_abi = false)
 	{
 		$this->entries = new Storage /** Storage<cpp_specialization_entry> */();
+	}
+
+	public function runtime_abi(): bool { return $this->use_runtime_abi; }
+
+	public function request_operation(cpp_runtime_operation $request): cpp_specialization_ref
+	{
+		return $this->intern(CPP_Runtime_Operations::entry($request, $this));
 	}
 
 	/** Compatibility recipe selection stays with the existing recipe owner, not this engine. */
 	public function request(canonical_type_use $type): cpp_specialization_ref
 	{
+		if ($this->use_runtime_abi) { return $this->request_opaque($type); }
 		return $this->intern(CPP_Concrete_Recipes::request($type, $this));
 	}
 
@@ -73,9 +81,10 @@ final class CPP_Specializations
 		$entries->append($entry);
 	}
 
-	/** Existing expression emission still uses the first-slice recipe protocol. */
+	/** Select the configured physical binding without implementing its storage protocol here. */
 	public function representation(canonical_type_use $type, cpp_generation_context $context): cpp_type
 	{
+		if ($this->use_runtime_abi) { return CPP_Opaque_Representation::representation($type, $this); }
 		return CPP_Concrete_Recipes::representation($type, $context, $this);
 	}
 

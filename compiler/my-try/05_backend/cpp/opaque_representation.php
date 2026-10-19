@@ -4,13 +4,28 @@ namespace scpp\compiler;
 /** Physical representation only: canonical identities/capabilities remain in their existing owners. */
 final class CPP_Opaque_Representation
 {
+	public static function representation(canonical_type_use $type, CPP_Specializations $engine): cpp_type
+	{
+		$entry = $engine->entry($engine->request_opaque($type));
+		$mapping = new cpp_type();
+		$mapping->spelling = 'scpp::internal::' . $entry->name;
+		$mapping->headers[$entry->header] = true;
+		$mapping->specialization = $type;
+		$mapping->opaque = true;
+		$mapping->literal = CPP_Types::representation($type)->literal;
+		return $mapping;
+	}
+
 	/** Reject source-layout bootstrap cycles in this first runtime-only integration. */
-	private static function require_runtime_type(canonical_type_use $type): void
+	public static function require_runtime_type(canonical_type_use $type): void
 	{
 		if (Type_Queries::source_declaration($type) !== null) {
 			throw new \RuntimeException('Opaque runtime layout cannot yet depend on a generated source type');
 		}
 		$canonical = Type_Queries::canonical($type);
+		if ($canonical->definition() instanceof callable_type_definition) {
+			throw new \RuntimeException('Opaque runtime callable storage needs callback ABI transport');
+		}
 		if ($canonical instanceof applied_template_type) {
 			foreach (object_cast($canonical, applied_template_type::class)->arguments() as $argument) {
 				self::require_runtime_type($argument);
@@ -19,7 +34,7 @@ final class CPP_Opaque_Representation
 	}
 
 	/** Stable output identity: distinct semantic types may share one native C++ spelling. */
-	private static function identity(canonical_type_use $type): string
+	public static function identity(canonical_type_use $type): string
 	{
 		$canonical = Type_Queries::canonical($type);
 		$text = $canonical->definition()->name();
@@ -146,6 +161,14 @@ final class CPP_Opaque_Representation
 			$declaration .= '#if ' . $macro . "\n" . $return_type . $signature . ";\n#else\n"
 				. $return_type . $signature . " = delete;\n#endif\n";
 			$implementation .= '#if ' . $macro . "\n" . $return_type . $name . '::' . $signature . ' { ' . $body . " }\n#endif\n";
+		}
+		if ($mapping->literal === cpp_literal_kind::signed_integer) {
+			$definition = object_cast(Type_Queries::canonical($type)->definition(), integer_type_definition::class);
+			$scalar = ($definition->signed() ? 'int' : 'uint') . $definition->bit_width() . '_t';
+			$declaration = "#include <cstdint>\n" . $declaration;
+			$declaration .= 'explicit ' . $name . '(' . $scalar . ' value); ' . $scalar . " native_value() const noexcept;\n";
+			$implementation .= $name . '::' . $name . '(' . $scalar . ' value) { ::new(address()) ' . $native . '(value); }' . "\n"
+				. $scalar . ' ' . $name . '::native_value() const noexcept { return unwrap(*this).native_value(); }' . "\n";
 		}
 		$declaration .= '~' . $name . "() noexcept;\n}; }\n";
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"

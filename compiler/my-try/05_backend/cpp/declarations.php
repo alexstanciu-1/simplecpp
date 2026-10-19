@@ -36,6 +36,9 @@ final class CPP_Declarations
 	/** Render only the operation selected by shared conversion preparation. */
 	public static function conversion(string $expression, conversion_decision $decision, cpp_generation_context $context): string
 	{
+		if ($context->runtime_abi() && ($decision->operation !== conversion_operation::identity)) {
+			return CPP_Runtime_Operations::convert($expression, $decision, $context);
+		}
 		if ($decision->operation === conversion_operation::callable_wrap) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
@@ -522,6 +525,12 @@ final class CPP_Declarations
 		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type,
 		string $prefix): string
 	{
+		if ($context->runtime_abi() && (weakref_get($facts->target) instanceof runtime_function_definition)) {
+			if (($callee !== '') || ($prefix !== '') || ($constructed_type !== null)) {
+				throw new \RuntimeException('runtime template ABI: receiver call transport is not yet implemented');
+			}
+			return CPP_Runtime_Operations::call($facts, $arguments, $context);
+		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		if (q_count($prepared_arguments) === 1) {

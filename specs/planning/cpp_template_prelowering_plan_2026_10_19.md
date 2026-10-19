@@ -55,9 +55,12 @@ compatibility. The [native counter/identity experiment](results/prelower_boundar
 proves the storage/borrow mechanism without extra measured allocation or payload
 copy. The [first ABI integration slice](results/prelower_layout_integration_2026_10_19/README.md)
 now consumes prepared observation signatures and existing bindings, publishes grouped
-layout probes, and resolves/cache-validates them in the native builder. Ordinary
-expression emission still uses the first-slice recipes; adopting the opaque protocol
-and replaying operation requests is the next slice.
+layout probes, and resolves/cache-validates them in the native builder. The [ordinary-expression checkpoint](results/prelower_expressions_2026_10_19/README.md)
+now adds opt-in runtime ABI emission, operation replay and shared prepared-path lowering.
+Nonempty initialization and broader call/iteration/reference transports remain deferred.
+The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
+details the missing backend request replay and native-address transport, and the
+prepared nested-read/write distinction. Its retained contract is agreed; the linked expression checkpoint records implemented coverage.
 
 Before locking the initial representation interfaces, inventory runtime template
 families and review them explicitly. Discovery must include runtime headers, operator

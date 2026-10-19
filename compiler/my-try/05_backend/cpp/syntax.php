@@ -159,7 +159,7 @@ final class CPP_Syntax
 	/** Bind the receiver once, convert the key next, and copy the read result before releasing temporaries. */
 	private function generate_index(index_node $node): string
 	{
-		if ($this->context->specialization_engine !== null) {
+		if (($this->context->specialization_engine !== null) && !$this->context->runtime_abi()) {
 			return CPP_Concrete_Operations::read($node, $this->context);
 		}
 		$decision = $node->require_index_preparation()->decision;
@@ -170,7 +170,7 @@ final class CPP_Syntax
 		elseif ($decision->operation !== operator_operation::index_checked_read) {
 			throw new \LogicException('Unsupported prepared index operation');
 		}
-		$this->context->headers['scpp/index_read.hpp'] = true;
+		if (!$this->context->runtime_abi()) { $this->context->headers['scpp/index_read.hpp'] = true; }
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$receiver = 'index_receiver_' . $id;
@@ -178,10 +178,13 @@ final class CPP_Syntax
 		$argument /** expression_node */ = $node->index;
 		$base = CPP_Declarations::bind_storage_receiver($node->base, $this->context);
 		$converted_key = CPP_Declarations::conversion($this->expression($argument), $decision->operands[1], $this->context);
+		$operation = $this->context->runtime_abi()
+			? CPP_Runtime_Operations::read($decision, $node->base->require_preparation()->type, $receiver, $key, $this->context)
+			: $helper . '(' . $receiver . ', ' . $key . ')';
 		return '([&]() -> ' . CPP_Declarations::type($decision->result_type, $this->context) . ' { '
 			. $base->statements . 'const auto& ' . $receiver . ' = ' . $base->value . '; '
 			. CPP_Declarations::type($decision->operands[1]->target_type, $this->context) . ' ' . $key . ' = ' . $converted_key . '; '
-			. 'return ' . $helper . '(' . $receiver . ', ' . $key . '); }())';
+			. 'return ' . $operation . '; }())';
 	}
 
 	/** Backend-owned selection only; typed handlers own child traversal. */
@@ -418,6 +421,7 @@ final class CPP_Syntax
 	public function generate_foreach(foreach_node $node): string
 	{
 		if ($this->context->specialization_engine !== null) {
+			if ($this->context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: iteration needs cursor transport'); }
 			return CPP_Concrete_Operations::iterate($node, $this->context);
 		}
 		$facts /** prepared_iteration */ = $node->require_preparation()->iteration;

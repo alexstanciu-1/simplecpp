@@ -93,7 +93,7 @@ final class CPP_Record_Construction
 final class CPP_Data_Construction
 {
 	/** Publish one backend binding for the already selected concrete semantic factory. */
-	private static function reference(initialization_binding $binding, cpp_generation_context $context): string
+	public static function reference(initialization_binding $binding, cpp_generation_context $context): string
 	{
 		$factory = object_cast($binding->factory(), registered_static_factory::class);
 		$catalog = Model::$cpp_callable_bindings;
@@ -115,6 +115,7 @@ final class CPP_Data_Construction
 		}
 		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
 		if ($context->specialization_engine !== null) {
+			if ($context->runtime_abi()) { return CPP_Runtime_Operations::initialize($node, $binding, $context); }
 			return CPP_Concrete_Operations::initialize($node, $binding->target(), $context);
 		}
 		$factory = self::reference($binding, $context);
