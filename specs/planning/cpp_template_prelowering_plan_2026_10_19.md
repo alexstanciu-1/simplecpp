@@ -33,6 +33,16 @@ counters match, but stock O2 loses three allocation-elision opportunities across
 middleware boundary; optimized allocation parity remains unresolved. No whole-accounting
 concrete executable is claimed; broader ownership/wrapper interfaces remain separate.
 
+The [runtime-call slice](results/prelower_concrete_runtime_calls_2026_10_19/README.md)
+routes free calls through existing observation/value contracts and registered bindings.
+Accounting now emits 283/285 fragments; the two remaining failures are iteration sites.
+No accounting source workaround was needed. The user permits documented workarounds
+for unrelated accounting issues, not bypasses of prelowering coverage gaps.
+
+Full runtime coverage is **deferred**. Later, expand the metadata supplied by the
+runtime through the existing registry. Do not turn this accounting slice into that
+inventory/coverage project or add a parallel registry.
+
 ## Active integration sequence: concrete type substitution
 
 1. Reuse the type-binding owner to spell native implementations with recursively

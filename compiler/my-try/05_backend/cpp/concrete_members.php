@@ -4,25 +4,6 @@ namespace scpp\compiler;
 /** Ordinary member surfaces over composed storage; selected calls still own all value boundaries. */
 final class CPP_Concrete_Members
 {
-	/** Only argument value category affects an overload; receiver lifetime stays at the call site. */
-	public static function identity(prepared_call $call): string
-	{
-		$key = CPP_Opaque_Representation::identity($call->type);
-		foreach ($call->signature->parameters as $index => $parameter) {
-			$key .= ':' . CPP_Opaque_Representation::identity($parameter->type)
-				. ':' . enum_name($parameter->mode) . ':' . enum_name($parameter->access)
-				. ':' . (self::consumed($call, $index) ? 'rvalue' : 'lvalue');
-		}
-		return $key;
-	}
-
-	private static function consumed(prepared_call $call, int $index): bool
-	{
-		$arguments /** Storage<prepared_call_argument> */ = $call->arguments;
-		if ($index >= q_count($arguments)) { return true; }
-		return $arguments[$index]->boundary === value_boundary_operation::consume_value;
-	}
-
 	public static function reference(prepared_call $call, cpp_generation_context $context): string
 	{
 		$target = object_cast(weakref_get($call->target), runtime_function_definition::class);
@@ -72,7 +53,7 @@ final class CPP_Concrete_Members
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
 			$reference = '&';
 			$argument = 'a' . $index;
-			if (($parameter->mode === passing_mode::value) && self::consumed($call, $index)) {
+			if (($parameter->mode === passing_mode::value) && CPP_Callables::argument_consumed($call, $index)) {
 				$reference = '&&';
 				$argument = 'std::move(' . $argument . ')';
 			}

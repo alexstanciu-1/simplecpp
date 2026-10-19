@@ -6,9 +6,7 @@ final class CPP_Concrete_Index
 {
 	public static function active(cpp_generation_context $context): bool
 	{
-		$engine = $context->specialization_engine;
-		if ($engine === null) { return false; }
-		return $engine->concrete_types();
+		return $context->concrete_types();
 	}
 
 	public static function reference(string $helper, array $types /** vector<canonical_type_use> */,

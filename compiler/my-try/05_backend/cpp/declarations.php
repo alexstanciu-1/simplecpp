@@ -544,7 +544,8 @@ final class CPP_Declarations
 		if (($transport === null) && $context->runtime_abi() && (weakref_get($facts->target) instanceof collected_method)) {
 			throw new \RuntimeException('runtime template ABI: source method calls need receiver/argument transport');
 		}
-		if ($context->runtime_abi() && (weakref_get($facts->target) instanceof runtime_function_definition)) {
+		if (($transport === null) && ($context->runtime_abi() || ($context->concrete_types() && ($facts->receiver === null)))
+			&& (weakref_get($facts->target) instanceof runtime_function_definition)) {
 			if (($callee !== '') || ($prefix !== '') || ($constructed_type !== null)) {
 				throw new \RuntimeException('runtime template ABI: receiver call transport is not yet implemented');
 			}
@@ -565,7 +566,7 @@ final class CPP_Declarations
 		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
 		$text .= $prefix;
 		$physical_arguments /** vector<string> */ = [];
-		if (($transport !== null) && ($constructed_type === null)) { $physical_arguments[] = $callee; }
+		if (($transport !== null) && ($transport->kind === cpp_runtime_operation_kind::method_call)) { $physical_arguments[] = $callee; }
 		$names = '';
 		$separator = '';
 		if ($constructed_type !== null) {

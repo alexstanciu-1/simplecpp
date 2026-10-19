@@ -133,6 +133,21 @@ Identity stays unchanged; ownership transfers and wrapper construction/extractio
 remain separate integration work. No cast admission, parsing or range rules are added.
 See the [cast proof](../../../../specs/planning/results/prelower_concrete_casts_2026_10_19/README.md).
 
+Concrete runtime free calls now use the registered C++ binding and prepared signature
+instead of the old count-vector recipe. Single observations remain one full expression,
+keeping temporary owners alive; value/reference inputs reuse ordinary selected-call
+sequencing and the existing copy/consume rules. Receiver methods keep their separate
+member interface. Reference results, variadics and combined observation/value arguments
+remain outside this transport. Native provider results must match either the selected
+native outer binding or an already-concrete payload; middleware-only type checking
+selects direct return versus final-storage construction without a family/function list.
+Providers requiring other physical argument/result conventions need further contracts.
+See the [runtime-call proof](../../../../specs/planning/results/prelower_concrete_runtime_calls_2026_10_19/README.md).
+
+Full runtime coverage is deferred. Its later contract work will expand the existing
+runtime-provided metadata, not introduce a parallel registry or eagerly instantiate
+all runtime templates. This bounded adapter does not claim complete runtime coverage.
+
 Concrete indexed compound updates reuse prepared paths, key conversions, binary
 computation and write-back conversions. Existing-only one-step probes return borrowed
 physical elements; ordinary emission snapshots the leaf before the RHS and revalidates

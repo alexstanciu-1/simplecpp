@@ -16,8 +16,8 @@ final class CPP_Runtime_Operations
 	{
 		$key = $request->kind_name() . ':' . $request->spelling . ':' . ($request->append ? 'append' : 'store');
 		if ($request->call !== null) {
-			$key .= ':' . ($request->kind === cpp_runtime_operation_kind::concrete_member
-				? CPP_Concrete_Members::identity($request->call) : CPP_Source_Calls::identity($request->call));
+			$key .= ':' . ((($request->kind === cpp_runtime_operation_kind::concrete_member) || ($request->kind === cpp_runtime_operation_kind::runtime_call))
+				? CPP_Callables::argument_identity($request->call) : CPP_Source_Calls::identity($request->call));
 		}
 		if ($request->construction !== null) {
 			$key .= ':payload=' . CPP_Opaque_Representation::identity($request->construction->constructed_type)
@@ -78,7 +78,9 @@ final class CPP_Runtime_Operations
 		// Only integrated operations select concrete physical bindings. Other ABI
 		// operations retain their existing representation contract until integrated.
 		$implementation_engine = ($engine->concrete_types() && (($request->kind === cpp_runtime_operation_kind::binary)
-			|| ($request->kind === cpp_runtime_operation_kind::conversion))) ? $engine : null;
+			|| ($request->kind === cpp_runtime_operation_kind::conversion)
+			|| ($request->kind === cpp_runtime_operation_kind::observation)
+			|| ($request->kind === cpp_runtime_operation_kind::runtime_call))) ? $engine : null;
 		$native_context = new cpp_generation_context();
 		$native_context->implementation_engine = $implementation_engine;
 		$signature = '';
@@ -108,7 +110,11 @@ final class CPP_Runtime_Operations
 			$output = $mapping->spelling;
 			$declaration_headers = $mapping->headers;
 			$body = $unpack . 'return ' . $expression . ';';
-			if ($mapping->opaque) {
+			if ($engine->concrete_types() && (($request->kind === cpp_runtime_operation_kind::observation) || ($request->kind === cpp_runtime_operation_kind::runtime_call)) && $mapping->opaque) {
+				$body = self::concrete_call_result($output, $native_result, $unpack, $expression);
+				$native_context->headers['type_traits'] = true;
+			}
+			elseif ($mapping->opaque) {
 				// The callback initializes the final result storage; neither side materializes a second value.
 				$reload = '';
 				foreach ($inputs as $position => $input) {
@@ -131,9 +137,22 @@ final class CPP_Runtime_Operations
 		return new cpp_specialization_entry($name, $header, $declaration, $implementation, []);
 	}
 
+	/** Providers can return native outer objects or already-substituted physical payloads. */
+	private static function concrete_call_result(string $output, string $native, string $unpack, string $expression): string
+	{
+		return $unpack . 'auto operation = [&]() -> decltype(auto) { return ' . $expression . '; }; '
+			. 'return []<class Operation>(const Operation& operation) -> ' . $output . ' { '
+			. 'using Result = std::remove_cvref_t<decltype(operation())>; '
+			. 'if constexpr (std::is_same_v<Result, ' . $output . '>) { return operation(); } '
+			. 'else { static_assert(std::is_same_v<Result, ' . $native . '>); return ' . $output . '(' . $output
+			. '::operation_result{}, +[](void* destination, const void* input) { '
+			. 'const auto& invoke = *static_cast<const Operation*>(input); ::new(destination) ' . $native
+			. '(invoke()); }, &operation); } }(operation);';
+	}
+
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool
 	{
-		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, $request->construction === null); }
+		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, ($request->construction === null) && ($request->kind !== cpp_runtime_operation_kind::runtime_call)); }
 		return ($position === 0) && ($request->kind === cpp_runtime_operation_kind::index_write);
 	}
 
@@ -153,10 +172,12 @@ final class CPP_Runtime_Operations
 			$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
 			return $factory . '(' . CPP_Declarations::type($parameters[0]->type, $context) . '{})';
 		}
-		if ($request->kind === cpp_runtime_operation_kind::observation) {
+		if (($request->kind === cpp_runtime_operation_kind::observation) || ($request->kind === cpp_runtime_operation_kind::runtime_call)) {
 			$binding /** cpp_function_binding */ = $request->binding;
-			$context->headers[$binding->header()] = true;
-			return $binding->symbol() . '(' . self::join($arguments) . ')';
+			if ($binding->header() !== '') { $context->headers[$binding->header()] = true; }
+			$values = self::join($arguments);
+			if ($request->call !== null) { $values = CPP_Source_Calls::native_arguments($request->call, $arguments, 0, $context); }
+			return $binding->symbol() . '(' . $values . ')';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::binary) {
 			$decision /** operator_decision */ = $request->decision;
@@ -324,12 +345,17 @@ final class CPP_Runtime_Operations
 			. $expression . '; return ' . self::invoke($request, [$name], $context) . '; }())';
 	}
 
-	/** The first call transport admits readonly observations and zero-input provider calls. */
+	/** Dispatch settled observation versus value/reference contracts without naming runtime functions. */
 	public static function call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context): string
 	{
 		if (($facts->signature->reference_return !== null) || ($facts->variadic_parameter !== null)) {
 			throw new \RuntimeException('runtime template ABI: reference-result/variadic call transport is not yet implemented');
+		}
+		foreach ($facts->signature->parameters as $parameter) {
+			if ($parameter->mode !== passing_mode::observation) {
+				return self::value_call($facts, $arguments, $context);
+			}
 		}
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::observation);
 		$target = object_cast(weakref_get($facts->target), runtime_function_definition::class);
@@ -339,18 +365,34 @@ final class CPP_Runtime_Operations
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		if (q_count($prepared_arguments) > 1) { throw new \RuntimeException('runtime template ABI: multiple observation inputs need a sequencing contract'); }
 		if (q_count($parameters) !== q_count($prepared_arguments)) { throw new \RuntimeException('runtime template ABI: default call inputs are not yet implemented'); }
-		$prefix = '';
 		$names /** vector<string> */ = [];
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$emitter = new CPP_Syntax($context);
 		foreach ($prepared_arguments as $position => $argument) {
 			if (($argument->boundary !== value_boundary_operation::observe_value) || ($argument->conversion !== null)) { throw new \RuntimeException('runtime template ABI: call requires prepared observation inputs'); }
-			$name = 'runtime_input_' . $context->next_temporary++;
-			$prefix .= 'const auto& ' . $name . ' = ' . $emitter->expression($arguments[$argument->source_index]) . '; ';
-			$inputs->append($parameters[$position]->type);
-			$names[] = $name;
+			$type = $parameters[$position]->type;
+			$inputs->append($type);
+			// Preserve the full-expression lifetime of both the observed value and any
+			// temporary owner. A local reference would not extend an indirect owner's life.
+			$names[] = 'static_cast<const ' . CPP_Declarations::type($type, $context) . '&>('
+				. $emitter->expression($arguments[$argument->source_index]) . ')';
 		}
-		$result_type = CPP_Declarations::type($facts->type, $context);
-		return '([&]() -> ' . $result_type . ' { ' . $prefix . 'return ' . self::invoke($request, $names, $context) . '; }())';
+		return self::invoke($request, $names, $context);
 	}
+
+	/** Reuse ordinary argument/default sequencing and prepared copy/consume/reference boundaries. */
+	private static function value_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
+		cpp_generation_context $context): string
+	{
+		CPP_Source_Calls::require_signature($facts);
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::runtime_call);
+		$request->call = $facts;
+		$target = object_cast(weakref_get($facts->target), runtime_function_definition::class);
+		$request->binding = Model::$cpp_callable_bindings->function_binding($target);
+		if (Type_Queries::canonical($facts->type)->family() !== type_family::no_value) { $request->result = $facts->type; }
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		foreach ($facts->signature->parameters as $parameter) { $inputs->append($parameter->type); }
+		return CPP_Declarations::selected_call($facts, $arguments, $context, '', null, '', $request);
+	}
+
 }

@@ -8,8 +8,9 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
+$observations = ($argv[6] ?? '') === 'observations';
 $compound = ($argv[6] ?? '') === 'compound';
-$casts = $compound || ($argv[6] ?? '') === 'casts';
+$casts = $observations || $compound || ($argv[6] ?? '') === 'casts';
 $binary = $casts || ($argv[6] ?? '') === 'binary';
 $initializers = $binary || ($argv[6] ?? '') === 'initializers';
 $indexing = $initializers || ($argv[6] ?? '') === 'indexing';
@@ -137,6 +138,25 @@ function cast_key_failure(vector<int> &$trace): void { $map hash<int,int> = [(ui
 function cast_value_failure(vector<int> &$trace): void { $map hash<int,int> = [index_key($trace,1) => (uint8)cast_number($trace,256), index_inner_key($trace,7) => 1]; }
 ';
 }
+if ($observations) {
+    $program .= '
+class ObservationOwner { public vector<int> $items = [4,5]; public string $text = "owner text"; }
+function observation_owner(vector<int> &$trace): ObservationOwner { $trace[] = 1; return new ObservationOwner(); }
+function observation_vector(vector<int> &$trace): vector<int> { $trace[] = 2; return [1,2,3]; }
+function observation_text(vector<int> &$trace): string { $trace[] = 3; return "Aé🙂"; }
+function observation_work(vector<int> &$trace, const vector<receipt> &$tracked, const parcel<vector<int>> &$parcel): int {
+ $empty vector<int>;
+ $map hash<int,int> = [1 => 8, 2 => 9];
+ $nested vector<vector<int>> = [[1],[2,3]];
+ if (count($empty) !== 0 || count($map) !== 2 || count($nested) !== 2 || count($tracked) !== 1 || count(unpack($parcel)) !== 2) { return 1; }
+ $result = count(observation_owner($trace)->items) + strlen(observation_owner($trace)->text);
+ if ($result !== 12) { return 2; }
+ $result = count(observation_vector($trace)) + strlen(observation_text($trace));
+ if ($result !== 10) { return 3; }
+ return 0;
+}
+';
+}
 if ($compound) {
     $program .= '
 function compound_rhs(vector<int> &$values, vector<int> &$trace): int {
@@ -261,6 +281,9 @@ function cast_text'));
             foreach (Model::$cpp_output_program->fragments[$owner]->runtime_operations as $request) {
                 if ($request->kind === cpp_runtime_operation_kind::conversion) {
                     throw new \LogicException('Removed casts retained a conversion helper');
+                }
+                if ($observations && ($request->kind === cpp_runtime_operation_kind::observation || $request->kind === cpp_runtime_operation_kind::runtime_call)) {
+                    throw new \LogicException('Removed observations retained a helper');
                 }
                 if ($compound && $request->kind === cpp_runtime_operation_kind::concrete_index && $request->spelling === 'index_existing_probe') {
                     throw new \LogicException('Removed compounds retained an existing-element helper');
@@ -640,6 +663,20 @@ if ($compound) {
         require(unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==4); }
     }';
     $main = str_replace('verify();', 'verify(); compound_proof();', $main);
+}
+if ($observations) {
+    $header .= "\nvoid observation_proof();\n";
+    $support .= "\n" . '#include "' . CPP_Artifacts::callable_header('observation_work') . "\"\n";
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('observation_work')[0]);
+    $support .= 'void observation_proof() {
+      TrackedVector tracked; unwrap(tracked).append(runtime_type_test::receipt{});
+      Parcel parcel; Vector values; unwrap(values).append(Int{1}); unwrap(values).append(Int{2}); unwrap(parcel).value = values;
+      begin(); { Vector trace; auto result=' . $function . '(trace,tracked,parcel); require(result.native_value()==0);
+        const long expected[]={1,1,2,3}; require(unwrap(trace).size()==4);
+        for(int i=0;i<4;++i) require(unwrap(trace).at(i).native_value()==expected[i]);
+      } report("observations");
+    }';
+    $main = str_replace('verify();', 'verify(); observation_proof();', $main);
 }
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);

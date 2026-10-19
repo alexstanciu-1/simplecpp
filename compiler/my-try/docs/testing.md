@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --observations --results FRESH_DIRECTORY`
+checks concrete runtime free calls: counts on several physical container types,
+byte-oriented strlen, temporary-owner observation, value argument sequencing and a
+provider returning an already-concrete payload. It retains the controlled allocator
+comparison and records ordinary O2 deltas separately. See
+[runtime-call evidence](../../../specs/planning/results/prelower_concrete_runtime_calls_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --compound --results FRESH_DIRECTORY`
 extends the cast proof with existing-element compound updates, RHS growth/replacement,
 nested paths, string concatenation, missing/deleted entries and division failure.

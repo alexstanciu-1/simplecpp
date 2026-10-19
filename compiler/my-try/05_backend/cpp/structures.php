@@ -122,6 +122,13 @@ final class cpp_generation_context
 	public function __construct(public ?CPP_Specializations $specialization_engine = null)
 	{
 	}
+	public function concrete_types(): bool
+	{
+		if ($this->specialization_engine === null) {
+			return false;
+		}
+		return $this->specialization_engine->concrete_types();
+	}
 	public function runtime_abi(): bool
 	{
 		if ($this->specialization_engine === null) { return false; }
@@ -198,6 +205,7 @@ enum cpp_runtime_operation_kind {
 	case construct_default;
 	case construct_call;
 	case observation;
+	case runtime_call;
 	case initialize_empty;
 	case initialize_buffer;
 	case binary;

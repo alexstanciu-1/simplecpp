@@ -150,6 +150,25 @@ final class CPP_Callable_Bindings
 
 final class CPP_Callables
 {
+	/** Physical call identity includes prepared parameter modes and argument value categories. */
+	public static function argument_identity(prepared_call $call): string
+	{
+		$key = CPP_Opaque_Representation::identity($call->type);
+		foreach ($call->signature->parameters as $index => $parameter) {
+			$key .= ':' . CPP_Opaque_Representation::identity($parameter->type)
+				. ':' . enum_name($parameter->mode) . ':' . enum_name($parameter->access)
+				. ':' . (self::argument_consumed($call, $index) ? 'rvalue' : 'lvalue');
+		}
+		return $key;
+	}
+
+	public static function argument_consumed(prepared_call $call, int $index): bool
+	{
+		$arguments /** Storage<prepared_call_argument> */ = $call->arguments;
+		if ($index >= q_count($arguments)) { return true; }
+		return $arguments[$index]->boundary === value_boundary_operation::consume_value;
+	}
+
 	/** Emission view only: authored inventories keep source methods, not specialization helpers. */
 	public static function implementations(collected_member_owner $record): Storage /** Storage<method_node> */
 	{
