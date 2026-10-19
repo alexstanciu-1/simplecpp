@@ -54,11 +54,17 @@ def main():
                         help='Run frontend/C++ type validation while explicitly skipping parked LLVM proofs')
     parser.add_argument('--jobs', type=positive_jobs, default=DEFAULT_JOBS,
                         help='Maximum concurrent fixture tasks (default: 12)')
+    parser.add_argument('--chapter13', action='store_true', help='Validate only the bounded Chapter 13 fixtures after rebuilding the compiler')
+    parser.add_argument('--chapter14', action='store_true', help='Validate bounded Chapter 14 artifacts and native publication/build owners')
     parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
     parser.add_argument('--no-pch', action='store_true', help='Compile generated fixture programs without PCH')
     parser.add_argument('--php-executor', choices=('auto', 'fpm', 'cli'), default='auto',
                         help='PHP backend: auto prefers FPM with CLI fallback (default)')
     args = parser.parse_args()
+    if args.chapter13 and args.chapter14:
+        parser.error("Select one chapter gate")
+    if (args.chapter13 or args.chapter14) and (not args.types_only or not args.no_stan):
+        parser.error('Chapter gates require --types-only --no-stan (LLVM and legacy STAN are deferred)')
     target, results = args.target_checkout.resolve(), args.results.resolve()
     results.mkdir(parents=True, exist_ok=args.resume)
     (results / 'summary.json').unlink(missing_ok=True)
@@ -155,6 +161,14 @@ def validate(args, target, results, logs, started, runner):
     print('Building native compiler ' + ('without STAN...' if args.no_stan else 'with normal STAN...'), flush=True)
     run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=600, cli_reason='CLI build tool with process exit status')
     executable = project / '.prism/build/main'
+    if getattr(args, 'chapter14', False):
+        from chapter14_validation import validate_chapter14
+        validate_chapter14(args, results, logs, started, runner, source, project, executable)
+        return
+    if getattr(args, 'chapter13', False):
+        from chapter13_validation import validate_chapter13
+        validate_chapter13(args, results, logs, started, runner, source, project, executable)
+        return
     # Ordinary host tests independently assert the algorithms and expected sample exits.
     host_suites = ['storage', 'tokenizer', 'ast']
     if args.types_only:

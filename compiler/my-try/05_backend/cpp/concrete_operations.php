@@ -97,9 +97,9 @@ final class CPP_Concrete_Operations
 		$text = '{ const auto& ' . $source . ' = ' . $emitter->expression($node->iterable) . '; '
 			. 'for (size_t ' . $index . ' = 0; ' . $index . ' < ' . $source . '.size(); ++' . $index . ') { ';
 		if ($facts->key !== null) {
-			$text .= $emitter->iteration_binding($facts->key, $key_type . '(' . $index . ')');
+			$text .= $emitter->initialized_binding($facts->key, $key_type . '(' . $index . ')');
 		}
-		$text .= $emitter->iteration_binding($facts->value, $source . '.at(' . $key_type . '(' . $index . '))');
+		$text .= $emitter->initialized_binding($facts->value, $source . '.at(' . $key_type . '(' . $index . '))');
 		return $text . $emitter->loop_body($node) . '} }';
 	}
 

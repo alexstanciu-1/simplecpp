@@ -83,7 +83,8 @@ final class Output_Publication
 			$digest = content_sha256($artifact->text);
 			$hashes[$path] = $digest;
 			$manifest .= $separator . '{"path":' . json_quote($path) . ',"sha256":' . json_quote($digest)
-				. ',"id":' . json_quote($artifact->identity) . ',"kind":' . json_quote($artifact->kind_name()) . '}';
+				. ',"id":' . json_quote($artifact->identity) . ',"kind":' . json_quote($artifact->kind_name())
+				. ',"includes":' . CPP_Artifacts::includes_json($artifact) . '}';
 			$separator = ',';
 			if ($artifact->kind() === cpp_artifact_kind::translation_unit) {
 				$units++;
@@ -117,7 +118,11 @@ final class Output_Publication
 		$journal = '{"format":"scpp-output-journal-v1","files":[';
 		$separator = '';
 		foreach ($owned as $path => $authorization) {
-			$journal .= $separator . self::inventory_entry($path, $current[$path] ?? '', $hashes[$path] ?? '');
+			$before = '';
+			$after = '';
+			if (isset($current[$path])) { $before = $current[$path]; }
+			if (isset($hashes[$path])) { $after = $hashes[$path]; }
+			$journal .= $separator . self::inventory_entry($path, $before, $after);
 			$separator = ',';
 		}
 		$journal .= "]}\n";

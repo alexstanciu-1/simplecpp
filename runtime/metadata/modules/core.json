@@ -4,6 +4,7 @@
   "dependencies": [],
   "cpp_build": {"sources": ["core/runtime.cpp"]},
   "types": [
+    {"id":"core.Exception","name":"Exception","kind":"class","storage":"shared","capabilities":[]},
     {
       "id": "core.vector", "name": "vector", "kind": "class",
       "initialization": [{"value": {"parameter":"Value"}, "nested": {"parameter":"Value"}}],
@@ -41,11 +42,18 @@
     {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"}
   ],
   "cpp_types": [
+    {"id":"core.Exception","symbol":"scpp::Exception","header":"lang/php/php_exceptions.hpp"},
     {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},
     {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"}
   ],
   "functions": [
     {"id":"core.vector.append","name":"append","member":{"owner":"vector","dispatch":"instance"},"parameters":[{"name":"value","type":{"parameter":"Value"},"passing":"value"}],"returns":"void"},
+    {"id":"core.Exception.make","name":"make","member":{"owner":"Exception","dispatch":"static"},"parameters":[{"name":"message","type":"string","passing":"value"}],"returns":"Exception"},
+    {"id":"core.Exception.get_message","name":"get_message","member":{"owner":"Exception","dispatch":"instance"},"parameters":[],"returns":"string"},
+    {"id":"core.error.make","name":"make","member":{"owner":"error","dispatch":"static"},"parameters":[{"name":"message","type":"string","passing":"value"},{"name":"line","type":"int","passing":"value","default":{"int":0}},{"name":"file","type":"string","passing":"value","default":{"string":""}}],"returns":"error"},
+    {"id":"core.error.get_message","name":"get_message","member":{"owner":"error","dispatch":"instance"},"parameters":[],"returns":"string"},
+    {"id":"core.error.get_line","name":"get_line","member":{"owner":"error","dispatch":"instance"},"parameters":[],"returns":"int"},
+    {"id":"core.error.get_file","name":"get_file","member":{"owner":"error","dispatch":"instance"},"parameters":[],"returns":"string"},
     {"id":"core.getenv","name":"getenv","parameters":[{"name":"name","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
     {"id":"core.shell_exec","name":"shell_exec","parameters":[{"name":"command","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
     {"id":"core.cli_argc","name":"cli_argc","parameters":[],"returns":"int"},
@@ -96,6 +104,12 @@
   ],
   "cpp": [
     {"id":"core.vector.append","symbol":"append","header":"scpp/vector_t.hpp"},
+    {"id":"core.Exception.make","symbol":"scpp::Exception::make","header":"lang/php/php_exceptions.hpp"},
+    {"id":"core.Exception.get_message","symbol":"message_string","header":"lang/php/php_exceptions.hpp"},
+    {"id":"core.error.make","symbol":"scpp::error_t::make","header":"scpp/error_t.hpp"},
+    {"id":"core.error.get_message","symbol":"get_message","header":"scpp/error_t.hpp"},
+    {"id":"core.error.get_line","symbol":"get_line","header":"scpp/error_t.hpp"},
+    {"id":"core.error.get_file","symbol":"get_file","header":"scpp/error_t.hpp"},
     {"id":"core.getenv","symbol":"scpp::php::getenv","header":"lang/php/php_process.hpp"},
     {"id":"core.shell_exec","symbol":"scpp::php::shell_exec","header":"lang/php/php_process.hpp"},
     {"id":"core.cli_argc","symbol":"scpp::php::cli_argc","header":"lang/php/php_process.hpp"},

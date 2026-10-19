@@ -168,6 +168,65 @@ See [the bounded DR-02 proof](planning/ownership_void_targets_2026_10_18/README.
 checks abstract inline constructor input rejection before emission, inherited
 signature invalidation/recovery, and four generated concrete/shared input controls.
 See [the bounded DR-04 repair proof](planning/constructor_parameter_admission_2026_10_18/README.md).
+CH14-EMIT-01 enables `-Wshadow` in shared fixture compilation (including runtime/PCH)
+and native build actions. `tests/project_cpp.py` covers qualified lookup and legal
+block/parameter/foreach-key/catch shadowing with PCH/no-PCH execution and standalone
+headers. `tests/native_invalidation.py` checks the flag on compile/PCH paths and
+successful warning delivery alongside its existing exact rebuild matrix. Warnings
+remain diagnostics, not errors; these runners do not rebuild the compiler itself.
+
+Chapter 14 native closeout uses the same conversion/build setup:
+
+```sh
+python3 compiler/my-try/tools/native_validate.py --target-checkout "$PWD" \
+  --candidate-revision "$(git rev-parse HEAD)" --results /tmp/ch14-native-FRESH \
+  --types-only --no-stan --chapter14
+```
+
+The converted driver compares exported multi-file projects with PHP, compiles native
+artifact bundles with and without PCH, and checks standalone headers. It also invokes
+the native compiler's actual publication and native-build workers for byte-identical
+manifests, no-op/body-edit reuse, failure/repair, successful warning delivery and an
+optional provider's source/definition/library invalidation. Build consumption is tested
+with the source catalog removed. These bounded checks do not sweep every historical
+publication interruption, locking or toolchain case. `--resume` retains attempt logs
+and objects; a successful summary is required before closeout. Source, harness,
+runtime-catalog and candidate hashes identify the exact tested overlay.
+
+Chapter 13 native closeout uses the shared candidate validator:
+
+```sh
+python3 compiler/my-try/tools/native_validate.py --target-checkout "$PWD" \
+  --candidate-revision "$(git rev-parse HEAD)" --results /tmp/ch13-native-FRESH \
+  --types-only --no-stan --chapter13
+```
+
+This converts the compiler to PHS, installs the existing portable framework, builds
+it natively and compares all exported error-value/exception/finally fixtures against
+PHP before compiling and running their C++. It also checks rejection/recovery,
+retained-session edits, production CLI failures and a no-change native rebuild.
+The mode uses no fixture PCH; the native compiler build retains its normal cache.
+`--resume` refreshes the source snapshot while preserving native objects and prior
+attempt logs. `source_hashes.json`, `harness_hashes.json`, `candidate.json` and the
+executable hash distinguish the tested source/overlay from an earlier revision.
+Test-owned native instrumentation executes only after byte equality of its complete
+uninstrumented base. A missing successful summary keeps the closeout gate open.
+
+`python3 compiler/my-try/tests/records.py --suite finally --no-pch --results FRESH`
+checks scalar/void delayed returns, nested exception propagation/replacement, cleanup
+order, local versus crossing transfers, source closure isolation and incremental
+rejection/repair. It compiles generated programs; no native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/records.py --suite exceptions --no-pch --results FRESH`
+checks the bounded Exception factory, canonical throw/catch admission, shared identity,
+handler lifetime, reverse exceptional cleanup, partial construction, outer reporting
+and incremental rejection/repair. It compiles generated programs, not the compiler.
+
+`python3 compiler/my-try/tests/records.py --suite error_values --no-pch --results FRESH`
+checks metadata error factory/defaults/getters, Result failure boundaries, state and
+copy behavior, no-error rejection with assignment preservation, preparation rejections
+and incremental repair/fresh agreement. It compiles generated programs; it does not
+rebuild the compiler.
 
 `python3 compiler/my-try/tests/indexed_properties.py --results FRESH_DIRECTORY`
 checks plain indexed shared-object property writes, reference/place boundaries,

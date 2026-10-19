@@ -29,6 +29,8 @@ final class CPP_Syntax
 					. CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
 			}
 			$previous_return = $this->context->return_type;
+			$previous_finally = $this->context->finally_return;
+			$this->context->finally_return = null;
 			$capture_parts /** vector<string> */ = [];
 			$body_work = object_cast($closure->require_body()->work(), anonymous_body_work::class);
 			$captures /** Storage<prepared_capture> */ = $body_work->captures;
@@ -40,7 +42,10 @@ final class CPP_Syntax
 			$this->context->return_type = $facts->signature->return_type;
 			$body = '';
 			try { $body = CPP_Generator::generate_statements($closure->require_body(), $this->context); }
-			finally { $this->context->return_type = $previous_return; }
+			finally {
+				$this->context->return_type = $previous_return;
+				$this->context->finally_return = $previous_finally;
+			}
 			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
 			return '[' . self::comma_list($capture_parts) . '](' . self::comma_list($parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
@@ -195,6 +200,14 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function statement(statement_node $node): string
 	{
+		if ($node instanceof throw_node) {
+			$throw_statement = object_cast($node, throw_node::class);
+			$this->context->headers['lang/php/php_exceptions.hpp'] = true;
+			return 'throw ::scpp::php::make_thrown(' . $this->expression($throw_statement->expression) . ");\n";
+		}
+		if ($node instanceof try_node) {
+			return $this->generate_try(object_cast($node, try_node::class));
+		}
 		if ($node instanceof cleanup_node) {
 			return $this->generate_cleanup(object_cast($node, cleanup_node::class));
 		}
@@ -262,6 +275,38 @@ final class CPP_Syntax
 	public function generate_function_body(function_body_node $node): string
 	{
 		return CPP_Generator::generate_statements($node, $this->context);
+	}
+
+	/** Catch only language transport, retaining the prepared shared binding through the handler. */
+	private function generate_try(try_node $node): string
+	{
+		if ($node->finalizer !== null) {
+			return CPP_Finally::generate($node, $this->context);
+		}
+		return $this->generate_protected($node);
+	}
+
+	/** The whole source try/catch is enclosed by the finally worker's exception capture. */
+	public function generate_protected(try_node $node): string
+	{
+		if ($node->handler === null) {
+			return $this->generate_block($node->body);
+		}
+		$handler /** catch_node */ = $node->handler;
+		$this->context->headers['lang/php/php_exceptions.hpp'] = true;
+		$id = $this->context->next_temporary;
+		$this->context->next_temporary++;
+		$caught = 'caught_exception_' . $id;
+		$value = 'caught_value_' . $id;
+		$binding = $handler->binding->require_preparation();
+		$payload = CPP_Types::payload($binding->type);
+		CPP_Types::record_dependencies($payload, $this->context);
+		return 'try ' . $this->generate_block($node->body)
+			. 'catch (const ::scpp::php::thrown_object& ' . $caught . ") {\n"
+			. 'auto ' . $value . ' = ::scpp::php::catch_as<' . $payload->spelling . '>(' . $caught . ");\n"
+			. 'if (!' . $value . ") { throw; }\n"
+			. $this->initialized_binding($binding, 'std::move(' . $value . ')')
+			. CPP_Generator::generate_statements($handler->body, $this->context) . "}\n";
 	}
 
 	public function generate_block(statement_body_node $node): string
@@ -439,13 +484,13 @@ final class CPP_Syntax
 		$text = "{\nconst auto& " . $source . ' = ' . $this->expression($node->iterable) . ";\n";
 		$text .= 'for (auto ' . $entry . ' : scpp::value_iteration(' . $source . ")) {\n";
 		if ($facts->key !== null) {
-			$text .= $this->iteration_binding($facts->key, $entry . '.key()');
+			$text .= $this->initialized_binding($facts->key, $entry . '.key()');
 		}
-		$text .= $this->iteration_binding($facts->value, $entry . '.value_copy()');
+		$text .= $this->initialized_binding($facts->value, $entry . '.value_copy()');
 		return $text . $this->loop_body($node) . "}\n}\n";
 	}
 
-	public function iteration_binding(prepared_binding $binding, string $value): string
+	public function initialized_binding(prepared_binding $binding, string $value): string
 	{
 		$entry = object_cast(weakref_get($binding->declaration), collected_name::class);
 		return CPP_Generator::generate_storage_value($binding, CPP_Generator::local_name($entry),

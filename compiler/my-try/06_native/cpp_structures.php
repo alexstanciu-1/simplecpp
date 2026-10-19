@@ -9,6 +9,8 @@ final class native_cpp_config
 	public string $cache_directory;
 	public bool $pch = true;
 	public bool $native_debug = false;
+	/** Explicit opt-in: runtime changes require a fresh cache directory. */
+	public bool $runtime_snapshot = false;
 	public int $optimization = 0;
 	public function __construct(string $compiler, string $runtime_include, string $cache_directory)
 	{
@@ -21,6 +23,8 @@ final class native_cpp_config
 final class native_cpp_result
 {
 	public string $executable = '';
+	/** Diagnostics from actions executed in this invocation; cached actions are not replayed. */
+	public string $diagnostics = '';
 	public int $compiled = 0;
 	public int $reused = 0;
 	public int $pch_built = 0;
@@ -41,4 +45,11 @@ final class native_cpp_artifact
 		$this->digest = $digest;
 		$this->reused = $reused;
 	}
+}
+
+/** Published generated input, not an AST or semantic dependency. */
+final class native_cpp_input
+{
+	public string $digest = '';
+	public array $includes /** vector<string> */ = [];
 }

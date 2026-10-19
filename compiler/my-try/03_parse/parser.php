@@ -593,6 +593,21 @@ final class Parser_Run
 			$removal->set_span($start, $this->position);
 			return $removal;
 		}
+		if ($this->text() === 'throw')
+		{
+			$start = $this->position++;
+			$throw_statement = new throw_node();
+			$throw_statement->expression = $this->expression();
+			$this->expect(';');
+			$this->finish_node($throw_statement, $start);
+			return $throw_statement;
+		}
+		if ($this->text() === 'try') {
+			return $this->try_statement();
+		}
+		if (($this->text() === 'catch') || ($this->text() === 'finally')) {
+			throw new \RuntimeException('Unexpected clause: only one catch followed by one finally is supported');
+		}
 		if ($this->text() === 'switch') { return $this->switch_statement(); }
 		if ($this->text() === 'while') { return $this->while_statement(); }
 		if ($this->text() === 'do') { return $this->do_while_statement(); }
@@ -1611,6 +1626,50 @@ final class Parser_Run
 		$this->expect(';');
 		$this->finish_node($return_statement, $start);
 		return $return_statement;
+	}
+
+	/** A protected body requires a catch, a finally, or both in that order. */
+	private function try_statement(): try_node
+	{
+		$start = $this->position++;
+		$protected_statement = new try_node();
+		$protected_statement->body = $this->statement_block();
+		if ($this->text() === 'catch') {
+			$protected_statement->handler = $this->catch_clause();
+		}
+		if ($this->text() === 'finally') {
+			$this->position++;
+			$protected_statement->finalizer = $this->statement_block();
+		}
+		if (($protected_statement->handler === null) && ($protected_statement->finalizer === null)) {
+			throw new \RuntimeException('Try requires catch or finally');
+		}
+		$this->finish_node($protected_statement, $start);
+		return $protected_statement;
+	}
+
+	/** Handler bindings use ordinary local storage facts. */
+	private function catch_clause(): catch_node
+	{
+		$catch_start = $this->position;
+		$this->expect('catch');
+		$this->expect('(');
+		$handler = new catch_node();
+		$binding = new variable_declaration_node();
+		$binding_start = $this->position;
+		$binding->type_syntax = $this->type_syntax($this->current_scope);
+		if (!string_byte_starts_with($this->text(), '$')) {
+			throw new \RuntimeException('Catch requires a simple local binding');
+		}
+		$name_position = $this->position++;
+		$binding->name = $this->name_at($name_position);
+		$this->finish_node($binding, $binding_start);
+		$binding->collect($this->collector, $this->current_scope, $name_position);
+		$this->expect(')');
+		$handler->binding = $binding;
+		$handler->body = $this->statement_block();
+		$this->finish_node($handler, $catch_start);
+		return $handler;
 	}
 
 	/** Explicit type syntax declares storage; plain writes use the expression grammar. */

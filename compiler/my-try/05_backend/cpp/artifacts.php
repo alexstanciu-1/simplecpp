@@ -17,6 +17,30 @@ final class CPP_Artifacts
 		return 'n_' . $result . '_' . content_sha256($identity);
 	}
 
+	/** Preserve the same include set that produced the artifact preamble. */
+	public static function described(string $identity, cpp_artifact_kind $kind, string $path,
+		string $text, array $headers /** hash<bool> */): cpp_artifact
+	{
+		$artifact = new cpp_artifact($identity, $kind, $path, $text);
+		foreach ($headers as $header => $used) {
+			if ($header !== $path) { $artifact->includes[] = $header; }
+		}
+		$artifact->includes_complete = true;
+		return $artifact;
+	}
+
+	public static function includes_json(cpp_artifact $artifact): string
+	{
+		if (!$artifact->includes_complete) { return 'null'; }
+		$text = '[';
+		$separator = '';
+		foreach ($artifact->includes as $header) {
+			$text .= $separator . json_quote($header);
+			$separator = ',';
+		}
+		return $text . ']';
+	}
+
 	public static function component(string $name): string
 	{
 		$hex = '0123456789abcdef';

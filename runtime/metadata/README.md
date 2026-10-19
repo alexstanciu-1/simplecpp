@@ -3,7 +3,12 @@ Doc Status: supporting
 
 `modules/*.json` follows the [versioned module contract](../../specs/runtime_module_metadata.md).
 The files are runtime-owned, reusable compiler input, not generated C++ or my-try-local
-configuration. Current coverage includes core `strlen`/`count`, JSON free functions,
+configuration. Core also exposes `error::make` with scalar defaults and the three
+error detail getters, using the existing registered error identity and ordinary
+static/instance callable bindings. Core also registers the opaque shared `Exception`,
+its `make(string)` factory and `get_message()` method; see the
+[bounded exception contract](../../specs/exceptions_v0_2.md). See the [error contract](../../specs/error_values_and_take.md).
+Current coverage includes core `strlen`/`count`, JSON free functions,
 all eleven strict datetime helpers, twenty-two strict filesystem helpers,
 and the ready strings surface (case/predicates/trimming, padding/constants,
 int/float formatting, split/typed join, slicing/comparison, hex conversion and

@@ -80,6 +80,9 @@ final class cpp_artifact {
 	private cpp_artifact_kind $artifact_kind;
 	public readonly string $file_name;
 	public readonly string $text;
+	/** Explicit preamble dependencies; unknown adapters retain the scanning fallback. */
+	public array $includes /** vector<string> */ = [];
+	public bool $includes_complete = false;
 
 	public function __construct(string $identity, cpp_artifact_kind $artifact_kind, string $file_name, string $text)
 	{
@@ -110,6 +113,13 @@ enum cpp_record_state {
 	case complete;
 }
 
+/** Invocation-local pending return transport for one emitted protected lambda. */
+final class cpp_finally_return
+{
+	public string $flag;
+	public ?string $value = null;
+}
+
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
@@ -134,6 +144,7 @@ final class cpp_generation_context
 		if ($this->specialization_engine === null) { return false; }
 		return $this->specialization_engine->runtime_abi();
 	}
+	public ?cpp_finally_return $finally_return = null;
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;

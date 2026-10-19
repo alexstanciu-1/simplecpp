@@ -82,6 +82,22 @@ them after the feature chapters and the planned rest break; they block overall
 catalog completion. Transferring design debt does not waive immediate feature-safety
 gates or automatically move other chapter blockers.
 
+## Current handoff — 2026-10-16
+
+Chapter 12's [bounded positive pass is closed](12_closures.md#bounded-closeout-and-current-handoff--2026-10-16).
+Its 13 imported cards and selected extensions have focused evidence; full CH12
+native parity/rejection/incremental coverage is not claimed. Existing CH15 deferrals
+remain unchanged. [Chapter 13 is finalized within its implemented bounds](13_errors.md#bounded-closeout-and-native-gate--2026-10-16)
+after PHS conversion, native compiler build and the focused native feature/rejection/edit
+gate. NOTE-047 is reconciled and Chapter 15 retains explicit diagnostic, return/transfer
+and exception-family extensions. [Chapter 14 bounded closeout](14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16)
+now passes compiler PHS conversion/native build and focused native artifact, publication,
+runtime-linkage and incremental proofs. Remaining diagnostic/runtime/cache extensions
+are explicit. [Chapter 15 now has a compact reconciled inventory](15_review.md) with
+52 selectable groups, recommended priorities and dependencies. Proposed first slice:
+iteration-policy/guard-ownership design; implementation awaits prioritization.
+Chapter 15 remains the final debt review; LLVM stays deferred.
+
 ## Prerequisite gates
 
 Chapter numbers organize the catalog; they are not a strict implementation queue.

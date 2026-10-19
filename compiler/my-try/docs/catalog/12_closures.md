@@ -27,7 +27,63 @@ cards below retain their original order and provenance.
 
 ## Progress
 
-### Current handoff — 2026-10-09
+### Bounded closeout and current handoff — 2026-10-16
+
+Chapter 12's selected frontend + C++ S2S positive pass is **closed with explicit
+deferrals and native coverage limits**. All 13 imported cards are reconciled within
+their supported or rejected bounds. The selected extensions cover contextual
+signatures, callable storage/absence, returns/factories, reference/variadic inputs,
+reference returns, borrowed receivers/captured fields and exact callable Result
+construction, extraction, observation and selection. No new language capability or
+blanket native certification is implied by this documentation closeout.
+
+| Completed group | Retained focused proof owners |
+| --- | --- |
+| Closure identities, captures, arrows, signatures and factories | [closure_model.php](../../tests/closure_model.php), [closures.php](../../tests/closures.php), [contextual_closures.php](../../tests/contextual_closures.php) |
+| Absence, properties/containers and void forwarding | [empty_callables.php](../../tests/empty_callables.php), [callable_storage.php](../../tests/callable_storage.php), [void_returns.php](../../tests/void_returns.php) |
+| Reference/receiver/captured-field lifetimes | [reference_captures.php](../../tests/reference_captures.php), [callable_reference_returns.php](../../tests/callable_reference_returns.php) |
+| Explicit reference/variadic contracts and callable payload inputs | [callable_inputs.php](../../tests/callable_inputs.php) |
+| Callable Result boundaries and observations/selections | [callable_results.php](../../tests/callable_results.php) |
+
+The dated checkpoints below record PHP checks, generated-program execution and
+rejection/incremental proofs. These test owners remain in the repository; their old
+`/tmp` result directories were unavailable in this workspace during reconciliation.
+Their counts are retained historical evidence, not freshly rerun results.
+
+Native evidence was checked against the selected work:
+
+- The [2026-10-10 checkpoint](../portability/conversion_review.md#native-checkpoint--2026-10-10)
+  records conversion/build of the compiler, cumulative validation and subsequent
+  closure/indexed-write execution after the JSON quoting repair. Its base plus
+  overlay and follow-up executable hashes identify that historical proof; the old
+  raw logs/hashes are unavailable here. The closure follow-up does not enumerate
+  complete CH12 suite coverage.
+- [native_validate.py](../../tools/native_validate.py) covers its named cumulative
+  fixtures, not all CH12 suites. [native_records.py](../../tools/native_records.py)
+  selects CH10 or CH11 only. Neither establishes full CH12 native rejection,
+  incremental or feature parity merely because the compiler builds.
+- The [2026-10-16 workspace smoke](../portability/conversion_review.md#workspace-smoke--2026-10-16)
+  directly verifies a fresh native compiler build at `8c7ac0e5`, three PHP/native
+  emission/type/control-flow proofs, generated-program execution and an up-to-date
+  incremental rebuild. It contains no CH12-specific fixture sweep.
+
+A complete CH12 native parity/rejection/incremental sweep remains **unclaimed**.
+This is an explicit validation boundary of the bounded closeout, not evidence of a
+known feature failure. Legacy STAN and LLVM remain parked; native build warnings
+remain. No new native run was performed for this documentation reconciliation.
+
+Existing CH15 deferrals in the remaining-capability table stay unchanged. Mutable
+by-value capture bindings, nullable/ownership callable wrappers, heap-backed borrowed
+projections and escaping borrowed environments remain outside this selected pass;
+this closeout does not enable them or silently approve their implementation.
+
+**Next:** discuss Chapter 13's first bounded slice. Review its structured error-value
+construction/getter and `error -> result<T>` prerequisite against the now-existing
+runtime metadata construction/member-call foundation. Keep in-band errors separate
+from throw/catch; agree exception cleanup before finally. Chapter 14 reconciliation
+and the final Chapter 15 review remain later work.
+
+### Implemented scope — 2026-10-09
 
 The capture-free slice and coordinated callable prerequisite are agreed in the
 [closure foundation plan](../planning/closure_foundation.md). The first checkpoint
@@ -107,8 +163,8 @@ All 13 imported IDs are implemented within their stated positive/rejection bound
 including empty explicitly typed callable storage.
 Concrete reference returns and borrowed receivers add two
 implemented rows; callable returns/factories and explicit reference returns add further
-rows. This is card reconciliation, not whole-chapter completion: imported
-prose and extensions contain further capabilities.
+rows. The bounded closeout below covers the selected work; imported prose and
+unselected extensions do not expand that scope.
 
 | Remaining capability | Current boundary / owner |
 | --- | --- |
@@ -174,8 +230,8 @@ methods, concrete closures and nested explicit callable contracts share the same
 No new AST/fact family or backend lowering was introduced. Read-only arguments alias
 rather than snapshot; writable references replace/reset the caller's callable.
 Temporary references, mismatched signatures and erased borrowing environments reject.
-Next: chapter closeout/native-validation discussion. The remaining-capability table
-distinguishes explicit CH15 deferrals from intentional unsupported wrappers.
+The selected work is closed by the bounded closeout below. The remaining-capability
+table distinguishes explicit CH15 deferrals from intentional unsupported wrappers.
 
 Callable-input evidence: 27 generated programs passed without PCH in
 `/tmp/my-try-callable-payload-inputs-20261009-final`; eight focused PHP regressions

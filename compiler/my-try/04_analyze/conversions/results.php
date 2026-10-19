@@ -50,6 +50,10 @@ final class Result_Conversions
 		if ($source->matches($payload)) {
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::result_wrap);
 		}
+		if (($role->result_family() === result_kind::structured_error)
+			&& $source->matches(Language_Types::error_type(Model::$language_scope))) {
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::result_error);
+		}
 		if ($role->result_family() !== result_kind::structured_error)
 		{
 			if (Nullable_Conversions::is_null($source)
@@ -63,7 +67,7 @@ final class Result_Conversions
 				}
 			}
 		}
-		throw new \RuntimeException('S2S Result construction requires an exact payload, same wrapper type or supported explicit sentinel');
+		throw new \RuntimeException('S2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel');
 	}
 
 	/** Required and selected coalescing values copy a checked payload; casts stay separate. */

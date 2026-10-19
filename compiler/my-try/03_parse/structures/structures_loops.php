@@ -14,7 +14,7 @@ final class while_node extends loop_node
 
 	public function children(): child_iterator_i
 	{
-		return new loop_pair_children_iterator($this->condition, $this->body);
+		return new pair_children_iterator($this->condition, $this->body);
 	}
 
 	/** Enumerate the two owning children in source grammar order. */
@@ -42,7 +42,7 @@ final class do_while_node extends loop_node
 
 	public function children(): child_iterator_i
 	{
-		return new loop_pair_children_iterator($this->body, $this->condition);
+		return new pair_children_iterator($this->body, $this->condition);
 	}
 
 	/** Enumerate the two owning children in source grammar order. */

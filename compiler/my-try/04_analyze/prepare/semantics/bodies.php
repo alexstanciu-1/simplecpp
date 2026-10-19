@@ -8,6 +8,12 @@ final class Body_Preparation
 	/** Analysis owns statement dispatch, fact attachment and completion composition. */
 	public static function prepare_statement(statement_node $node, preparation_context $context): statement_completion
 	{
+		if ($node instanceof throw_node) {
+			return Exception_Preparation::prepare_throw(object_cast($node, throw_node::class), $context);
+		}
+		if ($node instanceof try_node) {
+			return Exception_Preparation::prepare_try(object_cast($node, try_node::class), $context);
+		}
 		if ($node instanceof echo_node) {
 			$output = object_cast($node, echo_node::class);
 			$operands /** Storage<expression_node> */ = $output->operands;
@@ -276,6 +282,7 @@ final class Body_Preparation
 	/** Function returns use the signature; program-entry returns remain scalar exit values. */
 	public static function prepare_return(return_node $syntax, preparation_context $context): prepared_return
 	{
+		Exception_Preparation::require_return($context);
 		if ($context->reference_return_parameter !== null) {
 			return Reference_Preparation::prepare_return($syntax, $context);
 		}

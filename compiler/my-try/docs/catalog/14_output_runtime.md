@@ -9,6 +9,220 @@ Cross-cutting: use a minimal output skeleton from the first runnable example; gr
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Bounded closeout and native gate — 2026-10-16
+
+**Chapter 14 is closed within its implemented frontend + C++ S2S bounds.** Its 32
+imported rows are reconciled to current owners, superseded policies, supporting
+guidance or explicit limits. CH14-EMIT-01 and NOTE-024 retain legal source shadowing
+with `-Wshadow`; no warning-free or complete legacy-PHP compatibility claim is made.
+
+Native execution exposed an arrow-capture portability defect: PHP's absent-key
+`??` fallback became a throwing native hash read. `Capture_Preparation` now defaults
+the mode to value capture and reads an explicit mode only after a membership check.
+The legal-shadowing artifact parity/execution proof covers this path. Publication
+journal generation needed the same explicit membership checks for absent before/after
+digests; native cold publication and failure/repair cover that adaptation. Four focused
+host closure/capture suites also pass (`/tmp/scpp-ch14-capture-host-20261016/commands.json`).
+The test driver
+also avoids a top-level early return unsupported by the legacy entrypoint lowering.
+
+The compiler/proof sources (215 PHP files) converted to PHS and compiled/linked
+natively. The converted driver exercises the compiler's real artifact, publication
+and native-build workers; it does not substitute host PHP for those native operations.
+The gate passes:
+
+- 14 multi-file PHP/native artifact-byte comparisons and 28 generated executions
+  across PCH/no-PCH, including runtime-name collisions, qualification, source headers,
+  reference/ownership ABI and legal block/parameter/foreach-key/catch shadowing.
+- 27 standalone native-generated header checks without PCH and four host contract suites.
+- Native/PHP publication bundle and manifest parity; no-op byte/inode/mtime stability,
+  entry-body rebuild isolation, failed-publication readiness refusal and repaired reuse.
+- 5 incremental-program and 7 optional-provider native build/execution scenarios,
+  including PCH/no-PCH, successful warning delivery, provider-source edits,
+  definition/PCH invalidation and library-only relinking. Removing the source catalog
+  before building proves consumption of the published runtime requirements.
+- A final no-change native compiler rebuild.
+
+Evidence: `/tmp/scpp-ch14-native-20261016/summary.json`, final attempt `logs-5/`,
+its native publication/build `observations.json` files, `source_hashes.json`,
+`harness_hashes.json`, `runtime_catalog_hashes.json`, `candidate.json`, and the executable
+SHA-256 in the summary. Candidate base is `29efc8ad` plus the retained validation
+harness/portability overlay captured by those hashes. The driver replaces the normal
+entrypoint; this does not certify a new native production CLI. Legacy STAN and LLVM
+were explicitly skipped. The shared runner used PHP CLI. Warnings remain visible.
+
+The earlier CH14-EMIT-01 proof below retains its broader ten-case host-driven native
+cache matrix and actual old-cache flag-transition check. This focused native gate
+supplements it; it does not repeat every historical locking/interruption scenario,
+every optional module, or the cumulative CH01–14 suite. CH12's separate native coverage
+limits remain unchanged. The retained [native gate command](../testing.md) reproduces
+this scope; a missing successful summary cannot establish closeout.
+
+Deferred work remains explicit in [remaining work](#remaining-work) and
+[Chapter 15](15_blocking_debt.md#chapter-14-closeout-deferrals): structured diagnostic
+origins, broader template incomplete-type contracts, optional-module/toolchain
+acceptance, a checked current-build/run reader, automatic runtime refresh, cache cost,
+parallel native actions, garbage collection and LLVM. Formatting and broad warning
+cleanup are not silently added to the completed slice. Next: prioritize Chapter 15
+by user value and dependencies before agreeing its first bounded slice.
+
+## Reconciliation — 2026-10-16
+
+At reconciliation, the 32 imported rows were not 32 missing features. This review
+maps them to current owners and separates legacy policies from implementation gaps.
+`superseded` means the imported policy is replaced, not that its old spelling was
+implemented. `reconciled-bounded` inherits the linked owner's limits. Imported source
+text below remains historical evidence; it does not reopen completed chapter work.
+
+### Artifacts
+
+[Chapter 08](08_project_symbols.md) and its
+[artifact roadmap](../planning/incremental_cpp_artifacts.md) already own:
+
+- Individual type/callable headers, initial per-source implementation groups and a
+  selected `entry.cpp`, using one path for single- and multi-source programs.
+- Stable logical identities, declarations separate from bodies/default arguments,
+  and backend-owned declaration-versus-complete-definition requirements. Bare-record
+  declaration-only consumers can avoid layout includes; template/handle payloads
+  remain conservatively included. This is not missing shared-handle forward-declaration
+  support that must be implemented merely to match EMIT-FILE-003's historical example.
+- [Content-aware publication](../architecture/output_publication.md): no-op byte/mtime
+  preservation, owned-file retirement, failed-attempt readiness and cooperative locks.
+- [Native caching](../architecture/native_cpp_build.md): exact unit membership,
+  runtime-only PCH, content/dependency keys and failed-action recovery.
+
+Retained proof owners: `tests/project_cpp.php` / `.py`, `cpp_artifacts.php` / `.py`,
+`output_publication.py`, `native_cache.py` and `native_invalidation.py`. The project
+runner already compiles separate units and standalone headers without PCH and checks
+actual Clang dependencies. Rebuilding those facilities is not the next slice.
+
+### Runtime
+
+[Runtime module metadata](../../../../specs/runtime_module_metadata.md) separates
+semantic contracts from C++ bindings. Selected module closure supplies provider sources,
+ordered libraries and definitions through the publication's `runtime_build` snapshot;
+the native builder consumes it without reopening catalogs. This is already beyond the
+historical core-only cache. `runtime_catalog.php`, `runtime_build_contract.php` and
+`runtime_module_build.py` own admission, publication and real build/cache proofs.
+
+[Reference safety](../../../../specs/native_reference_safety.md), `tests/references.php`
+and `nullable_handles.php` own handle references and nullable normalization. `T` and
+`?T` are not a new promise of future non-null handle enforcement. Ordinary inline
+nullable types retain their distinct wrapper identity. Runtime probes, reset and strict
+identity remain with Chapters 05–07; static/member APIs remain with Chapters 09–11.
+[Ordered echo](../../../../specs/output_v0_2.md) and `tests/echo.php` already cover NOTE-046.
+The [Chapter 13 gate](13_errors.md#bounded-closeout-and-native-gate--2026-10-16) supplies
+current native evidence for its error/exception/cleanup bounds only.
+
+### Semantics
+
+The imported type-blind-generator boundary is not the v0.2 compiler model.
+Shared preparation resolves types, calls and admissible operations; backend workers
+consume settled facts. [Expression evaluation](../../../../specs/expression_evaluation.md)
+and Chapter 02 own operand sequencing, integer division and bounded comparison domains.
+Chapter 03 owns switch/loop behavior; Chapter 06 owns container defaults and iteration;
+Chapter 08 owns namespaces, imports and entry selection. Their explicit deferrals stay
+with those owners rather than becoming new Chapter 14 implementation requirements.
+
+### Qualification
+
+`CPP_Generator::source_name` owns reversible role-prefixed spellings; resolved source
+identities and registered runtime C++ bindings own call targets. The current output
+uses explicit `scpp::` / `::scpp::` references. Reintroducing the imported rooted-name
+ban or blanket using-directives would conflict with the existing output architecture.
+`tests/namespace_identity.php`, `namespaces.php` and runtime-catalog shadowing checks
+provide relevant evidence. Warning-enabled generated-artifact coverage is the remaining
+bounded acceptance gap below, not a mandate to rename every existing symbol.
+
+### Governance
+
+NOTE-001/003/004/007/030/064 are provenance/workflow guidance, not language features.
+The [spec map](../../../../specs/spec_map.md) and this catalog's current workflow govern.
+NOTE-048 remains supporting formatting guidance; exact pretty-printing and a global
+warning-free policy are not established by these cards.
+
+### Evidence checked in this review
+
+At base `10dfee14`, four focused host suites (`cpp_artifacts`, `project_cpp`,
+`runtime_catalog`, `runtime_build_contract`) pass in
+`/tmp/scpp-ch14-review-20261016/summary.json`. These prove transport, retained artifact
+behavior and metadata contracts; the exported project programs were not compiled by
+that host-only run. The optional-provider check also passes six build/execution scenarios in
+`/tmp/scpp-ch14-runtime-build-20261016/observations.json` and `logs/`: cold/warm,
+body edit, provider edit, definition/PCH invalidation and library-only relinking.
+The builder successfully consumes published requirements with the source catalog
+removed. These are generated executable proofs, not a native compiler rebuild.
+Historical CH08 checkpoints are recorded in the roadmap; their old temporary evidence
+is not present in this workspace and was not rerun as a full acceptance sweep.
+That reconciliation did not claim a native compiler rebuild; the closeout gate above
+now supplies focused native evidence.
+
+### Remaining work
+
+1. NOTE-024 is implemented by [CH14-EMIT-01](#first-slice) below. The requested native
+   closeout gate above now passes; its coverage remains explicitly bounded.
+2. Source-origin/category diagnostics remain **CH13-DIAG-01**, already recorded in
+   [Chapter 15](15_blocking_debt.md#chapter-13-deferred-work). Do not hide that gap by
+   treating an arbitrary C++ diagnostic as a complete source diagnostic.
+3. Broader runtime/template incomplete-type contracts, all optional-module/toolchain
+   combinations, and a current-build/run reader remain extensions of their existing
+   owners. The native guide explicitly distinguishes a historical executable path
+   from a checked freshness API. None is required merely to reproduce legacy file pairs.
+4. Automatic runtime refresh, native validation cost, broader toolchain completeness,
+   parallel native actions and cache garbage collection retain their existing CH15 or
+   native-guide deferrals. LLVM remains parked. Formatting is supporting work, not a
+   reason to silently widen this slice into a generator rewrite.
+
+### First slice
+
+**CH14-EMIT-01 implemented within its agreed bounds — 2026-10-16.**
+
+The shared `CppFixtureCompiler` and snippet runtime compilation now enable `-Wshadow`.
+`Native_CPP_Build` includes it in its common compilation/PCH flags. Existing ordered
+argument keys invalidate prior actions naturally; no cache schema change or deletion
+is needed. Successful compile/link stderr is returned in invocation-local
+`native_cpp_result::diagnostics` and delivered by the build CLI on stderr, leaving its
+JSON stdout intact. Cache hits do not replay historical warnings. Failed actions retain
+the existing exception path. This is raw compiler diagnostic delivery, not CH13-DIAG-01
+source-location enrichment.
+
+Legal source shadowing remains accepted. The added project cases execute qualified
+cross-file calls to a source function named `strlen`, source type/callable headers,
+arrow parameter shadowing, closure capture, explicit block-local shadowing, foreach
+key shadowing and catch shadowing. Foreach values retain the existing assignment
+semantics; this work does not change them into fresh loop-local bindings. Reviewed
+Clang shadow warnings identify the intended block, key and catch declarations. A
+pre-existing runtime explicit-instantiation warning also remains. No naming or lookup
+fault required a backend rename, and no warning is promoted to an error.
+
+Evidence at base `f0d6dd60` plus this slice:
+
+- `/tmp/scpp-ch14-emit-artifacts-04/summary.json`: five host suites, 16 unmodified
+  artifact bundles compiled/linked/run both with and without PCH (32 executions),
+  34 standalone header checks without PCH, three Clang transitive-dependency checks,
+  relocation and missing-entry rejection. The editable probe roundtrip assertion now
+  compares its actual identity/path/source-byte contract, excluding publication-only
+  include metadata; production bundles are compiled intact.
+- `/tmp/scpp-ch14-emit-incremental-02/summary.json` and `observations.json`: ten
+  native build/execution scenarios covering cold/warm, body/default/signature/layout,
+  insertion/deletion, relocation and compiler identity. Warm publication preserves
+  bytes/inode/mtime. Body edits rebuild only their implementation unit and retain PCH.
+  The compiler proxy verifies `-Wshadow` on scan/PCH/object paths; successful-build
+  stderr must contain the intentionally legal foreach-key shadow diagnostic.
+- `/tmp/scpp-ch14-emit-flag-transition-01/summary.json`: the prior review's real
+  no-`-Wshadow` optional-provider cache rebuilds three objects, PCH and executable
+  after the flag is added, then reuses everything on a second build. Both executions
+  retain exit 12. This local transition check supplements the retained runners.
+
+The shared runner used PHP CLI and its bounded task pool. These proofs compile
+**generated programs**, not the compiler itself. No compiler PHS/native rebuild,
+full chapter closeout or warning-free certification is claimed.
+
+Non-goals remain new language/runtime APIs, global symbol renaming, broad warning
+cleanup, formatting, structured source diagnostics, template dependency optimization,
+new run orchestration, legacy generator changes, STAN and LLVM. The native closeout
+above completes the chapter within these bounds; extensions need their own agreed slice.
+
 ## Progress
 
 ### Early output slice — 2026-10-09
@@ -24,47 +238,49 @@ wrapper states, rejection and incremental repair/fresh agreement. Run it with
 The shared generated-program runners check optional expected stdout as well as exit
 status. Native compiler rebuilding remains a separate requested checkpoint.
 
-Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
+Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress. `owner-linked` means existing implementation/tests
+are identified above, not that every imported example was recompiled in this review.
+Governance rows do not require frontend/backend implementation.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
-| [CLASS-SPLIT-001](#class-split-001) | pending-discussion | `class A { function f(): int { return 1; } }` | unverified | unverified | deferred | Source variants need reconciliation |
-| [GEN-QUAL-001](#gen-qual-001) | pending-discussion | `$x = ["a"]; echo $x[0];` | unverified | unverified | deferred | — |
-| [RUNTIME-REF-001](#runtime-ref-001) | pending-discussion | future Prism++ `&x` where `x` is `shared_p<T>`, `unique_p<T>`, or `weak_p<T>` | unverified | unverified | deferred | — |
-| [EMIT-FILE-001](#emit-file-001) | pending-discussion | `input.phs` | unverified | unverified | deferred | — |
-| [EMIT-FILE-002](#emit-file-002) | pending-discussion | generated header/source for one PHP++ input file | unverified | unverified | deferred | — |
-| [EMIT-FILE-003](#emit-file-003) | pending-discussion | `shared_p<B> b;` in a header declaration | unverified | unverified | deferred | — |
-| [EXPR-EMIT-001](#expr-emit-001) | pending-discussion | `$x = ($a + 1) * f($b);` | unverified | unverified | deferred | — |
-| [META-INTENT-001](#meta-intent-001) | pending-discussion | `function f(A $arg) {}` and `function f(?A $arg) {}` | unverified | unverified | deferred | — |
-| [NOTE-001](#note-001) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-002](#note-002) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-003](#note-003) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-004](#note-004) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-007](#note-007) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-008](#note-008) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-009](#note-009) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-014](#note-014) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-020](#note-020) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-023](#note-023) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-024](#note-024) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-026](#note-026) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-028](#note-028) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-030](#note-030) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-032](#note-032) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-041](#note-041) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-042](#note-042) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-046](#note-046) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-048](#note-048) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-049](#note-049) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-057](#note-057) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-061](#note-061) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-062](#note-062) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
-| [NOTE-064](#note-064) | pending-discussion | — (example pending) | unverified | unverified | deferred | Prose rule; extract/split examples |
+| [CLASS-SPLIT-001](#class-split-001) | superseded-bounded | `class A { function f(): int { return 1; } }` | owner-linked | owner-linked | deferred | Declaration/body split exists; artifact identity is per type/callable plus source implementation group, not one pair per class. |
+| [GEN-QUAL-001](#gen-qual-001) | superseded | `$x vector<string> = ["a"]; echo $x[0];` | owner-linked | owner-linked | deferred | The legacy rooted-name ban does not govern v0.2; backend-owned names and explicit runtime qualification are already emitted. |
+| [RUNTIME-REF-001](#runtime-ref-001) | implemented-bounded | `function inspect(const shared<Box> &$x): void {}` | owner-linked | owner-linked | deferred | References alias existing handle storage; no extra ownership wrapper. Reference/lifetime restrictions remain CH07. |
+| [EMIT-FILE-001](#emit-file-001) | superseded-bounded | `input.phs` | owner-linked | owner-linked | deferred | One-input/one-pair is replaced by the common partitioned artifact program, including single-source input. |
+| [EMIT-FILE-002](#emit-file-002) | superseded-bounded | generated header/source for one PHP++ input file | owner-linked | owner-linked | deferred | Explicit artifact includes and a separate runtime-only PCH replace reliance on a project umbrella header. |
+| [EMIT-FILE-003](#emit-file-003) | reconciled-conservative | `shared_p<B> b;` in a header declaration | owner-linked | owner-linked | deferred | Bare-record name-only requirements use forward declarations; template/handle payloads remain conservatively complete. |
+| [EXPR-EMIT-001](#expr-emit-001) | superseded | `$x = ($a + 1) * f($b);` | owner-linked | owner-linked | deferred | Prepared typed operations and ordered expression emission replace type-blind structural lowering. |
+| [META-INTENT-001](#meta-intent-001) | reconciled-bounded | `function f(A $arg) {}` and `function f(?A $arg) {}` | owner-linked | owner-linked | deferred | Nullable handle spelling normalizes through type metadata; this is not a deferred non-null enforcement promise. |
+| [NOTE-001](#note-001) | reconciled | — (policy/provenance) | owner-linked | owner-linked | deferred | Historical catalog preamble; v0.2 container defaults and authority are owned by CH06 and the spec map. |
+| [NOTE-002](#note-002) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Type-aware preparation, separated boxed families and prepared places replace the imported composite generator summary. |
+| [NOTE-003](#note-003) | reconciled | — (policy/provenance) | owner-linked | owner-linked | deferred | Historical catalog preamble and v1 bridge policy; v0.2 separated-family amendment takes precedence. |
+| [NOTE-004](#note-004) | reconciled | — (policy/provenance) | owner-linked | owner-linked | deferred | Coverage/normalization guidance, not a missing compiler feature. |
+| [NOTE-007](#note-007) | reconciled | — (policy/provenance) | owner-linked | owner-linked | deferred | Imported authority labels do not outrank top-level semantics or the v0.2 amendments. |
+| [NOTE-008](#note-008) | superseded | — (policy/provenance) | owner-linked | owner-linked | deferred | Type-blind responsibility boundary belongs to the legacy generator, not my-try shared preparation. |
+| [NOTE-009](#note-009) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Registered runtime types, ownership and bindings exist; no claim of every historical helper or runtime API. |
+| [NOTE-014](#note-014) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | PHP-semantic adapters and registered runtime bindings already select runtime behavior; constants are settled metadata. |
+| [NOTE-020](#note-020) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Historical rejection list is not the current feature matrix; CH02/03/06/07 own the implemented operations and deferrals. |
+| [NOTE-023](#note-023) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Bounded numeric division/comparisons/spaceship and switch contracts already supersede the old incompatibility list. |
+| [NOTE-024](#note-024) | implemented-bounded | — (policy/provenance) | owner-linked | proved | deferred | `-Wshadow` enabled in fixture/native compilation; artifact, lookup, diagnostics and incremental proofs pass; legal shadowing preserved. |
+| [NOTE-026](#note-026) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Partitioned declarations, precise dependencies and source implementation groups replace the imported file-pair policy. |
+| [NOTE-028](#note-028) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | CH08 owns canonical namespace bodies and selected entry; CH05/09 own handle normalization, not deferred intent metadata. |
+| [NOTE-030](#note-030) | reconciled | — (policy/provenance) | owner-linked | owner-linked | deferred | Use specs/spec_map.md authority order; imported catalog status cannot define semantics. |
+| [NOTE-032](#note-032) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Runtime behavior is delegated, but type/operation admission is checked in preparation; arbitrary stream/operator availability is not assumed. |
+| [NOTE-041](#note-041) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Prepared probes/reset/identity and settled constants already use their bounded owners; no PHP get_defined_constants discovery. |
+| [NOTE-042](#note-042) | superseded | — (policy/provenance) | owner-linked | owner-linked | deferred | Explicit runtime bindings and collision-safe generated names replace the relative-qualification-only convention. |
+| [NOTE-046](#note-046) | implemented-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Ordered echo is implemented; one ordered-operand node replaces the legacy exporter sibling representation. |
+| [NOTE-048](#note-048) | guidance | — (policy/provenance) | owner-linked | owner-linked | deferred | Readable compact output remains a style goal; generated whitespace is not a language feature or warning-clean guarantee. |
+| [NOTE-049](#note-049) | reconciled-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Integer division and admitted comparison domains are defined and tested; full PHP coercive arithmetic is not promised. |
+| [NOTE-057](#note-057) | implemented-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Native build selects SCPP_LANGUAGE_TARGET_PHP=1; runtime owns key normalization. |
+| [NOTE-061](#note-061) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Runtime-owned module catalogs replace legacy profile symbol lists as the my-try registration authority. |
+| [NOTE-062](#note-062) | superseded-bounded | — (policy/provenance) | owner-linked | owner-linked | deferred | Resolved source/runtime identities and separate C++ bindings replace tail-name rewriting; selected-module exposure is checked. |
+| [NOTE-064](#note-064) | reconciled | — (policy/provenance) | owner-linked | owner-linked | deferred | Current catalog workflow groups bounded contracts and proof owners; no implementation needed for historical workflow prose. |
 ## CLASS-SPLIT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** Declaration/body split exists; artifact identity is per type/callable plus source implementation group, not one pair per class. See [current ownership](#artifacts). Imported content below is historical.
 
-Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+Both imported versions are preserved for provenance. The current partitioned artifact model above supersedes their per-class file-pair wording.
 
 ### Imported version 1
 
@@ -129,7 +345,7 @@ class A { function f(): int { return 1; } }
 
 ## GEN-QUAL-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** The legacy rooted-name ban does not govern v0.2; backend-owned names and explicit runtime qualification are already emitted. See [current ownership](#qualification). Imported content below is historical.
 
 ### Imported version 1
 
@@ -166,7 +382,7 @@ mixed_t x = table_(table_item_(string_t("a"))); echo x.get(static_cast<int_t>(0)
 
 ## RUNTIME-REF-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** References alias existing handle storage; no extra ownership wrapper. Reference/lifetime restrictions remain CH07. See [current ownership](#runtime). Imported content below is historical.
 
 ### Imported version 1
 
@@ -199,7 +415,7 @@ native handle reference lowering such as `shared_p<T>&`
 
 ## EMIT-FILE-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** One-input/one-pair is replaced by the common partitioned artifact program, including single-source input. See [current ownership](#artifacts). Imported content below is historical.
 
 ### Imported version 1
 
@@ -234,7 +450,7 @@ input.phs
 
 ## EMIT-FILE-002
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** Explicit artifact includes and a separate runtime-only PCH replace reliance on a project umbrella header. See [current ownership](#artifacts). Imported content below is historical.
 
 ### Imported version 1
 
@@ -267,7 +483,7 @@ broad runtime/project header included
 
 ## EMIT-FILE-003
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** Bare-record name-only requirements use forward declarations; template/handle payloads remain conservatively complete. See [current ownership](#artifacts). Imported content below is historical.
 
 ### Imported version 1
 
@@ -300,7 +516,7 @@ broad runtime/project header included
 
 ## EXPR-EMIT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** Prepared typed operations and ordered expression emission replace type-blind structural lowering. See [current ownership](#semantics). Imported content below is historical.
 
 ### Imported version 1
 
@@ -335,7 +551,7 @@ structural C++ emission preserving grouping
 
 ## META-INTENT-001
 
-**v0.2 decision / target C++:** Pending discussion.
+**v0.2 reconciliation:** Nullable handle spelling normalizes through type metadata; this is not a deferred non-null enforcement promise. See [current ownership](#runtime). Imported content below is historical.
 
 ### Imported version 1
 
@@ -370,7 +586,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/catalog.md:1](../../../../generators/php/specs/catalog.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Historical catalog preamble; v0.2 container defaults and authority are owned by CH06 and the spec map. See [current ownership](#governance). Imported content below is historical.
 
 > # Prism++ â€“ Rule Catalog
 > Doc Status: normative
@@ -395,7 +611,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/catalog.md:107](../../../../generators/php/specs/catalog.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Type-aware preparation, separated boxed families and prepared places replace the imported composite generator summary. See [current ownership](#semantics). Imported content below is historical.
 
 > ## Notes
 >
@@ -444,7 +660,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules_catalog.md:1](../../../../generators/php/specs/rules_catalog.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Historical catalog preamble and v1 bridge policy; v0.2 separated-family amendment takes precedence. See [current ownership](#governance). Imported content below is historical.
 
 > Doc Status: normative
 >
@@ -472,7 +688,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules_catalog.md:346](../../../../generators/php/specs/rules_catalog.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Coverage/normalization guidance, not a missing compiler feature. See [current ownership](#governance). Imported content below is historical.
 
 > ## Notes
 >
@@ -484,7 +700,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:1](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Imported authority labels do not outrank top-level semantics or the v0.2 amendments. See [current ownership](#governance). Imported content below is historical.
 
 > Doc Status: normative
 >
@@ -503,7 +719,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:14](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Type-blind responsibility boundary belongs to the legacy generator, not my-try shared preparation. See [current ownership](#semantics). Imported content below is historical.
 
 > ## 0. Generator Responsibility Boundary
 >
@@ -519,7 +735,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:24](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Registered runtime types, ownership and bindings exist; no claim of every historical helper or runtime API. See [current ownership](#runtime). Imported content below is historical.
 
 > ## 1. Runtime Contract
 >
@@ -559,7 +775,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:205](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** PHP-semantic adapters and registered runtime bindings already select runtime behavior; constants are settled metadata. See [current ownership](#runtime). Imported content below is historical.
 
 > ## 6. Runtime Delegation
 >
@@ -585,7 +801,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:285](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Historical rejection list is not the current feature matrix; CH02/03/06/07 own the implemented operations and deferrals. See [current ownership](#semantics). Imported content below is historical.
 
 > ## 11. Rejected Features
 >
@@ -612,7 +828,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:364](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Bounded numeric division/comparisons/spaceship and switch contracts already supersede the old incompatibility list. See [current ownership](#semantics). Imported content below is historical.
 
 > ## 12. Incompatibilities
 >
@@ -629,7 +845,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:375](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** `-Wshadow` enabled in fixture/native compilation; artifact, lookup, diagnostics and incremental proofs pass; legal shadowing preserved. See [current ownership](#first-slice). Imported content below is historical.
 
 > ## 13. Compilation Constraints
 >
@@ -646,7 +862,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:446](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Partitioned declarations, precise dependencies and source implementation groups replace the imported file-pair policy. See [current ownership](#artifacts). Imported content below is historical.
 
 > ## 15. File Emission Model
 >
@@ -665,7 +881,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:468](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** CH08 owns canonical namespace bodies and selected entry; CH05/09 own handle normalization, not deferred intent metadata. See [current ownership](#semantics). Imported content below is historical.
 
 > ## 17. Deferred Intent Metadata
 >
@@ -723,7 +939,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:562](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Use specs/spec_map.md authority order; imported catalog status cannot define semantics. See [current ownership](#governance). Imported content below is historical.
 
 > ## 1. Scope and precedence
 >
@@ -735,7 +951,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:578](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Runtime behavior is delegated, but type/operation admission is checked in preparation; arbitrary stream/operator availability is not assumed. See [current ownership](#runtime). Imported content below is historical.
 
 > ## 3. Runtime assumptions
 >
@@ -792,7 +1008,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:842](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Prepared probes/reset/identity and settled constants already use their bounded owners; no PHP get_defined_constants discovery. See [current ownership](#runtime). Imported content below is historical.
 
 > ## 12. PHP runtime boundary rules
 >
@@ -813,7 +1029,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:857](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Explicit runtime bindings and collision-safe generated names replace the relative-qualification-only convention. See [current ownership](#qualification). Imported content below is historical.
 
 > ## 13. Prism++ runtime/helper boundary rules
 >
@@ -856,7 +1072,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:1055](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Ordered echo is implemented; one ordered-operand node replaces the legacy exporter sibling representation. See [current ownership](#runtime). Imported content below is historical.
 
 > ## 17. Output rules
 >
@@ -879,7 +1095,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:1079](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Readable compact output remains a style goal; generated whitespace is not a language feature or warning-clean guarantee. See [current ownership](#governance). Imported content below is historical.
 
 > ## 19. Formatting
 >
@@ -892,7 +1108,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:1086](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Integer division and admitted comparison domains are defined and tested; full PHP coercive arithmetic is not promised. See [current ownership](#semantics). Imported content below is historical.
 
 > ## 20. Notes on known open incompatibilities
 >
@@ -912,7 +1128,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:1257](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Native build selects SCPP_LANGUAGE_TARGET_PHP=1; runtime owns key normalization. See [current ownership](#runtime). Imported content below is historical.
 
 > ## Runtime language target
 >
@@ -922,7 +1138,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:1282](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Runtime-owned module catalogs replace legacy profile symbol lists as the my-try registration authority. See [current ownership](#runtime). Imported content below is historical.
 
 > ## PHP runtime relative symbol registry
 >
@@ -937,7 +1153,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/rules.md:1292](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Resolved source/runtime identities and separate C++ bindings replace tail-name rewriting; selected-module exposure is checked. See [current ownership](#runtime). Imported content below is historical.
 
 > ## Runtime Symbol Registry (relative to scpp)
 >
@@ -966,7 +1182,7 @@ same emitted handle type, different recorded intent metadata
 
 **Source:** [generators/php/specs/catalog_rebuild_workflow.md:1](../../../../generators/php/specs/catalog_rebuild_workflow.md)
 
-**v0.2 decision / examples:** Pending discussion. Imported prose follows; its authority labels and v1 implementation boundaries are source text, not this catalog's status.
+**v0.2 reconciliation:** Current catalog workflow groups bounded contracts and proof owners; no implementation needed for historical workflow prose. See [current ownership](#governance). Imported content below is historical.
 
 > # Prism++  Catalog Rebuild Workflow
 > Doc Status: planning

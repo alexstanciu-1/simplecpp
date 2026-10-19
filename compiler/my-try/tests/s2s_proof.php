@@ -5,6 +5,102 @@ namespace scpp\compiler;
 
 final class S2S_Proof
 {
+	/** Exercise production publication and native build owners through a portable request. */
+	public static function chapter14(string $directory): string
+	{
+		try
+		{
+			$published = fs_read_text($directory . '/published.txt');
+			if (fs_read_text($directory . '/mode.txt') === 'publish')
+			{
+				$modules /** vector<string> */ = [fs_read_text($directory . '/module.txt')];
+				Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(fs_read_text($directory . '/catalog.txt'), $modules));
+				$publication = new Output_Publication($published);
+				try
+				{
+					$paths /** vector<string> */ = [fs_read_text($directory . '/source.txt')];
+					$compiler = new Compiler();
+					$compiler->init($paths);
+					$compiler->select_entry('main', 'main.phs');
+					$compiler->exec_cpp($publication);
+					$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+					return CPP_Output::encode($outputs);
+				}
+				finally
+				{
+					$publication->close();
+				}
+			}
+			$config = new native_cpp_config('/usr/bin/clang++', fs_read_text($directory . '/runtime.txt'), fs_read_text($directory . '/cache.txt'));
+			$config->pch = fs_read_text($directory . '/pch.txt') === 'yes';
+			$result = (new Native_CPP_Build($config))->build($published);
+			return '{"executable":' . json_quote($result->executable) . ',"compiled":' . $result->compiled
+				. ',"reused":' . $result->reused . ',"pch_built":' . $result->pch_built . ',"linked":' . $result->linked
+				. ',"diagnostics":' . json_quote($result->diagnostics) . '}';
+		}
+		catch (\Throwable $error)
+		{
+			return "ERROR\n" . $error->getMessage();
+		}
+	}
+
+	/** Run bounded feature edits through the same retained compiler in PHP and native form. */
+	public static function edited_source(string $valid, string $invalid, string $changed): string
+	{
+		Compiler_Lifecycle::reset();
+		$input_module = new module('/edit-proof', '/edit-proof', '/edit-proof');
+		$source = new file();
+		$source->path = 'main.phs';
+		$source->content = $valid;
+		$record = Source_Registry::add($input_module, $source);
+		$modules /** Keyed_Storage<module> */ = Model::$modules;
+		$modules->add($input_module->name, $input_module);
+		$compiler = new Compiler();
+		$compiler->exec_cpp();
+		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
+		$original = CPP_Output::encode($outputs);
+		$paths /** vector<string> */ = ['/edit-proof/main.phs'];
+		$record->file->content = $invalid;
+		$rejected = false;
+		try {
+			$compiler->update_cpp($paths);
+		}
+		catch (\RuntimeException $error) {
+			$rejected = true;
+		}
+		$outputs = Model::$cpp_files;
+		if ((!$rejected) || (!$outputs->is_empty())) {
+			throw new \LogicException('Invalid edit published stale or partial C++');
+		}
+		$record->file->content = $changed;
+		$compiler->update_cpp($paths);
+		$outputs = Model::$cpp_files;
+		if (CPP_Output::encode($outputs) === $original) {
+			throw new \LogicException('Valid edit reused stale C++');
+		}
+		$record->file->content = $valid;
+		$compiler->update_cpp($paths);
+		$outputs = Model::$cpp_files;
+		if (CPP_Output::encode($outputs) !== $original) {
+			throw new \LogicException('Edited-source repair changed output');
+		}
+		Compiler_Lifecycle::reset();
+		$input_module = new module('/edit-proof', '/edit-proof', '/edit-proof');
+		$source = new file();
+		$source->path = 'main.phs';
+		$source->content = $valid;
+		Source_Registry::add($input_module, $source);
+		$modules = Model::$modules;
+		$modules->add($input_module->name, $input_module);
+		$compiler = new Compiler();
+		$compiler->exec_cpp();
+		$outputs = Model::$cpp_files;
+		if (CPP_Output::encode($outputs) !== $original) {
+			throw new \LogicException('Edited-source fresh output differs');
+		}
+		return $original;
+	}
+
 	/** Native control-flow identity and unselected-arm dependency recovery use one session. */
 	public static function control_flow(): string
 	{
@@ -231,7 +327,7 @@ final class S2S_Proof
 		}
 		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
 		$old_output = CPP_Output::single_unit($outputs);
-		$expected = "#include \"scpp/int_t.hpp\"\n#include \"lang/php/cli_context.hpp\"\n\nint main(int argc, char** argv)\n{\n\tscpp::php::set_cli_args(argc, argv);\n\tauto local_a = static_cast<scpp::int_t<>>(10LL);\n\tscpp::int_t<> local_b = local_a;\n\tlocal_a = static_cast<scpp::int_t<>>(12LL);\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
+		$expected = "#include \"scpp/int_t.hpp\"\n#include \"lang/php/cli_context.hpp\"\n#include \"scpp/runtime_error.hpp\"\n\nint main(int argc, char** argv)\n{\n// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n\tauto local_a = static_cast<scpp::int_t<>>(10LL);\n\tscpp::int_t<> local_b = local_a;\n\tlocal_a = static_cast<scpp::int_t<>>(12LL);\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n// SCPP-ENTRY-CATCH\n\t} catch (const std::exception& failure) {\n\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n";
 		if ($old_output->text !== $expected) {
 			throw new \LogicException('Unexpected C++ integer lowering');
 		}

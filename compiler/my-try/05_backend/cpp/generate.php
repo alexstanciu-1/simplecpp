@@ -199,8 +199,8 @@ final class CPP_Generator
 				$identity = 'callable:' . $definition->qualified_name();
 				$text = $fragment->prototype_text . ";\n";
 			}
-			$artifact = new cpp_artifact($identity, cpp_artifact_kind::header, $path,
-				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text);
+			$artifact = CPP_Artifacts::described($identity, cpp_artifact_kind::header, $path,
+				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text, $artifact_headers);
 			$artifact->header_dependencies = $artifact_headers;
 			unset($artifact->header_dependencies[$path]);
 			$result->append($artifact);
@@ -214,16 +214,21 @@ final class CPP_Generator
 		// Executable ABI initialization belongs to artifact assembly, not call preparation.
 		$entry_headers /** hash<bool> */ = $entry_fragment->headers;
 		$cli = 'scpp::php::set_cli_args';
+		$report = 'scpp::print_runtime_exception';
 		if ($this->specializations !== null) {
 			$entry_headers['specializations/base.hpp'] = true; $cli = 'scpp::internal::initialize_cli';
+			$report = 'scpp::internal::report_exception';
 		}
 		else {
 			$entry_headers['lang/php/cli_context.hpp'] = true;
+			$entry_headers['scpp/runtime_error.hpp'] = true;
 		}
-		$result->append(new cpp_artifact('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
+		$result->append(CPP_Artifacts::described('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
 			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . "\nint main(int argc, char** argv)\n{\n"
-			. "\t" . $cli . "(argc, argv);\n"
-			. $entry_fragment->text . "\treturn 0;\n}\n"));
+			. "// SCPP-ENTRY-TRY\n\ttry {\n\t" . $cli . "(argc, argv);\n"
+			. $entry_fragment->text . "\treturn 0;\n// SCPP-ENTRY-CATCH\n"
+			. "\t} catch (const std::exception& failure) {\n"
+			. "\t\t" . $report . "(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n", $entry_headers));
 		$helpers /** hash<prepared_compiler_call> */ = [];
 		foreach ($ordered as $owner) {
 			foreach ($this->program->fragments[$owner]->compiler_helpers as $key => $request) {
@@ -314,8 +319,8 @@ final class CPP_Generator
 		foreach ($dispatch_context->forward_declarations as $name => $used) { $declarations[$name] = true; }
 		if ($body_text !== '') {
 			$path = ($native_source ? 'support/' : '') . CPP_Artifacts::unit_path($prepared->source);
-			$result->append(new cpp_artifact('implementation:' . $path, cpp_artifact_kind::translation_unit,
-				$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text));
+			$result->append(CPP_Artifacts::described('implementation:' . $path, cpp_artifact_kind::translation_unit,
+				$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text, $headers));
 		}
 	}
 
@@ -520,20 +525,30 @@ final class CPP_Generator
 	/** Function returns retain their declared value type; entry returns become native exit codes. */
 	public static function generate_return(return_node $syntax, cpp_generation_context $context): string
 	{
-		if ($syntax->expression === null) {
-			return $context->return_type === null ? "\treturn 0;\n" : "\treturn;\n";
+		$value = self::return_value($syntax, $context);
+		if ($context->finally_return !== null) {
+			$pending /** cpp_finally_return */ = $context->finally_return;
+			return CPP_Finally::capture_return($pending, $value);
 		}
+		return "\treturn" . ($value === '' ? '' : ' ' . $value) . ";\n";
+	}
 
+	/** Evaluate the ordinary prepared conversion once, before any delayed-exit storage. */
+	public static function return_value(return_node $syntax, cpp_generation_context $context): string
+	{
+		if ($syntax->expression === null) {
+			return $context->return_type === null ? '0' : '';
+		}
 		$expression /** expression_node */ = $syntax->expression;
 		$value = (new CPP_Syntax($context))->expression($expression);
 		if ($context->return_type !== null) {
 			if ($syntax->require_preparation()->reference_target !== null) {
-				return "\treturn " . $value . ";\n";
+				return $value;
 			}
 			$decision = $syntax->require_preparation()->require_conversion();
-			return "\treturn " . CPP_Declarations::conversion($value, $decision, $context) . ";\n";
+			return CPP_Declarations::conversion($value, $decision, $context);
 		}
-		return "\treturn static_cast<int>((" . $value . ").native_value());\n";
+		return 'static_cast<int>((' . $value . ').native_value())';
 	}
 
 	public static function generate_expression_statement(expression_statement_node $syntax, cpp_generation_context $context): string

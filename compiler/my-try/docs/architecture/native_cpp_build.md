@@ -14,7 +14,7 @@ php compiler/my-try/tools/build_cpp.php /absolute/published /absolute/cache --no
 ```
 
 The CLI defaults to `/usr/bin/clang++`, the checkout runtime headers, C++23, PHP target,
-threads and `-O0`, without native debug information. Pass `--native-debug` (or set
+threads, `-Wshadow` and `-O0`, without native debug information. Pass `--native-debug` (or set
 `$config->native_debug = true`) to request full Clang `-g` information for
 PCH, generated units and runtime provider objects. Debug selection is independent
 of optimization and participates in the existing action cache keys; returning to
@@ -24,6 +24,12 @@ source-language diagnostics or runtime checks.
 The builder emits a JSON result only after success, with executable path and
 counts for compiled/reused objects, PCH creation and linking. It does not execute the
 program or rebuild the compiler itself. Programmatic callers use `native_cpp_config`.
+
+Successful compile/link diagnostics are returned in `native_cpp_result::diagnostics`;
+the CLI writes them to stderr while preserving JSON stdout. Only actions executed in
+this invocation contribute diagnostics; cached warnings are not replayed. Legal source
+shadowing is accepted, and `-Wshadow` is not promoted to an error. The flag participates
+in the ordinary action/PCH keys, so caches from before its introduction rebuild once.
 
 ## Ownership and ordering
 
@@ -52,6 +58,24 @@ readiness and this association while holding the relevant reservations. A raw
 historical executable path remains a historical artifact, not a freshness API.
 
 ## Dependencies and PCH
+
+The opt-in `--runtime-snapshot` option reuses Clang dependency discovery when the
+publication supplies complete generated include metadata. Generated inputs retain
+current content validation; external dependencies and include-search inventories
+are checked. Missing or unknown include metadata retains the full-scan path.
+Runtime dependency contents are pinned for the cache lifetime: after a runtime
+change, use a fresh native cache directory. Reload retained compiler catalogs as
+well when runtime metadata changes. Automatic runtime refresh remains
+[CH15 debt](../catalog/15_blocking_debt.md#ch15-native-runtime-identity-01--automatic-runtime-change-invalidation).
+The default remains fresh dependency scanning.
+
+PCH creation explicitly uses `-fpch-instantiate-templates`, moving eligible pending
+template instantiations into the reusable PCH. This creation-only flag participates
+in the existing ordered action-argument key. Older PCH entries cannot match; generated
+object keys also change through the selected PCH path/content, and linking follows
+the changed objects. Runtime provider objects compiled without PCH retain their keys.
+No global cache-version bump or cache deletion is needed. Ordinary dependency scans,
+PCH validation/recovery and the no-PCH configuration retain their existing contracts.
 
 The publication's required `runtime_build` snapshot supplies runtime provider sources,
 link libraries and global definitions. The builder never reopens catalogs. Relative

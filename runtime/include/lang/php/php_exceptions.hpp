@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "scpp/runtime_error.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/string_t.hpp"
 
@@ -61,6 +62,9 @@ template <typename T>
 [[nodiscard]] thrown_object make_thrown(shared_p<T> value)
 	requires std::is_base_of_v<throwable, T>
 {
+	if (!static_cast<bool>(value)) {
+		throw runtime_error("Cannot throw an absent Exception", "absent_exception", "exceptions", "throw");
+	}
 	return thrown_object(shared_p<throwable>(std::move(value)));
 }
 
@@ -86,6 +90,10 @@ using Throwable = ::scpp::php::throwable;
 
 class Exception : public ::scpp::php::exception {
 public:
+	[[nodiscard]] static shared_p<Exception> make(const string_t &message) {
+		return shared_p<Exception>(std::make_shared<Exception>(message));
+	}
+
 	Exception() = default;
 	explicit Exception(string_t message)
 		: ::scpp::php::exception(std::move(message)) {}

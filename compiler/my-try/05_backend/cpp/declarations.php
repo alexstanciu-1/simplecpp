@@ -67,6 +67,7 @@ final class CPP_Declarations
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
 		if (($decision->operation === conversion_operation::result_wrap)
+			|| ($decision->operation === conversion_operation::result_error)
 			|| ($decision->operation === conversion_operation::result_false)
 			|| ($decision->operation === conversion_operation::result_true)) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';

@@ -90,6 +90,9 @@ enum node_kind
 	case expression_statement;
 	case echo_statement;
 	case return_statement;
+	case throw_statement;
+	case try_statement;
+	case catch_clause;
 	case variable_declaration;
 }
 

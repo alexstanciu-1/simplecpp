@@ -78,12 +78,29 @@ The older PHP generator retains its documented helper spelling and function look
 rules; this change does not give that parser assignment-form support.
 
 The v0.2 compiler exposes default/copyable `error`, its registered readonly no-error
-constant, direct conditions and logical negation. Qualified constant parsing here
-does not implement general static properties. Source error constructors, detail
-getters, failure conversion `error -> result<T>`, broader error operators and
-`result<error>` disambiguation remain separately scoped. Runtime condition truthiness
-is the shared authority; this contract does not introduce an implicit or explicit
-boolean cast from error.
+constant, direct conditions and logical negation. Core runtime metadata additionally
+exposes `error::make(string message, int line = 0, string file = "") -> error` and
+`get_message() -> string`, `get_line() -> int`, `get_file() -> string` instance methods.
+The message is required; even `error::make("")` creates a real error. Details are
+supplied values, not automatically captured source locations. Getters return source
+values, not references into the error. They currently use the ordinary mutable,
+stable whole-storage inline receiver rules; temporary/projected/read-only receiver
+support is not added by this slice. Default/no-error getters return empty message/file
+and zero line, without creating an error.
+
+At ordinary value boundaries, canonical `error` converts to the failure state of
+`result<T>` for already-admitted payload types. Shared conversion preparation selects
+that operation; the runtime checks presence. This supports initialization, assignment,
+by-value arguments and returns. It does not grant error conversion into
+`result_or_false<T>` or `result_or_bool<T>`, nor admit `result<error>`.
+`take` retains the state and output rules above, including clearing old errors on
+success. No-error failure construction/assignment throws under the existing contract.
+
+The factory is a registered static callable, not a runtime-constructor syntax rule.
+`new error(...)`, broader error operators, the bare runtime error sentinel,
+`result<error>` disambiguation and throw/catch/finally remain outside this slice.
+Runtime condition truthiness is the shared authority; this contract does not
+introduce an implicit or explicit boolean cast from error.
 
 ## Typed-container Result boundaries — v0.2
 
