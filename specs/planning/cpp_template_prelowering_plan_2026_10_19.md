@@ -83,8 +83,10 @@ Concrete output now borrows through the existing runtime-operation bridge and ca
 Nested argument mappings now reuse ordinary stored/payload selection. This resolves
 the source-class container mismatch, and accounting compiles/runs at O0 with 998 checks
 passing. Native shared wrappers are still exposed, so audit remaining template
-exposure and runtime-interface coverage before claiming full prelowering or comparing
-performance against a fully equivalent baseline.
+exposure and runtime-interface coverage before claiming full prelowering. The
+[current accounting comparison](results/prelower_accounting_timing_2026_10_19/README.md)
+measures this partial implementation: application compile/link is about 2.16× faster
+at O0 and 1.91× at O2 with PCH on both paths; initial preparation costs remain explicit.
 
 ## Active integration sequence: concrete type substitution
 

@@ -6,7 +6,8 @@ operation decisions. It does not rewrite syntax or add a semantic pass. The ordi
 C++ path remains the default. The CLI retains the measured integer/vector recipe
 baseline; the API also offers the growing general runtime ABI path described below.
 The general API path now compiles and runs accounting at O0 (998 checks); this is
-not yet full template elimination or a performance comparison.
+not yet full template elimination. The [accounting timing comparison](../../../../specs/planning/results/prelower_accounting_timing_2026_10_19/README.md)
+measures the current partial implementation against ordinary C++ with PCH in both modes.
 
 The general path follows [capability-driven generalization](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md)
 through the existing registry and bindings, using original runtime templates behind
