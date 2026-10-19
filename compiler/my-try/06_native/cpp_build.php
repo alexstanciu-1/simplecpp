@@ -52,12 +52,16 @@ final class Native_CPP_Build
 			$build_inputs = self::runtime_inputs($document->member('runtime_build'));
 			$this->libraries = $build_inputs->libraries;
 			$units /** vector<string> */ = [];
+			$layout_probes /** vector<string> */ = [];
 			$files = $document->member('files');
 			for ($index = 0; $index < $files->size(); $index++) {
 				$row = $files->at($index);
 				$path = $row->member('path')->text();
 				if (fs_output_digest($source_root, $path) !== $row->member('sha256')->text()) { throw new \RuntimeException('Published artifact changed: ' . $path); }
-				if ($row->member('kind')->text() === 'translation_unit') { $units[] = $source_root . '/' . $path; }
+				$kind = $row->member('kind')->text();
+				if ($kind === 'translation_unit') { $units[] = $source_root . '/' . $path; }
+				elseif ($kind === 'layout_probe') { $layout_probes[] = $source_root . '/' . $path; }
+				elseif ($kind !== 'header') { throw new \RuntimeException('Unknown native artifact kind: ' . $kind); }
 			}
 			if (q_count($units) === 0) { throw new \RuntimeException('No published translation units'); }
 			$runtime = fs_require_realpath($this->config->runtime_include);
@@ -72,6 +76,13 @@ final class Native_CPP_Build
 			self::require_success($version);
 			$this->tool_key = "scpp-native-actions-v1\n" . self::file_digest($this->config->compiler) . self::file_digest('/usr/bin/ld')
 				. self::file_digest('/usr/bin/env') . $version->stdout;
+			$layout_headers /** vector<string> */ = [];
+			foreach ($layout_probes as $probe) {
+				$layout = $this->layout($probe, $source_root);
+				$layout_headers[] = $layout->path;
+				if ($layout->reused) { $this->report->layouts_reused++; }
+				else { $this->report->layouts_built++; }
+			}
 			$header = '#include "scpp/int_t.hpp"' . "\n" . '#include "scpp/nullable.hpp"' . "\n"
 				. '#include "scpp/cast.hpp"' . "\n" . '#include "lang/php/operators/conditional/condition_truthiness.hpp"' . "\n"
 				. '#include "scpp/generated/operators.hpp"' . "\n";
@@ -102,6 +113,7 @@ final class Native_CPP_Build
 			foreach ($units as $unit) {
 				$command /** vector<string> */ = $this->flags;
 				$command[] = '-I'; $command[] = $source_root;
+				foreach ($layout_headers as $layout_header) { $command[] = '-include'; $command[] = $layout_header; }
 				foreach ($pch_args as $argument) { $command[] = $argument; }
 				$command[] = '-c'; $command[] = $unit;
 				$artifact = $this->compile_action($command, 'o', false);
@@ -224,16 +236,7 @@ final class Native_CPP_Build
 			if ($cached !== null) { return $cached; }
 		}
 		$relative = 'artifacts/' . $key . '.' . $suffix;
-		$expected = fs_output_digest($this->root, $relative);
-		$record = fs_output_read($this->root, 'actions/' . $key . '.json');
-		if ($record === null) {
-			if ($expected !== '') { throw new \RuntimeException('Unowned native output collision'); }
-		}
-		else {
-			$previous = json_read($record);
-			if ($previous->member('format')->text() !== 'scpp-native-action-v1') { throw new \RuntimeException('Unknown native action owner'); }
-		}
-		fs_output_write($this->root, 'actions/' . $key . '.json', '{"format":"scpp-native-action-v1","state":"pending"}');
+		$expected = $this->begin_action($key, $suffix);
 		$stage = new \scpp\Output_Stage($this->root);
 		try {
 			$execution_command /** vector<string> */ = $command;
@@ -247,6 +250,50 @@ final class Native_CPP_Build
 		} finally { $stage->close(); }
 	}
 
+	/** Shared ownership and pending-state transition for compiled and generated cache artifacts. */
+	private function begin_action(string $key, string $suffix): string
+	{
+		$relative = 'artifacts/' . $key . '.' . $suffix;
+		$expected = fs_output_digest($this->root, $relative);
+		$record = fs_output_read($this->root, 'actions/' . $key . '.json');
+		if ($record === null) {
+			if ($expected !== '') { throw new \RuntimeException('Unowned native output collision'); }
+		}
+		else {
+			$previous = json_read($record);
+			if ($previous->member('format')->text() !== 'scpp-native-action-v1') { throw new \RuntimeException('Unknown native action owner'); }
+		}
+		fs_output_write($this->root, 'actions/' . $key . '.json', '{"format":"scpp-native-action-v1","state":"pending"}');
+		return $expected;
+	}
+
+	/** Resolve layouts inside the native owner; never mutate the published source bundle. */
+	private function layout(string $probe, string $source_root): native_cpp_artifact
+	{
+		$command /** vector<string> */ = $this->flags;
+		$command[] = '-I'; $command[] = $source_root;
+		$command[] = '-c'; $command[] = $probe;
+		$object_file = $this->compile_action($command, 'o', false);
+		$objects /** vector<string> */ = [$object_file->path];
+		$executable = $this->link($objects);
+		$key = content_sha256("scpp-native-layout-v1\n" . $this->tool_key
+			. self::arguments_key($this->flags) . $executable->digest);
+		$cached = $this->cached($key, 'hpp');
+		if ($cached !== null) { return $cached; }
+		$this->begin_action($key, 'hpp');
+		$arguments /** vector<string> */ = [];
+		$result = $this->invoke_program($executable->path, $arguments);
+		self::require_success($result);
+		if (!string_byte_starts_with($result->stdout, "// scpp-native-layout-v1\n")) {
+			throw new \RuntimeException('Invalid native layout probe output');
+		}
+		$relative = 'artifacts/' . $key . '.hpp';
+		fs_output_write($this->root, $relative, $result->stdout);
+		$digest = fs_output_digest($this->root, $relative);
+		$this->save_ready($key, $this->root . '/' . $relative, $digest);
+		return new native_cpp_artifact($this->root . '/' . $relative, $digest, false);
+	}
+
 	private function save_ready(string $key, string $path, string $digest): void
 	{
 		fs_output_write($this->root, 'actions/' . $key . '.json', '{"format":"scpp-native-action-v1","state":"ready","path":'
@@ -255,7 +302,12 @@ final class Native_CPP_Build
 
 	private function invoke(array $arguments /** vector<string> */): native_process_result
 	{
-		$args /** vector<string> */ = ['-i', 'PATH=/usr/bin:/bin', 'LC_ALL=C', 'TZ=UTC', 'SOURCE_DATE_EPOCH=0', $this->config->compiler];
+		return $this->invoke_program($this->config->compiler, $arguments);
+	}
+
+	private function invoke_program(string $executable, array $arguments /** vector<string> */): native_process_result
+	{
+		$args /** vector<string> */ = ['-i', 'PATH=/usr/bin:/bin', 'LC_ALL=C', 'TZ=UTC', 'SOURCE_DATE_EPOCH=0', $executable];
 		foreach ($arguments as $argument) { $args[] = $argument; }
 		$handle = process_spawn('/usr/bin/env', $args, '', 120000, $this->root);
 		try {

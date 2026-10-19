@@ -11,6 +11,45 @@ through the existing registry and bindings, using original runtime templates beh
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
 
+## Generic runtime ABI integration checkpoint
+
+The engine now exposes `request_opaque(canonical_type_use)` and
+`request_observation(prepared_call)`. `CPP_Opaque_Representation` consumes existing
+read-only type/capability queries and C++ type/callable bindings. Its storage and
+lifecycle generation has no family branches. The existing integer/vector recipe
+selection lives in `CPP_Concrete_Recipes`, outside engine bookkeeping.
+
+This is an API-level integration slice, exercised from real settled preparation.
+The ordinary expression emitter and `--prelower-templates` still use the measured
+first-slice recipes; they do **not** automatically select opaque storage yet.
+No new AST, semantic registry or prepared-fact cache was added.
+
+Opaque owners contain the original runtime object in aligned bytes. A grouped
+`layout_probe` artifact asks the native toolchain for size/alignment and physical
+lifecycle/noexcept traits. Source copy permission still comes from existing
+capabilities; native traits do not grant source operations. Shared/native objects
+are not heap-boxed merely to cross the boundary. A construction callback supports
+owned results directly in destination storage; constructors propagate exceptions.
+
+The first operation mechanism accepts one prepared readonly observation and an
+owned storable result. Its symbol/header comes from the selected callable binding.
+Borrow transport requires a prepared observation/reference decision and rejects
+conversion or copy boundaries. No operation is selected by names such as `count`,
+`vector` or `parcel`. Runtime-only nested arguments are admitted; generated source
+type dependencies reject until their layout bootstrap is designed.
+
+The [native builder](native_cpp_build.md) owns resolution and caching. Preparation
+and emission never invoke Clang. Published source remains immutable; cached layout
+headers are forced into generated units at native compilation. Requests deduplicate
+inside the existing engine, and generated names distinguish semantic type identity
+from coincident native spelling without embedding invocation-local IDs.
+
+Remaining work: select this protocol through ordinary expression emission and replay
+its operation requests in cached fragments; map prepared nested places and reference
+returns; extend beyond observation calls and prove source-record layout dependencies.
+The integration fixture's nested projection helpers are test code, not production
+index lowering. See the [integration evidence](../../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
+
 ## Invocation
 
 ```bash

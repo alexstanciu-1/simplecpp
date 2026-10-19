@@ -120,8 +120,9 @@ be demonstrated before adopting a general retained representation protocol.
 The [counter and nested-reference proof](results/prelower_boundary_2026_10_19/README.md)
 now passes for direct versus opaque storage at O0/O2, with sanitizers and optional
 copy elision disabled. It validates the native mechanism, including partial-copy
-cleanup and a negative control. It does not implement layout orchestration, prepared
-borrow transport, production provider integration or artifact-cache integration.
+cleanup and a negative control. The subsequent [API integration](results/prelower_layout_integration_2026_10_19/README.md)
+adds native layout actions and a bounded prepared-observation bridge through existing
+bindings. Ordinary expression and nested-place emission remain to be integrated.
 
 ## Integration proof, before broader implementation
 

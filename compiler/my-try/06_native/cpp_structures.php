@@ -25,6 +25,8 @@ final class native_cpp_result
 	public int $reused = 0;
 	public int $pch_built = 0;
 	public int $linked = 0;
+	public int $layouts_built = 0;
+	public int $layouts_reused = 0;
 }
 
 /** Invocation-local action result, not a retained semantic record. */

@@ -4,6 +4,58 @@ namespace scpp\compiler;
 /** Family recipes emit native code, never perform source semantic analysis. */
 final class CPP_Concrete_Recipes
 {
+	/** Compatibility with the measured first slice; new runtime bindings use the opaque worker. */
+	public static function request(canonical_type_use $type, CPP_Specializations $engine): cpp_specialization_entry
+	{
+		$canonical = Type_Queries::canonical($type);
+		$definition = $canonical->definition();
+		if ($definition instanceof integer_type_definition) {
+			$integer = object_cast($definition, integer_type_definition::class);
+			$name = ($integer->signed() ? 'int' : 'uint') . $integer->bit_width();
+			$existing = $engine->find($name);
+			if ($existing !== null) { return $existing; }
+			return self::integer($name, $integer->signed(), $integer->bit_width());
+		}
+		if ($canonical instanceof applied_template_type) {
+			$application = object_cast($canonical, applied_template_type::class);
+			if ($definition !== Model::$type_catalog->definition('vector')) {
+				throw new \RuntimeException('prelower_templates: unsupported template family ' . $definition->name());
+			}
+			$element = $application->arguments()[0];
+			if (!(new Capability_Facts())->has_capability($element, generic_contract::copyable_value)) {
+				throw new \RuntimeException('prelower_templates: vector recipe currently requires copyable elements');
+			}
+			$context = new cpp_generation_context($engine);
+			$mapping = CPP_Types::representation($element, $context);
+			$key = $engine->entry($engine->request(Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('int')->type_id())));
+			$suffix = '';
+			if ($mapping->specialization !== null) { $suffix = $engine->entry($engine->request($element))->name; }
+			else { $suffix = CPP_Artifacts::component($mapping->spelling); }
+			$vector_name = 'vector_' . $suffix;
+			$existing_vector = $engine->find($vector_name);
+			if ($existing_vector !== null) { return $existing_vector; }
+			return self::vector($vector_name, $mapping, $key);
+		}
+		throw new \RuntimeException('prelower_templates: no recipe for ' . $definition->name());
+	}
+
+	/** Ordinary nontemplate representations retain the existing binding, without another semantic pass. */
+	public static function representation(canonical_type_use $type, cpp_generation_context $context, CPP_Specializations $engine): cpp_type
+	{
+		$canonical = Type_Queries::canonical($type);
+		if (($canonical->family() !== type_family::integer) && !($canonical instanceof applied_template_type)) {
+			return CPP_Types::representation($type);
+		}
+		$context->specializations[$type->type_id()] = $type;
+		$entry = $engine->entry($engine->request($type));
+		$result = new cpp_type();
+		$result->spelling = 'scpp::internal::' . $entry->name;
+		$result->headers[$entry->header] = true;
+		$result->literal = $canonical->family() === type_family::integer ? cpp_literal_kind::signed_integer : cpp_literal_kind::none;
+		$result->specialization = $type;
+		return $result;
+	}
+
 	/** Substitute recipe slots; argument spelling comes only from backend bindings. */
 	private static function expand(array $slots /** vector<string> */, array $values /** vector<string> */, string $recipe): string
 	{

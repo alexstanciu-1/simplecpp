@@ -53,7 +53,11 @@ identifies the existing owners, current duplication and the next proof: direct o
 in-place opaque storage, borrowed transport, target layout and nested-reference ABI
 compatibility. The [native counter/identity experiment](results/prelower_boundary_2026_10_19/README.md)
 proves the storage/borrow mechanism without extra measured allocation or payload
-copy. Production binding integration and layout orchestration remain unimplemented.
+copy. The [first ABI integration slice](results/prelower_layout_integration_2026_10_19/README.md)
+now consumes prepared observation signatures and existing bindings, publishes grouped
+layout probes, and resolves/cache-validates them in the native builder. Ordinary
+expression emission still uses the first-slice recipes; adopting the opaque protocol
+and replaying operation requests is the next slice.
 
 Before locking the initial representation interfaces, inventory runtime template
 families and review them explicitly. Discovery must include runtime headers, operator

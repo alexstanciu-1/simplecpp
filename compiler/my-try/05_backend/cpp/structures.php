@@ -27,7 +27,8 @@ final class cpp_lowering_options
 final class cpp_specialization_entry
 {
 	public function __construct(public readonly string $name, public readonly string $header,
-		public readonly string $declaration, public readonly string $implementation)
+		public readonly string $declaration, public readonly string $implementation,
+		public readonly string $layout_declarations = '', public readonly string $layout_statements = '')
 	{
 	}
 }
@@ -57,6 +58,7 @@ final class cpp_assignment_sequence
 enum cpp_artifact_kind {
 	case translation_unit;
 	case header;
+	case layout_probe;
 }
 
 /** One final artifact; its logical identity is independent of storage position. */
@@ -79,6 +81,7 @@ final class cpp_artifact {
 
 	public function kind_name(): string
 	{
+		if ($this->artifact_kind === cpp_artifact_kind::layout_probe) { return 'layout_probe'; }
 		return $this->artifact_kind === cpp_artifact_kind::header ? 'header' : 'translation_unit';
 	}
 

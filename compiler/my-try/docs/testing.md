@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
+checks real prepared observation/type bindings through opaque lifecycle generation,
+publication and native layout caching, including provider dependency edits, recovery,
+allocation/copy counters and sanitizers. This is API integration, not ordinary source
+expression adoption; see the [checkpoint](../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_boundary.py --results FRESH_DIRECTORY`
 compares direct and in-place opaque runtime objects with allocation/lifecycle counters,
 nested-reference identity, failure cleanup and a deliberately copying negative control.

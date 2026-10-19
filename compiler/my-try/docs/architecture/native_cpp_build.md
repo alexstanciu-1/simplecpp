@@ -83,6 +83,29 @@ file; cached linking rechecks those library/startup/script inputs as well. First
 metadata associates the completed artifact with the discovered dependency key,
 without copying the executable. Permissions are checked before binary cache reuse.
 
+## Runtime layout actions
+
+Published `layout_probe` artifacts are compiled and linked through the existing
+native action cache before application units. These small host executables print
+layout/trait definitions; their output is a cached `.hpp` action, identified by
+protocol version, toolchain, configuration and probe executable digest. The regular
+fresh dependency scan covers their runtime and published headers. There is no second
+layout cache or mutation of the source publication.
+
+Generated units receive the resolved headers using `-include`, so dependency hashing
+also covers layout contents. Native status remains pending if layout compilation or
+execution fails. Missing/corrupt cache-owned layout output is regenerated using the
+same action ownership/readiness protocol. Layout headers are reused on body-only
+edits. `layouts_built`/`layouts_reused` report resolved headers; ordinary object/link
+counts exclude probe actions. Probe compilation/linking still performs its normal
+cache validation on warm builds.
+
+This first protocol is host-executed, Linux/Clang only, and uses one grouped probe.
+It does not support cross-compilation or a probe that depends on generated opaque
+source-record layouts. One grouped header conservatively couples consumers when its
+contents change; finer dependency partitioning remains follow-up work. Runtime
+provider objects do not receive application layout macros.
+
 ## Bounded first implementation and next work
 
 This is Linux, Clang plus GNU ld with dependency-file support, ordinary core runtime

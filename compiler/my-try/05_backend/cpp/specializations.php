@@ -12,47 +12,32 @@ final class CPP_Specializations
 		$this->entries = new Storage /** Storage<cpp_specialization_entry> */();
 	}
 
-	/** The same family recipe consumes every admitted argument; no concrete-type switch. */
+	/** Compatibility recipe selection stays with the existing recipe owner, not this engine. */
 	public function request(canonical_type_use $type): cpp_specialization_ref
 	{
-		$canonical = Type_Queries::canonical($type);
-		$definition = $canonical->definition();
-		if ($definition instanceof integer_type_definition)
-		{
-			$integer = object_cast($definition, integer_type_definition::class);
-			$name = ($integer->signed() ? 'int' : 'uint') . $integer->bit_width();
-			if (!isset($this->names[$name])) {
-				$this->install(CPP_Concrete_Recipes::integer($name, $integer->signed(), $integer->bit_width()));
-			}
-			return $this->reference($this->names[$name]);
-		}
-		if ($canonical instanceof applied_template_type)
-		{
-			$application = object_cast($canonical, applied_template_type::class);
-			if ($definition !== Model::$type_catalog->definition('vector')) {
-				throw new \RuntimeException('prelower_templates: unsupported template family ' . $definition->name());
-			}
-			$element = $application->arguments()[0];
-			if (!(new Capability_Facts())->has_capability($element, generic_contract::copyable_value)) {
-				throw new \RuntimeException('prelower_templates: vector recipe currently requires copyable elements');
-			}
-			$context = new cpp_generation_context($this);
-			$mapping = CPP_Types::representation($element, $context);
-			$key = $this->entry($this->request(Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('int')->type_id())));
-			$suffix = '';
-			if ($mapping->specialization !== null) {
-				$suffix = $this->entry($this->request($element))->name;
-			}
-			else {
-				$suffix = CPP_Artifacts::component($mapping->spelling);
-			}
-			$name = 'vector_' . $suffix;
-			if (!isset($this->names[$name])) {
-				$this->install(CPP_Concrete_Recipes::vector($name, $mapping, $key));
-			}
-			return $this->reference($this->names[$name]);
-		}
-		throw new \RuntimeException('prelower_templates: no recipe for ' . $definition->name());
+		return $this->intern(CPP_Concrete_Recipes::request($type, $this));
+	}
+
+	private function intern(cpp_specialization_entry $entry): cpp_specialization_ref
+	{
+		if (!isset($this->names[$entry->name])) { $this->install($entry); }
+		return $this->reference($this->names[$entry->name]);
+	}
+
+	/** Runtime ABI request from settled types; the representation worker uses existing bindings. */
+	public function request_opaque(canonical_type_use $type): cpp_specialization_ref
+	{
+		return $this->intern(CPP_Opaque_Representation::entry($type, $this));
+	}
+
+	public function request_observation(prepared_call $call): cpp_specialization_ref
+	{
+		$parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
+		// Validate operation shape before requesting its owned representations.
+		$entry = CPP_Opaque_Representation::observation($call, $this);
+		$this->request_opaque($parameters[0]->type);
+		$this->request_opaque($call->signature->return_type);
+		return $this->intern($entry);
 	}
 
 	/** Construct a fresh value reference; callers never mutate an acquired entry ID. */
@@ -69,6 +54,14 @@ final class CPP_Specializations
 		return $entries[$reference->entry_id];
 	}
 
+	/** Avoid rendering an already requested entry; this index owns no separate semantic facts. */
+	public function find(string $name): ?cpp_specialization_entry
+	{
+		if (!isset($this->names[$name])) { return null; }
+		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
+		return $entries[$this->names[$name]];
+	}
+
 	/** Keep index and entry ownership synchronized; IDs fit the compact reference. */
 	private function install(cpp_specialization_entry $entry): void
 	{
@@ -80,21 +73,10 @@ final class CPP_Specializations
 		$entries->append($entry);
 	}
 
-	/** Ordinary nontemplate representations retain the existing binding, without another semantic pass. */
+	/** Existing expression emission still uses the first-slice recipe protocol. */
 	public function representation(canonical_type_use $type, cpp_generation_context $context): cpp_type
 	{
-		$canonical = Type_Queries::canonical($type);
-		if (($canonical->family() !== type_family::integer) && !($canonical instanceof applied_template_type)) {
-			return CPP_Types::representation($type);
-		}
-		$context->specializations[$type->type_id()] = $type;
-		$entry = $this->entry($this->request($type));
-		$result = new cpp_type();
-		$result->spelling = 'scpp::internal::' . $entry->name;
-		$result->headers[$entry->header] = true;
-		$result->literal = $canonical->family() === type_family::integer ? cpp_literal_kind::signed_integer : cpp_literal_kind::none;
-		$result->specialization = $type;
-		return $result;
+		return CPP_Concrete_Recipes::representation($type, $context, $this);
 	}
 
 	/** Order an output-only index so discovery and cached-fragment replay cannot churn support bytes. */
@@ -126,12 +108,22 @@ final class CPP_Specializations
 		$artifacts->append(new cpp_artifact('specializations:base-header', cpp_artifact_kind::header, 'specializations/base.hpp', CPP_Concrete_Recipes::base_header()));
 		$artifacts->append(new cpp_artifact('specializations:base', cpp_artifact_kind::translation_unit, 'specializations/base.cpp', CPP_Concrete_Recipes::base_body()));
 		$implementation = '';
+		$layout_declarations = '';
+		$layout_statements = '';
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
 		foreach ($this->emission_order() as $id) {
 			$entry = $entries[$id];
+			$layout_declarations .= $entry->layout_declarations;
+			$layout_statements .= $entry->layout_statements;
 			$artifacts->append(new cpp_artifact('specialization:' . $entry->name, cpp_artifact_kind::header,
 			$entry->header, $entry->declaration));
 			$implementation .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
+		}
+		if ($layout_statements !== '') {
+			$probe = '#include <cstdio>' . "\n" . '#include <type_traits>' . "\n" . $layout_declarations
+				. 'int main() { std::printf("// scpp-native-layout-v1\\n");' . "\n" . $layout_statements . "}\n";
+			$artifacts->append(new cpp_artifact('specializations:layout', cpp_artifact_kind::layout_probe,
+				'specializations/layout.cpp', $probe));
 		}
 		if ($implementation !== '') {
 			$artifacts->append(new cpp_artifact('specializations:implementation', cpp_artifact_kind::translation_unit,
