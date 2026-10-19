@@ -15,7 +15,7 @@ return [
 	'container_call_references' => ['function v(vector<int> &$x): void { $x[] = 3; } function h(hash<int> &$x): void { $x["b"] = 4; } function m(mixed &$x): void { $x["b"] = 5; } function d(dynamic &$x): void { $x = {b: 6}; } $v vector<int> = [1]; $h hash<int> = {a: 1}; $m mixed = {a: 1}; $d dynamic = {a: 1}; $old = $d; v($v); h($h); m($m); d($d); $n int = $d["b"];',
 		'local_v.size() == 2 && local_h.size() == 2 && local_m.table_if()->size() == 2 && local_n.native_value() == 6 && local_old.table_if() != local_d.table_if() && local_old.get_table().size() == 1'],
 	'container_call_indexed_typed' => ['function number(int $x): int { return $x + 1; } function text(string $x): string { return $x; } $v vector<int> = [2]; $h hash<string> = {x: "yes"}; $a = number($v[0]); $b = text($h["x"]);',
-		'local_a.native_value() == 3 && local_b == scpp::string_t{"yes"} && local_v.at(0).native_value() == 2 && local_h.size() == 1'],
+		'local_a.native_value() == 3 && local_b.native_value() == "yes" && local_v.at(0).native_value() == 2 && local_h.size() == 1'],
 	'container_call_nested_value' => ['function edit(vector<int> $v): vector<int> { $v[] = 9; return $v; } $rows vector<vector<int>> = [[1]]; $out = edit($rows[0]);',
 		'local_rows.at(0).size() == 1 && local_out.size() == 2'],
 	'container_call_nested_mixed' => ['function edit(mixed $v): mixed { $v["x"] = 9; return $v; } $m mixed = {child: {x: 1}}; $out = edit($m["child"]); $a int = $m["child"]["x"]; $b int = $out["x"];',

@@ -716,19 +716,23 @@ final class CPP_Generator
 		self::record_operator_headers($decision, $context);
 		$prefix = '';
 		$suffix = '';
-		if (($decision->operation === operator_operation::integer_pre_increment)
+		if (($decision->operation === operator_operation::scalar_pre_increment)
+			|| ($decision->operation === operator_operation::wrapper_pre_increment)
 			|| ($decision->operation === operator_operation::boxed_pre_increment)) {
 			$prefix = '++';
 		}
-		elseif (($decision->operation === operator_operation::integer_pre_decrement)
+		elseif (($decision->operation === operator_operation::scalar_pre_decrement)
+			|| ($decision->operation === operator_operation::wrapper_pre_decrement)
 			|| ($decision->operation === operator_operation::boxed_pre_decrement)) {
 			$prefix = '--';
 		}
-		elseif (($decision->operation === operator_operation::integer_post_increment)
+		elseif (($decision->operation === operator_operation::scalar_post_increment)
+			|| ($decision->operation === operator_operation::wrapper_post_increment)
 			|| ($decision->operation === operator_operation::boxed_post_increment)) {
 			$suffix = '++';
 		}
-		elseif (($decision->operation === operator_operation::integer_post_decrement)
+		elseif (($decision->operation === operator_operation::scalar_post_decrement)
+			|| ($decision->operation === operator_operation::wrapper_post_decrement)
 			|| ($decision->operation === operator_operation::boxed_post_decrement)) {
 			$suffix = '--';
 		}
@@ -746,19 +750,22 @@ final class CPP_Generator
 	{
 		$decision = $syntax->require_unary_preparation()->decision;
 		self::record_operator_headers($decision, $context);
+		$operand = (new CPP_Syntax($context))->expression($syntax->operand);
+		$operand = self::extract_operator_operand($operand, $decision, 0, $context);
 		if ($decision->operation === operator_operation::condition_not)
 		{
 			$context->headers['scpp/bool_t.hpp'] = true;
 			$truthiness /** truthiness_decision */ = $decision->truthiness;
-			$operand = (new CPP_Syntax($context))->expression($syntax->operand);
 			return 'scpp::bool_t(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
 		}
 		$spelling = '';
 		if (($decision->operation === operator_operation::integer_positive)
+			|| ($decision->operation === operator_operation::floating_positive)
 			|| ($decision->operation === operator_operation::boxed_positive)) {
 			$spelling = '+';
 		}
 		elseif (($decision->operation === operator_operation::integer_negative)
+			|| ($decision->operation === operator_operation::floating_negative)
 			|| ($decision->operation === operator_operation::boxed_negative)) {
 			$spelling = '-';
 		}
@@ -771,9 +778,7 @@ final class CPP_Generator
 		else {
 			throw new \RuntimeException('C++ unary operation is not supported');
 		}
-		$worker = new CPP_Syntax($context);
-		$operand = CPP_Declarations::conversion(
-			$worker->expression($syntax->operand), $decision->operands[0], $context);
+		$operand = CPP_Declarations::conversion($operand, $decision->operands[0], $context);
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $spelling . $operand . ')';
 	}
@@ -793,6 +798,8 @@ final class CPP_Generator
 		string $left, string $right, cpp_generation_context $context): string
 	{
 		self::record_operator_headers($decision, $context);
+		$left = self::extract_operator_operand($left, $decision, 0, $context);
+		$right = self::extract_operator_operand($right, $decision, 1, $context);
 		if (($decision->operation === operator_operation::condition_and)
 			|| ($decision->operation === operator_operation::condition_or)) {
 			$logical_spelling = $decision->operation === operator_operation::condition_and ? '&&' : '||';
@@ -824,15 +831,18 @@ final class CPP_Generator
 		elseif ($decision->operation === operator_operation::boolean_or) {
 			$spelling = '||';
 		}
-		elseif ($decision->operation === operator_operation::boolean_xor) {
+		elseif (($decision->operation === operator_operation::boolean_xor)
+			|| ($decision->operation === operator_operation::condition_xor)) {
 			$spelling = '!=';
 		}
 		elseif (($decision->operation === operator_operation::integer_addition)
+			|| ($decision->operation === operator_operation::floating_addition)
 			|| ($decision->operation === operator_operation::boxed_addition)
 			|| ($decision->operation === operator_operation::string_concatenation)) {
 			$spelling = '+';
 		}
 		elseif (($decision->operation === operator_operation::integer_subtraction)
+			|| ($decision->operation === operator_operation::floating_subtraction)
 			|| ($decision->operation === operator_operation::boxed_subtraction)) {
 			$spelling = '-';
 		}
@@ -840,10 +850,12 @@ final class CPP_Generator
 			$spelling = 'scpp::pow';
 		}
 		elseif (($decision->operation === operator_operation::integer_multiplication)
+			|| ($decision->operation === operator_operation::floating_multiplication)
 			|| ($decision->operation === operator_operation::boxed_multiplication)) {
 			$spelling = '*';
 		}
 		elseif (($decision->operation === operator_operation::integer_division)
+			|| ($decision->operation === operator_operation::floating_division)
 			|| ($decision->operation === operator_operation::boxed_division)) {
 			$spelling = '/';
 		}
@@ -867,53 +879,83 @@ final class CPP_Generator
 			$spelling = '>>';
 		}
 		elseif (($decision->operation === operator_operation::integer_equal)
+			|| ($decision->operation === operator_operation::wrapper_equal)
+			|| ($decision->operation === operator_operation::string_equal)
+			|| ($decision->operation === operator_operation::floating_equal)
+			|| ($decision->operation === operator_operation::boolean_equal)
 			|| ($decision->operation === operator_operation::enum_equal)
 			|| ($decision->operation === operator_operation::boxed_equal)) {
 			$spelling = '==';
 		}
 		elseif (($decision->operation === operator_operation::integer_not_equal)
+			|| ($decision->operation === operator_operation::wrapper_not_equal)
+			|| ($decision->operation === operator_operation::string_not_equal)
+			|| ($decision->operation === operator_operation::floating_not_equal)
+			|| ($decision->operation === operator_operation::boolean_not_equal)
 			|| ($decision->operation === operator_operation::enum_not_equal)
 			|| ($decision->operation === operator_operation::boxed_not_equal)) {
 			$spelling = '!=';
 		}
 		elseif (($decision->operation === operator_operation::integer_identical)
+			|| ($decision->operation === operator_operation::wrapper_identical)
 			|| ($decision->operation === operator_operation::scalar_identical)
 			|| ($decision->operation === operator_operation::boxed_identical)) {
 			$spelling = 'scpp::php::identical';
 		}
 		elseif (($decision->operation === operator_operation::integer_not_identical)
+			|| ($decision->operation === operator_operation::wrapper_not_identical)
 			|| ($decision->operation === operator_operation::scalar_not_identical)
 			|| ($decision->operation === operator_operation::boxed_not_identical)) {
 			$spelling = 'scpp::php::not_identical';
 		}
 		elseif (($decision->operation === operator_operation::integer_less)
+			|| ($decision->operation === operator_operation::string_less)
+			|| ($decision->operation === operator_operation::floating_less)
 			|| ($decision->operation === operator_operation::boxed_less)) {
 			$spelling = '<';
 		}
 		elseif (($decision->operation === operator_operation::integer_less_equal)
+			|| ($decision->operation === operator_operation::string_less_equal)
+			|| ($decision->operation === operator_operation::floating_less_equal)
 			|| ($decision->operation === operator_operation::boxed_less_equal)) {
 			$spelling = '<=';
 		}
 		elseif (($decision->operation === operator_operation::integer_greater)
+			|| ($decision->operation === operator_operation::string_greater)
+			|| ($decision->operation === operator_operation::floating_greater)
 			|| ($decision->operation === operator_operation::boxed_greater)) {
 			$spelling = '>';
 		}
 		elseif (($decision->operation === operator_operation::integer_greater_equal)
+			|| ($decision->operation === operator_operation::string_greater_equal)
+			|| ($decision->operation === operator_operation::floating_greater_equal)
 			|| ($decision->operation === operator_operation::boxed_greater_equal)) {
 			$spelling = '>=';
 		}
-		elseif ($decision->operation === operator_operation::integer_three_way) {
+		elseif (($decision->operation === operator_operation::integer_three_way)
+			|| ($decision->operation === operator_operation::string_three_way)) {
 			$spelling = '<=>';
 		}
 		else {
 			throw new \RuntimeException('C++ binary operation is not supported yet');
 		}
-		if (q_count($decision->operands) !== 2) {
-			throw new \LogicException('C++ binary operation requires two prepared operands');
+		if ($decision->operation === operator_operation::condition_xor)
+		{
+			if (q_count($decision->operand_truthiness) !== 2) {
+				throw new \LogicException('Numeric XOR requires two prepared truth conversions');
+			}
+			$left = CPP_Declarations::truthiness($left, $decision->operand_truthiness[0], $context);
+			$right = CPP_Declarations::truthiness($right, $decision->operand_truthiness[1], $context);
+		}
+		else
+		{
+			if (q_count($decision->operands) !== 2) {
+				throw new \LogicException('C++ binary operation requires two prepared operands');
+			}
+			$left = CPP_Declarations::conversion($left, $decision->operands[0], $context);
+			$right = CPP_Declarations::conversion($right, $decision->operands[1], $context);
 		}
 
-		$left = CPP_Declarations::conversion($left, $decision->operands[0], $context);
-		$right = CPP_Declarations::conversion($right, $decision->operands[1], $context);
 		if (($decision->operation === operator_operation::boolean_and)
 			|| ($decision->operation === operator_operation::boolean_or)) {
 			$context->headers['scpp/bool_t.hpp'] = true;
@@ -933,25 +975,54 @@ final class CPP_Generator
 		return $prefix . self::render_eager_binary($decision, $spelling, $left_name, $right_name, $context) . '; }())';
 	}
 
+	/** Compose extraction inside the operand expression so lazy RHS guards remain lazy. */
+	private static function extract_operator_operand(string $expression, operator_decision $decision,
+		int $position, cpp_generation_context $context): string
+	{
+		if (q_count($decision->operand_extractions) === 0) {
+			return $expression;
+		}
+		return CPP_Declarations::conversion($expression, $decision->operand_extractions[$position], $context);
+	}
+
 	/** Compute from already converted, ordered values; no source expression is repeated. */
 	private static function render_eager_binary(operator_decision $decision, string $spelling,
 		string $left, string $right, cpp_generation_context $context): string
 	{
+		// Read native bytes only after both source values have been copied in order.
+		if (($decision->operation === operator_operation::string_equal)
+			|| ($decision->operation === operator_operation::string_not_equal)
+			|| ($decision->operation === operator_operation::string_less)
+			|| ($decision->operation === operator_operation::string_less_equal)
+			|| ($decision->operation === operator_operation::string_greater)
+			|| ($decision->operation === operator_operation::string_greater_equal)
+			|| ($decision->operation === operator_operation::string_three_way))
+		{
+			$left .= '.native_value()';
+			$right .= '.native_value()';
+			if ($decision->operation !== operator_operation::string_three_way) {
+				return 'scpp::bool_t(' . $left . ' ' . $spelling . ' ' . $right . ')';
+			}
+		}
 		if ($decision->operation === operator_operation::integer_power) {
 			$context->headers['operators/arithmetic/power.hpp'] = true;
 			return $spelling . '(' . $left . ', ' . $right . ')';
 		}
-		if ($decision->operation === operator_operation::boolean_xor) {
+		if (($decision->operation === operator_operation::boolean_xor)
+			|| ($decision->operation === operator_operation::condition_xor)) {
 			return 'scpp::bool_t(static_cast<bool>(' . $left . ') != static_cast<bool>(' . $right . '))';
 		}
-		if ($decision->operation === operator_operation::integer_three_way) {
+		if (($decision->operation === operator_operation::integer_three_way)
+			|| ($decision->operation === operator_operation::string_three_way)) {
 			$context->headers['scpp/generated/operators.hpp'] = true;
 			$result_type = CPP_Declarations::type($decision->result_type, $context);
 			return $result_type . '(static_cast<bool>(' . $left . ' < ' . $right . ') ? -1 : '
 				. '(static_cast<bool>(' . $left . ' > ' . $right . ') ? 1 : 0))';
 		}
 		if (($decision->operation === operator_operation::integer_identical)
+			|| ($decision->operation === operator_operation::wrapper_identical)
 			|| ($decision->operation === operator_operation::scalar_identical)
+			|| ($decision->operation === operator_operation::wrapper_not_identical)
 			|| ($decision->operation === operator_operation::scalar_not_identical)
 			|| ($decision->operation === operator_operation::integer_not_identical)
 			|| ($decision->operation === operator_operation::boxed_identical)

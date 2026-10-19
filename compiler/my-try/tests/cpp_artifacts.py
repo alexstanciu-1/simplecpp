@@ -54,16 +54,27 @@ def entry_boundary_checks():
         production = probe_bundle(text, instrumented=True)
         if production is not None and '// SCPP-ENTRY-CATCH' not in production:
             raise RuntimeError('Ordinary entry lost its production handler')
-        instrumented = text.replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try')
-        if partitioned:
-            unchanged = probe_bundle(instrumented)
-            if '// SCPP-ENTRY-CATCH' not in unchanged:
-                raise RuntimeError('Uninstrumented transport removed the production handler')
-        elif probe_bundle(instrumented) is not None:
-            raise RuntimeError('Uninstrumented single source changed')
-        recovered = decode_artifacts(probe_bundle(instrumented, instrumented=True))[-1]['text']
-        if '// SCPP-ENTRY-CATCH' in recovered or 'catch (int)' not in recovered:
-            raise RuntimeError('Function-try probe failed to isolate the outer boundary')
+        observers = [
+            text.replace('int main(int argc, char** argv)', 'int main(int argc, char** argv) try'),
+            text.replace('int main(int argc, char** argv)',
+                         '// SCPP-PROBE-OBSERVE-ENTRY\nint observed_entry(int argc, char** argv)')
+            + '\nint main() { try { return observed_entry(0, nullptr); } catch (...) { return 91; } }\n',
+        ]
+        for instrumented in observers:
+            if partitioned:
+                unchanged = probe_bundle(instrumented)
+                if '// SCPP-ENTRY-CATCH' not in unchanged:
+                    raise RuntimeError('Uninstrumented transport removed the production handler')
+            elif probe_bundle(instrumented) is not None:
+                raise RuntimeError('Uninstrumented single source changed')
+            recovered = decode_artifacts(probe_bundle(instrumented, instrumented=True))[-1]['text']
+            if '// SCPP-ENTRY-CATCH' in recovered or 'catch (int)' not in recovered:
+                raise RuntimeError('Exception observer failed to isolate the outer boundary')
+            if '// SCPP-PROBE-OBSERVE-ENTRY' in recovered:
+                raise RuntimeError('Exception observer marker was not consumed')
+            if 'int observed_entry' in recovered and 'catch (...) { return 91; }' not in recovered:
+                raise RuntimeError('Renamed-entry observer lost its own handler')
+
 
 
 def main():
@@ -99,6 +110,7 @@ def main():
         driver = (driver.replace('__RUN_LLVM_PROOFS__', 'false')
                   .replace('__REQUEST_FILE__', php_literal(request))
                   .replace('__RECOVERY_DIR__', php_literal(recovery))
+                  .replace('__RUNTIME_CATALOG_DIR__', php_literal(ROOT.parents[1] / 'runtime/metadata/modules'))
                   .replace('__PIPELINE_DIR__', php_literal(source)))
         driver_path = output / 'driver.php'
         driver_path.write_text(driver)

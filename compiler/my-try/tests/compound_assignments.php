@@ -74,7 +74,7 @@ $rejections = [
 	['$x += 1;', 'established local declaration'],
 	['$x = true; $x += 1;', 'integer binary operation requires integer operands'],
 	['$x uint8 = 3; $x += 1;', 'fixed-width compound assignment is deferred'],
-	['$x = 3; $x /= 1.5;', 'integer binary operation requires integer operands'],
+	['$x = 3; $x /= 1.5;', 'floating compounds require a float destination'],
 	['$x = "x"; $n ?int = 1; $x .= $n;', 'concatenation requires boxed'],
 	['$x = 3; $x .= "x";', 'concatenation requires string'],
 	['1 += 2;', 'existing local or parameter'],

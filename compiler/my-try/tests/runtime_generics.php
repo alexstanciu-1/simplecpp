@@ -121,7 +121,7 @@ foreach ([
 foreach (['mixed', 'dynamic'] as $family) {
 	foreach (['null', '1', '"abc"'] as $index => $literal) {
 		generic_compile('$x ' . $family . ' = ' . $literal . '; $n = count($x); return 91;');
-		$text = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
+		$text = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint observed_entry(int argc = 0, char** argv = nullptr)", CPP_Probe::text(Model::$cpp_files));
 		$text = '#include <stdexcept>' . "\n" . $text
 			. "\nint main() { try { observed_entry(); } catch (const std::runtime_error&) { return 0; } return 92; }\n";
 		file_put_contents($argv[1] . '/count_bad_' . $family . '_' . $index . '.cpp', $text);

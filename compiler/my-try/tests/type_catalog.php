@@ -34,13 +34,13 @@ Runtime_Type_Registration::install($core_input, $catalog);
 $bindings = CPP_Type_Binding_Registration::install($catalog);
 CPP_Runtime_Catalog::install_types($core_input, $catalog, $bindings);
 
-type_catalog_check($registry->definition_count() === 28, 'Unexpected semantic definition count');
-type_catalog_check($registry->type_count() === 19, 'Concrete built-in type count changed');
+type_catalog_check($registry->definition_count() === 29, 'Unexpected semantic definition count');
+type_catalog_check($registry->type_count() === 20, 'Concrete built-in type count changed');
 type_catalog_check($registry->application_count() === 0, 'Registration eagerly materialized a template application');
-type_catalog_check($catalog->source()->type_count() === 26, 'Source exposure count changed');
+type_catalog_check($catalog->source()->type_count() === 27, 'Source exposure count changed');
 type_catalog_check($catalog->source()->modifier_count() === 1, 'Source modifier count changed');
-type_catalog_check($catalog->providers()->count() === 10, 'Runtime provider count changed');
-type_catalog_check($bindings->definition_count() === 25, 'C++ binding count changed');
+type_catalog_check($catalog->providers()->count() === 11, 'Runtime provider count changed');
+type_catalog_check($bindings->definition_count() === 26, 'C++ binding count changed');
 type_catalog_check($registry->type($catalog->null_type()->type_id())->family() === type_family::null_sentinel,
 	'Null literal lost its distinct sentinel identity');
 type_catalog_rejects(fn() => $catalog->definition('null'));

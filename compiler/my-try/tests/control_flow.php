@@ -222,7 +222,7 @@ try
 	$compiler = control_program($path, 'return (bool) "yes";');
 	$compiler->prepare();
 	$compiler->cpp();
-	$cast_text = str_replace('int main(int argc, char** argv)', 'int cast_probe(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
+	$cast_text = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint cast_probe(int argc = 0, char** argv = nullptr)", CPP_Probe::text(Model::$cpp_files));
 	$cast_text .= "\nint main() { try { cast_probe(); } catch (const scpp::runtime_error& error) { return error.code() == \"invalid_cast_string_literal\" ? 0 : 2; } return 1; }\n";
 	if (isset($argv[1])) {
 		$output = $argv[1] . '/truth_explicit_cast_reject.cpp';
@@ -238,7 +238,7 @@ try
 	$compiler = control_program($path, 'return match (2) { 1 => 7 };');
 	$compiler->prepare();
 	$compiler->cpp();
-	$match_text = str_replace('int main(int argc, char** argv)', 'int match_probe(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
+	$match_text = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint match_probe(int argc = 0, char** argv = nullptr)", CPP_Probe::text(Model::$cpp_files));
 	$match_text .= "\n#include <string>\nint main() { try { match_probe(); } catch (const std::runtime_error& error) { return std::string(error.what()) == \"Unhandled match expression\" ? 0 : 2; } return 1; }\n";
 	if (isset($argv[1])) {
 		$output = $argv[1] . '/match_unhandled.cpp';

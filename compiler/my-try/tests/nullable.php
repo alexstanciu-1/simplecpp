@@ -66,7 +66,7 @@ try {
 		$compiler->sync($changed);
 		$failed = false;
 		try { $compiler->prepare(); }
-		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'coalesce branches require matching'); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'nullable selection branches require the same payload type'); }
 		nullable_check($failed && Model::$cpp_files->is_empty(), 'Fallback change did not invalidate coalesce');
 		nullable_check($stable->version === $version, 'Fallback change rebuilt independent body');
 	}
@@ -78,7 +78,7 @@ try {
 		$compiler->sync($changed);
 		$failed = false;
 		try { $compiler->prepare(); }
-		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'conditional branches require matching'); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'nullable selection branches require the same payload type'); }
 		nullable_check($failed && Model::$cpp_files->is_empty(), 'Conditional join failed to invalidate');
 		nullable_check($stable->version === $version, 'Conditional change rebuilt independent body');
 	}

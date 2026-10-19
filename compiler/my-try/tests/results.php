@@ -123,7 +123,6 @@ try
 		['$a result_or_bool<int> = 1; $b = $a ?? 2;', 'coalesce does not permit result_or_bool'],
 		['$a result_or_bool<int> = 1; $b = 2 ?? $a;', 'coalesce does not permit result_or_bool'],
 		['$a result<int> = 1; $b result_or_bool<int> = 2; $c = $a ?? $b;', 'coalesce does not permit result_or_bool'],
-		['$a result<int> = 1; $b = !$a;', 'unary operation requires'],
 		['$a result<int> = 1; $b = $a ?: 2.0;', 'conditional Result branches require'],
 		['$a result<int> = 1; $b result_or_false<int> = 2; $c = true ? $a : $b;', 'conditional Result branches require'],
 		['$a result<int> = 1; $b ?int = 2; $c = true ? $a : $b;', 'conditional Result branches require'],

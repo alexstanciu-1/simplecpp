@@ -1,0 +1,16 @@
+$d dynamic = json_decode('{"n":7}');
+$m mixed = json_decode_mixed('{"n":9}');
+$dynamic_text string = json_encode($d);
+$mixed_text string = json_encode($m);
+if ($dynamic_text !== '{"n":7}' || $mixed_text !== '{"n":9}') { return 1; }
+$diagnostic json_parse_error;
+$document json_document = json_document_parse('{"items":[17]}', $diagnostic);
+if (isset($diagnostic)) { return 2; }
+$root json_node = json_document_root($document);
+$items json_node = json_node_member($root, "items");
+$kind string = json_node_kind($items);
+$size int = json_node_size($items);
+$number json_node = json_node_at($items, 0);
+$value int = json_node_int($number);
+if ($kind !== "array" || $size !== 1 || $value !== 17) { return 3; }
+echo $dynamic_text, "|", $mixed_text, "|", $kind, ":", $value;

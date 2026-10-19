@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "baseline": "75de94c71e37060c564b6ade19850b7686bd457a",
+  "scope": "S02 strict-declaration migration companions only; original oracles retained; not unchanged-source compatibility.",
+  "cases": [
+    {
+      "source": "tests/php/datetime/strict_level_01/strict_datetime_001_datetime_surface.phs",
+      "metadata": "tests/php/datetime/strict_level_01/strict_datetime_001_datetime_surface.test-info.json",
+      "profile": "strict",
+      "feature": "datetime",
+      "lane": "source",
+      "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_datetime_001_datetime_surface.phs",
+      "migration": "Replace inline comment type declarations with strict declarations only."
+    },
+    {
+      "source": "tests/php/datetime/strict_level_01/strict_datetime_002_common_format.phs",
+      "metadata": "tests/php/datetime/strict_level_01/strict_datetime_002_common_format.test-info.json",
+      "profile": "strict",
+      "feature": "datetime",
+      "lane": "source",
+      "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_datetime_002_common_format.phs",
+      "migration": "Replace inline comment type declarations with strict declarations only."
+    },
+    {
+      "source": "tests/php/filesystem/strict_level_01/strict_filesystem_001_fs_surface.phs",
+      "metadata": "tests/php/filesystem/strict_level_01/strict_filesystem_001_fs_surface.test-info.json",
+      "profile": "strict",
+      "feature": "filesystem",
+      "lane": "source",
+      "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_filesystem_001_fs_surface.phs",
+      "migration": "Replace inline comment type declarations with strict declarations only."
+    },
+    {
+      "source": "tests/php/filesystem/strict_level_01/strict_filesystem_002_fs_error_paths.phs",
+      "metadata": "tests/php/filesystem/strict_level_01/strict_filesystem_002_fs_error_paths.test-info.json",
+      "profile": "strict",
+      "feature": "filesystem",
+      "lane": "source",
+      "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_filesystem_002_fs_error_paths.phs",
+      "migration": "Replace inline comment type declarations with strict declarations only."
+    },
+    {
+      "source": "tests/php/io/strict_level_01/strict_io_001_io_surface.phs",
+      "metadata": "tests/php/io/strict_level_01/strict_io_001_io_surface.test-info.json",
+      "profile": "strict",
+      "feature": "io",
+      "lane": "source",
+      "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_io_001_io_surface.phs",
+      "migration": "Replace inline comment type declarations with strict declarations only."
+    },
+    {
+      "source": "tests/php/io/strict_level_01/strict_io_002_io_open_failure.phs",
+      "metadata": "tests/php/io/strict_level_01/strict_io_002_io_open_failure.test-info.json",
+      "profile": "strict",
+      "feature": "io",
+      "lane": "source",
+      "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_io_002_io_open_failure.phs",
+      "migration": "Replace inline comment type declarations with strict declarations only."
+    }
+  ]
+}

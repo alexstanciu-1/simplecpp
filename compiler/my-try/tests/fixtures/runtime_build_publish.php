@@ -1,7 +1,7 @@
 <?php
 namespace scpp\compiler;
 require_once dirname(__DIR__, 2) . '/boot.php';
-Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load($argv[1], ['build_proof']));
+Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load($argv[1], [$argv[4] ?? 'build_proof']));
 $publication = new Output_Publication($argv[3]);
 try {
 	$compiler = new Compiler();
