@@ -243,11 +243,11 @@ final class CPP_Syntax
 		}
 		if ($node instanceof echo_node) {
 			$output = object_cast($node, echo_node::class);
-			$this->context->headers['lang/php/support/php_string.hpp'] = true;
 			$result = '';
 			$operands /** Storage<expression_node> */ = $output->operands;
 			foreach ($operands as $operand) {
-				$result .= "\t::scpp::php::echo_one(" . $this->expression($operand) . ");\n";
+				$result .= "\t" . CPP_Declarations::output($this->expression($operand),
+					$operand->require_preparation()->type, $this->context) . ";\n";
 			}
 			return $result;
 		}

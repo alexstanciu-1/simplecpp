@@ -5,6 +5,20 @@ namespace scpp\compiler;
 
 final class CPP_Declarations
 {
+	/** Preparation owns output admission; the bridge only changes physical transport. */
+	public static function output(string $expression, canonical_type_use $type, cpp_generation_context $context): string
+	{
+		// Null is an expression sentinel, not a stored type with a C++ binding.
+		if (($context->specialization_engine !== null)
+			&& (Type_Queries::canonical($type)->family() !== type_family::null_sentinel)) {
+			if (CPP_Types::representation($type, $context)->opaque) {
+				return CPP_Runtime_Operations::output($expression, $type, $context);
+			}
+		}
+		$context->headers['lang/php/support/php_string.hpp'] = true;
+		return '::scpp::php::echo_one(' . $expression . ')';
+	}
+
 	/** Render settled access without interpreting source modifiers or ancestry. */
 	public static function visibility(member_visibility $visibility): string
 	{

@@ -219,6 +219,7 @@ enum cpp_runtime_operation_kind {
 	case construct_call;
 	case observation;
 	case runtime_call;
+	case output;
 	case initialize_empty;
 	case initialize_buffer;
 	case binary;

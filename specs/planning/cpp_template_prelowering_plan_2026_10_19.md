@@ -78,8 +78,11 @@ passes for inline and shared storage, including retirement/replay and zero measu
 boundary allocations. Implicit shared-storage wrapper spelling now consumes its
 installed binding, preserving source forward-declaration requirements. Default and
 alternate binding proofs compile mutually referring source classes.
-Next review required runtime interface/trait contracts; representation metadata
-alone does not complete all operations.
+Concrete output now borrows through the existing runtime-operation bridge and calls
+`echo_one`; the scalar proof preserves ordered bytes and failure suppression.
+Accounting reaches container/source-class handle representation mismatches after
+passing integer output. Next align those existing physical mappings and operation
+adapters; representation metadata alone does not complete all operations.
 
 ## Active integration sequence: concrete type substitution
 

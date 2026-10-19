@@ -74,3 +74,12 @@ metadata/type suites also pass. Evidence is in `/tmp/prelower-shared-binding/`:
 `default2`, `alternate3`, `check1`. Initial runs caught an invalid fixture enum and
 an uninitialized literal fact on the new stored mapping; both were corrected before
 the final native proofs. No native compiler rebuild was performed.
+
+### Evidence correction during output follow-up
+
+The output follow-up found that the alternate fixture option read argv index 5
+instead of 4. Consequently `alternate3` above exercised the default binding, and
+its alternate-provider claim was not established by that run. The fixture now reads
+the correct argument and the driver independently requires the alternate header.
+The corrected alternate-provider run is recorded in the
+[output follow-up](../prelower_concrete_output_2026_10_19/README.md).

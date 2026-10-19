@@ -5,7 +5,8 @@ require_once dirname(__DIR__) . '/boot.php';
 // Host integration proof: ordinary source demand, physical recipes and incremental fragments.
 [$script,$source,$output,$mode]=$argv;
 $composed=$mode==='composed';
-$alternate=($argv[5]??'')==='alternate';
+$alternate=($argv[4]??'')==='alternate';
+$output_proof=($argv[5]??'')==='output';
 $metadata=new runtime_catalog_input();
 foreach(Model::$runtime_metadata->modules as $module){
 	if($alternate && $module->name==='core'){
@@ -28,6 +29,13 @@ function &borrow_closed(closed &$value): closed { return $value; }
 function overwrite(closed &$target, const closed &$source): void { $target = $source; }
 function copy_nested(const duo<closed,int> &$value): duo<closed,int> { return $value; }
 PHS;
+if($output_proof){$program.= <<<'PHS'
+function output_next(int &$n): int { $n++; echo "p"; return $n; }
+function &output_alias(int &$n): int { echo "r"; return $n; }
+function output_work(int &$n): void { echo "[", true, false, null, -12, ":", 2.5, "]", output_next($n), ":", output_next($n), ":", $n, output_alias($n); }
+function output_fail(int &$n, int $zero): void { echo output_next($n), ":", 1 / $zero, output_next($n); }
+PHS;
+}
 file_put_contents($source.'/main.phs',$program);
 $compiler=new Compiler();
 $compiler->cpp_lowering->prelower_templates=$composed;
@@ -60,6 +68,11 @@ $index=0;foreach(Model::$cpp_output_program->fragments as $owner){if(Model::$cpp
 file_put_contents($source.'/main.phs','function empty_work(): void {}');
 $compiler->update_cpp([$source.'/main.phs']);
 if(concrete_headers()!==[]){throw new \LogicException('Removed source demand retained concrete types');}
+foreach(Model::$cpp_output_program->fragments as $owner){
+ foreach(Model::$cpp_output_program->fragments[$owner]->runtime_operations as $request){
+  if($request->kind===cpp_runtime_operation_kind::output){throw new \LogicException('Removed output retained a helper request');}
+ }
+}
 file_put_contents($source.'/main.phs',$program);
 $compiler->update_cpp([$source.'/main.phs']);
 if(demand_snapshot()!==$before){throw new \LogicException('Restored demand changed output');}
@@ -107,6 +120,30 @@ $support.='using NativeShared='.$shared_native->spelling.'; void seed_shared(Sha
 $support.='bool same_shared(const Shared& value,const Shared& other){ const auto& a='.$shared_const.'; const auto& b='.$other_const.'; return a.get()==b.get() && a->native_value()==9 && a.use_count()==2; }' . "\n";
 $names=[];foreach(['copy_shared','copy_closed','copy_nested','borrow_closed','overwrite'] as $name){$definition=Model::$global_scope->functions_named($name)[0];$names[$name]=CPP_Callables::source_reference($definition);$declarations.='#include "'.CPP_Artifacts::callable_header($name).'"'."\n";}
 $main='#include "proof.hpp"'."\n".'#include "instrument.hpp"'."\nint main(){ Nested value; seed(value); Shared shared; seed_shared(shared); begin(); { auto shared_copy=".$names['copy_shared'].'(shared); require(same_shared(shared,shared_copy)); auto copied='.$names['copy_nested'].'(value); auto& slot=element(copied); auto& alias='.$names['borrow_closed'].'(slot); require(&slot==&alias); auto old='.$names['copy_closed'].'(alias); '.$names['overwrite'].'(alias,old); require(check(copied,7) && check(value,7)); } report("recipe-boundary"); }'."\n";
+if($output_proof){
+ $output_type=Model::$global_scope->functions_named('output_work')[0]->syntax()->require_preparation()->signature->parameters[0]->type;
+ $output_mapping=CPP_Types::representation($output_type,$context);
+ $declarations.=CPP_Artifacts::includes($output_mapping->headers,'').'using OutputInt='.$output_mapping->spelling.";\n";
+ foreach(['output_work','output_fail'] as $name){$names[$name]=CPP_Callables::source_reference(Model::$global_scope->functions_named($name)[0]);$declarations.='#include "'.CPP_Artifacts::callable_header($name).'"'."\n";}
+ $main=str_replace('int main(){', <<<'CPP'
+#include <scpp/runtime_error.hpp>
+#include <iostream>
+#include <streambuf>
+#include <string_view>
+struct Capture : std::streambuf {
+ char bytes[256];
+ Capture(){reset();}
+ void reset(){setp(bytes,bytes+sizeof(bytes));}
+ std::string_view text() const{return {pbase(),static_cast<std::size_t>(pptr()-pbase())};}
+};
+int main(){
+CPP, $main);
+ $proof='Capture capture; auto previous=std::cout.rdbuf(&capture); OutputInt n{0}; '
+  .'begin(); '.$names['output_work'].'(n); measuring=false; require(capture.text()=="[1-12:2.5]p1:p2:2r2" && n.native_value()==2); report("output"); '
+  .'capture.reset(); n=OutputInt{0}; bool failed=false; try { '.$names['output_fail'].'(n,OutputInt{0}); } catch(const scpp::runtime_error&){failed=true;} '
+  .'require(failed && capture.text()=="p1:" && n.native_value()==1); std::cout.rdbuf(previous); ';
+ $main=str_replace('int main(){','int main(){'.$proof,$main);
+}
 $artifacts=new Storage /** Storage<cpp_artifact> */();
 foreach(Model::$cpp_files as $artifact){if($artifact->file_name!=='entry.cpp'){$artifacts->append($artifact);}}
 if($alternate){$artifacts->append(new cpp_artifact('proof:storage-binding',cpp_artifact_kind::header,'binding_shared.hpp',"#pragma once\n#include <scpp/shared_p.hpp>\nnamespace fixture { template<class T> using Handle=scpp::shared_p<T>; }\n"));}

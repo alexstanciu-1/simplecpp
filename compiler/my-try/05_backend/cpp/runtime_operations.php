@@ -84,6 +84,7 @@ final class CPP_Runtime_Operations
 		$implementation_engine = ($engine->concrete_types() && (($request->kind === cpp_runtime_operation_kind::binary)
 			|| ($request->kind === cpp_runtime_operation_kind::conversion)
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
+			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call))) ? $engine : null;
 		$native_context = new cpp_generation_context();
 		$native_context->implementation_engine = $implementation_engine;
@@ -163,6 +164,10 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::output) {
+			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+			return CPP_Declarations::output($arguments[0], $inputs[0], $context);
+		}
 		if ($request->kind === cpp_runtime_operation_kind::construct_call) { return CPP_Source_Calls::native_construction($request, $arguments, $context); }
 		if ($request->kind === cpp_runtime_operation_kind::receiver_check) { return '(void)' . $arguments[0] . '.operator->()'; }
 		if ($request->kind === cpp_runtime_operation_kind::method_call) { return CPP_Source_Calls::native_call($request, $arguments, $context); }
@@ -339,6 +344,16 @@ final class CPP_Runtime_Operations
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($decision->source_type);
 		return self::single_value($request, $expression, $context);
+	}
+
+	/** Borrow within the full expression, including any temporary that owns a nested reference. */
+	public static function output(string $expression, canonical_type_use $type, cpp_generation_context $context): string
+	{
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::output);
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$inputs->append($type);
+		$operand = 'static_cast<const ' . CPP_Declarations::type($type, $context) . '&>(' . $expression . ')';
+		return self::invoke($request, [$operand], $context);
 	}
 
 	private static function single_value(cpp_runtime_operation $request, string $expression, cpp_generation_context $context): string

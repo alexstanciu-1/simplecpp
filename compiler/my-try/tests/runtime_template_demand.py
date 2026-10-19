@@ -14,6 +14,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', type=Path, required=True)
     parser.add_argument('--alternate-storage', action='store_true')
+    parser.add_argument('--output', action='store_true')
     args = parser.parse_args()
     out = args.results.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -24,7 +25,9 @@ def main():
                 folder = out / mode
                 cache = out / ('cache-' + mode)
                 runner.run(mode + '-emit', ['php', APP / 'tests/runtime_template_demand.php',
-                    out / ('source-' + mode), folder, mode, 'alternate' if args.alternate_storage else 'default'])
+                    out / ('source-' + mode), folder, mode, 'alternate' if args.alternate_storage else 'default', 'output' if args.output else 'default'])
+                if args.alternate_storage:
+                    assert (folder / 'binding_shared.hpp').is_file(), 'Alternate binding was not enabled'
                 for optimization in ['-O0', '-O2']:
                     label = mode + optimization
                     command = ['php', APP / 'tools/build_cpp.php', folder, cache, '--no-pch', optimization]
@@ -43,7 +46,13 @@ def main():
                     '-I' + str(ROOT / 'runtime/include'), '-I' + str(folder), *flags, *units, '-o', binary])
                 results[mode + '-sanitized'] = runner.run(mode + '-sanitized-run',
                     ['env', 'ASAN_OPTIONS=detect_leaks=0', binary]).decode()
-            assert set(results.values()) == {'recipe-boundary 0 0 0 0 0 0 0\n'}, results
+            if args.output:
+                assert all(text.startswith('output ') for text in results.values()), results
+                for variant in ['-O0', '-O2', '-sanitized']:
+                    assert results['direct' + variant] == results['composed' + variant], results
+                assert all(text.endswith('recipe-boundary 0 0 0 0 0 0 0\n') for text in results.values()), results
+            else:
+                assert set(results.values()) == {'recipe-boundary 0 0 0 0 0 0 0\n'}, results
             (out / 'summary.json').write_text(json.dumps({'counters': results, 'builds': builds}, indent=2) + '\n')
         run_tasks([Task('template-demand', proof)])
 

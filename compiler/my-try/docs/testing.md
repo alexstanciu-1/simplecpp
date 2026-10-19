@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_template_demand.py --output --alternate-storage --results FRESH_DIRECTORY`
+adds scalar echo transport, borrowed/temporary operands, exact ordered bytes and
+failure suppression to the source-demand proof. It compares direct/concrete allocation
+and payload counters and checks that the alternate storage binding was actually enabled.
+
 `python3 compiler/my-try/tests/runtime_template_demand.py --results FRESH_DIRECTORY`
 proves ordinary source emission selects concrete types from runtime recipes, including
 a closed native template behind a nominal type. It checks exact used-type closure,

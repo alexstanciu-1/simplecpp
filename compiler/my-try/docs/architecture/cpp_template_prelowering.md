@@ -37,10 +37,25 @@ recipe mode retains its bounded selection rule in `CPP_Concrete_Recipes`.
 The [source-demand proof](../../../../specs/planning/results/prelower_runtime_template_demand_2026_10_19/README.md)
 checks nested use, shared pointee identity, borrowed references, request retirement,
 replay and option switching. Runtime operation/trait coverage remains separate,
-including accounting's integer-output gap. Implicit shared storage consumes the
+including source-handle consistency at accounting's container boundaries. Implicit shared storage consumes the
 installed `shared` binding while preserving the payload's declaration/completeness
 requirement. The alternate-storage proof changes its native symbol and header without
 changing the renderer or semantic identity. See also the [migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
+
+## Concrete output transport
+
+Prepared operand types select output transport through `CPP_Declarations::output`.
+Concrete operands request the existing runtime-operation bridge, which borrows their
+native storage and calls the same `php::echo_one` helper. Null remains an expression
+sentinel without a stored-type binding. Ordinary emission retains one full expression
+per operand, so borrowed values and temporary owners remain alive through printing;
+exceptions suppress later operands. No formatting algorithm or output admission rule
+is duplicated in the backend.
+
+The [output proof](../../../../specs/planning/results/prelower_concrete_output_2026_10_19/README.md)
+checks scalar bytes, reference/temporary operands, sequencing, failure suppression,
+request retirement/replay and measured boundary costs. It does not establish output
+for all wrappers containing substituted concrete payloads.
 
 ## Concrete mutation interfaces
 
@@ -59,8 +74,9 @@ The [mutation proof](../../../../specs/planning/results/prelower_concrete_mutati
 covers integer aliases/fields, prefix/postfix sequencing and nullable-float success
 and failure, with no extra measured boundary allocations or tracked payload copies.
 It does not establish every numeric carrier with a substituted template payload.
-Accounting now passes the calendar increments and stops at concrete integer output
-conversion (`echo_one` / `to_string`); whole-accounting compilation remains unproved.
+Accounting passes calendar increments and concrete integer output; whole-accounting
+compilation remains unproved. Container adapters currently disagree with nested
+source-class handle representations.
 
 ## Concrete iteration adapter
 
