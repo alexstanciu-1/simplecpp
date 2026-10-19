@@ -578,7 +578,8 @@
 			],
 			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the false-like empty state is a runtime error for required-value conversions",
 			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_false<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the false-like empty state",
-			"operator_lifting_rule": "centralized generated operators define result_or_false participation through the same guarded-value lifting surface used by nullable; the false-like empty state fails through runtime errors except explicit false-sentinel comparisons",
+			"operator_lifting_rule": "centralized generated operators define result_or_false participation through the same guarded-value lifting surface used by nullable; value-required operations fail on the false-like empty state; state-aware equality and explicit sentinel comparisons do not unwrap",
+			"plain_payload_equality_rule": "for matching canonical int_t<>, float_t or string_t payloads, sentinel/plain == is false in both orders and != is its negation; present payloads use scalar equality; bool and mixed/boxed behavior is unchanged",
 			"sentinel_rule": "the public PHP-facing comparison surface remains == false while the runtime implementation uses false_sentinel_t / false_sentinel internally"
 		},
 		"result_or_bool": {
@@ -605,7 +606,8 @@
 			],
 			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the bool states are runtime errors for required-value conversions",
 			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_bool<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the bool states, while a true-state stringifies as the PHP boolean true contract",
-			"operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; the non-value bool states fail through runtime errors except explicit bool/false-sentinel comparisons",
+			"operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; value-required operations fail on the non-value bool states; state-aware equality and explicit sentinel comparisons do not unwrap",
+			"plain_payload_equality_rule": "for matching canonical int_t<>, float_t or string_t payloads, sentinel/plain == is false in both orders and != is its negation; present payloads use scalar equality; bool and mixed/boxed behavior is unchanged",
 			"sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and true_sentinel_t / true_sentinel internally; result_or_bool<bool_t> reserves plain bool/bool_t construction for wrapped payload values"
 		},
 		"error_t": {
@@ -2379,6 +2381,7 @@
 			"template_rule": true,
 			"status": "authoritative_current_policy",
 			"policy_role": "checked_unwrap_then_delegate_to_wrapped_operator_family",
+			"canonical_carrier_mutation_rule": "nullable, result, result_or_false and result_or_bool with int_t<> or float_t support prefix/postfix ++ and --; checked writable payload access, same-carrier prefix reference and old-carrier postfix value; failure preserves state",
 			"covers": [
 				"unary",
 				"binary",
@@ -2505,31 +2508,6 @@
 					"string_t",
 					"/",
 					"string_t"
-				]
-			]
-		},
-		{
-			"name": "nullable_arithmetic",
-			"patterns": [
-				[
-					"nullable<T>",
-					"+",
-					"nullable<T>"
-				],
-				[
-					"nullable<T>",
-					"-",
-					"nullable<T>"
-				],
-				[
-					"nullable<T>",
-					"*",
-					"nullable<T>"
-				],
-				[
-					"nullable<T>",
-					"/",
-					"nullable<T>"
 				]
 			]
 		},

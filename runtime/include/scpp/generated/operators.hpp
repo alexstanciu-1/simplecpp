@@ -25,7 +25,7 @@
 
 namespace scpp {
 
-// Generated from runtime/specs/config.json on 2026-06-26T04:01:41+00:00.
+// Generated from runtime/specs/config.json on 2026-10-19T09:32:00+00:00.
 // Enabled config families: bool_logical, float_arithmetic, float_logical, float_mutation, int_arithmetic, int_bitwise_and_mutation, int_logical, mixed_numeric, mixed_numeric_logical, null_comparisons, nullable_lifted_ops, nullable_ops, pointer_null_comparisons, string_ops, table_identity_comparisons.
 // Do not edit manually.
 
@@ -256,6 +256,45 @@ inline float_t &operator--(float_t &value) noexcept {
 
 inline float_t operator--(float_t &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_dec(value);
+}
+
+// Canonical numeric carrier updates: validate presence before mutation, preserve the carrier.
+template <typename T>
+concept is_numeric_update_carrier = is_lifted_compound_wrapper<T>
+	&& (is_default_int<lifted_compound_inner_t<T>> || is_native_float<lifted_compound_inner_t<T>>)
+	&& (!std::is_const_v<std::remove_reference_t<T>>);
+
+// Prefix returns the original native carrier; the source compiler snapshots its value.
+template <is_numeric_update_carrier T>
+inline T &operator++(T &value) {
+	auto &payload = require_lifted_compound_value(value, "prefix increment requires a present operand");
+	++payload;
+	return value;
+}
+
+// Postfix preserves an independent old carrier after validating the writable payload.
+template <is_numeric_update_carrier T>
+inline T operator++(T &value, int) {
+	auto &payload = require_lifted_compound_value(value, "postfix increment requires a present operand");
+	T previous = value;
+	++payload;
+	return previous;
+}
+
+// Decrement shares the same checked payload and same-object contract as increment.
+template <is_numeric_update_carrier T>
+inline T &operator--(T &value) {
+	auto &payload = require_lifted_compound_value(value, "prefix decrement requires a present operand");
+	--payload;
+	return value;
+}
+
+template <is_numeric_update_carrier T>
+inline T operator--(T &value, int) {
+	auto &payload = require_lifted_compound_value(value, "postfix decrement requires a present operand");
+	T previous = value;
+	--payload;
+	return previous;
 }
 
 [[nodiscard]] inline string_t operator+(const string_t &lhs, const string_t &rhs) {
@@ -504,6 +543,20 @@ template <typename Left, typename T>
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
+// Runtime spec 6.10: a bool sentinel differs from canonical non-bool scalars.
+// Preserve existing bool and boxed dispatch; this helper is only used by sentinel branches.
+namespace detail {
+template <typename Payload, typename Left, typename Right>
+[[nodiscard]] inline bool_t sentinel_plain_equal(const Left &lhs, const Right &rhs) {
+	if constexpr ((is_bool<Left> && std::same_as<detail::remove_cvref_t<Payload>, detail::remove_cvref_t<Right>> && (is_default_int<Right> || is_native_float<Right> || is_string_like<Right>))
+		|| (is_bool<Right> && std::same_as<detail::remove_cvref_t<Payload>, detail::remove_cvref_t<Left>> && (is_default_int<Left> || is_native_float<Left> || is_string_like<Left>))) {
+		return bool_t(false);
+	} else {
+		return bool_t(lhs == rhs);
+	}
+}
+} // namespace detail
+
 template <typename T, typename U>
 [[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const result_or_false<U> &rhs) {
 	if (!lhs.has_value().native_value()) {
@@ -519,7 +572,7 @@ template <typename T, typename Right>
 	requires is_lifted_equality_operand<Right>
 [[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const Right &rhs) {
 	if (!lhs.has_value().native_value()) {
-		return bool_t(bool_t(false) == rhs);
+		return detail::sentinel_plain_equal<T>(bool_t(false), rhs);
 	}
 	if constexpr (is_bool<Right> && !is_bool<T>) {
 		return bool_t(false);
@@ -532,7 +585,7 @@ template <typename Left, typename T>
 	requires is_lifted_equality_operand<Left>
 [[nodiscard]] inline bool_t operator==(const Left &lhs, const result_or_false<T> &rhs) {
 	if (!rhs.has_value().native_value()) {
-		return bool_t(lhs == bool_t(false));
+		return detail::sentinel_plain_equal<T>(lhs, bool_t(false));
 	}
 	if constexpr (is_bool<Left> && !is_bool<T>) {
 		return bool_t(false);
@@ -596,7 +649,7 @@ template <typename T, typename Right>
 	requires is_lifted_equality_operand<Right>
 [[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, const Right &rhs) {
 	if (!lhs.has_value().native_value()) {
-		return bool_t(bool_t(lhs.is_true().native_value()) == rhs);
+		return detail::sentinel_plain_equal<T>(bool_t(lhs.is_true().native_value()), rhs);
 	}
 	if constexpr (is_bool<Right> && !is_bool<T>) {
 		return bool_t(false);
@@ -609,7 +662,7 @@ template <typename Left, typename T>
 	requires is_lifted_equality_operand<Left>
 [[nodiscard]] inline bool_t operator==(const Left &lhs, const result_or_bool<T> &rhs) {
 	if (!rhs.has_value().native_value()) {
-		return bool_t(lhs == bool_t(rhs.is_true().native_value()));
+		return detail::sentinel_plain_equal<T>(lhs, bool_t(rhs.is_true().native_value()));
 	}
 	if constexpr (is_bool<Left> && !is_bool<T>) {
 		return bool_t(false);
