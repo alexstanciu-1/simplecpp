@@ -277,6 +277,14 @@ constructor limits are historical and superseded by this section and the
 
 ## Derived data through constructor contracts — 2026-10-08
 
+
+**Current scope — 2026-10-19 (CS495).** Class/struct inherited and authored data constructors observe initialized payload9, original parameter names, defaults plus child field defaults, multilevel selection, nested data inputs and explicit storage. Reversed keyed source inputs produce21, proving source evaluation order before parameter association. Extra fields do not become keys; missing/duplicate/wrong typed keys and missing explicit data opt-in reject. Cross-file inherited parameter name/type/constructor removal rejects on change/retry; authored-child replacement executes9 and reset/fresh output agrees. Historical public-only/non-public gate is superseded by protected inherited data factories, which execute9 under legal descendant access. No inherited set-property rebinding is claimed.
+
+Contracts and owners: [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [data_initialization.md](../../../../specs/data_initialization.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS495`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Implemented explicit `data` opt-in on a derived class/struct with an effective authored
 public constructor, either local or inherited. Keys are that constructor's parameter
 names; original types/defaults and lexical ownership remain unchanged. Extra child/base
@@ -298,6 +306,8 @@ reset and fresh/incremental agreement. No native compiler rebuild.
 The following checkpoint adds composed synthesized inputs. `data` is not inherited,
 non-public/reference/variadic constructors retain their existing gates, and inherited
 `set:` property rebinding is not introduced.
+
+</details>
 
 ## Composed synthesized data inputs — 2026-10-08
 
@@ -740,6 +750,14 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## v0.2 contract review debt
 
+
+**Current scope — 2026-10-19 (CS513).** Review queue is largely historical: non-public destructor rejection is superseded by access-aware cleanup CS486, constructor visibility by CS494, shared variance by CS485, and shared ancestry joins by CS489. Remaining sibling/unique/weak joins and abstract-constructor extensions stay deferred. Implementation internal abstract/final convention does not constrain source language admission. This queue does not authorize new semantics or compiler fixes.
+
+Contracts and owners: [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS513`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 CH10 now owns the [bounded destructor implementation](10_objects.md#destructors-and-automatic-cleanup--2026-10-07)
 and [nonthrowing lifecycle contract](../../../../specs/destructors_v0_2.md).
 The imported CLASS-ABS-001/002/003/004 examples overlap that completed base slice.
@@ -769,6 +787,8 @@ Reconcile normative specs, runtime, lowering and focused proofs when each decisi
 is agreed. This records review work, not approval to expand the language contract.
 The compiler implementation's abstract-base/final-concrete convention is separate
 from the inheritance forms the language may allow.
+
+</details>
 
 ## Progress
 
@@ -848,7 +868,17 @@ class B : public A { public: using base = A; };
 
 ## CLASS-INH-002
 
+
+**Current scope — 2026-10-19 (CS516).** Completed B supplies f1 and g2; A inherits both and implements I,J. Both source interface views are actually invoked and sum3, stronger than declaring multiple interfaces alone. Historical declaration-only/trait-rejection text and final-virtual restriction label are superseded by current contracts and CS504.
+
+Contracts and owners: [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS516`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Shared contract validation; local/inherited implementations; final-virtual forwarding restriction. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
+
+</details>
 
 ### Imported version 1
 
@@ -1147,7 +1177,17 @@ A::A(int_t x) : base(x) {}
 
 ## CLASS-INH-011
 
+
+**Current scope — 2026-10-19 (CS524).** Explicit Override implements abstract f and executes through A handle returning supplied1. Current preparation validates the inherited virtual/interface target; historical trust-as-is/no-semantic-validation guidance is superseded. Broader variance and invalid override signatures retain CS485/505 proofs.
+
+Contracts and owners: [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS524`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Checked inherited virtual target; shared-value variance with invariant references/other ownership; nonvirtual hiding rejected. See the progress table and checkpoints above; imported lowering below is historical evidence, not the v0.2 contract.
+
+</details>
 
 ### Imported version 1
 

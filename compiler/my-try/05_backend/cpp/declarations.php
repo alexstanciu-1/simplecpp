@@ -80,6 +80,9 @@ final class CPP_Declarations
 			return self::type($decision->target_type, $context) . '((' . $expression
 				. ').require_value("Result required-value extraction"))';
 		}
+		if ($decision->operation === conversion_operation::integer_to_floating) {
+			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+		}
 		if ($decision->operation === conversion_operation::integer_value_cast) {
 			return 'static_cast<' . self::type($decision->target_type, $context)
 				. '>((' . $expression . ').native_value())';

@@ -1,0 +1,24 @@
+{
+  "doc_status": "supporting",
+  "changed_from_baseline": [
+    "compiler/my-try/04_analyze/operators/mutations.php",
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/02_expressions.md",
+    "compiler/my-try/docs/s2s_scalar_operators.md",
+    "compiler/my-try/docs/testing.md",
+    "compiler/my-try/04_analyze/operators/guarded.php",
+    "compiler/my-try/tests/guarded_operators.php"
+  ],
+  "existing_code_changes": [
+    "compiler/my-try/04_analyze/operators/mutations.php",
+    "compiler/my-try/04_analyze/operators/guarded.php",
+    "compiler/my-try/tests/guarded_operators.php"
+  ],
+  "new_sources": [
+    "compiler/my-try/tests/int_carrier_compounds.php",
+    "compiler/my-try/tests/int_carrier_compounds.py"
+  ],
+  "tested_non_documentation_mismatches": [],
+  "runtime_changes": [],
+  "documentation_closeout_separate_from_tested_snapshot": true
+}

@@ -135,7 +135,7 @@ dynamic_boundaries_check($elvis->preparation() === null && $coalesce->preparatio
 foreach (['mixed', 'dynamic'] as $family) {
 	foreach (['$out = $v + true;', '$out = $v % 0.5;', '$out = ~$v;',
 		'$out = $v < "1";', '$v += false;', '$out = $v ** 2;',
-		'$n = 1; $n += $v;', '$out = $v++ + $v;', '$v[0] += 1;'] as $operation) {
+		'$n = 1; $n += $v;'] as $operation) {
 		$rejected = false;
 		try { dynamic_boundaries_source('$v ' . $family . ' = 1; ' . $operation); }
 		catch (\RuntimeException $error) { $rejected = true; }

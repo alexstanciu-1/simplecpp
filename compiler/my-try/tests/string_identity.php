@@ -24,7 +24,7 @@ foreach (['===' => operator_operation::scalar_identical, '!==' => operator_opera
 		if ($conversion->operation !== conversion_operation::identity) { throw new \LogicException('Boolean identity used coercion'); }
 	}
 }
-foreach (['"1" === 1', '1 !== "1"', '"a" < "b"', '"a" == "a"', 'true === 1', 'false !== ""', 'true < false'] as $expression) {
+foreach (['"1" === 1', '1 !== "1"', 'true == 1', 'false !== ""', 'true < false'] as $expression) {
 	$failed = false;
 	try { operator_test_source('$a = ' . $expression . ';'); }
 	catch (\RuntimeException $error) { $failed = true; }

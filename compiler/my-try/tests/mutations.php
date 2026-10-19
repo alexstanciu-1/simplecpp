@@ -24,10 +24,10 @@ function mutation_test_source(string $text): parsed_file
 }
 
 
-foreach ([['++$x', operator_operation::integer_pre_increment, false],
-	['$x++', operator_operation::integer_post_increment, true],
-	['--$x', operator_operation::integer_pre_decrement, false],
-	['$x--', operator_operation::integer_post_decrement, true]] as [$source, $operation, $postfix])
+foreach ([['++$x', operator_operation::scalar_pre_increment, false],
+	['$x++', operator_operation::scalar_post_increment, true],
+	['--$x', operator_operation::scalar_pre_decrement, false],
+	['$x--', operator_operation::scalar_post_decrement, true]] as [$source, $operation, $postfix])
 {
 	$syntax = mutation_test_source('$x = 3; $a = ' . $source . '; return $a;');
 	$mutation = $syntax->root->single_body()->body->statements[1]->expression->value;
@@ -67,10 +67,9 @@ if ($unary->require_unary_preparation()->decision->operation !== operator_operat
 $rejections = [
 	['++$missing;', 'established local declaration'],
 	['$missing++;', 'established local declaration'],
-	['$x = true; $x++;', 'canonical int or boxed storage'],
-	['$x = 1.5; --$x;', 'canonical int or boxed storage'],
-	['$x = "x"; ++$x;', 'canonical int or boxed storage'],
-	['$x uint8 = 3; $x--;', 'canonical int or boxed storage'],
+	['$x = true; $x++;', 'canonical int, float or boxed storage'],
+	['$x = "x"; ++$x;', 'canonical int, float or boxed storage'],
+	['$x uint8 = 3; $x--;', 'canonical int, float or boxed storage'],
 	['++1;', 'existing local or parameter'],
 	['PHP_INT_MAX++;', 'existing local or parameter'],
 	['function value(): int { return 1; } value()++;', 'existing local or parameter'],
@@ -113,7 +112,7 @@ try
 	$compiler->update_cpp([$path]);
 	$body = $function->body;
 	$mutation = $body->statements[1]->expression;
-	if (($mutation->require_mutation_preparation()->decision->operation !== operator_operation::integer_post_increment)
+	if (($mutation->require_mutation_preparation()->decision->operation !== operator_operation::scalar_post_increment)
 		|| ($function->require_preparation() !== $signature)) {
 		throw new \LogicException('Operator edit lost its new decision or invalidated an unchanged signature');
 	}
@@ -122,7 +121,7 @@ try
 	$compiler->update_cpp([$path]);
 	$body = $function->body;
 	$mutation = $body->statements[1]->expression;
-	if (($mutation->require_mutation_preparation()->decision->operation !== operator_operation::integer_post_decrement)
+	if (($mutation->require_mutation_preparation()->decision->operation !== operator_operation::scalar_post_decrement)
 		|| ($function->require_preparation() !== $signature)) {
 		throw new \LogicException('Mutation edit retained a stale decision or changed the signature');
 	}

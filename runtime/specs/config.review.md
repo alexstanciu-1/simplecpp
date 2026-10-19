@@ -177,7 +177,14 @@ Only these operator families are enabled. Everything else is forbidden by defaul
 | `mixed_numeric` | Mixed `int_t` + `float_t` arithmetic/comparison promotes to `float_t`. | `$a + $b; // int + float` | `auto x = a + b; // result float_t` | Promotion is explicit in config rather than inferred ad hoc. |
 | `string_ops` | Equality/inequality and lexicographic ordering on `string_t` are enabled. | `$a < $b;` | `auto before = (a < b);` | Notably, string concatenation is not an operator family here. |
 | `pointer_null_comparisons` | Handle wrappers compare against the configured null-equivalence group and shared handles compare with same-family peers. | `$obj == null;` | `auto empty = (obj == ::scpp::null_t());` | This is how null checks stay legal without opening general pointer arithmetic or cross-family comparisons. |
-| `nullable_ops` | Nullable values compare with null-equivalent sentinels and same-type nullable peers. | `$maybe == null;` | `auto empty = (maybe == ::scpp::null_t());` | Makes presence tests legal while keeping nullable arithmetic forbidden. |
+| `nullable_ops` | Nullable values compare with null-equivalent sentinels and same-type nullable peers. | `$maybe == null;` | `auto empty = (maybe == ::scpp::null_t());` | Presence/equality rules are separate from guarded payload arithmetic. |
+
+`nullable_lifted_ops` is the authoritative checked-payload policy. The stale
+`nullable_arithmetic` forbidden group was removed on 2026-10-19 (V-D13): admitted
+payload operations require present values, and empty operands throw. Results follow
+the payload operation; absence is not propagated. Equality remains its separately
+specified state-aware exception. Source compiler coverage is bounded separately;
+the rule does not claim that every configured family is implemented.
 
 ## 8. Forbidden Operation Groups
 
@@ -190,7 +197,6 @@ These are explicitly banned even if the underlying native C++ representation mig
 | `pointer_cross_family_comparisons` | Different ownership families must not be compared directly. | `$shared == $unique;` | `// compile-time error` | Ownership semantics differ; direct equality would be misleading. |
 | `vector_arithmetic` | Vectors do not gain arithmetic operators. | `$a + $b; // arrays/vectors` | `// compile-time error` | Avoids inventing element-wise semantics by accident. |
 | `string_arithmetic` | Strings do not gain arithmetic operators. | `$a + $b; // strings` | `// compile-time error` | Important because PHP string-plus-number behavior is already a source of ambiguity. |
-| `nullable_arithmetic` | Optional values do not participate in arithmetic directly. | `$a + $b; // nullable numbers` | `// compile-time error` | Forces explicit unwrap/coercion instead of propagating ambiguous null arithmetic. |
 | `pointer_arithmetic` | Ownership wrappers are not arithmetic operands. | `$obj + $obj;` | `// compile-time error` | Reinforces that handles are semantic wrappers, not address-like values. |
 | `sentinel_arithmetic` | Sentinels never behave like numbers. | `null + null;` | `// compile-time error` | Null-like values stay in the sentinel domain. |
 

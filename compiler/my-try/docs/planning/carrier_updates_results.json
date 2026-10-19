@@ -1,0 +1,381 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/carrier-updates/20261019-02",
+  "scope": {
+    "new_unary_signatures": 32,
+    "recovery_sequences": 32,
+    "negative_source_checks": {
+      "nullable-int": 56,
+      "nullable-float": 56,
+      "result-int": 56,
+      "result-float": 56,
+      "result_or_false-int": 56,
+      "result_or_false-float": 56,
+      "result_or_bool-int": 56,
+      "result_or_bool-float": 56
+    },
+    "native_counts": {
+      "nullable-int": {
+        "source_cases": 28,
+        "native_cases": 28,
+        "static_cases": 28,
+        "order_cases": 28,
+        "snapshot_cases": 192
+      },
+      "nullable-float": {
+        "source_cases": 36,
+        "native_cases": 36,
+        "static_cases": 36,
+        "order_cases": 36,
+        "snapshot_cases": 288
+      },
+      "result-int": {
+        "source_cases": 32,
+        "native_cases": 32,
+        "static_cases": 32,
+        "order_cases": 32,
+        "snapshot_cases": 216
+      },
+      "result-float": {
+        "source_cases": 40,
+        "native_cases": 40,
+        "static_cases": 40,
+        "order_cases": 40,
+        "snapshot_cases": 320
+      },
+      "result_or_false-int": {
+        "source_cases": 28,
+        "native_cases": 28,
+        "static_cases": 28,
+        "order_cases": 28,
+        "snapshot_cases": 192
+      },
+      "result_or_false-float": {
+        "source_cases": 36,
+        "native_cases": 36,
+        "static_cases": 36,
+        "order_cases": 36,
+        "snapshot_cases": 288
+      },
+      "result_or_bool-int": {
+        "source_cases": 32,
+        "native_cases": 32,
+        "static_cases": 32,
+        "order_cases": 32,
+        "snapshot_cases": 216
+      },
+      "result_or_bool-float": {
+        "source_cases": 40,
+        "native_cases": 40,
+        "static_cases": 40,
+        "order_cases": 40,
+        "snapshot_cases": 320
+      }
+    }
+  },
+  "signatures": [
+    [
+      "?int",
+      "preinc",
+      "?int"
+    ],
+    [
+      "?int",
+      "postinc",
+      "?int"
+    ],
+    [
+      "?int",
+      "predec",
+      "?int"
+    ],
+    [
+      "?int",
+      "postdec",
+      "?int"
+    ],
+    [
+      "?float",
+      "preinc",
+      "?float"
+    ],
+    [
+      "?float",
+      "postinc",
+      "?float"
+    ],
+    [
+      "?float",
+      "predec",
+      "?float"
+    ],
+    [
+      "?float",
+      "postdec",
+      "?float"
+    ],
+    [
+      "result<int>",
+      "preinc",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "postinc",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "predec",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "postdec",
+      "result<int>"
+    ],
+    [
+      "result<float>",
+      "preinc",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "postinc",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "predec",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "postdec",
+      "result<float>"
+    ],
+    [
+      "result_or_false<int>",
+      "preinc",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "postinc",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "predec",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "postdec",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<float>",
+      "preinc",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "postinc",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "predec",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "postdec",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_bool<int>",
+      "preinc",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "postinc",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "predec",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "postdec",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<float>",
+      "preinc",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "postinc",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "predec",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "postdec",
+      "result_or_bool<float>"
+    ]
+  ],
+  "suites": {
+    "focused": {
+      "commands": 41,
+      "all_expected_exits": true
+    },
+    "runtime": {
+      "commands": 83,
+      "all_expected_exits": true
+    },
+    "generation": {
+      "commands": 2,
+      "all_expected_exits": true
+    },
+    "properties": {
+      "commands": 58,
+      "all_expected_exits": true
+    },
+    "float_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_float": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_cross-final": {
+      "commands": 26,
+      "all_expected_exits": true
+    },
+    "guarded_mixed-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nonbool_sentinel_equality": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "bool_sentinel_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "false_bool_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "result_equality": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "nullable_int_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_float_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_bool_string_equality": {
+      "commands": 11,
+      "all_expected_exits": true
+    },
+    "eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "numeric_xor-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    }
+  },
+  "source_integrity": {
+    "checked": 6229,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "fd0043f059eab749f209210ab23843734dada8b7bc7c70af3816b7d26a2f6174",
+  "direct_runtime": {
+    "passed": true,
+    "original_nullable_test": true,
+    "negative_native_cases": 80
+  },
+  "property_regressions": {
+    "passed": true,
+    "executions": 14
+  },
+  "generation": {
+    "passed": true,
+    "identical_excluding_existing_timestamp": true,
+    "header_sha256": "792e50f2279c4d717f8e8656980a89a7f45d388b84c03a922428e15e7577aa06"
+  },
+  "attempts": {
+    "initial": "Fixture failures: generic declaration >= tokenization and missing generated operators include in native observer. No compiler/runtime correction needed.",
+    "focused_final": "All eight carrier/payload proofs passed.",
+    "regressions": "guarded_mixed and guarded_cross initially failed stale rejection expectations for newly admitted updates; removed those negatives and reverified affected suites, including numeric_xor. All 17 final suites and 14 property programs pass."
+  },
+  "runtime_changes": [
+    "runtime/tools/generate_operators.php",
+    "runtime/include/scpp/generated/operators.hpp"
+  ],
+  "contract_changes": [
+    "specs/expression_evaluation.md",
+    "runtime/specs/spec.md",
+    "runtime/specs/config.json"
+  ],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "issue_status": {
+    "V-L07": "partially-implemented-and-verified",
+    "V-R10": "implemented-and-verified"
+  },
+  "vl07_progress": {
+    "completed_slices": 19,
+    "binary_signatures": 1680,
+    "unary_signatures": 64,
+    "remaining_support_targets": 336,
+    "design_scope_candidates": 1872,
+    "proposed_core_denominator": 2080,
+    "proposed_core_coverage_percent": 83.8
+  }
+}

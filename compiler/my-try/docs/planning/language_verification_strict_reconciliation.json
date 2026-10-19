@@ -1,0 +1,1195 @@
+{
+  "doc_status": "planning",
+  "date": "2026-10-18",
+  "source_evidence": "language_verification_evidence/strict-04.json",
+  "prior_semantic_review": "v0_1_compatibility_strict_causes.json",
+  "counts": {
+    "compatible-proved": 14,
+    "missing-support": 9,
+    "compatible-rejection": 1,
+    "fixture-migration": 1,
+    "intentional-change": 3,
+    "compile-compatible": 83,
+    "adapter-blocked": 5,
+    "deferred-legacy-syntax": 6,
+    "deferred-v02-support": 3,
+    "contract-review": 1
+  },
+  "cases": [
+    {
+      "source": "tests/php/closures/strict_level_01/closures_001_typed_callable_use_capture.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_01/closures_002_typed_callable_supplies_return.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_01/closures_003_direct_signature_synthesis.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_004_use_reference_capture.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "reference-capture-signature",
+        "reason": "Explicit unchanged callable signature with reference capture fails preparation."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S05"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S05"
+      ]
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_005_multiple_use_capture.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_006_vector_return_typed_callable.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_007_vector_return_direct_signature.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_008_missing_return_type_negative.phs",
+      "raw_status": "rejection-needs-review",
+      "v01_stage": "generation",
+      "v02_stage": "generation",
+      "semantic_status": "compatible-rejection",
+      "review_status": "reviewed",
+      "review_reason": "Both generators reject absent closure return type without expected callable contract. v0.2 message changes wording; raw substring oracle mismatch is retained."
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_009_container_storage_negative.phs",
+      "raw_status": "rejection-needs-review",
+      "v01_stage": "generation",
+      "v02_stage": "generation",
+      "semantic_status": "fixture-migration",
+      "review_status": "reviewed",
+      "review_reason": "v0.2 rejects untyped [] before storage. Typed callable containers are admitted by callable_storage.php; this original fixture cannot prove an equivalent storage rejection.",
+      "issue_ids": [
+        "V-H10"
+      ]
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_001_php_helpers.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "intentional-change",
+        "group": "explicit-construction-target",
+        "reason": "specs/data_initialization.md: untyped data construction no longer defaults to mixed; supply an explicit target. Later operations remain untested."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [],
+      "semantic_status": "intentional-change",
+      "issue_ids": []
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_002_mixed_type_predicates.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "library-exposure",
+        "reason": "Missing unchanged API exposure: is_bool. A replacement API is not an approved source migration by itself."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S07"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S07"
+      ]
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_003_if_bool_literal_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_004_if_local_bool_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_005_if_local_comparison_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_006_if_local_greater_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_007_if_else_bool_literal_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_008_if_else_local_bool_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_009_if_else_local_comparison_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_010_ternary_int_literal_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_011_ternary_local_bool_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_012_ternary_local_comparison_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_013_if_assigned_local_bool_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_014_if_assigned_local_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_015_if_assigned_local_lt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_016_if_else_assigned_local_bool_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_017_if_else_assigned_local_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_018_if_else_assigned_local_lt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_019_ternary_assigned_local_bool_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_020_ternary_assigned_local_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_021_ternary_assigned_local_lt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/curl/strict_level_01/strict_curl_001_surface.phs",
+      "raw_status": "adapter-blocked",
+      "v01_stage": "not-run",
+      "v02_stage": "not-run",
+      "semantic_status": "adapter-blocked",
+      "review_status": "blocked before either compiler",
+      "review_reason": "Optional provider/project resource adapter required: curl",
+      "issue_ids": [
+        "V-E02"
+      ]
+    },
+    {
+      "source": "tests/php/curl/strict_level_01/strict_curl_002_http_get.phs",
+      "raw_status": "adapter-blocked",
+      "v01_stage": "not-run",
+      "v02_stage": "not-run",
+      "semantic_status": "adapter-blocked",
+      "review_status": "blocked before either compiler",
+      "review_reason": "Optional provider/project resource adapter required: curl",
+      "issue_ids": [
+        "V-E02"
+      ]
+    },
+    {
+      "source": "tests/php/curl/strict_level_01/strict_curl_003_github_raw_optin.phs",
+      "raw_status": "adapter-blocked",
+      "v01_stage": "not-run",
+      "v02_stage": "not-run",
+      "semantic_status": "adapter-blocked",
+      "review_status": "blocked before either compiler",
+      "review_reason": "Optional provider/project resource adapter required: curl",
+      "issue_ids": [
+        "V-E02"
+      ]
+    },
+    {
+      "source": "tests/php/curl/strict_level_01/strict_curl_004_post_input.phs",
+      "raw_status": "adapter-blocked",
+      "v01_stage": "not-run",
+      "v02_stage": "not-run",
+      "semantic_status": "adapter-blocked",
+      "review_status": "blocked before either compiler",
+      "review_reason": "Optional provider/project resource adapter required: curl",
+      "issue_ids": [
+        "V-E02"
+      ]
+    },
+    {
+      "source": "tests/php/curl/strict_level_01/strict_curl_005_json_roundtrip.phs",
+      "raw_status": "adapter-blocked",
+      "v01_stage": "not-run",
+      "v02_stage": "not-run",
+      "semantic_status": "adapter-blocked",
+      "review_status": "blocked before either compiler",
+      "review_reason": "Optional provider/project resource adapter required: curl",
+      "issue_ids": [
+        "V-E02"
+      ]
+    },
+    {
+      "source": "tests/php/datetime/strict_level_01/strict_datetime_001_datetime_surface.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "deferred-legacy-syntax",
+        "group": "S02",
+        "reason": "Strict library profile does not make comment declarations strict syntax. Keep original failure as deferred legacy evidence; strict-declaration companions are separate."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S02"
+      ],
+      "semantic_status": "deferred-legacy-syntax",
+      "issue_ids": [
+        "S02"
+      ]
+    },
+    {
+      "source": "tests/php/datetime/strict_level_01/strict_datetime_002_common_format.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "deferred-legacy-syntax",
+        "group": "S02",
+        "reason": "Strict library profile does not make comment declarations strict syntax. Keep original failure as deferred legacy evidence; strict-declaration companions are separate."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S02"
+      ],
+      "semantic_status": "deferred-legacy-syntax",
+      "issue_ids": [
+        "S02"
+      ]
+    },
+    {
+      "source": "tests/php/datetime/strict_level_01/strict_datetime_003_monotonic_precision.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "intentional-change",
+        "group": "integer-signedness",
+        "reason": "specs/compact_layout_types.md section 7: use an explicit unsigned conversion for the signed literal comparison."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [],
+      "semantic_status": "intentional-change",
+      "issue_ids": []
+    },
+    {
+      "source": "tests/php/debug/strict_level_01/strict_debug_001_dbg_scalar.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "library-exposure",
+        "reason": "Missing unchanged API exposure: dbg. A replacement API is not an approved source migration by itself."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S08"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S08"
+      ]
+    },
+    {
+      "source": "tests/php/filesystem/strict_level_01/strict_filesystem_001_fs_surface.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "deferred-legacy-syntax",
+        "group": "S02",
+        "reason": "Strict library profile does not make comment declarations strict syntax. Keep original failure as deferred legacy evidence; strict-declaration companions are separate."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S02"
+      ],
+      "semantic_status": "deferred-legacy-syntax",
+      "issue_ids": [
+        "S02"
+      ]
+    },
+    {
+      "source": "tests/php/filesystem/strict_level_01/strict_filesystem_002_fs_error_paths.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "deferred-legacy-syntax",
+        "group": "S02",
+        "reason": "Strict library profile does not make comment declarations strict syntax. Keep original failure as deferred legacy evidence; strict-declaration companions are separate."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S02"
+      ],
+      "semantic_status": "deferred-legacy-syntax",
+      "issue_ids": [
+        "S02"
+      ]
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_001_direct_zero_arg_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_002_direct_one_int_arg_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_003_direct_multi_int_arg_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_004_direct_local_target_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_005_default_int_arg_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_006_default_int_arg_explicit_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_007_default_trailing_int_arg_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_008_default_two_int_args_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/functions/strict_level_01/strict_functions_009_default_multi_int_args_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/io/strict_level_01/strict_io_001_io_surface.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "deferred-legacy-syntax",
+        "group": "S02",
+        "reason": "Strict library profile does not make comment declarations strict syntax. Keep original failure as deferred legacy evidence; strict-declaration companions are separate."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S02"
+      ],
+      "semantic_status": "deferred-legacy-syntax",
+      "issue_ids": [
+        "S02"
+      ]
+    },
+    {
+      "source": "tests/php/io/strict_level_01/strict_io_002_io_open_failure.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "deferred-legacy-syntax",
+        "group": "S02",
+        "reason": "Strict library profile does not make comment declarations strict syntax. Keep original failure as deferred legacy evidence; strict-declaration companions are separate."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S02"
+      ],
+      "semantic_status": "deferred-legacy-syntax",
+      "issue_ids": [
+        "S02"
+      ]
+    },
+    {
+      "source": "tests/php/json/strict_level_01/strict_json_001_json_surface.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "intentional-change",
+        "group": "json-family",
+        "reason": "specs/dynamic_types.md: default json_decode returns dynamic; select json_decode_mixed for mixed output. Later JSON operations remain untested."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [],
+      "semantic_status": "intentional-change",
+      "issue_ids": []
+    },
+    {
+      "source": "tests/php/namespaces/strict_level_01/strict_namespaces_001_qualified_function_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/namespaces/strict_level_01/strict_namespaces_002_relative_function_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/namespaces/strict_level_01/strict_namespaces_003_block_function_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_019_int_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_020_int_neq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_021_int_lt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_022_int_gt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_023_int_lte_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_024_int_gte_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_025_int_identical_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_026_int_not_identical_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_027_bool_and_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_028_bool_or_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_029_bool_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_030_bool_neq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_031_bool_identical_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_032_bool_not_identical_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_033_int_local_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_034_int_local_lt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_035_bool_local_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_036_bool_local_and_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_037_int_unary_minus_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_038_bool_logical_not_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_039_int_local_unary_minus_echo.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_040_bool_local_logical_not_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_041_int_local_unary_minus_assign_echo.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_042_int_local_local_eq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_043_int_local_local_add_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_044_int_local_local_sub_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_045_int_local_local_mul_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_046_int_local_local_div_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_047_int_local_local_mod_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_048_int_local_local_neq_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_049_int_local_local_lt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_050_int_local_local_gt_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_051_int_local_local_lte_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_052_int_local_local_gte_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_053_int_local_local_identical_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_054_int_local_local_not_identical_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_055_bool_local_and_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_056_bool_local_or_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_057_bool_local_eq_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_058_bool_local_neq_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_059_bool_local_identical_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_060_int_local_eq_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_061_int_local_neq_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_062_int_local_lt_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_063_int_local_gt_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_064_int_local_identical_assign_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_065_int32_local_local_add_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_066_int32_local_local_sub_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/process/strict_level_01/strict_process_001_shell_exec_contract.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "scalar-wrapper-operators",
+        "reason": "Valid baseline bool/float/string or result_or_false comparison is rejected by the prepared integer-only path; not matrix coverage."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S04"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S04"
+      ]
+    },
+    {
+      "source": "tests/php/source/strict_level_01/strict_source_001_buffer_span.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "library-exposure",
+        "reason": "Missing unchanged API exposure: source_buffer_span. A replacement API is not an approved source migration by itself."
+      },
+      "review_status": "reviewed",
+      "cause_ids": [
+        "S10"
+      ],
+      "semantic_status": "deferred-v02-support",
+      "review_reason": "specs/compiler_support_runtime_contract.md explicitly excludes byte_span and span-producing/consuming bindings until an agreed borrow/invalidation model exists. Older provider availability is retained.",
+      "issue_ids": [
+        "S10"
+      ]
+    },
+    {
+      "source": "tests/php/source/strict_level_01/strict_source_002_line_index.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/source/strict_level_01/strict_source_003_stable_hash.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "library-exposure",
+        "reason": "Missing unchanged API exposure: source_buffer_span. A replacement API is not an approved source migration by itself."
+      },
+      "review_status": "reviewed",
+      "cause_ids": [
+        "S10"
+      ],
+      "semantic_status": "deferred-v02-support",
+      "review_reason": "specs/compiler_support_runtime_contract.md explicitly excludes byte_span and span-producing/consuming bindings until an agreed borrow/invalidation model exists. Older provider availability is retained.",
+      "issue_ids": [
+        "S10"
+      ]
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "library-exposure",
+        "reason": "Missing unchanged API exposure: substr_replace. A replacement API is not an approved source migration by itself."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S09"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S09"
+      ]
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_002_str_edges.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "library-exposure",
+        "reason": "Missing unchanged API exposure: strpos. A replacement API is not an approved source migration by itself."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S09"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S09"
+      ]
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_003_str_result_error.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "brace-free-control-flow",
+        "reason": "Valid original brace-free if/else is not admitted."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S06"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S06"
+      ]
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_005_php_microtime_static_call.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "contract-review",
+        "group": "php-runtime-alias",
+        "reason": "Original php::microtime alias needs an explicit compatibility/migration decision."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [],
+      "semantic_status": "contract-review",
+      "issue_ids": [
+        "V-D09"
+      ]
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_006_unqualified_helper_resolution_repro.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_007_explicit_string_units.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_008_string_parts_builder.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_009_text_builder.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "borrowed-source-spans",
+        "reason": "Borrowed byte_span type and dependent source/text-builder operations are not exposed, with the source module explicitly selected."
+      },
+      "review_status": "reviewed",
+      "cause_ids": [
+        "S10"
+      ],
+      "semantic_status": "deferred-v02-support",
+      "review_reason": "specs/compiler_support_runtime_contract.md explicitly excludes byte_span and span-producing/consuming bindings until an agreed borrow/invalidation model exists. Older provider availability is retained.",
+      "issue_ids": [
+        "S10"
+      ]
+    },
+    {
+      "source": "tests/php/tokenizer/strict_level_01/strict_tokenizer_001_typed_buffer_accessors.phs",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "library-exposure",
+        "reason": "Missing unchanged API exposure: phs_tokenize_buffer. A replacement API is not an approved source migration by itself."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S11"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S11"
+      ]
+    },
+    {
+      "source": "tests/php/types/bool/strict_level_01/strict_bool_006_bool_literal_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/types/bool/strict_level_01/strict_bool_007_bool_local_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/types/int/strict_level_01/strict_int_006_fixed_width_local_returns.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/types/int/strict_level_01/strict_int_007_fixed_width_unsigned_local_returns.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/types/int/strict_level_01/strict_int_008_div_mod_basic.phs",
+      "raw_status": "compatible-proved",
+      "v01_stage": "passed",
+      "v02_stage": "passed",
+      "semantic_status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/use/strict_level_01/strict_use_001_namespace_function_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/php/use/strict_level_01/strict_use_002_namespace_use_function_return.phs",
+      "raw_status": "compile-compatible",
+      "v01_stage": "compiled",
+      "v02_stage": "compiled",
+      "semantic_status": "compile-compatible"
+    },
+    {
+      "source": "tests/tools/test_scpp_async_core_language.php",
+      "raw_status": "compatibility-gap",
+      "v01_stage": "passed",
+      "v02_stage": "generation",
+      "prior_disposition": {
+        "category": "missing-support",
+        "group": "async-syntax",
+        "reason": "Original async program passes baseline but is not parsed by v0.2."
+      },
+      "review_status": "reviewed first blocker; later operations remain masked",
+      "cause_ids": [
+        "S12"
+      ],
+      "semantic_status": "missing-support",
+      "issue_ids": [
+        "S12"
+      ]
+    }
+  ],
+  "raw_counts": {
+    "compatible-proved": 14,
+    "compatibility-gap": 22,
+    "rejection-needs-review": 2,
+    "compile-compatible": 83,
+    "adapter-blocked": 5
+  },
+  "classification_note": "Semantic review preserves every raw result. Compatible rejection does not promise identical diagnostic wording; fixture-migration does not establish the original negative mechanism."
+}

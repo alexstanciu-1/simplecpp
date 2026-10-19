@@ -1,0 +1,1742 @@
+{
+  "doc_status": "planning",
+  "date": "2026-10-18",
+  "status": "Original frozen-snapshot verification triage retained; seven fixture repairs subsequently implemented and verified on 2026-10-19.",
+  "issues": [
+    {
+      "id": "V-H01",
+      "title": "Stale entry-boundary expectations and observers",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/s2s.php and test-owned exception observers",
+      "contract": "specs/exceptions_v0_2.md:117",
+      "evidence": [
+        "verification/results/wave-01/functions/logs/s2s.stderr",
+        "verification/results/s2s-inspection",
+        "verification/results/wave-01/runtime_strings",
+        "verification/results/entry-observers-adapted-02",
+        "verification/results/entry-observers-adapted-03",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/entry-observers-adapted-02/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/entry-observers-adapted-03/outcomes.json"
+      ],
+      "finding": "S2S exact boolean oracle omits documented outer catch. Actual boolean output compiles/runs. Six string tests rename main then expect an exception outside the renamed production entry; the production catch consumes it and their wrapper returns 92. All 20 targeted string/generic/handle/source/control-flow failure observers pass after removing only the marked production entry catch; the handle replay retains its required test include path.",
+      "dependencies": [],
+      "next_action": "In a separate fixture batch, repair the bounded listed test observers and S2S entry oracle. Keep source handlers intact and original failures archived. New observer patterns require separate assessment.",
+      "acceptance": "Exact updated emitted text plus boolean execution; original failing string inputs still throw their declared runtime exception under a valid observer.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_01; no further repair queued for this bounded issue.",
+      "repair_scope": {
+        "observer_cases": [
+          "control_flow-match_unhandled",
+          "control_flow-truth_explicit_cast_reject",
+          "runtime_generics-count_bad_dynamic_0",
+          "runtime_generics-count_bad_dynamic_1",
+          "runtime_generics-count_bad_dynamic_2",
+          "runtime_generics-count_bad_mixed_0",
+          "runtime_generics-count_bad_mixed_1",
+          "runtime_generics-count_bad_mixed_2",
+          "runtime_handles-null_receiver",
+          "runtime_source-negative",
+          "runtime_source-overflow",
+          "runtime_source-past_end",
+          "runtime_source-wide",
+          "runtime_source-zero_line",
+          "runtime_strings-boxed_failure",
+          "runtime_strings-byte_search_negative",
+          "runtime_strings-byte_search_outside",
+          "runtime_strings-pad_empty",
+          "runtime_strings-pad_mode",
+          "runtime_strings-split_empty"
+        ],
+        "additional_oracle": "tests/s2s.php documented outer entry catch"
+      },
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_01.md",
+        "results": "fixture_repairs_01_results.json",
+        "scope": "Authorized seven-fixture batch; original verification findings and evidence retained."
+      }
+    },
+    {
+      "id": "V-E01",
+      "title": "Verification host requirements differ by stage",
+      "disposition": "Environment/provider blocker",
+      "handling_class": "light discussion",
+      "owner": "verification host selection",
+      "evidence": [
+        "verification/strict.log",
+        "verification/strict-02.log",
+        "verification/strict-03.log",
+        "verification/results/wave-01/runtime_assets/logs/build.stderr"
+      ],
+      "finding": "v0.1 needs PHP8.4/8.5 plus ext-ast; PHP8.5 satisfies this. v0.2 tokenization uses mbstring present in PHP8.2. Production process launcher needs pcntl_waitid (PHP8.4+), absent in PHP8.2.",
+      "next_action": "Resolved for tested integrations with privately extracted PHP8.5 mbstring; runtime assets, native invalidation, runtime module build, native cache and publication pass. Preserve setup failures separately.",
+      "dependencies": [],
+      "simple_batch_eligible": false,
+      "status": "resolved-environment"
+    },
+    {
+      "id": "S12",
+      "title": "Async callable syntax and suspension are absent",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "parser and async callable/suspension semantic preparation",
+      "contract": "specs/async_await.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json: tests/tools/test_scpp_async_core_language.php"
+      ],
+      "finding": "Unchanged baseline PHS source runs with stdout 4242; v0.2 rejects async function at byte 6.",
+      "affected_checks": [
+        "LV28.001",
+        "LV28.002",
+        "LV28.003"
+      ],
+      "dependencies": [
+        "Agree retained callable/suspension model and execution flow before implementation."
+      ],
+      "next_action": "Design discussion; no callback source adaptation and no compiler fix during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-H02",
+      "title": "Type-catalog totals predate the Exception registration",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/type_catalog.php",
+      "contract": "specs/exceptions_v0_2.md; runtime/metadata/modules/core.json core.Exception",
+      "finding": "Observed definitions/types/source types/providers/bindings are 29/20/27/11/26 versus asserted 28/19/26/10/25; template applications remain zero. Core metadata now explicitly registers Exception.",
+      "evidence": [
+        "verification/results/php-oracle-inspection/logs/type_catalog.stderr",
+        "verification/results/oracle-followup",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/oracle-followup/logs/commands.json"
+      ],
+      "next_action": "Separately labelled oracle replay passes with other assertions preserved. Retain as a fixture repair candidate; original failure remains recorded.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_01; no further repair queued for this bounded issue.",
+      "acceptance": "Update only the five Exception-related catalog totals; retain demand-only reuse, identity and template-application assertions.",
+      "dependencies": [],
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_01.md",
+        "results": "fixture_repairs_01_results.json",
+        "scope": "Authorized seven-fixture batch; original verification findings and evidence retained."
+      }
+    },
+    {
+      "id": "V-H03",
+      "title": "Nullable edit test matches an obsolete diagnostic",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/nullable.php",
+      "finding": "Fallback type edit is rejected as nullable selection branches require the same payload type, and emitted output is empty. Test instead requires substring coalesce branches require matching and reports invalidation failure.",
+      "evidence": [
+        "verification/results/php-oracle-inspection/logs/nullable.stderr",
+        "verification/results/oracle-followup",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/oracle-followup/logs/commands.json"
+      ],
+      "next_action": "Separately labelled oracle replay passes with other assertions preserved. Retain as a fixture repair candidate; original failure remains recorded.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_01; no further repair queued for this bounded issue.",
+      "acceptance": "Match the current nullable-selection diagnostic; retain rejection, empty output, repair and incremental assertions.",
+      "dependencies": [],
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_01.md",
+        "results": "fixture_repairs_01_results.json",
+        "scope": "Authorized seven-fixture batch; original verification findings and evidence retained.",
+        "detail": "Both stale coalesce and conditional-join diagnostic expectations corrected; first-attempt failure retained."
+      }
+    },
+    {
+      "id": "V-H04",
+      "title": "Negative operator fixtures predate admitted effectful expressions",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/property_mutations.php and tests/dynamic_boundaries.php",
+      "contract": "specs/expression_evaluation.md eager sequencing and Compound updates",
+      "finding": "Property negative fixture rejects $c->n += effect(), expressly admitted by the current RHS contract. Boxed negative fixture rejects $v++ + $v despite ordered snapshots. Original runs masked later negatives; the subsequent labelled replays below reach them. Three strict source probes execute with exact outputs 3:3:1 (property value/store/call count), 3:2 (mixed postfix snapshot) and 3:2 (dynamic postfix snapshot). Property-only oracle replay now passes all 12 generated programs and all remaining negatives after removing the single obsolete RHS negative; the two failure observers additionally require the separately cataloged V-H01 entry adaptation. Boxed replay now reaches all assertions: a second obsolete negative expected scalar-boxed indexing to reject in preparation. It correctly rejects at runtime because declared mixed/dynamic does not establish the current payload kind. Both family observers prove original int 7 remains unchanged. After isolating postfix and indexed negatives, preparation/recovery assertions pass.",
+      "evidence": [
+        "verification/results/php-oracle-inspection/logs/property_mutations.stderr",
+        "verification/results/wave-02/dynamic_families/logs/dynamic_boundaries.stderr",
+        "verification/results/source-probes-01/outcomes.json",
+        "verification/results/property-mutations-oracle-replay/outcomes.json",
+        "verification/results/boxed-boundary-oracle-02",
+        "verification/results/boxed-boundary-oracle-03",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/property-mutations-oracle-replay/logs/commands.json",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/boxed-boundary-oracle-03/logs/commands.json"
+      ],
+      "next_action": "None for this bounded repair; retain the original audit finding as historical evidence.",
+      "simple_batch_eligible": false,
+      "dependencies": [
+        "V-H01: test-owned exception observer repair; preserve boxed runtime failure and unchanged-value assertions."
+      ],
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_02; no further repair queued for this bounded issue.",
+      "acceptance": "Replace the effectful property RHS and boxed postfix stale negatives with exact 3:3:1 and 3:2 value/effect oracles. Scalar boxed indexing must fail at runtime with original int 7 unchanged. Preserve remaining preparation/recovery negatives and rerun both named suites after the V-H01 observer repair.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_02.md",
+        "results": "fixture_repairs_02_results.json",
+        "scope": "Authorized fixture/generator batch; original findings and evidence retained; no compiler/runtime fixes."
+      }
+    },
+    {
+      "id": "V-H05",
+      "title": "Artifact transport host template has an unfilled runtime-catalog placeholder",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/cpp_artifacts.py native_driver.php.in substitution",
+      "finding": "PHP host execution of generated driver fails on undefined __RUNTIME_CATALOG_DIR__ before comparing transport. This is not a native compiler build failure.",
+      "evidence": [
+        "verification/results/artifact-transport/logs/artifact-driver-host.stderr",
+        "verification/results/observer-followup/artifact",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/observer-followup/artifact/logs/commands.json"
+      ],
+      "next_action": "Test-only placeholder replay passed all artifact transport assertions. Retain as fixture repair candidate.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_01; no further repair queued for this bounded issue.",
+      "acceptance": "Fill the runtime-catalog placeholder in the test driver; retain host/artifact transport equality, malformed-source rejection and PCH/non-PCH execution checks.",
+      "dependencies": [],
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_01.md",
+        "results": "fixture_repairs_01_results.json",
+        "scope": "Authorized seven-fixture batch; original verification findings and evidence retained."
+      }
+    },
+    {
+      "id": "V-H06",
+      "title": "Indexed-container test observer invokes unavailable native string equality",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "compiler/my-try/tests/fixtures/container_calls.php native observer, consumed by tests/s2s.php",
+      "finding": "1408/1409 adapted S2S cases pass. Remaining C++ failure is in injected observer local_b == scpp::string_t{\"yes\"}, not emitted source-language code.",
+      "evidence": [
+        "verification/results/s2s-oracle-adapted/logs/container_call_indexed_typed_state-compile-unit-1.stderr",
+        "verification/results/string-observer-adapted",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/string-observer-adapted/logs/commands.json"
+      ],
+      "next_action": "Replay passed. Retain as a bounded fixture repair candidate; no compiler change required.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_01; no further repair queued for this bounded issue.",
+      "acceptance": "Replace only the injected native string comparison with the supported observation used by the passing replay; preserve indexed source and expected yes value.",
+      "dependencies": [],
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_01.md",
+        "results": "fixture_repairs_01_results.json",
+        "scope": "Authorized seven-fixture batch; original verification findings and evidence retained."
+      }
+    },
+    {
+      "id": "V-H07",
+      "title": "JSON native observer omits complete table definitions",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/json.php injected native predicate",
+      "finding": "Two JSON failure observers call table_if()->at() with only forward declarations available. Adding scpp/hash_t.hpp to the test observer makes both programs compile and pass; generated source functions are unchanged.",
+      "evidence": [
+        "verification/results/unmasked-suites/json_api",
+        "verification/results/observer-followup/json",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/observer-followup/json/logs/commands.json"
+      ],
+      "next_action": "Retain as test fixture repair candidate; no compiler change required.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_01; no further repair queued for this bounded issue.",
+      "acceptance": "Include complete table definitions in the native test observer; both mixed and dynamic failure observers must compile and execute without changing generated functions.",
+      "dependencies": [],
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_01.md",
+        "results": "fixture_repairs_01_results.json",
+        "scope": "Authorized seven-fixture batch; original verification findings and evidence retained."
+      }
+    },
+    {
+      "id": "V-D01",
+      "title": "Iteration mutation semantics remain explicitly unresolved",
+      "disposition": "Explicit v0.2 deferral",
+      "handling_class": "normal discussion",
+      "owner": "array semantics and iteration lifetime/invalidation",
+      "contract": "specs/array_semantics.md:64; CH06-ITER-01",
+      "finding": "Mutation/replacement through the direct source, alias or call has no promised live/snapshot/rejection policy. Non-mutating iteration passes its bounded contract.",
+      "evidence": [
+        "compiler/my-try/tests/fixtures/iteration.php",
+        "verification/results/s2s-oracle-adapted"
+      ],
+      "dependencies": [
+        "Agree semantics and lifetime/invalidation design before implementation"
+      ],
+      "next_action": "Discuss supported mutation policy; do not classify unspecified runtime outcomes as implementation defects.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-R01",
+      "title": "JSON module omits its value decoder/encoder provider from production builds",
+      "disposition": "Missing support: runtime build integration",
+      "handling_class": "simple fix",
+      "owner": "runtime/metadata/modules/json.json cpp_build sources",
+      "contract": "specs/builtins/json/json_decode.md; specs/builtins/json/json_encode.md; compiler/my-try/docs/architecture/native_cpp_build.md:73",
+      "finding": "JSON publication selects only modules/json/document.cpp alongside core/process/datetime. A valid strict source using json_decode, json_decode_mixed and json_encode fails production linkage with undefined decode_dynamic, decode_mixed and both encode overloads. Existing json_api.py explicitly links json.cpp and masked this omission.",
+      "evidence": [
+        "verification/results/json-shape-probe/logs/build.stderr",
+        "verification/results/json-shape-probe/published/.scpp-output.manifest"
+      ],
+      "dependencies": [],
+      "next_action": "None for this bounded repair; preserve original finding and evidence as historical.",
+      "simple_batch_eligible": false,
+      "affected_checks": [
+        "LV32.002"
+      ],
+      "acceptance": "Production Native_CPP_Build must link and execute json_decode, json_decode_mixed, both json_encode payload families and document APIs from metadata-selected sources. Changing provider requirements must invalidate the relevant native cache. Keep CMake aggregate ordering V-R11 separate.",
+      "repair_status": "implemented-and-verified",
+      "eligibility_reason": "Authorized repair completed and verified in simple_repairs_03.",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "simple_repairs_03.md",
+        "results": "simple_repairs_03_results.json",
+        "scope": "JSON build metadata only plus tests; supporting documentation reconciliation; no implementation fixes."
+      }
+    },
+    {
+      "id": "S06",
+      "title": "Brace-free if/else bodies remain unsupported",
+      "disposition": "Missing strict v0.1 source support",
+      "handling_class": "light discussion",
+      "owner": "Control-flow parser",
+      "finding": "The original strict string fixture and a builtin-free if/else probe both stop at the required opening brace. This is a bounded implementation restriction, not an agreed permanent language incompatibility.",
+      "evidence": [
+        "verification/results/strict-04",
+        "verification/results/call-contract-probes/brace_free_if"
+      ],
+      "dependencies": [],
+      "next_action": "Discuss one-statement body parsing and dangling-else binding policy, then implement in the existing control-flow parser. Keep downstream strpos API gap separate.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-L01",
+      "title": "Restricted union declarations have no v0.2 admission path",
+      "disposition": "Missing promised source support",
+      "handling_class": "normal discussion",
+      "owner": "Union syntax, declaration preparation and C++ storage",
+      "contract": "specs/compact_layout_types.md",
+      "finding": "A first-slice union containing only public int32/bool fields fails at byte 6 with Expected semicolon. specs/compact_layout_types.md promises this restricted surface; tests/tools/test_scpp_union_compile_probe.php is an existing v0.1 workflow proof.",
+      "evidence": [
+        "verification/results/enum-layout-probes"
+      ],
+      "dependencies": [],
+      "next_action": "Discuss union declaration ownership, recursive payload eligibility and untagged storage lowering; reuse existing declaration/type/layout machinery.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-L02",
+      "title": "All four declared layout probe helpers are unresolved",
+      "disposition": "Missing promised source support",
+      "handling_class": "normal discussion",
+      "owner": "Compile-time type/field query preparation and C++ emission",
+      "contract": "specs/compact_layout_types.md",
+      "finding": "layout_sizeof, layout_alignof, layout_offsetof and layout_field_sizeof fail resolved-function lookup even for an admitted int32-only struct. These helpers are explicitly promised by specs/compact_layout_types.md section 6.",
+      "evidence": [
+        "verification/results/enum-layout-probes"
+      ],
+      "dependencies": [],
+      "next_action": "Discuss compile-time type/field argument handling and prepared layout query facts; do not implement as ordinary runtime metadata functions.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-D03",
+      "title": "Trait lifecycle methods and conflict policy are deferred",
+      "disposition": "Explicit v0.2 deferral",
+      "handling_class": "normal discussion",
+      "owner": "Trait composition and construction/destruction",
+      "contract": "specs/inheritance_v0_2.md:322",
+      "finding": "Focused source probes reject at the documented admission boundary; no broader runtime behavior is claimed.",
+      "evidence": [
+        "verification/results/trait-boundary-probes"
+      ],
+      "dependencies": [
+        "Agree the deferred semantic contract before implementation"
+      ],
+      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-D04",
+      "title": "Unique and weak conditional joins are deferred",
+      "disposition": "Explicit v0.2 deferral",
+      "handling_class": "normal discussion",
+      "owner": "Selection and ownership transfer",
+      "contract": "specs/inheritance_v0_2.md:469,495",
+      "finding": "Focused source probes reject at the documented admission boundary; no broader runtime behavior is claimed.",
+      "evidence": [
+        "verification/results/trait-boundary-probes"
+      ],
+      "dependencies": [
+        "Agree the deferred semantic contract before implementation"
+      ],
+      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-D05",
+      "title": "Static interface implementation selection is deferred",
+      "disposition": "Explicit v0.2 deferral",
+      "handling_class": "normal discussion",
+      "owner": "Interface contracts and static call resolution",
+      "contract": "specs/static_members_v0_2.md:43",
+      "finding": "Focused source probes reject at the documented admission boundary; no broader runtime behavior is claimed.",
+      "evidence": [
+        "verification/results/trait-boundary-probes"
+      ],
+      "dependencies": [
+        "Agree the deferred semantic contract before implementation"
+      ],
+      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-H08",
+      "title": "Interpolation suite retains obsolete scalar-concatenation rejection",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/interpolation.php",
+      "contract": "specs/dynamic_types.md:1.3A; current text-conversion admission",
+      "finding": "Original suite stops at \"$x\" . 2 negative. Test-only replay removes that single negative; all remaining assertions pass. Independent native probe verifies scalar/null concat bytes a2|b1|c|d.",
+      "evidence": [
+        "verification/results/string-grid-probe/logs/interpolation-contract.stderr",
+        "verification/results/string-grid-probe-02",
+        "language_verification_evidence/logs-checkpoint-70.json.gz:results/expression-structure-provenance/logs/interpolation.stderr"
+      ],
+      "next_action": "None for this bounded repair; retain the original audit finding as historical evidence.",
+      "simple_batch_eligible": false,
+      "dependencies": [],
+      "acceptance": "Replace only the obsolete scalar concatenation rejection with the independent exact-byte a2|b1|c|d oracle; all remaining interpolation grammar and type negatives must retain their rejection stages.",
+      "repair_status": "implemented-and-verified",
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_02; no further repair queued for this bounded issue.",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_02.md",
+        "results": "fixture_repairs_02_results.json",
+        "scope": "Authorized fixture/generator batch; original findings and evidence retained; no compiler/runtime fixes."
+      }
+    },
+    {
+      "id": "V-L03",
+      "title": "Ordinary string comparison operators lack admission",
+      "disposition": "Missing support; current bounded compiler gate is not a permanent compatibility exception",
+      "handling_class": "light discussion",
+      "owner": "Shared operator admission and C++ lowering",
+      "contract": "specs/operator_matrix/data/semantics/operators_comparison_equality/equal__string_t__string_t.tsv; bounded scalar operator catalog",
+      "finding": "New strict source probes reject ==, !=, <, <=, >, >= and <=> for string/string. Strict ===/!== byte identity succeeds separately. The runtime matrix describes ordinary same-type string equality as supported; do not confuse a passing rejection oracle with language support.",
+      "evidence": [
+        "verification/results/string-grid-probe-02",
+        "verification/results/wave-02/string_identity"
+      ],
+      "dependencies": [
+        "Reconcile each ordinary comparison contract before selecting the implementation slice"
+      ],
+      "next_action": "None for seven exact string/string comparisons; wrappers, mixed-type comparisons and table semantics remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "string_comparisons_l03.md",
+        "results": "string_comparisons_l03_results.json",
+        "scope": "All seven exact byte string comparisons, ordered value snapshots; no runtime implementation changes."
+      }
+    },
+    {
+      "id": "V-H09",
+      "title": "Matrix generator omits 39 supported probe rows",
+      "disposition": "Test generation coverage gap; supplementary audit probes now cover all rows",
+      "handling_class": "simple fix",
+      "owner": "Operator-matrix seed generation",
+      "contract": "specs/count_empty_isset_contract.md; v0.2 preparation diagnostics policy",
+      "finding": "All 39 rows have no test_seed_class in the audited matrix. Supplemental strict-source probes now verify 12 count_value, 14 empty_keyed and 13 empty_value rows. Six known scalar empty cases must map to preparation rejection, rather than blindly preserving native-runtime rejection stage.",
+      "evidence": [
+        "language_verification_unseeded_rows.json",
+        "verification/results/unseeded-probes-02"
+      ],
+      "dependencies": [
+        "Reuse stable row IDs and current stage distinction; include native observer dependencies explicitly"
+      ],
+      "next_action": "None for this bounded repair; retain the original audit finding as historical evidence.",
+      "simple_batch_eligible": false,
+      "acceptance": "Generate all 39 stable row IDs and verify the reviewed 12 count_value, 14 empty_keyed and 13 empty_value mappings. The six statically invalid scalar empty cases must reject in preparation; native cases require their exact observation dependencies and values.",
+      "repair_status": "implemented-and-verified",
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_02; no further repair queued for this bounded issue.",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_02.md",
+        "results": "fixture_repairs_02_results.json",
+        "scope": "Authorized fixture/generator batch; original findings and evidence retained; no compiler/runtime fixes."
+      }
+    },
+    {
+      "id": "V-D06",
+      "title": "Non-scalar returns and loop transfers crossing finally are deferred",
+      "disposition": "Explicit v0.2 deferral; not a permanent compatibility exception",
+      "handling_class": "normal discussion",
+      "owner": "Finally control-flow and return transport preparation/emission",
+      "contract": "specs/exceptions_v0_2.md:90-103",
+      "finding": "Existing proofs reject reference/container/Result/shared Exception returns and cross-region break/continue. New probes confirm unique/weak/inline-record crossing returns reject at scalar-or-void transport admission. Owning and weak returns after the finally region complete work and preserve lifetime.",
+      "evidence": [
+        "verification/results/wave-01/records-finally",
+        "verification/results/finally-transfer-probe",
+        "verification/results/finally-transfer-probe-02"
+      ],
+      "dependencies": [
+        "Agree saved return ownership/reference transport and crossing control-flow semantics"
+      ],
+      "next_action": "Discuss extension of the bounded finally transfer model; keep it separate from supported scalar/void behavior.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-D07",
+      "title": "Named arguments, unpacking and reference default/variadic forms remain deferred",
+      "disposition": "Explicit bounded call-contract exclusions; not permanent compatibility exceptions",
+      "handling_class": "normal discussion",
+      "owner": "Call argument binding and parameter contracts",
+      "contract": "specs/instance_methods_v0_2.md:64-85; compiler/my-try/docs/catalog/04_functions.md",
+      "finding": "Named reordered/duplicate/mixed calls reject at parser admission before name binding. Call-site unpacking rejects for free and instance methods. Reference defaults and reference variadics reject; supported fixed references plus value defaults/variadics execute with ordered alias-aware effects.",
+      "evidence": [
+        "verification/results/call-contract-probes",
+        "verification/results/argument-combinations-probe"
+      ],
+      "dependencies": [
+        "Agree binding/evaluation and pack/reference contracts before expanding admission"
+      ],
+      "next_action": "Discuss named binding and unpacking independently from reference default/variadic semantics; retain positional regression proofs.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S13",
+      "title": "Strict IO resource type and source bindings are absent",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "runtime IO metadata/type registration and resource lifetime integration",
+      "contract": "specs/simple_cpp_php_strict_quick_learn.md:1228; specs/builtins/filesystem/first_pass.md",
+      "evidence": [
+        "verification/results/io-first-blocker",
+        "v0_1_compatibility_strict_s02_results.json"
+      ],
+      "finding": "Dedicated frozen-snapshot probes independently reject resource_handle, io_open and io_close as unresolved. Earlier declaration-only S02 migrations pass their v0.1 IO oracles but cannot enter the v0.2 IO path. Open/read/write/failure/unwind/release behavior remains masked; process and file-lock handles are different APIs.",
+      "affected_checks": [
+        "LV31.003",
+        "LV32.003"
+      ],
+      "dependencies": [
+        "Agree the existing IO resource representation and its metadata, wrapper and lifetime boundaries before exposing the family."
+      ],
+      "next_action": "Discuss source binding/ownership admission, then rerun original IO scenarios and failure/unwind probes. No repair authorized by verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-D08",
+      "title": "Enum extension surface remains explicitly deferred",
+      "disposition": "Explicit current deferral",
+      "handling_class": "normal discussion",
+      "owner": "enum semantic model and shared method/interface/wrapper integration",
+      "contract": "compiler/my-try/docs/catalog/09_value_types.md ENUM-003/004; compiler/my-try/docs/catalog/15_blocking_debt.md Chapter 09 closeout follow-ups",
+      "evidence": [
+        "verification/results/enum-extension-admission"
+      ],
+      "finding": "Eight probes reject string backing, cases/from/tryFrom, methods, interfaces, nullable enum and Result enum payloads. Imported v0.1 catalog marks reflection/method extensions unsupported; no v0.1 support is inferred from PHP syntax. Current CH09 closeout explicitly defers these extensions, not permanently removes them from compatibility goals.",
+      "affected_checks": [
+        "LV22.003"
+      ],
+      "dependencies": [
+        "Agree enum extension semantics and interaction with method/interface foundations and payload capabilities."
+      ],
+      "next_action": "Discuss extensions individually after the bounded enum implementation; retain existing explicit enum_name/value/from_value support.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-P01",
+      "title": "Project composition and public export policy are not exposed by the my-try CLI",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "host project configuration and compiler module/runtime configuration boundary",
+      "contract": "specs/project_build_v1.md:233; compiler/my-try/main.php CLI grammar",
+      "evidence": [
+        "verification/results/cli-project-boundary",
+        "compiler/my-try/main.php",
+        "compiler/my-try/tools/build_cpp.php"
+      ],
+      "finding": "Production CLI accepts one source directory with entry/output options. It does not consume prism.json project dependencies/public_exports or expose runtime module selection; a second positional source root rejects with usage. API-level disjoint module discovery, publication and native build exist, but do not implement the v0.1 project-policy workflow. Successful same-root imported callable+strlen execution and stale-build rejection are separately proved.",
+      "affected_checks": [
+        "LV25.004",
+        "LV33.003"
+      ],
+      "dependencies": [
+        "Agree project-manifest/dependency/export-policy integration through existing module and runtime configuration owners."
+      ],
+      "next_action": "Discuss bounded project CLI composition; do not duplicate semantic resolution in a manifest reader or equate API tests with CLI project support.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S04",
+      "title": "Falseable string result identity",
+      "disposition": "Missing/broken support",
+      "handling_class": "light discussion",
+      "owner": "wrapper/scalar comparison admission",
+      "contract": "specs/conditional_expression_matrix.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/process/strict_level_01/strict_process_001_shell_exec_contract.phs"
+      ],
+      "finding": "Original shell_exec result identity comparison rejects as an integer operation. Successful process module handles are unrelated to this legacy strict wrapper expression.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S05",
+      "title": "Reference-captured closure explicit callable boundary",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "callable signature identity and capture/reference boundary",
+      "contract": "specs/language/closures.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/closures/strict_level_02/closures_004_use_reference_capture.phs"
+      ],
+      "finding": "Original explicitly typed callable with reference capture fails exact signature admission. Other verified concrete reference capture cases do not remove this boundary failure.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S07",
+      "title": "Mixed type predicate source bindings",
+      "disposition": "Missing/broken support",
+      "handling_class": "light discussion",
+      "owner": "runtime metadata and boxed-kind predicate surface",
+      "contract": "specs/simple_cpp_php_strict_quick_learn.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/control_flow/strict_level_01/strict_control_flow_002_mixed_type_predicates.phs"
+      ],
+      "finding": "Original strict predicate fixture stops at unresolved is_bool; later predicates remain masked.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S08",
+      "title": "Debug helper source exposure",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "debug helper signature/lowering contract",
+      "contract": "specs/simple_cpp_php_strict_quick_learn.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/debug/strict_level_01/strict_debug_001_dbg_scalar.phs"
+      ],
+      "finding": "Original strict dbg scalar fixture stops at unresolved dbg. Its diagnostics and argument contract require review before admission.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S09",
+      "title": "String search and replacement source API gaps",
+      "disposition": "Missing/broken support",
+      "handling_class": "light discussion",
+      "owner": "strings runtime metadata/source API compatibility",
+      "contract": "specs/php/library_profiles.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+        "tests/php/strings/strict_level_01/strict_strings_002_str_edges.phs"
+      ],
+      "finding": "Two original strict fixtures independently stop at substr_replace and strpos. Existing registered string functions do not prove these unchanged spellings are exposed.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S10",
+      "title": "Borrowed source span admission is explicitly deferred",
+      "disposition": "Explicit current deferral",
+      "handling_class": "normal discussion",
+      "owner": "source borrow lifetime/invalidation model",
+      "contract": "specs/compiler_support_runtime_contract.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/source/strict_level_01/strict_source_001_buffer_span.phs",
+        "tests/php/source/strict_level_01/strict_source_003_stable_hash.phs",
+        "tests/php/strings/strict_level_01/strict_strings_009_text_builder.phs"
+      ],
+      "finding": "Three original strict fixtures fail at source_buffer_span or byte_span. The v0.2 amendment explicitly excludes these raw-owner views until a borrow/invalidation model is agreed; this is not a permanent compatibility exception.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S11",
+      "title": "Typed tokenizer source facade is absent",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "public compiler-support tokenizer provider boundary",
+      "contract": "specs/compiler_support_runtime_contract.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/tokenizer/strict_level_01/strict_tokenizer_001_typed_buffer_accessors.phs"
+      ],
+      "finding": "Original strict tokenizer fixture stops at unresolved phs_tokenize_buffer. Internal compiler tokenization does not expose this public source API.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-H10",
+      "title": "Closure container negative fixture masks its intended assertion",
+      "disposition": "Test/harness defect",
+      "handling_class": "light discussion",
+      "owner": "strict compatibility negative fixture migration",
+      "contract": "specs/data_initialization.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/closures/strict_level_02/closures_009_container_storage_negative.phs"
+      ],
+      "finding": "Original [] initialization rejects before closure storage. v0.2 has positive typed callable-container support; decide the intended invalid storage boundary and rewrite its test separately from compiler fixes.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-D09",
+      "title": "php::microtime alias requires a compatibility decision",
+      "disposition": "Contract requires discussion",
+      "handling_class": "light discussion",
+      "owner": "runtime source alias policy",
+      "contract": "specs/php/library_profiles.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/strings/strict_level_01/strict_strings_005_php_microtime_static_call.phs"
+      ],
+      "finding": "Original strict php::microtime call passes v0.1 but v0.2 cannot resolve type php. dt_* support does not by itself authorize source migration.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-E02",
+      "title": "Strict curl corpus lacks a provider/project adapter",
+      "disposition": "Environment/provider blocker",
+      "handling_class": "normal discussion",
+      "owner": "compatibility runner optional provider setup",
+      "contract": "specs/project_build_v1.md",
+      "evidence": [
+        "language_verification_evidence/strict-04.json"
+      ],
+      "cases": [
+        "tests/php/curl/strict_level_01/strict_curl_001_surface.phs",
+        "tests/php/curl/strict_level_01/strict_curl_002_http_get.phs",
+        "tests/php/curl/strict_level_01/strict_curl_003_github_raw_optin.phs",
+        "tests/php/curl/strict_level_01/strict_curl_004_post_input.phs",
+        "tests/php/curl/strict_level_01/strict_curl_005_json_roundtrip.phs"
+      ],
+      "finding": "Five strict curl cases are blocked before either compiler. No baseline or v0.2 behavioral result is claimed; local server fixtures and an explicit opt-in external-network case need separate handling.",
+      "dependencies": [
+        "Resolve the named source contract/owner before any repair."
+      ],
+      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "S02",
+      "title": "Legacy comment declarations are deferred",
+      "disposition": "Deferred legacy syntax",
+      "handling_class": "normal discussion",
+      "owner": "legacy declaration syntax compatibility",
+      "evidence": [
+        "language_verification_evidence/strict-04.json",
+        "v0_1_compatibility_strict_s02_results.json"
+      ],
+      "finding": "Six strict-profile fixtures still use comment type declarations. User explicitly deferred this syntax. Declaration-only migrations separately prove four datetime/filesystem scenarios and expose S13 in two IO scenarios.",
+      "dependencies": [
+        "User explicitly reopens legacy syntax scope."
+      ],
+      "next_action": "Keep original failures separate from declaration-only migration evidence; no repair in the strict verification goal.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-D10",
+      "title": "Live provider constraint replacement is outside immutable startup metadata contract",
+      "disposition": "Explicit current deferral",
+      "handling_class": "normal discussion",
+      "owner": "runtime catalog lifecycle and semantic identity invalidation",
+      "contract": "specs/runtime_module_metadata.md:518",
+      "evidence": [
+        "verification/results/wave-02/runtime_generics",
+        "verification/results/modern-host-runtime_assets/logs/runtime_catalog.stdout"
+      ],
+      "finding": "LV27.003 asks for selective specialization behavior after a live provider-constraint edit. Catalog edits are specified to take effect in a new compiler session; live replacement rejects. Existing generic checks prove shared provider identity with distinct concrete signatures, stale-binding rejection after reset, and source producer-type failure/repair, but not unsupported live catalog mutation.",
+      "affected_checks": [
+        "LV27.003"
+      ],
+      "dependencies": [
+        "Explicitly agree catalog hot reload and identity invalidation semantics before requiring selective preservation across metadata edits."
+      ],
+      "next_action": "Keep live constraint-edit scenario deferred. Ordinary source incremental specialization and startup validation retain their existing verified scope.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-R02",
+      "title": "Strict task runtime module is absent",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "Task object/callback/ownership contracts and opt-in provider integration",
+      "contract": [
+        "specs/builtins/tasks/README.md",
+        "specs/builtins/tasks/first_pass.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json"
+      ],
+      "finding": "Normative strict opt-in experimental task API; optional selection is not a deferral. No current metadata module; source names unresolved. Distinct from async syntax S12.",
+      "affected_names": [
+        "task_run",
+        "task_run_publish",
+        "task_start",
+        "task_join",
+        "task_cancel",
+        "task_done",
+        "task_status",
+        "task_progress",
+        "task_set_status",
+        "task_set_worker_pool_size",
+        "task_set_publish_try_lock",
+        "task_publish_lock_wait_us",
+        "task_publish_lock_hold_us",
+        "task_publish_callback_us",
+        "task_publish_batch_count",
+        "task_publish_published_count",
+        "task_publish_max_batch_size",
+        "task_publish_failed_try_lock_count",
+        "task_publish_deferred_flush_count"
+      ],
+      "dependencies": [],
+      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+    },
+    {
+      "id": "V-R03",
+      "title": "Strict curl runtime module is absent",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "Resource handle contracts, curl options and provider integration",
+      "contract": [
+        "specs/builtins/curl/README.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json"
+      ],
+      "finding": "Nine documented strict names absent. Source admission now independently established; five original v0.1 comparisons remain adapter-blocked (V-E02).",
+      "affected_names": [
+        "curl_init",
+        "curl_setopt",
+        "curl_exec",
+        "curl_getinfo",
+        "curl_errno",
+        "curl_error",
+        "curl_reset",
+        "curl_close",
+        "curl_strerror"
+      ],
+      "dependencies": [],
+      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+    },
+    {
+      "id": "V-R04",
+      "title": "Regex filter registration is held by conflicting replacement semantics",
+      "disposition": "Contract conflict",
+      "handling_class": "light discussion",
+      "owner": "Regex literal versus backreference replacement and empty-input error contract",
+      "contract": [
+        "specs/builtins/regex/preg_filter.md",
+        "compiler/my-try/docs/planning/runtime_catalog_coverage.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json"
+      ],
+      "finding": "Public literal replacement versus provider backreference expansion and empty-input validation debt; requires semantic reconciliation.",
+      "affected_names": [
+        "regex_filter"
+      ],
+      "dependencies": [],
+      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+    },
+    {
+      "id": "V-R05",
+      "title": "Regex callback bindings need provider ABI integration",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "Structural callable and capture-container provider ABI",
+      "contract": [
+        "specs/builtins/regex/preg_replace_callback.md",
+        "specs/builtins/regex/preg_replace_callback_array.md",
+        "compiler/my-try/docs/planning/runtime_catalog_coverage.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json"
+      ],
+      "finding": "Structural callable metadata exists, but provider callback/container ABI must be audited before registration.",
+      "affected_names": [
+        "regex_replace_callback",
+        "regex_replace_callback_array"
+      ],
+      "dependencies": [],
+      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+    },
+    {
+      "id": "V-R06",
+      "title": "Stable hashing violates its stability prerequisite",
+      "disposition": "Contract conflict",
+      "handling_class": "normal discussion",
+      "owner": "Stable hash algorithm and persisted-key migration",
+      "contract": [
+        "specs/compiler_support_runtime_contract.md",
+        "compiler/my-try/docs/catalog/15_blocking_debt.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json"
+      ],
+      "finding": "CH15-RUNTIME-HASH-01: std::hash dependency conflicts with stability promise; persisted-key migration needs discussion. Byte variants also require spans.",
+      "affected_names": [
+        "hash_string",
+        "stable_hash_string_u64",
+        "hash_bytes",
+        "stable_hash_bytes_u64"
+      ],
+      "dependencies": [
+        "S10"
+      ],
+      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+    },
+    {
+      "id": "V-R07",
+      "title": "Strict vector capacity and construction helpers lack source bindings",
+      "disposition": "Missing/broken support",
+      "handling_class": "light discussion",
+      "owner": "core runtime metadata and generic reference/value signatures",
+      "contract": [
+        "runtime/include/lang/php/support/php_value.hpp",
+        "generators/php/specs/php_runtime_symbols_strict.json"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-36.json.gz#results/provider-vector-admission/outcomes.json"
+      ],
+      "finding": "Seven strict-symbol-map helpers have provider implementations but no current metadata bindings. Eight strict source calls, including both vector_compact arities, reject as unresolved. Historical successful v0.1 fixture is legacy-profile evidence only; it is not rerun or relabelled strict.",
+      "dependencies": [],
+      "next_action": "Agree generic signatures and mutation/copy constraints, including both compact arities, before registering the family. Keep historical legacy fixture outside strict totals.",
+      "acceptance": "Strict programs prove reserve/capacity, resize fill/shrink, clear capacity policy, filled value copies, compact arities and negative argument errors through production build.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Generic mutation/default-value and capacity contracts need a bounded review; missing registration is not proof of a trivial patch."
+    },
+    {
+      "id": "V-R08",
+      "title": "UI and WebView preview modules have no v0.2 source exposure",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "UI/WebView handles, event carriers, module dependencies and build selection",
+      "contract": [
+        "docs/ui_webview_preview.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json",
+        "language_verification_provider_comparison.json"
+      ],
+      "finding": "Supporting release guide promises 24 frozen strict preview APIs, corroborated by pinned strict project samples. All 24 names are unresolved with current modules. Missing source/module support is independent of GUI execution availability; no GUI/platform sweep was attempted.",
+      "affected_names": [
+        "ui_app_create",
+        "ui_window_create",
+        "ui_window_show",
+        "ui_window_close",
+        "ui_app_poll",
+        "ui_app_next_event",
+        "ui_app_exit",
+        "ui_event_type",
+        "ui_event_window",
+        "ui_event_text",
+        "ui_event_webview",
+        "ui_event_message",
+        "ui_event_url",
+        "webview_create",
+        "webview_load_url",
+        "webview_load_html",
+        "webview_load_app",
+        "webview_eval",
+        "webview_reply_ok",
+        "webview_reply_error",
+        "webview_message_id",
+        "webview_message_command",
+        "webview_message_payload_json",
+        "webview_close"
+      ],
+      "dependencies": [],
+      "next_action": "Agree module/type integration; run headless admission/build checks first, then a separately authorized suitable GUI smoke. Do not classify absent module as merely unavailable display.",
+      "acceptance": "Explicit contract disposition for every listed public name, followed by signature/behavior/provider integration proofs for retained APIs.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Provider, type and integration decisions remain; not a proven metadata-only repair."
+    },
+    {
+      "id": "V-D11",
+      "title": "Collection provider migration has no established replacement contract",
+      "disposition": "Contract review",
+      "handling_class": "normal discussion",
+      "owner": "Collection algorithms, callback ABI and container family migration",
+      "contract": [
+        "specs/portability/collection_helpers.md",
+        "specs/dynamic_types.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json",
+        "language_verification_provider_comparison.json"
+      ],
+      "finding": "Six generic collection names absent; portable-framework supporting contract and callback/carrier restrictions require baseline-specific audit. Pinned baseline includes all six algorithms/adapters and descends from adapter commit 541413ac; current runtime header is absent. Determine migration intent and provider ownership before proposing registrations.",
+      "affected_names": [
+        "collection_map",
+        "collection_filter",
+        "sequence_map",
+        "sequence_filter",
+        "keyed_map",
+        "keyed_filter"
+      ],
+      "dependencies": [],
+      "next_action": "Determine retained typed vector/hash algorithms and explicitly decide old mixed/dynamic cases under current tagged-family rules. Do not silently restore the old header or assume its removal was intentional.",
+      "acceptance": "Explicit contract disposition for every listed public name, followed by signature/behavior/provider integration proofs for retained APIs.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Provider, type and integration decisions remain; not a proven metadata-only repair."
+    },
+    {
+      "id": "V-R09",
+      "title": "Regex replacement limit overload is absent",
+      "disposition": "Missing/broken support",
+      "handling_class": "normal discussion",
+      "owner": "Regex provider binding and shared reference/value overload admission",
+      "contract": [
+        "specs/builtins/regex/preg_replace.md",
+        "compiler/my-try/docs/planning/runtime_catalog_coverage.md"
+      ],
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-37.json.gz#results/regex-limit-admission/outcomes.json"
+      ],
+      "finding": "Three-argument regex_replace admits; documented fourth integer limit rejects during preparation. Existing module audit records const-limit/nonconst-count provider overload collisions for emitted snapshots. This is a missing public overload, distinct from regex_filter semantics and callback ABI.",
+      "dependencies": [],
+      "next_action": "Discuss unambiguous provider targets and reference/value overload handling; do not append a speculative metadata row.",
+      "acceptance": "Production builds prove limits -1, 0 and positive, reject/throw invalid negative per contract, preserve backreferences, and distinguish any separate count-output signature.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Provider overload collision requires shared binding/admission review."
+    },
+    {
+      "id": "V-D12",
+      "title": "Platform query and environment contract authority needs clarification",
+      "disposition": "Contract review",
+      "handling_class": "light discussion",
+      "owner": "Public runtime surface specifications and module inventory",
+      "contract": [
+        "specs/portability/source_discovery.md",
+        "compiler/my-try/docs/planning/runtime_catalog_coverage.md"
+      ],
+      "evidence": [
+        "language_verification_provider_comparison.json",
+        "language_verification_evidence/logs-checkpoint-35.json.gz#results/provider-name-admission/outcomes.json"
+      ],
+      "finding": "fs_is_windows appears in the strict symbol inventory and portability source-discovery guidance, but has no current metadata binding; no public standalone signature authority established in this audit. getenv behavior is tested and registered, while its independently normative source contract was not located. These are not approved intentional removals.",
+      "dependencies": [],
+      "next_action": "Settle public source status/owner and record normative signatures and failure policy before deciding registration or exclusion.",
+      "acceptance": "Each name has an authoritative public/internal disposition; retained APIs have exact source/provider evidence.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Public contract decision remains."
+    },
+    {
+      "id": "V-L04",
+      "title": "Float comparisons and mutation lack source admission",
+      "disposition": "Missing support",
+      "handling_class": "light discussion",
+      "owner": "04_analyze/operators floating and mutation owners",
+      "contract": "runtime/specs/config.json enabled overload_families; runtime/specs/spec.md sections 6.2 and 6.3",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Six ordinary float comparisons and four prefix/postfix increment/decrement cells reject during preparation despite enabled float_arithmetic/float_mutation rules. The scalar guide explicitly defers their implementation; this is missing support, not intentional incompatibility. Float arithmetic and unary plus/minus admit. Strict float identity, compounds and cross-type comparisons are outside this ten-cell finding.",
+      "dependencies": [],
+      "next_action": "None for the ten-form V-L04 scope. Strict identity, cross-type comparisons, compounds and wrappers remain separate.",
+      "acceptance": "Verify all six comparisons and four mutations, values and result types, prefix/postfix old/new values, storage update and evaluation order; review compounds and cross-type rules independently.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Operator admission and condition/mutation integration require the agreed discussion; no implementation authorized by verification goal.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "float_operators_l04.md",
+        "results": "float_operators_l04_results.json",
+        "scope": "Six exact float/float comparisons and four value-snapshot float mutations; no runtime implementation changes."
+      }
+    },
+    {
+      "id": "V-L05",
+      "title": "Canonical numeric logical operations lack source admission",
+      "disposition": "Missing support",
+      "handling_class": "light discussion",
+      "owner": "04_analyze/operators logical preparation and shared condition conversion",
+      "contract": "runtime/specs/config.json enabled overload_families; runtime/specs/spec.md sections 6.2 and 6.3",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Canonical int and float each reject !, && and || despite enabled int_logical/float_logical runtime rules. Bool equivalents admit. A bool-only bounded compiler implementation is not an explicit normative removal of numeric logical support. Word aliases and xor remain separate unclassified cells.",
+      "dependencies": [],
+      "next_action": "None for approved numeric !/AND/OR scope; xor, bool/numeric pairs, fixed widths and wrappers remain separate.",
+      "acceptance": "Verify numeric zero/nonzero negation and lazy conjunction/disjunction for int and float; RHS effects/errors must be skipped when determined by the LHS and result type must be bool.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Operator admission and condition/mutation integration require the agreed discussion; no implementation authorized by verification goal.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "numeric_logical_l05.md",
+        "results": "numeric_logical_l05_results.json",
+        "scope": "Original six cells plus explicitly approved and/or aliases and int/float pairs in both orders; no runtime implementation changes."
+      }
+    },
+    {
+      "id": "V-L06",
+      "title": "Carrier equality and float strict identity lack source admission",
+      "disposition": "Missing support",
+      "handling_class": "normal discussion",
+      "owner": "04_analyze/operators identity preparation and runtime identity adapters",
+      "contract": "runtime/specs/spec.md sections 3a and 7a; runtime/specs/spec.md section 6.10",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Eight homogeneous cells reject: === and !== for float, nullable<int>, result<int>, result_or_false<int>. Shared identity normalizes carriers and compares visible values. Int, bool, string, mixed and dynamic homogeneous identity admit. This issue groups the normalization/admission gap; falseable-string S04 remains linked as a related pre-existing case. Fixed-width identity remains separately bounded. Six ordinary ==/!= carrier cells also reject despite the explicit branch-normalization contract; ordinary and strict equality must remain semantically distinct.",
+      "dependencies": [
+        "S04"
+      ],
+      "next_action": "Discuss a shared carrier admission/normalization model before implementation; keep distinct equality normalization and guarded unwrap semantics.",
+      "acceptance": "Prove homogeneous float and carrier identity, absent/error/sentinel distinctions, differing visible kinds and single ordered evaluation; retain S04 as a related string carrier proof.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Carrier normalization and operand preparation need a shared design; this verification goal authorizes no implementation."
+    },
+    {
+      "id": "V-L07",
+      "title": "Guarded carrier operator lifting lacks source admission",
+      "disposition": "Missing support",
+      "handling_class": "normal discussion",
+      "owner": "04_analyze/operators operand normalization and carrier decisions",
+      "contract": "runtime/specs/spec.md sections 3a and 7a; runtime/specs/spec.md section 9; config types operator_lifting_rule and nullable_lifted_ops",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Twelve homogeneous <, <=, >, >= cells reject for nullable<int>, result<int> and result_or_false<int>. The runtime ordering contract explicitly admits these carrier families for admitted payload ordering and requires runtime unwrap errors for unusable states. This finding does not yet classify wrapper arithmetic, equality, logical, mutation or spaceship. Eighteen &, |, ^, <<, >> and ~ cells for the same three integer carriers also reject despite section 9 explicitly requiring guarded lifting. The types operator_lifting_rule and nullable_lifted_ops blocks also expose 37 rejected integer-carrier arithmetic, logical, unary and mutation cells. Four explicitly conflicting nullable arithmetic cells stay under V-D13. Nullable negation admits but checkpoint 48 proves its empty-state semantic mismatch, tracked separately as V-L08.",
+      "dependencies": [],
+      "next_action": "E5BNI verifies 192 bool/numeric carrier strict identities plus eight scalar prerequisites. Total 2,752 verified signatures; review 1,200 design/scope candidates. Ordinary equality, string-related identity, logical mixing and other domains remain separate.",
+      "acceptance": "Prove present integer payload ordering and all applicable absent/error/sentinel failures, left-to-right evaluation, unchanged source states and empty artifacts for genuinely invalid payload types. Include each admitted integer bitwise/shift family and valid shift counts, with distinct unusable-state unwrap failures. Include arithmetic, unary, lazy logical and mutation value/state/write-back proofs; do not replace guarded unwrap with condition truthiness.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Carrier normalization and operand preparation need a shared design; this verification goal authorizes no implementation.",
+      "repair_status": "partially-implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "guarded_wrappers_01.md",
+        "results": "guarded_wrappers_01_results.json",
+        "scope": "Approved first guarded canonical-int slice; original audit evidence retained. No runtime implementation changes."
+      },
+      "remaining_scope": [
+        "Cross-family and mixed ordinary equality remain separate; mixed int/float strict identity is verified; cross-family matching-payload strict identity is verified; matching canonical scalar equality for same carriers and carrier/plain arrangements is verified for all four carriers.",
+        "All 336 matching-payload and 96 float-destination/int-RHS carrier compounds and U1 updates complete for admitted stable targets. Narrowing mixed numeric, indexed, fixed-width and power compounds remain separate; V-R10 is repaired.",
+        "string-related heterogeneous identity, mixed ordinary equality, spaceship and narrowing compounds beyond approved ordering/arithmetic/logical/float-destination domains",
+        "payload/operator domains beyond implemented numeric, bool logical and string ordering slices",
+        "spaceship outside canonical-int/string pairs; string xor (bool and canonical numeric xor implemented)",
+        "bool/numeric strict identity is verified; ordinary equality, logical mixing and other operators remain separate"
+      ],
+      "repair_followups": [
+        {
+          "date": "2026-10-19",
+          "report": "guarded_wrappers_02.md",
+          "results": "guarded_wrappers_02_results.json",
+          "scope": "result_or_bool<int>, four unary forms and 19 binary spellings with same carrier/plain canonical int. Both sentinel states checked; original audit and first repair retained."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_float.md",
+          "results": "guarded_float_results.json",
+          "scope": "All four canonical-float carriers: unary +,-,! and binary +,-,*,/,<,<=,>,>=,&&,||,and,or; same carrier/plain float only. Existing extraction and scalar owners; no runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_mixed.md",
+          "results": "guarded_mixed_results.json",
+          "scope": "192 same-family and wrapper/plain int/float signatures for +,-,*,/,&&,||,and,or. Per-operand extraction, scalar promotion/truth conversion; no runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_bool.md",
+          "results": "guarded_bool_results.json",
+          "scope": "All four bool carriers: ! and &&,||,and,or, same family/plain bool only; payload/sentinel distinction and lazy checks preserved, no runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_string.md",
+          "results": "guarded_string_results.json",
+          "scope": "48 string ordering signatures across all four carriers; same carrier/plain string, byte semantics and owned left snapshots. Operator-specific admission preserves existing string logical/unary behavior; no runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_cross.md",
+          "results": "guarded_cross_results.json",
+          "scope": "All 660 approved cross-family signatures: int/int 228, float/float 144, mixed numeric 192, bool logical 48, string ordering 48. Independent extraction, error precedence and local/property snapshots; no runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_bool_xor.md",
+          "results": "guarded_bool_xor_results.json",
+          "scope": "24 guarded bool xor signatures across all four carriers, same-family/cross-family/wrapper-plain. Existing scalar decision and eager renderer; checked errors, source snapshots and precedence. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_spaceship.md",
+          "results": "guarded_spaceship_results.json",
+          "scope": "48 guarded spaceship signatures: canonical-int/int and string/string across all four carriers, same-family/cross-family/wrapper-plain. Exact int -1/0/1, errors, byte semantics and snapshots; other types remain excluded. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "numeric_xor.md",
+          "results": "numeric_xor_results.json",
+          "scope": "Four plain plus 96 guarded canonical int/float XOR signatures. Named condition_xor decision with per-operand truth conversion and existing eager snapshots; errors, precedence and recovery verified. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "nullable_int_equality.md",
+          "results": "nullable_int_equality_results.json",
+          "scope": "12 == != === !== signatures for ?int/?int, ?int/int and int/?int. Dedicated nullable comparison decisions preserve complete states without extraction; eager snapshots and runtime helpers verified. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "nullable_bool_string_equality.md",
+          "results": "nullable_bool_string_equality_results.json",
+          "scope": "24 == != === !== signatures for matching nullable bool/string pairs and nullable/plain in both orders. Complete-state decisions, exact bool/byte equality, eager snapshots and source-error precedence verified on dev002. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "nullable_float_equality.md",
+          "results": "nullable_float_equality_results.json",
+          "scope": "E1: 12 matching nullable/plain canonical-float equality/identity signatures; NaN value semantics, signed zeros, eager state snapshots and bit-preserving storage checked on dev002. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "result_equality.md",
+          "results": "result_equality_results.json",
+          "scope": "E2R: 48 matching result<T>/plain canonical scalar equality/identity signatures. Whole-state snapshots; any-two-failures equality vs structured-error identity, metadata preservation and eager exceptions verified on dev002. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "false_bool_equality.md",
+          "results": "false_bool_equality_results.json",
+          "scope": "E2FB: 12 result_or_false<bool> equality/identity signatures. State-aware carrier equality, visible false normalization for identity and wrapper/plain pairs; eager snapshots and recovery verified on dev002. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "bool_sentinel_equality.md",
+          "results": "bool_sentinel_equality_results.json",
+          "scope": "E2BB: 12 result_or_bool<bool> equality/identity signatures. Four-state equality vs visible bool identity; eager snapshots, source construction, guarded rejection and recovery verified on dev002. No runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "nonbool_sentinel_equality.md",
+          "results": "nonbool_sentinel_equality_results.json",
+          "scope": "E2NB: 48 non-bool sentinel comparisons verified on dev002. Deferred 24 ordinary wrapper/plain comparisons probed separately, all fail native instantiation; no runtime changes."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "sentinel_plain_equality.md",
+          "results": "sentinel_plain_equality_results.json",
+          "scope": "E2: final 24 non-bool sentinel/plain == != signatures. Agreed sentinel/plain equality false, generator-owned runtime repair and compiler admission verified on dev002; prior failed evidence preserved."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "carrier_updates.md",
+          "results": "carrier_updates_results.json",
+          "scope": "U1: 32 canonical int/float carrier updates; states, source snapshots, native reference/value contracts, stable destinations and recovery verified on dev002. Indexed updates/compounds separate."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "int_carrier_compounds.md",
+          "results": "int_carrier_compounds_results.json",
+          "scope": "C1IA: 48 canonical-int += -= *= /= signatures; same carrier/plain, four carriers. Snapshots, extraction order, failure effects, stable owners, once-only write-back and recovery verified on dev002. No runtime/emitter changes; cross-family/float/indexed/other compounds separate."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "int_bitwise_compounds.md",
+          "results": "int_bitwise_compounds_results.json",
+          "scope": "C1IB: 72 canonical-int %= &= |= ^= <<= >>= signatures; same carrier/plain, four carriers. Snapshots, extraction order, modulo_by_zero, failure effects, stable owners, once-only write-back and recovery verified on dev002. No runtime/emitter changes; cross-family/float/indexed compounds separate."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "int_cross_compounds.md",
+          "results": "int_cross_compounds_results.json",
+          "scope": "C1IX: all 120 cross-family canonical-int compound signatures. Independent extraction, error precedence, destination wrapping, snapshots, RHS effects, retained owners, once-only write-back and recovery verified on dev002. No runtime/emitter changes; float/indexed compounds separate."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "float_compounds.md",
+          "results": "float_compounds_results.json",
+          "scope": "C1: 96 exact-float carrier compounds plus four scalar prerequisites; ordered extraction, division_by_zero, NaN/signed-zero behavior, snapshots, stable storage and write-back verified on dev002. No runtime changes; mixed/indexed compounds remain separate. Proposed core complete; issue remains partial."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "mixed_ordering.md",
+          "results": "mixed_ordering_results.json",
+          "scope": "O1: 192 carrier signatures plus eight scalar prerequisites for < <= > >=; approved int-to-float rounding, NaNs, eager extraction/conversion, snapshots, owner rebinding and recovery verified on dev002. Equality/spaceship separate; runtime unchanged."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "widening_compounds.md",
+          "results": "widening_compounds_results.json",
+          "scope": "C2W: 96 float-destination/int-RHS carrier compounds plus four scalar prerequisites; promotion, division_by_zero, snapshots, state/error order, stable write-back and recovery verified on dev002. Narrowing/indexed separate; runtime unchanged."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "cross_identity_runtime.md",
+          "results": "cross_identity_runtime_results.json",
+          "scope": "E3 strict identity runtime prerequisite: 96 ambiguous-overload compilation failures, 32 same-family controls pass. No compiler/runtime changes; state and snapshot proof not reached. Counts unchanged."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "cross_identity.md",
+          "results": "cross_identity_results.json",
+          "scope": "Authorized bounded runtime left-carrier dispatch priority; 96 cross-family matching-payload strict identities verified with states, snapshots, eager effects and recovery. Historical 96 ambiguity failures preserved. Ordinary equality and mixed payloads excluded."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "mixed_identity.md",
+          "results": "mixed_identity_results.json",
+          "scope": "96 mixed int/float carrier strict identities plus four scalar prerequisites. Runtime-first gate passes unchanged; kind/state identity, eager snapshots, source failures and recovery verified on dev002. Ordinary equality and other payloads remain separate."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "bool_numeric_identity.md",
+          "results": "bool_numeric_identity_results.json",
+          "scope": "192 bool/numeric carrier strict identities plus eight scalar prerequisites; independent visible-state normalization, source order, snapshots and recovery verified on dev002. Runtime unchanged. Stale 1===true and true===1 rejections corrected to ordinary equality; historical failures preserved."
+        }
+      ],
+      "remaining_signature_inventory": {
+        "report": "vl07_inventory/README.md",
+        "signatures": "vl07_inventory/remaining.csv",
+        "summary": "vl07_inventory/summary.json",
+        "support_targets": 0,
+        "design_scope_candidates": 1200,
+        "method": "Static planning inventory; no new compiler execution or implementation authorization",
+        "wider_domains": "Explicit boundaries in inventory report; not silently included in canonical denominator"
+      }
+    },
+    {
+      "id": "V-D13",
+      "title": "Nullable arithmetic configuration contradicts its lifting policy",
+      "disposition": "Contract conflict",
+      "handling_class": "light discussion",
+      "owner": "runtime/specs/config.json and operator contract documentation",
+      "contract": "runtime/specs/spec.md:427; config nullable_lifted_ops versus nullable_arithmetic forbidden group",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "runtime/specs/config.json"
+      ],
+      "finding": "Four nullable<int> arithmetic probes reject. The same configuration both enables authoritative guarded lifting and explicitly forbids nullable arithmetic. The normative prose supports lifting. Reconcile the stale/conflicting configuration before using it as a mechanical policy oracle; compiler rejection alone does not decide the contract.",
+      "dependencies": [],
+      "next_action": "None for the contradiction: stale nullable_arithmetic forbidden group removed; checked payload lifting remains authoritative. Wider compiler coverage is tracked separately.",
+      "acceptance": "One unambiguous configured rule for nullable arithmetic with present-value results and empty-state runtime-error requirements.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Semantic configuration conflict needs a brief explicit decision rather than a verification-time edit.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "guarded_wrappers_01.md",
+        "results": "guarded_wrappers_01_results.json",
+        "scope": "Approved first guarded canonical-int slice; original audit evidence retained. No runtime implementation changes."
+      }
+    },
+    {
+      "id": "V-L08",
+      "title": "Nullable logical negation silently treats absence as false",
+      "disposition": "Semantic mismatch",
+      "handling_class": "light discussion",
+      "owner": "04_analyze/operators unary logical preparation and condition/unwrap selection",
+      "contract": "runtime/specs/spec.md:427; config nullable_lifted_ops; specs/conditional_expression_matrix.md logical-admission distinction",
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-48.json.gz",
+        "verification/results/nullable-negation-states"
+      ],
+      "finding": "Native generated program returns zero=true;seven=false;absent=true with exit 0. Present payload negation is correct, but empty nullable ! yields true instead of the required guarded-unwrap runtime error. This is a behavior defect in an admitted operator, distinct from missing source admission.",
+      "dependencies": [
+        "V-L07"
+      ],
+      "next_action": "None for nullable canonical int/float/bool negation; other payload domains remain separate.",
+      "acceptance": "Present 0/7 produce true/false; empty nullable negation throws; if/ternary/Elvis keep their separate absent-is-false condition contract. Test single evaluation and preserved source state.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Logical operator versus condition ownership must be agreed before implementation.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "guarded_wrappers_01.md",
+        "results": "guarded_wrappers_01_results.json",
+        "scope": "Nullable canonical-int negation: present 0/7 -> true/false; absence throws. Direct conditions and selection remain unchanged."
+      },
+      "repair_followups": [
+        {
+          "date": "2026-10-19",
+          "report": "guarded_float.md",
+          "results": "guarded_float_results.json",
+          "scope": "Extends checked nullable ! to canonical float; original nullable-int repair retained."
+        },
+        {
+          "date": "2026-10-19",
+          "report": "guarded_bool.md",
+          "results": "guarded_bool_results.json",
+          "scope": "Extends checked nullable ! to canonical bool; earlier numeric evidence retained."
+        }
+      ]
+    },
+    {
+      "id": "V-L09",
+      "title": "Boxed integer bitwise and shift operations lack admission",
+      "disposition": "Missing support",
+      "handling_class": "normal discussion",
+      "owner": "Boxed operator preparation and result-domain policy",
+      "contract": "See per-cell policy_authority in language_verification_operator_admission.json",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Twelve mixed/dynamic int-payload &, |, ^, <<, >> and ~ cells reject; structured semantic rows and shared boxed policy admit integer-kind dispatch.",
+      "dependencies": [],
+      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "acceptance": "Prove int payload results, exact result domains, unsuitable-kind errors, shift boundaries and left-to-right single evaluation.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+    },
+    {
+      "id": "V-L10",
+      "title": "Wrapper-to-wrapper coalescing lacks admission",
+      "disposition": "Missing support",
+      "handling_class": "normal discussion",
+      "owner": "Selection preparation and wrapper branch normalization",
+      "contract": "See per-cell policy_authority in language_verification_operator_admission.json",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Three homogeneous nullable/Result/falseable-Result int coalesces reject. The usable-value contract and explicit reference helper specialization select the normalized payload domain from either wrapper.",
+      "dependencies": [],
+      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "acceptance": "Prove present-left, absent-left/present-right, both-unusable errors, zero preservation, lazy RHS and normalized result type; keep result_or_bool rejected.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+    },
+    {
+      "id": "V-L11",
+      "title": "Configured nullable and fixed-width text operands reject concatenation",
+      "disposition": "Missing support",
+      "handling_class": "light discussion",
+      "owner": "Text conversion preparation",
+      "contract": "See per-cell policy_authority in language_verification_operator_admission.json",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Nullable<int> and int16 concatenations reject although configured text conversion provides the corresponding domains.",
+      "dependencies": [],
+      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "acceptance": "Prove nullable empty/present and signed-width boundary strings in both operand orders, with single ordered evaluation.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+    },
+    {
+      "id": "V-D14",
+      "title": "Result text helper behavior lacks configured source contract",
+      "disposition": "Contract review",
+      "handling_class": "light discussion",
+      "owner": "Text coercion specification and carrier registrations",
+      "contract": "See per-cell policy_authority in language_verification_operator_admission.json",
+      "evidence": [
+        "language_verification_operator_admission.json",
+        "language_verification_evidence/logs-checkpoint-47.json.gz"
+      ],
+      "finding": "Result and falseable-Result text helpers exist, but configured coercions.text omits both carriers. Source concatenation rejects. Structured failure helper returns an error message, so silently reusing guarded unwrap would change existing behavior.",
+      "dependencies": [],
+      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "acceptance": "Set an explicit text contract for success/error/sentinel states, then verify source and native behavior separately.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+    },
+    {
+      "id": "V-H11",
+      "title": "Native negative fixtures require GCC-specific diagnostic wording",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "tests/runtime/invariants_compile_fail metadata",
+      "contract": "Per-source metadata and paired diagnostics; runtime/specs/config.json nullable_lifted_ops where applicable",
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-55.json.gz",
+        "language_verification_discovery_reconciliation.json"
+      ],
+      "finding": "Unique copy construction and assignment are rejected by both snapshots at the intended operation. Metadata demands use of deleted function; Clang instead reports call to deleted constructor or overload resolution selected deleted operator. Retain operation/type-specific checks while accepting the compiler wording.",
+      "dependencies": [],
+      "next_action": "None for this bounded repair; retain the original audit finding as historical evidence.",
+      "acceptance": "Both compiler families must reject the same forbidden symbol; unexpected successful compilation must still fail the test.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_02; no further repair queued for this bounded issue.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_02.md",
+        "results": "fixture_repairs_02_results.json",
+        "scope": "Authorized fixture/generator batch; original findings and evidence retained; no compiler/runtime fixes."
+      }
+    },
+    {
+      "id": "V-R10",
+      "title": "Runtime nullable increment is missing despite the lifting contract",
+      "disposition": "Missing support",
+      "handling_class": "normal discussion",
+      "owner": "runtime generated mutation operator participation",
+      "contract": "Per-source metadata and paired diagnostics; runtime/specs/config.json nullable_lifted_ops where applicable",
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-55.json.gz",
+        "language_verification_discovery_reconciliation.json"
+      ],
+      "finding": "Original native test_nullable.cpp fails at ++value and value++ for nullable<int_t<>> in both snapshots. Baseline compatibility is unproven, but config nullable_lifted_ops explicitly covers mutation. Source admission under V-L07 cannot be repaired by assuming complete runtime support.",
+      "dependencies": [
+        "V-L07"
+      ],
+      "next_action": "None for V-R10. Original nullable runtime test now passes; all 32 bounded carrier updates proved. Compounds and other payloads remain separate.",
+      "acceptance": "Focused native and generated-source proofs for prefix/postfix value, write-back, empty-state errors and same-object semantics; inspect decrement separately.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Needs runtime ownership discussion or an external integration fixture.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "carrier_updates.md",
+        "results": "carrier_updates_results.json",
+        "scope": "Runtime generator-owned prefix/postfix ++/-- across canonical numeric payloads in four carriers. Original nullable test, native same-object/old-value contracts, failure preservation and generated-source proofs pass on dev002."
+      }
+    },
+    {
+      "id": "V-E03",
+      "title": "Native MySQL integrations lack a configured verification harness",
+      "disposition": "Verification blocked",
+      "handling_class": "normal discussion",
+      "owner": "Native optional-provider test adapter/environment",
+      "contract": "Per-source metadata and paired diagnostics; runtime/specs/config.json nullable_lifted_ops where applicable",
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-55.json.gz",
+        "language_verification_discovery_reconciliation.json"
+      ],
+      "finding": "test_mysqli_connect.cpp and test_mysqli_fetch_exhaustion.cpp remain not run in both snapshots because their provider/environment harness is absent. No current failure or compatibility pass is inferred.",
+      "dependencies": [],
+      "next_action": "Keep this finding separate from source-language admission and resolve in a separately authorized batch.",
+      "acceptance": "Supply an isolated provider/database fixture with deterministic connection and fetch-exhaustion expectations before running either native test.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Needs runtime ownership discussion or an external integration fixture."
+    },
+    {
+      "id": "V-D02",
+      "title": "Catalog status and prerequisite prose predates current supported contracts",
+      "disposition": "Documentation defect",
+      "handling_class": "simple fix",
+      "owner": "Chapter 07 TYPE-VAR-007A and Chapter 08 class/method prerequisite progress rows; Chapter 09 value/nullable construction progress rows; Chapter 10 inherited/static property prerequisite rows; Chapter 01 dated scope/progress wording; Chapter 02 dated mutation-target and closeout prose; docs/s2s_scalar_operators.md stale indexed-update status; Chapter 03 superseded foreach/selection prerequisite prose; Chapter 04 superseded reference/wrapper/container prerequisite prose; Chapter 05 superseded boxed operator limits",
+      "finding": "The chapter still says constructor arguments remain deferred. Explicit unique<Point> = new Point(1, 2) with a correctly declared constructor compiles and executes with field sum 3 on the frozen snapshot. Initial probe used a forbidden constructor return type; that test-authoring failure is retained separately. Fourteen Chapter 08 namespace/class composition probes pass, including namespaced construction/static calls and entry execution around declarations. Old CH10 prerequisite rows are stale; relative lookup deliberately selects the current namespace prefix. Chapter 09 value<Point>, bare value and normative ?value<Point> constructor probes pass; the old value<?Point> spelling is not an interchangeable current payload type. Bounded inherited field writes and static:: property reads/writes pass; inherited property redeclaration remains explicitly deferred and is not part of the passing claim. Chapter 10 interface call, late-static method/constant lookup and new static(1) probes pass; their CH11 prerequisite labels are stale. Abstract instance implementation, valid Override and inherited final method pass; abstract static and static Override intentionally reject with specific diagnostics, despite old generic deferred-CH11 labels. Chapter 01 retains dated canonical-int-only arithmetic and broad interpolation-rejection wording, superseded by later operator/interpolation contracts and executed evidence. Chapter 02 NOTE-018 still limits mutation targets to locals/parameters and says fields/brackets await contracts; current compound_effects and index_compound native observers prove bounded field and indexed updates. Its October 02 positive-pass closeout predates those later owners and must remain historical. Chapter 02 DIV/MOD/NESTED/CHAIN cards retain a duplicate Pending discussion statement below their implemented checkpoint. Supporting s2s_scalar_operators.md still says indexed updates remain deferred, despite the current indexed-compound contract and proofs; historical eager-effect restrictions are superseded by its own amendment. The same implemented/Pending discussion contradiction also occurs in concatenation, comparison, spaceship and symbolic logical cards (CS052-CS065). Keyword logical rejection text is explicitly imported v0.1 provenance, superseded by agreed v0.2 acceptance, and is not itself a new compiler bug. Chapter 02 mutation cards still exclude fields/indexes/eager operands wholesale; their dated local-only bounds are superseded by later target contracts. STR-INDEX-001 correctly defers strings but still describes general overload/lowering as deferred despite registered container support. STMT-EXPR-001 also retains implemented/Pending discussion duplication. Chapter 03 NOTE-017.b/progress and loop narrative still describe foreach as reserved or parser-rejected; current value iteration is implemented and executed. Old general wrapper/shared joins, eager effect gates and enum-selector deferrals are superseded by later owners. Brace-free compatibility remains actual S06 missing support, not a documentation-only reclassification. Chapter 04 notes/debt still broadly defer explicit reference returns, nullable boundaries and container operations despite later bounded contracts and proofs; they must route those owners while retaining restricted-union and broader-call gaps. No inferred return-reference or ordinary-function capture support is implied. Chapter 05 dated numeric/text/logical sections retain direct-dynamic-handle exclusions, effect gates and empty boxed dynamic distinctions superseded by the separated-family/eager amendments. Its explicit historical bridge section already points to the replacement and must not be restored as semantics. Table-contract and wider operator gaps remain separate. Chapter 05 single-value and Result probe checkpoints still describe empty on scalar/null/nullable/Result states; current collection-only amendment intentionally rejects these. Current Result fixture probes use isset/!isset, not wrapper empty. Checked extraction still carries obsolete source-error-only-native wording, and take retains a blanket aggregate deferral superseded by bounded boxed/container/callable support. Chapter 05 mixed model still describes dynamic as object-only/class-like storage, superseded by tagged scalar/null bindings. Direct selection and wrapper-fallback prose overstates shared table/object identity: existing selection bridge probes observe initial backing identity, not mutation behavior, and cannot override mixed COW. Progress rows still claim scalar/wrapper empty and obsolete keyed/take deferrals. Chapter 05 NULL-CHECK-001 says neither operand order evaluates once, contradicting its intended either-order once-only contract and native observer. TYPE-VAR-006B imported note claims an untyped-null fallback although LIT-NULL-001 and actual preparation reject it. These wording defects must not become implementation changes. Chapter 06 opening scope/gate retains indexed compound, callable-entry and property-construction deferrals superseded by later bounded slices; opening closeout must distinguish focused JSON explicit linkage from production provider omission V-R01. Chapter 06 initialization model still says mixed/dynamic share mixed inputs, and contextual preparation describes removed mixed_dynamic_box insertion. Current same-family declaration/negative tests supersede both; do not restore cross-family insertion. Chapter 06 read/nested-path checkpoints still say dynamic reads return mixed and direct-write text retains special cross-family boxing; current dynamic returns same-family values and implicit crossing rejects. Later field/eager/indexed-compound support supersedes the dated this/accounting blocker list without proving that whole application. Chapter 06 end-to-end ARR-EMPTY row still says missing true, superseded by collection-only empty throwing on missing leaves. Keyed removal prose claims no COW detachment, but current unset_path_lazy_noop/null_parent fixtures assert unequal table pointers; their values/lazy effects do not prove that physical efficiency claim. Do not convert that documentation claim into a verified runtime guarantee. ARR-INIT-004 labels both typed hash and untyped positional examples as strict working spelling, although its own decision and preparation tests reject the latter without a known target. Preserve both imported variants but distinguish their disposition. ARR-READ-002 still says current dynamic reads return mixed despite the completed migration. ARR-VALUE-001 calls a typed-container insertion example working although its unknown outer target and deferred aggregate boxing are explicitly unsupported. Chapter 07 empty-state checkpoint includes handle empty as presence; collection-only amendment intentionally rejects it. Default-owned construction checkpoint retains shared-by-default structs/zero-argument-only prose superseded by declaration-directed storage and bounded authored constructors.",
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-61.json.gz:results/catalog-reference-boundaries-02/outcomes.json",
+        "compiler/my-try/tests/constructors.php:34",
+        "language_verification_evidence/logs-checkpoint-62.json.gz:results/catalog-namespace-classes/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-63.json.gz:results/catalog-value-construction-02/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-64.json.gz:results/catalog-object-properties-02/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-65.json.gz:results/catalog-object-calls/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-66.json.gz:results/catalog-object-remainder/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-68.json.gz:results/wave-02/compound_effects/logs/commands.json",
+        "language_verification_evidence/logs-checkpoint-68.json.gz:results/wave-02/index_compound/logs/commands.json",
+        "language_verification_evidence/logs-checkpoint-69.json.gz:results/grouping-provenance/provenance.json"
+      ],
+      "next_action": "None for this bounded repair; preserve original finding and evidence as historical.",
+      "simple_batch_eligible": false,
+      "dependencies": [
+        "Use per-section reconciliation to preserve historical checkpoints and genuine remaining support gaps; do not bulk replace deferred wording."
+      ],
+      "acceptance": "Update only documentation-drift entries identified in the section ledger, linking current owning contracts and scoped evidence. Preserve dated historical checkpoints, division_by_zero, intentional incompatibilities and genuine deferred/missing support. No semantic spec or compiler changes.",
+      "repair_status": "implemented-and-verified",
+      "eligibility_reason": "Authorized repair completed and verified in simple_repairs_03.",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "simple_repairs_03.md",
+        "results": "simple_repairs_03_results.json",
+        "scope": "JSON build metadata only plus tests; supporting documentation reconciliation; no implementation fixes."
+      }
+    },
+    {
+      "id": "V-H12",
+      "title": "Data parser suite retains obsolete closure-expression syntax rejection",
+      "disposition": "Test/harness defect",
+      "handling_class": "simple fix",
+      "owner": "compiler/my-try/tests/data_construction.php",
+      "contract": "specs/data_initialization.md:values are expressions; callable storage has separate semantic admission",
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-71.json.gz::results/data-syntax-provenance/logs/commands.json",
+        "language_verification_evidence/logs-checkpoint-71.json.gz::results/data-syntax-adapted/logs/commands.json",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/data-syntax-adapted/logs/commands.json"
+      ],
+      "cases": [
+        "{a: function() {}}"
+      ],
+      "finding": "Original parser suite exits 255 because a closure value parses successfully. Test-only replay removes exactly this negative and all remaining structural/grammar/incremental assertions pass. Syntax acceptance does not authorize every target or callable storage combination.",
+      "dependencies": [],
+      "next_action": "Remove the stale parser negative; retain unsupported callable storage checks at semantic preparation. No compiler change required.",
+      "simple_batch_eligible": false,
+      "eligibility_reason": "Repair completed and verified in fixture_repairs_01; no further repair queued for this bounded issue.",
+      "acceptance": "Remove only the obsolete closure-expression parser negative; preserve all structural, grammar and incremental assertions and separate callable storage admission checks.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-19",
+        "report": "fixture_repairs_01.md",
+        "results": "fixture_repairs_01_results.json",
+        "scope": "Authorized seven-fixture batch; original verification findings and evidence retained."
+      }
+    },
+    {
+      "id": "V-D15",
+      "title": "Return-by-reference advisory lacks retained warning delivery",
+      "disposition": "Missing support",
+      "handling_class": "normal discussion",
+      "owner": "compiler diagnostics/reporting; CH07-WARN-01",
+      "contract": "specs/references.md:Return-by-reference warnings; compiler/my-try/docs/catalog/07_references_lifetime.md:CH07-WARN-01",
+      "evidence": [
+        "compiler/my-try/docs/catalog/07_references_lifetime.md:122",
+        "specs/references.md:184-190",
+        "language_verification_evidence/logs-checkpoint-71.json.gz::results/wave-02/references/logs/commands.json"
+      ],
+      "cases": [
+        "valid explicit reference-return declaration requiring advisory"
+      ],
+      "finding": "Normative reference contract retains advisory warning intent and explicitly identifies my-try missing warning delivery. Catalog requires a retained diagnostics owner with incremental replacement/cleanup and host/native delivery. Passing reference safety/runtime tests do not certify advisories. This is documented implementation debt; no new warning-output probe was run in this section audit. NOTE-059 also carries historical copy-after-reference-alias advice. Its intended admitted origin patterns must be reconciled with current strict provenance rules; indexed alias examples already reject and are not valid positive warning probes.",
+      "dependencies": [
+        "Agree diagnostics ownership, warning policy and delivery scope; native compiler parity remains deferred during this goal."
+      ],
+      "next_action": "Discuss retained diagnostic representation and publication/replacement before implementation; add explicit warning assertions to that slice.",
+      "simple_batch_eligible": false
+    },
+    {
+      "id": "V-R11",
+      "title": "CMake aggregate runtime links static core before dependent shared modules",
+      "disposition": "Build integration defect; reproduced historical debt",
+      "handling_class": "normal discussion",
+      "owner": "runtime/CMakeLists.txt runtime target dependency composition",
+      "contract": "compiler/my-try/docs/catalog/15_blocking_debt.md:546; scpp_runtime aggregate link interface",
+      "finding": "On frozen dev002 snapshot, existing isolated test_json_document builds/runs. A fresh consumer of the same unchanged source linked to scpp_runtime and scpp_runtime_test_support fails at link with unresolved mixed_t/dynamic_value/string-pool symbols from libscpp_json.so. Captured link order is static libscpp_runtime.a then shared JSON/filesystem/datetime. Test-only control moves only the static core archive after shared modules; link and execution pass. This is distinct from V-R01 missing provider metadata.",
+      "evidence": [
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/cmake-link-order/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/cmake-link-order/logs/commands.json",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/cmake-link-order/logs/aggregate-build.stderr",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/cmake-link-order-control/outcomes.json",
+        "language_verification_evidence/logs-checkpoint-75.json.gz::results/cmake-link-order-control/logs/commands.json"
+      ],
+      "first_failing_stage": "Native CMake consumer link",
+      "affected_checks": [
+        "LV33.001"
+      ],
+      "dependencies": [
+        "Choose truthful core/shared-provider target dependency graph and static/shared compatibility; avoid assuming a consumer-specific reorder is the final design."
+      ],
+      "next_action": "Discuss whether to split core implementation and aggregate interface targets or another supported dependency representation. Then prove core-independent and core-using consumers, static/shared configurations and optional providers.",
+      "acceptance_proof": "Unadapted aggregate document consumer must link/run, alongside existing isolated control and core-using runtime tests; retain actual link commands.",
+      "simple_batch_eligible": false
+    }
+  ],
+  "proposed_simple_fix_batch": [
+    {
+      "id": "fixture-oracles-01",
+      "status": "authorized-implemented-and-verified",
+      "issue_ids": [
+        "V-H01",
+        "V-H02",
+        "V-H03",
+        "V-H05",
+        "V-H06",
+        "V-H07",
+        "V-H12"
+      ],
+      "scope": "Seven fixture repairs including H01, authorized 2026-10-19 and verified on dev002.",
+      "dependencies": [],
+      "acceptance": "Rerun each affected original suite on dev002 after its fixture repair; retain original audit failures and adapted evidence as separate historical lanes. Follow each issue-specific acceptance; unexpected compilation success in negative checks remains a failure.",
+      "exclusions": "V-H04, V-H08, V-H09, V-H11, V-R01 and V-D02 remain separate candidates; no compiler/runtime fixes.",
+      "original_proposal_issue_ids": [
+        "V-H02",
+        "V-H03",
+        "V-H05",
+        "V-H06",
+        "V-H07",
+        "V-H12"
+      ],
+      "results": "fixture_repairs_01_results.json"
+    }
+  ],
+  "batch_note": "All 13 originally classified simple fixes are repaired and verified in fixture_repairs_01, fixture_repairs_02 and simple_repairs_03. Other handling classes and V-R11 remain open; no follow-on goal is authorized."
+}

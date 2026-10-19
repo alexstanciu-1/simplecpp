@@ -104,7 +104,7 @@ $failures = [
 foreach ($failures as $name => $operation)
 {
 	$source = '$text = "a\n"; $buffer = source_buffer_take($text); $index = source_line_index_build($buffer); ' . $operation . ' return 91;';
-	$text = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)', source_compile($source));
+	$text = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint observed_entry(int argc = 0, char** argv = nullptr)", source_compile($source));
 	$text .= "\nint main() { try { observed_entry(); } catch (const scpp::runtime_error&) { return 0; } return 92; }\n";
 	file_put_contents($directory . '/' . $name . '.cpp', $text);
 }

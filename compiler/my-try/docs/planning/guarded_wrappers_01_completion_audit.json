@@ -1,0 +1,35 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "baseline_comparison_changed_files": [
+    "compiler/my-try/04_analyze/operators/model.php",
+    "compiler/my-try/04_analyze/operators/mutations.php",
+    "compiler/my-try/04_analyze/operators/preparation.php",
+    "compiler/my-try/05_backend/cpp/generate.php",
+    "compiler/my-try/boot.php",
+    "compiler/my-try/docs/architecture/MODEL.md",
+    "compiler/my-try/docs/catalog/02_expressions.md",
+    "compiler/my-try/docs/s2s_scalar_operators.md",
+    "compiler/my-try/docs/testing.md",
+    "compiler/my-try/tests/mixed.php",
+    "compiler/my-try/tests/numeric_logical.php",
+    "compiler/my-try/tests/results.php",
+    "compiler/my-try/tests/s2s.php",
+    "runtime/specs/config.json",
+    "runtime/specs/config.review.md"
+  ],
+  "new_source_files": [
+    "compiler/my-try/04_analyze/operators/guarded.php",
+    "compiler/my-try/tests/guarded_operators.php",
+    "compiler/my-try/tests/guarded_operators.py"
+  ],
+  "tested_source_code_files_checked": 5596,
+  "tested_source_code_mismatches": [],
+  "runtime_tree_changes_since_goal_baseline": [
+    "runtime/specs/config.json",
+    "runtime/specs/config.review.md"
+  ],
+  "runtime_implementation_changed": false,
+  "remaining_blockers_in_scope": []
+}

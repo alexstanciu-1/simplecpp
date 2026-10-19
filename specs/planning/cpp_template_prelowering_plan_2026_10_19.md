@@ -47,6 +47,17 @@ calendar code (`year++`, `month++`). No source workaround or parked iteration wo
 was imported. Whole-accounting compilation remains unproved. The focused iteration
 proof matches controlled boundary counters; stock O2 has +1 allocation / +8 bytes.
 
+After integrating `_02`'s `v0.2/develop` through `3afc0573` (runtime guarded
+operator repair, scalar/guarded compiler compatibility and audit evidence), the
+unmodified accounting retry still emits 285/285 fragments and fails at the same
+concrete integer `year++` / `month++` operations. The shared decisions now use
+`scalar_pre_increment` / `scalar_post_increment` and the corresponding decrement
+forms; ordinary C++ emission still expects the represented object to implement
+those operators. The next prelowering slice should supply that physical interface
+using the existing prepared mutation decisions and runtime operators, without
+reimplementing the imported semantic/operator work. This merge does not establish
+whole-accounting native compilation.
+
 Full runtime coverage is **deferred**. Later, expand the metadata supplied by the
 runtime through the existing registry. Do not turn this accounting slice into that
 inventory/coverage project or add a parallel registry.

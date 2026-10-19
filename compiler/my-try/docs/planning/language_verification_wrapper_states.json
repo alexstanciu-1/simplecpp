@@ -1,0 +1,383 @@
+{
+  "doc_status": "planning",
+  "archive": "language_verification_evidence/logs-checkpoint-28.json.gz",
+  "rows": [
+    {
+      "id": "nullable-bool",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "f5872ca3a6c5f93f7adb8643b75e37e8b2a0bea621a92e0eebc6724cd2ee62bc",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "empty"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "nullable-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "5cef37a7860b25f3bc0e1acef21c0de2110ed2bfa72570bc9f5041bd37a23297",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "empty"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result-bool",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "2dd3c0c0fc72e9d607ad18a7122b8557824d33ae275eef5e3d76ab536504ac0f",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "error"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "nullable-string",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "a9d1eb95b49c140cee3ae8162e0b9f27e0b05f91f022b4771f50430983223a22",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "empty"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "ca0dab85b10ff6a8b891fcb9607459527afe914a56d6878b12dd9ec474eb8bf8",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "error"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result-string",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "191977aee2a863a82202e5b605439196730f635866310df5db6038b2dd5360b9",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "error"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result-vector-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "c2b295907b5642f6b97029a52d62baeb87745a7948bbb4394f209fdfae999528",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "error"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result-hash-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "09c935592eb38a6d6ef905df477d7638fb6f4e5e7b6d8ef4b368590779910ae9",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "error"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_false-bool",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "e8cdb07f9e12be950f5f30d5d41c5e11e26b000dd01944696be21883d9e583c3",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_false-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "0b852c674aaabf914e6eb560efe898ae4da4048dc17914c2f9ae0f44b34a97bf",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_false-string",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "2d291fa7c98b4b9c8e91e28227b141ecfc26d74ff69c11ea798588c5def3c7a9",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_bool-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "eb710431bcda31cabe92af77ddb81faa7d7bf5d42a78dde85c255041e98f5f62",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel",
+        "true-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_false-vector-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "b0b3de6ec644e195c430d9471a27f28c36b5c8ba9ec3720eae8b63ad63e2300e",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_bool-bool",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "73122a250babe6298c11f04a1bfdadd74ac1fdc728b9db9dbbdb4a6b3f29e86e",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel",
+        "true-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_false-hash-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "534e49465218d178f2161c4e6cdb1d9b1f6cf250f9504dc3b005661ef8432b99",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_bool-string",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "ae352d946691d6d919ccab0c75d5b216fe4d5ccd62821c836ee0af8d6cbaa05b",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel",
+        "true-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_bool-vector-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "dbfb62f3b3f4a00a095c6d1b07cd96a4d01d4a93f2ae95b90428e802f985ab0b",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel",
+        "true-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_bool-hash-int",
+      "run": "verification/results/wrapper-state-grid",
+      "source_sha256": "a7a4a0dc7fabaebc14cab743ee6a490bb6cebc72157576be29a568bb4803fab9",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel",
+        "true-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "nullable-float",
+      "run": "verification/results/wrapper-state-grid-02",
+      "source_sha256": "94c1d8a4f0ef73d38c7d0778e35a7e897b10fcfc0b16082582a1fa160a352956",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "empty"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result-float",
+      "run": "verification/results/wrapper-state-grid-02",
+      "source_sha256": "a423afa35bfa740358d1dd627bdd555a735b18568d5ca5eaa9065cc01b8630fb",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "error"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_false-float",
+      "run": "verification/results/wrapper-state-grid-02",
+      "source_sha256": "0efd5b5132d27315a9971bb852bd4bd2ec7f54dd67a2469fbe04c13f1ab83a1d",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    },
+    {
+      "id": "result_or_bool-float",
+      "run": "verification/results/wrapper-state-grid-02",
+      "source_sha256": "d2346ce9b4a0af873e9db79d24986fc4cef7e58fa0a987cfd88638bb4b05ad76",
+      "passed": true,
+      "states": [
+        "payload-zero/false/empty",
+        "payload-nonzero/nonempty",
+        "false-sentinel",
+        "true-sentinel"
+      ],
+      "assertions": [
+        "Extract each state twice; preserve wrapper and old output when no payload is written; verify status output.",
+        "Select every ordered state pair with both condition values; retain exact selected state and count calls."
+      ]
+    }
+  ],
+  "original_failures": {
+    "run": "verification/results/wrapper-state-grid",
+    "cases": [
+      "nullable-float",
+      "result-float",
+      "result_or_false-float",
+      "result_or_bool-float"
+    ],
+    "reason": "Float === in marker rejected before wrapper proof; four-case replay uses explicit int cast, preserving wrapper assertions. Float admission remains separate operator work."
+  },
+  "existing_complementary_evidence": [
+    {
+      "source": "tests/fixtures/result_construction.php",
+      "run": "verification/results/s2s-oracle-adapted",
+      "assertions": [
+        "Result-left coalesce over int/float/bool/string preserves zero/false/empty success; absent/error/false sentinel executes fallback once; good left skips throwing RHS.",
+        "String wrapper ternary/Elvis probes preserve failure/false/true sentinel, both branch orders, owned snapshots and lazy counters; numeric/bool payload probes distinguish zero/false truthiness.",
+        "take error-state probe transitions failure to success, preserving old output on error and clearing prior error on success."
+      ]
+    },
+    {
+      "source": "tests/results.php",
+      "run": "verification/results/unmasked-suites/results",
+      "assertions": [
+        "result_or_bool coalesce rejects in either operand, including unreachable branch; producer edit to boolable rejects then repairs fresh-equivalent.",
+        "Wrapper fallback and mismatched payload coalesce restrictions remain explicit rejection cases."
+      ]
+    },
+    {
+      "source": "tests/s2s.php and tests/nullable_records.php",
+      "run": "verification/results/s2s-oracle-adapted; verification/results/wave-01/records-nullable_records",
+      "assertions": [
+        "Nullable absent/present zero/false/empty, ternary carrier type and lazy operands; nullable record copies and owned selected values."
+      ]
+    }
+  ],
+  "scope": [
+    "Four scalar payloads in all four wrappers; vector<int>/hash<int> in the three registered Result families.",
+    "Boxed payloads and ownership-bearing handles retain their existing separately reconciled fixture evidence.",
+    "No nullable vector/hash or enum payload admission is inferred."
+  ]
+}

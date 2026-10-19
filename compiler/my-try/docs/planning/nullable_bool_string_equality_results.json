@@ -1,0 +1,206 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/nullable-bool-string-equality/20261019-01",
+  "scope": {
+    "binary_signatures": 24,
+    "recovery_sequences": 24,
+    "negative_source_checks": 224,
+    "native_counts": {
+      "bool": {
+        "binary_cases": 336,
+        "local_cases": 456,
+        "property_cases": 228
+      },
+      "string": {
+        "binary_cases": 16720,
+        "local_cases": 156104,
+        "property_cases": 78052
+      }
+    }
+  },
+  "suites": {
+    "focused": {
+      "commands": 11,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 24,
+        "recovery_sequences": 24,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "focused-final": {
+      "commands": 11,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 24,
+        "recovery_sequences": 24,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "nullable_int_equality": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 12,
+        "recovery_sequences": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "nullable-int-final": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 12,
+        "recovery_sequences": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "nullable": {
+      "commands": 268,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 99
+      }
+    },
+    "string_comparisons": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "comparison_forms": 7,
+        "string_values": 18,
+        "value_error_cases": 9072,
+        "snapshot_cases": 4536,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "string_identity": {
+      "commands": 12,
+      "all_expected_exits": true
+    },
+    "guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 4,
+        "binary_signatures": 48,
+        "unary_signatures": 4,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 4,
+        "binary_signatures": 48,
+        "unary_signatures": 0,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_cross": {
+      "commands": 26,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "ordered_family_pairs": 12,
+        "binary_signatures": 660,
+        "domains": {
+          "operators": 228,
+          "float": 144,
+          "mixed": 192,
+          "bool": 48,
+          "string": 48
+        },
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_bool_xor": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 1,
+        "binary_signatures": 24,
+        "unary_signatures": 4,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "guarded_spaceship": {
+      "commands": 11,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "ordered_family_pairs": 12,
+        "binary_signatures": 48,
+        "domains": {
+          "operators": 24,
+          "string": 24
+        },
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    }
+  },
+  "source_integrity": {
+    "checked": 6214,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "4ba113ae0bb7bce275289b8aaf2c62c4f25ae0f71e32c8585963052f0f672955",
+  "attempts": {
+    "focused": "Both payload fixtures passed first attempt.",
+    "focused-final": "Both passed after restoring the shared integer guarded-add control; nullable-int also rerun.",
+    "regressions": "All eleven passed."
+  },
+  "runtime_changes": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "issue_status": {
+    "V-L07": "partially-implemented-and-verified"
+  },
+  "vl07_progress": {
+    "completed_slices": 12,
+    "binary_signatures": 1524,
+    "unary_signatures": 32,
+    "percentage": null,
+    "reason": "Remaining scope has no settled signature denominator."
+  }
+}

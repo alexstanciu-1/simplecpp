@@ -1,0 +1,71 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "scope": "V-L04: six exact float/float comparisons and four float mutations",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "focused": {
+    "passed": true,
+    "comparison_forms": 6,
+    "mutation_forms": 4,
+    "comparison_pairs_per_form": 49,
+    "full_matrix_run": false,
+    "native_compiler_rebuilt": false
+  },
+  "checks": {
+    "focused-02": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "scalar": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "property-mutations": {
+      "commands": 59,
+      "all_expected_exits": true
+    },
+    "zero-errors": {
+      "commands": 5,
+      "all_expected_exits": true
+    }
+  },
+  "property_mutations": {
+    "passed": true,
+    "generated_programs": 14,
+    "cpp_pch": true,
+    "native_compiler_rebuilt": false
+  },
+  "zero_errors": {
+    "input": "/home/alex-ai/float-l04/20261019-01/verification/scalar/scalar_admission.cpp",
+    "input_sha256": "d50ed51e558e40aa2152edd994771baa9a28ab95681a21dd2285e8e3f473933c",
+    "observer_sha256": "8677e1ec18caccff0a5e29149b338f32156c2f9125d13967ce9e3e4d0c65c6bc",
+    "strengthened_existing_observers": 6,
+    "additional_zero_cases": 18,
+    "lane": "test observer extension; emitted source-language functions unchanged"
+  },
+  "source_integrity": {
+    "checked": 6187,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "runtime_changed": false,
+  "implementation_files_changed": [
+    "compiler/my-try/04_analyze/operators/floating_points.php",
+    "compiler/my-try/04_analyze/operators/model.php",
+    "compiler/my-try/04_analyze/operators/mutations.php",
+    "compiler/my-try/04_analyze/operators/preparation.php",
+    "compiler/my-try/05_backend/cpp/generate.php",
+    "compiler/my-try/tests/mutations.php",
+    "compiler/my-try/tests/operators.php",
+    "compiler/my-try/tests/scalar_admission.php"
+  ],
+  "evidence_sha256": "95214c8237bbff0f79421a1a49171ce59d7546b44fa34c61a082641322fc753c",
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers": []
+}

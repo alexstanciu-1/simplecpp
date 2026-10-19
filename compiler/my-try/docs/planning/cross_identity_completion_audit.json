@@ -1,0 +1,19 @@
+{
+  "doc_status": "supporting",
+  "existing_code_and_contract_changes": [
+    "runtime/include/operators/identity/strict_identity.hpp",
+    "runtime/specs/spec.md",
+    "specs/expression_evaluation.md",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/wrapper_equality_fixture.php",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php"
+  ],
+  "new_sources": [
+    "compiler/my-try/tests/cross_identity.py",
+    "compiler/my-try/tests/cross_identity.php",
+    "compiler/my-try/tests/cross_identity_support.hpp"
+  ],
+  "tested_source_mismatches": [],
+  "historical_failures_preserved": true,
+  "unrelated_native_fixture_failure_confirmed_on_baseline": true
+}

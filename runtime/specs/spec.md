@@ -429,6 +429,8 @@ admission rule, not a removal of the generic runtime wrapper implementations.
 - empty nullable dereference through `operator->()` must throw a project-shaped runtime error with explicit arrow-context wording so the user can quickly identify null object/property or method access
 - equality/inequality remain the narrow null-aware exception: `nullable<T> == null_t/nullopt_t` is allowed explicitly, `nullable<T> == value` returns false when empty, and relational/arithmetic/logical use of an empty nullable remains a runtime error
 - wrapper-aware equality follows branch normalization rather than guarded unwrap: `nullable<T>` compares empty-to-empty as equal, `result_or_false<T>` keeps the false sentinel distinct from wrapped payload values, `result_or_bool<T>` keeps its true/false sentinel states distinct from wrapped payload values, and `result<T>` treats matching failure states as equal in the current matrix slice
+- v0.2 sentinel/plain equality clarification (2026-10-19): for `result_or_false<T>` and `result_or_bool<T>` with matching canonical `T = int_t<>`, `float_t`, or `string_t`, either sentinel state compares unequal to every plain `T` in either operand order. Present payloads compare by scalar equality; `!=` negates `==`. No truth conversion or absent-payload extraction occurs. Thus sentinels differ from zero, empty string and numeric-looking strings. This does not enable ordinary bool/non-bool scalar equality or change bool-payload and mixed/boxed comparison contracts. Eager source evaluation and whole-state snapshots follow `specs/expression_evaluation.md`.
+
 - the temporary typed-boundary bridge is not a general operator-resolution escape hatch and must not be relied on to define operator participation outside the centralized operator surface
 
 
@@ -568,6 +570,7 @@ Policy flexibility is allowed only through configuration/version changes, not th
 
 - strict identity is owned by the shared runtime semantic family, with PHP exposing the stable adapter surface in `scpp::php`
 - strict identity is defined over **PHP-visible values**, not raw wrapper/storage types
+- Cross-family strict identity follows the same normalization rules. Runtime dispatch gives left-carrier normalization precedence over right-carrier normalization, without modifying either stored operand. This resolves overlapping wrapper overloads; it does not authorize ordinary equality coercions or new compiler payload combinations.
 - wrapper carriers normalize before comparison:
 	- `nullable<T>` normalizes to either PHP `null` or wrapped `T`
 	- `result_or_false<T>` normalizes to either PHP `false` or wrapped `T`
@@ -628,12 +631,13 @@ The current runtime phase uses a C++-first operator policy for the newly added n
 
 Required interpretation for this phase:
 - `int_t` arithmetic uses native C++ integer semantics, including truncating `/`
-- `float_t` arithmetic uses native C++ floating-point semantics, including IEEE-style `/`
+- `float_t` arithmetic uses native C++ floating-point semantics except that `/` rejects a zero divisor with `division_by_zero`. This applies to `float_t`/`float_t` and both mixed `int_t`/`float_t` operand orders, including floating `+0.0` and `-0.0`; division by zero does not produce infinity or NaN. This preserves existing runtime behavior (confirmed 2026-10-18).
 - integer-only operators such as `%`, `&`, `|`, `^`, `~`, `<<`, and `>>` follow native C++ behavior
 - compound assignment operators such as `+=`, `/=`, and `<<=` follow the corresponding native C++ base operator
 - approved integer wrapper carriers such as `nullable<int_t>`, `result<int_t>`, `result_or_false<int_t>`, and `result_or_bool<int_t>` participate in integer bitwise and shift families by guarded wrapper lifting: present/success payloads unwrap and delegate to the corresponding `int_t` operator
 - empty/error/sentinel wrapper states in those lifted integer bitwise and shift families remain compile-valid but must runtime-error during guarded unwrap rather than silently normalizing to `0`
 - increment and decrement follow native C++ prefix/postfix behavior
+- canonical int/float payloads in nullable, result, result_or_false and result_or_bool support all four updates through checked mutable payload access. Native prefix returns the same carrier by reference; postfix returns an independent old carrier. Unavailable payloads throw before mutation and preserve the complete state. Source expressions return carrier value snapshots as specified in `specs/expression_evaluation.md`; indexed/compound and other payload admission is separate.
 - strict identity and concatenation-assignment use explicit runtime semantic helpers rather than pretending to be ordinary C++ operator overloads
 - string/bitwise/coercion combinations not already representable by the runtime surface should remain unsupported for now and fail in earlier phases or at compile time
 

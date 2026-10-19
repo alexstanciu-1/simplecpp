@@ -59,9 +59,11 @@ def probe_text(payload):
 
 
 def probe_entry(text):
-    """Let explicit function-try probes observe failures outside generated main."""
-    if 'int main(int argc, char** argv) try' not in text:
+    """Let explicit test observers bypass only the production entry boundary."""
+    marker = '// SCPP-PROBE-OBSERVE-ENTRY\n'
+    if marker not in text and 'int main(int argc, char** argv) try' not in text:
         return text
+    text = text.replace(marker, '')
     # Remove only the marked production boundary, preserving source handlers.
     text = text.replace('// SCPP-ENTRY-TRY\n\ttry {\n', '')
     return re.sub(r'^// SCPP-ENTRY-CATCH\n.*?^// SCPP-ENTRY-END\n',

@@ -1149,7 +1149,6 @@ $rejections = ['function f(int &$x): void {} f(1);',
 	'$x ?int = null; $y = match (1) { 1 => $x, default => $x };',
 	'$x ?int = 1; return $x == null;',
 	'$x ?int = 1; return $x < null;',
-	'$x ?int = 1; return $x + 1;',
 	'function f(?void $x): void {}',
 	'function f(int &$x): void {} $x ?int = 1; f($x);',
 	'function f(?int &$x): void {} f(null);',
@@ -1612,7 +1611,7 @@ foreach ($syntax->collection->entries as $entry) {
 	}
 }
 $compiler->cpp();
-$expected = "#include \"scpp/bool_t.hpp\"\n#include \"lang/php/cli_context.hpp\"\n\nint main(int argc, char** argv)\n{\n\tscpp::php::set_cli_args(argc, argv);\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
+$expected = "#include \"scpp/bool_t.hpp\"\n#include \"lang/php/cli_context.hpp\"\n#include \"scpp/runtime_error.hpp\"\n\nint main(int argc, char** argv)\n{\n// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n// SCPP-ENTRY-CATCH\n\t} catch (const std::exception& failure) {\n\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n";
 if (CPP_Probe::text(Model::$cpp_files) !== $expected) {
 	throw new \LogicException('Unexpected boolean C++ representation or includes');
 }

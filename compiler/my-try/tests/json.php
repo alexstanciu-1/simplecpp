@@ -147,7 +147,7 @@ foreach (require __DIR__ . '/fixtures/json.php' as $name => [$source, $predicate
 	$programs[$name] = [$source, 0];
 	json_source($source);
 	$text = str_replace('int main(int argc, char** argv)', 'int unused_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
-	$text = '#include <limits>' . "\n" . $text . "\nint main() { return (" . $predicate . ") ? 0 : 91; }\n";
+	$text = '#include <scpp/hash_t.hpp>' . "\n" . '#include <limits>' . "\n" . $text . "\nint main() { return (" . $predicate . ") ? 0 : 91; }\n";
 	$path = $output . '/' . $name . '.cpp';
 	file_put_contents($path, $text);
 	$executions[] = ['path' => $path, 'exit_code' => 0];

@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "baseline": "75de94c71e37060c564b6ade19850b7686bd457a",
+  "scope": "Strict ordinary v0.1 operator fixtures; original sources and oracles; matrix not included.",
+  "cases": [
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_019_int_eq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_019_int_eq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_020_int_neq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_020_int_neq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_021_int_lt_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_021_int_lt_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_022_int_gt_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_022_int_gt_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_023_int_lte_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_023_int_lte_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_024_int_gte_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_024_int_gte_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_025_int_identical_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_025_int_identical_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_026_int_not_identical_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_026_int_not_identical_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_027_bool_and_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_027_bool_and_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_028_bool_or_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_028_bool_or_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_029_bool_eq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_029_bool_eq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_030_bool_neq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_030_bool_neq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_031_bool_identical_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_031_bool_identical_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_032_bool_not_identical_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_032_bool_not_identical_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_033_int_local_eq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_033_int_local_eq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_034_int_local_lt_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_034_int_local_lt_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_035_bool_local_eq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_035_bool_local_eq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_036_bool_local_and_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_036_bool_local_and_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_037_int_unary_minus_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_037_int_unary_minus_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_038_bool_logical_not_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_038_bool_logical_not_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_039_int_local_unary_minus_echo.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_039_int_local_unary_minus_echo.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_040_bool_local_logical_not_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_040_bool_local_logical_not_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_041_int_local_unary_minus_assign_echo.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_041_int_local_unary_minus_assign_echo.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_042_int_local_local_eq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_042_int_local_local_eq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_043_int_local_local_add_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_043_int_local_local_add_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_044_int_local_local_sub_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_044_int_local_local_sub_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_045_int_local_local_mul_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_045_int_local_local_mul_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_046_int_local_local_div_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_046_int_local_local_div_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_047_int_local_local_mod_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_047_int_local_local_mod_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_048_int_local_local_neq_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_048_int_local_local_neq_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_049_int_local_local_lt_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_049_int_local_local_lt_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_050_int_local_local_gt_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_050_int_local_local_gt_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_051_int_local_local_lte_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_051_int_local_local_lte_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_052_int_local_local_gte_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_052_int_local_local_gte_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_053_int_local_local_identical_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_053_int_local_local_identical_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_054_int_local_local_not_identical_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_054_int_local_local_not_identical_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_055_bool_local_and_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_055_bool_local_and_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_056_bool_local_or_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_056_bool_local_or_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_057_bool_local_eq_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_057_bool_local_eq_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_058_bool_local_neq_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_058_bool_local_neq_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_059_bool_local_identical_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_059_bool_local_identical_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_060_int_local_eq_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_060_int_local_eq_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_061_int_local_neq_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_061_int_local_neq_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_062_int_local_lt_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_062_int_local_lt_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_063_int_local_gt_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_063_int_local_gt_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_064_int_local_identical_assign_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_064_int_local_identical_assign_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_065_int32_local_local_add_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_065_int32_local_local_add_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    },
+    {
+      "source": "tests/php/operators/strict_level_01/strict_operators_066_int32_local_local_sub_return.phs",
+      "metadata": "tests/php/operators/strict_level_01/strict_operators_066_int32_local_local_sub_return.test-info.json",
+      "profile": "strict",
+      "feature": "operators",
+      "lane": "source"
+    }
+  ]
+}

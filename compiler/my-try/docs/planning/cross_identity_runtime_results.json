@@ -1,0 +1,19 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/widening-compounds/20261019-01",
+  "status": "runtime-prerequisite",
+  "signatures_probed": 96,
+  "compile_failures": 96,
+  "failure": "ambiguous identical overloads for distinct wrapper families",
+  "same_family_positive_controls": 32,
+  "positive_controls_passed": 32,
+  "runtime_local_hashes_match_tested_snapshot": true,
+  "runtime_files_checked": 217,
+  "compiler_changes": false,
+  "runtime_changes": false,
+  "full_matrix_run": false,
+  "state_and_snapshot_execution": "not reached; prerequisite compilation fails",
+  "evidence_sha256": "e1a613f5f5340146afd05896dc8f3ad6355e864bb16caf080ea0c03d4344715c"
+}

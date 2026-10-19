@@ -1,0 +1,387 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "gcc": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "python": "Python 3.12.3\n"
+  },
+  "suites": {
+    "property_mutations": {
+      "passed": true,
+      "generated_programs": 14,
+      "cpp_pch": true,
+      "native_compiler_rebuilt": false
+    },
+    "dynamic_families": {
+      "passed": true,
+      "cpp_pch": true,
+      "php_suites": 14,
+      "generated_programs": 64,
+      "native_compiler_rebuild": false
+    },
+    "interpolation": {
+      "passed": true,
+      "generated_programs": 1,
+      "cpp_pch": true,
+      "native_compiler_rebuilt": false
+    }
+  },
+  "h09": {
+    "passed": true,
+    "rows": [
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.bool.true|-|-|-|-|-|-|-",
+        "emitted_sha256": "9e1f90f8db9a1b638f1de64d7a3b71efc2f1f31c8e34fb933ce9c40722114950",
+        "stage": "runtime-rejection",
+        "source_sha256": "2888908f0f6980c50824190dcf8a568f57e891c3370e6d1f4621bd1e7e971295",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.empty|-|-|-|-|-|-|-",
+        "emitted_sha256": "827129265e2d4baa713540ff3dbcf4f5ecbd6b1d0f81eb4dba40dec2e2fd3834",
+        "stage": "runtime-rejection",
+        "source_sha256": "58e330b3a903ea8d837139252700e035b41517cbb30fc0b4b1a87632c46b3a6a",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.zero_string|-|-|-|-|-|-|-",
+        "emitted_sha256": "f63a054f2dd5838d91a91a26d05f1b19052fb316f0746a24eb00809263b41a14",
+        "stage": "runtime-rejection",
+        "source_sha256": "f4ff6649392b4c3a7de081737ff1b842106a4cd0fe5804bc3d9198023a438668",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.bool.false|-|-|-|-|-|-|-",
+        "emitted_sha256": "b67edbd2b429c884ea62388837c66f02ca801dc3ab547e4edf1346508423a03c",
+        "stage": "runtime-rejection",
+        "source_sha256": "e04feef733917a7deca59a4ac534a52ec091d43a4a7c5260daaf92ade403110c",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|bool_t|bool.false|-|-|-|-|-|-|-",
+        "emitted_sha256": "2108bf7221727c4d811cc15d537363cd5720e2d44b45ffec6bb6868bb696221e",
+        "stage": "preparation-rejection",
+        "diagnostic": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n",
+        "source_sha256": "fbcb170d078be9267c7feb4dd41a979e9c4125351c66bc3ae9c7352dc9dead6e",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.float.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "98afd9ade206e55a5d884f3ed39ae8df867ed6a02521fb9360a3dd63ccd4b4d9",
+        "stage": "runtime-rejection",
+        "source_sha256": "a036b63c3302609a9b207d09cf43340f708c178764f0f9bc16d3f3594cfe0210",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.hash.nonempty|-|-|-|-|-|-|-",
+        "emitted_sha256": "662bf4ba8df21aca3dc2c90058778fd5370113dfb38e1f265d71ebe9c1e0a148",
+        "stage": "runtime-rejection",
+        "source_sha256": "9bbc9507fe1545c2ed5c7961c5ccfc6acaa3d4d6ed20ddce0c5e462d4d66b125",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.int.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "f65ae934593321cd67f85afce7c44c4654c18be8f8baa5d7f1e66fe0d435e587",
+        "stage": "runtime-rejection",
+        "source_sha256": "b93e9c6a4ea3894fc34f17049bfd9262fe4f332c244e7a12e1f29411d340d777",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.nonempty_nonzero_nonbool_literal|-|-|-|-|-|-|-",
+        "emitted_sha256": "268a482f4881a9b6a23e1073dfd9d48d83024ad3b48a70c332c9fa0b8f234cb3",
+        "stage": "runtime-rejection",
+        "source_sha256": "345adbaa5171f4c73493483ba3bf966752ad59a21d50ed5c8f068d5aa88ad91f",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.int.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "df9ab208f6abb7ff9b9adb4f2ef0c46c34444859d7965b0f54e8d39466802fde",
+        "stage": "runtime-rejection",
+        "source_sha256": "3166303bcb29ee13e89b84425ff5fb14ec99ddbc938cd5fc27d6287e256bfb74",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.bool_true_literal|-|-|-|-|-|-|-",
+        "emitted_sha256": "d4f9d856ac6837cde82cb5e416d6e7b46c69158124ab5caedc5c9545307f6b33",
+        "stage": "runtime-rejection",
+        "source_sha256": "d3e1571c2cd76ee3bf6b1b84e9547de5d41e0f9c2b274b89a1771f3d792e1ec7",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|float_t|float.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "4ba79a7339cbac6a535fbac84a549f873f07d69b10b409260c254c8f9add54d3",
+        "stage": "preparation-rejection",
+        "diagnostic": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n",
+        "source_sha256": "cc4cc403f44d1f9937cf8325af20d3526c86e7b6c7a348f845857a4ff7e344ad",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.bool.true|-|-|-|-|-|-|-",
+        "emitted_sha256": "fe309ae57c9b8fba81ee711f7bd9eae7dfcbe1ba8688c8ee17d45c5c45369fe3",
+        "stage": "runtime-rejection",
+        "source_sha256": "cc430bde60bfe1e77fdd9403a5fbf7433bbe6dbb5bf3959b0e315878e2f57985",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.float.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "899d8b507bc898301c220af3f7f077e73f5dd57d2bf64c0adff84656fa9b0332",
+        "stage": "runtime-rejection",
+        "source_sha256": "a0b109dff68d69939c46e09cd9d1464ab0e53fdbff0bd045f95d364ba9dd6f09",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.int.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "ff8b26e6766f83320e290e8483ffae61abc0c5880974c1824ed00ee95c445009",
+        "stage": "runtime-rejection",
+        "source_sha256": "0631aa02e3e2510757886264ce42eb32ed5ef11e15a541c1ee7b9a08c0d9decf",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.nonempty_nonzero_nonbool_literal|-|-|-|-|-|-|-",
+        "emitted_sha256": "2604cf8e0a6dc9738ce563dd657b39043bcbf99e51bf0c57ee2d151a578dd3ce",
+        "stage": "runtime-rejection",
+        "source_sha256": "61d8fb5091e7fe6de1bebd4f8be8a5a05b4fc9679c9692d097871dd597a8b672",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.bool_false_literal|-|-|-|-|-|-|-",
+        "emitted_sha256": "13c130390e47a41ea323e9163bdaaf085890d0681283755e0c9b14c12f98499e",
+        "stage": "runtime-rejection",
+        "source_sha256": "4873c01c7957d12e7d610ce24047d9b55299cad221ea4b828c0bfe2eca8ff436",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.float.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "eb26cd14f81e36e928134f528b1551131f36587c6f2052f4dd779b2c77e926c8",
+        "stage": "runtime-rejection",
+        "source_sha256": "8f0d55d4f67f38f2ad33465a70157acfd9ade3f4726bf357fe7b7109440ac5b6",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.float.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "3d046f33a62054ff04982d62ed85dd5d79496025c883783758dd214860065050",
+        "stage": "runtime-rejection",
+        "source_sha256": "5dc67fafc7d8214cc954eea2850a69a9a74c9a6e849483cb35e7a86ad6342acb",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|float_t|float.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "5723f97983a41b69aa7c245691d0beef2e4ed5c15059dbf62a6c7f493715d89b",
+        "stage": "preparation-rejection",
+        "diagnostic": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n",
+        "source_sha256": "79d5bcd00b60c5e9a8be689f6f5cc065377570378c86ade4ddb83791c490d2c1",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.empty|-|-|-|-|-|-|-",
+        "emitted_sha256": "da094f2a3e57523e701adf3e3bef47090ed73f65cd924f718f63148a411a174d",
+        "stage": "runtime-rejection",
+        "source_sha256": "3584e0eb799e86e70aa56a6fa91a2fd55d18ec05e8ca380dd882eeb0334a7e38",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|bool_t|bool.true|-|-|-|-|-|-|-",
+        "emitted_sha256": "32da43ad05a1ecc6efd28043efaf56fed6b0c75034d7c6303a8c9fca9b32c010",
+        "stage": "preparation-rejection",
+        "diagnostic": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n",
+        "source_sha256": "a183fb8b35c56b3efe8314e1c89d3d6da57c420be7137ee711540e4c7768db91",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.int.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "6e12957805d51c530ed2422b980218c14944ae04c7d69f1698c48d316747ee18",
+        "stage": "runtime-rejection",
+        "source_sha256": "ac68e84932d463a0b73fb7b9ec315c457df7430731854d2cab6475049d454bbb",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.int.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "54bd0f07e7d0d1863fa6f2f4718fc87f31d742307c9c564246f4f7978fcb3647",
+        "stage": "runtime-rejection",
+        "source_sha256": "eaf9011edf77af374e56f89e620127f4df5e536de5b0085943427f4507b1361c",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.bool_false_literal|-|-|-|-|-|-|-",
+        "emitted_sha256": "b984ff7db4e00cee01633f6fcba25371d8c2aa87120b3c06be564975895991eb",
+        "stage": "runtime-rejection",
+        "source_sha256": "b2a67dd7353ff499308417fdb00055bc853981bd1a390e4d8925a7065ba932f2",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.bool_true_literal|-|-|-|-|-|-|-",
+        "emitted_sha256": "6f206537501d58acac7107df8b90dd289275278f8c1eda9082f8e333e1545afb",
+        "stage": "runtime-rejection",
+        "source_sha256": "609ba101ff0e0d6b577e26b313d96e96c8a8512337465439e4b8b6c149cf9484",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.hash.empty|-|-|-|-|-|-|-",
+        "emitted_sha256": "25afe7918c1fc4e2853db0e958d8ce2bc8daa026f9bab9163d2b8acca731d7dc",
+        "stage": "runtime-rejection",
+        "source_sha256": "e7e9bf015cd26414a2125beda6383fc132f2444533b8ba6316248c06bbc36223",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.float.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "5e05a96ea1793f47967c44ce98be5f382746844ec9094ad5b659039ad4ddc817",
+        "stage": "runtime-rejection",
+        "source_sha256": "4d75daeee53373e6e308c51e44d00d30d5c24f83a3a9472d868727f01b5fd658",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.bool.true|-|-|-|-|-|-|-",
+        "emitted_sha256": "01209fc176432548f3c982913d42c188652837afbfb9b960d73a84edf1fffd21",
+        "stage": "runtime-rejection",
+        "source_sha256": "0cd308baac2ac7d6522f71c8d5069d7a5eb7381f0f045bb02c35448862c020e4",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.null|-|-|-|-|-|-|-",
+        "emitted_sha256": "db42790de7dffa46876bac53f374fa81fb60107c8b21672fa4b5088182c0f1bc",
+        "stage": "runtime-rejection",
+        "source_sha256": "2ce504db82f52da76e695da98f291684fe10b75814bd28c0e9dfd33b000dbcd3",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.bool.false|-|-|-|-|-|-|-",
+        "emitted_sha256": "fe8bf0020c0675eb57c6be1cd2f839c3488b1ecc1b971f7bc27daba98a5ca8a3",
+        "stage": "runtime-rejection",
+        "source_sha256": "6f31416bd6d3b2eeae07f667d8f2568e6e3699beaca68b8e3a27b55f59b32457",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|int_t|int.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "af14d1ca532cc7c205e1a24ea70caa934a60ba084778b037d6d7adad2be89c90",
+        "stage": "preparation-rejection",
+        "diagnostic": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n",
+        "source_sha256": "06c60f58b23e5eb07eba670222059fe2585e9192c61edd920109c54d1e45b589",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.bool.false|-|-|-|-|-|-|-",
+        "emitted_sha256": "7baaee06ff407177b5c6aea4f8807c45bcf1afbb0df2593f81af22db5742d618",
+        "stage": "runtime-rejection",
+        "source_sha256": "bc76fbcc0d0dc33812433822cc532f5fdb599b441b3ee842252221e1ff01e760",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.zero_string|-|-|-|-|-|-|-",
+        "emitted_sha256": "72aaff03788e3d257bede9e8bc8ee9643291d159e4c4a800bb6a1b26b50e3fd4",
+        "stage": "runtime-rejection",
+        "source_sha256": "e9692b46992a2056c050811392dffa30ba6abf58ed84bb8ff645d0548a76faa8",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.null|-|-|-|-|-|-|-",
+        "emitted_sha256": "632a84f860892235de1a5fe82785a7fa0afb1ff8c75893dfd770b0c123ca913c",
+        "stage": "runtime-rejection",
+        "source_sha256": "bb37387caaa2c49121ebc5d67de36f05c9eaab11d8fe169bb4fb15372811f272",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.float.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "ca3f49ab697ed2ced2bad0c53cc4de3111efed7cafe8e7a61827b4584f9e37d1",
+        "stage": "runtime-rejection",
+        "source_sha256": "c0f4ddd19b2da8f1f47132e64c92bc1f8a29511593d32a65515f99c621e3914d",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.null|-|-|-|-|-|-|-",
+        "emitted_sha256": "b90c99f385b505c85b76f512d2e58facb8d251be2d44146eb6418688d80fc823",
+        "stage": "runtime-rejection",
+        "source_sha256": "67104273103a76af6326f32d6310ca00fd88610178a266656b006d678bce8da9",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|empty_value|int_t|int.zero|-|-|-|-|-|-|-",
+        "emitted_sha256": "e0c5875b821e9c0b03618ad8fd33d0ebf1b28d8da8160e8a492ebeb8327e57ec",
+        "stage": "preparation-rejection",
+        "diagnostic": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n",
+        "source_sha256": "ed58298e500dac52151b545c9cbb9dc9a3ce639c05075a579412e42211b4c331",
+        "passed": true
+      },
+      {
+        "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.int.nonzero|-|-|-|-|-|-|-",
+        "emitted_sha256": "0cde216d30fab401e01500a6dc008ab4bfa47f515ae70698a41f3bf1ca88146d",
+        "stage": "runtime-rejection",
+        "source_sha256": "3b1ac9910332607740c3177fd7013509e0ee3d7a5f8190d261e7c12b4d4f4808",
+        "passed": true
+      }
+    ],
+    "counts": {
+      "runtime-rejection": 33,
+      "preparation-rejection": 6
+    },
+    "positive_controls": true,
+    "full_matrix_run": false
+  },
+  "h11": {
+    "passed": true,
+    "results": [
+      {
+        "compiler": "clang++",
+        "case": "runtime_invariants_compile_fail_001_unique_copy_construct_forbidden",
+        "passed": true,
+        "error_contains": [
+          "deleted",
+          "unique_p(const unique_p &) = delete"
+        ]
+      },
+      {
+        "compiler": "g++",
+        "case": "runtime_invariants_compile_fail_001_unique_copy_construct_forbidden",
+        "passed": true,
+        "error_contains": [
+          "deleted",
+          "unique_p(const unique_p &) = delete"
+        ]
+      },
+      {
+        "compiler": "clang++",
+        "case": "runtime_invariants_compile_fail_002_unique_copy_assign_forbidden",
+        "passed": true,
+        "error_contains": [
+          "deleted",
+          "operator=(const unique_p &) = delete"
+        ]
+      },
+      {
+        "compiler": "g++",
+        "case": "runtime_invariants_compile_fail_002_unique_copy_assign_forbidden",
+        "passed": true,
+        "error_contains": [
+          "deleted",
+          "operator=(const unique_p &) = delete"
+        ]
+      },
+      {
+        "compiler": "g++",
+        "case": "unique_move_release_reset",
+        "passed": true
+      },
+      {
+        "compiler": "clang++",
+        "case": "unique_move_release_reset",
+        "passed": true
+      }
+    ]
+  },
+  "source_integrity": {
+    "protected_compiler_runtime_files_unchanged": 445,
+    "local_matches_final_tested_snapshot": 6182
+  },
+  "evidence": "fixture_repairs_02_evidence.json.gz",
+  "evidence_sha256": "127033c35501a525b8632c900fe4eb3345fdb04edf9ae244d787354bdb9a347e",
+  "harness_retries": [
+    "H11: separate per-compiler log namespaces; initial duplicate cpp-runtime-build name retained in evidence.",
+    "H09: validate complete family data before selecting exact 39 rows; first incomplete-family validator failure retained."
+  ],
+  "remaining_blockers": []
+}

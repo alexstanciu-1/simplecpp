@@ -1,7 +1,7 @@
 {
   "version": 1,
   "module": "json",
-  "cpp_build": {"sources":["modules/json/document.cpp"]},
+  "cpp_build": {"sources":["modules/json/document.cpp","modules/json/json.cpp"]},
   "types": [{"id":"json.json_document","name":"json_document","kind":"class","storage":"shared","capabilities":["result_payload"]},{"id":"json.json_node","name":"json_node","kind":"class","storage":"shared","capabilities":["result_payload"]},{"id":"json.json_parse_error","name":"json_parse_error","kind":"class","storage":"shared","capabilities":["result_payload"]}],
   "cpp_types": [{"id":"json.json_document","symbol":"scpp::json::document","header":"modules/json/document.hpp"},{"id":"json.json_node","symbol":"scpp::json::node","header":"modules/json/document.hpp"},{"id":"json.json_parse_error","symbol":"scpp::json::parse_error","header":"modules/json/document.hpp"}],
   "properties": [{"id":"json.diagnostic.category","owner":"json_parse_error","name":"category","type":"string"},{"id":"json.diagnostic.byte_offset","owner":"json_parse_error","name":"byte_offset","type":"int"},{"id":"json.diagnostic.message","owner":"json_parse_error","name":"message","type":"string"}],

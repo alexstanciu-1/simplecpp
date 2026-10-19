@@ -1,0 +1,24 @@
+{
+  "doc_status": "supporting",
+  "changed_from_baseline": [
+    "compiler/my-try/04_analyze/operators/floating_points.php",
+    "compiler/my-try/tests/compound_assignments.php",
+    "specs/expression_evaluation.md",
+    "compiler/my-try/tests/guarded_mixed.php",
+    "compiler/my-try/tests/numeric_compound_fixture.php"
+  ],
+  "existing_code_and_contract_changes": [
+    "compiler/my-try/04_analyze/operators/floating_points.php",
+    "compiler/my-try/tests/compound_assignments.php",
+    "specs/expression_evaluation.md",
+    "compiler/my-try/tests/guarded_mixed.php",
+    "compiler/my-try/tests/numeric_compound_fixture.php"
+  ],
+  "new_sources": [
+    "compiler/my-try/tests/widening_compounds.php",
+    "compiler/my-try/tests/widening_compounds.py"
+  ],
+  "tested_non_documentation_mismatches": [],
+  "runtime_changes": [],
+  "documentation_closeout_separate_from_tested_snapshot": true
+}

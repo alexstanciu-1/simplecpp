@@ -1,7 +1,7 @@
 <?php
 
 /* Generated-source proofs of tagged bindings and same-family container signatures. */
-return [
+$fixtures = [
 	'dynamic_scalar_copy' => [
 		'function run(): int { $a dynamic = 7; $copy = $a; $a = 9; $out int = $copy; return $out; }',
 		'function_run().native_value() == 7',
@@ -72,3 +72,26 @@ return [
 		'([&]() { try { function_fail(); } catch (const std::runtime_error&) { return true; } return false; }())',
 	],
 ];
+
+// Ordered postfix snapshots and value-dependent indexing failures are executable
+// contracts, not preparation negatives. Keep each boxed family independent.
+foreach (['mixed', 'dynamic'] as $family) {
+	$fixtures[$family . '_postfix_snapshot'] = [
+		'function probe(int &$final): int { $v ' . $family . ' = 1; '
+			. '$out = $v++ + $v; $final = $v; return $out; }',
+		'([&]() { scpp::int_t<> final{0}; auto out = function_probe(final); '
+			. 'return out.native_value() == 3 && final.native_value() == 2; }())',
+	];
+	$message = $family === 'mixed'
+		? 'nested write: expected mixed table; weak paths are deferred'
+		: 'dynamic: container access requires container payload';
+	$fixtures[$family . '_scalar_index_failure'] = [
+		'function make(): ' . $family . ' { return 7; } '
+			. 'function bad(' . $family . ' &$v): void { $v[0] += 1; }',
+		'([&]() { auto value = function_make(); bool caught = false; '
+			. 'try { function_bad(value); } catch (const std::runtime_error& failure) { '
+			. 'caught = std::string(failure.what()) == "' . $message . '"; } '
+			. 'return caught && value.get_int().native_value() == 7; }())',
+	];
+}
+return $fixtures;

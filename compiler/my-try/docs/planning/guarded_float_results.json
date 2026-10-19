@@ -1,0 +1,119 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/guarded-float/20261019-01",
+  "scope": {
+    "carriers": 4,
+    "binary_signatures": 144,
+    "unary_signatures": 12,
+    "binary_value_state_error_cases": 35280,
+    "snapshot_cases": 2870,
+    "unary_state_cases": 99,
+    "negative_sources": 1082,
+    "retained_binary_edit_sequences": 16
+  },
+  "suites": {
+    "focused-final-02": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 12,
+        "binary_signatures": 144,
+        "unary_signatures": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "results": {
+      "commands": 616,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 166,
+        "runtime_programs": 2
+      }
+    },
+    "nullable": {
+      "commands": 268,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 99
+      }
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 19,
+        "binary_signatures": 228,
+        "unary_signatures": 16,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "float_operators": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "comparison_forms": 6,
+        "mutation_forms": 4,
+        "comparison_pairs_per_form": 49,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "numeric_logical": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "numeric_pairings": 4,
+        "binary_spellings": 4,
+        "unary_types": 2,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    }
+  },
+  "source_integrity": {
+    "checked": 6197,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "982fc22d8e5aa3f3d0358eef56f8497fa1c105164f9553c9cf6902b304085583",
+  "historical_attempts": {
+    "focused-01": "New Result take preservation fixture omitted required error output; corrected fixture only.",
+    "focused-02": "Passed before strengthening independent native signed-zero controls and invalid-artifact checks.",
+    "focused-final": "Added native division control used an unavailable overloaded operator in minimal include environment; switched fixture to existing runtime division helper with explicit include.",
+    "focused-final-02": "Final proof passed; compiler unchanged throughout all attempts."
+  },
+  "runtime_implementation_changed": false,
+  "runtime_specification_changed": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "issue_status": {
+    "V-L07": "partially-implemented-and-verified",
+    "V-L08": "nullable canonical int and float verified; other payloads separate"
+  }
+}

@@ -1,0 +1,4514 @@
+[
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "bool_t",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__bool_t__nullable_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "bool_t",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__bool_t__result_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "bool_t",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 8
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "bool_t",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "float_t",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__float_t__nullable_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "float_t",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__float_t__result_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "float_t",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 8
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "float_t",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__float_t__result_or_false_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "int_t",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__int_t__nullable_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "int_t",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__int_t__result_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "int_t",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 8
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "int_t",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__int_t__result_or_false_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__nullable_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__nullable_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__nullable_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__nullable_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 84
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 84
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 56
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_bool_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 56
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_bool_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 56
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_bool_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 98
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_false_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_false_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_false_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "mixed_t",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__mixed_t__result_or_false_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 84
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "bool_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_bool_t__bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_bool_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_bool_t__result_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "float_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_float_t__float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_float_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_float_t__result_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "int_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_int_t__int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_int_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_int_t__result_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_string_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 84
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_string_t__nullable_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_string_t__result_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_string_t__result_or_false_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "string_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__nullable_string_t__string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 30
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "bool_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_bool_t__bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_bool_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_bool_t__result_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "float_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_float_t__float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_float_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_float_t__nullable_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_float_t__result_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "int_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_int_t__int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_int_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_int_t__nullable_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_int_t__result_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_string_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 84
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_string_t__nullable_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_string_t__result_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_string_t__result_or_false_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "string_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_string_t__string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 30
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "bool_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_bool_t__bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 8
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_bool_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 56
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_bool_t__result_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "float_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_float_t__float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 8
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_float_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 56
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_float_t__nullable_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_float_t__result_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "int_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_int_t__int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 8
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_int_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 56
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_int_t__nullable_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_int_t__result_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_string_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 98
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_string_t__nullable_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_string_t__result_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 49
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_string_t__result_or_false_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "string_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_bool_string_t__string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 35
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "bool_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_bool_t__bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_bool_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_bool_t__result_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "float_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_float_t__float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_float_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_float_t__nullable_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_float_t__result_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "int_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_int_t__int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 6
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_int_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_int_t__nullable_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_int_t__result_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 12
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "mixed_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_string_t__mixed_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 84
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_string_t__nullable_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_string_t__result_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 42
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_string_t__result_or_false_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "string_t",
+    "row_file": "semantics/operators_conditional_selection/coalesce__result_or_false_string_t__string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 30
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "string_t",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__string_t__nullable_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 30
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "string_t",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__string_t__result_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 30
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "string_t",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 35
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "coalesce",
+    "lhs_type": "string_t",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_conditional_selection/coalesce__string_t__result_or_false_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 30
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__nullable_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__nullable_string_t__nullable_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_bool_t__result_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_float_t__result_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_int_t__result_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_string_t__result_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_bool_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_bool_string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 49
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_false_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_conditional_selection",
+    "item_id": "elvis",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_conditional_selection/elvis__result_or_false_string_t__result_or_false_string_t.tsv",
+    "inventory_group": "separate-selection-owner",
+    "signature_id": "",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|+|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|+|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|+|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|+|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|+|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|+|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|+|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "add",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/add__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|+|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|-|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|-|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|-|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|-|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|-|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|-|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|-|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "subtract",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/subtract__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|-|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|*|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|*|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|*|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|*|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|*|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|*|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|*|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "multiply",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/multiply__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|*|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|/|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|/|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|/|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|/|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|/|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|/|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|/|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "divide",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_binary_arithmetic/divide__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|/|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "modulo",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/modulo__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|%|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "modulo",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/modulo__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|%|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "modulo",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/modulo__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|%|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_arithmetic",
+    "item_id": "modulo",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_arithmetic/modulo__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|%|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__nullable_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?bool|&&|?bool",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|&&|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|&&|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_bool_t__result_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<bool>|&&|result<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|&&|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|&&|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_or_false_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<bool>|&&|result_or_false<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|&&|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|&&|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_or_bool_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<bool>|&&|result_or_bool<bool>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|&&|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_and",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_and__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|&&|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__nullable_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?bool||||?bool",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int||||?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float||||?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_bool_t__result_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<bool>||||result<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>||||result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>||||result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_or_false_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<bool>||||result_or_false<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>||||result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>||||result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_or_bool_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<bool>||||result_or_bool<bool>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>||||result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_logical",
+    "item_id": "logical_or",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_binary_logical/logical_or__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>||||result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__nullable_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?bool|==|?bool",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|==|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "E1",
+    "signature_id": "binary|?float|==|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__nullable_string_t__nullable_string_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?string|==|?string",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_bool_t__result_bool_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<bool>|==|result<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_int_t__result_int_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<int>|==|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_float_t__result_float_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<float>|==|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_string_t__result_string_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<string>|==|result<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_false_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "E2FB",
+    "signature_id": "binary|result_or_false<bool>|==|result_or_false<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<int>|==|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<float>|==|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_false_string_t__result_or_false_string_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<string>|==|result_or_false<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_bool_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "E2BB",
+    "signature_id": "binary|result_or_bool<bool>|==|result_or_bool<bool>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<int>|==|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<float>|==|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "equal",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_comparison_equality/equal__result_or_bool_string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<string>|==|result_or_bool<string>",
+    "semantic_row_statuses": {
+      "supported": 49
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__nullable_bool_t__nullable_bool_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?bool|!=|?bool",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|!=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "E1",
+    "signature_id": "binary|?float|!=|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__nullable_string_t__nullable_string_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?string|!=|?string",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_bool_t__result_bool_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<bool>|!=|result<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_int_t__result_int_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<int>|!=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_float_t__result_float_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<float>|!=|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_string_t__result_string_t.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<string>|!=|result<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_false_bool_t__result_or_false_bool_t.tsv",
+    "inventory_group": "E2FB",
+    "signature_id": "binary|result_or_false<bool>|!=|result_or_false<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<int>|!=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<float>|!=|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_false_string_t__result_or_false_string_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<string>|!=|result_or_false<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_bool_bool_t__result_or_bool_bool_t.tsv",
+    "inventory_group": "E2BB",
+    "signature_id": "binary|result_or_bool<bool>|!=|result_or_bool<bool>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<int>|!=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<float>|!=|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_equality",
+    "item_id": "not_equal",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_comparison_equality/not_equal__result_or_bool_string_t__result_or_bool_string_t.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<string>|!=|result_or_bool<string>",
+    "semantic_row_statuses": {
+      "supported": 49
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|<|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|<|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|<|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|<|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|<|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|<|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|<|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|<|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|<=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|<=|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|<=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|<=|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|<=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|<=|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|<=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "less_than_or_equal",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/less_than_or_equal__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|<=|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|>|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|>|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|>|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|>|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|>|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|>|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|>|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|>|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|>=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?float|>=|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|>=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__result_float_t__result_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<float>|>=|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|>=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<float>|>=|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|>=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_comparison_ordering",
+    "item_id": "greater_than_or_equal",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_comparison_ordering/greater_than_or_equal__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<float>|>=|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_strict_identity/identical__nullable_bool_t___nullable_bool_t_.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?bool|===|?bool",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_strict_identity/identical__nullable_int_t___nullable_int_t_.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|===|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_strict_identity/identical__nullable_float_t___nullable_float_t_.tsv",
+    "inventory_group": "E1",
+    "signature_id": "binary|?float|===|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_strict_identity/identical__nullable_string_t___nullable_string_t_.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?string|===|?string",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_bool_t___result_bool_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<bool>|===|result<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_int_t___result_int_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<int>|===|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_float_t___result_float_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<float>|===|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_string_t___result_string_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<string>|===|result<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_false_bool_t___result_or_false_bool_t_.tsv",
+    "inventory_group": "E2FB",
+    "signature_id": "binary|result_or_false<bool>|===|result_or_false<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_false_int_t___result_or_false_int_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<int>|===|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_false_float_t___result_or_false_float_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<float>|===|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_false_string_t___result_or_false_string_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<string>|===|result_or_false<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_bool_bool_t___result_or_bool_bool_t_.tsv",
+    "inventory_group": "E2BB",
+    "signature_id": "binary|result_or_bool<bool>|===|result_or_bool<bool>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_bool_int_t___result_or_bool_int_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<int>|===|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_bool_float_t___result_or_bool_float_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<float>|===|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "identical",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_strict_identity/identical__result_or_bool_string_t___result_or_bool_string_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<string>|===|result_or_bool<string>",
+    "semantic_row_statuses": {
+      "supported": 49
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "nullable<bool_t>",
+    "rhs_type": "nullable<bool_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__nullable_bool_t___nullable_bool_t_.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?bool|!==|?bool",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__nullable_int_t___nullable_int_t_.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|!==|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__nullable_float_t___nullable_float_t_.tsv",
+    "inventory_group": "E1",
+    "signature_id": "binary|?float|!==|?float",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "nullable<string_t>",
+    "rhs_type": "nullable<string_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__nullable_string_t___nullable_string_t_.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?string|!==|?string",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result<bool_t>",
+    "rhs_type": "result<bool_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_bool_t___result_bool_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<bool>|!==|result<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_int_t___result_int_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<int>|!==|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_float_t___result_float_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<float>|!==|result<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result<string_t>",
+    "rhs_type": "result<string_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_string_t___result_string_t_.tsv",
+    "inventory_group": "E2R",
+    "signature_id": "binary|result<string>|!==|result<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_false<bool_t>",
+    "rhs_type": "result_or_false<bool_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_false_bool_t___result_or_false_bool_t_.tsv",
+    "inventory_group": "E2FB",
+    "signature_id": "binary|result_or_false<bool>|!==|result_or_false<bool>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_false_int_t___result_or_false_int_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<int>|!==|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_false_float_t___result_or_false_float_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<float>|!==|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_false<string_t>",
+    "rhs_type": "result_or_false<string_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_false_string_t___result_or_false_string_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_false<string>|!==|result_or_false<string>",
+    "semantic_row_statuses": {
+      "supported": 36
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_bool<bool_t>",
+    "rhs_type": "result_or_bool<bool_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_bool_bool_t___result_or_bool_bool_t_.tsv",
+    "inventory_group": "E2BB",
+    "signature_id": "binary|result_or_bool<bool>|!==|result_or_bool<bool>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_bool_int_t___result_or_bool_int_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<int>|!==|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_bool_float_t___result_or_bool_float_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<float>|!==|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_strict_identity",
+    "item_id": "not_identical",
+    "lhs_type": "result_or_bool<string_t>",
+    "rhs_type": "result_or_bool<string_t>",
+    "row_file": "semantics/operators_strict_identity/not_identical__result_or_bool_string_t___result_or_bool_string_t_.tsv",
+    "inventory_group": "E2NB",
+    "signature_id": "binary|result_or_bool<string>|!==|result_or_bool<string>",
+    "semantic_row_statuses": {
+      "supported": 49
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_and",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_and__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|&|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_and",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_and__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|&|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_and",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_and__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|&|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_and",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_and__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|&|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_or",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_or__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|||?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_or",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_or__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|||result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_or",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_or__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|||result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_or",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_or__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|||result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_xor",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_xor__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|^|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_xor",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_xor__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|^|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_xor",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_xor__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|^|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "bitwise_xor",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/bitwise_xor__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|^|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_left",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_left__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|<<|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_left",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_left__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|<<|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_left",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_left__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|<<|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_left",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_left__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|<<|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_right",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_right__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|?int|>>|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_right",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_right__result_int_t__result_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result<int>|>>|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_right",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_right__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_false<int>|>>|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_binary_bitwise",
+    "item_id": "shift_right",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_binary_bitwise/shift_right__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "done",
+    "signature_id": "binary|result_or_bool<int>|>>|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|?int|+=|?int",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|?float|+=|?float",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result<int>|+=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__result_float_t__result_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result<float>|+=|result<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_false<int>|+=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_false<float>|+=|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_bool<int>|+=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "add_assign",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_compound_assignment/add_assign__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_bool<float>|+=|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|?int|-=|?int",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|?float|-=|?float",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result<int>|-=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__result_float_t__result_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result<float>|-=|result<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_false<int>|-=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_false<float>|-=|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_bool<int>|-=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "subtract_assign",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_compound_assignment/subtract_assign__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_bool<float>|-=|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|?int|*=|?int",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|?float|*=|?float",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result<int>|*=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__result_float_t__result_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result<float>|*=|result<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_false<int>|*=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_false<float>|*=|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_bool<int>|*=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "multiply_assign",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_compound_assignment/multiply_assign__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_bool<float>|*=|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|?int|/=|?int",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "nullable<float_t>",
+    "rhs_type": "nullable<float_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__nullable_float_t__nullable_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|?float|/=|?float",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result<int>|/=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "result<float_t>",
+    "rhs_type": "result<float_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__result_float_t__result_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result<float>|/=|result<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_false<int>|/=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "result_or_false<float_t>",
+    "rhs_type": "result_or_false<float_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__result_or_false_float_t__result_or_false_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_false<float>|/=|result_or_false<float>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IA",
+    "signature_id": "compound|result_or_bool<int>|/=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "divide_assign",
+    "lhs_type": "result_or_bool<float_t>",
+    "rhs_type": "result_or_bool<float_t>",
+    "row_file": "semantics/operators_compound_assignment/divide_assign__result_or_bool_float_t__result_or_bool_float_t.tsv",
+    "inventory_group": "C1",
+    "signature_id": "compound|result_or_bool<float>|/=|result_or_bool<float>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "modulo_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/modulo_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|?int|%=|?int",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "modulo_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/modulo_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result<int>|%=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "modulo_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/modulo_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_false<int>|%=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 27
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "modulo_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/modulo_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_bool<int>|%=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 48
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_and_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_and_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|?int|&=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_and_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_and_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result<int>|&=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_and_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_and_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_false<int>|&=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_and_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_and_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_bool<int>|&=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_or_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_or_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|?int||=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_or_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_or_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result<int>||=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_or_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_or_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_false<int>||=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_or_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_or_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_bool<int>||=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_xor_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_xor_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|?int|^=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_xor_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_xor_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result<int>|^=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_xor_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_xor_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_false<int>|^=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "bitwise_xor_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/bitwise_xor_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_bool<int>|^=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_left_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_left_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|?int|<<=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_left_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_left_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result<int>|<<=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_left_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_left_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_false<int>|<<=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_left_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_left_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_bool<int>|<<=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_right_assign",
+    "lhs_type": "nullable<int_t>",
+    "rhs_type": "nullable<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_right_assign__nullable_int_t__nullable_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|?int|>>=|?int",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_right_assign",
+    "lhs_type": "result<int_t>",
+    "rhs_type": "result<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_right_assign__result_int_t__result_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result<int>|>>=|result<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_right_assign",
+    "lhs_type": "result_or_false<int_t>",
+    "rhs_type": "result_or_false<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_right_assign__result_or_false_int_t__result_or_false_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_false<int>|>>=|result_or_false<int>",
+    "semantic_row_statuses": {
+      "supported": 9
+    }
+  },
+  {
+    "family_id": "operators_compound_assignment",
+    "item_id": "shift_right_assign",
+    "lhs_type": "result_or_bool<int_t>",
+    "rhs_type": "result_or_bool<int_t>",
+    "row_file": "semantics/operators_compound_assignment/shift_right_assign__result_or_bool_int_t__result_or_bool_int_t.tsv",
+    "inventory_group": "C1IB",
+    "signature_id": "compound|result_or_bool<int>|>>=|result_or_bool<int>",
+    "semantic_row_statuses": {
+      "supported": 16
+    }
+  }
+]

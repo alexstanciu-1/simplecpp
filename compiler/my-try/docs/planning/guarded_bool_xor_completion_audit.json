@@ -1,0 +1,24 @@
+{
+  "doc_status": "supporting",
+  "changed_from_baseline": [
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/02_expressions.md",
+    "compiler/my-try/docs/s2s_scalar_operators.md",
+    "compiler/my-try/docs/testing.md",
+    "compiler/my-try/04_analyze/operators/guarded.php",
+    "compiler/my-try/tests/guarded_bool.php",
+    "compiler/my-try/tests/guarded_cross_support.php"
+  ],
+  "existing_executable_changes": [
+    "compiler/my-try/04_analyze/operators/guarded.php",
+    "compiler/my-try/tests/guarded_bool.php",
+    "compiler/my-try/tests/guarded_cross_support.php"
+  ],
+  "new_test_sources": [
+    "compiler/my-try/tests/guarded_bool_xor.py"
+  ],
+  "tested_non_documentation_mismatches": [],
+  "runtime_changes": [],
+  "historical_snapshot_files_unchanged": true,
+  "documentation_closeout_separate_from_tested_snapshot": true
+}

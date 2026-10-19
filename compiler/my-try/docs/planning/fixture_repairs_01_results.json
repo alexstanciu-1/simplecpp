@@ -1,0 +1,562 @@
+{
+  "doc_status": "planning",
+  "date": "2026-10-19",
+  "status": "complete",
+  "issue_ids": [
+    "V-H01",
+    "V-H02",
+    "V-H03",
+    "V-H05",
+    "V-H06",
+    "V-H07",
+    "V-H12"
+  ],
+  "evidence_archive": "fixture_repairs_01_evidence.json.gz",
+  "evidence_archive_sha256": "82f17d9acae7b433b91ccbcefe00fdb23e9287fe80c1a7ba8f0886f74a7d9b50",
+  "first_attempt": {
+    "passed": false,
+    "outcomes": [
+      {
+        "name": "direct",
+        "passed": true
+      },
+      {
+        "name": "cpp_artifacts",
+        "passed": true
+      },
+      {
+        "name": "nullable",
+        "passed": false,
+        "error": "nullable: expected exit 0, got 1; see /home/alex-ai/fixture-repairs/20261019-01/verification/results/orchestrator"
+      },
+      {
+        "name": "json_api",
+        "passed": true
+      },
+      {
+        "name": "runtime_strings",
+        "passed": true
+      },
+      {
+        "name": "runtime_generics",
+        "passed": true
+      },
+      {
+        "name": "runtime_source",
+        "passed": true
+      },
+      {
+        "name": "runtime_handles",
+        "passed": true
+      },
+      {
+        "name": "control_flow",
+        "passed": true
+      },
+      {
+        "name": "functions",
+        "passed": true
+      },
+      {
+        "name": "s2s-all",
+        "passed": true,
+        "cases": 1409
+      }
+    ]
+  },
+  "h03_followup": {
+    "passed": true,
+    "cpp_pch": true,
+    "php_suites": 11,
+    "generated_programs": 99
+  },
+  "effective_outcome": "All seven repairs verified; initial H03 failure retained and corrected in a separate snapshot.",
+  "per_issue": {
+    "V-H01": {
+      "observers": [
+        {
+          "case": "control_flow-match_unhandled",
+          "archive_entry": "20261019-01/verification/results/control_flow/logs/commands.json",
+          "command": {
+            "name": "match_unhandled-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/control_flow/programs/match_unhandled.program"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.007,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "control_flow-truth_explicit_cast_reject",
+          "archive_entry": "20261019-01/verification/results/control_flow/logs/commands.json",
+          "command": {
+            "name": "truth_explicit_cast_reject-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/control_flow/programs/truth_explicit_cast_reject.program"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_generics-count_bad_dynamic_0",
+          "archive_entry": "20261019-01/verification/results/runtime_generics/logs/commands.json",
+          "command": {
+            "name": "count_bad_dynamic_0-execute",
+            "command": [
+              "env",
+              "ASAN_OPTIONS=detect_leaks=0",
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_generics/count_bad_dynamic_0"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.008,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_generics-count_bad_dynamic_1",
+          "archive_entry": "20261019-01/verification/results/runtime_generics/logs/commands.json",
+          "command": {
+            "name": "count_bad_dynamic_1-execute",
+            "command": [
+              "env",
+              "ASAN_OPTIONS=detect_leaks=0",
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_generics/count_bad_dynamic_1"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.007,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_generics-count_bad_dynamic_2",
+          "archive_entry": "20261019-01/verification/results/runtime_generics/logs/commands.json",
+          "command": {
+            "name": "count_bad_dynamic_2-execute",
+            "command": [
+              "env",
+              "ASAN_OPTIONS=detect_leaks=0",
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_generics/count_bad_dynamic_2"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.008,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_generics-count_bad_mixed_0",
+          "archive_entry": "20261019-01/verification/results/runtime_generics/logs/commands.json",
+          "command": {
+            "name": "count_bad_mixed_0-execute",
+            "command": [
+              "env",
+              "ASAN_OPTIONS=detect_leaks=0",
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_generics/count_bad_mixed_0"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.006,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_generics-count_bad_mixed_1",
+          "archive_entry": "20261019-01/verification/results/runtime_generics/logs/commands.json",
+          "command": {
+            "name": "count_bad_mixed_1-execute",
+            "command": [
+              "env",
+              "ASAN_OPTIONS=detect_leaks=0",
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_generics/count_bad_mixed_1"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.005,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_generics-count_bad_mixed_2",
+          "archive_entry": "20261019-01/verification/results/runtime_generics/logs/commands.json",
+          "command": {
+            "name": "count_bad_mixed_2-execute",
+            "command": [
+              "env",
+              "ASAN_OPTIONS=detect_leaks=0",
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_generics/count_bad_mixed_2"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.006,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_handles-null_receiver",
+          "archive_entry": "20261019-01/verification/results/runtime_handles/logs/commands.json",
+          "command": {
+            "name": "null_receiver-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_handles/null_receiver"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_source-negative",
+          "archive_entry": "20261019-01/verification/results/runtime_source/logs/commands.json",
+          "command": {
+            "name": "negative-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_source/negative"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_source-overflow",
+          "archive_entry": "20261019-01/verification/results/runtime_source/logs/commands.json",
+          "command": {
+            "name": "overflow-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_source/overflow"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.003,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_source-past_end",
+          "archive_entry": "20261019-01/verification/results/runtime_source/logs/commands.json",
+          "command": {
+            "name": "past_end-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_source/past_end"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_source-wide",
+          "archive_entry": "20261019-01/verification/results/runtime_source/logs/commands.json",
+          "command": {
+            "name": "wide-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_source/wide"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_source-zero_line",
+          "archive_entry": "20261019-01/verification/results/runtime_source/logs/commands.json",
+          "command": {
+            "name": "zero_line-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_source/zero_line"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_strings-boxed_failure",
+          "archive_entry": "20261019-01/verification/results/runtime_strings/logs/commands.json",
+          "command": {
+            "name": "boxed_failure-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_strings/boxed_failure"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.003,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_strings-byte_search_negative",
+          "archive_entry": "20261019-01/verification/results/runtime_strings/logs/commands.json",
+          "command": {
+            "name": "byte_search_negative-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_strings/byte_search_negative"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_strings-byte_search_outside",
+          "archive_entry": "20261019-01/verification/results/runtime_strings/logs/commands.json",
+          "command": {
+            "name": "byte_search_outside-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_strings/byte_search_outside"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.003,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_strings-pad_empty",
+          "archive_entry": "20261019-01/verification/results/runtime_strings/logs/commands.json",
+          "command": {
+            "name": "pad_empty-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_strings/pad_empty"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.003,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_strings-pad_mode",
+          "archive_entry": "20261019-01/verification/results/runtime_strings/logs/commands.json",
+          "command": {
+            "name": "pad_mode-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_strings/pad_mode"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        },
+        {
+          "case": "runtime_strings-split_empty",
+          "archive_entry": "20261019-01/verification/results/runtime_strings/logs/commands.json",
+          "command": {
+            "name": "split_empty-execute",
+            "command": [
+              "/home/alex-ai/fixture-repairs/20261019-01/verification/results/runtime_strings/split_empty"
+            ],
+            "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+            "seconds": 0.002,
+            "code": 0,
+            "expected": 0,
+            "executor": "subprocess",
+            "executor_reason": "subprocess"
+          }
+        }
+      ],
+      "entry_expectation": {
+        "archive_entry": "20261019-01/verification/results/s2s-all/logs/commands.json",
+        "command": {
+          "name": "s2s-export",
+          "command": [
+            "php",
+            "/home/alex-ai/fixture-repairs/20261019-01/compiler/my-try/tests/s2s.php",
+            "/home/alex-ai/fixture-repairs/20261019-01/verification/results/s2s-all/programs"
+          ],
+          "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+          "seconds": 5.662,
+          "code": 0,
+          "expected": 0,
+          "executor": "cli",
+          "executor_reason": "PHP CLI/FPM versions differ"
+        }
+      },
+      "boundary_checks": "20261019-01/verification/results/cpp_artifacts/summary.json",
+      "preservation": "cpp_artifacts.py checks ordinary entries, uninstrumented transport, source catch, observer catch, both transport forms and marker consumption."
+    },
+    "V-H02": {
+      "archive_entry": "20261019-01/verification/results/direct/logs/commands.json",
+      "command": {
+        "name": "type_catalog",
+        "command": [
+          "php",
+          "/home/alex-ai/fixture-repairs/20261019-01/compiler/my-try/tests/type_catalog.php"
+        ],
+        "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+        "seconds": 0.102,
+        "code": 0,
+        "expected": 0,
+        "executor": "cli",
+        "executor_reason": "PHP CLI/FPM versions differ"
+      }
+    },
+    "V-H03": {
+      "archive_entry": "20261019-02/verification/nullable-02/summary.json",
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 99
+      },
+      "initial_failure": "20261019-01/verification/results/nullable/logs/nullable.stderr",
+      "repair": "Both coalesce and conditional-join diagnostic expectations updated; all recovery and withheld-output assertions retained."
+    },
+    "V-H05": {
+      "archive_entry": "20261019-01/verification/results/cpp_artifacts/summary.json",
+      "summary": {
+        "passed": true,
+        "php_suites": 5,
+        "generated_program_runs": 8,
+        "partitioned_fixture": "backend transport fixture, not multi-source lowering",
+        "native_compiler_rebuilt": false,
+        "persistent_pch": false
+      }
+    },
+    "V-H06": {
+      "archive_entry": "20261019-01/verification/results/s2s-all/logs/commands.json",
+      "command": {
+        "name": "container_call_indexed_typed_state-execute",
+        "command": [
+          "/home/alex-ai/fixture-repairs/20261019-01/verification/results/s2s-all/programs/container_call_indexed_typed_state.program"
+        ],
+        "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+        "seconds": 0.018,
+        "code": 0,
+        "expected": 0,
+        "executor": "subprocess",
+        "executor_reason": "subprocess"
+      }
+    },
+    "V-H07": {
+      "mixed": {
+        "archive_entry": "20261019-01/verification/results/json_api/logs/commands.json",
+        "command": {
+          "name": "json_mixed_failures-execute",
+          "command": [
+            "/home/alex-ai/fixture-repairs/20261019-01/verification/results/json_api/programs/json_mixed_failures.program"
+          ],
+          "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+          "seconds": 0.002,
+          "code": 0,
+          "expected": 0,
+          "executor": "subprocess",
+          "executor_reason": "subprocess"
+        }
+      },
+      "dynamic": {
+        "archive_entry": "20261019-01/verification/results/json_api/logs/commands.json",
+        "command": {
+          "name": "json_dynamic_failures-execute",
+          "command": [
+            "/home/alex-ai/fixture-repairs/20261019-01/verification/results/json_api/programs/json_dynamic_failures.program"
+          ],
+          "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+          "seconds": 0.002,
+          "code": 0,
+          "expected": 0,
+          "executor": "subprocess",
+          "executor_reason": "subprocess"
+        }
+      }
+    },
+    "V-H12": {
+      "archive_entry": "20261019-01/verification/results/direct/logs/commands.json",
+      "command": {
+        "name": "data_construction",
+        "command": [
+          "php",
+          "/home/alex-ai/fixture-repairs/20261019-01/compiler/my-try/tests/data_construction.php"
+        ],
+        "cwd": "/home/alex-ai/fixture-repairs/20261019-01",
+        "seconds": 0.111,
+        "code": 0,
+        "expected": 0,
+        "executor": "cli",
+        "executor_reason": "PHP CLI/FPM versions differ"
+      }
+    }
+  },
+  "changed_from_audit": [
+    "compiler/my-try/docs/planning/language_verification_plan.md",
+    "compiler/my-try/tests/control_flow.php",
+    "compiler/my-try/tests/cpp_artifacts.py",
+    "compiler/my-try/tests/data_construction.php",
+    "compiler/my-try/tests/fixtures/container_calls.php",
+    "compiler/my-try/tests/json.php",
+    "compiler/my-try/tests/nullable.php",
+    "compiler/my-try/tests/runtime_generics.php",
+    "compiler/my-try/tests/runtime_handles.php",
+    "compiler/my-try/tests/runtime_source.php",
+    "compiler/my-try/tests/runtime_strings.php",
+    "compiler/my-try/tests/s2s.php",
+    "compiler/my-try/tests/type_catalog.php",
+    "compiler/my-try/tools/cpp_artifacts.py"
+  ],
+  "compiler_runtime_changed": false,
+  "local_test_execution": false,
+  "max_test_workers": 24,
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "limits": [
+    "Generated-program execution, not native compiler parity.",
+    "JSON observer proof is separate from production metadata issue V-R01.",
+    "Other operator fixture repairs, matrix seed generation and documentation cleanup remain outside this batch."
+  ],
+  "remaining_blockers": []
+}

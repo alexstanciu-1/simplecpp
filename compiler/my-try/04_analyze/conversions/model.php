@@ -23,6 +23,7 @@ enum conversion_operation
 	case callable_wrap;
 	case identity;
 	case integer_value_cast;
+	case integer_to_floating;
 	case explicit_runtime_cast;
 	case text_conversion;
 	case nullable_empty;

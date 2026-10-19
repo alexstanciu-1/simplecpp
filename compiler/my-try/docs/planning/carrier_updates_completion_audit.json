@@ -1,0 +1,46 @@
+{
+  "doc_status": "supporting",
+  "changed_from_baseline": [
+    "compiler/my-try/04_analyze/operators/model.php",
+    "compiler/my-try/04_analyze/operators/mutations.php",
+    "compiler/my-try/05_backend/cpp/generate.php",
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/02_expressions.md",
+    "compiler/my-try/docs/s2s_scalar_operators.md",
+    "compiler/my-try/docs/testing.md",
+    "compiler/my-try/tests/float_operators.php",
+    "runtime/include/scpp/generated/operators.hpp",
+    "runtime/specs/config.json",
+    "runtime/specs/spec.md",
+    "runtime/tools/generate_operators.php",
+    "specs/expression_evaluation.md",
+    "compiler/my-try/tests/guarded_operators.php",
+    "compiler/my-try/tests/guarded_float.php",
+    "compiler/my-try/tests/guarded_mixed.php"
+  ],
+  "existing_code_and_contract_changes": [
+    "compiler/my-try/04_analyze/operators/model.php",
+    "compiler/my-try/04_analyze/operators/mutations.php",
+    "compiler/my-try/05_backend/cpp/generate.php",
+    "compiler/my-try/tests/float_operators.php",
+    "runtime/include/scpp/generated/operators.hpp",
+    "runtime/specs/config.json",
+    "runtime/specs/spec.md",
+    "runtime/tools/generate_operators.php",
+    "specs/expression_evaluation.md",
+    "compiler/my-try/tests/guarded_operators.php",
+    "compiler/my-try/tests/guarded_float.php",
+    "compiler/my-try/tests/guarded_mixed.php"
+  ],
+  "new_sources": [
+    "compiler/my-try/tests/carrier_updates.php",
+    "compiler/my-try/tests/carrier_updates.py",
+    "compiler/my-try/tests/carrier_updates_runtime.py"
+  ],
+  "tested_non_documentation_mismatches": [],
+  "runtime_changes": [
+    "runtime/tools/generate_operators.php",
+    "runtime/include/scpp/generated/operators.hpp"
+  ],
+  "documentation_closeout_separate_from_tested_snapshot": true
+}
