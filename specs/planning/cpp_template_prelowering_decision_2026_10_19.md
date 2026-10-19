@@ -71,6 +71,11 @@ The earlier generic opaque call/property route is an experimental comparison and
 can remain for genuinely native runtime boundaries. It is not the main architecture
 for source-defined fields/methods. Retire superseded routing after replacement proofs;
 do not accumulate permanent modes or duplicate registries.
+During bounded integration, the existing lowering configuration's
+`concrete_type_substitution` API selector enables ordinary source emission while
+keeping the measured comparison paths available. It is temporary: consolidate it
+into the general `prelower_templates` selection when equivalent coverage permits
+retiring those paths. Do not add separate family selectors.
 
 | Owner | Responsibility |
 |---|---|

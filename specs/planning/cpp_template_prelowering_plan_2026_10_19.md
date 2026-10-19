@@ -11,11 +11,14 @@ This document records the implementation sequence. The [current coverage guide](
    selected concrete arguments. Reuse the existing lifecycle generator and engine.
    Resolve dependent layout probes in publication order through the native cache.
    First prove nested runtime applications with real registry/prepared types; this
-   foundation does not yet switch ordinary application emission.
+   foundation is implemented; the source integration below consumes it.
 2. Integrate concrete source fields and signatures in the existing declaration
    emitter. Publish one source payload definition and resolve its layout dependencies.
    Preserve ordinary field/reference access and evaluate recursive source-type graphs
-   explicitly. No new AST, semantic pass or parallel registry.
+   explicitly. No new AST, semantic pass or parallel registry. The [inline source
+   checkpoint](results/prelower_source_fields_2026_10_19/README.md) now covers ordinary
+   fields/signatures/source methods and fragment replay. Source payload arguments and
+   recursive layout graphs remain open.
 3. Bind ordinary operations/members to concrete interfaces from existing prepared
    decisions and runtime bindings. Prove nested mutation, constructors, references,
    providers and allocation/copy parity before enabling broader application coverage.
@@ -101,8 +104,10 @@ supports the user's preferred next direction: define source fields as real concr
 owners, allowing ordinary member calls/references. Integration must consistently
 select physical template arguments and resolve dependent layouts through existing
 bindings/build owners. The [backend binding foundation](results/prelower_substitution_2026_10_19/README.md)
-now integrates concrete physical arguments and dependent layout caching. Source-field
-and ordinary operation emission remain the next steps.
+now integrates concrete physical arguments and dependent layout caching. The [source-field
+checkpoint](results/prelower_source_fields_2026_10_19/README.md) adds bounded inline-record
+fields/signatures and ordinary source member emission. Runtime forwarding interfaces
+and source payload layout graphs remain the next steps.
 The [native-place proposal](prelower_native_places_2026_10_19.md) is deferred for
 source fields and retained for boundaries that still expose original native storage.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)

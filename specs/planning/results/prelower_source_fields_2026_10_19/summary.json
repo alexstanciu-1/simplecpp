@@ -1,0 +1,122 @@
+{
+  "counters": {
+    "direct-O0": "workload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-O2": "workload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-sanitized": "workload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O0": "workload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O2": "workload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-sanitized": "workload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n"
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-fields-final/cache-direct/artifacts/86c29d2feaf1ab9dbbbe281b023b6c2244c2bcc5f5e1c4bacf389c8c3e4cc0bf.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "executable": "/tmp/prelower-fields-final/cache-direct/artifacts/86c29d2feaf1ab9dbbbe281b023b6c2244c2bcc5f5e1c4bacf389c8c3e4cc0bf.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-fields-final/cache-direct/artifacts/46f354338c889749f908b8de6c801106c88369a5bf1ea4881cf0ed6a2bb28e76.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "executable": "/tmp/prelower-fields-final/cache-direct/artifacts/46f354338c889749f908b8de6c801106c88369a5bf1ea4881cf0ed6a2bb28e76.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-fields-final/cache-composed/artifacts/4231a1829dbacd6e6ba356516b132ede14d25afbee94c25d4f87a6e5fb478d8e.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "executable": "/tmp/prelower-fields-final/cache-composed/artifacts/4231a1829dbacd6e6ba356516b132ede14d25afbee94c25d4f87a6e5fb478d8e.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-fields-final/cache-composed/artifacts/8a8a883649f351501aeaaa1035d482d80cddaf18f74991fb002af26475a888f5.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "executable": "/tmp/prelower-fields-final/cache-composed/artifacts/8a8a883649f351501aeaaa1035d482d80cddaf18f74991fb002af26475a888f5.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-fields-final/cache-composed/artifacts/1b54d4a2b801bfcac0035d2d68aa17bb3db9cc2ffea9955a2c076a39fd99c01c.bin",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "executable": "/tmp/prelower-fields-final/cache-composed/artifacts/4001913edd15883a7e5b2729048072c05b56efcc9a9da92b4e79553785ac4e1a.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "executable": "/tmp/prelower-fields-final/cache-composed/artifacts/4231a1829dbacd6e6ba356516b132ede14d25afbee94c25d4f87a6e5fb478d8e.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ]
+}

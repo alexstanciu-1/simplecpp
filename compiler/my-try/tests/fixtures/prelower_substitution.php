@@ -7,22 +7,80 @@ require_once dirname(__DIR__, 2) . '/boot.php';
 $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
+$fields = ($argv[6] ?? '') === 'fields';
 $metadata = new runtime_catalog_input();
 foreach (Model::$runtime_metadata->modules as $module) { $metadata->modules->add($module->name, $module); }
 $metadata->modules->add('type_proof', Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__) . '/runtime_types.json'), 'type_proof.json'));
 Compiler_Lifecycle::configure_runtime($metadata);
 if (!is_dir($source)) { mkdir($source, 0777, true); }
-file_put_contents($source . '/main.phs', '$v vector<int>; $n vector<vector<int>>; $p parcel<vector<int>>; $t vector<receipt>; $a=count($v); $b=count($n); $c=unpack($p); $d=count($t);');
+
+$program = '$v vector<int>; $n vector<vector<int>>; $p parcel<vector<int>>; $t vector<receipt>; $a=count($v); $b=count($n); $c=unpack($p); $d=count($t);';
+if ($fields) {
+    $program = <<<'PHS'
+struct Inner { public vector<int> $amounts; }
+struct Record {
+ public Inner $inner;
+ public vector<vector<int>> $nested;
+ public parcel<vector<int>> $parcel;
+ public vector<receipt> $tracked;
+ public function replace(const vector<int> &$input): void { $this->inner->amounts = $input; }
+ public function copy_amounts(): vector<int> { return $this->inner->amounts; }
+ public function forward(vector<int> &$output, const vector<int> &$input): void { copy_into($output, $input); }
+}
+function copy_into(vector<int> &$output, const vector<int> &$input): void { $output = $input; }
+function &field(vector<int> &$values): vector<int> { return $values; }
+function method(Record &$record, const vector<int> &$input): void { $record->replace($input); }
+function reference(Record &$record): void { $values =& $record->inner->amounts; $same =& field($values); }
+function demand(vector<int> &$v, vector<vector<int>> &$n, parcel<vector<int>> &$p, vector<receipt> &$t, int &$i): void {}
+PHS;
+}
+file_put_contents($source . '/main.phs', $program);
 $compiler = new Compiler();
+$compiler->cpp_lowering->prelower_templates = $fields && $composed;
+$compiler->cpp_lowering->concrete_type_substitution = $fields && $composed;
 $compiler->init([$source]);
 $compiler->exec_cpp();
 $body = Model::syntax_files()[0]->root->single_body()->body;
 $version = $body->work()->version;
 $types = [];
+if (!$fields) {
 foreach (['Vector', 'Nested', 'Parcel', 'TrackedVector'] as $offset => $name) {
     $types[$name] = $body->statements[$offset + 4]->expression->value->require_call_preparation()->signature->parameters[0]->type;
 }
 $types['Int'] = $body->statements[4]->expression->value->require_call_preparation()->type;
+} else {
+    $parameters = Model::$global_scope->functions_named('demand')[0]->syntax()->require_preparation()->signature->parameters;
+    foreach (['Vector', 'Nested', 'Parcel', 'TrackedVector', 'Int'] as $index => $name) { $types[$name] = $parameters[$index]->type; }
+    $snapshot = static function () { $r=[]; foreach(Model::$cpp_files as $a) {$r[$a->file_name]=$a->text;} return $r; };
+    $before = $snapshot();
+    $fragments=[]; foreach(Model::$cpp_output_program->fragments as $owner) {$fragments[] = Model::$cpp_output_program->fragments[$owner];}
+    $compiler->cpp();
+    if ($snapshot() !== $before) { throw new \LogicException('Concrete source fragment replay changed output'); }
+    $index=0; foreach(Model::$cpp_output_program->fragments as $owner) {
+        if (Model::$cpp_output_program->fragments[$owner] !== $fragments[$index++]) { throw new \LogicException('No-op regenerated a source fragment'); }
+    }
+    $stable_owner = Model::$global_scope->functions_named('field')[0]->syntax()->body->work();
+    $stable_fragment = Model::$cpp_output_program->fragments[$stable_owner];
+    $edited = str_replace('$this->inner->amounts = $input;', 'if (false) { $this->inner->amounts = $input; } $this->inner->amounts = $input;', $program);
+    file_put_contents($source . '/main.phs', $edited);
+    $compiler->update_cpp([$source . '/main.phs']);
+    if (Model::$cpp_output_program->fragments[$stable_owner] !== $stable_fragment) { throw new \LogicException('Member edit regenerated unrelated function'); }
+    if ($snapshot() === $before) { throw new \LogicException('Member body edit did not change emission'); }
+    file_put_contents($source . '/main.phs', $program);
+    $compiler->update_cpp([$source . '/main.phs']);
+    if ($snapshot() !== $before) { throw new \LogicException('Member edit restoration changed output'); }
+    if ($composed) {
+        $settled = $stable_owner->version;
+        $compiler->cpp_lowering->prelower_templates = false;
+        $compiler->cpp();
+        if ($snapshot() === $before) { throw new \LogicException('Option switch reused concrete source fragments'); }
+        $compiler->cpp_lowering->prelower_templates = true;
+        $compiler->cpp_lowering->runtime_template_abi = true; // Composition takes precedence over comparison mode.
+        $compiler->cpp();
+        if (($snapshot() !== $before) || ($stable_owner->version !== $settled)) { throw new \LogicException('Option replay changed preparation or output'); }
+    }
+
+}
 $engine = new CPP_Specializations();
 $header = "#pragma once\n#include \"instrument.hpp\"\n";
 $support = "#include \"interface.hpp\"\n#include <type_traits>\n#include <utility>\n#include <memory>\n";
@@ -51,6 +109,26 @@ if ($composed) {
     if ($probes !== 3) { throw new \LogicException('Expected integer, container and nested-container layout batches'); }
 }
 if ($version !== $body->work()->version) { throw new \LogicException('Physical substitution changed preparation'); }
+if ($fields) {
+    $generated = Model::$cpp_files;
+    $expected_support = []; foreach ($artifacts as $artifact) { $expected_support[$artifact->file_name] = $artifact->text; }
+    $actual_support = [];
+    $artifacts = new Storage();
+    foreach ($generated as $artifact) {
+        if (str_starts_with($artifact->file_name, 'specializations/')) { $actual_support[$artifact->file_name] = $artifact->text; }
+        elseif ($composed && (str_contains($artifact->text, 'scpp::vector_t<') || str_contains($artifact->text, 'scpp::int_t<'))) {
+            throw new \LogicException('Native template spelling leaked into source emission');
+        }
+        if ($artifact->file_name !== 'entry.cpp') { $artifacts->append($artifact); }
+    }
+    ksort($expected_support); ksort($actual_support);
+    if ($expected_support !== $actual_support) { throw new \LogicException('Source fragment requests did not publish the demanded support'); }
+    $header .= '#include "' . CPP_Artifacts::type_header('Record') . "\"\n";
+    foreach (['field', 'method', 'reference'] as $function) {
+        $header .= '#include "' . CPP_Artifacts::callable_header($function) . "\"\n";
+    }
+    $header .= 'using Record = ' . CPP_Generator::source_name('record', 'Record') . ";\n";
+}
 $header .= <<<'CPP'
 void seed(Vector&);
 void append(Nested&, const Vector&);
@@ -124,6 +202,22 @@ int main() {
     return REVISION;
 }
 CPP;
+if ($fields) {
+    $header = str_replace('struct Record { Nested nested; Parcel parcel; TrackedVector tracked; };', '', $header);
+    // The harness only drives generated declarations/calls; no replacement source implementation.
+    $field_function = CPP_Callables::source_reference(Model::$global_scope->functions_named('field')[0]);
+    $method_function = CPP_Callables::source_reference(Model::$global_scope->functions_named('method')[0]);
+    $main = str_replace('append(record.nested, input);',
+        'append(record.nested, input); ' . $method_function . '(record, input);', $main);
+    $main = str_replace('        Record copy(record);',
+        'Vector copied = record.' . CPP_Generator::source_name('method', 'copy_amounts') . '(); require(read(copied) == 7); record.' . CPP_Generator::source_name('method', 'forward') . '(copied, input); Record copy(record);', $main);
+    $reference_function = CPP_Callables::source_reference(Model::$global_scope->functions_named('reference')[0]);
+    $main = str_replace('report("references");',
+        $reference_function . '(record); auto& actual = ' . $field_function . '(record.inner.amounts); require(&actual == &record.inner.amounts); mutate(actual); require(read(record.inner.amounts) == 21); report("references");', $main);
+    foreach (['nested', 'parcel', 'tracked', 'inner', 'amounts'] as $field_name) {
+        $main = str_replace('.' . $field_name, '.' . CPP_Generator::source_name('field', $field_name), $main);
+    }
+}
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);
 $provider = str_replace('T value;', 'alignas(alignof(T) > ' . $alignment . ' ? alignof(T) : ' . $alignment . ') T value;', $provider);

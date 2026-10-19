@@ -14,14 +14,18 @@ final class CPP_Generator
 		$this->program = $program ?? new cpp_program();
 		$enabled = false;
 		$runtime_abi = false;
+		$concrete_types = false;
 		if ($options !== null) {
 			$enabled = $options->prelower_templates;
-			$runtime_abi = $enabled && $options->runtime_template_abi;
+			$concrete_types = $enabled && $options->concrete_type_substitution;
+			$runtime_abi = $enabled && !$concrete_types && $options->runtime_template_abi;
 		}
-		if (($this->program->prelower_templates !== $enabled) || ($this->program->runtime_template_abi !== $runtime_abi)) {
+		if (($this->program->prelower_templates !== $enabled) || ($this->program->runtime_template_abi !== $runtime_abi)
+			|| ($this->program->concrete_type_substitution !== $concrete_types)) {
 			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
 			$this->program->prelower_templates = $enabled;
 			$this->program->runtime_template_abi = $runtime_abi;
+			$this->program->concrete_type_substitution = $concrete_types;
 		}
 	}
 
@@ -36,7 +40,7 @@ final class CPP_Generator
 	/** One partitioning path for single-source and multi-source programs. */
 	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
 	{
-		$this->specializations = $this->program->prelower_templates ? new CPP_Specializations($this->program->runtime_template_abi) : null;
+		$this->specializations = $this->program->prelower_templates ? new CPP_Specializations($this->program->runtime_template_abi, $this->program->concrete_type_substitution) : null;
 		$ordered /** Storage<preparation_owner> */ = new Storage();
 		$found_entry = false;
 		foreach ($files as $prepared)

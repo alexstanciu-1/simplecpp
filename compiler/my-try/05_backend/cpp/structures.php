@@ -23,6 +23,8 @@ final class cpp_lowering_options
 	public bool $prelower_templates = false;
 	/** Opt-in runtime ABI integration; accounting recipes remain a comparison baseline. */
 	public bool $runtime_template_abi = false;
+	/** Temporary integration selector; replaces comparison paths after coverage parity. */
+	public bool $concrete_type_substitution = false;
 }
 
 /** Engine-owned representation; references only carry the entry position. */
@@ -170,6 +172,8 @@ final class cpp_program {
 	public bool $prelower_templates = false;
 	/** Opt-in runtime ABI integration; accounting recipes remain a comparison baseline. */
 	public bool $runtime_template_abi = false;
+	/** Temporary integration selector; replaces comparison paths after coverage parity. */
+	public bool $concrete_type_substitution = false;
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()

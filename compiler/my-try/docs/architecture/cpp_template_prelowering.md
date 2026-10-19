@@ -33,12 +33,43 @@ resolves them in publication order, forcing prior layout headers into later prob
 This conservatively includes all earlier batches, not just exact per-entry prerequisites.
 The original single-batch path retains its identity and artifact path.
 
-This is a backend API foundation, not a new public lowering mode or completed
-application substitution. Source payload arguments reject explicitly until the
-existing declaration emitter supplies consistent concrete field/signature bindings.
-Original native provider signatures cannot accept substituted types based on layout
-similarity alone. Ordinary operation/member interfaces and source declaration adoption
-remain the next integration work. See the [production-binding proof](../../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
+Source payload template arguments still reject explicitly until their layout graphs
+are integrated. Original native provider signatures cannot accept substituted types
+based on layout similarity alone. See the [production-binding proof](../../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
+
+## Ordinary source fields, signatures and members
+
+For the bounded integration path, set `prelower_templates = true` and
+`concrete_type_substitution = true` on the existing `cpp_lowering_options`.
+This temporary API selector takes precedence over `runtime_template_abi`; no new CLI
+flag was added. Its retirement condition is equivalent coverage sufficient to make
+concrete substitution the single general prelowering path. Existing comparison paths
+are retained until that condition is met.
+
+The generator configures the same specialization engine for live rendering and
+cached-fragment replay. Existing source declaration/body/dispatch contexts receive
+that engine, so fields, parameters and results consistently select concrete bindings.
+The existing field-access, source-call and argument-sequencing emitters run unchanged.
+No source object is hidden behind another facade, and no property-call bridge or
+new prepared facts were introduced. Changing effective settings invalidates existing
+C++ fragments without changing semantic preparation.
+
+The [source emission proof](../../../../specs/planning/results/prelower_source_fields_2026_10_19/README.md)
+uses compiler-emitted nested inline records, container fields, source method calls,
+reference parameters, source reference aliases, value returns and copied record
+lifecycles. Native and composed variants have identical measured allocations/copies,
+including zero measured work for reference access. No-op replay reuses fragments;
+method-body edits preserve unrelated fragments, and restoring edits/settings restores
+output. The harness seeds/mutates native containers in fixture support; it does not
+claim generated runtime-container member interfaces such as `Vector_Int::append`.
+
+Boundaries remain: source payloads as template arguments and recursive source layout
+graphs; concrete shared/unique/value access interfaces; general runtime forwarding
+methods, indexing, initialization, operators and provider compatibility. Existing
+semantic reference restrictions remain: reference returns must refer to the declared
+parameter storage type, and heap-backed property borrows (including the tested `$this`
+case) reject in preparation. The old source-call/constructor transport is not removed
+by this bounded inline-record proof.
 
 ## Runtime ABI expression integration
 
@@ -168,7 +199,8 @@ supports the preferred next source-field direction: actual concrete fields with
 ordinary member calls/references, including containers of those records and concrete
 nested elements. It preserves tested allocations/copies and lifecycle traits.
 Physical argument bindings and dependent layout resolution now have the backend API
-foundation above. Source declaration adoption and provider compatibility remain open.
+foundation above, and bounded inline source declarations now use those bindings.
+Source payload template arguments and provider compatibility remain open.
 The proposed [native-place contract](../../../../specs/planning/prelower_native_places_2026_10_19.md)
 is deferred for source fields, remaining relevant to original native storage boundaries.
 

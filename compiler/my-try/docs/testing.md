@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --source-fields --results FRESH_DIRECTORY`
+adds compiler-emitted inline source records, nested fields, method calls, parameter
+and return bindings, reference aliases, fragment replay, method-body edit restoration
+and lowering-option switching to the existing concrete-argument proof. Published
+specialization artifacts must match the demand set, and generated source artifacts
+must not retain tested native integer/vector spellings. The C++ harness drives the
+emitted declarations and supplies container seeding/mutation; runtime-container member
+forwarding is not covered. See [source-field evidence](../../../specs/planning/results/prelower_source_fields_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --results FRESH_DIRECTORY`
 proves production type-binding and lifecycle generation with concrete runtime
 arguments, including nested containers and an independently registered template.
