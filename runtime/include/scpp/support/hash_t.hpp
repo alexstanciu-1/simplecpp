@@ -185,13 +185,13 @@ struct key_ops<string_t> final {
 	}
 };
 
-template <typename Rep>
-struct key_ops<int_t<Rep>> final {
-	[[nodiscard]] static std::uint64_t hash(const int_t<Rep> &key) {
+template <typename T> requires detail::is_int_t_v<T>
+struct key_ops<T> final {
+	[[nodiscard]] static std::uint64_t hash(const T &key) {
 		return mix64(static_cast<std::uint64_t>(key.native_value()));
 	}
 
-	[[nodiscard]] static bool equal(const int_t<Rep> &left, const int_t<Rep> &right) {
+	[[nodiscard]] static bool equal(const T &left, const T &right) {
 		return left.native_value() == right.native_value();
 	}
 };

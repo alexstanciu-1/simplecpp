@@ -27,7 +27,13 @@ This document records the implementation sequence. The [current coverage guide](
    The [void-member slice](results/prelower_members_2026_10_19/README.md) now forwards
    registered runtime members through demanded concrete reference overloads, preserving
    prepared argument categories. Result transport, unrelated fixed native parameter
-   adaptation and ownership-wrapper access remain open.
+   adaptation and ownership-wrapper access remain open. The subsequent indexing audit
+   reproduced a [runtime interoperability prerequisite](prelower_index_contract_2026_10_19.md):
+   substituted hash keys lacked the native key/integer traits required for indexing
+   and removal. The approved [interoperability extension](../../runtime/specs/concrete_type_interoperability.md)
+   now supplies integer traits and demanded concrete indexing/path interfaces. The
+   [indexing proof](results/prelower_indexing_2026_10_19/README.md) covers ordinary
+   reads/writes, append and nested removal with the existing sequencing emitters.
 4. Consolidate the lowering setting around the proven substitution path. Keep
    ordinary C++ as the baseline; remove superseded experimental routing rather than
    maintaining an expanding matrix of permanent flags.

@@ -13,6 +13,7 @@ from test_runner import CommandRunner, Task, run_tasks
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--indexing', action='store_true')
     modes.add_argument('--members', action='store_true')
     modes.add_argument('--source-fields', action='store_true')
     modes.add_argument('--source-arguments', action='store_true')
@@ -29,7 +30,7 @@ def main():
                 nonlocal emission
                 emission += 1
                 runner.run(f'{mode}-emit-{emission}-{revision}-{alignment}', ['php', APP / 'tests/fixtures/prelower_substitution.php',
-                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings'))])
+                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'indexing' if args.indexing else 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings'))])
             def build(mode, label, optimization='-O0'):
                 result = json.loads(runner.run(label, ['php', APP / 'tools/build_cpp.php', out / mode,
                     out / ('cache-' + mode), '--no-pch', optimization], cli_reason='Native builder process'))
@@ -61,7 +62,13 @@ def main():
                     '-I' + str(ROOT / 'runtime/include'), '-I' + str(folder), *flags, *units, '-o', out / (mode + '-sanitized')])
                 results[mode + '-sanitized'] = runner.run(mode + '-sanitized-run',
                     ['env', 'ASAN_OPTIONS=detect_leaks=0', out / (mode + '-sanitized')]).decode()
-            assert len(set(results.values())) == 1, results
+            if args.indexing:
+                for variant in ['-O0', '-O2', '-sanitized']:
+                    assert results['direct' + variant] == results['composed' + variant], results
+                assert results['direct-O0'] == results['direct-O2'], results
+                assert 'indexed-references 0 0 0 0 0 0 0' in results['composed-O0'], results
+            else:
+                assert len(set(results.values())) == 1, results
             assert 'references 0 0 0 0 0 0 0' in results['composed-O0'], results
             shared_before = {}
             if args.source_arguments:

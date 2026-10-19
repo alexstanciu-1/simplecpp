@@ -93,10 +93,21 @@ explicitly reject; adaptation of unrelated fixed native parameter types, const r
 interfaces and ownership-wrapper access remain follow-up work. No runtime-family
 algorithms or new semantic facts were introduced.
 
+Ordinary indexed reads/writes, append syntax and keyed removal now select demanded
+concrete overloads of the existing runtime helpers through `CPP_Concrete_Index`.
+`CPP_Index_Write` and `CPP_Keyed_Path` retain their sequencing/resolution algorithms.
+Interface registration reads their settled operation/path facts; no type inference
+or container-family implementation moves into the engine. Integer representations
+publish the [runtime interoperability contract](../../../../runtime/specs/concrete_type_interoperability.md),
+so hashes retain concrete keys while reusing native hashing and append semantics.
+The [indexing proof](../../../../specs/planning/results/prelower_indexing_2026_10_19/README.md)
+compares vector/hash operations, nested root replacement, lazy removal, actual
+traversal-reference identity and throwing copies against ordinary C++ emission.
+
 Boundaries remain: recursive generated header/layout graphs (including a method
 signature returning `vector<Self>`); concrete shared/unique/value access interfaces;
 remaining runtime forwarding
-contracts, indexing, initialization, operators and provider compatibility. Existing
+contracts, compound indexed updates, initialization, operators and provider compatibility. Existing
 semantic reference restrictions remain: reference returns must refer to the declared
 parameter storage type, and heap-backed property borrows (including the tested `$this`
 case) reject in preparation. The old source-call/constructor transport is not removed

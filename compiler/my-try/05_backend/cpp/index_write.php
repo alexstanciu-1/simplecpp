@@ -50,13 +50,14 @@ final class CPP_Index_Write
 	public static function generate(assignment_expression_node $node, prepared_index_assignment $facts,
 		cpp_generation_context $context, bool $value_required = true): string
 	{
-		if (($context->specialization_engine !== null) && !$context->runtime_abi()) {
+		if (($context->specialization_engine !== null) && !$context->runtime_abi() && !CPP_Concrete_Index::active($context)) {
 			return CPP_Concrete_Operations::write($node, $facts, $context, $value_required);
 		}
+		if (CPP_Concrete_Index::active($context)) { CPP_Concrete_Index::write($facts, $context); }
 		$target = object_cast($node->target, index_node::class);
 		$destination = $facts->target;
 		$emitter = new CPP_Syntax($context);
-		if (!$context->runtime_abi()) { $context->headers['scpp/index_write.hpp'] = true; }
+		if (!$context->runtime_abi() && !CPP_Concrete_Index::active($context)) { $context->headers['scpp/index_write.hpp'] = true; }
 		$id = $context->next_temporary;
 		$context->next_temporary++;
 		$receiver = 'write_receiver_' . $id;
@@ -125,7 +126,7 @@ final class CPP_Index_Write
 		$result = new cpp_assignment_sequence();
 		$result->value = $root;
 		if ($elements->is_empty()) { return $result; }
-		$context->headers['scpp/index_write_path.hpp'] = true;
+		if (!CPP_Concrete_Index::active($context)) { $context->headers['scpp/index_write_path.hpp'] = true; }
 		$id = $context->next_temporary++;
 		$probe = $root;
 		$checks = '';

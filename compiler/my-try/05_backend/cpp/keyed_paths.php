@@ -8,10 +8,10 @@ final class CPP_Keyed_Path
 	public static function generate(prepared_keyed_path $path, cpp_generation_context $context,
 		bool $removing, bool $emptiness = false, ?truthiness_decision $presence = null): string
 	{
-		if ($context->specialization_engine !== null) {
+		if ($context->specialization_engine !== null && !CPP_Concrete_Index::active($context)) {
 			throw new \RuntimeException('prelower_templates: keyed probes/removal require a concrete adapter');
 		}
-		$context->headers['scpp/keyed_path.hpp'] = true;
+		if (!CPP_Concrete_Index::active($context)) { $context->headers['scpp/keyed_path.hpp'] = true; }
 		$id = $context->next_temporary;
 		$context->next_temporary++;
 		$emitter = new CPP_Syntax($context);
@@ -28,10 +28,14 @@ final class CPP_Keyed_Path
 			. $root . ' = ' . $binding->value . '; ';
 		$resolver = 'keyed_resolve_' . $id . '_0';
 		$text .= 'auto ' . $resolver . ' = [&]() -> const ' . $root_type . '* { return &' . $root . '; }; ';
+		$current_type = $path->root->require_preparation()->type;
 		$position = 0;
 		$last = $steps->count() - 1;
 		foreach ($steps as $step)
 		{
+			if (CPP_Concrete_Index::active($context)) {
+				CPP_Concrete_Index::keyed_step($current_type, $step, $position === $last, $removing, $presence !== null, $context);
+			}
 			$text .= 'if (!scpp::keyed_ready(' . $resolver . '(), ' . $mode . ')) { ' . $stop . ' } ';
 			$key = 'keyed_key_' . $id . '_' . $position;
 			$key_syntax /** expression_node */ = $step->syntax->index;
@@ -68,6 +72,7 @@ final class CPP_Keyed_Path
 				}
 				$text .= 'scpp::keyed_erase(' . $parent . ', ' . $key . '); ';
 			}
+			$current_type = $step->element_type;
 			$position++;
 		}
 		return $text . '}())';

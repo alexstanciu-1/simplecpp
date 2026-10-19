@@ -191,6 +191,7 @@ final class cpp_program {
 enum cpp_runtime_operation_kind {
 	case method_call;
 	case concrete_member;
+	case concrete_index;
 	case receiver_check;
 	case construct_default;
 	case construct_call;

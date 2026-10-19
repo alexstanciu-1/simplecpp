@@ -8,7 +8,8 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
-$members = ($argv[6] ?? '') === 'members';
+$indexing = ($argv[6] ?? '') === 'indexing';
+$members = $indexing || ($argv[6] ?? '') === 'members';
 $fields = $members || (($argv[6] ?? '') === 'fields') || $source_arguments;
 $metadata = new runtime_catalog_input();
 foreach (Model::$runtime_metadata->modules as $module) { $metadata->modules->add($module->name, $module); }
@@ -43,6 +44,25 @@ function runtime_members(vector<int> &$amounts, vector<vector<int>> &$nested, pa
  $amounts->append(5); $nested->append($input); $parcel->replace($input); $tracked->append($value); $tracked->append(copy_receipt($value));
 }';
 }
+if ($indexing) {
+    $program .= '
+function index_key(vector<int> &$trace, int $key): int { $trace[] = 1; return $key; }
+function index_inner_key(vector<int> &$trace, int $key): int { $trace[] = 4; return $key; }
+function index_rhs(vector<int> &$trace, vector<vector<receipt>> &$rows, const vector<vector<receipt>> &$replacement, const receipt &$value): receipt { $trace[] = 2; $rows = $replacement; return $value; }
+function index_work(vector<int> &$trace, vector<vector<receipt>> &$rows, const vector<vector<receipt>> &$replacement, hash<receipt,int> &$map, const receipt &$value): receipt {
+ $rows[index_key($trace,0)][index_inner_key($trace,0)] = index_rhs($trace,$rows,$replacement,$value);
+ $rows[index_key($trace,0)][] = $value;
+ $map[7] = $value; $map[] = $value; unset($map[index_key($trace,7)]);
+ $read = $rows[0][0]; return $read;
+}
+function unset_key(vector<int> &$trace, hash<hash<receipt,int>,int> &$tables, const hash<hash<receipt,int>,int> &$replacement): int { $trace[] = 3; $tables = $replacement; return 7; }
+function unset_work(vector<int> &$trace, hash<hash<receipt,int>,int> &$tables, const hash<hash<receipt,int>,int> &$replacement): void {
+ unset($tables[index_key($trace,10)][index_inner_key($trace,7)]);
+ unset($tables[index_key($trace,99)][index_key($trace,7)]);
+ unset($tables[index_key($trace,10)][unset_key($trace,$tables,$replacement)]);
+}
+function index_demand(vector<vector<receipt>> &$rows, hash<receipt,int> &$map, hash<hash<receipt,int>,int> &$tables): void {}';
+}
 if ($source_arguments) {
     $program .= '
 class MyClass { public vector<int> $amounts; public function duplicate(): vector<int> { return $this->amounts; } }
@@ -70,6 +90,10 @@ $types['Int'] = $body->statements[4]->expression->value->require_call_preparatio
         $parameters = Model::$global_scope->functions_named('source_demand')[0]->syntax()->require_preparation()->signature->parameters;
         foreach (['Records', 'RecordParcel', 'Owners'] as $index => $name) { $types[$name] = $parameters[$index]->type; }
         $types['Handle'] = Type_Queries::canonical($types['Owners'])->arguments()[0];
+    }
+    if ($indexing) {
+        $parameters = Model::$global_scope->functions_named('index_demand')[0]->syntax()->require_preparation()->signature->parameters;
+        foreach (['TrackedRows', 'TrackedHash', 'NestedHash'] as $index => $name) { $types[$name] = $parameters[$index]->type; }
     }
     $snapshot = static function () { $r=[]; foreach(Model::$cpp_files as $a) {$r[$a->file_name]=$a->text;} return $r; };
     $before = $snapshot();
@@ -341,6 +365,30 @@ if ($members) {
         . 'require(unwrap(amounts).at(0).native_value() == 5); require(read(row(nested)) == 7); require(read(contents(parcel)) == 7); require(unwrap(tracked).size() == 2); '
         . '} report("members"); require(live_values == 0); }';
     $main = str_replace('verify();', 'verify(); member_proof();', $main);
+}
+if ($indexing) {
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('index_work')[0]);
+    $support .= "\n#include <scpp/keyed_path.hpp>\n" . '#include "' . CPP_Artifacts::callable_header('index_work') . "\"\n";
+    foreach ($artifacts as $artifact) {
+        if (str_contains($artifact->file_name, 'runtime_concrete_index_') && $artifact->kind() === cpp_artifact_kind::header) {
+            $support .= '#include "' . $artifact->file_name . "\"\n";
+        }
+    }
+    $unset_function = CPP_Callables::source_reference(Model::$global_scope->functions_named('unset_work')[0]);
+    $support .= '#include "' . CPP_Artifacts::callable_header('unset_work') . "\"\n";
+    $header .= "\nvoid indexing_proof();\n";
+    $support .= 'void indexing_proof() { { TrackedHash edges; runtime_type_test::receipt value; unwrap(edges).set(Int{-4}, value); require(unwrap(edges).append(value).native_value()==0); unwrap(edges).set(Int{9223372036854775807LL}, value); bool overflow=false; try { (void)unwrap(edges).append(value); } catch(const std::overflow_error&) { overflow=true; } require(overflow); } require(live_values==0); begin(); { Vector trace; TrackedRows rows, replacement; TrackedVector row; seed_tracked(row); unwrap(rows).append(row); unwrap(replacement).append(row); TrackedHash map; runtime_type_test::receipt value; value.payload.value=91; '
+        . 'auto result = ' . $function . '(trace, rows, replacement, map, value); '
+        . 'require(result.payload.value==91); require(unwrap(trace).size()==5); require(unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==4 && unwrap(trace).at(2).native_value()==2); '
+        . 'require(unwrap(map).size()==1); require(unwrap(map).at(Int{8}).payload.value==91); require(unwrap(unwrap(rows).at(0)).at(0).payload.value==91); '
+        . 'require(unwrap(unwrap(replacement).at(0)).at(0).payload.value!=91); require(unwrap(unwrap(rows).at(0)).size()==3); '
+        . 'NestedHash tables, table_replacement; TrackedHash child, new_child; unwrap(child).set(Int{7}, value); unwrap(new_child).set(Int{9}, value); unwrap(tables).set(Int{10}, child); unwrap(table_replacement).set(Int{10}, new_child); '
+        . $unset_function . '(trace, tables, table_replacement); require(unwrap(trace).size()==10); const long expected_trace[]={1,4,2,1,1,1,4,1,1,3}; for(std::size_t i=0;i<10;++i) { require(unwrap(trace).at(i).native_value()==expected_trace[i]); } require(unwrap(tables).size()==1); require(unwrap(unwrap(tables).at(Int{10})).size()==1); require(unwrap(unwrap(tables).at(Int{10})).at(Int{9}).payload.value==91); '
+        . '} report("indexing"); require(live_values==0); '
+        . '{ TrackedRows rows; TrackedVector row; seed_tracked(row); unwrap(rows).append(row); Int key{0}; begin(); const auto& probe=scpp::index_path_probe(rows,key); auto& target=scpp::index_path_descend(rows,key); require(&probe==&target && &target==&unwrap(rows).at(0)); report("indexed-references"); } require(live_values==0); '
+        . 'for(int failure=0;failure<3;++failure) { begin(); { Vector trace; TrackedRows rows,replacement; TrackedVector row; seed_tracked(row); unwrap(rows).append(row); unwrap(replacement).append(row); TrackedHash map; runtime_type_test::receipt value; copies_before_throw=failure; bool caught=false; try { (void)'
+        . $function . '(trace,rows,replacement,map,value); } catch(const CopyFailure&) { caught=true; } copies_before_throw=-1; require(caught && unwrap(map).size()==0 && unwrap(trace).size()==(failure==0 ? 3 : 4)); } report("indexed-copy-failure"); require(live_values==0); } }';
+    $main = str_replace('verify();', 'verify(); indexing_proof();', $main);
 }
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);

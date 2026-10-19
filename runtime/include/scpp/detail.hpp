@@ -82,6 +82,10 @@ using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 template <typename T>
 struct is_int_t : std::false_type {};
 
+// Concrete lowerings publish the registry-selected representation through this protocol.
+template <typename T> requires requires { typename T::scpp_runtime_integer_rep; }
+struct is_int_t<T> : std::true_type {};
+
 template <typename Rep>
 struct is_int_t<int_t<Rep>> : std::true_type {};
 
@@ -91,6 +95,9 @@ inline constexpr bool is_int_t_v = is_int_t<remove_cvref_t<T>>::value;
 template <typename T>
 struct int_rep;
 
+template <typename T> requires requires { typename T::scpp_runtime_integer_rep; }
+struct int_rep<T> { using type = typename T::scpp_runtime_integer_rep; };
+
 template <typename Rep>
 struct int_rep<int_t<Rep>> {
 	using type = Rep;
@@ -98,6 +105,10 @@ struct int_rep<int_t<Rep>> {
 
 template <typename T>
 using int_rep_t = typename int_rep<remove_cvref_t<T>>::type;
+
+// Keyed mixed-to-integer admission remains the default signed integer domain.
+template<class T>
+concept default_index_integer = is_int_t_v<T> && std::is_same_v<int_rep_t<T>, std::int64_t>;
 
 
 template <typename T, template <typename...> class Template>

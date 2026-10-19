@@ -1,6 +1,14 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --indexing --results FRESH_DIRECTORY`
+adds ordinary indexed reads/writes, append and nested `unset` to the concrete proof.
+It checks key/RHS order, root replacement, missing-prefix short-circuiting, concrete
+integer hash keys, negative-key append/overflow behavior, internal reference identity,
+and throwing-copy cleanup. Counters compare direct/concrete builds within each
+configuration: disabling optional elision adds the same source-return move to both.
+See [indexing evidence](../../../specs/planning/results/prelower_indexing_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --members --results FRESH_DIRECTORY`
 extends the concrete source-field proof with ordinary compiler-emitted `append` and
 `replace` calls across integer, nested-vector and tracked-payload arguments. It

@@ -165,6 +165,7 @@ final class CPP_Opaque_Representation
 			$definition = object_cast(Type_Queries::canonical($type)->definition(), integer_type_definition::class);
 			$scalar = ($definition->signed() ? 'int' : 'uint') . $definition->bit_width() . '_t';
 			$declaration = "#include <cstdint>\n" . $declaration;
+			$declaration .= 'using scpp_runtime_integer_rep = ' . $scalar . ";\n";
 			$declaration .= 'explicit ' . $name . '(' . $scalar . ' value); ' . $scalar . " native_value() const noexcept;\n";
 			$implementation .= $name . '::' . $name . '(' . $scalar . ' value) { ::new(address()) ' . $native . '(value); }' . "\n"
 				. $scalar . ' ' . $name . '::native_value() const noexcept { return unwrap(*this).native_value(); }' . "\n";

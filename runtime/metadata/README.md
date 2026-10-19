@@ -40,6 +40,10 @@ JSON documents/nodes/diagnostics and file-lock handles are registered too. The
 optional process catalog adds its five managed-process calls, two shared types and
 six output fields. Shared storage copies handles, not provider payloads.
 
+Concrete backend representations use the separate
+[runtime interoperability contract](../specs/concrete_type_interoperability.md).
+It consumes registry-selected representation facts without adding a parallel catalog.
+
 ## Add or select a module
 
 1. Check the owning spec and provider ABI; do not infer semantics from a C++ name.

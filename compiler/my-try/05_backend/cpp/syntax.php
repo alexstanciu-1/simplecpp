@@ -160,7 +160,7 @@ final class CPP_Syntax
 	/** Bind the receiver once, convert the key next, and copy the read result before releasing temporaries. */
 	private function generate_index(index_node $node): string
 	{
-		if (($this->context->specialization_engine !== null) && !$this->context->runtime_abi()) {
+		if (($this->context->specialization_engine !== null) && !$this->context->runtime_abi() && !CPP_Concrete_Index::active($this->context)) {
 			return CPP_Concrete_Operations::read($node, $this->context);
 		}
 		$decision = $node->require_index_preparation()->decision;
@@ -171,7 +171,11 @@ final class CPP_Syntax
 		elseif ($decision->operation !== operator_operation::index_checked_read) {
 			throw new \LogicException('Unsupported prepared index operation');
 		}
-		if (!$this->context->runtime_abi()) { $this->context->headers['scpp/index_read.hpp'] = true; }
+		if (CPP_Concrete_Index::active($this->context)) {
+			$helper = CPP_Concrete_Index::reference($decision->operation === operator_operation::index_checked_read ? 'checked_index_read' : 'null_index_read',
+				[$node->base->require_preparation()->type, $decision->operands[1]->target_type], $decision->result_type, $this->context);
+		}
+		elseif (!$this->context->runtime_abi()) { $this->context->headers['scpp/index_read.hpp'] = true; }
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$receiver = 'index_receiver_' . $id;
