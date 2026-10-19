@@ -119,27 +119,58 @@ final class CPP_Specializations
 		return $order;
 	}
 
-	/** Topological layout batches; dependency identities come from physical type bindings. */
-	private function layout_depths(): array /** hash<int> */
+	/** Native headers need no generated layout; generated headers use the emitter's dependency facts. */
+	private static function required_depth(array $dependencies /** hash<bool> */, array $known /** hash<bool> */,
+		array $depths /** hash<int> */): int
 	{
+		$depth = 0;
+		foreach ($dependencies as $header => $used) {
+			if (!isset($known[$header])) { continue; }
+			if (!isset($depths[$header])) { return -1; }
+			if ($depths[$header] > $depth) { $depth = $depths[$header]; }
+		}
+		return $depth;
+	}
+
+	/** Topological layout batches include shared source headers, not source method bodies. */
+	private function layout_depths(Storage $artifacts /** Storage<cpp_artifact> */): array /** hash<int> */
+	{
+		$known /** hash<bool> */ = [];
 		$depths /** hash<int> */ = [];
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
-		while (q_count($depths) < $entries->count()) {
-			$before = q_count($depths);
-			foreach ($entries as $entry) {
-				if (isset($depths[$entry->name])) { continue; }
-				$ready = true;
-				$depth = 0;
-				foreach ($entry->layout_dependencies as $dependency => $used) {
-					if (!isset($depths[$dependency])) { $ready = false; break; }
-					$required = $depths[$dependency] + 1;
-					if ($required > $depth) { $depth = $required; }
-				}
-				if ($ready) { $depths[$entry->name] = $depth; }
-			}
-			if (q_count($depths) === $before) { throw new \RuntimeException('Concrete layout dependencies contain a cycle or missing request'); }
+		$required /** hash<bool> */ = [];
+		foreach ($entries as $entry) {
+			$known[$entry->header] = true;
+			foreach ($entry->layout_dependencies as $header => $used) { $required[$header] = true; }
 		}
-		return $depths;
+		// Only headers reached by layout requirements participate; unrelated includes are not layout work.
+		do {
+			$before = q_count($required);
+			foreach ($artifacts as $artifact) {
+				if (($artifact->kind() !== cpp_artifact_kind::header) || !isset($required[$artifact->file_name])) { continue; }
+				$known[$artifact->file_name] = true;
+				foreach ($artifact->header_dependencies as $header => $used) { $required[$header] = true; }
+			}
+		} while (q_count($required) !== $before);
+		while (q_count($depths) < q_count($known)) {
+			$before = q_count($depths);
+			foreach ($artifacts as $artifact) {
+				if (!isset($known[$artifact->file_name]) || isset($depths[$artifact->file_name])) { continue; }
+				$depth = self::required_depth($artifact->header_dependencies, $known, $depths);
+				if ($depth >= 0) { $depths[$artifact->file_name] = $depth; }
+			}
+			foreach ($entries as $entry) {
+				if (isset($depths[$entry->header])) { continue; }
+				$depth = self::required_depth($entry->layout_dependencies, $known, $depths);
+				if ($depth >= 0) { $depths[$entry->header] = $depth + ($entry->layout_statements === '' ? 0 : 1); }
+			}
+			if (q_count($depths) === $before) { throw new \RuntimeException('Concrete layout dependencies contain a generated header cycle'); }
+		}
+		$result /** hash<int> */ = [];
+		foreach ($entries as $entry) {
+			$result[$entry->name] = $depths[$entry->header] - ($entry->layout_statements === '' ? 0 : 1);
+		}
+		return $result;
 	}
 
 	/** Group implementation work, as in the accounting proof; headers remain per representation. */
@@ -150,7 +181,7 @@ final class CPP_Specializations
 		$implementation = '';
 		$layout_declarations /** hash<string,int> */ = [];
 		$layout_statements /** hash<string,int> */ = [];
-		$depths = $this->layout_depths();
+		$depths = $this->layout_depths($artifacts);
 		$maximum_depth = 0;
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
 		foreach ($this->emission_order() as $id) {

@@ -12,9 +12,12 @@ from test_runner import CommandRunner, Task, run_tasks
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source-fields', action='store_true')
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--source-fields', action='store_true')
+    modes.add_argument('--source-arguments', action='store_true')
     parser.add_argument('--results', type=Path, required=True)
     args = parser.parse_args()
+    batches = 4 if args.source_arguments else 3
     out = args.results.resolve()
     out.mkdir(parents=True, exist_ok=False)
     with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
@@ -25,7 +28,7 @@ def main():
                 nonlocal emission
                 emission += 1
                 runner.run(f'{mode}-emit-{emission}-{revision}-{alignment}', ['php', APP / 'tests/fixtures/prelower_substitution.php',
-                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'fields' if args.source_fields else 'bindings'])
+                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings')])
             def build(mode, label, optimization='-O0'):
                 result = json.loads(runner.run(label, ['php', APP / 'tools/build_cpp.php', out / mode,
                     out / ('cache-' + mode), '--no-pch', optimization], cli_reason='Native builder process'))
@@ -38,10 +41,10 @@ def main():
                     result = build(mode, label, optimization)
                     results[label] = runner.run(label + '-run', [result['executable']]).decode()
                     if mode == 'composed':
-                        assert result['layouts_built'] == 3, result
+                        assert result['layouts_built'] == batches, result
                     warm = build(mode, label + '-warm', optimization)
                     assert warm['compiled'] == 0 and warm['linked'] == 0, warm
-                    assert warm['layouts_reused'] == (3 if mode == 'composed' else 0), warm
+                    assert warm['layouts_reused'] == (batches if mode == 'composed' else 0), warm
                 folder = out / mode
                 manifest = json.loads((folder / '.scpp-output.manifest').read_text())
                 units = [folder / row['path'] for row in manifest['files'] if row['kind'] == 'translation_unit']
@@ -59,20 +62,31 @@ def main():
                     ['env', 'ASAN_OPTIONS=detect_leaks=0', out / (mode + '-sanitized')]).decode()
             assert len(set(results.values())) == 1, results
             assert 'references 0 0 0 0 0 0 0' in results['composed-O0'], results
+            shared_before = {}
+            if args.source_arguments:
+                shared_before = {str(path.relative_to(out / 'composed')): path.read_bytes()
+                    for directory in ['specializations', 'types']
+                    for path in (out / 'composed' / directory).glob('*') if path.is_file()}
             emit('composed', 3)
+            for path, contents in shared_before.items():
+                assert (out / 'composed' / path).read_bytes() == contents, path
             edited = build('composed', 'body-edit')
-            assert edited['layouts_reused'] == 3 and edited['compiled'] == 1, edited
-            runner.run('body-edit-run', [edited['executable']], expected=3)
+            assert edited['layouts_reused'] == batches and edited['compiled'] == 1, edited
+            runner.run('body-edit-run', [edited['executable']], expected=0 if args.source_arguments else 3)
             emit('composed', 3, 64)
             changed = build('composed', 'layout-edit')
             assert changed['layouts_built'] >= 1, changed
-            runner.run('layout-edit-run', [changed['executable']], expected=3)
+            runner.run('layout-edit-run', [changed['executable']], expected=0 if args.source_arguments else 3)
             emit('composed')
             restored = build('composed', 'restore')
-            assert restored['layouts_reused'] == 3 and restored['compiled'] == 0 and restored['linked'] == 0, restored
+            assert restored['layouts_reused'] == batches and restored['compiled'] == 0 and restored['linked'] == 0, restored
             runner.run('restore-run', [restored['executable']])
             (out / 'summary.json').write_text(json.dumps({'counters': results, 'builds': builds}, indent=2) + '\n')
-        run_tasks([Task('physical-substitution', proof)])
+        tasks = [Task('physical-substitution', proof)]
+        if args.source_arguments:
+            tasks.append(Task('source-header-cycle', lambda: runner.run('source-header-cycle',
+                ['php', APP / 'tests/fixtures/prelower_source_cycles.php', out / 'source-cycle'])))
+        run_tasks(tasks)
 
 
 if __name__ == '__main__':

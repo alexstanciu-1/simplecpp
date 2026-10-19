@@ -12,12 +12,11 @@ final class CPP_Opaque_Representation
 		$mapping->headers[$entry->header] = true;
 		$mapping->specialization = $type;
 		$mapping->opaque = true;
-		if ($compose_arguments) { $mapping->layout_dependencies[$entry->name] = true; }
 		$mapping->literal = CPP_Types::representation($type)->literal;
 		return $mapping;
 	}
 
-	/** Native source definitions use ordinary bindings, so probes do not depend on facade layouts. */
+	/** Callable transport remains unsupported; physical layout ordering belongs to the engine. */
 	public static function require_native_type(canonical_type_use $type): void
 	{
 		$canonical = Type_Queries::canonical($type);
@@ -174,6 +173,6 @@ final class CPP_Opaque_Representation
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
 			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
-			$declaration, $implementation, $mapping->layout_dependencies, $aliases, $probe);
+			$declaration, $implementation, $mapping->headers, $aliases, $probe);
 	}
 }

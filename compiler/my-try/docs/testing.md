@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
+adds `vector<Record>`, an independently registered `parcel<Record>`, and
+`vector<MyClass>` using the shared class handle representation. It compiles actual
+published source definitions with concrete fields, compares native/composed counters,
+checks nested reference identity and class sharing, and proves that a method-body edit
+leaves shared headers/support bytes unchanged and rebuilds only the source object.
+The sibling cycle fixture proves explicit generated-header-cycle rejection and recovery.
+See [source argument evidence](../../../specs/planning/results/prelower_source_arguments_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --source-fields --results FRESH_DIRECTORY`
 adds compiler-emitted inline source records, nested fields, method calls, parameter
 and return bindings, reference aliases, fragment replay, method-body edit restoration

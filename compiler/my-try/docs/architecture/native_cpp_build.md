@@ -106,8 +106,8 @@ concrete layout requests by dependency depth, allowing outer native templates to
 contain concrete inner owners. Prior header contents participate in the existing
 dependency scan/cache; source publication remains immutable. Grouped headers and
 all-prior-batch inclusion conservatively couple consumers; finer partitioning remains
-follow-up work. Cross-compilation and composed source-record layout graphs are not
-covered. Runtime provider objects do not receive application layout macros.
+follow-up work. Acyclic source-record headers participate through the same generated-header dependency
+facts. Cross-compilation and recursive header/layout graphs remain unsupported. Runtime provider objects do not receive application layout macros.
 
 ## Bounded first implementation and next work
 

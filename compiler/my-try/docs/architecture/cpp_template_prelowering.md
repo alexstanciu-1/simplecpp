@@ -27,15 +27,22 @@ Thus a nested container actually contains concrete inner owners. No family algor
 semantic type or registry is copied into the engine. Names have a bounded readable
 semantic label and stable digest of semantic identity plus physical spelling.
 
-Physical bindings and immutable specialization entries carry direct layout dependency
-names. The existing engine publishes topological probe batches; the native cache
+Specialization entries reuse physical bindings' required headers as layout dependencies.
+Generated header artifacts carry the emitter's existing header-dependency facts,
+including source fields and method declarations. The engine publishes topological
+probe batches through this header graph; the native cache
 resolves them in publication order, forcing prior layout headers into later probes.
 This conservatively includes all earlier batches, not just exact per-entry prerequisites.
 The original single-batch path retains its identity and artifact path.
 
-Source payload template arguments still reject explicitly until their layout graphs
-are integrated. Original native provider signatures cannot accept substituted types
-based on layout similarity alone. See the [production-binding proof](../../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
+Acyclic source payload template arguments now consume the one shared generated
+class/struct definition. The emitter supplies its header dependencies; the engine
+does not rebuild source layout facts. Inline records retain their source representation;
+nominal shared class arguments select a concrete owner over the runtime handle.
+Method implementations stay in their existing source units. See the
+[source argument proof](../../../../specs/planning/results/prelower_source_arguments_2026_10_19/README.md).
+Original native provider signatures cannot accept substituted types based on layout
+similarity alone. See the [production-binding proof](../../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
 
 ## Ordinary source fields, signatures and members
 
@@ -63,8 +70,9 @@ method-body edits preserve unrelated fragments, and restoring edits/settings res
 output. The harness seeds/mutates native containers in fixture support; it does not
 claim generated runtime-container member interfaces such as `Vector_Int::append`.
 
-Boundaries remain: source payloads as template arguments and recursive source layout
-graphs; concrete shared/unique/value access interfaces; general runtime forwarding
+Boundaries remain: recursive generated header/layout graphs (including a method
+signature returning `vector<Self>`); concrete shared/unique/value access interfaces;
+general runtime forwarding
 methods, indexing, initialization, operators and provider compatibility. Existing
 semantic reference restrictions remain: reference returns must refer to the declared
 parameter storage type, and heap-backed property borrows (including the tested `$this`
@@ -200,7 +208,8 @@ ordinary member calls/references, including containers of those records and conc
 nested elements. It preserves tested allocations/copies and lifecycle traits.
 Physical argument bindings and dependent layout resolution now have the backend API
 foundation above, and bounded inline source declarations now use those bindings.
-Source payload template arguments and provider compatibility remain open.
+Acyclic source payload template arguments now share those definitions. Recursive
+header/layout graphs and provider compatibility remain open.
 The proposed [native-place contract](../../../../specs/planning/prelower_native_places_2026_10_19.md)
 is deferred for source fields, remaining relevant to original native storage boundaries.
 

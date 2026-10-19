@@ -199,8 +199,11 @@ final class CPP_Generator
 				$identity = 'callable:' . $definition->qualified_name();
 				$text = $fragment->prototype_text . ";\n";
 			}
-			$result->append(new cpp_artifact($identity, cpp_artifact_kind::header, $path,
-				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text));
+			$artifact = new cpp_artifact($identity, cpp_artifact_kind::header, $path,
+				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text);
+			$artifact->header_dependencies = $artifact_headers;
+			unset($artifact->header_dependencies[$path]);
+			$result->append($artifact);
 		}
 		foreach ($files as $prepared) {
 			$this->append_implementation($prepared, $ordered, $result, false);

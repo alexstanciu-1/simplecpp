@@ -32,7 +32,7 @@ final class cpp_specialization_entry
 {
 	public function __construct(public readonly string $name, public readonly string $header,
 		public readonly string $declaration, public readonly string $implementation,
-		public readonly array $layout_dependencies /** hash<bool> */,
+		public readonly array $layout_dependencies /** hash<bool> */, // Headers required by the native layout probe.
 		public readonly string $layout_declarations = '', public readonly string $layout_statements = '')
 	{
 	}
@@ -46,8 +46,6 @@ final class cpp_specialization_ref
 }
 
 final class cpp_type {
-	/** Direct physical layout prerequisites, keyed by specialization name. */
-	public array $layout_dependencies /** hash<bool> */ = [];
 	public ?canonical_type_use $specialization = null;
 	public bool $opaque = false;
 	public string $spelling;
@@ -71,6 +69,8 @@ enum cpp_artifact_kind {
 
 /** One final artifact; its logical identity is independent of storage position. */
 final class cpp_artifact {
+	/** Assembly-only generated header dependencies; copied from emission facts, never parsed from text. */
+	public array $header_dependencies /** hash<bool> */ = [];
 	public readonly string $identity;
 	private cpp_artifact_kind $artifact_kind;
 	public readonly string $file_name;

@@ -423,9 +423,16 @@ handles as current compiler data. Collection positions are not live counts.
 ## Concrete specialization layout dependencies
 
 The C++ binding owner selects physical implementation arguments from existing
-canonical types and runtime bindings. `cpp_type::layout_dependencies` carries direct
-specialization names; the lifecycle worker copies these into immutable engine-owned
-`cpp_specialization_entry` records. These invocation-local links describe native
-layout prerequisites, not new semantic identities or prepared facts. The existing
-engine orders probe batches; the native builder resolves/cache-validates them in
-publication order. Neither mutates preparation or adds a retained registry.
+canonical types and runtime bindings. `cpp_type::headers` already describes the
+required headers; the lifecycle worker copies these into engine-owned
+`cpp_specialization_entry::layout_dependencies`. There is no second per-type layout
+list. The declaration emitter copies its assembled header dependencies into
+`cpp_artifact::header_dependencies`, finalized before appending the artifact.
+
+The existing engine uses those assembly-only links to order native layout batches
+through both concrete headers and shared source definitions. It does not walk source
+fields/signatures again or inspect method bodies. Native headers require no generated
+batch; a generated representation header becomes usable after its layout probe.
+Cycles reject before output publication. The native builder resolves/cache-validates
+batches in publication order. Preparation, source identity and registry ownership
+remain unchanged; no retained semantic dependency registry was added.

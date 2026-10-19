@@ -37,9 +37,6 @@ final class CPP_Types
 	/** Native outer implementation with concrete physical arguments, using the same registry bindings. */
 	public static function implementation_representation(canonical_type_use $type_use, CPP_Specializations $engine): cpp_type
 	{
-		if (Type_Queries::source_declaration($type_use) instanceof collected_member_owner) {
-			throw new \RuntimeException('Concrete substitution: source payload field bindings are not integrated yet');
-		}
 		return self::native_representation_for($type_use, cpp_type_requirement::complete, null, $engine);
 	}
 
@@ -186,11 +183,9 @@ final class CPP_Types
 	/** Physical substitution does not invent semantic types or grant new capabilities. */
 	private static function implementation_argument(canonical_type_use $argument, bool $payload, CPP_Specializations $engine): cpp_type
 	{
-		if (Type_Queries::source_declaration($argument) instanceof collected_member_owner) {
-			throw new \RuntimeException('Concrete substitution: source payload field bindings are not integrated yet');
-		}
 		$canonical = Type_Queries::canonical($argument);
-		if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type) || $argument->by_value()) {
+		if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type) || $argument->by_value()
+			|| (!$payload && Type_Queries::is_nominal_handle($argument))) {
 			return CPP_Opaque_Representation::representation($argument, $engine, true);
 		}
 		return $payload ? self::payload($argument) : self::representation($argument);
@@ -211,7 +206,6 @@ final class CPP_Types
 		foreach ($source->forward_declarations as $name => $used) {
 			$destination->forward_declarations[$name] = true;
 		}
-		foreach ($source->layout_dependencies as $name => $used) { $destination->layout_dependencies[$name] = true; }
 	}
 
 	/** Literal families are semantic; exact target spelling remains in the binding catalog. */

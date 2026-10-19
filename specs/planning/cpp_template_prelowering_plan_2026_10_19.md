@@ -17,8 +17,10 @@ This document records the implementation sequence. The [current coverage guide](
    Preserve ordinary field/reference access and evaluate recursive source-type graphs
    explicitly. No new AST, semantic pass or parallel registry. The [inline source
    checkpoint](results/prelower_source_fields_2026_10_19/README.md) now covers ordinary
-   fields/signatures/source methods and fragment replay. Source payload arguments and
-   recursive layout graphs remain open.
+   fields/signatures/source methods and fragment replay. The [source argument
+   checkpoint](results/prelower_source_arguments_2026_10_19/README.md) adds acyclic
+   source class/record payloads through emitted header dependencies. Recursive
+   header/layout graphs remain open.
 3. Bind ordinary operations/members to concrete interfaces from existing prepared
    decisions and runtime bindings. Prove nested mutation, constructors, references,
    providers and allocation/copy parity before enabling broader application coverage.
@@ -106,8 +108,10 @@ select physical template arguments and resolve dependent layouts through existin
 bindings/build owners. The [backend binding foundation](results/prelower_substitution_2026_10_19/README.md)
 now integrates concrete physical arguments and dependent layout caching. The [source-field
 checkpoint](results/prelower_source_fields_2026_10_19/README.md) adds bounded inline-record
-fields/signatures and ordinary source member emission. Runtime forwarding interfaces
-and source payload layout graphs remain the next steps.
+fields/signatures and ordinary source member emission. The [source argument
+checkpoint](results/prelower_source_arguments_2026_10_19/README.md) now covers acyclic
+source payload dependencies while leaving method bodies in source units. Runtime
+forwarding interfaces and recursive header/layout graphs remain the next steps.
 The [native-place proposal](prelower_native_places_2026_10_19.md) is deferred for
 source fields and retained for boundaries that still expose original native storage.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
