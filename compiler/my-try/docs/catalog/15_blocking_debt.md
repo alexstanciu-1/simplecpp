@@ -628,6 +628,35 @@ is now resolved; see Chapter 06's positive-pass conclusion.
 These items require review, not automatic implementation or an implicit promotion
 to blocking feature debt. Preserve the distinction from the blocking inventory above.
 
+### CH15-SOURCE-DETECTION-01 — scan-only edits with unchanged file metadata
+
+Deferred to Chapter 15 by explicit user decision on 2026-10-18. This is existing
+input change-detection debt, not a newly verified semantic preparation defect.
+The current [incremental strategy](../planning/incremental_strategy.md) records
+that mtime/size scanning can miss equal-size edits when timestamps are unchanged;
+explicit changed-path notifications force reads.
+
+The [historical review](../../../../specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INCREMENTAL.md)
+replaced `$x = 1; return $x;` with `$x = 1; return $y;` while preserving file size
+and mtime. Without notification, the same compiler instance reused old valid output
+and publication remained ready. Notified edits and fresh compilation detected the
+invalid source. Historical native-cache observations were downstream consequences
+of the missed input change, not proof of an independent cache invalidation defect.
+
+Owner: input discovery/change detection and its lifecycle notification contract.
+Discuss the required scan-only freshness guarantee and a sound detection strategy
+before implementation; do not silently add content hashing or redesign the cache.
+Assess detection cost alongside correctness once a strategy is agreed.
+
+Closeout needs same-instance equal-size/equal-mtime semantic and syntax edit cases,
+explicit-notification and fresh-instance controls, failure/readiness checks, and
+successful recovery after repair. Verify native-output reuse only where the chosen
+contract requires it. Establish evidence against the then-current revision.
+
+The diagnostic inventory's REC-03 is deferred here and excluded from the current
+review execution. Explicitly notified semantic/syntax failure and recovery cases
+REC-01/02 remain in scope. No implementation or execution is authorized by this entry.
+
 ### CH15-NATIVE-CACHE-PERF-01 — native cache validation overhead
 
 Transferred by user request on 2026-10-06; optimization is deferred, not a reason to

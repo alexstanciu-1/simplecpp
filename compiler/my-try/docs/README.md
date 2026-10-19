@@ -36,6 +36,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
 | Conversion quality and portable-PHP frontend discussion | [PHS elegance, native costs, lookup review and shared-model options](planning/conversion_quality.md) (planning only) |
 | Preparation / C++ emission boundary audit | [Findings, evidence and open repair gates](planning/preparation_emission_audit.md) |
+| Semantic diagnostics objective and next review | [Review workflow, case inventory and repair categories](planning/diagnostic_review.md) (planning; execution and repairs are separate steps) |
 | Stage dependency and ownership audit | [Forward dependencies, shared structures and discussion groups](planning/stage_boundary_audit.md) |
 | Stage-owned processing refactor | [Agreed no-visitor boundary, implementation batches and open questions](planning/stage_owned_processing.md) |
 | v0.2 early rejection versus runtime guards | [Preparation diagnostic policy](../../../specs/v0_2_preparation_diagnostics.md) |

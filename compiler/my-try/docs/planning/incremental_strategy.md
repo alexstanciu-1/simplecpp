@@ -112,7 +112,7 @@ the options and validation cost before implementation.
 
 | Area | Deferred work / boundary |
 | --- | --- |
-| Change detection | mtime + size can miss equal-size edits with unchanged timestamps; notifications force reads. Stronger detection is deferred. |
+| Change detection | mtime + size can miss equal-size edits with unchanged timestamps; notifications force reads. Stronger detection is deferred to [CH15-SOURCE-DETECTION-01](../catalog/15_blocking_debt.md#ch15-source-detection-01--scan-only-edits-with-unchanged-file-metadata). |
 | Error classification | Separate internal `RuntimeException` bugs from expected source diagnostics. Unexpected escaping exceptions already force a rebuild. |
 | Error continuation | Review read/lexical failures and downstream boundaries case by case. Parsing already finishes other files then blocks preparation after join errors. |
 | Lifetime | Explicit reverse unlinking is implemented. Review broader AST/scope cycles, obsolete source/module tombstones and strong observers; weak dependency storage is not required now. |

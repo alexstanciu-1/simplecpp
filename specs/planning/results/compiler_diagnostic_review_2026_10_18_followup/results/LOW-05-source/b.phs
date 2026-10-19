@@ -1,0 +1,1 @@
+namespace B; class Item { vector<\A\Item> $others; }

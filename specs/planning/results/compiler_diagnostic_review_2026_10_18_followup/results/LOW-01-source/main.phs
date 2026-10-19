@@ -1,0 +1,1 @@
+$n = 1; $f = fn(): int => $n; $f = $f; return $f();

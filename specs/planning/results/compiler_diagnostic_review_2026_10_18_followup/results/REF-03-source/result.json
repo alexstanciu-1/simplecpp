@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+}

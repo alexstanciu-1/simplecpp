@@ -1,0 +1,15 @@
+{
+  "control": {
+    "stage": "emitted",
+    "compile": "passed",
+    "compile_logs": [],
+    "link": "passed"
+  },
+  "source": {
+    "stage": "emitted",
+    "compile": "failed",
+    "compile_logs": [
+      "LOW-05-source-compile-0.stderr"
+    ]
+  }
+}

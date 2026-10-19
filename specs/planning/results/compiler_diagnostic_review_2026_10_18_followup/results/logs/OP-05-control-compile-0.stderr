@@ -1,0 +1,4 @@
+/tmp/diagnostic-review-20261018-current/results/OP-05-control/cpp/units/n6d61696e/n6d61696e2e706873.cpp:6:2: warning: expression result unused [-Wunused-value]
+    6 |         static_cast<scpp::int_t<>>(--local_x);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated.
