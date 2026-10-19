@@ -27,12 +27,19 @@ explicit empty arguments mean `Symbol<>`. The C++ renderer consumes this structu
 for both ordinary and composed native representations, including ownership payloads
 and the value modifier. Layout and lifecycle facts still come from existing probes.
 
-This migration preserves ordinary output for the checked baseline and does not yet
-replace every specialization-selection test with recipe queries. Existing explicit
-requests already render the same recipes; automatic discovery of closed native
-templates behind nominal source types is the next slice. Runtime operation/trait
-coverage remains separate, including accounting's integer-output gap. See the
-[migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
+The general runtime path now selects concrete types from the installed recipe's
+native-template fact, including closed templates behind nominal source identities.
+Nested arguments use the same query. Concrete representations already include their
+storage policy and are not wrapped a second time. Source declarations and structural
+callables keep their existing representation owners. The historical accounting
+recipe mode retains its bounded selection rule in `CPP_Concrete_Recipes`.
+
+The [source-demand proof](../../../../specs/planning/results/prelower_runtime_template_demand_2026_10_19/README.md)
+checks nested use, shared pointee identity, borrowed references, request retirement,
+replay and option switching. Runtime operation/trait coverage remains separate,
+including accounting's integer-output gap. Implicit shared storage still has a
+compiler-spelled runtime wrapper; route that spelling through its installed binding
+next. See also the [migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
 
 ## Concrete mutation interfaces
 

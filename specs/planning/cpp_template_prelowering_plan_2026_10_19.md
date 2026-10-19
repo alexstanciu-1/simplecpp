@@ -71,11 +71,14 @@ application demand and their required dependencies, never the entire runtime.
 Full operation coverage remains incremental; add no parallel registry. The user
 approved the existing-identity/structured-argument schema extension. The first
 migration now moves core runtime representations out of PHP registration and renders
-the installed recipes in the ordinary backend. Next, replace automatic template
-selection and nested-substitution category checks with recipe queries, including
-nominal source types whose native representation is a closed template. Then review
-required runtime interface/trait contracts; representation metadata alone does not
-complete all operations.
+the installed recipes in the ordinary backend. Automatic template selection and
+nested substitution now consume the recipe, including nominal source types whose
+native representation is a closed template. The [source-demand proof](results/prelower_runtime_template_demand_2026_10_19/README.md)
+passes for inline and shared storage, including retirement/replay and zero measured
+boundary allocations. Next route the implicit shared-storage wrapper spelling
+through its installed binding, preserving source forward-declaration requirements.
+Then review required runtime interface/trait contracts; representation metadata
+alone does not complete all operations.
 
 ## Active integration sequence: concrete type substitution
 

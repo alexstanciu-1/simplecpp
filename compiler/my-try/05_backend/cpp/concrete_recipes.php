@@ -4,6 +4,13 @@ namespace scpp\compiler;
 /** Family recipes emit native code, never perform source semantic analysis. */
 final class CPP_Concrete_Recipes
 {
+	/** Historical experiment selection stays separate from metadata-driven runtime preparation. */
+	public static function selects_representation(canonical_type_use $type): bool
+	{
+		$canonical = Type_Queries::canonical($type);
+		return ($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type);
+	}
+
 	/** Compatibility with the measured first slice; new runtime bindings use the opaque worker. */
 	public static function request(canonical_type_use $type, CPP_Specializations $engine): cpp_specialization_entry
 	{
@@ -43,7 +50,7 @@ final class CPP_Concrete_Recipes
 	public static function representation(canonical_type_use $type, cpp_generation_context $context, CPP_Specializations $engine): cpp_type
 	{
 		$canonical = Type_Queries::canonical($type);
-		if (($canonical->family() !== type_family::integer) && !($canonical instanceof applied_template_type)) {
+		if (!self::selects_representation($type)) {
 			return CPP_Types::representation($type);
 		}
 		$context->specializations[$type->type_id()] = $type;

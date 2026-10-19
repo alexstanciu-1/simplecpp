@@ -23,8 +23,7 @@ final class CPP_Types
 	{
 		if ($context !== null) {
 			if ($context->runtime_abi()) {
-				$canonical = Type_Queries::canonical($type_use);
-				if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type)
+				if (self::has_template_recipe($type_use)
 					|| $type_use->by_value() || (Type_Queries::source_declaration($type_use) instanceof collected_member_owner)) {
 					$engine /** CPP_Specializations */ = $context->specialization_engine;
 					return $engine->representation($type_use, $context);
@@ -47,6 +46,8 @@ final class CPP_Types
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
 		$result = self::unmodified_representation($type_use, $payload_requirement, $context, $argument_engine);
+		// A selected concrete representation already owns the complete stored type.
+		if ($result->opaque) { return $result; }
 		if (Type_Queries::is_nominal_handle($type_use)) {
 			$result->spelling = '::scpp::shared_p<' . $result->spelling . '>';
 			self::add_header($result, 'scpp/shared_p.hpp');
@@ -100,8 +101,10 @@ final class CPP_Types
 		$definition = $type->definition();
 		if ($context !== null) {
 			$engine = $context->specialization_engine;
-			if (($engine !== null) && (($type->family() === type_family::integer) || ($type instanceof applied_template_type))) {
-				return $engine->representation($type_use, $context);
+			if ($engine !== null) {
+				$selected = ($engine->concrete_types() || $engine->runtime_abi())
+					? self::has_template_recipe($type_use) : CPP_Concrete_Recipes::selects_representation($type_use);
+				if ($selected) { return $engine->representation($type_use, $context); }
 			}
 		}
 		$result = new cpp_type();
@@ -202,11 +205,21 @@ final class CPP_Types
 		return $result;
 	}
 
+	/** A native template application is a binding fact, independent of source type category. */
+	public static function has_template_recipe(canonical_type_use $type_use): bool
+	{
+		$definition = Type_Queries::canonical($type_use)->definition();
+		// Source records and structural callables have their own representation owners.
+		if (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition)) {
+			return false;
+		}
+		return Model::$cpp_type_bindings->definition($definition->definition_id())->recipe()->template_application;
+	}
+
 	/** Physical substitution does not invent semantic types or grant new capabilities. */
 	private static function implementation_argument(canonical_type_use $argument, bool $payload, CPP_Specializations $engine): cpp_type
 	{
-		$canonical = Type_Queries::canonical($argument);
-		if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type) || $argument->by_value()
+		if (self::has_template_recipe($argument) || $argument->by_value()
 			|| (!$payload && Type_Queries::is_nominal_handle($argument))) {
 			return CPP_Opaque_Representation::representation($argument, $engine, true);
 		}

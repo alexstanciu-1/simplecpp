@@ -38,15 +38,7 @@ foreach ($invalids as [$bad,$message]) {
 	binding_check($failed && Model::$runtime_metadata === $input, 'Invalid binding accepted or wrong diagnostic: '.$message);
 }
 
-$custom = '{"version":1,"module":"binding_proof","dependencies":["core"],"functions":[],"cpp":[],
-"types":[
- {"id":"proof.duo","name":"duo","kind":"struct","capabilities":["value_storable","copyable_value"],
-  "parameters":[{"name":"First","requires":["value_storable"]},{"name":"Second","requires":["value_storable"]}]},
- {"id":"proof.closed","name":"closed","kind":"struct","capabilities":["value_storable","copyable_value"]}],
-"cpp_types":[
- {"id":"proof.duo","symbol":"std::pair","header":"utility","arguments":[
-  {"parameter":"Second","representation":"stored"},{"parameter":"First","representation":"stored"}]},
- {"id":"proof.closed","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::int32_t","header":"cstdint"}]}]}';
+$custom = file_get_contents(__DIR__ . '/runtime_type_bindings.json');
 $candidate = new runtime_catalog_input();
 $candidate->modules->add('core', Runtime_Catalog_Reader::decode($core_text, 'core.json'));
 $candidate->modules->add('binding_proof', Runtime_Catalog_Reader::decode($custom, 'binding_proof.json'));

@@ -1,0 +1,64 @@
+{
+  "counters": {
+    "direct-O0": "recipe-boundary 0 0 0 0 0 0 0\n",
+    "direct-O2": "recipe-boundary 0 0 0 0 0 0 0\n",
+    "direct-sanitized": "recipe-boundary 0 0 0 0 0 0 0\n",
+    "composed-O0": "recipe-boundary 0 0 0 0 0 0 0\n",
+    "composed-O2": "recipe-boundary 0 0 0 0 0 0 0\n",
+    "composed-sanitized": "recipe-boundary 0 0 0 0 0 0 0\n"
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-recipe-selection/source3/cache-direct/artifacts/8e4df2e0e41b5e9b92d69f3764bfacd1a46545c32022d81b723879abd6d43609.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-recipe-selection/source3/cache-direct/artifacts/6f245c43a869a65c2f3bd9f7da753e91266594355d388197fd6f6dddb30c5f06.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-recipe-selection/source3/cache-composed/artifacts/99bb785b2217b35e4851730dc50776888f8ea158d188b9cbeb85d0fa979f5e31.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 2,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-recipe-selection/source3/cache-composed/artifacts/bde05d3ea165116c7406b2151ed2f551107f53279c866a1b5371848e1b511f75.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 2,
+      "layouts_reused": 0
+    }
+  ],
+  "doc_status": "planning",
+  "base_revision": "9f4b8137",
+  "source_proof_seconds": 34.99,
+  "mutation_proof_seconds": 190.13,
+  "expected_concrete_types": [
+    "int",
+    "closed",
+    "duo<closed,int>",
+    "shared_closed"
+  ],
+  "unused_metadata_type": "unused",
+  "scope": "Runtime recipe selection; implicit source storage and structural callable representation owners remain separate."
+}

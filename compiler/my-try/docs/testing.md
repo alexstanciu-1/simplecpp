@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_template_demand.py --results FRESH_DIRECTORY`
+proves ordinary source emission selects concrete types from runtime recipes, including
+a closed native template behind a nominal type. It checks exact used-type closure,
+unused metadata, nested references, shared pointee identity, source-copy behavior,
+request removal/restoration, fragment replay and option switching. Direct/concrete
+O0/O2 and sanitizer runs must report zero boundary allocations and tracked payload
+lifecycle counters; warm native builds compile/link nothing. Primitive numeric
+copies are not instrumented payload copies.
+
 `python3 compiler/my-try/tests/runtime_type_bindings.py --results FRESH_DIRECTORY`
 checks malformed/duplicate type recipes, existing-identity targets, argument reordering,
 closed native templates, reset and explicit demand. It compiles the generated layout
