@@ -37,13 +37,13 @@ final class CPP_Initializer_Buffer
 	{
 		$binding /** initialization_binding */ = $request->initialization;
 		$result /** canonical_type_use */ = $request->result;
-		CPP_Opaque_Representation::require_runtime_type($result);
+		CPP_Opaque_Representation::require_native_type($result);
 		$native_context = new cpp_generation_context();
 		$factory = CPP_Data_Construction::reference($binding, $native_context);
 		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
 		$element_type = $input->arguments()[0];
-		CPP_Opaque_Representation::require_runtime_type($element_type);
+		CPP_Opaque_Representation::require_native_type($element_type);
 		$element = CPP_Declarations::type($element_type, $native_context);
 		$native_result = CPP_Declarations::type($result, $native_context);
 		$mapping = CPP_Types::representation($result, new cpp_generation_context($engine));
@@ -54,7 +54,7 @@ final class CPP_Initializer_Buffer
 		$values = '';
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		foreach ($inputs as $position => $type) {
-			CPP_Opaque_Representation::require_runtime_type($type);
+			CPP_Opaque_Representation::require_native_type($type);
 			if ($position !== 0) { $signature .= ', '; $values .= ', '; }
 			$signature .= 'const void* p' . $position;
 			$values .= '*std::launder(static_cast<const ' . CPP_Declarations::type($type, $native_context) . '*>(p' . $position . '))';

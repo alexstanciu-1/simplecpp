@@ -154,7 +154,7 @@ final class CPP_Generator
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
 				$identity = 'type:' . $definition->qualified_name();
 				$record = object_cast($definition, collected_member_owner::class);
-				$bridge_context = new cpp_generation_context($this->specializations);
+				$bridge_context = $this->source_context();
 				$text = CPP_Declarations::type_opening($record, $bridge_context) . $fragment->text;
 				$contract = $record->contract_work->require_facts();
 				$dispatch /** Keyed_Storage<prepared_method_contract> */ = $contract->methods;
@@ -198,61 +198,9 @@ final class CPP_Generator
 			$result->append(new cpp_artifact($identity, cpp_artifact_kind::header, $path,
 				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text));
 		}
-		foreach ($files as $prepared)
-		{
-			$headers /** hash<bool> */ = [];
-			$declarations /** hash<bool> */ = [];
-			$body_text = '';
-			$dispatch_context = new cpp_generation_context($this->specializations);
-			foreach ($ordered as $callable_owner) {
-				if (($callable_owner instanceof record_definition_work) || ($callable_owner instanceof type_contract_work)) {
-					if ($callable_owner->source === $prepared->source) {
-						$dispatch_owner = object_cast($callable_owner->declaration(), collected_member_owner::class);
-						$body_text .= CPP_Dispatch::definitions($dispatch_owner, $dispatch_context);
-					}
-				}
-				if (($callable_owner instanceof record_definition_work) && ($callable_owner->source === $prepared->source)) {
-					$layout = $this->program->fragments[$callable_owner];
-					if ($layout->storage_text !== '') {
-						$record = object_cast($callable_owner, record_definition_work::class)->record_definition();
-						$headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
-						foreach ($layout->definition_headers as $header => $used) { $headers[$header] = true; }
-						$body_text .= $layout->storage_text;
-					}
-				}
-				if (!($callable_owner instanceof source_callable_signature_work)) { continue; }
-				$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
-				$implementation_source = $definition->collection;
-				if ($definition instanceof collected_method) {
-					$implementation_source = object_cast($definition, collected_method::class)->declaring_type()->collection;
-				}
-				if ($implementation_source !== $prepared->source) { continue; }
-				$function = $definition->callable_syntax();
-				if (!$function->has_parsed_body()) { continue; }
-				$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
-				$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
-				$signature = $this->program->fragments[$signature_owner];
-				$body = $this->program->fragments[$body_owner];
-				if ($definition instanceof collected_method) {
-					$headers[CPP_Artifacts::type_header(object_cast($definition, collected_method::class)->declaring_type()->qualified_name())] = true;
-				}
-				else { $headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true; }
-				foreach ($signature->definition_headers as $header => $used) {
-					$headers[$header] = true;
-				}
-				foreach ($body->headers as $header => $used) { $headers[$header] = true; }
-				foreach ($body->forward_declarations as $name => $used) {
-					$declarations[$name] = true;
-				}
-				$body_text .= $signature->text . $body->initializer_text . "\n{\n" . $body->text . "}\n\n";
-			}
-			foreach ($dispatch_context->headers as $header => $used) { $headers[$header] = true; }
-			foreach ($dispatch_context->forward_declarations as $name => $used) { $declarations[$name] = true; }
-			if ($body_text !== '') {
-				$path = CPP_Artifacts::unit_path($prepared->source);
-				$result->append(new cpp_artifact('implementation:' . $path, cpp_artifact_kind::translation_unit,
-					$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text));
-			}
+		foreach ($files as $prepared) {
+			$this->append_implementation($prepared, $ordered, $result, false);
+			if ($this->program->runtime_template_abi) { $this->append_implementation($prepared, $ordered, $result, true); }
 		}
 		$entry_owner = object_cast($entry_file->executable_body()->work(), preparation_owner::class);
 		$entry_fragment = $this->program->fragments[$entry_owner];
@@ -304,6 +252,98 @@ final class CPP_Generator
 		}
 	}
 
+	/** Keep native payload implementations out of application translation units. */
+	private function append_implementation(prepared_file $prepared, Storage $ordered /** Storage<preparation_owner> */,
+		Storage $result /** Storage<cpp_artifact> */, bool $native_source): void
+	{
+		$headers /** hash<bool> */ = [];
+		$declarations /** hash<bool> */ = [];
+		$body_text = '';
+		$dispatch_context = $this->source_context();
+		foreach ($ordered as $callable_owner) {
+			if ($this->program->runtime_template_abi && ($native_source !== self::native_source_owner($callable_owner))) { continue; }
+			if (($callable_owner instanceof record_definition_work) || ($callable_owner instanceof type_contract_work)) {
+				if ($callable_owner->source === $prepared->source) {
+					$dispatch_owner = object_cast($callable_owner->declaration(), collected_member_owner::class);
+					$body_text .= CPP_Dispatch::definitions($dispatch_owner, $dispatch_context);
+				}
+			}
+			if (($callable_owner instanceof record_definition_work) && ($callable_owner->source === $prepared->source)) {
+				$layout = $this->program->fragments[$callable_owner];
+				if ($layout->storage_text !== '') {
+					$record = object_cast($callable_owner, record_definition_work::class)->record_definition();
+					$headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
+					foreach ($layout->definition_headers as $header => $used) { $headers[$header] = true; }
+					$body_text .= $layout->storage_text;
+				}
+			}
+			if (!($callable_owner instanceof source_callable_signature_work)) { continue; }
+			$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
+			$implementation_source = $definition->collection;
+			if ($definition instanceof collected_method) {
+				$implementation_source = object_cast($definition, collected_method::class)->declaring_type()->collection;
+			}
+			if ($implementation_source !== $prepared->source) { continue; }
+			$function = $definition->callable_syntax();
+			if (!$function->has_parsed_body()) { continue; }
+			$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
+			$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
+			$signature = $this->program->fragments[$signature_owner];
+			$body = $this->program->fragments[$body_owner];
+			if ($definition instanceof collected_method) {
+				$headers[CPP_Artifacts::type_header(object_cast($definition, collected_method::class)->declaring_type()->qualified_name())] = true;
+			}
+			else { $headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true; }
+			foreach ($signature->definition_headers as $header => $used) {
+				$headers[$header] = true;
+			}
+			foreach ($body->headers as $header => $used) { $headers[$header] = true; }
+			foreach ($body->forward_declarations as $name => $used) {
+				$declarations[$name] = true;
+			}
+			$body_text .= $signature->text . $body->initializer_text . "\n{\n" . $body->text . "}\n\n";
+		}
+		foreach ($dispatch_context->headers as $header => $used) { $headers[$header] = true; }
+		foreach ($dispatch_context->forward_declarations as $name => $used) { $declarations[$name] = true; }
+		if ($body_text !== '') {
+			$path = ($native_source ? 'support/' : '') . CPP_Artifacts::unit_path($prepared->source);
+			$result->append(new cpp_artifact('implementation:' . $path, cpp_artifact_kind::translation_unit,
+				$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text));
+		}
+	}
+
+	/** One native payload definition, including fields, signatures, bodies and dispatch. */
+	private function source_context(): cpp_generation_context
+	{
+		if ($this->specializations !== null) {
+			if ($this->specializations->runtime_abi()) {
+				$context = new cpp_generation_context();
+				$context->native_source = true;
+				return $context;
+			}
+		}
+		return new cpp_generation_context($this->specializations);
+	}
+
+	/** Physical source ownership is already represented by the preparation work kinds. */
+	private static function native_source_owner(preparation_owner $owner): bool
+	{
+		if ($owner instanceof source_callable_body_work) {
+			return object_cast($owner, source_callable_body_work::class)->callable_definition() instanceof collected_method;
+		}
+		if ($owner->kind() === preparation_kind::declaration) {
+			$declaration = $owner->declaration();
+			return ($declaration instanceof collected_member_owner) || ($declaration instanceof collected_method);
+		}
+		return false;
+	}
+
+	private function fragment_context(preparation_owner $owner): cpp_generation_context
+	{
+		if (self::native_source_owner($owner)) { return $this->source_context(); }
+		return new cpp_generation_context($this->specializations);
+	}
+
 	/** Each body owns its temporary numbering; publish a fragment only after successful rendering. */
 	private function render(preparation_owner $owner): void
 	{
@@ -311,7 +351,7 @@ final class CPP_Generator
 		if (($owner->state !== preparation_state::ready) || $owner->failed) {
 			throw new \LogicException('C++ generation requires successfully prepared work');
 		}
-		$context = new cpp_generation_context($this->specializations);
+		$context = $this->fragment_context($owner);
 		$next = new cpp_fragment();
 		if ($owner instanceof body_work) {
 			$body_owner = object_cast($owner, body_work::class);
@@ -330,7 +370,7 @@ final class CPP_Generator
 			$entry = object_cast($owner->declaration(), collected_name::class);
 			if ($entry instanceof collected_source_callable) {
 				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
-				$definition_context = new cpp_generation_context($this->specializations);
+				$definition_context = $this->fragment_context($owner);
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;
 				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
@@ -351,7 +391,7 @@ final class CPP_Generator
 				$syntax = object_cast($entry, collected_record::class)->syntax();
 				CPP_Declarations::generate_record($syntax, $context);
 				$next->text = $context->records;
-				$definition_context = new cpp_generation_context($this->specializations);
+				$definition_context = $this->fragment_context($owner);
 				$next->storage_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
 				$next->definition_headers = $definition_context->headers;
 				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }

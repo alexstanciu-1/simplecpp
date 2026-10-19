@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/boot.php';
 $source = $argv[1];
 $output = $argv[2];
 $opaque = $argv[3] === 'opaque';
+$source_proof = ($argv[4] ?? '') === 'source-types';
 $initializer_proof = ($argv[4] ?? '') === 'initializers';
 if ($initializer_proof) { require __DIR__ . '/prelower_initializer_cases.php'; }
 $metadata = new runtime_catalog_input();
@@ -57,6 +58,16 @@ measure_end();
 return $answer;
 PHS;
 if ($initializer_proof) { $program = $initializer_program; }
+if ($source_proof) {
+    require __DIR__ . '/prelower_source_cases.php';
+    $program = $source_program;
+    if (($argv[5] ?? '') === 'method-edit') { $program = str_replace('$this->amount + 1', '$this->amount + 2', $program); }
+    if (($argv[5] ?? '') === 'layout-edit') {
+        $extra = '';
+        for ($i = 0; $i < 9; $i++) { $extra .= ' public int $extra' . $i . ' = 9;'; }
+        $program = str_replace('public int $amount = 7;', 'public int $amount = 7;' . $extra, $program);
+    }
+}
 file_put_contents($source . '/main.phs', $program);
 $compiler = new Compiler();
 $compiler->cpp_lowering->prelower_templates = $opaque;
@@ -70,6 +81,30 @@ function snapshot(): array {
     return $result;
 }
 $before = snapshot();
+if ($source_proof && $opaque) {
+    $requested = [];
+    foreach (Model::$cpp_output_program->fragments as $owner) {
+        foreach (Model::$cpp_output_program->fragments[$owner]->specializations as $type) {
+            $requested[CPP_Opaque_Representation::identity($type)] = true;
+        }
+    }
+    foreach (array_keys($requested) as $name) {
+        if (str_contains($name, 'Unused') || str_contains($name, 'weak<')) {
+            throw new \LogicException('Unrequested ownership representation: ' . $name);
+        }
+    }
+    foreach (['Invoice', 'value<Invoice>', 'unique<Invoice>', 'vector<Invoice>'] as $name) {
+        if (!isset($requested[$name])) { throw new \LogicException('Missing requested representation: ' . $name); }
+    }
+    $native_header = $before[CPP_Artifacts::type_header('Invoice')];
+    if (str_contains($native_header, 'specializations/')) { throw new \LogicException('Native payload depends on facade layout'); }
+    foreach ($before as $path => $text) {
+        if (($path === 'entry.cpp') || str_starts_with($path, 'units/')) {
+            if (str_contains($text, '#include "types/')) { throw new \LogicException('Application unit includes native payload definitions'); }
+        }
+    }
+}
+
 $fragments = [];
 foreach (Model::$cpp_output_program->fragments as $owner) { $fragments[] = Model::$cpp_output_program->fragments[$owner]; }
 $compiler->cpp();
@@ -98,6 +133,20 @@ if ($initializer_proof) {
         }
     }
 }
+if ($source_proof && $opaque) {
+    // Remove the complete function before its body substrings.
+    $reduced = preg_replace('/function make_unique\(\): unique<Invoice> \{.*?\}/', '', $program);
+    $reduced = str_replace(['$owner unique<Invoice> = new Invoice();', '$moved = move($owner);'], '', $reduced);
+    file_put_contents($source . '/main.phs', $reduced);
+    $compiler->update_cpp([$source . '/main.phs']);
+    foreach (Model::$cpp_output_program->fragments as $owner) {
+        foreach (Model::$cpp_output_program->fragments[$owner]->specializations as $type) {
+            if (CPP_Opaque_Representation::identity($type) === 'unique<Invoice>') {
+                throw new \LogicException('Removed unique use retained a representation request');
+            }
+        }
+    }
+}
 // Removing every call must drop every operation request, including dead support headers.
 file_put_contents($source . '/main.phs', 'return 0;');
 $compiler->update_cpp([$source . '/main.phs']);
@@ -110,6 +159,23 @@ if ($opaque) {
     try { $compiler->update_cpp([$source . '/main.phs']); }
     catch (\RuntimeException $error) { $failed = true; }
     if (!$failed || !Model::$cpp_files->is_empty()) { throw new \LogicException('Unsupported call published incomplete ABI output'); }
+}
+if ($source_proof && $opaque) {
+    $unsupported = [
+        'selected source constructors' => 'class C { function __construct(int $x) {} } $c = new C(1);',
+        'source method calls' => 'class C { function ping(): int { return 1; } } $c = new C(); $x = $c->ping();',
+        'property access' => 'class C { public int $x = 1; } $c = new C(); $x = $c->x;',
+        'static property access' => 'class C { public static int $x = 1; } $x = C::$x;',
+        'native source calls' => 'function app(): int { return 1; } class C { function ping(): int { return app(); } }',
+        'weak observation' => 'class C {} $c = new C(); $w = weak($c);',
+    ];
+    foreach ($unsupported as $expected => $input) {
+        file_put_contents($source . '/main.phs', $input);
+        $rejected = false;
+        try { $compiler->update_cpp([$source . '/main.phs']); }
+        catch (\RuntimeException $error) { $rejected = str_contains($error->getMessage(), $expected); }
+        if (!$rejected || !Model::$cpp_files->is_empty()) { throw new \LogicException('Missing ABI coverage rejection: ' . $expected); }
+    }
 }
 file_put_contents($source . '/main.phs', $program);
 $compiler->update_cpp([$source . '/main.phs']);
@@ -133,9 +199,28 @@ $fresh->init([$source]);
 $fresh->exec_cpp();
 if (snapshot() !== $before) { throw new \LogicException('Fresh/incremental output differs'); }
 $artifacts = Model::$cpp_files;
+if ($source_proof) {
+    // Test instrumentation only: both native payload definitions get identical tracked fields.
+    $instrumented = new Storage();
+    foreach ($artifacts as $artifact) {
+        $text = $artifact->text;
+        foreach (['Invoice', 'Row'] as $name) {
+            if ($artifact->file_name !== CPP_Artifacts::type_header($name)) { continue; }
+            $opening = 'struct ' . CPP_Generator::source_name('record', $name) . "\n{\n";
+            $text = '#include "instrument.hpp"' . "\n" . str_replace($opening, $opening . "Tracked proof_payload;\n", $text);
+        }
+        $instrumented->append(new cpp_artifact($artifact->identity, $artifact->kind(), $artifact->file_name, $text));
+    }
+    $artifacts = $instrumented;
+}
 $header = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $header = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $header);
 $header .= "\nvoid " . CPP_Generator::source_name('function', 'failure') . "();\ninline void measure_begin() { begin(); }\ninline void measure_end() { report(\"expressions\"); begin(); copies_before_throw=0; try { " . CPP_Generator::source_name('function', 'failure') . "(); require(false); } catch(const CopyFailure&) {} copies_before_throw=-1; require(live_values==0); report(\"failure\"); }\n";
+if ($source_proof) {
+    require __DIR__ . '/prelower_source_identity.php';
+    $header = str_replace('inline void measure_begin()', 'void source_identity_proof(); inline void measure_begin()', $header);
+    $header = str_replace('report("failure"); }', 'report("failure"); source_identity_proof(); }', $header);
+}
 if ($initializer_proof) {
     // Replace only instrumentation hooks; application initializer code is emitted from source.
     $header = substr($header, 0, strpos($header, "\nvoid " . CPP_Generator::source_name('function', 'failure')));

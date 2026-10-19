@@ -15,8 +15,12 @@ final class CPP_Runtime_Operations
 	public static function name(cpp_runtime_operation $request): string
 	{
 		$key = $request->kind_name() . ':' . $request->spelling . ':' . ($request->append ? 'append' : 'store');
+		if ($request->construction !== null) {
+			$key .= ':payload=' . CPP_Opaque_Representation::identity($request->construction->constructed_type)
+				. ':storage=' . enum_name($request->construction->storage);
+		}
 		if ($request->binding !== null) { $key .= ':' . $request->binding->target()->key() . ':' . $request->binding->symbol() . ':' . $request->binding->header(); }
-		if ($request->initialization !== null) { $key .= ':' . $request->initialization->factory()->key(); }
+		if ($request->initialization !== null) { $key .= ':' . CPP_Data_Construction::binding_identity($request->initialization); }
 		if ($request->decision !== null) { $key .= ':' . $request->decision->operation_name(); }
 		if ($request->conversion !== null) { $key .= ':' . $request->conversion->operation_name(); }
 		if ($request->result !== null) { $key .= ':result=' . CPP_Opaque_Representation::identity($request->result); }
@@ -71,7 +75,7 @@ final class CPP_Runtime_Operations
 		$pointers /** vector<string> */ = [];
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		foreach ($inputs as $position => $input) {
-			CPP_Opaque_Representation::require_runtime_type($input);
+			CPP_Opaque_Representation::require_native_type($input);
 			$native = CPP_Declarations::type($input, $native_context);
 			$mutable_input = ($position === 0) && ($request->kind === cpp_runtime_operation_kind::index_write);
 			$qualifier = $mutable_input ? '' : 'const ';
@@ -86,7 +90,7 @@ final class CPP_Runtime_Operations
 		$declaration_headers /** hash<bool> */ = [];
 		$body = $unpack . $expression . ';';
 		if ($request->result !== null) {
-			CPP_Opaque_Representation::require_runtime_type($request->result);
+			CPP_Opaque_Representation::require_native_type($request->result);
 			$native_result = CPP_Declarations::type($request->result, $native_context);
 			$mapping = CPP_Types::representation($request->result, new cpp_generation_context($engine));
 			$output = $mapping->spelling;
@@ -116,6 +120,10 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::construct_default) {
+			$facts /** prepared_object_construction */ = $request->construction;
+			return CPP_Record_Construction::object($facts, new Storage /** Storage<expression_node> */(), $context);
+		}
 		if ($request->kind === cpp_runtime_operation_kind::initialize_empty) {
 			$binding /** initialization_binding */ = $request->initialization;
 			$factory = CPP_Data_Construction::reference($binding, $context);
@@ -172,6 +180,18 @@ final class CPP_Runtime_Operations
 		$leaf = $request->append ? $value : $key . ', ' . $value;
 		return $resolved->statements . 'scpp::index_' . ($request->append ? 'append' : 'store')
 			. '(' . $resolved->value . ', ' . $leaf . ')';
+	}
+
+	/** Reuse settled storage/allocation facts; no guessed constructor or ownership family. */
+	public static function construct_default(prepared_object_construction $facts, cpp_generation_context $context): string
+	{
+		if ($facts->constructor_call !== null) {
+			throw new \RuntimeException('runtime template ABI: selected source constructors need argument transport');
+		}
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::construct_default);
+		$request->construction = $facts;
+		$request->result = $facts->type;
+		return self::invoke($request, [], $context);
 	}
 
 	public static function initialize(data_construction_node $node, initialization_binding $binding,

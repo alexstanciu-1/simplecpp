@@ -103,6 +103,8 @@ enum cpp_record_state {
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	/** Native source payloads share ordinary bindings; calls back into application ABI need transport. */
+	public bool $native_source = false;
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
 	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];
 	public function __construct(public ?CPP_Specializations $specialization_engine = null)
@@ -175,6 +177,7 @@ final class cpp_program {
 
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
+	case construct_default;
 	case observation;
 	case initialize_empty;
 	case initialize_buffer;
@@ -188,6 +191,7 @@ enum cpp_runtime_operation_kind {
 
 final class cpp_runtime_operation
 {
+	public ?prepared_object_construction $construction = null;
 	public function kind_name(): string { return enum_name($this->kind); }
 	public Storage $inputs /** Storage<canonical_type_use> */;
 	public ?canonical_type_use $result = null;

@@ -59,6 +59,7 @@ final class CPP_Syntax
 		if ($node instanceof ownership_observation_node)
 		{
 			$observation = object_cast($node, ownership_observation_node::class);
+			if ($this->context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: weak observation needs operation transport'); }
 			$facts = $observation->require_observation_preparation();
 			$operand = $this->expression($observation->operand);
 			if ($facts->operation === ownership_observation_kind::derive_weak) {

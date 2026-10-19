@@ -211,12 +211,14 @@ final class CPP_Callables
 	public static function reference(callable_definition_i $target, cpp_generation_context $context): string
 	{
 		if ($target instanceof collected_method) {
+			if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: source method calls need receiver/argument transport'); }
 			$method = object_cast($target, collected_method::class);
 			$record = $method->declaring_type();
 			$context->headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
 			return CPP_Generator::source_name('record', $record->qualified_name()) . '::' . self::method_name($method);
 		}
 		if ($target instanceof collected_function) {
+			if ($context->native_source) { throw new \RuntimeException('runtime template ABI: native source calls into application functions need argument transport'); }
 			$function = object_cast($target, collected_function::class);
 			$context->headers[CPP_Artifacts::callable_header($function->qualified_name())] = true;
 			return self::source_reference($function);

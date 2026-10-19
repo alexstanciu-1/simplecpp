@@ -424,6 +424,7 @@ final class CPP_Declarations
 
 	public static function static_property(prepared_static_property $facts, cpp_generation_context $context): string
 	{
+		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: static property access needs native-place transport'); }
 		if ($facts->field instanceof registered_property) {
 			return CPP_Runtime_Catalog::property(object_cast($facts->field, registered_property::class), $context);
 		}
@@ -525,6 +526,9 @@ final class CPP_Declarations
 		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type,
 		string $prefix): string
 	{
+		if ($context->runtime_abi() && (weakref_get($facts->target) instanceof collected_method)) {
+			throw new \RuntimeException('runtime template ABI: source method calls need receiver/argument transport');
+		}
 		if ($context->runtime_abi() && (weakref_get($facts->target) instanceof runtime_function_definition)) {
 			if (($callee !== '') || ($prefix !== '') || ($constructed_type !== null)) {
 				throw new \RuntimeException('runtime template ABI: receiver call transport is not yet implemented');
@@ -634,6 +638,7 @@ final class CPP_Declarations
 	/** Field identity comes from shared preparation, never a backend name lookup. */
 	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context, ?string $bound_base = null): string
 	{
+		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: property access needs native-place transport'); }
 		$facts = $syntax->require_field_access_preparation();
 		$name = '';
 		if ($facts->field instanceof registered_property) {

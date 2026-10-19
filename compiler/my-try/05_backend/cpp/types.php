@@ -24,7 +24,8 @@ final class CPP_Types
 		if ($context !== null) {
 			if ($context->runtime_abi()) {
 				$canonical = Type_Queries::canonical($type_use);
-				if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type) || $type_use->by_value()) {
+				if (($canonical->family() === type_family::integer) || ($canonical instanceof applied_template_type)
+					|| $type_use->by_value() || (Type_Queries::source_declaration($type_use) instanceof collected_member_owner)) {
 					$engine /** CPP_Specializations */ = $context->specialization_engine;
 					return $engine->representation($type_use, $context);
 				}

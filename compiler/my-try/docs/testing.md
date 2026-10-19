@@ -20,6 +20,16 @@ exact allocation parity is asserted with capture isolated, while unfiltered
 conversion failures must preserve payload lifetimes and evaluation traces.
 Runtime error stack-frame allocations depend on bridge depth and optimization.
 
+`python3 compiler/my-try/tests/prelower_expressions.py --source-types --results FRESH_DIRECTORY`
+checks source payload definitions, requested shared/unique/value representations,
+nested containers, tracked payload lifecycle and copy failure, pointer identity,
+unique moved-from state, independent value copies, unused representation removal,
+and native layout reuse on method-body edits versus rebuilding on field-layout edits.
+The fixture adds identical tracked members to emitted payloads solely for counters;
+construction, methods, destruction and application operations are compiler-generated.
+Direct/ABI counters are compared within each build configuration: disabling optional
+elision may add a return move equally in both modes.
+
 `python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
 checks real prepared observation/type bindings through opaque lifecycle generation,
 publication and native layout caching, including provider dependency edits, recovery,

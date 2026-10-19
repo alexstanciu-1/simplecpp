@@ -60,6 +60,12 @@ now adds opt-in runtime ABI emission, operation replay and shared prepared-path 
 The [nonempty-initializer checkpoint](results/prelower_initializers_2026_10_19/README.md)
 adds the existing runtime buffer through the same request/layout owners. Broader
 call/iteration/reference transports remain deferred.
+The [source-payload checkpoint](results/prelower_source_payloads_2026_10_19/README.md)
+adds one native source definition, demand-driven ownership/value representations,
+default construction and source payload container arguments. Only requested forms
+and their dependencies are generated; do not eagerly produce every ownership form.
+Method/property crossings and selected constructor arguments remain the next boundary
+work, using existing prepared call/place facts.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
 details the missing backend request replay and native-address transport, and the
 prepared nested-read/write distinction. Its retained contract is agreed; the linked expression checkpoint records implemented coverage.

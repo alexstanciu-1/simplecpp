@@ -16,19 +16,16 @@ final class CPP_Opaque_Representation
 		return $mapping;
 	}
 
-	/** Reject source-layout bootstrap cycles in this first runtime-only integration. */
-	public static function require_runtime_type(canonical_type_use $type): void
+	/** Native source definitions use ordinary bindings, so probes do not depend on facade layouts. */
+	public static function require_native_type(canonical_type_use $type): void
 	{
-		if (Type_Queries::source_declaration($type) !== null) {
-			throw new \RuntimeException('Opaque runtime layout cannot yet depend on a generated source type');
-		}
 		$canonical = Type_Queries::canonical($type);
 		if ($canonical->definition() instanceof callable_type_definition) {
 			throw new \RuntimeException('Opaque runtime callable storage needs callback ABI transport');
 		}
 		if ($canonical instanceof applied_template_type) {
 			foreach (object_cast($canonical, applied_template_type::class)->arguments() as $argument) {
-				self::require_runtime_type($argument);
+				self::require_native_type($argument);
 			}
 		}
 	}
@@ -75,8 +72,8 @@ final class CPP_Opaque_Representation
 			throw new \RuntimeException('Opaque operation requires a prepared observation');
 		}
 		self::borrowed_argument($arguments[0], 'input');
-		self::require_runtime_type($parameters[0]->type);
-		self::require_runtime_type($call->signature->return_type);
+		self::require_native_type($parameters[0]->type);
+		self::require_native_type($call->signature->return_type);
 		$target = object_cast(weakref_get($call->target), runtime_function_definition::class);
 		$binding = Model::$cpp_callable_bindings->function_binding($target);
 		$input = CPP_Types::representation($parameters[0]->type);
@@ -98,7 +95,7 @@ final class CPP_Opaque_Representation
 
 	public static function entry(canonical_type_use $type, CPP_Specializations $engine): cpp_specialization_entry
 	{
-		self::require_runtime_type($type);
+		self::require_native_type($type);
 		$capabilities = new Capability_Facts();
 		if (!$capabilities->has_capability($type, generic_contract::value_storable)) {
 			throw new \RuntimeException('Opaque representation requires a storable type');

@@ -3,10 +3,11 @@ Doc Status: supporting
 
 The opt-in `prelower_templates` path uses the existing AST, prepared types and
 operation decisions. It does not rewrite syntax or add a semantic pass. The ordinary
-C++ path remains the default. This is the first bounded integer/vector slice, not
-whole-accounting coverage or a general interpreter for arbitrary C++ templates.
+C++ path remains the default. The CLI retains the measured integer/vector recipe
+baseline; the API also offers the growing general runtime ABI path described below.
+Neither currently establishes whole-accounting coverage.
 
-The next design slice is [capability-driven generalization](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md)
+The general path follows [capability-driven generalization](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md)
 through the existing registry and bindings, using original runtime templates behind
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
@@ -37,8 +38,8 @@ The first operation mechanism accepts one prepared readonly observation and an
 owned storable result. Its symbol/header comes from the selected callable binding.
 Borrow transport requires a prepared observation/reference decision and rejects
 conversion or copy boundaries. No operation is selected by names such as `count`,
-`vector` or `parcel`. Runtime-only nested arguments are admitted; generated source
-type dependencies reject until their layout bootstrap is designed.
+`vector` or `parcel`. Nested runtime and source payload arguments use the same
+representation worker; source payload definitions use native bindings as described below.
 
 The [native builder](native_cpp_build.md) owns resolution and caching. Preparation
 and emission never invoke Clang. Published source remains immutable; cached layout
@@ -82,12 +83,41 @@ This is bounded expression integration, not full backend coverage. Iteration, mu
 indexed compound updates, broader runtime call boundaries (defaults, multiple inputs,
 value/consume/reference parameters, receiver calls and reference results), and the
 remaining wrapper/property/callback operations are not covered by this proof.
-Source-derived template arguments still reject pending layout bootstrap. Existing
+Existing
 accounting recipes remain available; do not silently fall back between representations.
 See the [generated-expression evidence](../../../../specs/planning/results/prelower_expressions_2026_10_19/README.md)
 and the earlier [API/layout proof](../../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
 
-## Invocation
+## Demand-driven source payloads
+
+In runtime ABI mode, the existing class emitter uses ordinary native bindings for
+source fields, method signatures/bodies, static storage and dispatch. It emits one
+payload definition at the existing `types/` path. Native method/static/dispatch
+implementations live in per-source `support/units/` artifacts; application function
+units do not include payload headers merely because they share a source file.
+There is no second class layout, AST or semantic registry.
+
+Application type uses request opaque representations through the existing engine.
+Implicit class handles, explicit ownership applications and `value<T>` consume their
+existing canonical/storage/capability facts. Only requested representations and
+required dependencies are emitted: requesting shared storage does not request
+unique, weak or value storage. Native signatures do not request application facades.
+This is specialization demand, not a new dead-source-declaration elimination pass.
+
+Default `new` without a selected constructor call replays its settled construction
+facts through the existing operation request. Original runtime allocation helpers
+construct directly into the result owner. Copy/transfer/destruction remain original
+runtime operations; source classes and structs can now be container arguments.
+Factory helper output identities use resolved native bindings rather than registry
+keys containing transient source type IDs, preserving deletion/restoration stability.
+
+This slice does not implement application-to-native method/property/static-property
+access, selected constructors/named construction, weak derivation/lock or calls from
+native methods back into application functions. These crossings reject explicitly.
+Recursive payload graphs, callback crossings and full inheritance operation coverage
+remain follow-up proofs. See the [source-payload checkpoint](../../../../specs/planning/results/prelower_source_payloads_2026_10_19/README.md).
+
+## Accounting recipe baseline: invocation
 
 ```bash
 php compiler/my-try/main.php --s2s /absolute/source --output /absolute/output --prelower-templates
@@ -100,7 +130,7 @@ Changing this setting invalidates retained emission fragments, not semantic work
 Optimization, PCH and native debug remain independent native-builder settings.
 Use `--no-pch` for the concrete comparison; native debug is off by default.
 
-## Ownership
+## Accounting recipe baseline: ownership
 
 `CPP_Specializations` accepts canonical types, deduplicates representations and
 synchronously generates their declarations and implementations. It uses registered
@@ -127,7 +157,7 @@ C++ spelling. No source-name short-name lookup determines specialization identit
 Representation freshness is ordinary generated content: existing publication and
 native object hashing own invalidation. There is no second object cache.
 
-## Current coverage
+## Accounting recipe baseline: coverage
 
 - Concrete signed/unsigned 8-, 16-, 32- and 64-bit integer wrappers, derived from the
   registry; ordinary `int` shares its registered representation. Integer literals,

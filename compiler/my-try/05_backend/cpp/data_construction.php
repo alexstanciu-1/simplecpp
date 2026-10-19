@@ -82,6 +82,7 @@ final class CPP_Record_Construction
 	public static function object(prepared_object_construction $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context): string
 	{
+		if ($context->runtime_abi()) { return CPP_Runtime_Operations::construct_default($facts, $context); }
 		$callee = self::allocation($facts->type, $facts->constructed_type, $facts->storage, $context);
 		if ($facts->constructor_call !== null) {
 			return CPP_Declarations::selected_call($facts->constructor_call, $arguments, $context, $callee, $facts->type, '');
@@ -92,6 +93,14 @@ final class CPP_Record_Construction
 
 final class CPP_Data_Construction
 {
+	/** Factory registration keys contain transient type IDs; output names use resolved native bindings. */
+	public static function binding_identity(initialization_binding $binding): string
+	{
+		$context = new cpp_generation_context();
+		$symbol = self::reference($binding, $context);
+		return $symbol . ':' . CPP_Artifacts::includes($context->headers, '');
+	}
+
 	/** Publish one backend binding for the already selected concrete semantic factory. */
 	public static function reference(initialization_binding $binding, cpp_generation_context $context): string
 	{
@@ -179,6 +188,7 @@ final class CPP_Data_Construction
 	private static function record(data_construction_node $node, prepared_record_construction $facts,
 		cpp_generation_context $context): string
 	{
+		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: named source construction needs argument transport'); }
 		$context->headers['utility'] = true;
 		$type = CPP_Declarations::type($facts->type, $context);
 		$payload = CPP_Types::payload($facts->payload_type, $context);
