@@ -68,8 +68,14 @@ the existing metadata/binding owners before continuing accounting adapters; see 
 [current audit and proposed representation-binding slice](runtime_template_capability_matrix_2026_10_19.md#current-metadata-audit-and-proposed-next-slice--df056d90).
 Coverage of descriptions does not request compilation. Prepare only types used by
 application demand and their required dependencies, never the entire runtime.
-Full operation coverage remains incremental; add no parallel registry. The first
-binding migration requires a reviewed schema extension and ordinary-output parity.
+Full operation coverage remains incremental; add no parallel registry. The user
+approved the existing-identity/structured-argument schema extension. The first
+migration now moves core runtime representations out of PHP registration and renders
+the installed recipes in the ordinary backend. Next, replace automatic template
+selection and nested-substitution category checks with recipe queries, including
+nominal source types whose native representation is a closed template. Then review
+required runtime interface/trait contracts; representation metadata alone does not
+complete all operations.
 
 ## Active integration sequence: concrete type substitution
 

@@ -251,16 +251,79 @@ and ordinary registry interning completes omitted arguments. The core hash recip
 uses `Value` requiring storage, then `Key` requiring hashability/comparison and
 defaulting to `string`; both arguments gate hash copyability.
 
-Each type has exactly one `cpp_types` binding in its declaring module, using the
-same `id`/`symbol`/`header` fields as a function binding. No orphan entries, source
-fragments, baked-in template arguments or alternative parameter order are supported.
-The backend appends canonical type arguments in declaration order. The compiler
-does not verify C++ symbols exist; generated-program compilation proves that boundary.
+Each ordinary type has exactly one `cpp_types` binding in its declaring module,
+with `id`, `symbol` and `header`. By default the backend appends semantic template
+arguments in declaration order using their stored representations. A nominal binding
+without explicit arguments names a plain native type. The compiler does not verify
+C++ symbols exist; generated-program compilation proves that boundary.
+
+### Native type representation recipes
+
+`cpp_types` also accepts bindings to existing compiler-interpreted identities. These
+rows retain a unique `id`, and add exactly one of `type` (registered source type name)
+or `modifier` (registered modifier name). They supply C++ representation only: they
+do not declare another semantic type, change its role, or add capabilities. Ordinary
+metadata definitions must still join by their declaring `id`; explicit targets
+cannot redirect those rows or bind another module's ordinary declaration. Duplicate
+bindings to the same canonical definition or modifier reject before configuration
+publication, including through aliases. Unresolved targets and orphan rows reject.
+The native language spelling of void remains compiler-owned.
+
+An optional `arguments` array makes a binding an explicit native template application.
+An empty array means `Symbol<>`, distinct from a plain type. Each argument has one
+of these shapes:
+
+```json
+{"native":"std::int32_t"}
+{"native":"provider::native_type","header":"provider/native_type.hpp"}
+{"parameter":"Value","representation":"stored"}
+{"parameter":"Target","representation":"payload"}
+{"modified_type":true,"representation":"payload"}
+```
+
+`native` and its optional header are validated qualified-name/include-path spellings,
+not C++ expressions or arbitrary source. Parameter references must name a formal of
+the existing semantic definition. The list supplies native argument order and may
+use fixed native types; source application order and formation rules do not change.
+Stored arguments include their normal storage representation. Payload arguments name
+the underlying type, retaining the established ownership-wrapper behavior. Semantic
+arguments require an explicit representation and cannot supply a header. A native
+argument cannot select a semantic representation. Other fields and multiple targets
+are rejected. Non-type arguments and recursively authored native-template expressions
+are outside this bounded recipe vocabulary.
+
+Modifier bindings require explicit arguments; only they can use `modified_type`.
+That argument requires payload representation so it cannot recursively apply its
+own modifier. The existing value modifier's normalization and source admission stay
+with the registry. No modifier or language role can be declared through this schema.
+
+For example, core binds the existing integer and ownership identities:
+
+```json
+{"id":"core.representation.int","type":"int","symbol":"scpp::int_t",
+ "header":"scpp/int_t.hpp","arguments":[]}
+{"id":"core.representation.shared","type":"shared","symbol":"scpp::shared_p",
+ "header":"scpp/shared_p.hpp",
+ "arguments":[{"parameter":"Target","representation":"payload"}]}
+```
+
+Core supplies runtime representations of the existing scalars, boxed types,
+nullable/Result and ownership families, plus the value modifier. Hosts emitting
+those runtime representations must select core (directly or through dependencies);
+an empty metadata selection does not silently reinstall compiler-local runtime
+bindings. Definitions still exist independently for semantic-only use.
+
+Loading and validating recipes does not request native preparation. Recipes attach
+to current identities on reset; backend demands and their dependency closure own
+concrete support generation. Layout/trait probes remain target-specific and are not
+replaced with size/alignment constants in metadata. Operation/member interfaces
+continue using their separate registered/prepared contracts.
 
 The core vector/hash definitions and their C++ bindings now come solely from this
 metadata. Source publication enumerates registered exposures rather than a second
-name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
-families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
+name list. Language-interpreted scalar, mixed/dynamic, nullable, Result and ownership
+semantics remain compiler-owned: ordinary JSON declarations cannot claim those roles.
+Their physical C++ representations are runtime-owned recipes as described above.
 Type declaration alone grants no initialization/indexing/iteration protocol, borrowed
 storage, non-type parameters or handle-lifetime contract. Indexing and iteration
 require the independent opt-ins below, as does initialization.

@@ -12,6 +12,28 @@ through the existing registry and bindings, using original runtime templates beh
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
 
+## Runtime-owned native representation recipes
+
+`cpp_types` now describes both ordinary runtime definitions and representations of
+existing compiler-known types/modifiers. `CPP_Runtime_Type_Bindings` resolves these
+records into the existing `CPP_Type_Bindings`; no extra semantic registry is added.
+The core catalog owns scalar, boxed, wrapper and modifier C++ bindings. Compiler
+registration retains only the native spelling of void.
+
+A recipe records a symbol/header and explicit native template arguments when needed.
+Arguments may be fixed native types or registered formals in stored/payload
+representation. Omitted arguments retain ordinary declaration-order shorthand;
+explicit empty arguments mean `Symbol<>`. The C++ renderer consumes this structure
+for both ordinary and composed native representations, including ownership payloads
+and the value modifier. Layout and lifecycle facts still come from existing probes.
+
+This migration preserves ordinary output for the checked baseline and does not yet
+replace every specialization-selection test with recipe queries. Existing explicit
+requests already render the same recipes; automatic discovery of closed native
+templates behind nominal source types is the next slice. Runtime operation/trait
+coverage remains separate, including accounting's integer-output gap. See the
+[migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
+
 ## Concrete mutation interfaces
 
 `CPP_Concrete_Mutations` requests `operator++` / `operator--` members from the

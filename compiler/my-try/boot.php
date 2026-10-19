@@ -204,6 +204,7 @@ require_once __DIR__ . '/05_backend/cpp/declarations.php';
 require_once __DIR__ . '/05_backend/cpp/dispatch.php';
 require_once __DIR__ . '/05_backend/cpp/callable_bindings.php';
 require_once __DIR__ . '/05_backend/cpp/runtime_catalog.php';
+require_once __DIR__ . '/05_backend/cpp/runtime_type_bindings.php';
 require_once __DIR__ . '/05_backend/cpp/runtime_build.php';
 require_once __DIR__ . '/05_backend/cpp/data_construction.php';
 require_once __DIR__ . '/05_backend/cpp/index_write.php';

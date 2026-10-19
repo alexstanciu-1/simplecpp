@@ -45,6 +45,13 @@ JSON documents/nodes/diagnostics and file-lock handles are registered too. The
 optional process catalog adds its five managed-process calls, two shared types and
 six output fields. Shared storage copies handles, not provider payloads.
 
+Core now supplies C++ representation recipes for existing compiler-known scalar,
+boxed, nullable/Result, ownership and value-modifier identities. These are bindings
+in `cpp_types`, not additional semantic declarations. Structured native arguments
+distinguish plain types, closed templates and semantic arguments in stored/payload
+representation. Missing core selection supplies no implicit runtime binding fallback.
+Catalog registration does not generate concrete types; application demand does.
+
 Concrete backend representations use the separate
 [runtime interoperability contract](../specs/concrete_type_interoperability.md).
 It consumes registry-selected representation facts without adding a parallel catalog.

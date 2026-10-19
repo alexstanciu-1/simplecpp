@@ -70,14 +70,20 @@ final class Runtime_Catalog_Reader
 					$properties->append(self::property_spec($reader));
 				}
 			}
+			elseif ($key === 'cpp_types') {
+				$type_bindings /** Keyed_Storage<runtime_cpp_type_spec> */ = $result->cpp_types;
+				$reader->begin_array();
+				while ($reader->next_element()) {
+					$type_binding = self::cpp_type_spec($reader);
+					if (isset($type_bindings[$type_binding->identity])) { $reader->reject('Duplicate C++ binding identity'); }
+					$type_bindings->add($type_binding->identity, $type_binding);
+				}
+			}
 			elseif ($key === 'cpp_build') { $result->cpp_build = self::build_spec($reader); }
-			elseif (($key === 'cpp') || ($key === 'cpp_types') || ($key === 'cpp_properties') || ($key === 'cpp_initialization'))
+			elseif (($key === 'cpp') || ($key === 'cpp_properties') || ($key === 'cpp_initialization'))
 			{
 				$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $result->cpp;
-				if ($key === 'cpp_types') {
-					$bindings = $result->cpp_types;
-				}
-				elseif ($key === 'cpp_properties') { $bindings = $result->cpp_properties; }
+				if ($key === 'cpp_properties') { $bindings = $result->cpp_properties; }
 				elseif ($key === 'cpp_initialization') { $bindings = $result->cpp_initialization; }
 				$reader->begin_array();
 				while ($reader->next_element()) {
@@ -615,6 +621,68 @@ final class Runtime_Catalog_Reader
 		}
 		if (!$owner || !$dispatch) {
 			$reader->reject('Missing runtime callable member field');
+		}
+		return $result;
+	}
+
+	private static function cpp_type_spec(\scpp\Json_Reader $reader): runtime_cpp_type_spec
+	{
+		$result = new runtime_cpp_type_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$key = $reader->property_name();
+			if ($key === 'id') { $result->identity = self::name($reader); }
+			elseif ($key === 'symbol') { $result->symbol = self::name($reader); }
+			elseif ($key === 'header') { $result->header = self::name($reader); }
+			elseif ($key === 'type') { $result->type_name = self::name($reader); }
+			elseif ($key === 'modifier') { $result->modifier_name = self::name($reader); }
+			elseif ($key === 'arguments') {
+				$arguments = new Storage /** Storage<runtime_cpp_argument_spec> */();
+				$reader->begin_array();
+				while ($reader->next_element()) { $arguments->append(self::cpp_argument_spec($reader)); }
+				$result->arguments = $arguments;
+			}
+			else { $reader->reject('Unknown C++ type binding field: ' . $key); }
+		}
+		if (($result->identity === '') || ($result->symbol === '') || ($result->header === '')) {
+			$reader->reject('Missing C++ binding field');
+		}
+		if (($result->type_name !== '') && ($result->modifier_name !== '')) {
+			$reader->reject('C++ type binding cannot target both a type and modifier');
+		}
+		return $result;
+	}
+
+	private static function cpp_argument_spec(\scpp\Json_Reader $reader): runtime_cpp_argument_spec
+	{
+		$result = new runtime_cpp_argument_spec();
+		$targets = 0;
+		$representation = false;
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$key = $reader->property_name();
+			if ($key === 'native') { $result->native_name = self::name($reader); $targets++; }
+			elseif ($key === 'parameter') { $result->parameter = self::name($reader); $targets++; }
+			elseif ($key === 'modified_type') {
+				$result->modified_type = $reader->read_boolean();
+				if (!$result->modified_type) { $reader->reject('C++ modified_type argument must be true'); }
+				$targets++;
+			}
+			elseif ($key === 'header') { $result->header = self::name($reader); }
+			elseif ($key === 'representation') {
+				$mode = self::name($reader);
+				if (($mode !== 'stored') && ($mode !== 'payload')) { $reader->reject('Unknown C++ argument representation'); }
+				$result->payload = $mode === 'payload';
+				$representation = true;
+			}
+			else { $reader->reject('Unknown C++ type argument field: ' . $key); }
+		}
+		if ($targets !== 1) { $reader->reject('C++ type argument requires exactly one target'); }
+		if ($result->native_name !== '') {
+			if ($representation) { $reader->reject('Native C++ argument cannot select semantic representation'); }
+		}
+		elseif (!$representation || ($result->header !== '')) {
+			$reader->reject('Semantic C++ argument requires representation and cannot supply a header');
 		}
 		return $result;
 	}

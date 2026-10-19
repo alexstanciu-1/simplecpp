@@ -33,8 +33,8 @@ Bindings remain structured names/contracts, not arbitrary executable C++ snippet
 
 The [current audit](results/prelower_runtime_metadata_audit_2026_10_19/README.md)
 finds 14 ordinary type declarations across eight runtime catalogs. Vector/hash are
-the two metadata-declared templates. Compiler-known scalar, nullable/Result,
-ownership, boxed and value-modifier representations still have PHP-installed C++
+the two metadata-declared templates. At that checkpoint compiler-known scalar, nullable/Result,
+ownership, boxed and value-modifier representations still had PHP-installed C++
 bindings. This is incomplete runtime metadata coverage, not missing semantic type
 identities. The older matrix below remains the family review; the audit includes
 `Exception`, subsequently added to core with shared storage and no payload-copy claim.
@@ -50,7 +50,11 @@ identities. The older matrix below remains the family review; the audit includes
 | Required concrete operations | Prepared calls/operators/conversions and existing fragment requests | Type metadata alone cannot make echo/traits/member forwarding complete; consume these decisions, add only missing runtime interface contracts |
 | Private helper-template closure | Native C++ instantiation in support units | Do not register every implementation helper as a source type; native dependency tracking owns their rebuilds |
 
-### Proposed representation-binding extension (not implemented)
+### Representation-binding extension — first migration implemented
+
+The [first migration proof](results/prelower_runtime_type_bindings_2026_10_19/README.md)
+records the implemented schema, core binding migration and ordinary-output/native
+checks. Automatic preparation selection is the next slice.
 
 Extend the existing `cpp_types` input and `CPP_Type_Bindings`, rather than create a
 second registry. Preserve `id` joins for ordinary metadata types. Add an exclusive
@@ -63,16 +67,16 @@ provider consumes its stored representation or its payload representation. This 
 physical C++ information, not a new source capability. Native fixed-width argument
 names are validated qualified names; no arbitrary C++ snippets are accepted.
 
-Illustrative shape for review, not an accepted schema yet:
+The implementation follows the [versioned metadata contract](../runtime_module_metadata.md#native-type-representation-recipes). Binding IDs are required; representative rows:
 
 ```json
-{"type":"int", "symbol":"scpp::int_t", "header":"scpp/int_t.hpp",
+{"id":"core.representation.int","type":"int", "symbol":"scpp::int_t", "header":"scpp/int_t.hpp",
  "arguments":[{"native":"std::int64_t"}]}
 
-{"type":"dynamic", "symbol":"scpp::dynamic_t", "header":"scpp/dynamic_t.hpp",
+{"id":"core.representation.dynamic","type":"dynamic", "symbol":"scpp::dynamic_t", "header":"scpp/dynamic_t.hpp",
  "arguments":[]}
 
-{"type":"shared", "symbol":"scpp::shared_p", "header":"scpp/shared_p.hpp",
+{"id":"core.representation.shared","type":"shared", "symbol":"scpp::shared_p", "header":"scpp/shared_p.hpp",
  "arguments":[{"parameter":"Target", "representation":"payload"}]}
 ```
 
@@ -89,10 +93,11 @@ nested substitution consume the resolved recipe. An explicit template applicatio
 is a preparation candidate; it is not an eager request. Missing recipes/interfaces
 must be diagnosed, not silently treated as fully supported concrete output.
 
-This crosses catalog decoding/validation, installed C++ bindings and representation
-emission. It must be reviewed before a coordinated schema change; the current v1
-contract expressly forbids baked-in template arguments and orphan binding rows.
-Do not weaken that validation piecemeal or expand ordinary `types` with fake roles.
+The user approved this coordinated extension after review. It crosses catalog
+decoding/validation, installed C++ bindings and representation emission. The v1
+contract now explicitly defines structured native arguments and existing-identity
+targets; orphan rows and arbitrary source fragments remain rejected. Ordinary
+`types` do not acquire fake language roles.
 
 Validation must cover old catalog compatibility, duplicate/missing/invalid target
 bindings, parameter references, default/native argument spelling, reset/replay,

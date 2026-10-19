@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_type_bindings.py --results FRESH_DIRECTORY`
+checks malformed/duplicate type recipes, existing-identity targets, argument reordering,
+closed native templates, reset and explicit demand. It compiles the generated layout
+probes and concrete lifecycle code at O0/O2 and under ASan/UBSan without PCH. This
+proves generated applications, not a native compiler rebuild. The existing mutation
+substitution suite supplies the broader allocation/copy and incremental replay proof.
+
 `python3 compiler/my-try/tests/runtime_inventory.py --results FRESH_DIRECTORY`
 checks all production catalogs together, their type/protocol contracts and demand-only
 concrete preparation. Loading every catalog emits no concrete type headers; requesting

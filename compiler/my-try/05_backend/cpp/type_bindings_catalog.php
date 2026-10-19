@@ -3,21 +3,39 @@
 /* Role: C++ representation bindings for canonical semantic definitions and type-use modifiers. */
 namespace scpp\compiler;
 
+enum cpp_type_argument_kind { case native_type; case parameter; case modified_type; }
+
+/** Resolved physical argument; semantic identity and admission stay in the registry. */
+final class cpp_type_argument_binding
+{
+	public cpp_type_argument_kind $kind;
+	public int $position = 0;
+	public string $native_name = '';
+	public string $header = '';
+	public bool $payload = false;
+}
+
+/** Native type construction, shared by definition and modifier bindings. */
+final class cpp_type_recipe
+{
+	public bool $template_application = false;
+	public array $arguments /** vector<cpp_type_argument_binding> */ = [];
+	public function __construct(public string $symbol, public string $header) {}
+}
+
 final class cpp_type_definition_binding
 {
 	private int $semantic_definition_id /** uint32 */;
-	private string $cpp_name;
-	private string $required_header;
+	private cpp_type_recipe $native_recipe;
 
-	public function __construct(int $definition_id, string $name, string $header)
+	public function __construct(int $definition_id, cpp_type_recipe $recipe)
 	{
 		Type_Identity::require_valid($definition_id, 'C++ binding definition identity');
-		if ($name === '') {
+		if ($recipe->symbol === '') {
 			throw new \InvalidArgumentException('C++ type binding name must not be empty');
 		}
 		$this->semantic_definition_id = $definition_id;
-		$this->cpp_name = $name;
-		$this->required_header = $header;
+		$this->native_recipe = $recipe;
 	}
 
 	public function definition_id(): int
@@ -27,29 +45,28 @@ final class cpp_type_definition_binding
 
 	public function name(): string
 	{
-		return $this->cpp_name;
+		return $this->native_recipe->symbol;
 	}
 
 	public function header(): string
 	{
-		return $this->required_header;
+		return $this->native_recipe->header;
 	}
+	public function recipe(): cpp_type_recipe { return $this->native_recipe; }
 }
 
 final class cpp_type_modifier_binding
 {
 	private type_use_modifier_kind $modifier_kind;
-	private string $cpp_name;
-	private string $required_header;
+	private cpp_type_recipe $native_recipe;
 
-	public function __construct(type_use_modifier_kind $kind, string $name, string $header)
+	public function __construct(type_use_modifier_kind $kind, cpp_type_recipe $recipe)
 	{
-		if ($name === '') {
+		if ($recipe->symbol === '') {
 			throw new \InvalidArgumentException('C++ type modifier binding name must not be empty');
 		}
 		$this->modifier_kind = $kind;
-		$this->cpp_name = $name;
-		$this->required_header = $header;
+		$this->native_recipe = $recipe;
 	}
 
 	public function kind(): type_use_modifier_kind
@@ -59,13 +76,14 @@ final class cpp_type_modifier_binding
 
 	public function name(): string
 	{
-		return $this->cpp_name;
+		return $this->native_recipe->symbol;
 	}
 
 	public function header(): string
 	{
-		return $this->required_header;
+		return $this->native_recipe->header;
 	}
+	public function recipe(): cpp_type_recipe { return $this->native_recipe; }
 }
 
 /** Backend bindings remain independent of source spellings and provider identities. */
@@ -76,20 +94,36 @@ final class CPP_Type_Bindings
 
 	public function bind_definition(type_definition_i $definition, string $name, string $header): void
 	{
+		$recipe = new cpp_type_recipe($name, $header);
+		if ($definition instanceof abstract_template_type_definition) {
+			$template_definition = object_cast($definition, abstract_template_type_definition::class);
+			$recipe->template_application = true;
+			foreach ($template_definition->parameters() as $position => $parameter) {
+				$argument = new cpp_type_argument_binding();
+				$argument->kind = cpp_type_argument_kind::parameter;
+				$argument->position = $position;
+				$recipe->arguments[] = $argument;
+			}
+		}
+		$this->bind_recipe($definition, $recipe);
+	}
+
+	public function bind_recipe(type_definition_i $definition, cpp_type_recipe $recipe): void
+	{
 		$id = $definition->definition_id();
 		if (isset($this->definitions[$id])) {
 			throw new \LogicException('Duplicate C++ type definition binding');
 		}
-		$this->definitions[$id] = new cpp_type_definition_binding($id, $name, $header);
+		$this->definitions[$id] = new cpp_type_definition_binding($id, $recipe);
 	}
 
-	public function bind_modifier(type_use_modifier_kind $kind, string $name, string $header): void
+	public function bind_modifier(type_use_modifier_kind $kind, cpp_type_recipe $recipe): void
 	{
 		$key = Type_Use_Modifier_Name::text($kind);
 		if (isset($this->modifiers[$key])) {
 			throw new \LogicException('Duplicate C++ type modifier binding');
 		}
-		$this->modifiers[$key] = new cpp_type_modifier_binding($kind, $name, $header);
+		$this->modifiers[$key] = new cpp_type_modifier_binding($kind, $recipe);
 	}
 
 	public function definition(int $definition_id): cpp_type_definition_binding
@@ -118,46 +152,11 @@ final class CPP_Type_Bindings
 
 final class CPP_Type_Binding_Registration
 {
-	/** Bind compiler-interpreted definitions; the coordinator adds ordinary metadata bindings. */
+	/** Native language-only spelling; runtime representations come from selected catalogs. */
 	public static function install(registered_type_catalog $types): CPP_Type_Bindings
 	{
 		$bindings = new CPP_Type_Bindings();
-		self::bind_scalars($bindings, $types);
-		self::bind_runtime_types($bindings, $types);
-		$bindings->bind_modifier(type_use_modifier_kind::by_value, 'scpp::value_p', 'scpp/value_p.hpp');
-		return $bindings;
-	}
-
-	/** Bind each concrete built-in identity; source aliases share its one binding. */
-	private static function bind_scalars(CPP_Type_Bindings $bindings, registered_type_catalog $types): void
-	{
 		$bindings->bind_definition($types->definition('void'), 'void', '');
-		$bindings->bind_definition($types->definition('bool'), 'scpp::bool_t', 'scpp/bool_t.hpp');
-		foreach ([8, 16, 32, 64] as $bits)
-		{
-			$bindings->bind_definition($types->definition('int' . $bits),
-				'scpp::int_t<std::int' . $bits . '_t>', 'scpp/int_t.hpp');
-			$bindings->bind_definition($types->definition('uint' . $bits),
-				'scpp::int_t<std::uint' . $bits . '_t>', 'scpp/int_t.hpp');
-		}
-		$bindings->bind_definition($types->definition('int'), 'scpp::int_t<>', 'scpp/int_t.hpp');
-		$bindings->bind_definition($types->definition('float'), 'scpp::float_t', 'scpp/float_t.hpp');
-		$bindings->bind_definition($types->definition('string'), 'scpp::string_t', 'scpp/string_t.hpp');
-		$bindings->bind_definition($types->definition('error'), 'scpp::error_t', 'scpp/error_t.hpp');
-	}
-
-	/** Bind runtime semantic families without adding their backend names to source lookup. */
-	private static function bind_runtime_types(CPP_Type_Bindings $bindings,
-		registered_type_catalog $types): void
-	{
-		$bindings->bind_definition($types->definition('mixed'), 'scpp::mixed_t', 'scpp/mixed_t.hpp');
-		$bindings->bind_definition($types->definition('dynamic'), 'scpp::dynamic_t<>', 'scpp/dynamic_t.hpp');
-		$bindings->bind_definition($types->definition('nullable'), 'scpp::nullable', 'scpp/nullable.hpp');
-		$bindings->bind_definition($types->definition('result'), 'scpp::result', 'scpp/result.hpp');
-		$bindings->bind_definition($types->definition('result_or_false'), 'scpp::result_or_false', 'scpp/result_or_false.hpp');
-		$bindings->bind_definition($types->definition('result_or_bool'), 'scpp::result_or_bool', 'scpp/result_or_bool.hpp');
-		$bindings->bind_definition($types->definition('shared'), 'scpp::shared_p', 'scpp/shared_p.hpp');
-		$bindings->bind_definition($types->definition('weak'), 'scpp::weak_p', 'scpp/weak_p.hpp');
-		$bindings->bind_definition($types->definition('unique'), 'scpp::unique_p', 'scpp/unique_p.hpp');
+		return $bindings;
 	}
 }

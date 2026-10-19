@@ -53,8 +53,8 @@ final class CPP_Types
 		}
 		if ($type_use->by_value()) {
 			$modifier = Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value);
-			$result->spelling = $modifier->name() . '<' . $result->spelling . '>';
-			self::add_header($result, $modifier->header());
+			$no_arguments /** vector<canonical_type_use> */ = [];
+			$result = self::native_recipe($modifier->recipe(), $no_arguments, $result, $context, $argument_engine);
 			$result->literal = cpp_literal_kind::none;
 		}
 		return $result;
@@ -126,21 +126,7 @@ final class CPP_Types
 		if ($type instanceof applied_template_type) {
 			$application = object_cast($type, applied_template_type::class);
 			$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
-			$arguments = '';
-			foreach ($application->arguments() as $position => $argument) {
-				if ($position !== 0) {
-					$arguments .= ', ';
-				}
-				// Template bindings do not yet promise incomplete-payload support.
-				$argument_type = $argument_engine !== null
-					? self::implementation_argument($argument, $definition instanceof ownership_semantics, $argument_engine)
-					: ($definition instanceof ownership_semantics
-						? self::payload($argument, $context) : self::representation($argument, $context));
-				$arguments .= $argument_type->spelling;
-				self::merge_headers($result, $argument_type);
-			}
-			$result->spelling = $binding->name() . '<' . $arguments . '>';
-			self::add_header($result, $binding->header());
+			$result = self::native_recipe($binding->recipe(), $application->arguments(), null, $context, $argument_engine);
 			$result->literal = cpp_literal_kind::none;
 			return $result;
 		}
@@ -175,9 +161,44 @@ final class CPP_Types
 		}
 
 		$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
-		$result->spelling = $binding->name();
-		self::add_header($result, $binding->header());
+		$no_arguments /** vector<canonical_type_use> */ = [];
+		$result = self::native_recipe($binding->recipe(), $no_arguments, null, $context, $argument_engine);
 		$result->literal = self::literal_kind($type, $definition);
+		return $result;
+	}
+
+	/** Render structured runtime binding data; argument interpretation never depends on family names. */
+	private static function native_recipe(cpp_type_recipe $recipe, array $arguments /** vector<canonical_type_use> */,
+		?cpp_type $modified, ?cpp_generation_context $context, ?CPP_Specializations $engine): cpp_type
+	{
+		$result = new cpp_type();
+		$result->spelling = $recipe->symbol;
+		if ($recipe->template_application) {
+			$result->spelling .= '<';
+			$separator = '';
+			foreach ($recipe->arguments as $argument) {
+				$mapping = new cpp_type();
+				if ($argument->kind === cpp_type_argument_kind::native_type) {
+					$mapping->spelling = $argument->native_name;
+					self::add_header($mapping, $argument->header);
+				}
+				elseif ($argument->kind === cpp_type_argument_kind::modified_type) {
+					if ($modified === null) { throw new \LogicException('C++ modifier recipe requires its payload'); }
+					$mapping = $modified;
+				}
+				else {
+					$type_argument = $arguments[$argument->position];
+					$mapping = $engine !== null
+						? self::implementation_argument($type_argument, $argument->payload, $engine)
+						: ($argument->payload ? self::payload($type_argument, $context) : self::representation($type_argument, $context));
+				}
+				$result->spelling .= $separator . $mapping->spelling;
+				$separator = ', ';
+				self::merge_headers($result, $mapping);
+			}
+			$result->spelling .= '>';
+		}
+		self::add_header($result, $recipe->header);
 		return $result;
 	}
 
