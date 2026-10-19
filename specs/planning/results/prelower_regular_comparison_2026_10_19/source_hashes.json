@@ -1,0 +1,17 @@
+{
+  "examples/accounting_workload/main.phs": "5e60d5f701ee533e4548011725816567a02a04113c31a20336dc5788e3add8ab",
+  "examples/accounting_workload/src/assets.phs": "cb1937a70a2dcb40d15ed45e2a34eb4a16fc3b41c38899023d568b9c19660da5",
+  "examples/accounting_workload/src/calendar.phs": "6cc305e6d48a97b0fa7f514bc13800206231776157c5aed8bc8bc4ca247e456a",
+  "examples/accounting_workload/src/purchasing.phs": "b9e08c16043d318a51bd5e2579bff4714ed76a1e142da485a40f7c30111c8944",
+  "examples/accounting_workload/src/sales.phs": "5ad11cbdfd004f5e5706b6c381379798b93487ac13b9a8d13067dfd808b1e231",
+  "examples/accounting_workload/src/reports.phs": "7194a1d75d83260f1d8444fccb36775f5b6785184d3d4ca0e17d5a5e0baccaa7",
+  "examples/accounting_workload/src/checks.phs": "c4364d298b2698df20b74ea7f857f7fbeafbea7de4a09268a9e5b39488f49d37",
+  "examples/accounting_workload/src/business_checks.phs": "9fa9d36809481485c8158e12ef3b722e8a72e2f459bcd13fffddc23e9df2ad71",
+  "examples/accounting_workload/src/closing.phs": "fc2f9a9255a8aa1f9b0c624266fa1b946806966d6b872bb5c0290a4f2adce6b0",
+  "examples/accounting_workload/src/ledger.phs": "5eb90a6919ca43abe4cc7bf3b69a3031392f0880825efd907e0c6f521874f439",
+  "examples/accounting_workload/src/closing_checks.phs": "1fe3e81f2abb8330823d3ebeb9e5e793a3ad44082d2095b1a21ec15f5d8c257f",
+  "examples/accounting_workload/src/core.phs": "82819a17f5c3d485b4bc6d23c210adbdbafd210fe7a97abf8531289bf0f254c3",
+  "examples/accounting_workload/src/banking.phs": "46ead8556a256affe9e4103ee0c2f8ae8bbefd45584a49ffc8dfa5b64e425e7f",
+  "examples/accounting_workload/src/stock.phs": "2f2999384900663641f7eac501970564717e8a705de59f267c4e97f44a272401",
+  "examples/accounting_workload/src/money.phs": "d386f11b39a3f11862ca00956049788d86310b164dc3d4fc5f41cc42c0940609"
+}
