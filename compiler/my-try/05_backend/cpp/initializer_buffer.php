@@ -4,6 +4,58 @@ namespace scpp\compiler;
 /** Physical transport of the existing call-scoped runtime initializer buffer. */
 final class CPP_Initializer_Buffer
 {
+	/** Both experimental representations share sequencing and buffer lifetime ownership. */
+	public static function active(cpp_generation_context $context): bool
+	{
+		$engine = $context->specialization_engine;
+		return $engine !== null && ($engine->runtime_abi() || $engine->concrete_types());
+	}
+
+	/** Buffer elements are physical values; only the outer result uses its native implementation. */
+	private static function physical_type(canonical_type_use $type, cpp_generation_context $context,
+		CPP_Specializations $engine, bool $implementation): string
+	{
+		$mapping = CPP_Types::representation($type);
+		if ($engine->concrete_types()) {
+			$mapping = $implementation ? CPP_Types::implementation_representation($type, $engine)
+				: CPP_Types::representation($type, new cpp_generation_context($engine));
+		}
+		CPP_Types::record_dependencies($mapping, $context);
+		return $mapping->spelling;
+	}
+
+	/** Empty initialization still invokes the selected factory, not an assumed default constructor. */
+	public static function empty_entry(cpp_runtime_operation $request, CPP_Specializations $engine): cpp_specialization_entry
+	{
+		$binding /** initialization_binding */ = $request->initialization;
+		$result /** canonical_type_use */ = $request->result;
+		$context = new cpp_generation_context();
+		$factory = CPP_Data_Construction::reference($binding, $context, $engine);
+		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
+		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
+		$element = self::physical_type($input->arguments()[0], $context, $engine, $binding->is_keyed());
+		// Keep the registered input-view binding, substituting its element's physical representation.
+		$input_binding = Model::$cpp_type_bindings->definition($input->definition()->definition_id());
+		$context->headers[$input_binding->header()] = true;
+		$native = self::physical_type($result, $context, $engine, true);
+		$mapping = CPP_Types::representation($result, new cpp_generation_context($engine));
+		$name = CPP_Runtime_Operations::name($request);
+		$expression = $factory . '(' . $input_binding->name() . '<' . $element . '>{})';
+		$body = 'return ' . $expression . ';';
+		if ($mapping->opaque) {
+			$body = 'return ' . $mapping->spelling . '(' . $mapping->spelling
+				. '::operation_result{}, +[](void* destination, const void*) { ::new(destination) '
+				. $native . '(' . $expression . '); }, nullptr);';
+		}
+		$prototype = $mapping->spelling . ' ' . $name . '()';
+		$header = 'specializations/' . $name . '.hpp';
+		$declaration = "#pragma once\n" . CPP_Artifacts::includes($mapping->headers, '')
+			. 'namespace scpp::internal { ' . $prototype . "; }\n";
+		$implementation = CPP_Artifacts::includes($context->headers, '') . "#include <new>\n"
+			. 'namespace scpp::internal { ' . $prototype . ' { ' . $body . " } }\n";
+		return new cpp_specialization_entry($name, $header, $declaration, $implementation, []);
+	}
+
 	public static function reference(data_construction_node $node, initialization_binding $binding,
 		cpp_generation_context $context): string
 	{
@@ -26,10 +78,17 @@ final class CPP_Initializer_Buffer
 	{
 		$arguments = '';
 		if ($facts->key_conversion !== null) {
-			$arguments = CPP_Runtime_Operations::address(new cpp_runtime_operand($facts->key_conversion->target_type, $key), $context) . ', ';
+			$arguments = self::input_address($facts->key_conversion->target_type, $key, $context) . ', ';
 		}
-		$arguments .= CPP_Runtime_Operations::address(new cpp_runtime_operand($facts->value_conversion->target_type, $value), $context);
+		$arguments .= self::input_address($facts->value_conversion->target_type, $value, $context);
 		return $buffer . '.append(' . $arguments . ')';
+	}
+
+	private static function input_address(canonical_type_use $type, string $value, cpp_generation_context $context): string
+	{
+		$engine /** CPP_Specializations */ = $context->specialization_engine;
+		if ($engine->concrete_types()) { return '&(' . $value . ')'; }
+		return CPP_Runtime_Operations::address(new cpp_runtime_operand($type, $value), $context);
 	}
 
 	/** A nonmovable inline owner preserves the native buffer's self-referencing local storage. */
@@ -39,13 +98,13 @@ final class CPP_Initializer_Buffer
 		$result /** canonical_type_use */ = $request->result;
 		CPP_Opaque_Representation::require_native_type($result);
 		$native_context = new cpp_generation_context();
-		$factory = CPP_Data_Construction::reference($binding, $native_context);
+		$factory = CPP_Data_Construction::reference($binding, $native_context, $engine->concrete_types() ? $engine : null);
 		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
 		$element_type = $input->arguments()[0];
 		CPP_Opaque_Representation::require_native_type($element_type);
-		$element = CPP_Declarations::type($element_type, $native_context);
-		$native_result = CPP_Declarations::type($result, $native_context);
+		$element = self::physical_type($element_type, $native_context, $engine, $binding->is_keyed());
+		$native_result = self::physical_type($result, $native_context, $engine, true);
 		$mapping = CPP_Types::representation($result, new cpp_generation_context($engine));
 		$name = CPP_Runtime_Operations::name($request);
 		$native = 'native_' . $name;
@@ -57,7 +116,7 @@ final class CPP_Initializer_Buffer
 			CPP_Opaque_Representation::require_native_type($type);
 			if ($position !== 0) { $signature .= ', '; $values .= ', '; }
 			$signature .= 'const void* p' . $position;
-			$values .= '*std::launder(static_cast<const ' . CPP_Declarations::type($type, $native_context) . '*>(p' . $position . '))';
+			$values .= '*std::launder(static_cast<const ' . self::physical_type($type, $native_context, $engine, false) . '*>(p' . $position . '))';
 		}
 		// Match the ordinary append expression exactly: lvalue for list entries, aggregate prvalue for keyed entries.
 		if ($binding->is_keyed()) { $values = $element . '{' . $values . '}'; }
@@ -88,6 +147,6 @@ final class CPP_Initializer_Buffer
 				. $native . '*>(input))->view())); }, storage_)';
 		}
 		$implementation .= $mapping->spelling . ' ' . $name . '::finish() { return ' . $finish . "; }\n}\n";
-		return new cpp_specialization_entry($name, $header, $declaration, $implementation, [], $aliases, $probe);
+		return new cpp_specialization_entry($name, $header, $declaration, $implementation, $native_context->headers, $aliases, $probe);
 	}
 }

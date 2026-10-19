@@ -105,7 +105,8 @@ final class CPP_Data_Construction
 	}
 
 	/** Publish one backend binding for the already selected concrete semantic factory. */
-	public static function reference(initialization_binding $binding, cpp_generation_context $context): string
+	public static function reference(initialization_binding $binding, cpp_generation_context $context,
+		?CPP_Specializations $implementation_engine = null): string
 	{
 		$factory = object_cast($binding->factory(), registered_static_factory::class);
 		$catalog = Model::$cpp_callable_bindings;
@@ -115,7 +116,7 @@ final class CPP_Data_Construction
 			$member = $binding->is_keyed() ? 'from_key_value' : 'from_list';
 			$catalog->bind_adapter($factory, $adapter->name(), $member, $adapter->header());
 		}
-		return CPP_Callables::reference($factory, $context);
+		return CPP_Callables::runtime_reference($factory, $context, $implementation_engine);
 	}
 
 	/** Input backing and each entry's snapshots stay inside this synchronous construction call. */
@@ -127,7 +128,7 @@ final class CPP_Data_Construction
 		}
 		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
 		if ($context->specialization_engine !== null) {
-			if ($context->runtime_abi()) { return CPP_Runtime_Operations::initialize($node, $binding, $context); }
+			if (CPP_Initializer_Buffer::active($context)) { return CPP_Runtime_Operations::initialize($node, $binding, $context); }
 			return CPP_Concrete_Operations::initialize($node, $binding->target(), $context);
 		}
 		return self::sequence($node, $binding, $context);
@@ -137,7 +138,7 @@ final class CPP_Data_Construction
 	public static function sequence(data_construction_node $node, initialization_binding $binding,
 		cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi()) {
+		if (CPP_Initializer_Buffer::active($context)) {
 			return self::emit_sequence($node, $binding, $context, CPP_Initializer_Buffer::reference($node, $binding, $context), '', '');
 		}
 		$factory = self::reference($binding, $context);
@@ -175,7 +176,7 @@ final class CPP_Data_Construction
 			$context->next_temporary++;
 			$value = CPP_Declarations::conversion($emitter->expression($entry->value), $facts->value_conversion, $context);
 			$text .= CPP_Declarations::type($facts->value_conversion->target_type, $context) . ' ' . $value_name . ' = ' . $value . ";\n";
-			if ($context->runtime_abi()) {
+			if (CPP_Initializer_Buffer::active($context)) {
 				$text .= CPP_Initializer_Buffer::append($facts, $buffer, $key_name, $value_name, $context) . ";\n}\n";
 				continue;
 			}
@@ -183,7 +184,7 @@ final class CPP_Data_Construction
 			if ($entry->key !== null) { $argument = $element . '{' . $key_name . ', ' . $value_name . '}'; }
 			$text .= $buffer . '.append(' . $argument . ");\n}\n";
 		}
-		$finish = $context->runtime_abi() ? $buffer . '.finish()' : $factory . '(' . $buffer . '.view())';
+		$finish = CPP_Initializer_Buffer::active($context) ? $buffer . '.finish()' : $factory . '(' . $buffer . '.view())';
 		return $text . 'return ' . $finish . ";\n}())";
 	}
 

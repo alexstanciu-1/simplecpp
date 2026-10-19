@@ -14,6 +14,11 @@ noninteger operations/conversions, indexed compound updates and runtime-call rou
 gaps. Nominal class handles still expose native shared templates. Use this observed
 coverage to prioritize general integration; do not extend the old family recipes.
 
+The [concrete initialization slice](results/prelower_concrete_initializers_2026_10_19/README.md)
+now routes list/keyed initialization through the selected factory and existing buffer
+worker. The accounting retry passes its eleven initializer failure sites; later
+operation failures remain. This does not establish whole-accounting compilation.
+
 ## Active integration sequence: concrete type substitution
 
 1. Reuse the type-binding owner to spell native implementations with recursively

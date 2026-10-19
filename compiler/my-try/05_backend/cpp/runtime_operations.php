@@ -69,6 +69,9 @@ final class CPP_Runtime_Operations
 		$name = self::name($request);
 		$existing = $engine->find($name);
 		if ($existing !== null) { return $existing; }
+		if ($engine->concrete_types() && ($request->kind === cpp_runtime_operation_kind::initialize_empty)) {
+			return CPP_Initializer_Buffer::empty_entry($request, $engine);
+		}
 		if ($request->kind === cpp_runtime_operation_kind::initialize_buffer) {
 			return CPP_Initializer_Buffer::entry($request, $engine);
 		}

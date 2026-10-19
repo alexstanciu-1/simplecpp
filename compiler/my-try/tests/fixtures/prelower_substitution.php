@@ -8,7 +8,8 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
-$indexing = ($argv[6] ?? '') === 'indexing';
+$initializers = ($argv[6] ?? '') === 'initializers';
+$indexing = $initializers || ($argv[6] ?? '') === 'indexing';
 $members = $indexing || ($argv[6] ?? '') === 'members';
 $fields = $members || (($argv[6] ?? '') === 'fields') || $source_arguments;
 $metadata = new runtime_catalog_input();
@@ -63,6 +64,22 @@ function unset_work(vector<int> &$trace, hash<hash<receipt,int>,int> &$tables, c
 }
 function index_demand(vector<vector<receipt>> &$rows, hash<receipt,int> &$map, hash<hash<receipt,int>,int> &$tables): void {}';
 }
+if ($initializers) {
+    $program .= '
+struct InitialDefaults { public hash<receipt,int> $map = []; public vector<int> $numbers = []; }
+function init_value(vector<int> &$trace, const receipt &$value): receipt { $trace[] = 2; return $value; }
+function init_work(vector<int> &$trace, const receipt &$value): void {
+ $defaults InitialDefaults;
+ $list vector<receipt> = [$value, $value];
+ $keyed hash<receipt,int> = [index_key($trace,1) => init_value($trace,$value), index_inner_key($trace,3) => init_value($trace,$value)];
+ $nested vector<vector<receipt>> = [[$value], [$value, $value]];
+ $nested_hash hash<vector<receipt>,int> = [1 => [$value, $value]];
+ $numbers vector<int> = [3,4];
+ $large vector<receipt> = [LARGE_INITIALIZER];
+ if ($numbers[1] !== 4) { $trace[] = 99; }
+}';
+    $program = str_replace('LARGE_INITIALIZER', implode(', ', array_fill(0,40,'$value')), $program);
+}
 if ($source_arguments) {
     $program .= '
 class MyClass { public vector<int> $amounts; public function duplicate(): vector<int> { return $this->amounts; } }
@@ -115,6 +132,20 @@ $types['Int'] = $body->statements[4]->expression->value->require_call_preparatio
         file_put_contents($source . '/main.phs', $program);
         $compiler->update_cpp([$source . '/main.phs']);
         if ($snapshot() !== $before) { throw new \LogicException('Member request restoration changed output'); }
+    }
+    if ($initializers) {
+        $removed = substr($program, 0, strpos($program, '
+struct InitialDefaults'));
+        file_put_contents($source . '/main.phs', $removed);
+        $compiler->update_cpp([$source . '/main.phs']);
+        foreach (Model::$cpp_files as $artifact) {
+            if (str_starts_with($artifact->file_name, 'specializations/runtime_initialize_')) {
+                throw new \LogicException('Removed initializer requests survived fragment replacement');
+            }
+        }
+        file_put_contents($source . '/main.phs', $program);
+        $compiler->update_cpp([$source . '/main.phs']);
+        if ($snapshot() !== $before) { throw new \LogicException('Initializer request restoration changed output'); }
     }
     $stable_owner = Model::$global_scope->functions_named('field')[0]->syntax()->body->work();
     $stable_fragment = Model::$cpp_output_program->fragments[$stable_owner];
@@ -389,6 +420,29 @@ if ($indexing) {
         . 'for(int failure=0;failure<3;++failure) { begin(); { Vector trace; TrackedRows rows,replacement; TrackedVector row; seed_tracked(row); unwrap(rows).append(row); unwrap(replacement).append(row); TrackedHash map; runtime_type_test::receipt value; copies_before_throw=failure; bool caught=false; try { (void)'
         . $function . '(trace,rows,replacement,map,value); } catch(const CopyFailure&) { caught=true; } copies_before_throw=-1; require(caught && unwrap(map).size()==0 && unwrap(trace).size()==(failure==0 ? 3 : 4)); } report("indexed-copy-failure"); require(live_values==0); } }';
     $main = str_replace('verify();', 'verify(); indexing_proof();', $main);
+}
+if ($initializers) {
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('init_work')[0]);
+    $support .= "\n" . '#include "' . CPP_Artifacts::callable_header('init_work') . "\"\n";
+    $header .= "\nvoid initializer_proof();\n";
+    $support .= 'void initializer_proof() {
+      begin(); { Vector trace; runtime_type_test::receipt value; ' . $function . '(trace,value);
+        require(unwrap(trace).size()==4); const long expected[]={1,2,4,2};
+        for(int i=0;i<4;++i) require(unwrap(trace).at(i).native_value()==expected[i]);
+      } report("initializers"); require(live_values==0);
+      bool completed=false;
+      for(int budget=0;budget<512;++budget) {
+        begin(); { Vector trace; runtime_type_test::receipt value; copies_before_throw=budget;
+          try { ' . $function . '(trace,value); completed=true; } catch(const CopyFailure&) {}
+          copies_before_throw=-1;
+          require(unwrap(trace).size()<=4); const long expected[]={1,2,4,2};
+          for(std::size_t i=0;i<unwrap(trace).size();++i) require(unwrap(trace).at(i).native_value()==expected[i]);
+          std::printf("initializer-prefix %zu\n", unwrap(trace).size());
+        } report("initializer-copy-budget"); require(live_values==0);
+        if(completed) break;
+      } require(completed);
+    }';
+    $main = str_replace('verify();', 'verify(); initializer_proof();', $main);
 }
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);

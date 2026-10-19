@@ -246,12 +246,16 @@ final class CPP_Callables
 	}
 
 	public static function runtime_reference(registered_static_factory $target,
-		cpp_generation_context $context): string
+		cpp_generation_context $context, ?CPP_Specializations $implementation_engine = null): string
 	{
 		$binding = Model::$cpp_callable_bindings->definition($target);
 		$header = $binding->header();
 		if ($header !== '') { $context->headers[$header] = true; }
-		$receiver = CPP_Declarations::type($target->owner(), $context);
+		$mapping = $implementation_engine !== null
+			? CPP_Types::implementation_representation($target->owner(), $implementation_engine)
+			: CPP_Types::representation($target->owner(), $context);
+		CPP_Types::record_dependencies($mapping, $context);
+		$receiver = $mapping->spelling;
 		if ($binding->adapter() !== '') { $receiver = $binding->adapter() . '<' . $receiver . '>'; }
 		return $receiver . '::' . $binding->member();
 	}

@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --initializers --results FRESH_DIRECTORY`
+extends the indexing proof with empty source-field defaults, nonempty list/keyed
+initialization, nested concrete elements, 40-element buffer allocation, key/value
+order and throwing-copy budgets through successful completion. It verifies initializer
+request removal/restoration, cached replay, native/layout reuse and direct/concrete
+counter parity. See [initializer evidence](../../../specs/planning/results/prelower_concrete_initializers_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --indexing --results FRESH_DIRECTORY`
 adds ordinary indexed reads/writes, append and nested `unset` to the concrete proof.
 It checks key/RHS order, root replacement, missing-prefix short-circuiting, concrete

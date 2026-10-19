@@ -104,10 +104,22 @@ The [indexing proof](../../../../specs/planning/results/prelower_indexing_2026_1
 compares vector/hash operations, nested root replacement, lazy removal, actual
 traversal-reference identity and throwing copies against ordinary C++ emission.
 
+Sequence initialization now reuses `CPP_Data_Construction`'s existing prepared entry
+loop and `CPP_Initializer_Buffer` for concrete substitution. The selected registered
+factory is spelled against the native outer implementation with concrete arguments.
+Buffers store the actual concrete elements (or the registered keyed-entry aggregate),
+not unwrapped native copies. Buffer probes publish their physical header dependencies
+through the existing layout graph. Empty initialization still calls the selected
+factory; it does not assume that default construction is equivalent. No new family
+recipe, AST, registry or semantic conversion rule is introduced. See the
+[concrete initializer proof](../../../../specs/planning/results/prelower_concrete_initializers_2026_10_19/README.md).
+
 Boundaries remain: recursive generated header/layout graphs (including a method
 signature returning `vector<Self>`); concrete shared/unique/value access interfaces;
 remaining runtime forwarding
-contracts, compound indexed updates, initialization, operators and provider compatibility. Existing
+contracts, compound indexed updates, operators and provider compatibility. Initializer
+coverage is bounded by those physical provider/ownership interfaces; arbitrary
+runtime providers and nominal-class elements are not established by the initializer proof. Existing
 semantic reference restrictions remain: reference returns must refer to the declared
 parameter storage type, and heap-backed property borrows (including the tested `$this`
 case) reject in preparation. The old source-call/constructor transport is not removed
