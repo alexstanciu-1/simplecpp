@@ -8,7 +8,8 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
-$casts = ($argv[6] ?? '') === 'casts';
+$compound = ($argv[6] ?? '') === 'compound';
+$casts = $compound || ($argv[6] ?? '') === 'casts';
 $binary = $casts || ($argv[6] ?? '') === 'binary';
 $initializers = $binary || ($argv[6] ?? '') === 'initializers';
 $indexing = $initializers || ($argv[6] ?? '') === 'indexing';
@@ -136,6 +137,33 @@ function cast_key_failure(vector<int> &$trace): void { $map hash<int,int> = [(ui
 function cast_value_failure(vector<int> &$trace): void { $map hash<int,int> = [index_key($trace,1) => (uint8)cast_number($trace,256), index_inner_key($trace,7) => 1]; }
 ';
 }
+if ($compound) {
+    $program .= '
+function compound_rhs(vector<int> &$values, vector<int> &$trace): int {
+ $trace[] = 2; for ($i = 0; $i < 100; $i = $i + 1) { $values[] = $i; } $values[0] = 100; return 3;
+}
+function compound_replace(vector<vector<int>> &$values, vector<int> &$trace): int { $trace[] = 3; $values = [[100]]; return 4; }
+function compound_work(vector<int> &$trace): int {
+ $values vector<int> = [10];
+ $result = ($values[index_key($trace,0)] += compound_rhs($values,$trace));
+ if ($result !== 13 || $values[0] !== 13 || $values[100] !== 99) { return 1; }
+ $nested vector<vector<int>> = [[5]]; $copy = $nested;
+ $nested[index_key($trace,0)][index_inner_key($trace,0)] *= compound_replace($nested,$trace);
+ if ($nested[0][0] !== 20 || $copy[0][0] !== 5) { return 2; }
+ $map hash<int,int> = [1 => 8]; $map[1] -= 3;
+ if ($map[1] !== 5) { return 3; }
+ $words hash<string> = {x: "start-with-a-long-string-that-exercises-runtime-string-storage"}; $words["x"] .= "-end";
+ if ($words["x"] !== "start-with-a-long-string-that-exercises-runtime-string-storage-end") { return 4; }
+ return 0;
+}
+function compound_missing(vector<int> &$trace): void { $map hash<int,int>; $map[index_key($trace,1)] += index_inner_key($trace,2); }
+function compound_remove(hash<int,int> &$map, vector<int> &$trace): int { $trace[] = 2; unset($map[1]); return 1; }
+function compound_map(): hash<int,int> { return [1 => 10]; }
+function compound_present(const hash<int,int> &$map): bool { return isset($map[1]); }
+function compound_divide(vector<int> &$values, vector<int> &$trace): void { $values[index_key($trace,0)] /= index_inner_key($trace,0); }
+function compound_deleted(hash<int,int> &$map, vector<int> &$trace): void { $map[index_key($trace,1)] += compound_remove($map,$trace); }
+';
+}
 if ($source_arguments) {
     $program .= '
 class MyClass { public vector<int> $amounts; public function duplicate(): vector<int> { return $this->amounts; } }
@@ -233,6 +261,9 @@ function cast_text'));
             foreach (Model::$cpp_output_program->fragments[$owner]->runtime_operations as $request) {
                 if ($request->kind === cpp_runtime_operation_kind::conversion) {
                     throw new \LogicException('Removed casts retained a conversion helper');
+                }
+                if ($compound && $request->kind === cpp_runtime_operation_kind::concrete_index && $request->spelling === 'index_existing_probe') {
+                    throw new \LogicException('Removed compounds retained an existing-element helper');
                 }
             }
         }
@@ -580,6 +611,35 @@ if ($casts) {
         require(caught && unwrap(trace).size()==2 && unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==2); }
     }';
     $main = str_replace('verify();', 'verify(); cast_proof();', $main);
+}
+if ($compound) {
+    $header .= "\nvoid compound_proof();\n";
+    foreach (['compound_work','compound_missing','compound_deleted','compound_map','compound_present','compound_divide'] as $name) {
+        $support .= "\n" . '#include "' . CPP_Artifacts::callable_header($name) . "\"\n";
+    }
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_work')[0]);
+    $missing = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_missing')[0]);
+    $deleted = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_deleted')[0]);
+    $make = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_map')[0]);
+    $present = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_present')[0]);
+    $divide = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_divide')[0]);
+    $support .= 'void compound_proof() {
+      begin(); { Vector trace; auto result=' . $function . '(trace); require(result.native_value()==0);
+        const long expected[]={1,2,1,4,3}; require(unwrap(trace).size()==5);
+        for(int i=0;i<5;++i) require(unwrap(trace).at(i).native_value()==expected[i]);
+      } report("compound");
+      { Vector trace; bool caught=false; try { ' . $missing . '(trace); } catch(const std::exception&) { caught=true; }
+        require(caught && unwrap(trace).size()==1 && unwrap(trace).at(0).native_value()==1); }
+      { Vector trace; auto map=' . $make . '(); bool caught=false;
+        try { ' . $deleted . '(map,trace); } catch(const std::exception&) { caught=true; }
+        require(caught && !' . $present . '(map).native_value() && unwrap(trace).size()==2);
+        require(unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==2); }
+      { Vector trace, values; unwrap(values).append(Int{10}); bool caught=false;
+        try { ' . $divide . '(values,trace); } catch(const std::exception&) { caught=true; }
+        require(caught && unwrap(values).at(0).native_value()==10 && unwrap(trace).size()==2);
+        require(unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==4); }
+    }';
+    $main = str_replace('verify();', 'verify(); compound_proof();', $main);
 }
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);

@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --compound --results FRESH_DIRECTORY`
+extends the cast proof with existing-element compound updates, RHS growth/replacement,
+nested paths, string concatenation, missing/deleted entries and division failure.
+It verifies demand removal and incremental reuse. O0, sanitizer and O2 with allocator
+assumptions disabled compare full direct/concrete counters. Stock O2 compares payload
+lifecycle counters and records its allocation delta separately: inline native code
+can elide allocations that survive the out-of-line concrete boundary.
+See [compound evidence](../../../specs/planning/results/prelower_concrete_compound_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --casts --results FRESH_DIRECTORY`
 extends the binary proof with string/integer, numeric, boolean and narrowing/widening
 casts plus implicit text conversion. It checks source effects and failed-cast

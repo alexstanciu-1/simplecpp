@@ -24,8 +24,13 @@ now delegates concrete eager binaries to the existing native renderer through th
 operation bridge. No `_02` semantic/operator work is duplicated. Accounting's binary
 adapter failures disappear. The [cast integration slice](results/prelower_concrete_casts_2026_10_19/README.md)
 also reuses prepared conversion decisions and the native conversion renderer. All
-three cast failures disappear: 281 of 285 fragments emit. Two indexed compound
-updates, one strlen call and one hash iteration remain blocked. No whole-accounting
+three cast failures disappear. The [indexed compound integration](results/prelower_concrete_compound_2026_10_19/README.md)
+then clears both compound failures; a later container failure becomes visible.
+282 of 285 fragments emit. The remaining failures are two container-operation sites
+and one strlen call. The focused compound fixture also exposed concrete `count`
+and increment interface gaps, retained as follow-up work. Controlled compound boundary
+counters match, but stock O2 loses three allocation-elision opportunities across the
+middleware boundary; optimized allocation parity remains unresolved. No whole-accounting
 concrete executable is claimed; broader ownership/wrapper interfaces remain separate.
 
 ## Active integration sequence: concrete type substitution

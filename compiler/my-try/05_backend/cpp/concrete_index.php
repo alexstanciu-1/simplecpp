@@ -16,7 +16,7 @@ final class CPP_Concrete_Index
 	{
 		$receiver = CPP_Types::representation($types[0], $context);
 		if (!$receiver->opaque) {
-			$context->headers['scpp/keyed_path.hpp'] = true;
+			$context->headers[$helper === 'index_existing_probe' ? 'scpp/index_existing.hpp' : 'scpp/keyed_path.hpp'] = true;
 			return 'scpp::' . $helper;
 		}
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::concrete_index);
@@ -107,13 +107,13 @@ final class CPP_Concrete_Index
 			$mapping = CPP_Types::representation($request->result, $context);
 			CPP_Types::record_dependencies($mapping, $context);
 			$output = $mapping->spelling;
-			if ($helper === 'index_path_probe') { $output = 'const ' . $output . '&'; }
+			if (($helper === 'index_path_probe') || ($helper === 'index_existing_probe')) { $output = 'const ' . $output . '&'; }
 			if ($helper === 'index_path_descend' || $helper === 'keyed_descend') { $output .= '&'; }
 			if ($helper === 'keyed_lookup' || $helper === 'keyed_child') { $output = 'const ' . $output . '*'; }
 		}
 		$signature = $output . ' ' . $helper . '(' . $parameters . ')';
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . 'namespace scpp { ' . $signature . "; }\n";
-		$body = CPP_Artifacts::includes($native_headers, '') . "#include <memory>\n#include <scpp/keyed_path.hpp>\nnamespace scpp { "
+		$body = CPP_Artifacts::includes($native_headers, '') . "#include <memory>\n#include <scpp/keyed_path.hpp>\n#include <scpp/index_existing.hpp>\nnamespace scpp { "
 			. $signature . ' { return scpp::' . $helper . '(' . $arguments . "); } }\n";
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $declaration, $body, []);
 	}

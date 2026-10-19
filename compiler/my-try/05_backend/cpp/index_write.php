@@ -10,18 +10,20 @@ final class CPP_Index_Write
 		prepared_compound_assignment_expression $facts, cpp_generation_context $context): string
 	{
 		$destination /** prepared_index_target */ = $facts->indexed_target;
-		if ($context->specialization_engine !== null) {
+		if (($context->specialization_engine !== null) && !CPP_Concrete_Index::active($context)) {
 			throw new \RuntimeException('prelower_templates: indexed compound assignment is not in the first slice');
 		}
 		$target = object_cast($node->target, index_node::class);
-		$context->headers['scpp/index_existing.hpp'] = true;
+		if (!CPP_Concrete_Index::active($context)) {
+			$context->headers['scpp/index_existing.hpp'] = true;
+		}
 		$id = $context->next_temporary;
 		$context->next_temporary++;
 		$receiver = 'update_receiver_' . $id;
 		$previous = 'update_previous_' . $id;
 		$root = CPP_Declarations::bind_storage_receiver($destination->root, $context);
 		$text = $root->statements . 'auto& ' . $receiver . ' = ' . $root->value . '; ';
-		$keys = '';
+		$keys /** vector<string> */ = [];
 		$position = 0;
 		$emitter = new CPP_Syntax($context);
 		$path /** Storage<prepared_index_path_step> */ = $destination->path;
@@ -29,21 +31,94 @@ final class CPP_Index_Write
 			$key = 'update_key_' . $id . '_' . $position;
 			$key_syntax /** expression_node */ = $step->syntax->index;
 			$text .= 'auto ' . $key . ' = ' . CPP_Declarations::conversion(
-				$emitter->expression($key_syntax), $step->key_conversion, $context) . '; scpp::require_write_key(' . $key . '); ';
-			$keys .= ', ' . $key;
+				$emitter->expression($key_syntax), $step->key_conversion, $context) . '; '
+				. self::compound_key_check($step->key_conversion->target_type, $key, $context) . '; ';
+			$keys[] = $key;
 			$position++;
 		}
 		$key = 'update_key_' . $id . '_' . $position;
 		$key_syntax /** expression_node */ = $target->index;
 		$text .= 'auto ' . $key . ' = ' . CPP_Declarations::conversion(
 			$emitter->expression($key_syntax), $destination->decision->operands[1], $context)
-			. '; scpp::require_write_key(' . $key . '); ';
-		$keys .= ', ' . $key;
-		$text .= 'auto ' . $previous . ' = scpp::index_existing_read(' . $receiver . $keys . '); ';
+			. '; ' . self::compound_key_check($destination->decision->operands[1]->target_type, $key, $context) . '; ';
+		$keys[] = $key;
+		$text .= self::existing_snapshot($destination, $receiver, $keys, $previous, $context);
 		$text .= CPP_Generator::compute_compound($facts, $previous, $emitter->expression($node->value), $context);
-		$text .= 'scpp::index_existing_store(' . $receiver . ', ' . $previous . $keys . '); ';
+		$text .= self::existing_store($destination, $receiver, $keys, $previous, $context);
 		return '([&]() -> ' . CPP_Declarations::type($facts->type, $context) . ' { '
 			. $text . 'return ' . $previous . '; }())';
+	}
+
+	/** Append already evaluated keys to a runtime helper call. */
+	private static function key_arguments(array $keys /** vector<string> */): string
+	{
+		$result = '';
+		foreach ($keys as $key) {
+			$result .= ', ' . $key;
+		}
+		return $result;
+	}
+
+	private static function compound_key_check(canonical_type_use $type, string $key, cpp_generation_context $context): string
+	{
+		if (CPP_Concrete_Index::active($context)) {
+			CPP_Concrete_Index::reference('require_write_key', [$type], null, $context);
+		}
+		return self::key_check($type, $key, $context);
+	}
+
+	/** Snapshot within a scope that releases every interior borrow before source RHS evaluation. */
+	private static function existing_snapshot(prepared_index_target $destination, string $receiver,
+		array $keys /** vector<string> */, string $previous, cpp_generation_context $context): string
+	{
+		if (!CPP_Concrete_Index::active($context)) {
+			return 'auto ' . $previous . ' = scpp::index_existing_read(' . $receiver . self::key_arguments($keys) . '); ';
+		}
+		$probe = self::existing_probe($destination, $receiver, $keys, $context);
+		return 'auto ' . $previous . ' = [&]() { ' . $probe->statements . 'return ' . $probe->value . '; }(); ';
+	}
+
+	/** Validate the full path before mutable descent; reuse runtime storage/COW operations. */
+	private static function existing_store(prepared_index_target $destination, string $receiver,
+		array $keys /** vector<string> */, string $value, cpp_generation_context $context): string
+	{
+		if (!CPP_Concrete_Index::active($context)) {
+			return 'scpp::index_existing_store(' . $receiver . ', ' . $value . self::key_arguments($keys) . '); ';
+		}
+		$probe = self::existing_probe($destination, $receiver, $keys, $context);
+		$text = '{ ' . $probe->statements . '(void)' . $probe->value . '; } ';
+		$current = $destination->root->require_preparation()->type;
+		foreach ($destination->path as $position => $step)
+		{
+			$helper = CPP_Concrete_Index::reference('index_path_descend', [$current, $step->key_conversion->target_type], $step->element_type, $context);
+			$child = 'update_child_' . $context->next_temporary++;
+			$text .= 'auto& ' . $child . ' = ' . $helper . '(' . $receiver . ', ' . $keys[$position] . '); ';
+			$receiver = $child;
+			$current = $step->element_type;
+		}
+		$helper = CPP_Concrete_Index::reference('index_store', [$current, $destination->decision->operands[1]->target_type,
+			$destination->decision->result_type], null, $context);
+		return $text . $helper . '(' . $receiver . ', ' . $keys[q_count($keys) - 1] . ', ' . $value . '); ';
+	}
+
+	/** Existing-only traversal uses settled path types and never creates or detaches storage. */
+	private static function existing_probe(prepared_index_target $destination, string $receiver,
+		array $keys /** vector<string> */, cpp_generation_context $context): cpp_assignment_sequence
+	{
+		$result = new cpp_assignment_sequence();
+		$current = $destination->root->require_preparation()->type;
+		foreach ($destination->path as $position => $step)
+		{
+			$helper = CPP_Concrete_Index::reference('index_existing_probe', [$current, $step->key_conversion->target_type], $step->element_type, $context);
+			$child = 'update_probe_' . $context->next_temporary++;
+			$result->statements .= 'const auto& ' . $child . ' = ' . $helper . '(' . $receiver . ', ' . $keys[$position] . '); ';
+			$receiver = $child;
+			$current = $step->element_type;
+		}
+		$helper = CPP_Concrete_Index::reference('index_existing_probe', [$current, $destination->decision->operands[1]->target_type],
+			$destination->decision->result_type, $context);
+		$result->value = $helper . '(' . $receiver . ', ' . $keys[q_count($keys) - 1] . ')';
+		return $result;
 	}
 
 	/** The same lowering serves every registered family; runtime overloads own storage details. */

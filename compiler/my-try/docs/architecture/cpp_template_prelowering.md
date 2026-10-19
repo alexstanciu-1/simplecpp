@@ -133,10 +133,23 @@ Identity stays unchanged; ownership transfers and wrapper construction/extractio
 remain separate integration work. No cast admission, parsing or range rules are added.
 See the [cast proof](../../../../specs/planning/results/prelower_concrete_casts_2026_10_19/README.md).
 
+Concrete indexed compound updates reuse prepared paths, key conversions, binary
+computation and write-back conversions. Existing-only one-step probes return borrowed
+physical elements; ordinary emission snapshots the leaf before the RHS and revalidates
+the full saved path before mutable descent/store. No interior borrow survives source
+RHS code. The operation engine only supplies concrete helper overloads, with no family
+dispatch. Runtime vector existing-element access now accepts its established integer
+capability, as ordinary indexing already does. Boxed stored-kind write-back remains a
+separate concrete integration boundary. The focused proof has equal boundary counters
+with allocator effects observable, but stock O2 retains three more allocations than
+inline ordinary code in that workload. Optimized allocation parity is not established.
+See the
+[compound proof](../../../../specs/planning/results/prelower_concrete_compound_2026_10_19/README.md).
+
 Boundaries remain: recursive generated header/layout graphs (including a method
 signature returning `vector<Self>`); concrete shared/unique/value access interfaces;
 remaining runtime forwarding
-contracts, compound indexed updates, remaining conversion/operation boundaries and provider compatibility. Initializer
+contracts, boxed compound write-back, remaining conversion/operation boundaries and provider compatibility. Initializer
 coverage is bounded by those physical provider/ownership interfaces; arbitrary
 runtime providers and nominal-class elements are not established by the initializer proof. Existing
 semantic reference restrictions remain: reference returns must refer to the declared
