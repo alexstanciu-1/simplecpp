@@ -43,6 +43,12 @@ Preserve these choices initially:
 
 ## Early runtime-template review
 
+The initial [family-by-capability matrix](runtime_template_capability_matrix_2026_10_19.md)
+and [runtime source index](runtime_template_source_inventory_2026_10_19.md) now distinguish
+existing registry facts, missing bindings and internal helper exposure. Extend those
+existing owners; do not introduce another registry or multiply handwritten family recipes.
+The next design slice is the general representation/operation-binding contract.
+
 Before locking the initial representation interfaces, inventory runtime template
 families and review them explicitly. Discovery must include runtime headers, operator
 helpers, metadata bindings and generated adapters; metadata alone is not a complete

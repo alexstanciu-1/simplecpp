@@ -6,6 +6,11 @@ operation decisions. It does not rewrite syntax or add a semantic pass. The ordi
 C++ path remains the default. This is the first bounded integer/vector slice, not
 whole-accounting coverage or a general interpreter for arbitrary C++ templates.
 
+The next design slice is [capability-driven generalization](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md)
+through the existing registry and bindings, using original runtime templates behind
+concrete application interfaces. The handwritten recipes described below are the
+current measured implementation, not a mandate to add more per-family implementations.
+
 ## Invocation
 
 ```bash

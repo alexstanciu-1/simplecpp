@@ -24,6 +24,23 @@ Small `if (prelower_templates)` branches are acceptable. Each branch delegates t
 named method unless its implementation is only one or two lines. No prerequisite
 emitter refactor or new common abstraction is required to start.
 
+## Capability-driven refinement — 2026-10-19
+
+The generalization target is a runtime-owned, capability-driven contract consumed
+through the existing type registry and backend bindings. `vector` and `hash` already
+come from runtime metadata; do not duplicate their definitions, requirements or
+capability propagation in a specialization registry. Extend existing semantic owners
+for genuinely missing capabilities and existing backend bindings for C++ ABI details.
+
+The first slice's handwritten integer/vector implementations remain measured proof,
+not the architecture to expand family by family. Generate concrete application
+interfaces and separately compiled implementations that may use original runtime
+templates privately. Application inputs should ultimately expose no templates;
+templates inside cached support are allowed. Concrete layout, lifecycle, nested values
+and argument/result transport require explicit contracts, not just aliases or object
+precompilation. The [family-by-capability matrix](runtime_template_capability_matrix_2026_10_19.md)
+records current facts and proposed extensions without installing another registry.
+
 ## Ownership and request contract
 
 | Owner | Responsibility |
