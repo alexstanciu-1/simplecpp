@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_header_boundaries.py --results FRESH_DIRECTORY`
+reuses the output, indexing and compound fixtures at O0 only. It checks native scalar
+output bridge demand, broad indexing-header exclusion, direct/concrete behavior and
+allocation/copy parity, nested references, source evaluation order and warm reuse.
+Output emission also exercises request retirement, replay and option switching.
+
 `python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
 checks source payload layout, generated source-class append/store/read calls, shared
 identity/reference counts, allocation/copy parity, source header cycles and incremental

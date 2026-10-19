@@ -53,6 +53,20 @@ $forward=CPP_Types::representation_for($left,cpp_type_requirement::declaration);
 $expected_wrapper=$alternate?'::fixture::Handle<':'::scpp::shared_p<';
 if(!str_starts_with($forward->spelling,$expected_wrapper) || !isset($forward->forward_declarations['Left'])
 	|| isset($forward->headers[CPP_Artifacts::type_header('Left')])){throw new \LogicException('Implicit storage lost its binding or incomplete payload requirement');}
+// Native representations must also use output bridges in the concrete path.
+if ($composed && $output_proof) {
+	$output_families = [];
+	foreach (Model::$cpp_output_program->fragments as $owner) {
+		foreach (Model::$cpp_output_program->fragments[$owner]->runtime_operations as $request) {
+			if ($request->kind === cpp_runtime_operation_kind::output) {
+				$output_families[Type_Queries::canonical($request->inputs[0])->family()->name] = true;
+			}
+		}
+	}
+	foreach ([type_family::nominal, type_family::boolean, type_family::floating] as $family) {
+		if (!isset($output_families[$family->name])) { throw new \LogicException('Native output bypassed its middleware bridge'); }
+	}
+}
 $before=demand_snapshot();
 $headers=concrete_headers();
 if(count($headers)!==($composed?4:0)){throw new \LogicException('Source demand prepared the wrong type closure');}

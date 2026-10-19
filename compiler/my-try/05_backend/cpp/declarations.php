@@ -8,12 +8,11 @@ final class CPP_Declarations
 	/** Preparation owns output admission; the bridge only changes physical transport. */
 	public static function output(string $expression, canonical_type_use $type, cpp_generation_context $context): string
 	{
+		// Native representations also need the compiled output boundary.
 		// Null is an expression sentinel, not a stored type with a C++ binding.
-		if (($context->specialization_engine !== null)
+		if (($context->runtime_abi() || $context->concrete_types())
 			&& (Type_Queries::canonical($type)->family() !== type_family::null_sentinel)) {
-			if (CPP_Types::representation($type, $context)->opaque) {
-				return CPP_Runtime_Operations::output($expression, $type, $context);
-			}
+			return CPP_Runtime_Operations::output($expression, $type, $context);
 		}
 		$context->headers['lang/php/support/php_string.hpp'] = true;
 		return '::scpp::php::echo_one(' . $expression . ')';

@@ -1,0 +1,79 @@
+{
+  "cold": {
+    "executable": "/tmp/accounting-header-fix/cache/artifacts/3ca8ad097caf0874ff508ac2d457935e964b4d9d515ab0ba13b473624a7f82b9.bin",
+    "compiled": 22,
+    "reused": 0,
+    "pch_built": 1,
+    "linked": 1
+  },
+  "warm": {
+    "executable": "/tmp/accounting-header-fix/cache/artifacts/3ca8ad097caf0874ff508ac2d457935e964b4d9d515ab0ba13b473624a7f82b9.bin",
+    "compiled": 0,
+    "reused": 22,
+    "pch_built": 0,
+    "linked": 0
+  },
+  "variants": {
+    "baseline": [
+      {
+        "application": 9.897540633042809,
+        "link": 0.481492189981509
+      },
+      {
+        "application": 9.90742650104221,
+        "link": 0.4983974499627948
+      },
+      {
+        "application": 9.974640470172744,
+        "link": 0.4905300289974548
+      }
+    ],
+    "fixed": [
+      {
+        "application": 7.330199212941807,
+        "link": 0.5304835269926116
+      },
+      {
+        "application": 7.38749836711213,
+        "link": 0.5041877949843183
+      },
+      {
+        "application": 7.388736088003498,
+        "link": 0.5029455759795383
+      }
+    ]
+  },
+  "configuration": "Clang 18.1.3; C++23; O0; debug disabled; eager runtime PCH; sequential; 16 app units; 3 alternating-order repetitions",
+  "baseline_commit": "3cd251ae",
+  "accounting_checks_per_run": 998,
+  "accounting_successful_runs": 7,
+  "baseline_median_application_seconds": 9.90742650104221,
+  "fixed_median_application_seconds": 7.38749836711213,
+  "reduction_percent": 25.4347396235036,
+  "app_manifest_sha256": "d588f26e42fa081f94b074b191bd21c96e64109380ba438fa51fd2ceccb0b6e7",
+  "focused_proofs": {
+    "output": {
+      "direct_composed_equal": true,
+      "counter_lines": [
+        "output 0 0 0 0 0 0 0",
+        "recipe-boundary 0 0 0 0 0 0 0"
+      ]
+    },
+    "indexing": {
+      "direct_composed_equal": true,
+      "counter_lines": [
+        "indexing 61 3723 61 5 25 10 35",
+        "indexed-references 0 0 0 0 0 0 0",
+        "indexed-copy-failure 9 1000 9 3 8 1 10"
+      ]
+    },
+    "compound": {
+      "direct_composed_equal": true,
+      "counter_lines": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0"
+      ]
+    }
+  }
+}

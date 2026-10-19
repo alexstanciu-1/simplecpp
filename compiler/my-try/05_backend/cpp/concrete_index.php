@@ -33,7 +33,6 @@ final class CPP_Concrete_Index
 		$current = $destination->root->require_preparation()->type;
 		foreach ($destination->path as $step) {
 			$key = $step->key_conversion->target_type;
-			self::reference('require_write_key', [$key], null, $context);
 			self::reference('index_path_probe', [$current, $key], $step->element_type, $context);
 			self::reference('index_path_descend', [$current, $key], $step->element_type, $context);
 			$current = $step->element_type;
@@ -42,7 +41,6 @@ final class CPP_Concrete_Index
 		$inputs /** vector<canonical_type_use> */ = [$current];
 		if (!$append) {
 			$key = $destination->decision->operands[1]->target_type;
-			self::reference('require_write_key', [$key], null, $context);
 			$inputs[] = $key;
 		}
 		$inputs[] = $facts->destination_type();

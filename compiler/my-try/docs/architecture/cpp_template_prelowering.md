@@ -47,7 +47,8 @@ changing the renderer or semantic identity. See also the [migration evidence](..
 ## Concrete output transport
 
 Prepared operand types select output transport through `CPP_Declarations::output`.
-Concrete operands request the existing runtime-operation bridge, which borrows their
+All stored operand types in the prelowered path request the existing runtime-operation
+bridge, including native string/bool/float representations. It borrows their
 native storage and calls the same `php::echo_one` helper. Null remains an expression
 sentinel without a stored-type binding. Ordinary emission retains one full expression
 per operand, so borrowed values and temporary owners remain alive through printing;
@@ -58,6 +59,21 @@ The [output proof](../../../../specs/planning/results/prelower_concrete_output_2
 checks scalar bytes, reference/temporary operands, sequencing, failure suppression,
 request retirement/replay and measured boundary costs. It does not establish output
 for all wrappers containing substituted concrete payloads.
+
+## Application header boundaries
+
+Key validation uses `CPP_Runtime_Operations::write_key` for both ordinary and
+compound concrete writes. `CPP_Index_Write` still owns sequencing before RHS
+execution; `CPP_Concrete_Index` requests only the container interfaces. The compiled
+adapter calls the original runtime validator on borrowed storage. Native string keys
+therefore no longer pull `keyed_path.hpp` into the application just for validation.
+Output similarly keeps `php_string.hpp` behind its existing compiled adapter for
+stored operands. Null output and unrelated native fallback operations can still
+expose broad runtime headers; this is not full template elimination.
+
+The O0-only `tests/prelower_header_boundaries.py` runner reuses output, indexing and
+compound proofs for byte/order/exception behavior, nested references, counter parity
+and warm build reuse. It also checks header exclusion and output request retention.
 
 ## Concrete mutation interfaces
 

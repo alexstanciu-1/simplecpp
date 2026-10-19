@@ -375,8 +375,10 @@ concrete path a general default.
 The [controlled header-exposure experiment](results/prelower_header_impact_2026_10_19/README.md)
 reduces prepared accounting application compilation from 10.892 s to 7.409 s
 (32%) by narrowing indexing and string-output headers, with all 998 checks passing.
-Prioritize concrete declaration/include selection through existing bindings before
-expanding runtime coverage. These are diagnostic shims, not production fixes.
+The [production boundary repair](results/prelower_header_fix_2026_10_19/README.md)
+now removes these accounting includes through existing output/key adapters, with a
+matched O0 improvement from 9.907 s to 7.387 s (25.4%). Remaining template exposure
+and broader runtime coverage are separate work.
 Continue O0-only measurements until the agreed optimization work is complete.
 
 Use identical supported workloads and toolchain configuration for both emission

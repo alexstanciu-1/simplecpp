@@ -32,7 +32,7 @@ final class CPP_Index_Write
 			$key_syntax /** expression_node */ = $step->syntax->index;
 			$text .= 'auto ' . $key . ' = ' . CPP_Declarations::conversion(
 				$emitter->expression($key_syntax), $step->key_conversion, $context) . '; '
-				. self::compound_key_check($step->key_conversion->target_type, $key, $context) . '; ';
+				. self::key_check($step->key_conversion->target_type, $key, $context) . '; ';
 			$keys[] = $key;
 			$position++;
 		}
@@ -40,7 +40,7 @@ final class CPP_Index_Write
 		$key_syntax /** expression_node */ = $target->index;
 		$text .= 'auto ' . $key . ' = ' . CPP_Declarations::conversion(
 			$emitter->expression($key_syntax), $destination->decision->operands[1], $context)
-			. '; ' . self::compound_key_check($destination->decision->operands[1]->target_type, $key, $context) . '; ';
+			. '; ' . self::key_check($destination->decision->operands[1]->target_type, $key, $context) . '; ';
 		$keys[] = $key;
 		$text .= self::existing_snapshot($destination, $receiver, $keys, $previous, $context);
 		$text .= CPP_Generator::compute_compound($facts, $previous, $emitter->expression($node->value), $context);
@@ -57,14 +57,6 @@ final class CPP_Index_Write
 			$result .= ', ' . $key;
 		}
 		return $result;
-	}
-
-	private static function compound_key_check(canonical_type_use $type, string $key, cpp_generation_context $context): string
-	{
-		if (CPP_Concrete_Index::active($context)) {
-			CPP_Concrete_Index::reference('require_write_key', [$type], null, $context);
-		}
-		return self::key_check($type, $key, $context);
 	}
 
 	/** Snapshot within a scope that releases every interior borrow before source RHS evaluation. */
@@ -221,9 +213,12 @@ final class CPP_Index_Write
 		return $result;
 	}
 
+	/** Borrow the evaluated key; validation stays before RHS evaluation in both write paths. */
 	private static function key_check(canonical_type_use $type, string $key, cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi()) { return CPP_Runtime_Operations::write_key($type, $key, $context); }
+		if ($context->runtime_abi() || CPP_Concrete_Index::active($context)) {
+			return CPP_Runtime_Operations::write_key($type, $key, $context);
+		}
 		return 'scpp::require_write_key(' . $key . ')';
 	}
 
