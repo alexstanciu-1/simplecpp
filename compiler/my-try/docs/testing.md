@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_boundary.py --results FRESH_DIRECTORY`
+compares direct and in-place opaque runtime objects with allocation/lifecycle counters,
+nested-reference identity, failure cleanup and a deliberately copying negative control.
+This is a native boundary experiment, not compiler integration; see the
+[dated proof](../../../specs/planning/results/prelower_boundary_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_templates.py --results FRESH_DIRECTORY`
 checks the opt-in concrete integer/vector slice, incremental emission/native reuse,
 error parity, sanitizers and matched no-PCH native timings. See

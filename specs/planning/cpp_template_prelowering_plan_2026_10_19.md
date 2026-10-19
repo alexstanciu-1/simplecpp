@@ -51,7 +51,9 @@ existing owners; do not introduce another registry or multiply handwritten famil
 The [representation and ownership audit](prelower_representation_audit_2026_10_19.md)
 identifies the existing owners, current duplication and the next proof: direct or
 in-place opaque storage, borrowed transport, target layout and nested-reference ABI
-compatibility. These mechanisms remain proposed, not implemented.
+compatibility. The [native counter/identity experiment](results/prelower_boundary_2026_10_19/README.md)
+proves the storage/borrow mechanism without extra measured allocation or payload
+copy. Production binding integration and layout orchestration remain unimplemented.
 
 Before locking the initial representation interfaces, inventory runtime template
 families and review them explicitly. Discovery must include runtime headers, operator

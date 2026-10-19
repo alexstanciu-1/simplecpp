@@ -115,7 +115,15 @@ be demonstrated before adopting a general retained representation protocol.
    attributing overhead to prelowering; a wrapper must not add another snapshot.
    `observed_call` already provides readonly non-retaining access and should be reused.
 
-## Next bounded proof, before broader implementation
+## Native mechanism proof checkpoint
+
+The [counter and nested-reference proof](results/prelower_boundary_2026_10_19/README.md)
+now passes for direct versus opaque storage at O0/O2, with sanitizers and optional
+copy elision disabled. It validates the native mechanism, including partial-copy
+cleanup and a negative control. It does not implement layout orchestration, prepared
+borrow transport, production provider integration or artifact-cache integration.
+
+## Integration proof, before broader implementation
 
 Keep this as a backend/binding proof, not a new AST or semantic pass. Use one generic
 transport implementation across integer wrappers, a container, nested elements and
