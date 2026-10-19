@@ -29,6 +29,77 @@ not permission to introduce a parallel semantic registry. Metadata stays runtime
 and is loaded through the existing startup/configuration path, not rescanned per use.
 Bindings remain structured names/contracts, not arbitrary executable C++ snippets.
 
+## Current metadata audit and proposed next slice — `df056d90`
+
+The [current audit](results/prelower_runtime_metadata_audit_2026_10_19/README.md)
+finds 14 ordinary type declarations across eight runtime catalogs. Vector/hash are
+the two metadata-declared templates. Compiler-known scalar, nullable/Result,
+ownership, boxed and value-modifier representations still have PHP-installed C++
+bindings. This is incomplete runtime metadata coverage, not missing semantic type
+identities. The older matrix below remains the family review; the audit includes
+`Exception`, subsequently added to core with shared storage and no payload-copy claim.
+
+| Required information | Already available | Remaining gap / owner |
+|---|---|---|
+| Semantic identity, argument formation/defaults, copy/storage capabilities | Existing registry; JSON for ordinary types, compiler-interpreted definitions for language roles | Keep one identity and existing semantic-role owners; do not redeclare int/nullable/shared in ordinary `types` |
+| Public member/free-function contracts and C++ names | Callable/member catalogs and bindings | Inventory omitted operations; do not mirror existing signatures in a specialization-method registry |
+| Initialization, indexing and iteration | Registered protocols and settled source decisions | Keep these owners; connect physical adapters to their selected contracts |
+| Concrete native symbol and include | `cpp_types` for ordinary definitions; PHP registration for compiler-known roles | Allow runtime-owned C++ bindings to attach to existing semantic identities |
+| Native template shape and argument representation | Currently implicit in spelling, applied semantic type and ownership checks | Structured backend recipe: native symbol, explicit argument list, stored-value versus payload argument use |
+| ABI size/alignment and lifecycle availability | Existing native layout/trait probes plus semantic copy permission | Probe only demanded concrete applications; do not duplicate host/target-dependent values in JSON |
+| Required concrete operations | Prepared calls/operators/conversions and existing fragment requests | Type metadata alone cannot make echo/traits/member forwarding complete; consume these decisions, add only missing runtime interface contracts |
+| Private helper-template closure | Native C++ instantiation in support units | Do not register every implementation helper as a source type; native dependency tracking owns their rebuilds |
+
+### Proposed representation-binding extension (not implemented)
+
+Extend the existing `cpp_types` input and `CPP_Type_Bindings`, rather than create a
+second registry. Preserve `id` joins for ordinary metadata types. Add an exclusive
+reference to an already registered semantic type, or the existing value modifier,
+for compiler-known bindings. The compiler still owns their language roles.
+
+Bindings must distinguish a plain native type from a template application with
+zero, fixed or semantic arguments. Each semantic argument states whether the native
+provider consumes its stored representation or its payload representation. This is
+physical C++ information, not a new source capability. Native fixed-width argument
+names are validated qualified names; no arbitrary C++ snippets are accepted.
+
+Illustrative shape for review, not an accepted schema yet:
+
+```json
+{"type":"int", "symbol":"scpp::int_t", "header":"scpp/int_t.hpp",
+ "arguments":[{"native":"std::int64_t"}]}
+
+{"type":"dynamic", "symbol":"scpp::dynamic_t", "header":"scpp/dynamic_t.hpp",
+ "arguments":[]}
+
+{"type":"shared", "symbol":"scpp::shared_p", "header":"scpp/shared_p.hpp",
+ "arguments":[{"parameter":"Target", "representation":"payload"}]}
+```
+
+Existing ordinary vector/hash bindings can retain their current shorthand: append
+semantic arguments in declaration order using stored representation. The resolved
+backend binding should expose the same structured recipe for both forms. Aliases
+such as byte still share the existing canonical binding, never another declaration.
+The value modifier needs the analogous reference to its modified type; ownership
+storage policy and modifier normalization must remain unchanged.
+
+First migrate representation descriptions and remove their equivalent PHP binding
+rows only after ordinary emitted spellings match. Then make concrete selection and
+nested substitution consume the resolved recipe. An explicit template application
+is a preparation candidate; it is not an eager request. Missing recipes/interfaces
+must be diagnosed, not silently treated as fully supported concrete output.
+
+This crosses catalog decoding/validation, installed C++ bindings and representation
+emission. It must be reviewed before a coordinated schema change; the current v1
+contract expressly forbids baked-in template arguments and orphan binding rows.
+Do not weaken that validation piecemeal or expand ordinary `types` with fake roles.
+
+Validation must cover old catalog compatibility, duplicate/missing/invalid target
+bindings, parameter references, default/native argument spelling, reset/replay,
+ordinary-output equivalence, used-only nested demand, and native lifecycle/ABI
+proofs for the changed representations. Complete operation/trait interoperability
+remains subsequent capability-driven work; this slice alone cannot close accounting.
+
 ## Reading the matrix
 
 Existing capability vocabulary is `value_storable` (S), `copyable_value` (C),

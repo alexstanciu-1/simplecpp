@@ -42,6 +42,17 @@ and argument/result transport require explicit contracts, not just aliases or ob
 precompilation. The [family-by-capability matrix](runtime_template_capability_matrix_2026_10_19.md)
 records current facts and proposed extensions without installing another registry.
 
+## Runtime metadata coverage and demand
+
+Inventory runtime type/representation facts through existing metadata and binding
+owners, including representations of compiler-known semantic types. Complete
+metadata coverage does not mean preparing the entire runtime. Only application
+requests and their required type/operation dependencies cause concrete generation.
+Registration, signature resolution and canonical interning are not native build
+requests. Reuse existing fragment replay, layout caching and artifact publication.
+See the [binding audit](runtime_template_capability_matrix_2026_10_19.md#current-metadata-audit-and-proposed-next-slice--df056d90)
+for the proposed next schema slice and remaining coverage gaps.
+
 ## Ownership and request contract
 
 ### Concrete type substitution refinement

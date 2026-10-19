@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_inventory.py --results FRESH_DIRECTORY`
+checks all production catalogs together, their type/protocol contracts and demand-only
+concrete preparation. Loading every catalog emits no concrete type headers; requesting
+a nested container emits only its required concrete type closure. Repeated requests
+preserve output and semantic identity. This is a PHP-host emission proof, not native
+compilation or full runtime metadata coverage.
+
 `python3 compiler/my-try/tests/prelower_substitution.py --mutations --results FRESH_DIRECTORY`
 compares ordinary and concrete prefix/postfix increments and decrements, local
 aliases, field receiver evaluation, ordered expressions, native float passthrough

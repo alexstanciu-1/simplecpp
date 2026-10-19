@@ -63,9 +63,13 @@ concrete integer `echo_one` / `to_string` output conversion. That representation
 adapter is the next gap; no accounting source workaround was introduced. Full
 numeric-carrier coverage and whole-accounting native compilation remain unproved.
 
-Full runtime coverage is **deferred**. Later, expand the metadata supplied by the
-runtime through the existing registry. Do not turn this accounting slice into that
-inventory/coverage project or add a parallel registry.
+The user has now brought the runtime metadata inventory forward. Audit and extend
+the existing metadata/binding owners before continuing accounting adapters; see the
+[current audit and proposed representation-binding slice](runtime_template_capability_matrix_2026_10_19.md#current-metadata-audit-and-proposed-next-slice--df056d90).
+Coverage of descriptions does not request compilation. Prepare only types used by
+application demand and their required dependencies, never the entire runtime.
+Full operation coverage remains incremental; add no parallel registry. The first
+binding migration requires a reviewed schema extension and ordinary-output parity.
 
 ## Active integration sequence: concrete type substitution
 
