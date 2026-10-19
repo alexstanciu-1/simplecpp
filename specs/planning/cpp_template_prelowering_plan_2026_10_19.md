@@ -24,6 +24,10 @@ This document records the implementation sequence. The [current coverage guide](
 3. Bind ordinary operations/members to concrete interfaces from existing prepared
    decisions and runtime bindings. Prove nested mutation, constructors, references,
    providers and allocation/copy parity before enabling broader application coverage.
+   The [void-member slice](results/prelower_members_2026_10_19/README.md) now forwards
+   registered runtime members through demanded concrete reference overloads, preserving
+   prepared argument categories. Result transport, unrelated fixed native parameter
+   adaptation and ownership-wrapper access remain open.
 4. Consolidate the lowering setting around the proven substitution path. Keep
    ordinary C++ as the baseline; remove superseded experimental routing rather than
    maintaining an expanding matrix of permanent flags.

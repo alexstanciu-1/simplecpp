@@ -45,6 +45,7 @@
     {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"}
   ],
   "functions": [
+    {"id":"core.vector.append","name":"append","member":{"owner":"vector","dispatch":"instance"},"parameters":[{"name":"value","type":{"parameter":"Value"},"passing":"value"}],"returns":"void"},
     {"id":"core.getenv","name":"getenv","parameters":[{"name":"name","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
     {"id":"core.shell_exec","name":"shell_exec","parameters":[{"name":"command","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
     {"id":"core.cli_argc","name":"cli_argc","parameters":[],"returns":"int"},
@@ -94,6 +95,7 @@
     }
   ],
   "cpp": [
+    {"id":"core.vector.append","symbol":"append","header":"scpp/vector_t.hpp"},
     {"id":"core.getenv","symbol":"scpp::php::getenv","header":"lang/php/php_process.hpp"},
     {"id":"core.shell_exec","symbol":"scpp::php::shell_exec","header":"lang/php/php_process.hpp"},
     {"id":"core.cli_argc","symbol":"scpp::php::cli_argc","header":"lang/php/php_process.hpp"},

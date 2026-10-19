@@ -169,10 +169,10 @@ final class CPP_Opaque_Representation
 			$implementation .= $name . '::' . $name . '(' . $scalar . ' value) { ::new(address()) ' . $native . '(value); }' . "\n"
 				. $scalar . ' ' . $name . '::native_value() const noexcept { return unwrap(*this).native_value(); }' . "\n";
 		}
-		$declaration .= '~' . $name . "() noexcept;\n}; }\n";
+		$declaration .= '~' . $name . "() noexcept;\n";
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
 			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
-			$declaration, $implementation, $mapping->headers, $aliases, $probe);
+			$declaration, $implementation, $mapping->headers, $aliases, $probe, "}; }\n");
 	}
 }

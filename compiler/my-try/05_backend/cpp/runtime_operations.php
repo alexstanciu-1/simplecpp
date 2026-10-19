@@ -15,7 +15,10 @@ final class CPP_Runtime_Operations
 	public static function name(cpp_runtime_operation $request): string
 	{
 		$key = $request->kind_name() . ':' . $request->spelling . ':' . ($request->append ? 'append' : 'store');
-		if ($request->call !== null) { $key .= ':' . CPP_Source_Calls::identity($request->call); }
+		if ($request->call !== null) {
+			$key .= ':' . ($request->kind === cpp_runtime_operation_kind::concrete_member
+				? CPP_Concrete_Members::identity($request->call) : CPP_Source_Calls::identity($request->call));
+		}
 		if ($request->construction !== null) {
 			$key .= ':payload=' . CPP_Opaque_Representation::identity($request->construction->constructed_type)
 				. ':storage=' . enum_name($request->construction->storage);

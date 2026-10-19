@@ -13,6 +13,7 @@ from test_runner import CommandRunner, Task, run_tasks
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--members', action='store_true')
     modes.add_argument('--source-fields', action='store_true')
     modes.add_argument('--source-arguments', action='store_true')
     parser.add_argument('--results', type=Path, required=True)
@@ -28,7 +29,7 @@ def main():
                 nonlocal emission
                 emission += 1
                 runner.run(f'{mode}-emit-{emission}-{revision}-{alignment}', ['php', APP / 'tests/fixtures/prelower_substitution.php',
-                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings')])
+                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings'))])
             def build(mode, label, optimization='-O0'):
                 result = json.loads(runner.run(label, ['php', APP / 'tools/build_cpp.php', out / mode,
                     out / ('cache-' + mode), '--no-pch', optimization], cli_reason='Native builder process'))

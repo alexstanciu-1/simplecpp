@@ -70,10 +70,33 @@ method-body edits preserve unrelated fragments, and restoring edits/settings res
 output. The harness seeds/mutates native containers in fixture support; it does not
 claim generated runtime-container member interfaces such as `Vector_Int::append`.
 
+Ordinary void-returning runtime members now use `CPP_Concrete_Members`, driven by
+existing runtime callable bindings and prepared signatures/argument boundaries.
+The core registry exposes `vector::append`; the same worker forwards independently
+registered `parcel::replace`. It contains no container-family branches. Existing
+selected-call emission still evaluates the receiver and snapshots arguments in order.
+Forwarders accept references to those snapshots: `T&` for the ordinary lvalue form,
+`T&&` for consumed values, with the same value category passed to the native member.
+This preserves native overload selection without an additional wrapper parameter copy.
+
+Demanded overloads reuse each fragment's existing `runtime_operations` requests.
+The invocation-local engine assembles member declarations into the existing concrete
+class, with definitions in support output. Class closing text is a separate output
+part, not patched generated text. Reference-only concrete parameters are forward
+declared; implementation dependencies stay in support. Replay, demand removal and
+restoration reuse the same protocol as other specialization requests.
+See the [member forwarding proof](../../../../specs/planning/results/prelower_members_2026_10_19/README.md).
+
+This slice covers void-returning members whose native parameter types match the
+substituted physical argument types. Owned/reference results and variadic transport
+explicitly reject; adaptation of unrelated fixed native parameter types, const receiver
+interfaces and ownership-wrapper access remain follow-up work. No runtime-family
+algorithms or new semantic facts were introduced.
+
 Boundaries remain: recursive generated header/layout graphs (including a method
 signature returning `vector<Self>`); concrete shared/unique/value access interfaces;
-general runtime forwarding
-methods, indexing, initialization, operators and provider compatibility. Existing
+remaining runtime forwarding
+contracts, indexing, initialization, operators and provider compatibility. Existing
 semantic reference restrictions remain: reference returns must refer to the declared
 parameter storage type, and heap-backed property borrows (including the tested `$this`
 case) reject in preparation. The old source-call/constructor transport is not removed

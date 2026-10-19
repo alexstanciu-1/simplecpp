@@ -27,13 +27,18 @@ final class cpp_lowering_options
 	public bool $concrete_type_substitution = false;
 }
 
-/** Engine-owned representation; references only carry the entry position. */
+/** Engine-owned output parts; references only carry the entry position.
+ * A member entry contributes declaration/implementation to member_owner's class/header.
+ * A class entry keeps its closing declaration_tail separate for demand-time assembly.
+ */
 final class cpp_specialization_entry
 {
 	public function __construct(public readonly string $name, public readonly string $header,
 		public readonly string $declaration, public readonly string $implementation,
 		public readonly array $layout_dependencies /** hash<bool> */, // Headers required by the native layout probe.
-		public readonly string $layout_declarations = '', public readonly string $layout_statements = '')
+		public readonly string $layout_declarations = '', public readonly string $layout_statements = '',
+		public readonly string $declaration_tail = '', public readonly string $member_owner = '',
+		public readonly string $declaration_prefix = '')
 	{
 	}
 }
@@ -185,6 +190,7 @@ final class cpp_program {
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
 	case method_call;
+	case concrete_member;
 	case receiver_check;
 	case construct_default;
 	case construct_call;

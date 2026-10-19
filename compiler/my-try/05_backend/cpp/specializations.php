@@ -12,10 +12,15 @@ final class CPP_Specializations
 		$this->entries = new Storage /** Storage<cpp_specialization_entry> */();
 	}
 
+	public function concrete_types(): bool { return $this->compose_types; }
+
 	public function runtime_abi(): bool { return $this->use_runtime_abi && !$this->compose_types; }
 
 	public function request_operation(cpp_runtime_operation $request): cpp_specialization_ref
 	{
+		if ($request->kind === cpp_runtime_operation_kind::concrete_member) {
+			return $this->intern(CPP_Concrete_Members::entry($request, $this));
+		}
 		return $this->intern(CPP_Runtime_Operations::entry($request, $this));
 	}
 
@@ -184,14 +189,30 @@ final class CPP_Specializations
 		$depths = $this->layout_depths($artifacts);
 		$maximum_depth = 0;
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
-		foreach ($this->emission_order() as $id) {
+		$order = $this->emission_order();
+		$member_prefixes /** hash<string> */ = [];
+		$member_declarations /** hash<string> */ = [];
+		// Invocation-local assembly index; retained requests stay with existing fragments.
+		foreach ($order as $id) {
+			$member = $entries[$id];
+			if ($member->member_owner === '') { continue; }
+			$owner = $member->member_owner;
+			$member_prefixes[$owner] = ($member_prefixes[$owner] ?? '') . $member->declaration_prefix;
+			$member_declarations[$owner] = ($member_declarations[$owner] ?? '') . $member->declaration;
+		}
+		foreach ($order as $id) {
 			$entry = $entries[$id];
 			$depth = $depths[$entry->name];
 			if ($depth > $maximum_depth) { $maximum_depth = $depth; }
 			$layout_declarations[$depth] = ($layout_declarations[$depth] ?? '') . $entry->layout_declarations;
 			$layout_statements[$depth] = ($layout_statements[$depth] ?? '') . $entry->layout_statements;
-			$artifacts->append(new cpp_artifact('specialization:' . $entry->name, cpp_artifact_kind::header,
-			$entry->header, $entry->declaration));
+			if ($entry->member_owner === '') {
+				$prefix = $member_prefixes[$entry->name] ?? '';
+				$declaration = ($prefix === '' ? '' : "#pragma once\n" . $prefix) . $entry->declaration
+					. ($member_declarations[$entry->name] ?? '') . $entry->declaration_tail;
+				$artifacts->append(new cpp_artifact('specialization:' . $entry->name, cpp_artifact_kind::header,
+					$entry->header, $declaration));
+			}
 			$implementation .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
 		}
 		for ($depth = 0; $depth <= $maximum_depth; $depth++) {

@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --members --results FRESH_DIRECTORY`
+extends the concrete source-field proof with ordinary compiler-emitted `append` and
+`replace` calls across integer, nested-vector and tracked-payload arguments. It
+compares lvalue snapshots and consumed results at O0/O2 and with ASan/UBSan, checks
+member-demand removal/restoration, cached-fragment replay and native/layout reuse.
+See [member forwarding evidence](../../../specs/planning/results/prelower_members_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
 adds `vector<Record>`, an independently registered `parcel<Record>`, and
 `vector<MyClass>` using the shared class handle representation. It compiles actual

@@ -467,7 +467,7 @@ final class CPP_Declarations
 		if ($facts->receiver !== null) {
 			if ($context->runtime_abi()) { return CPP_Source_Calls::method($syntax, $context); }
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
-			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
+			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context);
 			$value = 'this';
 			$arrow = true;
 			if ($receiver->lifetime !== method_receiver_lifetime::current_instance) {
@@ -485,7 +485,10 @@ final class CPP_Declarations
 			}
 			$target = weakref_get($facts->target);
 			if ($target instanceof runtime_function_definition) {
-				$member_name = CPP_Callables::reference($target, $context);
+				$member_name = '';
+				$engine = $context->specialization_engine;
+				if (($engine !== null) && $engine->concrete_types()) { $member_name = CPP_Concrete_Members::reference($facts, $context); }
+				else { $member_name = CPP_Callables::reference($target, $context); }
 				$callee = $name . ($arrow ? '->' : '.') . $member_name;
 				return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 			}
@@ -500,7 +503,7 @@ final class CPP_Declarations
 	{
 		$receiver /** prepared_method_receiver */ = $facts->receiver;
 		$method = object_cast(weakref_get($facts->target), collected_method::class);
-		CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
+		CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context);
 		$qualification = '';
 		if ($receiver->dispatch_type !== null) {
 			$mapping = CPP_Types::payload($receiver->dispatch_type, $context);
