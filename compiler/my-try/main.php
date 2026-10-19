@@ -17,6 +17,7 @@ if (PHP_SAPI !== 'cli') {
 // CLI: --s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY].
 // HTTP also accepts entry=RELATIVE_PATH, but never selects an output directory.
 // No parameter retains the existing sample/debug report.
+$prelower_templates = false;
 $s2s = false;
 $source_directory = '';
 $entry_path = '';
@@ -26,18 +27,25 @@ if (PHP_SAPI === 'cli')
 {
 	if ($argc !== 1)
 	{
-		if (($argc < 3) || ($argv[1] !== '--s2s') || (($argc % 2) !== 1)) {
+		if (($argc < 3) || ($argv[1] !== '--s2s')) {
 			$usage_error = true;
 		}
 		else {
 			$s2s = true;
 			$source_directory = $argv[2];
 			$usage_error = $source_directory === '';
-			for ($index = 3; $index < $argc; $index += 2) {
+			for ($index = 3; $index < $argc; $index++) {
+				if ($argv[$index] === '--prelower-templates') {
+					$prelower_templates = true; continue;
+				}
+				if ($index + 1 >= $argc) {
+					$usage_error = true; break;
+				}
 				if (($argv[$index] === '--entry') && ($entry_path === '')) { $entry_path = $argv[$index + 1]; }
 				elseif (($argv[$index] === '--output') && ($output_directory === '')) { $output_directory = $argv[$index + 1]; }
 				else { $usage_error = true; }
 				if ($argv[$index + 1] === '') { $usage_error = true; }
+				$index++;
 			}
 		}
 	}
@@ -61,7 +69,7 @@ else
 if ($usage_error)
 {
 	if (PHP_SAPI === 'cli') {
-		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY]]\n");
+		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY] [--prelower-templates]]\n");
 	}
 	else {
 		http_response_code(400);
@@ -77,6 +85,7 @@ if ($s2s)
 	try {
 		if ($output_directory !== '') { $publication = new Output_Publication($output_directory); }
 		$compiler = new Compiler();
+		$compiler->cpp_lowering->prelower_templates = $prelower_templates;
 		$compiler->init([$source_directory]);
 		if ($entry_path !== '') { $compiler->select_entry('main', $entry_path); }
 		$compiler->exec_cpp($publication);

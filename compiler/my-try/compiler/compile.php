@@ -14,10 +14,12 @@ final class Compiler
 {
 	/** Constructor installs the configured default before use. */
 	public int $jobs = 0;
+	public cpp_lowering_options $cpp_lowering;
 
 	public function __construct()
 	{
 		$this->jobs = \scpp\compiler\DEFAULT_COMPILER_JOBS;
+		$this->cpp_lowering = new cpp_lowering_options();
 	}
 
 	public function select_entry(string $module_name, string $source_path): void
@@ -301,7 +303,7 @@ final class Compiler
 		$output /** Storage<cpp_artifact> */;
 		try {
 			$entry /** prepared_file */ = Model::$prepared_entry;
-			$output = (new CPP_Generator(Model::$cpp_output_program))->generate_program($prepared, $entry);
+			$output = (new CPP_Generator(Model::$cpp_output_program, $this->cpp_lowering))->generate_program($prepared, $entry);
 			if ($publication !== null) {
 				$publication->publish($output, CPP_Runtime_Build::requirements(Model::$runtime_metadata));
 			}

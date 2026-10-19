@@ -2,15 +2,25 @@
 Doc Status: planning
 
 Date: 2026-10-19
-Status: proposed implementation sequence under the [agreed decision](cpp_template_prelowering_decision_2026_10_19.md).
-This document records work to do; it does not claim production support.
+Status: first bounded integer/vector slice implemented; remaining work follows the [agreed decision](cpp_template_prelowering_decision_2026_10_19.md).
+This document records the implementation sequence. The [current coverage guide](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md) distinguishes implemented behavior from remaining work.
+
+## First-slice checkpoint
+
+The [integer/vector proof](results/prelower_first_slice_2026_10_19/README.md) covers
+general recipes, runtime integer widths, source-record elements, fragment replay,
+option switching, error parity and native object reuse. Steps below remain the
+expansion sequence; full accounting coverage and the runtime-family review are not
+marked complete by this checkpoint.
 
 ## Target and baseline
 
 Implement `prelower_templates` inside the existing C++ backend, with a dedicated
 specialization engine and compact reference structure. Use the current AST and
-prepared facts directly. The first vertical slice is one concrete integer-vector
-specialization; expand toward the accounting inventory after that slice is proved.
+prepared facts directly. The first vertical slice is general integer-wrapper and vector-family recipes.
+`vector<int>` is the first test, not a hard-coded implementation. Exercise additional
+element types, integer widths and signedness through the same recipes; expand toward
+the accounting inventory after that slice is proved.
 
 The measured reference is [the accounting conversion](results/accounting_template_free_2026_10_18/README.md):
 15 application units, 44 concrete handles, 24 concrete vector/hash representations,
@@ -30,6 +40,32 @@ Preserve these choices initially:
 - Ordinary C++ automatic cleanup and dispatch; no full C or new lifetime lowering.
 - No PCH for concrete proof builds, debug disabled by default, explicit debug opt-in.
   Keep native optimization and debug configuration separate from lowering options.
+
+## Early runtime-template review
+
+Before locking the initial representation interfaces, inventory runtime template
+families and review them explicitly. Discovery must include runtime headers, operator
+helpers, metadata bindings and generated adapters; metadata alone is not a complete
+inventory. For each family record its purpose, canonical arguments, prepared facts /
+capabilities consumed, internal template dependencies, current measured cost (or
+unknown), ABI/behavior obligations and proposed disposition. Discuss every discovered
+family; do not assume that unmeasured means cheap or that every template needs removal.
+
+The initial checklist includes fixed-width/signed integer wrappers; vector/hash;
+shared/unique/weak and value ownership; nullable/result/sentinel wrappers; dynamic
+representations; callable adapters; initialization buffers/factories; iteration,
+indexing and keyed-path helpers; conversions, arithmetic/operator helpers and traits;
+compiler Storage/Keyed_Storage where exposed to generated native units; and templates
+inside runtime implementation providers. Expand the checklist from actual discovery.
+Distinguish source-facing generic types, compiler-only storage and implementation-only
+helpers so the discussion does not silently widen the application backend scope.
+
+Record an explicit disposition: implement in the initial slice, discuss for the next
+slice, or retain templates for now with a reason. Integer representations are included
+from the start: derive native width/signedness from registered facts, rather than
+leaving `int_t<Rep>` beneath the concrete vector. Family recipes may differ; concrete
+type combinations must be generated from data and must not be special-case fixtures.
+Selective methods, operation closure and ABI bridges remain explicit follow-up topics.
 
 ## 1. Establish configuration and engine ownership in one vertical slice
 
@@ -61,12 +97,11 @@ indexing, iteration, copy/move/destruction and admitted family methods. Reuse th
 accounting implementation shape after checking each behavior against the owning
 language/runtime contracts.
 
-Inventory scalar and ownership dependencies first. Choose a concrete scalar binding
-that preserves the source integer contract; do not silently assume the experiment's
-bounded signed-64 wrapper implements every production integer rule. If the first
-slice still exposes a template dependency, identify it explicitly and do not label
-the whole native input template-free. Removing that exposure is part of reaching the
-accounting-shaped performance checkpoint.
+Inventory scalar and ownership dependencies first. Generate concrete integer
+bindings from registered width/signedness and preserve the production conversion,
+arithmetic and error contracts. Do not assume the experiment's signed-64 wrapper
+implements every integer rule. Audit remaining template exposure and label it
+explicitly; no silent integer-template fallback is allowed in the concrete path.
 
 Compile generated application and grouped support units with Clang through the
 existing native builder, then link and execute them. Keep lowering and native build

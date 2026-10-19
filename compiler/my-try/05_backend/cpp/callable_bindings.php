@@ -190,13 +190,16 @@ final class CPP_Callables
 	public static function call_reference(prepared_call $facts, cpp_generation_context $context): string
 	{
 		$target = weakref_get($facts->target);
+		if (($context->specialization_engine !== null) && ($target instanceof runtime_function_definition)) {
+			return CPP_Concrete_Operations::call_reference($facts, $context);
+		}
 		$reference = self::reference($target, $context);
 		if ($facts->runtime_owner !== null) {
 			$owner /** canonical_type_use */ = $facts->runtime_owner;
 			$member = Model::$runtime_callables->member_for(object_cast($target, runtime_function_definition::class));
 			if ($member !== null) {
 				if ($member->static_member && ($member->owner instanceof abstract_template_type_definition)) {
-					$mapping = CPP_Types::payload($owner);
+					$mapping = CPP_Types::payload($owner, $context);
 					CPP_Types::record_dependencies($mapping, $context);
 					return $mapping->spelling . '::' . $reference;
 				}
@@ -220,6 +223,9 @@ final class CPP_Callables
 		}
 		if ($target instanceof runtime_function_definition) {
 			$binding = Model::$cpp_callable_bindings->function_binding(object_cast($target, runtime_function_definition::class));
+			if ($context->specialization_engine !== null) {
+				throw new \RuntimeException('prelower_templates: runtime calls require concrete ABI adapters');
+			}
 			$header = $binding->header();
 			if ($header !== '') {
 				$context->headers[$header] = true;

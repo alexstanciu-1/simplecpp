@@ -6,24 +6,24 @@ namespace scpp\compiler;
 final class CPP_Types
 {
 	/** Allocation and ownership wrappers name the payload, not its default stored representation. */
-	public static function payload(canonical_type_use $type_use): cpp_type
+	public static function payload(canonical_type_use $type_use, ?cpp_generation_context $context = null): cpp_type
 	{
-		return self::unmodified_representation($type_use, cpp_type_requirement::complete);
+		return self::unmodified_representation($type_use, cpp_type_requirement::complete, $context);
 	}
 
 	/** Resolve the semantic identity first; backend metadata never establishes type equality. */
-	public static function representation(canonical_type_use $type_use): cpp_type
+	public static function representation(canonical_type_use $type_use, ?cpp_generation_context $context = null): cpp_type
 	{
-		return self::representation_for($type_use, cpp_type_requirement::complete);
+		return self::representation_for($type_use, cpp_type_requirement::complete, $context);
 	}
 
 	/** Classify source visibility without assuming incomplete-type support in runtime templates. */
 	public static function representation_for(canonical_type_use $type_use,
-		cpp_type_requirement $requirement): cpp_type
+		cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
-		$result = self::unmodified_representation($type_use, $payload_requirement);
+		$result = self::unmodified_representation($type_use, $payload_requirement, $context);
 		if (Type_Queries::is_nominal_handle($type_use)) {
 			$result->spelling = '::scpp::shared_p<' . $result->spelling . '>';
 			self::add_header($result, 'scpp/shared_p.hpp');
@@ -38,18 +38,18 @@ final class CPP_Types
 	}
 
 	/** One parameter spelling for declarations and erased callable representations. */
-	public static function parameter_representation(callable_parameter $parameter, cpp_type_requirement $requirement): cpp_type
+	public static function parameter_representation(callable_parameter $parameter, cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
-		$result = self::representation_for($parameter->type, $requirement);
+		$result = self::representation_for($parameter->type, $requirement, $context);
 		$result->spelling = ($parameter->access === storage_access::read_only ? 'const ' : '')
 			. $result->spelling . ($parameter->mode === passing_mode::reference ? '&' : '');
 		return $result;
 	}
 
 	/** Reference results have identical spelling for source and erased callables. */
-	public static function return_representation(callable_signature $signature, cpp_type_requirement $requirement): cpp_type
+	public static function return_representation(callable_signature $signature, cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
-		$result = self::representation_for($signature->return_type, $requirement);
+		$result = self::representation_for($signature->return_type, $requirement, $context);
 		if ($signature->reference_return !== null) { $result->spelling .= '&'; }
 		return $result;
 	}
@@ -57,6 +57,9 @@ final class CPP_Types
 	/** Add every representation dependency to one generation context exactly once. */
 	public static function record_dependencies(cpp_type $type, cpp_generation_context $context): void
 	{
+		if ($type->specialization !== null) {
+			$context->specializations[$type->specialization->type_id()] = $type->specialization;
+		}
 		foreach ($type->headers as $header => $used) {
 			$context->headers[$header] = true;
 		}
@@ -67,20 +70,26 @@ final class CPP_Types
 
 	/** Resolve the canonical core; recursive arguments contribute their own direct headers. */
 	private static function unmodified_representation(canonical_type_use $type_use,
-		cpp_type_requirement $requirement): cpp_type
+		cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
 		$type = Type_Queries::canonical($type_use);
 		$definition = $type->definition();
+		if ($context !== null) {
+			$engine = $context->specialization_engine;
+			if (($engine !== null) && (($type->family() === type_family::integer) || ($type instanceof applied_template_type))) {
+				return $engine->representation($type_use, $context);
+			}
+		}
 		$result = new cpp_type();
 		if ($definition instanceof callable_type_definition) {
 			$signature = object_cast($definition, callable_type_definition::class)->signature();
-			$return_mapping = self::return_representation($signature, cpp_type_requirement::complete);
+			$return_mapping = self::return_representation($signature, cpp_type_requirement::complete, $context);
 			self::merge_headers($result, $return_mapping);
 			$parts = '';
 			$separator = '';
 			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 			foreach ($parameters as $parameter) {
-				$mapping = self::parameter_representation($parameter, cpp_type_requirement::complete);
+				$mapping = self::parameter_representation($parameter, cpp_type_requirement::complete, $context);
 				self::merge_headers($result, $mapping);
 				$parts .= $separator . $mapping->spelling;
 				$separator = ', ';
@@ -100,7 +109,7 @@ final class CPP_Types
 				}
 				// Template bindings do not yet promise incomplete-payload support.
 				$argument_type = $definition instanceof ownership_semantics
-					? self::payload($argument) : self::representation($argument);
+					? self::payload($argument, $context) : self::representation($argument, $context);
 				$arguments .= $argument_type->spelling;
 				self::merge_headers($result, $argument_type);
 			}

@@ -1,6 +1,11 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_templates.py --results FRESH_DIRECTORY`
+checks the opt-in concrete integer/vector slice, incremental emission/native reuse,
+error parity, sanitizers and matched no-PCH native timings. See
+[coverage and ownership](architecture/cpp_template_prelowering.md).
+
 `python3 compiler/my-try/tests/records.py --suite duplicate_types --no-pch --results FRESH_DIRECTORY`
 checks duplicate type admission before emission, all source type kinds, cross-file
 retry/rename/removal recovery and valid namespace/import controls. See

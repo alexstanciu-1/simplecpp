@@ -2,7 +2,8 @@
 Doc Status: planning
 
 Date: 2026-10-19
-Status: agreed architectural direction; production implementation pending.
+Status: agreed architectural direction; first bounded integer/vector slice implemented.
+See [current coverage](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md).
 
 ## Decision
 
@@ -35,7 +36,12 @@ emitter refactor or new common abstraction is required to start.
 | Existing native builder | Compile generated implementation units with Clang; cache objects and link |
 
 A request conceptually says: “I need this canonical vector type with these
-operations.” Initially every admitted specialization generates all methods in its
+operations.” Recipes are family-based and consume canonical arguments; `vector<int>` is a test,
+not a hard-coded implementation. Concrete integer representations derived from
+registered width/signedness are included from the start. Review all runtime template
+families early and record explicit implementation/discussion/retention decisions.
+
+Initially every admitted specialization generates all methods in its
 supported family; selective methods are deferred.
 
 Return a dedicated small-footprint specialization-reference structure, ideally a

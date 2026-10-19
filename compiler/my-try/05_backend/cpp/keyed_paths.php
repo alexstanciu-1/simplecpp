@@ -8,6 +8,9 @@ final class CPP_Keyed_Path
 	public static function generate(prepared_keyed_path $path, cpp_generation_context $context,
 		bool $removing, bool $emptiness = false, ?truthiness_decision $presence = null): string
 	{
+		if ($context->specialization_engine !== null) {
+			throw new \RuntimeException('prelower_templates: keyed probes/removal require a concrete adapter');
+		}
 		$context->headers['scpp/keyed_path.hpp'] = true;
 		$id = $context->next_temporary;
 		$context->next_temporary++;

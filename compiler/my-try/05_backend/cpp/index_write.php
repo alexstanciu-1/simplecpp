@@ -10,6 +10,9 @@ final class CPP_Index_Write
 		prepared_compound_assignment_expression $facts, cpp_generation_context $context): string
 	{
 		$destination /** prepared_index_target */ = $facts->indexed_target;
+		if ($context->specialization_engine !== null) {
+			throw new \RuntimeException('prelower_templates: indexed compound assignment is not in the first slice');
+		}
 		$target = object_cast($node->target, index_node::class);
 		$context->headers['scpp/index_existing.hpp'] = true;
 		$id = $context->next_temporary;
@@ -47,6 +50,9 @@ final class CPP_Index_Write
 	public static function generate(assignment_expression_node $node, prepared_index_assignment $facts,
 		cpp_generation_context $context, bool $value_required = true): string
 	{
+		if ($context->specialization_engine !== null) {
+			return CPP_Concrete_Operations::write($node, $facts, $context, $value_required);
+		}
 		$target = object_cast($node->target, index_node::class);
 		$destination = $facts->target;
 		$emitter = new CPP_Syntax($context);

@@ -27,7 +27,7 @@ final class CPP_Declarations
 	public static function type_for(canonical_type_use $type, cpp_generation_context $context,
 		cpp_type_requirement $requirement): string
 	{
-		$mapping = CPP_Types::representation_for($type, $requirement);
+		$mapping = CPP_Types::representation_for($type, $requirement, $context);
 		CPP_Types::record_dependencies($mapping, $context);
 
 		return $mapping->spelling;
@@ -82,6 +82,9 @@ final class CPP_Declarations
 			return 'scpp::required_cast<' . self::type($decision->target_type, $context)
 				. '>(' . $expression . ')';
 		}
+		if (($context->specialization_engine !== null) && ($decision->operation === conversion_operation::explicit_runtime_cast)) {
+			return CPP_Concrete_Operations::cast($expression, $decision, $context);
+		}
 		if ($decision->operation === conversion_operation::explicit_runtime_cast) {
 			$context->headers['scpp/cast.hpp'] = true;
 			return 'scpp::cast<' . self::type($decision->target_type, $context)
@@ -112,6 +115,8 @@ final class CPP_Declarations
 			if ($decision->operation === truthiness_operation::nullable_condition) {
 				$context->headers['scpp/cast.hpp'] = true;
 			}
+			if (($context->specialization_engine !== null) && ($decision->operation === truthiness_operation::scalar_condition)
+				&& (Type_Queries::canonical($decision->source_type)->family() === type_family::integer)) { return '((' . $expression . ').native_value() != 0)'; }
 			$context->headers['lang/php/operators/conditional/condition_truthiness.hpp'] = true;
 			return 'scpp::php::condition_truthy(' . $expression . ').native_value()';
 		}
@@ -167,7 +172,7 @@ final class CPP_Declarations
 	public static function parameter_type(callable_parameter $parameter, cpp_generation_context $context, bool $prototype): string
 	{
 		$reference = $parameter->mode === passing_mode::reference;
-		$mapping = CPP_Types::parameter_representation($parameter, self::signature_requirement($prototype, $reference));
+		$mapping = CPP_Types::parameter_representation($parameter, self::signature_requirement($prototype, $reference), $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		return $mapping->spelling;
 	}
@@ -175,7 +180,7 @@ final class CPP_Declarations
 	public static function return_type(callable_signature $signature, cpp_generation_context $context, bool $prototype): string
 	{
 		$reference = $signature->reference_return !== null;
-		$mapping = CPP_Types::return_representation($signature, self::signature_requirement($prototype, $reference));
+		$mapping = CPP_Types::return_representation($signature, self::signature_requirement($prototype, $reference), $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		return $mapping->spelling;
 	}
@@ -186,7 +191,7 @@ final class CPP_Declarations
 		$text = '';
 		$base = $method->callable_syntax()->require_body()->base_initialization;
 		if ($base !== null) {
-			$mapping = CPP_Types::payload($base->base_type);
+			$mapping = CPP_Types::payload($base->base_type, $context);
 			CPP_Types::record_dependencies($mapping, $context);
 			$arguments /** Storage<expression_node> */ = new Storage /** Storage<expression_node> */();
 			$source_call = weakref_get($base->source_call);
@@ -307,7 +312,7 @@ final class CPP_Declarations
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$requirement = Type_Queries::is_nominal_handle($type)
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
-			$representation = CPP_Types::representation_for($type, $requirement);
+			$representation = CPP_Types::representation_for($type, $requirement, $context);
 			CPP_Types::record_dependencies($representation, $context);
 			$text .= self::visibility($field->visibility);
 			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
@@ -330,7 +335,7 @@ final class CPP_Declarations
 		$constructor = weakref_get($syntax->require_preparation()->constructor);
 		if ($constructor !== null) {
 			if ($constructor->declaring_type() !== $syntax->occurrence()) {
-				$base_mapping = CPP_Types::payload($syntax->require_preparation()->base_type);
+				$base_mapping = CPP_Types::payload($syntax->require_preparation()->base_type, $context);
 				$text .= "\tusing " . $base_mapping->spelling . '::' . $base_mapping->spelling . ";\n";
 			}
 		}
@@ -482,7 +487,7 @@ final class CPP_Declarations
 			$method = object_cast($target, collected_method::class);
 			$qualification = '';
 			if ($receiver->dispatch_type !== null) {
-				$mapping = CPP_Types::payload($receiver->dispatch_type);
+				$mapping = CPP_Types::payload($receiver->dispatch_type, $context);
 				CPP_Types::record_dependencies($mapping, $context);
 				$qualification = $mapping->spelling . '::';
 			}
@@ -632,7 +637,7 @@ final class CPP_Declarations
 		}
 		$base = $syntax->base;
 		// A reference declaration does not supply the layout needed by member access.
-		$payload = CPP_Types::payload($facts->record_type);
+		$payload = CPP_Types::payload($facts->record_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
 		$arrow = ($facts->receiver_storage !== record_storage_kind::inline_value)
 			|| $base->require_preparation()->type->by_value();

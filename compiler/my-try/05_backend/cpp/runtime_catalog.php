@@ -163,7 +163,7 @@ final class CPP_Runtime_Catalog
 		$binding /** runtime_cpp_spec */ = Model::$cpp_property_bindings[$definition];
 		$context->headers[$binding->header] = true;
 		if ($definition->static_member && ($definition->owner instanceof abstract_template_type_definition)) {
-			$mapping = CPP_Types::payload($property->owner_type);
+			$mapping = CPP_Types::payload($property->owner_type, $context);
 			CPP_Types::record_dependencies($mapping, $context);
 			return $mapping->spelling . '::' . $binding->symbol;
 		}

@@ -48,7 +48,7 @@ final class CPP_Syntax
 		if ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);
 			$facts = $object_type->require_object_type_preparation();
-			$target = CPP_Types::payload($facts->target_payload);
+			$target = CPP_Types::payload($facts->target_payload, $this->context);
 			CPP_Types::record_dependencies($target, $this->context);
 			CPP_Declarations::type($object_type->operand->require_preparation()->type, $this->context);
 			$this->context->headers['scpp/object_cast.hpp'] = true;
@@ -159,6 +159,9 @@ final class CPP_Syntax
 	/** Bind the receiver once, convert the key next, and copy the read result before releasing temporaries. */
 	private function generate_index(index_node $node): string
 	{
+		if ($this->context->specialization_engine !== null) {
+			return CPP_Concrete_Operations::read($node, $this->context);
+		}
 		$decision = $node->require_index_preparation()->decision;
 		$helper = 'scpp::checked_index_read';
 		if ($decision->operation === operator_operation::index_null_read) {
@@ -358,7 +361,7 @@ final class CPP_Syntax
 		return $text . $fallback . '}())';
 	}
 
-	private function loop_body(loop_node $node): string
+	public function loop_body(loop_node $node): string
 	{
 		$outer_break /** nullable<breakable_node> */ = $this->context->break_target;
 		$outer_continue /** nullable<loop_node> */ = $this->context->continue_target;
@@ -414,6 +417,9 @@ final class CPP_Syntax
 	/** Borrow the once-evaluated source; value bindings copy entries, not the collection. */
 	public function generate_foreach(foreach_node $node): string
 	{
+		if ($this->context->specialization_engine !== null) {
+			return CPP_Concrete_Operations::iterate($node, $this->context);
+		}
 		$facts /** prepared_iteration */ = $node->require_preparation()->iteration;
 		$this->context->headers['scpp/value_iteration.hpp'] = true;
 		$id = $this->context->next_temporary;
@@ -429,7 +435,7 @@ final class CPP_Syntax
 		return $text . $this->loop_body($node) . "}\n}\n";
 	}
 
-	private function iteration_binding(prepared_binding $binding, string $value): string
+	public function iteration_binding(prepared_binding $binding, string $value): string
 	{
 		$entry = object_cast(weakref_get($binding->declaration), collected_name::class);
 		return CPP_Generator::generate_storage_value($binding, CPP_Generator::local_name($entry),

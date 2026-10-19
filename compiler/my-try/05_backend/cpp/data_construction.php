@@ -71,7 +71,7 @@ final class CPP_Record_Construction
 		record_storage_kind $storage, cpp_generation_context $context): string
 	{
 		if ($storage === record_storage_kind::inline_value) { return CPP_Declarations::type($type, $context); }
-		$payload = CPP_Types::payload($payload_type);
+		$payload = CPP_Types::payload($payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
 		$context->headers['scpp/memory.hpp'] = true;
 		$helper = $storage === record_storage_kind::unique ? 'unique' : 'shared';
@@ -114,6 +114,9 @@ final class CPP_Data_Construction
 			return self::record($node, object_cast($prepared, prepared_record_construction::class), $context);
 		}
 		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
+		if ($context->specialization_engine !== null) {
+			return CPP_Concrete_Operations::initialize($node, $binding->target(), $context);
+		}
 		$factory = self::reference($binding, $context);
 		$entries /** Storage<data_entry_node> */ = $node->entries;
 		$signature = $binding->factory()->signature();
@@ -157,7 +160,7 @@ final class CPP_Data_Construction
 	{
 		$context->headers['utility'] = true;
 		$type = CPP_Declarations::type($facts->type, $context);
-		$payload = CPP_Types::payload($facts->payload_type);
+		$payload = CPP_Types::payload($facts->payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
 		$text = '([&]() -> ' . $type . " {\n";
 		$arguments /** hash<string, int> */ = [];
@@ -202,7 +205,7 @@ final class CPP_Data_Construction
 		$base_count = 0;
 		if ($contract->base_contract !== null) {
 			$base_count = q_count($contract->base_contract->inputs_in_order());
-			$base = CPP_Types::payload($contract->base_type);
+			$base = CPP_Types::payload($contract->base_type, $context);
 			CPP_Types::record_dependencies($base, $context);
 			$initializers = ' : ' . $base->spelling . '{' . $base->spelling . '::scpp_data_tag{}';
 			for ($index = 0; $index < $base_count; $index++) {

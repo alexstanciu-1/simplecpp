@@ -17,7 +17,30 @@ enum cpp_type_requirement {
 	case complete;
 }
 
+/** Representation choices only; native optimization/debug belong to the native builder. */
+final class cpp_lowering_options
+{
+	public bool $prelower_templates = false;
+}
+
+/** Engine-owned representation; references only carry the entry position. */
+final class cpp_specialization_entry
+{
+	public function __construct(public readonly string $name, public readonly string $header,
+		public readonly string $declaration, public readonly string $implementation)
+	{
+	}
+}
+
+// Invocation-local entry ID, written only by the engine; never a durable identity.
+/** @scpp-struct */
+final class cpp_specialization_ref
+{
+	public int $entry_id /** uint32 */ = 0;
+}
+
 final class cpp_type {
+	public ?canonical_type_use $specialization = null;
 	public string $spelling;
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
@@ -74,6 +97,10 @@ enum cpp_record_state {
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	public array $specializations /** hash<canonical_type_use,int> */ = [];
+	public function __construct(public ?CPP_Specializations $specialization_engine = null)
+	{
+	}
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;
@@ -94,6 +121,7 @@ final class cpp_generation_context
 /** One independently replaceable C++ fragment; no references to transient generation workers. */
 final class cpp_fragment
 {
+	public array $specializations /** hash<canonical_type_use,int> */ = [];
 	/** Used helper requests survive cached body reuse; assembly deduplicates live fragments. */
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public change_state $change_status = change_state::added;
@@ -121,6 +149,7 @@ final class cpp_fragment
 
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
+	public bool $prelower_templates = false;
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()
