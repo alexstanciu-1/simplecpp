@@ -46,7 +46,9 @@ final class CPP_Runtime_Operations
 		$parts /** vector<string> */ = [];
 		foreach ($inputs as $position => $input) {
 			$operand = new cpp_runtime_operand($input, $expressions[$position]);
-			$parts[] = self::address($operand, $context);
+			// Source constructors consume application representations, not native unwrapped values.
+			$parts[] = ($context->concrete_types() && ($request->kind === cpp_runtime_operation_kind::construct_call))
+				? '&(' . $operand->expression . ')' : self::address($operand, $context);
 		}
 		return 'scpp::internal::' . $entry->name . '(' . self::join($parts) . ')';
 	}
@@ -85,7 +87,9 @@ final class CPP_Runtime_Operations
 			|| ($request->kind === cpp_runtime_operation_kind::conversion)
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
 			|| ($request->kind === cpp_runtime_operation_kind::output)
-			|| ($request->kind === cpp_runtime_operation_kind::runtime_call))) ? $engine : null;
+			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
+			|| ($request->kind === cpp_runtime_operation_kind::construct_default)
+			|| ($request->kind === cpp_runtime_operation_kind::construct_call))) ? $engine : null;
 		$native_context = new cpp_generation_context();
 		$native_context->implementation_engine = $implementation_engine;
 		$signature = '';
@@ -95,7 +99,12 @@ final class CPP_Runtime_Operations
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		foreach ($inputs as $position => $input) {
 			CPP_Opaque_Representation::require_native_type($input);
-			$native = CPP_Declarations::type($input, $native_context);
+			$input_context = $native_context;
+			if ($engine->concrete_types() && ($request->kind === cpp_runtime_operation_kind::construct_call)) {
+				$input_context = new cpp_generation_context($engine);
+			}
+			$native = CPP_Declarations::type($input, $input_context);
+			foreach ($input_context->headers as $header => $used) { $native_context->headers[$header] = true; }
 			$mutable_input = self::mutable_input($request, $position);
 			$qualifier = $mutable_input ? '' : 'const ';
 			if ($position !== 0) { $signature .= ', '; }
@@ -333,7 +342,9 @@ final class CPP_Runtime_Operations
 		if ($engine === null || !$engine->concrete_types()) { return false; }
 		return ($decision->operation === conversion_operation::explicit_runtime_cast)
 			|| ($decision->operation === conversion_operation::text_conversion)
-			|| ($decision->operation === conversion_operation::integer_value_cast);
+			|| ($decision->operation === conversion_operation::integer_value_cast)
+			|| ($decision->operation === conversion_operation::ownership_upcast)
+			|| ($decision->operation === conversion_operation::unique_upcast);
 	}
 
 	public static function convert(string $expression, conversion_decision $decision, cpp_generation_context $context): string

@@ -109,7 +109,7 @@ final class CPP_Opaque_Representation
 		if ($existing !== null) { return $existing; }
 		$native = 'native_' . $name;
 		$prefix = 'SCPP_LAYOUT_' . $name;
-		$includes = CPP_Artifacts::includes($mapping->headers, '');
+		$includes = CPP_Artifacts::preamble($mapping->headers, $mapping->forward_declarations, '');
 		$aliases = $includes . 'using ' . $native . ' = ' . $mapping->spelling . ";\n";
 		$copyable = $capabilities->has_capability($type, generic_contract::copyable_value);
 		$probe = 'std::printf("#define ' . $prefix . '_SIZE %zu\\n#define ' . $prefix . '_ALIGN %zu\\n", sizeof('
@@ -119,11 +119,25 @@ final class CPP_Opaque_Representation
 			. 'struct operation_result {}; ' . $name . '(operation_result, void (*construct)(void*, const void*), const void* input);' . "\n"
 			. 'private: unsigned char storage_[' . $prefix . "_SIZE];\npublic:\n"
 			. "void* address() noexcept { return storage_; }\nconst void* address() const noexcept { return storage_; }\n";
-		$implementation = $aliases . "#include <memory>\n#include <new>\n#include <utility>\nnamespace scpp::internal {\n"
+		$payload = null;
+		$pointee = $compose_arguments ? CPP_Types::pointee($type) : null;
+		$implementation_headers /** hash<bool> */ = [];
+		if ($pointee !== null) {
+			$payload = CPP_Types::payload($pointee, new cpp_generation_context($engine));
+			$implementation_headers = $payload->headers;
+			$payload_declaration = CPP_Types::payload($pointee, new cpp_generation_context($engine), cpp_type_requirement::declaration);
+			$declaration = CPP_Artifacts::preamble($payload_declaration->headers, $payload_declaration->forward_declarations, '') . $declaration;
+			$declaration .= $payload->spelling . '* operator->() const; ' . $payload->spelling . "& operator*() const;\n";
+		}
+		$implementation = $aliases . CPP_Artifacts::includes($implementation_headers, '') . "#include <memory>\n#include <new>\n#include <utility>\nnamespace scpp::internal {\n"
 			. 'static_assert(sizeof(' . $name . ') == sizeof(' . $native . "));\n"
 			. 'static_assert(alignof(' . $name . ') == alignof(' . $native . "));\n"
 			. $native . '& unwrap(' . $name . '& value) { return *std::launder(static_cast<' . $native . "*>(value.address())); }\n"
 			. 'const ' . $native . '& unwrap(const ' . $name . '& value) { return *std::launder(static_cast<const ' . $native . "*>(value.address())); }\n";
+		if ($payload !== null) {
+			$implementation .= $payload->spelling . '* ' . $name . '::operator->() const { return unwrap(*this).operator->(); }' . "\n"
+				. $payload->spelling . '& ' . $name . '::operator*() const { return unwrap(*this).operator*(); }' . "\n";
+		}
 		$implementation .= $name . '::' . $name . '(operation_result, void (*construct)(void*, const void*), const void* input) { construct(address(), input); }' . "\n";
 		// Native traits govern the physical special members; semantic copy permission is independent.
 		foreach (['default', 'copy', 'move', 'copy_assign', 'move_assign'] as $operation) {

@@ -6,9 +6,10 @@ namespace scpp\compiler;
 final class CPP_Types
 {
 	/** Allocation and ownership wrappers name the payload, not its default stored representation. */
-	public static function payload(canonical_type_use $type_use, ?cpp_generation_context $context = null): cpp_type
+	public static function payload(canonical_type_use $type_use, ?cpp_generation_context $context = null,
+		cpp_type_requirement $requirement = cpp_type_requirement::complete): cpp_type
 	{
-		return self::unmodified_representation($type_use, cpp_type_requirement::complete, $context);
+		return self::unmodified_representation($type_use, $requirement, $context);
 	}
 
 	/** Resolve the semantic identity first; backend metadata never establishes type equality. */
@@ -22,6 +23,15 @@ final class CPP_Types
 		cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
 		if ($context !== null) {
+			if ($context->concrete_types() && self::needs_concrete_storage($type_use)) {
+				$engine /** CPP_Specializations */ = $context->specialization_engine;
+				$result = $engine->representation($type_use, $context);
+				$pointee = self::pointee($type_use);
+				if (($pointee !== null) && ($requirement === cpp_type_requirement::complete)) {
+					self::merge_headers($result, self::payload($pointee, $context));
+				}
+				return $result;
+			}
 			if ($context->runtime_abi()) {
 				if (self::has_template_recipe($type_use)
 					|| $type_use->by_value() || (Type_Queries::source_declaration($type_use) instanceof collected_member_owner)) {
@@ -37,7 +47,8 @@ final class CPP_Types
 	/** Native outer implementation with concrete physical arguments, using the same registry bindings. */
 	public static function implementation_representation(canonical_type_use $type_use, CPP_Specializations $engine): cpp_type
 	{
-		return self::native_representation_for($type_use, cpp_type_requirement::complete, null, $engine);
+		$requirement = self::pointee($type_use) !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+		return self::native_representation_for($type_use, $requirement, null, $engine);
 	}
 
 	private static function native_representation_for(canonical_type_use $type_use, cpp_type_requirement $requirement,
@@ -118,7 +129,8 @@ final class CPP_Types
 			if ($engine !== null) {
 				$selected = ($engine->concrete_types() || $engine->runtime_abi())
 					? self::has_template_recipe($type_use) : CPP_Concrete_Recipes::selects_representation($type_use);
-				if ($selected) { return $engine->representation($type_use, $context); }
+				// Payload queries must not select the complete stored owner again.
+				if ($selected && !Type_Queries::is_nominal_handle($type_use)) { return $engine->representation($type_use, $context); }
 			}
 		}
 		$result = new cpp_type();
@@ -210,9 +222,14 @@ final class CPP_Types
 				}
 				else {
 					$type_argument = $arguments[$argument->position];
-					$mapping = $engine !== null
-						? self::implementation_argument($type_argument, $argument->payload, $engine)
-						: ($argument->payload ? self::payload($type_argument, $context) : self::representation($type_argument, $context));
+					if (($engine !== null) && ($recipe->pointee_position === $argument->position)) {
+						$mapping = self::unmodified_representation($type_argument, cpp_type_requirement::declaration, new cpp_generation_context($engine));
+					}
+					else {
+						$mapping = $engine !== null
+							? self::implementation_argument($type_argument, $argument->payload, $engine)
+							: ($argument->payload ? self::payload($type_argument, $context) : self::representation($type_argument, $context));
+					}
 				}
 				$result->spelling .= $separator . $mapping->spelling;
 				$separator = ', ';
@@ -222,6 +239,33 @@ final class CPP_Types
 		}
 		self::add_header($result, $recipe->header);
 		return $result;
+	}
+
+	/** Resolve the existing storage owner's recipe without introducing a second type registry. */
+	public static function stored_recipe(canonical_type_use $type): ?cpp_type_recipe
+	{
+		if ($type->by_value()) { return Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value)->recipe(); }
+		$definition = Type_Queries::canonical($type)->definition();
+		if (Type_Queries::is_nominal_handle($type)) { $definition = Model::$type_catalog->definition('shared'); }
+		elseif (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition)) { return null; }
+		return Model::$cpp_type_bindings->definition($definition->definition_id())->recipe();
+	}
+
+	public static function needs_concrete_storage(canonical_type_use $type): bool
+	{
+		$recipe = self::stored_recipe($type);
+		return $recipe !== null && ($recipe->template_application || $recipe->concrete_boundary);
+	}
+
+	/** A physical pointer interface identifies its payload through the installed recipe. */
+	public static function pointee(canonical_type_use $type): ?canonical_type_use
+	{
+		$recipe = self::stored_recipe($type);
+		if ($recipe === null || $recipe->pointee_position < 0) { return null; }
+		if (Type_Queries::is_nominal_handle($type)) { return $type; }
+		$canonical = Type_Queries::canonical($type);
+		if (!($canonical instanceof applied_template_type)) { throw new \LogicException('Pointer interface requires an applied template'); }
+		return object_cast($canonical, applied_template_type::class)->arguments()[$recipe->pointee_position];
 	}
 
 	/** A native template application is a binding fact, independent of source type category. */

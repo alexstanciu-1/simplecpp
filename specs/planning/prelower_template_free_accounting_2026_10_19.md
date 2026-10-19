@@ -1,7 +1,7 @@
 # Template-free accounting application boundary
 Doc Status: planning
 
-Status: proposed contract extension; not implemented.
+Status: approved; goal active. The [source-handle slice](results/prelower_source_handles_2026_10_19/README.md) passes accounting and focused O0 proofs. Literal/scalar interfaces and template-free include closure remain in progress.
 
 ## Target and audit
 

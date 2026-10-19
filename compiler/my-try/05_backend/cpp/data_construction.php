@@ -82,7 +82,7 @@ final class CPP_Record_Construction
 	public static function object(prepared_object_construction $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi()) {
+		if ($context->runtime_abi() || ($context->concrete_types() && CPP_Types::needs_concrete_storage($facts->type))) {
 			if ($facts->constructor_call !== null) { return CPP_Source_Calls::construct($facts, $arguments, $context); }
 			return CPP_Runtime_Operations::construct_default($facts, $context);
 		}

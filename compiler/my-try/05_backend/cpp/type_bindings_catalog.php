@@ -19,6 +19,8 @@ final class cpp_type_argument_binding
 final class cpp_type_recipe
 {
 	public bool $template_application = false;
+	public bool $concrete_boundary = false;
+	public int $pointee_position = -1;
 	public array $arguments /** vector<cpp_type_argument_binding> */ = [];
 	public function __construct(public string $symbol, public string $header) {}
 }

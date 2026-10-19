@@ -636,6 +636,8 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'header') { $result->header = self::name($reader); }
 			elseif ($key === 'type') { $result->type_name = self::name($reader); }
 			elseif ($key === 'modifier') { $result->modifier_name = self::name($reader); }
+			elseif ($key === 'pointee') { $result->pointee_parameter = self::name($reader); }
+			elseif ($key === 'concrete_boundary') { $result->concrete_boundary = $reader->read_boolean(); }
 			elseif ($key === 'arguments') {
 				$arguments = new Storage /** Storage<runtime_cpp_argument_spec> */();
 				$reader->begin_array();

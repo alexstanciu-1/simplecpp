@@ -126,6 +126,9 @@ final class runtime_cpp_type_spec extends runtime_cpp_spec
 {
 	public string $type_name = '';
 	public string $modifier_name = '';
+	/** Physical interface only; names a declared template parameter. */
+	public string $pointee_parameter = '';
+	public bool $concrete_boundary = false;
 	public ?Storage $arguments /** Storage<runtime_cpp_argument_spec> */ = null;
 }
 

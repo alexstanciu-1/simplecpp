@@ -69,7 +69,7 @@ if ($composed && $output_proof) {
 }
 $before=demand_snapshot();
 $headers=concrete_headers();
-if(count($headers)!==($composed?4:0)){throw new \LogicException('Source demand prepared the wrong type closure');}
+if(count($headers)!==($composed?6:0)){throw new \LogicException('Source demand prepared the wrong type closure');}
 foreach($headers as $text){if(str_contains($text,'unused')){throw new \LogicException('Unrequested runtime type was prepared');}}
 $closed=Model::$global_scope->functions_named('copy_closed')[0]->syntax()->require_preparation()->signature->return_type;
 $nested=Model::$global_scope->functions_named('copy_nested')[0]->syntax()->require_preparation()->signature->return_type;
@@ -93,7 +93,7 @@ if(demand_snapshot()!==$before){throw new \LogicException('Restored demand chang
 $compiler->cpp_lowering->prelower_templates=!$composed;
 $compiler->cpp_lowering->concrete_type_substitution=!$composed;
 $compiler->cpp();
-if(count(concrete_headers())!==($composed?0:4)){throw new \LogicException('Option switch did not replace physical selection');}
+if(count(concrete_headers())!==($composed?0:6)){throw new \LogicException('Option switch did not replace physical selection');}
 $compiler->cpp_lowering->prelower_templates=$composed;
 $compiler->cpp_lowering->concrete_type_substitution=$composed;
 $compiler->cpp();
@@ -158,6 +158,21 @@ CPP, $main);
   .'require(failed && capture.text()=="p1:" && n.native_value()==1); std::cout.rdbuf(previous); ';
  $main=str_replace('int main(){','int main(){'.$proof,$main);
 }
+// Source-class handles retain native identity while their headers use concrete storage.
+$left=Model::$global_scope->functions_named('copy_left')[0]->syntax()->require_preparation()->signature->return_type;
+$left_mapping=CPP_Types::representation($left,$context);
+$left_native=$composed?CPP_Types::implementation_representation($left,$engine):CPP_Types::representation($left);
+$left_payload=CPP_Types::payload($left,$context);
+$declarations.=CPP_Artifacts::includes($left_mapping->headers,'').'using SourceOwner='.$left_mapping->spelling.'; void source_owner_proof();'."\n";
+$support.=CPP_Artifacts::includes($left_native->headers+$left_payload->headers,'').'#include "instrument.hpp"'."\n"
+ .'#include "'.CPP_Artifacts::callable_header('copy_left').'"'."\n";
+$left_access=$composed?'(*std::launder(static_cast<'.$left_native->spelling.'*>(owner.address())))':'owner';
+$left_copy=CPP_Callables::source_reference(Model::$global_scope->functions_named('copy_left')[0]);
+$support.='void source_owner_proof(){ SourceOwner owner; '.$left_access.'='.$left_native->spelling.'(std::make_shared<'.$left_payload->spelling.'>()); '
+ .'auto* original=owner.operator->(); begin(); { auto copied='.$left_copy.'(owner); require(copied.operator->()==original && '.$left_access.'.use_count()==2); '
+ .'require(&*copied==original); } require('.$left_access.'.use_count()==1); report("source-owner"); measuring=false; '
+ .'SourceOwner empty; bool failed=false; try { (void)empty.operator->(); } catch(const scpp::runtime_error&){failed=true;} require(failed); }'."\n";
+$main=str_replace(' Nested value;', ' source_owner_proof(); Nested value;', $main);
 $artifacts=new Storage /** Storage<cpp_artifact> */();
 foreach(Model::$cpp_files as $artifact){if($artifact->file_name!=='entry.cpp'){$artifacts->append($artifact);}}
 if($alternate){$artifacts->append(new cpp_artifact('proof:storage-binding',cpp_artifact_kind::header,'binding_shared.hpp',"#pragma once\n#include <scpp/shared_p.hpp>\nnamespace fixture { template<class T> using Handle=scpp::shared_p<T>; }\n"));}

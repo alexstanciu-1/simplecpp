@@ -41,7 +41,12 @@ checks nested use, shared pointee identity, borrowed references, request retirem
 replay and option switching. Runtime operation/trait coverage remains separate,
 including wrapper payload interoperability beyond the bounded proofs. Implicit shared storage consumes the
 installed `shared` binding while preserving the payload's declaration/completeness
-requirement. The alternate-storage proof changes its native symbol and header without
+requirement. In concrete mode its full stored representation is substituted. The
+recipe's `pointee` contract supplies typed dereference interfaces; native lifecycle
+and allocation stay in compiled middleware. Pointer layouts use forward payload
+declarations and implementations use complete definitions, including recursive
+source-class fields. Prepared inherited-handle conversions use the existing
+conversion adapter. The alternate-storage proof changes its native symbol and header without
 changing the renderer or semantic identity. See also the [migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
 
 ## Concrete output transport

@@ -61,6 +61,22 @@ final class CPP_Runtime_Type_Bindings
 			$template_definition = object_cast($definition, abstract_template_type_definition::class);
 			foreach ($template_definition->parameters() as $position => $parameter) { $parameters[$parameter->name()] = $position; }
 		}
+		$recipe->concrete_boundary = $spec->concrete_boundary;
+		if ($spec->pointee_parameter !== '') {
+			if ($modifier || !isset($parameters[$spec->pointee_parameter])) {
+				throw new \RuntimeException('C++ pointee must name a declared type parameter');
+			}
+			$recipe->pointee_position = $parameters[$spec->pointee_parameter];
+			if ($spec->arguments === null) { throw new \RuntimeException('C++ pointee requires explicit payload arguments'); }
+			$found = false;
+			foreach ($spec->arguments as $argument_spec) {
+				if ($argument_spec->parameter === $spec->pointee_parameter) {
+					if (!$argument_spec->payload) { throw new \RuntimeException('C++ pointee requires payload representation'); }
+					$found = true;
+				}
+			}
+			if (!$found) { throw new \RuntimeException('C++ pointee must occur in native arguments'); }
+		}
 		if ($spec->arguments === null) {
 			if ($modifier) { throw new \RuntimeException('C++ modifier binding requires explicit arguments'); }
 			$recipe->template_application = $definition instanceof abstract_template_type_definition;

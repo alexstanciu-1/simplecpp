@@ -307,6 +307,20 @@ For example, core binds the existing integer and ownership identities:
  "arguments":[{"parameter":"Target","representation":"payload"}]}
 ```
 
+A type recipe may set `concrete_boundary: true` to require concrete application
+storage even when its native spelling is not a template. This is physical exposure
+metadata; it does not change semantic identity or capabilities. Template applications
+continue to select concrete storage without this flag.
+
+An optional `pointee` names a formal parameter already present in the explicit native
+arguments with `representation: "payload"`. It declares a native pointer interface:
+`operator->() const` and `operator*() const` access that payload using the runtime's
+checks. The native handle must support layout/special-member trait inspection with a
+forward-declared source payload; complete payload definitions are required only by
+its compiled implementations. Unknown parameters, omitted explicit arguments, missing
+payload arguments and modifier targets reject. This mechanism also supplies the
+implicit source-class storage binding through the existing shared owner policy.
+
 Core supplies runtime representations of the existing scalars, boxed types,
 nullable/Result and ownership families, plus the value modifier. Hosts emitting
 those runtime representations must select core (directly or through dependencies);
