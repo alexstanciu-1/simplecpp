@@ -43,7 +43,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Mandatory performance task once operational | [PCH findings, incremental builds and LLVM/IR investigation](planning/compile_performance.md) |
 | Chapter 08 implementation roadmap | [Multi-file artifacts, staged migration, incremental native builds and runtime PCH](planning/incremental_cpp_artifacts.md) |
 | Persistent generated output | [Coordinator publication, ownership, locking and recovery](architecture/output_publication.md) |
-| Concrete C++ specialization | [Opt-in integer/vector recipes, ownership and current coverage](architecture/cpp_template_prelowering.md); [capability-driven generalization matrix](../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md) |
+| Concrete C++ specialization | [Opt-in integer/vector recipes, ownership and current coverage](architecture/cpp_template_prelowering.md); [capability-driven generalization matrix](../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md); [representation/ownership audit](../../../specs/planning/prelower_representation_audit_2026_10_19.md) |
 | Persistent native cache | [Staged outputs, dependencies, runtime PCH and bounded native build](architecture/native_cpp_build.md) |
 | Namespace/import implementation | [Agreed language rules](../../../specs/namespaces_v0_2.md), [approved identity/body migration and current checkpoints](planning/namespace_identity_migration.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |

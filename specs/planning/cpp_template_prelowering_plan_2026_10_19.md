@@ -29,7 +29,8 @@ and three grouped support units. Its `manifest.json`, `converted/concrete.hpp`,
 concrete examples. The bounded text converter is evidence, not production code to
 insert after emission.
 
-Preserve these choices initially:
+The completed first experiment used these choices (the generalization below supersedes
+handwritten family recipes; original runtime templates may remain in support units):
 
 - Concrete declarations and out-of-line implementations, not aliases or explicit
   instantiations of the existing runtime templates.
@@ -47,7 +48,10 @@ The initial [family-by-capability matrix](runtime_template_capability_matrix_202
 and [runtime source index](runtime_template_source_inventory_2026_10_19.md) now distinguish
 existing registry facts, missing bindings and internal helper exposure. Extend those
 existing owners; do not introduce another registry or multiply handwritten family recipes.
-The next design slice is the general representation/operation-binding contract.
+The [representation and ownership audit](prelower_representation_audit_2026_10_19.md)
+identifies the existing owners, current duplication and the next proof: direct or
+in-place opaque storage, borrowed transport, target layout and nested-reference ABI
+compatibility. These mechanisms remain proposed, not implemented.
 
 Before locking the initial representation interfaces, inventory runtime template
 families and review them explicitly. Discovery must include runtime headers, operator
@@ -69,8 +73,8 @@ helpers so the discussion does not silently widen the application backend scope.
 Record an explicit disposition: implement in the initial slice, discuss for the next
 slice, or retain templates for now with a reason. Integer representations are included
 from the start: derive native width/signedness from registered facts, rather than
-leaving `int_t<Rep>` beneath the concrete vector. Family recipes may differ; concrete
-type combinations must be generated from data and must not be special-case fixtures.
+leaving `int_t<Rep>` beneath the concrete vector. Runtime bindings may differ; concrete
+type combinations must be generated from data, without family-specific engine branches.
 Selective methods, operation closure and ABI bridges remain explicit follow-up topics.
 
 ## 1. Establish configuration and engine ownership in one vertical slice
