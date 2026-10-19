@@ -135,8 +135,14 @@ named construction, weak derivation/lock or calls from
 native methods back into application functions. These crossings reject explicitly.
 Recursive payload graphs, callback crossings and full inheritance operation coverage
 remain follow-up proofs. See the [source-payload checkpoint](../../../../specs/planning/results/prelower_source_payloads_2026_10_19/README.md).
+The [concrete-composition experiment](../../../../specs/planning/results/prelower_composition_2026_10_19/README.md)
+supports the preferred next source-field direction: actual concrete fields with
+ordinary member calls/references, including containers of those records and concrete
+nested elements. It preserves tested allocations/copies and lifecycle traits.
+This is not yet production lowering: physical argument bindings, dependent layout
+resolution and existing provider compatibility must be integrated deliberately.
 The proposed [native-place contract](../../../../specs/planning/prelower_native_places_2026_10_19.md)
-describes the additional physical distinction required for field mutation.
+is deferred for source fields, remaining relevant to original native storage boundaries.
 
 ## Accounting recipe baseline: invocation
 

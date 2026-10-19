@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_composition.py --results FRESH_DIRECTORY`
+compares a source record containing actual concrete fields against original native
+template fields. It checks field/reference identity, record and nested-container
+copy/move/growth, shared/unique ownership, partial-copy cleanup, layout/lifecycle
+traits, sanitizer behavior and zero extra allocation/payload-copy counts. A negative
+control verifies counter sensitivity. `--timing-repeats 5` adds paired separate-unit
+compile timings. This is a native representation experiment, not compiler lowering;
+see the [composition proof](../../../specs/planning/results/prelower_composition_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_expressions.py --results FRESH_DIRECTORY`
 compares ordinary generated source with the runtime ABI mode at O0/O2 and under
 ASan/UBSan with optional copy elision disabled. It checks payload allocation/copy

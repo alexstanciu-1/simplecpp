@@ -1,6 +1,12 @@
 # Native field places across the prelower boundary
 Doc Status: planning
 
+Status: deferred as the first approach for source-defined fields. The user requested
+and the [concrete-composition proof](results/prelower_composition_2026_10_19/README.md)
+supports defining those fields as actual concrete owners. Such fields use ordinary
+C++ references. The analysis below remains relevant where runtime APIs expose
+original native storage; it is not the preferred next source-field slice.
+
 ## Finding
 
 The existing backend already owns field selection and receiver retention in

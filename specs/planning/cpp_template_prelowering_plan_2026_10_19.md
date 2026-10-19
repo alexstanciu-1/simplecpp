@@ -70,8 +70,13 @@ receivers and owned results. Selected positional constructors reuse this call
 transport, existing allocation selection and final result storage. Property crossings,
 static/provider methods, reference results and variadic/observation transport remain
 follow-ups using the same prepared call/place owners.
-The [native-place proposal](prelower_native_places_2026_10_19.md) records the missing
-borrowed-address distinction and bounded field-mutation integration for agreement.
+The [concrete-composition proof](results/prelower_composition_2026_10_19/README.md)
+supports the user's preferred next direction: define source fields as real concrete
+owners, allowing ordinary member calls/references. Integration must consistently
+select physical template arguments and resolve dependent layouts through existing
+bindings/build owners. This is proved natively, not yet integrated in compiler emission.
+The [native-place proposal](prelower_native_places_2026_10_19.md) is deferred for
+source fields and retained for boundaries that still expose original native storage.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
 details the missing backend request replay and native-address transport, and the
 prepared nested-read/write distinction. Its retained contract is agreed; the linked expression checkpoint records implemented coverage.
