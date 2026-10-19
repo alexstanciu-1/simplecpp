@@ -1,0 +1,65 @@
+{
+  "configuration": "Clang 18.1.3, C++23, O0, debug disabled, existing eager runtime PCH, 16 application units, sequential compilation",
+  "source_commit": "3b358f7e",
+  "output_bridge_compile_seconds": 0.5697958539822139,
+  "checks_per_execution": 998,
+  "successful_executions": 12,
+  "variants": {
+    "baseline": {
+      "compile_samples_seconds": [
+        11.156297310895752,
+        10.892243737063836,
+        10.262589640915394
+      ],
+      "compile_median_seconds": 10.892243737063836,
+      "link_samples_seconds": [
+        0.5168588180094957,
+        0.4991044620401226,
+        0.5346109829843044
+      ],
+      "link_median_seconds": 0.5168588180094957
+    },
+    "index": {
+      "compile_samples_seconds": [
+        9.142212645150721,
+        8.136285944841802,
+        8.461979924933985
+      ],
+      "compile_median_seconds": 8.461979924933985,
+      "link_samples_seconds": [
+        0.5366648869821802,
+        0.4955043389927596,
+        0.48933581000892445
+      ],
+      "link_median_seconds": 0.4955043389927596
+    },
+    "output": {
+      "compile_samples_seconds": [
+        9.990973805077374,
+        8.998998349998146,
+        9.28819744498469
+      ],
+      "compile_median_seconds": 9.28819744498469,
+      "link_samples_seconds": [
+        0.5120682599954307,
+        0.48968840402085334,
+        0.49260335898725316
+      ],
+      "link_median_seconds": 0.49260335898725316
+    },
+    "both": {
+      "compile_samples_seconds": [
+        7.547477137006354,
+        7.374275532958563,
+        7.40916371892672
+      ],
+      "compile_median_seconds": 7.40916371892672,
+      "link_samples_seconds": [
+        0.4831177790183574,
+        0.4947856570361182,
+        0.4858219849993475
+      ],
+      "link_median_seconds": 0.4858219849993475
+    }
+  }
+}

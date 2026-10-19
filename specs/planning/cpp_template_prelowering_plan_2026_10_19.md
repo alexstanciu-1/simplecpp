@@ -372,6 +372,13 @@ concrete path a general default.
 
 ## 5. Measure the production path against the experiment
 
+The [controlled header-exposure experiment](results/prelower_header_impact_2026_10_19/README.md)
+reduces prepared accounting application compilation from 10.892 s to 7.409 s
+(32%) by narrowing indexing and string-output headers, with all 998 checks passing.
+Prioritize concrete declaration/include selection through existing bindings before
+expanding runtime coverage. These are diagnostic shims, not production fixes.
+Continue O0-only measurements until the agreed optimization work is complete.
+
 Use identical supported workloads and toolchain configuration for both emission
 modes. Keep application partitioning and support grouping comparable. Compare the
 existing runtime PCH path, improved PCH where available, and concrete/no-PCH output.
