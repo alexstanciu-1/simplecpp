@@ -238,11 +238,8 @@ final class CPP_Types
 	/** Physical substitution does not invent semantic types or grant new capabilities. */
 	private static function implementation_argument(canonical_type_use $argument, bool $payload, CPP_Specializations $engine): cpp_type
 	{
-		if (self::has_template_recipe($argument) || $argument->by_value()
-			|| (!$payload && Type_Queries::is_nominal_handle($argument))) {
-			return CPP_Opaque_Representation::representation($argument, $engine, true);
-		}
-		return $payload ? self::payload($argument) : self::representation($argument);
+		$context = new cpp_generation_context($engine);
+		return $payload ? self::payload($argument, $context) : self::representation($argument, $context);
 	}
 
 	private static function add_header(cpp_type $type, string $header): void

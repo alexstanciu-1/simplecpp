@@ -80,9 +80,11 @@ installed binding, preserving source forward-declaration requirements. Default a
 alternate binding proofs compile mutually referring source classes.
 Concrete output now borrows through the existing runtime-operation bridge and calls
 `echo_one`; the scalar proof preserves ordered bytes and failure suppression.
-Accounting reaches container/source-class handle representation mismatches after
-passing integer output. Next align those existing physical mappings and operation
-adapters; representation metadata alone does not complete all operations.
+Nested argument mappings now reuse ordinary stored/payload selection. This resolves
+the source-class container mismatch, and accounting compiles/runs at O0 with 998 checks
+passing. Native shared wrappers are still exposed, so audit remaining template
+exposure and runtime-interface coverage before claiming full prelowering or comparing
+performance against a fully equivalent baseline.
 
 ## Active integration sequence: concrete type substitution
 

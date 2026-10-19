@@ -5,7 +5,8 @@ The opt-in `prelower_templates` path uses the existing AST, prepared types and
 operation decisions. It does not rewrite syntax or add a semantic pass. The ordinary
 C++ path remains the default. The CLI retains the measured integer/vector recipe
 baseline; the API also offers the growing general runtime ABI path described below.
-Neither currently establishes whole-accounting coverage.
+The general API path now compiles and runs accounting at O0 (998 checks); this is
+not yet full template elimination or a performance comparison.
 
 The general path follows [capability-driven generalization](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md)
 through the existing registry and bindings, using original runtime templates behind
@@ -37,7 +38,7 @@ recipe mode retains its bounded selection rule in `CPP_Concrete_Recipes`.
 The [source-demand proof](../../../../specs/planning/results/prelower_runtime_template_demand_2026_10_19/README.md)
 checks nested use, shared pointee identity, borrowed references, request retirement,
 replay and option switching. Runtime operation/trait coverage remains separate,
-including source-handle consistency at accounting's container boundaries. Implicit shared storage consumes the
+including wrapper payload interoperability beyond the bounded proofs. Implicit shared storage consumes the
 installed `shared` binding while preserving the payload's declaration/completeness
 requirement. The alternate-storage proof changes its native symbol and header without
 changing the renderer or semantic identity. See also the [migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
@@ -74,9 +75,8 @@ The [mutation proof](../../../../specs/planning/results/prelower_concrete_mutati
 covers integer aliases/fields, prefix/postfix sequencing and nullable-float success
 and failure, with no extra measured boundary allocations or tracked payload copies.
 It does not establish every numeric carrier with a substituted template payload.
-Accounting passes calendar increments and concrete integer output; whole-accounting
-compilation remains unproved. Container adapters currently disagree with nested
-source-class handle representations.
+Accounting passes calendar increments, concrete integer output and source-class
+container operations. The O0 executable reports 998 successful checks.
 
 ## Concrete iteration adapter
 
@@ -123,10 +123,15 @@ The original single-batch path retains its identity and artifact path.
 
 Acyclic source payload template arguments now consume the one shared generated
 class/struct definition. The emitter supplies its header dependencies; the engine
-does not rebuild source layout facts. Inline records retain their source representation;
-nominal shared class arguments select a concrete owner over the runtime handle.
+does not rebuild source layout facts. Nested arguments now use the same stored/payload representation query as ordinary
+signatures and operations, rather than a second opaque-selection rule. Inline
+records and nominal shared classes therefore retain their existing source mappings
+in both places. Native shared wrappers remain exposed; complete preparation of those
+wrappers is still a coverage item. This avoids allocating or copying conversions
+between otherwise incompatible physical representations.
 Method implementations stay in their existing source units. See the
-[source argument proof](../../../../specs/planning/results/prelower_source_arguments_2026_10_19/README.md).
+[source argument proof](../../../../specs/planning/results/prelower_source_arguments_2026_10_19/README.md) and
+[representation-consistency follow-up](../../../../specs/planning/results/prelower_source_storage_2026_10_19/README.md).
 Original native provider signatures cannot accept substituted types based on layout
 similarity alone. See the [production-binding proof](../../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
 

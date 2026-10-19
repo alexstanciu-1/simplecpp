@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
+checks source payload layout, generated source-class append/store/read calls, shared
+identity/reference counts, allocation/copy parity, source header cycles and incremental
+body/layout cache behavior. Nested storage must match ordinary signatures; native
+source-class shared wrappers remain exposed in this checkpoint.
+
 `python3 compiler/my-try/tests/runtime_template_demand.py --output --alternate-storage --results FRESH_DIRECTORY`
 adds scalar echo transport, borrowed/temporary operands, exact ordered bytes and
 failure suppression to the source-demand proof. It compares direct/concrete allocation
