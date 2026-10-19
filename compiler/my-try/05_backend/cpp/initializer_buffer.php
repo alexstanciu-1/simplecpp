@@ -126,18 +126,18 @@ final class CPP_Initializer_Buffer
 		$probe = 'std::printf("#define ' . $prefix . '_SIZE %zu\\n#define ' . $prefix . '_ALIGN %zu\\n", sizeof('
 			. $native . '), alignof(' . $native . "));\n";
 		$header = 'specializations/' . $name . '.hpp';
-		$declaration = "#pragma once\n#include <cstddef>\n" . CPP_Artifacts::includes($mapping->headers, '')
+		$declaration = "#pragma once\n#include <stddef.h>\n" . CPP_Artifacts::includes($mapping->headers, '')
 			. '#ifndef ' . $prefix . "_SIZE\n#error Native layout resolution is required\n#endif\n"
 			. 'namespace scpp::internal { class alignas(' . $prefix . '_ALIGN) ' . $name . " final {\n"
 			. 'unsigned char storage_[' . $prefix . "_SIZE];\npublic:\n"
-			. 'explicit ' . $name . '(std::size_t count); ~' . $name . "() noexcept;\n"
+			. 'explicit ' . $name . '(size_t count); ~' . $name . "() noexcept;\n"
 			. $name . '(const ' . $name . '&) = delete; ' . $name . '& operator=(const ' . $name . "&) = delete;\n"
 			. $name . '(' . $name . '&&) = delete; ' . $name . '& operator=(' . $name . "&&) = delete;\n"
 			. 'void append(' . $signature . '); ' . $mapping->spelling . " finish();\n}; }\n";
 		$implementation = $aliases . "#include <memory>\n#include <new>\n#include <type_traits>\nnamespace scpp::internal {\n"
 			. 'static_assert(sizeof(' . $name . ') == sizeof(' . $native . ')); static_assert(alignof(' . $name . ') == alignof(' . $native . "));\n"
 			. 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
-			. $name . '::' . $name . '(std::size_t count) { ::new(storage_) ' . $native . "(count); }\n"
+			. $name . '::' . $name . '(size_t count) { ::new(storage_) ' . $native . "(count); }\n"
 			. $name . '::~' . $name . '() noexcept { std::destroy_at(std::launder(reinterpret_cast<' . $native . "*>(storage_))); }\n"
 			. 'void ' . $name . '::append(' . $signature . ') { std::launder(reinterpret_cast<' . $native . '*>(storage_))->append(' . $values . "); }\n";
 		$finish = $factory . '(std::launder(reinterpret_cast<const ' . $native . '*>(storage_))->view())';

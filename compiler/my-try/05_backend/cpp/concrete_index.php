@@ -98,7 +98,7 @@ final class CPP_Concrete_Index
 		if ($pointer) { $parameters .= ', bool mode'; $arguments .= ', mode'; }
 		$output = 'void';
 		if ($helper === 'keyed_ready') { $output = 'bool'; }
-		if ($helper === 'keyed_probe') { $output = 'scpp::bool_t'; $context->headers['scpp/bool_t.hpp'] = true; }
+		if ($helper === 'keyed_probe') { $output = 'bool'; }
 		if ($request->result !== null) {
 			$mapping = CPP_Types::representation($request->result, $context);
 			CPP_Types::record_dependencies($mapping, $context);
@@ -110,7 +110,8 @@ final class CPP_Concrete_Index
 		$signature = $output . ' ' . $helper . '(' . $parameters . ')';
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . 'namespace scpp { ' . $signature . "; }\n";
 		$body = CPP_Artifacts::includes($native_headers, '') . "#include <memory>\n#include <scpp/keyed_path.hpp>\n#include <scpp/index_existing.hpp>\nnamespace scpp { "
-			. $signature . ' { return scpp::' . $helper . '(' . $arguments . "); } }\n";
+			. $signature . ' { return scpp::' . $helper . '(' . $arguments . ')'
+			. ($helper === 'keyed_probe' ? '.native_value()' : '') . "; } }\n";
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $declaration, $body, []);
 	}
 }

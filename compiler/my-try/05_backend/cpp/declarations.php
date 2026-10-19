@@ -5,6 +5,17 @@ namespace scpp\compiler;
 
 final class CPP_Declarations
 {
+	/** Change value category using the already prepared physical type, without a template helper. */
+	public static function move(string $value, canonical_type_use $type, cpp_generation_context $context, bool $read_only = false): string
+	{
+		if (!$context->concrete_types()) {
+			$context->headers['utility'] = true;
+			return 'std::move(' . $value . ')';
+		}
+		return 'static_cast<' . ($read_only ? 'const ' : '')
+			. self::type_for($type, $context, cpp_type_requirement::declaration) . '&&>(' . $value . ')';
+	}
+
 	/** Preparation owns output admission; the bridge only changes physical transport. */
 	public static function output(string $expression, canonical_type_use $type, cpp_generation_context $context): string
 	{
@@ -611,8 +622,7 @@ final class CPP_Declarations
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
 			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {
-				$context->headers['utility'] = true;
-				$name = 'std::move(' . $name . ')';
+				$name = self::move($name, $argument_type, $context, $parameter->access === storage_access::read_only);
 			}
 			if ($index < $facts->fixed_count) {
 				$names .= $separator . $name;
@@ -630,8 +640,7 @@ final class CPP_Declarations
 			$context->next_temporary++;
 			$text .= self::type($parameters[$index]->type, $context) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
 			if ($transport !== null) { $physical_arguments[] = $name; }
-			$context->headers['utility'] = true;
-			$names .= $separator . 'std::move(' . $name . ')';
+			$names .= $separator . self::move($name, $parameters[$index]->type, $context);
 			$separator = ', ';
 		}
 		if ($facts->variadic_parameter !== null) {

@@ -11,6 +11,14 @@ enum cpp_literal_kind {
 	case none;
 }
 
+/** Transient physical interface text, owned by the backend renderer. */
+final class cpp_type_interface
+{
+	public string $declaration_prefix = '';
+	public string $declaration = '';
+	public string $implementation = '';
+}
+
 /** Required visibility at a C++ use site, not a semantic type capability. */
 enum cpp_type_requirement {
 	case declaration;

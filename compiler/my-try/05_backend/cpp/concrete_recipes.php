@@ -202,13 +202,12 @@ const @E@& @N@::at(@K@ index) const {
 	{
 		return '#pragma once
 #include <stdint.h>
-#include <exception>
 namespace scpp::internal {
 [[noreturn]] void integer_cast_range(int64_t value);
 [[noreturn]] void integer_cast_range(uint64_t value);
 [[noreturn]] void zero_divisor(bool remainder);
 void initialize_cli(int argc, char** argv);
-void report_exception(const std::exception& failure);
+int run_application(int argc, char** argv, int (*body)());
 }
 ';
 	}
@@ -222,7 +221,10 @@ void report_exception(const std::exception& failure);
 #include "lang/php/cli_context.hpp"
 namespace scpp::internal {
 void initialize_cli(int argc, char** argv) { scpp::php::set_cli_args(argc, argv); }
-void report_exception(const std::exception& failure) { scpp::print_runtime_exception(failure); }
+int run_application(int argc, char** argv, int (*body)()) {
+    try { initialize_cli(argc, argv); return body(); }
+    catch (const std::exception& failure) { scpp::print_runtime_exception(failure); return 1; }
+}
 [[noreturn]] static void cast_range_message(const std::string& value) {
     throw scpp::runtime_error("scpp::cast<int_t>: integer value is outside the target range: " + value,
         "integer_cast_out_of_range", "scpp::cast<int_t>", "", {{"target_type","int_t"},{"value",value}});

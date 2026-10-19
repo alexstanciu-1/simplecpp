@@ -13,6 +13,8 @@ foreach(Model::$runtime_metadata->modules as $module){
 		$module=Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__,3).'/runtime/metadata/modules/core.json'),'core.json');
 		$binding=$module->cpp_types['core.representation.shared'];
 		$binding->symbol='fixture::Handle'; $binding->header='binding_shared.hpp';
+		$bytes=$module->cpp_types['core.representation.string'];
+		$bytes->byte_interface='fixture::Bytes'; $bytes->header='binding_bytes.hpp';
 	}
 	$metadata->modules->add($module->name,$module);
 }
@@ -30,6 +32,14 @@ function overwrite(closed &$target, const closed &$source): void { $target = $so
 function copy_nested(const duo<closed,int> &$value): duo<closed,int> { return $value; }
 PHS;
 if($output_proof){$program.= <<<'PHS'
+function byte_literal(int $index): string {
+ if ($index === 0) { return ""; }
+ if ($index === 1) { return "small"; }
+ if ($index === 2) { return "a\0b"; }
+ return "a long string value that exceeds short string storage";
+}
+function &byte_borrow(string &$value): string { return $value; }
+function byte_copy(const string &$value): string { return $value; }
 function output_next(int &$n): int { $n++; echo "p"; return $n; }
 function &output_alias(int &$n): int { echo "r"; return $n; }
 function output_work(int &$n): void { echo "[", true, false, null, -12, ":", 2.5, "]", output_next($n), ":", output_next($n), ":", $n, output_alias($n); }
@@ -68,8 +78,9 @@ if ($composed && $output_proof) {
 	}
 }
 $before=demand_snapshot();
+$expected_concrete=$output_proof?9:6;
 $headers=concrete_headers();
-if(count($headers)!==($composed?6:0)){throw new \LogicException('Source demand prepared the wrong type closure');}
+if(count($headers)!==($composed?$expected_concrete:0)){throw new \LogicException('Source demand prepared the wrong type closure');}
 foreach($headers as $text){if(str_contains($text,'unused')){throw new \LogicException('Unrequested runtime type was prepared');}}
 $closed=Model::$global_scope->functions_named('copy_closed')[0]->syntax()->require_preparation()->signature->return_type;
 $nested=Model::$global_scope->functions_named('copy_nested')[0]->syntax()->require_preparation()->signature->return_type;
@@ -93,7 +104,7 @@ if(demand_snapshot()!==$before){throw new \LogicException('Restored demand chang
 $compiler->cpp_lowering->prelower_templates=!$composed;
 $compiler->cpp_lowering->concrete_type_substitution=!$composed;
 $compiler->cpp();
-if(count(concrete_headers())!==($composed?0:6)){throw new \LogicException('Option switch did not replace physical selection');}
+if(count(concrete_headers())!==($composed?0:$expected_concrete)){throw new \LogicException('Option switch did not replace physical selection');}
 $compiler->cpp_lowering->prelower_templates=$composed;
 $compiler->cpp_lowering->concrete_type_substitution=$composed;
 $compiler->cpp();
@@ -160,6 +171,34 @@ CPP, $main);
 }
 // Source-class handles retain native identity while their headers use concrete storage.
 $left=Model::$global_scope->functions_named('copy_left')[0]->syntax()->require_preparation()->signature->return_type;
+if($output_proof){
+ $byte_type=Model::$global_scope->functions_named('byte_literal')[0]->syntax()->require_preparation()->signature->return_type;
+ $byte_mapping=CPP_Types::representation($byte_type,$context);
+ $declarations.=CPP_Artifacts::includes($byte_mapping->headers,'').'using Bytes='.$byte_mapping->spelling.";\nvoid byte_proof();\n";
+ foreach(['byte_literal','byte_borrow','byte_copy'] as $name){$names[$name]=CPP_Callables::source_reference(Model::$global_scope->functions_named($name)[0]);$support.='#include "'.CPP_Artifacts::callable_header($name).'"'."\n";}
+ $support.='#include "scpp/support/hash_t.hpp"'."\n#include \"instrument.hpp\"\n";
+ $support.='void byte_proof() {
+  const std::string_view expected[]={"", "small", std::string_view("a\0b",3), "a long string value that exceeds short string storage"};
+  for(int i=0;i<4;++i) {
+   begin(); { auto value='.$names['byte_literal'].'(OutputInt{i});
+    auto copied='.$names['byte_copy'].'(value); auto moved=Bytes(static_cast<Bytes&&>(copied));
+    require(scpp::hash_detail::byte_key_view(value)==expected[i]);
+    require(scpp::hash_detail::byte_key_view(moved)==expected[i]);
+   } report("byte-lifetime");
+   auto value='.$names['byte_literal'].'(OutputInt{i});
+   const scpp::string_t native(expected[i]);
+   const auto old_hash=scpp::hash_detail::mix64(static_cast<std::uint64_t>(std::hash<std::string>{}(native.native_value())));
+   begin(); {
+    auto& alias='.$names['byte_borrow'].'(value); require(&alias==&value);
+    require(scpp::hash_detail::key_ops<Bytes>::hash(alias)==old_hash);
+    require(scpp::hash_detail::key_ops<scpp::string_t>::hash(native)==old_hash);
+    require(scpp::hash_detail::key_ops<Bytes>::equal(value,alias));
+    require(scpp::hash_detail::byte_key_view(value)==expected[i]);
+   } report("byte-borrow-hash");
+  }
+ }'."\n";
+ $main=str_replace(' Nested value;', ' byte_proof(); Nested value;', $main);
+}
 $left_mapping=CPP_Types::representation($left,$context);
 $left_native=$composed?CPP_Types::implementation_representation($left,$engine):CPP_Types::representation($left);
 $left_payload=CPP_Types::payload($left,$context);
@@ -175,7 +214,7 @@ $support.='void source_owner_proof(){ SourceOwner owner; '.$left_access.'='.$lef
 $main=str_replace(' Nested value;', ' source_owner_proof(); Nested value;', $main);
 $artifacts=new Storage /** Storage<cpp_artifact> */();
 foreach(Model::$cpp_files as $artifact){if($artifact->file_name!=='entry.cpp'){$artifacts->append($artifact);}}
-if($alternate){$artifacts->append(new cpp_artifact('proof:storage-binding',cpp_artifact_kind::header,'binding_shared.hpp',"#pragma once\n#include <scpp/shared_p.hpp>\nnamespace fixture { template<class T> using Handle=scpp::shared_p<T>; }\n"));}
+if($alternate){$artifacts->append(new cpp_artifact('proof:byte-binding',cpp_artifact_kind::header,'binding_bytes.hpp',"#pragma once\n#include <scpp/support/string_representation.hpp>\nnamespace fixture { using Bytes=scpp::string_representation; }\n"));$artifacts->append(new cpp_artifact('proof:storage-binding',cpp_artifact_kind::header,'binding_shared.hpp',"#pragma once\n#include <scpp/shared_p.hpp>\nnamespace fixture { template<class T> using Handle=scpp::shared_p<T>; }\n"));}
 $artifacts->append(new cpp_artifact('proof:header',cpp_artifact_kind::header,'proof.hpp',$declarations));
 $artifacts->append(new cpp_artifact('proof:support',cpp_artifact_kind::translation_unit,'support.cpp',$support));
 $artifacts->append(new cpp_artifact('proof:main',cpp_artifact_kind::translation_unit,'entry.cpp',$main));

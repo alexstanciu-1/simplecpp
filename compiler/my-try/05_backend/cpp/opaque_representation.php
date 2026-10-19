@@ -175,15 +175,10 @@ final class CPP_Opaque_Representation
 				. $return_type . $signature . " = delete;\n#endif\n";
 			$implementation .= '#if ' . $macro . "\n" . $return_type . $name . '::' . $signature . ' { ' . $body . " }\n#endif\n";
 		}
-		if ($mapping->literal === cpp_literal_kind::signed_integer) {
-			$definition = object_cast(Type_Queries::canonical($type)->definition(), integer_type_definition::class);
-			$scalar = ($definition->signed() ? 'int' : 'uint') . $definition->bit_width() . '_t';
-			$declaration = "#include <cstdint>\n" . $declaration;
-			$declaration .= 'using scpp_runtime_integer_rep = ' . $scalar . ";\n";
-			$declaration .= 'explicit ' . $name . '(' . $scalar . ' value); ' . $scalar . " native_value() const noexcept;\n";
-			$implementation .= $name . '::' . $name . '(' . $scalar . ' value) { ::new(address()) ' . $native . '(value); }' . "\n"
-				. $scalar . ' ' . $name . '::native_value() const noexcept { return unwrap(*this).native_value(); }' . "\n";
-		}
+		$literal = CPP_Physical_Interfaces::literal($type, $mapping, $name, $native);
+		$declaration = $literal->declaration_prefix . $declaration . $literal->declaration;
+		$implementation .= $literal->implementation;
+
 		$declaration .= '~' . $name . "() noexcept;\n";
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
 			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";

@@ -187,6 +187,7 @@ require_once __DIR__ . '/05_backend/cpp/artifacts.php';
 require_once __DIR__ . '/05_backend/cpp/types.php';
 require_once __DIR__ . '/05_backend/cpp/specializations.php';
 require_once __DIR__ . '/05_backend/cpp/concrete_recipes.php';
+require_once __DIR__ . '/05_backend/cpp/physical_interfaces.php';
 require_once __DIR__ . '/05_backend/cpp/opaque_representation.php';
 require_once __DIR__ . '/05_backend/cpp/runtime_operations.php';
 require_once __DIR__ . '/05_backend/cpp/concrete_members.php';

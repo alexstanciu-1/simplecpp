@@ -5,6 +5,20 @@ namespace scpp\compiler;
 
 final class CPP_Generator
 {
+	/** Keep exception implementation headers in compiled middleware. */
+	private static function compiled_entry(string $body): string
+	{
+		return "\nstatic int application_body()\n{\n" . $body . "\treturn 0;\n}\n"
+			. "int main(int argc, char** argv) { return scpp::internal::run_application(argc, argv, application_body); }\n";
+	}
+
+	private static function native_entry(string $body): string
+	{
+		return "\nint main(int argc, char** argv)\n{\n// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n"
+			. $body . "\treturn 0;\n// SCPP-ENTRY-CATCH\n"
+			. "\t} catch (const std::exception& failure) {\n\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n";
+	}
+
 	private cpp_program $program;
 	private ?CPP_Specializations $specializations = null;
 
@@ -213,22 +227,17 @@ final class CPP_Generator
 		$entry_fragment = $this->program->fragments[$entry_owner];
 		// Executable ABI initialization belongs to artifact assembly, not call preparation.
 		$entry_headers /** hash<bool> */ = $entry_fragment->headers;
-		$cli = 'scpp::php::set_cli_args';
-		$report = 'scpp::print_runtime_exception';
 		if ($this->specializations !== null) {
-			$entry_headers['specializations/base.hpp'] = true; $cli = 'scpp::internal::initialize_cli';
-			$report = 'scpp::internal::report_exception';
+			$entry_headers['specializations/base.hpp'] = true;
+			$entry_text = self::compiled_entry($entry_fragment->text);
 		}
 		else {
 			$entry_headers['lang/php/cli_context.hpp'] = true;
 			$entry_headers['scpp/runtime_error.hpp'] = true;
+			$entry_text = self::native_entry($entry_fragment->text);
 		}
 		$result->append(CPP_Artifacts::described('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
-			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . "\nint main(int argc, char** argv)\n{\n"
-			. "// SCPP-ENTRY-TRY\n\ttry {\n\t" . $cli . "(argc, argv);\n"
-			. $entry_fragment->text . "\treturn 0;\n// SCPP-ENTRY-CATCH\n"
-			. "\t} catch (const std::exception& failure) {\n"
-			. "\t\t" . $report . "(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n", $entry_headers));
+			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . $entry_text, $entry_headers));
 		$helpers /** hash<prepared_compiler_call> */ = [];
 		foreach ($ordered as $owner) {
 			foreach ($this->program->fragments[$owner]->compiler_helpers as $key => $request) {
@@ -854,9 +863,8 @@ final class CPP_Generator
 		$operand = self::extract_operator_operand($operand, $decision, 0, $context);
 		if ($decision->operation === operator_operation::condition_not)
 		{
-			$context->headers['scpp/bool_t.hpp'] = true;
 			$truthiness /** truthiness_decision */ = $decision->truthiness;
-			return 'scpp::bool_t(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
+			return CPP_Declarations::type($decision->result_type, $context) . '(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
 		}
 		$spelling = '';
 		if (($decision->operation === operator_operation::integer_positive)
@@ -911,9 +919,8 @@ final class CPP_Generator
 			$logical_spelling = $decision->operation === operator_operation::condition_and ? '&&' : '||';
 			$logical_left = CPP_Declarations::truthiness($left, $decision->operand_truthiness[0], $context);
 			$logical_right = CPP_Declarations::truthiness($right, $decision->operand_truthiness[1], $context);
-			$context->headers['scpp/bool_t.hpp'] = true;
 			// Both operands are native bool: C++ must skip the RHS when the left decides the result.
-			return 'scpp::bool_t((' . $logical_left . ') ' . $logical_spelling . ' (' . $logical_right . '))';
+			return CPP_Declarations::type($decision->result_type, $context) . '((' . $logical_left . ') ' . $logical_spelling . ' (' . $logical_right . '))';
 		}
 		if (($decision->operation === operator_operation::presence_is_null)
 			|| ($decision->operation === operator_operation::presence_not_null)) {
@@ -1064,8 +1071,7 @@ final class CPP_Generator
 
 		if (($decision->operation === operator_operation::boolean_and)
 			|| ($decision->operation === operator_operation::boolean_or)) {
-			$context->headers['scpp/bool_t.hpp'] = true;
-			return 'scpp::bool_t(static_cast<bool>(' . $left . ') ' . $spelling
+			return CPP_Declarations::type($decision->result_type, $context) . '(static_cast<bool>(' . $left . ') ' . $spelling
 				. ' static_cast<bool>(' . $right . '))';
 		}
 
@@ -1113,7 +1119,7 @@ final class CPP_Generator
 			$left .= '.native_value()';
 			$right .= '.native_value()';
 			if ($decision->operation !== operator_operation::string_three_way) {
-				return 'scpp::bool_t(' . $left . ' ' . $spelling . ' ' . $right . ')';
+				return CPP_Declarations::type($decision->result_type, $context) . '(' . $left . ' ' . $spelling . ' ' . $right . ')';
 			}
 		}
 		if ($decision->operation === operator_operation::integer_power) {
@@ -1122,7 +1128,7 @@ final class CPP_Generator
 		}
 		if (($decision->operation === operator_operation::boolean_xor)
 			|| ($decision->operation === operator_operation::condition_xor)) {
-			return 'scpp::bool_t(static_cast<bool>(' . $left . ') != static_cast<bool>(' . $right . '))';
+			return CPP_Declarations::type($decision->result_type, $context) . '(static_cast<bool>(' . $left . ') != static_cast<bool>(' . $right . '))';
 		}
 		if (($decision->operation === operator_operation::integer_three_way)
 			|| ($decision->operation === operator_operation::string_three_way)) {
@@ -1144,8 +1150,7 @@ final class CPP_Generator
 		}
 		if (($decision->operation === operator_operation::enum_equal)
 			|| ($decision->operation === operator_operation::enum_not_equal)) {
-			$context->headers['scpp/bool_t.hpp'] = true;
-			return 'scpp::bool_t(' . $left . ' ' . $spelling . ' ' . $right . ')';
+			return CPP_Declarations::type($decision->result_type, $context) . '(' . $left . ' ' . $spelling . ' ' . $right . ')';
 		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $left . ' ' . $spelling . ' ' . $right . ')';
@@ -1251,6 +1256,7 @@ final class CPP_Generator
 		}
 
 		$spelling = self::cpp_string_literal($value);
+		if ($mapping->opaque) { return $mapping->spelling . '(' . $spelling . ', ' . string_byte_len($value) . ')'; }
 		if (!self::contains_zero_byte($value)) {
 			return $mapping->spelling . '(' . $spelling . ')';
 		}

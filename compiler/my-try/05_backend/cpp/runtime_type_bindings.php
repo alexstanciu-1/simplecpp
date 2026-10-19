@@ -62,6 +62,12 @@ final class CPP_Runtime_Type_Bindings
 			foreach ($template_definition->parameters() as $position => $parameter) { $parameters[$parameter->name()] = $position; }
 		}
 		$recipe->concrete_boundary = $spec->concrete_boundary;
+		$recipe->literal_interface = $spec->literal_interface;
+		$recipe->byte_interface = $spec->byte_interface;
+		if (($spec->literal_interface === 'bytes') !== ($spec->byte_interface !== '')) {
+			throw new \RuntimeException('Byte literal interface requires its runtime adapter');
+		}
+		if ($spec->byte_interface !== '') { CPP_Runtime_Catalog::spelling($spec->byte_interface, false); }
 		if ($spec->pointee_parameter !== '') {
 			if ($modifier || !isset($parameters[$spec->pointee_parameter])) {
 				throw new \RuntimeException('C++ pointee must name a declared type parameter');

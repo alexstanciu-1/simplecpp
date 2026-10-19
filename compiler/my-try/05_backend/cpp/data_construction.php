@@ -193,7 +193,6 @@ final class CPP_Data_Construction
 		cpp_generation_context $context): string
 	{
 		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: named source construction needs argument transport'); }
-		$context->headers['utility'] = true;
 		$type = CPP_Declarations::type($facts->type, $context);
 		$payload = CPP_Types::payload($facts->payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
@@ -224,7 +223,7 @@ final class CPP_Data_Construction
 				$text .= $field_type . ' ' . $name . ' = ' . $value . ";\n";
 				$arguments[$position] = $name;
 			}
-			$ordered .= ($ordered === '' ? '' : ', ') . 'std::move(' . $arguments[$position] . ')';
+			$ordered .= ($ordered === '' ? '' : ', ') . CPP_Declarations::move($arguments[$position], $parameter->type, $context);
 		}
 		$callee = CPP_Record_Construction::allocation($facts->type, $facts->payload_type, $facts->storage, $context);
 		return $text . 'return ' . $callee . '(' . $ordered . ");\n}())";
@@ -234,21 +233,20 @@ final class CPP_Data_Construction
 	public static function constructor(string $name, record_initialization_contract $contract,
 		cpp_generation_context $context): string
 	{
-		$context->headers['utility'] = true;
 		$parameters = 'scpp_data_tag';
 		$initializers = '';
 		$base_count = 0;
+		$inputs /** vector<record_initialization_input> */ = $contract->inputs_in_order();
 		if ($contract->base_contract !== null) {
 			$base_count = q_count($contract->base_contract->inputs_in_order());
 			$base = CPP_Types::payload($contract->base_type, $context);
 			CPP_Types::record_dependencies($base, $context);
 			$initializers = ' : ' . $base->spelling . '{' . $base->spelling . '::scpp_data_tag{}';
 			for ($index = 0; $index < $base_count; $index++) {
-				$initializers .= ', std::move(input_' . $index . ')';
+				$initializers .= ', ' . CPP_Declarations::move('input_' . $index, $inputs[$index]->field->type, $context);
 			}
 			$initializers .= '}';
 		}
-		$inputs /** vector<record_initialization_input> */ = $contract->inputs_in_order();
 		foreach ($inputs as $position => $input) {
 			$field /** prepared_field */ = $input->field;
 			$requirement = Type_Queries::is_nominal_handle($field->type)
@@ -257,7 +255,7 @@ final class CPP_Data_Construction
 			if ($position < $base_count) { continue; }
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$initializers .= ($initializers === '' ? ' : ' : ', ')
-				. CPP_Generator::source_name('field', $entry->name) . '(std::move(input_' . $position . '))';
+				. CPP_Generator::source_name('field', $entry->name) . '(' . CPP_Declarations::move('input_' . $position, $field->type, $context) . ')';
 		}
 		$text = "\tstruct scpp_data_tag {};\n\t" . $name . "() = default;\n\t" . $name . '(' . $parameters . ')' . $initializers;
 		return $text . " {}\n";

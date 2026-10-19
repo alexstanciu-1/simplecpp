@@ -1,0 +1,322 @@
+[
+  {
+    "jobs": 1,
+    "source": "main.phs",
+    "seconds": [
+      0.099,
+      0.083,
+      0.085
+    ],
+    "median_seconds": 0.085
+  },
+  {
+    "jobs": 1,
+    "source": "src/assets.phs",
+    "seconds": [
+      0.196,
+      0.206,
+      0.189
+    ],
+    "median_seconds": 0.196
+  },
+  {
+    "jobs": 1,
+    "source": "src/banking.phs",
+    "seconds": [
+      0.18,
+      0.163,
+      0.164
+    ],
+    "median_seconds": 0.164
+  },
+  {
+    "jobs": 1,
+    "source": "src/business_checks.phs",
+    "seconds": [
+      0.279,
+      0.264,
+      0.264
+    ],
+    "median_seconds": 0.264
+  },
+  {
+    "jobs": 1,
+    "source": "src/calendar.phs",
+    "seconds": [
+      0.142,
+      0.147,
+      0.147
+    ],
+    "median_seconds": 0.147
+  },
+  {
+    "jobs": 1,
+    "source": "src/checks.phs",
+    "seconds": [
+      0.321,
+      0.309,
+      0.31
+    ],
+    "median_seconds": 0.31
+  },
+  {
+    "jobs": 1,
+    "source": "src/closing.phs",
+    "seconds": [
+      0.18,
+      0.203,
+      0.18
+    ],
+    "median_seconds": 0.18
+  },
+  {
+    "jobs": 1,
+    "source": "src/closing_checks.phs",
+    "seconds": [
+      0.267,
+      0.278,
+      0.262
+    ],
+    "median_seconds": 0.267
+  },
+  {
+    "jobs": 1,
+    "source": "src/core.phs",
+    "seconds": [
+      0.07,
+      0.065,
+      0.065
+    ],
+    "median_seconds": 0.065
+  },
+  {
+    "jobs": 1,
+    "source": "src/ledger.phs",
+    "seconds": [
+      0.211,
+      0.194,
+      0.223
+    ],
+    "median_seconds": 0.211
+  },
+  {
+    "jobs": 1,
+    "source": "src/money.phs",
+    "seconds": [
+      0.135,
+      0.137,
+      0.138
+    ],
+    "median_seconds": 0.137
+  },
+  {
+    "jobs": 1,
+    "source": "src/purchasing.phs",
+    "seconds": [
+      0.207,
+      0.212,
+      0.229
+    ],
+    "median_seconds": 0.212
+  },
+  {
+    "jobs": 1,
+    "source": "src/reports.phs",
+    "seconds": [
+      0.125,
+      0.12,
+      0.12
+    ],
+    "median_seconds": 0.12
+  },
+  {
+    "jobs": 1,
+    "source": "src/sales.phs",
+    "seconds": [
+      0.111,
+      0.109,
+      0.118
+    ],
+    "median_seconds": 0.111
+  },
+  {
+    "jobs": 1,
+    "source": "src/stock.phs",
+    "seconds": [
+      0.188,
+      0.191,
+      0.189
+    ],
+    "median_seconds": 0.189
+  },
+  {
+    "jobs": 1,
+    "source": "entry.cpp",
+    "seconds": [
+      0.063,
+      0.065,
+      0.064
+    ],
+    "median_seconds": 0.064
+  },
+  {
+    "jobs": 12,
+    "source": "src/core.phs",
+    "seconds": [
+      0.13,
+      0.166,
+      0.124
+    ],
+    "median_seconds": 0.13
+  },
+  {
+    "jobs": 12,
+    "source": "main.phs",
+    "seconds": [
+      0.192,
+      0.23,
+      0.206
+    ],
+    "median_seconds": 0.206
+  },
+  {
+    "jobs": 12,
+    "source": "src/calendar.phs",
+    "seconds": [
+      0.316,
+      0.396,
+      0.341
+    ],
+    "median_seconds": 0.341
+  },
+  {
+    "jobs": 12,
+    "source": "src/money.phs",
+    "seconds": [
+      0.311,
+      0.351,
+      0.296
+    ],
+    "median_seconds": 0.311
+  },
+  {
+    "jobs": 12,
+    "source": "src/banking.phs",
+    "seconds": [
+      0.358,
+      0.392,
+      0.357
+    ],
+    "median_seconds": 0.358
+  },
+  {
+    "jobs": 12,
+    "source": "src/sales.phs",
+    "seconds": [
+      0.212,
+      0.291,
+      0.219
+    ],
+    "median_seconds": 0.219
+  },
+  {
+    "jobs": 12,
+    "source": "src/assets.phs",
+    "seconds": [
+      0.412,
+      0.485,
+      0.466
+    ],
+    "median_seconds": 0.466
+  },
+  {
+    "jobs": 12,
+    "source": "src/closing.phs",
+    "seconds": [
+      0.413,
+      0.466,
+      0.388
+    ],
+    "median_seconds": 0.413
+  },
+  {
+    "jobs": 12,
+    "source": "src/ledger.phs",
+    "seconds": [
+      0.41,
+      0.487,
+      0.454
+    ],
+    "median_seconds": 0.454
+  },
+  {
+    "jobs": 12,
+    "source": "entry.cpp",
+    "seconds": [
+      0.102,
+      0.148,
+      0.105
+    ],
+    "median_seconds": 0.105
+  },
+  {
+    "jobs": 12,
+    "source": "src/reports.phs",
+    "seconds": [
+      0.292,
+      0.283,
+      0.286
+    ],
+    "median_seconds": 0.286
+  },
+  {
+    "jobs": 12,
+    "source": "src/purchasing.phs",
+    "seconds": [
+      0.414,
+      0.503,
+      0.429
+    ],
+    "median_seconds": 0.429
+  },
+  {
+    "jobs": 12,
+    "source": "src/business_checks.phs",
+    "seconds": [
+      0.518,
+      0.605,
+      0.527
+    ],
+    "median_seconds": 0.527
+  },
+  {
+    "jobs": 12,
+    "source": "src/closing_checks.phs",
+    "seconds": [
+      0.537,
+      0.647,
+      0.555
+    ],
+    "median_seconds": 0.555
+  },
+  {
+    "jobs": 12,
+    "source": "src/checks.phs",
+    "seconds": [
+      0.563,
+      0.655,
+      0.561
+    ],
+    "median_seconds": 0.563
+  },
+  {
+    "jobs": 12,
+    "source": "src/stock.phs",
+    "seconds": [
+      0.281,
+      0.383,
+      0.294
+    ],
+    "median_seconds": 0.294
+  }
+]

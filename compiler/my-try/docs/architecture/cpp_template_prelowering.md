@@ -5,9 +5,10 @@ The opt-in `prelower_templates` path uses the existing AST, prepared types and
 operation decisions. It does not rewrite syntax or add a semantic pass. The ordinary
 C++ path remains the default. The CLI retains the measured integer/vector recipe
 baseline; the API also offers the growing general runtime ABI path described below.
-The general API path now compiles and runs accounting at O0 (998 checks); this is
-not yet full template elimination. The [accounting timing comparison](../../../../specs/planning/results/prelower_accounting_timing_2026_10_19/README.md)
-measures the current partial implementation against ordinary C++ with PCH in both modes.
+The general API path now compiles and runs accounting at O0 (998 checks) with no
+templates in any app unit or its transitive headers, with PCH disabled. See the
+[template-free evidence](../../../../specs/planning/results/prelower_template_free_accounting_2026_10_19/README.md). The [accounting timing comparison](../../../../specs/planning/results/prelower_accounting_timing_2026_10_19/README.md)
+records the earlier partial implementation against ordinary C++ with PCH in both modes.
 
 The general path follows [capability-driven generalization](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md)
 through the existing registry and bindings, using original runtime templates behind
@@ -30,7 +31,7 @@ for both ordinary and composed native representations, including ownership paylo
 and the value modifier. Layout and lifecycle facts still come from existing probes.
 
 The general runtime path now selects concrete types from the installed recipe's
-native-template fact, including closed templates behind nominal source identities.
+native-template fact or explicit `concrete_boundary`, including closed templates behind nominal source identities.
 Nested arguments use the same query. Concrete representations already include their
 storage policy and are not wrapped a second time. Source declarations and structural
 callables keep their existing representation owners. The historical accounting
@@ -48,6 +49,21 @@ declarations and implementations use complete definitions, including recursive
 source-class fields. Prepared inherited-handle conversions use the existing
 conversion adapter. The alternate-storage proof changes its native symbol and header without
 changing the renderer or semantic identity. See also the [migration evidence](../../../../specs/planning/results/prelower_runtime_type_bindings_2026_10_19/README.md).
+
+## Physical literal interfaces
+
+`CPP_Physical_Interfaces` consumes the existing recipe's scalar/byte contracts and
+prepared literal facts. It replaces the old integer-only interface generator.
+Boolean, float and string native implementations remain in middleware alongside
+container and handle templates. The byte adapter delegates to the runtime string;
+hash keys borrow pointer/length views with the same native hash/equality behavior.
+No source-family switch or second registry is involved.
+
+Application moves use the settled physical type for an rvalue cast. Sequencing,
+const qualification and materialization remain with the existing emitter. The entry
+function supplies a plain callback to compiled `run_application`, which preserves
+CLI setup and standard-exception reporting without importing `<exception>` into the
+app. Layout buffers expose `size_t` through `<stddef.h>`.
 
 ## Concrete output transport
 

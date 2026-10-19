@@ -6,6 +6,14 @@ reuses the output, indexing and compound fixtures at O0 only. It checks native s
 output bridge demand, broad indexing-header exclusion, direct/concrete behavior and
 allocation/copy parity, nested references, source evaluation order and warm reuse.
 Output emission also exercises request retirement, replay and option switching.
+Its byte proof covers empty, short, embedded-NUL and long literals, copy/move
+allocation parity, borrowed identity and native/concrete string-hash parity, including
+an alternate metadata-selected byte adapter.
+
+`tests/prelower_template_closure.py --commands RECORDED_JSONL --published APP_DIRECTORY --results FRESH_DIRECTORY`
+replays recorded app object commands as preprocessing and full-granularity Clang
+traces. It rejects PCH use, template declarations in transitive input, or class/function
+instantiations. Middleware and layout probes are excluded deliberately.
 
 `python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
 checks source payload layout, generated source-class append/store/read calls, shared

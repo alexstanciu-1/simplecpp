@@ -78,10 +78,9 @@ final class CPP_Syntax
 		{
 			$move = object_cast($node, move_expression_node::class);
 			$facts = $move->require_move_preparation();
-			$this->context->headers['utility'] = true;
-			// Materialize an owner now: std::move alone would only change the value category.
+			// Materialize an owner now; a category cast alone does not consume it.
 			return CPP_Declarations::type($facts->type, $this->context)
-				. '(std::move(' . $this->expression($move->operand) . '))';
+				. '(' . CPP_Declarations::move($this->expression($move->operand), $facts->type, $this->context) . ')';
 		}
 		if ($node instanceof object_construction_node) {
 			$construction = object_cast($node, object_construction_node::class);
@@ -544,11 +543,10 @@ final class CPP_Syntax
 		$facts = $node->require_probe_preparation();
 		$path = $facts->path;
 		if ($path !== null) {
-			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty, $facts->presence);
+			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty, $facts->presence, $facts->type);
 		}
 		if ($facts->presence !== null) {
-			$this->context->headers['scpp/bool_t.hpp'] = true;
-			return 'scpp::bool_t(' . CPP_Declarations::truthiness($this->expression($node->operand), $facts->presence, $this->context) . ')';
+			return CPP_Declarations::type($facts->type, $this->context) . '(' . CPP_Declarations::truthiness($this->expression($node->operand), $facts->presence, $this->context) . ')';
 		}
 		$name = $facts->operation === value_probe_kind::isset ? 'isset' : 'empty';
 		$this->context->headers['lang/php/operators/' . $name . '/' . $name . '.hpp'] = true;

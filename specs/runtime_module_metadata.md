@@ -321,6 +321,23 @@ its compiled implementations. Unknown parameters, omitted explicit arguments, mi
 payload arguments and modifier targets reject. This mechanism also supplies the
 implicit source-class storage binding through the existing shared owner policy.
 
+The optional `literal_interface` selects a physical contract, not source semantics:
+
+- `scalar` exposes construction/extraction through the prepared native scalar ABI
+  (boolean, double, or the canonical integer width/signedness). Integer interfaces
+  retain the existing runtime integer marker; booleans expose explicit truth access.
+- `bytes` requires `byte_interface`, a validated qualified runtime adapter name.
+  The adapter provides `construct(const char*, size_t)`, `data(const Native&)`,
+  `size(const Native&)` and `append(Native&, const Native&)`. Construction returns
+  the native value directly; data/size borrow its bytes. The concrete declaration
+  uses only pointer/length types and the runtime byte-sequence marker. Embedded NUL
+  is preserved. The binding header supplies the adapter and native implementation.
+
+A byte adapter without the byte literal contract rejects. These interfaces do not
+add source operations or decide source admission. Existing prepared operations and
+runtime implementations remain authoritative. Runtime hash keys can consume the
+byte-sequence marker without allocating an intermediate string.
+
 Core supplies runtime representations of the existing scalars, boxed types,
 nullable/Result and ownership families, plus the value modifier. Hosts emitting
 those runtime representations must select core (directly or through dependencies);

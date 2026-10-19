@@ -273,6 +273,7 @@ $types['Int'] = $body->statements[4]->expression->value->require_call_preparatio
         $parameters = Model::$global_scope->functions_named('index_demand')[0]->syntax()->require_preparation()->signature->parameters;
         foreach (['TrackedRows', 'TrackedHash', 'NestedHash'] as $index => $name) { $types[$name] = $parameters[$index]->type; }
     }
+    if ($binary) { $types['String'] = Model::$global_scope->functions_named('binary_work')[0]->syntax()->require_preparation()->signature->parameters[0]->type; }
     if ($mutations) { $types['NullableFloat'] = Model::$global_scope->functions_named('mutation_carrier')[0]->syntax()->require_preparation()->signature->parameters[0]->type; }
     $snapshot = static function () { $r=[]; foreach(Model::$cpp_files as $a) {$r[$a->file_name]=$a->text;} return $r; };
     $before = $snapshot();
@@ -287,7 +288,7 @@ $types['Int'] = $body->statements[4]->expression->value->require_call_preparatio
         file_put_contents($source . '/main.phs', $removed);
         $compiler->update_cpp([$source . '/main.phs']);
         foreach (Model::$cpp_files as $artifact) {
-            if (str_starts_with($artifact->file_name, 'specializations/concrete_') && str_contains($artifact->text, 'void append(')) {
+            if (str_starts_with($artifact->file_name, 'specializations/concrete_') && str_contains($artifact->text, 'void append(') && !str_contains($artifact->text, 'scpp_runtime_byte_sequence')) {
                 throw new \LogicException('Removed member requests survived fragment replacement');
             }
         }
@@ -667,9 +668,10 @@ if ($binary) {
     $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('binary_work')[0]);
     $failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('binary_failure')[0]);
     $rhs_failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('binary_rhs_failure')[0]);
+    $support .= 'String string_value(std::string_view bytes) { return String(' . ($composed ? 'bytes.data(), bytes.size()' : 'bytes') . '); }' . "\n";
     $support .= 'void binary_proof() {
-      scpp::string_t text{"a long string value that exceeds short string storage"};
-      scpp::string_t other{"another long string value that exceeds short string storage"};
+      String text=string_value("a long string value that exceeds short string storage");
+      String other=string_value("another long string value that exceeds short string storage");
       begin(); { auto result=' . $function . '(text,other); require(result.native_value()==0); } report("binary");
       // Runtime error stack-trace allocations are diagnostic policy, not boundary payload work.
       { Vector trace; bool caught=false; try { (void)' . $failure . '(trace,Int{0}); } catch(const std::exception&) { caught=true; }
@@ -689,7 +691,7 @@ if ($casts) {
     $key_failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('cast_key_failure')[0]);
     $value_failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('cast_value_failure')[0]);
     $support .= 'void cast_proof() {
-      scpp::string_t digits{"42"}, bad{"invalid integer"};
+      String digits=string_value("42"), bad=string_value("invalid integer");
       begin(); { Vector trace; auto result=' . $function . '(trace,digits); require(result.native_value()==0);
         const long expected[]={1,2,2,2,1,2}; require(unwrap(trace).size()==6);
         for(int i=0;i<6;++i) require(unwrap(trace).at(i).native_value()==expected[i]);

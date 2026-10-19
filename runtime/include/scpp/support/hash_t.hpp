@@ -1,4 +1,5 @@
 #pragma once
+#include <string_view>
 
 #include "scpp/detail.hpp"
 #include "scpp/bool_t.hpp"
@@ -174,14 +175,28 @@ struct key_ops<T_KEY> final {
 	}
 };
 
-template <>
-struct key_ops<string_t> final {
-	[[nodiscard]] static std::uint64_t hash(const string_t &key) {
-		return mix64(static_cast<std::uint64_t>(std::hash<std::string>{}(key.native_value())));
+inline std::string_view byte_key_view(const string_t &key) noexcept {
+	return key.native_value();
+}
+
+// Concrete byte interfaces borrow the original bytes; no temporary string is made.
+template <typename T> requires requires(const T &key) {
+	typename T::scpp_runtime_byte_sequence;
+	{ key.byte_data() } -> std::same_as<const char*>;
+	{ key.byte_size() } -> std::convertible_to<std::size_t>;
+}
+std::string_view byte_key_view(const T &key) noexcept {
+	return {key.byte_data(), key.byte_size()};
+}
+
+template <typename T> requires requires(const T &key) { byte_key_view(key); }
+struct key_ops<T> final {
+	[[nodiscard]] static std::uint64_t hash(const T &key) {
+		return mix64(static_cast<std::uint64_t>(std::hash<std::string_view>{}(byte_key_view(key))));
 	}
 
-	[[nodiscard]] static bool equal(const string_t &left, const string_t &right) {
-		return left.native_value() == right.native_value();
+	[[nodiscard]] static bool equal(const T &left, const T &right) {
+		return byte_key_view(left) == byte_key_view(right);
 	}
 };
 

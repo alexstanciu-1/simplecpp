@@ -1,5 +1,5 @@
 # Template-free accounting application boundary
-Doc Status: planning
+Doc Status: implemented and validated for accounting. All 16 app units have zero template declarations and zero Clang instantiations without PCH; accounting passes 998/0. See the [acceptance evidence and O0 timings](results/prelower_template_free_accounting_2026_10_19/README.md). Full runtime coverage remains deferred.
 
 Status: approved; goal active. The [source-handle slice](results/prelower_source_handles_2026_10_19/README.md) passes accounting and focused O0 proofs. Literal/scalar interfaces and template-free include closure remain in progress.
 
@@ -17,7 +17,7 @@ lines per application unit after the two measured header fixes. Native scalar
 headers and source-class ownership remain exposed. Template declarations are in
 transitive runtime/toolchain headers, not generated template class declarations.
 
-## Why include removal alone is insufficient
+## Starting-state findings: why include removal alone was insufficient
 
 `CPP_Types::has_template_recipe` deliberately excludes source definitions; concrete
 selection sees the semantic core before implicit shared storage is applied.

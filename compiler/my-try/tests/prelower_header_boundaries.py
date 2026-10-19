@@ -43,6 +43,7 @@ def main():
             assert results['direct'] == results['composed'], results
             if group == 'output':
                 assert results['composed'].startswith('output '), results
+                assert results['composed'].count('byte-borrow-hash 0 0 0 0 0 0 0') == 4, results
                 assert 'source-owner 0 0 0 0 0 0 0' in results['composed'], results
                 assert results['composed'].endswith('recipe-boundary 0 0 0 0 0 0 0\n'), results
             else:

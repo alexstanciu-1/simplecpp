@@ -636,8 +636,13 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'header') { $result->header = self::name($reader); }
 			elseif ($key === 'type') { $result->type_name = self::name($reader); }
 			elseif ($key === 'modifier') { $result->modifier_name = self::name($reader); }
+			elseif ($key === 'byte_interface') { $result->byte_interface = self::name($reader); }
 			elseif ($key === 'pointee') { $result->pointee_parameter = self::name($reader); }
 			elseif ($key === 'concrete_boundary') { $result->concrete_boundary = $reader->read_boolean(); }
+			elseif ($key === 'literal_interface') {
+				$result->literal_interface = self::name($reader);
+				if (($result->literal_interface !== 'scalar') && ($result->literal_interface !== 'bytes')) { $reader->reject('Unknown C++ literal interface'); }
+			}
 			elseif ($key === 'arguments') {
 				$arguments = new Storage /** Storage<runtime_cpp_argument_spec> */();
 				$reader->begin_array();
