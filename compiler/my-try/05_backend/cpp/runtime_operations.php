@@ -15,6 +15,7 @@ final class CPP_Runtime_Operations
 	public static function name(cpp_runtime_operation $request): string
 	{
 		$key = $request->kind_name() . ':' . $request->spelling . ':' . ($request->append ? 'append' : 'store');
+		if ($request->call !== null) { $key .= ':' . CPP_Method_Calls::identity($request->call); }
 		if ($request->construction !== null) {
 			$key .= ':payload=' . CPP_Opaque_Representation::identity($request->construction->constructed_type)
 				. ':storage=' . enum_name($request->construction->storage);
@@ -77,7 +78,7 @@ final class CPP_Runtime_Operations
 		foreach ($inputs as $position => $input) {
 			CPP_Opaque_Representation::require_native_type($input);
 			$native = CPP_Declarations::type($input, $native_context);
-			$mutable_input = ($position === 0) && ($request->kind === cpp_runtime_operation_kind::index_write);
+			$mutable_input = self::mutable_input($request, $position);
 			$qualifier = $mutable_input ? '' : 'const ';
 			if ($position !== 0) { $signature .= ', '; }
 			$signature .= $qualifier . 'void* p' . $position;
@@ -100,7 +101,9 @@ final class CPP_Runtime_Operations
 				// The callback initializes the final result storage; neither side materializes a second value.
 				$reload = '';
 				foreach ($inputs as $position => $input) {
-					$reload .= 'const void* p' . $position . ' = addresses[' . $position . ']; ';
+					$reload .= self::mutable_input($request, $position)
+						? 'void* p' . $position . ' = const_cast<void*>(addresses[' . $position . ']); '
+						: 'const void* p' . $position . ' = addresses[' . $position . ']; ';
 				}
 				$body = 'const void* addresses[] = {' . (q_count($pointers) === 0 ? 'nullptr' : self::join($pointers)) . '}; '
 					. 'return ' . $output . '(' . $output . '::operation_result{}, +[](void* destination, const void* input) { '
@@ -117,9 +120,17 @@ final class CPP_Runtime_Operations
 		return new cpp_specialization_entry($name, $header, $declaration, $implementation);
 	}
 
+	private static function mutable_input(cpp_runtime_operation $request, int $position): bool
+	{
+		if ($request->call !== null) { return CPP_Method_Calls::mutable_input($request->call, $position); }
+		return ($position === 0) && ($request->kind === cpp_runtime_operation_kind::index_write);
+	}
+
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::receiver_check) { return '(void)' . $arguments[0] . '.operator->()'; }
+		if ($request->kind === cpp_runtime_operation_kind::method_call) { return CPP_Method_Calls::native_call($request, $arguments, $context); }
 		if ($request->kind === cpp_runtime_operation_kind::construct_default) {
 			$facts /** prepared_object_construction */ = $request->construction;
 			return CPP_Record_Construction::object($facts, new Storage /** Storage<expression_node> */(), $context);

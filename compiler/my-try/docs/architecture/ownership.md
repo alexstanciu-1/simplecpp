@@ -259,6 +259,13 @@ fragments; a transient native-source context selects ordinary physical bindings.
 Assembly separates native method/static/dispatch implementation units from
 application functions. No alternate retained payload graph or specialization cache
 is introduced. Representation demand does not expand into unused ownership forms.
+Source instance method requests retain the existing settled prepared call facts.
+The ordinary call lambda owns receiver retention and ordered argument snapshots;
+the bridge borrows their native addresses for the synchronous invocation. Inline
+receivers and reference arguments preserve storage identity. Result callbacks borrow
+the same addresses until construction finishes and do not escape the invocation.
+Only inputs admitted as mutable by the prepared parameter boundary regain mutable
+pointers inside the result callback.
 
 Runtime argument facts retain source positions, not syntax backlinks. Compiler-call
 preparation may consume type-marker syntax before admitting runtime arguments;

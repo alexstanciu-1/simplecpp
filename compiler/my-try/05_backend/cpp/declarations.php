@@ -465,6 +465,7 @@ final class CPP_Declarations
 			return self::selected_call($facts, $syntax->arguments, $context, '', null, $evaluation);
 		}
 		if ($facts->receiver !== null) {
+			if ($context->runtime_abi()) { return CPP_Method_Calls::generate($syntax, $context); }
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
 			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
 			$value = 'this';
@@ -488,19 +489,27 @@ final class CPP_Declarations
 				$callee = $name . ($arrow ? '->' : '.') . $member_name;
 				return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 			}
-			$method = object_cast($target, collected_method::class);
-			$qualification = '';
-			if ($receiver->dispatch_type !== null) {
-				$mapping = CPP_Types::payload($receiver->dispatch_type, $context);
-				CPP_Types::record_dependencies($mapping, $context);
-				$qualification = $mapping->spelling . '::';
-			}
-			$member_name = CPP_Generator::source_name('method', $method->name);
-			if ($receiver->dispatch_type !== null) { $member_name = CPP_Callables::method_name($method); }
-			$callee = $name . ($arrow ? '->' : '.') . $qualification . $member_name;
+			$callee = self::method_reference($facts, $name, $arrow, $context);
 			return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 		}
 		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context, '', null, '');
+	}
+
+	/** One source dispatch spelling for ordinary calls and concrete ABI bridges. */
+	public static function method_reference(prepared_call $facts, string $name, bool $arrow, cpp_generation_context $context): string
+	{
+		$receiver /** prepared_method_receiver */ = $facts->receiver;
+		$method = object_cast(weakref_get($facts->target), collected_method::class);
+		CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
+		$qualification = '';
+		if ($receiver->dispatch_type !== null) {
+			$mapping = CPP_Types::payload($receiver->dispatch_type, $context);
+			CPP_Types::record_dependencies($mapping, $context);
+			$qualification = $mapping->spelling . '::';
+		}
+		$member_name = CPP_Generator::source_name('method', $method->name);
+		if ($receiver->dispatch_type !== null) { $member_name = CPP_Callables::method_name($method); }
+		return $name . ($arrow ? '->' : '.') . $qualification . $member_name;
 	}
 
 	/** Discard without copying; qualifier temporaries end before the selected operation. */
@@ -524,9 +533,9 @@ final class CPP_Declarations
 	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
 	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type,
-		string $prefix): string
+		string $prefix, ?cpp_runtime_operation $transport = null): string
 	{
-		if ($context->runtime_abi() && (weakref_get($facts->target) instanceof collected_method)) {
+		if (($transport === null) && $context->runtime_abi() && (weakref_get($facts->target) instanceof collected_method)) {
 			throw new \RuntimeException('runtime template ABI: source method calls need receiver/argument transport');
 		}
 		if ($context->runtime_abi() && (weakref_get($facts->target) instanceof runtime_function_definition)) {
@@ -549,6 +558,8 @@ final class CPP_Declarations
 		$result_type = $constructed_type ?? $facts->type;
 		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
 		$text .= $prefix;
+		$physical_arguments /** vector<string> */ = [];
+		if ($transport !== null) { $physical_arguments[] = $callee; }
 		$names = '';
 		$separator = '';
 		if ($constructed_type !== null) {
@@ -574,6 +585,7 @@ final class CPP_Declarations
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
 			$argument_requirement = self::signature_requirement(false, $boundary === value_boundary_operation::bind_reference);
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {
 				$context->headers['utility'] = true;
 				$name = 'std::move(' . $name . ')';
@@ -593,6 +605,7 @@ final class CPP_Declarations
 			$name = 'default_argument_' . $context->next_temporary;
 			$context->next_temporary++;
 			$text .= self::type($parameters[$index]->type, $context) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
+			if ($transport !== null) { $physical_arguments[] = $name; }
 			$context->headers['utility'] = true;
 			$names .= $separator . 'std::move(' . $name . ')';
 			$separator = ', ';
@@ -602,6 +615,9 @@ final class CPP_Declarations
 			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
 		}
 
+		if ($transport !== null) {
+			return $text . "\treturn " . CPP_Runtime_Operations::invoke($transport, $physical_arguments, $context) . ";\n}())";
+		}
 		$reference = $callee;
 		if ($callee === '') {
 			if ($facts->specialization !== null) {

@@ -111,8 +111,20 @@ runtime operations; source classes and structs can now be container arguments.
 Factory helper output identities use resolved native bindings rather than registry
 keys containing transient source type IDs, preserving deletion/restoration stability.
 
-This slice does not implement application-to-native method/property/static-property
-access, selected constructors/named construction, weak derivation/lock or calls from
+Source instance calls now reuse the ordinary call emitter's prepared argument
+sequencing. A named backend worker requests a concrete native method bridge using
+the existing prepared call, receiver and parameter facts. Shared receivers are
+retained and checked before arguments; inline receivers are borrowed. Fixed value
+and reference parameters, defaults, void and owned results use existing native
+storage addresses. Native dispatch spelling is shared with ordinary emission.
+The result callback constructs directly in final storage; mutable/reference inputs
+keep their prepared access through that callback. No family-specific engine branch,
+new AST or argument registry is involved. See the
+[method transport proof](../../../../specs/planning/results/prelower_methods_2026_10_19/README.md).
+
+This slice does not implement static method/property/static-property crossings,
+method reference results, variadic/observation parameters, runtime-provider methods,
+selected constructors/named construction, weak derivation/lock or calls from
 native methods back into application functions. These crossings reject explicitly.
 Recursive payload graphs, callback crossings and full inheritance operation coverage
 remain follow-up proofs. See the [source-payload checkpoint](../../../../specs/planning/results/prelower_source_payloads_2026_10_19/README.md).

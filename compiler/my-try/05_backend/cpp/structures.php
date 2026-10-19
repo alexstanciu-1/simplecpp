@@ -177,6 +177,8 @@ final class cpp_program {
 
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
+	case method_call;
+	case receiver_check;
 	case construct_default;
 	case observation;
 	case initialize_empty;
@@ -191,6 +193,7 @@ enum cpp_runtime_operation_kind {
 
 final class cpp_runtime_operation
 {
+	public ?prepared_call $call = null;
 	public ?prepared_object_construction $construction = null;
 	public function kind_name(): string { return enum_name($this->kind); }
 	public Storage $inputs /** Storage<canonical_type_use> */;

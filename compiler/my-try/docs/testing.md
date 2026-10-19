@@ -25,6 +25,10 @@ checks source payload definitions, requested shared/unique/value representations
 nested containers, tracked payload lifecycle and copy failure, pointer identity,
 unique moved-from state, independent value copies, unused representation removal,
 and native layout reuse on method-body edits versus rebuilding on field-layout edits.
+It also exercises source instance methods: receiver replacement during argument
+evaluation, clearing the caller's handle inside a method, ordered value arguments,
+aliased writable/readonly references, inline receivers, defaults and owned results.
+Throwing copies cover both argument snapshots and native parameter construction.
 The fixture adds identical tracked members to emitted payloads solely for counters;
 construction, methods, destruction and application operations are compiler-generated.
 Direct/ABI counters are compared within each build configuration: disabling optional

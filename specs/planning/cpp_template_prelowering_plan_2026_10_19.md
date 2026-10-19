@@ -64,8 +64,11 @@ The [source-payload checkpoint](results/prelower_source_payloads_2026_10_19/READ
 adds one native source definition, demand-driven ownership/value representations,
 default construction and source payload container arguments. Only requested forms
 and their dependencies are generated; do not eagerly produce every ownership form.
-Method/property crossings and selected constructor arguments remain the next boundary
-work, using existing prepared call/place facts.
+Fixed-parameter source instance calls now reuse existing prepared calls and the
+ordinary argument-sequencing emitter, including retained shared/borrowed inline
+receivers and owned results. Property crossings, selected constructor arguments,
+static/provider methods, reference results and variadic/observation transport remain
+follow-ups using the same prepared call/place owners.
 The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
 details the missing backend request replay and native-address transport, and the
 prepared nested-read/write distinction. Its retained contract is agreed; the linked expression checkpoint records implemented coverage.

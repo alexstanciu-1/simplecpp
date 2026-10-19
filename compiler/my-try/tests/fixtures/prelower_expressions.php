@@ -61,7 +61,10 @@ if ($initializer_proof) { $program = $initializer_program; }
 if ($source_proof) {
     require __DIR__ . '/prelower_source_cases.php';
     $program = $source_program;
-    if (($argv[5] ?? '') === 'method-edit') { $program = str_replace('$this->amount + 1', '$this->amount + 2', $program); }
+    if (($argv[5] ?? '') === 'method-edit') {
+        $program = str_replace('function __destruct() { $this->touch(); }',
+            'function __destruct() { $this->touch(); $this->touch(); }', $program);
+    }
     if (($argv[5] ?? '') === 'layout-edit') {
         $extra = '';
         for ($i = 0; $i < 9; $i++) { $extra .= ' public int $extra' . $i . ' = 9;'; }
@@ -163,7 +166,7 @@ if ($opaque) {
 if ($source_proof && $opaque) {
     $unsupported = [
         'selected source constructors' => 'class C { function __construct(int $x) {} } $c = new C(1);',
-        'source method calls' => 'class C { function ping(): int { return 1; } } $c = new C(); $x = $c->ping();',
+        'method reference returns and variadic packs' => 'class C { function ping(int ...$values): int { return 1; } } $c = new C(); $x = $c->ping(1);',
         'property access' => 'class C { public int $x = 1; } $c = new C(); $x = $c->x;',
         'static property access' => 'class C { public static int $x = 1; } $x = C::$x;',
         'native source calls' => 'function app(): int { return 1; } class C { function ping(): int { return app(); } }',
@@ -219,7 +222,10 @@ $header .= "\nvoid " . CPP_Generator::source_name('function', 'failure') . "();\
 if ($source_proof) {
     require __DIR__ . '/prelower_source_identity.php';
     $header = str_replace('inline void measure_begin()', 'void source_identity_proof(); inline void measure_begin()', $header);
-    $header = str_replace('report("failure"); }', 'report("failure"); source_identity_proof(); }', $header);
+    $header = str_replace('report("failure"); }', 'report("failure"); begin(); copies_before_throw=1; try { '
+        . CPP_Generator::source_name('function', 'failure')
+        . '(); require(false); } catch(const CopyFailure&) {} copies_before_throw=-1; require(live_values==0); '
+        . 'report("parameter-failure"); source_identity_proof(); }', $header);
 }
 if ($initializer_proof) {
     // Replace only instrumentation hooks; application initializer code is emitted from source.
