@@ -8,7 +8,8 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
-$initializers = ($argv[6] ?? '') === 'initializers';
+$binary = ($argv[6] ?? '') === 'binary';
+$initializers = $binary || ($argv[6] ?? '') === 'initializers';
 $indexing = $initializers || ($argv[6] ?? '') === 'indexing';
 $members = $indexing || ($argv[6] ?? '') === 'members';
 $fields = $members || (($argv[6] ?? '') === 'fields') || $source_arguments;
@@ -80,6 +81,37 @@ function init_work(vector<int> &$trace, const receipt &$value): void {
 }';
     $program = str_replace('LARGE_INITIALIZER', implode(', ', array_fill(0,40,'$value')), $program);
 }
+if ($binary) {
+    $program .= '
+enum BinaryTag: int { case First = 1; case Second = 2; }
+function binary_step(int &$order, int $digit, const string &$value): string { $order = $order * 10 + $digit; return $value; }
+function binary_change(string &$value, const string &$replacement): string { $value = $replacement; return $replacement; }
+function binary_flag(int &$order, int $digit): bool { $order = $order * 10 + $digit; return true; }
+function binary_work(const string &$text, const string &$other): int {
+ $order = 0;
+ $joined = binary_step($order,1,$text) . binary_step($order,2,$other);
+ if ($order !== 12 || $joined !== ($text . $other)) { return 1; }
+ $value = $text;
+ if ($value === binary_change($value,$other)) { return 2; }
+ if ($value !== $other) { return 3; }
+ $order = 0;
+ if (!(binary_flag($order,1) === binary_flag($order,2)) || $order !== 12) { return 4; }
+ if ((true !== true) || !(false !== true)) { return 5; }
+ $order = 0;
+ $skip = false && binary_flag($order,1);
+ $skip = true || binary_flag($order,2);
+ if ($order !== 0) { return 6; }
+ if (((17 + 3) * 2 - 4) / 3 !== 12 || 17 % 3 !== 2) { return 7; }
+ if ((2 ** 3) !== 8 || (2 << 3) !== 16 || (16 >> 2) !== 4) { return 8; }
+ if ((7 & 3) !== 3 || (4 | 1) !== 5 || (7 ^ 3) !== 4) { return 9; }
+ if ((2 <=> 3) !== -1 || (3 <=> 3) !== 0 || (4 <=> 3) !== 1) { return 10; }
+ if (!(BinaryTag::First == BinaryTag::First) || !(BinaryTag::First != BinaryTag::Second)) { return 11; }
+ return 0;
+}
+function binary_failure(vector<int> &$trace, int $zero): int { return index_key($trace,1) / $zero + index_inner_key($trace,2); }
+function binary_rhs_failure(vector<int> &$trace, int $zero): int { return index_key($trace,1) + (index_inner_key($trace,2) / $zero); }
+';
+}
 if ($source_arguments) {
     $program .= '
 class MyClass { public vector<int> $amounts; public function duplicate(): vector<int> { return $this->amounts; } }
@@ -136,6 +168,8 @@ $types['Int'] = $body->statements[4]->expression->value->require_call_preparatio
     if ($initializers) {
         $removed = substr($program, 0, strpos($program, '
 struct InitialDefaults'));
+        if ($binary) { $removed .= substr($program, strpos($program, '
+enum BinaryTag')); }
         file_put_contents($source . '/main.phs', $removed);
         $compiler->update_cpp([$source . '/main.phs']);
         foreach (Model::$cpp_files as $artifact) {
@@ -146,6 +180,21 @@ struct InitialDefaults'));
         file_put_contents($source . '/main.phs', $program);
         $compiler->update_cpp([$source . '/main.phs']);
         if ($snapshot() !== $before) { throw new \LogicException('Initializer request restoration changed output'); }
+    }
+    if ($binary && $composed) {
+        $removed = preg_replace('/function binary_work\(.*?\n\}/s', '', $program);
+        file_put_contents($source . '/main.phs', $removed);
+        $compiler->update_cpp([$source . '/main.phs']);
+        foreach (Model::$cpp_output_program->fragments as $owner) {
+            foreach (Model::$cpp_output_program->fragments[$owner]->runtime_operations as $request) {
+                if ($request->kind === cpp_runtime_operation_kind::binary && $request->decision->operation === operator_operation::string_concatenation) {
+                    throw new \LogicException('Removed binary operation retained a helper demand');
+                }
+            }
+        }
+        file_put_contents($source . '/main.phs', $program);
+        $compiler->update_cpp([$source . '/main.phs']);
+        if ($snapshot() !== $before) { throw new \LogicException('Binary request restoration changed output'); }
     }
     $stable_owner = Model::$global_scope->functions_named('field')[0]->syntax()->body->work();
     $stable_fragment = Model::$cpp_output_program->fragments[$stable_owner];
@@ -443,6 +492,26 @@ if ($initializers) {
       } require(completed);
     }';
     $main = str_replace('verify();', 'verify(); initializer_proof();', $main);
+}
+if ($binary) {
+    $header .= "\nvoid binary_proof();\n";
+    foreach (['binary_work','binary_failure','binary_rhs_failure'] as $name) {
+        $support .= "\n" . '#include "' . CPP_Artifacts::callable_header($name) . "\"\n";
+    }
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('binary_work')[0]);
+    $failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('binary_failure')[0]);
+    $rhs_failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('binary_rhs_failure')[0]);
+    $support .= 'void binary_proof() {
+      scpp::string_t text{"a long string value that exceeds short string storage"};
+      scpp::string_t other{"another long string value that exceeds short string storage"};
+      begin(); { auto result=' . $function . '(text,other); require(result.native_value()==0); } report("binary");
+      // Runtime error stack-trace allocations are diagnostic policy, not boundary payload work.
+      { Vector trace; bool caught=false; try { (void)' . $failure . '(trace,Int{0}); } catch(const std::exception&) { caught=true; }
+        require(caught && unwrap(trace).size()==1 && unwrap(trace).at(0).native_value()==1); }
+      { Vector trace; bool caught=false; try { (void)' . $rhs_failure . '(trace,Int{0}); } catch(const std::exception&) { caught=true; }
+        require(caught && unwrap(trace).size()==2 && unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==4); }
+    }';
+    $main = str_replace('verify();', 'verify(); binary_proof();', $main);
 }
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);

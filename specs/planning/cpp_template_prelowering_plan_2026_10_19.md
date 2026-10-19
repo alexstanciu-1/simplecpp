@@ -19,6 +19,12 @@ now routes list/keyed initialization through the selected factory and existing b
 worker. The accounting retry passes its eleven initializer failure sites; later
 operation failures remain. This does not establish whole-accounting compilation.
 
+The [binary integration slice](results/prelower_concrete_binary_2026_10_19/README.md)
+now delegates concrete eager binaries to the existing native renderer through the
+operation bridge. No `_02` semantic/operator work is duplicated. Accounting's binary
+adapter failures disappear; casts, indexed compounds, runtime calls and iteration
+remain separate prelowering gaps.
+
 ## Active integration sequence: concrete type substitution
 
 1. Reuse the type-binding owner to spell native implementations with recursively

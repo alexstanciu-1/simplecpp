@@ -114,10 +114,19 @@ factory; it does not assume that default construction is equivalent. No new fami
 recipe, AST, registry or semantic conversion rule is introduced. See the
 [concrete initializer proof](../../../../specs/planning/results/prelower_concrete_initializers_2026_10_19/README.md).
 
+Concrete eager binary operations now use the existing `CPP_Runtime_Operations`
+request/bridge protocol instead of the accounting recipe's integer-only adapter.
+Operand snapshots and conversions remain in ordinary emission; middleware borrows
+their native outer objects using the existing physical type bindings and calls the
+ordinary binary renderer with the same prepared decision. Owned concrete results
+are constructed in final storage. Short-circuit/presence paths retain their existing
+emission. No operator admission, conversion rules or operation table is duplicated.
+See the [binary integration proof](../../../../specs/planning/results/prelower_concrete_binary_2026_10_19/README.md).
+
 Boundaries remain: recursive generated header/layout graphs (including a method
 signature returning `vector<Self>`); concrete shared/unique/value access interfaces;
 remaining runtime forwarding
-contracts, compound indexed updates, operators and provider compatibility. Initializer
+contracts, compound indexed updates, remaining conversion/operation boundaries and provider compatibility. Initializer
 coverage is bounded by those physical provider/ownership interfaces; arbitrary
 runtime providers and nominal-class elements are not established by the initializer proof. Existing
 semantic reference restrictions remain: reference returns must refer to the declared

@@ -64,6 +64,17 @@ final class CPP_Runtime_Operations
 		return $mapping->opaque ? '(' . $operand->expression . ').address()' : '&(' . $operand->expression . ')';
 	}
 
+	/** Concrete operands expose their native outer object, with existing physical arguments. */
+	private static function native_type(canonical_type_use $type, cpp_generation_context $context,
+		?CPP_Specializations $implementation_engine): string
+	{
+		$mapping = $implementation_engine !== null
+			? CPP_Types::implementation_representation($type, $implementation_engine)
+			: CPP_Types::representation($type);
+		CPP_Types::record_dependencies($mapping, $context);
+		return $mapping->spelling;
+	}
+
 	public static function entry(cpp_runtime_operation $request, CPP_Specializations $engine): cpp_specialization_entry
 	{
 		$name = self::name($request);
@@ -75,6 +86,9 @@ final class CPP_Runtime_Operations
 		if ($request->kind === cpp_runtime_operation_kind::initialize_buffer) {
 			return CPP_Initializer_Buffer::entry($request, $engine);
 		}
+		// Only this integrated operation selects concrete physical bindings. Other ABI
+		// operations retain their existing representation contract until integrated.
+		$implementation_engine = ($engine->concrete_types() && ($request->kind === cpp_runtime_operation_kind::binary)) ? $engine : null;
 		$native_context = new cpp_generation_context();
 		$signature = '';
 		$unpack = '';
@@ -83,7 +97,7 @@ final class CPP_Runtime_Operations
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		foreach ($inputs as $position => $input) {
 			CPP_Opaque_Representation::require_native_type($input);
-			$native = CPP_Declarations::type($input, $native_context);
+			$native = self::native_type($input, $native_context, $implementation_engine);
 			$mutable_input = self::mutable_input($request, $position);
 			$qualifier = $mutable_input ? '' : 'const ';
 			if ($position !== 0) { $signature .= ', '; }
@@ -98,7 +112,7 @@ final class CPP_Runtime_Operations
 		$body = $unpack . $expression . ';';
 		if ($request->result !== null) {
 			CPP_Opaque_Representation::require_native_type($request->result);
-			$native_result = CPP_Declarations::type($request->result, $native_context);
+			$native_result = self::native_type($request->result, $native_context, $implementation_engine);
 			$mapping = CPP_Types::representation($request->result, new cpp_generation_context($engine));
 			$output = $mapping->spelling;
 			$declaration_headers = $mapping->headers;

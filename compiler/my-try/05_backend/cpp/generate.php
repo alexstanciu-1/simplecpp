@@ -1025,7 +1025,9 @@ final class CPP_Generator
 		string $left, string $right, cpp_generation_context $context): string
 	{
 		if ($context->specialization_engine !== null) {
-			if ($context->runtime_abi()) { return CPP_Runtime_Operations::binary($decision, $spelling, $left, $right, $context); }
+			if ($context->runtime_abi() || $context->specialization_engine->concrete_types()) {
+				return CPP_Runtime_Operations::binary($decision, $spelling, $left, $right, $context);
+			}
 			return CPP_Concrete_Operations::binary($decision, $spelling, $left, $right, $context);
 		}
 		if ($decision->operation === operator_operation::integer_power) {

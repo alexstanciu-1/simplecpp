@@ -1,6 +1,14 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --binary --results FRESH_DIRECTORY`
+extends the initializer/indexing proof with existing string concatenation and strict
+identity, boolean identity, integer arithmetic/power/bitwise/three-way operations,
+enum equality, snapshot order, short-circuiting and division-failure order. It checks
+binary-helper demand removal/restoration and compares successful workload counters
+across direct/concrete O0/O2 and sanitizer builds. Runtime-error stack allocations
+are outside the counter window. See [binary evidence](../../../specs/planning/results/prelower_concrete_binary_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --initializers --results FRESH_DIRECTORY`
 extends the indexing proof with empty source-field defaults, nonempty list/keyed
 initialization, nested concrete elements, 40-element buffer allocation, key/value
