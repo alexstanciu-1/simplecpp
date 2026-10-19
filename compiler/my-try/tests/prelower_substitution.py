@@ -16,6 +16,7 @@ def main():
     modes.add_argument('--indexing', action='store_true')
     modes.add_argument('--initializers', action='store_true')
     modes.add_argument('--binary', action='store_true')
+    modes.add_argument('--casts', action='store_true')
     modes.add_argument('--members', action='store_true')
     modes.add_argument('--source-fields', action='store_true')
     modes.add_argument('--source-arguments', action='store_true')
@@ -32,7 +33,7 @@ def main():
                 nonlocal emission
                 emission += 1
                 runner.run(f'{mode}-emit-{emission}-{revision}-{alignment}', ['php', APP / 'tests/fixtures/prelower_substitution.php',
-                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'binary' if args.binary else ('initializers' if args.initializers else ('indexing' if args.indexing else 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings'))))])
+                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'casts' if args.casts else ('binary' if args.binary else ('initializers' if args.initializers else ('indexing' if args.indexing else 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings')))))])
             def build(mode, label, optimization='-O0'):
                 result = json.loads(runner.run(label, ['php', APP / 'tools/build_cpp.php', out / mode,
                     out / ('cache-' + mode), '--no-pch', optimization], cli_reason='Native builder process'))
@@ -64,7 +65,7 @@ def main():
                     '-I' + str(ROOT / 'runtime/include'), '-I' + str(folder), *flags, *units, '-o', out / (mode + '-sanitized')])
                 results[mode + '-sanitized'] = runner.run(mode + '-sanitized-run',
                     ['env', 'ASAN_OPTIONS=detect_leaks=0', out / (mode + '-sanitized')]).decode()
-            if args.indexing or args.initializers or args.binary:
+            if args.indexing or args.initializers or args.binary or args.casts:
                 for variant in ['-O0', '-O2', '-sanitized']:
                     assert results['direct' + variant] == results['composed' + variant], results
                 assert results['direct-O0'] == results['direct-O2'], results

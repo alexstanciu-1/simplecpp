@@ -115,6 +115,8 @@ final class cpp_generation_context
 {
 	/** Native source payloads share ordinary bindings; calls back into application ABI need transport. */
 	public bool $native_source = false;
+	/** Middleware expressions use native outer implementations with concrete physical arguments. */
+	public ?CPP_Specializations $implementation_engine = null;
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
 	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];
 	public function __construct(public ?CPP_Specializations $specialization_engine = null)

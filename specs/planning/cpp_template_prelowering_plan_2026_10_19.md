@@ -22,8 +22,11 @@ operation failures remain. This does not establish whole-accounting compilation.
 The [binary integration slice](results/prelower_concrete_binary_2026_10_19/README.md)
 now delegates concrete eager binaries to the existing native renderer through the
 operation bridge. No `_02` semantic/operator work is duplicated. Accounting's binary
-adapter failures disappear; casts, indexed compounds, runtime calls and iteration
-remain separate prelowering gaps.
+adapter failures disappear. The [cast integration slice](results/prelower_concrete_casts_2026_10_19/README.md)
+also reuses prepared conversion decisions and the native conversion renderer. All
+three cast failures disappear: 281 of 285 fragments emit. Two indexed compound
+updates, one strlen call and one hash iteration remain blocked. No whole-accounting
+concrete executable is claimed; broader ownership/wrapper interfaces remain separate.
 
 ## Active integration sequence: concrete type substitution
 

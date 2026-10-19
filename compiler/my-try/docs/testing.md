@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --casts --results FRESH_DIRECTORY`
+extends the binary proof with string/integer, numeric, boolean and narrowing/widening
+casts plus implicit text conversion. It checks source effects and failed-cast
+suppression in binary operands and keyed initializers, helper demand removal/replay,
+and direct/concrete allocation/copy parity. See [cast evidence](../../../specs/planning/results/prelower_concrete_casts_2026_10_19/README.md).
+
 `python3 compiler/my-try/tests/prelower_substitution.py --binary --results FRESH_DIRECTORY`
 extends the initializer/indexing proof with existing string concatenation and strict
 identity, boolean identity, integer arithmetic/power/bitwise/three-way operations,

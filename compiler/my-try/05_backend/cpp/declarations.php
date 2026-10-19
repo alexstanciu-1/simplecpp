@@ -39,6 +39,9 @@ final class CPP_Declarations
 		if ($context->runtime_abi() && ($decision->operation !== conversion_operation::identity)) {
 			return CPP_Runtime_Operations::convert($expression, $decision, $context);
 		}
+		if (CPP_Runtime_Operations::concrete_conversion($decision, $context)) {
+			return CPP_Runtime_Operations::convert($expression, $decision, $context);
+		}
 		if ($decision->operation === conversion_operation::callable_wrap) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}

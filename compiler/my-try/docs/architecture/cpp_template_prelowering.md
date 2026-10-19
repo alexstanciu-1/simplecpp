@@ -123,6 +123,16 @@ are constructed in final storage. Short-circuit/presence paths retain their exis
 emission. No operator admission, conversion rules or operation table is duplicated.
 See the [binary integration proof](../../../../specs/planning/results/prelower_concrete_binary_2026_10_19/README.md).
 
+Concrete explicit runtime casts, text conversions and integer value casts reuse the
+prepared conversion decision through the same operation bridge. The input is bound
+once by const reference; opaque results are constructed in final storage. A transient
+implementation context lets the existing conversion renderer spell native outer types
+with concrete physical arguments through `CPP_Types`, also shared by binary operand
+unpacking and result construction. It cannot recursively request another bridge.
+Identity stays unchanged; ownership transfers and wrapper construction/extraction
+remain separate integration work. No cast admission, parsing or range rules are added.
+See the [cast proof](../../../../specs/planning/results/prelower_concrete_casts_2026_10_19/README.md).
+
 Boundaries remain: recursive generated header/layout graphs (including a method
 signature returning `vector<Self>`); concrete shared/unique/value access interfaces;
 remaining runtime forwarding

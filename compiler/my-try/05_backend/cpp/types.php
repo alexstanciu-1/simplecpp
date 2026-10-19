@@ -31,7 +31,8 @@ final class CPP_Types
 				}
 			}
 		}
-		return self::native_representation_for($type_use, $requirement, $context, null);
+		return self::native_representation_for($type_use, $requirement, $context,
+			$context !== null ? $context->implementation_engine : null);
 	}
 
 	/** Native outer implementation with concrete physical arguments, using the same registry bindings. */

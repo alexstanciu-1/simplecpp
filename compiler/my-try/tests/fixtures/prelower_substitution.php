@@ -8,7 +8,8 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
-$binary = ($argv[6] ?? '') === 'binary';
+$casts = ($argv[6] ?? '') === 'casts';
+$binary = $casts || ($argv[6] ?? '') === 'binary';
 $initializers = $binary || ($argv[6] ?? '') === 'initializers';
 $indexing = $initializers || ($argv[6] ?? '') === 'indexing';
 $members = $indexing || ($argv[6] ?? '') === 'members';
@@ -112,6 +113,29 @@ function binary_failure(vector<int> &$trace, int $zero): int { return index_key(
 function binary_rhs_failure(vector<int> &$trace, int $zero): int { return index_key($trace,1) + (index_inner_key($trace,2) / $zero); }
 ';
 }
+if ($casts) {
+    $program .= '
+function cast_text(vector<int> &$trace, const string &$value): string { $trace[] = 1; return $value; }
+function cast_number(vector<int> &$trace, int $value): int { $trace[] = 2; return $value; }
+function cast_work(vector<int> &$trace, const string &$digits): int {
+ $a = (int)cast_text($trace,$digits);
+ $b = (string)cast_number($trace,42);
+ if ($a !== 42 || $b !== "42") { return 1; }
+ $small vector<uint8> = [(uint8)cast_number($trace,7)];
+ if ((int)$small[0] !== 7) { return 2; }
+ $f = (float)7;
+ if ((int)$f !== 7 || (bool)0 || !(bool)1) { return 3; }
+ $text = "value=" . cast_number($trace,9);
+ if ($text !== "value=9") { return 4; }
+ $map hash<int,int> = [(int)cast_text($trace,$digits) => (int8)cast_number($trace,8)];
+ if ($map[42] !== 8) { return 5; }
+ return 0;
+}
+function cast_failure(vector<int> &$trace, const string &$bad): int { return (int)cast_text($trace,$bad) + index_inner_key($trace,7); }
+function cast_key_failure(vector<int> &$trace): void { $map hash<int,int> = [(uint8)cast_number($trace,256) => index_inner_key($trace,7)]; }
+function cast_value_failure(vector<int> &$trace): void { $map hash<int,int> = [index_key($trace,1) => (uint8)cast_number($trace,256), index_inner_key($trace,7) => 1]; }
+';
+}
 if ($source_arguments) {
     $program .= '
 class MyClass { public vector<int> $amounts; public function duplicate(): vector<int> { return $this->amounts; } }
@@ -170,6 +194,8 @@ $types['Int'] = $body->statements[4]->expression->value->require_call_preparatio
 struct InitialDefaults'));
         if ($binary) { $removed .= substr($program, strpos($program, '
 enum BinaryTag')); }
+        if ($casts) { $removed = substr($removed,0,strpos($removed,'
+function cast_text')); }
         file_put_contents($source . '/main.phs', $removed);
         $compiler->update_cpp([$source . '/main.phs']);
         foreach (Model::$cpp_files as $artifact) {
@@ -183,6 +209,8 @@ enum BinaryTag')); }
     }
     if ($binary && $composed) {
         $removed = preg_replace('/function binary_work\(.*?\n\}/s', '', $program);
+        if ($casts) { $removed = substr($removed,0,strpos($removed,'
+function cast_text')); }
         file_put_contents($source . '/main.phs', $removed);
         $compiler->update_cpp([$source . '/main.phs']);
         foreach (Model::$cpp_output_program->fragments as $owner) {
@@ -195,6 +223,22 @@ enum BinaryTag')); }
         file_put_contents($source . '/main.phs', $program);
         $compiler->update_cpp([$source . '/main.phs']);
         if ($snapshot() !== $before) { throw new \LogicException('Binary request restoration changed output'); }
+    }
+    if ($casts && $composed) {
+        $removed = substr($program,0,strpos($program,'
+function cast_text'));
+        file_put_contents($source . '/main.phs', $removed);
+        $compiler->update_cpp([$source . '/main.phs']);
+        foreach (Model::$cpp_output_program->fragments as $owner) {
+            foreach (Model::$cpp_output_program->fragments[$owner]->runtime_operations as $request) {
+                if ($request->kind === cpp_runtime_operation_kind::conversion) {
+                    throw new \LogicException('Removed casts retained a conversion helper');
+                }
+            }
+        }
+        file_put_contents($source . '/main.phs', $program);
+        $compiler->update_cpp([$source . '/main.phs']);
+        if ($snapshot() !== $before) { throw new \LogicException('Cast restoration changed output'); }
     }
     $stable_owner = Model::$global_scope->functions_named('field')[0]->syntax()->body->work();
     $stable_fragment = Model::$cpp_output_program->fragments[$stable_owner];
@@ -512,6 +556,30 @@ if ($binary) {
         require(caught && unwrap(trace).size()==2 && unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==4); }
     }';
     $main = str_replace('verify();', 'verify(); binary_proof();', $main);
+}
+if ($casts) {
+    $header .= "\nvoid cast_proof();\n";
+    foreach (['cast_work','cast_failure','cast_key_failure','cast_value_failure'] as $name) {
+        $support .= "\n" . '#include "' . CPP_Artifacts::callable_header($name) . "\"\n";
+    }
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('cast_work')[0]);
+    $failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('cast_failure')[0]);
+    $key_failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('cast_key_failure')[0]);
+    $value_failure = CPP_Callables::source_reference(Model::$global_scope->functions_named('cast_value_failure')[0]);
+    $support .= 'void cast_proof() {
+      scpp::string_t digits{"42"}, bad{"invalid integer"};
+      begin(); { Vector trace; auto result=' . $function . '(trace,digits); require(result.native_value()==0);
+        const long expected[]={1,2,2,2,1,2}; require(unwrap(trace).size()==6);
+        for(int i=0;i<6;++i) require(unwrap(trace).at(i).native_value()==expected[i]);
+      } report("casts");
+      { Vector trace; bool caught=false; try { (void)' . $failure . '(trace,bad); } catch(const std::exception&) { caught=true; }
+        require(caught && unwrap(trace).size()==1 && unwrap(trace).at(0).native_value()==1); }
+      { Vector trace; bool caught=false; try { ' . $key_failure . '(trace); } catch(const std::exception&) { caught=true; }
+        require(caught && unwrap(trace).size()==1 && unwrap(trace).at(0).native_value()==2); }
+      { Vector trace; bool caught=false; try { ' . $value_failure . '(trace); } catch(const std::exception&) { caught=true; }
+        require(caught && unwrap(trace).size()==2 && unwrap(trace).at(0).native_value()==1 && unwrap(trace).at(1).native_value()==2); }
+    }';
+    $main = str_replace('verify();', 'verify(); cast_proof();', $main);
 }
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);
