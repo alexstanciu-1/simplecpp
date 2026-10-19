@@ -1,0 +1,204 @@
+class WorkloadChecks {
+    public int $passed = 0;
+    public int $failed = 0;
+    public $failures vector<string> = [];
+
+    public function expect(bool $condition, string $label): void {
+        if ($condition) {
+            $this->passed += 1;
+        } else {
+            $this->failed += 1;
+            $this->failures[] = $label;
+        }
+    }
+
+    public function equal(int $actual, int $expected, string $label): void {
+        $this->expect($actual === $expected, $label);
+    }
+
+    public function accepted(AccountingCheck $check, string $label): void {
+        $this->expect($check->accepted, $label . ":" . $check->code);
+    }
+
+    public function rejected(AccountingCheck $check, string $code, string $label): void {
+        $this->expect(!$check->accepted && $check->code === $code, $label . ":" . $check->code);
+    }
+
+    public function report(): void {
+        foreach ($this->failures as $failure) {
+            echo "FAIL ", $failure, "\n";
+        }
+        echo "CHECKS passed=", $this->passed, " failed=", $this->failed, "\n";
+        if ($this->failed === 0) {
+            echo "ACCOUNTING_WORKLOAD_PASS\n";
+        } else {
+            echo "ACCOUNTING_WORKLOAD_FAIL\n";
+        }
+    }
+}
+
+function setup_accounting_ledger(WorkloadChecks $checks): GeneralLedger {
+    $ledger GeneralLedger = new GeneralLedger();
+    $checks->accepted($ledger->add_account("bank", "Operating bank", AccountCategory::Asset), "chart bank");
+    $checks->accepted($ledger->add_account("receivables", "Trade receivables", AccountCategory::Asset), "chart receivables");
+    $checks->accepted($ledger->add_account("inventory", "Stock at cost", AccountCategory::Asset), "chart inventory");
+    $checks->accepted($ledger->add_account("input-tax", "Recoverable input tax", AccountCategory::Asset), "chart input tax");
+    $checks->accepted($ledger->add_account("fixed-assets", "Fixed assets at cost", AccountCategory::Asset), "chart assets");
+    $checks->accepted($ledger->add_account("accumulated-depreciation", "Accumulated depreciation", AccountCategory::Asset), "chart depreciation");
+    $checks->accepted($ledger->add_account("prepayments", "Prepaid expenses", AccountCategory::Asset), "chart prepayments");
+    $checks->accepted($ledger->add_account("payables", "Trade payables", AccountCategory::Liability), "chart payables");
+    $checks->accepted($ledger->add_account("goods-received", "Goods received not invoiced", AccountCategory::Liability), "chart receipt accrual");
+    $checks->accepted($ledger->add_account("tax-payable", "Output tax", AccountCategory::Liability), "chart output tax");
+    $checks->accepted($ledger->add_account("accruals", "Accrued expenses", AccountCategory::Liability), "chart accruals");
+    $checks->accepted($ledger->add_account("capital", "Owner capital", AccountCategory::Equity), "chart capital");
+    $checks->accepted($ledger->add_account("retained-earnings", "Retained earnings", AccountCategory::Equity), "chart retained earnings");
+    $checks->accepted($ledger->add_account("revenue", "Sales revenue", AccountCategory::Revenue), "chart revenue");
+    $checks->accepted($ledger->add_account("interest-income", "Bank interest", AccountCategory::Revenue), "chart interest");
+    $checks->accepted($ledger->add_account("asset-gain", "Asset disposal gain", AccountCategory::Revenue), "chart asset gain");
+    $checks->accepted($ledger->add_account("cost-of-sales", "Cost of sales", AccountCategory::Expense), "chart cost of sales");
+    $checks->accepted($ledger->add_account("operating-expense", "Operating expenses", AccountCategory::Expense), "chart expenses");
+    $checks->accepted($ledger->add_account("bank-fees", "Bank fees", AccountCategory::Expense), "chart fees");
+    $checks->accepted($ledger->add_account("depreciation-expense", "Depreciation expense", AccountCategory::Expense), "chart depreciation expense");
+    $checks->accepted($ledger->add_account("asset-loss", "Asset disposal loss", AccountCategory::Expense), "chart asset loss");
+    return $ledger;
+}
+
+function check_money_rules(WorkloadChecks $checks): void {
+    $half AmountResult = MoneyRules::rate(5, 1000);
+    $checks->expect($half->valid, "positive half minor unit accepted");
+    $checks->equal($half->amount, 1, "positive half rounds away from zero");
+    $negative AmountResult = MoneyRules::rate(-5, 1000);
+    $checks->equal($negative->amount, -1, "negative half rounds away from zero");
+    $below AmountResult = MoneyRules::rate(4, 1000);
+    $checks->equal($below->amount, 0, "below half rounds down");
+    $maximum AmountResult = MoneyRules::rate(1000000000, 10000);
+    $checks->equal($maximum->amount, 1000000000, "maximum rate product remains exact");
+    $overflow AmountResult = MoneyRules::add(1000000000, 1);
+    $checks->expect(!$overflow->valid, "addition rejects workload overflow");
+    $bad_rate AmountResult = MoneyRules::rate(100, -1);
+    $checks->expect(!$bad_rate->valid, "negative tax rate rejected");
+    $product AmountResult = MoneyRules::multiply(150, 7);
+    $checks->equal($product->amount, 1050, "quantity times price");
+    $bad_product AmountResult = MoneyRules::multiply(1000000000, 2);
+    $checks->expect(!$bad_product->valid, "line extension overflow rejected");
+    $split AllocationResult = MoneyAllocation::equally(100, 3);
+    $checks->expect($split->valid, "equal allocation accepted");
+    $checks->equal($split->amounts[0], 34, "first equal allocation receives remainder");
+    $checks->equal($split->amounts[1], 33, "second equal allocation");
+    $checks->equal($split->amounts[2], 33, "third equal allocation");
+    $weights vector<int> = [1, 2, 3];
+    $weighted AllocationResult = MoneyAllocation::weighted(100, $weights);
+    $checks->expect($weighted->valid, "weighted allocation accepted");
+    $checks->equal($weighted->amounts[0], 17, "largest remainder gets minor unit");
+    $checks->equal($weighted->amounts[1], 33, "weighted second share");
+    $checks->equal($weighted->amounts[2], 50, "weighted third share");
+    $zero_weights vector<int> = [0, 0];
+    $invalid AllocationResult = MoneyAllocation::weighted(10, $zero_weights);
+    $checks->expect(!$invalid->valid, "zero weight total rejected");
+    // Exercise conservation across sign, quotient, and remainder boundaries.
+    for ($amount int = -101; $amount <= 101; $amount++) {
+        $allocation AllocationResult = MoneyAllocation::weighted($amount, $weights);
+        $sum int = 0;
+        foreach ($allocation->amounts as $portion) {
+            $sum += $portion;
+        }
+        $checks->expect($allocation->valid && $sum === $amount, "weighted allocation conserves signed amount");
+    }
+}
+
+function check_calendar_rules(WorkloadChecks $checks): void {
+    $date AccountingDate = new AccountingDate();
+    $date->year = 2024;
+    $date->month = 2;
+    $date->day = 28;
+    $next AccountingDate = CalendarRules::add_days($date, 1);
+    $checks->equal($next->day, 29, "leap day exists");
+    $checks->equal($date->day, 28, "date struct copy is independent");
+    $march AccountingDate = CalendarRules::add_days($date, 2);
+    $checks->equal($march->month, 3, "leap day rollover month");
+    $checks->equal($march->day, 1, "leap day rollover day");
+    $bad AccountingDate = new AccountingDate();
+    $bad->year = 2023;
+    $bad->month = 2;
+    $bad->day = 29;
+    $checks->expect(!CalendarRules::valid($bad), "non-leap February 29 rejected");
+    $terms PaymentTerms = new PaymentTerms();
+    $terms->kind = PaymentTermKind::DaysAfterMonthEnd;
+    $terms->days = 30;
+    $due AccountingDate = $terms->due_date($date);
+    $checks->equal($due->month, 3, "month-end terms month");
+    $checks->equal($due->day, 30, "month-end terms day");
+    $terms->discount_days = 10;
+    $terms->discount_basis_points = 200;
+    $discount AmountResult = $terms->settlement_discount(10000, $date, $next);
+    $checks->equal($discount->amount, 200, "early settlement discount");
+    $late AmountResult = $terms->settlement_discount(10000, $date, $due);
+    $checks->equal($late->amount, 0, "late settlement no discount");
+    for ($ordinal int = 0; $ordinal <= 36524; $ordinal += 97) {
+        $round_trip AccountingDate = CalendarRules::from_ordinal($ordinal);
+        $checks->equal(CalendarRules::ordinal($round_trip), $ordinal, "date ordinal round trip");
+    }
+    $last AccountingDate = CalendarRules::from_ordinal(36524);
+    $checks->equal($last->year, 2099, "calendar final year");
+    $checks->equal($last->month, 12, "calendar final month");
+    $checks->equal($last->day, 31, "calendar final day");
+}
+
+function check_ledger_rejections(WorkloadChecks $checks): void {
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    $entry JournalEntry = new JournalEntry();
+    $entry->reference = "unbalanced";
+    $entry->add_debit("bank", 100, "test");
+    $entry->add_credit("capital", 99, "test");
+    $checks->rejected($ledger->post($entry), "journal.unbalanced", "unbalanced journal rejected");
+    $checks->equal($ledger->entry_count(), 0, "rejected journal not recorded");
+    $checks->equal($ledger->balance_of("bank"), 0, "rejected journal leaves bank unchanged");
+    $entry->lines[1]->credit = 100;
+    $checks->accepted($ledger->post($entry), "corrected draft posted");
+    $entry->lines[0]->debit = 999;
+    $checks->equal($ledger->turnover("bank", 1, 1), 100, "posted journal owns line snapshot");
+    $checks->rejected($ledger->post($entry), "journal.duplicate", "duplicate reference rejected");
+    $checks->rejected($ledger->set_account_active("bank", false), "account.nonzero", "nonzero account cannot deactivate");
+    $checks->accepted($ledger->reverse("unbalanced", "reverse-001"), "reverse immutable journal");
+    $checks->equal($ledger->balance_of("bank"), 0, "reversal clears bank");
+    $checks->rejected($ledger->reverse("unbalanced", "reverse-002"), "reversal.duplicate", "journal cannot reverse twice");
+    $checks->equal($ledger->entry_count(), 2, "duplicate reversal leaves journal unchanged");
+    $checks->accepted($ledger->set_account_active("bank", false), "zero account deactivated");
+    $entry->reference = "inactive";
+    $entry->lines[0]->debit = 100;
+    $checks->rejected($ledger->post($entry), "journal.inactive", "inactive account rejects posting");
+    $checks->accepted($ledger->set_account_active("bank", true), "bank reactivated");
+    $checks->accepted($ledger->close_period(1), "close first period");
+    $checks->rejected($ledger->post($entry), "journal.period", "closed period rejects posting");
+    $checks->rejected($ledger->close_period(1), "period.sequence", "stale close rejected");
+    $checks->equal($ledger->current_period(), 2, "period advances once");
+    $report TrialBalance = $ledger->trial_balance();
+    $checks->expect($report->is_balanced(), "rejection and reversal trial balance");
+}
+
+function check_inventory_flow(WorkloadChecks $checks): void {
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    $inventory InventoryBook = new InventoryBook();
+    $checks->accepted($inventory->register_item("PART-01", "Fictional replacement part"), "register stock item");
+    $checks->accepted($inventory->receive($ledger, "GRN-001", "PART-01", 10, 100), "first stock lot");
+    $checks->accepted($inventory->receive($ledger, "GRN-002", "PART-01", 5, 120), "second stock lot");
+    $checks->equal($inventory->total_value(), 1600, "stock receipt valuation");
+    $checks->accepted($inventory->reserve("ORDER-001", "PART-01", 4), "reserve stock");
+    $checks->equal($inventory->available_of("PART-01"), 11, "reservation reduces availability");
+    $blocked StockIssueResult = $inventory->issue($ledger, "SHIP-BLOCKED", "PART-01", 12);
+    $checks->expect(!$blocked->accepted, "cannot ship reserved stock");
+    $checks->equal($inventory->quantity_of("PART-01"), 15, "rejected shipment leaves quantity");
+    $checks->accepted($inventory->release("ORDER-001"), "release stock reservation");
+    $shipped StockIssueResult = $inventory->issue($ledger, "SHIP-001", "PART-01", 12);
+    $checks->expect($shipped->accepted, "ship across FIFO lots");
+    $checks->equal($shipped->cost, 1240, "FIFO consumes oldest ten then two newer units");
+    $checks->equal($inventory->quantity_of("PART-01"), 3, "remaining stock quantity");
+    $checks->equal($inventory->total_value(), 360, "remaining stock value");
+    $checks->equal($ledger->balance_of("cost-of-sales"), 1240, "shipment posts cost of sales");
+    $checks->accepted($inventory->reconcile($ledger), "inventory control reconciles");
+    $duplicate StockIssueResult = $inventory->issue($ledger, "SHIP-001", "PART-01", 1);
+    $checks->expect(!$duplicate->accepted, "duplicate shipment rejected");
+    $checks->equal($inventory->total_value(), 360, "duplicate shipment leaves value");
+    $checks->rejected($inventory->release("ORDER-001"), "reservation.released", "reservation cannot release twice");
+    $checks->accepted($ledger->set_account_active("bank-fees", false), "deactivate unused expense account");
+}

@@ -1,0 +1,900 @@
+{
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+  "cpu": "model name\t: AMD Ryzen 5 PRO 4650G with Radeon Graphics",
+  "load_start": [
+    0.37451171875,
+    0.1435546875,
+    0.04296875
+  ],
+  "repeats": 7,
+  "runtime_library": "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+  "runtime_sha256": "c4f2874ea49a06be39a4674eb003ec9f34976f1393cf4acd0d4bdd4a2d04713f",
+  "source_sha256": {
+    "generated_money.cpp": "3eb14ea959a4810f948fde6127a30a0fa7bf91e3226a6cac1f2bbae7a424852b",
+    "handle_money.c": "4a580361c34b1147f12926024562ba935273b839c45f00223120af6962c4ee97",
+    "run_handles.py": "7f84540a553d31d9fc105dff033da63675e1c8df92f6ceb12201d3ef6c2e898d",
+    "generated_money.hpp": "982fa4d37eb510ca2b2cf3857f756de1afe3b223fde1dbdfc4e176ab6f250159",
+    "run_selective.py": "6e13ef70dc37f7a4d36fa93a2d4fc60530fb5656b3716c5771c7f16b9b0fabc3",
+    "handle_abi.h": "55bdb12a93d659c544f095919efcc8a691c28cca83a3f552d6c8c5a6bbb30c8d",
+    "money.c": "54639794e3dcf054f416fee436b31a9c8a06e79493ca51e2346dd0b1313913d8",
+    "concrete_money.cpp": "18def553153212be09c78d84a618968576e2842d85caf80d1d30baba7063dcff",
+    "concrete_amount.hpp": "2115ff874709b7076ec27591105503f7b8776c56295cdf75e3b1587d3d4153aa",
+    "run.py": "5e997561e36214ab90e64ffdb4e39554e17f0631d1bdd7376cd8ba5c4e40c589",
+    "verification.py": "8fa87e687dfb5b4aca643bbb742825030a8d30474a56b4364419f2bdef5f1366",
+    "money_abi.h": "d98f9ad8cd6664f50af5715e134c0d6e10bf3627027d64261c5c8ea6ada9f786",
+    "bridge.cpp": "0bbc7dfb3cb216d97551fba3735da5e9e4e2ed8a0871224a0a86bd926c69529d",
+    "handle_checks.c": "40fe715aeeae6d9772307c2fcde58f8866a628a1ab7058eb4881e77b892029e5",
+    "driver.c": "205461686bd967b63c4f96d19bc3b951393bf58a7624a958a3dcdae66cbe267c",
+    "handle_runtime.cpp": "49a31b00a02203fc6dde11a37f32ff41f7d1f5f8f542992bc28657eef906d2b4"
+  },
+  "results": {
+    "-O0": {
+      "setup": {
+        "pch_s": 4.6573856309987605,
+        "handle_runtime_s": 1.8937569350237027,
+        "original_bridge_s": 1.7293197439867072
+      },
+      "retained_artifacts_unchanged": true,
+      "behavior_cases_per_variant": 21870,
+      "alias_checks_passed": true,
+      "variants": {
+        "C_handles": {
+          "timings": {
+            "compile": {
+              "median_ms": 56.46105797495693,
+              "min_ms": 54.69939700560644,
+              "max_ms": 60.67256798269227,
+              "samples_s": [
+                0.057214102998841554,
+                0.06067256798269227,
+                0.05469939700560644,
+                0.05646105797495693,
+                0.055055150995031,
+                0.05525050702271983,
+                0.056980504014063627
+              ]
+            },
+            "link": {
+              "median_ms": 143.95294297719374,
+              "min_ms": 139.0552570228465,
+              "max_ms": 150.45019699027762,
+              "samples_s": [
+                0.1390552570228465,
+                0.14395294297719374,
+                0.15045019699027762,
+                0.13953630294417962,
+                0.14443677401868626,
+                0.1495744870044291,
+                0.14357894798740745
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 200.55945200147107,
+              "min_ms": 195.99736091913655,
+              "max_ms": 205.14959399588406,
+              "samples_s": [
+                0.19626936002168804,
+                0.20462551095988601,
+                0.20514959399588406,
+                0.19599736091913655,
+                0.19949192501371726,
+                0.20482499402714893,
+                0.20055945200147107
+              ]
+            }
+          },
+          "compile_command": [
+            "clang",
+            "-std=c17",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O0",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/handle_money.c"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/C_handles.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/C_handles.exe"
+          ]
+        },
+        "CXX_handles_control": {
+          "timings": {
+            "compile": {
+              "median_ms": 57.67409800319001,
+              "min_ms": 56.95458297850564,
+              "max_ms": 68.04944394389167,
+              "samples_s": [
+                0.06804944394389167,
+                0.05767409800319001,
+                0.05716275901068002,
+                0.05840834398986772,
+                0.05792287702206522,
+                0.05750646197702736,
+                0.05695458297850564
+              ]
+            },
+            "link": {
+              "median_ms": 140.03655000124127,
+              "min_ms": 138.96484300494194,
+              "max_ms": 151.70731104444712,
+              "samples_s": [
+                0.14158591302111745,
+                0.15170731104444712,
+                0.13896484300494194,
+                0.14003655000124127,
+                0.14392583695007488,
+                0.13966788799734786,
+                0.1398611640324816
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 198.44489399110898,
+              "min_ms": 196.12760201562196,
+              "max_ms": 209.63535696500912,
+              "samples_s": [
+                0.20963535696500912,
+                0.20938140904763713,
+                0.19612760201562196,
+                0.19844489399110898,
+                0.2018487139721401,
+                0.19717434997437522,
+                0.19681574701098725
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O0",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-x",
+            "c++",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/handle_money.c"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_handles_control.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_handles_control.exe"
+          ]
+        },
+        "CXX_RAII_statements": {
+          "timings": {
+            "compile": {
+              "median_ms": 65.04428200423717,
+              "min_ms": 63.65529797039926,
+              "max_ms": 65.22926001343876,
+              "samples_s": [
+                0.06520109000848606,
+                0.06462839001324028,
+                0.0650928959948942,
+                0.06522926001343876,
+                0.06365529797039926,
+                0.06463568902108818,
+                0.06504428200423717
+              ]
+            },
+            "link": {
+              "median_ms": 140.1976030319929,
+              "min_ms": 137.88639899576083,
+              "max_ms": 148.25180399930105,
+              "samples_s": [
+                0.14489439298631623,
+                0.1379478900344111,
+                0.13788639899576083,
+                0.14511832798598334,
+                0.1401976030319929,
+                0.13834778300952166,
+                0.14825180399930105
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 203.85290100239217,
+              "min_ms": 202.57628004765138,
+              "max_ms": 213.29608600353822,
+              "samples_s": [
+                0.2100954829948023,
+                0.20257628004765138,
+                0.20297929499065503,
+                0.2103475879994221,
+                0.20385290100239217,
+                0.20298347203060985,
+                0.21329608600353822
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O0",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/concrete_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_statements.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_statements.exe"
+          ]
+        },
+        "CXX_RAII_lambdas": {
+          "timings": {
+            "compile": {
+              "median_ms": 67.37276096828282,
+              "min_ms": 66.8836859986186,
+              "max_ms": 71.9752840232104,
+              "samples_s": [
+                0.06820603896630928,
+                0.0695572349941358,
+                0.0668836859986186,
+                0.06725757697131485,
+                0.06704721099231392,
+                0.0719752840232104,
+                0.06737276096828282
+              ]
+            },
+            "link": {
+              "median_ms": 141.3825759664178,
+              "min_ms": 136.9792460463941,
+              "max_ms": 153.63992401398718,
+              "samples_s": [
+                0.1413825759664178,
+                0.1473243529908359,
+                0.1369792460463941,
+                0.15363992401398718,
+                0.14033815800212324,
+                0.14153416000772268,
+                0.13822068902663887
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 209.58861493272707,
+              "min_ms": 203.8629320450127,
+              "max_ms": 220.89750098530203,
+              "samples_s": [
+                0.20958861493272707,
+                0.2168815879849717,
+                0.2038629320450127,
+                0.22089750098530203,
+                0.20738536899443716,
+                0.21350944403093308,
+                0.20559344999492168
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O0",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-DUSE_LAMBDAS=1",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/concrete_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_lambdas.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_lambdas.exe"
+          ]
+        },
+        "CXX_RAII_exposed_PCH": {
+          "timings": {
+            "compile": {
+              "median_ms": 1689.507111965213,
+              "min_ms": 1660.9385650372133,
+              "max_ms": 1723.5881639644504,
+              "samples_s": [
+                1.6609385650372133,
+                1.6749682700028643,
+                1.702969839971047,
+                1.6795976199791767,
+                1.7235881639644504,
+                1.72317676799139,
+                1.689507111965213
+              ]
+            },
+            "link": {
+              "median_ms": 139.23567300662398,
+              "min_ms": 138.03787296637893,
+              "max_ms": 162.48137096408755,
+              "samples_s": [
+                0.16248137096408755,
+                0.13878516800468788,
+                0.13803787296637893,
+                0.1391503500053659,
+                0.13923567300662398,
+                0.1418765219859779,
+                0.14512484904844314
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 1834.631961013656,
+              "min_ms": 1813.7534380075522,
+              "max_ms": 1865.053289977368,
+              "samples_s": [
+                1.8234199360013008,
+                1.8137534380075522,
+                1.8410077129374258,
+                1.8187479699845426,
+                1.8628238369710743,
+                1.865053289977368,
+                1.834631961013656
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O0",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-include-pch",
+            "/tmp/accounting-handle-_cipk37g/-O0.pch",
+            "-DEXPOSE_RUNTIME=1",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/concrete_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_exposed_PCH.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_exposed_PCH.exe"
+          ]
+        },
+        "generated_CXX_PCH": {
+          "timings": {
+            "compile": {
+              "median_ms": 1842.6031790440902,
+              "min_ms": 1805.8706010342576,
+              "max_ms": 1915.6452600145712,
+              "samples_s": [
+                1.8343643929692917,
+                1.9156452600145712,
+                1.8434812769992277,
+                1.8260454080300406,
+                1.9133681959938258,
+                1.8058706010342576,
+                1.8426031790440902
+              ]
+            },
+            "link": {
+              "median_ms": 142.53429300151765,
+              "min_ms": 140.68871299969032,
+              "max_ms": 158.40697300154716,
+              "samples_s": [
+                0.14068871299969032,
+                0.1527583949500695,
+                0.14253429300151765,
+                0.14704145200084895,
+                0.14207247598096728,
+                0.15840697300154716,
+                0.1420817369944416
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 1984.6849160385318,
+              "min_ms": 1964.2775740358047,
+              "max_ms": 2068.4036549646407,
+              "samples_s": [
+                1.975053105968982,
+                2.0684036549646407,
+                1.9860155700007454,
+                1.9730868600308895,
+                2.055440671974793,
+                1.9642775740358047,
+                1.9846849160385318
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O0",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-include-pch",
+            "/tmp/accounting-handle-_cipk37g/-O0.pch",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/generated_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/generated_CXX_PCH.o",
+            "/tmp/accounting-handle-_cipk37g/original_bridge.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/generated_CXX_PCH.exe"
+          ]
+        }
+      }
+    },
+    "-O2": {
+      "setup": {
+        "pch_s": 4.375184531963896,
+        "handle_runtime_s": 2.0322429230436683,
+        "original_bridge_s": 1.984026411024388
+      },
+      "retained_artifacts_unchanged": true,
+      "behavior_cases_per_variant": 21870,
+      "alias_checks_passed": true,
+      "variants": {
+        "C_handles": {
+          "timings": {
+            "compile": {
+              "median_ms": 104.40348699921742,
+              "min_ms": 102.37238800618798,
+              "max_ms": 119.34202496195212,
+              "samples_s": [
+                0.11934202496195212,
+                0.10237238800618798,
+                0.10899012500885874,
+                0.10440348699921742,
+                0.10566256003221497,
+                0.1042176199844107,
+                0.10298967099515721
+              ]
+            },
+            "link": {
+              "median_ms": 147.9448530008085,
+              "min_ms": 145.33243398182094,
+              "max_ms": 159.1409260290675,
+              "samples_s": [
+                0.14904335798928514,
+                0.1456838760059327,
+                0.1591409260290675,
+                0.14622850401792675,
+                0.14986964501440525,
+                0.1479448530008085,
+                0.14533243398182094
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 252.1624729852192,
+              "min_ms": 248.05626401212066,
+              "max_ms": 268.38538295123726,
+              "samples_s": [
+                0.26838538295123726,
+                0.24805626401212066,
+                0.2681310510379262,
+                0.2506319910171442,
+                0.2555322050466202,
+                0.2521624729852192,
+                0.24832210497697815
+              ]
+            }
+          },
+          "compile_command": [
+            "clang",
+            "-std=c17",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O2",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/handle_money.c"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/C_handles.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/C_handles.exe"
+          ]
+        },
+        "CXX_handles_control": {
+          "timings": {
+            "compile": {
+              "median_ms": 105.31305900076404,
+              "min_ms": 103.88544102897868,
+              "max_ms": 114.88801700761542,
+              "samples_s": [
+                0.10785437503363937,
+                0.10410736699122936,
+                0.10553586698370054,
+                0.10514943301677704,
+                0.11488801700761542,
+                0.10531305900076404,
+                0.10388544102897868
+              ]
+            },
+            "link": {
+              "median_ms": 147.62866200180724,
+              "min_ms": 145.9303349838592,
+              "max_ms": 171.62774299504235,
+              "samples_s": [
+                0.1459303349838592,
+                0.14602017804281786,
+                0.1485698889591731,
+                0.14926683396333829,
+                0.17162774299504235,
+                0.14717005600687116,
+                0.14762866200180724
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 253.78471001749858,
+              "min_ms": 250.12754503404722,
+              "max_ms": 286.51576000265777,
+              "samples_s": [
+                0.2537847100174986,
+                0.2501275450340472,
+                0.25410575594287366,
+                0.2544162669801153,
+                0.28651576000265777,
+                0.2524831150076352,
+                0.2515141030307859
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O2",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-x",
+            "c++",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/handle_money.c"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_handles_control.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_handles_control.exe"
+          ]
+        },
+        "CXX_RAII_statements": {
+          "timings": {
+            "compile": {
+              "median_ms": 109.6547840279527,
+              "min_ms": 106.75762500613928,
+              "max_ms": 117.04939999617636,
+              "samples_s": [
+                0.11704939999617636,
+                0.1096547840279527,
+                0.10776884097140282,
+                0.10675762500613928,
+                0.11458790698088706,
+                0.11292048299219459,
+                0.10857600695453584
+              ]
+            },
+            "link": {
+              "median_ms": 148.02769501693547,
+              "min_ms": 146.0828899871558,
+              "max_ms": 154.39611696638167,
+              "samples_s": [
+                0.14767394197406247,
+                0.15155119402334094,
+                0.14692738896701485,
+                0.1460828899871558,
+                0.14886090299114585,
+                0.14802769501693547,
+                0.15439611696638167
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 261.20597805129364,
+              "min_ms": 252.84051499329507,
+              "max_ms": 264.72334197023883,
+              "samples_s": [
+                0.26472334197023883,
+                0.26120597805129364,
+                0.2546962299384177,
+                0.2528405149932951,
+                0.2634488099720329,
+                0.26094817800913006,
+                0.2629721239209175
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O2",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/concrete_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_statements.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_statements.exe"
+          ]
+        },
+        "CXX_RAII_lambdas": {
+          "timings": {
+            "compile": {
+              "median_ms": 113.65365702658892,
+              "min_ms": 111.90453701419756,
+              "max_ms": 121.27706001047045,
+              "samples_s": [
+                0.11254858801839873,
+                0.12127706001047045,
+                0.11270605801837519,
+                0.11365365702658892,
+                0.11600517499027774,
+                0.11190453701419756,
+                0.11913670995272696
+              ]
+            },
+            "link": {
+              "median_ms": 153.4822559915483,
+              "min_ms": 146.1653020232916,
+              "max_ms": 166.9138770084828,
+              "samples_s": [
+                0.1462487749522552,
+                0.15721019101329148,
+                0.1669138770084828,
+                0.15420894097769633,
+                0.1534822559915483,
+                0.1461653020232916,
+                0.14781480800593272
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 267.86259800428525,
+              "min_ms": 258.06983903748915,
+              "max_ms": 279.619935026858,
+              "samples_s": [
+                0.2587973629706539,
+                0.27848725102376193,
+                0.279619935026858,
+                0.26786259800428525,
+                0.26948743098182604,
+                0.25806983903748915,
+                0.2669515179586597
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O2",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-DUSE_LAMBDAS=1",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/concrete_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_lambdas.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_lambdas.exe"
+          ]
+        },
+        "CXX_RAII_exposed_PCH": {
+          "timings": {
+            "compile": {
+              "median_ms": 1702.2056229761802,
+              "min_ms": 1689.754224033095,
+              "max_ms": 1752.894020988606,
+              "samples_s": [
+                1.7344670959864743,
+                1.7031832609791309,
+                1.7022056229761802,
+                1.752894020988606,
+                1.689754224033095,
+                1.6909092660062015,
+                1.6912498960155062
+              ]
+            },
+            "link": {
+              "median_ms": 147.64920400921255,
+              "min_ms": 146.2552270386368,
+              "max_ms": 154.28236400475726,
+              "samples_s": [
+                0.14742421201663092,
+                0.14764920400921255,
+                0.1462552270386368,
+                0.15428236400475726,
+                0.15207414998440072,
+                0.148720758035779,
+                0.14749212696915492
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 1848.460850014817,
+              "min_ms": 1838.7420229846612,
+              "max_ms": 1907.1763849933632,
+              "samples_s": [
+                1.8818913080031052,
+                1.8508324649883434,
+                1.848460850014817,
+                1.9071763849933632,
+                1.8418283740174957,
+                1.8396300240419805,
+                1.8387420229846612
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O2",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-include-pch",
+            "/tmp/accounting-handle-_cipk37g/-O2.pch",
+            "-DEXPOSE_RUNTIME=1",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/concrete_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_exposed_PCH.o",
+            "/tmp/accounting-handle-_cipk37g/handle_runtime.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/CXX_RAII_exposed_PCH.exe"
+          ]
+        },
+        "generated_CXX_PCH": {
+          "timings": {
+            "compile": {
+              "median_ms": 2196.180282975547,
+              "min_ms": 2143.6382670071907,
+              "max_ms": 2230.081424000673,
+              "samples_s": [
+                2.157752259983681,
+                2.196180282975547,
+                2.229032005998306,
+                2.1436382670071907,
+                2.230081424000673,
+                2.164484175038524,
+                2.197187468991615
+              ]
+            },
+            "link": {
+              "median_ms": 148.33290502429008,
+              "min_ms": 146.18072099983692,
+              "max_ms": 153.73063494917005,
+              "samples_s": [
+                0.1482979950378649,
+                0.14618072099983692,
+                0.14871612004935741,
+                0.14833290502429008,
+                0.15269915998214856,
+                0.1481513690087013,
+                0.15373063494917005
+              ]
+            },
+            "compile_and_link": {
+              "median_ms": 2342.361003975384,
+              "min_ms": 2291.971172031481,
+              "max_ms": 2382.7805839828216,
+              "samples_s": [
+                2.306050255021546,
+                2.342361003975384,
+                2.3777481260476634,
+                2.291971172031481,
+                2.3827805839828216,
+                2.3126355440472253,
+                2.350918103940785
+              ]
+            }
+          },
+          "compile_command": [
+            "clang++",
+            "-std=c++23",
+            "-fPIC",
+            "-g",
+            "-pipe",
+            "-O2",
+            "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+            "-DSCPP_LANGUAGE_TARGET_PHP=1",
+            "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+            "-include-pch",
+            "/tmp/accounting-handle-_cipk37g/-O2.pch",
+            "-c",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/generated_money.cpp"
+          ],
+          "link_command": [
+            "clang++",
+            "/tmp/accounting-handle-_cipk37g/driver.o",
+            "/tmp/accounting-handle-_cipk37g/generated_CXX_PCH.o",
+            "/tmp/accounting-handle-_cipk37g/original_bridge.o",
+            "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+            "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+            "-o",
+            "/tmp/accounting-handle-_cipk37g/generated_CXX_PCH.exe"
+          ]
+        }
+      }
+    }
+  },
+  "load_end": [
+    1.67333984375,
+    0.64111328125,
+    0.232421875
+  ]
+}

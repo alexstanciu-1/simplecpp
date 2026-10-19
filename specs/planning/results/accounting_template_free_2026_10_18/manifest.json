@@ -1,0 +1,334 @@
+{
+  "original_files": {
+    "main.cpp": "a8d89ef5f57eae18c386c24736e47073d9a149ef6c581be8fa186b8a7780921f",
+    "main.hpp": "5f8324ee286e04c4853d8d8438790ead5ffee0144d2f0c8cf6f9f26db2eb004f",
+    "__project_fwd.hpp": "01a2971d2c06cff00ca368c67d2d78baf5c78d13adcfe7df4f647fb55dbf4672",
+    "__project.hpp": "9b49b2e7a44f795f4b8f05d2b5573920e152038b1f2bef34dae1826b2a59edcc",
+    "__project_units.hpp": "29e6b509c9f975e33f8e881d9d1f8ced341edfc12f87eb3e5c3a1b0bf5184794",
+    "__project_units/broad.hpp": "8d206103df8256bb92e55385089c2f66e03c1e964b7001bb6ad6c654f978d45a",
+    "__project_units/f74b50e9c799e8a2.hpp": "8d206103df8256bb92e55385089c2f66e03c1e964b7001bb6ad6c654f978d45a",
+    "src/reports.cpp": "fce48f0a660b4b48569f785f1cafa3a3a7fd06ee0b4b3d8a5b53faeea4cb731e",
+    "src/closing.hpp": "43ba7c3c04844b77f6cb00529f167724877f19406b4342248af36d24ba531967",
+    "src/core.hpp": "1c756af559ff7908212c4594ea601e5526277059201a1df9c080b31bbe61e88e",
+    "src/ledger.cpp": "c88403909258353d254c2c3f19941a68878d6d4cbdfc18cb5a1bf68d288b3088",
+    "src/closing_checks.hpp": "655c28df1c50e81bc990480921c458f3fa3525464aa5354604e09a9f62c0bed4",
+    "src/money.cpp": "ba91375fa46e5cc981bd679759410bff6c9a3e4d68e867e135c7075a70beb710",
+    "src/purchasing.cpp": "fd94a4304a3368cc436e9e3a07a5c9d01b0a8a180093eb6d945672f3e423de4e",
+    "src/ledger.hpp": "6ffe997ccf04c2012afa648bc790a1fe6f6a5d966b6d31d44c1475b21a85d00e",
+    "src/banking.cpp": "d49691864427bcf92ac43e26b999de2fc043abc7acbf6dd4498053341e3f6071",
+    "src/stock.cpp": "167087323fff1fc7222ee70366a646b91dffc3409e0512104fd72bede0a90b4f",
+    "src/banking.hpp": "48ef55abd197f5d03851eee221b93a5bfed2321dac7f115fc511282bd4008096",
+    "src/assets.cpp": "c4545fe47dac909d9545d46d0f5b461e653c00bed97777514dc505fd7858a464",
+    "src/reports.hpp": "a1f9bd2d3af0f11faa9f6fefac4be66eec6b2fcab06c11cb2e8f7a7538f045de",
+    "src/checks.cpp": "b9b1fb10b77851a70ca999419b7a8d4920b340e03dfb86fad11ac140cdcb5576",
+    "src/assets.hpp": "af42cc523c837352c865a9933ab3dd0a0ec75d6d0e1c7c6f69a5aa070edda4c4",
+    "src/calendar.hpp": "45ab0d5f11376dcc16cbd5981ad83ce924409c860211befbac5c1cf8f133ab50",
+    "src/checks.hpp": "f8a36d549c627869c757f1d4fb927458316a3bd43d1dfeb676be0fa505bd8daa",
+    "src/calendar.cpp": "d3af48ac30814ffabe199601a4dceda63e2637d813a6445b7ef2d6f470ac36c8",
+    "src/closing_checks.cpp": "42d0d61f02b10c4250c5b522564a4b1adbc48c0a027b28d52a34b4f320f2c430",
+    "src/closing.cpp": "959859b2549ae4c75c9c71433b25739029b9bd07d9fa9e9a4c99ef6025ee0c68",
+    "src/purchasing.hpp": "653afbfd7fc56f6f6400d7946ae74fb2eba4e6a330a5a036f82623106d86f490",
+    "src/money.hpp": "107c35f8f6a3f243d1daa353aa2fda9269884985d657c91e14be3c3ba0948a04",
+    "src/sales.cpp": "306ff8540e2241c983ed0a68f9876fe838d4d3ef592a6b24560c391e6078ecd9",
+    "src/sales.hpp": "061c3c4c62f616e7275fe4e35f341f809f0792843a032d3c030f94afafd57304",
+    "src/business_checks.hpp": "e9426d8b1ab0053784e19f1671d9f971f4bd1dcf548679f96320cb7d74f92693",
+    "src/core.cpp": "daa507717a22fb5976370265ec81c6d21a167006ba3f991c4565314a66a49b8d",
+    "src/stock.hpp": "30a10864e2e1a19c91d4d0636d4dffe5d281d090cdcd59e776e3656251d942a6",
+    "src/business_checks.cpp": "56d99c832df39a510433c51d464e5c5b7bf4d5d7b542d14d4aa5edd9c3f97359"
+  },
+  "application_cpp": [
+    "main.cpp",
+    "src/reports.cpp",
+    "src/ledger.cpp",
+    "src/money.cpp",
+    "src/purchasing.cpp",
+    "src/banking.cpp",
+    "src/stock.cpp",
+    "src/assets.cpp",
+    "src/checks.cpp",
+    "src/calendar.cpp",
+    "src/closing_checks.cpp",
+    "src/closing.cpp",
+    "src/sales.cpp",
+    "src/core.cpp",
+    "src/business_checks.cpp"
+  ],
+  "classes": [
+    "AccountingCheck",
+    "AccrualRecord",
+    "AdjustmentBook",
+    "AllocationResult",
+    "AmountResult",
+    "AssetRegister",
+    "BankMatch",
+    "BankReconciliation",
+    "BankReconciliationReport",
+    "BankStatementLine",
+    "BudgetBook",
+    "BudgetLine",
+    "BudgetReport",
+    "BudgetVarianceRow",
+    "CalendarRules",
+    "DecliningBalanceDepreciation",
+    "DepreciationPolicy",
+    "FinancialPosition",
+    "FinancialReports",
+    "FixedAsset",
+    "GeneralLedger",
+    "InventoryBook",
+    "JournalEntry",
+    "JournalLine",
+    "LedgerAccount",
+    "MoneyAllocation",
+    "MoneyRules",
+    "PayableRecord",
+    "PaymentProposal",
+    "PaymentProposalRow",
+    "PaymentTerms",
+    "PrepaymentSchedule",
+    "ProfitAndLoss",
+    "PurchasingBook",
+    "SalesInvoice",
+    "SalesService",
+    "StockIssueResult",
+    "StockItem",
+    "StockLot",
+    "StockReservation",
+    "StraightLineDepreciation",
+    "SupplierBill",
+    "SupplierRecord",
+    "TrialBalance",
+    "TrialBalanceRow",
+    "WorkingCapital",
+    "WorkloadChecks"
+  ],
+  "handles": [
+    "AccountingCheck",
+    "AccrualRecord",
+    "AdjustmentBook",
+    "AllocationResult",
+    "AmountResult",
+    "AssetRegister",
+    "BankMatch",
+    "BankReconciliation",
+    "BankReconciliationReport",
+    "BankStatementLine",
+    "BudgetBook",
+    "BudgetLine",
+    "BudgetReport",
+    "BudgetVarianceRow",
+    "DecliningBalanceDepreciation",
+    "DepreciationPolicy",
+    "FinancialPosition",
+    "FinancialReports",
+    "FixedAsset",
+    "GeneralLedger",
+    "InventoryBook",
+    "JournalEntry",
+    "JournalLine",
+    "LedgerAccount",
+    "PayableRecord",
+    "PaymentProposal",
+    "PaymentProposalRow",
+    "PaymentTerms",
+    "PrepaymentSchedule",
+    "ProfitAndLoss",
+    "PurchasingBook",
+    "SalesInvoice",
+    "SalesService",
+    "StockIssueResult",
+    "StockItem",
+    "StockLot",
+    "StockReservation",
+    "StraightLineDepreciation",
+    "SupplierBill",
+    "SupplierRecord",
+    "TrialBalance",
+    "TrialBalanceRow",
+    "WorkingCapital",
+    "WorkloadChecks"
+  ],
+  "containers": {
+    "V_I": [
+      "vector_t",
+      "I",
+      "string_t"
+    ],
+    "H_bool_t_I": [
+      "hash_t",
+      "bool_t",
+      "I"
+    ],
+    "H_P_PrepaymentSchedule_string_t": [
+      "hash_t",
+      "P_PrepaymentSchedule",
+      "string_t"
+    ],
+    "V_string_t": [
+      "vector_t",
+      "string_t",
+      "string_t"
+    ],
+    "H_P_AccrualRecord_string_t": [
+      "hash_t",
+      "P_AccrualRecord",
+      "string_t"
+    ],
+    "V_P_JournalLine": [
+      "vector_t",
+      "P_JournalLine",
+      "string_t"
+    ],
+    "V_P_TrialBalanceRow": [
+      "vector_t",
+      "P_TrialBalanceRow",
+      "string_t"
+    ],
+    "H_I_string_t": [
+      "hash_t",
+      "I",
+      "string_t"
+    ],
+    "H_bool_t_string_t": [
+      "hash_t",
+      "bool_t",
+      "string_t"
+    ],
+    "H_P_LedgerAccount_string_t": [
+      "hash_t",
+      "P_LedgerAccount",
+      "string_t"
+    ],
+    "V_P_JournalEntry": [
+      "vector_t",
+      "P_JournalEntry",
+      "string_t"
+    ],
+    "V_P_BankStatementLine": [
+      "vector_t",
+      "P_BankStatementLine",
+      "string_t"
+    ],
+    "H_P_BankStatementLine_string_t": [
+      "hash_t",
+      "P_BankStatementLine",
+      "string_t"
+    ],
+    "H_P_BankMatch_string_t": [
+      "hash_t",
+      "P_BankMatch",
+      "string_t"
+    ],
+    "V_P_BudgetVarianceRow": [
+      "vector_t",
+      "P_BudgetVarianceRow",
+      "string_t"
+    ],
+    "V_P_BudgetLine": [
+      "vector_t",
+      "P_BudgetLine",
+      "string_t"
+    ],
+    "H_P_FixedAsset_string_t": [
+      "hash_t",
+      "P_FixedAsset",
+      "string_t"
+    ],
+    "V_P_PaymentProposalRow": [
+      "vector_t",
+      "P_PaymentProposalRow",
+      "string_t"
+    ],
+    "H_P_SupplierRecord_string_t": [
+      "hash_t",
+      "P_SupplierRecord",
+      "string_t"
+    ],
+    "H_P_PayableRecord_string_t": [
+      "hash_t",
+      "P_PayableRecord",
+      "string_t"
+    ],
+    "H_P_SalesInvoice_string_t": [
+      "hash_t",
+      "P_SalesInvoice",
+      "string_t"
+    ],
+    "V_P_StockLot": [
+      "vector_t",
+      "P_StockLot",
+      "string_t"
+    ],
+    "H_P_StockItem_string_t": [
+      "hash_t",
+      "P_StockItem",
+      "string_t"
+    ],
+    "H_P_StockReservation_string_t": [
+      "hash_t",
+      "P_StockReservation",
+      "string_t"
+    ]
+  },
+  "factories": [
+    "AccountingCheck",
+    "AccrualRecord",
+    "AdjustmentBook",
+    "AllocationResult",
+    "AmountResult",
+    "AssetRegister",
+    "BankMatch",
+    "BankReconciliation",
+    "BankReconciliationReport",
+    "BankStatementLine",
+    "BudgetBook",
+    "BudgetLine",
+    "BudgetReport",
+    "BudgetVarianceRow",
+    "DecliningBalanceDepreciation",
+    "FinancialPosition",
+    "FinancialReports",
+    "FixedAsset",
+    "GeneralLedger",
+    "InventoryBook",
+    "JournalEntry",
+    "JournalLine",
+    "LedgerAccount",
+    "PayableRecord",
+    "PaymentProposal",
+    "PaymentProposalRow",
+    "PaymentTerms",
+    "PrepaymentSchedule",
+    "ProfitAndLoss",
+    "PurchasingBook",
+    "SalesInvoice",
+    "SalesService",
+    "StockIssueResult",
+    "StockItem",
+    "StockLot",
+    "StockReservation",
+    "StraightLineDepreciation",
+    "SupplierBill",
+    "SupplierRecord",
+    "TrialBalance",
+    "TrialBalanceRow",
+    "WorkingCapital",
+    "WorkloadChecks"
+  ],
+  "casts": [
+    "I",
+    "V_I",
+    "V_P_BankStatementLine",
+    "bool_t",
+    "string_t"
+  ],
+  "parents": {
+    "StraightLineDepreciation": "DepreciationPolicy",
+    "DecliningBalanceDepreciation": "DepreciationPolicy"
+  },
+  "support_sources": [
+    "base.cpp",
+    "containers.cpp",
+    "objects.cpp"
+  ]
+}

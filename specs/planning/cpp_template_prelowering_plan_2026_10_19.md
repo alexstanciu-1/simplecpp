@@ -1,0 +1,189 @@
+# Plan: accounting-shaped concrete C++ specialization
+Doc Status: planning
+
+Date: 2026-10-19
+Status: proposed implementation sequence under the [agreed decision](cpp_template_prelowering_decision_2026_10_19.md).
+This document records work to do; it does not claim production support.
+
+## Target and baseline
+
+Implement `prelower_templates` inside the existing C++ backend, with a dedicated
+specialization engine and compact reference structure. Use the current AST and
+prepared facts directly. The first vertical slice is one concrete integer-vector
+specialization; expand toward the accounting inventory after that slice is proved.
+
+The measured reference is [the accounting conversion](results/accounting_template_free_2026_10_18/README.md):
+15 application units, 44 concrete handles, 24 concrete vector/hash representations,
+and three grouped support units. Its `manifest.json`, `converted/concrete.hpp`,
+`base.hpp`, `base.cpp`, `containers.cpp`, `objects.cpp` and behavioral probes provide
+concrete examples. The bounded text converter is evidence, not production code to
+insert after emission.
+
+Preserve these choices initially:
+
+- Concrete declarations and out-of-line implementations, not aliases or explicit
+  instantiations of the existing runtime templates.
+- Group support into base/container/object implementation units as applicable.
+  Do not split every method/type into a separate native compilation yet.
+- Generate all methods in each admitted implementation family. Unsupported semantic
+  operations are rejected/reported explicitly, never silently implemented differently.
+- Ordinary C++ automatic cleanup and dispatch; no full C or new lifetime lowering.
+- No PCH for concrete proof builds, debug disabled by default, explicit debug opt-in.
+  Keep native optimization and debug configuration separate from lowering options.
+
+## 1. Establish configuration and engine ownership in one vertical slice
+
+Inspect existing generator invocation/configuration and retained fragment structures
+before choosing exact field/class names. Add a dedicated typed C++ lowering-options
+structure containing `prelower_templates`, carried from CLI/API through emission.
+Keep the existing path as the default during initial opt-in integration.
+
+Place the engine, its entry data and compact reference alongside the existing C++
+backend. Keep workers and records separate according to local ownership rules. A
+request receives existing canonical type information and the supported operation
+family; it returns a dedicated reference. Start with one entry ID in that reference
+if existing storage conventions permit it without introducing a new retention model.
+
+The engine resolves readable, namespace-scoped names, deduplicates requests and
+provides their declaration dependencies. Record representation policy and versioned
+implementation inputs explicitly. Separate the stable emitted name from artifact
+content hashes and process-local IDs. Prove collision handling for distinct source
+types sharing a short name, and request-order-independent names.
+
+The emitter's boolean branches dispatch to named methods. The engine, not those
+branches, generates specialization bodies. Avoid a broad emitter refactor first.
+
+## 2. Produce and execute one concrete integer vector
+
+Request `vector<int>` from a supported source program using existing prepared types
+and resolved operations. Generate its concrete declaration, typed storage, growth,
+indexing, iteration, copy/move/destruction and admitted family methods. Reuse the
+accounting implementation shape after checking each behavior against the owning
+language/runtime contracts.
+
+Inventory scalar and ownership dependencies first. Choose a concrete scalar binding
+that preserves the source integer contract; do not silently assume the experiment's
+bounded signed-64 wrapper implements every production integer rule. If the first
+slice still exposes a template dependency, identify it explicitly and do not label
+the whole native input template-free. Removing that exposure is part of reaching the
+accounting-shaped performance checkpoint.
+
+Compile generated application and grouped support units with Clang through the
+existing native builder, then link and execute them. Keep lowering and native build
+configuration distinct. Unsupported concrete families must produce a clear coverage
+diagnostic during this bounded opt-in mode; no silent fallback concealed by the flag.
+
+Acceptance: equivalent results through both paths for empty/growing vectors,
+indexing and bounds failure, independent copies, self-assignment, iteration and
+cleanup. Add negative/error probes appropriate to the admitted production contract.
+Audit preprocessed exposure, not just the absence of angle brackets in app.cpp.
+
+## 3. Prove publication, reuse and invalidation
+
+Integrate generated headers/support units into the existing artifact membership and
+publication transaction. Finish engine generation before publishing readiness.
+Clang object reuse remains owned by the existing native builder.
+
+Explicitly account for retained emitter fragments: their unchanged consumers must
+still contribute required specialization artifacts to a new publication. Either
+reconstruct requests from existing dependency records or retain them with an explicit
+valid lifecycle. Do not let an invocation-local engine silently omit support needed
+by a cached fragment. Do not introduce a new generic lifecycle framework by default.
+
+| Change | Required proof |
+|---|---|
+| Repeated request in one emission | One specialization definition; consistent reference/name |
+| Unchanged rebuild | Same generated bytes; native objects reused |
+| Application body only | Unchanged specialization support reused |
+| Toggle lowering option | Correct artifact membership and executable; no stale cross-mode reuse |
+| Toggle native debug | Semantic/lowering output unchanged; correct native variant selected |
+| Change implementation recipe | Affected support rebuilt even if source type identity is unchanged |
+| Request removed/source deleted | Unused support membership removed without breaking retained consumers |
+| Generation failure then repair | No partial ready publication; valid recovery |
+
+As handle/vector-of-class support is added, prove body versus payload-layout versus
+capability changes separately. Avoid depending on payload layout merely because a
+handle names the payload; retain dependencies wherever destruction, construction or
+actual field access needs them. Do not infer ABI compatibility from matching names.
+
+## 4. Expand toward the measured accounting representation
+
+Expand through concrete shared handles/factories and vectors of handles, then the
+ordered hash families needed by accounting. Include scalar/string/common ownership
+support necessary to avoid pulling the original template-heavy umbrella into every
+consumer. Follow the measured grouped support layout first.
+
+Use existing canonical identities and capability queries for each family. Repair
+shared preparation only for a demonstrated missing semantic fact. Representation
+names, generated method bodies and artifact dependencies belong in the engine.
+
+Compare production contracts with the experiment before adapting each implementation:
+integer overflow/conversions, string byte/codepoint behavior, ownership and copy
+identity, iteration/removal order, failure types/metadata and allocation behavior.
+Do not import the experiment's simplified failure hierarchy, unused argv substitution
+or lack of weak/reflection support as silent production behavior. Existing runtime
+ABI boundaries need explicit support or a clear rejection; concrete and templated
+objects are not interchangeable by default.
+
+Run the accounting application's existing 998 checks when its source features are
+supported by this backend. First audit that source against my-try coverage: the
+historic experiment started from another generator's output. Any source-feature
+blockers must be reported separately, not solved by adding an unplanned language
+feature or claiming the artifact conversion proves my-try source support.
+
+Reuse the additional accounting probes for container growth/copy/order, aliases,
+shared replacement, cleanup and string/numeric boundaries. Use ASan/UBSan where
+relevant, recording the existing LeakSanitizer limitation and what owner counts do
+and do not prove. Runtime behavior/performance must be checked before making the
+concrete path a general default.
+
+## 5. Measure the production path against the experiment
+
+Use identical supported workloads and toolchain configuration for both emission
+modes. Keep application partitioning and support grouping comparable. Compare the
+existing runtime PCH path, improved PCH where available, and concrete/no-PCH output.
+
+Report separately:
+
+- Keep source preparation, emission and engine generation outside the initial native
+  timing comparison, as agreed. Measuring the extra lowering cost is deferred.
+- Application compilation, grouped support compilation, linking and PCH setup.
+- Cold native work, unchanged reuse and representative edit/rebuild work.
+- O0 and O2 with debug disabled on both sides; an explicit matched debug-enabled run
+  connects the new measurements to the historical accounting table if needed.
+- Artifact/source hashes, commands, repetitions and exact behavioral results.
+
+Start with serial native measurements and at least three varied-order repetitions,
+with no object reuse inside fresh-compilation rounds. Do not compare a cached support
+build with a cold baseline without labelling the difference. Do not attribute all
+savings to template syntax: concrete runtime representation also contributes.
+
+The historical sixfold whole-build advantage is evidence and a comparison point,
+not a guaranteed threshold for the first integer-vector slice. Investigate material
+regressions before expanding families. Fine-grained native partitioning, further
+header reduction and parallel scheduling need their own later measurements.
+
+## Deferred extensions
+
+Selective method generation must include the transitive dependencies of requested
+methods. Clang cannot supply omitted concrete definitions. Keep the type name stable
+when additional methods are requested; operation coverage and artifact freshness are
+separate concerns. Generate all family methods first.
+
+Background generation may later separate request/name resolution from completion.
+Workers would consume settled immutable inputs, not mutate the AST/preparation state.
+Publication must wait for all required outputs and propagate failures.
+
+Persistent engine caches, one-object-per-specialization layouts, full debugger
+support and generalized template families are outside the first implementation.
+Source-facing debugging remains compiler-owned in direction; see the
+[debugging note](compiler_owned_debugging_2026_10_18.md).
+
+## Completion criteria
+
+The first production slice is complete when configuration reaches the existing
+backend, one real specialization is generated through the engine, its compact
+reference is used by consumers, both paths execute equivalently, and publication /
+reuse / configuration switching are proved. Record coverage and remaining limitations
+before expanding. The broader accounting checkpoint additionally requires its full
+behavioral proof and a matched native compilation comparison.

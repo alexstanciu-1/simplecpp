@@ -1,0 +1,201 @@
+class AmountResult {
+    public bool $valid = false;
+    public int $amount = 0;
+    public string $reason = "";
+}
+
+class MoneyRules {
+    // All amounts are minor units in the fictional company's single currency.
+    // A bounded domain keeps intermediate products exact on both backends.
+    public static function maximum(): int {
+        return 1000000000;
+    }
+
+    public static function accepts(int $amount): bool {
+        return $amount >= -1000000000 && $amount <= 1000000000;
+    }
+
+    public static function add(int $left, int $right): AmountResult {
+        $result AmountResult = new AmountResult();
+        if (!MoneyRules::accepts($left) || !MoneyRules::accepts($right)) {
+            $result->reason = "amount.operand";
+            return $result;
+        }
+        $sum int = $left + $right;
+        if (!MoneyRules::accepts($sum)) {
+            $result->reason = "amount.overflow";
+            return $result;
+        }
+        $result->valid = true;
+        $result->amount = $sum;
+        return $result;
+    }
+
+    public static function multiply(int $unit_amount, int $quantity): AmountResult {
+        $result AmountResult = new AmountResult();
+        if (!MoneyRules::accepts($unit_amount) || $quantity < 0 || $quantity > 1000000) {
+            $result->reason = "amount.quantity";
+            return $result;
+        }
+        $product int = $unit_amount * $quantity;
+        if (!MoneyRules::accepts($product)) {
+            $result->reason = "amount.overflow";
+            return $result;
+        }
+        $result->valid = true;
+        $result->amount = $product;
+        return $result;
+    }
+
+    public static function rate(int $base, int $basis_points): AmountResult {
+        $result AmountResult = new AmountResult();
+        if (!MoneyRules::accepts($base) || $basis_points < 0 || $basis_points > 10000) {
+            $result->reason = "amount.rate";
+            return $result;
+        }
+        $negative bool = $base < 0;
+        $magnitude int = $base;
+        if ($negative) {
+            $magnitude = -$base;
+        }
+        $scaled int = $magnitude * $basis_points;
+        $remainder int = $scaled % 10000;
+        // Divide an exact multiple, avoiding floating-point tie decisions.
+        $rounded int = (int)(($scaled - $remainder) / 10000);
+        if ($remainder >= 5000) {
+            $rounded += 1;
+        }
+        if ($negative) {
+            $rounded = -$rounded;
+        }
+        $result->valid = true;
+        $result->amount = $rounded;
+        return $result;
+    }
+
+    public static function prorate(int $amount, int $numerator, int $denominator): AmountResult {
+        $result AmountResult = new AmountResult();
+        if (!MoneyRules::accepts($amount) || $numerator < 0 || $denominator <= 0) {
+            $result->reason = "amount.ratio";
+            return $result;
+        }
+        if ($numerator > $denominator || $denominator > 1000000) {
+            $result->reason = "amount.ratio";
+            return $result;
+        }
+        $magnitude int = $amount;
+        if ($amount < 0) {
+            $magnitude = -$amount;
+        }
+        $scaled int = $magnitude * $numerator;
+        $remainder int = $scaled % $denominator;
+        $rounded int = (int)(($scaled - $remainder) / $denominator);
+        if ($remainder * 2 >= $denominator) {
+            $rounded += 1;
+        }
+        if ($amount < 0) {
+            $rounded = -$rounded;
+        }
+        $result->valid = true;
+        $result->amount = $rounded;
+        return $result;
+    }
+}
+
+class AllocationResult {
+    public bool $valid = false;
+    public string $reason = "";
+    public $amounts vector<int> = [];
+}
+
+class MoneyAllocation {
+    public static function equally(int $amount, int $parts): AllocationResult {
+        $result AllocationResult = new AllocationResult();
+        if (!MoneyRules::accepts($amount) || $parts <= 0 || $parts > 10000) {
+            $result->reason = "allocation.range";
+            return $result;
+        }
+        $magnitude int = $amount;
+        if ($amount < 0) {
+            $magnitude = -$amount;
+        }
+        $remainder int = $magnitude % $parts;
+        $quotient int = (int)(($magnitude - $remainder) / $parts);
+        for ($index int = 0; $index < $parts; $index++) {
+            $portion int = $quotient;
+            if ($index < $remainder) {
+                $portion += 1;
+            }
+            if ($amount < 0) {
+                $portion = -$portion;
+            }
+            $result->amounts[] = $portion;
+        }
+        $result->valid = true;
+        return $result;
+    }
+
+    public static function weighted(int $amount, vector<int> $weights): AllocationResult {
+        $result AllocationResult = new AllocationResult();
+        if (!MoneyRules::accepts($amount) || count($weights) === 0 || count($weights) > 10000) {
+            $result->reason = "allocation.range";
+            return $result;
+        }
+        $total_weight int = 0;
+        foreach ($weights as $weight) {
+            if ($weight < 0 || $weight > 1000000) {
+                $result->reason = "allocation.weight";
+                return $result;
+            }
+            $total_weight += $weight;
+            if ($total_weight > 1000000) {
+                $result->reason = "allocation.weight-total";
+                return $result;
+            }
+        }
+        if ($total_weight === 0) {
+            $result->reason = "allocation.zero-weight";
+            return $result;
+        }
+        $magnitude int = $amount;
+        if ($amount < 0) {
+            $magnitude = -$amount;
+        }
+        $remainders vector<int> = [];
+        $assigned int = 0;
+        foreach ($weights as $weight) {
+            $scaled int = $magnitude * $weight;
+            $remainder int = $scaled % $total_weight;
+            $portion int = (int)(($scaled - $remainder) / $total_weight);
+            $result->amounts[] = $portion;
+            $remainders[] = $remainder;
+            $assigned += $portion;
+        }
+        $leftover int = $magnitude - $assigned;
+        // Largest remainder allocation; original order breaks equal ties.
+        while ($leftover > 0) {
+            $best int = -1;
+            $best_remainder int = -1;
+            for ($index int = 0; $index < count($remainders); $index++) {
+                if ($remainders[$index] > $best_remainder) {
+                    $best = $index;
+                    $best_remainder = $remainders[$index];
+                }
+            }
+            if ($best < 0) {
+                $result->reason = "allocation.internal";
+                return $result;
+            }
+            $result->amounts[$best] += 1;
+            $remainders[$best] = -1;
+            $leftover -= 1;
+        }
+        if ($amount < 0) {
+            for ($index int = 0; $index < count($result->amounts); $index++) {
+                $result->amounts[$index] = -$result->amounts[$index];
+            }
+        }
+        $result->valid = true;
+        return $result;
+    }
+}

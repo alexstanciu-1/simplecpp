@@ -1,0 +1,840 @@
+{
+  "commands": [
+    {
+      "label": "original-probes-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O0",
+        "-g",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/generated",
+        "-DSCPP_LANGUAGE_TARGET_PHP=1",
+        "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/generated/__project_units/broad.hpp",
+        "-DPROBE_MAIN=1",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/probes.cpp",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/generated/src/core.cpp",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9/libruntime.so",
+        "-Wl,-rpath,/home/alexv/__AI/simple_cpp/simple_cpp_01/examples/accounting_workload/.prism/runtime/project/php-strict/116def5680c631b9",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/original-probes"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "original-probes-execute",
+      "command": [
+        "/tmp/accounting-concrete-validation-v0tbbf8w/original-probes"
+      ],
+      "exit_code": 0,
+      "stdout": "CONTAINER_PROBES_PASS\n",
+      "stderr": ""
+    },
+    {
+      "label": "base.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/base.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/base.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "containers.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/containers.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/containers.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "objects.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/objects.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/objects.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "main.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-Dmain=accounting_original_entry",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/main.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/main.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/reports.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/reports.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_reports.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/ledger.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/ledger.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_ledger.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/money.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/money.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_money.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/purchasing.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/purchasing.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_purchasing.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/banking.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/banking.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_banking.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/stock.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/stock.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_stock.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/assets.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/assets.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_assets.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/checks.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/checks.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_checks.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/calendar.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/calendar.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_calendar.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/closing_checks.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/closing_checks.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_closing_checks.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/closing.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/closing.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_closing.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/sales.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/sales.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_sales.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/core.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/core.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_core.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/business_checks.cpp-sanitizer-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/business_checks.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_business_checks.cpp.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "concrete-probes-compile",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-DCONCRETE_PROBE=1",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-c",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/probes.cpp",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/probes.o"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "sanitizer-link",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-DSCPP_OWNER_AUDIT=1",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/driver.cpp",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/base.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/containers.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/objects.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/main.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_reports.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_ledger.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_money.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_purchasing.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_banking.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_stock.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_assets.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_checks.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_calendar.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_closing_checks.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_closing.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_sales.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_core.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/src_business_checks.cpp.o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/probes.o",
+        "-o",
+        "/tmp/accounting-concrete-validation-v0tbbf8w/app"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "sanitizer-execute",
+      "command": [
+        "/tmp/accounting-concrete-validation-v0tbbf8w/app"
+      ],
+      "exit_code": 0,
+      "stdout": "accounting workload: invoice/payment/trial-balance checks passed\nCHECKS passed=998 failed=0\nACCOUNTING_WORKLOAD_PASS\n",
+      "stderr": ""
+    },
+    {
+      "label": "base.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/base.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "containers.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/containers.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "objects.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/objects.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "main.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/main.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/reports.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/reports.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/ledger.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/ledger.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/money.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/money.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/purchasing.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/purchasing.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/banking.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/banking.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/stock.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/stock.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/assets.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/assets.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/checks.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/checks.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/calendar.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/calendar.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/closing_checks.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/closing_checks.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/closing.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/closing.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/sales.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/sales.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/core.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/core.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "src/business_checks.cpp-preprocess",
+      "command": [
+        "clang++",
+        "-std=c++23",
+        "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted",
+        "-include",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/all.hpp",
+        "-E",
+        "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_template_free_2026_10_18/converted/src/business_checks.cpp"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "asan_ubsan_passed": true,
+  "leak_detection": false,
+  "owner_balance_passed": true,
+  "template_audit": {
+    "base.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 91210
+    },
+    "containers.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 173010
+    },
+    "objects.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 152786
+    },
+    "main.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 145526
+    },
+    "src/reports.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 147917
+    },
+    "src/ledger.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 154327
+    },
+    "src/money.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 150281
+    },
+    "src/purchasing.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 154625
+    },
+    "src/banking.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 152225
+    },
+    "src/stock.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 153021
+    },
+    "src/assets.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 153227
+    },
+    "src/checks.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 159129
+    },
+    "src/calendar.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 149483
+    },
+    "src/closing_checks.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 155501
+    },
+    "src/closing.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 152517
+    },
+    "src/sales.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 146768
+    },
+    "src/core.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 144702
+    },
+    "src/business_checks.cpp": {
+      "template_declarations": 0,
+      "preprocessed_bytes": 154801
+    }
+  }
+}
