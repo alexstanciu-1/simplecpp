@@ -1,0 +1,3450 @@
+{
+  "doc_status": "planning",
+  "date": "2026-10-18",
+  "goal_status": "verification-complete-with-explicit-failures-blockers-and-deferrals",
+  "snapshot": "language_verification_evidence/source-manifest.json.gz",
+  "remote_root": "/home/alex-ai/language-verification/20261018",
+  "checks": [
+    {
+      "id": "LV01.001",
+      "family": "LV01",
+      "title": "Token spans and longest matching",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Scan adjacent comparison, shift, exponent and comment forms; preserve exact byte spans and distinguish separated punctuation.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/functions/logs/tokenizer.stdout",
+          "layer": "tokenization and incremental emission",
+          "assertions": [
+            "tokenizer.php: all 256 byte classifications; offset/length/text on CRLF prefix and exponent literals; adjacent and separated shifts; power; compound operators; comments and quoted comment markers."
+          ]
+        }
+      ],
+      "remaining": [
+        "Combined CRLF/multibyte diagnostic presentation is tracked separately by LV01.003."
+      ],
+      "issues": []
+    },
+    {
+      "id": "LV01.002",
+      "family": "LV01",
+      "title": "Lexical rejection and edit recovery",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Malformed quotes/comments report the offending source position; repairing the edit restores fresh-equivalent output.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/functions/logs/tokenizer.stdout",
+          "layer": "tokenization and incremental emission",
+          "assertions": [
+            "tokenizer.php: malformed numeric/identifier bytes, unterminated quote/comment rejection at byte 2; valid-to-invalid comment edit rejects; repaired output equals prior and fresh output."
+          ]
+        }
+      ],
+      "remaining": [
+        "Combined CRLF/multibyte diagnostic presentation is tracked separately by LV01.003."
+      ],
+      "issues": []
+    },
+    {
+      "id": "LV02.001",
+      "family": "LV02",
+      "title": "Constant bytes and dependency updates",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md",
+        "specs/namespaces_v0_2.md"
+      ],
+      "required_observation": "NUL-containing string and signed float constants preserve values; changing an upstream constant refreshes consumers without stale output.",
+      "evidence": [
+        {
+          "run": "verification/results/declaration-replays/source_constants",
+          "layer": "exact preparation assertions and generated execution where noted",
+          "assertions": [
+            "source_constants.php checks exact prepared NUL bytes and signed float decimal, forward/imported/rooted constant resolution, retained identity on no-op, upstream 7->9 consumer change, invalid string-return edit and repair. Ten generated programs (initial and recovery exports) execute with exit 7. Shared s2s expectation adaptation is labelled; constants source cases unchanged."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV02.002",
+      "family": "LV02",
+      "title": "Declaration identity and scopes",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md",
+        "specs/namespaces_v0_2.md"
+      ],
+      "required_observation": "Check declaration versus assignment, shadowing and conflicting declarations; rejected edits publish no successful output.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted; verification/results/scope-composition",
+          "layer": "exact preparation assertions and generated execution where noted",
+          "assertions": [
+            "s2s.php:1311 checks declaration versus assignment facts and one storage identity, exact conversion decisions, duplicate declaration/type mismatch rejection with no facts/output. New nested-capture/sibling-block probe executes 231, rejects duplicate declaration after edit with empty output and repairs to fresh-equivalent bytes."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV03.001",
+      "family": "LV03",
+      "title": "Integer widths and result domains",
+      "status": "passed",
+      "authority": [
+        "specs/compact_layout_types.md"
+      ],
+      "required_observation": "Check same-signedness promotion, explicit narrowing limits and result types; signed/unsigned implicit pairs reject.",
+      "evidence": [
+        {
+          "run": "verification/results/integer-promotions; verification/results/wave-02/integer_widths",
+          "layer": "source invariant-reference result-type guards and native values; original preparation assertions",
+          "assertions": [
+            "All 50 same-signedness ordered type pairs pass twelve admitted arithmetic/comparison operators (600 exact type/value checks); 50 opposite-signedness pairs reject addition before output. Canonical int and byte aliases included.",
+            "Original integer_widths.php checks retained operand conversion targets and comparison/spaceship result facts, selected mixed-sign comparison rejection, full uint64 values, ordered calls and zero-divisor failures."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-31.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV03.002",
+      "family": "LV03",
+      "title": "Capabilities versus type identity",
+      "status": "passed",
+      "authority": [
+        "specs/compact_layout_types.md"
+      ],
+      "required_observation": "Check that storage/copy/result-payload permission comes from the declared capability, not spelling or incidental representation.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/runtime_filesystem/logs/type-capabilities.stdout",
+          "layer": "exact preparation assertions and generated execution where noted",
+          "assertions": [
+            "type_capabilities.php registers an unfamiliar template with selective copy dependency, proves storage independent of copying, recursively checks wrappers/vector, permits shared handles independent of pointee copying, admits registered Result payload and rejects storage-only payload. Initialization tests additionally reject same-spelled nominal vector without opt-in."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV04.001",
+      "family": "LV04",
+      "title": "Direct scalar operators",
+      "status": "passed",
+      "authority": [
+        "runtime/specs/spec.md"
+      ],
+      "required_observation": "Bool equality truth table and float/int arithmetic yield exact types/values; division by positive/negative zero reports division_by_zero.",
+      "evidence": [
+        {
+          "run": "verification/results/scalar",
+          "layer": "preparation, generated C++ compilation and execution",
+          "assertions": [
+            "bool equality/inequality complete truth table; float result domains and operator-only int promotion; float/int arithmetic and signed-zero unary behavior; order and snapshot checks."
+          ]
+        },
+        {
+          "run": "verification/results/scalar-error-codes",
+          "layer": "generated C++ execution, strengthened test observer",
+          "assertions": [
+            "Six existing generic exception observers now require runtime_error.code()==division_by_zero; 18 additional signed-zero/numerator cases across float/float, int/float and float/int."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV04.002",
+      "family": "LV04",
+      "title": "Deferred versus admitted operators",
+      "status": "passed",
+      "authority": [
+        "runtime/specs/spec.md"
+      ],
+      "required_observation": "Classify each scalar/fixed-width/wrapper operator rejection against current contract; do not equate bounded implementation with permanent incompatibility.",
+      "evidence": [
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "run": "verification/results/operator-admission-grid",
+          "archive": "language_verification_evidence/logs-checkpoint-47.json.gz",
+          "assertions": [
+            "370 current-snapshot preparation/emission observations:139 admitted,231 rejected with empty artifacts. No native behavior or normative-policy pass claimed."
+          ]
+        },
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "layer": "contract classification, not native pass",
+          "assertions": [
+            "All 370 observations have explicit dispositions: 196 matching contract/extension observations, 120 missing-support cells, 48 bounded/unextended forms, four conflicts and two contract-review cells.",
+            "Checkpoint 48 independently proves nullable logical negation empty-state semantic mismatch (V-L08)."
+          ]
+        },
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "archive": "language_verification_evidence/logs-checkpoint-49.json.gz",
+          "run": "verification/results/operator-policy-replay",
+          "layer": "predeclared policy replay and complementary-evidence reconciliation",
+          "assertions": [
+            "370 source hashes and admission stages reproduce; all 231 rejections leave empty artifacts. Classification/checklist pass does not mean all operators are supported.",
+            "Policy outcomes: 196 matches,120 missing-support cells,48 deferred-scope cells,6 unresolved-contract cells explicitly assigned V-D13/V-D14.",
+            "Complementary proofs mapped to LV04.001,LV06.001/.002,LV07.001/.002/.003,LV10.003,LV11.002,LV19.002 and integer/wrapper ledgers; unsupported domains remain issues, not native passes."
+          ]
+        }
+      ],
+      "remaining": [
+        "Implementation gaps and V-D13/V-D14 contract decisions remain in the issue ledger for the later discussion/repair phase.",
+        "This finite family/operator grid and dedicated complementary checks do not establish exhaustive ordered type/state/value Cartesian coverage."
+      ],
+      "issues": [
+        "V-L03",
+        "V-L04",
+        "V-L05",
+        "V-L06",
+        "V-L07",
+        "V-L08",
+        "V-L09",
+        "V-L10",
+        "V-L11",
+        "V-D13",
+        "V-D14"
+      ]
+    },
+    {
+      "id": "LV05.001",
+      "family": "LV05",
+      "title": "Typed-boundary conversions",
+      "status": "passed",
+      "authority": [
+        "specs/dynamic_types.md"
+      ],
+      "required_observation": "Check declaration, assignment, argument and return conversions retain the correct source/target type and conversion operation.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/integer_widths/logs/conversions.stdout",
+          "layer": "exact preparation assertions and generated execution where noted",
+          "assertions": [
+            "conversions.php inspects declaration/assignment identity and integer casts, source/target identity, argument and return contexts and selected operations, byte alias identity, incompatible bool rejection and reference arguments without value conversion. Emitted snippets consume those settled decisions; additional boxed conversion/error probes remain separate LV05 checks."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV05.002",
+      "family": "LV05",
+      "title": "Boxed extraction and rejected conversion",
+      "status": "passed",
+      "authority": [
+        "specs/dynamic_types.md",
+        "specs/expression_evaluation.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Check source and destination values on successful and failed boxed conversion; require current mixed/dynamic family separation.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted; verification/results/failed-store-grid; verification/results/boxed-boundary-oracle-03",
+          "layer": "Prepared conversion facts and exact native state/effect/error observations; adapted suites labelled",
+          "assertions": [
+            "mixed_boundaries fixtures assert exact successful int/bool/float/string extraction across declaration/argument/return/assignment and rejected scalar/null/table conversions with unchanged destination, one source effect and zero callee effects. dynamic_boundaries fixtures prove checked dynamic extraction, scalar copies and rejected absent/container inputs. mixed_dynamic_casts asserts scalar/null round trips preserve kinds and containers cannot cross, preserving prior destination identity/value. Corrected preparation suite validates shared conversion facts and family separation."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV06.001",
+      "family": "LV06",
+      "title": "Eager sequencing and snapshots",
+      "status": "passed",
+      "authority": [
+        "specs/expression_evaluation.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Left conversion completes before right evaluation; mutation of a left source cannot change its snapshotted operand value.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/eager_binary",
+          "layer": "Exact generated native values, effects, lifetimes and distinct failure observers",
+          "assertions": [
+            "All four eager_binary native programs pass. Left snapshots survive property mutation and reference-return source replacement; nested precedence preserves effect trace 123. Arithmetic/power/spaceship/concat/shifts/xor use ordered operands; mixed postfix snapshot is 5. Native failure observer verifies absent nullable and table-to-int left conversions suppress RHS effects; division computation occurs only after both operands. Lazy &&/||/ternary/Elvis/coalesce skip effects. Preparation tests cover no-op stability and ordinary expression admission."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV06.002",
+      "family": "LV06",
+      "title": "Compound RHS and lifetime",
+      "status": "passed",
+      "authority": [
+        "specs/expression_evaluation.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Resolve destination and old value before RHS effects; preserve owners and use the agreed write-back policy on success/failure.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/compound_effects; verification/results/wave-02/index_compound",
+          "layer": "Exact generated native values, effects, lifetimes and distinct failure observers",
+          "assertions": [
+            "Three compound-effect and two indexed-compound native programs pass. Preserved old value wins over RHS replacement (10 += RHS storing 100 and returning 3 produces 13); boxed stored-kind checks use old kind. Shared property owner survives RHS replacement until commit/destruction. Division or kind failure keeps prior RHS effects with no compound write-back; absent owner suppresses RHS. Indexed writes survive vector growth, re-resolve replaced roots, preserve mixed copies/dynamic identity and reject deleted/invalidated targets without recreating them."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV07.001",
+      "family": "LV07",
+      "title": "Nullable selection states",
+      "status": "passed",
+      "authority": [
+        "specs/conditional_expression_matrix.md"
+      ],
+      "required_observation": "Selected branch determines value with the declared join type; unselected expressions do not execute; branch order does not change the type.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/nullable",
+          "layer": "labelled diagnostic-oracle adaptation and preparation assertions",
+          "assertions": [
+            "nullable.php checks canonical nullable type identity, branch-order-independent nullable joins, owned/nonaddressable results, right-associated coalescing and payload result type. Producer/fallback/branch type edits reject twice with no output; unrelated body version is preserved; repair matches fresh output."
+          ]
+        },
+        {
+          "run": "verification/results/s2s-oracle-adapted",
+          "layer": "labelled shared S2S harness adaptation; original source/value oracles",
+          "assertions": [
+            "Nullable coalesce fixtures distinguish absent from present zero/false/empty/string-zero values, preserve source value, evaluate each operand once and skip throwing RHS. Ternary and Elvis fixtures retain nullable carrier and laziness."
+          ]
+        },
+        {
+          "run": "verification/results/wave-01/records-nullable_records",
+          "layer": "22 original generated native programs",
+          "assertions": [
+            "Struct and value<Class> nullable joins preserve owned copies and wrapper type; empty/present coalesce returns independent payloads; lazy counters are exactly 1,12,13,24,24 across Elvis/coalesce/ternary selections."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-27.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-H01",
+        "V-H03"
+      ]
+    },
+    {
+      "id": "LV07.002",
+      "family": "LV07",
+      "title": "Shared selection joins",
+      "status": "passed",
+      "authority": [
+        "specs/conditional_expression_matrix.md"
+      ],
+      "required_observation": "Base/interface joins preserve owner and identity; rejected joins are diagnosed before emission and remain rejected after edits.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-shared_joins",
+          "layer": "29 original generated programs plus preparation/edit assertions",
+          "assertions": [
+            "Ordinary classes and shared structs exercise seven selection arrangements, two lazy operators, three interface arrangements and empty joins. Invariant reference parameters assert inferred base/child types, writes through selected handles preserve child identity, and counters distinguish selected versus skipped fallback.",
+            "Sibling common-ancestor inference, unique/weak joins, bare-null fallback and inline mixed-record joins reject. Removing ancestry in another source invalidates ternary/Elvis/coalesce on changed and unchanged retries; repair, preparation reset and fresh compilation produce identical artifacts."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-27.json.gz"
+        }
+      ],
+      "remaining": [
+        "Unique/weak selection extensions remain explicitly deferred under V-D04; this verifies the admitted shared join boundary."
+      ],
+      "issues": [
+        "V-D04"
+      ]
+    },
+    {
+      "id": "LV08.001",
+      "family": "LV08",
+      "title": "Branches, loops and transfers",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Execute bounded if/loop/switch/match fixtures and compare exit/output; skipped branches and break/continue counts follow the contract.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/control_flow; verification/results/entry-observers-adapted-02",
+          "layer": "preparation and generated execution",
+          "assertions": [
+            "control_flow.php exports 135 cases with exact exit/value/effect oracles for if, while, do, for, switch/fallthrough, match, lazy selection and break/continue/return targets. 133 original executions pass; truth_explicit_cast_reject and match_unhandled pass in labelled entry-observer replay preserving source handlers. Original suite failure is retained."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV08.002",
+      "family": "LV08",
+      "title": "Return completeness and rejection",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Reject reachable fallthrough in required-return functions and invalid control-flow forms; include loops which may execute zero times.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/control_flow/logs/fallthrough.stdout; verification/results/wave-01/iteration/logs/iteration.stdout",
+          "layer": "preparation and generated execution",
+          "assertions": [
+            "fallthrough.php rejects absent/bare value returns, signature-only void->int edits and failed repair attempts with empty published output. control_flow.php rejects loops/switch arms that can fall through and invalid transfers. iteration.php rejects a function whose only return is inside a potentially empty foreach. Repair and independent-body assertions pass."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV09.001",
+      "family": "LV09",
+      "title": "Call argument order and specialization",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Arguments execute once in source order; repeated specializations reuse definitions while unused specializations emit no executable body.",
+      "evidence": [
+        {
+          "run": "verification/results/call-contract-probes",
+          "layer": "generated execution",
+          "assertions": [
+            "Once-only argument ordering verified separately from parameter sums, for free and instance calls."
+          ],
+          "case": "default_variadic_order",
+          "outcomes": "results/call-contract-probes/outcomes.json",
+          "commands": "results/call-contract-probes/logs/commands.json"
+        },
+        {
+          "run": "verification/results/declaration-replays/declaration_model; verification/results/wave-01/records-late_static; verification/results/call-contract-probes",
+          "layer": "inspected identity/invalidation assertions and generated execution",
+          "assertions": [
+            "callable_demands.php and callable_instances.php assert repeated and recursive identity reuse, separate called-type instances and stable versions on no-op. late_static.php proves unused unresolved bodies do not execute and removing the last demand removes implementation_ output. Free/method argument traces independently prove once-only source order. This covers supported called-type specialization, not unrestricted source generic functions."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV09.002",
+      "family": "LV09",
+      "title": "Void/value return boundary",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Accept valid void calls/returns; reject using void as a value or violating return contracts; cleanup still occurs.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-void_returns; verification/results/wave-01/records-finally",
+          "layer": "preparation and generated execution",
+          "assertions": [
+            "Fifteen generated void forwarding cases pass across functions, closures, arrows, class/struct instance/static calls and reference capture. Value/void misuse rejects; provider return-type edit invalidates and repairs to fresh-equivalent output. Finally void_forward and void_bare verify once-only effect/finalizer trace and skipped following statements; cleanup proofs remain in LV24."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV10.001",
+      "family": "LV10",
+      "title": "Result payload versus sentinel",
+      "status": "passed",
+      "authority": [
+        "specs/error_values_and_take.md"
+      ],
+      "required_observation": "Wrapped false/zero values remain distinct from sentinels; construction/extraction chooses the correct Result family and preserves error state.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/results",
+          "layer": "preparation and generated/native execution as specified",
+          "assertions": [
+            "results.php validates sentinel identity, conversion operations and distinct Result families. fixtures/result_construction.php independently observes wrapped zero/false/empty strings versus false/true sentinels, copies and error payloads. All 166 exported Result programs and two runtime wrapper proofs pass."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV10.002",
+      "family": "LV10",
+      "title": "Take output/state and recovery",
+      "status": "passed",
+      "authority": [
+        "specs/error_values_and_take.md"
+      ],
+      "required_observation": "Take assigns the correct value/error/flag branch, clears prior error on success, and invalidates then repairs after a source return-type edit.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/results",
+          "layer": "preparation and generated/native execution as specified",
+          "assertions": [
+            "take.php rejects invalid outputs before emission and changes nullable<int> producer to nullable<float>: repeated preparation fails, output clears, independent body version is unchanged, repair equals fresh. result_take_* programs and runtime_wrappers_003_take_helper.cpp prove value preservation on failure, error reset on success, boolean sentinel output and once-only source-before-output evaluation."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV11.001",
+      "family": "LV11",
+      "title": "Mixed versus dynamic identity",
+      "status": "passed",
+      "authority": [
+        "specs/dynamic_types.md",
+        "specs/expression_evaluation.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Compare copied mixed COW values with shared dynamic containers, explicit crossings and rejected implicit family mixing.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted; verification/results/boxed-boundary-oracle-03",
+          "layer": "Prepared conversion facts and exact native state/effect/error observations; adapted suites labelled",
+          "assertions": [
+            "Mixed nested values/call arguments remain independent under mutation; dynamic nested containers/arguments retain shared identity until rebinding. Explicit scalar/null family crossings succeed; container crossings fail without changing targets. Implicit family mixing rejects across assignment, construction, indexing, iteration, selection and operators. The boxed-boundary suite completes after two stale negative expectations are isolated; no physical COW implementation is inferred merely from independent value behavior."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-H04"
+      ]
+    },
+    {
+      "id": "LV11.002",
+      "family": "LV11",
+      "title": "Boxed numeric/text write-back",
+      "status": "passed",
+      "authority": [
+        "specs/dynamic_types.md",
+        "specs/expression_evaluation.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Numeric compound updates preserve stored numeric kind; text replacement follows its separate policy; failure must not install an invalid value.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/compound_effects; verification/results/s2s-oracle-adapted; verification/results/boxed-boundary-oracle-02; verification/results/boxed-boundary-oracle-03",
+          "layer": "Prepared conversion facts and exact native state/effect/error observations; adapted suites labelled",
+          "assertions": [
+            "Numeric compound updates preserve old stored-kind constraints and compute from the old value even if RHS changes destination kind. Kind/computation failure performs no compound store but retains earlier RHS effects (100). Text replacement uses separate text conversion (mixed postfix-concat yields 77). Boxed scalar indexed compound expressions are admitted then throw at runtime with original int 7 preserved; obsolete compile-negative removed only in test copy."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-H04"
+      ]
+    },
+    {
+      "id": "LV12.001",
+      "family": "LV12",
+      "title": "String identity and bytes",
+      "status": "passed",
+      "authority": [
+        "specs/string_interpolation.md"
+      ],
+      "required_observation": "Strict identity compares exact bytes including NUL; same-text values match without truthiness conversion, and operand effects stay ordered.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/string_identity",
+          "layer": "prepared facts and generated native byte/diagnostic oracles",
+          "assertions": [
+            "Original values and binary observers pass. Exact string identity distinguishes empty, case, numeric-looking strings and composed/decomposed UTF-8 without coercion. Native binary inputs exercise generated same/different functions on embedded NUL; ordered calls and property snapshots prove first-operand retention."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV12.002",
+      "family": "LV12",
+      "title": "Public string operations",
+      "status": "passed",
+      "authority": [
+        "specs/compiler_support_runtime_contract.md",
+        "specs/runtime_module_metadata.md",
+        "specs/builtins/string/",
+        "runtime/metadata/modules/strings.json"
+      ],
+      "required_observation": "Execute registered helpers/builders with explicit byte/result expectations, including empty inputs and declared failure returns.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/runtime_strings; verification/results/unmasked-suites/runtime_builders; verification/results/entry-observers-adapted-02; verification/results/builder-observers-adapted",
+          "layer": "Per-signature ledger plus independent generated/native value and failure oracles",
+          "assertions": [
+            "All 70 strings module declarations (65 callable signatures, two builder types and three constants) are mapped in language_verification_runtime_coverage.json. Every registered helper arity and int/float formatting overload has explicit value assertions; generic implode covers vector and both hash key specializations. Builder reference/observe/value modes have copy, alias, temporary-query and rejection proofs. Empty, NUL and UTF-8 values and declared hex/search failure returns are checked. Original six string and two builder native exception observers pass in a separately labelled entry-handler-adapted lane."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV13.001",
+      "family": "LV13",
+      "title": "Contextual data construction",
+      "status": "passed",
+      "authority": [
+        "specs/data_initialization.md"
+      ],
+      "required_observation": "The resolved target controls literal/key/value conversion; malformed or unsupported construction rejects before facts/output are published.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/data_initialization",
+          "layer": "preparation and generated/native execution as specified",
+          "assertions": [
+            "data_preparation.php checks concrete target identity, key/value conversion contexts, same-family nested construction, 28 valid sources and malformed/unsupported cases with both prepared and C++ outputs empty. Return-type edits refresh retained construction target and rejected edits clear stale facts. 48 generated construction programs pass."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV13.002",
+      "family": "LV13",
+      "title": "Initialization input contracts",
+      "status": "passed",
+      "authority": [
+        "specs/data_initialization.md"
+      ],
+      "required_observation": "Check input views are call-scoped/readonly, entry types have the proper key/value arguments, and registration does not instantiate every input eagerly.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/data_initialization",
+          "layer": "preparation and generated/native execution as specified",
+          "assertions": [
+            "initialization.php checks zero eager template applications, hidden input types, readonly/call-scoped capabilities, exact key/value entry ordering, view storage rejection and malformed factory contracts. data_initializer_runtime.cpp adds independent static type and throwing-copy lifetime assertions; runtime proof passes."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV14.001",
+      "family": "LV14",
+      "title": "Container reads and missing keys",
+      "status": "passed",
+      "authority": [
+        "specs/array_semantics.md",
+        "specs/native_reference_safety.md"
+      ],
+      "required_observation": "Read each admitted container/key family with correct value/reference semantics; missing, out-of-range and invalid key cases follow the contract.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted; verification/results/wave-02/container_reads/logs/indexing.stdout",
+          "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+          "assertions": [
+            "Fourteen read fixtures (28 base/state executions) cover vector, string/int-key hash, nested and nullable elements, mixed/dynamic missing/null reads without creation, numeric key normalization, value snapshots/shared nested identity, receiver-before-key order and lazy RHS. Native observers assert typed missing/bounds and invalid-key/kind failures, preserved required-conversion destination and unchanged containers. indexing.php verifies non-addressable reads, exact preparation gates, compaction and edit recovery."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV14.002",
+      "family": "LV14",
+      "title": "Property-root mutation and replacement",
+      "status": "passed",
+      "authority": [
+        "specs/array_semantics.md",
+        "specs/native_reference_safety.md"
+      ],
+      "required_observation": "Nested writes/append evaluate receiver/key/RHS in order, retain replaced owners and preserve the specified effects on failure.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted; verification/results/wave-02/field_container_writes",
+          "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+          "assertions": [
+            "Thirty-two write fixtures (64 base/state executions) plus five field-root programs cover nested typed/mixed/dynamic writes, append, COW versus identity, normalized keys, scalar conversion, assignment values and argument modes. Root lookup follows key/RHS effects. Shared property owners remain retained across replacement: the old object receives 17 while the new one remains 1; last-owner destruction observes committed 19. Invalid keys suppress RHS, failed RHS conversion leaves size unchanged, bounds failure preserves already-performed RHS effects and causes no write."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV15.001",
+      "family": "LV15",
+      "title": "Value probe semantics and invalidation",
+      "status": "passed",
+      "authority": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Count/empty/isset return the specified values without introducing mutable places; dependency edits invalidate and repair facts.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-collection_probes; verification/results/wave-01/iteration/logs/value_probes.stdout; verification/results/wave-02/runtime_generics; verification/results/s2s-oracle-adapted",
+          "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+          "assertions": [
+            "28 collection-probe programs verify collection-only emptiness (empty string true, string zero false, nonempty null-containing table false), keyed failures and lazy evaluation; invalid scalar/wrapper operands reject or throw invalid_empty_operand. Nullable/scalar isset fixtures preserve presence independently of value truth. count overloads have independent sizes. value_probes.php asserts non-addressable bool results, type-change invalidation, empty artifacts on failure, unrelated-body stability and fresh-equivalent repair."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV15.002",
+      "family": "LV15",
+      "title": "Lazy path probes and removal",
+      "status": "passed",
+      "authority": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Missing/null parents skip later keys, probes do not create entries, and unset preserves aliases/COW according to the receiver family.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted; verification/results/wave-02/field_container_probes",
+          "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+          "assertions": [
+            "22 keyed fixtures (44 base/state executions) plus five field-probe programs verify null/missing parents skip later keys; probes do not create entries; invalid keys and empty invalid leaves follow distinct contracts. unset preserves mixed value independence and dynamic shared identity. Replacing/removing prefixes during key evaluation revalidates the path, skips later keys and retains required property owners until the observation/removal ends."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV16.001",
+      "family": "LV16",
+      "title": "Iteration binding and retained dependencies",
+      "status": "passed",
+      "authority": [
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Changing vector iteration to hash updates key type without reparsing the consumer; noniterable edits invalidate output and repair matches fresh.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/iteration/logs/iteration.stdout",
+          "layer": "preparation and generated/native execution as specified",
+          "assertions": [
+            "iteration.php retains the consumer body while changing producer vector<int> to hash<int>, verifies string key type, rejects later noniterable int dependency with cleared output, and repairs to byte-identical fresh output. Cleanup removes iteration facts."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV16.002",
+      "family": "LV16",
+      "title": "Iteration execution and loop scope",
+      "status": "passed",
+      "authority": [
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Execute empty/populated/nested value loops; verify keys, values, order and loop-variable scope rather than merely emitted syntax.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted",
+          "layer": "preparation and generated/native execution as specified",
+          "assertions": [
+            "fixtures/iteration.php has exact native-state oracles for vector/hash/mixed/dynamic order, empty and nested loops, key scope versus reused value binding, temporary-source single evaluation, break/continue/return, copies and conversion failure. All foreach_* programs pass in the labelled entry-oracle-adapted run; original iteration.php also rejects leaked loop bindings."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV17.001",
+      "family": "LV17",
+      "title": "Reference origin and escape rejection",
+      "status": "passed",
+      "authority": [
+        "specs/references.md"
+      ],
+      "required_observation": "Reference returns preserve admitted origins; temporary/escaping/read-only-invalid references reject before emission.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/references",
+          "layer": "prepared provenance, rejection and generated execution",
+          "assertions": [
+            "references.php proves returned parameter-origin identity through alias chains; local/by-value/interior/temporary escape, const mutation and recursive forwarding reject with empty C++ output. Cross-file body edits invalidate unchanged forwarding consumers; retry and repair preserve provenance and match fresh output. 36 generated reference programs pass."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV17.002",
+      "family": "LV17",
+      "title": "Reference forwarding across calls",
+      "status": "passed",
+      "authority": [
+        "specs/references.md"
+      ],
+      "required_observation": "Mutations through forwarded reference arguments reach the original storage; return-reference lifetimes do not outlive owners.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/references; verification/results/wave-01/records-method_returns; verification/results/wave-01/records-closures",
+          "layer": "prepared provenance, rejection and generated execution",
+          "assertions": [
+            "Generated alias chains, branch/loop/switch returns, const forwarding and whole-parameter reference forwarding mutate original storage with exact value oracles. Method and closure reference-return programs supplement free-function paths; forbidden owner origins remain rejected. Selection-composition extension remains LV17.003."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV18.001",
+      "family": "LV18",
+      "title": "Ownership observations and transfers",
+      "status": "passed",
+      "authority": [
+        "specs/destructors_v0_2.md"
+      ],
+      "required_observation": "Move/lock/observe retain payload identity and correct ownership family; unique owned results differ from borrowed/reference results.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/ownership",
+          "layer": "prepared ownership facts and generated lifetime observations",
+          "assertions": [
+            "Ownership preparation checks distinguish owned unique return temporaries from reference-return storage, retain move source-place identity and consuming argument facts. Twenty-six generated/native-observer programs verify transfer empties source, weak control-block identity, locking/expiry, temporary retention, once-only observations and signature-edit invalidation/repair."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV18.002",
+      "family": "LV18",
+      "title": "Destruction and exceptional cleanup",
+      "status": "passed",
+      "authority": [
+        "specs/destructors_v0_2.md"
+      ],
+      "required_observation": "Check destruction order and exactly-once cleanup on scope exit, return and exception; inaccessible/throwing destructors follow declared rejection rules.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-destructors; verification/results/wave-01/records-finally",
+          "layer": "prepared ownership facts and generated lifetime observations",
+          "assertions": [
+            "Thirty-six destructor programs verify last shared owner, unique reset, inline copies/aliases, early return, loop transfers, body-before-members and reverse member order. Runtime unwind observer checks exactly-once cleanup; custom terminate handler proves escaping destructor error terminates after body effect. Invalid signatures/access/allocation and visibility edits reject, repair matches fresh output. Throwing destructors are not statically prohibited by an effect analysis; the specified runtime boundary is termination."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV19.001",
+      "family": "LV19",
+      "title": "Construction and field initialization",
+      "status": "passed",
+      "authority": [
+        "specs/instance_methods_v0_2.md",
+        "specs/data_initialization.md"
+      ],
+      "required_observation": "Defaults and explicit inputs initialize fields in contract order; constructor visibility and duplicate/missing inputs are checked.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-constructors; verification/results/wave-01/records-property_defaults; verification/results/wave-01/records-data_records",
+          "layer": "preparation assertions and generated native execution",
+          "assertions": [
+            "constructors.php: 60 generated executions cover constructor access/factories, set: promotion, supplied argument source order and data key order, required/duplicate/unknown inputs and per-instance/suppressed defaults. property_defaults.php adds 35 executions and data_records.php adds 28; all original suites passed."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV19.002",
+      "family": "LV19",
+      "title": "Property updates and receiver retention",
+      "status": "passed",
+      "authority": [
+        "specs/instance_methods_v0_2.md"
+      ],
+      "required_observation": "Execute prefix/postfix and compound property mutation, verify old/new snapshots, and retain receivers during RHS replacement.",
+      "evidence": [
+        {
+          "run": "verification/results/property-mutations-oracle-replay; verification/results/receiver-replacement-probe-02",
+          "layer": "preparation assertions and generated native execution; adapted lane identified explicitly",
+          "assertions": [
+            "Twelve original class/struct programs pass in an explicitly adapted oracle lane: remove the obsolete effectful-RHS negative, and remove only the marked production entry catch for the two preexisting native division-failure observers. Prefix/postfix, compound updates, boxed properties, static qualifiers, readonly-static access and failed-store preservation pass. New source probe verifies receiver retention while compound RHS drops its owner; old/new snapshots and destructor timing are exact."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV20.001",
+      "family": "LV20",
+      "title": "Inherited dispatch and overrides",
+      "status": "passed",
+      "authority": [
+        "specs/inheritance_v0_2.md"
+      ],
+      "required_observation": "Virtual calls select the correct implementation; invalid override signatures/access/abstract construction reject.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-inheritance; verification/results/wave-01/records-abstract_dispatch",
+          "layer": "preparation and generated execution",
+          "assertions": [
+            "59 inheritance and 32 abstract-dispatch programs pass, including parent construction, protected access, reference forwarding, virtual/abstract selection, constructor-time dispatch, static defaults and destruction order. Preparation rejects invalid override/final/access/signature and abstract construction combinations; retained dependency edits and repair are covered."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV20.002",
+      "family": "LV20",
+      "title": "Interface contracts and handles",
+      "status": "passed",
+      "authority": [
+        "specs/inheritance_v0_2.md"
+      ],
+      "required_observation": "Interface conversion and dispatch preserve object identity and valid lifetime; missing implementations and incompatible contracts reject.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-interfaces; verification/results/wave-01/records-interface_handles",
+          "layer": "preparation and generated execution",
+          "assertions": [
+            "37 interface and 44 interface-handle programs pass. Source shared/weak conversions, diamond contracts, default selection, reference/variadic calls, receiver retention after release, weak expiry and exactly-once final-owner cleanup have exact oracles. Native interface dispatch/deletion probes supplement source calls. Missing implementations, incompatible visibility/signature and unsupported inline/unique interface storage reject."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV21.001",
+      "family": "LV21",
+      "title": "Static member storage and access",
+      "status": "passed",
+      "authority": [
+        "specs/static_members_v0_2.md"
+      ],
+      "required_observation": "Type-owned properties/constants/methods obey visibility and initialization, with one appropriate storage identity across source files.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-static_members; verification/results/static-cross-file-probe-02",
+          "layer": "preparation assertions and generated native execution; adapted lane identified explicitly",
+          "assertions": [
+            "All 35 original static_members generated executions pass: class/struct properties/constants/methods, default initialization, nullable/container values, visibility, static versus instance access, constant cycles, separate member namespaces and source order. New three-source-unit test proves mutation by one function is visible in another unit through the same static property."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV21.002",
+      "family": "LV21",
+      "title": "Called-type dispatch",
+      "status": "passed",
+      "authority": [
+        "specs/static_members_v0_2.md"
+      ],
+      "required_observation": "Late-static factories/calls preserve the selected called type; dependency changes invalidate affected specializations.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-late_static",
+          "layer": "inspected identity/invalidation assertions and generated execution",
+          "assertions": [
+            "Twelve generated programs execute dispatch, self/parent forwarding, explicit qualifier reset, shared static storage, abstract/new-static constructor factories, struct calls, two called contexts and recursion. Cross-file demand removal eliminates implementations; re-adding invalid demand rejects; repaired child returns 8 and fresh output matches."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV22.001",
+      "family": "LV22",
+      "title": "Enum nominal identity",
+      "status": "passed",
+      "authority": [
+        "specs/compact_layout_types.md"
+      ],
+      "required_observation": "Enums retain nominal identity rather than silently becoming integers; only declared conversions/operators are admitted.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/enums; verification/results/enum-entry-oracle",
+          "layer": "preparation, native independent assertions, generated execution",
+          "assertions": [
+            "23 original programs pass; unhandled enum match passes labelled oracle replay with exit 1 and exact error text rather than abort. Nominal cross-enum/int mixing rejects; native static_assert verifies fixed widths and full uint64/int64 values. Name/value/from-value helpers check once-only evaluation and invalid mathematical values before narrowing; selection copies/laziness and dependency repair are asserted."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV22.002",
+      "family": "LV22",
+      "title": "Enum execution and failure",
+      "status": "passed",
+      "authority": [
+        "specs/compact_layout_types.md"
+      ],
+      "required_observation": "Execute enum name/value/from-value helpers and invalid value paths; distinguish currently deferred reflection/backing extensions.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/enums; verification/results/enum-entry-oracle",
+          "layer": "preparation, native independent assertions, generated execution",
+          "assertions": [
+            "23 original programs pass; unhandled enum match passes labelled oracle replay with exit 1 and exact error text rather than abort. Nominal cross-enum/int mixing rejects; native static_assert verifies fixed widths and full uint64/int64 values. Name/value/from-value helpers check once-only evaluation and invalid mathematical values before narrowing; selection copies/laziness and dependency repair are asserted."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV23.001",
+      "family": "LV23",
+      "title": "Closure concrete versus erased identity",
+      "status": "passed",
+      "authority": [
+        "specs/language/closures.md"
+      ],
+      "required_observation": "Inferred closures retain concrete capture types; explicit callable boundaries erase intentionally; no-op compilation does not recreate types.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-closures",
+          "source": "compiler/my-try/tests/closures.php",
+          "layer": "preparation, generated C++ execution, incremental emission",
+          "assertions": [
+            "83 programs; concrete cases reject std::function emission, typed_* cases require it.",
+            "capture_snapshot/vector/mixed preserve values, capture_shared/dynamic share declared state.",
+            "Every positive recompiles no-op and asserts stable type_count and identical emitted bytes."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV23.002",
+      "family": "LV23",
+      "title": "Reference capture lifetime",
+      "status": "passed",
+      "authority": [
+        "specs/language/closures.md"
+      ],
+      "required_observation": "Borrowing captures remain within approved lexical regions; escaping or unsupported captures reject with no stale successful publication.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-reference_captures",
+          "source": "compiler/my-try/tests/reference_captures.php",
+          "assertions": [
+            "44 generated programs execute; readonly/escape/erased-callable rejections and lifetime-region/no-op/repair assertions pass."
+          ]
+        },
+        {
+          "run": "verification/results/recovery-probes",
+          "source": "verification_borrow_publication.php",
+          "layer": "preparation and incremental rejection",
+          "assertions": [
+            "Every original rejection assertion additionally requires Model::$cpp_files->is_empty(); all pass.",
+            "Original lifetime/readonly/repair/no-op assertions remain intact."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV24.001",
+      "family": "LV24",
+      "title": "Exception propagation and recovery",
+      "status": "passed",
+      "authority": [
+        "specs/exceptions_v0_2.md"
+      ],
+      "required_observation": "Execute throw/catch propagation and cleanup; invalid exception edits reject, then repair restores fresh-equivalent output.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-exceptions",
+          "source": "compiler/my-try/tests/exceptions.php",
+          "layer": "preparation, generated C++ execution, incremental emission",
+          "assertions": [
+            "17 generated executions and 20 preparation rejections.",
+            "callee/nested_rethrow preserve messages; native identity_transport verifies pointer identity and weak expiry.",
+            "cleanup_order observes 21 and outer survivor; partial_constructor observes completed-field cleanup only; handler_cleanup observes 12.",
+            "Three invalid edits reject; repair restores baseline emitted output; fresh compiler output matches."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV24.002",
+      "family": "LV24",
+      "title": "Finally execution and transfers",
+      "status": "passed",
+      "authority": [
+        "specs/exceptions_v0_2.md"
+      ],
+      "required_observation": "Finally executes once on normal/exceptional exit; admitted returns preserve values and cleanup while unsupported transfers are classified.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-finally",
+          "source": "compiler/my-try/tests/finally.php",
+          "layer": "preparation, generated C++ execution, incremental emission",
+          "assertions": [
+            "34 generated programs and 19 preparation rejections.",
+            "normal/empty, nested_returns/nested_throw, catch return/throw, return replacement, exception replacement and guard propagation verify exact effects.",
+            "Scalar/void snapshots and single evaluation: return_evaluation, snapshot, string_snapshot, float_bool, void_forward, void_bare.",
+            "Reference/vector/Exception/Result returns crossing finally and cross-finally loop transfers reject as the bounded contract requires.",
+            "Invalid and valid edits repair to identical fresh output."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV25.001",
+      "family": "LV25",
+      "title": "Namespace bodies and entry selection",
+      "status": "passed",
+      "authority": [
+        "specs/namespaces_v0_2.md"
+      ],
+      "required_observation": "Distinct namespace bodies retain independent environments; the selected executable body is not hardwired to the first body.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/namespace_bodies",
+          "source": "compiler/my-try/tests/namespace_bodies.php",
+          "layer": "preparation, generated C++ execution and bounded recovery",
+          "assertions": [
+            "namespace_bodies.php retains distinct body scopes/work, rejects two executable bodies, selects a later body after moving the return, and compares bytes.",
+            "Generated selected entry exits 7; declaration-only body exits 0. Failed join retains ownership; stale saved preparation cannot emit.",
+            "This is the body model/emission proof; source namespace grammar is covered separately."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV25.002",
+      "family": "LV25",
+      "title": "Qualified lookup and imports",
+      "status": "passed",
+      "authority": [
+        "specs/namespaces_v0_2.md"
+      ],
+      "required_observation": "Qualified/rooted/imported symbols resolve under current namespace rules; collisions and changed imports invalidate affected consumers.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/namespaces; verification/results/wave-02/namespace_identity",
+          "layer": "Prepared lookup/invalidation assertions and 24 generated native programs",
+          "assertions": [
+            "Rooted and relative function/type/field/new/constant paths resolve to the specified namespace; semicolon/braced/reopened namespaces preserve body-local environments. Plain/function/constant imports, aliases, homogeneous groups, textual-position independence and idempotent repeats pass. Missing/wrong-kind/conflicting targets reject even unused; imports do not re-export or leak across bodies/files. Qualified absent-target subscriptions recover after provider addition; imported function/type retargeting invalidates unchanged consumer work/signatures and repaired output equals fresh."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV26.001",
+      "family": "LV26",
+      "title": "Echo conversion and order",
+      "status": "passed",
+      "authority": [
+        "specs/output_v0_2.md"
+      ],
+      "required_observation": "Multiple echo operands evaluate once in order and produce exact bytes; unsupported output types reject at the documented boundary.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-echo",
+          "source": "compiler/my-try/tests/echo.php",
+          "layer": "preparation, generated C++ execution, incremental emission",
+          "assertions": [
+            "10 generated executions compare exact stdout bytes: ordered emits p1:p2:2; scalars [1-12:2.5]; wrappers 34; sentinels [1].",
+            "Typed container/callable/void/struct output and malformed echo syntax reject.",
+            "Invalid output type edit rejects, then repair/no-op/fresh output agree."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV26.002",
+      "family": "LV26",
+      "title": "CLI entry and arguments",
+      "status": "passed",
+      "authority": [
+        "specs/output_v0_2.md"
+      ],
+      "required_observation": "Generated executable startup initializes argument state once; argc/argv/args reflect invocation and returned collections have the documented copy behavior.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/runtime_cli",
+          "layer": "generated C++ execution and preparation assertions",
+          "assertions": [
+            "Generated arguments and shadow programs passed. runtime_cli.php asserts exactly one startup initialization, rejects wrong arity/internal APIs with empty output. Python runner checks argc and byte lengths for empty, spaced, Unicode and flag arguments, and verifies cli_argv mutation leaves fresh and aliased snapshots unchanged. The suite overall fails a separate generic exception observer."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV27.001",
+      "family": "LV27",
+      "title": "Runtime generic substitution",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md",
+        "specs/metaprogramming_contract.md"
+      ],
+      "required_observation": "Installed generic signatures substitute parameters and constraints correctly; unsupported payload or arity rejects before emission.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_generics",
+          "source": "compiler/my-try/tests/runtime_generics.php",
+          "layer": "preparation, generated C++ execution and bounded recovery",
+          "assertions": [
+            "identity<T>, wrap<T>, same<T>, nested vector<T>, and default-key hash<T> substitutions exercised with exact values and ordered calls.",
+            "Duplicate/unbound variables, invalid arity/payload/reference defaults and ambiguous overlap reject without replacing installed metadata.",
+            "Same provider identity is retained with distinct int/string concrete signatures; source invalid argument/arity/payload combinations reject with empty artifacts."
+          ]
+        },
+        {
+          "run": "verification/results/entry-observers-adapted-02",
+          "assertions": [
+            "Six dynamic/mixed invalid count-kind runtime failure observers pass with marked production catch removed; source handlers and original exception oracle retained."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV27.002",
+      "family": "LV27",
+      "title": "Specialization demand and invalidation",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md",
+        "specs/metaprogramming_contract.md"
+      ],
+      "required_observation": "One required specialization is generated per settled identity; changed dependencies replace stale signatures/bodies without duplicating unrelated instances.",
+      "evidence": [
+        {
+          "run": "verification/results/declaration-replays/declaration_model; verification/results/wave-02/runtime_generics",
+          "layer": "inspected identity/invalidation assertions and generated execution",
+          "assertions": [
+            "Callable instance tests prove interned identity, private-body isolation, external dependency reprepare without rematerialization, failure/retry/repair, no-op stability and retirement on origin/called-source edits/removal/reset. Runtime generics retain one provider identity with distinct concrete per-call signatures, reject stale bindings after reset, and invalidate/repair a changed producer. No claim of unrestricted source generics or provider-constraint isolation (LV27.003)."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV28.001",
+      "family": "LV28",
+      "title": "Async source admission and scope",
+      "status": "failed",
+      "authority": [
+        "specs/async_await.md"
+      ],
+      "required_observation": "Replay the existing strict PHS async fixture unchanged via the strict compatibility manifest; baseline expects exit 0 and stdout 4242; record first v0.2 blocker.",
+      "evidence": [
+        {
+          "run": "language_verification_evidence/strict-04.json",
+          "source": "tests/tools/test_scpp_async_core_language.php",
+          "layer": "original strict source differential",
+          "assertions": [
+            "v0.1 exact PHS nowdoc executes stdout 4242; v0.2 parser rejects async function at byte 6."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "S12"
+      ]
+    },
+    {
+      "id": "LV28.002",
+      "family": "LV28",
+      "title": "Suspension and task lifetime",
+      "status": "blocked",
+      "authority": [
+        "specs/async_await.md"
+      ],
+      "required_observation": "If source admission exists, verify values/errors across suspension, capture/resource lifetime and scheduler completion; otherwise record the blocking owner without inferring support from runtime tests.",
+      "evidence": [
+        {
+          "run": "language_verification_evidence/strict-04.json",
+          "source": "tests/tools/test_scpp_async_core_language.php",
+          "layer": "original strict source differential",
+          "assertions": [
+            "v0.1 exact PHS nowdoc executes stdout 4242; v0.2 parser rejects async function at byte 6."
+          ]
+        }
+      ],
+      "remaining": [
+        "Suspension/task-lifetime proof is blocked by absent source admission; no callback translation is permitted."
+      ],
+      "issues": [
+        "S12"
+      ]
+    },
+    {
+      "id": "LV29.001",
+      "family": "LV29",
+      "title": "Metadata validity and reset",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "Invalid schema/contract/cycle/collision must not replace installed configuration; resets reuse decoded metadata with fresh semantic identities.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_catalog",
+          "source": "compiler/my-try/tests/runtime_catalog.php",
+          "layer": "preparation, generated C++ execution and bounded recovery",
+          "assertions": [
+            "Malformed schema versions/keys/values/types and invalid contracts reject while Model::$runtime_metadata remains the same installed input.",
+            "Cross-module constant collisions and dependency cycles reject.",
+            "Metadata files are removed before resets; reset creates fresh callable/constant identities while retaining decoded metadata; old binding lookup rejects."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV29.002",
+      "family": "LV29",
+      "title": "Runtime exports and source shadowing",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "Public source bindings resolve through metadata and update correctly when source names shadow/unshadow them; private or disabled surfaces reject.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_exports; verification/results/wave-02/runtime_regex; verification/results/unmasked-suites/runtime_cli",
+          "layer": "inspected identity/invalidation assertions and generated execution",
+          "assertions": [
+            "runtime_exports.php verifies imported vector/strlen/constant bindings, source shadow/unshadow invalidation and wrong-category/missing/namespace-leaking aliases. Generated runtime_exports program checks values. Regex disabled-module source use rejects. CLI preparation rejects internal set_cli_args and unselected process_start; datetime core-only metadata rejects dt_now lookup. Per-signature disabled coverage remains in LV29.003."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV30.001",
+      "family": "LV30",
+      "title": "JSON source integration",
+      "status": "passed",
+      "authority": [
+        "specs/builtins/json/first_pass.md"
+      ],
+      "required_observation": "Decode/encode success and malformed input retain declared wrapper/value families; explicit mixed versus default dynamic contracts remain distinct.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/json_api; verification/results/observer-followup/json",
+          "layer": "preparation and generated/native execution as specified",
+          "assertions": [
+            "fixtures/json.php verifies both decoder families across scalar/container roots, COW versus shared identity, once-only encode inputs, malformed decode and nonfinite encode failure preservation, null/false successes and dynamic cycle rejection. Five original generated programs pass; two injected native observers pass with the explicit table header added. Original failures retained as V-H07."
+          ]
+        },
+        {
+          "run": "verification/results/json-shape-probe",
+          "layer": "production publication and native build",
+          "assertions": [
+            "Strict source publishes successfully; native linkage fails because declared runtime_build omits modules/json/json.cpp. Explicitly linked unit tests do not prove production provider integration."
+          ]
+        }
+      ],
+      "remaining": [
+        "Source semantics proven with explicit provider linkage only; production build blocked by V-R01 (tracked under integration checks)."
+      ],
+      "issues": [
+        "V-R01"
+      ]
+    },
+    {
+      "id": "LV30.002",
+      "family": "LV30",
+      "title": "String module signatures and values",
+      "status": "passed",
+      "authority": [
+        "specs/compiler_support_runtime_contract.md",
+        "specs/runtime_module_metadata.md",
+        "specs/builtins/string/",
+        "runtime/metadata/modules/strings.json"
+      ],
+      "required_observation": "For every registered overload, identify argument/default/reference mode and an independent result oracle; a name occurrence is not overload coverage.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/runtime_strings; verification/results/unmasked-suites/runtime_builders; verification/results/entry-observers-adapted-02; verification/results/builder-observers-adapted",
+          "layer": "Per-signature ledger plus independent generated/native value and failure oracles",
+          "assertions": [
+            "All 70 strings module declarations (65 callable signatures, two builder types and three constants) are mapped in language_verification_runtime_coverage.json. Every registered helper arity and int/float formatting overload has explicit value assertions; generic implode covers vector and both hash key specializations. Builder reference/observe/value modes have copy, alias, temporary-query and rejection proofs. Empty, NUL and UTF-8 values and declared hex/search failure returns are checked. Original six string and two builder native exception observers pass in a separately labelled entry-handler-adapted lane."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV31.001",
+      "family": "LV31",
+      "title": "Filesystem outputs and failures",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "Execute operations in temporary isolated paths; verify content, failure values, container Results and resource cleanup.",
+      "evidence": [
+        {
+          "run": "verification/results/unmasked-suites/runtime_filesystem",
+          "layer": "generated C++ execution and preparation assertions",
+          "assertions": [
+            "Private-directory roundtrip, sorted paths, broken/symlink cases, failed output preservation, fixed-mtime snapshots and result-container programs pass exact output oracles; native snapshot regression passes. Temporary resources are isolated under the result directory and retained as evidence."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV31.002",
+      "family": "LV31",
+      "title": "Opaque handle semantics",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "Handle source operations obey registered ownership/storage contracts; unsupported payload access rejects and recovery preserves metadata.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_handles",
+          "layer": "preparation and generated native runtime",
+          "assertions": [
+            "Identity 9|9|9, result 13|13, container 19, members 23|99|yes|42|31|51, constants 37|41|53|37|1 and properties 23|23|23|41|43|9.",
+            "Opaque payload construction, unsupported reference escape, wrong types, missing members and explicit ownership wrappers reject without artifacts. Valid identity case succeeds after failures; reset preserves metadata input and rebuilds type identities."
+          ]
+        },
+        {
+          "run": "verification/results/entry-observers-adapted-03",
+          "layer": "test-only entry observer adaptation",
+          "assertions": [
+            "Null receiver throws before argument side effects; production entry catch removed only in native observer."
+          ]
+        },
+        {
+          "run": "verification/results/assets-extended-04",
+          "layer": "real provider lifecycle",
+          "assertions": [
+            "JSON child nodes outlive parents; process snapshots are independent and close invalidates aliases; lock transfer and shared/exclusive contention follow handle contract."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-26.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-H01"
+      ]
+    },
+    {
+      "id": "LV32.001",
+      "family": "LV32",
+      "title": "Source module ownership",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md",
+        "specs/compiler_support_runtime_contract.md"
+      ],
+      "required_observation": "Buffers/indexes/locations obey transfer/release and byte-position contracts with no unsupported borrowed-span escape.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_source; verification/results/entry-observers-adapted-02",
+          "layer": "original preparation/value oracles; separately adapted native bounds observers",
+          "assertions": [
+            "Exact buffer trace 0|3|97|abc|0|abc|bc|0, location trace 4|10|4|3|10|1|1|1 and binary trace 2|255|00ff prove transfer, independent copies, index lifetime, newline/EOF/byte mapping.",
+            "Five bounds failures throw; unsupported span calls, wrong argument modes/types and count reject with empty artifacts; valid recovery and metadata-preserving reset pass."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-26.json.gz"
+        }
+      ],
+      "remaining": [
+        "Borrowed spans are outside the admitted v0.2 source catalog; their lifetime model remains a separate compatibility discussion."
+      ],
+      "issues": [
+        "V-H01"
+      ]
+    },
+    {
+      "id": "LV32.002",
+      "family": "LV32",
+      "title": "Optional providers and resource behavior",
+      "status": "failed",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "Test enabled/disabled provider visibility, link requirements and local resource lifetime without requiring external network services.",
+      "evidence": [
+        {
+          "run": "verification/results/json-shape-probe",
+          "layer": "production publication and native build",
+          "assertions": [
+            "Strict source publishes successfully; native linkage fails because declared runtime_build omits modules/json/json.cpp. Explicitly linked unit tests do not prove production provider integration."
+          ]
+        },
+        {
+          "ledger": "language_verification_module_visibility.json",
+          "run": "verification/results/module-visibility",
+          "assertions": [
+            "1584 all-enabled/excluded module declaration lookups pass. Core mandatory; optional source-level rejection fixtures remain linked."
+          ]
+        },
+        {
+          "run": "verification/results/assets-extended-04; verification/results/resource-failures",
+          "archive": "language_verification_evidence/logs-checkpoint-41.json.gz",
+          "assertions": [
+            "Production publication/native builds prove process close/alias invalidation/live stop and lock contention/transfer/release/retry, plus error states."
+          ]
+        },
+        {
+          "run": "verification/results/regex-failures; verification/results/regex-failures-02; verification/results/source-failures",
+          "archive": "language_verification_evidence/logs-checkpoint-43.json.gz",
+          "assertions": [
+            "Optional regex/source generated programs build with metadata-declared providers; no external network service needed."
+          ]
+        },
+        {
+          "run": "verification/results/json-shape-probe/logs/build.stderr",
+          "archive": "language_verification_evidence/logs-checkpoint-46.json.gz",
+          "assertions": [
+            "Production link has unresolved scpp::json::decode_mixed and associated value-codec symbols. Source generation succeeds; provider dependency omission V-R01 remains unfixed."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-R01"
+      ],
+      "proof_limits": [
+        "No external network/GUI services or additional platforms exercised. Absent curl/tasks/UI modules remain separate missing support issues, not enabled-provider passes.",
+        "Fork/inherited ownership, OS exhaustion and syscall fault injection are not established by the local resource probes."
+      ]
+    },
+    {
+      "id": "LV33.001",
+      "family": "LV33",
+      "title": "Project C++ composition",
+      "status": "failed",
+      "authority": [
+        "specs/project_build_v1.md"
+      ],
+      "required_observation": "Compile multi-file artifacts and standalone headers; symbol/export/provider identities and generated behavior agree across project entrypoints.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/project_cpp; verification/results/modern-host-runtime_module_build",
+          "layer": "artifact assertions, production integration and incremental recovery",
+          "assertions": [
+            "32 multi-file program runs with and without PCH, 34 standalone headers and three clang transitive-dependency checks pass. Project module identities survive reordering/relocation; explicit entry selection is checked. Synthetic provider requirements deduplicate, publication is consumable without catalogs, and provider/configuration edits produce expected values and rebuild counts. Real JSON provider omission remains V-R01, not disproven by this structural integration proof."
+          ]
+        },
+        {
+          "archive": "language_verification_evidence/logs-checkpoint-75.json.gz",
+          "run": "verification/results/cmake-link-order; verification/results/cmake-link-order-control",
+          "layer": "original CMake consumer and explicitly reordered test-only link control",
+          "assertions": [
+            "Isolated document test passes; aggregate consumer fails link; archive-last control links and executes."
+          ]
+        }
+      ],
+      "remaining": [
+        "JSON automatic provider linkage fails independently; tracked by V-R01 and LV33.003.",
+        "Aggregate runtime CMake consumer fails with static-core/shared-provider link order (V-R11); isolated and my-try production-builder proofs do not close this distinct build route."
+      ],
+      "issues": [
+        "V-R01",
+        "V-R11"
+      ]
+    },
+    {
+      "id": "LV33.002",
+      "family": "LV33",
+      "title": "Artifact boundaries and determinism",
+      "status": "passed",
+      "authority": [
+        "specs/project_build_v1.md"
+      ],
+      "required_observation": "Artifacts retain unique ownership and correct includes/dependencies; no-op generation is stable and failures do not publish partial success.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/project_cpp; verification/results/observer-followup/artifact; verification/results/modern-output-publication",
+          "layer": "artifact assertions, production integration and incremental recovery",
+          "assertions": [
+            "Project snapshots enforce unique artifact identities, deduplicated includes, exact layout dependencies and body-only artifact changes. Probe roundtrip preserves bytes; malformed transport rejects without partial publication; CLI relocation/no-op remain stable. Preparation failure exposes no bundle and leaves prior committed files unchanged with pending status."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV34.001",
+      "family": "LV34",
+      "title": "Incremental dependency precision",
+      "status": "passed",
+      "authority": [
+        "specs/metaprogramming_contract.md",
+        "compiler/my-try/docs/lifecycle/incremental.md"
+      ],
+      "required_observation": "Body-only changes preserve unrelated signatures/consumers; signature/type/import changes invalidate dependents; no-op retains identity.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/project_cpp; verification/results/declaration-replays/source_constants",
+          "layer": "artifact assertions, production integration and incremental recovery",
+          "assertions": [
+            "Body/layout/signature edits update only specified artifacts; no-op and fresh comparisons pass. imports.php retargets aliases without replacing the consumer work, rejects stale emission, follows newly added providers and changes type signatures; source_constants.php propagates upstream value/type edits. This is representative dependency precision; per-feature completeness remains LV34.003."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV34.002",
+      "family": "LV34",
+      "title": "Failed preparation and repair",
+      "status": "passed",
+      "authority": [
+        "specs/metaprogramming_contract.md",
+        "compiler/my-try/docs/lifecycle/incremental.md"
+      ],
+      "required_observation": "Parse/preparation failure blocks emission, and repairing the source reproduces a fresh build without stale facts or output.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/control_flow; verification/results/scope-composition; verification/results/declaration-replays/declaration_model",
+          "layer": "artifact assertions, production integration and incremental recovery",
+          "assertions": [
+            "preparation_recovery.php checks failed signature propagation, withheld facts/output and independent work progress. Scope, control-flow, callable-instance and trait tests separately cover failed parse/preparation, retained identities, repeated failures, repair and fresh-equivalent output. Per-feature extension of this protocol remains LV34.003."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV35.001",
+      "family": "LV35",
+      "title": "Original strict compatibility corpus",
+      "status": "blocked",
+      "authority": [
+        "specs/v0_2_preparation_diagnostics.md"
+      ],
+      "required_observation": "Run each enabled strict manifest case unchanged against pinned v0.1 and frozen v0.2; compare its declared oracle and preserve baseline failures separately.",
+      "evidence": [
+        {
+          "run": "language_verification_evidence/strict-04.json",
+          "layer": "pinned v0.1 versus frozen v0.2 original strict sources",
+          "assertions": [
+            "126 manifest entries retained: 121 reached both compiler lanes, five curl entries stopped before execution because the provider/project adapter is absent. Raw outcomes remain unchanged.",
+            "Semantic review in language_verification_strict_reconciliation.json distinguishes 14 runtime-compatible, 83 compile-compatible, one intended negative rejection, one masked fixture migration, nine missing-support cases, three intentional changes, six deferred legacy declaration cases, three explicitly deferred span cases, one alias contract decision and five adapter blockers."
+          ]
+        }
+      ],
+      "remaining": [
+        "Five curl cases need a local provider/project adapter; no compiler/runtime pass is inferred for them.",
+        "Recorded missing-support cases require separate repair goals, not changes during verification."
+      ],
+      "issues": [
+        "V-E02",
+        "S04",
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10",
+        "S11",
+        "S12",
+        "V-H10",
+        "V-D09"
+      ]
+    },
+    {
+      "id": "LV35.002",
+      "family": "LV35",
+      "title": "Migration probes and approved differences",
+      "status": "passed",
+      "authority": [
+        "specs/v0_2_preparation_diagnostics.md"
+      ],
+      "required_observation": "Keep original-source and adapted-source results distinct; justify each intentional difference by an approved contract and retain the first blocker.",
+      "evidence": [
+        {
+          "run": "verification/results/s02-strict-adapted; language_verification_strict_reconciliation.json",
+          "layer": "explicitly separate declaration migrations and contract-based first-blocker review",
+          "assertions": [
+            "Six S02 sources change declarations only: four datetime/filesystem programs match pinned-v0.1 outputs; two IO programs expose S13. Original sources keep deferred-legacy classification.",
+            "Untyped data construction, signed/unsigned comparison and default dynamic JSON decode are justified by data_initialization.md, compact_layout_types.md section 7 and dynamic_types.md; later statements remain masked.",
+            "Borrowed spans are explicitly deferred by compiler_support_runtime_contract.md. php::microtime migration remains undecided (V-D09); no replacement API is silently counted as source compatibility."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-32.json.gz"
+        }
+      ],
+      "remaining": [
+        "No whole-fixture migration pass is claimed for the three intentional-change originals beyond their reviewed first blocker."
+      ],
+      "issues": [
+        "S02",
+        "S13",
+        "S10",
+        "V-D09"
+      ]
+    },
+    {
+      "id": "LV36.001",
+      "family": "LV36",
+      "title": "Containers through calls and returns",
+      "status": "passed",
+      "authority": [
+        "specs/array_semantics.md",
+        "specs/native_reference_safety.md"
+      ],
+      "required_observation": "Exercise container values/aliases across argument and return boundaries; verify copy/identity and failed conversion effects.",
+      "evidence": [
+        {
+          "run": "verification/results/s2s-oracle-adapted; verification/results/string-observer-adapted; verification/results/wave-02/container_calls/logs/container_calls.stdout",
+          "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+          "assertions": [
+            "Fourteen container-call fixtures: value copies of vector/hash/mixed remain independent; dynamic values share identity until rebound; explicit references mutate original storage; nested values preserve their family copy policy. Typed/missing conversion failure prevents later arguments/callee effects. Source/key/later argument order is 123 and indexed-value snapshot precedes later mutation. 27 original base/state programs pass; the remaining indexed string state observer passes after test-only native_value comparison adaptation V-H06. Indexed arguments cannot become source references; signature edit invalidation/repair matches fresh output."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-H06"
+      ]
+    },
+    {
+      "id": "LV36.002",
+      "family": "LV36",
+      "title": "Construction plus inheritance",
+      "status": "passed",
+      "authority": [
+        "specs/data_initialization.md",
+        "specs/inheritance_v0_2.md"
+      ],
+      "required_observation": "Derived data construction obeys inherited input/default/access contracts and initializes through the responsible construction owner.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-derived_data",
+          "layer": "preparation assertions and generated native execution",
+          "assertions": [
+            "derived_data.php: 40 generated executions cover class/struct inherited authored parameter contracts and synthesized base-first contracts, protected access through factories, explicit data opt-in, multilevel defaults, required enum inputs, private-field exclusion, source key evaluation order, unique/alternate storage and suppressed defaults. Negative assertions check missing/duplicate/unknown/wrong-type inputs and default-constructible child constraints. Unchanged callers reject inherited signature/schema edits; repair, no-op, reset and fresh builds agree; changing inherited defaults changes output."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV01.003",
+      "family": "LV01",
+      "title": "source-diagnostic",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Create one malformed source with CRLF, a multibyte comment and a later bad token; check the declared byte/line convention, then repair incrementally.",
+      "evidence": [
+        {
+          "run": "verification/results/recovery-probes",
+          "source": "verification_lexical_position.php",
+          "layer": "tokenization diagnostic and incremental emission",
+          "assertions": [
+            "UTF8 comment plus CRLF before malformed variable reports main.phs: byte 21 (UTF8 byte count, not character count).",
+            "Repair restores identical emitted bytes; fresh compiler agrees.",
+            "No line/character-column guarantee invented; implementation uses byte diagnostics."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV02.003",
+      "family": "LV02",
+      "title": "scope-composition",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md",
+        "specs/namespaces_v0_2.md"
+      ],
+      "required_observation": "Exercise same local spelling in sibling blocks and a nested closure, then edit a declaration to a conflict; observe the intended bindings and rejection/repair.",
+      "evidence": [
+        {
+          "run": "verification/results/scope-composition",
+          "layer": "exact preparation assertions and generated execution where noted",
+          "assertions": [
+            "Same x spelling in outer and sibling blocks; nested closures capture the first inner x. Exact output 231. Same-scope duplicate edit produces already declared diagnostic, clears output, and repair equals fresh generation."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV03.003",
+      "family": "LV03",
+      "title": "type-boundaries",
+      "status": "passed",
+      "authority": [
+        "specs/compact_layout_types.md"
+      ],
+      "required_observation": "For each admitted signedness/width pair, check min/max boundary conversion and result type through local, argument, field and return sites; record unsupported pairs explicitly.",
+      "evidence": [
+        {
+          "run": "verification/results/integer-boundaries-02",
+          "layer": "generated functions invoked by independent native integer oracle",
+          "assertions": [
+            "100 ordered type pairs; 504 source/target boundary values and 2520 assertions across local, argument, field, return and explicit cast. Inputs include source min/max, target min/max and adjacent values where source-representable.",
+            "Explicit checked casts reject out-of-range values with integer_cast_out_of_range; ordinary narrowing expectations are separate native-boundary observations. Initial all-casts-identical oracle failed and is retained."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-31.json.gz"
+        }
+      ],
+      "remaining": [
+        "No signed arithmetic overflow or universal narrowing/wrapping guarantee is inferred; this is the frozen boundary contract and tested Linux/C++23 behavior."
+      ],
+      "issues": []
+    },
+    {
+      "id": "LV04.003",
+      "family": "LV04",
+      "title": "operator-completion",
+      "status": "passed",
+      "authority": [
+        "runtime/specs/spec.md"
+      ],
+      "required_observation": "Create an operand-family/operator grid including float comparisons, bool equality, unary/mutation symmetry, fixed-width, dynamic, wrappers, power, concat, spaceship, xor and word aliases; record valid/invalid policy before probing.",
+      "evidence": [
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "run": "verification/results/operator-admission-grid",
+          "archive": "language_verification_evidence/logs-checkpoint-47.json.gz",
+          "assertions": [
+            "370 current-snapshot preparation/emission observations:139 admitted,231 rejected with empty artifacts. No native behavior or normative-policy pass claimed."
+          ]
+        },
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "layer": "contract classification, not native pass",
+          "assertions": [
+            "All 370 observations have explicit dispositions: 196 matching contract/extension observations, 120 missing-support cells, 48 bounded/unextended forms, four conflicts and two contract-review cells.",
+            "Checkpoint 48 independently proves nullable logical negation empty-state semantic mismatch (V-L08)."
+          ]
+        },
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "archive": "language_verification_evidence/logs-checkpoint-49.json.gz",
+          "run": "verification/results/operator-policy-replay",
+          "layer": "predeclared policy replay and complementary-evidence reconciliation",
+          "assertions": [
+            "370 source hashes and admission stages reproduce; all 231 rejections leave empty artifacts. Classification/checklist pass does not mean all operators are supported.",
+            "Policy outcomes: 196 matches,120 missing-support cells,48 deferred-scope cells,6 unresolved-contract cells explicitly assigned V-D13/V-D14.",
+            "Complementary proofs mapped to LV04.001,LV06.001/.002,LV07.001/.002/.003,LV10.003,LV11.002,LV19.002 and integer/wrapper ledgers; unsupported domains remain issues, not native passes."
+          ]
+        }
+      ],
+      "remaining": [
+        "Implementation gaps and V-D13/V-D14 contract decisions remain in the issue ledger for the later discussion/repair phase.",
+        "This finite family/operator grid and dedicated complementary checks do not establish exhaustive ordered type/state/value Cartesian coverage."
+      ],
+      "issues": [
+        "V-L03",
+        "V-L04",
+        "V-L05",
+        "V-L06",
+        "V-L07",
+        "V-L08",
+        "V-L09",
+        "V-L10",
+        "V-L11",
+        "V-D13",
+        "V-D14"
+      ]
+    },
+    {
+      "id": "LV05.003",
+      "family": "LV05",
+      "title": "failed-store",
+      "status": "passed",
+      "authority": [
+        "specs/dynamic_types.md",
+        "specs/expression_evaluation.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Force one invalid boxed conversion at local, field, element, argument and return boundaries with an effect counter; verify which effects occur and that a rejected store preserves the destination.",
+      "evidence": [
+        {
+          "run": "verification/results/failed-store-grid",
+          "layer": "Prepared conversion facts and exact native state/effect/error observations; adapted suites labelled",
+          "assertions": [
+            "Both mixed and dynamic false-to-int conversions fail at six boundaries: local assignment, field assignment, element assignment, argument, return and declaration initialization. Each source effect occurs once; argument callee is never entered. Existing local, field and vector element all retain 7, vector size remains one. Native observers retain all twelve exact diagnostics and call generated functions directly."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV06.003",
+      "family": "LV06",
+      "title": "error-precedence",
+      "status": "passed",
+      "authority": [
+        "specs/expression_evaluation.md",
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Make left conversion and right expression independently fail with distinct errors/counters; test eager arithmetic and comparison in both operand orders and lazy alternatives.",
+      "evidence": [
+        {
+          "run": "verification/results/error-precedence-probe",
+          "layer": "Exact generated native values, effects, lifetimes and distinct failure observers",
+          "assertions": [
+            "New arithmetic (+) and comparison (<) probes each compete an absent-nullable conversion with a division-by-zero expression in both orders. Conversion-first emits nullable diagnostic and counter 1, suppressing division. Division-first emits exact division_by_zero and counter 2, suppressing conversion. Lazy &&, ||, ternary and coalescing leave counter zero and return exact selected values. Native observers call generated functions directly, preserving source handlers and avoiding entry-catch interference."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV07.003",
+      "family": "LV07",
+      "title": "selection-states",
+      "status": "passed",
+      "authority": [
+        "specs/conditional_expression_matrix.md"
+      ],
+      "required_observation": "Enumerate empty/present nullable and success/error/false/true wrapper states on each selection side; assert selected value/type, RHS count and rejected result_or_bool coalesce.",
+      "evidence": [
+        {
+          "run": "verification/results/wrapper-state-grid; verification/results/wrapper-state-grid-02",
+          "layer": "new generated-native state grid; separate float marker replay",
+          "assertions": [
+            "22 wrapper/payload combinations enumerate payload and every admitted sentinel/error state. Repeated take preserves source state, old output when absent, and declared status behavior. Every ordered ternary state pair is selected in both directions.",
+            "language_verification_wrapper_states.json maps cases and links original coalesce/Elvis/laziness, error reset, nullable and result_or_bool rejection assertions. Float comparison rejection is preserved and does not count as wrapper failure."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-28.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV08.003",
+      "family": "LV08",
+      "title": "brace-free-control",
+      "status": "failed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Run original strict brace-free if/else and nested loop transfers with exact counter outputs; isolate downstream missing builtins in a separate probe.",
+      "evidence": [
+        {
+          "run": "verification/results/call-contract-probes; verification/results/strict-04",
+          "layer": "parsing, original strict compatibility and isolated source probe",
+          "assertions": [
+            "Minimal no-builtin source fails Expected { at byte 18. Original strict_strings_004_strpos_false_branch_regression remains blocked by same grammar; downstream strpos is a separate cause."
+          ],
+          "case": "brace_free_if",
+          "outcomes": "results/call-contract-probes/outcomes.json",
+          "commands": "results/call-contract-probes/logs/commands.json"
+        }
+      ],
+      "remaining": [
+        "Brace-free if/else prevents compiling original strict fixture; nested braced loop transfers are independently covered by LV08.001."
+      ],
+      "issues": [
+        "S06"
+      ]
+    },
+    {
+      "id": "LV09.003",
+      "family": "LV09",
+      "title": "argument-contracts",
+      "status": "passed",
+      "authority": [
+        "specs/instance_methods_v0_2.md",
+        "specs/native_reference_safety.md",
+        "compiler/my-try/docs/catalog/04_functions.md"
+      ],
+      "required_observation": "Inventory named/default/variadic/reference combinations; use an ordered trace to distinguish argument evaluation order from parameter binding, and reject invalid duplicates/mixing.",
+      "evidence": [
+        {
+          "run": "verification/results/call-contract-probes",
+          "layer": "call-contract inventory and source probes",
+          "assertions": [
+            "Positional/default/variadic function and method traces pass; reference defaults and variadics reject explicitly; required-after-optional rejects. Named reordered/duplicate/mixed calls reject at parser Expected ), before binding. No named-order or duplicate-name semantic claim."
+          ]
+        },
+        {
+          "run": "verification/results/argument-combinations-probe",
+          "layer": "Strict source preparation and generated native execution",
+          "assertions": [
+            "Free and instance methods combine one fixed writable reference with an omitted/default value parameter and typed by-value variadic tail. Exact trace 8:15:15|8:15:15 distinguishes live reference binding from snapshots when a later value argument overwrites the same caller storage. Free/method call-site unpacking rejects in parsing. Combined with earlier reordered/duplicate/mixed named-call rejections, this inventories current positional admission and deferred forms without claiming named binding validation."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-D07"
+      ]
+    },
+    {
+      "id": "LV10.003",
+      "family": "LV10",
+      "title": "wrapper-state-grid",
+      "status": "passed",
+      "authority": [
+        "specs/error_values_and_take.md"
+      ],
+      "required_observation": "For nullable/result/falseable/bool-able scalar and admitted container payloads, contrast wrapped false/zero/empty with each sentinel; take twice and inspect output/error reset.",
+      "evidence": [
+        {
+          "run": "verification/results/wrapper-state-grid; verification/results/wrapper-state-grid-02",
+          "layer": "new generated-native state grid; separate float marker replay",
+          "assertions": [
+            "22 wrapper/payload combinations enumerate payload and every admitted sentinel/error state. Repeated take preserves source state, old output when absent, and declared status behavior. Every ordered ternary state pair is selected in both directions.",
+            "language_verification_wrapper_states.json maps cases and links original coalesce/Elvis/laziness, error reset, nullable and result_or_bool rejection assertions. Float comparison rejection is preserved and does not count as wrapper failure."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-28.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV11.003",
+      "family": "LV11",
+      "title": "boxed-copy-lifetime",
+      "status": "passed",
+      "authority": [
+        "specs/dynamic_types.md"
+      ],
+      "required_observation": "Copy nested mixed containers and alias dynamic containers, mutate one path, then destroy/replace an owner during a call; verify values and identity separately.",
+      "evidence": [
+        {
+          "run": "verification/results/boxed-copy-lifetime",
+          "layer": "Strict source calls plus independent native value/identity observers",
+          "assertions": [
+            "Nested original child changes 1->7. Mixed copy remains 1; dynamic alias reads 7. Native root identity is separately observed as distinct for the current mixed implementation and shared for dynamic, before and after mutation. The mixed identity observation does not prescribe physical eager copying over a future valid COW implementation. A later argument clears the source root once; the earlier value argument remains usable and returns 7. Repeating with a fresh sole root and no extra alias returns 1 while caller root becomes null, confirming call-held lifetime."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV12.003",
+      "family": "LV12",
+      "title": "string-operator-grid",
+      "status": "passed",
+      "authority": [
+        "specs/string_interpolation.md"
+      ],
+      "required_observation": "Probe ordinary equality/order separately from strict identity, then interpolation/concat with empty/NUL/UTF-8 and scalar peers; compare byte values and conversion failure.",
+      "evidence": [
+        {
+          "run": "verification/results/string-grid-probe-02",
+          "layer": "prepared facts and generated native byte/diagnostic oracles",
+          "assertions": [
+            "Exact concat byte trace 6100c3a9:12 proves NUL/UTF-8 and ordered once-only calls. Scalar/null concat prints a2|b1|c|d. Interpolation prints hex 00c3a93a313a3a2d323a312e35. All seven ordinary comparison spellings reject in preparation, separately from verified strict identity: this is V-L03 missing admission, not a claim of comparison support."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-L03"
+      ]
+    },
+    {
+      "id": "LV13.003",
+      "family": "LV13",
+      "title": "construction-order",
+      "status": "passed",
+      "authority": [
+        "specs/data_initialization.md"
+      ],
+      "required_observation": "Construct nested data with two side-effectful entries and a failing conversion; check entry/key order, duplicate-key policy and cleanup of already-created values.",
+      "evidence": [
+        {
+          "run": "verification/results/construction-failure-probes; verification/results/wave-01/records-data_records; verification/results/wave-01/records-derived_data",
+          "layer": "preparation assertions and generated native execution",
+          "assertions": [
+            "New nested vector<data struct> construction prints ABD then exits 1 with required_cast<int_t>(mixed_t) failure: A and B run in source order, the first temporary is destroyed once, and no completed result is published. Duplicate hash<C> construction prints ABDD then exits 1 with duplicate key: both expressions execute before rejection and both values are destroyed. Duplicate data record key rejects during preparation with no emitted artifacts. Existing data/derived tests separately verify reversed key versus declaration order (21), suppressed defaults and independent instances."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV14.003",
+      "family": "LV14",
+      "title": "nested-write-failure",
+      "status": "passed",
+      "authority": [
+        "specs/array_semantics.md",
+        "specs/native_reference_safety.md"
+      ],
+      "required_observation": "Use keys and RHS that replace the root or invalidate a parent; test vector/hash/mixed/dynamic paths and assert documented partial effects/owner retention.",
+      "evidence": [
+        {
+          "run": "verification/results/nested-write-failure-probe-02; verification/results/s2s-oracle-adapted; verification/results/wave-02/field_container_writes",
+          "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+          "assertions": [
+            "New vector/hash/mixed/dynamic probes replace the root from a key then invalidate the destination from the RHS. Native observers invoke generated functions directly: effects equal 12, a standard runtime exception occurs, and the root equals exactly the RHS replacement with no write-induced change. Original observer assumed scpp::runtime_error for all families; broader standard exception observer records diagnostics and retains unchanged state assertions. Existing fixtures separately cover successful root redirection, failed key/RHS checks before creation, partial source effects, mixed autovivification and required existing dynamic children."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV15.003",
+      "family": "LV15",
+      "title": "unseeded-probes",
+      "status": "passed",
+      "authority": [
+        "specs/count_empty_isset_contract.md"
+      ],
+      "required_observation": "Turn the 39 unseeded empty_keyed/empty_value/count_value semantic rows into valid strict sources with exact bool/count and no-mutation observations.",
+      "evidence": [
+        {
+          "run": "verification/results/unseeded-probes; verification/results/unseeded-probes-02",
+          "layer": "Row-mapped strict source preparation and native state/error observers",
+          "assertions": [
+            "All 39 stable row IDs are mapped in language_verification_unseeded_rows.json: 12 count_value, 14 empty_keyed, 13 empty_value. All are negative rows. Six statically known scalar empty operands reject during preparation with no artifacts; 33 mixed probes throw at runtime and retain exact scalar kind/value or table identity/size/leaf. Empty runtime errors assert invalid_empty_operand; count errors assert the hash-compatible requirement. Existing independently checked positive bool/count controls are linked separately. First-run PHP fatal-output transport and incomplete native table definitions are harness failures; only eight affected rows replayed."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-H09"
+      ]
+    },
+    {
+      "id": "LV16.003",
+      "family": "LV16",
+      "title": "iteration-mutation",
+      "status": "deferred",
+      "authority": [
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Remove/append/replace the iterated container through both direct binding and a called alias, including an empty source; classify permitted behavior versus required guard/rejection.",
+      "evidence": [
+        {
+          "run": "source contract review",
+          "layer": "normative scope",
+          "assertions": [
+            "specs/array_semantics.md:64 explicitly excludes direct/alias/call mutation and replacement while iterating, including empty sources. Do not infer safe mutation from current executable behavior."
+          ]
+        }
+      ],
+      "remaining": [
+        "Await agreed iteration mutation semantics and lifetime/invalidation design (CH06-ITER-01). No live-mutation or guard behavior is promised."
+      ],
+      "issues": [
+        "V-D01"
+      ]
+    },
+    {
+      "id": "LV17.003",
+      "family": "LV17",
+      "title": "reference-composition",
+      "status": "passed",
+      "authority": [
+        "specs/native_reference_safety.md",
+        "specs/language/closures.md",
+        "specs/instance_methods_v0_2.md"
+      ],
+      "required_observation": "Forward a reference through a method/closure and selection boundary, then attempt return/escape of a temporary owner; verify write-through or a justified rejection.",
+      "evidence": [
+        {
+          "run": "verification/results/reference-composition-probe",
+          "layer": "Strict source preparation and generated native execution",
+          "assertions": [
+            "Concrete reference-return closure forwards through an instance method whose branches retain the same whole reference-parameter origin. Value assignment snapshots 3; aliases through the closure and a temporary shared method receiver update caller storage to 8. Exact stdout 3:8. Ternary value selection cannot become a reference argument/alias; method receiver property and captured-object property escapes reject during preparation."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV18.003",
+      "family": "LV18",
+      "title": "exceptional-ownership",
+      "status": "passed",
+      "authority": [
+        "specs/destructors_v0_2.md"
+      ],
+      "required_observation": "Transfer unique/shared/weak state across a call that throws before/after acquisition; observe destructor trace, weak expiry and no double release.",
+      "evidence": [
+        {
+          "run": "verification/results/exceptional-ownership-probe",
+          "layer": "generated strict source with independent destructor trace",
+          "assertions": [
+            "Throwing first argument skips later unique move; owner remains present with zero destructions. Throw after unique acquisition empties source and destroys once. Shared first argument survives later argument dropping original owner until throw; locked weak acquisition survives original-owner release until unwind. Weak locks then expire. Exact trace 0:1:12:123."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV19.003",
+      "family": "LV19",
+      "title": "receiver-replacement",
+      "status": "passed",
+      "authority": [
+        "specs/instance_methods_v0_2.md"
+      ],
+      "required_observation": "During method/property RHS evaluation, replace the last owning receiver; check method result, postfix snapshot and destructor timing for supported receiver forms.",
+      "evidence": [
+        {
+          "run": "verification/results/receiver-replacement-probe-02; verification/results/wave-01/records-methods",
+          "layer": "preparation assertions and generated native execution; adapted lane identified explicitly",
+          "assertions": [
+            "New source probe exact trace 7:1|10:12|7:9:7:12:123|7:1234|7:12345|8:123456 proves shared receiver retention through method arguments and property compound RHS replacement, prefix/postfix snapshots, locked-weak and temporary-shared method receivers, and inline whole-storage aliases with destruction at scope exit. Existing methods fixtures separately reject unique, unlocked weak, projected inline, inline temporary and readonly receiver gates; no new lifetime admission is claimed."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV20.003",
+      "family": "LV20",
+      "title": "trait-lifecycle",
+      "status": "deferred",
+      "authority": [
+        "specs/inheritance_v0_2.md"
+      ],
+      "required_observation": "Inventory trait constructor/destructor conflicts, interface/static dispatch and unique/weak joins; use minimal source probes to identify first blocker and governing contract.",
+      "evidence": [
+        {
+          "run": "verification/results/trait-boundary-probes",
+          "layer": "seven isolated source-admission probes",
+          "assertions": [
+            "Trait constructor/destructor and conflict variants reject ordinary-body gate. Static interface declaration/call rejects instance-contract and class/struct-call gates. Unique/weak conditional joins reject. Governing boundaries: inheritance_v0_2.md:322,469,495; static_members_v0_2.md:43."
+          ]
+        }
+      ],
+      "remaining": [
+        "Lifecycle admission blocks constructor/destructor conflict-policy testing; unique join stops at consuming-boundary admission; weak join stops at shared-selection admission. These are explicit current deferrals, not permanent compatibility exceptions."
+      ],
+      "issues": [
+        "V-D03",
+        "V-D04",
+        "V-D05"
+      ]
+    },
+    {
+      "id": "LV21.003",
+      "family": "LV21",
+      "title": "static-cross-file",
+      "status": "passed",
+      "authority": [
+        "specs/static_members_v0_2.md"
+      ],
+      "required_observation": "Use two source units referring to one static property; mutate/read it and edit its initializer/type/import; verify storage identity and incremental equivalence.",
+      "evidence": [
+        {
+          "run": "verification/results/static-cross-file-probe-02",
+          "layer": "preparation assertions and generated native execution; adapted lane identified explicitly",
+          "assertions": [
+            "Four generated native runs print 7:8:8, 9:10:10, 9:10:10 and 40:41:41 for initial, initializer edit, int-to-mixed property type edit and import retargeting. Each phase compares incremental output with no-op and fresh output. Initial attempted int32 mutation is preserved in static-cross-file-probe: it rejects at the documented canonical-int/boxed mutation gate; this does not establish fixed-width mutation support."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV22.003",
+      "family": "LV22",
+      "title": "enum-surface",
+      "status": "passed",
+      "authority": [
+        "specs/compact_layout_types.md"
+      ],
+      "required_observation": "Inventory string backing, cases/from/tryFrom, methods/interfaces and wrapper payloads; compare promised v0.1 forms with documented v0.2 deferrals.",
+      "evidence": [
+        {
+          "run": "verification/results/enum-extension-admission",
+          "layer": "surface inventory and declared exclusion probes",
+          "assertions": [
+            "All eight explicit extension forms reject with empty artifacts. String backing is non-integer; reflection calls require source class/struct; methods/interfaces reject in parse; nullable/Result enum payloads reject in preparation.",
+            "Imported v0.1 catalog labels reflection and method/interface extensions unsupported; CH09 explicitly defers the broader extension list. Existing supported helpers are covered separately under LV22.001/002. This is verified scope/rejection, not implemented extension support."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-27.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-D08"
+      ]
+    },
+    {
+      "id": "LV23.003",
+      "family": "LV23",
+      "title": "capture-escape",
+      "status": "passed",
+      "authority": [
+        "specs/language/closures.md"
+      ],
+      "required_observation": "Copy a borrowing closure into a property/container or return it, contrast with an owning capture, and observe admitted cleanup or the required escape rejection.",
+      "evidence": [
+        {
+          "run": "verification/results/capture-storage-probes-02; verification/results/recovery-probes",
+          "layer": "source escape rejection and generated lifetime trace",
+          "assertions": [
+            "Borrowing closures reject property/container/return boundaries with no emitted output. Owning capture returned from factory and stored in vector survives clean(local callable), remains callable, and destroys captured Box exactly once on container release: stdout 0:7:1. First attempt used unsupported callable=null; retained as probe-authoring failure and corrected to documented clean(). Existing borrow-rejection replay additionally verifies empty Model output."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV24.003",
+      "family": "LV24",
+      "title": "finally-transfer-grid",
+      "status": "passed",
+      "authority": [
+        "specs/exceptions_v0_2.md"
+      ],
+      "required_observation": "Cross finally with scalar/void/value/reference/owning returns and loop transfers; record the admitted set, exact cleanup trace and rejection stage.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-finally",
+          "source": "compiler/my-try/tests/finally.php",
+          "layer": "preparation, generated C++ execution, incremental emission",
+          "assertions": [
+            "34 generated programs and 19 preparation rejections.",
+            "normal/empty, nested_returns/nested_throw, catch return/throw, return replacement, exception replacement and guard propagation verify exact effects.",
+            "Scalar/void snapshots and single evaluation: return_evaluation, snapshot, string_snapshot, float_bool, void_forward, void_bare.",
+            "Reference/vector/Exception/Result returns crossing finally and cross-finally loop transfers reject as the bounded contract requires.",
+            "Invalid and valid edits repair to identical fresh output."
+          ]
+        },
+        {
+          "run": "verification/results/finally-transfer-probe; verification/results/finally-transfer-probe-02",
+          "layer": "Strict-source admission and generated native ownership traces",
+          "assertions": [
+            "Unique, weak and inline-record returns crossing finally all reject with Finally supports only scalar or void return transport. Weak return after the region prints TF1: and expires after owner release. Unique return after the region prints TF1:1: try/finally order, successful move and exactly one destructor at caller scope exit. First unique fixture incorrectly used clean(unique); corrected fixture uses ordinary scope cleanup. No ownership transport through finally is claimed."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-D06"
+      ]
+    },
+    {
+      "id": "LV25.003",
+      "family": "LV25",
+      "title": "import-edit",
+      "status": "passed",
+      "authority": [
+        "specs/namespaces_v0_2.md"
+      ],
+      "required_observation": "Change an alias/namespace/provider declaration in one file while a consumer body remains unchanged; check new binding, collision rejection and repaired fresh output.",
+      "evidence": [
+        {
+          "run": "verification/results/import-edit-probe; verification/results/wave-02/namespaces/logs/imports.stdout; verification/results/wave-02/namespaces/logs/qualified_lookup.stdout",
+          "layer": "Cross-file incremental preparation, native execution and fresh artifact comparison",
+          "assertions": [
+            "Alias retarget changes native exit 3 to 4. Provider adds conflicting App\\pick in a different file while the importing consumer remains unchanged: edit and retry both reject and emitted artifacts are empty. Provider repair restores retargeted artifacts exactly; fresh build agrees. Existing imports/qualified-lookup suites separately assert unchanged consumer identity, changed binding and missing-provider addition/removal recovery."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV26.003",
+      "family": "LV26",
+      "title": "output-failure-order",
+      "status": "passed",
+      "authority": [
+        "specs/output_v0_2.md"
+      ],
+      "required_observation": "Emit a successful operand followed by a failing conversion and a counter-producing third operand; compare prior bytes and skipped effects under the output contract.",
+      "evidence": [
+        {
+          "run": "verification/results/source-probes-02",
+          "source": "language_verification_probes.json:echo_conversion_failure_order",
+          "layer": "strict source and generated C++ execution",
+          "assertions": [
+            "First output A persists; second operand prints B then fails dynamic-object-to-int conversion; third operand C is never evaluated.",
+            "Exit 1, stdout exactly AB, stderr dynamic: exact int access requires int payload."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV27.003",
+      "family": "LV27",
+      "title": "specialization-isolation",
+      "status": "deferred",
+      "authority": [
+        "specs/runtime_module_metadata.md",
+        "specs/metaprogramming_contract.md"
+      ],
+      "required_observation": "Call one generic with two admissible types, invalidate one provider constraint, repair it and compare reused versus replaced instances and executable values.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_generics; verification/results/modern-host-runtime_assets",
+          "layer": "original generic identity/reset assertions and live configuration rejection",
+          "assertions": [
+            "Two concrete count signatures share provider identity but not payload types. Semantic reset rebuilds identities from retained metadata and rejects old backend targets. Source producer change invalidates count and repair matches original output.",
+            "runtime_catalog.php explicitly rejects configure_runtime after compilation. specs/runtime_module_metadata.md defines immutable startup metadata and defers live replacement; a selective live constraint-edit assertion would require a new contract."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-32.json.gz"
+        }
+      ],
+      "remaining": [
+        "Live provider constraint-edit/repair and selective instance preservation are not supported or verified; covered by explicit deferral V-D10."
+      ],
+      "issues": [
+        "V-D10"
+      ]
+    },
+    {
+      "id": "LV28.003",
+      "family": "LV28",
+      "title": "async-admission",
+      "status": "blocked",
+      "authority": [
+        "specs/async_await.md"
+      ],
+      "required_observation": "Locate strict v0.1 async fixtures and run the smallest matching v0.2 source without translating to callbacks; if blocked, record the stage and defer suspension probes behind it.",
+      "evidence": [
+        {
+          "run": "language_verification_evidence/strict-04.json",
+          "source": "tests/tools/test_scpp_async_core_language.php",
+          "layer": "original strict source differential",
+          "assertions": [
+            "v0.1 exact PHS nowdoc executes stdout 4242; v0.2 parser rejects async function at byte 6."
+          ]
+        }
+      ],
+      "remaining": [
+        "Suspension/task-lifetime proof is blocked by absent source admission; no callback translation is permitted."
+      ],
+      "issues": [
+        "S12"
+      ]
+    },
+    {
+      "id": "LV29.003",
+      "family": "LV29",
+      "title": "runtime-overloads",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "For every public signature/type/constant/property in the metadata ledger, map one exact source use and declared failure/disabled-module behavior where applicable.",
+      "evidence": [
+        {
+          "run": "verification/results/module-visibility",
+          "archive": "language_verification_evidence/logs-checkpoint-33.json.gz",
+          "assertions": [
+            "1584 module declaration lookup checks across all-enabled and optional-disabled configurations; source use and disabled-source fixtures linked per declaration."
+          ]
+        },
+        {
+          "ledger": "language_verification_runtime_coverage.json",
+          "assertions": [
+            "All198 declarations have exact-use evidence and failure dispositions, including separate noncallable owner rules."
+          ]
+        },
+        {
+          "ledger": "language_verification_runtime_failures.json",
+          "assertions": [
+            "Focused declared failures mapped by signature; adapted observer, explicit-provider and production-entry lanes retained."
+          ]
+        },
+        {
+          "run": "verification/results/datetime-host-injection",
+          "archive": "language_verification_evidence/logs-checkpoint-46.json.gz",
+          "assertions": [
+            "Controlled localtime_r failure completes last direct declared-error probe. All198 declarations map exact-use, visibility and failure/no-failure/noncallable dispositions; distinct execution/adaptation lanes retained."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-R01"
+      ],
+      "proof_limits": [
+        "Allocation/exhaustion, >4GiB storage and additional platforms not exercised.",
+        "Explicit byte/Unicode helpers retain boundary-evidence-only classification where authority does not enumerate all failure cases.",
+        "Predicate/no-ordinary-error/noncallable dispositions are not negative test passes.",
+        "V-R01 JSON value-codec production dependency remains a separate known failure; explicit linking does not repair it."
+      ]
+    },
+    {
+      "id": "LV30.003",
+      "family": "LV30",
+      "title": "json-shape",
+      "status": "passed",
+      "authority": [
+        "specs/builtins/json/first_pass.md"
+      ],
+      "required_observation": "Round-trip empty object/array, numeric-key object, NUL string, malformed JSON and both mixed/dynamic decode entrypoints; distinguish approved shape changes from defects.",
+      "evidence": [
+        {
+          "run": "verification/results/json-shape-probe",
+          "layer": "production publication and native build",
+          "assertions": [
+            "Strict source publishes successfully; native linkage fails because declared runtime_build omits modules/json/json.cpp. Explicitly linked unit tests do not prove production provider integration."
+          ]
+        },
+        {
+          "run": "verification/results/json-shape-explicit-link",
+          "layer": "generated source execution with explicitly linked provider",
+          "assertions": [
+            "Both decoder families: {} and [] encode as []; {\"0\":7} encodes as [7]; escaped NUL string round-trips; malformed input leaves int payload 7 unchanged and sets error. Exact stdout retained. Shape loss is explicitly documented, not a new regression."
+          ]
+        }
+      ],
+      "remaining": [
+        "Production automatic provider linkage fails separately as V-R01."
+      ],
+      "issues": [
+        "V-R01"
+      ]
+    },
+    {
+      "id": "LV31.003",
+      "family": "LV31",
+      "title": "resource-failure",
+      "status": "blocked",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "Open/use/close a resource, trigger one declared IO failure and unwind; check return wrapper and release behavior with local fixtures.",
+      "evidence": [
+        {
+          "run": "verification/results/io-first-blocker",
+          "layer": "strict source preparation first blockers",
+          "assertions": [
+            "resource_handle rejects as unresolved type; io_open/io_close independently reject as unresolved functions; all emit empty artifacts."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-27.json.gz"
+        },
+        {
+          "run": "v0_1_compatibility_strict_s02_results.json",
+          "layer": "historical separately labelled declaration migration",
+          "assertions": [
+            "Two migrated strict IO scenarios match v0.1 output but fail v0.2 at resource_handle."
+          ]
+        }
+      ],
+      "remaining": [
+        "IO open/use/close, declared failure and unwind/release execution are blocked until S13 source bindings exist."
+      ],
+      "issues": [
+        "S13"
+      ]
+    },
+    {
+      "id": "LV32.003",
+      "family": "LV32",
+      "title": "provider-difference",
+      "status": "passed",
+      "authority": [
+        "specs/runtime_module_metadata.md"
+      ],
+      "required_observation": "Cross-reference public v0.1 APIs against eight current metadata modules; record absent source bindings, optional dependencies and internal-only helpers, then probe each settled supported signature.",
+      "evidence": [
+        {
+          "ledger": "language_verification_provider_comparison.json",
+          "assertions": [
+            "257 pinned baseline symbol entries scoped:121 metadata-matched,116 absent with admission probes,14 internal helpers,3 language forms,3 JSS deferred. All absence groups have missing/intentional/deferred/discussion dispositions."
+          ]
+        },
+        {
+          "ledger": "language_verification_provider_signatures.json",
+          "assertions": [
+            "121 matched names reviewed:93 normalized signatures and28 direct contracts; defaults included. Missing regex limit overload V-R09 reproduced."
+          ]
+        },
+        {
+          "ledger": "language_verification_runtime_coverage.json",
+          "assertions": [
+            "198 metadata declarations link exact-use, visibility and scoped failure evidence; explicit/injected/production/adapted lanes retained."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "S08",
+        "V-D09",
+        "V-D11",
+        "V-D12",
+        "V-R09"
+      ],
+      "proof_limits": [
+        "Ten absent names remain explicit contract-discussion items: six collections V-D11, microtime V-D09, dbg_enabled/var_dump S08, fs_is_windows V-D12.",
+        "getenv has tested behavior but independently normative authority remains V-D12.",
+        "Current metadata signatures have scoped use/visibility/failure mappings, not exhaustive v0.1 behavior equivalence."
+      ]
+    },
+    {
+      "id": "LV33.003",
+      "family": "LV33",
+      "title": "production-cli",
+      "status": "blocked",
+      "authority": [
+        "specs/project_build_v1.md"
+      ],
+      "required_observation": "Compile and run a minimal strict multi-project exported callable with one selected provider through the actual v0.2 CLI; test missing entry/provider and stale executable rejection.",
+      "evidence": [
+        {
+          "run": "verification/results/cli-project-boundary",
+          "layer": "actual main.php and tools/build_cpp.php entrypoints",
+          "assertions": [
+            "Single-root, multi-file namespaced imported callable with strlen publishes, builds and executes exit 7. Missing entry rejects; next native build rejects pending source publication rather than reporting prior executable success. Second positional root rejects as unsupported CLI syntax."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-29.json.gz"
+        }
+      ],
+      "remaining": [
+        "Multi-project configuration and selected/missing-provider CLI cases are blocked by V-P01.",
+        "A checked run/current-build reader remains explicitly deferred in docs/architecture/native_cpp_build.md; direct execution of a freshly returned build path is not that reader."
+      ],
+      "issues": [
+        "V-P01"
+      ]
+    },
+    {
+      "id": "LV34.003",
+      "family": "LV34",
+      "title": "incremental-language-grid",
+      "status": "passed",
+      "authority": [
+        "specs/metaprogramming_contract.md",
+        "compiler/my-try/docs/lifecycle/incremental.md"
+      ],
+      "required_observation": "For each feature with retained facts, edit its defining type/signature/state, force rejection, repair, and compare executable values plus fresh output on the same snapshot.",
+      "evidence": [
+        {
+          "ledger": "language_verification_incremental_coverage.json",
+          "layer": "per-family retained edit/rejection/repair/fresh/native evidence",
+          "assertions": [
+            "All 36 language families dispositioned: 34 focused verified, LV28 blocked before retained async facts by S12, LV35 provenance axis rather than separate retained feature.",
+            "Checkpoints 34 and 50\u201354 provide direct original-source probes; LV33 publication/native-cache obligations use inspected existing suite assertions and archived successful commands.",
+            "Defining edits, invalid retries, withheld output, repair/fresh equality and exact executable values are linked per applicable family."
+          ]
+        }
+      ],
+      "remaining": [
+        "Async/suspension retained-fact verification requires S12 support and remains explicitly blocked.",
+        "Representative edits are scoped; no exhaustive Cartesian edit coverage claimed."
+      ],
+      "issues": [
+        "S12",
+        "V-P01",
+        "V-R01"
+      ]
+    },
+    {
+      "id": "LV35.003",
+      "family": "LV35",
+      "title": "baseline-and-ledger",
+      "status": "passed",
+      "authority": [
+        "specs/v0_2_preparation_diagnostics.md"
+      ],
+      "required_observation": "Refresh reference selection, freeze both checkouts, rerun the strict ledger after S01/S03 and keep S02/legacy/adapted lanes separate.",
+      "evidence": [
+        {
+          "run": "verification/results/baseline-audit-02; verification/results/strict-04",
+          "layer": "GitHub/local references, full snapshot integrity and original-source differential ledger",
+          "assertions": [
+            "Pinned develop baseline matches local refs/verification/v01 and current GitHub develop. Latest v0.1 tag is v0.1.77; annotated tag object and peeled commit are distinguished. release/0.1.78 remains recorded separately.",
+            "All 6178 snapshot file hashes match. strict-04 uses the pinned baseline and includes approved S01/scalar working-tree changes. All 126 entries retain separate original-source outcomes and semantic classification, including adapter blockers."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-32.json.gz"
+        }
+      ],
+      "remaining": [
+        "Five unexecuted optional-provider entries remain blocked under LV35.001/V-E02; this audit does not turn them into passes."
+      ],
+      "issues": [
+        "V-E02"
+      ]
+    },
+    {
+      "id": "LV36.003",
+      "family": "LV36",
+      "title": "end-to-end-scenarios",
+      "status": "passed",
+      "authority": [
+        "specs/array_semantics.md"
+      ],
+      "required_observation": "Run small strict programs combining JSON/container boundaries, callable captures, inheritance construction, and exception cleanup with independent exact output/trace oracles.",
+      "evidence": [
+        {
+          "run": "verification/results/end-to-end",
+          "layer": "test-only provider configuration; production publication/native build; exact executable trace",
+          "assertions": [
+            "JSON document array values become a typed vector, then feed inherited constructors. Closure captures shared object and vector value; later vector mutation does not alter captured value (answer 7).",
+            "Normal return and throw paths each destroy child then base exactly once; catch/finally follow unwind. Exact BC7|DAR7|BC7|DAcaught|F|0 also proves subsequent malformed/valid JSON diagnostic reset and empty array size."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-30.json.gz"
+        }
+      ],
+      "remaining": [
+        "This uses the document JSON provider. Separate value-codec production linkage issue V-R01 and multi-project CLI configuration V-P01 remain open; no claim of those workflows is made."
+      ],
+      "issues": []
+    },
+    {
+      "id": "LV03.004",
+      "family": "LV03",
+      "title": "Union/layout surface",
+      "status": "failed",
+      "authority": [
+        "specs/compact_layout_types.md"
+      ],
+      "required_observation": "Check declared union payload/layout rules, unsupported fields and size/alignment probes; distinguish source admission from runtime layout support.",
+      "evidence": [
+        {
+          "run": "verification/results/enum-layout-probes",
+          "layer": "isolated source admission",
+          "assertions": [
+            "Public int32/bool union rejects at parsing; each of four layout helpers rejects at function resolution. Existing enum suite separately proves native enum widths; that does not establish union/source layout support."
+          ]
+        }
+      ],
+      "remaining": [
+        "Union admission blocks recursive forbidden-payload and native union-layout probes. Layout helpers also fail independently on an admitted struct."
+      ],
+      "issues": [
+        "V-L01",
+        "V-L02"
+      ]
+    },
+    {
+      "id": "LV09.004",
+      "family": "LV09",
+      "title": "Defaults and variadic parameter binding",
+      "status": "passed",
+      "authority": [
+        "generators/php/specs/rules.md"
+      ],
+      "required_observation": "Execute omitted/provided defaults and variadic inputs with argument traces; record reference/default restrictions and free-function versus method differences.",
+      "evidence": [
+        {
+          "run": "verification/results/call-contract-probes; verification/results/s2s-oracle-adapted",
+          "layer": "preparation and generated execution",
+          "assertions": [
+            "New free-function versus method probe checks omitted defaults, populated packs, consumed element sums and source-order trace 7:6:123|9:6:321. Existing function_default_* and function_variadic_* cover empty/partial/provided defaults and scalar pack payloads with native observers. Reference defaults, reference variadics and required-after-optional reject with distinct diagnostics and no generated stdout."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV12.004",
+      "family": "LV12",
+      "title": "Interpolation value and error behavior",
+      "status": "passed",
+      "authority": [
+        "specs/string_interpolation.md"
+      ],
+      "required_observation": "Verify literal escapes, embedded expression conversions and once-only source order, including invalid interpolation operands.",
+      "evidence": [
+        {
+          "run": "verification/results/string-grid-probe-02; verification/results/s2s-oracle-adapted",
+          "layer": "prepared facts and generated native byte/diagnostic oracles",
+          "assertions": [
+            "All 20 original interp_* generated byte oracles pass (shared S2S harness adaptation labelled), covering scalar widths, float/bool, escapes, NUL, UTF-8, literal dollars, self assignment and snapshots. Interpolation preparation/recovery suite passes after removing one stale scalar-concatenation negative; all interpolation grammar/type negatives remain. New probes reject mixed/dynamic insertions and verify exact scalar/NUL conversion bytes."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-H08"
+      ]
+    },
+    {
+      "id": "LV20.004",
+      "family": "LV20",
+      "title": "Trait composition and conflicts",
+      "status": "passed",
+      "authority": [
+        "specs/inheritance_v0_2.md"
+      ],
+      "required_observation": "Execute nested trait composition with origin deduplication; reject ambiguous members and invalid abstract requirements without losing visibility/dispatch.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-traits",
+          "layer": "preparation and generated execution",
+          "assertions": [
+            "51 trait programs pass. Nested diamond origin deduplication, lexical lookup, per-consumer static storage, inherited static dispatch and abstract requirements have exact results. Concrete collisions, duplicate uses, cycles, incompatible/hidden/static requirements reject. Cross-file trait edits retire private instances, preserve failed-parse identity and repair to fresh output."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV23.004",
+      "family": "LV23",
+      "title": "Callable parameters, results and storage",
+      "status": "passed",
+      "authority": [
+        "specs/language/closures.md"
+      ],
+      "required_observation": "Check concrete-to-erased adaptation, callable parameter/result transport and property/container storage; keep borrowing escape restrictions explicit.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-callable_inputs; verification/results/wave-01/records-callable_results; verification/results/wave-01/records-callable_storage",
+          "layer": "prepared provenance, rejection and generated execution",
+          "assertions": [
+            "27 callable-input, 37 callable-Result and 32 callable-storage programs pass. Explicit concrete-to-erased contracts transport values/reference/variadic modes; Result extraction/presence and property/container copy/invocation have independent value assertions. Borrowing property/container escape rejects before emission; absent calls and signature mismatches are separately checked."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV24.004",
+      "family": "LV24",
+      "title": "Structured error payloads and take",
+      "status": "passed",
+      "authority": [
+        "specs/error_values_and_take.md"
+      ],
+      "required_observation": "Verify no-error versus real empty-message error, payload fields and take error clearing; keep error distinct from Exception.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-01/records-error_values",
+          "source": "compiler/my-try/tests/error_values.php",
+          "layer": "preparation, generated C++ execution, incremental emission",
+          "assertions": [
+            "17 generated programs and 13 preparation rejections.",
+            "defaults/details_copy/empty_message/no_error_getters/getter_snapshot verify payload and sentinel distinction.",
+            "assignment_take_clear preserves value on failure and clears error on success; no_error_construct/constant reject with native invalid_argument observer.",
+            "Exception remains separate: exceptions.php rejects throw error::make and catch(error)."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV25.004",
+      "family": "LV25",
+      "title": "Module discovery and exported symbols",
+      "status": "blocked",
+      "authority": [
+        "specs/namespaces_v0_2.md"
+      ],
+      "required_observation": "Check multi-root discovery, exported/private symbol visibility, path identity and added/deleted source files; do not use legacy dynamic include as composition.",
+      "evidence": [
+        {
+          "run": "verification/results/cli-project-boundary",
+          "layer": "original module discovery and production CLI",
+          "assertions": [
+            "Sorted recursive discovery, ignored non-PHS files, symlink-cycle exclusion, canonical path identity, stable add/edit/delete membership, overlapping-root rejection and disjoint module ordering/ownership pass.",
+            "Production multi-file imported callable executes with exit 7. Project public_exports policy is not exposed by this CLI."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-29.json.gz"
+        },
+        {
+          "run": "verification/results/wave-02/project_cpp",
+          "layer": "module_sync original assertions",
+          "assertions": [
+            "Module reorder, canonical root replacement, full-sync retry, tombstones and complete removal pass; permission-failure branch is conditional on host readability and is not independently claimed."
+          ]
+        }
+      ],
+      "remaining": [
+        "Project-level public/private export policy and dependency composition remain blocked by V-P01; lexical/class visibility is verified separately."
+      ],
+      "issues": [
+        "V-P01"
+      ]
+    },
+    {
+      "id": "LV31.004",
+      "family": "LV31",
+      "title": "Datetime and environmental clocks",
+      "status": "passed",
+      "authority": [
+        "specs/builtins/datetime/first_pass.md"
+      ],
+      "required_observation": "Check UTC parse/format exact values, malformed dates, monotonic ordering and declared failure results; use bounded clock checks rather than fixed current timestamps.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_datetime",
+          "source": "compiler/my-try/tests/runtime_datetime.php",
+          "layer": "preparation, generated C++ execution and bounded recovery",
+          "assertions": [
+            "UTC epoch/leap-day exact values and local token formatting in TZ=UTC0; malformed UTC and local date strings produce declared Result errors.",
+            "dt_monotonic_ms nondecreases; us/ns use explicit uint64 values bounded and ordered by Python observer.",
+            "Sleep -1/0/1 exercised; clock checks do not require an exact current timestamp.",
+            "Incorrect arity/type and legacy spellings reject; runtime native datetime regression also passes."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV31.005",
+      "family": "LV31",
+      "title": "Regex enabled/disabled module",
+      "status": "passed",
+      "authority": [
+        "specs/builtins/regex/first_pass.md"
+      ],
+      "required_observation": "Verify exact captures, malformed patterns, replacements and reference outputs for registered overloads; disabled module rejects and PCRE2 absence is environmental.",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_regex",
+          "assertions": [
+            "All 18 callable signatures have source sites; capture/named/rows/split/grep/replace cases compare exact bytes; invalid patterns preserve take destination and use falseable failure state.",
+            "No registered reference-output signatures: every parameter in metadata passes by value.",
+            "Unselected module rejects and PCRE2 linkage succeeds."
+          ]
+        },
+        {
+          "run": "verification/results/wave-02/runtime_regex",
+          "layer": "metadata, generated C++ and native runtime",
+          "assertions": [
+            "Nine generated output oracles cover quote, captures, named captures, all-match rows, failure/preservation, grep/replace/split, ordered effects and shadowing. Disabled module rejects. All 18 registered signatures have value-mode parameters; no reference-output overload is registered."
+          ]
+        },
+        {
+          "run": "verification/results/regex-jit-probe",
+          "layer": "generated C++ with independent native observer",
+          "assertions": [
+            "Two regex_jit_available source calls match PCRE2_CONFIG_JIT plus independent trivial xy JIT compilation."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV31.006",
+      "family": "LV31",
+      "title": "Environment and process contracts",
+      "status": "passed",
+      "authority": [
+        "specs/builtins/process.md"
+      ],
+      "required_observation": "Check absent/empty environment and shell output, failure wrappers and binary bytes; exercise managed process timeout/stop/close with local child programs.",
+      "evidence": [
+        {
+          "run": "verification/results/process-lifecycle-probe",
+          "layer": "generated C++ execution and preparation assertions",
+          "assertions": [
+            "Managed local children pass timeout, repeated stop, poll, close, alias invalidation and retained output snapshot assertions; exact stdout timeout|stop|snapshot. Existing wave-02 runtime_environment proves absent/empty/value environment, single evaluation, binary and 5000-byte shell outputs and pipe failure."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV33.004",
+      "family": "LV33",
+      "title": "Publication and cached executable freshness",
+      "status": "passed",
+      "authority": [
+        "specs/project_build_v1.md"
+      ],
+      "required_observation": "Verify failed generation/build cannot publish a ready stale executable, reader identity matches outputs, and lock/failure recovery preserves last valid state.",
+      "evidence": [
+        {
+          "run": "verification/results/modern-output-publication; verification/results/modern-host-native_cache",
+          "layer": "production publication and native cache",
+          "assertions": [
+            "Readiness matches manifest digest; shared/exclusive lock contention preserves last valid files/status; failed source publication leaves pending source and native status and no successful result; repair reuses valid actions and executes expected value."
+          ]
+        },
+        {
+          "run": "verification/results/native-failure-readiness",
+          "layer": "isolated artifact fault injection through production builder",
+          "assertions": [
+            "Actual Clang compile failure returns no successful build JSON and sets native status to pending; restoring valid artifacts builds and executes with exit 9."
+          ]
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    }
+  ],
+  "limits": [
+    "A passed inventory or rejection check is not a claim of full language support. Per-check assertions and remaining limits define the scope.",
+    "Preparation or emission evidence does not imply runtime behavior. Original and adapted lanes remain separate."
+  ],
+  "probe_reconciliation": [
+    {
+      "id": "LV01-P01",
+      "check": "LV01.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/recovery-probes"
+    },
+    {
+      "id": "LV02-P01",
+      "check": "LV02.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/scope-composition"
+    },
+    {
+      "id": "LV03-P01",
+      "check": "LV03.003",
+      "status": "evidence-reconciled-with-stated-limits",
+      "evidence": [
+        {
+          "run": "verification/results/integer-boundaries-02",
+          "layer": "generated functions invoked by independent native integer oracle",
+          "assertions": [
+            "100 ordered type pairs; 504 source/target boundary values and 2520 assertions across local, argument, field, return and explicit cast. Inputs include source min/max, target min/max and adjacent values where source-representable.",
+            "Explicit checked casts reject out-of-range values with integer_cast_out_of_range; ordinary narrowing expectations are separate native-boundary observations. Initial all-casts-identical oracle failed and is retained."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-31.json.gz"
+        }
+      ],
+      "remaining": [
+        "No signed arithmetic overflow or universal narrowing/wrapping guarantee is inferred; this is the frozen boundary contract and tested Linux/C++23 behavior."
+      ],
+      "issues": []
+    },
+    {
+      "id": "LV04-P01",
+      "check": "LV04.003",
+      "status": "evidence-reconciled-with-stated-limits",
+      "evidence": [
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "run": "verification/results/operator-admission-grid",
+          "archive": "language_verification_evidence/logs-checkpoint-47.json.gz",
+          "assertions": [
+            "370 current-snapshot preparation/emission observations:139 admitted,231 rejected with empty artifacts. No native behavior or normative-policy pass claimed."
+          ]
+        },
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "layer": "contract classification, not native pass",
+          "assertions": [
+            "All 370 observations have explicit dispositions: 196 matching contract/extension observations, 120 missing-support cells, 48 bounded/unextended forms, four conflicts and two contract-review cells.",
+            "Checkpoint 48 independently proves nullable logical negation empty-state semantic mismatch (V-L08)."
+          ]
+        },
+        {
+          "ledger": "language_verification_operator_admission.json",
+          "archive": "language_verification_evidence/logs-checkpoint-49.json.gz",
+          "run": "verification/results/operator-policy-replay",
+          "layer": "predeclared policy replay and complementary-evidence reconciliation",
+          "assertions": [
+            "370 source hashes and admission stages reproduce; all 231 rejections leave empty artifacts. Classification/checklist pass does not mean all operators are supported.",
+            "Policy outcomes: 196 matches,120 missing-support cells,48 deferred-scope cells,6 unresolved-contract cells explicitly assigned V-D13/V-D14.",
+            "Complementary proofs mapped to LV04.001,LV06.001/.002,LV07.001/.002/.003,LV10.003,LV11.002,LV19.002 and integer/wrapper ledgers; unsupported domains remain issues, not native passes."
+          ]
+        }
+      ],
+      "remaining": [
+        "Implementation gaps and V-D13/V-D14 contract decisions remain in the issue ledger for the later discussion/repair phase.",
+        "This finite family/operator grid and dedicated complementary checks do not establish exhaustive ordered type/state/value Cartesian coverage."
+      ],
+      "issues": [
+        "V-L03",
+        "V-L04",
+        "V-L05",
+        "V-L06",
+        "V-L07",
+        "V-L08",
+        "V-L09",
+        "V-L10",
+        "V-L11",
+        "V-D13",
+        "V-D14"
+      ]
+    },
+    {
+      "id": "LV05-P01",
+      "check": "LV05.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/failed-store-grid"
+    },
+    {
+      "id": "LV06-P01",
+      "check": "LV06.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/error-precedence-probe"
+    },
+    {
+      "id": "LV07-P01",
+      "check": "LV07.003",
+      "status": "evidence-reconciled-with-stated-limits",
+      "evidence": [
+        {
+          "run": "verification/results/wrapper-state-grid; verification/results/wrapper-state-grid-02",
+          "layer": "new generated-native state grid; separate float marker replay",
+          "assertions": [
+            "22 wrapper/payload combinations enumerate payload and every admitted sentinel/error state. Repeated take preserves source state, old output when absent, and declared status behavior. Every ordered ternary state pair is selected in both directions.",
+            "language_verification_wrapper_states.json maps cases and links original coalesce/Elvis/laziness, error reset, nullable and result_or_bool rejection assertions. Float comparison rejection is preserved and does not count as wrapper failure."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-28.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV08-P01",
+      "check": "LV08.003",
+      "status": "missing-support-reproduced",
+      "evidence": "verification/results/call-contract-probes/outcomes.json; case brace_free_if; S06"
+    },
+    {
+      "id": "LV09-P01",
+      "check": "LV09.003",
+      "status": "bounded-composition-verified",
+      "evidence": "verification/results/argument-combinations-probe"
+    },
+    {
+      "id": "LV10-P01",
+      "check": "LV10.003",
+      "status": "evidence-reconciled-with-stated-limits",
+      "evidence": [
+        {
+          "run": "verification/results/wrapper-state-grid; verification/results/wrapper-state-grid-02",
+          "layer": "new generated-native state grid; separate float marker replay",
+          "assertions": [
+            "22 wrapper/payload combinations enumerate payload and every admitted sentinel/error state. Repeated take preserves source state, old output when absent, and declared status behavior. Every ordered ternary state pair is selected in both directions.",
+            "language_verification_wrapper_states.json maps cases and links original coalesce/Elvis/laziness, error reset, nullable and result_or_bool rejection assertions. Float comparison rejection is preserved and does not count as wrapper failure."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-28.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": []
+    },
+    {
+      "id": "LV11-P01",
+      "check": "LV11.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/boxed-copy-lifetime"
+    },
+    {
+      "id": "LV12-P01",
+      "check": "LV12.003",
+      "status": "grid-verified-with-missing-admission",
+      "evidence": "verification/results/string-grid-probe-02; V-L03"
+    },
+    {
+      "id": "LV13-P01",
+      "check": "LV13.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/construction-failure-probes"
+    },
+    {
+      "id": "LV14-P01",
+      "check": "LV14.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/nested-write-failure-probe-02"
+    },
+    {
+      "id": "LV15-P01",
+      "check": "LV15.003",
+      "status": "all-39-rows-verified",
+      "evidence": "language_verification_unseeded_rows.json"
+    },
+    {
+      "id": "LV16-P01",
+      "check": "LV16.003",
+      "status": "explicit-contract-deferral",
+      "evidence": "specs/array_semantics.md:64; V-D01"
+    },
+    {
+      "id": "LV17-P01",
+      "check": "LV17.003",
+      "status": "bounded-composition-verified",
+      "evidence": "verification/results/reference-composition-probe"
+    },
+    {
+      "id": "LV18-P01",
+      "check": "LV18.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/exceptional-ownership-probe"
+    },
+    {
+      "id": "LV19-P01",
+      "check": "LV19.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/receiver-replacement-probe-02"
+    },
+    {
+      "id": "LV20-P01",
+      "check": "LV20.003",
+      "status": "documented-deferrals-reproduced",
+      "evidence": "verification/results/trait-boundary-probes"
+    },
+    {
+      "id": "LV21-P01",
+      "check": "LV21.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/static-cross-file-probe-02"
+    },
+    {
+      "id": "LV22-P01",
+      "check": "LV22.003",
+      "status": "evidence-reconciled-with-stated-limits",
+      "evidence": [
+        {
+          "run": "verification/results/enum-extension-admission",
+          "layer": "surface inventory and declared exclusion probes",
+          "assertions": [
+            "All eight explicit extension forms reject with empty artifacts. String backing is non-integer; reflection calls require source class/struct; methods/interfaces reject in parse; nullable/Result enum payloads reject in preparation.",
+            "Imported v0.1 catalog labels reflection and method/interface extensions unsupported; CH09 explicitly defers the broader extension list. Existing supported helpers are covered separately under LV22.001/002. This is verified scope/rejection, not implemented extension support."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-27.json.gz"
+        }
+      ],
+      "remaining": [],
+      "issues": [
+        "V-D08"
+      ]
+    },
+    {
+      "id": "LV23-P01",
+      "check": "LV23.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/capture-storage-probes-02"
+    },
+    {
+      "id": "LV24-P01",
+      "check": "LV24.003",
+      "status": "bounded-grid-verified-with-explicit-deferrals",
+      "evidence": "verification/results/finally-transfer-probe; verification/results/finally-transfer-probe-02"
+    },
+    {
+      "id": "LV25-P01",
+      "check": "LV25.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/import-edit-probe"
+    },
+    {
+      "id": "LV26-P01",
+      "check": "LV26.003",
+      "status": "new-probe-passed",
+      "evidence": "verification/results/source-probes-02"
+    },
+    {
+      "id": "LV27-P01",
+      "check": "LV27.003",
+      "status": "explicit-contract-deferral",
+      "evidence": [
+        {
+          "run": "verification/results/wave-02/runtime_generics; verification/results/modern-host-runtime_assets",
+          "layer": "original generic identity/reset assertions and live configuration rejection",
+          "assertions": [
+            "Two concrete count signatures share provider identity but not payload types. Semantic reset rebuilds identities from retained metadata and rejects old backend targets. Source producer change invalidates count and repair matches original output.",
+            "runtime_catalog.php explicitly rejects configure_runtime after compilation. specs/runtime_module_metadata.md defines immutable startup metadata and defers live replacement; a selective live constraint-edit assertion would require a new contract."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-32.json.gz"
+        }
+      ],
+      "remaining": [
+        "Live provider constraint-edit/repair and selective instance preservation are not supported or verified; covered by explicit deferral V-D10."
+      ],
+      "issues": [
+        "V-D10"
+      ]
+    },
+    {
+      "id": "LV28-P01",
+      "check": "LV28.003",
+      "status": "blocked",
+      "evidence": [
+        {
+          "run": "language_verification_evidence/strict-04.json",
+          "source": "tests/tools/test_scpp_async_core_language.php",
+          "layer": "original strict source differential",
+          "assertions": [
+            "v0.1 exact PHS nowdoc executes stdout 4242; v0.2 parser rejects async function at byte 6."
+          ]
+        }
+      ],
+      "remaining": [
+        "Suspension/task-lifetime proof is blocked by absent source admission; no callback translation is permitted."
+      ],
+      "issues": [
+        "S12"
+      ]
+    },
+    {
+      "id": "LV29-P01",
+      "check": "LV29.003",
+      "status": "per-declaration-mapping-passed-with-explicit-limits",
+      "evidence": "language_verification_runtime_coverage.json; language_verification_runtime_failures.json; language_verification_module_visibility.json"
+    },
+    {
+      "id": "LV30-P01",
+      "check": "LV30.003",
+      "status": "new-probe-passed-with-explicit-provider-link",
+      "evidence": "verification/results/json-shape-explicit-link; production linkage separately fails V-R01"
+    },
+    {
+      "id": "LV31-P01",
+      "status": "blocked",
+      "check": "LV31.003",
+      "evidence": "verification/results/io-first-blocker",
+      "finding": "S13 blocks IO resource execution; dedicated type/open/close probes confirm independent unresolved bindings."
+    },
+    {
+      "id": "LV32-P01",
+      "check": "LV32.003",
+      "status": "inventory-reconciled-with-explicit-discussion-items",
+      "evidence": "language_verification_provider_comparison.json; language_verification_provider_signatures.json"
+    },
+    {
+      "id": "LV33-P01",
+      "check": "LV33.003",
+      "status": "blocked",
+      "evidence": [
+        {
+          "run": "verification/results/cli-project-boundary",
+          "layer": "actual main.php and tools/build_cpp.php entrypoints",
+          "assertions": [
+            "Single-root, multi-file namespaced imported callable with strlen publishes, builds and executes exit 7. Missing entry rejects; next native build rejects pending source publication rather than reporting prior executable success. Second positional root rejects as unsupported CLI syntax."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-29.json.gz"
+        }
+      ],
+      "remaining": [
+        "Multi-project configuration and selected/missing-provider CLI cases are blocked by V-P01.",
+        "A checked run/current-build reader remains explicitly deferred in docs/architecture/native_cpp_build.md; direct execution of a freshly returned build path is not that reader."
+      ],
+      "issues": [
+        "V-P01"
+      ]
+    },
+    {
+      "id": "LV34-P01",
+      "check": "LV34.003",
+      "status": "evidence-reconciled-with-stated-limits",
+      "evidence": [
+        {
+          "ledger": "language_verification_incremental_coverage.json",
+          "layer": "per-family retained edit/rejection/repair/fresh/native evidence",
+          "assertions": [
+            "All 36 language families dispositioned: 34 focused verified, LV28 blocked before retained async facts by S12, LV35 provenance axis rather than separate retained feature.",
+            "Checkpoints 34 and 50\u201354 provide direct original-source probes; LV33 publication/native-cache obligations use inspected existing suite assertions and archived successful commands.",
+            "Defining edits, invalid retries, withheld output, repair/fresh equality and exact executable values are linked per applicable family."
+          ]
+        }
+      ],
+      "remaining": [
+        "Async/suspension retained-fact verification requires S12 support and remains explicitly blocked.",
+        "Representative edits are scoped; no exhaustive Cartesian edit coverage claimed."
+      ],
+      "issues": [
+        "S12",
+        "V-P01",
+        "V-R01"
+      ]
+    },
+    {
+      "id": "LV35-P01",
+      "check": "LV35.003",
+      "status": "evidence-reconciled-with-stated-limits",
+      "evidence": [
+        {
+          "run": "verification/results/baseline-audit-02; verification/results/strict-04",
+          "layer": "GitHub/local references, full snapshot integrity and original-source differential ledger",
+          "assertions": [
+            "Pinned develop baseline matches local refs/verification/v01 and current GitHub develop. Latest v0.1 tag is v0.1.77; annotated tag object and peeled commit are distinguished. release/0.1.78 remains recorded separately.",
+            "All 6178 snapshot file hashes match. strict-04 uses the pinned baseline and includes approved S01/scalar working-tree changes. All 126 entries retain separate original-source outcomes and semantic classification, including adapter blockers."
+          ],
+          "archive": "language_verification_evidence/logs-checkpoint-32.json.gz"
+        }
+      ],
+      "remaining": [
+        "Five unexecuted optional-provider entries remain blocked under LV35.001/V-E02; this audit does not turn them into passes."
+      ],
+      "issues": [
+        "V-E02"
+      ]
+    },
+    {
+      "id": "LV36-P01",
+      "check": "LV36.003",
+      "status": "passed",
+      "evidence": "verification/results/end-to-end",
+      "finding": "Combined JSON/container/capture/inheritance/normal-return/unwind/recovery workflow executes with exact independent trace."
+    }
+  ],
+  "probe_inventory_note": "inventory.json missing_probes is the frozen planning inventory; its not-implemented labels describe the starting state. This reconciliation records the current disposition of all 36 designs. A reconciled design is not a claim that blocked/deferred behavior is implemented."
+}

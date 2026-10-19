@@ -1,0 +1,22 @@
+{
+  "doc_status": "supporting",
+  "existing_code_and_contract_changes": [
+    "compiler/my-try/04_analyze/operators/preparation.php",
+    "compiler/my-try/boot.php",
+    "specs/expression_evaluation.md",
+    "compiler/my-try/tests/guarded_mixed.php",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/wrapper_equality_fixture.php",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php",
+    "compiler/my-try/tests/mixed_ordering.php",
+    "compiler/my-try/tests/cross_identity.php",
+    "compiler/my-try/tests/cross_identity_support.hpp"
+  ],
+  "new_sources": [
+    "compiler/my-try/tests/mixed_identity.py",
+    "compiler/my-try/04_analyze/operators/identity.php"
+  ],
+  "tested_source_mismatches": [],
+  "runtime_changes": [],
+  "historical_evidence_preserved": true
+}

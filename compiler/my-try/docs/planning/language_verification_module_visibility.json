@@ -1,0 +1,8045 @@
+{
+  "doc_status": "planning",
+  "archive": "language_verification_evidence/logs-checkpoint-33.json.gz",
+  "lookups": 1584,
+  "configurations": [
+    {
+      "excluded": "regex",
+      "selected": [
+        "core",
+        "datetime",
+        "filesystem",
+        "json",
+        "process",
+        "source",
+        "strings"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_root",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_number",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_key",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_has",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_member",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.start",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.poll",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.result",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.stop",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.close",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_output",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.signal",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stopped",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.quote.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.quote.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.grep.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.replace.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.split.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.split.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.split.4",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.constants.0",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.constants.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_column",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_length",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.replace",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lower",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.upper",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.contains",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.starts_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ends_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.2",
+          "present": true,
+          "expected": true
+        }
+      ]
+    },
+    {
+      "excluded": "none",
+      "selected": [
+        "core",
+        "datetime",
+        "filesystem",
+        "json",
+        "process",
+        "regex",
+        "source",
+        "strings"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_root",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_number",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_key",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_has",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_member",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.start",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.poll",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.result",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.stop",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.close",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_output",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.signal",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stopped",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.grep.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.replace.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_column",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_length",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.replace",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lower",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.upper",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.contains",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.starts_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ends_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.2",
+          "present": true,
+          "expected": true
+        }
+      ]
+    },
+    {
+      "excluded": "datetime",
+      "selected": [
+        "core",
+        "filesystem",
+        "json",
+        "process",
+        "regex",
+        "source",
+        "strings"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_root",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_number",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_key",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_has",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_member",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.start",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.poll",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.result",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.stop",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.close",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_output",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.signal",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stopped",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.grep.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.replace.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_column",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_length",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.replace",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lower",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.upper",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.contains",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.starts_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ends_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.2",
+          "present": true,
+          "expected": true
+        }
+      ]
+    },
+    {
+      "excluded": "filesystem",
+      "selected": [
+        "core",
+        "datetime",
+        "json",
+        "process",
+        "regex",
+        "source",
+        "strings"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_root",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_number",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_key",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_has",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_member",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.start",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.poll",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.result",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.stop",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.close",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_output",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.signal",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stopped",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.grep.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.replace.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_column",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_length",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.replace",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lower",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.upper",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.contains",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.starts_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ends_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.2",
+          "present": true,
+          "expected": true
+        }
+      ]
+    },
+    {
+      "excluded": "strings",
+      "selected": [
+        "core",
+        "datetime",
+        "filesystem",
+        "json",
+        "process",
+        "regex",
+        "source"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_root",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_number",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_key",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_has",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_member",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.start",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.poll",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.result",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.stop",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.close",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_output",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.signal",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stopped",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.grep.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.replace.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_column",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.split.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.split.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.join.vector",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.join.hash",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.substr.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.substr.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.byte_length",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.byte_at",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.pad.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.pad.3",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.pad.4",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.trim.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.trim.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.replace",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.lower",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.upper",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.contains",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.starts_with",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.ends_with",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.text_builder",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.constants.0",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.constants.1",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.constants.2",
+          "present": false,
+          "expected": false
+        }
+      ]
+    },
+    {
+      "excluded": "source",
+      "selected": [
+        "core",
+        "datetime",
+        "filesystem",
+        "json",
+        "process",
+        "regex",
+        "strings"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_root",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_number",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_key",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_has",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_member",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.start",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.poll",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.result",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.stop",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.close",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_output",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.signal",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stopped",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.grep.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.replace.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_location_line",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_location_column",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_buffer",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_line_index",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "source.source_location",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_length",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.replace",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lower",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.upper",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.contains",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.starts_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ends_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.2",
+          "present": true,
+          "expected": true
+        }
+      ]
+    },
+    {
+      "excluded": "json",
+      "selected": [
+        "core",
+        "datetime",
+        "filesystem",
+        "process",
+        "regex",
+        "source",
+        "strings"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_document_root",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_size",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_string",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_number",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_int",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_at",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_key",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_has",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node_member",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_document",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_node",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.start",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.poll",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.result",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.stop",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.close",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.process_output",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.signal",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.output.stopped",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.grep.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.replace.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_column",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_length",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.replace",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lower",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.upper",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.contains",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.starts_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ends_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.2",
+          "present": true,
+          "expected": true
+        }
+      ]
+    },
+    {
+      "excluded": "process",
+      "selected": [
+        "core",
+        "datetime",
+        "filesystem",
+        "json",
+        "regex",
+        "source",
+        "strings"
+      ],
+      "rows": [
+        {
+          "id": "core.Exception.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.make",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.error.get_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.getenv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.shell_exec",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_argv",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.cli_args",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.memory_get_peak_usage.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.strlen",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.count.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.Exception",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "core.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_now_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_us",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_monotonic_ns",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_sleep_ms",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse_iso_utc",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_format_now",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "datetime.dt_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_try",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_lock_transfer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_scan",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_file",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_dir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_is_link",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_exists",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_get",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_put",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mkdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_mtime",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_touch",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rmdir",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_remove",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_copy",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_rename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_realpath",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_dirname",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_basename",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.fs_read_snapshot",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "filesystem.file_lock_handle",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_parse",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document_root",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_kind",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_size",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_boolean",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_number",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_key",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_has",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node_member",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.mixed",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.decode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.encode.dynamic",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_document",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_node",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.json_parse_error",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.category",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.byte_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "json.diagnostic.message",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "process.start",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.poll",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.result",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.stop",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.close",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.process_handle",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.process_output",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.output.stdout_text",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.output.stderr_text",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.output.exit_code",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.output.signal",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.output.timed_out",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "process.output.stopped",
+          "present": false,
+          "expected": false
+        },
+        {
+          "id": "regex.jit_available.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.quote.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_pattern_order.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.match_all_named.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.grep.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.replace.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.split.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "regex.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_empty",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_take",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_release",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_build",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_offset_to_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index_line_column_to_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_offset",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_line",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location_column",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_buffer",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_line_index",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "source.source_location",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_reserve",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_capacity",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_create",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_reserve_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_capacity_bytes",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_byte_len",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_int",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_append_bool",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_to_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_take_string",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder_clear",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.split.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.vector",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.join.hash",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.substr_compare.5",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_decode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_length",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_find.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.byte_slice_equals",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_at",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.utf8_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_count",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.grapheme_slice",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.3",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.pad.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.int.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.number_format.float.4",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.trim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ltrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.rtrim.2",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.hex_encode",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.replace",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lower",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.upper",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.lcfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ucfirst",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.contains",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.starts_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.ends_with",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.string_parts_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.text_builder",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.0",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.1",
+          "present": true,
+          "expected": true
+        },
+        {
+          "id": "strings.constants.2",
+          "present": true,
+          "expected": true
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Registration lookup proof; not a new source compile/value test for every disabled declaration.",
+    "Core is a mandatory dependency, not an independently disabled optional provider.",
+    "Per-family failure/provider linkage obligations remain separate."
+  ]
+}

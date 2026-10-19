@@ -38,6 +38,14 @@ No additional implementation or language-policy change is made by this closeout.
 
 ### Remaining scope and reopening gates
 
+
+**Current scope — 2026-10-19 (CS222).** Reference foreach/mutation safety and deep-path cost remain explicit debt. Later ordinary indexing/mutation, callable containers, record/property construction and dynamic property slices supersede some opening deferrals, with each owned by its later chapter/section. Source sequence-factory execution, raw legacy array guards, arbitrary container crossings and unstable interior references are not inferred.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [array_semantics.md](../../../../specs/array_semantics.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS222`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 This consolidates existing deferrals; it does not transfer new blockers to Chapter 15.
 
 | Remaining work | Owner / prerequisite |
@@ -72,6 +80,8 @@ for the tested overlay, portability repairs, retained warnings and skipped LLVM/
 Next: [Chapter 07](07_references_lifetime.md#handoff-from-chapter-06--2026-10-05),
 starting with a reconciliation of already-supported whole-storage reference calls
 before designing new aliases, reference returns or ownership-template behavior.
+
+</details>
 
 ## Agreed standard and revised grouping — 2026-10-05
 
@@ -118,6 +128,14 @@ unrestricted casts, dynamic `->` and native interior references are not introduc
 ## Mixed/dynamic closeout gate
 
 ### CH06-MIX-DYN-01 — mixed/dynamic containment contract
+
+
+**Current scope — 2026-10-19 (CS225).** Separated-family boxing, casts, construction, selection and mutation/copy observers distinguish independent mixed values from shared dynamic container aliases. Binding replacement is distinct from mutation. Scalar/null explicit crossing is admitted; container and implicit crossing remain rejected. H04 repaired the stale boxed-boundary negatives, and the affected dynamic suite now passes (fixture_repairs_02). Indexed compound updates have their later contract. R01 production JSON linkage is verified in simple_repairs_03; task metadata remains a separate gap. The 24-byte ABI statement below is a historical measurement, not a portable guarantee.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [array_semantics.md](../../../../specs/array_semantics.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS225`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Status: **resolved for the agreed core v0.2 slice — 2026-10-05**. The approved
 breaking family separation, shared compiler integration and JSON source boundary
@@ -198,6 +216,8 @@ Closeout requires an explicit agreed decision, reconciliation of the owning
 `specs/data_initialization.md` / `specs/dynamic_types.md` contracts, and any required
 compiler/runtime changes with focused proofs. Those requirements are met for this
 gate; final chapter inventory remains a separate review.
+
+</details>
 
 ### Runtime free functions and JSON source integration — 2026-10-05
 
@@ -349,6 +369,14 @@ compiler rebuild, conversion, LLVM work or broad regression run in this slice.
 
 ### Initialization binding and input model — 2026-10-05
 
+
+**Current scope — 2026-10-19 (CS232).** Eight built-in initialization bindings have exact target/value/key/nested roles; ambiguity, invalid signature, input storage/copy restrictions and source capability changes/recovery are asserted. Views are internal/read-only/call-scoped. Source-defined sequence factory execution/non-escape remain gated. Old shared mixed input wording is superseded by same-family mixed/dynamic inputs; later data-record/property construction is a separate contract.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [dynamic_types.md](../../../../specs/dynamic_types.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS232`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 One `initialization_declaration` / `initialization_binding` path covers vector, hash,
 mixed, dynamic and separately registered runtime providers. Declarations identify
 the exact registry definition, value/key type substitutions, contextual nested target,
@@ -400,7 +428,17 @@ Property-driven object initialization and automatic key-to-property mapping rema
 deferred. The [top-level rule](../../../../specs/data_initialization.md#concrete-targets-and-property-contexts)
 owns this contract; it does not introduce source class/interface support here.
 
+</details>
+
 ### Contextual literal preparation — 2026-10-05
+
+
+**Current scope — 2026-10-19 (CS233).** 28 preparation sources verify concrete contexts, owned result, nested family defaults and key/container-element conversion facts. Invalid types/shapes, unknown untyped targets and reference binding reject with no published facts/output; signature edits reprepare retained nodes. Old dynamic-to-mixed initializer exception is removed by separated-family contract and explicit negative tests. Preparation alone is not execution evidence.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [dynamic_types.md](../../../../specs/dynamic_types.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS233`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 `Expression_Preparation::prepare` accepts an optional expected type, passed explicitly
 by typed declarations, established local/field assignments, fixed/variadic arguments
@@ -445,7 +483,17 @@ No native compiler rebuild, conversion or new runtime execution was performed.
 This preparation-only checkpoint did not enable executable output. The following
 execution checkpoint supersedes that gate for built-ins only.
 
+</details>
+
 ### Built-in construction execution — 2026-10-05
+
+
+**Current scope — 2026-10-19 (CS234).** 48 generated program/state executions plus runtime-input proof pass in unmasked construction suite. Exact probes establish key-before-value order, snapshots, normalized duplicate rejection, unchanged destinations after failure, retained earlier effects and nested repeated-key independence. Runtime input proof tests immutable keys/copy-return views, bounds, small(3)/large(80) backing and live-count cleanup after input/output copy throws. No allocation/performance generalization or source factory nonescape proof. Earlier mixed containment open gate is explicitly superseded by chapter closeout.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [dynamic_types.md](../../../../specs/dynamic_types.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS234`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 `CPP_Data_Construction` consumes settled bindings and entry conversions through one
 family-independent lowering path. Backend-only definition metadata selects
@@ -497,7 +545,17 @@ Remaining construction gates/debt:
 The following read slice implements the next agreed group. Dynamic `->` needs its
 own language discussion; reference iteration remains separately gated.
 
+</details>
+
 ### Shared container value reads — 2026-10-05
+
+
+**Current scope — 2026-10-19 (CS235).** Native read/state probes establish copied typed values, typed missing/bounds failures, same-family boxed null on miss, wrong-kind/key failures, receiver-before-key execution and nonmutating nested reads. Temporary receivers and source state have bounded observers. Catalog dynamic reads yield mixed is superseded: dynamic reads yield dynamic. Later write/probe/eager support supersedes old deferrals; string indexing and unstable native references remain separate limits.
+
+Contracts and owners: [array_semantics.md](../../../../specs/array_semantics.md), [index_operator.md](../../../../specs/index_operator.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS235`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 One `index_node` and the existing operator-selection boundary now serve vector,
 typed hash, mixed and dynamic value reads. Exact definition identities select
@@ -541,7 +599,17 @@ and generated-program proofs, not a native compiler rebuild or broad regression 
 Direct writes/appends are implemented in the following checkpoint.
 **CH06-MIX-DYN-01 remains open and blocking Chapter 06 closeout.**
 
+</details>
+
 ### Direct container writes and appends — 2026-10-05
+
+
+**Current scope — 2026-10-19 (CS236).** Direct stores/appends have native content, assignment-result, key normalization, next-integer-key and value-versus-reference parameter observers. Bad key skips RHS; RHS conversion/failure inserts no placeholder, while earlier effects remain. Mixed copies remain independent and dynamic aliases share; null dynamic mutation rejects. Old special dynamic-to-mixed boxing and absent-handle wording are superseded; no general allocation/copy transaction guarantee.
+
+Contracts and owners: [array_semantics.md](../../../../specs/array_semantics.md), [index_operator.md](../../../../specs/index_operator.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS236`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 The three approved refinements are documented in the top-level array, indexing,
 data-initialization and dynamic contracts: ordered receiver/key/RHS/commit, writable
@@ -583,7 +651,17 @@ unavailable. All 1,117 pre-write S2S exports remain byte-identical. This is not 
 native compiler rebuild or a broad regression run.
 **CH06-MIX-DYN-01 remains open and blocking chapter closeout.**
 
+</details>
+
 ### Nested write paths — 2026-10-05
+
+
+**Current scope — 2026-10-19 (CS237).** Native nested typed/mixed/dynamic paths prove key-key-RHS order, contextual leaves, mixed bootstrap, dynamic sharing and source root replacement during RHS. Failed keys skip effects; later missing/wrong-kind/bounds/conversion failures preserve write-induced state while retaining earlier RHS effects. Cross-family insertion fails without creation. No interior reference survives source calls, and commit allocation failures are outside rollback claims. Old dynamic read-result and compound/property gates are superseded.
+
+Contracts and owners: [array_semantics.md](../../../../specs/array_semantics.md), [index_operator.md](../../../../specs/index_operator.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS237`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Agreed scope: local/parameter roots, explicit intermediate keys, final store or
 append, existing typed intermediates, mixed missing/null table creation, and
@@ -629,7 +707,17 @@ These are generated-program proofs, not a native compiler rebuild or broad regre
 The following checkpoint implements keyed probes/removal; value iteration follows.
 **CH06-MIX-DYN-01 is still open and blocks chapter closeout.**
 
+</details>
+
 ### Lazy keyed probes and removal — 2026-10-05
+
+
+**Current scope — 2026-10-19 (CS238).** Current field suites prove borrowed class this and struct receivers, private fields, key/RHS order, lazy skipped keys, retained heap owners on handle replacement and const/readonly restrictions. Ten generated field programs pass plus preparation/no-op checks. This scoped proof does not establish complete accounting application execution; later indexed-compound/eager support supersedes the dated blocker list.
+
+Contracts and owners: [array_semantics.md](../../../../specs/array_semantics.md), [index_operator.md](../../../../specs/index_operator.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS238`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Class `$this` repair (2026-10-10): shared receiver admission now distinguishes
 the existing `prepared_receiver` borrowed-instance identity from authored `value<T>`
@@ -649,7 +737,17 @@ no longer reports ownership-modified receiver errors. String strict identity,
 compound RHS effects and indexed compound mutation still block full emission.
 No native compiler rebuild or full accounting execution is claimed.
 
+</details>
+
 ### Existing-element compound updates — 2026-10-10
+
+
+**Current scope — 2026-10-19 (CS239).** Indexed compound values/failures programs pass: pre-RHS leaf snapshot survives resize/replacement, missing leaf skips RHS, deletion/wrong-kind during RHS fails revalidation without recreation while retaining RHS effects. Keyed native probes distinguish lazy isset/removal, reached-key exceptions and collection-only empty. Older text implying wrapper emptiness/missing-empty true is superseded. No-op removal fixtures compare unequal backing pointers; they do not prove the prose no-COW-detachment claim. Preserve safe re-resolution and O(depth-squared) debt; no timing/physical-sharing guarantee inferred.
+
+Contracts and owners: [array_semantics.md](../../../../specs/array_semantics.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [data_initialization.md](../../../../specs/data_initialization.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS239`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Plain and compound indexed writes share `prepared_index_target`, root admission,
 registered key/element types and owner binding. Compound updates additionally copy
@@ -735,6 +833,8 @@ references or copying full containers. This is non-blocking first-pass debt.
 
 The following checkpoint implements bounded value iteration. **CH06-MIX-DYN-01
 blocks chapter closeout; CH06-ITER-01 blocks final catalog completion.**
+
+</details>
 
 ### Value foreach — 2026-10-05
 
@@ -899,6 +999,14 @@ not resolve either one or implement reference foreach.
 
 ### Construction defaults and legacy reconciliation — 2026-10-05
 
+
+**Current scope — 2026-10-19 (CS242).** Known-target construction replaces implicit mixed inference. Typed keys require their declared family; boxed numeric-string normalization and duplicate rejection are directly observed, including null/false existing values and retained destination/earlier effects. Untyped literals/null, legacy array/?array/vector_t and array casts reject in preparation. Existing typed-container boxing is separate deferred conversion; old containment-closeout blocker is superseded.
+
+Contracts and owners: [array_semantics.md](../../../../specs/array_semantics.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [data_initialization.md](../../../../specs/data_initialization.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS242`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 The user agreed to preserve the current known-target and key contracts, rather than
 reintroduce implicit mixed inference or legacy spellings. This is a grouped proof
 and catalog reconciliation, not new syntax or a change to the runtime key policy.
@@ -939,7 +1047,17 @@ This is not chapter closeout: **CH06-MIX-DYN-01 remains a chapter blocker**.
 Reference foreach and iterator mutation/lifetime semantics, library redesign and
 dynamic `->` are now final-chapter work under Chapter 15, not this chapter's queue.
 
+</details>
+
 ### End-to-end catalog rows
+
+
+**Current scope — 2026-10-19 (CS243).** Table aggregates bounded forms only; individual source cards still require review. ARR-EMPTY missing-true statement is stale: collection-only empty throws on missing leaf, while isset returns false and missing unset is a no-op. Reference foreach/legacy array guards/typed-container boxing remain deferred. Later field writes and compound updates extend the dated local-root inventory without establishing unrestricted references.
+
+Contracts and owners: [array_semantics.md](../../../../specs/array_semantics.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [data_initialization.md](../../../../specs/data_initialization.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS243`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
@@ -978,6 +1096,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-053](#note-053) | bounded-support | — | passed | passed | deferred | Shared nested read/write proofs; interior native references remain rejected |
 | [NOTE-055](#note-055) | split | — | unverified | unverified | deferred | Strict value materialization/reference limits proved; legacy array/nullable-array guards deferred |
 | [NOTE-058](#note-058) | bounded-support | `f($x[0]);` | passed | passed | deferred | Old creating-DIM guidance superseded by ordinary non-creating v0.2 reads |
+
+</details>
+
 ## CAST-ARRAY-001
 
 **v0.2 decision / target C++:** Deferred conversion; rejection before C++ generation is proved by `tests/data_preparation.php`. No builtin `array` cast target is registered. Do not infer typed-container conversion or implicit mixed construction from this spelling.
@@ -1394,6 +1515,14 @@ $v /** vector<int> */ = [1, 2, 3];
 
 ## ARR-INIT-004
 
+
+**Current scope — 2026-10-19 (CS255).** Both imported variants retained: strict `hash<int>` keyed replacement has native content/key observers; untyped positional first assignment rejects unknown target. Typed string versus integer key domains remain distinct and normalized duplicate construction rejects. Wording calling both examples strict working spelling is misleading; only the typed hash example works.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [array_semantics.md](../../../../specs/array_semantics.md), [15_blocking_debt.md](15_blocking_debt.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS255`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Strict-mode PHP input example:** `$m hash<int> = ["a" => 1, "b" => 2];`<br>`$a = [1, 2, 3];`
 
 This is the strict working spelling. Imported versions below remain historical reference material; the decision here and chapter checkpoints describe current support.
@@ -1401,6 +1530,8 @@ This is the strict working spelling. Imported versions below remain historical r
 **v0.2 decision / target C++:** Explicit typed hashes use the shared keyed factory path; duplicate keys reject at runtime. Imported untyped first-assignment variants reject without a known target.
 
 Different source versions share this ID. Preserve both until their differences are discussed; neither is silently selected as the v0.2 decision.
+
+</details>
 
 ### Imported version 1
 
@@ -1578,7 +1709,17 @@ auto a = b[static_cast<int_t>(0)];
 
 ## ARR-READ-002
 
+
+**Current scope — 2026-10-19 (CS259).** Native dynamic/mixed reads retain same-family result identity and null-on-miss without creation; required scalar extraction has separate failure checks. Final sentence claiming runtime dynamic reads still return mixed is stale after migration.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [array_semantics.md](../../../../specs/array_semantics.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [native_reference_safety.md](../../../../specs/native_reference_safety.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS259`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Mixed reads return mixed; dynamic reads return dynamic under the approved separated-family contract. Both preserve same-family null-on-miss without creating entries; typed destinations then use checked conversion. The current runtime still returns mixed for dynamic reads and needs migration.
+
+</details>
 
 ### Imported version 1
 
@@ -1874,11 +2015,21 @@ a[1] = "int"; a["1"] = "string";
 
 ## ARR-VALUE-001
 
+
+**Current scope — 2026-10-19 (CS267).** Existing typed-container boxing into mixed/dynamic remains deferred and differs from contextual nested literals. Imported outer literal additionally lacks a known target. Calling the strict-spelled example working is misleading: rewriting only the comment does not make this program supported.
+
+Contracts and owners: [data_initialization.md](../../../../specs/data_initialization.md), [array_semantics.md](../../../../specs/array_semantics.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [native_reference_safety.md](../../../../specs/native_reference_safety.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS267`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Strict-mode PHP input example:** `$v vector<int> = [1, 2, 3]; $d = ["data" => $v];`
 
 This is the strict working spelling. Imported versions below remain historical reference material; the decision here and chapter checkpoints describe current support.
 
 **v0.2 decision / target C++:** Deferred: embedding an existing typed vector/hash in mixed/dynamic requires aggregate boxing support. It is not implied by contextual nested literal construction; an unknown outer target is a separate rejection.
+
+</details>
 
 ### Imported version 1
 

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "runtime_strings-byte_search_negative",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-01/runtime_strings/byte_search_negative.cpp",
+    "original_sha256": "8c9051c34a0f752125e2dac9d470b61c1c38b4eb7e50bee52049bcdb14393484",
+    "observer_sha256": "8633ca459548fc998fe70ac461b5f91f0f45e598f17c28575921725a099869e8",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_source-past_end",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_source/runtime_source/past_end.cpp",
+    "original_sha256": "4df5410616345be9e10c7f771a4cfd7bd7a75bc60d1b32f241a2215dfc9487ce",
+    "observer_sha256": "e80677772151b0141245a2bd50de320e7c23f42dcae8b216e8fb17af34560181",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_generics-count_bad_dynamic_2",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_generics/count_bad_dynamic_2.cpp",
+    "original_sha256": "fc3a64caac0f8c0e54aba3c094a3c3c5cea7a9cf3e491f756b4313c3f9e29496",
+    "observer_sha256": "1299422ca3e4ce91a6bd5835d8d8d371e4fcb5fa12df2eb30751bdb9343d7845",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "control_flow-truth_explicit_cast_reject",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/control_flow/programs/truth_explicit_cast_reject.cpp",
+    "original_sha256": "ab6e09c41569479970c0a712fa8bb16732e8f5ffe67ce5db6b25559d14b161e6",
+    "observer_sha256": "7c759dd3636ba2a2ca648ffed0d26f71b0616c9c49133697d3bd1b1747197879",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_generics-count_bad_mixed_1",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_generics/count_bad_mixed_1.cpp",
+    "original_sha256": "f7c26b56b1ab65dd4639b943b5f0dc9428642c35a6b55526c8794422f8547c7f",
+    "observer_sha256": "6e10fd205a3c56b2a12928df40039acdf1e34a2cd61bf64b2929007873e5feac",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_source-overflow",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_source/runtime_source/overflow.cpp",
+    "original_sha256": "abf4394fcfb3d4a397482ec2948a9a24c08e24653b3a4ddfa41be2f712f93ea9",
+    "observer_sha256": "0c478b82f724324ec025a06fe88defbc0664fc28fd9fdcc3263203fd86de8014",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_generics-count_bad_mixed_2",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_generics/count_bad_mixed_2.cpp",
+    "original_sha256": "66b5ae624b79bd4cea3b8c8d320dc2c82036f7f1420538e04285d1b2a0c53d72",
+    "observer_sha256": "5eb595f612d8003f959e415d256cdf982e597fda1603d778d79b294e80bd9ef5",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "control_flow-match_unhandled",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/control_flow/programs/match_unhandled.cpp",
+    "original_sha256": "74538b74d1a57a10d1715bc71c45ca1e35820370651e1c433b8790f16d4993bf",
+    "observer_sha256": "f65c9b5ffa4d81e80bafe3d907a48ca90527cbe0b5f3fbace18301a1ebc973cd",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_strings-pad_mode",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-01/runtime_strings/pad_mode.cpp",
+    "original_sha256": "769ae68a1c72684bbe9030c8589190978d0678b496a7a9d5d7ac27e34099ed9a",
+    "observer_sha256": "206b2070d712807f8a612d6ebf73faabd1a73dccf3b5ccffcd03e3c9d72e3ac9",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_source-zero_line",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_source/runtime_source/zero_line.cpp",
+    "original_sha256": "58a96a476c628011dafa985c2e239796fcc2c239886fb683bbd7d508e0174767",
+    "observer_sha256": "0dce8e0f7ed3102cceb95f7f9c7b41d741e1522b1dd388bd67aed89e13767b49",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_generics-count_bad_dynamic_0",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_generics/count_bad_dynamic_0.cpp",
+    "original_sha256": "bfb2523988cf5e21c489fdc75c1787e0e02cc2bd7dcf1c5570afc02bee63ee8e",
+    "observer_sha256": "bb8d4eff39af2b4539c33af8eae313a57bd6cabd7906a5a499460fb095463191",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_strings-split_empty",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-01/runtime_strings/split_empty.cpp",
+    "original_sha256": "07972f8195de8e9d79da8edc36bca1a674aa5bbeb745adaae57cb3ce382cc8c5",
+    "observer_sha256": "6df26634f0b776abaf2218aaef562cbbfbb4b0863a6168138a3a966ab0b62880",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_handles-null_receiver",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_handles/runtime_handles/null_receiver.cpp",
+    "original_sha256": "55906cc996bc7fc0260bcf3fc5f15bf040822ad204f1cf7a424e0f8490efee81",
+    "observer_sha256": "67814ec4ceba16557c4269f518e6bd91a184d14d3f82fae99d92b4f8c98e5994",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": false
+  },
+  {
+    "id": "runtime_strings-boxed_failure",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-01/runtime_strings/boxed_failure.cpp",
+    "original_sha256": "5c9edd0bcfba1806157b3fb0fa23f3ebd6f1793076b4bf3a171cc3f4a451ab27",
+    "observer_sha256": "d4e2890dae85ebe94deca7c9e4fd2f8fcc8107c5bd56d1357d0728f869370f69",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_strings-byte_search_outside",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-01/runtime_strings/byte_search_outside.cpp",
+    "original_sha256": "506cd031f090b3e059cd23c718affbe6ee9f0487e3725a861b8058eeb72ca239",
+    "observer_sha256": "cb430174e5998a508e814ed48436de72b11c6890456ad4492ed8a65733633b6a",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_source-negative",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_source/runtime_source/negative.cpp",
+    "original_sha256": "2ae0cb2f00a55e20fdb4706d4ab8e233312743af8675783e0bb5c4577e9a3985",
+    "observer_sha256": "c510d6af9def71bffd9979e5d7d42e44da3009181c0fa7921c330a5ccc96b311",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_strings-pad_empty",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-01/runtime_strings/pad_empty.cpp",
+    "original_sha256": "5d626743eaf3d59f4b35274fe48dc1848ce264ac9210613490c7af0460222a7b",
+    "observer_sha256": "50eccd57f18d47ff2e71fad0d3125d0f08cd95f3879a52682ad69aa479f927ca",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_generics-count_bad_dynamic_1",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_generics/count_bad_dynamic_1.cpp",
+    "original_sha256": "3d3913acf5d10722923d7154272cbf957efe4896e34a2e83b87e9aa03be38d37",
+    "observer_sha256": "02d25cfb90792b4d72e25aa248621a5e6d5ba64aa08a0fbba6d3de9230ffe9f7",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_generics-count_bad_mixed_0",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_generics/count_bad_mixed_0.cpp",
+    "original_sha256": "2bf3e6b3c981e13124bce2c616de7a91ee28239f326cda5585f9a9c82f08a73f",
+    "observer_sha256": "b72fca5ad90bb50b1dd6dd9fd40c47c60dcac6e1fcc0158dcc8c204f235e196d",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  },
+  {
+    "id": "runtime_source-wide",
+    "original": "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_source/runtime_source/wide.cpp",
+    "original_sha256": "b1c29f747449413569b1e065f763810e5f7fe7c8fa162437db5c844d3c05255d",
+    "observer_sha256": "1e5af7bd41b45fb506bbe4e38e9cfb0609661095715a3366d3e9df331d18e8eb",
+    "lane": "Only marked production entry handler removed; original native exception observer and source handlers retained.",
+    "passed": true
+  }
+]

@@ -1,9 +1,36 @@
 # Compiler development catalog
 Doc Status: planning
 
+Scalar compatibility follow-up: [bool equality and float arithmetic](../planning/v0_1_compatibility_scalar_admission.md)
+are implemented and tested on dev002. On 2026-10-18, preserving `division_by_zero`
+resolved the final contract question and closed this slice. V-L04 subsequently added the bounded [float comparisons and mutations](../planning/float_operators_l04.md)
+on 2026-10-19. Lifted wrappers and conditional selection still await their separate discussion.
+
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**
 
 Implementation home: `compiler/my-try`.
+
+## Next milestone: v0.1 source compatibility
+
+Agreed goal, 2026-10-17: compile supported v0.1 PHS/PHP++ code with preserved
+specified behavior, except for explicit v0.2 incompatibilities and approved changes.
+Identical C++ lowering is not required. Strict-first adapted examples and bounded
+chapter closeouts do not by themselves prove original-source compatibility.
+The [compatibility report](../planning/v0_1_compatibility_report.md) pins the newest
+verified v0.1 baselines, separates missing support from deliberate changes and
+baseline-unsupported features, and defines the acceptance ledger still needed.
+Existing Chapter 15 safety gates remain in force; its entire extension inventory
+is not automatically the compatibility milestone's implementation queue.
+
+## Reading current status and historical evidence
+
+The 2026-10-19 [documentation reconciliation](../planning/simple_repairs_03.md)
+updates the 141 sections identified by V-D02. Their **Current scope** notes link
+owning contracts and stable section IDs in the frozen verification ledger. Earlier
+checkpoints are explicitly historical; imported v0.1 examples remain provenance.
+A passing bounded probe does not close wider operator, ownership or API gaps.
+The [issue ledger](../planning/language_verification_issues.json) tracks those gaps
+and repair status separately from the original verification counts.
 
 ## Strict mode first
 

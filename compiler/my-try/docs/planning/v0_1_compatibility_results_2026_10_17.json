@@ -1,0 +1,1207 @@
+{
+  "doc_status": "planning",
+  "date": "2026-10-17",
+  "baseline": "75de94c71e37060c564b6ade19850b7686bd457a",
+  "current": "d675aca8251374555c9191067793175b43d8a79c",
+  "scope": "selected unchanged single-source fixtures; no project CLI parity",
+  "full_evidence": "/tmp/scpp-compat-pass1-final",
+  "inventory_counts": {
+    "source-or-project-needs-oracle-and-adapter": 504,
+    "operator-second-pass": 2211,
+    "selected-unchanged-source": 50,
+    "expectation-metadata": 413,
+    "source-fixture-needs-selection": 465,
+    "runtime-only-needs-separate-adapter": 145,
+    "harness-coupled-needs-adapter": 65
+  },
+  "cases": [
+    {
+      "source": "tests/php/functions/level_01/functions_001_typed_param_basic.phs",
+      "metadata": "tests/php/functions/level_01/functions_001_typed_param_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "functions",
+      "sha256": "421399925c9df98e96e83d5c9fb0d3e01730eedc8a44ea1e1c8bce56feb1b4ce",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "5\n",
+        "stderr": "",
+        "stdout_hex": "350a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "5\n",
+        "stderr": "",
+        "stdout_hex": "350a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/functions/level_01/functions_002_typed_return_basic.phs",
+      "metadata": "tests/php/functions/level_01/functions_002_typed_return_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "functions",
+      "sha256": "d4fd0cb43ea803ab3cb14d837f192c6dc4d6f4a7c7f6cab9717c50658a969f16",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "8\n",
+        "stderr": "",
+        "stdout_hex": "380a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "8\n",
+        "stderr": "",
+        "stdout_hex": "380a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/control_flow/level_01/control_flow_001_if_basic.phs",
+      "metadata": "tests/php/control_flow/level_01/control_flow_001_if_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow",
+      "sha256": "465974e5a8ad6916e00b39eca2d4532842ca9a465428ccdb313a9f7a2a62db9e",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "yes\n",
+        "stderr": "",
+        "stdout_hex": "7965730a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "yes\n",
+        "stderr": "",
+        "stdout_hex": "7965730a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/control_flow/level_01/control_flow_002_if_else_basic.phs",
+      "metadata": "tests/php/control_flow/level_01/control_flow_002_if_else_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow",
+      "sha256": "f4fcd2601da5b5d4f3f87d51bb60910eda375cf8a9d9e5753d644b2832541f4a",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "other\n",
+        "stderr": "",
+        "stdout_hex": "6f746865720a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "other\n",
+        "stderr": "",
+        "stdout_hex": "6f746865720a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_001_php_helpers.phs",
+      "metadata": "tests/php/control_flow/strict_level_01/strict_control_flow_001_php_helpers.test-info.json",
+      "profile": "strict",
+      "feature": "control_flow",
+      "sha256": "90f9f4dc13e765ff9d894d29f231f36fece1b37a0c65544c14514c3dc706239c",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "2\nY\nN\nE\n7\n2\nI\nJ\n",
+        "stderr": "",
+        "stdout_hex": "320a590a4e0a450a370a320a490a4a0a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-004-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-004-v02-generate",
+        "diagnostic": "S2S generation failed: S2S data construction requires a known concrete target\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_002_mixed_type_predicates.phs",
+      "metadata": "tests/php/control_flow/strict_level_01/strict_control_flow_002_mixed_type_predicates.test-info.json",
+      "profile": "strict",
+      "feature": "control_flow",
+      "sha256": "016126fe3ee9b3f8c12944ce2fdb9d0ab56db5ee8ffb8bbff1c9d17d33bb8288",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "not-bool\nnot-int\nnot-float\nbool\nint\nfloat\n",
+        "stderr": "",
+        "stdout_hex": "6e6f742d626f6f6c0a6e6f742d696e740a6e6f742d666c6f61740a626f6f6c0a696e740a666c6f61740a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-005-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-005-v02-generate",
+        "diagnostic": "S2S generation failed: S2S needs one resolved function for is_bool\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/variables/level_01/variables_001_definition_basic.phs",
+      "metadata": "tests/php/variables/level_01/variables_001_definition_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "variables",
+      "sha256": "84b8571d0cbe4d406c60250d4d69ce9431c892de69bc043cf8ca613ec62c1894",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "11\n",
+        "stderr": "",
+        "stdout_hex": "31310a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "11\n",
+        "stderr": "",
+        "stdout_hex": "31310a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/variables/level_01/variables_002_reassignment_basic.phs",
+      "metadata": "tests/php/variables/level_01/variables_002_reassignment_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "variables",
+      "sha256": "79b7e9517574386988b6d104cb84938b60fb75e11f6f0d8dea409244960da33f",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "19\n",
+        "stderr": "",
+        "stdout_hex": "31390a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "19\n",
+        "stderr": "",
+        "stdout_hex": "31390a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/constants/level_01/constants_001_class_const_basic.phs",
+      "metadata": "tests/php/constants/level_01/constants_001_class_const_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "constants",
+      "sha256": "5b07cf1c9588dc0275a1a694ae8eb8e50bb63418e7b8939eee1a9958a0636180",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "12\n",
+        "stderr": "",
+        "stdout_hex": "31320a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "12\n",
+        "stderr": "",
+        "stdout_hex": "31320a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/constants/level_01/constants_002_const_read_basic.phs",
+      "metadata": "tests/php/constants/level_01/constants_002_const_read_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "constants",
+      "sha256": "9c2ce0a5de14d5d04de17ee5335a622460c3540020d0a876a0f79b122bc00a05",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "9\n",
+        "stderr": "",
+        "stdout_hex": "390a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "9\n",
+        "stderr": "",
+        "stdout_hex": "390a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/classes/level_01/classes_001_basic_construction.phs",
+      "metadata": "tests/php/classes/level_01/classes_001_basic_construction.test-info.json",
+      "profile": "legacy",
+      "feature": "classes",
+      "sha256": "029502cc003e3c795ebeac362729927207158d2e774f5187733a7377c63499c3",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "5\n",
+        "stderr": "",
+        "stdout_hex": "350a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "5\n",
+        "stderr": "",
+        "stdout_hex": "350a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/classes/level_01/classes_002_property_read_write_basic.phs",
+      "metadata": "tests/php/classes/level_01/classes_002_property_read_write_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "classes",
+      "sha256": "9d78f57c407277196cc36077a72dfa6ee7510f1be0d0fdab07848ba5fdf3674d",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "13\n",
+        "stderr": "",
+        "stdout_hex": "31330a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "13\n",
+        "stderr": "",
+        "stdout_hex": "31330a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/namespaces/level_01/namespaces_001_basic_namespace_class.phs",
+      "metadata": "tests/php/namespaces/level_01/namespaces_001_basic_namespace_class.test-info.json",
+      "profile": "legacy",
+      "feature": "namespaces",
+      "sha256": "194766be0aeac5e43210f5b6d06bf74deffc99a635018479d75db0137eaa8a9c",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "31\n",
+        "stderr": "",
+        "stdout_hex": "33310a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "31\n",
+        "stderr": "",
+        "stdout_hex": "33310a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/namespaces/level_01/namespaces_002_fully_qualified_class_access.phs",
+      "metadata": "tests/php/namespaces/level_01/namespaces_002_fully_qualified_class_access.test-info.json",
+      "profile": "legacy",
+      "feature": "namespaces",
+      "sha256": "0b87772c84f9b4822e35901aeb219711a12794d995bb757a7ab09584a67e5d0b",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "37\n",
+        "stderr": "",
+        "stdout_hex": "33370a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "37\n",
+        "stderr": "",
+        "stdout_hex": "33370a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_01/closures_001_typed_callable_use_capture.phs",
+      "metadata": "tests/php/closures/strict_level_01/closures_001_typed_callable_use_capture.test-info.json",
+      "profile": "strict",
+      "feature": "closures",
+      "sha256": "ad4de5dd592d569be3a1417dce7f50d1812accefe6db52f1ee9863fd798db291",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n",
+        "stderr": "",
+        "stdout_hex": "310a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n",
+        "stderr": "",
+        "stdout_hex": "310a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/closures/strict_level_01/closures_002_typed_callable_supplies_return.phs",
+      "metadata": "tests/php/closures/strict_level_01/closures_002_typed_callable_supplies_return.test-info.json",
+      "profile": "strict",
+      "feature": "closures",
+      "sha256": "555ef4397e08c0896aa684f28e57c118d992b7f19b09ec77e0fe31cde5418344",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n",
+        "stderr": "",
+        "stdout_hex": "310a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n",
+        "stderr": "",
+        "stdout_hex": "310a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/arrays/level_01/arrays_001_empty_append_scalar.phs",
+      "metadata": "tests/php/arrays/level_01/arrays_001_empty_append_scalar.test-info.json",
+      "profile": "legacy",
+      "feature": "arrays",
+      "sha256": "e4b1990c1773cfa22cb4bd79c604ccf3269cb6966054fed8348064d25ae8135e",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "array(3) {\n  [0]=>\n  int(10)\n  [1]=>\n  int(20)\n  [2]=>\n  int(30)\n}\n",
+        "stderr": "",
+        "stdout_hex": "6172726179283329207b0a20205b305d3d3e0a2020696e74283130290a20205b315d3d3e0a2020696e74283230290a20205b325d3d3e0a2020696e74283330290a7d0a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-016-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-016-v02-generate",
+        "diagnostic": "S2S generation failed: S2S data construction requires a known concrete target\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/arrays/level_01/arrays_002_packed_readback.phs",
+      "metadata": "tests/php/arrays/level_01/arrays_002_packed_readback.test-info.json",
+      "profile": "legacy",
+      "feature": "arrays",
+      "sha256": "8096433648911221486c16ad6547bb7b01977294b6cfd230bc116e7ddf69fb51",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "4\n5\n6\n",
+        "stderr": "",
+        "stdout_hex": "340a350a360a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-017-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-017-v02-generate",
+        "diagnostic": "S2S generation failed: S2S data construction requires a known concrete target\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/types/bool/level_01/bool_001_init_basic.phs",
+      "metadata": "tests/php/types/bool/level_01/bool_001_init_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types",
+      "sha256": "5008e90d83f2a9c092aa28c5a284857cee3a305dfb5ebffbd39ac916cba36054",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "true\n",
+        "stderr": "",
+        "stdout_hex": "747275650a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "true\n",
+        "stderr": "",
+        "stdout_hex": "747275650a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/types/bool/level_01/bool_002_assign_basic.phs",
+      "metadata": "tests/php/types/bool/level_01/bool_002_assign_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types",
+      "sha256": "7331999827730957210c15fd9e8b22d7b2324c749341a2893c856bedf4c933bc",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n",
+        "stderr": "",
+        "stdout_hex": "310a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n",
+        "stderr": "",
+        "stdout_hex": "310a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/types/int/strict_level_01/strict_int_006_fixed_width_local_returns.phs",
+      "metadata": "tests/php/types/int/strict_level_01/strict_int_006_fixed_width_local_returns.test-info.json",
+      "profile": "strict",
+      "feature": "types",
+      "sha256": "82686fa62cb393b5340a31c11a59e1bc90a82e48883e37ce5abc3770f3cbea7a",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "12\n30\n42\n",
+        "stderr": "",
+        "stdout_hex": "31320a33300a34320a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "12\n30\n42\n",
+        "stderr": "",
+        "stdout_hex": "31320a33300a34320a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/types/int/strict_level_01/strict_int_007_fixed_width_unsigned_local_returns.phs",
+      "metadata": "tests/php/types/int/strict_level_01/strict_int_007_fixed_width_unsigned_local_returns.test-info.json",
+      "profile": "strict",
+      "feature": "types",
+      "sha256": "dbe9a04981d1b615217b091274abcf83201bc2fda896e6a785517cf36dba5f95",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "7\n8\n16\n32\n64\n",
+        "stderr": "",
+        "stdout_hex": "370a380a31360a33320a36340a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "7\n8\n16\n32\n64\n",
+        "stderr": "",
+        "stdout_hex": "370a380a31360a33320a36340a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/references/level_01/references_001_local_reference_basic.phs",
+      "metadata": "tests/php/references/level_01/references_001_local_reference_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "references",
+      "sha256": "4444bf54a616d3cf125bf68212fc34d6f4df31302b95bf837d7d2063a899c203",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "9\n",
+        "stderr": "",
+        "stdout_hex": "390a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "9\n",
+        "stderr": "",
+        "stdout_hex": "390a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/references/level_01/references_002_reference_assignment_basic.phs",
+      "metadata": "tests/php/references/level_01/references_002_reference_assignment_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "references",
+      "sha256": "a9c068dabe430d79c75369d9a47e782d92a3cb951e28802d5249c9b3c126a108",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "6\n",
+        "stderr": "",
+        "stdout_hex": "360a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "6\n",
+        "stderr": "",
+        "stdout_hex": "360a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.test-info.json",
+      "profile": "strict",
+      "feature": "strings",
+      "sha256": "891580ca91aaa07e9e801f515d13de5b6253227aefd29ce747168b9a6daa5e34",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "cdef\nbcd\n1\nabZZef\nx..\naXXdXX\na-b-c\nAB\n4142\n12,345\n5\n2\n4\n-1\nabc\nABC\nhello\nHello\nY\nY\nY\nY\nN\n[hi]\n[hi  ]\n[  hi]\n",
+        "stderr": "",
+        "stdout_hex": "636465660a6263640a310a61625a5a65660a782e2e0a6158586458580a612d622d630a41420a343134320a31322c3334350a350a320a340a2d310a6162630a4142430a68656c6c6f0a48656c6c6f0a590a590a590a590a4e0a5b68695d0a5b686920205d0a5b202068695d0a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-024-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-024-v02-generate",
+        "diagnostic": "S2S generation failed: S2S needs one resolved function for substr_replace\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_002_str_edges.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_002_str_edges.test-info.json",
+      "profile": "strict",
+      "feature": "strings",
+      "sha256": "ef5bf5be6d66370a22bc00b14a18c577321c5915d82ba53f4a69025651cdc666",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "ef\nbcd\n0\nhi\nhi--\n--hi\na|b,c\na|b\n4\n2\n",
+        "stderr": "",
+        "stdout_hex": "65660a6263640a300a68690a68692d2d0a2d2d68690a617c622c630a617c620a340a320a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-025-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-025-v02-generate",
+        "diagnostic": "S2S generation failed: S2S needs one resolved function for strpos\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/take/level_02/take_001_wrapper_extraction_basic.phs",
+      "metadata": "tests/php/take/level_02/take_001_wrapper_extraction_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "take",
+      "sha256": "b7881960985d560092364853351945000bc4d0dd56f01ff6c32bd9e96168ab98",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "T\n7\nF\n7\nT\n21\nF\n21\nT\nB1\n21\nF\nB0\n21\nT\nB0\n33\n",
+        "stderr": "",
+        "stdout_hex": "540a370a460a370a540a32310a460a32310a540a42310a32310a460a42300a32310a540a42300a33330a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-026-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-026-v02-generate",
+        "diagnostic": "S2S generation failed: S2S take requires a supported wrapper source\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/take/level_02/take_006_result_wrapper_basic.phs",
+      "metadata": "tests/php/take/level_02/take_006_result_wrapper_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "take",
+      "sha256": "a2c8d666c6e66222e8d5b98e155c5a17c75a6d870b087fde5ee428e102a11176",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "T\n13\nF\n13\n",
+        "stderr": "",
+        "stdout_hex": "540a31330a460a31330a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-027-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-027-v02-generate",
+        "diagnostic": "S2S generation failed: S2S needs one resolved constant for error\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/output/level_01/output_001_echo_string_literal.phs",
+      "metadata": "tests/php/output/level_01/output_001_echo_string_literal.test-info.json",
+      "profile": "legacy",
+      "feature": "output",
+      "sha256": "5fb191b7e5c01dbbc8b3a45d687e1fe6fd2af7f71539199f35a72c40cbaadfdd",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "ok\n",
+        "stderr": "",
+        "stdout_hex": "6f6b0a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "ok\n",
+        "stderr": "",
+        "stdout_hex": "6f6b0a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/output/level_01/output_002_echo_multiple_values.phs",
+      "metadata": "tests/php/output/level_01/output_002_echo_multiple_values.test-info.json",
+      "profile": "legacy",
+      "feature": "output",
+      "sha256": "51a42d6d59dd82ec5a5302ed221d7d11b6f01e036f1abfed1ab3ed26c07110b3",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "a-b\n",
+        "stderr": "",
+        "stdout_hex": "612d620a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "a-b\n",
+        "stderr": "",
+        "stdout_hex": "612d620a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/use/level_01/use_001_use_class_basic.phs",
+      "metadata": "tests/php/use/level_01/use_001_use_class_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "use",
+      "sha256": "09d09c50a6683673d21d1344ce5a26fe1338805d1488b8fb2c92e8c8bdbc439c",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "41\n",
+        "stderr": "",
+        "stdout_hex": "34310a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "41\n",
+        "stderr": "",
+        "stdout_hex": "34310a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/use/level_02/use_003_use_function_basic.phs",
+      "metadata": "tests/php/use/level_02/use_003_use_function_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "use",
+      "sha256": "0e3877158f3a6c8a52e1aa18486823ff3f698ecf7efa85466dd56936543579f2",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "8\n",
+        "stderr": "",
+        "stdout_hex": "380a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "8\n",
+        "stderr": "",
+        "stdout_hex": "380a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/generators/php/special_tests/test_07_finally_return.phs",
+      "profile": "legacy",
+      "feature": "finally",
+      "note": "No metadata oracle; compare execution against the pinned baseline.",
+      "sha256": "ed6395380e48c0f9646a0090cb8ff3b233d90ba1214512aa12c8172611b9cd1d",
+      "v01": {
+        "stage": "cpp-build",
+        "passed": false,
+        "error": "case-032-v01-build: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-032-v01-build",
+        "diagnostic": "/tmp/scpp-compat-pass1-final/case-032/v01/program.cpp:1:9: warning: #pragma once in main file [-Wpragma-once-outside-header]\n    1 | #pragma once\n      |         ^\n/tmp/scpp-compat-pass1-final/case-032/v01/program.cpp:76:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]\n   76 | }\n      | ^\nIn file included from /tmp/scpp-compat-pass1-final/case-032/v01/program.cpp:3:\nIn file included from /tmp/scpp-compat-pass1-final/baseline/runtime/include/scpp/lang/php.hpp:3:\nIn file included from /tmp/scpp-compat-pass1-final/baseline/runtime/include/scpp/runtime.hpp:3:\nIn file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/functional:53:\nIn file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/tuple:44:\nIn file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/ranges_util.h:34:\nIn file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/ranges_base.h:37:\nIn file included from /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_iterator.h:85:\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_construct.h:115:4: error: no matching function for call to 'construct_at'\n  115 |           std::construct_at(__p, std::forward<_Args>(__args)...);\n      |           ^~~~~~~~~~~~~~~~~\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/alloc_traits.h:661:9: note: in instantiation of function template specialization 'std::_Construct<scpp::MyEx, scpp::string_t>' requested here\n  661 |         { std::_Construct(__p, std::forward<_Args>(__args)...); }\n      |                ^\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:604:30: note: in instantiation of function template specialization 'std::allocator_traits<std::allocator<void>>::construct<scpp::MyEx, scpp::string_t>' requested here\n  604 |           allocator_traits<_Alloc>::construct(__a, _M_ptr(),\n      |                                     ^\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:972:6: note: in instantiation of function template specialization 'std::_Sp_counted_ptr_inplace<scpp::MyEx, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<scpp::string_t>' requested here\n  972 |             _Sp_cp_type(__a._M_a, std::forward<_Args>(__args)...);\n      |             ^\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:1712:14: note: in instantiation of function template specialization 'std::__shared_count<>::__shared_count<scpp::MyEx, std::allocator<void>, scpp::string_t>' requested here\n 1712 |         : _M_ptr(), _M_refcount(_M_ptr, __tag, std::forward<_Args>(__args)...)\n      |                     ^\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr.h:464:4: note: in instantiation of function template specialization 'std::__shared_ptr<scpp::MyEx>::__shared_ptr<std::allocator<void>, scpp::string_t>' requested here\n  464 |         : __shared_ptr<_Tp>(__tag, std::forward<_Args>(__args)...)\n      |           ^\n/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr.h:1009:14: note: in instantiation of function template specialization 'std::shared_ptr<scpp::MyEx>::shared_ptr<std::allocator<void>, scpp::string_t>' requested here\n 1009 |       return shared_ptr<_Tp>(_Sp_alloc_shared_tag<_Alloc>{__a},\n      |              ^\n/tmp/scpp-compat-pass1-final/baseline/runtime/include/scpp/memory.hpp:21:26: note: in instantiation of function template specialization 'std::make_shared<scpp::MyEx, scpp::string_t>' requested here\n   21 |         return shared_p<T>(std::make_shared<T>(std::forward<TArgs>(args)...));\n      |                                 ^\n/tmp/scpp-compat-pass1-final/case-032/v01/program.cpp:58:35: note: in instantiation of function template specialization "
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-032-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-032-v02-generate",
+        "diagnostic": "S2S generation failed: Relationship target must be a source class, struct or interface\n\n"
+      },
+      "status": "baseline-unproven"
+    },
+    {
+      "source": "tests/generators/php/special_tests/test_08_finally_return_for_loop.phs",
+      "profile": "legacy",
+      "feature": "finally",
+      "note": "No metadata oracle; compare execution against the pinned baseline.",
+      "sha256": "4a0df68ab0864468c9146bbc7bf0e13200dbf5ace6f54cbd27dbd877506ac26e",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "F:0\nint(0)\n",
+        "stderr": "",
+        "stdout_hex": "463a300a696e742830290a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-033-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-033-v02-generate",
+        "diagnostic": "S2S generation failed: S2S needs one resolved function for var_dump\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/control_flow/level_02/control_flow_013_foreach_ref_value_basic.phs",
+      "metadata": "tests/php/control_flow/level_02/control_flow_013_foreach_ref_value_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow",
+      "sha256": "e9971465d8281a11ec9a96abcb632298315e7e82ed98684b096ff1acacec6949",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "11\n12\n",
+        "stderr": "",
+        "stdout_hex": "31310a31320a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-034-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-034-v02-generate",
+        "diagnostic": "S2S generation failed: control_flow_013_foreach_ref_value_basic.phs: foreach requires a simple value binding; references and destructuring are deferred at control_flow_013_foreach_ref_value_basic.phs: byte 55\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/control_flow/level_02/control_flow_016_foreach_key_ref_value_negative.phs",
+      "metadata": "tests/php/control_flow/level_02/control_flow_016_foreach_key_ref_value_negative.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow",
+      "sha256": "d559b965b522c39fe556c15aca65190faac56132107ad4094206fb4ee565c22a",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "5\n",
+        "stderr": "",
+        "stdout_hex": "350a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-035-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-035-v02-generate",
+        "diagnostic": "S2S generation failed: control_flow_016_foreach_key_ref_value_negative.phs: foreach requires a simple value binding; references and destructuring are deferred at control_flow_016_foreach_key_ref_value_negative.phs: byte 61\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/types/vector/level_02/vector_003_vector_assign_basic.phs",
+      "metadata": "tests/php/types/vector/level_02/vector_003_vector_assign_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types",
+      "sha256": "fca29d760d67eccf717d3602661022b3667997659c44020934a742de06399295",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n2\n",
+        "stderr": "",
+        "stdout_hex": "310a320a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-036-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-036-v02-generate",
+        "diagnostic": "S2S generation failed: S2S data construction requires a known concrete target\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/types/vector/level_02/vector_004_vector_append_basic.phs",
+      "metadata": "tests/php/types/vector/level_02/vector_004_vector_append_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types",
+      "sha256": "9bbfa99e237e92550ccc1b87f5b5ee7f07972b7cf9171d4b66b4551680af3175",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "10\n20\n",
+        "stderr": "",
+        "stdout_hex": "31300a32300a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-037-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-037-v02-generate",
+        "diagnostic": "S2S generation failed: S2S data construction requires a known concrete target\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/types/nullable/level_02/nullable_003_null_coalesce_basic.phs",
+      "metadata": "tests/php/types/nullable/level_02/nullable_003_null_coalesce_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types",
+      "sha256": "c2e972572908c956883496e118c1919fa7fcf8979fff261bb8e35bd6ff492344",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "10\n3\n",
+        "stderr": "",
+        "stdout_hex": "31300a330a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "10\n3\n",
+        "stderr": "",
+        "stdout_hex": "31300a330a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/types/nullable/level_02/nullable_004_mixed_null_coalesce_basic.phs",
+      "metadata": "tests/php/types/nullable/level_02/nullable_004_mixed_null_coalesce_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types",
+      "sha256": "c2ba828d79860d232ce62ff9294c8c4fa721465a671e2e05256aee4b5b223c5c",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "int(7)\nint(0)\n",
+        "stderr": "",
+        "stdout_hex": "696e742837290a696e742830290a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-039-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-039-v02-generate",
+        "diagnostic": "S2S generation failed: S2S needs one resolved function for var_dump\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_004_use_reference_capture.phs",
+      "metadata": "tests/php/closures/strict_level_02/closures_004_use_reference_capture.test-info.json",
+      "profile": "strict",
+      "feature": "closures",
+      "sha256": "9d84c4d0de7e6d8af10dc9a1d21b83fa3c34a989a4a84c1062f175694964b3ae",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "2\n",
+        "stderr": "",
+        "stdout_hex": "320a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-040-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-040-v02-generate",
+        "diagnostic": "S2S generation failed: Callable boundary requires an exact parameter and return signature\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_006_vector_return_typed_callable.phs",
+      "metadata": "tests/php/closures/strict_level_02/closures_006_vector_return_typed_callable.test-info.json",
+      "profile": "strict",
+      "feature": "closures",
+      "sha256": "3a80d2c3b5a1ea69f28ce4a266658346b82b8dcffdec752d386be40210584e83",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1:2\n",
+        "stderr": "",
+        "stdout_hex": "313a320a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1:2\n",
+        "stderr": "",
+        "stdout_hex": "313a320a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.test-info.json",
+      "profile": "strict",
+      "feature": "strings",
+      "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "start\nbase=string\nbase=varchar\ndone\n",
+        "stderr": "",
+        "stdout_hex": "73746172740a626173653d737472696e670a626173653d766172636861720a646f6e650a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-042-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-042-v02-generate",
+        "diagnostic": "S2S generation failed: strict_strings_004_strpos_false_branch_regression.phs: Expected '{' at strict_strings_004_strpos_false_branch_regression.phs: byte 121\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_007_explicit_string_units.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_007_explicit_string_units.test-info.json",
+      "profile": "strict",
+      "feature": "strings",
+      "sha256": "f8ef49dec85e7c5c5d4130ccef38544b67eb70be3ab7898343d18fef04e673b3",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "6\n4\n3\n196\n259\n1\n\u0103\ne\u0301\ne\u0301\nY\n",
+        "stderr": "",
+        "stdout_hex": "360a340a330a3139360a3235390a310ac4830a65cc810a65cc810a590a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "6\n4\n3\n196\n259\n1\n\u0103\ne\u0301\ne\u0301\nY\n",
+        "stderr": "",
+        "stdout_hex": "360a340a330a3139360a3235390a310ac4830a65cc810a65cc810a590a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_008_string_parts_builder.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_008_string_parts_builder.test-info.json",
+      "profile": "strict",
+      "feature": "strings",
+      "sha256": "48a59815cd4f6da6edd2798aaf865fd03b3bf820cdcf1344272f2ddc2e918592",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "reserved\n6\n10\nhello-42-1\n0\n0\nagain\n",
+        "stderr": "",
+        "stdout_hex": "72657365727665640a360a31300a68656c6c6f2d34322d310a300a300a616761696e0a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "reserved\n6\n10\nhello-42-1\n0\n0\nagain\n",
+        "stderr": "",
+        "stdout_hex": "72657365727665640a360a31300a68656c6c6f2d34322d310a300a300a616761696e0a",
+        "stderr_hex": ""
+      },
+      "status": "compatible-proved"
+    },
+    {
+      "source": "tests/php/io/strict_level_01/strict_io_001_io_surface.phs",
+      "metadata": "tests/php/io/strict_level_01/strict_io_001_io_surface.test-info.json",
+      "profile": "strict",
+      "feature": "io",
+      "sha256": "ae98988cbb30c1b1e15f7e25d1320211c9e44871fc2ae348049fe6e0a0dbc60c",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "O\n11\nF\nR\nline1\n6\nline2\nE\nC\nO\n0\n2\nne1\nC\n",
+        "stderr": "",
+        "stdout_hex": "4f0a31310a460a520a6c696e65310a360a6c696e65320a450a430a4f0a300a320a6e65310a430a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-045-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-045-v02-generate",
+        "diagnostic": "S2S generation failed: S2S needs an established local declaration for fh\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/json/strict_level_01/strict_json_001_json_surface.phs",
+      "metadata": "tests/php/json/strict_level_01/strict_json_001_json_surface.test-info.json",
+      "profile": "strict",
+      "feature": "json",
+      "sha256": "76b06ccb05a2b1094458065732a6a581fd52accfb5d0587325c859d6d2774880",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "1\n3\n{\"a\":1,\"b\":[2,3],\"c\":\"x\"}\njson error at byte 1: expected string key\nunchanged\nrepaired\nnull_ok\nnull_value\nfalse_ok\nfalse_value\njson_encode: non-finite float_t is not supported\nunchanged\nnested_encode_error\nunchanged\n\"repaired\"\nnull\nfalse\n",
+        "stderr": "",
+        "stdout_hex": "310a330a7b2261223a312c2262223a5b322c335d2c2263223a2278227d0a6a736f6e206572726f72206174206279746520313a20657870656374656420737472696e67206b65790a756e6368616e6765640a72657061697265640a6e756c6c5f6f6b0a6e756c6c5f76616c75650a66616c73655f6f6b0a66616c73655f76616c75650a6a736f6e5f656e636f64653a206e6f6e2d66696e69746520666c6f61745f74206973206e6f7420737570706f727465640a756e6368616e6765640a6e65737465645f656e636f64655f6572726f720a756e6368616e6765640a227265706169726564220a6e756c6c0a66616c73650a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-046-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-046-v02-generate",
+        "diagnostic": "S2S generation failed: S2S take output requires the exact branch type\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/source/strict_level_01/strict_source_001_buffer_span.phs",
+      "metadata": "tests/php/source/strict_level_01/strict_source_001_buffer_span.test-info.json",
+      "profile": "strict",
+      "feature": "source",
+      "modules": [
+        "core",
+        "source",
+        "strings"
+      ],
+      "sha256": "41aad2ce918c06d0b079a82f32e8ac76c4cf25c801580c033fbc8fb0514a5ae0",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "empty\n6\n98\ncde\n3\n100\nbcd\nhash-ok\nabcdef\n0\n",
+        "stderr": "",
+        "stdout_hex": "656d7074790a360a39380a6364650a330a3130300a6263640a686173682d6f6b0a6162636465660a300a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-047-v02-generate: expected exit 0, got 255; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-047-v02-generate",
+        "diagnostic": "PHP Fatal error:  Uncaught RuntimeException: S2S needs one resolved function for source_buffer_span\n in /home/alexv/__AI/simple_cpp/simple_cpp_02/compiler/my-try/04_analyze/prepare/worker.php:979\nStack trace:\n#0 /home/alexv/__AI/simple_cpp/simple_cpp_02/compiler/my-try/04_analyze/prepare/worker.php(118): scpp\\compiler\\Preparation_Worker->require_success()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_02/compiler/my-try/compiler/preparation.php(14): scpp\\compiler\\Preparation_Worker->prepare()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_02/compiler/my-try/compiler/compile.php(277): scpp\\compiler\\Preparation_Run::prepare()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_02/compiler/my-try/compiler/compile.php(148): scpp\\compiler\\Compiler->prepare()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_02/compiler/my-try/tests/compatibility_modules.php(10): scpp\\compiler\\Compiler->exec_cpp()\n#5 {main}\n  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_02/compiler/my-try/04_analyze/prepare/worker.php on line 979\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/php/constants/level_02/constants_005_top_level_array_const_regression.phs",
+      "metadata": "tests/php/constants/level_02/constants_005_top_level_array_const_regression.test-info.json",
+      "profile": "legacy",
+      "feature": "constants",
+      "sha256": "0fe34d52119bb4ed8170d6ac2e3fe97e6e6b19b748100c0d1be95a74d0c63dd5",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "types\n",
+        "stderr": "",
+        "stdout_hex": "74797065730a",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-048-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-048-v02-generate",
+        "diagnostic": "S2S generation failed: S2S constant initializer requires a scalar literal, constant reference or numeric sign\n\n"
+      },
+      "status": "compatibility-gap"
+    },
+    {
+      "source": "tests/tools/test_scpp_async_core_language.php",
+      "nowdoc": "PHS",
+      "profile": "strict",
+      "feature": "async",
+      "expected": {
+        "exit_code": 0,
+        "stdout": "4242",
+        "stderr": ""
+      },
+      "note": "Exact PHS nowdoc from baseline writeProject; no migration.",
+      "sha256": "e13650bf244c7d3c0e3ea93459a3c22e7412bdee476aff0d29dc1881f934f18a",
+      "v01": {
+        "stage": "passed",
+        "passed": true,
+        "stdout": "4242",
+        "stderr": "",
+        "stdout_hex": "34323432",
+        "stderr_hex": ""
+      },
+      "v02": {
+        "stage": "generation",
+        "passed": false,
+        "error": "case-049-v02-generate: expected exit 0, got 1; see /tmp/scpp-compat-pass1-final/logs",
+        "failure_command": "case-049-v02-generate",
+        "diagnostic": "S2S generation failed: main.phs: Expected ';' at main.phs: byte 6\n\n"
+      },
+      "status": "compatibility-gap"
+    }
+  ]
+}

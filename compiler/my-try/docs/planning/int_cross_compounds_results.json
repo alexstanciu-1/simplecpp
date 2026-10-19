@@ -1,0 +1,979 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/int-cross-compounds/20261019-01",
+  "scope": {
+    "new_compound_signatures": 120,
+    "recovery_sequences": 120,
+    "negative_source_checks": {
+      "nullable-result": 101,
+      "nullable-result_or_false": 101,
+      "nullable-result_or_bool": 101,
+      "result-nullable": 101,
+      "result-result_or_false": 101,
+      "result-result_or_bool": 101,
+      "result_or_false-nullable": 101,
+      "result_or_false-result": 101,
+      "result_or_false-result_or_bool": 101,
+      "result_or_bool-nullable": 101,
+      "result_or_bool-result": 101,
+      "result_or_bool-result_or_false": 101
+    },
+    "native_counts": {
+      "nullable-result": {
+        "basic_cases": 1039,
+        "rhs_cases": 20780,
+        "property_cases": 20780,
+        "owner_cases": 20780,
+        "static_cases": 20780,
+        "snapshot_cases": 14620,
+        "alias_cases": 0
+      },
+      "nullable-result_or_false": {
+        "basic_cases": 939,
+        "rhs_cases": 18780,
+        "property_cases": 18780,
+        "owner_cases": 18780,
+        "static_cases": 18780,
+        "snapshot_cases": 14620,
+        "alias_cases": 0
+      },
+      "nullable-result_or_bool": {
+        "basic_cases": 1039,
+        "rhs_cases": 20780,
+        "property_cases": 20780,
+        "owner_cases": 20780,
+        "static_cases": 20780,
+        "snapshot_cases": 14620,
+        "alias_cases": 0
+      },
+      "result-nullable": {
+        "basic_cases": 1039,
+        "rhs_cases": 22858,
+        "property_cases": 22858,
+        "owner_cases": 22858,
+        "static_cases": 22858,
+        "snapshot_cases": 16082,
+        "alias_cases": 0
+      },
+      "result-result_or_false": {
+        "basic_cases": 1039,
+        "rhs_cases": 22858,
+        "property_cases": 22858,
+        "owner_cases": 22858,
+        "static_cases": 22858,
+        "snapshot_cases": 16082,
+        "alias_cases": 0
+      },
+      "result-result_or_bool": {
+        "basic_cases": 1149,
+        "rhs_cases": 25278,
+        "property_cases": 25278,
+        "owner_cases": 25278,
+        "static_cases": 25278,
+        "snapshot_cases": 16082,
+        "alias_cases": 0
+      },
+      "result_or_false-nullable": {
+        "basic_cases": 939,
+        "rhs_cases": 18780,
+        "property_cases": 18780,
+        "owner_cases": 18780,
+        "static_cases": 18780,
+        "snapshot_cases": 14620,
+        "alias_cases": 0
+      },
+      "result_or_false-result": {
+        "basic_cases": 1039,
+        "rhs_cases": 20780,
+        "property_cases": 20780,
+        "owner_cases": 20780,
+        "static_cases": 20780,
+        "snapshot_cases": 14620,
+        "alias_cases": 0
+      },
+      "result_or_false-result_or_bool": {
+        "basic_cases": 1039,
+        "rhs_cases": 20780,
+        "property_cases": 20780,
+        "owner_cases": 20780,
+        "static_cases": 20780,
+        "snapshot_cases": 14620,
+        "alias_cases": 0
+      },
+      "result_or_bool-nullable": {
+        "basic_cases": 1039,
+        "rhs_cases": 22858,
+        "property_cases": 22858,
+        "owner_cases": 22858,
+        "static_cases": 22858,
+        "snapshot_cases": 16082,
+        "alias_cases": 0
+      },
+      "result_or_bool-result": {
+        "basic_cases": 1149,
+        "rhs_cases": 25278,
+        "property_cases": 25278,
+        "owner_cases": 25278,
+        "static_cases": 25278,
+        "snapshot_cases": 16082,
+        "alias_cases": 0
+      },
+      "result_or_bool-result_or_false": {
+        "basic_cases": 1039,
+        "rhs_cases": 22858,
+        "property_cases": 22858,
+        "owner_cases": 22858,
+        "static_cases": 22858,
+        "snapshot_cases": 16082,
+        "alias_cases": 0
+      }
+    }
+  },
+  "signatures": [
+    [
+      "?int",
+      "+=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "-=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "*=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "/=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "%=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "&=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "|=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "^=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "<<=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      ">>=",
+      "result<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "+=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "-=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "*=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "/=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "%=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "&=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "|=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "^=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "<<=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      ">>=",
+      "result_or_false<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "+=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "-=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "*=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "/=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "%=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "&=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "|=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "^=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      "<<=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "?int",
+      ">>=",
+      "result_or_bool<int>",
+      "?int"
+    ],
+    [
+      "result<int>",
+      "+=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "-=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "*=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "/=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "%=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "&=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "|=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "^=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "<<=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      ">>=",
+      "?int",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "+=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "-=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "*=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "/=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "%=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "&=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "|=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "^=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "<<=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      ">>=",
+      "result_or_false<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "+=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "-=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "*=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "/=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "%=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "&=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "|=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "^=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "<<=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      ">>=",
+      "result_or_bool<int>",
+      "result<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "+=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "-=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "*=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "/=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "%=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "&=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "|=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "^=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "<<=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      ">>=",
+      "?int",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "+=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "-=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "*=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "/=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "%=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "&=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "|=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "^=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "<<=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      ">>=",
+      "result<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "+=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "-=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "*=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "/=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "%=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "&=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "|=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "^=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "<<=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      ">>=",
+      "result_or_bool<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "+=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "-=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "*=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "/=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "%=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "&=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "|=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "^=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "<<=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      ">>=",
+      "?int",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "+=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "-=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "*=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "/=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "%=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "&=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "|=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "^=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "<<=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      ">>=",
+      "result<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "+=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "-=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "*=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "/=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "%=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "&=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "|=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "^=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "<<=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      ">>=",
+      "result_or_false<int>",
+      "result_or_bool<int>"
+    ]
+  ],
+  "suites": {
+    "focused": {
+      "commands": 61,
+      "all_expected_exits": true
+    },
+    "properties": {
+      "commands": 58,
+      "all_expected_exits": true
+    },
+    "int_carrier_compounds": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "int_bitwise_compounds": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "carrier_updates": {
+      "commands": 41,
+      "all_expected_exits": true
+    },
+    "float_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_float": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_cross": {
+      "commands": 26,
+      "all_expected_exits": true
+    },
+    "guarded_mixed": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nonbool_sentinel_equality": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "bool_sentinel_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "false_bool_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "result_equality": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "nullable_int_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_float_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_bool_string_equality": {
+      "commands": 11,
+      "all_expected_exits": true
+    },
+    "eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "numeric_xor": {
+      "commands": 6,
+      "all_expected_exits": true
+    }
+  },
+  "source_integrity": {
+    "checked": 6231,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "4d50562852700693c8cf1509b9a5fa02adc885d6b12c51c3f2e754b5fda70852",
+  "property_regressions": {
+    "passed": true,
+    "executions": 14
+  },
+  "attempts": {
+    "focused": "All twelve ordered carrier-pair proofs passed first attempt.",
+    "regressions": "All 20 suites including the previous 120 arithmetic and bitwise compounds, and 14 property programs pass."
+  },
+  "runtime_changes": [],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "vl07_progress": {
+    "completed_slices": 22,
+    "binary_signatures": 1680,
+    "unary_signatures": 64,
+    "compound_signatures": 240,
+    "remaining_support_targets": 96,
+    "design_scope_candidates": 1872,
+    "proposed_core_denominator": 2080,
+    "proposed_core_coverage_percent": 95.4
+  }
+}

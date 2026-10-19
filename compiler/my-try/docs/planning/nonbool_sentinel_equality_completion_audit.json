@@ -1,0 +1,31 @@
+{
+  "doc_status": "supporting",
+  "changed_from_baseline": [
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/02_expressions.md",
+    "compiler/my-try/docs/s2s_scalar_operators.md",
+    "compiler/my-try/docs/testing.md",
+    "compiler/my-try/tests/guarded_operators.php",
+    "compiler/my-try/tests/guarded_float.php",
+    "compiler/my-try/tests/guarded_string.php",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/wrapper_equality_fixture.php",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php"
+  ],
+  "existing_executable_changes": [
+    "compiler/my-try/tests/guarded_operators.php",
+    "compiler/my-try/tests/guarded_float.php",
+    "compiler/my-try/tests/guarded_string.php",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/wrapper_equality_fixture.php",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php"
+  ],
+  "new_sources": [
+    "compiler/my-try/tests/nonbool_sentinel_equality.php",
+    "compiler/my-try/tests/nonbool_sentinel_equality.py",
+    "compiler/my-try/tests/nonbool_sentinel_deferred.py"
+  ],
+  "tested_non_documentation_mismatches": [],
+  "runtime_changes": [],
+  "documentation_closeout_separate_from_tested_snapshot": true
+}

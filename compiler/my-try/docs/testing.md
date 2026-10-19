@@ -1,6 +1,17 @@
 # Test runners
 Doc Status: supporting
 
+`tests/scalar_admission.py --php /usr/bin/php8.2 --jobs 32 --results FRESH`
+checks bool equality and float arithmetic, conversions, deferred boundaries and
+seven generated programs. Run on dev002. The agreed contract preserves
+`division_by_zero`. `--ieee-zero` retains the historical counterfactual IEEE probe;
+it is expected to fail and is not an acceptance check or an open blocker.
+
+For the v0.1 compatibility milestone, use the [pinned original-source corpus and
+differential runner](planning/v0_1_compatibility_testing.md). It runs both compiler/
+runtime generations, distinguishes baseline failures from v0.2 gaps, and excludes
+operator matrices for a separate semantic-review pass.
+
 CH14-EMIT-01 enables `-Wshadow` in shared fixture compilation (including runtime/PCH)
 and native build actions. `tests/project_cpp.py` covers qualified lookup and legal
 block/parameter/foreach-key/catch shadowing with PCH/no-PCH execution and standalone
@@ -1101,3 +1112,269 @@ of the runner default.
 indexed compound preparation and generated C++: key/RHS sequencing, vector resize
 and replacement, nested COW/shared identity, and missing/deleted/wrong-kind paths.
 It does not rebuild the compiler natively.
+
+
+V-L04 focused float comparisons/mutations: run
+`python3 compiler/my-try/tests/float_operators.py --results FRESH` on dev002.
+This proves six exact float/float comparisons and four value-snapshot mutations,
+including preparation cleanup/recovery and native special values. It is not a
+whole operator-matrix run; see [the bounded report](planning/float_operators_l04.md).
+
+
+V-L05 numeric logical checks:
+`python3 compiler/my-try/tests/numeric_logical.py --results FRESH` on dev002.
+The bounded proof covers canonical numeric !/AND/OR, word aliases and mixed numeric
+pairs, with independent counts/traces, exceptions, truth snapshots and preparation
+recovery. See [scope and results](planning/numeric_logical_l05.md).
+
+`python3 compiler/my-try/tests/string_comparisons.py --results FRESH` verifies
+V-L03 on dev002: seven exact string comparisons, unsigned-byte expected ordering,
+embedded NUL/high bytes, once-only ordered effects and exceptions, local/property
+snapshots, excluded types, cleanup and failure/repair/fresh equivalence. See the
+[bounded report](planning/string_comparisons_l03.md). No full matrix or native compiler rebuild.
+
+`python3 compiler/my-try/tests/guarded_operators.py --results FRESH` verifies the
+[four-carrier guarded-wrapper slice](planning/guarded_wrappers_02.md) on dev002: 228 binary
+and 16 unary signatures, checked states, eager snapshots, lazy guards, errors,
+condition/selection preservation, exclusions and retained-session repair. The
+runtime extraction controls use existing APIs; no runtime implementation changes,
+full matrix run or native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_float.py --results FRESH` verifies the
+[guarded-float slice](planning/guarded_float.md) on dev002: 144 binary and 12 unary
+signatures across four carriers. It checks signed zero, NaN/infinities, missing
+states, exact scalar results, snapshots/lazy effects, division_by_zero, separate
+selector/take semantics, excluded types/operators and retained-session recovery.
+Use `guarded_operators.py` for the companion int regression; no full matrix or
+native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_mixed.py --results FRESH` verifies the
+[mixed-numeric guarded slice](planning/guarded_mixed.md) on dev002: 192 binary
+signatures, independent integer/float states, arithmetic promotion, lazy truth
+conversion, errors, snapshots, alias precedence and retained repair. Companion
+int/float guarded runners retain mixed-ordering and other unsupported-form rejection checks;
+only newly admitted negatives were retired. No full matrix or native rebuild.
+
+`python3 compiler/my-try/tests/guarded_bool.py --results FRESH` verifies the
+[guarded-bool slice](planning/guarded_bool.md) on dev002: four unary and 48 binary
+signatures, payload/sentinel distinctions through source construction/assignment,
+lazy effects, truth snapshots, separate selector/take semantics, exclusions and
+retained recovery. Numeric guarded suites remain companion regressions; no runtime
+change, full matrix or native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_string.py --results FRESH` verifies the
+[guarded-string ordering slice](planning/guarded_string.md) on dev002: 48 signatures,
+independent unsigned-byte ordering, missing states, ordered effects, local/property
+snapshots, selector/take preservation and retained recovery. Equality and string
+logical operators remain separate. No full matrix or native compiler rebuild.
+
+`python3 compiler/my-try/tests/guarded_cross.py --results FRESH` verifies the
+[cross-family slice](planning/guarded_cross.md) on dev002. It runs the five payload
+fixtures in `--cross` mode through the shared runner, builds one shared snippet
+runtime object, and checks exactly 660 distinct binary signatures. Independent
+state/value oracles check family-specific errors, left precedence, lazy effects,
+local/property snapshots and 72 retained repair sequences. Ordinary fixture modes
+remain regression controls. No full matrix or native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_bool_xor.py --results FRESH` verifies all 24
+guarded-bool XOR signatures using `guarded_bool.php --xor`, with exact signature-set
+validation, eager source/error products, local/property snapshots, assignment
+precedence and 24 retained recovery sequences. It reuses the independent bool state
+oracle and snapshot helper. AND/OR and cross-family fixture modes retain their
+existing scope; only newly valid bool-XOR negatives are retired. See the
+[dev002 proof](planning/guarded_bool_xor.md). No runtime changes or full matrix run.
+
+`python3 compiler/my-try/tests/guarded_spaceship.py --results FRESH` verifies 48
+canonical-int/string spaceship signatures using the existing payload fixtures in
+`--spaceship` mode. It checks exact signature sets, int -1/0/1 results, integer
+boundaries, complete byte strings, errors, eager effects, local/property snapshots
+and 48 retained recovery sequences. Exhaustive focused type exclusions retain
+fixed-width, float, bool and mixed-payload boundaries. See the [dev002 proof](planning/guarded_spaceship.md).
+This is a bounded suite, not a full matrix or native compiler rebuild.
+
+`python3 compiler/my-try/tests/numeric_xor.py --results FRESH` verifies all 100
+canonical numeric XOR signatures through `guarded_mixed.php --numeric-xor`.
+Preparation proofs retain each truth conversion's actual payload type; native
+oracles check eager reach, signed zero, NaN/infinities, large integers, source errors,
+local/property snapshots and assignment precedence. The exact signature set and
+100 retained recovery sequences are required. Shared recovery now uses an unresolved
+call as its invalid edit so ordinary plain equality need not be misclassified.
+See [dev002 evidence](planning/numeric_xor.md); no runtime changes or full matrix run.
+
+`python3 compiler/my-try/tests/nullable_int_equality.py --results FRESH` verifies
+all 12 nullable/plain canonical-int equality and identity signatures on dev002.
+It checks state-preserving preparation, integer boundaries, empty versus zero,
+eager RHS reach on empty left, distinct source errors, local/property state
+replacement, 12 retained recovery sequences and 136 excluded sources. Literal-null
+presence and throwing guarded arithmetic/ordering are controls. See the
+[proof](planning/nullable_int_equality.md); no runtime changes or full matrix run.
+
+
+### Nullable bool/string equality — 2026-10-19
+
+`python3 compiler/my-try/tests/nullable_bool_string_equality.py --results FRESH`
+verifies 24 `== != === !==` signatures over nullable/nullable and nullable/plain
+matching bool/string payloads. The shared `wrapper_equality_fixture.php` also
+serves the existing nullable-int runner. It checks complete-state decisions,
+eager error ordering, empty versus false/empty-string distinctions, full byte
+comparison, local/property replacement snapshots and retained recovery. Native
+oracles use presence plus exact payload equality, independently of compiler helpers.
+See the [dev002 proof](planning/nullable_bool_string_equality.md). No runtime changes,
+full matrix run or native compiler rebuild.
+
+
+### Nullable-float equality — 2026-10-19
+
+`python3 compiler/my-try/tests/nullable_float_equality.py --results FRESH` verifies
+12 matching nullable/plain float equality and identity signatures. The shared
+nullable equality fixture distinguishes value comparison (NaN unequal, signed zeros
+equal) from bit-preserving storage checks. It covers eager source errors, presence,
+local/property replacement and retained recovery. Plain float identity, mixed
+payloads and Result equality remain negative controls. See the
+[dev002 evidence](planning/nullable_float_equality.md).
+
+
+### Structured-error Result equality — 2026-10-19
+
+`python3 compiler/my-try/tests/result_equality.py --results FRESH` verifies 48
+signatures across int/float/bool/string. The shared `wrapper_equality_fixture.php`
+(formerly nullable-only) uses separate state equality and identity oracles, five
+valid error payloads with independently varied fields, eager source failures,
+bit-preserving float storage observers, local/property replacement and recovery.
+`error::$no_error` construction rejects. Sentinel families, mixed payloads,
+cross-family comparisons and direct `error` comparisons remain negative controls.
+See [the dev002 proof](planning/result_equality.md); no runtime change/full matrix.
+
+
+### False-sentinel bool equality — 2026-10-19
+
+`python3 compiler/my-try/tests/false_bool_equality.py --results FRESH` proves 12
+signatures over `result_or_false<bool>` and plain bool. The shared wrapper fixture
+uses state-sensitive equality for two carriers and visible-bool comparison for
+identity and wrapper/plain pairs. It proves sentinel/payload-false distinction,
+eager errors, snapshots, recovery and literal bool construction; explicit sentinel
+comparisons and non-bool payloads remain negative controls. See the
+[dev002 report](planning/false_bool_equality.md).
+
+
+### Two-sentinel bool equality — 2026-10-19
+
+`python3 compiler/my-try/tests/bool_sentinel_equality.py --results FRESH` verifies
+12 `result_or_bool<bool>` equality/identity signatures across four carrier states
+and two plain bool values. The shared bool-state oracle distinguishes carrier
+equality from visible identity; false/true literal construction, explicit sentinel
+construction, eager errors, local/property snapshots and recovery are checked.
+Both absent-payload states still fail guarded negation. See the
+[dev002 report](planning/bool_sentinel_equality.md).
+
+
+### Non-bool sentinel equality — 2026-10-19
+
+`python3 compiler/my-try/tests/nonbool_sentinel_equality.py --results FRESH` proves
+72 signatures over two carriers and int/float/string, with states, scalar edges,
+eager errors, local/property snapshots, construction and retained recovery.
+`nonbool_sentinel_deferred.py` separately observes 24 native wrapper/plain equality
+instantiations, recording compiler outcomes and diagnostics. Its task success means
+an observation was collected, not that the comparison compiled. See the
+[dev002 report](planning/nonbool_sentinel_equality.md).
+
+
+### Sentinel/plain equality repair — 2026-10-19
+
+`nonbool_sentinel_equality.py` now verifies the 24 newly admitted ordinary
+carrier/plain comparisons alongside the previous 48 (72 total, 72 recoveries).
+`sentinel_plain_runtime.py` verifies their direct runtime behavior, preserved bool
+and boxed delegation, and 20 scalar/mixed-payload/fixed-width compile rejections.
+The historical `nonbool_sentinel_deferred.py` remains an observation tool: its
+24 instantiations now compile. The earlier failure archive remains unchanged.
+See [the repair report](planning/sentinel_plain_equality.md).
+
+
+### Carrier updates and V-R10 — 2026-10-19
+
+`python3 compiler/my-try/tests/carrier_updates.py --results FRESH` verifies 32
+canonical numeric carrier updates, native prefix/postfix contracts, source snapshots,
+state/error preservation, references, local/instance/static storage, once-only static
+qualifiers, null owners, error ordering and retained recovery.
+`carrier_updates_runtime.py` runs the original nullable native test and 80 negative
+native update controls. See [dev002 evidence](planning/carrier_updates.md).
+
+
+### Canonical-int arithmetic compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/int_carrier_compounds.py --results FRESH` verifies
+48 same-carrier/plain `+= -= *= /=` signatures. It checks preparation, recovery,
+state/error precedence, RHS replacement effects, source snapshots, aliases, nested
+updates, locals/references, stable property owners and static qualifiers.
+See [dev002 evidence and proof boundaries](planning/int_carrier_compounds.md).
+
+
+### Canonical-int remainder/bitwise/shift compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/int_carrier_compounds.py --group bitwise --results FRESH`
+verifies 72 same-carrier/plain `%= &= |= ^= <<= >>=` signatures. The shared fixture
+retains arithmetic mode separately and uses safe shift pairs, signed remainder,
+bit patterns, distinct RHS/computation errors and the existing state/snapshot/owner
+proof. See [dev002 evidence](planning/int_bitwise_compounds.md).
+
+
+### Canonical-int cross-family compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/int_carrier_compounds.py --group cross --results FRESH`
+verifies all 120 ordered distinct-carrier signatures. The shared fixture independently
+models left/right states and checks ordered extraction kinds, destination wrapping,
+error precedence, RHS effects, snapshots, stable owners, write-back and recovery.
+Arithmetic and bitwise modes retain the preceding 120 same-carrier/plain signatures.
+See [dev002 evidence](planning/int_cross_compounds.md).
+
+
+### Exact-float compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/float_compounds.py --results FRESH` runs four scalar
+prerequisites first, then all 96 carrier signatures. It shares
+`numeric_compound_fixture.php` with the retained int modes and adds float state/value
+oracles: NaN classification, signed zero, bit-preserving untouched storage and
+replacement snapshots. See [dev002 evidence](planning/float_compounds.md).
+
+
+### Mixed numeric ordering O1 — 2026-10-19
+
+`python3 compiler/my-try/tests/mixed_ordering.py --results FRESH` runs eight scalar
+prerequisites first, then 192 carrier signatures in 24 family-pair tasks. It checks
+precision boundaries, NaNs/zeros/infinities, ordered errors and conversions, snapshots,
+property-owner rebinding and 50 retained recovery sequences. See [dev002 evidence](planning/mixed_ordering.md).
+
+
+### Float-destination mixed compounds C2W — 2026-10-19
+
+`python3 compiler/my-try/tests/widening_compounds.py --results FRESH` verifies four
+scalar prerequisites before all 96 carrier signatures. The shared numeric fixture
+retains independent float destination and int RHS representations through precision
+boundaries, extraction/conversion facts, errors, snapshots and storage/recovery checks.
+See [dev002 evidence](planning/widening_compounds.md).
+
+
+### Cross-family strict identity E3I — 2026-10-19
+
+`python3 compiler/my-try/tests/cross_identity.py --results FRESH` first verifies
+runtime normalization over all carrier pairs, then all 96 source signatures with
+state, exception-order, local/property snapshot and retained recovery proofs.
+`--runtime-only` selects the prerequisite gate. Run on dev002; see
+[the dated evidence](planning/cross_identity.md).
+
+
+### Mixed numeric strict identity E4I — 2026-10-19
+
+`python3 compiler/my-try/tests/mixed_identity.py --results FRESH` verifies unchanged
+runtime support, then four scalar prerequisites and 96 carrier signatures using
+the shared identity state/snapshot fixture. `--runtime-only` selects the prerequisite
+gate. Run on dev002; see [the dated proof](planning/mixed_identity.md).
+
+
+### Bool/numeric strict identity E5BNI — 2026-10-19
+
+`python3 compiler/my-try/tests/mixed_identity.py --group bool-numeric --results FRESH`
+verifies runtime support first, then eight scalar prerequisites and 192 carrier
+signatures with independent state normalization and source snapshots. Add
+`--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/bool_numeric_identity.md).

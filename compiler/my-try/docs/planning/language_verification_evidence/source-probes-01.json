@@ -1,0 +1,38 @@
+[
+  {
+    "id": "dynamic_postfix_left_snapshot",
+    "checks": [
+      "LV06.001",
+      "LV11.002"
+    ],
+    "authority": "specs/expression_evaluation.md:10",
+    "source_sha256": "7309b004f04db0c5f2abef1af855241a9966e03173872587eba9c6e6c1a51e91",
+    "stage": "passed",
+    "passed": true,
+    "stdout_hex": "333a32"
+  },
+  {
+    "id": "mixed_postfix_left_snapshot",
+    "checks": [
+      "LV06.001",
+      "LV11.002"
+    ],
+    "authority": "specs/expression_evaluation.md:10",
+    "source_sha256": "debc0622d6da3ed17ccda729952002665f63ab2ce9be2561f67b26e14ac5d07f",
+    "stage": "passed",
+    "passed": true,
+    "stdout_hex": "333a32"
+  },
+  {
+    "id": "property_compound_call",
+    "checks": [
+      "LV06.002",
+      "LV19.002"
+    ],
+    "authority": "specs/expression_evaluation.md:50",
+    "source_sha256": "7043471aae8cca84ddd02ba97972c06f963b894b7fe9dd7b4e12b559c6b45ff6",
+    "stage": "passed",
+    "passed": true,
+    "stdout_hex": "333a333a31"
+  }
+]

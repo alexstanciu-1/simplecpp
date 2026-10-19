@@ -1,0 +1,3008 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/bool-numeric-identity/20261019-01",
+  "scope": {
+    "new_binary_signatures": 192,
+    "scalar_prerequisites": 8,
+    "recovery_sequences": 200,
+    "negative_source_checks": 1100
+  },
+  "signatures": [
+    [
+      "bool",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ]
+  ],
+  "carrier_signatures": [
+    [
+      "result_or_false<int>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "int",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "int",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "result_or_false<bool>",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "int",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "?int",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "?int",
+      "bool"
+    ],
+    [
+      "?bool",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "?bool",
+      "!==",
+      "float",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "bool",
+      "===",
+      "?float",
+      "bool"
+    ],
+    [
+      "bool",
+      "!==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "===",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result<bool>",
+      "!==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "===",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<bool>",
+      "!==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "===",
+      "bool",
+      "bool"
+    ],
+    [
+      "?float",
+      "!==",
+      "bool",
+      "bool"
+    ],
+    [
+      "float",
+      "===",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "result<bool>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "===",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!==",
+      "?bool",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "===",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!==",
+      "result_or_false<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "===",
+      "result_or_bool<bool>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!==",
+      "result_or_bool<bool>",
+      "bool"
+    ]
+  ],
+  "counts": {
+    "verification/focused-final/logs/result_or_bool-result-bool-float-execute.stdout": {
+      "binary_cases": 640,
+      "local_cases": 1280,
+      "property_cases": 640
+    },
+    "verification/focused-final/logs/plain-nullable-float-bool-execute.stdout": {
+      "binary_cases": 384,
+      "local_cases": 3072,
+      "property_cases": 1536
+    },
+    "verification/focused-final/logs/result_or_false-result-bool-float-execute.stdout": {
+      "binary_cases": 480,
+      "local_cases": 720,
+      "property_cases": 360
+    },
+    "verification/focused-final/logs/nullable-result_or_false-bool-float-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 612,
+      "property_cases": 306
+    },
+    "verification/focused-final/logs/plain-result_or_bool-bool-float-execute.stdout": {
+      "binary_cases": 288,
+      "local_cases": 288,
+      "property_cases": 144
+    },
+    "verification/focused-final/logs/result_or_bool-result-float-bool-execute.stdout": {
+      "binary_cases": 864,
+      "local_cases": 7776,
+      "property_cases": 3888
+    },
+    "verification/focused-final/logs/plain-result_or_false-bool-float-execute.stdout": {
+      "binary_cases": 272,
+      "local_cases": 272,
+      "property_cases": 136
+    },
+    "verification/focused-final/logs/result_or_false-plain-bool-int-execute.stdout": {
+      "binary_cases": 240,
+      "local_cases": 360,
+      "property_cases": 180
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_bool-int-bool-execute.stdout": {
+      "binary_cases": 384,
+      "local_cases": 2304,
+      "property_cases": 1152
+    },
+    "verification/focused-final/logs/result-result_or_bool-bool-int-execute.stdout": {
+      "binary_cases": 576,
+      "local_cases": 1728,
+      "property_cases": 864
+    },
+    "verification/focused-final/logs/result_or_false-plain-float-bool-execute.stdout": {
+      "binary_cases": 272,
+      "local_cases": 2312,
+      "property_cases": 1156
+    },
+    "verification/focused-final/logs/result-nullable-float-bool-execute.stdout": {
+      "binary_cases": 480,
+      "local_cases": 4800,
+      "property_cases": 2400
+    },
+    "verification/focused-final/logs/result_or_bool-nullable-bool-int-execute.stdout": {
+      "binary_cases": 352,
+      "local_cases": 704,
+      "property_cases": 352
+    },
+    "verification/focused-final/logs/result-nullable-int-bool-execute.stdout": {
+      "binary_cases": 336,
+      "local_cases": 2352,
+      "property_cases": 1176
+    },
+    "verification/focused-final/logs/result-result_or_false-bool-float-execute.stdout": {
+      "binary_cases": 816,
+      "local_cases": 2448,
+      "property_cases": 1224
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_false-bool-float-execute.stdout": {
+      "binary_cases": 544,
+      "local_cases": 1088,
+      "property_cases": 544
+    },
+    "verification/focused-final/logs/result_or_bool-plain-int-bool-execute.stdout": {
+      "binary_cases": 192,
+      "local_cases": 1152,
+      "property_cases": 576
+    },
+    "verification/focused-final/logs/result-plain-bool-float-execute.stdout": {
+      "binary_cases": 768,
+      "local_cases": 2304,
+      "property_cases": 1152
+    },
+    "verification/focused-final/logs/nullable-result_or_bool-float-bool-execute.stdout": {
+      "binary_cases": 544,
+      "local_cases": 4624,
+      "property_cases": 2312
+    },
+    "verification/focused-final/logs/result-plain-float-bool-execute.stdout": {
+      "binary_cases": 320,
+      "local_cases": 3200,
+      "property_cases": 1600
+    },
+    "verification/focused-final/logs/result_or_false-result_or_bool-bool-int-execute.stdout": {
+      "binary_cases": 288,
+      "local_cases": 432,
+      "property_cases": 216
+    },
+    "verification/focused-final/logs/nullable-result_or_bool-int-bool-execute.stdout": {
+      "binary_cases": 352,
+      "local_cases": 1936,
+      "property_cases": 968
+    },
+    "verification/focused-final/logs/plain-plain-bool-int-execute.stdout": {
+      "binary_cases": 160,
+      "local_cases": 160,
+      "property_cases": 80
+    },
+    "verification/focused-final/logs/result_or_false-nullable-int-bool-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 1452,
+      "property_cases": 726
+    },
+    "verification/focused-final/logs/result_or_false-plain-bool-float-execute.stdout": {
+      "binary_cases": 384,
+      "local_cases": 576,
+      "property_cases": 288
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_bool-bool-int-execute.stdout": {
+      "binary_cases": 384,
+      "local_cases": 768,
+      "property_cases": 384
+    },
+    "verification/focused-final/logs/result_or_false-result_or_false-float-bool-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 3468,
+      "property_cases": 1734
+    },
+    "verification/focused-final/logs/result-nullable-bool-int-execute.stdout": {
+      "binary_cases": 528,
+      "local_cases": 1584,
+      "property_cases": 792
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_false-float-bool-execute.stdout": {
+      "binary_cases": 432,
+      "local_cases": 3888,
+      "property_cases": 1944
+    },
+    "verification/focused-final/logs/result-result-float-bool-execute.stdout": {
+      "binary_cases": 960,
+      "local_cases": 9600,
+      "property_cases": 4800
+    },
+    "verification/focused-final/logs/plain-plain-bool-float-execute.stdout": {
+      "binary_cases": 256,
+      "local_cases": 256,
+      "property_cases": 128
+    },
+    "verification/focused-final/logs/result_or_false-result_or_bool-float-bool-execute.stdout": {
+      "binary_cases": 544,
+      "local_cases": 4624,
+      "property_cases": 2312
+    },
+    "verification/focused-final/logs/result_or_bool-result-int-bool-execute.stdout": {
+      "binary_cases": 576,
+      "local_cases": 3456,
+      "property_cases": 1728
+    },
+    "verification/focused-final/logs/nullable-nullable-int-bool-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 1452,
+      "property_cases": 726
+    },
+    "verification/focused-final/logs/int-bool-runtime-execute.stdout": {
+      "runtime_cases": 1044
+    },
+    "verification/focused-final/logs/bool-float-runtime-execute.stdout": {
+      "runtime_cases": 1584
+    },
+    "verification/focused-final/logs/result_or_bool-nullable-bool-float-execute.stdout": {
+      "binary_cases": 544,
+      "local_cases": 1088,
+      "property_cases": 544
+    },
+    "verification/focused-final/logs/result_or_false-result_or_bool-bool-float-execute.stdout": {
+      "binary_cases": 432,
+      "local_cases": 648,
+      "property_cases": 324
+    },
+    "verification/focused-final/logs/plain-result-bool-float-execute.stdout": {
+      "binary_cases": 320,
+      "local_cases": 320,
+      "property_cases": 160
+    },
+    "verification/focused-final/logs/result-result-bool-float-execute.stdout": {
+      "binary_cases": 960,
+      "local_cases": 2880,
+      "property_cases": 1440
+    },
+    "verification/focused-final/logs/nullable-nullable-bool-float-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 612,
+      "property_cases": 306
+    },
+    "verification/focused-final/logs/result_or_false-result-int-bool-execute.stdout": {
+      "binary_cases": 528,
+      "local_cases": 2904,
+      "property_cases": 1452
+    },
+    "verification/focused-final/logs/result_or_false-result_or_bool-int-bool-execute.stdout": {
+      "binary_cases": 352,
+      "local_cases": 1936,
+      "property_cases": 968
+    },
+    "verification/focused-final/logs/plain-plain-float-bool-execute.stdout": {
+      "binary_cases": 256,
+      "local_cases": 2048,
+      "property_cases": 1024
+    },
+    "verification/focused-final/logs/result_or_false-result-bool-int-execute.stdout": {
+      "binary_cases": 336,
+      "local_cases": 504,
+      "property_cases": 252
+    },
+    "verification/focused-final/logs/result_or_false-result_or_false-int-bool-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 1452,
+      "property_cases": 726
+    },
+    "verification/focused-final/logs/result-nullable-bool-float-execute.stdout": {
+      "binary_cases": 816,
+      "local_cases": 2448,
+      "property_cases": 1224
+    },
+    "verification/focused-final/logs/result_or_bool-nullable-int-bool-execute.stdout": {
+      "binary_cases": 288,
+      "local_cases": 1728,
+      "property_cases": 864
+    },
+    "verification/focused-final/logs/plain-nullable-bool-float-execute.stdout": {
+      "binary_cases": 272,
+      "local_cases": 272,
+      "property_cases": 136
+    },
+    "verification/focused-final/logs/result-result_or_bool-bool-float-execute.stdout": {
+      "binary_cases": 864,
+      "local_cases": 2592,
+      "property_cases": 1296
+    },
+    "verification/focused-final/logs/result-plain-int-bool-execute.stdout": {
+      "binary_cases": 224,
+      "local_cases": 1568,
+      "property_cases": 784
+    },
+    "verification/focused-final/logs/nullable-result_or_bool-bool-float-execute.stdout": {
+      "binary_cases": 432,
+      "local_cases": 648,
+      "property_cases": 324
+    },
+    "verification/focused-final/logs/nullable-result_or_false-bool-int-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 396,
+      "property_cases": 198
+    },
+    "verification/focused-final/logs/nullable-result-int-bool-execute.stdout": {
+      "binary_cases": 528,
+      "local_cases": 2904,
+      "property_cases": 1452
+    },
+    "verification/focused-final/logs/result_or_false-result-float-bool-execute.stdout": {
+      "binary_cases": 816,
+      "local_cases": 6936,
+      "property_cases": 3468
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_false-int-bool-execute.stdout": {
+      "binary_cases": 288,
+      "local_cases": 1728,
+      "property_cases": 864
+    },
+    "verification/focused-final/logs/result_or_false-nullable-bool-int-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 396,
+      "property_cases": 198
+    },
+    "verification/focused-final/logs/result_or_bool-result-bool-int-execute.stdout": {
+      "binary_cases": 448,
+      "local_cases": 896,
+      "property_cases": 448
+    },
+    "verification/focused-final/logs/nullable-plain-bool-int-execute.stdout": {
+      "binary_cases": 240,
+      "local_cases": 360,
+      "property_cases": 180
+    },
+    "verification/focused-final/logs/result-plain-bool-int-execute.stdout": {
+      "binary_cases": 480,
+      "local_cases": 1440,
+      "property_cases": 720
+    },
+    "verification/focused-final/logs/plain-nullable-int-bool-execute.stdout": {
+      "binary_cases": 240,
+      "local_cases": 1200,
+      "property_cases": 600
+    },
+    "verification/focused-final/logs/plain-nullable-bool-int-execute.stdout": {
+      "binary_cases": 176,
+      "local_cases": 176,
+      "property_cases": 88
+    },
+    "verification/focused-final/logs/result-result_or_false-int-bool-execute.stdout": {
+      "binary_cases": 336,
+      "local_cases": 2352,
+      "property_cases": 1176
+    },
+    "verification/focused-final/logs/result_or_false-plain-int-bool-execute.stdout": {
+      "binary_cases": 176,
+      "local_cases": 968,
+      "property_cases": 484
+    },
+    "verification/focused-final/logs/plain-plain-int-bool-execute.stdout": {
+      "binary_cases": 160,
+      "local_cases": 800,
+      "property_cases": 400
+    },
+    "verification/focused-final/logs/nullable-nullable-bool-int-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 396,
+      "property_cases": 198
+    },
+    "verification/focused-final/logs/result_or_bool-plain-bool-int-execute.stdout": {
+      "binary_cases": 320,
+      "local_cases": 640,
+      "property_cases": 320
+    },
+    "verification/focused-final/logs/result_or_false-result_or_false-bool-int-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 396,
+      "property_cases": 198
+    },
+    "verification/focused-final/logs/nullable-plain-float-bool-execute.stdout": {
+      "binary_cases": 272,
+      "local_cases": 2312,
+      "property_cases": 1156
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_false-bool-int-execute.stdout": {
+      "binary_cases": 352,
+      "local_cases": 704,
+      "property_cases": 352
+    },
+    "verification/focused-final/logs/nullable-plain-int-bool-execute.stdout": {
+      "binary_cases": 176,
+      "local_cases": 968,
+      "property_cases": 484
+    },
+    "verification/focused-final/logs/plain-result-int-bool-execute.stdout": {
+      "binary_cases": 480,
+      "local_cases": 2400,
+      "property_cases": 1200
+    },
+    "verification/focused-final/logs/result_or_false-nullable-bool-float-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 612,
+      "property_cases": 306
+    },
+    "verification/focused-final/logs/bool-int-runtime-execute.stdout": {
+      "runtime_cases": 1044
+    },
+    "verification/focused-final/logs/result-result_or_bool-float-bool-execute.stdout": {
+      "binary_cases": 640,
+      "local_cases": 6400,
+      "property_cases": 3200
+    },
+    "verification/focused-final/logs/nullable-result-bool-int-execute.stdout": {
+      "binary_cases": 336,
+      "local_cases": 504,
+      "property_cases": 252
+    },
+    "verification/focused-final/logs/result-result-bool-int-execute.stdout": {
+      "binary_cases": 672,
+      "local_cases": 2016,
+      "property_cases": 1008
+    },
+    "verification/focused-final/logs/plain-result-float-bool-execute.stdout": {
+      "binary_cases": 768,
+      "local_cases": 6144,
+      "property_cases": 3072
+    },
+    "verification/focused-final/logs/result_or_bool-nullable-float-bool-execute.stdout": {
+      "binary_cases": 432,
+      "local_cases": 3888,
+      "property_cases": 1944
+    },
+    "verification/focused-final/logs/nullable-result_or_bool-bool-int-execute.stdout": {
+      "binary_cases": 288,
+      "local_cases": 432,
+      "property_cases": 216
+    },
+    "verification/focused-final/logs/result_or_false-result_or_false-bool-float-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 612,
+      "property_cases": 306
+    },
+    "verification/focused-final/logs/result-result-int-bool-execute.stdout": {
+      "binary_cases": 672,
+      "local_cases": 4704,
+      "property_cases": 2352
+    },
+    "verification/focused-final/logs/result_or_bool-plain-float-bool-execute.stdout": {
+      "binary_cases": 288,
+      "local_cases": 2592,
+      "property_cases": 1296
+    },
+    "verification/focused-final/logs/nullable-plain-bool-float-execute.stdout": {
+      "binary_cases": 384,
+      "local_cases": 576,
+      "property_cases": 288
+    },
+    "verification/focused-final/logs/nullable-result-float-bool-execute.stdout": {
+      "binary_cases": 816,
+      "local_cases": 6936,
+      "property_cases": 3468
+    },
+    "verification/focused-final/logs/result-result_or_false-float-bool-execute.stdout": {
+      "binary_cases": 480,
+      "local_cases": 4800,
+      "property_cases": 2400
+    },
+    "verification/focused-final/logs/plain-result_or_false-int-bool-execute.stdout": {
+      "binary_cases": 240,
+      "local_cases": 1200,
+      "property_cases": 600
+    },
+    "verification/focused-final/logs/plain-result_or_false-float-bool-execute.stdout": {
+      "binary_cases": 384,
+      "local_cases": 3072,
+      "property_cases": 1536
+    },
+    "verification/focused-final/logs/float-bool-runtime-execute.stdout": {
+      "runtime_cases": 1584
+    },
+    "verification/focused-final/logs/plain-result_or_bool-int-bool-execute.stdout": {
+      "binary_cases": 320,
+      "local_cases": 1600,
+      "property_cases": 800
+    },
+    "verification/focused-final/logs/nullable-nullable-float-bool-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 3468,
+      "property_cases": 1734
+    },
+    "verification/focused-final/logs/plain-result_or_bool-float-bool-execute.stdout": {
+      "binary_cases": 512,
+      "local_cases": 4096,
+      "property_cases": 2048
+    },
+    "verification/focused-final/logs/result_or_false-nullable-float-bool-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 3468,
+      "property_cases": 1734
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_bool-float-bool-execute.stdout": {
+      "binary_cases": 576,
+      "local_cases": 5184,
+      "property_cases": 2592
+    },
+    "verification/focused-final/logs/nullable-result_or_false-float-bool-execute.stdout": {
+      "binary_cases": 408,
+      "local_cases": 3468,
+      "property_cases": 1734
+    },
+    "verification/focused-final/logs/result_or_bool-plain-bool-float-execute.stdout": {
+      "binary_cases": 512,
+      "local_cases": 1024,
+      "property_cases": 512
+    },
+    "verification/focused-final/logs/plain-result-bool-int-execute.stdout": {
+      "binary_cases": 224,
+      "local_cases": 224,
+      "property_cases": 112
+    },
+    "verification/focused-final/logs/plain-result_or_false-bool-int-execute.stdout": {
+      "binary_cases": 176,
+      "local_cases": 176,
+      "property_cases": 88
+    },
+    "verification/focused-final/logs/result-result_or_false-bool-int-execute.stdout": {
+      "binary_cases": 528,
+      "local_cases": 1584,
+      "property_cases": 792
+    },
+    "verification/focused-final/logs/nullable-result-bool-float-execute.stdout": {
+      "binary_cases": 480,
+      "local_cases": 720,
+      "property_cases": 360
+    },
+    "verification/focused-final/logs/result-result_or_bool-int-bool-execute.stdout": {
+      "binary_cases": 448,
+      "local_cases": 3136,
+      "property_cases": 1568
+    },
+    "verification/focused-final/logs/result_or_bool-result_or_bool-bool-float-execute.stdout": {
+      "binary_cases": 576,
+      "local_cases": 1152,
+      "property_cases": 576
+    },
+    "verification/focused-final/logs/nullable-result_or_false-int-bool-execute.stdout": {
+      "binary_cases": 264,
+      "local_cases": 1452,
+      "property_cases": 726
+    },
+    "verification/focused-final/logs/plain-result_or_bool-bool-int-execute.stdout": {
+      "binary_cases": 192,
+      "local_cases": 192,
+      "property_cases": 96
+    }
+  },
+  "suites": {
+    "runtime": {
+      "commands": 9,
+      "all_expected_exits": true
+    },
+    "focused-final": {
+      "commands": 509,
+      "all_expected_exits": true
+    },
+    "mixed_identity-final": {
+      "commands": 255,
+      "all_expected_exits": true
+    },
+    "cross_identity-final": {
+      "commands": 249,
+      "all_expected_exits": true
+    },
+    "mixed_ordering-final": {
+      "commands": 126,
+      "all_expected_exits": true
+    },
+    "numeric_xor-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "float_operators-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nonbool_sentinel_equality-final": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "bool_sentinel_equality-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "false_bool_equality-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "result_equality-final": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "nullable_int_equality-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_float_equality-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_bool_string_equality-final": {
+      "commands": 11,
+      "all_expected_exits": true
+    },
+    "guarded_cross-final": {
+      "commands": 26,
+      "all_expected_exits": true
+    },
+    "guarded_operators-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_float-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_bool-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_mixed-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_string-final": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "eager_binary-final": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "scalar_admission-final": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "string_identity-final2": {
+      "commands": 12,
+      "all_expected_exits": true
+    }
+  },
+  "source_integrity": {
+    "checked": 6243,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "runtime_changes": [],
+  "compiler_change": "Strict identity distinct-kind admission covers canonical bool/int/float. Each operand preserves its own type and complete state.",
+  "attempts": {
+    "runtime": "first attempt pass before compiler admission; final focused repeats unchanged runtime proof",
+    "focused": "initial shared operators.php stale 1===true rejection stopped scalar preparation; replaced with ordinary 1==true rejection. All 8 scalars and 192 carriers pass next attempt.",
+    "regressions": "Initial shared rejection affected all 21 suites. After its repair, 20 pass; string identity had a second stale true===1 negative, replaced with ordinary true==1. Its final2 retry passes; all 21 latest suites pass. Earlier logs preserved."
+  },
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "evidence_sha256": "0269deae70270c29b7c54b215de921a1576b41c9a7eed6198dfe77f56fa5bf93",
+  "vl07_progress": {
+    "completed_slices": 28,
+    "binary_signatures": 2256,
+    "unary_signatures": 64,
+    "compound_signatures": 432,
+    "verified_total": 2752,
+    "design_scope_candidates": 1200,
+    "original_proposed_core_denominator": 2080,
+    "original_proposed_core_coverage_percent": 100.0,
+    "approved_beyond_original_core": 672
+  }
+}

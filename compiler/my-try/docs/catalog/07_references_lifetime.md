@@ -255,6 +255,14 @@ No native compiler rebuild, runtime wrapper change or performance claim is inclu
 
 ## Ownership empty state and presence — 2026-10-06
 
+
+**Current scope — 2026-10-19 (CS283).** Empty/null/reset and shared/unique presence have native state/once observers; weak implicit presence and alias unset reject. Current collection-only empty deliberately rejects ownership handles, superseding old presence-empty claim. Unique empty construction does not permit copying. Later transfers/selection/weak operations have separate contracts.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [references.md](../../../../specs/references.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS283`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 All three ownership families support default empty construction, null storage
 initialization/assignment and whole-variable `unset`. Native alias/reference-parameter
 null assignment works; `unset` directly on those references still rejects. `clean`
@@ -279,7 +287,17 @@ PCH. Recovery includes changing a shared signature to weak while retaining its
 presence-using body, no-change retry, repair and cleanup/re-preparation. FPM socket
 restrictions required CLI fallback. The compiler itself was not rebuilt natively.
 
+</details>
+
 ## Default owned construction — 2026-10-06
+
+
+**Current scope — 2026-10-19 (CS284).** Current allocation probes use declaration-directed Class/Struct storage and exact typed unique/shared initializers. Historical shared-by-default Struct and zero-argument-only wording is superseded by record/constructor contracts and earlier constructor probes. Noncopyable pointee creation is distinct from copying; reset destroys only retained ownership. No runtime arbitrary construction or allocation benchmark inferred.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [references.md](../../../../specs/references.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS284`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Implemented one `new T(args...)` syntax node with owning type/argument edges and
 ordinary inspection, cleanup and token relocation. Preparation currently admits
@@ -305,6 +323,8 @@ compiler rebuild, allocation benchmark or user-destructor execution proof is cla
 Remaining: user constructors/destructors, runtime value construction, pointee access,
 unique reassignment/argument/return transfer and explicit moves; weak derivation/locking
 is a separate slice. New syntax alone does not enable those paths.
+
+</details>
 
 ## Explicit local unique transfers — 2026-10-06
 
@@ -434,6 +454,14 @@ The reconciliation and subsequent closeout below record the remaining debt decis
 
 ## Catalog reconciliation — 2026-10-06
 
+
+**Current scope — 2026-10-19 (CS289).** Closeout preserves strict reference/value/const distinctions, excludes native proxies, and defers legacy array guards. Constructor-argument/default-struct limits are superseded by later declarations/constructors. Performance guidance is not warning delivery; CH07-WARN-01 is V-D15. Historical native checkpoint remains outside current goal validation.
+
+Contracts and owners: [references.md](../../../../specs/references.md), [native_reference_safety.md](../../../../specs/native_reference_safety.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS289`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 This is a documentation audit against the existing ownership/reference tests and
 Chapter 04/06 contracts, not another implementation or native checkpoint.
 
@@ -469,6 +497,8 @@ Retain these explicit limits/debts and close the bounded positive pass after the
 requested validation. The [Chapter 15 register](15_blocking_debt.md#chapter-07-closeout-debt--2026-10-06)
 owns their final-review milestone, not permission to enable legacy syntax or widen
 the lifetime contract.
+
+</details>
 
 ## Block-local aliases — 2026-10-06
 
@@ -553,6 +583,14 @@ canonical formation alone does not establish nested payload operations.
 
 ## Progress
 
+
+**Current scope — 2026-10-19 (CS294).** Progress rows summarize bounded evidence, not independent whole-feature passes. Constructor arguments are implemented under later record contracts; nullable-only unset wording omits later ownership reset. Warning advice remains missing V-D15, whereas heavy-value reassignment guidance is not a promised emitted warning.
+
+Contracts and owners: [references.md](../../../../specs/references.md), [native_reference_safety.md](../../../../specs/native_reference_safety.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS294`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
@@ -579,6 +617,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-056](#note-056) | guidance-only | Composite value parameter reassignment | existing value contract | verified for admitted types | deferred | No body-dependent passing mode or universal deep-copy claim |
 | [NOTE-059](#note-059) | debt | Reference-return advice | warning delivery deferred | — | deferred | CH07-WARN-01 |
 | [NOTE-060](#note-060) | reconciled-excluded | Legacy typed reference proxies | not admitted | not used | deferred | Native-reference safety; exact stable places only |
+
+</details>
+
 ## FUNC-REF-001
 
 **v0.2 decision / target C++:** See the [bounded alias/reference-return checkpoint](#local-aliases-and-bounded-reference-returns--2026-10-06) and progress row above. Imported v1 behavior below is historical, not broader v0.2 admission.
@@ -729,9 +770,19 @@ ERROR
 
 ## VAR-UNSET-001
 
+
+**Current scope — 2026-10-19 (CS299).** Native nullable owner reset preserves aliases, repeated reset and later writes; ownership reset has separate native proof. Direct alias/reference-parameter unset rejects. Exact-type reset is neither symbol removal nor reference detachment; scalar/container clean and keyed removal are separate operations.
+
+Contracts and owners: [references.md](../../../../specs/references.md), [native_reference_safety.md](../../../../specs/native_reference_safety.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS299`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** See [whole-storage resets](#whole-storage-resets--2026-10-06).
 Preparation admits nullable owner variables and emits exact-type default assignment;
 alias/reference-parameter unset rejects. Keyed removal retains its separate contract.
+
+</details>
 
 ### Imported version 1
 
@@ -1191,9 +1242,19 @@ void_t f(mixed_t a) { expect_array_argument(a, false, "a"); a = table_(); }
 
 ## TYPE-VAR-007A
 
+
+**Current scope — 2026-10-19 (CS311).** Strict `unique<Point>` with authored two-argument constructor executes and observes field sum 3 in the dedicated catalog probe. Imported comment syntax remains legacy; zero-argument-only/arguments-deferred catalog decision is stale. Matching payload and direct unique allocation remain explicit contracts.
+
+Contracts and owners: [references.md](../../../../specs/references.md), [native_reference_safety.md](../../../../specs/native_reference_safety.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS311`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Strict-first scope:** The proved strict subset is recorded below; imported annotation syntax remains legacy reference only.
 
 **v0.2 decision / target C++:** Strict `$p unique<Point> = new Point();` default-struct construction is proved by `tests/ownership.php` and emits direct unique allocation. Constructor arguments in the imported example remain deferred.
+
+</details>
 
 ### Imported version 1
 

@@ -16,6 +16,14 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Progress
 
+
+**Current scope — 2026-10-19 (CS358).** Enum support remains bounded by the per-card proofs. Later CH10 ownership/constructor work resolves the nullable and argument-bearing construction prerequisites. Reflection, string backing and method extensions remain V-D08. Original enum failures and adapted audit lanes remain historical evidence; H12 fixture repairs passed in fixture_repairs_01.
+
+Contracts and owners: [compact_layout_types.md](../../../../specs/compact_layout_types.md), [exceptions_v0_2.md](../../../../specs/exceptions_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS358`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
@@ -27,6 +35,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ENUM-002](#enum-002) | bounded pass | `enum HttpStatus: int { case Ok = 200; case NotFound = 404; }` | proved | proved | deferred | Includes exact fixed-width backing; [execution checkpoint](#enum-execution--2026-10-06) |
 | [ENUM-003](#enum-003) | bounded helpers; remainder CH15 | `Color::tryFrom('green')?->name ?? 'null'` | partial | partial | deferred | Explicit name/numeric helpers proved; reflection/string backing deferred |
 | [ENUM-004](#enum-004) | deferred until CH10/11 models | Enum methods/interfaces | not claimed | not claimed | deferred | Requires shared method/interface foundations |
+
+</details>
 
 ## Enum model foundation — 2026-10-06
 
@@ -248,6 +258,14 @@ rebuild or portability conversion was performed.
 
 ### Bounded closeout — 2026-10-06
 
+
+**Current scope — 2026-10-19 (CS366).** Bounded enums and explicit helpers have concrete proofs; later constructor probes resolve the old CH10 carryovers. String backing, PHP reflection, enum methods/interfaces and wrappers remain explicit extensions in V-D08. Historical native compiler checkpoints do not prove current native compiler parity. Original enum failures remain archived; H12 repaired the bounded stale fixture expectations in fixture_repairs_01.
+
+Contracts and owners: [compact_layout_types.md](../../../../specs/compact_layout_types.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS366`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 User approved concluding CH09's bounded feature pass, not claiming all imported
 examples are implemented. Core enums, exact storage, selection, explicit defaults
 and name/numeric helpers are proved above. Existing struct value-copy support is
@@ -268,13 +286,25 @@ build. See the [portability report](../portability/conversion_review.md#latest-n
 for source/harness evidence and the STAN/LLVM exclusions. This supersedes the
 earlier partial passes and clears the native gate before CH10 discussion.
 
+</details>
+
 ## TYPE-VAR-006
+
+
+**Current scope — 2026-10-19 (CS367).** Strict `value<Point>` local replaces legacy annotation. Completed Point constructor receives 1,2; copy remains 3 after mutating original x to 9. Native result establishes argument-bearing inline construction and copy independence; old construction prerequisite prose is stale. Backend wrapper spelling is not a compatibility requirement.
+
+Contracts and owners: [compact_layout_types.md](../../../../specs/compact_layout_types.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS367`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 **Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
 
 **v0.2 decision / target C++:** Existing bounded struct value storage/copy retained;
 constructor integration carries to CH10. The imported argument-bearing example is
 not claimed complete.
+
+</details>
 
 ### Imported version 1
 
@@ -311,10 +341,20 @@ value_p<Point> p = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));
 
 ## TYPE-VAR-006A
 
+
+**Current scope — 2026-10-19 (CS368).** Current nullable inline spelling `?value<Point>` constructs with 1,2, copies into `value<Point>`, resets the nullable original and returns copied sum 3. The first `value<?Point>` attempt remains rejected; this is documented modifier placement and legacy annotation migration, not silent original-source acceptance. Old no-native-support claim is stale.
+
+Contracts and owners: [compact_layout_types.md](../../../../specs/compact_layout_types.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS368`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Strict-first scope:** Define the strict source form and verify its type/ownership contract when this feature is discussed. The imported annotation spelling below is legacy reference only.
 
 **v0.2 decision / target C++:** Nullable inline object operations and construction
 carry to CH10; no native support is claimed for this imported example.
+
+</details>
 
 ### Imported version 1
 

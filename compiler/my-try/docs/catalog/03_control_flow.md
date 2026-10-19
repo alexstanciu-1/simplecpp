@@ -30,6 +30,14 @@ for exact source/harness identity and portability adaptations; LLVM/STAN remain 
 
 ### Remaining debt and scope boundaries
 
+
+**Current scope — 2026-10-19 (CS101).** Debt register is not a permanent incompatibility list. Brace-free strict compatibility is missing S06; numbered transfers, alternative grammar and constant-reachability/CFG extensions remain explicit bounds. Foreach, enum selection, record/shared joins and exceptions have later owners; old blanket deferrals are stale. LLVM/native compiler/performance remain outside this verification goal.
+
+Contracts and owners: [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [array_semantics.md](../../../../specs/array_semantics.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS101`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Explicitly flagged as **deferred debt** by user agreement. These entries include
 intentional first-pass limits, not only defects. They are not implementation approval
 or a requirement to support every PHP spelling; confirm the owning language contract
@@ -53,6 +61,8 @@ copyability, bracket overload/lowering, and output partitioning. The portability
 blockers found at closeout are **resolved**, with the native checkpoint linked above.
 Future native validation remains an explicitly requested checkpoint, not an automatic
 requirement for every feature slice.
+
+</details>
 
 ### Handoff to Chapter 04
 
@@ -168,6 +178,14 @@ This is PHP-host/compiler and generated-program proof, not a native compiler reb
 
 ## Agreed loop slice — 2026-10-02
 
+
+**Current scope — 2026-10-19 (CS105).** Loops prove init/test/update order, loop-local visibility, body-local exclusion, nearest transfers, do-continue test and for-continue update, break skipping and completion. PHP assertions inspect weak target identity, retained syntax and failed/repeated/fresh recovery. Reserved-only foreach prose is superseded by Chapter 06.
+
+Contracts and owners: [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [array_semantics.md](../../../../specs/array_semantics.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS105`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 `loop_node extends breakable_node` owns one `block_node` body and shared preparation
 dispatch. `while_node` and `do_while_node` own their condition; `for_node` owns ordered
 initialization statements, condition expressions and update expressions. Named edges
@@ -216,7 +234,17 @@ compiler rebuild.
 Final loop evidence: `/tmp/my-try-loops-20261002-final/` — 10 focused PHP suites
 (shared FPM pool) and 43 generated-C++ programs passed.
 
+</details>
+
 ## Agreed switch slice — 2026-10-02
+
+
+**Current scope — 2026-10-19 (CS106).** Switch observes selector once, grouped labels, fallthrough/default anywhere, group-local shadowing, exact duplicate rejection and distinct break/loop-continue targets. Completion accounts for unmatched path. Canonical-int-only checkpoint is bounded; enum selection is a later verified owner, not unsupported.
+
+Contracts and owners: [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [array_semantics.md](../../../../specs/array_semantics.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS106`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 `switch_node extends breakable_node` owns a selector and ordered
 `switch_case_group` records. Each group owns explicit case/default labels and one
@@ -259,6 +287,8 @@ incremental recovery (including malformed syntax). Final evidence:
 FPM pool and 65 generated-C++ executions passed with `-Werror=return-type`.
 This does not prove a native compiler rebuild; that checkpoint remains on demand.
 
+</details>
+
 ## Scalar truthiness update — 2026-10-02
 
 All implemented condition consumers (`if`, `elseif`, `while`, `do-while`, and the
@@ -292,6 +322,14 @@ Evidence: `/tmp/my-try-truthiness-20261002-reviewed/` — 10 focused PHP suites 
 
 ## Agreed conditional-expression slice — 2026-10-02
 
+
+**Current scope — 2026-10-19 (CS108).** Same-scalar ternary/Elvis prove one condition/left evaluation, lazy branches, snapshot value result, grammar precedence and unselected-branch validation/dependencies. PHP checks child edges, conversions and failed/repeated/repair equivalence. Later nullable/shared/record join ledgers extend this checkpoint; it is not a complete conditional matrix pass. Old effect gate is superseded.
+
+Contracts and owners: [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [array_semantics.md](../../../../specs/array_semantics.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS108`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Full ternary and Elvis share `conditional_expression_node`: required condition and
 fallback, optional true branch (absent for shorthand), without a redundant kind flag.
 Preparation uses `Condition_Truthiness`, prepares both branches, and accepts matching
@@ -320,6 +358,8 @@ precedence, value-only results, distinct child edges, retained body identity,
 dependency invalidation and failure/retry/repair. Generated programs compile with
 `-Werror=return-type`. This is PHP-host and generated-program proof, not a native
 compiler rebuild.
+
+</details>
 
 ## Agreed match-expression slice — 2026-10-02
 
@@ -365,6 +405,14 @@ generated-program proof, not a native compiler rebuild.
 
 ## Progress
 
+
+**Current scope — 2026-10-19 (CS110).** Progress table is routing evidence, not a substitute for per-rule verification. Its foreach deferred/parser-only status is stale; value iteration has independent executed proof and mutation policy remains separately deferred.
+
+Contracts and owners: [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [array_semantics.md](../../../../specs/array_semantics.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS110`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
@@ -384,6 +432,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-017](#note-017) | split | See NOTE-017.a/b | not-applicable | not-applicable | deferred | Summary reconciled below; no separate implementation |
 | [NOTE-017.a](#note-017a--bounded-statement-control-flow) | agreed | Existing CTRL-IF/WHILE/DOWHILE/FOR/SWITCH examples | proved | proved | deferred | Existing bounded slices and tests/control_flow.php |
 | [NOTE-017.b](#note-017b--foreach-belongs-to-chapter-06) | deferred | `foreach ($items as $item) { }` | deferred | deferred | deferred | Chapter 06 CTRL-FOREACH-001–004; reserved loop specialization only |
+
+</details>
+
 ## CTRL-IF-001
 
 **v0.2 decision / target C++:** [Agreed first slice](#agreed-first-slice--2026-10-02).
@@ -825,12 +876,22 @@ auto x = static_cast<int_t>(1); if (...) { x = static_cast<int_t>(2); } php::ech
 
 ## NOTE-017
 
+
+**Current scope — 2026-10-19 (CS123).** Overview splits statement control flow from container iteration; it adds no semantic feature. Individual branch/loop/switch and Chapter 06 owners carry proofs; imported rejection heading contradicts foreach lowering and is historical provenance.
+
+Contracts and owners: [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [array_semantics.md](../../../../specs/array_semantics.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS123`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Source:** [generators/php/specs/rules.md:249](../../../../generators/php/specs/rules.md)
 
 **v0.2 decision / examples — 2026-10-02:** Reconciled into the two bounded items
 below. This is an overview of existing feature entries, not another implementation
 task or a claim of full PHP control-flow compatibility. The imported text is retained
 unchanged for provenance.
+
+</details>
 
 ### NOTE-017.a — Bounded statement control flow
 
@@ -853,6 +914,14 @@ by EXPR-TERNARY-001 and CTRL-MATCH-001, not implied by the imported list.
 
 ### NOTE-017.b — Foreach belongs to Chapter 06
 
+
+**Current scope — 2026-10-19 (CS125).** Ownership correctly routes foreach to Chapter 06, but reserved/parser-rejected-only description is stale. Native foreach observers prove vector/hash/mixed/dynamic ordered value iteration, empty/nested/temp source, scope, conversions and transfers. Reference iteration/structural mutation policy remain separately deferred.
+
+Contracts and owners: [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [array_semantics.md](../../../../specs/array_semantics.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS125`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 The imported “Rejected” heading contradicts its own lowering sentence. Treat that
 as an inherited documentation discrepancy, not a language-level ban or an agreed
 indexed-for lowering contract for this compiler.
@@ -863,6 +932,8 @@ TODO in [structures_loops.php](../../03_parse/structures/structures_loops.php).
 Future work must reuse the shared loop/body/transfer protocol and establish container,
 binding and reference behavior there. The placeholder is not parser, preparation or
 emission support; current parser rejection does not complete the foreach feature.
+
+</details>
 
 ### Imported prose
 
