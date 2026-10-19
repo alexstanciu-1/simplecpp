@@ -12,6 +12,26 @@ through the existing registry and bindings, using original runtime templates beh
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
 
+## Concrete iteration adapter
+
+`CPP_Concrete_Iteration` supplies concrete range/iterator/sentinel/entry interfaces
+for the existing `scpp::value_iteration` protocol. Ordinary foreach emission still
+owns source evaluation, source lifetime, variable binding and loop control. The
+existing prepared iteration contract supplies key/value types. The adapter does
+not recreate iteration semantics or import the parked guarded-iteration work.
+
+Requests reference the existing prepared facts and replay through the existing
+fragment operation inventory. Native protocol objects occupy inline storage,
+with layout resolved by the existing probe/cache mechanism. Entry dereference
+materializes the runtime entry exactly once. Key/value results reuse the same
+physical-result adaptation as runtime calls, including already-concrete payloads.
+There are no vector/hash family branches or new semantic registry entries.
+
+This slice requires a substituted source representation. Unsubstituted source
+adapters remain an explicit coverage gap. Mutation/replacement during iteration
+retains the ordinary runtime's existing unsupported status. Full runtime metadata
+expansion remains deferred. See the [iteration evidence](../../../../specs/planning/results/prelower_concrete_iteration_2026_10_19/README.md).
+
 ## Concrete argument substitution foundation
 
 The agreed target is `runtime → pretemplate support → application`: recursively

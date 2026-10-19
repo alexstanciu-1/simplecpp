@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_substitution.py --iteration --results FRESH_DIRECTORY`
+compares ordinary and concrete iteration over vectors, hashes, nested containers and
+an independently metadata-registered `tray<T>` provider. It covers source evaluation
+once, key order, empty loops, break/continue/return, throwing payload copies, inline
+protocol storage, demand removal/replay and layout-cache reuse. Instrumented O0,
+ASan/UBSan and controlled O2 compare all counters; stock O2 differences are reported
+separately. The tracked-payload loop must allocate zero times and perform exactly the
+ordinary three copies/destructions, including early return.
+
 `python3 compiler/my-try/tests/prelower_substitution.py --observations --results FRESH_DIRECTORY`
 checks concrete runtime free calls: counts on several physical container types,
 byte-oriented strlen, temporary-owner observation, value argument sequencing and a

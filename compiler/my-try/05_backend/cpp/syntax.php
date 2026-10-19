@@ -425,12 +425,13 @@ final class CPP_Syntax
 	/** Borrow the once-evaluated source; value bindings copy entries, not the collection. */
 	public function generate_foreach(foreach_node $node): string
 	{
-		if ($this->context->specialization_engine !== null) {
+		if (($this->context->specialization_engine !== null) && !$this->context->concrete_types()) {
 			if ($this->context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: iteration needs cursor transport'); }
 			return CPP_Concrete_Operations::iterate($node, $this->context);
 		}
 		$facts /** prepared_iteration */ = $node->require_preparation()->iteration;
-		$this->context->headers['scpp/value_iteration.hpp'] = true;
+		if ($this->context->concrete_types()) { CPP_Concrete_Iteration::require_interface($node, $this->context); }
+		else { $this->context->headers['scpp/value_iteration.hpp'] = true; }
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$source = 'foreach_source_' . $id;

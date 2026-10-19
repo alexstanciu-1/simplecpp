@@ -39,6 +39,14 @@ Accounting now emits 283/285 fragments; the two remaining failures are iteration
 No accounting source workaround was needed. The user permits documented workarounds
 for unrelated accounting issues, not bypasses of prelowering coverage gaps.
 
+The [iteration adapter](results/prelower_concrete_iteration_2026_10_19/README.md)
+reuses ordinary foreach emission, prepared key/value contracts and native iteration.
+Accounting now emits **285/285 fragments**, publishes and reaches Clang. Native
+compilation first fails on the existing concrete integer increment interface gap in
+calendar code (`year++`, `month++`). No source workaround or parked iteration work
+was imported. Whole-accounting compilation remains unproved. The focused iteration
+proof matches controlled boundary counters; stock O2 has +1 allocation / +8 bytes.
+
 Full runtime coverage is **deferred**. Later, expand the metadata supplied by the
 runtime through the existing registry. Do not turn this accounting slice into that
 inventory/coverage project or add a parallel registry.

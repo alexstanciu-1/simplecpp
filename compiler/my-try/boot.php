@@ -183,6 +183,7 @@ require_once __DIR__ . '/05_backend/cpp/opaque_representation.php';
 require_once __DIR__ . '/05_backend/cpp/runtime_operations.php';
 require_once __DIR__ . '/05_backend/cpp/concrete_members.php';
 require_once __DIR__ . '/05_backend/cpp/concrete_index.php';
+require_once __DIR__ . '/05_backend/cpp/concrete_iteration.php';
 require_once __DIR__ . '/05_backend/cpp/source_calls.php';
 require_once __DIR__ . '/05_backend/cpp/initializer_buffer.php';
 require_once __DIR__ . '/05_backend/cpp/concrete_operations.php';

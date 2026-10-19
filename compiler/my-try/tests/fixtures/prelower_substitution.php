@@ -8,9 +8,10 @@ $revision = (int)($argv[4] ?? 0);
 $alignment = (int)($argv[5] ?? 8);
 $composed = $mode === 'composed';
 $source_arguments = ($argv[6] ?? '') === 'arguments';
+$iteration = ($argv[6] ?? '') === 'iteration';
 $observations = ($argv[6] ?? '') === 'observations';
 $compound = ($argv[6] ?? '') === 'compound';
-$casts = $observations || $compound || ($argv[6] ?? '') === 'casts';
+$casts = $iteration || $observations || $compound || ($argv[6] ?? '') === 'casts';
 $binary = $casts || ($argv[6] ?? '') === 'binary';
 $initializers = $binary || ($argv[6] ?? '') === 'initializers';
 $indexing = $initializers || ($argv[6] ?? '') === 'indexing';
@@ -19,6 +20,7 @@ $fields = $members || (($argv[6] ?? '') === 'fields') || $source_arguments;
 $metadata = new runtime_catalog_input();
 foreach (Model::$runtime_metadata->modules as $module) { $metadata->modules->add($module->name, $module); }
 $metadata->modules->add('type_proof', Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__) . '/runtime_types.json'), 'type_proof.json'));
+if ($iteration) { $metadata->modules->add('protocol_proof', Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__) . '/runtime_protocols.json'), 'protocol_proof.json')); }
 Compiler_Lifecycle::configure_runtime($metadata);
 if (!is_dir($source)) { mkdir($source, 0777, true); }
 
@@ -137,6 +139,36 @@ function cast_failure(vector<int> &$trace, const string &$bad): int { return (in
 function cast_key_failure(vector<int> &$trace): void { $map hash<int,int> = [(uint8)cast_number($trace,256) => index_inner_key($trace,7)]; }
 function cast_value_failure(vector<int> &$trace): void { $map hash<int,int> = [index_key($trace,1) => (uint8)cast_number($trace,256), index_inner_key($trace,7) => 1]; }
 ';
+}
+if ($iteration) {
+    $program .= <<<'PHS'
+function iteration_source(vector<int> &$trace): vector<int> { $trace[] = 9; return [2,3,4]; }
+function iteration_work(vector<int> &$trace): int {
+ $sum = 0;
+ foreach (iteration_source($trace) as $key => $value) {
+  if ($key === 1) { continue; }
+  $sum = $sum + $value;
+ }
+ $map hash<int,int> = [8 => 20, 3 => 40];
+ foreach ($map as $key => $value) { $trace[] = $key; $sum = $sum + $value; }
+ $nested vector<vector<int>> = [[1,2],[3]];
+ foreach ($nested as $row) { foreach ($row as $value) { $sum = $sum + $value; } }
+ $custom tray<int> = [5,6];
+ foreach ($custom as $key => $value) { $sum = $sum + $key + $value; }
+ $empty vector<int>;
+ $value = 100;
+ foreach ($empty as $value) { return -1; }
+ if ($value !== 100) { return -2; }
+ foreach ($map as $key => $value) { $sum = $sum + $key; break; }
+ return $sum;
+}
+function iteration_tracked(const vector<receipt> &$values): int {
+ $sum = 0; foreach ($values as $item) { $sum = $sum + 1; } return $sum;
+}
+function iteration_return(const vector<receipt> &$values): int {
+ foreach ($values as $item) { return 1; } return 0;
+}
+PHS;
 }
 if ($observations) {
     $program .= '
@@ -282,6 +314,7 @@ function cast_text'));
                 if ($request->kind === cpp_runtime_operation_kind::conversion) {
                     throw new \LogicException('Removed casts retained a conversion helper');
                 }
+                if ($iteration && $request->kind === cpp_runtime_operation_kind::concrete_iteration) { throw new \LogicException('Removed iteration retained a helper'); }
                 if ($observations && ($request->kind === cpp_runtime_operation_kind::observation || $request->kind === cpp_runtime_operation_kind::runtime_call)) {
                     throw new \LogicException('Removed observations retained a helper');
                 }
@@ -678,9 +711,34 @@ if ($observations) {
     }';
     $main = str_replace('verify();', 'verify(); observation_proof();', $main);
 }
+if ($iteration) {
+    $header .= "\nvoid iteration_proof();\n";
+    foreach (['iteration_work','iteration_tracked','iteration_return'] as $name) {
+        $support .= "\n" . '#include "' . CPP_Artifacts::callable_header($name) . "\"\n";
+    }
+    $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('iteration_work')[0]);
+    $tracked_function = CPP_Callables::source_reference(Model::$global_scope->functions_named('iteration_tracked')[0]);
+    $early = CPP_Callables::source_reference(Model::$global_scope->functions_named('iteration_return')[0]);
+    $support .= 'void iteration_proof() {
+      begin(); { Vector trace; auto result=' . $function . '(trace); require(result.native_value()==92);
+        require(unwrap(trace).size()==3); const long expected[]={9,8,3};
+        for(int i=0;i<3;++i) require(unwrap(trace).at(i).native_value()==expected[i]);
+      } report("iteration");
+      TrackedVector values; unwrap(values).append(runtime_type_test::receipt{}); unwrap(values).append(runtime_type_test::receipt{});
+      begin(); { auto result=' . $tracked_function . '(values); require(result.native_value()==2);
+        require(' . $early . '(values).native_value()==1);
+      } report("iteration-copies");
+      const int live=live_values; copies_before_throw=1; bool caught=false;
+      try { (void)' . $tracked_function . '(values); } catch(const CopyFailure&) { caught=true; }
+      copies_before_throw=-1; require(caught && live_values==live);
+      require(' . $tracked_function . '(values).native_value()==2);
+    }';
+    $main = str_replace('verify();', 'verify(); iteration_proof();', $main);
+}
 $provider = '#include "instrument.hpp"' . "\n" . file_get_contents(dirname(__DIR__) . '/runtime_type_support.hpp');
 $provider = str_replace('struct receipt { scpp::int_t<> number; };', 'struct receipt { scpp::int_t<> number; Tracked payload{}; };', $provider);
 $provider = str_replace('T value;', 'alignas(alignof(T) > ' . $alignment . ' ? alignof(T) : ' . $alignment . ') T value;', $provider);
+if ($iteration) { $artifacts->append(new cpp_artifact('proof:protocol', cpp_artifact_kind::header, 'runtime_protocol_support.hpp', file_get_contents(dirname(__DIR__) . '/runtime_protocol_support.hpp'))); }
 foreach (['interface.hpp'=>$header, 'runtime_type_support.hpp'=>$provider] as $path=>$text) {
     $artifacts->append(new cpp_artifact('proof:' . $path, cpp_artifact_kind::header, $path, $text));
 }

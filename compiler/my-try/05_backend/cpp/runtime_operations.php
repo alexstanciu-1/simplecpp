@@ -15,6 +15,10 @@ final class CPP_Runtime_Operations
 	public static function name(cpp_runtime_operation $request): string
 	{
 		$key = $request->kind_name() . ':' . $request->spelling . ':' . ($request->append ? 'append' : 'store');
+		if ($request->iteration !== null) {
+			$key .= ':key=' . CPP_Opaque_Representation::identity($request->iteration->key_type)
+				. ':value=' . CPP_Opaque_Representation::identity($request->iteration->value_type);
+		}
 		if ($request->call !== null) {
 			$key .= ':' . ((($request->kind === cpp_runtime_operation_kind::concrete_member) || ($request->kind === cpp_runtime_operation_kind::runtime_call))
 				? CPP_Callables::argument_identity($request->call) : CPP_Source_Calls::identity($request->call));
@@ -138,7 +142,7 @@ final class CPP_Runtime_Operations
 	}
 
 	/** Providers can return native outer objects or already-substituted physical payloads. */
-	private static function concrete_call_result(string $output, string $native, string $unpack, string $expression): string
+	public static function concrete_call_result(string $output, string $native, string $unpack, string $expression): string
 	{
 		return $unpack . 'auto operation = [&]() -> decltype(auto) { return ' . $expression . '; }; '
 			. 'return []<class Operation>(const Operation& operation) -> ' . $output . ' { '
