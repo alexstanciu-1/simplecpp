@@ -5,6 +5,15 @@ Date: 2026-10-19
 Status: first bounded integer/vector slice implemented; remaining work follows the [agreed decision](cpp_template_prelowering_decision_2026_10_19.md).
 This document records the implementation sequence. The [current coverage guide](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md) distinguishes implemented behavior from remaining work.
 
+## Accounting coverage checkpoint
+
+The [unchanged small-app audit](results/accounting_concrete_coverage_2026_10_19/README.md)
+passes 998 checks with the ordinary backend. General concrete emission stops before
+Clang; independent prepared-fragment probes identify construction/iteration,
+noninteger operations/conversions, indexed compound updates and runtime-call routing
+gaps. Nominal class handles still expose native shared templates. Use this observed
+coverage to prioritize general integration; do not extend the old family recipes.
+
 ## Active integration sequence: concrete type substitution
 
 1. Reuse the type-binding owner to spell native implementations with recursively
