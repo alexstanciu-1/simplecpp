@@ -12,6 +12,14 @@ final class CPP_Syntax
 		$this->context = $context;
 	}
 
+	/** Native-only handlers must reject before emitting operands or exposing runtime headers. */
+	private function require_native_operation(string $operation): void
+	{
+		if ($this->context->concrete_types()) {
+			throw new \RuntimeException('prelower_templates: ' . $operation . ' requires concrete transport');
+		}
+	}
+
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
@@ -51,6 +59,7 @@ final class CPP_Syntax
 			return '[' . self::comma_list($capture_parts) . '](' . self::comma_list($parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
 		}
 		if ($node instanceof object_type_node) {
+			$this->require_native_operation('object type operation');
 			$object_type = object_cast($node, object_type_node::class);
 			$facts = $object_type->require_object_type_preparation();
 			$target = CPP_Types::payload($facts->target_payload, $this->context);
@@ -63,6 +72,7 @@ final class CPP_Syntax
 		}
 		if ($node instanceof ownership_observation_node)
 		{
+			$this->require_native_operation('ownership observation');
 			$observation = object_cast($node, ownership_observation_node::class);
 			if ($this->context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: weak observation needs operation transport'); }
 			$facts = $observation->require_observation_preparation();

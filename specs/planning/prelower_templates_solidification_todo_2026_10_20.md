@@ -100,6 +100,11 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   nested callable storage uses the same diagnostic. Five ordinary/rejection/recovery/
   replay cases pass. This closes one known escape, not the complete contract gate.
   See [slice evidence](results/prelower_callable_boundary_2026_10_20/README.md).
+- [x] Close native-only object-test/cast and weak-observation escapes in the existing
+  expression owner. Reject before operand emission/runtime-header exposure, keeping
+  ordinary source semantics unchanged. Four new rejection/recovery cases pass;
+  [evidence](results/prelower_operation_boundaries_2026_10_20/README.md) records the
+  bounded scope. Concrete adapters for these operations remain unimplemented.
 - [ ] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
   Choosing ordinary compilation remains an explicit caller decision.

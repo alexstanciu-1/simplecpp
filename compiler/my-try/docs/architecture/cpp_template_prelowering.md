@@ -27,6 +27,10 @@ requires explicit rejection rather than template fallback. The first enforcement
 slice rejects structural callable storage in concrete application representations
 through the existing representation check; ordinary callable emission is unchanged.
 See the [bounded proof](../../../../specs/planning/results/prelower_callable_boundary_2026_10_20/README.md).
+Native-only object type tests/casts and weak creation/locking also reject in concrete
+mode before operand emission. Their runtime helpers must not leak through application
+headers; concrete transport remains future coverage. See the
+[operation-boundary proof](../../../../specs/planning/results/prelower_operation_boundaries_2026_10_20/README.md).
 Other closure checks and the CLI/API migration remain pending; current mode selectors
 below still describe the implementation, not the completed strict guarantee.
 

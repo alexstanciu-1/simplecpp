@@ -17,8 +17,8 @@ def main():
     out = args.results.resolve()
     out.mkdir(parents=True, exist_ok=False)
     with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
-        run_tasks([Task('callable-boundary', lambda: runner.run('callable-boundary',
-            ['php', APP / 'tests/prelower_callable_boundary.php', out / 'source'])),
+        run_tasks([Task('unsupported-boundaries', lambda: runner.run('unsupported-boundaries',
+            ['php', APP / 'tests/prelower_unsupported_boundaries.php', out / 'source'])),
                    Task('closure-coverage', lambda: runner.run('closure-coverage',
                        [sys.executable, APP / 'tests/prelower_closure_coverage.py']))])
 
