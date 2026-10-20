@@ -1,0 +1,3 @@
+$name string = "compiler";
+$text string = "Hello $name" . "!";
+return 0;

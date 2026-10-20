@@ -1,0 +1,7 @@
+/tmp/mytry-diagnostic-review/batch9/abstract_ctor_body/cpp/units/n6d61696e/n6d61696e2e706873.cpp:5:20: error: parameter type 'record_A' is an abstract class
+    5 | record_C::record_C(record_A local_a)
+      |                    ^
+/tmp/mytry-diagnostic-review/batch9/abstract_ctor_body/cpp/types/n41.hpp:7:24: note: unimplemented pure virtual method 'dispatch_A__method_f' in 'record_A'
+    7 |         virtual scpp::int_t<> dispatch_A__method_f() = 0;
+      |                               ^
+1 error generated.

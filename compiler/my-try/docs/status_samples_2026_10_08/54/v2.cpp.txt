@@ -1,0 +1,59 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n436f756e746572.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Counter
+{
+private:
+	scpp::int_t<> field_value = static_cast<scpp::int_t<>>(1LL);
+public:
+	static scpp::int_t<> field_total;
+public:
+public:
+	scpp::int_t<> implementation_Counter__method_read();
+scpp::int_t<> method_read();
+public:
+	static scpp::int_t<> implementation_extra_for_type_Counter();
+};
+
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "types/n436f756e746572.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/generated/operators.hpp"
+scpp::int_t<> record_Counter::method_read() { return record_Counter::implementation_Counter__method_read(); }
+scpp::int_t<> record_Counter::field_total = static_cast<scpp::int_t<>>(2LL);
+scpp::int_t<> record_Counter::implementation_Counter__method_read()
+{
+	return (this)->field_value;
+}
+
+scpp::int_t<> record_Counter::implementation_extra_for_type_Counter()
+{
+	auto local_total = record_Counter::field_total;
+	return (local_total + static_cast<scpp::int_t<>>(3LL));
+}
+
+
+// === entry.cpp ===
+#include "types/n436f756e746572.hpp"
+#include "scpp/memory.hpp"
+#include "scpp/shared_p.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/generated/operators.hpp"
+
+int main()
+{
+	auto local_counter = ::scpp::shared<record_Counter>();
+	auto local_value = ([&]() -> scpp::int_t<> {
+auto receiver_0 = local_counter;
+(void)receiver_0.operator->();
+	return receiver_0->method_read();
+}());
+	auto local_extra = ([&]() -> scpp::int_t<> {
+	return record_Counter::implementation_extra_for_type_Counter();
+}());
+	return static_cast<int>(((local_value + local_extra)).native_value());
+	return 0;
+}

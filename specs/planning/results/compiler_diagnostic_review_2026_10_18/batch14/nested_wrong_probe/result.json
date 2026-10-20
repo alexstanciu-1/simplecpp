@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S receiver has no keyed probe/removal contract\n"
+}

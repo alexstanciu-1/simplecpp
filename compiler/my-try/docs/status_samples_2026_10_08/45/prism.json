@@ -1,0 +1,17 @@
+{
+  "runtime": {
+    "languages": {
+      "php": {
+        "profile": "strict"
+      }
+    },
+    "modules": [
+      "compiler",
+      "filesystem",
+      "tasks",
+      "process",
+      "datetime",
+      "json"
+    ]
+  }
+}

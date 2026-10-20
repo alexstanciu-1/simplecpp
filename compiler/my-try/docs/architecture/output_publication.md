@@ -56,8 +56,8 @@ proves initial publication and native addition/removal with the guarded reads.
 Write changed artifacts via same-directory atomic replacement. Exact no-ops retain
 inode/mtime. Write `.scpp-output.manifest` last, then the ready status. Manifest JSON:
 `format: scpp-output-manifest-v1`, ordered `files` rows containing `path`, `sha256`,
-`id`, `kind` (`header` or `translation_unit`). This is the complete artifact set and
-translation-unit membership. The manifest also contains `cpp_policy` (versioned C++ lowering profile) and `runtime_build` with resolved
+`id`, `kind` (`header`, `translation_unit` or `layout_probe`). This is the complete artifact set and
+translation-unit membership. The manifest also contains `cpp_policy` and `runtime_build` with resolved
 `sources`, `libraries` and `definitions` arrays from the selected module closure.
 The backend supplies these requirements through the coordinator; publication does
 not load catalogs or choose build policy. The ready digest covers both artifacts

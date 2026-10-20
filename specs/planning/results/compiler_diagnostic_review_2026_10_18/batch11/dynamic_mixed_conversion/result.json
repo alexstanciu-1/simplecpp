@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S mixed/dynamic family conversion requires an explicit scalar/null cast without storage modifiers\n"
+}

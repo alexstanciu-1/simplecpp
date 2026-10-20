@@ -1,0 +1,1 @@
+abstract struct S { abstract function f(): int; } $s ?S = null; return 0;

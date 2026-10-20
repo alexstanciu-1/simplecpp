@@ -1,0 +1,26 @@
+{
+  "baseline": "b86cf7f3",
+  "matched_failures": [
+    "carrier_updates.php",
+    "compatibility_export.php",
+    "compatibility_modules.php",
+    "cross_identity.php",
+    "dependency_cleanup.php",
+    "float_compounds.php",
+    "int_carrier_compounds.php",
+    "llvm.php",
+    "mixed_ordering.php",
+    "model.php",
+    "nonbool_sentinel_equality.php",
+    "nullable_bool_string_equality.php",
+    "numeric_compound_fixture.php",
+    "prelower_unsupported_boundaries.php",
+    "probe_matrix.php",
+    "result_equality.php",
+    "runtime_template_demand.php",
+    "string_comparisons.php",
+    "type_catalog.php",
+    "widening_compounds.php",
+    "wrapper_equality_fixture.php"
+  ]
+}

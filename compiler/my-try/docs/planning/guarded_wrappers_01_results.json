@@ -1,0 +1,132 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "scope": {
+    "carriers": 3,
+    "binary_signatures": 171,
+    "unary_signatures": 12,
+    "binary_value_state_error_cases": 9120,
+    "rhs_reset_cases": 495,
+    "negative_sources": 150,
+    "retained_binary_edit_sequences": 12
+  },
+  "suites": {
+    "focused-final": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 3,
+        "binary_forms": 19,
+        "binary_signatures": 171,
+        "unary_signatures": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "results-02": {
+      "commands": 616,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 166,
+        "runtime_programs": 2
+      }
+    },
+    "nullable-02": {
+      "commands": 268,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 99
+      }
+    },
+    "control-flow": {
+      "commands": 329,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 12,
+        "generated_programs": 135
+      }
+    },
+    "scalar-02": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "numeric-logical": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "numeric_pairings": 4,
+        "binary_spellings": 4,
+        "unary_types": 2,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    }
+  },
+  "source_integrity": {
+    "checked": 6195,
+    "mismatches": []
+  },
+  "policy_integrity": {
+    "passed": true,
+    "nullable_arithmetic_forbidden": false,
+    "nullable_lifted_ops": {
+      "name": "nullable_lifted_ops",
+      "enabled": true,
+      "template_rule": true,
+      "status": "authoritative_current_policy",
+      "policy_role": "checked_unwrap_then_delegate_to_wrapped_operator_family",
+      "covers": [
+        "unary",
+        "binary",
+        "logical",
+        "relational",
+        "mutation",
+        "compound_assignment"
+      ],
+      "operands": [
+        "nullable<T> with nullable<U> or plain U where the wrapped-value operator family is defined"
+      ],
+      "empty_operand_policy": "runtime_error_except_explicit_null_sentinel_comparisons_and_nullable_equality_with_non_sentinel_values",
+      "notes": [
+        "temporary typed-boundary implicit conversion is not the intended operator participation mechanism",
+        "operator lifting must stay centralized to keep generated code and overload review deterministic"
+      ]
+    }
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "731178619ac638a249585b152c1a377558e6a1845f7c48f30ae650a5a7e34c32",
+  "historical_failed_attempts": {
+    "results": "Stale S2S nullable addition negative",
+    "nullable": "Same stale S2S nullable addition negative",
+    "scalar": "Still-rejected mixed/wrapper pair has new guarded-owner diagnostic"
+  },
+  "runtime_implementation_changed": false,
+  "runtime_specification_changes": [
+    "runtime/specs/config.json",
+    "runtime/specs/config.review.md"
+  ],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "issue_status": {
+    "V-D13": "implemented-and-verified",
+    "V-L08": "implemented-and-verified for nullable canonical int",
+    "V-L07": "partially-implemented-and-verified"
+  }
+}

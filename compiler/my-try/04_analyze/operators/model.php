@@ -5,6 +5,7 @@ namespace scpp\compiler;
 
 enum operator_context {
 	case expression;
+	case compound_assignment;
 }
 
 /** Ordinary converted stores and updates preserving a runtime payload kind differ. */
@@ -50,6 +51,32 @@ enum operator_kind {
 }
 
 enum operator_operation {
+	case wrapper_equal;
+	case wrapper_not_equal;
+	case wrapper_identical;
+	case wrapper_not_identical;
+	case string_equal;
+	case string_not_equal;
+	case string_less;
+	case string_less_equal;
+	case string_greater;
+	case string_greater_equal;
+	case string_three_way;
+
+	case boolean_equal;
+	case boolean_not_equal;
+	case floating_addition;
+	case floating_subtraction;
+	case floating_multiplication;
+	case floating_division;
+	case floating_positive;
+	case floating_negative;
+	case floating_equal;
+	case floating_not_equal;
+	case floating_less;
+	case floating_less_equal;
+	case floating_greater;
+	case floating_greater_equal;
 	case enum_equal;
 	case enum_not_equal;
 	case index_checked_read;
@@ -63,10 +90,14 @@ enum operator_operation {
 	case integer_bitwise_xor;
 	case integer_shift_left;
 	case integer_shift_right;
-	case integer_pre_increment;
-	case integer_post_increment;
-	case integer_pre_decrement;
-	case integer_post_decrement;
+	case scalar_pre_increment;
+	case scalar_post_increment;
+	case scalar_pre_decrement;
+	case scalar_post_decrement;
+	case wrapper_pre_increment;
+	case wrapper_post_increment;
+	case wrapper_pre_decrement;
+	case wrapper_post_decrement;
 	case boxed_pre_increment;
 	case boxed_post_increment;
 	case boxed_pre_decrement;
@@ -92,11 +123,13 @@ enum operator_operation {
 	case boxed_greater;
 	case boxed_greater_equal;
 	case integer_three_way;
+	case floating_three_way;
 	case boolean_xor;
 	case boolean_and;
 	case boolean_or;
 	case condition_and;
 	case condition_or;
+	case condition_xor;
 	case string_concatenation;
 	case integer_addition;
 	case integer_subtraction;
@@ -118,6 +151,10 @@ enum operator_operation {
 
 /** Selected operation, result type and ordered conversions or condition truthiness. */
 final class operator_decision {
+	/** Stable descriptive tag; enum-name lowering stays beside its declaration. */
+	public function operation_name(): string { return enum_name($this->operation); }
+	/** Empty for ordinary operators; otherwise one extraction per source operand before payload conversion/truthiness. */
+	public array $operand_extractions /** vector<conversion_decision> */ = [];
 	public ?truthiness_decision $truthiness = null;
 	public array $operand_truthiness /** vector<truthiness_decision> */ = [];
 	public operator_kind $source_operator;

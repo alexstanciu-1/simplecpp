@@ -74,6 +74,8 @@ final class runtime_indexing_spec
 
 final class runtime_parameter_spec
 {
+	/** Provider copies the input independently of caller-side value transport. */
+	public bool $requires_copy = false;
 	public bool $variadic = false;
 	public ?runtime_default_spec $default_value = null;
 	public string $name = '';
@@ -103,6 +105,7 @@ final class runtime_function_spec extends runtime_signature_spec
 	public ?runtime_callable_member_spec $member = null;
 	public string $identity = '';
 	public string $name = '';
+	public array $qualified_aliases /** vector<string> */ = [];
 	public array $type_parameters /** vector<string> */ = [];
 }
 
@@ -114,10 +117,33 @@ final class runtime_callable_member_spec
 }
 
 /** Backend metadata is separate from type/function semantics, joined only by identity. */
-final class runtime_cpp_spec
+class runtime_cpp_spec
 {
 	public string $identity = '';
 	public string $symbol = '';
+	public string $header = '';
+}
+
+/** Unresolved C++ type recipe. Absence of arguments retains declaration-order shorthand. */
+final class runtime_cpp_type_spec extends runtime_cpp_spec
+{
+	public string $type_name = '';
+	public string $modifier_name = '';
+	/** Physical interface only; selects a declared parameter or the modifier payload. */
+	public string $pointee_parameter = '';
+	public bool $pointee_modified_type = false;
+	public bool $concrete_boundary = false;
+	public string $literal_interface = '';
+	public string $byte_interface = '';
+	public ?Storage $arguments /** Storage<runtime_cpp_argument_spec> */ = null;
+}
+
+final class runtime_cpp_argument_spec
+{
+	public string $native_name = '';
+	public string $parameter = '';
+	public bool $modified_type = false;
+	public bool $payload = false;
 	public string $header = '';
 }
 
@@ -152,7 +178,7 @@ final class runtime_module_spec
 	public Storage $properties /** Storage<runtime_property_spec> */;
 	public Keyed_Storage $cpp_properties /** Keyed_Storage<runtime_cpp_spec> */;
 	public Storage $types /** Storage<runtime_type_definition_spec> */;
-	public Keyed_Storage $cpp_types /** Keyed_Storage<runtime_cpp_spec> */;
+	public Keyed_Storage $cpp_types /** Keyed_Storage<runtime_cpp_type_spec> */;
 	public Keyed_Storage $cpp /** Keyed_Storage<runtime_cpp_spec> */;
 	public function __construct()
 	{
@@ -163,7 +189,7 @@ final class runtime_module_spec
 		$this->properties = new Storage /** Storage<runtime_property_spec> */();
 		$this->cpp_properties = new Keyed_Storage /** Keyed_Storage<runtime_cpp_spec> */();
 		$this->types = new Storage /** Storage<runtime_type_definition_spec> */();
-		$this->cpp_types = new Keyed_Storage /** Keyed_Storage<runtime_cpp_spec> */();
+		$this->cpp_types = new Keyed_Storage /** Keyed_Storage<runtime_cpp_type_spec> */();
 		$this->cpp = new Keyed_Storage /** Keyed_Storage<runtime_cpp_spec> */();
 	}
 }

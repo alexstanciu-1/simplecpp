@@ -1,0 +1,45 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === callables/n6669727374.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+scpp::int_t<> function_first(const scpp::vector_t<scpp::int_t<>>& local_values);
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "callables/n6669727374.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+#include "scpp/index_read.hpp"
+scpp::int_t<> function_first(const scpp::vector_t<scpp::int_t<>>& local_values)
+{
+	return ([&]() -> scpp::int_t<> { const auto& index_receiver_0 = local_values; scpp::int_t<> index_key_0 = static_cast<scpp::int_t<>>(0LL); return scpp::checked_index_read(index_receiver_0, index_key_0); }());
+}
+
+
+// === entry.cpp ===
+#include "scpp/data_initializer.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+#include "callables/n6669727374.hpp"
+
+int main()
+{
+	scpp::vector_t<scpp::int_t<>> local_values = ([&]() -> scpp::vector_t<scpp::int_t<>> {
+scpp::initializer_buffer<scpp::int_t<>> initializer_0(2);
+{
+scpp::int_t<> initializer_value_1 = static_cast<scpp::int_t<>>(1LL);
+initializer_0.append(initializer_value_1);
+}
+{
+scpp::int_t<> initializer_value_2 = static_cast<scpp::int_t<>>(2LL);
+initializer_0.append(initializer_value_2);
+}
+return scpp::data_initializer<scpp::vector_t<scpp::int_t<>>>::from_list(initializer_0.view());
+}());
+	return static_cast<int>((([&]() -> scpp::int_t<> {
+	const scpp::vector_t<scpp::int_t<>>& argument_3 = local_values;
+	return function_first(argument_3);
+}())).native_value());
+	return 0;
+}

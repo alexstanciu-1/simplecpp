@@ -3,7 +3,12 @@ Doc Status: supporting
 
 `modules/*.json` follows the [versioned module contract](../../specs/runtime_module_metadata.md).
 The files are runtime-owned, reusable compiler input, not generated C++ or my-try-local
-configuration. Current coverage includes core `strlen`/`count`, JSON free functions,
+configuration. Core also exposes `error::make` with scalar defaults and the three
+error detail getters, using the existing registered error identity and ordinary
+static/instance callable bindings. Core also registers the opaque shared `Exception`,
+its `make(string)` factory and `get_message()` method; see the
+[bounded exception contract](../../specs/exceptions_v0_2.md). See the [error contract](../../specs/error_values_and_take.md).
+Current coverage includes core `strlen`/`count`, JSON free functions,
 all eleven strict datetime helpers, twenty-two strict filesystem helpers,
 and the ready strings surface (case/predicates/trimming, padding/constants,
 int/float formatting, split/typed join, slicing/comparison, hex conversion and
@@ -48,6 +53,17 @@ Borrowed lifetimes remain subsequent integration work.
 JSON documents/nodes/diagnostics and file-lock handles are registered too. The
 optional process catalog adds its five managed-process calls, two shared types and
 six output fields. Shared storage copies handles, not provider payloads.
+
+Core now supplies C++ representation recipes for existing compiler-known scalar,
+boxed, nullable/Result, ownership and value-modifier identities. These are bindings
+in `cpp_types`, not additional semantic declarations. Structured native arguments
+distinguish plain types, closed templates and semantic arguments in stored/payload
+representation. Missing core selection supplies no implicit runtime binding fallback.
+Catalog registration does not generate concrete types; application demand does.
+
+Concrete backend representations use the separate
+[runtime interoperability contract](../specs/concrete_type_interoperability.md).
+It consumes registry-selected representation facts without adding a parallel catalog.
 
 ## Add or select a module
 

@@ -1,0 +1,56 @@
+{
+  "doc_status": "supporting",
+  "changed_from_baseline": [
+    "compiler/my-try/04_analyze/operators/model.php",
+    "compiler/my-try/04_analyze/operators/preparation.php",
+    "compiler/my-try/05_backend/cpp/generate.php",
+    "compiler/my-try/boot.php",
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/02_expressions.md",
+    "compiler/my-try/docs/s2s_scalar_operators.md",
+    "compiler/my-try/docs/testing.md",
+    "compiler/my-try/tests/string_comparisons.php",
+    "compiler/my-try/tests/guarded_operators.php",
+    "compiler/my-try/tests/guarded_float.php",
+    "compiler/my-try/tests/guarded_bool.php",
+    "compiler/my-try/tests/guarded_string.php",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/nullable_int_equality.py",
+    "compiler/my-try/tests/nullable_int_equality.php",
+    "compiler/my-try/tests/nullable_bool_string_equality.py",
+    "compiler/my-try/tests/nullable_bool_string_equality.php",
+    "compiler/my-try/tests/nullable_float_equality.py",
+    "compiler/my-try/tests/nullable_float_equality.php"
+  ],
+  "existing_executable_changes": [
+    "compiler/my-try/04_analyze/operators/model.php",
+    "compiler/my-try/04_analyze/operators/preparation.php",
+    "compiler/my-try/05_backend/cpp/generate.php",
+    "compiler/my-try/boot.php",
+    "compiler/my-try/tests/string_comparisons.php",
+    "compiler/my-try/tests/guarded_operators.php",
+    "compiler/my-try/tests/guarded_float.php",
+    "compiler/my-try/tests/guarded_bool.php",
+    "compiler/my-try/tests/guarded_string.php",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/nullable_int_equality.py",
+    "compiler/my-try/tests/nullable_int_equality.php",
+    "compiler/my-try/tests/nullable_bool_string_equality.py",
+    "compiler/my-try/tests/nullable_bool_string_equality.php",
+    "compiler/my-try/tests/nullable_float_equality.py",
+    "compiler/my-try/tests/nullable_float_equality.php"
+  ],
+  "removed_paths_renamed_to_wrapper_owners": [
+    "compiler/my-try/04_analyze/operators/nullable_equality.php",
+    "compiler/my-try/tests/nullable_equality_fixture.php"
+  ],
+  "new_sources": [
+    "compiler/my-try/tests/result_equality.py",
+    "compiler/my-try/tests/result_equality.php",
+    "compiler/my-try/tests/wrapper_equality_fixture.php",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php"
+  ],
+  "tested_non_documentation_mismatches": [],
+  "runtime_changes": [],
+  "documentation_closeout_separate_from_tested_snapshot": true
+}

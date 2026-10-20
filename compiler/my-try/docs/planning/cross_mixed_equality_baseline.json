@@ -1,0 +1,6 @@
+{
+  "doc_status": "supporting",
+  "head": "2a133d6e63c9e46364d2e05faf9dba3be3d3cc8a",
+  "scope": "E4: 48 mixed int/float cross-family ordinary equality signatures",
+  "dirty_status": " M compiler/my-try/docs/catalog/15_blocking_debt.md\n M compiler/my-try/docs/catalog/15_review.md\n M compiler/my-try/tests/mixed_equality.py\n M compiler/my-try/tests/mixed_equality_support.hpp\n?? compiler/my-try/docs/planning/cross_mixed_equality_source.json\n?? compiler/my-try/tests/__pycache__/\n"
+}

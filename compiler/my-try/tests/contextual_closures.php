@@ -42,7 +42,7 @@ $executions = [];
 try {
 	foreach ($cases as $name => [$source, $exit]) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		$text = CPP_Probe::text(Model::$cpp_files);
 		$compiler->exec_cpp(); contextual_check(CPP_Probe::text(Model::$cpp_files) === $text, 'No-op changed contextual output');
 		file_put_contents($output . '/' . $name . '.cpp', $text);
@@ -50,14 +50,14 @@ try {
 	}
 	foreach ($invalid as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		contextual_check($rejected, 'Invalid contextual closure accepted: ' . $source);
 	}
 	Compiler_Lifecycle::reset(); file_put_contents($path, 'return apply(fn($n) => $n);');
 	$api = 'function apply(function<int(int)> $f): int { return $f(4); }';
 	file_put_contents($provider, $api);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	foreach (Model::collected_files() as $collection) {
 		foreach ($collection->anonymous_callables as $identity) { $retained = $identity; }
 	}
@@ -76,7 +76,7 @@ try {
 	contextual_check($rejected, 'Changed contextual arity was accepted');
 	file_put_contents($provider, $float_api); $compiler->update_cpp([$provider]);
 	contextual_check(CPP_Probe::text(Model::$cpp_files) === $updated, 'Contextual recovery differs');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	contextual_check(CPP_Probe::text(Model::$cpp_files) === $updated, 'Fresh/incremental contextual output differs');
 	file_put_contents($output . '/provider_edit.cpp', $updated);
 	$executions[] = ['path' => $output . '/provider_edit.cpp', 'exit_code' => 4];

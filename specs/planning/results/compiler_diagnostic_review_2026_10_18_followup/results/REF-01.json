@@ -1,0 +1,12 @@
+{
+  "control": {
+    "stage": "emitted",
+    "compile": "passed",
+    "compile_logs": [],
+    "link": "passed"
+  },
+  "source": {
+    "stage": "prepare",
+    "error": "S2S reference return cannot escape local, value-parameter or interior storage\n"
+  }
+}

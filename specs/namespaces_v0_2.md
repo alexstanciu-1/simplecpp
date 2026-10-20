@@ -14,6 +14,13 @@ Semicolon and braced namespace notation use the same namespace semantics. Reopen
 a namespace does not merge its source bodies or their import environments.
 Project module names do not introduce source namespaces.
 
+A qualified type name may have only one source declaration. Classes, structs,
+interfaces, traits and enums share this type namespace; different declaration kinds
+do not permit the same type name to be redeclared. This applies across files and
+reopened namespace bodies, including unused declarations. Reject duplicates during
+semantic preparation, before backend emission. Imports do not create declarations;
+functions and constants retain their separate symbol namespaces.
+
 ## Name lookup
 
 - A rooted path such as `\Lib\f` starts at the source-language root.

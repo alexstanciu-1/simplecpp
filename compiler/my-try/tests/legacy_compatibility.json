@@ -1,0 +1,318 @@
+{
+  "version": 1,
+  "baseline": "75de94c71e37060c564b6ade19850b7686bd457a",
+  "scope": "First pass: unchanged single-source positive fixtures. Operators and operator matrices deferred.",
+  "cases": [
+    {
+      "source": "tests/php/functions/level_01/functions_001_typed_param_basic.phs",
+      "metadata": "tests/php/functions/level_01/functions_001_typed_param_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "functions"
+    },
+    {
+      "source": "tests/php/functions/level_01/functions_002_typed_return_basic.phs",
+      "metadata": "tests/php/functions/level_01/functions_002_typed_return_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "functions"
+    },
+    {
+      "source": "tests/php/control_flow/level_01/control_flow_001_if_basic.phs",
+      "metadata": "tests/php/control_flow/level_01/control_flow_001_if_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow"
+    },
+    {
+      "source": "tests/php/control_flow/level_01/control_flow_002_if_else_basic.phs",
+      "metadata": "tests/php/control_flow/level_01/control_flow_002_if_else_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_001_php_helpers.phs",
+      "metadata": "tests/php/control_flow/strict_level_01/strict_control_flow_001_php_helpers.test-info.json",
+      "profile": "strict",
+      "feature": "control_flow"
+    },
+    {
+      "source": "tests/php/control_flow/strict_level_01/strict_control_flow_002_mixed_type_predicates.phs",
+      "metadata": "tests/php/control_flow/strict_level_01/strict_control_flow_002_mixed_type_predicates.test-info.json",
+      "profile": "strict",
+      "feature": "control_flow"
+    },
+    {
+      "source": "tests/php/variables/level_01/variables_001_definition_basic.phs",
+      "metadata": "tests/php/variables/level_01/variables_001_definition_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "variables"
+    },
+    {
+      "source": "tests/php/variables/level_01/variables_002_reassignment_basic.phs",
+      "metadata": "tests/php/variables/level_01/variables_002_reassignment_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "variables"
+    },
+    {
+      "source": "tests/php/constants/level_01/constants_001_class_const_basic.phs",
+      "metadata": "tests/php/constants/level_01/constants_001_class_const_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "constants"
+    },
+    {
+      "source": "tests/php/constants/level_01/constants_002_const_read_basic.phs",
+      "metadata": "tests/php/constants/level_01/constants_002_const_read_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "constants"
+    },
+    {
+      "source": "tests/php/classes/level_01/classes_001_basic_construction.phs",
+      "metadata": "tests/php/classes/level_01/classes_001_basic_construction.test-info.json",
+      "profile": "legacy",
+      "feature": "classes"
+    },
+    {
+      "source": "tests/php/classes/level_01/classes_002_property_read_write_basic.phs",
+      "metadata": "tests/php/classes/level_01/classes_002_property_read_write_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "classes"
+    },
+    {
+      "source": "tests/php/namespaces/level_01/namespaces_001_basic_namespace_class.phs",
+      "metadata": "tests/php/namespaces/level_01/namespaces_001_basic_namespace_class.test-info.json",
+      "profile": "legacy",
+      "feature": "namespaces"
+    },
+    {
+      "source": "tests/php/namespaces/level_01/namespaces_002_fully_qualified_class_access.phs",
+      "metadata": "tests/php/namespaces/level_01/namespaces_002_fully_qualified_class_access.test-info.json",
+      "profile": "legacy",
+      "feature": "namespaces"
+    },
+    {
+      "source": "tests/php/closures/strict_level_01/closures_001_typed_callable_use_capture.phs",
+      "metadata": "tests/php/closures/strict_level_01/closures_001_typed_callable_use_capture.test-info.json",
+      "profile": "strict",
+      "feature": "closures"
+    },
+    {
+      "source": "tests/php/closures/strict_level_01/closures_002_typed_callable_supplies_return.phs",
+      "metadata": "tests/php/closures/strict_level_01/closures_002_typed_callable_supplies_return.test-info.json",
+      "profile": "strict",
+      "feature": "closures"
+    },
+    {
+      "source": "tests/php/arrays/level_01/arrays_001_empty_append_scalar.phs",
+      "metadata": "tests/php/arrays/level_01/arrays_001_empty_append_scalar.test-info.json",
+      "profile": "legacy",
+      "feature": "arrays"
+    },
+    {
+      "source": "tests/php/arrays/level_01/arrays_002_packed_readback.phs",
+      "metadata": "tests/php/arrays/level_01/arrays_002_packed_readback.test-info.json",
+      "profile": "legacy",
+      "feature": "arrays"
+    },
+    {
+      "source": "tests/php/types/bool/level_01/bool_001_init_basic.phs",
+      "metadata": "tests/php/types/bool/level_01/bool_001_init_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/types/bool/level_01/bool_002_assign_basic.phs",
+      "metadata": "tests/php/types/bool/level_01/bool_002_assign_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/types/int/strict_level_01/strict_int_006_fixed_width_local_returns.phs",
+      "metadata": "tests/php/types/int/strict_level_01/strict_int_006_fixed_width_local_returns.test-info.json",
+      "profile": "strict",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/types/int/strict_level_01/strict_int_007_fixed_width_unsigned_local_returns.phs",
+      "metadata": "tests/php/types/int/strict_level_01/strict_int_007_fixed_width_unsigned_local_returns.test-info.json",
+      "profile": "strict",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/references/level_01/references_001_local_reference_basic.phs",
+      "metadata": "tests/php/references/level_01/references_001_local_reference_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "references"
+    },
+    {
+      "source": "tests/php/references/level_01/references_002_reference_assignment_basic.phs",
+      "metadata": "tests/php/references/level_01/references_002_reference_assignment_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "references"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.test-info.json",
+      "profile": "strict",
+      "feature": "strings"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_002_str_edges.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_002_str_edges.test-info.json",
+      "profile": "strict",
+      "feature": "strings"
+    },
+    {
+      "source": "tests/php/take/level_02/take_001_wrapper_extraction_basic.phs",
+      "metadata": "tests/php/take/level_02/take_001_wrapper_extraction_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "take"
+    },
+    {
+      "source": "tests/php/take/level_02/take_006_result_wrapper_basic.phs",
+      "metadata": "tests/php/take/level_02/take_006_result_wrapper_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "take"
+    },
+    {
+      "source": "tests/php/output/level_01/output_001_echo_string_literal.phs",
+      "metadata": "tests/php/output/level_01/output_001_echo_string_literal.test-info.json",
+      "profile": "legacy",
+      "feature": "output"
+    },
+    {
+      "source": "tests/php/output/level_01/output_002_echo_multiple_values.phs",
+      "metadata": "tests/php/output/level_01/output_002_echo_multiple_values.test-info.json",
+      "profile": "legacy",
+      "feature": "output"
+    },
+    {
+      "source": "tests/php/use/level_01/use_001_use_class_basic.phs",
+      "metadata": "tests/php/use/level_01/use_001_use_class_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "use"
+    },
+    {
+      "source": "tests/php/use/level_02/use_003_use_function_basic.phs",
+      "metadata": "tests/php/use/level_02/use_003_use_function_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "use"
+    },
+    {
+      "source": "tests/generators/php/special_tests/test_07_finally_return.phs",
+      "profile": "legacy",
+      "feature": "finally",
+      "note": "No metadata oracle; compare execution against the pinned baseline."
+    },
+    {
+      "source": "tests/generators/php/special_tests/test_08_finally_return_for_loop.phs",
+      "profile": "legacy",
+      "feature": "finally",
+      "note": "No metadata oracle; compare execution against the pinned baseline."
+    },
+    {
+      "source": "tests/php/control_flow/level_02/control_flow_013_foreach_ref_value_basic.phs",
+      "metadata": "tests/php/control_flow/level_02/control_flow_013_foreach_ref_value_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow"
+    },
+    {
+      "source": "tests/php/control_flow/level_02/control_flow_016_foreach_key_ref_value_negative.phs",
+      "metadata": "tests/php/control_flow/level_02/control_flow_016_foreach_key_ref_value_negative.test-info.json",
+      "profile": "legacy",
+      "feature": "control_flow"
+    },
+    {
+      "source": "tests/php/types/vector/level_02/vector_003_vector_assign_basic.phs",
+      "metadata": "tests/php/types/vector/level_02/vector_003_vector_assign_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/types/vector/level_02/vector_004_vector_append_basic.phs",
+      "metadata": "tests/php/types/vector/level_02/vector_004_vector_append_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/types/nullable/level_02/nullable_003_null_coalesce_basic.phs",
+      "metadata": "tests/php/types/nullable/level_02/nullable_003_null_coalesce_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/types/nullable/level_02/nullable_004_mixed_null_coalesce_basic.phs",
+      "metadata": "tests/php/types/nullable/level_02/nullable_004_mixed_null_coalesce_basic.test-info.json",
+      "profile": "legacy",
+      "feature": "types"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_004_use_reference_capture.phs",
+      "metadata": "tests/php/closures/strict_level_02/closures_004_use_reference_capture.test-info.json",
+      "profile": "strict",
+      "feature": "closures"
+    },
+    {
+      "source": "tests/php/closures/strict_level_02/closures_006_vector_return_typed_callable.phs",
+      "metadata": "tests/php/closures/strict_level_02/closures_006_vector_return_typed_callable.test-info.json",
+      "profile": "strict",
+      "feature": "closures"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.test-info.json",
+      "profile": "strict",
+      "feature": "strings"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_007_explicit_string_units.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_007_explicit_string_units.test-info.json",
+      "profile": "strict",
+      "feature": "strings"
+    },
+    {
+      "source": "tests/php/strings/strict_level_01/strict_strings_008_string_parts_builder.phs",
+      "metadata": "tests/php/strings/strict_level_01/strict_strings_008_string_parts_builder.test-info.json",
+      "profile": "strict",
+      "feature": "strings"
+    },
+    {
+      "source": "tests/php/io/strict_level_01/strict_io_001_io_surface.phs",
+      "metadata": "tests/php/io/strict_level_01/strict_io_001_io_surface.test-info.json",
+      "profile": "strict",
+      "feature": "io"
+    },
+    {
+      "source": "tests/php/json/strict_level_01/strict_json_001_json_surface.phs",
+      "metadata": "tests/php/json/strict_level_01/strict_json_001_json_surface.test-info.json",
+      "profile": "strict",
+      "feature": "json"
+    },
+    {
+      "source": "tests/php/source/strict_level_01/strict_source_001_buffer_span.phs",
+      "metadata": "tests/php/source/strict_level_01/strict_source_001_buffer_span.test-info.json",
+      "profile": "strict",
+      "feature": "source",
+      "modules": [
+        "core",
+        "source",
+        "strings"
+      ]
+    },
+    {
+      "source": "tests/php/constants/level_02/constants_005_top_level_array_const_regression.phs",
+      "metadata": "tests/php/constants/level_02/constants_005_top_level_array_const_regression.test-info.json",
+      "profile": "legacy",
+      "feature": "constants"
+    },
+    {
+      "source": "tests/tools/test_scpp_async_core_language.php",
+      "nowdoc": "PHS",
+      "profile": "strict",
+      "feature": "async",
+      "expected": {
+        "exit_code": 0,
+        "stdout": "4242",
+        "stderr": ""
+      },
+      "note": "Exact PHS nowdoc from baseline writeProject; no migration."
+    }
+  ]
+}

@@ -34,7 +34,7 @@ def main():
             cache = output / 'cache'
             observations = []
             def publish(name, expected=0):
-                runner.run(name, ['php', APP / 'main.php', '--s2s', source, '--entry', 'main.phs', '--output', published],
+                runner.run(name, ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates', '--entry', 'main.phs', '--output', published],
                            expected=expected, cli_reason='Publication CLI contract')
             def build(name, expected=0, *options):
                 start = time.monotonic()
@@ -60,6 +60,21 @@ def main():
                 raise RuntimeError('Warm build repeated native actions: ' + repr(warm))
             if {p: (p.stat().st_ino, p.stat().st_mtime_ns) for p in before} != before:
                 raise RuntimeError('Warm cache rewrote artifacts')
+            debug = build('native-debug', 0, '--native-debug')
+            if (debug['compiled'], debug['pch_built'], debug['linked']) != (5, 1, 1):
+                raise RuntimeError('Native debug did not isolate compilation/PCH/link configuration')
+            execute('native-debug-execute', debug, 7)
+            for label, result, present in [('default', first, False), ('debug', debug, True)]:
+                sections = runner.run(label + '-sections', ['readelf', '-SW', result['executable']])
+                if (b'.debug_info' in sections) != present:
+                    raise RuntimeError('Unexpected native debug sections: ' + label)
+            debug_warm = build('native-debug-warm', 0, '--native-debug')
+            restored = build('default-after-debug')
+            for result in [debug_warm, restored]:
+                if (result['compiled'], result['pch_built'], result['linked']) != (0, 0, 0):
+                    raise RuntimeError('Switching debug configuration lost cached artifacts')
+            if restored['executable'] != first['executable']:
+                raise RuntimeError('Default build reused the debug executable')
             library.write_text('function answer(): int { return 9; }')
             publish('publish-body')
             edited = build('body-edit')

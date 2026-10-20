@@ -9,7 +9,8 @@ abstract class native_cpp_toolchain
 	/** Explicit linker executable; zero threads leaves its own default unchanged. */
 	public string $linker = '/usr/bin/ld';
 	public int $linker_threads = 0;
-	public bool $pch = true;
+	public bool $pch = false;
+	public bool $native_debug = false;
 	public int $optimization = 0;
 	public function __construct(string $compiler, string $runtime_include)
 	{
@@ -52,10 +53,14 @@ final class native_ninja_result {
 
 final class native_cpp_result {
 	public string $executable = '';
+	/** Diagnostics from actions executed in this invocation; cached actions are not replayed. */
+	public string $diagnostics = '';
 	public int $compiled = 0;
 	public int $reused = 0;
 	public int $pch_built = 0;
 	public int $linked = 0;
+	public int $layouts_built = 0;
+	public int $layouts_reused = 0;
 }
 
 /** Invocation-local action result, not a retained semantic record. */

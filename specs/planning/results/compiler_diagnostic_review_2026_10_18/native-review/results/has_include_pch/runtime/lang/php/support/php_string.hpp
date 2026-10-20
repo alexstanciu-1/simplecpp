@@ -1,0 +1,525 @@
+#pragma once
+
+#include "scpp/cast.hpp"
+#include "lang/php/support/php_common.hpp"
+#include "modules/strings/strings.hpp"
+#include "scpp/stable_hash.hpp"
+
+namespace scpp::php {
+
+inline int_t<> strlen(const string_t &value) {
+	return scpp::str::length(value);
+}
+
+inline int_t<> strlen(const nullable<string_t> &value) {
+	return scpp::str::length(value);
+}
+
+inline int_t<> string_byte_len(const string_t &value) {
+	return scpp::str::byte_length(value);
+}
+
+inline int_t<> string_byte_at(const string_t &value, const int_t<> &offset) {
+	return scpp::str::byte_at(value, offset);
+}
+
+inline result_or_false<int_t<>> string_byte_find(const string_t &haystack, const string_t &needle) {
+	const auto position = scpp::str::byte_find(haystack, needle);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline result_or_false<int_t<>> string_byte_find(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto position = scpp::str::byte_find(haystack, needle, offset);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline string_t string_byte_slice(const string_t &value, const int_t<> &offset, const int_t<> &length) {
+	return scpp::str::byte_slice(value, offset, length);
+}
+
+inline bool_t string_byte_slice_equals(const string_t &value, const int_t<> &offset, const int_t<> &length, const string_t &literal) {
+	return scpp::str::byte_slice_equals(value, offset, length, literal);
+}
+
+inline int_t<> string_utf8_codepoint_count(const string_t &value) {
+	return scpp::str::utf8_codepoint_count(value);
+}
+
+inline int_t<> string_utf8_codepoint_at(const string_t &value, const int_t<> &index) {
+	return scpp::str::utf8_codepoint_at(value, index);
+}
+
+inline string_t string_utf8_slice_codepoints(const string_t &value, const int_t<> &start, const int_t<> &length) {
+	return scpp::str::utf8_slice_codepoints(value, start, length);
+}
+
+inline int_t<> string_grapheme_count(const string_t &value) {
+	return scpp::str::grapheme_count(value);
+}
+
+inline string_t string_grapheme_slice(const string_t &value, const int_t<> &start, const int_t<> &length) {
+	return scpp::str::grapheme_slice(value, start, length);
+}
+
+inline string_t hash_string(const string_t &value) {
+	return scpp::stable_hash::string_hex(value);
+}
+
+inline int_t<std::uint64_t> stable_hash_string_u64(const string_t &value) {
+	return scpp::stable_hash::string_uint64(value);
+}
+
+inline result_or_false<int_t<>> strpos(const string_t &haystack, const string_t &needle) {
+	const auto position = scpp::str::find(haystack, needle);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline result_or_false<int_t<>> strpos(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto position = scpp::str::find(haystack, needle, offset);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline result_or_false<int_t<>> strrpos(const string_t &haystack, const string_t &needle) {
+	const auto position = scpp::str::rfind(haystack, needle);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline result_or_false<int_t<>> strrpos(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto position = scpp::str::rfind(haystack, needle, offset);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline string_t strtolower(const string_t &value) {
+	return scpp::str::lower(value);
+}
+
+inline string_t strtoupper(const string_t &value) {
+	return scpp::str::upper(value);
+}
+
+inline string_t lcfirst(const string_t &value) {
+	return scpp::str::lcfirst(value);
+}
+
+inline string_t ucfirst(const string_t &value) {
+	return scpp::str::ucfirst(value);
+}
+
+inline bool_t str_starts_with(const string_t &haystack, const string_t &needle) {
+	return scpp::str::starts_with(haystack, needle);
+}
+
+inline bool_t str_ends_with(const string_t &haystack, const string_t &needle) {
+	return scpp::str::ends_with(haystack, needle);
+}
+
+inline bool_t str_contains(const string_t &haystack, const string_t &needle) {
+	return scpp::str::contains(haystack, needle);
+}
+
+inline string_t ltrim(const string_t &value) {
+	return scpp::str::ltrim(value);
+}
+
+inline string_t ltrim(const string_t &value, const string_t &mask) {
+	return scpp::str::ltrim(value, mask);
+}
+
+inline string_t rtrim(const string_t &value) {
+	return scpp::str::rtrim(value);
+}
+
+inline string_t rtrim(const string_t &value, const string_t &mask) {
+	return scpp::str::rtrim(value, mask);
+}
+
+inline string_t trim(const string_t &value) {
+	return scpp::str::trim(value);
+}
+
+inline string_t trim(const string_t &value, const string_t &mask) {
+	return scpp::str::trim(value, mask);
+}
+
+inline string_t substr(const string_t &value, const int_t<> &offset, const int_t<> &length) {
+	return scpp::str::substr(value, offset, length);
+}
+
+inline string_t substr(const string_t &value, const int_t<> &offset) {
+	return scpp::str::substr(value, offset);
+}
+
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str, const int_t<> &offset) {
+	return scpp::str::substr_compare(main_str, str, offset);
+}
+
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str, const int_t<> &offset, const int_t<> &length) {
+	return scpp::str::substr_compare(main_str, str, offset, length);
+}
+
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str, const int_t<> &offset, const int_t<> &length, const bool_t &case_insensitive) {
+	return scpp::str::substr_compare(main_str, str, offset, length, case_insensitive);
+}
+
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset) {
+	return scpp::str::substr_replace(subject, replacement, offset);
+}
+
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset, const int_t<> &length) {
+	return scpp::str::substr_replace(subject, replacement, offset, length);
+}
+
+inline string_t str_replace(const string_t &search, const string_t &replace, const string_t &subject) {
+	return scpp::str::replace(search, replace, subject);
+}
+
+inline string_t str_pad(const string_t &input, const int_t<> &pad_length, const string_t &pad_string, const int_t<> &pad_type) {
+	return scpp::str::pad(input, pad_length, pad_string, pad_type);
+}
+
+inline string_t str_pad(const string_t &input, const int_t<> &pad_length, const string_t &pad_string) {
+	return scpp::str::pad(input, pad_length, pad_string);
+}
+
+inline string_t str_pad(const string_t &input, const int_t<> &pad_length) {
+	return scpp::str::pad(input, pad_length);
+}
+
+
+inline vector_t<string_t> explode(const string_t &separator, const string_t &string, const int_t<> &limit) {
+	return scpp::str::split(separator, string, limit);
+}
+
+inline vector_t<string_t> explode(const string_t &separator, const string_t &string) {
+	return explode(separator, string, PHP_INT_MAX);
+}
+
+template <typename K>
+inline string_t implode(const string_t &separator, const hash_t<string_t, K> &pieces) {
+	return scpp::str::join(separator, pieces);
+}
+
+inline string_t implode(const string_t &separator, const vector_t<string_t> &pieces) {
+	return scpp::str::join(separator, pieces);
+}
+
+inline string_t implode(const string_t &separator, const mixed_t &pieces) {
+	vector_t<string_t> items;
+	if (const auto *table = pieces.table_if(); table != nullptr) {
+		for (auto it = table->begin_entries(); it != table->end_entries(); ++it) {
+			items.push_back(cast<string_t>((*it).value_ref()));
+		}
+		return scpp::str::join(separator, items);
+	}
+	if (const auto *shared_table = pieces.shared_table_if(); shared_table != nullptr && *shared_table != null) {
+		for (auto it = (*shared_table)->begin_entries(); it != (*shared_table)->end_entries(); ++it) {
+			items.push_back(cast<string_t>((*it).value_ref()));
+		}
+		return scpp::str::join(separator, items);
+	}
+	if (const auto *weak_table = pieces.weak_table_if(); weak_table != nullptr) {
+		const auto locked = weak_table->lock();
+		if (locked != null) {
+			for (auto it = locked->begin_entries(); it != locked->end_entries(); ++it) {
+				items.push_back(cast<string_t>((*it).value_ref()));
+			}
+			return scpp::str::join(separator, items);
+		}
+	}
+
+	throw std::runtime_error("implode(): Argument #2 ($pieces) must be array-like");
+}
+
+inline result_or_false<string_t> hex2bin(const string_t &value) {
+	const auto decoded = scpp::str::hex_decode(value);
+	if (!decoded.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return decoded.value();
+}
+
+inline string_t bin2hex(const string_t &value) {
+	return scpp::str::hex_encode(value);
+}
+
+
+inline string_t number_format(const int_t<> &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const int_t<> &value, const int_t<> &decimals) {
+	return scpp::str::number_format(value, decimals);
+}
+
+inline string_t number_format(const int_t<> &value) {
+	return scpp::str::number_format(value);
+}
+
+inline string_t number_format(const float_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const float_t &value, const int_t<> &decimals) {
+	return scpp::str::number_format(value, decimals);
+}
+
+inline string_t number_format(const float_t &value) {
+	return scpp::str::number_format(value);
+}
+
+inline string_t number_format(const string_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const string_t &value, const int_t<> &decimals) {
+	return scpp::str::number_format(value, decimals);
+}
+
+inline string_t number_format(const string_t &value) {
+	return scpp::str::number_format(value);
+}
+
+inline string_t number_format(const bool_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const bool_t &value, const int_t<> &decimals) {
+	return scpp::str::number_format(value, decimals);
+}
+
+inline string_t number_format(const bool_t &value) {
+	return scpp::str::number_format(value);
+}
+
+inline string_t number_format(const mixed_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const mixed_t &value, const int_t<> &decimals) {
+	return scpp::str::number_format(value, decimals);
+}
+
+inline string_t number_format(const mixed_t &value) {
+	return scpp::str::number_format(value);
+}
+
+// Implements PHP microtime() string mode.
+// How: system_clock is sampled once, then formatted as "0.xxxxxxxx seconds" to mirror PHP's default contract.
+inline string_t microtime() {
+	const auto now = std::chrono::system_clock::now();
+	const auto since_epoch = now.time_since_epoch();
+	const auto micros_total = std::chrono::duration_cast<std::chrono::microseconds>(since_epoch).count();
+	const auto seconds = micros_total / static_cast<std::int64_t>(1000000);
+	const auto micros_part = micros_total % static_cast<std::int64_t>(1000000);
+
+	std::ostringstream stream;
+	stream << std::fixed << std::setprecision(8)
+		<< (static_cast<double>(micros_part) / 1000000.0)
+		<< ' ' << seconds;
+	return string_t(stream.str());
+}
+
+// Implements the numeric branch of PHP microtime(true).
+// How: the helper is split out explicitly because the current runtime does not model a string|float union return type for one overload.
+inline float_t microtime(bool_t as_float) {
+	if (!as_float.native_value()) {
+		throw std::logic_error("microtime(false) is not supported; use microtime() for string form");
+	}
+
+	const auto now = std::chrono::system_clock::now();
+	const auto since_epoch = now.time_since_epoch();
+	const auto micros_total = std::chrono::duration_cast<std::chrono::microseconds>(since_epoch).count();
+	return float_t(static_cast<double>(micros_total) / 1000000.0);
+}
+
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+inline string_t to_string(const string_t &value) {
+	return value;
+}
+
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+template <typename Rep>
+inline string_t to_string(const int_t<Rep> &value) {
+	if constexpr (std::is_signed_v<Rep>) {
+		return string_t(std::to_string(static_cast<std::int64_t>(value.native_value())));
+	} else {
+		return string_t(std::to_string(static_cast<std::uint64_t>(value.native_value())));
+	}
+}
+
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+inline string_t to_string(const float_t &value) {
+	std::ostringstream stream;
+	stream << value.native_value();
+	return string_t(stream.str());
+}
+
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+inline string_t to_string(const bool_t &value) {
+	return string_t(value.native_value() ? "1" : "");
+}
+
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+inline string_t to_string(null_t) {
+	return string_t("");
+}
+
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+inline string_t to_string(nullopt_t) {
+	return string_t("");
+}
+
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+inline string_t to_string(nullptr_t) {
+	return string_t("");
+}
+
+// Shared scalar text conversion; each family retains its own container label.
+template <typename Box>
+requires (std::is_same_v<Box, mixed_t> || std::is_same_v<Box, scpp::detail::dynamic_value>)
+inline string_t to_string(const Box &value) {
+	using kind = typename Box::kind_t;
+	switch (value.kind()) {
+		case kind::null_v:
+			return string_t("");
+		case kind::bool_v:
+			return to_string(value.get_bool());
+		case kind::int_v:
+			return to_string(value.get_int());
+		case kind::float_v:
+			return to_string(value.get_float());
+		case kind::string_v:
+			return to_string(value.get_string());
+		case kind::table_v:
+			if constexpr (std::is_same_v<Box, mixed_t>) return string_t("Array");
+			return string_t("Object");
+		default:
+			break;
+	}
+	if constexpr (std::is_same_v<Box, mixed_t>) {
+		if (value.kind() == kind::shared_table_v || value.kind() == kind::weak_table_v)
+			return string_t("Array");
+	}
+	return string_t("");
+}
+
+template <typename T>
+inline constexpr bool js_plus_static_string_operand_v = std::is_same_v<scpp::detail::remove_cvref_t<T>, string_t>;
+
+template <typename L, typename R>
+inline auto js_plus(const L &left, const R &right) {
+	if constexpr (js_plus_static_string_operand_v<L> || js_plus_static_string_operand_v<R>) {
+		return to_string(left) + to_string(right);
+	} else {
+		return mixed_t(left) + mixed_t(right);
+	}
+}
+
+template <typename T>
+// Converts one runtime value into its PHP echo/string representation.
+// How: behavior is defined here once so the generator and runtime can share one coercion layer.
+inline string_t to_string(const nullable<T> &value) {
+	if (!value.has_value().native_value()) {
+		return string_t("");
+	}
+	return to_string(value.value());
+}
+
+template <typename T>
+inline string_t to_string(const result_or_false<T> &value) {
+	if (!value.has_value().native_value()) {
+		return string_t("");
+	}
+	return to_string(value.value());
+}
+
+template <typename T>
+inline string_t to_string(const result_or_bool<T> &value) {
+	if (value.has_value().native_value()) {
+		return to_string(value.value());
+	}
+	if (value.is_true().native_value()) {
+		return to_string(bool_t(true));
+	}
+	return string_t("");
+}
+
+template <typename T>
+inline string_t to_string(const result<T> &value) {
+	if (!value.has_value().native_value()) {
+		return value.error()->get_message();
+	}
+	return to_string(value.value());
+}
+
+// Prints one runtime value according to the PHP echo contract implemented by the prototype.
+// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
+inline void echo_one(const string_t &value) {
+	std::cout << value.native_value();
+}
+
+template <typename T>
+requires requires (const std::remove_cvref_t<T> &value) {
+	{ to_string(value) } -> std::same_as<string_t>;
+}
+// Prints one runtime value according to the PHP echo contract implemented by the prototype.
+// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
+inline void echo_one(T &&value) {
+	std::cout << to_string(std::forward<T>(value)).native_value();
+}
+
+// Prints one or more values using the runtime echo helpers.
+// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
+inline void echo() {
+}
+
+template <typename... Args>
+// Prints one or more values using the runtime echo helpers.
+// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
+inline void echo(Args &&...args) {
+	(echo_one(std::forward<Args>(args)), ...);
+}
+
+template <typename Fn>
+requires requires (Fn &&fn) {
+	std::forward<Fn>(fn)();
+}
+// Evaluates one deferred echo operand and prints it.
+// How: the thunk form preserves PHP left-to-right operand evaluation when the generator wants one logical echo call.
+inline void echo_eval_one(Fn &&fn) {
+	echo_one(std::forward<Fn>(fn)());
+}
+
+template <typename... Fns>
+// Evaluates deferred echo operands left-to-right and prints them.
+// How: a comma-fold over thunk invocations preserves sequencing while still allowing the generator to emit one runtime call.
+inline void echo_eval(Fns &&...fns) {
+	(echo_eval_one(std::forward<Fns>(fns)), ...);
+}
+
+} // namespace scpp::php

@@ -1,0 +1,107 @@
+{
+  "builds": [
+    {
+      "label": "cold",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/d3696f2d541331d99166fa09b668afe79a316233848461f859dc4d40f5a31215.bin",
+      "compiled": 5,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 0
+    },
+    {
+      "label": "warm",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/d3696f2d541331d99166fa09b668afe79a316233848461f859dc4d40f5a31215.bin",
+      "compiled": 0,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 1
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/231c015e3e34468b3d90d182bcfb5bcc09714d863c47e4cc831df0af933df01d.bin",
+      "compiled": 1,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 1
+    },
+    {
+      "label": "corrupt-layout-repair",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/231c015e3e34468b3d90d182bcfb5bcc09714d863c47e4cc831df0af933df01d.bin",
+      "compiled": 0,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 1,
+      "layouts_reused": 0
+    },
+    {
+      "label": "optimized",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/bfb55e63de8111ea45390aa003cd9ab883daeacce554980960d25c585adad0a8.bin",
+      "compiled": 5,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 0
+    },
+    {
+      "label": "restore-O0",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/231c015e3e34468b3d90d182bcfb5bcc09714d863c47e4cc831df0af933df01d.bin",
+      "compiled": 0,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 1
+    },
+    {
+      "label": "layout-dependency",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/85488df36d1a3d8aed468ffe8c39e7a944a5abf32720afc652266e42f98cdd11.bin",
+      "compiled": 5,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 0
+    },
+    {
+      "label": "recovered-layout",
+      "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/85488df36d1a3d8aed468ffe8c39e7a944a5abf32720afc652266e42f98cdd11.bin",
+      "compiled": 0,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 1
+    }
+  ],
+  "counters": [
+    "direct 4 80 4 0 0 0 0",
+    "opaque 4 80 4 0 0 0 0",
+    "direct_provider 0 0 0 1 1 0 2",
+    "opaque_provider 0 0 0 1 1 0 2"
+  ],
+  "final_review_build": {
+    "executable": "/tmp/prelower-integration-verified/layout/cache/artifacts/d7d870300ca54f38e0b55e93d508c3f4ff6ab55ed2bb82830f6a9c80c70619e2.bin",
+    "compiled": 1,
+    "reused": 4,
+    "pch_built": 0,
+    "linked": 1,
+    "layouts_built": 0,
+    "layouts_reused": 1
+  },
+  "final_review_counters": [
+    "direct 4 80 4 0 0 0 0",
+    "opaque 4 80 4 0 0 0 0",
+    "direct_provider 0 0 0 1 1 0 2",
+    "opaque_provider 0 0 0 1 1 0 2"
+  ],
+  "sanitizers": "ASan/UBSan passed; leak detection disabled",
+  "portability": "Six changed portable implementation files checked and converted; no native compiler rebuild"
+}

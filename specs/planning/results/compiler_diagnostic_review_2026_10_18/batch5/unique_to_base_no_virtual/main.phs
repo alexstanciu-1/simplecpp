@@ -1,0 +1,1 @@
+class B {} class D extends B {} $d unique<D> = new D(); $b unique<B> = move($d); return 0;

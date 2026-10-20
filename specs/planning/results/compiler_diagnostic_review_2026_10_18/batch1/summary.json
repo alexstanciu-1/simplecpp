@@ -1,0 +1,117 @@
+{
+  "control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "duplicate_method": {
+    "stage": "prepare",
+    "error": "Duplicate method: f\n"
+  },
+  "method_field": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "duplicate_type": {
+    "stage": "emit",
+    "error": "Duplicate C++ artifact identity or path"
+  },
+  "duplicate_local": {
+    "stage": "prepare",
+    "error": "S2S local a is already declared in this scope\n"
+  },
+  "void_local": {
+    "stage": "prepare",
+    "error": "S2S void is not a storage type\n"
+  },
+  "void_vector": {
+    "stage": "prepare",
+    "error": "Template type argument does not declare required capability value_storable for vector\n"
+  },
+  "void_nullable": {
+    "stage": "prepare",
+    "error": "Template type argument does not declare required capability value_storable for nullable\n"
+  },
+  "void_parameter": {
+    "stage": "prepare",
+    "error": "S2S void is not a storage type\n"
+  },
+  "void_field": {
+    "stage": "prepare",
+    "error": "S2S struct field type does not declare value_storable\n"
+  },
+  "self_struct": {
+    "stage": "prepare",
+    "error": "Cyclic by-value declaration dependency\n"
+  },
+  "recursive_vector": {
+    "stage": "prepare",
+    "error": "Cyclic by-value declaration dependency\n"
+  },
+  "const_default": {
+    "stage": "parse",
+    "error": "main.phs: Expected '=' at main.phs: byte 8\n"
+  },
+  "duplicate_static": {
+    "stage": "prepare",
+    "error": "Duplicate property n\n"
+  },
+  "break_outside": {
+    "stage": "prepare",
+    "error": "S2S break/continue requires an enclosing legal target\n"
+  },
+  "continue_outside": {
+    "stage": "prepare",
+    "error": "S2S break/continue requires an enclosing legal target\n"
+  },
+  "partial_return": {
+    "stage": "prepare",
+    "error": "S2S non-void function f can reach the end without returning a value\n"
+  },
+  "do_continue": {
+    "stage": "prepare",
+    "error": "S2S non-void function f can reach the end without returning a value\n"
+  },
+  "switch_partial": {
+    "stage": "prepare",
+    "error": "S2S non-void function f can reach the end without returning a value\n"
+  },
+  "unused_bad_static": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "unused_bad_method": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for missing\n"
+  },
+  "abstract_local": {
+    "stage": "prepare",
+    "error": "Inline record storage requires an explicit initializer\n"
+  },
+  "reference_temp": {
+    "stage": "prepare",
+    "error": "S2S reference arguments require stable storage of the exact parameter type\n"
+  },
+  "default_ref": {
+    "stage": "prepare",
+    "error": "S2S reference parameter defaults are deferred\n"
+  },
+  "default_order": {
+    "stage": "prepare",
+    "error": "S2S required parameter cannot follow an optional parameter\n"
+  },
+  "duplicate_constructor": {
+    "stage": "prepare",
+    "error": "Duplicate constructor\n"
+  },
+  "private_destructor": {
+    "stage": "prepare",
+    "error": "Allocation requires a public destructor\n"
+  },
+  "const_method_collision": {
+    "stage": "parse",
+    "error": "main.phs: Expected '=' at main.phs: byte 18\n"
+  }
+}

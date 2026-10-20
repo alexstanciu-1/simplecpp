@@ -1,0 +1,52 @@
+{
+  "base": "560e2a0c",
+  "command": "python3 compiler/my-try/tests/runtime_template_demand.py --output --alternate-storage --results /tmp/prelower-output-4",
+  "seconds": 63.0,
+  "counters": {
+    "direct-O0": "output 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n",
+    "direct-O2": "output 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n",
+    "direct-sanitized": "output 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n",
+    "composed-O0": "output 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n",
+    "composed-O2": "output 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n",
+    "composed-sanitized": "output 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n"
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 2,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 2,
+      "layouts_reused": 0
+    }
+  ],
+  "accounting": "Publication passes; native build passes integer output, fails container adapters with concrete source handles versus native shared handles."
+}

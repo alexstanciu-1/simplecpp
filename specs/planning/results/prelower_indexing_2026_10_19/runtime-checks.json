@@ -1,0 +1,114 @@
+[
+  {
+    "name": "runtime-core",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-O0",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/core/runtime.cpp",
+      "-o",
+      "/tmp/prelower-index-checks-final/core.o"
+    ],
+    "seconds": 8.552,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "portability",
+    "command": [
+      "php",
+      "tools/php_portability/check.php",
+      "/tmp/prelower-index-checks-final/source"
+    ],
+    "seconds": 0.634,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "002_strict_key_domains-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-O0",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/hash_t/level_01/runtime_hash_t_002_strict_key_domains.cpp",
+      "/tmp/prelower-index-checks-final/core.o",
+      "-pthread",
+      "-o",
+      "/tmp/prelower-index-checks-final/002_strict_key_domains"
+    ],
+    "seconds": 6.72,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "002_strict_key_domains-run",
+    "command": [
+      "/tmp/prelower-index-checks-final/002_strict_key_domains"
+    ],
+    "seconds": 0.005,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "001_find_at_remove_append-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-O0",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/hash_t/level_01/runtime_hash_t_001_find_at_remove_append.cpp",
+      "/tmp/prelower-index-checks-final/core.o",
+      "-pthread",
+      "-o",
+      "/tmp/prelower-index-checks-final/001_find_at_remove_append"
+    ],
+    "seconds": 6.984,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "001_find_at_remove_append-run",
+    "command": [
+      "/tmp/prelower-index-checks-final/001_find_at_remove_append"
+    ],
+    "seconds": 0.005,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "005_fixed_width_key_domains-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-O0",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/hash_t/level_01/runtime_hash_t_005_fixed_width_key_domains.cpp",
+      "/tmp/prelower-index-checks-final/core.o",
+      "-pthread",
+      "-o",
+      "/tmp/prelower-index-checks-final/005_fixed_width_key_domains"
+    ],
+    "seconds": 7.018,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "005_fixed_width_key_domains-run",
+    "command": [
+      "/tmp/prelower-index-checks-final/005_fixed_width_key_domains"
+    ],
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0
+  }
+]

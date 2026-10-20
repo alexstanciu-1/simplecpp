@@ -15,7 +15,7 @@ function methods_source(string $source): string
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -100,7 +100,7 @@ try {
 	file_put_contents($type_path, $declaration);
 	file_put_contents($entry_path, 'use Types\C; $c = new C(); return $c->get();');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();
@@ -140,7 +140,7 @@ try {
 	$incremental = CPP_Output::encode(Model::$cpp_files);
 	if ($incremental === $original) { throw new \LogicException('Method default failed to invalidate caller'); }
 	Compiler_Lifecycle::reset();
-	$fresh = new Compiler();
+	$fresh = new Compiler(new cpp_lowering_options(false));
 	$fresh->init([$directory]);
 	$fresh->select_entry('main', 'main.phs');
 	$fresh->exec_cpp();

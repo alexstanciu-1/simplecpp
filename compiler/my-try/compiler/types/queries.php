@@ -88,3 +88,35 @@ final class Type_Queries
 		return null;
 	}
 }
+
+/** Read settled capabilities without scheduling work or retaining a preparation context. */
+final class Capability_Facts implements type_capability_query
+{
+	/** Recurse through registered argument rules while reading completed source facts. */
+	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
+	{
+		$definition = Type_Queries::canonical($type_use)->definition();
+		if (Type_Queries::is_nominal_handle($type_use) && ($definition->origin() === type_definition_origin::source)) {
+			return ($capability === generic_contract::copyable_value)
+				|| ($capability === generic_contract::value_storable);
+		}
+		$declaration = Type_Queries::source_declaration($type_use);
+		if ($declaration === null) {
+			return Model::$type_catalog->registry()->has_registered_capability($type_use, $capability, $this);
+		}
+		$work = $declaration->preparation_work_owner();
+		if ($work === null) {
+			throw new \LogicException('Capability facts require completed declaration preparation');
+		}
+		if (!Preparation_Status::complete($work)) {
+			throw new \LogicException('Capability facts require completed declaration preparation');
+		}
+		if ($declaration instanceof collected_record) {
+			return object_cast($declaration, collected_record::class)->syntax()->require_preparation()->has_capability($capability);
+		}
+		if ($declaration instanceof collected_enum) {
+			return object_cast($declaration, collected_enum::class)->enum_syntax()->require_preparation()->has_capability($capability);
+		}
+		throw new \LogicException('Capability facts are unavailable for this source declaration');
+	}
+}

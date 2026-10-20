@@ -117,7 +117,7 @@ try
 {
 	file_put_contents($path, $initial);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$function = Model::$global_scope->functions_named('value')[0]->syntax();

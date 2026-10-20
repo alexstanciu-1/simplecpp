@@ -75,6 +75,7 @@ The authority stack for the current project is:
    - `specs/instance_methods_v0_2.md` (bounded instance calls, visibility and receiver lifetime)
    - `specs/inheritance_v0_2.md` (bases, inherited members, protected access, abstract/override and interface contracts, virtual dispatch, direct trait composition)
    - `specs/static_members_v0_2.md` (qualified methods/constants and type-owned property storage)
+   - `specs/exceptions_v0_2.md` (bounded Exception factory, single-type throw/catch, bounded finally and exceptional cleanup)
    - `specs/destructors_v0_2.md` (automatic cleanup, nonthrowing destructors and copy/move preservation)
    - `specs/namespaces_v0_2.md` (namespace identity, body-local imports and qualified lookup)
    - `specs/compact_layout_types.md`
@@ -82,7 +83,11 @@ The authority stack for the current project is:
    - `specs/count_empty_isset_contract.md`
    - `specs/output_v0_2.md` (ordered echo statements and bounded output admission)
    - `specs/expression_evaluation.md` (v0.2 ordered eager binary values and conversions)
+   - `specs/conditional_statements_v0_2.md` (conditional bodies, nearest-if binding and branch scopes)
    - `specs/runtime_module_metadata.md` (runtime-owned module catalogs and compiler ingestion boundaries)
+   - `specs/builtins/datetime/microtime.md` (free/qualified wall-clock compatibility calls)
+   - `specs/builtins/filesystem/fs_is_windows.md` (target-native filesystem separator fact)
+   - `specs/builtins/process/getenv.md` (environment snapshots, absence and NUL-name rejection)
    - `specs/error_values_and_take.md`
    - `specs/v0_2_preparation_diagnostics.md`
    - `specs/async_await.md`

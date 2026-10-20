@@ -1,0 +1,105 @@
+{
+  "mutual_vector_min": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_min/cpp/entry.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_min/cpp/types/n41.hpp:2:\n/tmp/mytry-diagnostic-review/batch17/mutual_vector_min/cpp/types/n42.hpp:8:34: error: use of undeclared identifier 'record_A'\n    8 |         scpp::vector_t<::scpp::shared_p<record_A>> field_as;\n      |                                         ^\n1 error generated.\n"
+    ]
+  },
+  "mutual_hash_min": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/entry.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/types/n41.hpp:2:\n/tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/types/n42.hpp:9:32: error: unknown type name 'record_A'; did you mean 'record_B'?\n    9 |         scpp::hash_t<::scpp::shared_p<record_A>, scpp::string_t> field_as;\n      |                                       ^~~~~~~~\n      |                                       record_B\n/tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/types/n42.hpp:6:8: note: 'record_B' declared here\n    6 | struct record_B\n      |        ^\n1 error generated.\n"
+    ]
+  },
+  "mutual_vector_single_file": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_single_file/cpp/entry.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_single_file/cpp/types/n41.hpp:2:\n/tmp/mytry-diagnostic-review/batch17/mutual_vector_single_file/cpp/types/n42.hpp:8:34: error: use of undeclared identifier 'record_A'\n    8 |         scpp::vector_t<::scpp::shared_p<record_A>> field_as;\n      |                                         ^\n1 error generated.\n"
+    ]
+  },
+  "self_vector_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "acyclic_vector_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mutual_direct_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_vector_direct": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "three_cycle_vector": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch17/three_cycle_vector/cpp/entry.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch17/three_cycle_vector/cpp/types/n41.hpp:2:\nIn file included from /tmp/mytry-diagnostic-review/batch17/three_cycle_vector/cpp/types/n42.hpp:2:\n/tmp/mytry-diagnostic-review/batch17/three_cycle_vector/cpp/types/n43.hpp:8:34: error: use of undeclared identifier 'record_A'\n    8 |         scpp::vector_t<::scpp::shared_p<record_A>> field_as;\n      |                                         ^\n1 error generated.\n"
+    ]
+  },
+  "mutual_callable": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch17/mutual_callable/cpp/entry.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch17/mutual_callable/cpp/types/n41.hpp:2:\n/tmp/mytry-diagnostic-review/batch17/mutual_callable/cpp/types/n42.hpp:8:33: error: unknown type name 'record_A'; did you mean 'record_B'?\n    8 |         std::function<::scpp::shared_p<record_A>()> field_f;\n      |                                        ^~~~~~~~\n      |                                        record_B\n/tmp/mytry-diagnostic-review/batch17/mutual_callable/cpp/types/n42.hpp:5:8: note: 'record_B' declared here\n    5 | struct record_B\n      |        ^\n1 error generated.\n"
+    ]
+  },
+  "cross_enum": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "alias_type_bad_kind": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved type for T\n"
+  },
+  "relative_import_absolute": {
+    "stage": "prepare",
+    "error": "Missing import target or wrong symbol kind: \\Lib\\C"
+  },
+  "runtime_shadow_type": {
+    "stage": "prepare",
+    "error": "S2S type arguments require a template definition\n"
+  },
+  "constant_import_wrong": {
+    "stage": "prepare",
+    "error": "Missing import target or wrong symbol kind: \\Lib\\C"
+  },
+  "same_alias_different_files": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "cross_trait": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "cross_unknown_property_type": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved type for Missing\n"
+  },
+  "cross_interface_incompatible": {
+    "stage": "prepare",
+    "error": "Interface implementation requires a compatible public instance signature\n"
+  },
+  "cross_const_forward": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "cross_static_return": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved type for static\n"
+  }
+}

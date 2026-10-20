@@ -1,0 +1,2 @@
+namespace { function global_helper(): int { return 7; } }
+namespace App { return global_helper(); }

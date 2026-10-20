@@ -16,7 +16,8 @@ final class Native_CPP_Commands
 		}
 		$optimization = '-O' . $policy->optimization;
 		$result /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
-			'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
+			'-Wshadow', '-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
+		if ($config->native_debug) { $result[] = '-g'; }
 		foreach ($definitions as $definition) {
 			$result[] = '-D' . $definition;
 		}

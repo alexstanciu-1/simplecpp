@@ -1,0 +1,39 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n426f78.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Box
+{
+public:
+	scpp::int_t<> field_value = static_cast<scpp::int_t<>>(2LL);
+public:
+public:
+	record_Box(scpp::int_t<> local_initial);
+};
+
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "types/n426f78.hpp"
+#include "scpp/int_t.hpp"
+record_Box::record_Box(scpp::int_t<> local_initial)
+{
+	(this)->field_value = local_initial;
+}
+
+
+// === entry.cpp ===
+#include "types/n426f78.hpp"
+#include "scpp/memory.hpp"
+#include "scpp/shared_p.hpp"
+#include "scpp/int_t.hpp"
+
+int main()
+{
+	auto local_box = ([&]() -> ::scpp::shared_p<record_Box> {
+	scpp::int_t<> argument_0 = static_cast<scpp::int_t<>>(7LL);
+	return ::scpp::shared<record_Box>(argument_0);
+}());
+	return static_cast<int>(((local_box)->field_value).native_value());
+	return 0;
+}

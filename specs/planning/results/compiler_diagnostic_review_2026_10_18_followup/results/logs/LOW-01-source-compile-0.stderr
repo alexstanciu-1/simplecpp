@@ -1,0 +1,7 @@
+/tmp/diagnostic-review-20261018-current/results/LOW-01-source/cpp/entry.cpp:11:10: error: object of type '(lambda at /tmp/diagnostic-review-20261018-current/results/LOW-01-source/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted
+   11 |         local_f = local_f;
+      |                 ^
+/tmp/diagnostic-review-20261018-current/results/LOW-01-source/cpp/entry.cpp:8:17: note: lambda expression begins here
+    8 |         auto local_f = [local_n]() mutable -> scpp::int_t<> {
+      |                        ^
+1 error generated.

@@ -21,7 +21,7 @@ try {
 		. '$d ?int = true ? option() : 3; $e ?int = true ? 3 : option(); return read();';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);
@@ -66,7 +66,7 @@ try {
 		$compiler->sync($changed);
 		$failed = false;
 		try { $compiler->prepare(); }
-		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'coalesce branches require matching'); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'nullable selection branches require the same payload type'); }
 		nullable_check($failed && Model::$cpp_files->is_empty(), 'Fallback change did not invalidate coalesce');
 		nullable_check($stable->version === $version, 'Fallback change rebuilt independent body');
 	}
@@ -78,7 +78,7 @@ try {
 		$compiler->sync($changed);
 		$failed = false;
 		try { $compiler->prepare(); }
-		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'conditional branches require matching'); }
+		catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'nullable selection branches require the same payload type'); }
 		nullable_check($failed && Model::$cpp_files->is_empty(), 'Conditional join failed to invalidate');
 		nullable_check($stable->version === $version, 'Conditional change rebuilt independent body');
 	}
@@ -86,7 +86,7 @@ try {
 	$compiler->update_cpp([$path]);
 	nullable_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Conditional repair changed output');
 	Compiler_Lifecycle::reset();
-	$clean = new Compiler();
+	$clean = new Compiler(new cpp_lowering_options(false));
 	$clean->init([$directory]);
 	$clean->exec_cpp();
 	nullable_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental nullable output differ');

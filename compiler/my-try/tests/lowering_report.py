@@ -29,7 +29,7 @@ return 0;
         def check(level):
             root = out / str(level)
             root.mkdir()
-            command = ['php', APP / 'main.php', '--s2s', source, '--entry', 'main.phs', '--optimization', str(level)]
+            command = ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates', '--entry', 'main.phs', '--optimization', str(level)]
             baseline = runner.run(f'baseline-{level}', command)
             report_path, explain_path = root / 'report.json', root / 'explain.json'
             observed = runner.run(f'report-{level}', [*command, '--lowering-report', report_path, '--lowering-explain', explain_path])
@@ -68,7 +68,7 @@ return 0;
             driver.write_text(r'''<?php
 namespace scpp\compiler;
 require BOOT;
-$compiler = new Compiler(); $compiler->init([SOURCE]); $compiler->select_entry('main', 'main.phs');
+$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([SOURCE]); $compiler->select_entry('main', 'main.phs');
 $policy = new cpp_lowering_policy(0); $compiler->exec_cpp(null, $policy);
 $before = CPP_Output::encode(Model::$cpp_files);
 $report = CPP_Lowering_Report::encode(Model::$cpp_files, Model::$cpp_output_program, $policy, true);

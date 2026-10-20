@@ -49,7 +49,7 @@ function callback_compile(string $source): string {
 	$module=new module('/callbacks','/callbacks','/callbacks');
 	$file=new file(); $file->path='main.phs'; $file->content=$source;
 	Source_Registry::add($module,$file); Model::$modules->add($module->name,$module);
-	$compiler=new Compiler(); $compiler->exec_cpp();
+	$compiler=new Compiler(new cpp_lowering_options(false)); $compiler->exec_cpp();
 	$output=CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 	callback_check($output===CPP_Probe::text(Model::$cpp_files),'Callback no-op changed output');
 	return $output;

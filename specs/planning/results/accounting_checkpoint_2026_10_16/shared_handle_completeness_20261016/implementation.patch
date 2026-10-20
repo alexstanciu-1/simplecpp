@@ -1,0 +1,40 @@
+diff --git a/compiler/my-try/05_backend/cpp/declarations.php b/compiler/my-try/05_backend/cpp/declarations.php
+index d7daf841..b94a78b1 100644
+--- a/compiler/my-try/05_backend/cpp/declarations.php
++++ b/compiler/my-try/05_backend/cpp/declarations.php
+@@ -163 +163 @@ final class CPP_Declarations
+-		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
++		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::stored_value;
+@@ -577 +577 @@ final class CPP_Declarations
+-			$text .= self::type($parameters[$index]->type, $context) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
++			$text .= self::type_for($parameters[$index]->type, $context, cpp_type_requirement::stored_value) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
+diff --git a/compiler/my-try/05_backend/cpp/generate.php b/compiler/my-try/05_backend/cpp/generate.php
+index 7f357d62..d739f1ee 100644
+--- a/compiler/my-try/05_backend/cpp/generate.php
++++ b/compiler/my-try/05_backend/cpp/generate.php
+@@ -338 +338 @@ final class CPP_Generator
+-			return CPP_Declarations::type($binding->type, $context) . ' ' . $name;
++			return CPP_Declarations::type_for($binding->type, $context, cpp_type_requirement::stored_value) . ' ' . $name;
+@@ -360,2 +360,2 @@ final class CPP_Generator
+-		// Even an inferred `auto` copy or replacement needs its concrete value definition.
+-		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
++		// An inferred copy needs the stored representation, not necessarily a shared payload layout.
++		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::stored_value;
+diff --git a/compiler/my-try/05_backend/cpp/structures.php b/compiler/my-try/05_backend/cpp/structures.php
+index 004b8c2f..22cf4625 100644
+--- a/compiler/my-try/05_backend/cpp/structures.php
++++ b/compiler/my-try/05_backend/cpp/structures.php
+@@ -16,0 +17,2 @@ enum cpp_type_requirement {
++	// A complete stored value need not expose the payload of a nominal shared handle.
++	case stored_value;
+diff --git a/compiler/my-try/05_backend/cpp/types.php b/compiler/my-try/05_backend/cpp/types.php
+index 237f5c20..dd2de284 100644
+--- a/compiler/my-try/05_backend/cpp/types.php
++++ b/compiler/my-try/05_backend/cpp/types.php
+@@ -23,0 +24,6 @@ final class CPP_Types
++		// Passing/copying the stored handle does not inspect its payload. Other
++		// representations retain their complete-type requirements.
++		if ($requirement === cpp_type_requirement::stored_value) {
++			$requirement = Type_Queries::is_nominal_handle($type_use)
++				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
++		}

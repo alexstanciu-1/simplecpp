@@ -1,0 +1,1 @@
+$v vector<unique<int>>; $p unique<int>; $v[0] = move($p); return 0;

@@ -6,8 +6,8 @@ namespace scpp {
 
 // Private-to-lowering traversal. No source callback runs between probe and mutation,
 // and no returned reference is exposed as a source-language native binding.
-template <typename T>
-const T &index_path_probe(const vector_t<T> &receiver, const int_t<> &key) {
+template <typename T, typename K> requires detail::is_int_t_v<K>
+const T &index_path_probe(const vector_t<T> &receiver, const K &key) {
 	return receiver.at(key);
 }
 
@@ -41,8 +41,8 @@ inline const detail::dynamic_value &index_path_probe(const detail::dynamic_value
 	return child;
 }
 
-template <typename T>
-T &index_path_descend(vector_t<T> &receiver, const int_t<> &key) {
+template <typename T, typename K> requires detail::is_int_t_v<K>
+T &index_path_descend(vector_t<T> &receiver, const K &key) {
 	return receiver.at(key);
 }
 
@@ -63,8 +63,8 @@ inline detail::dynamic_value &index_path_descend(detail::dynamic_value &receiver
 
 // Check the leaf before ANY path creation or detachment. Value conversion has
 // already completed. Allocation/copy failures during commit are not transactions.
-template <typename T>
-void index_path_check_store(const vector_t<T> &receiver, const int_t<> &key, const T &) {
+template <typename T, typename K> requires detail::is_int_t_v<K>
+void index_path_check_store(const vector_t<T> &receiver, const K &key, const T &) {
 	(void)receiver.at(key);
 }
 
@@ -88,8 +88,8 @@ inline void index_path_check_store(const detail::dynamic_value &receiver, const 
 template <typename T>
 void index_path_check_append(const vector_t<T> &, const T &) {}
 
-template <typename V>
-void index_path_check_append(const hash_t<V, int_t<>> &, const V &) {}
+template <typename V, typename K> requires detail::is_int_t_v<K>
+void index_path_check_append(const hash_t<V, K> &, const V &) {}
 
 inline void index_path_check_append(const mixed_t &receiver, const mixed_t &value) {
 	index_path_check_value(receiver, value);

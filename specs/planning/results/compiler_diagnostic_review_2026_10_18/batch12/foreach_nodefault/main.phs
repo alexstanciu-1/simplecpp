@@ -1,0 +1,1 @@
+struct S { function __construct(int $n) {} } $v vector<S> = [new S(1)]; foreach ($v as $s) {} return 0;

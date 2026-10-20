@@ -83,6 +83,14 @@ and container-specific ownership remain deferred. String ownership is reconciled
 
 ### Terminating-recursion verification — 2026-10-02
 
+
+**Current scope — 2026-10-19 (CS130).** Eight programs execute successfully, but function_recursive_signature only declares an uncalled recursive cycle. Seven remaining cases actually exercise bounded recursion: base return, factorial, countdown, local isolation, Fibonacci, mutual forward calls and reference forwarding. No arbitrary termination/depth/tail-call claim. Old eager-effect boundary is superseded.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS130`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 FUNC-RECURSION-001 uses ordinary calls, not a special recursive-call node. Shared
 preparation publishes signatures before bodies; C++ emits prototypes before bodies.
 Each invocation has independent value parameters/locals, while explicit reference
@@ -110,6 +118,8 @@ in future requested native validation through the existing S2S source manifest.
 
 Non-goals: proving arbitrary recursion terminates, stack-depth limits, tail-call
 optimization, general call-effect composition, or new return/type-inference rules.
+
+</details>
 
 ### Scalar parameter defaults — 2026-10-02
 
@@ -189,6 +199,14 @@ duplicate struct fields remain debt. NOTE-016/039/040 retain unrelated deferred 
 
 ### String parameter and return ownership — 2026-10-02
 
+
+**Current scope — 2026-10-19 (CS133).** Twelve native value/signature probes combine runtime alias isolation with exact C++ parameter/return static assertions: value append leaves caller intact, explicit reference append writes it, ordinary returns remain values and survive locals/parameter changes. No inferred reference return or general deep-copy guarantee. Explicit safe reference returns now have their separate later contract.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS133`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 By-value string parameters are local values: assignment and `.=` cannot change the
 caller's string. Explicit `&` aliases caller storage, so the same writes are visible
 to the caller. A read-only value parameter remains a snapshot even when another
@@ -218,6 +236,8 @@ Explicit reference returns require a separate lifetime contract and remain defer
 Containers/wrappers/shared-object handles retain their own copy semantics; string
 independence is not a general deep-copy rule. TYPE-PARAM-003D is closed for its string
 example only; its imported vector extension remains for Chapter 06.
+
+</details>
 
 ### Typed trailing variadics — 2026-10-02
 
@@ -282,6 +302,14 @@ native compilation is not warning-clean.
 
 ### Remaining debt and scope boundaries
 
+
+**Current scope — 2026-10-19 (CS136).** Debt register routes later owners: nullable boundaries, safe explicit references, container operations and templates are no longer blanket unimplemented prerequisites. Restricted unions remain V-L01; explicit ordinary-function/method captures, broader defaults, reference/untyped variadics and unpacking retain their actual boundaries. Legacy annotations and LLVM/native parity remain out of scope.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS136`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 | ID | Deferred work | Owning next area |
 | --- | --- | --- |
 | FN-01 | Nullable/wrapper parameter and return boundaries; primary-type normalized union signatures | Chapter 05; review established specs before selecting a bounded slice |
@@ -302,6 +330,8 @@ and preparation/emission debt remains tracked in its owning documents.
 Next: discuss Chapter 05 in grouped slices, starting with typed nullable values,
 null construction/checks and nullable function boundaries. Preserve the distinction
 between null, false, zero and empty values, and between truthiness and explicit casts.
+
+</details>
 
 ## Ordinary-function foundation (2026-09-27)
 
@@ -347,6 +377,14 @@ not a claim of current frontend or S2S support. Coordinate with
 
 ## Progress
 
+
+**Current scope — 2026-10-19 (CS139).** Progress table routes source cards to bounded function proofs, not universal signatures/returns. Nullable/reference/container deferrals in the old notes are superseded only by specific later owners.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS139`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
@@ -375,6 +413,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-016](#note-016) | agreed bounded subset | Explicit signatures, scalar defaults, explicit parameter references | proved for current slice | proved for current slice | deferred | FN-01/02/03/05/07 retain broader forms |
 | [NOTE-039](#note-039) | agreed bounded subset | Explicit typed value return | proved for current slice | proved for current slice | deferred | No implicit auto/reference returns; wrapper extensions deferred |
 | [NOTE-040](#note-040) | agreed bounded subset | Explicit parameters and value returns | proved for current slice | proved for current slice | deferred | Legacy annotation conflicts and explicit reference returns deferred |
+
+</details>
+
 ## FUNC-DECL-001
 
 **v0.2 decision / target C++:** Reject omitted return types, including empty bodies.
@@ -1108,6 +1149,14 @@ void_t f(string_t s) { s += string_t("x"); }
 
 ## NOTE-016
 
+
+**Current scope — 2026-10-19 (CS161).** Explicit types, literal defaults and explicit parameter references have direct evidence. Imported primary-type normalized unions remain missing V-L01; nullable/method/reference forms must map to later contracts rather than the blanket original deferral. Prototype default placement is verified, exact generated spelling is not universal.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS161`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Agreed subset (2026-10-02):** ordinary named functions require explicit parameter
 and return types; scalar defaults and explicit parameter references follow their
 implemented contracts above. Nullable/union signatures, methods and reference
@@ -1136,7 +1185,17 @@ historical provenance and is not a claim that those deferred forms are implement
 >
 > ---
 
+</details>
+
 ## NOTE-039
+
+
+**Current scope — 2026-10-19 (CS162).** Missing ordinary return type rejects; no implicit auto or inferred const-reference return. Native signature probes prove string returns by value even from existing parameter/reference storage. Explicit same-origin reference returns are separately supported under native_reference_safety; old blanket reference/wrapper deferral is stale.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS162`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 **Agreed correction (2026-10-02):** no implicit `auto` return type for ordinary named
 functions. Their declared return type is required. Ordinary returns remain by value;
@@ -1189,7 +1248,17 @@ follows; its authority labels and v1 boundaries are not this catalog's status.
 > nullable<string_t> f(const nullable<string_t>& a) { return null; }
 > ```
 
+</details>
+
 ## NOTE-040
+
+
+**Current scope — 2026-10-19 (CS163).** Explicit ordinary parameter/return annotations are required, with no auto fallback. String value-return signatures are independently checked. Legacy annotation conflict handling remains excluded; explicit reference-return lifetime is governed by later normative rules, not imported heuristics.
+
+Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS163`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 **Agreed subset (2026-10-02):** explicit parameter types are mandatory and have no
 `auto` fallback. Named functions also require explicit return types. Legacy annotation
@@ -1216,3 +1285,5 @@ returns remain deferred. Imported prose follows, not current implementation stat
 > const string_t& f(const string_t& a) { return a; }
 > string_t f() { return string_t("x"); }
 > ```
+
+</details>

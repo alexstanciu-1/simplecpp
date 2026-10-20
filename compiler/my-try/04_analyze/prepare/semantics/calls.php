@@ -78,6 +78,13 @@ final class Call_Preparation
 			}
 		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
+		// Provider requirements apply to the selected input type, including moved/defaulted inputs.
+		foreach ($parameters as $parameter)
+		{
+			if ($parameter->requires_copy) {
+				Capability_Preparation::require_copy($parameter->type, $context);
+			}
+		}
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		$facts->fixed_count = q_count($parameters);
 		if ($facts->fixed_count > 0) {

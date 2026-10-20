@@ -28,7 +28,7 @@ try {
 	file_put_contents($child_path, $child_text);
 	file_put_contents($config_path, 'namespace external; const BONUS = 1;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'child.phs');
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'child.phs');
 	$compiler->exec_cpp();
 	$base = callable_instance_owner('origin\\Base');
 	$child = callable_instance_owner('app\\Child');

@@ -13,6 +13,20 @@ the features that need them. This register is initially seeded with the explicit
 transferred iteration-policy and reference-iteration safety debts; it is not an exhaustive migration of existing
 debts. Other chapter blockers remain in place unless explicitly transferred.
 
+## Current reconciliation — 2026-10-16
+
+The [compact decision inventory](15_review.md) indexes all debt recorded here in
+52 selectable groups, including unnamed chapter follow-ups, with recommended
+priorities and dependencies. It reconciles the current implementation at `82659125`;
+no implementation or new validation run is claimed by this review.
+
+Only CH06-ITER-01 and CH06-REF-01 are explicitly final-catalog blockers. Other entries
+retain their existing deferred/non-blocking or unclassified status even when listed
+under the historical blocking-inventory heading. Recommended first slice:
+**CH15-ITER-DESIGN-01**, a mutation-policy and guard-ownership decision before runtime
+implementation. It remains a proposal awaiting prioritization, not an approved
+container redesign. The detailed entries below retain their contracts and provenance.
+
 ## Blocking inventory
 
 Non-blocking follow-ups are recorded separately below; their presence in this
@@ -177,8 +191,9 @@ now preserves embedded NULs. Review embedded-NUL input names/commands (currently
 passed through c_str), stream-read failures/partial output, ignored pclose status,
 unbounded capture, environment concurrency and Windows behavior before broader
 guarantees. Do not silently change failure states or introduce managed-process
-semantics into this helper. The separate managed-process APIs still need registered
-handle/output types. This follow-up does not block the bounded catalog pass.
+semantics into this helper. The separate managed-process APIs now have registered
+handle/output types in `runtime/metadata/modules/process.json`; their metadata is not
+outstanding debt. This follow-up does not block the bounded catalog pass.
 
 ### CH15-RUNTIME-HASH-01 — stable hashing implementation and persisted-key compatibility
 
@@ -220,9 +235,11 @@ the compiler algorithms that interpret it.
 Foundation implemented 2026-10-09: ordinary nominal/template definitions, formation
 requirements, defaults, capability dependencies and separate C++ bindings are JSON-driven.
 Vector/hash now use that path, and scope publication enumerates registered exposures.
-Language-interpreted types remain explicit compiler-owned exceptions. This does not
-close the audit: initialization/indexing/iteration protocol declarations, runtime
-members/factories, specialized storage and handle-lifetime facts still need review.
+Language-interpreted types remain explicit compiler-owned exceptions. Subsequent
+module work implemented initialization/indexing/iteration protocols,
+members/factories and storage/lifetime metadata. The remaining audit is the four
+operation gates above and future provider-specific contracts, not reimplementation
+of those foundations.
 
 Acceptance proof: introduce an unfamiliar runtime type and nested applications through
 metadata alone, with separate C++ bindings, and exercise admission/copy checks without
@@ -250,8 +267,9 @@ the entire regex surface. Held forms remain unavailable in executable metadata:
   callback/callback-array registration still needs provider ABI/retention and
   owning-contract validation, not string/mixed placeholders.
 
-The module remains opt-in. Automatic optional-provider linkage and CLI selection
-remain with their build/composition owners. Current matching behavior, including
+The module remains opt-in. Metadata-driven optional-provider linkage is implemented
+by the native build owner. CLI module-selection ergonomics and broader provider/platform
+acceptance remain with their build/composition owners. Current matching behavior, including
 UTF-8 zero-length advancement, warrants later edge review; registration is not a
 claim of new PCRE/PHP compatibility. These items do not block the registered subset.
 See the [inventory](../planning/runtime_catalog_coverage.md#regex-module-inventory--2026-10-09).
@@ -274,9 +292,11 @@ platform/error-path debt above.
 ### CH15-RUNTIME-DATETIME-01 — datetime edge/platform review
 
 The strict module catalog preserves all 11 existing datetime signatures, including
-uint64 monotonic micro/nanosecond counters. Generalize fixed-width integer operations
-in their shared compiler owner before claiming direct arithmetic/comparison support
-for these return values; catalog registration must not narrow them to int.
+uint64 monotonic micro/nanosecond counters. Bounded same-signedness binary
+arithmetic/comparison now supports these fixed-width
+returns through the shared integer model; catalog registration does not narrow them
+to int. Broader mutation, mixed-signedness and overflow work remains
+CH15-INTEGER-DOMAINS-01.
 
 Review the local parser's unconditional mktime `-1` failure check (that Unix second
 can represent a valid pre-epoch time), host time_t narrowing/formatting range, and DST
@@ -289,8 +309,9 @@ to the native build owner, not execution by the semantic catalog.
 ### CH15-RUNTIME-INTEGRATION-TESTS-01 — extended module validation
 
 Non-blocking testing debt requested 2026-10-10. The runtime integration plan uses
-focused positive/negative and generated-C++ boundary proofs. After foundations
-settle, review large catalogs, malformed-input fuzzing, all provider API edges,
+focused positive/negative and generated-C++ boundary proofs. CH13/14 now also have
+bounded compiler-native gates; those do not close this extended acceptance matrix.
+After foundations settle, review large catalogs, malformed-input fuzzing, all provider API edges,
 cross-platform linkage, full ownership/callable/protocol combinations, PCH/cache
 performance and the native compiler rebuild. Do not treat this deferral as
 permission to enable unsafe lifetime paths or skip representative rejection tests.
@@ -628,6 +649,35 @@ is now resolved; see Chapter 06's positive-pass conclusion.
 These items require review, not automatic implementation or an implicit promotion
 to blocking feature debt. Preserve the distinction from the blocking inventory above.
 
+### CH15-SOURCE-DETECTION-01 — scan-only edits with unchanged file metadata
+
+Deferred to Chapter 15 by explicit user decision on 2026-10-18. This is existing
+input change-detection debt, not a newly verified semantic preparation defect.
+The current [incremental strategy](../planning/incremental_strategy.md) records
+that mtime/size scanning can miss equal-size edits when timestamps are unchanged;
+explicit changed-path notifications force reads.
+
+The [historical review](../../../../specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INCREMENTAL.md)
+replaced `$x = 1; return $x;` with `$x = 1; return $y;` while preserving file size
+and mtime. Without notification, the same compiler instance reused old valid output
+and publication remained ready. Notified edits and fresh compilation detected the
+invalid source. Historical native-cache observations were downstream consequences
+of the missed input change, not proof of an independent cache invalidation defect.
+
+Owner: input discovery/change detection and its lifecycle notification contract.
+Discuss the required scan-only freshness guarantee and a sound detection strategy
+before implementation; do not silently add content hashing or redesign the cache.
+Assess detection cost alongside correctness once a strategy is agreed.
+
+Closeout needs same-instance equal-size/equal-mtime semantic and syntax edit cases,
+explicit-notification and fresh-instance controls, failure/readiness checks, and
+successful recovery after repair. Verify native-output reuse only where the chosen
+contract requires it. Establish evidence against the then-current revision.
+
+The diagnostic inventory's REC-03 is deferred here and excluded from the current
+review execution. Explicitly notified semantic/syntax failure and recovery cases
+REC-01/02 remain in scope. No implementation or execution is authorized by this entry.
+
 ### CH15-NATIVE-CACHE-PERF-01 — native cache validation overhead
 
 Transferred by user request on 2026-10-06; optimization is deferred, not a reason to
@@ -649,14 +699,16 @@ Preserve Clang's normal PCH checks, header-search/shadowing correctness, content
 invalidation, reservations and failed-build recovery. Do not substitute timestamp-only
 reuse or silently trust stale dependencies. Require measured cold/no-op/edit phases
 and the Chapter 08 acceptance matrix before closing; broader toolchain/search and
-parallel-action work retain their own scope. No optimization is implemented by deferral.
+parallel-action work retain their own scope. The original deferral itself implemented no optimization.
 
 A bounded follow-up on 2026-10-10 integrated template instantiation during PCH
 creation, with command-key invalidation and old/new cache migration proved in the
 historical dev002 accounting run. Benchmark artifacts are outside this compiler-only
 recovery (2026-10-16); the recovery itself reruns no tests or benchmarks.
-This reduces validation/compilation work but does not remove scans or standalone
-validation; this broader cache-validation debt remains open.
+The current builder also implements opt-in `--runtime-snapshot` dependency-discovery
+reuse with manual runtime invalidation, while the default retains fresh scans.
+Standalone PCH validation and broader validation costs remain. Re-measure the current
+implementation before selecting another optimization; this debt remains open.
 
 ### CH15-NATIVE-RUNTIME-IDENTITY-01 — automatic runtime change invalidation
 
@@ -950,6 +1002,45 @@ and the relation to CH15-SHAPE-01. Callable values do not automatically imply me
 binding; coordinate with CH15-CALLABLE-01. Completion requires an agreed normative
 contract plus preparation, generated-program and failure-state proofs. This debt
 does not defer ordinary typed class/struct member work in its owning chapter.
+
+## Chapter 13 deferred work
+
+The [Chapter 13](13_errors.md) closeout is bounded by its implemented language surface
+and explicit native validation gate. These extensions are not implied by its closeout:
+
+- **CH13-DIAG-01:** structured diagnostic origins and uniform file/line/column delivery,
+  with stable unsupported-feature versus language-invalid categorization. Owners:
+  shared preparation failure records, token/source provenance and CLI presentation.
+  Existing message-based rejection/publication guards remain valid; do not widen the
+  chapter closeout into a cross-stage diagnostic redesign.
+- Finally transport for reference, record/container/wrapper and owning-handle returns;
+  break/continue crossing protected regions; transfers escaping finally.
+- Multiple/union catches, source exception subclasses/runtime inheritance, runtime
+  constructor metadata (`new Exception`), bare rethrow, throw expressions and chaining.
+- Static exception-effect analysis, expanded runtime-handle ownership/identity APIs,
+  broader error getter receivers and Result payload families, `result<error>`, and LLVM.
+
+Each extension needs its own bounded contract and lifetime/transfer proofs. Native
+chapter proofs do not certify exhaustive lifetime combinations or all deferred paths.
+
+## Chapter 14 closeout deferrals
+
+[Chapter 14](14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16) closes
+its existing artifact/runtime contracts and warning-enabled acceptance. Its native
+proof does not implement the following extensions or transfer ownership away from
+their current guides:
+
+- Structured source-origin/category diagnostics: existing **CH13-DIAG-01**.
+- More permissive template/handle incomplete-type dependencies: C++ type/declaration
+  requirements and per-runtime binding proofs; conservative includes remain valid.
+- Broader optional-module and toolchain coverage, a checked current-build/run reader,
+  parallel native actions and garbage collection: native build/publication owners.
+- Automatic runtime refresh: **CH15-NATIVE-RUNTIME-IDENTITY-01**; validation cost:
+  **CH15-NATIVE-CACHE-PERF-01**. Their existing boundaries remain in force.
+- Formatting, broad warning cleanup and LLVM remain outside the completed slice.
+
+Prioritize a bounded contract before implementation. The closeout is not a promise
+of a hermetic cache, replayed cached warnings, or exhaustive publication crash recovery.
 
 
 ### CH15-NINJA-01 — Ninja adapter follow-ups

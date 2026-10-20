@@ -3,6 +3,10 @@ Doc Status: planning
 
 Date: 2026-09-20
 
+Coverage checkpoint: 2026-10-16; see section 11 for implemented coverage,
+remaining gaps and the next compile-cost experiments. The original historical
+measurements below remain unchanged.
+
 Audience: implementers of the next semantically informed Simple C++ S2S and its
 build driver. This is a technical handoff from the compile-latency assessment,
 not a new language specification or an implemented compiler API. Normative
@@ -337,3 +341,104 @@ resolved frontend or a general C++ parser. Do not transplant the experimental
 regular expressions or class-specific metadata as the next compiler's semantic
 model. Build the artifact rules from the supplied resolved program, preserve the
 language contracts, and use the archived experiments as acceptance evidence.
+
+## 11. my-try coverage checkpoint — 2026-10-16
+
+The core output/build architecture is substantially implemented; the complete
+handoff acceptance package is not closed. This assessment is pinned to isolated
+checkout `sandbox/accounting-recovery-20261016/repo`, commit `2f453540`, rather
+than concurrent work in the original `compiler/my-try/` tree. It is a bounded
+implementation/evidence assessment, not a percentage of language completeness.
+
+### Architecture and acceptance coverage
+
+| Handoff area | Coverage at this checkpoint | Remaining qualification or gap |
+| --- | --- | --- |
+| Resolved semantic inputs (§2) | Lowering uses prepared types, calls, conversions, storage and lifetime facts rather than the historical lexical heuristics. | Bounded by supported language features; not an audit of every semantic fact or compiler incremental/MT internals. |
+| Narrow declarations (§4) | Individual type headers and free-callable declaration headers; no all-project application declaration umbrella or application PCH. | Method declarations remain in their owning type header. |
+| Completeness dependencies (§2–5) | Focused proofs cover inferred values, nested access, value copies and inheritance. The new stored-value requirement permits forward declarations for shared-handle storage while preserving payload dependencies for actual operations. | Template/callable payload requirements remain conservative; general dependency minimality is not proved. |
+| Stable implementation units (§4) | Explicit implementation-group assembly preserves source-based membership and stable paths. | No automatic size bound or splitting. Automatic splitting and multi-file classes remain deferred CH15 debt. |
+| Publication (§3–4) | Final-content hashes, unchanged-file preservation, owned obsolete-artifact cleanup and a consistent ready-manifest boundary. | This does not by itself establish every semantic invalidation category. |
+| Explainable artifact graph (§3) | Manifest records identities, paths, content hashes, includes and translation-unit membership; runtime build requirements are explicit. | Full symbol-to-artifact ownership/explanation graph, dependency reasons, and separately recorded source-contract versus lowered-ABI fingerprints are not yet exposed. |
+| Native build driver (§7) | Shared command recipes, optional Ninja reuse, runtime-only PCH, Clang depfiles, Mold selection/thread configuration and relevant invalidation. | Not a fully hermetic toolchain/cache guarantee; automatic memory-aware job tuning is not established. |
+| Edit validation (§5, §8) | Body, signature/caller, layout, shared-declaration, no-op and reversal cases; earlier addition/removal and configuration checks. | Full inline/template/constant/location-change acceptance matrix remains open. |
+| Behavioral preservation (§6, §8) | Focused shared identity, last-owner destruction, value-copy, reference, inheritance and callable proofs plus accounting execution checks. | Not an exhaustive language, diagnostic or optimized-runtime performance regression proof. |
+| Diagnostic identity/location data (§2, §4, §8) | No dedicated separation proof established by this work. | Demonstrate accurate mapping and location-only publication/rebuild behavior before claiming coverage. |
+| Historical acceptance workloads (§8) | The accounting workload supplies new evidence. | Frozen historical samples and both coherent compound changes have not been replayed with this compiler; the full twelve-source historical feature replay remains open too. |
+| Optional compile-cost work (§9) | Profiles identify frontend/template exposure in expensive units. | Narrower runtime exposure, reduced repeated template work and lightweight diagnostic-data compilation remain experiments, not demonstrated improvements. |
+
+### Current accounting evidence
+
+The application has 528,088 authored bytes in 93 PHS files, producing 93 generated
+translation units plus three runtime objects. On dev002 (Ryzen 9 5950X, native
+Linux), settings are native compiler O2 with debug information, application O0,
+Clang 18.1.3, compiler jobs 12, Ninja jobs 8, Mold 3.0.0 with 8 threads, runtime-only
+PCH, profiling disabled and normal OS caching. These settings and workload differ
+from the historical reference in §7; this is not a direct speedup comparison.
+
+| Case | Total invocation seconds | Rebuilt / reused objects |
+| --- | ---: | ---: |
+| Full build | 11.751 | 96 / 0 |
+| Unchanged | 1.049 | 0 / 96 |
+| Two body edits in one unit | 1.554 | 1 / 95 |
+| Signature plus callers | 4.041 | 5 / 91 |
+| Local class layout | 4.031 | 5 / 91 |
+| Shared declaration | 3.771 | 20 / 76 |
+
+Times are from each case's median-total trial of three. The shared-declaration
+case previously rebuilt 89 objects and took 9.450 seconds; the completeness
+refinement reduces it to 20 objects. Peak sampled process-tree RSS for that case
+is 1,528.3 MiB and did not improve. All application edits reuse the PCH. All 54
+builds, 51 exact dependency-set checks, three PHP/native publication comparisons,
+and 1,855 application checks per successful build passed. All 27 unchanged runs
+launch zero Clang/PCH/link actions.
+
+Each build starts a fresh native compiler process. Ninja owns optional native
+reuse between runs; these are not retained compiler-incremental timings. Runtime
+sources remain fixed, as expected for ordinary application builds. Incremental
+and MT internals remain outside this architecture work's scope.
+
+Checkpoint evidence is preserved in the [local archive](results/accounting_checkpoint_2026_10_16/README.md):
+
+- [Shared-handle implementation, validation and stage/memory results](results/accounting_checkpoint_2026_10_16/shared_handle_completeness_20261016.md).
+- [Header fan-out and expensive-unit investigation](results/accounting_checkpoint_2026_10_16/accounting_header_fanout_20261016.md).
+
+These links identify archived reports and evidence from `2f453540`, not the
+current compiler tree. The archive records original paths and content hashes;
+reproduction requires the recorded source revision and toolchain.
+
+### Next expensive-unit experiments — discussion, not implementation approval
+
+Keep source-based unit membership unchanged. The target remains at least 80% of
+actual object compilations within three seconds, aiming toward two seconds;
+this is a percentile target, not an arithmetic-average target. The earlier
+accounting screen already met it, but its slowest units still determine several
+edit critical paths.
+
+1. Refresh focused traces for the slow units after the completeness refinement.
+   The earlier isolated traces put roughly 73–78% of compiler execution in the
+   frontend. Template event totals overlap and must not be added as independent
+   costs. Establish current attribution before selecting a change.
+2. First candidate: move eligible generated construction/default-initialization
+   work out of headers into the owning existing implementation unit. Inline typed
+   hash initializers and shared construction appear in expensive instantiations.
+   Distinguish moving a constructor body from moving the allocation wrapper:
+   the former does not necessarily remove caller-side `make_shared` instantiation.
+   Neither improvement is measured yet. Preserve initialization order, argument
+   evaluation, ownership, destruction, exception behavior and supported ABI/export
+   contracts; measure runtime cost as well as compile savings.
+3. Audit runtime header exposure using resolved operations and the existing PCH
+   boundary. A fixed runtime does not mean every unit needs its broadest headers.
+   Check actual reductions in parsing/instantiation before changing PCH composition.
+4. Only where traces justify it, investigate simplifying generated expression
+   scaffolding. Numerous immediately invoked lambdas are observable in slow units,
+   but their independent cost is not established. Preserve ordered evaluation,
+   references and temporary lifetimes; do not remove sequencing mechanically.
+
+For any selected experiment, compare isolated Clang frontend/backend time and
+peak memory, then full-build and affected-edit wall time with identical native
+settings. Check PCH/object rebuild sets, unchanged publication, correctness and
+execution performance. A compile-time win must not silently increase fan-out or
+introduce a material execution regression. Wide changes across ownership areas
+require a separate scope decision. Unit splitting, multi-file classes, direct
+LLVM lowering and compiler incremental/MT redesign are not part of this slice.

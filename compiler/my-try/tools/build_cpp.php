@@ -5,11 +5,13 @@ require_once dirname(__DIR__) . '/boot.php';
 // Host CLI only; all build policy is in the portable native-build worker.
 try {
 	if ($argc < 3) {
-		throw new \RuntimeException('Usage: php build_cpp.php PUBLISHED_DIRECTORY CACHE_DIRECTORY [--no-pch] [--runtime-snapshot] [-O0|-O1|-O2|-O3] [--linker=PATH] [--linker-threads=N]');
+		throw new \RuntimeException('Usage: php build_cpp.php PUBLISHED_DIRECTORY CACHE_DIRECTORY [--pch|--no-pch] [--runtime-snapshot] [-O0|-O1|-O2|-O3] [--linker=PATH] [--linker-threads=N] [--native-debug] (PCH disabled by default)');
 	}
 	$config = new native_cpp_config('/usr/bin/clang++', dirname(__DIR__, 3) . '/runtime/include', $argv[2]);
 	for ($index = 3; $index < $argc; $index++) {
 		if ($argv[$index] === '--no-pch') { $config->pch = false; }
+		elseif ($argv[$index] === '--pch') { $config->pch = true; }
+		elseif ($argv[$index] === '--native-debug') { $config->native_debug = true; }
 		elseif ($argv[$index] === '--runtime-snapshot') { $config->runtime_snapshot = true; }
 		elseif ($argv[$index] === '-O0') { $config->optimization = 0; }
 		elseif ($argv[$index] === '-O1') { $config->optimization = 1; }
@@ -24,6 +26,8 @@ try {
 		else { throw new \RuntimeException('Unknown native build option'); }
 	}
 	$result = (new Native_CPP_Build($config))->build($argv[1]);
+	fwrite(STDERR, $result->diagnostics);
 	echo json_encode(['executable' => $result->executable, 'compiled' => $result->compiled,
-		'reused' => $result->reused, 'pch_built' => $result->pch_built, 'linked' => $result->linked], JSON_THROW_ON_ERROR), "\n";
+		'reused' => $result->reused, 'pch_built' => $result->pch_built, 'linked' => $result->linked,
+		'layouts_built' => $result->layouts_built, 'layouts_reused' => $result->layouts_reused], JSON_THROW_ON_ERROR), "\n";
 } catch (\Throwable $error) { fwrite(STDERR, $error->getMessage() . "\n"); exit(1); }

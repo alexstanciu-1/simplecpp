@@ -1,0 +1,1 @@
+class C { function __destruct() { return 1; } } return 0;

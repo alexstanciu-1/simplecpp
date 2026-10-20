@@ -10,7 +10,7 @@ function handle_source(string $text): string
 	$module = new module('/handles', '/handles', '/handles');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 $results = [];
@@ -110,7 +110,7 @@ try {
 		$class_text = 'class C implements J {}';
 		file_put_contents($interface_path, $interface_text); file_put_contents($class_path, $class_text);
 		file_put_contents($main_path, $producer . ' $i weak<I> = $w; return 9;');
-		Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+		Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 		$original = CPP_Output::encode(Model::$cpp_files);
 		$edited = $index === 0 ? $class_path : $interface_path;
 		file_put_contents($edited, $index === 0 ? 'class C {}' : 'interface I {} interface J {}');
@@ -131,7 +131,7 @@ try {
 	file_put_contents($interface_path, $interface_text); file_put_contents($class_path, $class_text);
 	file_put_contents($main_path, '$i I = new C(); return $i->read();');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$original = CPP_Output::encode(Model::$cpp_files);
 	foreach ([[$interface_path, str_replace(' extends J', '', $interface_text), $interface_text],
 		[$class_path, str_replace(' implements I', '', $class_text), $class_text]] as [$path, $invalid, $valid]) {

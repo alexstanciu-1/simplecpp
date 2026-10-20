@@ -17,7 +17,7 @@ function compound_test_source(string $text): parsed_file
 	$modules->add($module->name, $module);
 	$record = Source_Registry::add($module, $input);
 	Source_Publication::publish_parsed($record, $syntax);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->prepare();
 	$compiler->cpp();
 	return $syntax;
@@ -70,12 +70,14 @@ foreach ([['&=', '7', '3', operator_operation::integer_bitwise_and],
 }
 // Stable field compound updates were enabled by CH10; retain a positive check.
 compound_test_source('struct Box { int $value; } $box Box; ($box->value) += 1;');
+// V-L11/V-D14 now admits canonical nullable payloads in string text updates.
+compound_test_source('$x = "x"; $n ?int = 1; $x .= $n;');
 $rejections = [
 	['$x += 1;', 'established local declaration'],
 	['$x = true; $x += 1;', 'integer binary operation requires integer operands'],
 	['$x uint8 = 3; $x += 1;', 'fixed-width compound assignment is deferred'],
-	['$x = 3; $x /= 1.5;', 'integer binary operation requires integer operands'],
-	['$x = "x"; $n ?int = 1; $x .= $n;', 'concatenation requires boxed'],
+	['$x = 3; $x /= 1.5;', 'floating compounds require a float destination'],
+	['$x = "x"; $n ?int16; $x .= $n;', 'concatenation requires boxed'],
 	['$x = 3; $x .= "x";', 'concatenation requires string'],
 	['1 += 2;', 'existing local or parameter'],
 	['PHP_INT_MAX += 1;', 'existing local or parameter'],
@@ -106,7 +108,7 @@ try
 {
 	file_put_contents($path, $initial);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$function = Model::$global_scope->functions_named('value')[0]->syntax();

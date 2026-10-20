@@ -1,0 +1,1 @@
+class C { int $n = 1; } $c value<C> = new C(); $h hash<value<C>> = {x: $c}; $h['x'] = $c; $d = $h['x']; return $d->n;

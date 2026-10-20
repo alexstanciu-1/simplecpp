@@ -17,7 +17,7 @@ function constructed_rejects(string $path, string $source, string $message): voi
 {
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([dirname($path)]);
 	$compiler->tokenize();
 	$compiler->parse();
@@ -59,7 +59,7 @@ return 0;
 PHS;
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$initial_applications = Model::$type_catalog->registry()->application_count();
 	$compiler->tokenize();
@@ -194,7 +194,7 @@ PHS;
 	// The v0.2 modifier contract supersedes the imported blanket value-wrapper ban.
 	file_put_contents($path, '$v value<value<int>> = 3; return $v;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$normalized = Model::syntax_files()[0]->root->single_body()->body->statements[0]->type_syntax->require_preparation();

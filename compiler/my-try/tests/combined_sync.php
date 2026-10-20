@@ -17,7 +17,7 @@ $initial = 'function target(int $x): int { return $x; } function caller(): int {
 try
 {
 	file_put_contents($path, $initial);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();

@@ -1,0 +1,46 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/23/main.phs", 0);
+	vector_t<int_t<>> values = required_cast<vector_t<int_t<>>>(vector_t<int_t<>>{static_cast<int_t<> >(1), static_cast<int_t<> >(2)});
+	hash_t<vector_t<int_t<>>> table = required_cast<hash_t<vector_t<int_t<>>>>([&]() -> hash_t<vector_t<int_t<>>> {
+	hash_t<vector_t<int_t<>>> __scpp_hash_value{};
+	__scpp_hash_value.set(string_t("row"), vector_t<int_t<>>{static_cast<int_t<> >(3), static_cast<int_t<> >(4)});
+	return __scpp_hash_value;
+}());
+	mixed_t boxed = mixed_t{shared_table_(table_kv_(string_t("nested"), mixed_t{shared_table_(table_item_(static_cast<int_t<> >(1)), table_item_(static_cast<bool_t>(false)))}))};
+	return values.at(static_cast<int_t<> >(0));
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

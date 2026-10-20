@@ -1,0 +1,5 @@
+data class Point { public int $x; public int $y = 2; }
+$point Point = {x: 7};
+$x = $point->x;
+$y = $point->y;
+return $x + $y;

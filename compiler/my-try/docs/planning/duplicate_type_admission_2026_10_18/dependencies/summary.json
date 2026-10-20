@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "suites": [
+    "relationships",
+    "observed_lookup"
+  ],
+  "native_compiler_rebuilt": false
+}

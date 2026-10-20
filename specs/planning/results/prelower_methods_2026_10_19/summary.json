@@ -1,0 +1,8 @@
+{
+  "direct-O0": "expressions 26 1536 26 7 11 4 22\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nsource-identities 2 320 2 3 1 0 4\n",
+  "direct-O2": "expressions 26 1536 26 7 11 4 22\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nsource-identities 2 320 2 3 1 0 4\n",
+  "direct-sanitized": "expressions 26 1536 26 7 11 4 22\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nsource-identities 2 320 2 3 1 1 5\n",
+  "opaque-O0": "expressions 26 1536 26 7 11 4 22\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nsource-identities 2 320 2 3 1 0 4\n",
+  "opaque-O2": "expressions 26 1536 26 7 11 4 22\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nsource-identities 2 320 2 3 1 0 4\n",
+  "opaque-sanitized": "expressions 26 1536 26 7 11 4 22\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nsource-identities 2 320 2 3 1 1 5\n"
+}

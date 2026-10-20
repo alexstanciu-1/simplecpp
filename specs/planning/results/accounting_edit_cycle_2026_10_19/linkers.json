@@ -1,0 +1,47 @@
+[
+  {
+    "linker": "gnu",
+    "trial": 0,
+    "seconds": 0.4960128079983406
+  },
+  {
+    "linker": "mold",
+    "trial": 0,
+    "seconds": 0.11062808299902827
+  },
+  {
+    "linker": "lld",
+    "trial": 0,
+    "seconds": 0.12900738598546013
+  },
+  {
+    "linker": "lld",
+    "trial": 1,
+    "seconds": 0.11775510100414976
+  },
+  {
+    "linker": "mold",
+    "trial": 1,
+    "seconds": 0.10104321897961199
+  },
+  {
+    "linker": "gnu",
+    "trial": 1,
+    "seconds": 0.4901192950201221
+  },
+  {
+    "linker": "gnu",
+    "trial": 2,
+    "seconds": 0.47049507999327034
+  },
+  {
+    "linker": "mold",
+    "trial": 2,
+    "seconds": 0.10867901204619557
+  },
+  {
+    "linker": "lld",
+    "trial": 2,
+    "seconds": 0.12266042298870161
+  }
+]

@@ -1,0 +1,2 @@
+$result int = helper(3);
+return $result;

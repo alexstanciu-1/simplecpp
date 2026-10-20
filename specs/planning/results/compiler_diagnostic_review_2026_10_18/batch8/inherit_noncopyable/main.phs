@@ -1,0 +1,1 @@
+struct B { unique<int> $p; } struct C extends B {} $c = new C(); $d = $c; return 0;

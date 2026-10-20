@@ -1,0 +1,331 @@
+{
+  "source": "examples/accounting_workload",
+  "sources": {
+    "main.phs": "5e60d5f701ee533e4548011725816567a02a04113c31a20336dc5788e3add8ab",
+    "src/assets.phs": "cb1937a70a2dcb40d15ed45e2a34eb4a16fc3b41c38899023d568b9c19660da5",
+    "src/banking.phs": "46ead8556a256affe9e4103ee0c2f8ae8bbefd45584a49ffc8dfa5b64e425e7f",
+    "src/business_checks.phs": "9fa9d36809481485c8158e12ef3b722e8a72e2f459bcd13fffddc23e9df2ad71",
+    "src/calendar.phs": "6cc305e6d48a97b0fa7f514bc13800206231776157c5aed8bc8bc4ca247e456a",
+    "src/checks.phs": "c4364d298b2698df20b74ea7f857f7fbeafbea7de4a09268a9e5b39488f49d37",
+    "src/closing.phs": "fc2f9a9255a8aa1f9b0c624266fa1b946806966d6b872bb5c0290a4f2adce6b0",
+    "src/closing_checks.phs": "1fe3e81f2abb8330823d3ebeb9e5e793a3ad44082d2095b1a21ec15f5d8c257f",
+    "src/core.phs": "82819a17f5c3d485b4bc6d23c210adbdbafd210fe7a97abf8531289bf0f254c3",
+    "src/ledger.phs": "5eb90a6919ca43abe4cc7bf3b69a3031392f0880825efd907e0c6f521874f439",
+    "src/money.phs": "d386f11b39a3f11862ca00956049788d86310b164dc3d4fc5f41cc42c0940609",
+    "src/purchasing.phs": "b9e08c16043d318a51bd5e2579bff4714ed76a1e142da485a40f7c30111c8944",
+    "src/reports.phs": "7194a1d75d83260f1d8444fccb36775f5b6785184d3d4ca0e17d5a5e0baccaa7",
+    "src/sales.phs": "5ad11cbdfd004f5e5706b6c381379798b93487ac13b9a8d13067dfd808b1e231",
+    "src/stock.phs": "2f2999384900663641f7eac501970564717e8a705de59f267c4e97f44a272401"
+  },
+  "modes": {
+    "concrete": {
+      "ok": false,
+      "stage": "cpp",
+      "error": "prelower_templates: container operation requires an admitted family adapter",
+      "trace": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/data_construction.php(131): scpp\\compiler\\CPP_Concrete_Operations::initialize()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(447): scpp\\compiler\\CPP_Data_Construction::generate()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(324): scpp\\compiler\\CPP_Declarations::property_default()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(399): scpp\\compiler\\CPP_Declarations::generate_record()\n#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(134): scpp\\compiler\\CPP_Generator->render()\n#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(306): scpp\\compiler\\CPP_Generator->generate_program()\n#7 /home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_concrete_coverage_2026_10_19/probe.php(16): scpp\\compiler\\Compiler->cpp()\n#8 {main}"
+    },
+    "direct": {
+      "ok": true,
+      "stage": "cpp",
+      "build": {
+        "executable": "/tmp/accounting-concrete-coverage/direct-cache/artifacts/eaf802ec5f06bb9dba249b7b004821209a07238028b00e3f364a8922790ebda0.bin",
+        "compiled": 0,
+        "reused": 19,
+        "pch_built": 0,
+        "linked": 0,
+        "layouts_built": 0,
+        "layouts_reused": 0
+      },
+      "output": "accounting workload: invoice/payment/trial-balance checks passed\nCHECKS passed=998 failed=0\nACCOUNTING_WORKLOAD_PASS\n"
+    }
+  },
+  "fragments": {
+    "total": 285,
+    "emitted": 241,
+    "errors": {
+      "prelower_templates: container operation requires an admitted family adapter": 12,
+      "prelower_templates: binary operation needs a concrete family adapter": 27,
+      "prelower_templates: noninteger checked casts need a concrete adapter": 3,
+      "prelower_templates: indexed compound assignment is not in the first slice": 1,
+      "prelower_templates: runtime call needs an adapter: core.strlen": 1
+    },
+    "template_bearing_emitted": 133,
+    "failures": [
+      {
+        "owner": "AssetRegister",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "AssetRegister::acquire",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "AssetRegister::depreciate",
+        "kind": "function_body",
+        "error": "prelower_templates: noninteger checked casts need a concrete adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(89): scpp\\compiler\\CPP_Concrete_Operations::cast()"
+      },
+      {
+        "owner": "AssetRegister::dispose",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "BankReconciliation",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "BankReconciliation::import_statement",
+        "kind": "function_body",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "BankReconciliation::post_adjustment",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PaymentTerms::validate",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PaymentTerms::due_date",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "WorkloadChecks::accepted",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "WorkloadChecks::rejected",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PrepaymentSchedule",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "AdjustmentBook",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "AdjustmentBook::prepay",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "AdjustmentBook::release_prepayment",
+        "kind": "function_body",
+        "error": "prelower_templates: noninteger checked casts need a concrete adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(89): scpp\\compiler\\CPP_Concrete_Operations::cast()"
+      },
+      {
+        "owner": "AdjustmentBook::accrue",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "AdjustmentBook::reverse_accrual",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "GeneralLedger",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "GeneralLedger::add_account",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "GeneralLedger::validate",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "GeneralLedger::reverse",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "GeneralLedger::turnover",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "GeneralLedger::reference_movement",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "GeneralLedger::category_balance",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "MoneyAllocation::weighted",
+        "kind": "function_body",
+        "error": "prelower_templates: indexed compound assignment is not in the first slice",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(757): scpp\\compiler\\CPP_Index_Write::generate_compound()"
+      },
+      {
+        "owner": "PurchasingBook",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "PurchasingBook::register_supplier",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PurchasingBook::bill_key",
+        "kind": "function_body",
+        "error": "prelower_templates: runtime call needs an adapter: core.strlen",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/callable_bindings.php(194): scpp\\compiler\\CPP_Concrete_Operations::call_reference()"
+      },
+      {
+        "owner": "PurchasingBook::supplier_balance",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PurchasingBook::record_bill",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PurchasingBook::pay",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PurchasingBook::credit",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "PurchasingBook::propose_payments",
+        "kind": "function_body",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "BudgetBook",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "BudgetBook::add",
+        "kind": "function_body",
+        "error": "prelower_templates: noninteger checked casts need a concrete adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(89): scpp\\compiler\\CPP_Concrete_Operations::cast()"
+      },
+      {
+        "owner": "SalesService",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "SalesService::issue",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "SalesService::receive",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "SalesService::total_outstanding",
+        "kind": "function_body",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(91): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "InventoryBook",
+        "kind": "declaration",
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(32): scpp\\compiler\\CPP_Concrete_Operations::require_vector()"
+      },
+      {
+        "owner": "InventoryBook::register_item",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "InventoryBook::receive",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "InventoryBook::reserve",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      },
+      {
+        "owner": "InventoryBook::issue",
+        "kind": "function_body",
+        "error": "prelower_templates: binary operation needs a concrete family adapter",
+        "first_frame": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()"
+      }
+    ]
+  },
+  "revision": "40d0ba8278e0bb2f5969e608c7d748f5c6269cf1",
+  "scope": "Unchanged small repository accounting sample; not the historical expanded 515 KiB fixture.",
+  "initial_cold_build": {
+    "executable": "/tmp/accounting-concrete-coverage/direct-cache/artifacts/eaf802ec5f06bb9dba249b7b004821209a07238028b00e3f364a8922790ebda0.bin",
+    "compiled": 19,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1,
+    "layouts_built": 0,
+    "layouts_reused": 0
+  }
+}

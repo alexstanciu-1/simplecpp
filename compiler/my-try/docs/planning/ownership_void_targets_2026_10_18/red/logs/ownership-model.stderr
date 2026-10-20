@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught LogicException: Expected ownership model rejection: non-void target in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/ownership_model.php:10
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/ownership_model.php(24): scpp\compiler\ownership_check()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/ownership_model.php(93): scpp\compiler\ownership_rejects()
+#2 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/ownership_model.php on line 10

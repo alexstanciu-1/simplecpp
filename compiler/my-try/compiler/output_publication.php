@@ -59,7 +59,7 @@ final class Output_Publication
 	}
 
 	/** Preflight all ownership before writes; journal first, manifest last, readiness after success. */
-	public function publish(Storage $artifacts /** Storage<cpp_artifact> */, runtime_cpp_build_spec $runtime, ?cpp_lowering_policy $policy = null): void
+	public function publish(Storage $artifacts /** Storage<cpp_artifact> */, runtime_cpp_build_spec $runtime, bool $template_free_application = false, ?cpp_lowering_policy $policy = null): void
 	{
 		if (!$this->reservation->active() || $this->attempted) {
 			throw new \LogicException('Publication requires an active unfinished reservation');
@@ -94,7 +94,9 @@ final class Output_Publication
 			throw new \RuntimeException('Publication requires executable translation units');
 		}
 		$selected_policy = $policy ?? new cpp_lowering_policy();
-		$manifest .= '],"cpp_policy":' . json_quote($selected_policy->identity()) . ',"runtime_build":' . Runtime_Build_Contract::encode($runtime) . "}\n";
+		$template_policy = $template_free_application ? 'forbidden' : 'allowed';
+		$manifest .= '],"application_templates":' . json_quote($template_policy)
+			. ',"cpp_policy":' . json_quote($selected_policy->identity()) . ',"runtime_build":' . Runtime_Build_Contract::encode($runtime) . "}\n";
 		$current /** hash<string> */ = [];
 		$owned /** Keyed_Storage<output_file_ownership> */ = $this->owned;
 		foreach ($owned as $path => $authorization)

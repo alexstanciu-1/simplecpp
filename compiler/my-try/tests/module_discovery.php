@@ -22,7 +22,7 @@ try
 	file_put_contents($directory . '/a.phs', 'return 1;');
 	file_put_contents($directory . '/nested/ignored.txt', '$');
 	symlink($directory, $directory . '/nested/cycle');
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$paths = [];
 	foreach (Model::$modules[$directory]->sources as $record) {

@@ -1,0 +1,1 @@
+function cleanup(): void {} class C { function __destruct() { return cleanup(); } } return 0;

@@ -1,0 +1,1 @@
+enum E : uint8 { case A = 1; } return E::A == 1 ? 1 : 0;

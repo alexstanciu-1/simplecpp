@@ -1,0 +1,1 @@
+$d dynamic = {}; $m mixed = 1; $d['x'] = $m; return 0;

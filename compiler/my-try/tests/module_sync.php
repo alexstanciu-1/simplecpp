@@ -30,7 +30,7 @@ foreach (['a', 'b', 'c'] as $name) {
 try
 {
 	chdir($directory);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$inputs = module_inputs([new module_input('a')]);
 	module_check($compiler->init_modules($inputs), 'Initial configuration did not rebuild');
 	$a = Model::$modules['a'];

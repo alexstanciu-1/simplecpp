@@ -1,0 +1,57 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/10/main.phs", 0);
+	int_t<> sum = required_cast<int_t<>>(static_cast<int_t<> >(0));
+	for (auto i = static_cast<int_t<> >(0); static_cast<bool>((i < static_cast<int_t<> >(4))); (i++)) {
+		if (static_cast<bool>(php::identical(i, static_cast<int_t<> >(1)))) {
+			continue;
+		}
+		else if (static_cast<bool>(php::identical(i, static_cast<int_t<> >(3)))) {
+			break;
+		}
+		else {
+			sum += i;
+		}
+	}
+	while (static_cast<bool>((sum < static_cast<int_t<> >(4)))) {
+		(sum++);
+	}
+	do {
+		(sum--);
+	} while (static_cast<bool>((sum > static_cast<int_t<> >(3))));
+	return sum;
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

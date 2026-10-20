@@ -17,7 +17,7 @@ def verify_php(root, output, runner, jobs):
     """Run PHP suites independently, each with private temporary files and logs."""
     def suite(source):
         command = ['php', str(source)]
-        if source.stem in ('echo', 'calls', 'llvm', 's2s', 'control_flow', 'closures', 'reference_captures', 'contextual_closures', 'empty_callables', 'callable_storage', 'void_returns', 'callable_inputs', 'callable_results', 'callable_reference_returns',
+        if source.stem in ('finally', 'exceptions', 'error_values', 'echo', 'calls', 'llvm', 's2s', 'control_flow', 'closures', 'reference_captures', 'contextual_closures', 'empty_callables', 'callable_storage', 'void_returns', 'callable_inputs', 'callable_results', 'callable_reference_returns',
                           'runtime_catalog', 'runtime_observation', 'runtime_generics', 'runtime_strings', 'runtime_datetime', 'runtime_filesystem', 'result_containers', 'runtime_types', 'runtime_builders', 'runtime_source', 'runtime_handles'):
             directory = output / source.stem
             directory.mkdir()
@@ -77,7 +77,7 @@ def verify_cli(root, output, runner):
     cli_source = output / 'cli-source'
     cli_source.mkdir()
     (cli_source / 'main.phs').write_text('$a = 10; return $a;')
-    cli = run('cli-s2s', ['php', root / 'main.php', '--s2s', cli_source])
+    cli = run('cli-s2s', ['php', root / 'main.php', '--s2s', cli_source, '--no-prelower-templates'])
     if single_unit_text(cli).encode() != (output / 's2s/value.cpp').read_bytes() or (runner.logs / 'cli-s2s.stderr').read_bytes():
         raise RuntimeError('Host S2S mode differs from direct generation')
     for index, arguments in enumerate((['--s2s'], ['--unknown'], ['--s2s', str(cli_source), 'extra'])):

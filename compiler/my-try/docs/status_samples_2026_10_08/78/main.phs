@@ -1,0 +1,6 @@
+$text string = "abc";
+$length = string_byte_len($text);
+$byte = string_byte_at($text, 0);
+$part = string_byte_slice($text, 1, 2);
+$prefix = str_starts_with($text, "a");
+return $length;

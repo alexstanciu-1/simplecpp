@@ -1,0 +1,13 @@
+/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:13:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted
+   13 |         local_g = local_f;
+      |                 ^
+/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17: note: lambda expression begins here
+    8 |         auto local_f = [local_n]() mutable -> scpp::int_t<> {
+      |                        ^
+/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:14:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted
+   14 |         local_h = local_g;
+      |                 ^
+/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17: note: lambda expression begins here
+    8 |         auto local_f = [local_n]() mutable -> scpp::int_t<> {
+      |                        ^
+2 errors generated.

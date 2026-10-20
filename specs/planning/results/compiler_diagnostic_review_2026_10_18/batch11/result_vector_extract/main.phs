@@ -1,0 +1,1 @@
+function f(result<vector<int>> $r): int { $v vector<int> = $r; return count($v); } return 0;

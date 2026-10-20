@@ -1,0 +1,1 @@
+{"base": {"main.phs": "$a = new A(); return 0;", "a.phs": "class A implements I { function f(): int { return 1; } }", "i.phs": "interface I { function f(): int; }"}, "edit": {"i.phs": "interface I { function f(): int; function g(): int; }"}}

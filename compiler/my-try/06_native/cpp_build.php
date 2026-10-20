@@ -50,19 +50,48 @@ final class Native_CPP_Build
 			fs_output_write($this->root, '.scpp-native.status', "pending\n");
 			$manifest = Output_Publication::require_ready($source_root);
 			$document = json_read($manifest);
+			if (!$document->has('application_templates')) {
+				throw new \RuntimeException('Publication lacks application template policy; republish with the current compiler');
+			}
+			$policy = $document->member('application_templates')->text();
+			if (($policy !== 'allowed') && ($policy !== 'forbidden')) {
+				throw new \RuntimeException('Unknown application template policy');
+			}
+			$template_free = $policy === 'forbidden';
+			if ($template_free && $this->config->pch) {
+				throw new \RuntimeException('prelower_templates: runtime PCH is incompatible with template-free application input; select --no-pch');
+			}
 			Native_CPP_Publication::require_policy($document, $this->config->optimization);
 			if (!$document->has('runtime_build')) { throw new \RuntimeException('Publication lacks runtime build requirements; republish with the current compiler'); }
 			$build_inputs = Native_CPP_Publication::runtime_inputs($document->member('runtime_build'));
 			$this->libraries = $build_inputs->libraries;
 			$units /** vector<string> */ = [];
+			$checked_units /** hash<bool> */ = [];
+			$layout_probes /** vector<string> */ = [];
 			$files = $document->member('files');
 			for ($index = 0; $index < $files->size(); $index++) {
 				$row = $files->at($index);
 				$path = $row->member('path')->text();
 				if (fs_output_digest($source_root, $path) !== $row->member('sha256')->text()) { throw new \RuntimeException('Published artifact changed: ' . $path); }
-				if ($row->member('kind')->text() === 'translation_unit') { $units[] = $source_root . '/' . $path; }
+				$kind = $row->member('kind')->text();
+				if ($kind === 'translation_unit')
+				{
+					$units[] = $source_root . '/' . $path;
+					if ($template_free && !string_byte_starts_with($path, 'specializations/')) {
+						if (($path !== 'entry.cpp') && !string_byte_starts_with($path, 'units/')) {
+							throw new \RuntimeException('prelower_templates: unclassified application translation unit: ' . $path);
+						}
+						$checked_units[$source_root . '/' . $path] = true;
+					}
+				}
+				elseif ($kind === 'layout_probe') { $layout_probes[] = $source_root . '/' . $path; }
+				elseif ($kind !== 'header') { throw new \RuntimeException('Unknown native artifact kind: ' . $kind); }
 			}
 			if (q_count($units) === 0) { throw new \RuntimeException('No published translation units'); }
+			$entry_path = $source_root . '/entry.cpp';
+			if ($template_free && !isset($checked_units[$entry_path])) {
+				throw new \RuntimeException('prelower_templates: missing application entry translation unit');
+			}
 			$runtime = fs_require_realpath($this->config->runtime_include);
 			$this->flags = Native_CPP_Commands::flags($this->config, $runtime, $build_inputs->definitions);
 			$version_arguments /** vector<string> */ = ['--version'];
@@ -72,6 +101,13 @@ final class Native_CPP_Build
 				. self::file_digest('/usr/bin/env') . $version->stdout;
 			// Linker replacement must not invalidate compilation or dependency discovery.
 			$this->linker_key = fs_require_realpath($this->config->linker) . ':' . self::file_digest($this->config->linker);
+			$layout_headers /** vector<string> */ = [];
+			foreach ($layout_probes as $probe) {
+				$layout = $this->layout($probe, $source_root, $layout_headers);
+				$layout_headers[] = $layout->path;
+				if ($layout->reused) { $this->report->layouts_reused++; }
+				else { $this->report->layouts_built++; }
+			}
 			fs_output_write($this->root, 'runtime-pch.hpp', Native_CPP_Commands::pch_header());
 			if ($this->config->runtime_snapshot) {
 				$inputs = new Native_Dependency_Inputs($this->root, $runtime, $source_root, $files);
@@ -107,7 +143,8 @@ final class Native_CPP_Build
 			}
 			foreach ($units as $unit) {
 				$command = Native_CPP_Commands::implementation($this->flags, $source_root, $pch_path, $unit);
-				$artifact = $this->compile_action($command, 'o', false);
+				foreach ($layout_headers as $layout_header) { $command[] = '-include'; $command[] = $layout_header; }
+				$artifact = $this->compile_action($command, 'o', false, isset($checked_units[$unit]));
 				$this->record_object($artifact);
 				$objects[] = $artifact->path;
 			}
@@ -129,9 +166,13 @@ final class Native_CPP_Build
 	}
 
 	/** Reuse described dependency discovery, otherwise scan through Clang. */
-	private function compile_action(array $command /** vector<string> */, string $suffix, bool $force): native_cpp_artifact
+	private function compile_action(array $command /** vector<string> */, string $suffix, bool $force, bool $template_free = false): native_cpp_artifact
 	{
 		$inputs /** nullable<Native_Dependency_Inputs> */ = $this->dependency_inputs;
+		// Strict application validation always observes fresh transitive dependencies.
+		if ($template_free) {
+			$inputs = null;
+		}
 		$discovery = '';
 		if ($inputs !== null) {
 			$source = $command[q_count($command) - 1];
@@ -161,7 +202,34 @@ final class Native_CPP_Build
 		if ($inputs !== null) { $input_key = $inputs->inputs_key($inputs->remember($discovery, $paths)); }
 		else { $input_key = self::inputs_key($paths); }
 		$key = content_sha256($this->tool_key . self::arguments_key($command) . $input_key);
-		return $this->action($command, $key, $suffix, $force, false);
+		if ($template_free) {
+			$key = content_sha256("scpp-template-free-tokens-v1\n" . $key);
+		}
+		return $this->action($command, $key, $suffix, $force, false, $template_free);
+	}
+
+	/** Ask Clang for active tokens, including macro expansion and transitive provider headers. */
+	private function require_template_free(array $command /** vector<string> */): void
+	{
+		$tokens /** vector<string> */ = [];
+		foreach ($command as $argument) {
+			if ($argument !== '-c') {
+				$tokens[] = $argument;
+			}
+		}
+		foreach (['-fsyntax-only', '-Xclang', '-dump-tokens'] as $argument) {
+			$tokens[] = $argument;
+		}
+		$result = $this->invoke($tokens);
+		self::require_success($result);
+		$text = "\n" . $result->stderr;
+		if (q_strpos($text, "\ntemplate 'template'\t") !== false) {
+			throw new \RuntimeException('prelower_templates: template token in application input (including provider headers): '
+				. $command[q_count($command) - 1]);
+		}
+		if (q_strpos($text, "\neof ''\t") === false) {
+			throw new \RuntimeException('prelower_templates: Clang did not provide a complete application token stream');
+		}
 	}
 
 	/** Link state records actual linker dependencies in addition to exact ordered object membership. */
@@ -213,12 +281,34 @@ final class Native_CPP_Build
 		return new native_cpp_artifact($path, $digest, true);
 	}
 
-	private function action(array $command /** vector<string> */, string $key, string $suffix, bool $force, bool $executable): native_cpp_artifact
+	private function action(array $command /** vector<string> */, string $key, string $suffix, bool $force, bool $executable, bool $template_free = false): native_cpp_artifact
 	{
 		if (!$force) {
 			$cached = $this->cached($key, $suffix);
 			if ($cached !== null) { return $cached; }
 		}
+		$relative = 'artifacts/' . $key . '.' . $suffix;
+		$expected = $this->begin_action($key, $suffix);
+		if ($template_free) {
+			$this->require_template_free($command);
+		}
+		$stage = new \scpp\Output_Stage($this->root);
+		try {
+			$execution_command /** vector<string> */ = $command;
+			$execution_command[] = '-o'; $execution_command[] = $stage->path();
+			$execution = $this->invoke($execution_command);
+			self::require_success($execution);
+			$this->report->diagnostics .= $execution->stderr;
+			$stage->promote($relative, $expected, $executable);
+			$digest = fs_output_digest($this->root, $relative);
+			$this->save_ready($key, $this->root . '/' . $relative, $digest);
+			return new native_cpp_artifact($this->root . '/' . $relative, $digest, false);
+		} finally { $stage->close(); }
+	}
+
+	/** Shared ownership and pending-state transition for compiled and generated cache artifacts. */
+	private function begin_action(string $key, string $suffix): string
+	{
 		$relative = 'artifacts/' . $key . '.' . $suffix;
 		$expected = fs_output_digest($this->root, $relative);
 		$record = fs_output_read($this->root, 'actions/' . $key . '.json');
@@ -230,17 +320,35 @@ final class Native_CPP_Build
 			if ($previous->member('format')->text() !== 'scpp-native-action-v1') { throw new \RuntimeException('Unknown native action owner'); }
 		}
 		fs_output_write($this->root, 'actions/' . $key . '.json', '{"format":"scpp-native-action-v1","state":"pending"}');
-		$stage = new \scpp\Output_Stage($this->root);
-		try {
-			$execution_command /** vector<string> */ = $command;
-			$execution_command[] = '-o'; $execution_command[] = $stage->path();
-			$execution = $this->invoke($execution_command);
-			self::require_success($execution);
-			$stage->promote($relative, $expected, $executable);
-			$digest = fs_output_digest($this->root, $relative);
-			$this->save_ready($key, $this->root . '/' . $relative, $digest);
-			return new native_cpp_artifact($this->root . '/' . $relative, $digest, false);
-		} finally { $stage->close(); }
+		return $expected;
+	}
+
+	/** Resolve layouts inside the native owner; never mutate the published source bundle. */
+	private function layout(string $probe, string $source_root, array $prerequisites /** vector<string> */): native_cpp_artifact
+	{
+		$command /** vector<string> */ = $this->flags;
+		$command[] = '-I'; $command[] = $source_root;
+		foreach ($prerequisites as $header) { $command[] = '-include'; $command[] = $header; }
+		$command[] = '-c'; $command[] = $probe;
+		$object_file = $this->compile_action($command, 'o', false);
+		$objects /** vector<string> */ = [$object_file->path];
+		$executable = $this->link($objects);
+		$key = content_sha256("scpp-native-layout-v1\n" . $this->tool_key
+			. self::arguments_key($this->flags) . $executable->digest);
+		$cached = $this->cached($key, 'hpp');
+		if ($cached !== null) { return $cached; }
+		$this->begin_action($key, 'hpp');
+		$arguments /** vector<string> */ = [];
+		$result = $this->invoke_program($executable->path, $arguments);
+		self::require_success($result);
+		if (!string_byte_starts_with($result->stdout, "// scpp-native-layout-v1\n")) {
+			throw new \RuntimeException('Invalid native layout probe output');
+		}
+		$relative = 'artifacts/' . $key . '.hpp';
+		fs_output_write($this->root, $relative, $result->stdout);
+		$digest = fs_output_digest($this->root, $relative);
+		$this->save_ready($key, $this->root . '/' . $relative, $digest);
+		return new native_cpp_artifact($this->root . '/' . $relative, $digest, false);
 	}
 
 	private function save_ready(string $key, string $path, string $digest): void
@@ -251,7 +359,12 @@ final class Native_CPP_Build
 
 	private function invoke(array $arguments /** vector<string> */): native_process_result
 	{
-		$args = Native_CPP_Commands::environment($this->config->compiler);
+		return $this->invoke_program($this->config->compiler, $arguments);
+	}
+
+	private function invoke_program(string $executable, array $arguments /** vector<string> */): native_process_result
+	{
+		$args /** vector<string> */ = Native_CPP_Commands::environment($executable);
 		foreach ($arguments as $argument) { $args[] = $argument; }
 		$handle = process_spawn('/usr/bin/env', $args, '', 120000, $this->root);
 		try {

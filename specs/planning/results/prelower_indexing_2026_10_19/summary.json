@@ -1,0 +1,122 @@
+{
+  "counters": {
+    "direct-O0": "indexing 61 3723 61 5 25 10 35\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-O2": "indexing 61 3723 61 5 25 10 35\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-sanitized": "indexing 61 3723 61 5 25 11 36\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O0": "indexing 61 3723 61 5 25 10 35\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O2": "indexing 61 3723 61 5 25 10 35\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-sanitized": "indexing 61 3723 61 5 25 11 36\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n"
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-index-verified-2/cache-direct/artifacts/b9271e6d80e13c45dad66763d84d1dad845ebeb54856679b56b0ed19fc0e337e.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "executable": "/tmp/prelower-index-verified-2/cache-direct/artifacts/b9271e6d80e13c45dad66763d84d1dad845ebeb54856679b56b0ed19fc0e337e.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-index-verified-2/cache-direct/artifacts/08de0cffbc6e88031d22dd803f84652f395a6173ff1cc6b565540a22aedb0f7c.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "executable": "/tmp/prelower-index-verified-2/cache-direct/artifacts/08de0cffbc6e88031d22dd803f84652f395a6173ff1cc6b565540a22aedb0f7c.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-index-verified-2/cache-composed/artifacts/f67aa71ff78cc01f15a497fd2caea09e274601077fd5c956312b1842bb18eca7.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "executable": "/tmp/prelower-index-verified-2/cache-composed/artifacts/f67aa71ff78cc01f15a497fd2caea09e274601077fd5c956312b1842bb18eca7.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-index-verified-2/cache-composed/artifacts/26a98c11ad47b4a67313b284ac156dfdfab5c61ece0f43cf84cebc5e3a241739.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "executable": "/tmp/prelower-index-verified-2/cache-composed/artifacts/26a98c11ad47b4a67313b284ac156dfdfab5c61ece0f43cf84cebc5e3a241739.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-index-verified-2/cache-composed/artifacts/4a6fcb2dd10355a9982d0fb5373377c06d7d52e0886d8f5d176cf03cd86afc75.bin",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "executable": "/tmp/prelower-index-verified-2/cache-composed/artifacts/4cb0b63d5de7c7e57166e0e841e690d1d7eca891df7e89da0a1d36c4cec060be.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "executable": "/tmp/prelower-index-verified-2/cache-composed/artifacts/f67aa71ff78cc01f15a497fd2caea09e274601077fd5c956312b1842bb18eca7.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ]
+}

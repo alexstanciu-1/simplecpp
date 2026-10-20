@@ -1,0 +1,4 @@
+$optional ?int = 7;
+$value int = 0;
+if (take($value, $optional)) { return $value; }
+return 0;

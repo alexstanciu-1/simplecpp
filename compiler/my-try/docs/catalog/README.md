@@ -1,9 +1,39 @@
 # Compiler development catalog
 Doc Status: planning
 
+Scalar compatibility follow-up: [bool equality and float arithmetic](../planning/v0_1_compatibility_scalar_admission.md)
+are implemented and tested on dev002. On 2026-10-18, preserving `division_by_zero`
+resolved the final contract question and closed this slice. V-L04 subsequently added the bounded [float comparisons and mutations](../planning/float_operators_l04.md)
+on 2026-10-19. Lifted wrappers and conditional selection still await their separate discussion.
+
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**
 
 Implementation home: `compiler/my-try`.
+
+## Next milestone: v0.1 source compatibility
+
+Agreed goal, 2026-10-17: compile supported v0.1 PHS/PHP++ code with preserved
+specified behavior, except for explicit v0.2 incompatibilities and approved changes.
+Identical C++ lowering is not required. Strict-first adapted examples and bounded
+chapter closeouts do not by themselves prove original-source compatibility.
+The [compatibility report](../planning/v0_1_compatibility_report.md) pins the newest
+verified v0.1 baselines, separates missing support from deliberate changes and
+baseline-unsupported features, and defines the acceptance ledger still needed.
+Existing Chapter 15 safety gates remain in force; its entire extension inventory
+is not automatically the compatibility milestone's implementation queue.
+
+Current closure checkpoint: [V-R04/V-R09 regex](../planning/regex_replacement.md) brings
+the original issue inventory to 31/64 closed (48.4375%); no full matrix rerun.
+
+## Reading current status and historical evidence
+
+The 2026-10-19 [documentation reconciliation](../planning/simple_repairs_03.md)
+updates the 141 sections identified by V-D02. Their **Current scope** notes link
+owning contracts and stable section IDs in the frozen verification ledger. Earlier
+checkpoints are explicitly historical; imported v0.1 examples remain provenance.
+A passing bounded probe does not close wider operator, ownership or API gaps.
+The [issue ledger](../planning/language_verification_issues.json) tracks those gaps
+and repair status separately from the original verification counts.
 
 ## Strict mode first
 
@@ -81,6 +111,22 @@ Chapter 15 stays last and owns explicitly transferred final-review blockers. Rev
 them after the feature chapters and the planned rest break; they block overall
 catalog completion. Transferring design debt does not waive immediate feature-safety
 gates or automatically move other chapter blockers.
+
+## Current handoff — 2026-10-16
+
+Chapter 12's [bounded positive pass is closed](12_closures.md#bounded-closeout-and-current-handoff--2026-10-16).
+Its 13 imported cards and selected extensions have focused evidence; full CH12
+native parity/rejection/incremental coverage is not claimed. Existing CH15 deferrals
+remain unchanged. [Chapter 13 is finalized within its implemented bounds](13_errors.md#bounded-closeout-and-native-gate--2026-10-16)
+after PHS conversion, native compiler build and the focused native feature/rejection/edit
+gate. NOTE-047 is reconciled and Chapter 15 retains explicit diagnostic, return/transfer
+and exception-family extensions. [Chapter 14 bounded closeout](14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16)
+now passes compiler PHS conversion/native build and focused native artifact, publication,
+runtime-linkage and incremental proofs. Remaining diagnostic/runtime/cache extensions
+are explicit. [Chapter 15 now has a compact reconciled inventory](15_review.md) with
+52 selectable groups, recommended priorities and dependencies. Proposed first slice:
+iteration-policy/guard-ownership design; implementation awaits prioritization.
+Chapter 15 remains the final debt review; LLVM stays deferred.
 
 ## Prerequisite gates
 
@@ -274,3 +320,7 @@ new mixed-property behavior and incremental publication may need new examples wh
 we reach them. Add those deliberately rather than treating absence as rejection.
 
 Intake totals: **402 source rows → 330 distinct rule IDs**, with **13 IDs retaining differing versions** and **64 prose sections**.
+
+The [V-D09/V-D12 closeout](../planning/platform_alias.md) records qualified runtime
+callable aliases with observed source-type precedence, restored `fs_is_windows`
+and NUL-rejecting `getenv`. Other aliases and general namespace work are separate.

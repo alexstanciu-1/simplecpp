@@ -746,9 +746,19 @@ final class reference_cycle_vertex
 	}
 }
 
+/** Settled exit facts for one finally region; return values keep ordinary prepared conversions. */
+final class prepared_finally
+{
+	public bool $captures_return = false;
+	public bool $can_fall_through = true;
+}
+
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {
+	/** Current protected region; nested callable preparation starts with a fresh context. */
+	public ?prepared_finally $finally_region = null;
+	public bool $finally_return_forbidden = false;
 	public ?collected_member_owner $member_owner = null;
 	/** Concrete implementation context, independent of lexical access/receiver ownership. */
 	public ?collected_record $called_type = null;
@@ -994,5 +1004,23 @@ final class prepared_return
 			throw new \LogicException('Prepared typed return has no conversion decision');
 		}
 		return $this->conversion;
+	}
+}
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Value_Boundary_Operation_Name
+{
+	public static function text(value_boundary_operation $kind): string
+	{
+		return enum_name($kind);
+	}
+}
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Method_Receiver_Lifetime_Name
+{
+	public static function text(method_receiver_lifetime $kind): string
+	{
+		return enum_name($kind);
 	}
 }

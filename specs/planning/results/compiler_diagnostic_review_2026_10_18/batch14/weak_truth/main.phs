@@ -1,0 +1,1 @@
+struct S {} $w weak<S>; return $w ? 1 : 0;

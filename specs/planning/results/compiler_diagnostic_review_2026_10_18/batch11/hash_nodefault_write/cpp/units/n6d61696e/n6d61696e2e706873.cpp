@@ -1,0 +1,7 @@
+#include "types/n53.hpp"
+#include "scpp/int_t.hpp"
+record_S::record_S(scpp::int_t<> local_n)
+{
+	(this)->field_n = local_n;
+}
+

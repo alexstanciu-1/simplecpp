@@ -927,6 +927,9 @@ function om_seed_supports_cast_wrapper_enablement_by_default(array $seed): bool
 function om_feature_supports_negative_runtime_enablement_by_default(string $feature): bool
 {
 	return isset([
+		'count_value' => true,
+		'empty_value' => true,
+		'empty_keyed' => true,
 		'coalesce' => true,
 		'ternary' => true,
 		'elvis' => true,

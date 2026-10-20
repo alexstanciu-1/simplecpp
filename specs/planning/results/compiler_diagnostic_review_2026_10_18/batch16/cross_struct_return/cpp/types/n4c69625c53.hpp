@@ -1,0 +1,9 @@
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_LibUqS
+{
+public:
+	scpp::int_t<> field_n = static_cast<scpp::int_t<>>(1LL);
+public:
+};
+

@@ -1,0 +1,410 @@
+{
+  "CXX_RAII_statements": {
+    "totals_ms": {
+      "Total ExecuteCompiler": 24.911,
+      "Total Backend": 11.458,
+      "Total Frontend": 11.391,
+      "Total CodeGenPasses": 10.594,
+      "Total OptModule": 10.519,
+      "Total OptFunction": 9.395,
+      "Total RunPass": 9.271,
+      "Total Source": 6.05,
+      "Total ParseDeclarationOrFunctionDefinition": 4.112,
+      "Total CodeGen Function": 3.448,
+      "Total ParseFunctionDefinition": 2.853,
+      "Total ParseClass": 0.955,
+      "Total DebugType": 0.232,
+      "Total EvaluateAsRValue": 0.18,
+      "Total EvaluateForOverflow": 0.127,
+      "Total EvaluateAsInt": 0.12,
+      "Total Optimizer": 0.102,
+      "Total EvaluateAsBooleanCondition": 0.069,
+      "Total AlwaysInlinerPass": 0.041,
+      "Total ModuleToFunctionPassAdaptor": 0.039,
+      "Total EvaluateAsInitializer": 0.037,
+      "Total AnnotationRemarksPass": 0.025,
+      "Total EvaluateAsConstantExpr": 0.019,
+      "Total TargetLibraryAnalysis": 0.01,
+      "Total PerformPendingInstantiations": 0.009,
+      "Total CoroConditionalWrapper": 0.008,
+      "Total ProfileSummaryAnalysis": 0.001,
+      "Total InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0
+    },
+    "largest_events": [
+      {
+        "name": "Backend",
+        "ms": 11.458,
+        "detail": ""
+      },
+      {
+        "name": "Frontend",
+        "ms": 10.756,
+        "detail": ""
+      },
+      {
+        "name": "Frontend",
+        "ms": 0.636,
+        "detail": ""
+      }
+    ]
+  },
+  "CXX_RAII_lambdas": {
+    "totals_ms": {
+      "Total ExecuteCompiler": 33.453,
+      "Total Frontend": 16.964,
+      "Total Backend": 14.584,
+      "Total CodeGenPasses": 13.603,
+      "Total OptModule": 13.508,
+      "Total OptFunction": 12.239,
+      "Total RunPass": 12.06,
+      "Total Source": 8.296,
+      "Total ParseDeclarationOrFunctionDefinition": 7.099,
+      "Total CodeGen Function": 5.336,
+      "Total ParseFunctionDefinition": 5.237,
+      "Total ParseClass": 1.115,
+      "Total DebugType": 0.44,
+      "Total EvaluateAsRValue": 0.267,
+      "Total EvaluateAsInitializer": 0.21,
+      "Total EvaluateForOverflow": 0.166,
+      "Total EvaluateAsInt": 0.159,
+      "Total Optimizer": 0.129,
+      "Total EvaluateAsBooleanCondition": 0.101,
+      "Total AlwaysInlinerPass": 0.052,
+      "Total ModuleToFunctionPassAdaptor": 0.051,
+      "Total AnnotationRemarksPass": 0.036,
+      "Total EvaluateAsConstantExpr": 0.028,
+      "Total TargetLibraryAnalysis": 0.014,
+      "Total PerformPendingInstantiations": 0.009,
+      "Total CoroConditionalWrapper": 0.008,
+      "Total ProfileSummaryAnalysis": 0.001,
+      "Total InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0
+    },
+    "largest_events": [
+      {
+        "name": "Frontend",
+        "ms": 15.559,
+        "detail": ""
+      },
+      {
+        "name": "Backend",
+        "ms": 14.584,
+        "detail": ""
+      },
+      {
+        "name": "Frontend",
+        "ms": 1.406,
+        "detail": ""
+      }
+    ]
+  },
+  "CXX_RAII_exposed_PCH": {
+    "totals_ms": {
+      "Total ExecuteCompiler": 1751.658,
+      "Total Frontend": 1697.626,
+      "Total PerformPendingInstantiations": 1645.184,
+      "Total InstantiateFunction": 1620.414,
+      "Total InstantiateClass": 396.112,
+      "Total EvaluateAsConstantExpr": 45.807,
+      "Total EvaluateAsRValue": 25.409,
+      "Total EvaluateForOverflow": 22.135,
+      "Total DebugType": 19.18,
+      "Total DebugGlobalVariable": 19.011,
+      "Total Backend": 16.067,
+      "Total ParseDeclarationOrFunctionDefinition": 15.545,
+      "Total Source": 15.017,
+      "Total CodeGenPasses": 13.851,
+      "Total OptModule": 13.697,
+      "Total EvaluateAsInitializer": 12.107,
+      "Total ParseClass": 11.915,
+      "Total OptFunction": 11.173,
+      "Total RunPass": 10.972,
+      "Total EvaluateAsBooleanCondition": 9.803,
+      "Total CodeGen Function": 4.793,
+      "Total ReadAST": 3.083,
+      "Total ParseFunctionDefinition": 2.981,
+      "Total EvaluateAsInt": 2.55,
+      "Total EvaluateKnownConstInt": 1.358,
+      "Total Optimizer": 1.038,
+      "Total AlwaysInlinerPass": 0.959,
+      "Total Read Loaded AST": 0.859,
+      "Total isIntegerConstantExpr": 0.515,
+      "Total AAManager": 0.498,
+      "Total BasicAA": 0.481,
+      "Total AssumptionAnalysis": 0.476,
+      "Total TargetIRAnalysis": 0.468,
+      "Total BlockFrequencyAnalysis": 0.169,
+      "Total BranchProbabilityAnalysis": 0.147,
+      "Total LoopAnalysis": 0.066,
+      "Total ModuleToFunctionPassAdaptor": 0.053,
+      "Total EvaluateAsFloat": 0.037,
+      "Total AnnotationRemarksPass": 0.034,
+      "Total TargetLibraryAnalysis": 0.026,
+      "Total PostDominatorTreeAnalysis": 0.017,
+      "Total DominatorTreeAnalysis": 0.015,
+      "Total CoroConditionalWrapper": 0.01,
+      "Total ProfileSummaryAnalysis": 0.004,
+      "Total OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.001,
+      "Total ScopedNoAliasAA": 0.001,
+      "Total TypeBasedAA": 0.001,
+      "Total InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0
+    },
+    "largest_events": [
+      {
+        "name": "Frontend",
+        "ms": 1695.345,
+        "detail": ""
+      },
+      {
+        "name": "PerformPendingInstantiations",
+        "ms": 1645.184,
+        "detail": ""
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 177.374,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 176.699,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<char>, char, std::basic_format_context<std::__format::_Sink_iter<char>, char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 131.556,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::set"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 125.857,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::insert_or_assign_int"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 104.378,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<wchar_t>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 103.993,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<wchar_t>, wchar_t, std::basic_format_context<std::__format::_Sink_iter<wchar_t>, wchar_t>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 73.586,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::set"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 72.721,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::insert_or_assign_key<const scpp::string_t &>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 55.328,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::wake_up_associative_mode"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 54.115,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::rehash"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 44.085,
+        "detail": "std::formatter<bool>::format<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 43.61,
+        "detail": "std::__format::__formatter_int<char>::format<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 42.936,
+        "detail": "std::visit<(lambda at /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:869:14), std::variant<std::monostate, scpp::hash_detail::flat_hash_index_t<unsigned char>, scpp::hash_detail::flat_hash_index_t<unsigned short>, scpp::hash_detail::flat_hash_index_t<unsigned int>> &>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 37.873,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::add_to_index"
+      },
+      {
+        "name": "InstantiateClass",
+        "ms": 35.654,
+        "detail": "std::__format::_Formatting_scanner<std::__format::_Sink_iter<char>, char>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 32.876,
+        "detail": "std::__format::__formatter_int<char>::format<unsigned char, std::__format::_Sink_iter<char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 30.066,
+        "detail": "std::__format::_Formatting_scanner<std::__format::_Sink_iter<char>, char>::_M_format_arg"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 30.049,
+        "detail": "std::basic_string<char8_t>::_M_construct<const char8_t *>"
+      }
+    ]
+  },
+  "generated_CXX_PCH": {
+    "totals_ms": {
+      "Total ExecuteCompiler": 2060.194,
+      "Total Frontend": 1915.691,
+      "Total PerformPendingInstantiations": 1698.21,
+      "Total InstantiateFunction": 1677.553,
+      "Total InstantiateClass": 423.079,
+      "Total Backend": 107.37,
+      "Total ParseDeclarationOrFunctionDefinition": 98.132,
+      "Total CodeGenPasses": 97.978,
+      "Total OptModule": 96.323,
+      "Total ParseFunctionDefinition": 85.999,
+      "Total OptFunction": 80.548,
+      "Total RunPass": 78.48,
+      "Total CodeGen Function": 72.137,
+      "Total DebugType": 51.001,
+      "Total EvaluateAsConstantExpr": 49.452,
+      "Total EvaluateAsRValue": 28.931,
+      "Total EvaluateForOverflow": 22.938,
+      "Total DebugGlobalVariable": 17.959,
+      "Total EvaluateAsInitializer": 12.612,
+      "Total Source": 12.074,
+      "Total ParseClass": 11.719,
+      "Total EvaluateAsBooleanCondition": 11.121,
+      "Total Optimizer": 7.516,
+      "Total AlwaysInlinerPass": 6.709,
+      "Total EvaluateAsInt": 3.548,
+      "Total ReadAST": 3.241,
+      "Total BlockFrequencyAnalysis": 1.874,
+      "Total BranchProbabilityAnalysis": 1.509,
+      "Total EvaluateKnownConstInt": 1.47,
+      "Total Read Loaded AST": 0.922,
+      "Total AAManager": 0.809,
+      "Total ModuleToFunctionPassAdaptor": 0.727,
+      "Total isIntegerConstantExpr": 0.713,
+      "Total AnnotationRemarksPass": 0.594,
+      "Total AssumptionAnalysis": 0.592,
+      "Total BasicAA": 0.567,
+      "Total TargetIRAnalysis": 0.501,
+      "Total LoopAnalysis": 0.497,
+      "Total PostDominatorTreeAnalysis": 0.305,
+      "Total DominatorTreeAnalysis": 0.268,
+      "Total TargetLibraryAnalysis": 0.228,
+      "Total DebugConstGlobalVariable": 0.074,
+      "Total EvaluateAsFloat": 0.045,
+      "Total CoroConditionalWrapper": 0.029,
+      "Total OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 0.019,
+      "Total ScopedNoAliasAA": 0.017,
+      "Total TypeBasedAA": 0.015,
+      "Total ProfileSummaryAnalysis": 0.004,
+      "Total InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.001
+    },
+    "largest_events": [
+      {
+        "name": "Frontend",
+        "ms": 1853.746,
+        "detail": ""
+      },
+      {
+        "name": "PerformPendingInstantiations",
+        "ms": 1698.211,
+        "detail": ""
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 172.919,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 172.184,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<char>, char, std::basic_format_context<std::__format::_Sink_iter<char>, char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 137.156,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::set"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 128.507,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::insert_or_assign_int"
+      },
+      {
+        "name": "Backend",
+        "ms": 107.371,
+        "detail": ""
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 104.652,
+        "detail": "std::vformat_to<std::__format::_Sink_iter<wchar_t>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 104.299,
+        "detail": "std::__format::__do_vformat_to<std::__format::_Sink_iter<wchar_t>, wchar_t, std::basic_format_context<std::__format::_Sink_iter<wchar_t>, wchar_t>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 83.205,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::set"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 82.387,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::insert_or_assign_key<const scpp::string_t &>"
+      },
+      {
+        "name": "Frontend",
+        "ms": 61.945,
+        "detail": ""
+      },
+      {
+        "name": "InstantiateClass",
+        "ms": 51.346,
+        "detail": "scpp::shared_p<scpp::AmountResult>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 49.361,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::wake_up_associative_mode"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 48.144,
+        "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::rehash"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 45.218,
+        "detail": "std::formatter<bool>::format<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 44.915,
+        "detail": "scpp::hash_t<std::function<scpp::string_t (scpp::vector_t<scpp::string_t>)>, scpp::string_t>::add_to_index"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 44.728,
+        "detail": "std::__format::__formatter_int<char>::format<std::__format::_Sink_iter<char>>"
+      },
+      {
+        "name": "InstantiateFunction",
+        "ms": 37.269,
+        "detail": "std::visit<(lambda at /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:869:14), std::variant<std::monostate, scpp::hash_detail::flat_hash_index_t<unsigned char>, scpp::hash_detail::flat_hash_index_t<unsigned short>, scpp::hash_detail::flat_hash_index_t<unsigned int>> &>"
+      },
+      {
+        "name": "InstantiateClass",
+        "ms": 35.613,
+        "detail": "std::__format::_Formatting_scanner<std::__format::_Sink_iter<char>, char>"
+      }
+    ]
+  },
+  "concrete_copy_move_unwind_checks_passed": true
+}

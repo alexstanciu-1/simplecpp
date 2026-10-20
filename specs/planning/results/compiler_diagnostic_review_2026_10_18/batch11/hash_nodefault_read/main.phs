@@ -1,0 +1,1 @@
+struct S { int $n; function __construct(int $n) { $this->n = $n; } } $v hash<S> = {x: new S(1)}; $s = $v['x']; return $s->n;

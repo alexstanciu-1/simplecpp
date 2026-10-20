@@ -1,0 +1,1 @@
+$v vector<nullable<int>> = [1]; return empty($v[0]) ? 1 : 0;

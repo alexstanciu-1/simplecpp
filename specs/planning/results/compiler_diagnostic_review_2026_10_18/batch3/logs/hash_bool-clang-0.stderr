@@ -1,0 +1,18 @@
+In file included from /tmp/mytry-diagnostic-review/batch3/hash_bool/cpp/entry.cpp:3:
+In file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/hash_t.hpp:3:
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:248:16: error: static assertion failed: hash_t<T, T_KEY> requires a supported typed key family
+  248 |         static_assert(hash_detail::typed_hash_key<T_KEY>, "hash_t<T, T_KEY> requires a supported typed key family");
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/mytry-diagnostic-review/batch3/hash_bool/cpp/entry.cpp:9:44: note: in instantiation of template class 'scpp::hash_t<scpp::int_t<>, scpp::bool_t>' requested here
+    9 |         scpp::hash_t<scpp::int_t<>, scpp::bool_t> local_s;
+      |                                                   ^
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:248:16: note: because 'scpp::bool_t' does not satisfy 'typed_hash_key'
+  248 |         static_assert(hash_detail::typed_hash_key<T_KEY>, "hash_t<T, T_KEY> requires a supported typed key family");
+      |                       ^
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:240:26: note: because 'scpp::bool_t' does not satisfy 'hash_key'
+  240 | concept typed_hash_key = hash_key<T_KEY>;
+      |                          ^
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:235:4: note: because 'key_ops<T_KEY>::hash(left)' would be invalid: implicit instantiation of undefined template 'scpp::hash_detail::key_ops<scpp::bool_t>'
+  235 |         { key_ops<T_KEY>::hash(left) } -> std::convertible_to<std::uint64_t>;
+      |           ^
+1 error generated.

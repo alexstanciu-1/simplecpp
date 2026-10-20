@@ -1,0 +1,72 @@
+[
+  {
+    "name": "semantic",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/stale.php",
+      "/tmp/mytry-diagnostic-review/batch19/semantic",
+      "semantic"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.256,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "syntax",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/stale.php",
+      "/tmp/mytry-diagnostic-review/batch19/syntax",
+      "syntax"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.262,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "syntax-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch19/syntax/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch19/syntax/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.979,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "semantic-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch19/semantic/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch19/semantic/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.022,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

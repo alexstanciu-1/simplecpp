@@ -1,0 +1,9 @@
+class Row { public int $value = 7; }
+$rows Storage<Row> = new Storage<Row>();
+$named Keyed_Storage<Row> = new Keyed_Storage<Row>();
+$duplicates Key_Storage_List<Row> = new Key_Storage_List<Row>();
+$row = new Row();
+$position = $rows->append($row);
+$named->add("first", $row);
+$duplicates->add("group", $row);
+return $rows->read($position)->value;

@@ -1,0 +1,21 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "scpp/mixed_t.hpp"
+#include "operators/arithmetic/boxed_numeric.hpp"
+#include "scpp/generated/operators.hpp"
+#include "scpp/string_t.hpp"
+#include "lang/php/support/php_string.hpp"
+#include "lang/php/operators/identity/strict_identity.hpp"
+
+int main()
+{
+	scpp::mixed_t local_left = scpp::mixed_t{static_cast<scpp::int_t<>>(4LL)};
+	scpp::mixed_t local_right = scpp::mixed_t{static_cast<scpp::int_t<>>(2LL)};
+	scpp::mixed_t local_sum = (local_left + local_right);
+	scpp::mixed_t local_text = scpp::mixed_t{scpp::string_t("a")};
+	([&]() -> scpp::mixed_t { auto& target_0 = local_text; target_0 = scpp::mixed_t{(scpp::php::to_string(target_0) + scpp::string_t("b"))}; return target_0; }());
+	return static_cast<int>((([&]() -> scpp::int_t<> { if ((scpp::php::identical(local_sum, static_cast<scpp::int_t<>>(6LL))).native_value()) { return static_cast<scpp::int_t<>>(0LL); } return static_cast<scpp::int_t<>>(1LL); }())).native_value());
+	return 0;
+}

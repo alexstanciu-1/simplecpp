@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S parameter defaults require scalar literals\n"
+}

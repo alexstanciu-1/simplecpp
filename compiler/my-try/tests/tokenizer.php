@@ -176,7 +176,7 @@ $path = $directory . '/main.phs';
 try {
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, 'function value(): int { return 7; } return value();');
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	$before = CPP_Probe::text(Model::$cpp_files);
 	$commented = "/** function docs */ function /* name */ value(): int { // body\n return 7; # result\n } return value(); // EOF";
 	file_put_contents($path, $commented); $compiler->update_cpp([$path]);
@@ -188,7 +188,7 @@ try {
 	token_check($failed);
 	file_put_contents($path, $commented); $compiler->update_cpp([$path]);
 	token_check(CPP_Probe::text(Model::$cpp_files) === $before);
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	token_check(CPP_Probe::text(Model::$cpp_files) === $before);
 }
 finally { Compiler_Lifecycle::reset(); unlink($path); rmdir($directory); }

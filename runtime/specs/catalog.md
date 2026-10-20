@@ -315,7 +315,10 @@ PHP-like substring under normalized offset/length rules.
 Substring compare.
 
 ### `substr_replace(subject, replacement, offset[, length]) -> string_t` â€” Stable
-Substring replacement.
+Byte-window replacement under the [normative builtin contract](../../specs/builtins/string/substr_replace.md).
+Omitted or zero length inserts; a negative length with no nonempty removal window
+returns the original value unchanged. v0.2 reconciles the earlier runtime behavior
+with that contract; source inputs are strings and canonical integers.
 
 ### `str_replace(search, replace, subject) -> string_t` â€” Stable
 String replacement.

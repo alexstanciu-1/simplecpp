@@ -1,0 +1,1 @@
+function f(unique<int> $p): void {} $p unique<int>; f($p); return 0;

@@ -1,0 +1,31 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n4d6f6465.hpp ===
+#pragma once
+#include "cstdint"
+enum class enum_Mode : std::uint8_t {
+	case_Ready = 0ULL,
+	case_Busy = 1ULL,
+};
+
+// === types/n436f6465.hpp ===
+#pragma once
+#include "cstdint"
+enum class enum_Code : std::uint16_t {
+	case_Ok = 0ULL,
+	case_Failed = 1ULL,
+};
+
+// === entry.cpp ===
+#include "types/n4d6f6465.hpp"
+#include "types/n436f6465.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/bool_t.hpp"
+
+int main()
+{
+	auto local_mode = enum_Mode::case_Ready;
+	auto local_code = enum_Code::case_Ok;
+	return static_cast<int>((([&]() -> scpp::int_t<> { if ((scpp::bool_t(static_cast<bool>(scpp::bool_t(local_mode == enum_Mode::case_Ready)) && static_cast<bool>(scpp::bool_t(local_code == enum_Code::case_Ok)))).native_value()) { return static_cast<scpp::int_t<>>(0LL); } return static_cast<scpp::int_t<>>(1LL); }())).native_value());
+	return 0;
+}

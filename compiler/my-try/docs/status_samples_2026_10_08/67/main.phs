@@ -1,0 +1,5 @@
+$value int = 2;
+$snapshot = function() use ($value): int { return $value; };
+$live = function() use (&$value): int { return $value; };
+$value = 7;
+return $snapshot() + $live();

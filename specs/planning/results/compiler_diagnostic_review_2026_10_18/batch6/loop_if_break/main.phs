@@ -1,0 +1,1 @@
+function f(bool $b): int { for (;;) { if ($b) { break; } return 1; } } return 0;

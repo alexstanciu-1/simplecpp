@@ -1,0 +1,1004 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/widening-compounds/20261019-01",
+  "scope": {
+    "new_carrier_signatures": 96,
+    "scalar_prerequisites": 4,
+    "recovery_sequences": 100,
+    "negative_source_checks": {
+      "plain-plain": 63,
+      "plain-nullable": 63,
+      "plain-result": 63,
+      "plain-result_or_false": 63,
+      "plain-result_or_bool": 63,
+      "nullable-plain": 63,
+      "nullable-nullable": 63,
+      "nullable-result": 63,
+      "nullable-result_or_false": 63,
+      "nullable-result_or_bool": 63,
+      "result-plain": 63,
+      "result-nullable": 63,
+      "result-result": 63,
+      "result-result_or_false": 63,
+      "result-result_or_bool": 63,
+      "result_or_false-plain": 63,
+      "result_or_false-nullable": 63,
+      "result_or_false-result": 63,
+      "result_or_false-result_or_false": 63,
+      "result_or_false-result_or_bool": 63,
+      "result_or_bool-plain": 63,
+      "result_or_bool-nullable": 63,
+      "result_or_bool-result": 63,
+      "result_or_bool-result_or_false": 63,
+      "result_or_bool-result_or_bool": 63
+    },
+    "native_counts": {
+      "plain-plain": {
+        "basic_cases": 416,
+        "rhs_cases": 6656,
+        "property_cases": 6656,
+        "owner_cases": 6656,
+        "static_cases": 6656,
+        "snapshot_cases": 6528,
+        "alias_cases": 0
+      },
+      "plain-nullable": {
+        "basic_cases": 448,
+        "rhs_cases": 7168,
+        "property_cases": 7168,
+        "owner_cases": 7168,
+        "static_cases": 7168,
+        "snapshot_cases": 6528,
+        "alias_cases": 0
+      },
+      "plain-result": {
+        "basic_cases": 480,
+        "rhs_cases": 7680,
+        "property_cases": 7680,
+        "owner_cases": 7680,
+        "static_cases": 7680,
+        "snapshot_cases": 6528,
+        "alias_cases": 0
+      },
+      "plain-result_or_false": {
+        "basic_cases": 448,
+        "rhs_cases": 7168,
+        "property_cases": 7168,
+        "owner_cases": 7168,
+        "static_cases": 7168,
+        "snapshot_cases": 6528,
+        "alias_cases": 0
+      },
+      "plain-result_or_bool": {
+        "basic_cases": 480,
+        "rhs_cases": 7680,
+        "property_cases": 7680,
+        "owner_cases": 7680,
+        "static_cases": 7680,
+        "snapshot_cases": 6528,
+        "alias_cases": 0
+      },
+      "nullable-plain": {
+        "basic_cases": 468,
+        "rhs_cases": 8424,
+        "property_cases": 8424,
+        "owner_cases": 8424,
+        "static_cases": 8424,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "nullable-nullable": {
+        "basic_cases": 504,
+        "rhs_cases": 9072,
+        "property_cases": 9072,
+        "owner_cases": 9072,
+        "static_cases": 9072,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "nullable-result": {
+        "basic_cases": 540,
+        "rhs_cases": 9720,
+        "property_cases": 9720,
+        "owner_cases": 9720,
+        "static_cases": 9720,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "nullable-result_or_false": {
+        "basic_cases": 504,
+        "rhs_cases": 9072,
+        "property_cases": 9072,
+        "owner_cases": 9072,
+        "static_cases": 9072,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "nullable-result_or_bool": {
+        "basic_cases": 540,
+        "rhs_cases": 9720,
+        "property_cases": 9720,
+        "owner_cases": 9720,
+        "static_cases": 9720,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "result-plain": {
+        "basic_cases": 520,
+        "rhs_cases": 10400,
+        "property_cases": 10400,
+        "owner_cases": 10400,
+        "static_cases": 10400,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result-nullable": {
+        "basic_cases": 560,
+        "rhs_cases": 11200,
+        "property_cases": 11200,
+        "owner_cases": 11200,
+        "static_cases": 11200,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result-result": {
+        "basic_cases": 600,
+        "rhs_cases": 12000,
+        "property_cases": 12000,
+        "owner_cases": 12000,
+        "static_cases": 12000,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result-result_or_false": {
+        "basic_cases": 560,
+        "rhs_cases": 11200,
+        "property_cases": 11200,
+        "owner_cases": 11200,
+        "static_cases": 11200,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result-result_or_bool": {
+        "basic_cases": 600,
+        "rhs_cases": 12000,
+        "property_cases": 12000,
+        "owner_cases": 12000,
+        "static_cases": 12000,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result_or_false-plain": {
+        "basic_cases": 468,
+        "rhs_cases": 8424,
+        "property_cases": 8424,
+        "owner_cases": 8424,
+        "static_cases": 8424,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "result_or_false-nullable": {
+        "basic_cases": 504,
+        "rhs_cases": 9072,
+        "property_cases": 9072,
+        "owner_cases": 9072,
+        "static_cases": 9072,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "result_or_false-result": {
+        "basic_cases": 540,
+        "rhs_cases": 9720,
+        "property_cases": 9720,
+        "owner_cases": 9720,
+        "static_cases": 9720,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "result_or_false-result_or_false": {
+        "basic_cases": 504,
+        "rhs_cases": 9072,
+        "property_cases": 9072,
+        "owner_cases": 9072,
+        "static_cases": 9072,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "result_or_false-result_or_bool": {
+        "basic_cases": 540,
+        "rhs_cases": 9720,
+        "property_cases": 9720,
+        "owner_cases": 9720,
+        "static_cases": 9720,
+        "snapshot_cases": 7344,
+        "alias_cases": 0
+      },
+      "result_or_bool-plain": {
+        "basic_cases": 520,
+        "rhs_cases": 10400,
+        "property_cases": 10400,
+        "owner_cases": 10400,
+        "static_cases": 10400,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result_or_bool-nullable": {
+        "basic_cases": 560,
+        "rhs_cases": 11200,
+        "property_cases": 11200,
+        "owner_cases": 11200,
+        "static_cases": 11200,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result_or_bool-result": {
+        "basic_cases": 600,
+        "rhs_cases": 12000,
+        "property_cases": 12000,
+        "owner_cases": 12000,
+        "static_cases": 12000,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result_or_bool-result_or_false": {
+        "basic_cases": 560,
+        "rhs_cases": 11200,
+        "property_cases": 11200,
+        "owner_cases": 11200,
+        "static_cases": 11200,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      },
+      "result_or_bool-result_or_bool": {
+        "basic_cases": 600,
+        "rhs_cases": 12000,
+        "property_cases": 12000,
+        "owner_cases": 12000,
+        "static_cases": 12000,
+        "snapshot_cases": 8160,
+        "alias_cases": 0
+      }
+    }
+  },
+  "signatures": [
+    [
+      "float",
+      "+=",
+      "int",
+      "float"
+    ],
+    [
+      "float",
+      "-=",
+      "int",
+      "float"
+    ],
+    [
+      "float",
+      "*=",
+      "int",
+      "float"
+    ],
+    [
+      "float",
+      "/=",
+      "int",
+      "float"
+    ],
+    [
+      "float",
+      "+=",
+      "?int",
+      "float"
+    ],
+    [
+      "float",
+      "-=",
+      "?int",
+      "float"
+    ],
+    [
+      "float",
+      "*=",
+      "?int",
+      "float"
+    ],
+    [
+      "float",
+      "/=",
+      "?int",
+      "float"
+    ],
+    [
+      "float",
+      "+=",
+      "result<int>",
+      "float"
+    ],
+    [
+      "float",
+      "-=",
+      "result<int>",
+      "float"
+    ],
+    [
+      "float",
+      "*=",
+      "result<int>",
+      "float"
+    ],
+    [
+      "float",
+      "/=",
+      "result<int>",
+      "float"
+    ],
+    [
+      "float",
+      "+=",
+      "result_or_false<int>",
+      "float"
+    ],
+    [
+      "float",
+      "-=",
+      "result_or_false<int>",
+      "float"
+    ],
+    [
+      "float",
+      "*=",
+      "result_or_false<int>",
+      "float"
+    ],
+    [
+      "float",
+      "/=",
+      "result_or_false<int>",
+      "float"
+    ],
+    [
+      "float",
+      "+=",
+      "result_or_bool<int>",
+      "float"
+    ],
+    [
+      "float",
+      "-=",
+      "result_or_bool<int>",
+      "float"
+    ],
+    [
+      "float",
+      "*=",
+      "result_or_bool<int>",
+      "float"
+    ],
+    [
+      "float",
+      "/=",
+      "result_or_bool<int>",
+      "float"
+    ],
+    [
+      "?float",
+      "+=",
+      "int",
+      "?float"
+    ],
+    [
+      "?float",
+      "-=",
+      "int",
+      "?float"
+    ],
+    [
+      "?float",
+      "*=",
+      "int",
+      "?float"
+    ],
+    [
+      "?float",
+      "/=",
+      "int",
+      "?float"
+    ],
+    [
+      "?float",
+      "+=",
+      "?int",
+      "?float"
+    ],
+    [
+      "?float",
+      "-=",
+      "?int",
+      "?float"
+    ],
+    [
+      "?float",
+      "*=",
+      "?int",
+      "?float"
+    ],
+    [
+      "?float",
+      "/=",
+      "?int",
+      "?float"
+    ],
+    [
+      "?float",
+      "+=",
+      "result<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "-=",
+      "result<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "*=",
+      "result<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "/=",
+      "result<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "+=",
+      "result_or_false<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "-=",
+      "result_or_false<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "*=",
+      "result_or_false<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "/=",
+      "result_or_false<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "+=",
+      "result_or_bool<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "-=",
+      "result_or_bool<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "*=",
+      "result_or_bool<int>",
+      "?float"
+    ],
+    [
+      "?float",
+      "/=",
+      "result_or_bool<int>",
+      "?float"
+    ],
+    [
+      "result<float>",
+      "+=",
+      "int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "-=",
+      "int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "*=",
+      "int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "/=",
+      "int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "+=",
+      "?int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "-=",
+      "?int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "*=",
+      "?int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "/=",
+      "?int",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "+=",
+      "result<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "-=",
+      "result<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "*=",
+      "result<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "/=",
+      "result<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "+=",
+      "result_or_false<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "-=",
+      "result_or_false<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "*=",
+      "result_or_false<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "/=",
+      "result_or_false<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "+=",
+      "result_or_bool<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "-=",
+      "result_or_bool<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "*=",
+      "result_or_bool<int>",
+      "result<float>"
+    ],
+    [
+      "result<float>",
+      "/=",
+      "result_or_bool<int>",
+      "result<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "+=",
+      "int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "-=",
+      "int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "*=",
+      "int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "/=",
+      "int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "+=",
+      "?int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "-=",
+      "?int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "*=",
+      "?int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "/=",
+      "?int",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "+=",
+      "result<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "-=",
+      "result<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "*=",
+      "result<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "/=",
+      "result<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "+=",
+      "result_or_false<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "-=",
+      "result_or_false<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "*=",
+      "result_or_false<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "/=",
+      "result_or_false<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "+=",
+      "result_or_bool<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "-=",
+      "result_or_bool<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "*=",
+      "result_or_bool<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_false<float>",
+      "/=",
+      "result_or_bool<int>",
+      "result_or_false<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "+=",
+      "int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "-=",
+      "int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "*=",
+      "int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "/=",
+      "int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "+=",
+      "?int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "-=",
+      "?int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "*=",
+      "?int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "/=",
+      "?int",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "+=",
+      "result<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "-=",
+      "result<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "*=",
+      "result<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "/=",
+      "result<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "+=",
+      "result_or_false<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "-=",
+      "result_or_false<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "*=",
+      "result_or_false<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "/=",
+      "result_or_false<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "+=",
+      "result_or_bool<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "-=",
+      "result_or_bool<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "*=",
+      "result_or_bool<int>",
+      "result_or_bool<float>"
+    ],
+    [
+      "result_or_bool<float>",
+      "/=",
+      "result_or_bool<int>",
+      "result_or_bool<float>"
+    ]
+  ],
+  "suites": {
+    "focused": {
+      "commands": 126,
+      "all_expected_exits": true
+    },
+    "properties": {
+      "commands": 58,
+      "all_expected_exits": true
+    },
+    "mixed_ordering": {
+      "commands": 126,
+      "all_expected_exits": true
+    },
+    "float_compounds": {
+      "commands": 86,
+      "all_expected_exits": true
+    },
+    "int_carrier_compounds": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "int_bitwise_compounds": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "int_cross_compounds": {
+      "commands": 61,
+      "all_expected_exits": true
+    },
+    "carrier_updates": {
+      "commands": 41,
+      "all_expected_exits": true
+    },
+    "float_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_float": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_cross": {
+      "commands": 26,
+      "all_expected_exits": true
+    },
+    "guarded_mixed": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nonbool_sentinel_equality": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "bool_sentinel_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "false_bool_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "result_equality": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "nullable_int_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_float_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_bool_string_equality": {
+      "commands": 11,
+      "all_expected_exits": true
+    },
+    "eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "numeric_xor": {
+      "commands": 6,
+      "all_expected_exits": true
+    }
+  },
+  "source_integrity": {
+    "checked": 6238,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "9b894f9e958c547cb9b33479db9f74476143818fd15d5ffd1aaecb1e1d208a17",
+  "property_regressions": {
+    "passed": true,
+    "executions": 14
+  },
+  "attempts": {
+    "focused": "Four scalar prerequisites and all 96 carrier signatures passed first attempt.",
+    "regressions": "All 23 suites and 14 property programs pass."
+  },
+  "runtime_changes": [],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "vl07_progress": {
+    "completed_slices": 25,
+    "binary_signatures": 1872,
+    "unary_signatures": 64,
+    "compound_signatures": 432,
+    "verified_total": 2368,
+    "remaining_support_targets": 0,
+    "design_scope_candidates": 1584,
+    "original_proposed_core_denominator": 2080,
+    "original_proposed_core_coverage_percent": 100.0,
+    "approved_beyond_original_core": 288
+  }
+}

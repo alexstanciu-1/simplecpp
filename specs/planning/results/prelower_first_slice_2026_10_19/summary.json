@@ -1,0 +1,202 @@
+{
+  "errors": [
+    "vector index -1 is out of bounds for size 1.|bounds_error|runtime|operator[]|container=vector|index=-1|size=1|operation=operator[]",
+    "scpp runtime arithmetic error: operator '/' rejected a zero divisor.|division_by_zero|generated_operator_detail|/|lhs_kind=int_t|rhs_kind=int_t",
+    "scpp runtime arithmetic error: operator '%' rejected a zero divisor.|modulo_by_zero|generated_operator_detail|%|lhs_kind=int_t|rhs_kind=int_t",
+    "scpp::cast<int_t>: integer value is outside the target range: 128|integer_cast_out_of_range|scpp::cast<int_t>||target_type=int_t|value=128",
+    "scpp::cast<int_t>: integer value is outside the target range: -1|integer_cast_out_of_range|scpp::cast<int_t>||target_type=int_t|value=-1"
+  ],
+  "timings": [
+    {
+      "variant": "original",
+      "opt": "O0",
+      "trial": 0,
+      "compile_s": 4.961525375023484,
+      "link_s": 0.18866236897883937,
+      "application_s": 4.961525375023484,
+      "support_s": 0.0
+    },
+    {
+      "variant": "concrete",
+      "opt": "O0",
+      "trial": 0,
+      "compile_s": 2.754546632990241,
+      "link_s": 0.14170761202694848,
+      "application_s": 0.859535967989359,
+      "support_s": 1.895010665000882
+    },
+    {
+      "variant": "concrete",
+      "opt": "O0",
+      "trial": 1,
+      "compile_s": 2.8063653430435807,
+      "link_s": 0.14360880298772827,
+      "application_s": 0.8497743290499784,
+      "support_s": 1.9565910139936022
+    },
+    {
+      "variant": "original",
+      "opt": "O0",
+      "trial": 1,
+      "compile_s": 4.727757902990561,
+      "link_s": 0.1640662660356611,
+      "application_s": 4.727757902990561,
+      "support_s": 0.0
+    },
+    {
+      "variant": "concrete",
+      "opt": "O0",
+      "trial": 2,
+      "compile_s": 2.8135789539664984,
+      "link_s": 0.17187524598557502,
+      "application_s": 0.8541969989892095,
+      "support_s": 1.9593819549772888
+    },
+    {
+      "variant": "original",
+      "opt": "O0",
+      "trial": 2,
+      "compile_s": 4.766638368950225,
+      "link_s": 0.16169558197725564,
+      "application_s": 4.766638368950225,
+      "support_s": 0.0
+    },
+    {
+      "variant": "original",
+      "opt": "O2",
+      "trial": 0,
+      "compile_s": 5.916823873005342,
+      "link_s": 0.14875879499595612,
+      "application_s": 5.916823873005342,
+      "support_s": 0.0
+    },
+    {
+      "variant": "concrete",
+      "opt": "O2",
+      "trial": 0,
+      "compile_s": 3.9471920479554683,
+      "link_s": 0.14079640002455562,
+      "application_s": 0.9305931529961526,
+      "support_s": 3.0165988949593157
+    },
+    {
+      "variant": "concrete",
+      "opt": "O2",
+      "trial": 1,
+      "compile_s": 3.7918697900604457,
+      "link_s": 0.14127261197427288,
+      "application_s": 0.9172526990296319,
+      "support_s": 2.8746170910308138
+    },
+    {
+      "variant": "original",
+      "opt": "O2",
+      "trial": 1,
+      "compile_s": 5.702417191001587,
+      "link_s": 0.1416495320154354,
+      "application_s": 5.702417191001587,
+      "support_s": 0.0
+    },
+    {
+      "variant": "concrete",
+      "opt": "O2",
+      "trial": 2,
+      "compile_s": 3.9892951140063815,
+      "link_s": 0.14572575397323817,
+      "application_s": 0.9150858709472232,
+      "support_s": 3.0742092430591583
+    },
+    {
+      "variant": "original",
+      "opt": "O2",
+      "trial": 2,
+      "compile_s": 5.76706148404628,
+      "link_s": 0.14037508005276322,
+      "application_s": 5.76706148404628,
+      "support_s": 0.0
+    }
+  ],
+  "medians": {
+    "O0": {
+      "original": {
+        "application_s": 4.766638368950225,
+        "support_s": 0.0,
+        "compile_s": 4.766638368950225,
+        "link_s": 0.1640662660356611
+      },
+      "concrete": {
+        "application_s": 0.8541969989892095,
+        "support_s": 1.9565910139936022,
+        "compile_s": 2.8063653430435807,
+        "link_s": 0.14360880298772827
+      }
+    },
+    "O2": {
+      "original": {
+        "application_s": 5.76706148404628,
+        "support_s": 0.0,
+        "compile_s": 5.76706148404628,
+        "link_s": 0.1416495320154354
+      },
+      "concrete": {
+        "application_s": 0.9172526990296319,
+        "support_s": 3.0165988949593157,
+        "compile_s": 3.9471920479554683,
+        "link_s": 0.14127261197427288
+      }
+    }
+  },
+  "native_cache": [
+    {
+      "executable": "/tmp/prelower-integration-20261019-7/native-cache/artifacts/05811cbc594c9c1acd31e6433e19bfbd968c5b43ba985bbf13927fd4d360c685.bin",
+      "compiled": 7,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1
+    },
+    {
+      "executable": "/tmp/prelower-integration-20261019-7/native-cache/artifacts/05811cbc594c9c1acd31e6433e19bfbd968c5b43ba985bbf13927fd4d360c685.bin",
+      "compiled": 0,
+      "reused": 7,
+      "pch_built": 0,
+      "linked": 0
+    },
+    {
+      "executable": "/tmp/prelower-integration-20261019-7/native-cache/artifacts/c11f314d0878365d2790c2bc824c4375c2d765818de326865535ce5b6f4a3330.bin",
+      "compiled": 1,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 1
+    }
+  ],
+  "preprocessed": {
+    "original": {
+      "bytes": 3587412,
+      "template_tokens": 6950
+    },
+    "concrete": {
+      "bytes": 1641069,
+      "template_tokens": 3736
+    }
+  },
+  "passed": true,
+  "record_elements": {
+    "passed": true,
+    "run": "/tmp/prelower-records-20261019"
+  },
+  "toolchain": "Ubuntu Clang 18.1.3; x86_64-pc-linux-gnu; C++23",
+  "measurement": "3 serial fresh-object trials per optimization and variant; no PCH; -g0; lowering, shared runtime provider objects and native-cache dependency scanning excluded",
+  "base_commit": "fac5b85723f15fc59c1e1414fcc92ef4ca2a5902",
+  "final_checks": {
+    "passed": true,
+    "run": "/tmp/prelower-final-20261019",
+    "checks": [
+      "exact generated artifact agreement with measured version",
+      "record elements in both modes",
+      "same-instance lifecycle and discovery order",
+      "portable PHP backend check",
+      "backend conversion",
+      "shared type query conversion"
+    ]
+  }
+}

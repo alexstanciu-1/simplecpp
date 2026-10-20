@@ -3,13 +3,127 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest checkpoint covers the implemented Chapter 05–11 slices, including
+The latest focused gate covers native prelowering and accounting; the preceding
+O2 ordinary gate covers Chapter 14, as detailed below. The historical
+cumulative checkpoint covers the implemented Chapter 05–11 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
 partitioned namespace/constant/enum programs, bounded class/struct behavior,
 inheritance, traits, interface dispatch and shared callable variance.
 The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
+
+## Native prelowering execution — 2026-10-20
+
+The native driver can now select the public `prelower_templates` setting and run
+production publication/build owners. Use `tools/native_validate.py` with
+`--prelower-accounting --compiler-optimization O2 --no-stan --types-only --no-pch`
+plus the normal checkout/revision/results arguments. The compiler executable is
+O2 without debug information; accounting, middleware and application runtime
+objects remain O0. The compiler's own PCH is independent of the strict application
+PCH prohibition. The validation-only compiler proxy records actual Clang arguments
+because the production release preset otherwise selects O3.
+
+[Native execution evidence](../../../../specs/planning/results/native_prelower_accounting_2026_10_20/README.md)
+records the bounded results and source/executable hashes. The proof compares PHP
+and native artifact bytes/manifests, repeats concrete preparation/emission, checks
+explicit unsupported-case and PCH rejection with publication recovery, and checks
+accounting behavior, full application closure and warm reuse. It does not expand
+runtime coverage or establish a compiler-performance benchmark.
+
+Native execution exposed missing-key hash reads through `??` in specialization
+artifact assembly. Explicit initialization and guarded optional reads repair that
+source-portability issue in the existing owner; no fallback or new registry is added.
+
+## Native refresh after prelowering — 2026-10-20
+
+Candidate base `2a302b1a` plus authored portability repairs now passes conversion
+of 233 compiler/proof PHP files and native compilation. The bounded Chapter 14
+gate passes 14 byte-identical PHP/native artifact comparisons, 28 generated
+program executions with/without PCH, 27 standalone header checks, native
+publication parity and failure/recovery, five incremental build scenarios and
+seven runtime-module build scenarios. The final compiler rebuild reports no work.
+
+[Retained evidence](../../../../specs/planning/results/native_compiler_refresh_2026_10_20/README.md)
+includes the result and source/harness hashes. Raw attempts remain under
+`/tmp/prelower-native-compiler-20261020/`; attempt 13 passes. Repairs use explicit
+typed collection/nullable/scope boundaries and declaration-local enum reflection.
+Execution also exposed overloaded-boolean eager evaluation of a nullable guard;
+explicit branches preserve PHP behavior. No prelowering fallback is added.
+
+That earlier refresh includes the prelowering implementation, but its native
+execution gate exercises ordinary emission. Native prelowering execution is
+covered by the later focused gate above. STAN and parked LLVM were skipped; build warnings remain. The
+separate O0 prelowering regression uses the PHP-hosted compiler. See the evidence
+note for its result and the exact build configuration.
+
+## Chapter 14 native gate — 2026-10-16
+
+The [bounded closeout](../catalog/14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16)
+passes conversion of 215 compiler/proof PHP files to PHS and native compilation,
+14 multi-file artifact parity comparisons, 28 PCH/no-PCH executions and
+27 standalone header checks. The converted native publisher and native builder
+also pass publication parity, no-op/body-edit reuse, failed-publication repair,
+successful shadow-warning delivery and optional provider source/definition/library
+invalidation (5 incremental and 7 module build/execution scenarios).
+The final no-change native compiler build passes.
+
+Evidence: `/tmp/scpp-ch14-native-20261016/summary.json`, `logs-5/` and source/harness/
+runtime-catalog/candidate hashes plus the executable hash. Base `29efc8ad` has the
+retained validation overlay captured by those hashes. The converted driver replaces
+the normal entrypoint. STAN and LLVM were skipped explicitly; PHP used CLI. Warnings
+remain. The chapter page records the bounded scope and explicit deferrals; this is
+not a cumulative CH01–14 sweep or expanded CH12 native certification.
+
+## Chapter 13 native gate — 2026-10-16
+
+The [bounded Chapter 13 closeout](../catalog/13_errors.md#bounded-closeout-and-native-gate--2026-10-16)
+now passes compiler PHP-to-PHS conversion and native build, plus all 68 chapter
+programs with byte-identical PHP/native output and successful generated execution,
+52 rejection/recovery comparisons, four native edit/repair/fresh proofs and three
+PHP production CLI failure checks. The final no-change native rebuild passes.
+
+Evidence: `/tmp/scpp-ch13-native-20261016/summary.json` and `logs-5/`, with source,
+harness, runtime-catalog and candidate hashes plus the executable hash. Candidate
+base `b0e1d278` includes a portability/proof overlay captured by those hashes. All
+215 compiler/proof PHP files converted. Resumed builds included the added edit-proof
+driver and corrected the baseline emission proof to expect the implemented outer
+exception handler. Native fixtures additionally required explicit nullable branches in
+finally preparation/emission and a count-based generic-parameter check in metadata
+registration. Those authored PHP repairs preserve the existing language contract.
+The native validation driver is substituted for the normal entrypoint.
+Legacy STAN and LLVM were skipped explicitly; the shared runner used CLI and 12 slots.
+Generated fixtures ran without PCH. Build warnings remain.
+
+This is the Chapter 13 focused native evidence. It does not repeat the historical
+cumulative checkpoint below, prove every incremental/lifetime combination, or close
+CH12's broader native coverage gap. Chapter 13 deferrals remain explicit in Chapter 15.
+
+## Workspace smoke — 2026-10-16
+
+Revision `8c7ac0e5b10faf8217cb31916da3d988d4e86ddc` passes a fresh native compiler
+build using the existing validator's source snapshot/conversion/framework/build
+setup, with `--no-stan` and parked LLVM excluded. Build time was 421.764 seconds;
+the final no-change build took 1.188 seconds. Three focused proofs (`s2s-proof`,
+`types-proof`, `control-proof`) produced byte-identical PHP/native output and their
+generated programs exited with expected codes 10, 0 and 8. The control proof includes
+its retained identity and dependency failure/retry/repair checks. Total elapsed time
+was 431.715 seconds; this is an observed run, not a benchmark.
+
+Evidence: `/tmp/scpp-v02-workspace-smoke-20261016/summary.json`, `commands.json`,
+`source_hashes.json`, `candidate.json` and `logs/`; focused orchestration script:
+`/tmp/scpp-v02-workspace-smoke.py`. These local artifacts were available during CH12
+reconciliation. The generated validation driver intentionally replaces `main.php`;
+other snapshotted compiler/proof PHP files matched the checkout. FPM socket creation
+was unavailable and the shared runner used its CLI fallback. Native build warnings
+remain; this is not warning-clean certification.
+
+This run rebuilds the compiler itself but does not sweep CH12 fixtures. The
+[CH12 closeout](../catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
+combines its recorded focused feature proofs with this limited workspace proof;
+complete chapter-native parity, rejection and incremental coverage remains unclaimed.
+The older 2026-10-10 result directories were absent here, so their recorded summaries
+below were reviewed without rechecking their raw logs or overlay hashes.
 
 ## Native lowering-report checkpoint — 2026-10-16
 
@@ -98,7 +212,9 @@ compiler build passes in 1.216s. The follow-up summary records a complete pass.
 These targeted post-repair checks supplement, rather than claim a repeat of, the
 full cumulative sweep. Both runs bypass legacy STAN and parked LLVM execution.
 
-## Latest native checkpoint — 2026-10-08 Chapter 11
+<a id="latest-native-checkpoint--2026-10-08-chapter-11"></a>
+
+## Earlier native checkpoint — 2026-10-08 Chapter 11
 
 Candidate base `65d96f7e6bd0af0c6a5420eb49447266d4c1fcd4`, with the current
 portability overlay. Evidence: `/tmp/my-try-ch11-native-20261008/`.

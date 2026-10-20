@@ -71,7 +71,7 @@ final class CPP_Record_Construction
 		record_storage_kind $storage, cpp_generation_context $context): string
 	{
 		if ($storage === record_storage_kind::inline_value) { return CPP_Declarations::type($type, $context); }
-		$payload = CPP_Types::payload($payload_type);
+		$payload = CPP_Types::payload($payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
 		if ($storage === record_storage_kind::shared) {
 			$source_record = Type_Queries::source_record($payload_type);
@@ -92,6 +92,10 @@ final class CPP_Record_Construction
 	public static function object(prepared_object_construction $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context): string
 	{
+		if ($context->concrete_types() && CPP_Types::needs_concrete_storage($facts->type)) {
+			if ($facts->constructor_call !== null) { return CPP_Source_Calls::construct($facts, $arguments, $context); }
+			return CPP_Runtime_Operations::construct_default($facts, $context);
+		}
 		$callee = self::allocation($facts->type, $facts->constructed_type, $facts->storage, $context);
 		if ($facts->constructor_call !== null) {
 			return CPP_Declarations::selected_call($facts->constructor_call, $arguments, $context, $callee, $facts->type, '');
@@ -102,8 +106,17 @@ final class CPP_Record_Construction
 
 final class CPP_Data_Construction
 {
+	/** Factory registration keys contain transient type IDs; output names use resolved native bindings. */
+	public static function binding_identity(initialization_binding $binding): string
+	{
+		$context = new cpp_generation_context();
+		$symbol = self::reference($binding, $context);
+		return $symbol . ':' . CPP_Artifacts::includes($context->headers, '');
+	}
+
 	/** Publish one backend binding for the already selected concrete semantic factory. */
-	private static function reference(initialization_binding $binding, cpp_generation_context $context): string
+	public static function reference(initialization_binding $binding, cpp_generation_context $context,
+		?CPP_Specializations $implementation_engine = null): string
 	{
 		$factory = object_cast($binding->factory(), registered_static_factory::class);
 		$catalog = Model::$cpp_callable_bindings;
@@ -113,7 +126,7 @@ final class CPP_Data_Construction
 			$member = $binding->is_keyed() ? 'from_key_value' : 'from_list';
 			$catalog->bind_adapter($factory, $adapter->name(), $member, $adapter->header());
 		}
-		return CPP_Callables::reference($factory, $context);
+		return CPP_Callables::runtime_reference($factory, $context, $implementation_engine);
 	}
 
 	/** Input backing and each entry's snapshots stay inside this synchronous construction call. */
@@ -124,20 +137,39 @@ final class CPP_Data_Construction
 			return self::record($node, object_cast($prepared, prepared_record_construction::class), $context);
 		}
 		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
-		$factory = self::reference($binding, $context);
-		$entries /** Storage<data_entry_node> */ = $node->entries;
-		$signature = $binding->factory()->signature();
-		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
-		$input_type = CPP_Declarations::type($parameters[0]->type, $context);
-		if ($entries->is_empty()) { return $factory . '(' . $input_type . '{})'; }
+		if ($context->specialization_engine !== null) {
+			return CPP_Runtime_Operations::initialize($node, $binding, $context);
+		}
+		return self::sequence($node, $binding, $context);
+	}
 
-		// The input signature already identifies the complete entry/element type.
+	/** Both representations use the same source sequencing and entry lifetimes. */
+	public static function sequence(data_construction_node $node, initialization_binding $binding,
+		cpp_generation_context $context): string
+	{
+		if (CPP_Initializer_Buffer::active($context)) {
+			return self::emit_sequence($node, $binding, $context, CPP_Initializer_Buffer::reference($node, $binding, $context), '', '');
+		}
+		$factory = self::reference($binding, $context);
+		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
+		$input_type = CPP_Declarations::type($parameters[0]->type, $context);
+		$entries /** Storage<data_entry_node> */ = $node->entries;
+		if ($entries->is_empty()) { return $factory . '(' . $input_type . '{})'; }
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
 		$element = CPP_Declarations::type($input->arguments()[0], $context);
+		return self::emit_sequence($node, $binding, $context, 'scpp::initializer_buffer<' . $element . '>', $element, $factory);
+	}
+
+	/** Only physical buffer operations vary; source evaluation and lifetime scopes are shared. */
+	private static function emit_sequence(data_construction_node $node, initialization_binding $binding,
+		cpp_generation_context $context, string $buffer_type, string $element, string $factory): string
+	{
+		$entries /** Storage<data_entry_node> */ = $node->entries;
+
 		$buffer = 'initializer_' . $context->next_temporary;
 		$context->next_temporary++;
 		$text = '([&]() -> ' . CPP_Declarations::type($binding->target(), $context) . " {\n";
-		$text .= 'scpp::initializer_buffer<' . $element . '> ' . $buffer . '(' . q_count($entries) . ");\n";
+		$text .= $buffer_type . ' ' . $buffer . '(' . q_count($entries) . ");\n";
 		$emitter = new CPP_Syntax($context);
 		foreach ($entries as $entry) {
 			$facts = $entry->require_preparation();
@@ -154,20 +186,24 @@ final class CPP_Data_Construction
 			$context->next_temporary++;
 			$value = CPP_Declarations::conversion($emitter->expression($entry->value), $facts->value_conversion, $context);
 			$text .= CPP_Declarations::type($facts->value_conversion->target_type, $context) . ' ' . $value_name . ' = ' . $value . ";\n";
+			if (CPP_Initializer_Buffer::active($context)) {
+				$text .= CPP_Initializer_Buffer::append($facts, $buffer, $key_name, $value_name, $context) . ";\n}\n";
+				continue;
+			}
 			$argument = $value_name;
 			if ($entry->key !== null) { $argument = $element . '{' . $key_name . ', ' . $value_name . '}'; }
 			$text .= $buffer . '.append(' . $argument . ");\n}\n";
 		}
-		return $text . 'return ' . $factory . '(' . $buffer . ".view());\n}())";
+		$finish = CPP_Initializer_Buffer::active($context) ? $buffer . '.finish()' : $factory . '(' . $buffer . '.view())';
+		return $text . 'return ' . $finish . ";\n}())";
 	}
 
 	/** Snapshot supplied inputs first, then omitted defaults; invoke the settled typed constructor. */
 	private static function record(data_construction_node $node, prepared_record_construction $facts,
 		cpp_generation_context $context): string
 	{
-		$context->headers['utility'] = true;
 		$type = CPP_Declarations::type($facts->type, $context);
-		$payload = CPP_Types::payload($facts->payload_type);
+		$payload = CPP_Types::payload($facts->payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
 		$text = '([&]() -> ' . $type . " {\n";
 		$arguments /** hash<string, int> */ = [];
@@ -196,7 +232,7 @@ final class CPP_Data_Construction
 				$text .= $field_type . ' ' . $name . ' = ' . $value . ";\n";
 				$arguments[$position] = $name;
 			}
-			$ordered .= ($ordered === '' ? '' : ', ') . 'std::move(' . $arguments[$position] . ')';
+			$ordered .= ($ordered === '' ? '' : ', ') . CPP_Declarations::move($arguments[$position], $parameter->type, $context);
 		}
 		$callee = CPP_Record_Construction::allocation($facts->type, $facts->payload_type, $facts->storage, $context);
 		return $text . 'return ' . $callee . '(' . $ordered . ");\n}())";
@@ -206,21 +242,20 @@ final class CPP_Data_Construction
 	public static function constructor(string $name, record_initialization_contract $contract,
 		cpp_generation_context $context): string
 	{
-		$context->headers['utility'] = true;
 		$parameters = 'scpp_data_tag';
 		$initializers = '';
 		$base_count = 0;
+		$inputs /** vector<record_initialization_input> */ = $contract->inputs_in_order();
 		if ($contract->base_contract !== null) {
 			$base_count = q_count($contract->base_contract->inputs_in_order());
-			$base = CPP_Types::payload($contract->base_type);
+			$base = CPP_Types::payload($contract->base_type, $context);
 			CPP_Types::record_dependencies($base, $context);
 			$initializers = ' : ' . $base->spelling . '{' . $base->spelling . '::scpp_data_tag{}';
 			for ($index = 0; $index < $base_count; $index++) {
-				$initializers .= ', std::move(input_' . $index . ')';
+				$initializers .= ', ' . CPP_Declarations::move('input_' . $index, $inputs[$index]->field->type, $context);
 			}
 			$initializers .= '}';
 		}
-		$inputs /** vector<record_initialization_input> */ = $contract->inputs_in_order();
 		foreach ($inputs as $position => $input) {
 			$field /** prepared_field */ = $input->field;
 			$requirement = Type_Queries::is_nominal_handle($field->type)
@@ -229,7 +264,7 @@ final class CPP_Data_Construction
 			if ($position < $base_count) { continue; }
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$initializers .= ($initializers === '' ? ' : ' : ', ')
-				. CPP_Generator::source_name('field', $entry->name) . '(std::move(input_' . $position . '))';
+				. CPP_Generator::source_name('field', $entry->name) . '(' . CPP_Declarations::move('input_' . $position, $field->type, $context) . ')';
 		}
 		$text = "\tstruct scpp_data_tag {};\n\t" . $name . "() = default;\n\t" . $name . '(' . $parameters . ')' . $initializers;
 		return $text . " {}\n";

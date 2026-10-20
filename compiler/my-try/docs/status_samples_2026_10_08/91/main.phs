@@ -1,0 +1,3 @@
+class Item { public function __construct(public int $value) {} }
+$item = new Item(value: 7);
+return $item->value;

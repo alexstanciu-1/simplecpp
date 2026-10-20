@@ -1,0 +1,1965 @@
+{
+  "date": "2026-10-17",
+  "host": "dev002.travelfuse.ro",
+  "remote_root": "/home/alex-ai/operator-audits/20261017-v02",
+  "origin": {
+    "origin": "/home/alexv/__AI/simple_cpp/simple_cpp_02",
+    "branch": "v0.2/develop",
+    "head": "d675aca8251374555c9191067793175b43d8a79c",
+    "input_archive_sha256": "b95815e7eee43e3014b040dc840684356a2af9a27dfc07652fe7a5d77d702555",
+    "runtime_header_sha256": "e21f5b1ded130e0eeb05d3d53a6ca4a476dd537f6b36475d670c157d706ca41a",
+    "scope": "Current v0.2 working compiler, existing S01 header fix; no compiler fixes for matrix audit."
+  },
+  "selected": 22816,
+  "outcomes": {
+    "positive": 11813,
+    "negative_runtime": 10963,
+    "negative_compile": 40
+  },
+  "lanes": {
+    "original": {
+      "failed": 11813,
+      "rejection-needs-review": 11003
+    },
+    "strict": {
+      "failed": 4032,
+      "passed": 7782,
+      "expected-runtime-rejection": 6020,
+      "rejection-needs-review": 4982
+    }
+  },
+  "families": {
+    "casts_explicit": {
+      "total": 160,
+      "positive": 110,
+      "positive_strict": {
+        "passed": 83,
+        "failed": 27
+      },
+      "negative_strict": {
+        "expected-runtime-rejection": 32,
+        "rejection-needs-review": 18
+      }
+    },
+    "condition_truthiness": {
+      "total": 34,
+      "positive": 32,
+      "positive_strict": {
+        "passed": 32
+      },
+      "negative_strict": {
+        "expected-runtime-rejection": 2
+      }
+    },
+    "language_probes_and_reset": {
+      "total": 95,
+      "positive": 55,
+      "positive_strict": {
+        "passed": 55
+      },
+      "negative_strict": {
+        "rejection-needs-review": 39,
+        "failed": 1
+      }
+    },
+    "operators_binary_arithmetic": {
+      "total": 1435,
+      "positive": 236,
+      "positive_strict": {
+        "failed": 162,
+        "passed": 74
+      },
+      "negative_strict": {
+        "expected-runtime-rejection": 926,
+        "rejection-needs-review": 273
+      }
+    },
+    "operators_binary_bitwise": {
+      "total": 1215,
+      "positive": 120,
+      "positive_strict": {
+        "passed": 20,
+        "failed": 100
+      },
+      "negative_strict": {
+        "rejection-needs-review": 1095
+      }
+    },
+    "operators_binary_logical": {
+      "total": 690,
+      "positive": 448,
+      "positive_strict": {
+        "passed": 320,
+        "failed": 128
+      },
+      "negative_strict": {
+        "expected-runtime-rejection": 80,
+        "rejection-needs-review": 162
+      }
+    },
+    "operators_comparison_equality": {
+      "total": 1038,
+      "positive": 1038,
+      "positive_strict": {
+        "failed": 734,
+        "passed": 304
+      },
+      "negative_strict": {}
+    },
+    "operators_comparison_ordering": {
+      "total": 1292,
+      "positive": 356,
+      "positive_strict": {
+        "failed": 276,
+        "passed": 80
+      },
+      "negative_strict": {
+        "expected-runtime-rejection": 720,
+        "rejection-needs-review": 216
+      }
+    },
+    "operators_compound_assignment": {
+      "total": 6500,
+      "positive": 892,
+      "positive_strict": {
+        "failed": 572,
+        "passed": 320
+      },
+      "negative_strict": {
+        "expected-runtime-rejection": 3704,
+        "rejection-needs-review": 1904
+      }
+    },
+    "operators_conditional_selection": {
+      "total": 9175,
+      "positive": 7418,
+      "positive_strict": {
+        "passed": 5984,
+        "failed": 1434
+      },
+      "negative_strict": {
+        "rejection-needs-review": 1263,
+        "expected-runtime-rejection": 494
+      }
+    },
+    "operators_strict_identity": {
+      "total": 1038,
+      "positive": 1038,
+      "positive_strict": {
+        "passed": 458,
+        "failed": 580
+      },
+      "negative_strict": {}
+    },
+    "operators_unary": {
+      "total": 144,
+      "positive": 70,
+      "positive_strict": {
+        "passed": 52,
+        "failed": 18
+      },
+      "negative_strict": {
+        "rejection-needs-review": 12,
+        "expected-runtime-rejection": 62
+      }
+    }
+  },
+  "positive_failures": {
+    "original": {
+      "generation: S2S generation failed: S2S needs one resolved function for var_dump": {
+        "count": 8201,
+        "examples": [
+          {
+            "index": 0,
+            "seed_id": "seed|operators_binary_arithmetic|add|float_t|float.nonzero|float_t|float.nonzero|-|-|-|-|-"
+          },
+          {
+            "index": 1,
+            "seed_id": "seed|operators_binary_arithmetic|add|float_t|float.nonzero|float_t|float.zero|-|-|-|-|-"
+          },
+          {
+            "index": 2,
+            "seed_id": "seed|operators_binary_arithmetic|add|float_t|float.nonzero|int_t|int.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S null requires an explicit nullable, mixed or legacy Result destination": {
+        "count": 1622,
+        "examples": [
+          {
+            "index": 3016,
+            "seed_id": "seed|casts_explicit|cast_string|mixed_t|mixed.null|-|-|-|-|-|-|-"
+          },
+          {
+            "index": 3022,
+            "seed_id": "seed|casts_explicit|cast_string|nullable<bool_t>|nullable.empty|-|-|-|-|-|-|-"
+          },
+          {
+            "index": 3025,
+            "seed_id": "seed|casts_explicit|cast_string|nullable<float_t>|nullable.empty|-|-|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S data construction requires a known concrete target": {
+        "count": 1462,
+        "examples": [
+          {
+            "index": 300,
+            "seed_id": "seed|operators_compound_assignment|add_assign|float_t|float.nonzero|float_t|float.nonzero|-|-|keyed_element|-|-"
+          },
+          {
+            "index": 304,
+            "seed_id": "seed|operators_compound_assignment|add_assign|float_t|float.nonzero|float_t|float.zero|-|-|keyed_element|-|-"
+          },
+          {
+            "index": 308,
+            "seed_id": "seed|operators_compound_assignment|add_assign|float_t|float.zero|float_t|float.nonzero|-|-|keyed_element|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S needs one resolved constant for error": {
+        "count": 318,
+        "examples": [
+          {
+            "index": 3061,
+            "seed_id": "seed|operators_conditional_selection|coalesce|bool_t|bool.false|result<bool_t>|result.failure|-|-|-|-|-"
+          },
+          {
+            "index": 3090,
+            "seed_id": "seed|operators_conditional_selection|coalesce|bool_t|bool.true|result<bool_t>|result.failure|-|-|-|-|-"
+          },
+          {
+            "index": 3119,
+            "seed_id": "seed|operators_conditional_selection|coalesce|float_t|float.nonzero|result<float_t>|result.failure|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: Property without a default requires an explicit type": {
+        "count": 180,
+        "examples": [
+          {
+            "index": 1181,
+            "seed_id": "seed|operators_compound_assignment|add_assign|result<float_t>|result.success.float.nonzero|result<float_t>|result.success.float.nonzero|-|-|chained_writable_path|-|-"
+          },
+          {
+            "index": 1182,
+            "seed_id": "seed|operators_compound_assignment|add_assign|result<float_t>|result.success.float.nonzero|result<float_t>|result.success.float.nonzero|-|-|member_property|-|-"
+          },
+          {
+            "index": 1184,
+            "seed_id": "seed|operators_compound_assignment|add_assign|result<float_t>|result.success.float.nonzero|result<float_t>|result.success.float.zero|-|-|chained_writable_path|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S boolean sentinel requires an explicit Result destination": {
+        "count": 30,
+        "examples": [
+          {
+            "index": 8589,
+            "seed_id": "seed|operators_conditional_selection|elvis|result_or_bool<bool_t>|result_or_bool.sentinel.true|result_or_bool<bool_t>|result_or_bool.sentinel.false|-|-|-|-|-"
+          },
+          {
+            "index": 8590,
+            "seed_id": "seed|operators_conditional_selection|elvis|result_or_bool<bool_t>|result_or_bool.sentinel.true|result_or_bool<bool_t>|result_or_bool.sentinel.true|-|-|-|-|-"
+          },
+          {
+            "index": 8591,
+            "seed_id": "seed|operators_conditional_selection|elvis|result_or_bool<bool_t>|result_or_bool.sentinel.true|result_or_bool<bool_t>|result_or_bool.success.bool.false|-|-|-|-|-"
+          }
+        ]
+      }
+    },
+    "strict": {
+      "generation: S2S generation failed: S2S integer binary operation requires integer operands": {
+        "count": 1164,
+        "examples": [
+          {
+            "index": 0,
+            "seed_id": "seed|operators_binary_arithmetic|add|float_t|float.nonzero|float_t|float.nonzero|-|-|-|-|-"
+          },
+          {
+            "index": 1,
+            "seed_id": "seed|operators_binary_arithmetic|add|float_t|float.nonzero|float_t|float.zero|-|-|-|-|-"
+          },
+          {
+            "index": 2,
+            "seed_id": "seed|operators_binary_arithmetic|add|float_t|float.nonzero|int_t|int.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S integer binary operation requires canonical int operands": {
+        "count": 592,
+        "examples": [
+          {
+            "index": 1576,
+            "seed_id": "seed|operators_binary_bitwise|bitwise_and|nullable<int_t>|nullable.present.int.nonzero|nullable<int_t>|nullable.present.int.nonzero|-|-|-|-|-"
+          },
+          {
+            "index": 1577,
+            "seed_id": "seed|operators_binary_bitwise|bitwise_and|nullable<int_t>|nullable.present.int.nonzero|nullable<int_t>|nullable.present.int.zero|-|-|-|-|-"
+          },
+          {
+            "index": 1579,
+            "seed_id": "seed|operators_binary_bitwise|bitwise_and|nullable<int_t>|nullable.present.int.zero|nullable<int_t>|nullable.present.int.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S Result extraction supports only required assignment, argument and return boundaries or selected coalesce values": {
+        "count": 360,
+        "examples": [
+          {
+            "index": 3252,
+            "seed_id": "seed|operators_conditional_selection|coalesce|mixed_t|mixed.bool.false|result<bool_t>|result.success.bool.false|-|-|-|-|-"
+          },
+          {
+            "index": 3253,
+            "seed_id": "seed|operators_conditional_selection|coalesce|mixed_t|mixed.bool.false|result<bool_t>|result.success.bool.true|-|-|-|-|-"
+          },
+          {
+            "index": 3255,
+            "seed_id": "seed|operators_conditional_selection|coalesce|mixed_t|mixed.bool.false|result<float_t>|result.success.float.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S needs one resolved constant for error": {
+        "count": 326,
+        "examples": [
+          {
+            "index": 3061,
+            "seed_id": "seed|operators_conditional_selection|coalesce|bool_t|bool.false|result<bool_t>|result.failure|-|-|-|-|-"
+          },
+          {
+            "index": 3090,
+            "seed_id": "seed|operators_conditional_selection|coalesce|bool_t|bool.true|result<bool_t>|result.failure|-|-|-|-|-"
+          },
+          {
+            "index": 3119,
+            "seed_id": "seed|operators_conditional_selection|coalesce|float_t|float.nonzero|result<float_t>|result.failure|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S coalesce branches require matching scalar types or exact Result payload types": {
+        "count": 299,
+        "examples": [
+          {
+            "index": 5032,
+            "seed_id": "seed|operators_conditional_selection|coalesce|result<bool_t>|result.success.bool.false|nullable<bool_t>|nullable.empty|-|-|-|-|-"
+          },
+          {
+            "index": 5033,
+            "seed_id": "seed|operators_conditional_selection|coalesce|result<bool_t>|result.success.bool.false|nullable<bool_t>|nullable.present.bool.false|-|-|-|-|-"
+          },
+          {
+            "index": 5034,
+            "seed_id": "seed|operators_conditional_selection|coalesce|result<bool_t>|result.success.bool.false|nullable<bool_t>|nullable.present.bool.true|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel": {
+        "count": 240,
+        "examples": [
+          {
+            "index": 8601,
+            "seed_id": "seed|operators_conditional_selection|elvis|result_or_bool<float_t>|result_or_bool.sentinel.false|result_or_bool<float_t>|result_or_bool.sentinel.false|-|-|-|-|-"
+          },
+          {
+            "index": 8602,
+            "seed_id": "seed|operators_conditional_selection|elvis|result_or_bool<float_t>|result_or_bool.sentinel.false|result_or_bool<float_t>|result_or_bool.sentinel.true|-|-|-|-|-"
+          },
+          {
+            "index": 8603,
+            "seed_id": "seed|operators_conditional_selection|elvis|result_or_bool<float_t>|result_or_bool.sentinel.false|result_or_bool<float_t>|result_or_bool.success.float.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S boxed selection requires matching boxed family or supported scalar branches": {
+        "count": 206,
+        "examples": [
+          {
+            "index": 3236,
+            "seed_id": "seed|operators_conditional_selection|coalesce|mixed_t|mixed.bool.false|nullable<bool_t>|nullable.empty|-|-|-|-|-"
+          },
+          {
+            "index": 3237,
+            "seed_id": "seed|operators_conditional_selection|coalesce|mixed_t|mixed.bool.false|nullable<bool_t>|nullable.present.bool.false|-|-|-|-|-"
+          },
+          {
+            "index": 3238,
+            "seed_id": "seed|operators_conditional_selection|coalesce|mixed_t|mixed.bool.false|nullable<bool_t>|nullable.present.bool.true|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S object construction requires default-constructible fields": {
+        "count": 180,
+        "examples": [
+          {
+            "index": 1181,
+            "seed_id": "seed|operators_compound_assignment|add_assign|result<float_t>|result.success.float.nonzero|result<float_t>|result.success.float.nonzero|-|-|chained_writable_path|-|-"
+          },
+          {
+            "index": 1182,
+            "seed_id": "seed|operators_compound_assignment|add_assign|result<float_t>|result.success.float.nonzero|result<float_t>|result.success.float.nonzero|-|-|member_property|-|-"
+          },
+          {
+            "index": 1184,
+            "seed_id": "seed|operators_compound_assignment|add_assign|result<float_t>|result.success.float.nonzero|result<float_t>|result.success.float.zero|-|-|chained_writable_path|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S nullable value boundary requires a scalar or inline record payload": {
+        "count": 166,
+        "examples": [
+          {
+            "index": 4479,
+            "seed_id": "seed|operators_conditional_selection|coalesce|nullable<bool_t>|nullable.empty|nullable<bool_t>|nullable.present.bool.false|-|-|-|-|-"
+          },
+          {
+            "index": 4480,
+            "seed_id": "seed|operators_conditional_selection|coalesce|nullable<bool_t>|nullable.empty|nullable<bool_t>|nullable.present.bool.true|-|-|-|-|-"
+          },
+          {
+            "index": 4482,
+            "seed_id": "seed|operators_conditional_selection|coalesce|nullable<bool_t>|nullable.empty|result<bool_t>|result.success.bool.false|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S coalesce branches require supported scalar value types": {
+        "count": 133,
+        "examples": [
+          {
+            "index": 3058,
+            "seed_id": "seed|operators_conditional_selection|coalesce|bool_t|bool.false|nullable<bool_t>|nullable.empty|-|-|-|-|-"
+          },
+          {
+            "index": 3059,
+            "seed_id": "seed|operators_conditional_selection|coalesce|bool_t|bool.false|nullable<bool_t>|nullable.present.bool.false|-|-|-|-|-"
+          },
+          {
+            "index": 3060,
+            "seed_id": "seed|operators_conditional_selection|coalesce|bool_t|bool.false|nullable<bool_t>|nullable.present.bool.true|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S logical operation requires canonical bool operands": {
+        "count": 128,
+        "examples": [
+          {
+            "index": 11225,
+            "seed_id": "seed|operators_binary_logical|logical_and|float_t|float.nonzero|float_t|float.nonzero|-|-|-|-|-"
+          },
+          {
+            "index": 11226,
+            "seed_id": "seed|operators_binary_logical|logical_and|float_t|float.nonzero|float_t|float.zero|-|-|-|-|-"
+          },
+          {
+            "index": 11227,
+            "seed_id": "seed|operators_binary_logical|logical_and|float_t|float.nonzero|int_t|int.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation 'compound write-back' is not supported for operand kinds 'int_t' and 'float_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 56,
+        "examples": [
+          {
+            "index": 674,
+            "seed_id": "seed|operators_compound_assignment|add_assign|mixed_t|mixed.int.nonzero|mixed_t|mixed.float.nonzero|-|-|assignable_variable|-|-"
+          },
+          {
+            "index": 675,
+            "seed_id": "seed|operators_compound_assignment|add_assign|mixed_t|mixed.int.nonzero|mixed_t|mixed.float.nonzero|-|-|chained_writable_path|-|-"
+          },
+          {
+            "index": 676,
+            "seed_id": "seed|operators_compound_assignment|add_assign|mixed_t|mixed.int.nonzero|mixed_t|mixed.float.nonzero|-|-|keyed_element|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S boxed operator is outside the numeric arithmetic slice": {
+        "count": 42,
+        "examples": [
+          {
+            "index": 1466,
+            "seed_id": "seed|operators_binary_bitwise|bitwise_and|mixed_t|mixed.int.nonzero|mixed_t|mixed.int.nonzero|-|-|-|-|-"
+          },
+          {
+            "index": 1467,
+            "seed_id": "seed|operators_binary_bitwise|bitwise_and|mixed_t|mixed.int.nonzero|mixed_t|mixed.int.zero|-|-|-|-|-"
+          },
+          {
+            "index": 1480,
+            "seed_id": "seed|operators_binary_bitwise|bitwise_and|mixed_t|mixed.int.zero|mixed_t|mixed.int.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S nullable boundary requires the same payload type": {
+        "count": 27,
+        "examples": [
+          {
+            "index": 2906,
+            "seed_id": "seed|casts_explicit|cast_bool|nullable<float_t>|nullable.present.float.nonzero|-|-|-|-|-|-|-"
+          },
+          {
+            "index": 2907,
+            "seed_id": "seed|casts_explicit|cast_bool|nullable<float_t>|nullable.present.float.zero|-|-|-|-|-|-|-"
+          },
+          {
+            "index": 2909,
+            "seed_id": "seed|casts_explicit|cast_bool|nullable<int_t>|nullable.present.int.nonzero|-|-|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'hash_t' and 'string_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 20,
+        "examples": [
+          {
+            "index": 8895,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.string.bool_false_literal|-|-|-|-|-"
+          },
+          {
+            "index": 8896,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.string.bool_true_literal|-|-|-|-|-"
+          },
+          {
+            "index": 8897,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.string.empty|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'string_t' and 'hash_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 20,
+        "examples": [
+          {
+            "index": 8960,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.string.bool_false_literal|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          },
+          {
+            "index": 8961,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.string.bool_false_literal|mixed_t|mixed.hash.nonempty|-|-|-|-|-"
+          },
+          {
+            "index": 8974,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.string.bool_true_literal|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'bool_t' and 'hash_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 8834,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.bool.false|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          },
+          {
+            "index": 8835,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.bool.false|mixed_t|mixed.hash.nonempty|-|-|-|-|-"
+          },
+          {
+            "index": 8848,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.bool.true|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'float_t' and 'hash_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 8862,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.float.nonzero|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          },
+          {
+            "index": 8863,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.float.nonzero|mixed_t|mixed.hash.nonempty|-|-|-|-|-"
+          },
+          {
+            "index": 8876,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.float.zero|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'hash_t' and 'bool_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 8886,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.bool.false|-|-|-|-|-"
+          },
+          {
+            "index": 8887,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.bool.true|-|-|-|-|-"
+          },
+          {
+            "index": 8900,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.nonempty|mixed_t|mixed.bool.false|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'hash_t' and 'float_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 8888,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.float.nonzero|-|-|-|-|-"
+          },
+          {
+            "index": 8889,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.float.zero|-|-|-|-|-"
+          },
+          {
+            "index": 8902,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.nonempty|mixed_t|mixed.float.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: table-vs-table equality currently has no deep-compare implementation. Requirement: use identity-bearing table carriers where identity comparison is defined, or add explicit deep table comparison semantics.": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 8890,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          },
+          {
+            "index": 8891,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.hash.nonempty|-|-|-|-|-"
+          },
+          {
+            "index": 8904,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.nonempty|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'hash_t' and 'int_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 8892,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.int.nonzero|-|-|-|-|-"
+          },
+          {
+            "index": 8893,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.empty|mixed_t|mixed.int.zero|-|-|-|-|-"
+          },
+          {
+            "index": 8906,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.hash.nonempty|mixed_t|mixed.int.nonzero|-|-|-|-|-"
+          }
+        ]
+      },
+      "execution: scpp::mixed_t runtime error: binary operation '==' is not supported for operand kinds 'int_t' and 'hash_t'. Requirement: this operator must be defined for the active mixed_t runtime-kind pair.": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 8918,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.int.nonzero|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          },
+          {
+            "index": 8919,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.int.nonzero|mixed_t|mixed.hash.nonempty|-|-|-|-|-"
+          },
+          {
+            "index": 8932,
+            "seed_id": "seed|operators_comparison_equality|equal|mixed_t|mixed.int.zero|mixed_t|mixed.hash.empty|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S unary operation requires its canonical int or bool operand type": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 11568,
+            "seed_id": "seed|operators_unary|logical_not|float_t|float.nonzero|-|-|-|-|-|-|-"
+          },
+          {
+            "index": 11569,
+            "seed_id": "seed|operators_unary|logical_not|float_t|float.zero|-|-|-|-|-|-|-"
+          },
+          {
+            "index": 11570,
+            "seed_id": "seed|operators_unary|logical_not|int_t|int.nonzero|-|-|-|-|-|-|-"
+          }
+        ]
+      },
+      "generation: S2S generation failed: S2S mutation requires canonical int or boxed storage": {
+        "count": 8,
+        "examples": [
+          {
+            "index": 15513,
+            "seed_id": "seed|operators_unary|post_decrement|float_t|float.nonzero|-|-|-|-|assignable_variable|-|-"
+          },
+          {
+            "index": 15514,
+            "seed_id": "seed|operators_unary|post_decrement|float_t|float.zero|-|-|-|-|assignable_variable|-|-"
+          },
+          {
+            "index": 15531,
+            "seed_id": "seed|operators_unary|post_increment|float_t|float.nonzero|-|-|-|-|assignable_variable|-|-"
+          }
+        ]
+      }
+    }
+  },
+  "negative_stages": {
+    "original": {
+      "rejection-needs-review:generation": 11003
+    },
+    "strict": {
+      "expected-runtime-rejection:execution": 6020,
+      "rejection-needs-review:generation": 4971,
+      "rejection-needs-review:execution": 11,
+      "failed:oracle": 1
+    }
+  },
+  "runs": {
+    "full": {
+      "selected": 22816,
+      "completed": 22816,
+      "jobs": 32,
+      "commands": 89624,
+      "elapsed_command_seconds": 60339.379,
+      "source_hashes_sha256": "d0ae5141c6ab18c1e82fb4ebef8b254eb92ffcbd2fd0044006388d93464ee1c7"
+    },
+    "property-replay": {
+      "selected": 612,
+      "completed": 612,
+      "jobs": 32,
+      "commands": 1226,
+      "elapsed_command_seconds": 155.271,
+      "source_hashes_sha256": "6eceeee3950c87d9fbba2d2fb838ddbc51fb7f36526d5c42a5cb79e3b302308f"
+    },
+    "observation-replay": {
+      "selected": 8752,
+      "completed": 8752,
+      "jobs": 32,
+      "commands": 37762,
+      "elapsed_command_seconds": 27825.253,
+      "source_hashes_sha256": "6eceeee3950c87d9fbba2d2fb838ddbc51fb7f36526d5c42a5cb79e3b302308f"
+    },
+    "diagnostic-replay": {
+      "selected": 6020,
+      "completed": 6020,
+      "jobs": 32,
+      "commands": 6020,
+      "elapsed_command_seconds": 78.25,
+      "source_hashes_sha256": "9a7e5b3d55b1353ac021a37be8b030af58af1fb1b077dc266d4d8b0eefbdce88"
+    }
+  },
+  "reviewed_rules": {
+    "result_or_bool_coalesce_early_rejection": 793,
+    "positive_mixed_kind_preserving_compound_rejection": 56,
+    "null_mixed_keyed_unset_now_valid": 1,
+    "structured_runtime_oracle_matches": 102,
+    "coarse_runtime_oracle_matches": 5918,
+    "prior_cpp_build_failures": 0
+  },
+  "toolchain": "tf-dev002\n32\nPHP 8.2.34 (cli) (built: Sep 24 2026 14:34:53) (NTS)\nCopyright (c) The PHP Group\nZend Engine v4.2.34, Copyright (c) Zend Technologies\n    with Zend OPcache v8.2.34, Copyright (c), by Zend Technologies\nUbuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\nPython 3.12.3\ne21f5b1ded130e0eeb05d3d53a6ca4a476dd537f6b36475d670c157d706ca41a  runtime/include/scpp/runtime_error.hpp\n",
+  "unseeded_rows": [
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.bool.false|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.bool.false",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.bool.false",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed bool values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.bool.true|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.bool.true",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.bool.true",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed bool values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.float.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.float.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.float.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed float values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.float.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.float.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.float.zero",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed float values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.int.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.int.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.int.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed integer values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.int.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.int.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.int.zero",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed integer values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.null|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.null",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.null",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed null values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.bool_false_literal|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.bool_false_literal",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.string.bool_false_literal",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed string values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.bool_true_literal|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.bool_true_literal",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.string.bool_true_literal",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed string values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.empty|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.empty",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.string.empty",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed string values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.nonempty_nonzero_nonbool_literal|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.nonempty_nonzero_nonbool_literal",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.string.nonempty_nonzero_nonbool_literal",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed string values."
+    },
+    {
+      "row_id": "language_probes_and_reset|count_value|mixed_t|mixed.string.zero_string|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "count_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.zero_string",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "count_value.mixed.string.zero_string",
+      "test_seed_class": null,
+      "diagnostic_class": null,
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "Count rejects non-countable mixed string values."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.bool.false|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.bool.false",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.bool.false",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.bool.true|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.bool.true",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.bool.true",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.float.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.float.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.float.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.float.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.float.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.float.zero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.hash.empty|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.hash.empty",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.hash.empty",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.hash.nonempty|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.hash.nonempty",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.hash.nonempty",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.int.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.int.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.int.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.int.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.int.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.int.zero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.null|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.null",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.null",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.bool_false_literal|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.bool_false_literal",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.string.bool_false_literal",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.bool_true_literal|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.bool_true_literal",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.string.bool_true_literal",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.empty|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.empty",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.string.empty",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.nonempty_nonzero_nonbool_literal|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.nonempty_nonzero_nonbool_literal",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.string.nonempty_nonzero_nonbool_literal",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_keyed|mixed_t|mixed.string.zero_string|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_keyed",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.string.zero_string",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_keyed.mixed.string.zero_string",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 keyed empty requires an existing string/collection leaf; invalid or missing paths and the representative numeric leaf throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|bool_t|bool.false|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "bool_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "bool.false",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.bool.false",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|bool_t|bool.true|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "bool_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "bool.true",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.bool.true",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|float_t|float.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "float_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "float.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.float.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|float_t|float.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "float_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "float.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.float.zero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|int_t|int.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "int_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "int.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.int.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|int_t|int.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "int_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "int.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.int.zero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.bool.false|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.bool.false",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.mixed.bool.false",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.bool.true|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.bool.true",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.mixed.bool.true",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.float.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.float.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.mixed.float.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.float.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.float.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.mixed.float.zero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.int.nonzero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.int.nonzero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.mixed.int.nonzero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.int.zero|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.int.zero",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.mixed.int.zero",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    },
+    {
+      "row_id": "language_probes_and_reset|empty_value|mixed_t|mixed.null|-|-|-|-|-|-|-",
+      "family_id": "language_probes_and_reset",
+      "item_id": "empty_value",
+      "subfamily_id": "probe",
+      "arity": 1,
+      "lhs_type": "mixed_t",
+      "rhs_type": null,
+      "third_type": null,
+      "lhs_profile": "mixed.null",
+      "rhs_profile": null,
+      "third_profile": null,
+      "lhs_target_kind": null,
+      "rhs_target_kind": null,
+      "third_target_kind": null,
+      "status": "supported",
+      "behavior_class": "throws",
+      "result_type": null,
+      "result_profile": null,
+      "edge_case": true,
+      "edge_case_id": "empty_value.mixed.null",
+      "test_seed_class": null,
+      "diagnostic_class": "invalid_empty_operand",
+      "source_family_refs": [
+        "specs/count_empty_isset_contract.md",
+        "specs/array_semantics.md",
+        "runtime/specs/spec.md"
+      ],
+      "source_item_refs": [],
+      "notes": "v0.2 empty rejects noncollection values; known source types reject in preparation, native/dynamic calls throw."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+Native compilation failed: In file included from /tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/cache/runtime-pch.hpp:1:
+/tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/runtime/scpp/int_t.hpp:54:15: error: static assertion failed: broken PCH input
+   54 | static_assert(false, "broken PCH input");
+      |               ^~~~~
+1 error generated.

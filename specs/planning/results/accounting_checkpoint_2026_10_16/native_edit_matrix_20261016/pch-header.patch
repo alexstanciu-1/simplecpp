@@ -1,0 +1,13 @@
+diff --git a/include/scpp/int_t.hpp b/include/scpp/int_t.hpp
+index 5725086..76b95be 100644
+--- a/include/scpp/int_t.hpp
++++ b/include/scpp/int_t.hpp
+@@ -45,7 +45,7 @@ public:
+ 	}
+ 
+ 	[[nodiscard]] constexpr Rep native_value() const noexcept {
+-		return value_;
++		return static_cast<Rep>(value_ + 0);
+ 	}
+ };
+ 

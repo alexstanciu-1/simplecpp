@@ -1,0 +1,241 @@
+{
+  "doc_status": "supporting",
+  "source_commit": "2f453540a278c60d5c1c4bf6e2a03682d692607b",
+  "files": {
+    "accounting_header_fanout_20261016.md": {
+      "source_path": "compiler/my-try/docs/planning/accounting_header_fanout_20261016.md",
+      "source_sha256": "ae79fd621cba97d77d4db54d765d72795cae6305def2ceea48608b46c3a676bc",
+      "archive_sha256": "ae79fd621cba97d77d4db54d765d72795cae6305def2ceea48608b46c3a676bc"
+    },
+    "accounting_header_fanout_20261016/README.md": {
+      "source_path": "compiler/my-try/docs/planning/accounting_header_fanout_20261016/README.md",
+      "source_sha256": "9db7c8fa22e562625bb8ed84d31ec62a3cc38516fc41fc589294db609a534d4a",
+      "archive_sha256": "9db7c8fa22e562625bb8ed84d31ec62a3cc38516fc41fc589294db609a534d4a"
+    },
+    "accounting_header_fanout_20261016/analysis.json": {
+      "source_path": "compiler/my-try/docs/planning/accounting_header_fanout_20261016/analysis.json",
+      "source_sha256": "6756d373a45e8911604a6bbaf1b02bce7f81dd4cf493cdad8d1fb935a44deb69",
+      "archive_sha256": "6756d373a45e8911604a6bbaf1b02bce7f81dd4cf493cdad8d1fb935a44deb69"
+    },
+    "accounting_header_fanout_20261016/link-proof.json": {
+      "source_path": "compiler/my-try/docs/planning/accounting_header_fanout_20261016/link-proof.json",
+      "source_sha256": "6c2687b9b1194d499222637d153dd962ce5b7604cc98bd6ea5862bcfbcaf3fd2",
+      "archive_sha256": "6c2687b9b1194d499222637d153dd962ce5b7604cc98bd6ea5862bcfbcaf3fd2"
+    },
+    "accounting_header_fanout_20261016/link_probe.py": {
+      "source_path": "compiler/my-try/docs/planning/accounting_header_fanout_20261016/link_probe.py",
+      "source_sha256": "af05cfb2e6f838d3c06927357b295ba4828cb388db159588616595d984e40343",
+      "archive_sha256": "af05cfb2e6f838d3c06927357b295ba4828cb388db159588616595d984e40343"
+    },
+    "accounting_header_fanout_20261016/probe.py": {
+      "source_path": "compiler/my-try/docs/planning/accounting_header_fanout_20261016/probe.py",
+      "source_sha256": "c24c4a9b8090d9fc9ec5b9bfd537ee05693e8e9f8b01d403b019f346ba395807",
+      "archive_sha256": "c24c4a9b8090d9fc9ec5b9bfd537ee05693e8e9f8b01d403b019f346ba395807"
+    },
+    "accounting_header_fanout_20261016/summarize.py": {
+      "source_path": "compiler/my-try/docs/planning/accounting_header_fanout_20261016/summarize.py",
+      "source_sha256": "76299c77c5157642b15e0ee10a3e12f2210697d0aa6f3b0d81017b7375e514da",
+      "archive_sha256": "76299c77c5157642b15e0ee10a3e12f2210697d0aa6f3b0d81017b7375e514da"
+    },
+    "native_edit_matrix_20261016.md": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016.md",
+      "source_sha256": "ddc65a392b44fbe6454e05f3b0a6ef9436a8afcc6c372f46e4392f9c0a7bc8ff",
+      "archive_sha256": "ddc65a392b44fbe6454e05f3b0a6ef9436a8afcc6c372f46e4392f9c0a7bc8ff"
+    },
+    "native_edit_matrix_20261016/README.md": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/README.md",
+      "source_sha256": "cbb0874d1cd9e352f7e23d01daf194d913f64ebf7c9d7c3ecf62a78e46fc935b",
+      "archive_sha256": "cbb0874d1cd9e352f7e23d01daf194d913f64ebf7c9d7c3ecf62a78e46fc935b"
+    },
+    "native_edit_matrix_20261016/benchmark_support.py": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/benchmark_support.py",
+      "source_sha256": "33051bb9169808151b7283b2aa52c8eb4cac08253f86225a71c331a79b0fbed5",
+      "archive_sha256": "33051bb9169808151b7283b2aa52c8eb4cac08253f86225a71c331a79b0fbed5"
+    },
+    "native_edit_matrix_20261016/class-layout.patch": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/class-layout.patch",
+      "source_sha256": "18fdd7a763de09f70ee2e1b8c74856af9360a8f258c20d4ab268140346a7a092",
+      "archive_sha256": "18fdd7a763de09f70ee2e1b8c74856af9360a8f258c20d4ab268140346a7a092"
+    },
+    "native_edit_matrix_20261016/common-declaration.patch": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/common-declaration.patch",
+      "source_sha256": "b81c91dadaa8075ad2856eb65b94280192ab33b18d3e511fce3099f58774bff7",
+      "archive_sha256": "b81c91dadaa8075ad2856eb65b94280192ab33b18d3e511fce3099f58774bff7"
+    },
+    "native_edit_matrix_20261016/edit_matrix.py": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/edit_matrix.py",
+      "source_sha256": "f851f0abb70d11725e7df036aad9e2448e19e36437cb451c99563c19c16c335c",
+      "archive_sha256": "f851f0abb70d11725e7df036aad9e2448e19e36437cb451c99563c19c16c335c"
+    },
+    "native_edit_matrix_20261016/experiment-identity.json": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/experiment-identity.json",
+      "source_sha256": "1c53ae277c7533a29c35a92ce7170e5a79b92f2fb7d708fc63bece9687f66fe7",
+      "archive_sha256": "1c53ae277c7533a29c35a92ce7170e5a79b92f2fb7d708fc63bece9687f66fe7"
+    },
+    "native_edit_matrix_20261016/finalize_evidence.py": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/finalize_evidence.py",
+      "source_sha256": "1d593649f139dbc23d24ad00b8c0bc66d4ab4be8911126c0f59910a518e337d0",
+      "archive_sha256": "1d593649f139dbc23d24ad00b8c0bc66d4ab4be8911126c0f59910a518e337d0"
+    },
+    "native_edit_matrix_20261016/multiple-bodies.patch": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/multiple-bodies.patch",
+      "source_sha256": "04c0238e81d1a0fba8ec3716dece6b278e76fd763e7a7d7a6d41f5df177ee7f6",
+      "archive_sha256": "04c0238e81d1a0fba8ec3716dece6b278e76fd763e7a7d7a6d41f5df177ee7f6"
+    },
+    "native_edit_matrix_20261016/pch-header.patch": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/pch-header.patch",
+      "source_sha256": "0cb116657e58349a18f1e4bf01af051baa272c5ed0cc30f29cf607b1c4025f5a",
+      "archive_sha256": "0cb116657e58349a18f1e4bf01af051baa272c5ed0cc30f29cf607b1c4025f5a"
+    },
+    "native_edit_matrix_20261016/provenance.json": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/provenance.json",
+      "source_sha256": "ce872e5ff9eabf10445f09e7ec833df2c1f8bbd9e201b60929617c3bc9e25e0c",
+      "archive_sha256": "ce872e5ff9eabf10445f09e7ec833df2c1f8bbd9e201b60929617c3bc9e25e0c"
+    },
+    "native_edit_matrix_20261016/provider-implementation.patch": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/provider-implementation.patch",
+      "source_sha256": "fc7ce004cea84d271d7caaf34b1c8b988ef1c2574b844dbb9ba19431cc0ef9a9",
+      "archive_sha256": "fc7ce004cea84d271d7caaf34b1c8b988ef1c2574b844dbb9ba19431cc0ef9a9"
+    },
+    "native_edit_matrix_20261016/signature-callers.patch": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/signature-callers.patch",
+      "source_sha256": "08c803450dbcde748cba73ff174d5b92d40abaf6fc3b8b6bc311e8ba39cd8f4c",
+      "archive_sha256": "08c803450dbcde748cba73ff174d5b92d40abaf6fc3b8b6bc311e8ba39cd8f4c"
+    },
+    "native_edit_matrix_20261016/summary.json": {
+      "source_path": "compiler/my-try/docs/planning/native_edit_matrix_20261016/summary.json",
+      "source_sha256": "faeffb96e0f2fee581905fe8b9cde99805153218c62cc6cf81388c582bece73f",
+      "archive_sha256": "faeffb96e0f2fee581905fe8b9cde99805153218c62cc6cf81388c582bece73f"
+    },
+    "shared_handle_completeness_20261016.md": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016.md",
+      "source_sha256": "13beadfd535915fbe525056ad35e52758490ed674aef44c5618ef84f474bbebb",
+      "archive_sha256": "13beadfd535915fbe525056ad35e52758490ed674aef44c5618ef84f474bbebb"
+    },
+    "shared_handle_completeness_20261016/README.md": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/README.md",
+      "source_sha256": "2def618fb0d1f8cb3541893d1c7674847d503348c179aba97854c55a89570aea",
+      "archive_sha256": "2def618fb0d1f8cb3541893d1c7674847d503348c179aba97854c55a89570aea"
+    },
+    "shared_handle_completeness_20261016/benchmark_support.py": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/benchmark_support.py",
+      "source_sha256": "33051bb9169808151b7283b2aa52c8eb4cac08253f86225a71c331a79b0fbed5",
+      "archive_sha256": "33051bb9169808151b7283b2aa52c8eb4cac08253f86225a71c331a79b0fbed5"
+    },
+    "shared_handle_completeness_20261016/capture_identity.py": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/capture_identity.py",
+      "source_sha256": "803bfd397dc26386052fec9bdf09e5c6a72108d877a84f80753cdf20899f99b0",
+      "archive_sha256": "803bfd397dc26386052fec9bdf09e5c6a72108d877a84f80753cdf20899f99b0"
+    },
+    "shared_handle_completeness_20261016/comparison.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/comparison.json",
+      "source_sha256": "a892422d8a5041ebf24804be149dbc54c1e9432c8677447d52e74ee384d76d97",
+      "archive_sha256": "a892422d8a5041ebf24804be149dbc54c1e9432c8677447d52e74ee384d76d97"
+    },
+    "shared_handle_completeness_20261016/driver.php": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/driver.php",
+      "source_sha256": "3775447406fbe229328068f51130c602958c3356a05450a22e93c6e7e20507bc",
+      "archive_sha256": "3775447406fbe229328068f51130c602958c3356a05450a22e93c6e7e20507bc"
+    },
+    "shared_handle_completeness_20261016/edit_matrix.py": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/edit_matrix.py",
+      "source_sha256": "25409e0128f58c9e9609039f4a7d6eb6da929f9147bc516990c89b3bb17efa48",
+      "archive_sha256": "25409e0128f58c9e9609039f4a7d6eb6da929f9147bc516990c89b3bb17efa48"
+    },
+    "shared_handle_completeness_20261016/emission-shape-proof.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/emission-shape-proof.json",
+      "source_sha256": "7b292209c66687607f679cb39007405c67b98b8bfdb1fd207bf904fd6a1fd60c",
+      "archive_sha256": "7b292209c66687607f679cb39007405c67b98b8bfdb1fd207bf904fd6a1fd60c"
+    },
+    "shared_handle_completeness_20261016/expected-shared-layout-units.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/expected-shared-layout-units.json",
+      "source_sha256": "58fa116d9c63aea62c6beefc52f10da9e23a192b765daf6551d27a2866f69061",
+      "archive_sha256": "58fa116d9c63aea62c6beefc52f10da9e23a192b765daf6551d27a2866f69061"
+    },
+    "shared_handle_completeness_20261016/experiment-identity.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/experiment-identity.json",
+      "source_sha256": "f1f9ee3cbd7c829bc00334877cd2d9b212b881ae7a5dd5c1726a6355d54435d2",
+      "archive_sha256": "f1f9ee3cbd7c829bc00334877cd2d9b212b881ae7a5dd5c1726a6355d54435d2"
+    },
+    "shared_handle_completeness_20261016/finalize_evidence.py": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/finalize_evidence.py",
+      "source_sha256": "93bbc41bfd63e4b5ef94aac54ebacc52225992b8f09e697e59ddcfd8a55f29d4",
+      "archive_sha256": "93bbc41bfd63e4b5ef94aac54ebacc52225992b8f09e697e59ddcfd8a55f29d4"
+    },
+    "shared_handle_completeness_20261016/focused-proof/commands.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/focused-proof/commands.json",
+      "source_sha256": "c83577c097ce3f074c4104c68ce0010a24061e58f8311e4427ca6627fff6da07",
+      "archive_sha256": "c83577c097ce3f074c4104c68ce0010a24061e58f8311e4427ca6627fff6da07"
+    },
+    "shared_handle_completeness_20261016/focused-proof/regressions.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/focused-proof/regressions.json",
+      "source_sha256": "043b54057652f7f3a81ca92325366e15d072c8c74123ff95ae7a46de51c36895",
+      "archive_sha256": "043b54057652f7f3a81ca92325366e15d072c8c74123ff95ae7a46de51c36895"
+    },
+    "shared_handle_completeness_20261016/focused-proof/summary.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/focused-proof/summary.json",
+      "source_sha256": "6d14038e77cb801f31f13c559d56e9dd009450e5ce0834af96a6d83f0aaaab86",
+      "archive_sha256": "6d14038e77cb801f31f13c559d56e9dd009450e5ce0834af96a6d83f0aaaab86"
+    },
+    "shared_handle_completeness_20261016/implementation.patch": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/implementation.patch",
+      "source_sha256": "b7fc33cd1ebb9d00f90bdfa9343d38094d4ca901394d9eb9bd509072930427ab",
+      "archive_sha256": "b7fc33cd1ebb9d00f90bdfa9343d38094d4ca901394d9eb9bd509072930427ab"
+    },
+    "shared_handle_completeness_20261016/mold-provenance.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/mold-provenance.json",
+      "source_sha256": "20f3ffcfd7b81fdebd04a6bde566f6b0e9eb106830d932a6dc3ab4ba1e847207",
+      "archive_sha256": "20f3ffcfd7b81fdebd04a6bde566f6b0e9eb106830d932a6dc3ab4ba1e847207"
+    },
+    "shared_handle_completeness_20261016/native-build-commands.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/native-build-commands.json",
+      "source_sha256": "f306184903589ea78c95a612c63d9b2843e481957a8b34522207cdf3162b4932",
+      "archive_sha256": "f306184903589ea78c95a612c63d9b2843e481957a8b34522207cdf3162b4932"
+    },
+    "shared_handle_completeness_20261016/native-build-config.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/native-build-config.json",
+      "source_sha256": "9ff9df01e29db614f6ce2e157a21e9e40f7dd748ca64ed544b0844f95c9ba18e",
+      "archive_sha256": "9ff9df01e29db614f6ce2e157a21e9e40f7dd748ca64ed544b0844f95c9ba18e"
+    },
+    "shared_handle_completeness_20261016/native-build-resource.txt": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/native-build-resource.txt",
+      "source_sha256": "f135ea46c568030c37411c44594841c7f0cd29abb05db2d51bcaadf54a483d57",
+      "archive_sha256": "f135ea46c568030c37411c44594841c7f0cd29abb05db2d51bcaadf54a483d57"
+    },
+    "shared_handle_completeness_20261016/native-source-hashes.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/native-source-hashes.json",
+      "source_sha256": "a6014de06e0aa9e5f43d9549b51abc9dbff208f41c73a69f9473626be1ab99db",
+      "archive_sha256": "a6014de06e0aa9e5f43d9549b51abc9dbff208f41c73a69f9473626be1ab99db"
+    },
+    "shared_handle_completeness_20261016/rebuild_compiler.py": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/rebuild_compiler.py",
+      "source_sha256": "880c9fc2fdf8d0c3d5f01afb7089155ed8efae25d57d0f624ad2cd7ae160dc5c",
+      "archive_sha256": "880c9fc2fdf8d0c3d5f01afb7089155ed8efae25d57d0f624ad2cd7ae160dc5c"
+    },
+    "shared_handle_completeness_20261016/summarize_results.py": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/summarize_results.py",
+      "source_sha256": "a13f8c43fc658415b5468c55094a91b52d009820fb3b19a4b413e5fa6573b6d4",
+      "archive_sha256": "a13f8c43fc658415b5468c55094a91b52d009820fb3b19a4b413e5fa6573b6d4"
+    },
+    "shared_handle_completeness_20261016/summary.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/summary.json",
+      "source_sha256": "29596ca2f698360b2cf23af52625790ff84a9e4d522cb5e8213cbfea91d1798e",
+      "archive_sha256": "29596ca2f698360b2cf23af52625790ff84a9e4d522cb5e8213cbfea91d1798e"
+    },
+    "shared_handle_completeness_20261016/verification.json": {
+      "source_path": "compiler/my-try/docs/planning/shared_handle_completeness_20261016/verification.json",
+      "source_sha256": "de053406b4baaca338db85f81322a530557af0d91f2e35d3976bf0531b52cfb5",
+      "archive_sha256": "de053406b4baaca338db85f81322a530557af0d91f2e35d3976bf0531b52cfb5"
+    },
+    "native_linker_configuration_20261016.md": {
+      "source_path": "compiler/my-try/docs/planning/native_linker_configuration_20261016.md",
+      "source_sha256": "edd65b63968a204173c8b2b179ec4b8f324fb95ac3fa61f9543fd665e51a7ac7",
+      "archive_sha256": "7a0eea4c23d00f5d7a8dcec2ecf6f0143fe22aca0db6130973212be75539a047"
+    },
+    "clang_units_and_mold.md": {
+      "source_path": "compiler/my-try/docs/planning/clang_units_and_mold.md",
+      "source_sha256": "8852a42a9482bfc6c27fec8250b67175e2f78fb4b046dab96d5a7ef93c459189",
+      "archive_sha256": "80e432584f2273d1b193469489e42e36fe40356ec36865cac3607a3286ee981f"
+    }
+  }
+}

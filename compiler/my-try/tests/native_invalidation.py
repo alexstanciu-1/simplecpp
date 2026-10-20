@@ -29,7 +29,7 @@ def main():
     sources = {
         'main.phs': '$box Box; $box->value = 7; $alias Box =& forward($box); return read($alias);',
         'type.phs': 'struct Box { int $value; }',
-        'read.phs': 'function read(const Box &$box, int $offset = 0): int { $value int = $box->value; return $value + $offset; }',
+        'read.phs': 'function read(const Box &$box, int $offset = 0): int { $value int = $box->value; $items vector<int> = [0]; foreach ($items as $offset => $item) {} return $value + $offset; }',
         'forward.phs': 'function &forward(Box &$box): Box { return identity($box); }',
         'identity.phs': 'function &identity(Box &$box): Box { return $box; }',
         'unrelated.phs': 'function unrelated(): int { return 21; }',
@@ -54,6 +54,10 @@ def main():
                     timeout=300, cli_reason='Native process timing and cache acceptance'))
                 native_seconds = time.monotonic() - start
                 actions = [json.loads(line) for line in log.read_text().splitlines()[previous_lines:]]
+                for row in actions:
+                    if row['phase'] in ('dependency_scan', 'pch_validation', 'pch_creation', 'object_compile'):
+                        if '-Wshadow' not in row['arguments']:
+                            raise RuntimeError(f'{name}: native compile path omitted -Wshadow')
                 compiled = [next(arg for arg in row['arguments'] if arg.endswith('.cpp'))
                             for row in actions if row['phase'] == 'object_compile']
                 actual = {Path(path).name for path in compiled}
@@ -74,6 +78,8 @@ def main():
 
             all_units = ['runtime.cpp', 'document.cpp', 'datetime.cpp', 'entry.cpp', *[unit(n) for n in ['read.phs', 'forward.phs', 'identity.phs', 'unrelated.phs']]]
             build('cold', all_units, 7, pch=1)
+            if '-Wshadow' not in (output / 'logs/cold-build.stderr').read_text():
+                raise RuntimeError('Successful native build lost legal-shadowing diagnostics')
             before = {p: (p.read_bytes(), p.stat().st_ino, p.stat().st_mtime_ns)
                       for p in published.rglob('*') if p.is_file() and not p.name.startswith('.scpp-')}
             build('warm', [], 7, linked=0)

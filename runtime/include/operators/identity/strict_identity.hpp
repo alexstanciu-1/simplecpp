@@ -6,6 +6,19 @@
 
 namespace scpp {
 
+namespace detail {
+
+// Identity normalizes the left carrier before the right carrier. This shared
+// classification keeps distinct wrapper families from competing for dispatch.
+template <typename T>
+inline constexpr bool is_identity_carrier_v =
+	is_specialization_of_v<std::remove_cvref_t<T>, nullable>
+	|| is_specialization_of_v<std::remove_cvref_t<T>, result>
+	|| is_specialization_of_v<std::remove_cvref_t<T>, result_or_false>
+	|| is_specialization_of_v<std::remove_cvref_t<T>, result_or_bool>;
+
+} // namespace detail
+
 // Implements PHP/Prism++ strict identity for visible null sentinels.
 // How: runtime-only null sentinels all normalize to the language-level null value before strict comparison.
 template <typename Left, typename Right>
@@ -346,7 +359,7 @@ inline bool_t identical(const nullable<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
-requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, nullable>)
+requires (!detail::is_identity_carrier_v<Left>)
 inline bool_t identical(const Left &left, const nullable<T> &right) {
 	if (!right.has_value().native_value()) {
 		return identical(left, null_t{});
@@ -389,7 +402,7 @@ inline bool_t identical(const result_or_false<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
-requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result_or_false>)
+requires (!detail::is_identity_carrier_v<Left>)
 inline bool_t identical(const Left &left, const result_or_false<T> &right) {
 	if (!right.has_value().native_value()) {
 		return identical(left, bool_t(false));
@@ -418,7 +431,7 @@ inline bool_t identical(const result_or_bool<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
-requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result_or_bool>)
+requires (!detail::is_identity_carrier_v<Left>)
 inline bool_t identical(const Left &left, const result_or_bool<T> &right) {
 	if (!right.has_value().native_value()) {
 		return identical(left, bool_t(right.is_true().native_value()));
@@ -471,7 +484,7 @@ inline bool_t identical(const result<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
-requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result>)
+requires (!detail::is_identity_carrier_v<Left>)
 inline bool_t identical(const Left &left, const result<T> &right) {
 	if constexpr (std::is_same_v<std::remove_cvref_t<Left>, error_sentinel_t>) {
 		return right.has_error().native_value() ? bool_t(true) : bool_t(false);

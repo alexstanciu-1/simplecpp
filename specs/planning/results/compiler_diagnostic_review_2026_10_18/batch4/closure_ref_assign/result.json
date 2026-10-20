@@ -1,0 +1,7 @@
+{
+  "stage": "emitted",
+  "clang": "failed",
+  "errors": [
+    "/tmp/mytry-diagnostic-review/batch4/closure_ref_assign/cpp/entry.cpp:12:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch4/closure_ref_assign/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted\n   12 |         local_g = local_f;\n      |                 ^\n/tmp/mytry-diagnostic-review/batch4/closure_ref_assign/cpp/entry.cpp:8:17: note: lambda expression begins here\n    8 |         auto local_f = [&local_n]() mutable -> scpp::int_t<> {\n      |                        ^\n1 error generated.\n"
+  ]
+}

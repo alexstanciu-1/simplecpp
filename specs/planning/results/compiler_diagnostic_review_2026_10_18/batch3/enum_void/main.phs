@@ -1,0 +1,1 @@
+enum E : void { case A = 0; } return 0;

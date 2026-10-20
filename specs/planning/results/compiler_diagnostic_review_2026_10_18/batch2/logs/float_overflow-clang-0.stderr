@@ -1,0 +1,4 @@
+/tmp/mytry-diagnostic-review/batch2/float_overflow/cpp/entry.cpp:8:44: warning: magnitude of floating-point constant too large for type 'double'; maximum is 1.7976931348623157E+308 [-Wliteral-range]
+    8 |         auto local_x = static_cast<scpp::float_t>(1.0e9999);
+      |                                                   ^
+1 warning generated.

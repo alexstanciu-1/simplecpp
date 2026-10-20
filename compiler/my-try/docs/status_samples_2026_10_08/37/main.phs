@@ -1,0 +1,5 @@
+function bump(int &$value): void { $value++; }
+$value int = 1;
+$alias =& $value;
+bump($alias);
+return $value;

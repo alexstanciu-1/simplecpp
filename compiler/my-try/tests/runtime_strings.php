@@ -16,7 +16,7 @@ function strings_compile(string $source): void
 	$file = new file(); $file->path = 'main.phs'; $file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 }
 
 $cases = [
@@ -107,6 +107,8 @@ PHS,
 	'predicates' => 'if (!str_contains("abc", "b") || !str_starts_with("abc", "ab") || !str_ends_with("abc", "bc")) { return 1; } if (str_contains("abc", "B") || str_starts_with("abc", "bc") || str_ends_with("abc", "ab")) { return 2; } if (str_starts_with("a", "abc") || str_ends_with("a", "abc") || str_contains("", "a")) { return 3; } if (!str_contains("é中😀", "中") || !str_starts_with("é中😀", "é") || !str_ends_with("é中😀", "😀")) { return 4; } if (!str_contains("abc", "") || !str_starts_with("abc", "") || !str_ends_with("abc", "")) { return 5; } return 0;',
 	'order' => 'function first(int &$order, string &$text): string { $order = $order * 10 + 1; return $text; } function second(int &$order, string &$text): string { $order = $order * 10 + 2; $text = "changed"; return "b"; } $order = 0; $text = "abc"; $found = str_contains(first($order, $text), second($order, $text)); if (!$found || $order !== 12) { return 1; } echo $text; return 0;',
 	'purity' => '$text = "AbC"; $lower = strtolower($text); $upper = strtoupper($text); echo $text, "|", $lower, "|", $upper; return 0;',
+	'offset_replace' => 'echo substr_replace("abcdef", "X", 2), "|", substr_replace("abcdef", "X", 2, -99); return 0;',
+	'php_byte_search' => 'echo (strpos("éaéa", "a") ?? -1), "|", (strrpos("éaéa", "a") ?? -1); return 0;',
 	'shadow' => 'function strtolower(int $value): int { return $value; } return strtolower(0);',
 ];
 foreach ($cases as $name => $source) {
@@ -114,7 +116,7 @@ foreach ($cases as $name => $source) {
 	file_put_contents($argv[1] . '/' . $name . '.cpp', CPP_Probe::text(Model::$cpp_files));
 }
 strings_compile('$value dynamic = {a: 1}; $text = ucfirst($value); return 91;');
-$cpp = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
+$cpp = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint observed_entry(int argc = 0, char** argv = nullptr)", CPP_Probe::text(Model::$cpp_files));
 $cpp = '#include <stdexcept>' . "\n" . $cpp
 	. "\nint main() { try { observed_entry(); } catch (const std::runtime_error&) { return 0; } return 92; }\n";
 file_put_contents($argv[1] . '/boxed_failure.cpp', $cpp);
@@ -122,12 +124,11 @@ foreach (['pad_empty' => 'str_pad("abc", 1, "");', 'pad_mode' => 'str_pad("abc",
 	'split_empty' => 'explode("", "abc");', 'byte_search_negative' => 'string_byte_find("abc", "a", -1);',
 	'byte_search_outside' => 'string_byte_find("abc", "a", 4);'] as $name => $source) {
 	strings_compile($source . ' return 91;');
-	$cpp = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
+	$cpp = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint observed_entry(int argc = 0, char** argv = nullptr)", CPP_Probe::text(Model::$cpp_files));
 	$cpp .= "\nint main() { try { observed_entry(); } catch (const scpp::ValueError&) { return 0; } return 92; }\n";
 	file_put_contents($argv[1] . '/' . $name . '.cpp', $cpp);
 }
 foreach (['strtolower();', 'strtoupper("x", "y");', 'lcfirst(vector<int>::[1]);',
-	'strpos("abc", "a");', 'strrpos("abc", "a");', 'substr_replace("abc", "x", 1);',
 	'text_builder_append_byte_span();',
 	'explode(",");', 'explode(",", "abc", "2");', 'implode(vector<string>::[]);',
 	'implode(",", vector<int>::[1]);', 'implode(",", hash<int>::["a" => 1]);',

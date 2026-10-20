@@ -1,0 +1,4 @@
+Native compilation failed: /tmp/mytry-diagnostic-review/native-review/include-results/has_include_pch/published/entry.cpp:2:15: error: static assertion failed: newly selected invalid code
+    2 | static_assert(false, "newly selected invalid code");
+      |               ^~~~~
+1 error generated.

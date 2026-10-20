@@ -1,0 +1,71 @@
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+class Lifetime;
+
+class Lifetime : public virtual ::scpp::shared_self {
+public:
+	static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }
+	static bool_t __scpp_static_accepts(const void* __scpp_token);
+	static int_t<> destroyed;
+	~Lifetime();
+};
+
+void scope();
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+int_t<> Lifetime::destroyed = static_cast<int_t<> >(0);
+
+bool_t Lifetime::__scpp_static_accepts(const void* __scpp_token) {
+	if (__scpp_token == Lifetime::__scpp_static_token()) {
+		return static_cast<bool_t>(true);
+	}
+	return static_cast<bool_t>(false);
+}
+
+Lifetime::~Lifetime() {
+	SCPP_CALL_DEPTH_GUARD("Lifetime::__destruct", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/57/main.phs", 3);
+	(Lifetime::destroyed++);
+}
+
+void scope() {
+	SCPP_CALL_DEPTH_GUARD("scope", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/57/main.phs", 5);
+	auto object = create<Lifetime>();
+}
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/57/main.phs", 0);
+	scope();
+	return Lifetime::destroyed;
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+

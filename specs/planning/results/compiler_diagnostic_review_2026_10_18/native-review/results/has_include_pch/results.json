@@ -1,0 +1,18 @@
+{
+  "cold": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/cache/artifacts/3449e9da8b48893443756fa4706442c9a7cb30384dac77e01d62b65786a81057.bin",
+    "compiled": 1,
+    "reused": 0,
+    "pch_built": 1,
+    "linked": 1,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/has_include_pch\\/cache\\/artifacts\\/3449e9da8b48893443756fa4706442c9a7cb30384dac77e01d62b65786a81057.bin\",\"sha256\":\"e9cf4784146ef165d21039785fc4cc7e363bee9e607e08e6f82adc43ea09e43f\"}\n"
+  },
+  "warm": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/cache/artifacts/3449e9da8b48893443756fa4706442c9a7cb30384dac77e01d62b65786a81057.bin",
+    "compiled": 0,
+    "reused": 1,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/has_include_pch\\/cache\\/artifacts\\/3449e9da8b48893443756fa4706442c9a7cb30384dac77e01d62b65786a81057.bin\",\"sha256\":\"e9cf4784146ef165d21039785fc4cc7e363bee9e607e08e6f82adc43ea09e43f\"}\n"
+  }
+}

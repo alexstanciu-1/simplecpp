@@ -91,7 +91,7 @@ data_check($entry_children === [$node->entries[0]->key, $node->entries[0]->value
 foreach (['["a": 1]', '{"a" => 1}', '{a => 1}', '{1}', '{$key: 1}', '{1: 2}',
 	'{"$key": 1}', '{a}', '[,]', '[1,,]', '{a: 1,,}', '[1,}', '{a: 1,]',
 	'["a" =>]', '{a:}', '[1 2]', '{a: 1 b: 2}', '[...$items]', '{...$items}',
-	'[]::{}', 'vector<>::[]', '{a: function() {}}'] as $source)
+	'[]::{}', 'vector<>::[]'] as $source)
 {
 	$failed = false;
 	try {
@@ -159,7 +159,7 @@ foreach (['[]', '{key: 1}', 'dynamic::{key: 1}'] as $source)
 	Model::$modules->add($module->name, $module);
 	$record = Source_Registry::add($module, $syntax->source_file());
 	Source_Publication::publish_parsed($record, $syntax);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$failed = false;
 	try {
 		$compiler->prepare();

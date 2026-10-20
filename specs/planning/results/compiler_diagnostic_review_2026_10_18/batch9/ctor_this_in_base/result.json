@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "$this requires an instance body\n"
+}

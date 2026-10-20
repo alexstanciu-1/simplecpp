@@ -1,7 +1,7 @@
 <?php
 namespace scpp\compiler;
 
-/** Exact concrete/pattern selection shares one argument traversal and admission path. */
+/** Exact selection precedes bounded required-payload fallback; both share ordinary argument admission. */
 final class Runtime_Call_Preparation
 {
 	public static function prepare(array $targets /** vector<callable_definition_i> */,
@@ -37,7 +37,11 @@ final class Runtime_Call_Preparation
 			$inference = $match;
 		}
 		if ($selected === null) {
-			throw new \RuntimeException('S2S runtime call requires one exact signature; use explicit argument types');
+			$selected = self::select_required_payload($targets, $arguments);
+			$inference = new runtime_type_bindings();
+		}
+		if ($selected === null) {
+			throw new \RuntimeException('S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types');
 		}
 		if ($inference === null) { throw new \LogicException('Selected runtime call lost inference'); }
 		$signature /** callable_signature */;
@@ -50,6 +54,55 @@ final class Runtime_Call_Preparation
 		$facts = Call_Preparation::admit($selected, $signature, $arguments, $context, true);
 		$facts->runtime_owner = $runtime_owner;
 		return $facts;
+	}
+
+	/** A zero-exact-match fallback never ranks conversions or instantiates generic recipes. */
+	private static function select_required_payload(array $targets /** vector<callable_definition_i> */,
+		Storage $arguments /** Storage<expression_node> */): ?registered_function
+	{
+		$selected /** nullable<registered_function> */ = null;
+		foreach ($targets as $candidate)
+		{
+			if (!($candidate instanceof registered_function)) {
+				continue;
+			}
+			$concrete = object_cast($candidate, registered_function::class);
+			if (!self::matches_required_arguments($concrete->signature(), $arguments)) {
+				continue;
+			}
+			if ($selected !== null) {
+				throw new \RuntimeException('S2S runtime call has ambiguous checked-payload signatures; use explicit argument types');
+			}
+			$selected = $concrete;
+		}
+		return $selected;
+	}
+
+	/** Fixed concrete value inputs may extract once; references and observations remain exact. */
+	private static function matches_required_arguments(callable_signature $signature,
+		Storage $arguments /** Storage<expression_node> */): bool
+	{
+		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
+		if (q_count($parameters) !== q_count($arguments)) {
+			return false;
+		}
+		$extracts = false;
+		foreach ($parameters as $index => $parameter)
+		{
+			if (($parameter->default_value !== null) || ($parameter->element_type !== null)) {
+				return false;
+			}
+			$actual = $arguments[$index]->require_preparation()->type;
+			if ($parameter->type->matches($actual)) {
+				continue;
+			}
+			if (($parameter->mode !== passing_mode::value)
+				|| !Conversion_Preparation::matches_required_payload($actual, $parameter->type)) {
+				return false;
+			}
+			$extracts = true;
+		}
+		return $extracts;
 	}
 
 	/** Determine expression consumption before visiting any argument. */
@@ -205,6 +258,7 @@ final class Runtime_Call_Preparation
 			$type = Runtime_Pattern_Preparation::substitute($pattern->type, $inference, $context);
 			$parameter = Declaration_Preparation::parameter_contract($type, $pattern->mode, $pattern->access,
 				$pattern->variadic, $context);
+			$parameter->requires_copy = $pattern->requires_copy;
 			if ($pattern->default_value !== null) {
 				$default_value /** prepared_literal_parameter_default */ = $pattern->default_value;
 				if (!$default_value->result_type()->matches($parameter->type)) {

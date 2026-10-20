@@ -17,7 +17,7 @@ file_put_contents($path, 'function value(): int { return 1; } return value();');
 file_put_contents($other, 'function neighbor(): int { return 8; }');
 try {
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->sync([]);
 	$compiler->prepare();
@@ -47,7 +47,7 @@ try {
 	$compiler->sync([$path]);
 	handoff_check($function->body->syntax_changed && $collection->root->single_body()->body->syntax_changed, 'Repeated parsing erased unconsumed body changes');
 	$failed = false;
-	try { $stale = (new CPP_Generator())->generate($prepared); }
+	try { $stale = (new CPP_Generator(null, new cpp_lowering_options(false)))->generate($prepared); }
 	catch (\RuntimeException $expected) { $failed = true; }
 	handoff_check($failed, 'Saved preparation permitted emission after unconsumed edits');
 	$compiler->prepare();

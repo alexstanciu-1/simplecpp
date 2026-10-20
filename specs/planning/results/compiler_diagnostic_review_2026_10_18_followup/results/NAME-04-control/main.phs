@@ -1,0 +1,4 @@
+// Cross-file diagnostic must identify the use, not generated C++.
+$c = new Lib\C();
+
+return $c->f();

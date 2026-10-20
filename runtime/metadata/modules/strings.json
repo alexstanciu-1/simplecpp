@@ -16,6 +16,12 @@
     {"name":"STR_PAD_BOTH","type":"int","value":2}
   ],
   "functions": [
+    {"id":"strings.substr_replace.3","name":"substr_replace","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"strings.substr_replace.4","name":"substr_replace","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"},{"name":"length","type":"int","passing":"value"}],"returns":"string"},
+    {"id":"strings.strpos.2","name":"strpos","parameters":[{"name":"haystack","type":"string","passing":"value"},{"name":"needle","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["int"]}},
+    {"id":"strings.strpos.3","name":"strpos","parameters":[{"name":"haystack","type":"string","passing":"value"},{"name":"needle","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":["int"]}},
+    {"id":"strings.strrpos.2","name":"strrpos","parameters":[{"name":"haystack","type":"string","passing":"value"},{"name":"needle","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["int"]}},
+    {"id":"strings.strrpos.3","name":"strrpos","parameters":[{"name":"haystack","type":"string","passing":"value"},{"name":"needle","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":["int"]}},
     {"id":"strings.string_parts_builder_create","name":"string_parts_builder_create","parameters":[],"returns":"string_parts_builder"},
     {"id":"strings.string_parts_builder_reserve","name":"string_parts_builder_reserve","parameters":[{"name":"builder","type":"string_parts_builder","passing":"reference"},{"name":"capacity","type":"int","passing":"value"}],"returns":"void"},
     {"id":"strings.string_parts_builder_count","name":"string_parts_builder_count","parameters":[{"name":"builder","type":"string_parts_builder","passing":"observe"}],"returns":"int"},
@@ -83,6 +89,12 @@
     {"id": "strings.ends_with", "name": "str_ends_with", "parameters": [{"name": "haystack", "type": "string", "passing": "value"}, {"name": "needle", "type": "string", "passing": "value"}], "returns": "bool"}
   ],
   "cpp": [
+    {"id":"strings.substr_replace.3","symbol":"scpp::php::substr_replace","header":"lang/php/support/php_string.hpp"},
+    {"id":"strings.substr_replace.4","symbol":"scpp::php::substr_replace","header":"lang/php/support/php_string.hpp"},
+    {"id":"strings.strpos.2","symbol":"scpp::php::strpos_bytes","header":"lang/php/support/php_string.hpp"},
+    {"id":"strings.strpos.3","symbol":"scpp::php::strpos_bytes","header":"lang/php/support/php_string.hpp"},
+    {"id":"strings.strrpos.2","symbol":"scpp::php::strrpos_bytes","header":"lang/php/support/php_string.hpp"},
+    {"id":"strings.strrpos.3","symbol":"scpp::php::strrpos_bytes","header":"lang/php/support/php_string.hpp"},
     {"id":"strings.string_parts_builder_create","symbol":"scpp::str::string_parts_builder_create","header":"modules/strings/strings.hpp"},
     {"id":"strings.string_parts_builder_reserve","symbol":"scpp::str::string_parts_builder_reserve","header":"modules/strings/strings.hpp"},
     {"id":"strings.string_parts_builder_count","symbol":"scpp::str::string_parts_builder_count","header":"modules/strings/strings.hpp"},

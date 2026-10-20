@@ -1,0 +1,2307 @@
+{
+  "doc_status": "planning",
+  "status": "Focused per-family incremental audit complete: 34 verified, async blocked, provenance not a retained feature",
+  "source": "language_verification_coverage.json",
+  "families": [
+    {
+      "family": "LV01",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV01.002",
+        "LV01.003"
+      ],
+      "evidence": [
+        {
+          "check": "LV01.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/functions/logs/tokenizer.stdout",
+              "layer": "tokenization and incremental emission",
+              "assertions": [
+                "tokenizer.php: malformed numeric/identifier bytes, unterminated quote/comment rejection at byte 2; valid-to-invalid comment edit rejects; repaired output equals prior and fresh output."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV01.003",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/recovery-probes",
+              "source": "verification_lexical_position.php",
+              "layer": "tokenization diagnostic and incremental emission",
+              "assertions": [
+                "UTF8 comment plus CRLF before malformed variable reports main.phs: byte 21 (UTF8 byte count, not character count).",
+                "Repair restores identical emitted bytes; fresh compiler agrees.",
+                "No line/character-column guarantee invented; implementation uses byte diagnostics."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named defining edit directly proves all four axes; does not claim every edit form in this family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-53.json.gz",
+        "run": "verification/results/incremental-definitions",
+        "case": {
+          "id": "lexical",
+          "config": {
+            "consumer": "echo produce(); return 0;",
+            "initial": "function produce(): int { return 7; }",
+            "changed": "/* changed */\r\nfunction produce(): int { return 9; }",
+            "invalid": "/* unterminated",
+            "diagnostic": "unterminated",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "6311196fe9d4774f727ed16af6902734227176b69cd0916be0d85709779d5156",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid defining edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs execute with exact configured stdout."
+        ],
+        "fixture_history": "Ownership attempts corrected direct unique-return construction and redundant shared<Class> spelling before the intended consumer mismatch was tested. All attempts preserved; other five passing cases not rerun."
+      }
+    },
+    {
+      "family": "LV02",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV02.001",
+        "LV02.003"
+      ],
+      "evidence": [
+        {
+          "check": "LV02.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/declaration-replays/source_constants",
+              "layer": "exact preparation assertions and generated execution where noted",
+              "assertions": [
+                "source_constants.php checks exact prepared NUL bytes and signed float decimal, forward/imported/rooted constant resolution, retained identity on no-op, upstream 7->9 consumer change, invalid string-return edit and repair. Ten generated programs (initial and recovery exports) execute with exit 7. Shared s2s expectation adaptation is labelled; constants source cases unchanged."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV02.003",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/scope-composition",
+              "layer": "exact preparation assertions and generated execution where noted",
+              "assertions": [
+                "Same x spelling in outer and sibling blocks; nested closures capture the first inner x. Exact output 231. Same-scope duplicate edit produces already declared diagnostic, clears output, and repair equals fresh generation."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named defining edit directly proves all four axes; does not claim every edit form in this family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-53.json.gz",
+        "run": "verification/results/incremental-definitions",
+        "case": {
+          "id": "constant",
+          "config": {
+            "consumer": "echo VALUE; return 0;",
+            "initial": "const VALUE = 7;",
+            "changed": "const VALUE = 9;",
+            "invalid": "const OTHER = 9;",
+            "diagnostic": "VALUE",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "d634565fc0c3d666cabffea3381c9df3bcf217be97d80070ab0730406b3f3620",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid defining edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs execute with exact configured stdout."
+        ],
+        "fixture_history": "Ownership attempts corrected direct unique-return construction and redundant shared<Class> spelling before the intended consumer mismatch was tested. All attempts preserved; other five passing cases not rerun."
+      }
+    },
+    {
+      "family": "LV03",
+      "status": "verified-focused-edit",
+      "linked_checks": [],
+      "evidence": [],
+      "review": "All four required axes are directly asserted for the named provider-return-type change. This does not claim every possible edit in the family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "run": "verification/results/incremental-domains",
+        "case": "numeric",
+        "archive": "language_verification_evidence/logs-checkpoint-34.json.gz",
+        "config": {
+          "consumer": "$a = produce(); $b int8 = 1; $c = $a + $b; echo $c; return 0;",
+          "initial": "function produce(): int16 { return 7; }",
+          "changed": "function produce(): int64 { return 10; }",
+          "invalid": "function produce(): uint64 { return 10; }",
+          "diagnostic": "signedness",
+          "domains": {
+            "initial": "int16",
+            "changed": "int64",
+            "repaired": "int64"
+          },
+          "expected": {
+            "initial": "8",
+            "changed": "11",
+            "repaired": "11"
+          }
+        },
+        "assertions": [
+          "Consumer parsed identity remains unchanged after the valid provider edit.",
+          "Invalid provider edit and unchanged retry both reject and clear emitted artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compilation.",
+          "Initial, changed and repaired native programs execute with exact expected output.",
+          "Prepared binary result domain changes from int16 to int64."
+        ]
+      }
+    },
+    {
+      "family": "LV04",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV04.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV04.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/scalar",
+              "layer": "preparation, generated C++ compilation and execution",
+              "assertions": [
+                "bool equality/inequality complete truth table; float result domains and operator-only int promotion; float/int arithmetic and signed-zero unary behavior; order and snapshot checks."
+              ]
+            },
+            {
+              "run": "verification/results/scalar-error-codes",
+              "layer": "generated C++ execution, strengthened test observer",
+              "assertions": [
+                "Six existing generic exception observers now require runtime_error.code()==division_by_zero; 18 additional signed-zero/numerator cases across float/float, int/float and float/int."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "All four axes directly asserted for the named focused source edits; not exhaustive per-feature mutation coverage.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-50.json.gz",
+        "run": "verification/results/incremental-operators-selection-02",
+        "cases": [
+          {
+            "id": "scalar_float",
+            "config": {
+              "consumer": "$a = produce(); $b float = 2.0; $c = $a + $b; echo $c; return 0;",
+              "initial": "function produce(): int { return 7; }",
+              "changed": "function produce(): float { return 10.5; }",
+              "invalid": "function produce(): string { return \"bad\"; }",
+              "diagnostic": "requires",
+              "expected": {
+                "initial": "9",
+                "changed": "12.5",
+                "repaired": "12.5"
+              }
+            },
+            "config_sha256": "ab4087faf2e672a2fa3a1e99e8c2e353ccf78cbb40a067caa9550c973dd01f2a",
+            "passed": true
+          },
+          {
+            "id": "scalar_bool",
+            "config": {
+              "consumer": "$a = produce(); echo ($a == true ? \"same\" : \"different\"); return 0;",
+              "initial": "function produce(): bool { return true; }",
+              "changed": "function produce(): bool { return false; }",
+              "invalid": "function produce(): string { return \"bad\"; }",
+              "diagnostic": "requires",
+              "expected": {
+                "initial": "same",
+                "changed": "different",
+                "repaired": "different"
+              }
+            },
+            "config_sha256": "3a80bdabb398ad70692f9b787c62cda41ba263e3fab7ffbc2d78b9b6446977a0",
+            "passed": true
+          }
+        ],
+        "assertions": [
+          "Valid provider edit retains consumer parsed identity.",
+          "Invalid return-type edit and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Initial, changed and repaired generated native programs execute with exact configured output."
+        ],
+        "first_attempt": "verification/results/incremental-operators-selection: harness diagnostic substring assumptions failed; source and semantic expectations unchanged in corrected attempt."
+      }
+    },
+    {
+      "family": "LV05",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV05.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV05.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/s2s-oracle-adapted; verification/results/failed-store-grid; verification/results/boxed-boundary-oracle-03",
+              "layer": "Prepared conversion facts and exact native state/effect/error observations; adapted suites labelled",
+              "assertions": [
+                "mixed_boundaries fixtures assert exact successful int/bool/float/string extraction across declaration/argument/return/assignment and rejected scalar/null/table conversions with unchanged destination, one source effect and zero callee effects. dynamic_boundaries fixtures prove checked dynamic extraction, scalar copies and rejected absent/container inputs. mixed_dynamic_casts asserts scalar/null round trips preserve kinds and containers cannot cross, preserving prior destination identity/value. Corrected preparation suite validates shared conversion facts and family separation."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values-02",
+        "case": {
+          "id": "conversion",
+          "config": {
+            "consumer": "$a int = produce(); echo $a; return 0;",
+            "initial": "function produce(): int { return 7; }",
+            "changed": "function produce(): mixed { return 10; }",
+            "invalid": "function produce(): vector<int> { return [1]; }",
+            "diagnostic": "value boundary",
+            "expected": {
+              "initial": "7",
+              "changed": "10",
+              "repaired": "10"
+            }
+          },
+          "config_sha256": "b257d95b30b0fd2c471cd9c58384e90db9d809a285001565194a69ceaa7718ec",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV06",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV06.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV06.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/eager_binary",
+              "layer": "Exact generated native values, effects, lifetimes and distinct failure observers",
+              "assertions": [
+                "All four eager_binary native programs pass. Left snapshots survive property mutation and reference-return source replacement; nested precedence preserves effect trace 123. Arithmetic/power/spaceship/concat/shifts/xor use ordered operands; mixed postfix snapshot is 5. Native failure observer verifies absent nullable and table-to-int left conversions suppress RHS effects; division computation occurs only after both operands. Lazy &&/||/ternary/Elvis/coalesce skip effects. Preparation tests cover no-op stability and ordinary expression admission."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "All four axes directly asserted for the named focused source edits; not exhaustive per-feature mutation coverage.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-50.json.gz",
+        "run": "verification/results/incremental-operators-selection-02",
+        "cases": [
+          {
+            "id": "compound",
+            "config": {
+              "consumer": "$a int = 10; $a += produce(); echo $a; return 0;",
+              "initial": "function produce(): int { return 7; }",
+              "changed": "function produce(): int { return 3; }",
+              "invalid": "function produce(): string { return \"bad\"; }",
+              "diagnostic": "requires",
+              "expected": {
+                "initial": "17",
+                "changed": "13",
+                "repaired": "13"
+              }
+            },
+            "config_sha256": "b7b445268ea891f5fcfa1d1d32d5c8a21f1f91ccc3e0f34c84af09626f4ce332",
+            "passed": true
+          }
+        ],
+        "assertions": [
+          "Valid provider edit retains consumer parsed identity.",
+          "Invalid return-type edit and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Initial, changed and repaired generated native programs execute with exact configured output."
+        ],
+        "first_attempt": "verification/results/incremental-operators-selection: harness diagnostic substring assumptions failed; source and semantic expectations unchanged in corrected attempt."
+      }
+    },
+    {
+      "family": "LV07",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV07.001",
+        "LV07.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV07.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/unmasked-suites/nullable",
+              "layer": "labelled diagnostic-oracle adaptation and preparation assertions",
+              "assertions": [
+                "nullable.php checks canonical nullable type identity, branch-order-independent nullable joins, owned/nonaddressable results, right-associated coalescing and payload result type. Producer/fallback/branch type edits reject twice with no output; unrelated body version is preserved; repair matches fresh output."
+              ]
+            },
+            {
+              "run": "verification/results/s2s-oracle-adapted",
+              "layer": "labelled shared S2S harness adaptation; original source/value oracles",
+              "assertions": [
+                "Nullable coalesce fixtures distinguish absent from present zero/false/empty/string-zero values, preserve source value, evaluate each operand once and skip throwing RHS. Ternary and Elvis fixtures retain nullable carrier and laziness."
+              ]
+            },
+            {
+              "run": "verification/results/wave-01/records-nullable_records",
+              "layer": "22 original generated native programs",
+              "assertions": [
+                "Struct and value<Class> nullable joins preserve owned copies and wrapper type; empty/present coalesce returns independent payloads; lazy counters are exactly 1,12,13,24,24 across Elvis/coalesce/ternary selections."
+              ],
+              "archive": "language_verification_evidence/logs-checkpoint-27.json.gz"
+            }
+          ]
+        },
+        {
+          "check": "LV07.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-shared_joins",
+              "layer": "29 original generated programs plus preparation/edit assertions",
+              "assertions": [
+                "Ordinary classes and shared structs exercise seven selection arrangements, two lazy operators, three interface arrangements and empty joins. Invariant reference parameters assert inferred base/child types, writes through selected handles preserve child identity, and counters distinguish selected versus skipped fallback.",
+                "Sibling common-ancestor inference, unique/weak joins, bare-null fallback and inline mixed-record joins reject. Removing ancestry in another source invalidates ternary/Elvis/coalesce on changed and unchanged retries; repair, preparation reset and fresh compilation produce identical artifacts."
+              ],
+              "archive": "language_verification_evidence/logs-checkpoint-27.json.gz"
+            }
+          ]
+        }
+      ],
+      "review": "All four axes directly asserted for the named focused source edits; not exhaustive per-feature mutation coverage.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-50.json.gz",
+        "run": "verification/results/incremental-operators-selection-02",
+        "cases": [
+          {
+            "id": "nullable_selection",
+            "config": {
+              "consumer": "$a = produce(); echo ($a ?? 2); return 0;",
+              "initial": "function produce(): ?int { return null; }",
+              "changed": "function produce(): ?int { return 7; }",
+              "invalid": "function produce(): ?string { return \"bad\"; }",
+              "diagnostic": "same payload type",
+              "expected": {
+                "initial": "2",
+                "changed": "7",
+                "repaired": "7"
+              }
+            },
+            "config_sha256": "c9f06705732c52dbebffd3e6d7aad7cdbcdc95f8a925786970d6a48cdb78b58b",
+            "passed": true
+          }
+        ],
+        "assertions": [
+          "Valid provider edit retains consumer parsed identity.",
+          "Invalid return-type edit and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Initial, changed and repaired generated native programs execute with exact configured output."
+        ],
+        "first_attempt": "verification/results/incremental-operators-selection: harness diagnostic substring assumptions failed; source and semantic expectations unchanged in corrected attempt."
+      }
+    },
+    {
+      "family": "LV08",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV08.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV08.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/control_flow/logs/fallthrough.stdout; verification/results/wave-01/iteration/logs/iteration.stdout",
+              "layer": "preparation and generated execution",
+              "assertions": [
+                "fallthrough.php rejects absent/bare value returns, signature-only void->int edits and failed repair attempts with empty published output. control_flow.php rejects loops/switch arms that can fall through and invalid transfers. iteration.php rejects a function whose only return is inside a potentially empty foreach. Repair and independent-body assertions pass."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values",
+        "case": {
+          "id": "condition",
+          "config": {
+            "consumer": "if (produce()) { echo \"yes\"; } else { echo \"no\"; } return 0;",
+            "initial": "function produce(): int { return 0; }",
+            "changed": "function produce(): string { return \"yes\"; }",
+            "invalid": "function produce(): vector<int> { return [1]; }",
+            "diagnostic": "condition",
+            "expected": {
+              "initial": "no",
+              "changed": "yes",
+              "repaired": "yes"
+            }
+          },
+          "config_sha256": "b1bb7afca3371db7dde8f51886b1501217c8ca986aab78e2797ca2670e55dbbe",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV09",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV09.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV09.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-void_returns; verification/results/wave-01/records-finally",
+              "layer": "preparation and generated execution",
+              "assertions": [
+                "Fifteen generated void forwarding cases pass across functions, closures, arrows, class/struct instance/static calls and reference capture. Value/void misuse rejects; provider return-type edit invalidates and repairs to fresh-equivalent output. Finally void_forward and void_bare verify once-only effect/finalizer trace and skipped following statements; cleanup proofs remain in LV24."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values-02",
+        "case": {
+          "id": "call",
+          "config": {
+            "consumer": "echo consume(7); return 0;",
+            "initial": "function consume(int $v): int { return $v + 1; }",
+            "changed": "function consume(int $v): int { return $v + 2; }",
+            "invalid": "function consume(vector<int> $v): int { return 0; }",
+            "diagnostic": "value boundary",
+            "expected": {
+              "initial": "8",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "e650cd7765f19437496d8d37f71beba5355b3599cb5cbf9be5a2cde7ed48e2d8",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV10",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV10.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV10.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/unmasked-suites/results",
+              "layer": "preparation and generated/native execution as specified",
+              "assertions": [
+                "take.php rejects invalid outputs before emission and changes nullable<int> producer to nullable<float>: repeated preparation fails, output clears, independent body version is unchanged, repair equals fresh. result_take_* programs and runtime_wrappers_003_take_helper.cpp prove value preservation on failure, error reset on success, boolean sentinel output and once-only source-before-output evaluation."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values",
+        "case": {
+          "id": "result",
+          "config": {
+            "consumer": "$v int = 3; $r = produce(); $ok = take($v, $r); echo $v; return 0;",
+            "initial": "function produce(): result_or_false<int> { return null; }",
+            "changed": "function produce(): result_or_false<int> { return 7; }",
+            "invalid": "function produce(): result_or_false<string> { return \"bad\"; }",
+            "diagnostic": "take",
+            "expected": {
+              "initial": "3",
+              "changed": "7",
+              "repaired": "7"
+            }
+          },
+          "config_sha256": "c896ffb6f98337e848e0e50b3ba19f0f32f07ad8ca6e1093f37fceafbe88ceab",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV11",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV11.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV11.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/s2s-oracle-adapted; verification/results/boxed-boundary-oracle-03",
+              "layer": "Prepared conversion facts and exact native state/effect/error observations; adapted suites labelled",
+              "assertions": [
+                "Mixed nested values/call arguments remain independent under mutation; dynamic nested containers/arguments retain shared identity until rebinding. Explicit scalar/null family crossings succeed; container crossings fail without changing targets. Implicit family mixing rejects across assignment, construction, indexing, iteration, selection and operators. The boxed-boundary suite completes after two stale negative expectations are isolated; no physical COW implementation is inferred merely from independent value behavior."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values-03",
+        "case": {
+          "id": "boxed",
+          "config": {
+            "consumer": "$a dynamic = produce(); echo $a; return 0;",
+            "initial": "function produce(): dynamic { return 7; }",
+            "changed": "function produce(): dynamic { return \"changed\"; }",
+            "invalid": "function produce(): mixed { return 7; }",
+            "diagnostic": "mixed/dynamic family conversion",
+            "expected": {
+              "initial": "7",
+              "changed": "changed",
+              "repaired": "changed"
+            }
+          },
+          "config_sha256": "0ad2ca7494e782b71bf769856589833cc90fd80a942903bf0c7680fd5af752ad",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV12",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV12.004"
+      ],
+      "evidence": [
+        {
+          "check": "LV12.004",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/string-grid-probe-02; verification/results/s2s-oracle-adapted",
+              "layer": "prepared facts and generated native byte/diagnostic oracles",
+              "assertions": [
+                "All 20 original interp_* generated byte oracles pass (shared S2S harness adaptation labelled), covering scalar widths, float/bool, escapes, NUL, UTF-8, literal dollars, self assignment and snapshots. Interpolation preparation/recovery suite passes after removing one stale scalar-concatenation negative; all interpolation grammar/type negatives remain. New probes reject mixed/dynamic insertions and verify exact scalar/NUL conversion bytes."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values",
+        "case": {
+          "id": "interpolation",
+          "config": {
+            "consumer": "$a = produce(); echo \"v=$a\"; return 0;",
+            "initial": "function produce(): int { return 7; }",
+            "changed": "function produce(): string { return \"changed\"; }",
+            "invalid": "function produce(): vector<int> { return [1]; }",
+            "diagnostic": "interpolation",
+            "expected": {
+              "initial": "v=7",
+              "changed": "v=changed",
+              "repaired": "v=changed"
+            }
+          },
+          "config_sha256": "01d025c1161c64b04c7bba52113e3efe6f715625f1b82cd24261a7b5d0b7dbf4",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV13",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV13.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV13.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/unmasked-suites/data_initialization",
+              "layer": "preparation and generated/native execution as specified",
+              "assertions": [
+                "data_preparation.php checks concrete target identity, key/value conversion contexts, same-family nested construction, 28 valid sources and malformed/unsupported cases with both prepared and C++ outputs empty. Return-type edits refresh retained construction target and rejected edits clear stale facts. 48 generated construction programs pass."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values-02",
+        "case": {
+          "id": "vector",
+          "config": {
+            "consumer": "$a = produce(); echo $a[0]; return 0;",
+            "initial": "function produce(): vector<int> { return [7]; }",
+            "changed": "function produce(): vector<string> { return [\"changed\"]; }",
+            "invalid": "function produce(): bool { return true; }",
+            "diagnostic": "operator[]",
+            "expected": {
+              "initial": "7",
+              "changed": "changed",
+              "repaired": "changed"
+            }
+          },
+          "config_sha256": "ea4867b3eae8ae49e7712a40280fb0e808669e7cc8fda40ad79120cd9b3399d5",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV14",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV14.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV14.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/s2s-oracle-adapted; verification/results/wave-02/container_reads/logs/indexing.stdout",
+              "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+              "assertions": [
+                "Fourteen read fixtures (28 base/state executions) cover vector, string/int-key hash, nested and nullable elements, mixed/dynamic missing/null reads without creation, numeric key normalization, value snapshots/shared nested identity, receiver-before-key order and lazy RHS. Native observers assert typed missing/bounds and invalid-key/kind failures, preserved required-conversion destination and unchanged containers. indexing.php verifies non-addressable reads, exact preparation gates, compaction and edit recovery."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named focused edit proves all four required axes; wider feature-specific mutation combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-51.json.gz",
+        "run": "verification/results/incremental-values-02",
+        "case": {
+          "id": "hash",
+          "config": {
+            "consumer": "$a = produce(); echo $a[\"key\"]; return 0;",
+            "initial": "function produce(): hash<int> { return [\"key\" => 7]; }",
+            "changed": "function produce(): hash<string> { return [\"key\" => \"changed\"]; }",
+            "invalid": "function produce(): bool { return true; }",
+            "diagnostic": "operator[]",
+            "expected": {
+              "initial": "7",
+              "changed": "changed",
+              "repaired": "changed"
+            }
+          },
+          "config_sha256": "0ee64e8a8c2fd3b56975ee47548ceddfe6f16538e7457ae92e31eaaa671cf87a",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains unchanged consumer parsed identity.",
+          "Invalid provider signature/type and unchanged retry both reject and clear output.",
+          "Repair equals valid edited artifacts and fresh compiler output.",
+          "Three original-source native programs execute with exact initial/changed/repaired output."
+        ],
+        "fixture_history": "Initial probes used unsupported explicit boxed casts or inaccurate diagnostic substrings. Corrected fixtures use typed-return boxing and exact rejection fragments. All three attempts retained; successful cases were not rerun."
+      }
+    },
+    {
+      "family": "LV15",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV15.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV15.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-collection_probes; verification/results/wave-01/iteration/logs/value_probes.stdout; verification/results/wave-02/runtime_generics; verification/results/s2s-oracle-adapted",
+              "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+              "assertions": [
+                "28 collection-probe programs verify collection-only emptiness (empty string true, string zero false, nonempty null-containing table false), keyed failures and lazy evaluation; invalid scalar/wrapper operands reject or throw invalid_empty_operand. Nullable/scalar isset fixtures preserve presence independently of value truth. count overloads have independent sizes. value_probes.php asserts non-addressable bool results, type-change invalidation, empty artifacts on failure, unrelated-body stability and fresh-equivalent repair."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named edit directly proves required axes; additional feature-specific edit combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-52.json.gz",
+        "run": "verification/results/incremental-structure-02",
+        "case": {
+          "id": "count",
+          "config": {
+            "consumer": "echo count(produce()); return 0;",
+            "initial": "function produce(): vector<int> { return [7]; }",
+            "changed": "function produce(): hash<int> { return [\"a\"=>7,\"b\"=>9]; }",
+            "invalid": "function produce(): int { return 7; }",
+            "diagnostic": "one exact signature",
+            "expected": {
+              "initial": "1",
+              "changed": "2",
+              "repaired": "2"
+            }
+          },
+          "config_sha256": "d58a9301482f56c16ae5a405b4c0d8e22ac808601a5388b9564e5e300a05ce77",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid type/signature/visibility edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs have exact configured stdout."
+        ],
+        "fixture_history": "Count first-attempt diagnostic substring was corrected; source and semantics unchanged. Other five passing cases were not rerun."
+      }
+    },
+    {
+      "family": "LV16",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV16.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV16.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/iteration/logs/iteration.stdout",
+              "layer": "preparation and generated/native execution as specified",
+              "assertions": [
+                "iteration.php retains the consumer body while changing producer vector<int> to hash<int>, verifies string key type, rejects later noniterable int dependency with cleared output, and repairs to byte-identical fresh output. Cleanup removes iteration facts."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named edit directly proves required axes; additional feature-specific edit combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-52.json.gz",
+        "run": "verification/results/incremental-structure",
+        "case": {
+          "id": "iteration",
+          "config": {
+            "consumer": "$a = produce(); $sum int = 0; foreach ($a as $v) { $sum += $v; } echo $sum; return 0;",
+            "initial": "function produce(): vector<int> { return [7]; }",
+            "changed": "function produce(): hash<int> { return [\"a\"=>7,\"b\"=>9]; }",
+            "invalid": "function produce(): bool { return true; }",
+            "diagnostic": "foreach",
+            "expected": {
+              "initial": "7",
+              "changed": "16",
+              "repaired": "16"
+            }
+          },
+          "config_sha256": "66cd7b92744f4e31e627ba55ca9ff4de75ac2e269314d3c69a19fb45c6f95d6b",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid type/signature/visibility edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs have exact configured stdout."
+        ],
+        "fixture_history": "Count first-attempt diagnostic substring was corrected; source and semantics unchanged. Other five passing cases were not rerun."
+      }
+    },
+    {
+      "family": "LV17",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV17.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV17.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/references",
+              "layer": "prepared provenance, rejection and generated execution",
+              "assertions": [
+                "references.php proves returned parameter-origin identity through alias chains; local/by-value/interior/temporary escape, const mutation and recursive forwarding reject with empty C++ output. Cross-file body edits invalidate unchanged forwarding consumers; retry and repair preserve provenance and match fresh output. 36 generated reference programs pass."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named edit directly proves required axes; additional feature-specific edit combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-52.json.gz",
+        "run": "verification/results/incremental-structure",
+        "case": {
+          "id": "reference",
+          "config": {
+            "consumer": "$n int = 1; $a =& select($n); $a += 2; echo $n; return 0;",
+            "initial": "function &select(int &$n): int { return $n; }",
+            "changed": "function &select(int &$n): int { $n += 4; return $n; }",
+            "invalid": "function select(int $n): int { return $n; }",
+            "diagnostic": "reference",
+            "expected": {
+              "initial": "3",
+              "changed": "7",
+              "repaired": "7"
+            }
+          },
+          "config_sha256": "91fe98520f2eda76a435170a50248bb06aa70183a4b3ec2cedf4132861299d8d",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid type/signature/visibility edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs have exact configured stdout."
+        ],
+        "fixture_history": "Count first-attempt diagnostic substring was corrected; source and semantics unchanged. Other five passing cases were not rerun."
+      }
+    },
+    {
+      "family": "LV18",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV18.001",
+        "LV18.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV18.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/unmasked-suites/ownership",
+              "layer": "prepared ownership facts and generated lifetime observations",
+              "assertions": [
+                "Ownership preparation checks distinguish owned unique return temporaries from reference-return storage, retain move source-place identity and consuming argument facts. Twenty-six generated/native-observer programs verify transfer empties source, weak control-block identity, locking/expiry, temporary retention, once-only observations and signature-edit invalidation/repair."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV18.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-destructors; verification/results/wave-01/records-finally",
+              "layer": "prepared ownership facts and generated lifetime observations",
+              "assertions": [
+                "Thirty-six destructor programs verify last shared owner, unique reset, inline copies/aliases, early return, loop transfers, body-before-members and reverse member order. Runtime unwind observer checks exactly-once cleanup; custom terminate handler proves escaping destructor error terminates after body effect. Invalid signatures/access/allocation and visibility edits reject, repair matches fresh output. Throwing destructors are not statically prohibited by an effect analysis; the specified runtime boundary is termination."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named defining edit directly proves all four axes; does not claim every edit form in this family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-53.json.gz",
+        "run": "verification/results/incremental-definitions-03",
+        "case": {
+          "id": "ownership",
+          "config": {
+            "consumer": "$a unique<Box> = produce(); echo $a->n; return 0;",
+            "initial": "class Box { public int $n = 7; } function produce(): unique<Box> { $item unique<Box> = new Box(); return move($item); }",
+            "changed": "class Box { public int $n = 9; } function produce(): unique<Box> { $item unique<Box> = new Box(); return move($item); }",
+            "invalid": "class Box { public int $n = 9; } function produce(): Box { $item Box = new Box(); return $item; }",
+            "diagnostic": "ownership",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "e9bf5ee0e7ae01413593edbe35289acb1fa1a414b8c73f8ea628c0a9d791125e",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid defining edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs execute with exact configured stdout."
+        ],
+        "fixture_history": "Ownership attempts corrected direct unique-return construction and redundant shared<Class> spelling before the intended consumer mismatch was tested. All attempts preserved; other five passing cases not rerun."
+      }
+    },
+    {
+      "family": "LV19",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV19.001",
+        "LV36.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV19.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-constructors; verification/results/wave-01/records-property_defaults; verification/results/wave-01/records-data_records",
+              "layer": "preparation assertions and generated native execution",
+              "assertions": [
+                "constructors.php: 60 generated executions cover constructor access/factories, set: promotion, supplied argument source order and data key order, required/duplicate/unknown inputs and per-instance/suppressed defaults. property_defaults.php adds 35 executions and data_records.php adds 28; all original suites passed."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV36.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-derived_data",
+              "layer": "preparation assertions and generated native execution",
+              "assertions": [
+                "derived_data.php: 40 generated executions cover class/struct inherited authored parameter contracts and synthesized base-first contracts, protected access through factories, explicit data opt-in, multilevel defaults, required enum inputs, private-field exclusion, source key evaluation order, unique/alternate storage and suppressed defaults. Negative assertions check missing/duplicate/unknown/wrong-type inputs and default-constructible child constraints. Unchanged callers reject inherited signature/schema edits; repair, no-op, reset and fresh builds agree; changing inherited defaults changes output."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named edit directly proves required axes; additional feature-specific edit combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-52.json.gz",
+        "run": "verification/results/incremental-structure",
+        "case": {
+          "id": "constructor",
+          "config": {
+            "consumer": "$a = new Box(7); echo $a->n; return 0;",
+            "initial": "class Box { public int $n; public function __construct(int $v) { $this->n = $v; } }",
+            "changed": "class Box { public int $n; public function __construct(int $v) { $this->n = $v + 2; } }",
+            "invalid": "class Box { public int $n; private function __construct(int $v) { $this->n = $v; } }",
+            "diagnostic": "private",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "e55e4baf9613daeedb2ebe38c19ef6f001788bfbab5dffbba9dc05a184e79dfe",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid type/signature/visibility edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs have exact configured stdout."
+        ],
+        "fixture_history": "Count first-attempt diagnostic substring was corrected; source and semantics unchanged. Other five passing cases were not rerun."
+      }
+    },
+    {
+      "family": "LV20",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV20.001",
+        "LV20.004"
+      ],
+      "evidence": [
+        {
+          "check": "LV20.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-inheritance; verification/results/wave-01/records-abstract_dispatch",
+              "layer": "preparation and generated execution",
+              "assertions": [
+                "59 inheritance and 32 abstract-dispatch programs pass, including parent construction, protected access, reference forwarding, virtual/abstract selection, constructor-time dispatch, static defaults and destruction order. Preparation rejects invalid override/final/access/signature and abstract construction combinations; retained dependency edits and repair are covered."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV20.004",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-traits",
+              "layer": "preparation and generated execution",
+              "assertions": [
+                "51 trait programs pass. Nested diamond origin deduplication, lexical lookup, per-consumer static storage, inherited static dispatch and abstract requirements have exact results. Concrete collisions, duplicate uses, cycles, incompatible/hidden/static requirements reject. Cross-file trait edits retire private instances, preserve failed-parse identity and repair to fresh output."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named defining edit directly proves all four axes; does not claim every edit form in this family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-53.json.gz",
+        "run": "verification/results/incremental-definitions",
+        "case": {
+          "id": "inheritance",
+          "config": {
+            "consumer": "$a = new Child(); echo $a->value(); return 0;",
+            "initial": "class Base { public function value(): int { return 7; } } class Child extends Base {}",
+            "changed": "class Base { public function value(): int { return 9; } } class Child extends Base {}",
+            "invalid": "class Base { private function value(): int { return 9; } } class Child extends Base {}",
+            "diagnostic": "private",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "30a35c3d45179b47c8d05bba25aed7cd6a1f9afcbc5a7ab2ad715075c4595c8a",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid defining edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs execute with exact configured stdout."
+        ],
+        "fixture_history": "Ownership attempts corrected direct unique-return construction and redundant shared<Class> spelling before the intended consumer mismatch was tested. All attempts preserved; other five passing cases not rerun."
+      }
+    },
+    {
+      "family": "LV21",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV21.002",
+        "LV21.003"
+      ],
+      "evidence": [
+        {
+          "check": "LV21.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-late_static",
+              "layer": "inspected identity/invalidation assertions and generated execution",
+              "assertions": [
+                "Twelve generated programs execute dispatch, self/parent forwarding, explicit qualifier reset, shared static storage, abstract/new-static constructor factories, struct calls, two called contexts and recursion. Cross-file demand removal eliminates implementations; re-adding invalid demand rejects; repaired child returns 8 and fresh output matches."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV21.003",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/static-cross-file-probe-02",
+              "layer": "preparation assertions and generated native execution; adapted lane identified explicitly",
+              "assertions": [
+                "Four generated native runs print 7:8:8, 9:10:10, 9:10:10 and 40:41:41 for initial, initializer edit, int-to-mixed property type edit and import retargeting. Each phase compares incremental output with no-op and fresh output. Initial attempted int32 mutation is preserved in static-cross-file-probe: it rejects at the documented canonical-int/boxed mutation gate; this does not establish fixed-width mutation support."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named edit directly proves required axes; additional feature-specific edit combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-52.json.gz",
+        "run": "verification/results/incremental-structure",
+        "case": {
+          "id": "static",
+          "config": {
+            "consumer": "echo Box::$n; return 0;",
+            "initial": "class Box { public static int $n = 7; }",
+            "changed": "class Box { public static int $n = 9; }",
+            "invalid": "class Box { private static int $n = 9; }",
+            "diagnostic": "private",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "c55fcbd2c2ec7678da8b088b150cccfa9d7dd6b575b8107dd1ca479bc9c311c4",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid type/signature/visibility edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs have exact configured stdout."
+        ],
+        "fixture_history": "Count first-attempt diagnostic substring was corrected; source and semantics unchanged. Other five passing cases were not rerun."
+      }
+    },
+    {
+      "family": "LV22",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV22.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV22.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/unmasked-suites/enums; verification/results/enum-entry-oracle",
+              "layer": "preparation, native independent assertions, generated execution",
+              "assertions": [
+                "23 original programs pass; unhandled enum match passes labelled oracle replay with exit 1 and exact error text rather than abort. Nominal cross-enum/int mixing rejects; native static_assert verifies fixed widths and full uint64/int64 values. Name/value/from-value helpers check once-only evaluation and invalid mathematical values before narrowing; selection copies/laziness and dependency repair are asserted."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named defining edit directly proves all four axes; does not claim every edit form in this family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-53.json.gz",
+        "run": "verification/results/incremental-definitions",
+        "case": {
+          "id": "enum",
+          "config": {
+            "consumer": "echo (produce() === State::Ready ? \"ready\" : \"done\"); return 0;",
+            "initial": "enum State { case Ready; case Done; } function produce(): State { return State::Ready; }",
+            "changed": "enum State { case Ready; case Done; } function produce(): State { return State::Done; }",
+            "invalid": "enum State { case Gone; case Done; } function produce(): State { return State::Done; }",
+            "diagnostic": "Ready",
+            "expected": {
+              "initial": "ready",
+              "changed": "done",
+              "repaired": "done"
+            }
+          },
+          "config_sha256": "8a9509109a565d47dc433f66d73477cbe1a93897e691419fc3284bb16670c851",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid defining edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs execute with exact configured stdout."
+        ],
+        "fixture_history": "Ownership attempts corrected direct unique-return construction and redundant shared<Class> spelling before the intended consumer mismatch was tested. All attempts preserved; other five passing cases not rerun."
+      }
+    },
+    {
+      "family": "LV23",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV23.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV23.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-reference_captures",
+              "source": "compiler/my-try/tests/reference_captures.php",
+              "assertions": [
+                "44 generated programs execute; readonly/escape/erased-callable rejections and lifetime-region/no-op/repair assertions pass."
+              ]
+            },
+            {
+              "run": "verification/results/recovery-probes",
+              "source": "verification_borrow_publication.php",
+              "layer": "preparation and incremental rejection",
+              "assertions": [
+                "Every original rejection assertion additionally requires Model::$cpp_files->is_empty(); all pass.",
+                "Original lifetime/readonly/repair/no-op assertions remain intact."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named edit directly proves required axes; additional feature-specific edit combinations are not inferred.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-52.json.gz",
+        "run": "verification/results/incremental-structure",
+        "case": {
+          "id": "closure",
+          "config": {
+            "consumer": "$f = fn(): int => produce(); echo $f(); return 0;",
+            "initial": "function produce(): int { return 7; }",
+            "changed": "function produce(): int { return 9; }",
+            "invalid": "function produce(): string { return \"bad\"; }",
+            "diagnostic": "value boundary",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "1654977d3552e4ec6aa4d1f74dd1f2da058ca838dd2470c62df3077c90ff12f1",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid type/signature/visibility edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs have exact configured stdout."
+        ],
+        "fixture_history": "Count first-attempt diagnostic substring was corrected; source and semantics unchanged. Other five passing cases were not rerun."
+      }
+    },
+    {
+      "family": "LV24",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV24.001",
+        "LV24.003"
+      ],
+      "evidence": [
+        {
+          "check": "LV24.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-exceptions",
+              "source": "compiler/my-try/tests/exceptions.php",
+              "layer": "preparation, generated C++ execution, incremental emission",
+              "assertions": [
+                "17 generated executions and 20 preparation rejections.",
+                "callee/nested_rethrow preserve messages; native identity_transport verifies pointer identity and weak expiry.",
+                "cleanup_order observes 21 and outer survivor; partial_constructor observes completed-field cleanup only; handler_cleanup observes 12.",
+                "Three invalid edits reject; repair restores baseline emitted output; fresh compiler output matches."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV24.003",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-finally",
+              "source": "compiler/my-try/tests/finally.php",
+              "layer": "preparation, generated C++ execution, incremental emission",
+              "assertions": [
+                "34 generated programs and 19 preparation rejections.",
+                "normal/empty, nested_returns/nested_throw, catch return/throw, return replacement, exception replacement and guard propagation verify exact effects.",
+                "Scalar/void snapshots and single evaluation: return_evaluation, snapshot, string_snapshot, float_bool, void_forward, void_bare.",
+                "Reference/vector/Exception/Result returns crossing finally and cross-finally loop transfers reject as the bounded contract requires.",
+                "Invalid and valid edits repair to identical fresh output."
+              ]
+            },
+            {
+              "run": "verification/results/finally-transfer-probe; verification/results/finally-transfer-probe-02",
+              "layer": "Strict-source admission and generated native ownership traces",
+              "assertions": [
+                "Unique, weak and inline-record returns crossing finally all reject with Finally supports only scalar or void return transport. Weak return after the region prints TF1: and expires after owner release. Unique return after the region prints TF1:1: try/finally order, successful move and exactly one destructor at caller scope exit. First unique fixture incorrectly used clean(unique); corrected fixture uses ordinary scope cleanup. No ownership transport through finally is claimed."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named defining edit directly proves all four axes; does not claim every edit form in this family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-53.json.gz",
+        "run": "verification/results/incremental-definitions",
+        "case": {
+          "id": "exception",
+          "config": {
+            "consumer": "try { produce(); echo \"ok\"; } catch (Exception $e) { echo \"caught\"; } return 0;",
+            "initial": "function produce(): void { throw Exception::make(\"bad\"); }",
+            "changed": "function produce(): void { return; }",
+            "invalid": "function produce(): void { throw 7; }",
+            "diagnostic": "throw",
+            "expected": {
+              "initial": "caught",
+              "changed": "ok",
+              "repaired": "ok"
+            }
+          },
+          "config_sha256": "0cdce07f367da05c2e470942da03742223588cf1af73bc16156b04a6c84ecfa9",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid defining edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs execute with exact configured stdout."
+        ],
+        "fixture_history": "Ownership attempts corrected direct unique-return construction and redundant shared<Class> spelling before the intended consumer mismatch was tested. All attempts preserved; other five passing cases not rerun."
+      }
+    },
+    {
+      "family": "LV25",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV25.003",
+        "LV25.004"
+      ],
+      "evidence": [
+        {
+          "check": "LV25.003",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/import-edit-probe; verification/results/wave-02/namespaces/logs/imports.stdout; verification/results/wave-02/namespaces/logs/qualified_lookup.stdout",
+              "layer": "Cross-file incremental preparation, native execution and fresh artifact comparison",
+              "assertions": [
+                "Alias retarget changes native exit 3 to 4. Provider adds conflicting App\\pick in a different file while the importing consumer remains unchanged: edit and retry both reject and emitted artifacts are empty. Provider repair restores retargeted artifacts exactly; fresh build agrees. Existing imports/qualified-lookup suites separately assert unchanged consumer identity, changed binding and missing-provider addition/removal recovery."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV25.004",
+          "status": "blocked",
+          "evidence": [
+            {
+              "run": "verification/results/cli-project-boundary",
+              "layer": "original module discovery and production CLI",
+              "assertions": [
+                "Sorted recursive discovery, ignored non-PHS files, symlink-cycle exclusion, canonical path identity, stable add/edit/delete membership, overlapping-root rejection and disjoint module ordering/ownership pass.",
+                "Production multi-file imported callable executes with exit 7. Project public_exports policy is not exposed by this CLI."
+              ],
+              "archive": "language_verification_evidence/logs-checkpoint-29.json.gz"
+            },
+            {
+              "run": "verification/results/wave-02/project_cpp",
+              "layer": "module_sync original assertions",
+              "assertions": [
+                "Module reorder, canonical root replacement, full-sync retry, tombstones and complete removal pass; permission-failure branch is conditional on host readability and is not independently claimed."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named source defining edit proves required axes with immutable startup metadata. Does not imply live catalog mutation or complete production integration.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-54.json.gz",
+        "run": "verification/results/incremental-integration-02",
+        "case": {
+          "id": "namespace",
+          "config": {
+            "consumer": "namespace App; use function Lib\\produce; echo produce(); return 0;",
+            "initial": "namespace Lib; function produce(): int { return 7; }",
+            "changed": "namespace Lib; function produce(): int { return 9; }",
+            "invalid": "namespace Other; function produce(): int { return 9; }",
+            "diagnostic": "produce",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "5cc8489362be3e8afe1950baf1db725105a1f57a55565c210266203e18bc61bc",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains consumer parsed identity.",
+          "Invalid signature/name/schema edit and unchanged retry reject and clear artifacts.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Three generated native programs execute with exact configured output."
+        ],
+        "lane": "Shared fixture runtime with explicit JSON document provider linkage; not production provider publication proof.",
+        "fixture_history": "Initial run had inaccurate diagnostic fragments and duplicate filesystem object linkage; corrected only harness expectations/link setup. Both attempts retained."
+      }
+    },
+    {
+      "family": "LV26",
+      "status": "verified-focused-edit",
+      "linked_checks": [],
+      "evidence": [],
+      "review": "All four required axes are directly asserted for the named provider-return-type change. This does not claim every possible edit in the family.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "run": "verification/results/incremental-domains",
+        "case": "echo",
+        "archive": "language_verification_evidence/logs-checkpoint-34.json.gz",
+        "config": {
+          "consumer": "echo produce(); return 0;",
+          "initial": "function produce(): int { return 7; }",
+          "changed": "function produce(): string { return \"changed\"; }",
+          "invalid": "function produce(): vector<int> { return [1]; }",
+          "diagnostic": "echo",
+          "expected": {
+            "initial": "7",
+            "changed": "changed",
+            "repaired": "changed"
+          }
+        },
+        "assertions": [
+          "Consumer parsed identity remains unchanged after the valid provider edit.",
+          "Invalid provider edit and unchanged retry both reject and clear emitted artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compilation.",
+          "Initial, changed and repaired native programs execute with exact expected output."
+        ]
+      }
+    },
+    {
+      "family": "LV27",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV27.002",
+        "LV27.003"
+      ],
+      "evidence": [
+        {
+          "check": "LV27.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/declaration-replays/declaration_model; verification/results/wave-02/runtime_generics",
+              "layer": "inspected identity/invalidation assertions and generated execution",
+              "assertions": [
+                "Callable instance tests prove interned identity, private-body isolation, external dependency reprepare without rematerialization, failure/retry/repair, no-op stability and retirement on origin/called-source edits/removal/reset. Runtime generics retain one provider identity with distinct concrete per-call signatures, reject stale bindings after reset, and invalidate/repair a changed producer. No claim of unrestricted source generics or provider-constraint isolation (LV27.003)."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV27.003",
+          "status": "deferred",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/runtime_generics; verification/results/modern-host-runtime_assets",
+              "layer": "original generic identity/reset assertions and live configuration rejection",
+              "assertions": [
+                "Two concrete count signatures share provider identity but not payload types. Semantic reset rebuilds identities from retained metadata and rejects old backend targets. Source producer change invalidates count and repair matches original output.",
+                "runtime_catalog.php explicitly rejects configure_runtime after compilation. specs/runtime_module_metadata.md defines immutable startup metadata and defers live replacement; a selective live constraint-edit assertion would require a new contract."
+              ],
+              "archive": "language_verification_evidence/logs-checkpoint-32.json.gz"
+            }
+          ]
+        }
+      ],
+      "review": "Count provider specialization follows vector-to-hash source return-type change, invalid scalar retry and repair. Live provider metadata edits remain explicitly deferred V-D10.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-52.json.gz",
+        "run": "verification/results/incremental-structure-02",
+        "case": {
+          "id": "count",
+          "config": {
+            "consumer": "echo count(produce()); return 0;",
+            "initial": "function produce(): vector<int> { return [7]; }",
+            "changed": "function produce(): hash<int> { return [\"a\"=>7,\"b\"=>9]; }",
+            "invalid": "function produce(): int { return 7; }",
+            "diagnostic": "one exact signature",
+            "expected": {
+              "initial": "1",
+              "changed": "2",
+              "repaired": "2"
+            }
+          },
+          "config_sha256": "d58a9301482f56c16ae5a405b4c0d8e22ac808601a5388b9564e5e300a05ce77",
+          "passed": true
+        },
+        "assertions": [
+          "Valid defining edit retains consumer parsed identity.",
+          "Invalid type/signature/visibility edit and unchanged retry reject and leave empty artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compiler output.",
+          "Initial/changed/repaired native programs have exact configured stdout."
+        ],
+        "fixture_history": "Count first-attempt diagnostic substring was corrected; source and semantics unchanged. Other five passing cases were not rerun.",
+        "scope": "Reuses the same count probe; not an additional execution. The configured generic count provider resolves different concrete container argument signatures."
+      }
+    },
+    {
+      "family": "LV28",
+      "status": "blocked",
+      "linked_checks": [
+        "LV28.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV28.001",
+          "status": "failed",
+          "evidence": [
+            {
+              "run": "language_verification_evidence/strict-04.json",
+              "source": "tests/tools/test_scpp_async_core_language.php",
+              "layer": "original strict source differential",
+              "assertions": [
+                "v0.1 exact PHS nowdoc executes stdout 4242; v0.2 parser rejects async function at byte 6."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Async parse failure S12 blocks retained async/suspension facts.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ]
+    },
+    {
+      "family": "LV29",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV29.001",
+        "LV29.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV29.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/runtime_catalog",
+              "source": "compiler/my-try/tests/runtime_catalog.php",
+              "layer": "preparation, generated C++ execution and bounded recovery",
+              "assertions": [
+                "Malformed schema versions/keys/values/types and invalid contracts reject while Model::$runtime_metadata remains the same installed input.",
+                "Cross-module constant collisions and dependency cycles reject.",
+                "Metadata files are removed before resets; reset creates fresh callable/constant identities while retaining decoded metadata; old binding lookup rejects."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV29.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/runtime_exports; verification/results/wave-02/runtime_regex; verification/results/unmasked-suites/runtime_cli",
+              "layer": "inspected identity/invalidation assertions and generated execution",
+              "assertions": [
+                "runtime_exports.php verifies imported vector/strlen/constant bindings, source shadow/unshadow invalidation and wrong-category/missing/namespace-leaking aliases. Generated runtime_exports program checks values. Regex disabled-module source use rejects. CLI preparation rejects internal set_cli_args and unselected process_start; datetime core-only metadata rejects dt_now lookup. Per-signature disabled coverage remains in LV29.003."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named source defining edit proves required axes with immutable startup metadata. Does not imply live catalog mutation or complete production integration.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-54.json.gz",
+        "run": "verification/results/incremental-integration-02",
+        "case": {
+          "id": "runtime_shadow",
+          "config": {
+            "consumer": "echo strlen(\"abc\"); return 0;",
+            "initial": "function spare(): int { return 0; }",
+            "changed": "function strlen(string $v): int { return 9; }",
+            "invalid": "function strlen(vector<int> $v): int { return 9; }",
+            "diagnostic": "value boundary",
+            "expected": {
+              "initial": "3",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "c117915c5442d087f69bda92b406b970bf2faa5292b374bc27d146ecdb2608d7",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains consumer parsed identity.",
+          "Invalid signature/name/schema edit and unchanged retry reject and clear artifacts.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Three generated native programs execute with exact configured output."
+        ],
+        "lane": "Shared fixture runtime with explicit JSON document provider linkage; not production provider publication proof.",
+        "fixture_history": "Initial run had inaccurate diagnostic fragments and duplicate filesystem object linkage; corrected only harness expectations/link setup. Both attempts retained."
+      }
+    },
+    {
+      "family": "LV30",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV30.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV30.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/unmasked-suites/json_api; verification/results/observer-followup/json",
+              "layer": "preparation and generated/native execution as specified",
+              "assertions": [
+                "fixtures/json.php verifies both decoder families across scalar/container roots, COW versus shared identity, once-only encode inputs, malformed decode and nonfinite encode failure preservation, null/false successes and dynamic cycle rejection. Five original generated programs pass; two injected native observers pass with the explicit table header added. Original failures retained as V-H07."
+              ]
+            },
+            {
+              "run": "verification/results/json-shape-probe",
+              "layer": "production publication and native build",
+              "assertions": [
+                "Strict source publishes successfully; native linkage fails because declared runtime_build omits modules/json/json.cpp. Explicitly linked unit tests do not prove production provider integration."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named source defining edit proves required axes with immutable startup metadata. Does not imply live catalog mutation or complete production integration.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-54.json.gz",
+        "run": "verification/results/incremental-integration-02",
+        "case": {
+          "id": "json",
+          "config": {
+            "consumer": "$err json_parse_error; $doc json_document = json_document_parse(produce(), $err); $node json_node = json_document_root($doc); $v int = json_node_int($node); echo $v; return 0;",
+            "initial": "function produce(): string { return \"7\"; }",
+            "changed": "function produce(): string { return \"9\"; }",
+            "invalid": "function produce(): bool { return true; }",
+            "diagnostic": "value boundary",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "c88fdf6aabecbb5e1966cf3e9d256837aa2e421c2cf5cf7f0ed7d35855eb4810",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains consumer parsed identity.",
+          "Invalid signature/name/schema edit and unchanged retry reject and clear artifacts.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Three generated native programs execute with exact configured output."
+        ],
+        "lane": "Shared fixture runtime with explicit JSON document provider linkage; not production provider publication proof.",
+        "fixture_history": "Initial run had inaccurate diagnostic fragments and duplicate filesystem object linkage; corrected only harness expectations/link setup. Both attempts retained."
+      }
+    },
+    {
+      "family": "LV31",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV31.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV31.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/runtime_handles",
+              "layer": "preparation and generated native runtime",
+              "assertions": [
+                "Identity 9|9|9, result 13|13, container 19, members 23|99|yes|42|31|51, constants 37|41|53|37|1 and properties 23|23|23|41|43|9.",
+                "Opaque payload construction, unsupported reference escape, wrong types, missing members and explicit ownership wrappers reject without artifacts. Valid identity case succeeds after failures; reset preserves metadata input and rebuilds type identities."
+              ]
+            },
+            {
+              "run": "verification/results/entry-observers-adapted-03",
+              "layer": "test-only entry observer adaptation",
+              "assertions": [
+                "Null receiver throws before argument side effects; production entry catch removed only in native observer."
+              ]
+            },
+            {
+              "run": "verification/results/assets-extended-04",
+              "layer": "real provider lifecycle",
+              "assertions": [
+                "JSON child nodes outlive parents; process snapshots are independent and close invalidates aliases; lock transfer and shared/exclusive contention follow handle contract."
+              ],
+              "archive": "language_verification_evidence/logs-checkpoint-26.json.gz"
+            }
+          ]
+        }
+      ],
+      "review": "Named source defining edit proves required axes with immutable startup metadata. Does not imply live catalog mutation or complete production integration.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-54.json.gz",
+        "run": "verification/results/incremental-integration-02",
+        "case": {
+          "id": "filesystem",
+          "config": {
+            "consumer": "echo (fs_exists(produce()) ? \"exists\" : \"absent\"); return 0;",
+            "initial": "function produce(): string { return \"/\"; }",
+            "changed": "function produce(): string { return \"/__scpp_verification_missing_20261018__\"; }",
+            "invalid": "function produce(): int { return 7; }",
+            "diagnostic": "value boundary",
+            "expected": {
+              "initial": "exists",
+              "changed": "absent",
+              "repaired": "absent"
+            }
+          },
+          "config_sha256": "b1fe1af188eefeb5bf98222710d9fd24724e5aa0d888b87b8c1785a9dffc1ba8",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains consumer parsed identity.",
+          "Invalid signature/name/schema edit and unchanged retry reject and clear artifacts.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Three generated native programs execute with exact configured output."
+        ],
+        "lane": "Shared fixture runtime with explicit JSON document provider linkage; not production provider publication proof.",
+        "fixture_history": "Initial run had inaccurate diagnostic fragments and duplicate filesystem object linkage; corrected only harness expectations/link setup. Both attempts retained."
+      }
+    },
+    {
+      "family": "LV32",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV32.001"
+      ],
+      "evidence": [
+        {
+          "check": "LV32.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/runtime_source; verification/results/entry-observers-adapted-02",
+              "layer": "original preparation/value oracles; separately adapted native bounds observers",
+              "assertions": [
+                "Exact buffer trace 0|3|97|abc|0|abc|bc|0, location trace 4|10|4|3|10|1|1|1 and binary trace 2|255|00ff prove transfer, independent copies, index lifetime, newline/EOF/byte mapping.",
+                "Five bounds failures throw; unsupported span calls, wrong argument modes/types and count reject with empty artifacts; valid recovery and metadata-preserving reset pass."
+              ],
+              "archive": "language_verification_evidence/logs-checkpoint-26.json.gz"
+            }
+          ]
+        }
+      ],
+      "review": "Named source defining edit proves required axes with immutable startup metadata. Does not imply live catalog mutation or complete production integration.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-54.json.gz",
+        "run": "verification/results/incremental-integration-02",
+        "case": {
+          "id": "source",
+          "config": {
+            "consumer": "$text = produce(); $buffer = source_buffer_take($text); echo source_buffer_byte_len($buffer); return 0;",
+            "initial": "function produce(): string { return \"abc\"; }",
+            "changed": "function produce(): string { return \"abcdef\"; }",
+            "invalid": "function produce(): int { return 7; }",
+            "diagnostic": "reference arguments",
+            "expected": {
+              "initial": "3",
+              "changed": "6",
+              "repaired": "6"
+            }
+          },
+          "config_sha256": "6a501f1ca9f9dee3bff0374da0c08d573e44fee8a374d0f13332ad20f54fa867",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains consumer parsed identity.",
+          "Invalid signature/name/schema edit and unchanged retry reject and clear artifacts.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Three generated native programs execute with exact configured output."
+        ],
+        "lane": "Shared fixture runtime with explicit JSON document provider linkage; not production provider publication proof.",
+        "fixture_history": "Initial run had inaccurate diagnostic fragments and duplicate filesystem object linkage; corrected only harness expectations/link setup. Both attempts retained."
+      }
+    },
+    {
+      "family": "LV33",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV33.001",
+        "LV33.004"
+      ],
+      "evidence": [
+        {
+          "check": "LV33.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/project_cpp; verification/results/modern-host-runtime_module_build",
+              "layer": "artifact assertions, production integration and incremental recovery",
+              "assertions": [
+                "32 multi-file program runs with and without PCH, 34 standalone headers and three clang transitive-dependency checks pass. Project module identities survive reordering/relocation; explicit entry selection is checked. Synthetic provider requirements deduplicate, publication is consumable without catalogs, and provider/configuration edits produce expected values and rebuild counts. Real JSON provider omission remains V-R01, not disproven by this structural integration proof."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV33.004",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/modern-output-publication; verification/results/modern-host-native_cache",
+              "layer": "production publication and native cache",
+              "assertions": [
+                "Readiness matches manifest digest; shared/exclusive lock contention preserves last valid files/status; failed source publication leaves pending source and native status and no successful result; repair reuses valid actions and executes expected value."
+              ]
+            },
+            {
+              "run": "verification/results/native-failure-readiness",
+              "layer": "isolated artifact fault injection through production builder",
+              "assertions": [
+                "Actual Clang compile failure returns no successful build JSON and sets native status to pending; restoring valid artifacts builds and executes with exit 9."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Publication and native-cache obligations verified by complementary existing executed tests; source retained-fact protocol is separately covered by per-family direct probes. Public project export policy remains V-P01.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-54.json.gz",
+        "runs": [
+          "verification/results/wave-02/project_cpp",
+          "verification/results/modern-host-native_cache",
+          "verification/results/modern-output-publication"
+        ],
+        "assertions": [
+          "project_cpp.php proves exact body/layout artifact isolation, clean-generation comparison, signature changes, called declaration deletion with empty output, repair equality and retry handoff acknowledgement.",
+          "native_cache.py executes cold/body-edit/repaired programs with exits 7/9/9; failed source publication/build exposes no successful result and keeps native status pending; repair reuses valid cached native actions.",
+          "output_publication.py verifies lock exclusion, readiness digests and isolated unit update; generated published program executes.",
+          "No native compiler rebuild claimed; these are generated-C++ build/publication tests."
+        ],
+        "proof_limits": [
+          "Does not implement absent project export/composition CLI or repair JSON value provider metadata.",
+          "Evidence is reused from already executed suites, not counted as new executions."
+        ]
+      }
+    },
+    {
+      "family": "LV34",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV34.001",
+        "LV34.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV34.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/project_cpp; verification/results/declaration-replays/source_constants",
+              "layer": "artifact assertions, production integration and incremental recovery",
+              "assertions": [
+                "Body/layout/signature edits update only specified artifacts; no-op and fresh comparisons pass. imports.php retargets aliases without replacing the consumer work, rejects stale emission, follows newly added providers and changes type signatures; source_constants.php propagates upstream value/type edits. This is representative dependency precision; per-feature completeness remains LV34.003."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV34.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-02/control_flow; verification/results/scope-composition; verification/results/declaration-replays/declaration_model",
+              "layer": "artifact assertions, production integration and incremental recovery",
+              "assertions": [
+                "preparation_recovery.php checks failed signature propagation, withheld facts/output and independent work progress. Scope, control-flow, callable-instance and trait tests separately cover failed parse/preparation, retained identities, repeated failures, repair and fresh-equivalent output. Per-feature extension of this protocol remains LV34.003."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Incremental coordinator protocol is directly exercised by the provider numeric-domain edit, repeated invalid retry and fresh comparison. Per-feature completeness remains the aggregate LV34.003 audit, not assumed from this row.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "run": "verification/results/incremental-domains",
+        "case": "numeric",
+        "archive": "language_verification_evidence/logs-checkpoint-34.json.gz",
+        "config": {
+          "consumer": "$a = produce(); $b int8 = 1; $c = $a + $b; echo $c; return 0;",
+          "initial": "function produce(): int16 { return 7; }",
+          "changed": "function produce(): int64 { return 10; }",
+          "invalid": "function produce(): uint64 { return 10; }",
+          "diagnostic": "signedness",
+          "domains": {
+            "initial": "int16",
+            "changed": "int64",
+            "repaired": "int64"
+          },
+          "expected": {
+            "initial": "8",
+            "changed": "11",
+            "repaired": "11"
+          }
+        },
+        "assertions": [
+          "Consumer parsed identity remains unchanged after the valid provider edit.",
+          "Invalid provider edit and unchanged retry both reject and clear emitted artifacts.",
+          "Repair equals prior valid edited artifacts and fresh compilation.",
+          "Initial, changed and repaired native programs execute with exact expected output.",
+          "Prepared binary result domain changes from int16 to int64."
+        ],
+        "scope": "Reuses the numeric retained-domain probe; no additional execution counted."
+      }
+    },
+    {
+      "family": "LV35",
+      "status": "not-a-separate-retained-feature",
+      "linked_checks": [
+        "LV35.001",
+        "LV35.003"
+      ],
+      "evidence": [
+        {
+          "check": "LV35.001",
+          "status": "blocked",
+          "evidence": [
+            {
+              "run": "language_verification_evidence/strict-04.json",
+              "layer": "pinned v0.1 versus frozen v0.2 original strict sources",
+              "assertions": [
+                "126 manifest entries retained: 121 reached both compiler lanes, five curl entries stopped before execution because the provider/project adapter is absent. Raw outcomes remain unchanged.",
+                "Semantic review in language_verification_strict_reconciliation.json distinguishes 14 runtime-compatible, 83 compile-compatible, one intended negative rejection, one masked fixture migration, nine missing-support cases, three intentional changes, six deferred legacy declaration cases, three explicitly deferred span cases, one alias contract decision and five adapter blockers."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV35.003",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/baseline-audit-02; verification/results/strict-04",
+              "layer": "GitHub/local references, full snapshot integrity and original-source differential ledger",
+              "assertions": [
+                "Pinned develop baseline matches local refs/verification/v01 and current GitHub develop. Latest v0.1 tag is v0.1.77; annotated tag object and peeled commit are distinguished. release/0.1.78 remains recorded separately.",
+                "All 6178 snapshot file hashes match. strict-04 uses the pinned baseline and includes approved S01/scalar working-tree changes. All 126 entries retain separate original-source outcomes and semantic classification, including adapter blockers."
+              ],
+              "archive": "language_verification_evidence/logs-checkpoint-32.json.gz"
+            }
+          ]
+        }
+      ],
+      "review": "Baseline and fixture migration are provenance axes, not a separate retained language fact; their source families belong to other rows.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ]
+    },
+    {
+      "family": "LV36",
+      "status": "verified-focused-edit",
+      "linked_checks": [
+        "LV36.001",
+        "LV36.002"
+      ],
+      "evidence": [
+        {
+          "check": "LV36.001",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/s2s-oracle-adapted; verification/results/string-observer-adapted; verification/results/wave-02/container_calls/logs/container_calls.stdout",
+              "layer": "Exact prepared facts and generated native state/value/error observers; adapted lanes explicitly identified",
+              "assertions": [
+                "Fourteen container-call fixtures: value copies of vector/hash/mixed remain independent; dynamic values share identity until rebound; explicit references mutate original storage; nested values preserve their family copy policy. Typed/missing conversion failure prevents later arguments/callee effects. Source/key/later argument order is 123 and indexed-value snapshot precedes later mutation. 27 original base/state programs pass; the remaining indexed string state observer passes after test-only native_value comparison adaptation V-H06. Indexed arguments cannot become source references; signature edit invalidation/repair matches fresh output."
+              ]
+            }
+          ]
+        },
+        {
+          "check": "LV36.002",
+          "status": "passed",
+          "evidence": [
+            {
+              "run": "verification/results/wave-01/records-derived_data",
+              "layer": "preparation assertions and generated native execution",
+              "assertions": [
+                "derived_data.php: 40 generated executions cover class/struct inherited authored parameter contracts and synthesized base-first contracts, protected access through factories, explicit data opt-in, multilevel defaults, required enum inputs, private-field exclusion, source key evaluation order, unique/alternate storage and suppressed defaults. Negative assertions check missing/duplicate/unknown/wrong-type inputs and default-constructible child constraints. Unchanged callers reject inherited signature/schema edits; repair, no-op, reset and fresh builds agree; changing inherited defaults changes output."
+              ]
+            }
+          ]
+        }
+      ],
+      "review": "Named source defining edit proves required axes with immutable startup metadata. Does not imply live catalog mutation or complete production integration.",
+      "required_axes": [
+        "defining edit reaches unchanged consumer",
+        "rejected state withholds stale output",
+        "repair and fresh artifacts agree",
+        "edited/repaired execution has an exact oracle"
+      ],
+      "direct_evidence": {
+        "archive": "language_verification_evidence/logs-checkpoint-54.json.gz",
+        "run": "verification/results/incremental-integration-02",
+        "case": {
+          "id": "derived_data",
+          "config": {
+            "consumer": "$a Child = {}; echo $a->n; return 0;",
+            "initial": "class Base { public int $n; function __construct(int $v = 7) { $this->n = $v; } } data class Child extends Base {}",
+            "changed": "class Base { public int $n; function __construct(int $v = 9) { $this->n = $v; } } data class Child extends Base {}",
+            "invalid": "class Base { public int $n; function __construct(int $v) { $this->n = $v; } } data class Child extends Base {}",
+            "diagnostic": "required",
+            "expected": {
+              "initial": "7",
+              "changed": "9",
+              "repaired": "9"
+            }
+          },
+          "config_sha256": "2de8519800a115e768e159e5d1aa7609e993865de3563b3eacd51d5c62f6a368",
+          "passed": true
+        },
+        "assertions": [
+          "Provider edit retains consumer parsed identity.",
+          "Invalid signature/name/schema edit and unchanged retry reject and clear artifacts.",
+          "Repair equals valid edited artifacts and fresh compilation.",
+          "Three generated native programs execute with exact configured output."
+        ],
+        "lane": "Shared fixture runtime with explicit JSON document provider linkage; not production provider publication proof.",
+        "fixture_history": "Initial run had inaccurate diagnostic fragments and duplicate filesystem object linkage; corrected only harness expectations/link setup. Both attempts retained."
+      }
+    }
+  ],
+  "limits": [
+    "No family is declared fully verified merely because a linked suite passed.",
+    "Existing no-op/reset checks, parse recovery and fresh runtime programs are distinguished from retained semantic edits.",
+    "Explicitly deferred metadata hot reload and blocked async remain separate from ordinary source incremental behavior.",
+    "Focused representative edits establish the named retained dependencies and recovery paths, not exhaustive mutation of every feature combination. Async remains explicitly blocked by S12."
+  ]
+}

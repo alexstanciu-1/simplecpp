@@ -1,0 +1,27 @@
+{
+  "base": {
+    "emitted": true,
+    "digest": "fac8c31f25180aa48e22e35ecf62d39b05e36a7dd4c3030cf5c837ff132a6e8e",
+    "ready": true
+  },
+  "disk_source": "$x = 1; return )x;",
+  "scan_only": {
+    "emitted": true,
+    "digest": "fac8c31f25180aa48e22e35ecf62d39b05e36a7dd4c3030cf5c837ff132a6e8e",
+    "ready": true
+  },
+  "empty_update": {
+    "emitted": true,
+    "digest": "fac8c31f25180aa48e22e35ecf62d39b05e36a7dd4c3030cf5c837ff132a6e8e",
+    "ready": true
+  },
+  "notified": {
+    "error": "main.phs: Expected scalar literal or variable reference at main.phs: byte 16\n",
+    "ready": false
+  },
+  "fresh": {
+    "error": "main.phs: Expected scalar literal or variable reference at main.phs: byte 16\n",
+    "ready": false
+  },
+  "stale_cpp_clang": "passed"
+}

@@ -19,7 +19,7 @@ function namespace_project(array $sources): Compiler
 		Source_Registry::add($module, $file);
 	}
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->select_entry('main', 'main.phs');
 	return $compiler;
 }

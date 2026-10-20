@@ -1,0 +1,1 @@
+interface I { function f(unique<int> $p): unique<int>; } class C implements I { function f(unique<int> $p): unique<int> { return move($p); } } $c = new C(); $i I = $c; $p unique<int>; $q = $i->f(move($p)); return 0;

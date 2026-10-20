@@ -51,7 +51,7 @@ def main():
 
             def build(name, expected_exit=8, options=(), directory=build_dir, expected_actions=None):
                 command = ['php', APP / 'tools/build_ninja.php', published, directory,
-                           '--runtime=' + str(runtime), '--jobs=2', *options]
+                           '--runtime=' + str(runtime), '--jobs=2', '--pch', *options]
                 result = json.loads(runner.run(name, command, timeout=300,
                                               cli_reason='Managed Ninja integration'))
                 runner.run(name + '-execute', [result['executable']], expected=expected_exit)
@@ -107,7 +107,7 @@ def main():
             saved = implementation.read_text()
             implementation.write_text('this is invalid C++;\n')
             runner.run('failed-build', ['php', APP / 'tools/build_ninja.php', published, build_dir,
-                       '--reuse', '--runtime=' + str(runtime), '--jobs=2'], expected=1,
+                       '--reuse', '--runtime=' + str(runtime), '--jobs=2', '--pch'], expected=1,
                        cli_reason='Failed native action and readiness')
             if (build_dir / '.scpp-ninja.status').read_text() != 'pending\n':
                 raise RuntimeError('Failed build claimed readiness')

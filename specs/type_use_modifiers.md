@@ -109,6 +109,20 @@ destination requires them. Source syntax alone never suppresses a required conve
 
 ## v0.2 ownership composition — 2026-10-06
 
+### Non-void owning targets — 2026-10-18
+
+`shared<void>` and `unique<void>` are invalid type applications. Reject them during
+semantic preparation, before interning the application or emitting C++, even in an
+unused declaration or nested type application. Apply the rule to the resolved
+ownership family and no-value target identity, independently of aliases or spelling.
+Owning a target does not require that target to be copyable; this rule introduces
+no general copyability constraint on ownership targets.
+
+This amendment leaves `weak<void>` and other weak-target admission unchanged. It
+does not introduce opaque void ownership, custom deleters, or new weak operations.
+
+### Existing composition rules
+
 Ownership roles are semantic definition facts, not spelling or storage modifiers.
 `shared<T>`, `unique<T>` and `weak<T>` preserve their C++ ownership meanings, with
 the safety/subset decisions in the [ownership contract](../runtime/specs/spec.md#v02-ownership-boundary--2026-10-06).

@@ -1,0 +1,292 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/result-equality/20261019-01",
+  "scope": {
+    "binary_signatures": 48,
+    "recovery_sequences": 48,
+    "negative_source_checks": {
+      "int": 140,
+      "float": 142,
+      "bool": 140,
+      "string": 140
+    },
+    "native_counts": {
+      "int": {
+        "binary_cases": 4992,
+        "local_cases": 26592,
+        "property_cases": 13296
+      },
+      "float": {
+        "binary_cases": 12672,
+        "local_cases": 104688,
+        "property_cases": 52344
+      },
+      "bool": {
+        "binary_cases": 1232,
+        "local_cases": 3752,
+        "property_cases": 1876
+      },
+      "string": {
+        "binary_cases": 21712,
+        "local_cases": 233128,
+        "property_cases": 116564
+      }
+    },
+    "error_states": 5
+  },
+  "suites": {
+    "focused-02": {
+      "commands": 21,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 48,
+        "recovery_sequences": 48,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "nullable_int_equality": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 12,
+        "recovery_sequences": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "nullable_bool_string_equality": {
+      "commands": 11,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 24,
+        "recovery_sequences": 24,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "nullable_float_equality": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 12,
+        "recovery_sequences": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "nullable": {
+      "commands": 268,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "cpp_pch": true,
+        "php_suites": 11,
+        "generated_programs": 99
+      }
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 19,
+        "binary_signatures": 228,
+        "unary_signatures": 16,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_float": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 12,
+        "binary_signatures": 144,
+        "unary_signatures": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 4,
+        "binary_signatures": 48,
+        "unary_signatures": 4,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 4,
+        "binary_signatures": 48,
+        "unary_signatures": 0,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_cross": {
+      "commands": 26,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "ordered_family_pairs": 12,
+        "binary_signatures": 660,
+        "domains": {
+          "operators": 228,
+          "float": 144,
+          "mixed": 192,
+          "bool": 48,
+          "string": 48
+        },
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_bool_xor": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 1,
+        "binary_signatures": 24,
+        "unary_signatures": 4,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_spaceship": {
+      "commands": 11,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "ordered_family_pairs": 12,
+        "binary_signatures": 48,
+        "domains": {
+          "operators": 24,
+          "string": 24
+        },
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "numeric_xor": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 1,
+        "binary_signatures": 100,
+        "unary_signatures": 0,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "string_comparisons": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "comparison_forms": 7,
+        "string_values": 18,
+        "value_error_cases": 9072,
+        "snapshot_cases": 4536,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "string_identity": {
+      "commands": 12,
+      "all_expected_exits": true
+    },
+    "eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "final-nullable-int": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 12,
+        "recovery_sequences": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "final-nullable-float": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 12,
+        "recovery_sequences": 12,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "final-nullable-bool-string": {
+      "commands": 11,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "binary_signatures": 24,
+        "recovery_sequences": 24,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    }
+  },
+  "source_integrity": {
+    "checked": 6218,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "38234711894102a51467b4aa79a4b54160d66842f2c73ff5abad92ea31f415c8",
+  "attempts": {
+    "focused": "Fixture source used result<T>=value without whitespace, parsed as >=; all four preparation tasks failed. Preserved in archive.",
+    "focused-02": "All four payload proofs passed after fixture spacing correction; no parser fix.",
+    "regressions": "All fifteen passed; nullable fixtures rerun on final shared fixture."
+  },
+  "runtime_changes": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "issue_status": {
+    "V-L07": "partially-implemented-and-verified"
+  },
+  "vl07_progress": {
+    "completed_slices": 14,
+    "binary_signatures": 1584,
+    "unary_signatures": 32,
+    "remaining_support_targets": 464,
+    "design_scope_candidates": 1872,
+    "proposed_core_denominator": 2080,
+    "proposed_core_coverage_percent": 77.7
+  }
+}

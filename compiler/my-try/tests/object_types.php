@@ -10,7 +10,7 @@ function object_types_source(string $source): string
 	$module = new module('/object-types', '/object-types', '/object-types');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $source;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -87,7 +87,7 @@ try {
 	file_put_contents($child_path, 'namespace Demo; class C extends B { int $n = 9; }');
 	file_put_contents($main_path, 'use Demo\\B; use Demo\\C; $b B = new C(); $c = object_cast($b, C::class); return $c->n;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$original = CPP_Output::encode(Model::$cpp_files);
 	foreach (['polymorphic source', 'related ancestry'] as $diagnostic) {
 		$changed_path = $diagnostic === 'polymorphic source' ? $base_path : $child_path;

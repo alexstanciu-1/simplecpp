@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "scope": "Chapter 14 bounded native gate",
+  "candidate_revision": "069ade60",
+  "phs_conversion": true,
+  "native_compiler_rebuilt": true,
+  "stan": "skipped",
+  "llvm": "skipped",
+  "compiler_optimization": "O2",
+  "generated_optimization": "O0",
+  "source_php_files": 233,
+  "artifact_parity_projects": 14,
+  "generated_program_runs": 28,
+  "standalone_headers": 27,
+  "host_suites": [
+    "project_cpp",
+    "cpp_artifacts",
+    "runtime_catalog",
+    "runtime_build_contract"
+  ],
+  "pch_and_no_pch": true,
+  "native_publication_parity": true,
+  "native_failed_publication_recovery": true,
+  "native_incremental_build_runs": 5,
+  "native_module_build_runs": 7,
+  "executable_sha256": "b3c117401366f744069306c7dffd1f926321e908b22eee908982372ea043db9d",
+  "wall_seconds": 729.27
+}

@@ -1,0 +1,603 @@
+[
+  {
+    "name": "cleanup",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/cleanup.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/cleanup",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:57:36.955837+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:57:45.234028+00:00"
+  },
+  {
+    "name": "compound_effects",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/compound_effects.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/compound_effects"
+    ],
+    "started": "2026-10-18T04:57:36.956147+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:57:44.583145+00:00"
+  },
+  {
+    "name": "container_calls",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/container_calls.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/container_calls",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:57:44.583381+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:57:50.357371+00:00"
+  },
+  {
+    "name": "container_reads",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/container_reads.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/container_reads",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:57:45.234257+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:57:51.108478+00:00"
+  },
+  {
+    "name": "container_regression",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/container_regression.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/container_regression",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:57:50.357600+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:57:56.230985+00:00"
+  },
+  {
+    "name": "container_writes",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/container_writes.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/container_writes",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:57:51.108673+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:57:56.931792+00:00"
+  },
+  {
+    "name": "control_flow",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/control_flow.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/control_flow",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:57:56.231170+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:15.229285+00:00"
+  },
+  {
+    "name": "data_initialization",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/data_initialization.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/data_initialization",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:57:56.932007+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:03.408076+00:00"
+  },
+  {
+    "name": "declaration_model",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/declaration_model.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/declaration_model"
+    ],
+    "started": "2026-10-18T04:58:03.408344+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:10.234227+00:00"
+  },
+  {
+    "name": "dynamic_families",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/dynamic_families.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/dynamic_families",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:58:10.234521+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:11.500640+00:00"
+  },
+  {
+    "name": "eager_binary",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/eager_binary.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/eager_binary"
+    ],
+    "started": "2026-10-18T04:58:11.500908+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:58:20.930175+00:00"
+  },
+  {
+    "name": "enums",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/enums.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/enums"
+    ],
+    "started": "2026-10-18T04:58:15.229484+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:16.545178+00:00"
+  },
+  {
+    "name": "field_container_probes",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/field_container_probes.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/field_container_probes"
+    ],
+    "started": "2026-10-18T04:58:16.545385+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:58:25.323414+00:00"
+  },
+  {
+    "name": "field_container_writes",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/field_container_writes.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/field_container_writes"
+    ],
+    "started": "2026-10-18T04:58:20.930361+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:58:29.558082+00:00"
+  },
+  {
+    "name": "index_compound",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/index_compound.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/index_compound"
+    ],
+    "started": "2026-10-18T04:58:25.323640+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:58:34.251848+00:00"
+  },
+  {
+    "name": "indexed_properties",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/indexed_properties.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/indexed_properties"
+    ],
+    "started": "2026-10-18T04:58:29.558322+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:58:37.634228+00:00"
+  },
+  {
+    "name": "integer_widths",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/integer_widths.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/integer_widths"
+    ],
+    "started": "2026-10-18T04:58:34.252055+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:58:42.230748+00:00"
+  },
+  {
+    "name": "json_api",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/json_api.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/json_api",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:58:37.634438+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:46.563034+00:00"
+  },
+  {
+    "name": "keyed_paths",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/keyed_paths.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/keyed_paths",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:58:42.230955+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:48.204070+00:00"
+  },
+  {
+    "name": "mixed",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/mixed.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/mixed",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:58:46.563261+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:58:52.385548+00:00"
+  },
+  {
+    "name": "mixed_layout",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/mixed_layout.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/mixed_layout"
+    ],
+    "started": "2026-10-18T04:58:48.204254+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:03.843995+00:00"
+  },
+  {
+    "name": "mysql_rows",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/mysql_rows.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/mysql_rows"
+    ],
+    "started": "2026-10-18T04:58:52.385773+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:09.728498+00:00"
+  },
+  {
+    "name": "namespace_bodies",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/namespace_bodies.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/namespace_bodies"
+    ],
+    "started": "2026-10-18T04:59:03.844337+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:04.709913+00:00"
+  },
+  {
+    "name": "namespace_identity",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/namespace_identity.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/namespace_identity"
+    ],
+    "started": "2026-10-18T04:59:04.710178+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:06.376551+00:00"
+  },
+  {
+    "name": "namespaces",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/namespaces.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/namespaces"
+    ],
+    "started": "2026-10-18T04:59:06.376756+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:09.597241+00:00"
+  },
+  {
+    "name": "native_cache",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/native_cache.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/native_cache"
+    ],
+    "started": "2026-10-18T04:59:09.597467+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:09.961728+00:00"
+  },
+  {
+    "name": "nullable",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/nullable.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/nullable",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:59:09.728709+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:15.503547+00:00"
+  },
+  {
+    "name": "output_publication",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/output_publication.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/output_publication"
+    ],
+    "started": "2026-10-18T04:59:09.961916+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:12.730490+00:00"
+  },
+  {
+    "name": "ownership",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/ownership.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/ownership"
+    ],
+    "started": "2026-10-18T04:59:12.730710+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:13.395774+00:00"
+  },
+  {
+    "name": "project_cpp",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/project_cpp.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/project_cpp"
+    ],
+    "started": "2026-10-18T04:59:13.395986+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:27.936764+00:00"
+  },
+  {
+    "name": "references",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/references.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/references"
+    ],
+    "started": "2026-10-18T04:59:15.503778+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:27.189577+00:00"
+  },
+  {
+    "name": "results",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/results.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/results",
+      "--no-pch"
+    ],
+    "started": "2026-10-18T04:59:27.189805+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:33.013310+00:00"
+  },
+  {
+    "name": "runtime_builders",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_builders.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_builders"
+    ],
+    "started": "2026-10-18T04:59:27.936981+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:28.501879+00:00"
+  },
+  {
+    "name": "runtime_catalog",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_catalog.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_catalog"
+    ],
+    "started": "2026-10-18T04:59:28.502065+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:34.725329+00:00"
+  },
+  {
+    "name": "runtime_cli",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_cli.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_cli"
+    ],
+    "started": "2026-10-18T04:59:33.013530+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:38.737785+00:00"
+  },
+  {
+    "name": "runtime_datetime",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_datetime.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_datetime"
+    ],
+    "started": "2026-10-18T04:59:34.725529+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:43.553771+00:00"
+  },
+  {
+    "name": "runtime_environment",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_environment.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_environment"
+    ],
+    "started": "2026-10-18T04:59:38.738029+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:46.614214+00:00"
+  },
+  {
+    "name": "runtime_exports",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_exports.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_exports"
+    ],
+    "started": "2026-10-18T04:59:43.554004+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T04:59:49.928680+00:00"
+  },
+  {
+    "name": "runtime_filesystem",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_filesystem.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_filesystem"
+    ],
+    "started": "2026-10-18T04:59:46.614446+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:47.179000+00:00"
+  },
+  {
+    "name": "runtime_generics",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_generics.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_generics"
+    ],
+    "started": "2026-10-18T04:59:47.179223+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:56.608731+00:00"
+  },
+  {
+    "name": "runtime_handles",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_handles.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_handles"
+    ],
+    "started": "2026-10-18T04:59:49.928899+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:58.208564+00:00"
+  },
+  {
+    "name": "runtime_memory",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_memory.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_memory"
+    ],
+    "started": "2026-10-18T04:59:56.608959+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T05:00:04.486637+00:00"
+  },
+  {
+    "name": "runtime_module_build",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_module_build.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_module_build"
+    ],
+    "started": "2026-10-18T04:59:58.208801+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T04:59:58.472910+00:00"
+  },
+  {
+    "name": "runtime_observation",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_observation.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_observation"
+    ],
+    "started": "2026-10-18T04:59:58.473128+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T05:00:06.951674+00:00"
+  },
+  {
+    "name": "runtime_regex",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_regex.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_regex"
+    ],
+    "started": "2026-10-18T05:00:04.486918+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T05:00:14.119441+00:00"
+  },
+  {
+    "name": "runtime_source",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_source.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_source"
+    ],
+    "started": "2026-10-18T05:00:06.951931+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T05:00:15.031891+00:00"
+  },
+  {
+    "name": "runtime_types",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/runtime_types.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/runtime_types"
+    ],
+    "started": "2026-10-18T05:00:14.119648+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T05:00:14.533792+00:00"
+  },
+  {
+    "name": "source_constants",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/source_constants.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/source_constants"
+    ],
+    "started": "2026-10-18T05:00:14.534077+00:00",
+    "exit_code": 1,
+    "finished": "2026-10-18T05:00:20.206585+00:00"
+  },
+  {
+    "name": "string_identity",
+    "command": [
+      "/usr/bin/python3",
+      "/home/alex-ai/language-verification/20261018/compiler/my-try/tests/string_identity.py",
+      "--results",
+      "/home/alex-ai/language-verification/20261018/verification/results/wave-02/string_identity"
+    ],
+    "started": "2026-10-18T05:00:15.032111+00:00",
+    "exit_code": 0,
+    "finished": "2026-10-18T05:00:23.209822+00:00"
+  }
+]

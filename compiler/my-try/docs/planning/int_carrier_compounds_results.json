@@ -1,0 +1,461 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/int-carrier-compounds/20261019-01",
+  "scope": {
+    "new_compound_signatures": 48,
+    "recovery_sequences": 48,
+    "negative_source_checks": {
+      "nullable": 95,
+      "result": 95,
+      "result_or_false": 95,
+      "result_or_bool": 95
+    },
+    "native_counts": {
+      "nullable": {
+        "basic_cases": 260,
+        "rhs_cases": 2440,
+        "property_cases": 2440,
+        "owner_cases": 2440,
+        "static_cases": 2440,
+        "snapshot_cases": 1680,
+        "alias_cases": 20
+      },
+      "result": {
+        "basic_cases": 336,
+        "rhs_cases": 3648,
+        "property_cases": 3648,
+        "owner_cases": 3648,
+        "static_cases": 3648,
+        "snapshot_cases": 1920,
+        "alias_cases": 24
+      },
+      "result_or_false": {
+        "basic_cases": 260,
+        "rhs_cases": 2440,
+        "property_cases": 2440,
+        "owner_cases": 2440,
+        "static_cases": 2440,
+        "snapshot_cases": 1680,
+        "alias_cases": 20
+      },
+      "result_or_bool": {
+        "basic_cases": 336,
+        "rhs_cases": 3648,
+        "property_cases": 3648,
+        "owner_cases": 3648,
+        "static_cases": 3648,
+        "snapshot_cases": 1920,
+        "alias_cases": 24
+      }
+    }
+  },
+  "signatures": [
+    [
+      "?int",
+      "+=",
+      "?int",
+      "?int"
+    ],
+    [
+      "?int",
+      "+=",
+      "int",
+      "?int"
+    ],
+    [
+      "int",
+      "+=",
+      "?int",
+      "int"
+    ],
+    [
+      "?int",
+      "-=",
+      "?int",
+      "?int"
+    ],
+    [
+      "?int",
+      "-=",
+      "int",
+      "?int"
+    ],
+    [
+      "int",
+      "-=",
+      "?int",
+      "int"
+    ],
+    [
+      "?int",
+      "*=",
+      "?int",
+      "?int"
+    ],
+    [
+      "?int",
+      "*=",
+      "int",
+      "?int"
+    ],
+    [
+      "int",
+      "*=",
+      "?int",
+      "int"
+    ],
+    [
+      "?int",
+      "/=",
+      "?int",
+      "?int"
+    ],
+    [
+      "?int",
+      "/=",
+      "int",
+      "?int"
+    ],
+    [
+      "int",
+      "/=",
+      "?int",
+      "int"
+    ],
+    [
+      "result<int>",
+      "+=",
+      "result<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "+=",
+      "int",
+      "result<int>"
+    ],
+    [
+      "int",
+      "+=",
+      "result<int>",
+      "int"
+    ],
+    [
+      "result<int>",
+      "-=",
+      "result<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "-=",
+      "int",
+      "result<int>"
+    ],
+    [
+      "int",
+      "-=",
+      "result<int>",
+      "int"
+    ],
+    [
+      "result<int>",
+      "*=",
+      "result<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "*=",
+      "int",
+      "result<int>"
+    ],
+    [
+      "int",
+      "*=",
+      "result<int>",
+      "int"
+    ],
+    [
+      "result<int>",
+      "/=",
+      "result<int>",
+      "result<int>"
+    ],
+    [
+      "result<int>",
+      "/=",
+      "int",
+      "result<int>"
+    ],
+    [
+      "int",
+      "/=",
+      "result<int>",
+      "int"
+    ],
+    [
+      "result_or_false<int>",
+      "+=",
+      "result_or_false<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "+=",
+      "int",
+      "result_or_false<int>"
+    ],
+    [
+      "int",
+      "+=",
+      "result_or_false<int>",
+      "int"
+    ],
+    [
+      "result_or_false<int>",
+      "-=",
+      "result_or_false<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "-=",
+      "int",
+      "result_or_false<int>"
+    ],
+    [
+      "int",
+      "-=",
+      "result_or_false<int>",
+      "int"
+    ],
+    [
+      "result_or_false<int>",
+      "*=",
+      "result_or_false<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "*=",
+      "int",
+      "result_or_false<int>"
+    ],
+    [
+      "int",
+      "*=",
+      "result_or_false<int>",
+      "int"
+    ],
+    [
+      "result_or_false<int>",
+      "/=",
+      "result_or_false<int>",
+      "result_or_false<int>"
+    ],
+    [
+      "result_or_false<int>",
+      "/=",
+      "int",
+      "result_or_false<int>"
+    ],
+    [
+      "int",
+      "/=",
+      "result_or_false<int>",
+      "int"
+    ],
+    [
+      "result_or_bool<int>",
+      "+=",
+      "result_or_bool<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "+=",
+      "int",
+      "result_or_bool<int>"
+    ],
+    [
+      "int",
+      "+=",
+      "result_or_bool<int>",
+      "int"
+    ],
+    [
+      "result_or_bool<int>",
+      "-=",
+      "result_or_bool<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "-=",
+      "int",
+      "result_or_bool<int>"
+    ],
+    [
+      "int",
+      "-=",
+      "result_or_bool<int>",
+      "int"
+    ],
+    [
+      "result_or_bool<int>",
+      "*=",
+      "result_or_bool<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "*=",
+      "int",
+      "result_or_bool<int>"
+    ],
+    [
+      "int",
+      "*=",
+      "result_or_bool<int>",
+      "int"
+    ],
+    [
+      "result_or_bool<int>",
+      "/=",
+      "result_or_bool<int>",
+      "result_or_bool<int>"
+    ],
+    [
+      "result_or_bool<int>",
+      "/=",
+      "int",
+      "result_or_bool<int>"
+    ],
+    [
+      "int",
+      "/=",
+      "result_or_bool<int>",
+      "int"
+    ]
+  ],
+  "suites": {
+    "focused-03": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "properties": {
+      "commands": 58,
+      "all_expected_exits": true
+    },
+    "carrier_updates": {
+      "commands": 41,
+      "all_expected_exits": true
+    },
+    "float_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_float": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_cross": {
+      "commands": 26,
+      "all_expected_exits": true
+    },
+    "guarded_mixed": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nonbool_sentinel_equality": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "bool_sentinel_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "false_bool_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "result_equality": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "nullable_int_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_float_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "nullable_bool_string_equality": {
+      "commands": 11,
+      "all_expected_exits": true
+    },
+    "eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "numeric_xor": {
+      "commands": 6,
+      "all_expected_exits": true
+    }
+  },
+  "source_integrity": {
+    "checked": 6231,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "4da776ed820919025c7d4d5469f3b221f6bfa9b1cd54c4ffc094cc79aa234d5c",
+  "property_regressions": {
+    "passed": true,
+    "executions": 14
+  },
+  "attempts": {
+    "focused": "Fixture attempted unsupported heap-property reference borrowing; all four preparations rejected.",
+    "focused-final": "Same fixture restriction for static-property reference borrowing.",
+    "focused-03": "Helpers mutate instance/static properties directly; all four carrier proofs pass without changing borrowing support.",
+    "regressions": "All 18 suites and 14 property programs pass."
+  },
+  "runtime_changes": [],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "vl07_progress": {
+    "completed_slices": 20,
+    "binary_signatures": 1680,
+    "unary_signatures": 64,
+    "compound_signatures": 48,
+    "remaining_support_targets": 288,
+    "design_scope_candidates": 1872,
+    "proposed_core_denominator": 2080,
+    "proposed_core_coverage_percent": 86.2
+  }
+}

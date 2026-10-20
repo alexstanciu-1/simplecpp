@@ -1,0 +1,1 @@
+$v vector<unique<int>>; foreach ($v as $p) {} return 0;

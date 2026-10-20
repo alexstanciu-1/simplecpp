@@ -1,0 +1,7 @@
+{
+  "stage": "emitted",
+  "clang": "failed",
+  "errors": [
+    "In file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/callables/n66.hpp:2:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/shared_p.hpp:91:4: error: cannot form a reference to 'void'\n   91 |         T &deref() const {\n      |           ^\n/tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/units/n6d61696e/n6d61696e2e706873.cpp:3:38: note: in instantiation of template class 'scpp::shared_p<void>' requested here\n    3 | void function_f(scpp::shared_p<void> local_s)\n      |                                      ^\nIn file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/callables/n66.hpp:2:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/shared_p.hpp:104:4: error: cannot form a reference to 'void'\n  104 |         T &operator*() const { return deref(); }\n      |           ^\n2 errors generated.\n"
+  ]
+}

@@ -68,7 +68,7 @@ try {
 	file_put_contents($base_path, $base_text);
 	file_put_contents($child_path, $child_text);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->sync([]);
 	$worker = relationship_prepare();

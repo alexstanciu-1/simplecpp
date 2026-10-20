@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S struct field type does not declare value_storable\n"
+}

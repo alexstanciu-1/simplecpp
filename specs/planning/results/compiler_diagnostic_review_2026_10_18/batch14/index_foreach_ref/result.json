@@ -1,0 +1,4 @@
+{
+  "stage": "parse",
+  "error": "main.phs: foreach requires a simple value binding; references and destructuring are deferred at main.phs: byte 37\n"
+}

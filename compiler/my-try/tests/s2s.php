@@ -621,7 +621,7 @@ foreach ($cases as $name => [$source, $exit])
 	Compiler_Lifecycle::reset();
 	$syntax = s2s_parse($source);
 	$before = s2s_snapshot($syntax);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->prepare();
 	$compiler->cpp();
 	$path = $directory . '/' . $name . '.cpp';
@@ -1115,7 +1115,7 @@ foreach ($scope_isolation_rejections as $source => $diagnostic)
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		(new Compiler())->prepare();
+		(new Compiler(new cpp_lowering_options(false)))->prepare();
 	}
 	catch (\RuntimeException $error) {
 		$failed = str_contains($error->getMessage(), $diagnostic);
@@ -1149,7 +1149,6 @@ $rejections = ['function f(int &$x): void {} f(1);',
 	'$x ?int = null; $y = match (1) { 1 => $x, default => $x };',
 	'$x ?int = 1; return $x == null;',
 	'$x ?int = 1; return $x < null;',
-	'$x ?int = 1; return $x + 1;',
 	'function f(?void $x): void {}',
 	'function f(int &$x): void {} $x ?int = 1; f($x);',
 	'function f(?int &$x): void {} f(null);',
@@ -1209,8 +1208,8 @@ foreach ($rejections as $source)
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		(new Compiler())->prepare();
-		(new Compiler())->cpp();
+		(new Compiler(new cpp_lowering_options(false)))->prepare();
+		(new Compiler(new cpp_lowering_options(false)))->cpp();
 	}
 	catch (\RuntimeException $expected) {
 		$failed = true;
@@ -1230,7 +1229,7 @@ $source_reference = object_cast($copy_assignment->value, variable_reference_node
 $source_mutation = object_cast($children[2]->expression, assignment_expression_node::class);
 $copy_reference = object_cast($children[3]->expression, variable_reference_node::class);
 $before = s2s_snapshot($syntax);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $source_binding = $source_declaration->require_preparation();
 $copy_facts = $copy_assignment->require_assignment_preparation();
@@ -1276,7 +1275,7 @@ foreach ($variable_copy_rejections as $name => [$source, $diagnostic])
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		(new Compiler())->prepare();
+		(new Compiler(new cpp_lowering_options(false)))->prepare();
 	}
 	catch (\RuntimeException $error) {
 		$failed = str_contains($error->getMessage(), $diagnostic);
@@ -1298,7 +1297,7 @@ foreach ($integer_addition_rejections as $name => [$source, $diagnostic])
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		(new Compiler())->prepare();
+		(new Compiler(new cpp_lowering_options(false)))->prepare();
 	}
 	catch (\RuntimeException $error) {
 		$failed = str_contains($error->getMessage(), $diagnostic);
@@ -1316,7 +1315,7 @@ $declaration_assignment = object_cast($children[0]->expression, assignment_expre
 $reassignment = object_cast($children[1]->expression, assignment_expression_node::class);
 $result_reference = object_cast($children[2]->expression, variable_reference_node::class);
 $before = s2s_snapshot($syntax);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $declaration_facts = $declaration_assignment->require_assignment_preparation();
 $reassignment_facts = $reassignment->require_assignment_preparation();
@@ -1348,7 +1347,7 @@ if (($declaration_assignment->preparation() !== null) || ($reassignment->prepara
 
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a uint8 = 1; $b = 2; $a = $b; return $a;');
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $compiler->cpp();
 if (!str_contains(CPP_Probe::text(Model::$cpp_files),
@@ -1361,7 +1360,7 @@ $syntax = s2s_parse('$a = 1; $a = $a; return $a;');
 $children = $syntax->root->single_body()->body->statements;
 $self_reassignment = object_cast($children[1]->expression, assignment_expression_node::class);
 $self_reference = object_cast($self_reassignment->value, variable_reference_node::class);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $self_binding = $self_reassignment->require_assignment_preparation()->binding;
 $self_reference_facts = $self_reference->require_variable_reference_preparation();
@@ -1381,7 +1380,7 @@ foreach ($reassignment_rejections as $source => $diagnostic)
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		(new Compiler())->prepare();
+		(new Compiler(new cpp_lowering_options(false)))->prepare();
 	}
 	catch (\RuntimeException $error) {
 		$failed = str_contains($error->getMessage(), $diagnostic);
@@ -1398,7 +1397,7 @@ $children = $syntax->root->single_body()->body->statements;
 $declaration = object_cast($children[0], variable_declaration_node::class);
 $assignment = object_cast($children[1]->expression, assignment_expression_node::class);
 $before = s2s_snapshot($syntax);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $declaration_facts = $declaration->require_preparation();
 $assignment_facts = $assignment->require_assignment_preparation()->binding;
@@ -1430,7 +1429,7 @@ foreach ($typed_local_rejections as $source => $diagnostic)
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		(new Compiler())->prepare();
+		(new Compiler(new cpp_lowering_options(false)))->prepare();
 	}
 	catch (\RuntimeException $error) {
 		$failed = str_contains($error->getMessage(), $diagnostic);
@@ -1452,7 +1451,7 @@ foreach ($string_rejections as $source => $diagnostic)
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
-		(new Compiler())->prepare();
+		(new Compiler(new cpp_lowering_options(false)))->prepare();
 	}
 	catch (\RuntimeException $error) {
 		$failed = str_contains($error->getMessage(), $diagnostic);
@@ -1467,7 +1466,7 @@ foreach (['struct Loop { Loop $next; }', 'struct A { B $b; } struct B { A $a; }'
 {
 	Compiler_Lifecycle::reset();
 	$syntax = s2s_parse($source);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$before = s2s_snapshot($syntax);
 	$failed = false;
 	try {
@@ -1504,7 +1503,7 @@ $children = $syntax->root->single_body()->body->statements;
 $float_node = $children[0]->expression->value;
 $float_data = object_cast($float_node, float_literal_node::class);
 $before = s2s_snapshot($syntax);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $float_facts = $float_data->require_float_literal_preparation();
 $floating = Language_Types::floating(Model::$language_scope);
@@ -1553,7 +1552,7 @@ foreach ($children as $index => $statement) {
 	$string_nodes[] = object_cast($assignment->value, string_literal_node::class);
 }
 $before = s2s_snapshot($syntax);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $string_type = Language_Types::string_type(Model::$language_scope);
 $resolved = Scope_Lookup::types(Model::$global_scope, 'string');
@@ -1599,7 +1598,7 @@ $literal_node = $binding_data->value;
 $literal_data = object_cast($literal_node, boolean_literal_node::class);
 $reference_data = object_cast($children[1]->expression->value, variable_reference_node::class);
 $before = s2s_snapshot($syntax);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $boolean_type = Language_Types::boolean(Model::$language_scope);
 $literal_facts = $literal_data->require_boolean_literal_preparation();
@@ -1612,7 +1611,7 @@ foreach ($syntax->collection->entries as $entry) {
 	}
 }
 $compiler->cpp();
-$expected = "#include \"scpp/bool_t.hpp\"\n#include \"lang/php/cli_context.hpp\"\n\nint main(int argc, char** argv)\n{\n\tscpp::php::set_cli_args(argc, argv);\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n}\n";
+$expected = "#include \"scpp/bool_t.hpp\"\n#include \"lang/php/cli_context.hpp\"\n#include \"scpp/runtime_error.hpp\"\n\nint main(int argc, char** argv)\n{\n// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n\tauto local_a = static_cast<scpp::bool_t>(false);\n\tauto local_b = local_a;\n\treturn static_cast<int>((local_b).native_value());\n\treturn 0;\n// SCPP-ENTRY-CATCH\n\t} catch (const std::exception& failure) {\n\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n";
 if (CPP_Probe::text(Model::$cpp_files) !== $expected) {
 	throw new \LogicException('Unexpected boolean C++ representation or includes');
 }
@@ -1646,7 +1645,7 @@ if ((!$failed) || (s2s_snapshot($syntax) !== $before)) {
 // Preparation and emission are independent; an output failure retains valid facts.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $failed = false;
 try {
 	$compiler->cpp();
@@ -1723,8 +1722,8 @@ if (($nested_literal_data->preparation() !== null) || (s2s_snapshot($syntax) !==
 // Reset must clear the old graph before dropping it, including externally retained nodes.
 Compiler_Lifecycle::reset();
 $syntax = s2s_parse('$a = 10; return $a;');
-(new Compiler())->prepare();
-(new Compiler())->cpp();
+(new Compiler(new cpp_lowering_options(false)))->prepare();
+(new Compiler(new cpp_lowering_options(false)))->cpp();
 $children = $syntax->root->single_body()->body->statements;
 $first_data = $children[0]->expression;
 $first_literal_data = object_cast($first_data->value, integer_literal_node::class);

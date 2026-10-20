@@ -1,0 +1,27 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n4974656d.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Item
+{
+public:
+	scpp::int_t<> field_value = static_cast<scpp::int_t<>>(7LL);
+public:
+};
+
+
+// === entry.cpp ===
+#include "types/n4974656d.hpp"
+#include "scpp/memory.hpp"
+#include "scpp/shared_p.hpp"
+#include "scpp/weak_p.hpp"
+
+int main()
+{
+	auto local_owner = ::scpp::shared<record_Item>();
+	auto local_observer = ::scpp::weak(local_owner);
+	auto local_held = (local_observer).lock();
+	return static_cast<int>(((local_held)->field_value).native_value());
+	return 0;
+}

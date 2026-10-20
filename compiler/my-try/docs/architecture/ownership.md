@@ -241,6 +241,32 @@ retirement membership. Call-owned specialization facts share immutable prepared 
 metadata; they never retain workers or syntax. C++ fragments may retain those same
 read-only helper requests across body reuse. Only live fragments contribute to
 artifact assembly, so unused helper artifacts disappear without a new semantic root.
+C++ fragments also own runtime ABI operation requests: canonical input/result/path
+types and settled operation/conversion decisions or runtime callable/initializer
+bindings. These backend requests are immutable after publication, contain no syntax,
+workers or compact engine IDs, and add no semantic registry. Fragment replacement
+or removal drops them; assembly replays live requests into an invocation-local engine.
+Transient physical operand records do not retain source owners or lifetime analysis.
+Nonempty initializer requests reuse this ownership, retaining the selected factory
+and converted input types, not entries or literal length. Their generated inline
+buffer owns the original runtime initializer buffer for one synchronous call. It
+cannot be copied or moved; entry snapshots remain in the ordinary emitter's scopes.
+Native RAII releases partial contents on append/conversion/factory failure.
+Source construction requests retain settled construction facts and, when selected,
+the existing prepared constructor call, together with the canonical result. They
+reuse fragment retirement and replay. Source payload declarations and methods remain in their existing
+fragments; a transient native-source context selects ordinary physical bindings.
+Assembly separates native method/static/dispatch implementation units from
+application functions. No alternate retained payload graph or specialization cache
+is introduced. Representation demand does not expand into unused ownership forms.
+Source instance method requests retain the existing settled prepared call facts.
+The ordinary call lambda owns receiver retention and ordered argument snapshots;
+the bridge borrows their native addresses for the synchronous invocation. Inline
+receivers and reference arguments preserve storage identity. Result callbacks borrow
+the same addresses until construction finishes and do not escape the invocation.
+Only inputs admitted as mutable by the prepared parameter boundary regain mutable
+pointers inside the result callback.
+
 Runtime argument facts retain source positions, not syntax backlinks. Compiler-call
 preparation may consume type-marker syntax before admitting runtime arguments;
 the ordinary call owns the complete source argument list and its type occurrences.
@@ -393,3 +419,20 @@ handles as current compiler data. Collection positions are not live counts.
 [Storage](../storage/STORAGE.md) defines shared membership and snapshots.
 [AST layout](ast_layout.md) defines typed ownership and inspection.
 [Portability review](../portability/REVIEW.md) tracks lifetime/publication proof gaps.
+
+## Concrete specialization layout dependencies
+
+The C++ binding owner selects physical implementation arguments from existing
+canonical types and runtime bindings. `cpp_type::headers` already describes the
+required headers; the lifecycle worker copies these into engine-owned
+`cpp_specialization_entry::layout_dependencies`. There is no second per-type layout
+list. The declaration emitter copies its assembled header dependencies into
+`cpp_artifact::header_dependencies`, finalized before appending the artifact.
+
+The existing engine uses those assembly-only links to order native layout batches
+through both concrete headers and shared source definitions. It does not walk source
+fields/signatures again or inspect method bodies. Native headers require no generated
+batch; a generated representation header becomes usable after its layout probe.
+Cycles reject before output publication. The native builder resolves/cache-validates
+batches in publication order. Preparation, source identity and registry ownership
+remain unchanged; no retained semantic dependency registry was added.

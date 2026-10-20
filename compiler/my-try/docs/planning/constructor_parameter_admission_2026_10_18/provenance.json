@@ -1,0 +1,11 @@
+{
+  "doc_status": "supporting",
+  "base_revision": "bccaef7fb51b8e9287998cbd5e971ae7f905a573",
+  "source_sha256": {
+    "compiler/my-try/04_analyze/prepare/semantics/constructors.php": "240e49fecf9e83a13e9040e91ba3c8e84ae3f52e29eb19b1fb3085b49ed710bb",
+    "compiler/my-try/tests/constructor_parameters.php": "402e08dcb62842cffc3a9b65b91b25aad3e89131b89b061428bda7893959fcb1",
+    "compiler/my-try/tests/records.py": "9c9d2e9e9a55dd73028b18c55b275a84d525f82e31fef43890c1310a01eade63"
+  },
+  "scope": "DR-04 only; pre-existing documentation and dependency_cleanup.php changes excluded",
+  "native_compiler_rebuilt": false
+}

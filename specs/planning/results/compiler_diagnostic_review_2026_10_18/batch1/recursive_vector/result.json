@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Cyclic by-value declaration dependency\n"
+}

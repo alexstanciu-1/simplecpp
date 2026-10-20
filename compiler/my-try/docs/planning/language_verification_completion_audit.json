@@ -1,0 +1,72 @@
+{
+  "doc_status": "planning",
+  "status": "verification-complete-with-explicit-limitations",
+  "scope": "Completion of the verification plan for the frozen snapshot; not implementation completeness or exhaustive Cartesian behavior.",
+  "counts": {
+    "checks": 119,
+    "families": 36,
+    "probes": 36,
+    "issues": 64,
+    "cards": 330,
+    "sections": 661,
+    "discovery_entries": 997,
+    "runtime_declarations": 198
+  },
+  "check_statuses": {
+    "passed": 105,
+    "failed": 5,
+    "blocked": 6,
+    "deferred": 3
+  },
+  "source_archive_sha256": "b7958fd2f53b3ee901595ff6844cd220147d8d48cb1cd287c3d7fe402c9fd71a",
+  "ledger_sha256": {
+    "language_verification_coverage.json": "460768354741fd93b8a4cd29005e8fb59baa4fe3a6a35769a56ae764d132ce25",
+    "language_verification_inventory.json": "b74615f911559eb2c8b22932585b4c9bd797ec89b05bb28e76ef204a17e7446f",
+    "language_verification_issues.json": "ae0a1a0da8d7cc9ce8412bc8351c32310a07edc3fd0cc8ac77cc076850101e93",
+    "language_verification_catalog_reconciliation.json": "a2fcded1c27b7d614911e409d4c84762097e97c929362adf2b65da1ef31bde9a",
+    "language_verification_section_reconciliation.json": "8abd9cf1df24c397979ac015e765ec808e8882dbdab8d1b94678853f28bbe984",
+    "language_verification_discovery_reconciliation.json": "368d6c2feb011cefff915c7f40c8cf968a9cbd84079fd0e53a5db65cbf3c4c55",
+    "language_verification_runtime_coverage.json": "7d876570035fe14e6b3b12445c5b7cfe823e5d536069295b6ee6e0d599eb50ba",
+    "language_verification_strict_reconciliation.json": "7c42e25b425a1a867252700e06e87f5c8a4beab2ceba90370cfa754ca1b49625"
+  },
+  "completion_gates": [
+    {
+      "requirement": "Every planned check and probe has evidence or blocker/deferral",
+      "status": "satisfied-with-explicit-scope",
+      "evidence": "119 assertion-bearing checks, 36 exact probe mappings, 211 resolving archived run references. All failed/blocked/deferred checks retain issue ownership and remaining boundaries."
+    },
+    {
+      "requirement": "Every failure/blocker has a classified owner and next action",
+      "status": "satisfied-with-explicit-scope",
+      "evidence": "64 issue records with semantic disposition, four-class handling, owner, dependencies, next action and evidence. Strict source issues and check issues resolve; optional-service blockers are not passes."
+    },
+    {
+      "requirement": "Every in-scope catalog/discovery/runtime entry is reconciled",
+      "status": "satisfied-with-explicit-scope",
+      "evidence": "330 cards and 661 sections retain assertion-level authority/evidence/disposition reviews; 997 discovery entries include 126 strict cases bijective with original differential evidence. 198 runtime declarations each have use, module visibility, failure-contract mapping and remaining limits. Chapter10 and output routes corrected; navigation links are not blanket proof."
+    },
+    {
+      "requirement": "Final report shows families, layers, outcomes, intentional differences, limits and queues",
+      "status": "satisfied-with-explicit-scope",
+      "evidence": "Report includes 36 family rows, six proof dimensions (native compiler parity deferred), original versus semantic strict counts, operator limits, failed/blocked/deferred checks and all 64 issue groups in four queues."
+    },
+    {
+      "requirement": "Proposed simple-fix batch is explicit with settled acceptance",
+      "status": "satisfied-with-explicit-scope",
+      "evidence": "fixture-oracles-01 contains six exact issue IDs with archived passing adaptations and acceptance criteria; no production repair or new goal authorized."
+    }
+  ],
+  "evidence_locator_audit": {
+    "coverage_run_references": 211,
+    "missing_run_references": 0,
+    "referenced_evidence_files": 47,
+    "missing_files": 0,
+    "compressed_json_integrity": "all referenced compressed JSON parsed successfully",
+    "scope": "Existence and archive readability only; assertion-level meaning remains in per-check and per-section reviews."
+  },
+  "report_sha256": "3adb65787cac2aaf6e1f6ebe3bb61e82c74087476dd5a376fbc36ac4d39d17c5",
+  "subsequent_repair_note": "The ledger/report hashes above identify the verification-closeout versions. The issue ledger and report were subsequently annotated with the separately authorized 2026-10-19 fixture repairs; original verification evidence remains unchanged.",
+  "subsequent_repairs": [
+    "fixture_repairs_01_results.json"
+  ]
+}

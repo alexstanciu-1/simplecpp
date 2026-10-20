@@ -1,0 +1,6 @@
+$table hash<string> = ["x" => "present"];
+$present = isset($table["x"]);
+$text string = "";
+$blank = empty($text);
+unset($table["x"]);
+return $present && $blank && !isset($table["x"]) ? 0 : 1;

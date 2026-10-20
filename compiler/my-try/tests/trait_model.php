@@ -27,7 +27,7 @@ $consumers = 'namespace app; use features\\Counter as Counted; class A { use Cou
 try {
 	file_put_contents($trait_path, $traits); file_put_contents($consumer_path, $consumers);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]);
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]);
 	$trait = trait_model_owner('features\\Counter');
 	$a = trait_model_owner('app\\A'); $b = trait_model_owner('app\\B');
 	trait_model_check($trait instanceof collected_trait && !($trait instanceof collected_record), 'Trait acquired record identity');

@@ -5,6 +5,7 @@
   "types": [{"id":"filesystem.file_lock_handle","name":"file_lock_handle","kind":"class","storage":"shared","capabilities":["result_payload"]}],
   "cpp_types": [{"id":"filesystem.file_lock_handle","symbol":"scpp::fs::file_lock","header":"modules/filesystem/file_lock.hpp"}],
   "functions": [
+    {"id":"filesystem.fs_is_windows","name":"fs_is_windows","parameters":[],"returns":"bool"},
     {"id":"filesystem.fs_lock_try","name":"fs_lock_try","parameters":[{"name":"out","type":"file_lock_handle","passing":"reference"},{"name":"path","type":"string","passing":"value"},{"name":"shared","type":"bool","passing":"value","default":{"bool":false}}],"returns":{"name":"result","arguments":["bool"]}},
     {"id":"filesystem.fs_lock_release","name":"fs_lock_release","parameters":[{"name":"handle","type":"file_lock_handle","passing":"value"}],"returns":{"name":"result","arguments":["bool"]}},
     {"id":"filesystem.fs_lock_transfer","name":"fs_lock_transfer","parameters":[{"name":"handle","type":"file_lock_handle","passing":"value"}],"returns":{"name":"result","arguments":["file_lock_handle"]}},
@@ -29,6 +30,7 @@
     {"id":"filesystem.fs_read_snapshot","name":"fs_read_snapshot","parameters":[{"name":"path","type":"string","passing":"value"},{"name":"expected_mtime","type":"int","passing":"value"},{"name":"expected_size","type":"int","passing":"value"}],"returns":{"name":"result","arguments":["string"]}}
   ],
   "cpp": [
+    {"id":"filesystem.fs_is_windows","symbol":"scpp::fs::is_windows","header":"modules/filesystem/filesystem.hpp"},
     {"id":"filesystem.fs_lock_try","symbol":"scpp::fs::lock_try","header":"modules/filesystem/file_lock.hpp"},
     {"id":"filesystem.fs_lock_release","symbol":"scpp::fs::lock_release","header":"modules/filesystem/file_lock.hpp"},
     {"id":"filesystem.fs_lock_transfer","symbol":"scpp::fs::lock_transfer","header":"modules/filesystem/file_lock.hpp"},

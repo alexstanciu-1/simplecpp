@@ -1,0 +1,6 @@
+$value dynamic;
+$failure error;
+$text string = "";
+if (!take($value, $failure, json_decode("{\"n\":7}"))) { return 1; }
+if (!take($text, $failure, json_encode($value))) { return 2; }
+return 0;

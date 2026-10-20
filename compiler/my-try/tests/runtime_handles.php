@@ -20,7 +20,7 @@ function handle_compile(string $source): string
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->exec_cpp();
 	$text = CPP_Probe::text(Model::$cpp_files);
 	$compiler->exec_cpp();
@@ -162,7 +162,7 @@ foreach ($cases as $name => $source) {
 	file_put_contents($directory . '/' . $name . '.cpp', handle_compile($source));
 }
 $null_source = 'function argument(): int { echo "unexpected"; return 1; } $a ticket = null; $a->change(argument()); return 91;';
-$null_cpp = str_replace('int main(int argc, char** argv)', 'int observed_entry(int argc = 0, char** argv = nullptr)',
+$null_cpp = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint observed_entry(int argc = 0, char** argv = nullptr)",
 	handle_compile($null_source));
 $null_cpp .= "\nint main() { try { observed_entry(); } catch (const scpp::runtime_error&) { return 0; } return 92; }\n";
 file_put_contents($directory . '/null_receiver.cpp', $null_cpp);

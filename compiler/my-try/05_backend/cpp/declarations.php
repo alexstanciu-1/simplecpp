@@ -5,6 +5,28 @@ namespace scpp\compiler;
 
 final class CPP_Declarations
 {
+	/** Change value category using the already prepared physical type, without a template helper. */
+	public static function move(string $value, canonical_type_use $type, cpp_generation_context $context, bool $read_only = false): string
+	{
+		if (!$context->concrete_types()) {
+			$context->headers['utility'] = true;
+			return 'std::move(' . $value . ')';
+		}
+		return 'static_cast<' . ($read_only ? 'const ' : '')
+			. self::type_for($type, $context, cpp_type_requirement::declaration) . '&&>(' . $value . ')';
+	}
+
+	/** Preparation owns output admission; the bridge only changes physical transport. */
+	public static function output(string $expression, canonical_type_use $type, cpp_generation_context $context): string
+	{
+		// Native representations also need the compiled output boundary.
+		if ($context->concrete_types()) {
+			return CPP_Runtime_Operations::output($expression, $type, $context);
+		}
+		$context->headers['lang/php/support/php_string.hpp'] = true;
+		return '::scpp::php::echo_one(' . $expression . ')';
+	}
+
 	/** Render settled access without interpreting source modifiers or ancestry. */
 	public static function visibility(member_visibility $visibility): string
 	{
@@ -27,7 +49,7 @@ final class CPP_Declarations
 	public static function type_for(canonical_type_use $type, cpp_generation_context $context,
 		cpp_type_requirement $requirement): string
 	{
-		$mapping = CPP_Types::representation_for($type, $requirement);
+		$mapping = CPP_Types::representation_for($type, $requirement, $context);
 		CPP_Types::record_dependencies($mapping, $context);
 
 		return $mapping->spelling;
@@ -36,6 +58,10 @@ final class CPP_Declarations
 	/** Render only the operation selected by shared conversion preparation. */
 	public static function conversion(string $expression, conversion_decision $decision, cpp_generation_context $context): string
 	{
+
+		if (CPP_Runtime_Operations::concrete_conversion($decision, $context)) {
+			return CPP_Runtime_Operations::convert($expression, $decision, $context);
+		}
 		if ($decision->operation === conversion_operation::callable_wrap) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
@@ -47,6 +73,16 @@ final class CPP_Declarations
 			// The runtime's converting handle constructor needs complete ancestry, not just forward declarations.
 			self::type($decision->source_type, $context);
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+		}
+		if ($decision->operation === conversion_operation::required_payload_text) {
+			$context->headers['lang/php/support/php_string.hpp'] = true;
+			return 'scpp::php::to_string((' . $expression . ').require_value("text: required Result payload"))';
+		}
+		if ($decision->operation === conversion_operation::optional_payload_text) {
+			$context->headers['lang/php/support/php_string.hpp'] = true;
+			return '[](const auto& text_value) { return text_value.has_value().native_value()'
+				. ' ? scpp::php::to_string(text_value.require_value("text: present payload")) : scpp::string_t{}; }('
+				. $expression . ')';
 		}
 		if ($decision->operation === conversion_operation::text_conversion) {
 			$context->headers['lang/php/support/php_string.hpp'] = true;
@@ -61,6 +97,7 @@ final class CPP_Declarations
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
 		if (($decision->operation === conversion_operation::result_wrap)
+			|| ($decision->operation === conversion_operation::result_error)
 			|| ($decision->operation === conversion_operation::result_false)
 			|| ($decision->operation === conversion_operation::result_true)) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
@@ -73,11 +110,15 @@ final class CPP_Declarations
 			return self::type($decision->target_type, $context) . '((' . $expression
 				. ').require_value("Result required-value extraction"))';
 		}
+		if ($decision->operation === conversion_operation::integer_to_floating) {
+			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+		}
 		if ($decision->operation === conversion_operation::integer_value_cast) {
 			return 'static_cast<' . self::type($decision->target_type, $context)
 				. '>((' . $expression . ').native_value())';
 		}
 		if ($decision->operation === conversion_operation::boxed_extract) {
+			if ($context->concrete_types()) { throw new \RuntimeException('prelower_templates: boxed extraction requires concrete transport'); }
 			$context->headers['scpp/cast.hpp'] = true;
 			return 'scpp::required_cast<' . self::type($decision->target_type, $context)
 				. '>(' . $expression . ')';
@@ -109,6 +150,9 @@ final class CPP_Declarations
 			|| ($decision->operation === truthiness_operation::error_condition)
 			|| ($decision->operation === truthiness_operation::result_condition)
 			|| ($decision->operation === truthiness_operation::nullable_condition)) {
+			if (($context->specialization_engine !== null) && ($decision->operation === truthiness_operation::scalar_condition)
+				&& (Type_Queries::canonical($decision->source_type)->family() === type_family::integer)) { return '((' . $expression . ').native_value() != 0)'; }
+			if ($context->concrete_types()) { throw new \RuntimeException('prelower_templates: runtime condition requires concrete transport'); }
 			if ($decision->operation === truthiness_operation::nullable_condition) {
 				$context->headers['scpp/cast.hpp'] = true;
 			}
@@ -167,7 +211,7 @@ final class CPP_Declarations
 	public static function parameter_type(callable_parameter $parameter, cpp_generation_context $context, bool $prototype): string
 	{
 		$reference = $parameter->mode === passing_mode::reference;
-		$mapping = CPP_Types::parameter_representation($parameter, self::signature_requirement($prototype, $reference));
+		$mapping = CPP_Types::parameter_representation($parameter, self::signature_requirement($prototype, $reference), $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		return $mapping->spelling;
 	}
@@ -175,7 +219,7 @@ final class CPP_Declarations
 	public static function return_type(callable_signature $signature, cpp_generation_context $context, bool $prototype): string
 	{
 		$reference = $signature->reference_return !== null;
-		$mapping = CPP_Types::return_representation($signature, self::signature_requirement($prototype, $reference));
+		$mapping = CPP_Types::return_representation($signature, self::signature_requirement($prototype, $reference), $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		return $mapping->spelling;
 	}
@@ -186,7 +230,7 @@ final class CPP_Declarations
 		$text = '';
 		$base = $method->callable_syntax()->require_body()->base_initialization;
 		if ($base !== null) {
-			$mapping = CPP_Types::payload($base->base_type);
+			$mapping = CPP_Types::payload($base->base_type, $context);
 			CPP_Types::record_dependencies($mapping, $context);
 			$arguments /** Storage<expression_node> */ = new Storage /** Storage<expression_node> */();
 			$source_call = weakref_get($base->source_call);
@@ -307,7 +351,7 @@ final class CPP_Declarations
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$requirement = Type_Queries::is_nominal_handle($type)
 				? cpp_type_requirement::declaration : cpp_type_requirement::complete;
-			$representation = CPP_Types::representation_for($type, $requirement);
+			$representation = CPP_Types::representation_for($type, $requirement, $context);
 			CPP_Types::record_dependencies($representation, $context);
 			$text .= self::visibility($field->visibility);
 			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
@@ -331,7 +375,7 @@ final class CPP_Declarations
 		$constructor = weakref_get($syntax->require_preparation()->constructor);
 		if ($constructor !== null) {
 			if ($constructor->declaring_type() !== $syntax->occurrence()) {
-				$base_mapping = CPP_Types::payload($syntax->require_preparation()->base_type);
+				$base_mapping = CPP_Types::payload($syntax->require_preparation()->base_type, $context);
 				$text .= "\tusing " . $base_mapping->spelling . '::' . $base_mapping->spelling . ";\n";
 			}
 		}
@@ -458,7 +502,7 @@ final class CPP_Declarations
 		}
 		if ($facts->receiver !== null) {
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
-			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type), $context);
+			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context);
 			$value = 'this';
 			$arrow = true;
 			if ($receiver->lifetime !== method_receiver_lifetime::current_instance) {
@@ -476,23 +520,34 @@ final class CPP_Declarations
 			}
 			$target = weakref_get($facts->target);
 			if ($target instanceof runtime_function_definition) {
-				$member_name = CPP_Callables::reference($target, $context);
+				$member_name = '';
+				$engine = $context->specialization_engine;
+				if ($engine !== null) { $member_name = CPP_Concrete_Members::reference($facts, $context); }
+				else { $member_name = CPP_Callables::reference($target, $context); }
 				$callee = $name . ($arrow ? '->' : '.') . $member_name;
 				return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 			}
-			$method = object_cast($target, collected_method::class);
-			$qualification = '';
-			if ($receiver->dispatch_type !== null) {
-				$mapping = CPP_Types::payload($receiver->dispatch_type);
-				CPP_Types::record_dependencies($mapping, $context);
-				$qualification = $mapping->spelling . '::';
-			}
-			$member_name = CPP_Generator::source_name('method', $method->name);
-			if ($receiver->dispatch_type !== null) { $member_name = CPP_Callables::method_name($method); }
-			$callee = $name . ($arrow ? '->' : '.') . $qualification . $member_name;
+			$callee = self::method_reference($facts, $name, $arrow, $context);
 			return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 		}
 		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context, '', null, '');
+	}
+
+	/** One source dispatch spelling for ordinary calls and concrete ABI bridges. */
+	public static function method_reference(prepared_call $facts, string $name, bool $arrow, cpp_generation_context $context): string
+	{
+		$receiver /** prepared_method_receiver */ = $facts->receiver;
+		$method = object_cast(weakref_get($facts->target), collected_method::class);
+		CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context);
+		$qualification = '';
+		if ($receiver->dispatch_type !== null) {
+			$mapping = CPP_Types::payload($receiver->dispatch_type, $context);
+			CPP_Types::record_dependencies($mapping, $context);
+			$qualification = $mapping->spelling . '::';
+		}
+		$member_name = CPP_Generator::source_name('method', $method->name);
+		if ($receiver->dispatch_type !== null) { $member_name = CPP_Callables::method_name($method); }
+		return $name . ($arrow ? '->' : '.') . $qualification . $member_name;
 	}
 
 	/** Discard without copying; qualifier temporaries end before the selected operation. */
@@ -516,8 +571,16 @@ final class CPP_Declarations
 	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
 	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type,
-		string $prefix): string
+		string $prefix, ?cpp_runtime_operation $transport = null): string
 	{
+
+		if (($transport === null) && ($context->concrete_types() && ($facts->receiver === null))
+			&& (weakref_get($facts->target) instanceof runtime_function_definition)) {
+			if (($callee !== '') || ($prefix !== '') || ($constructed_type !== null)) {
+				throw new \RuntimeException('prelower_templates: receiver call transport is not yet implemented');
+			}
+			return CPP_Runtime_Operations::call($facts, $arguments, $context);
+		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		if (q_count($prepared_arguments) === 1) {
@@ -532,6 +595,7 @@ final class CPP_Declarations
 		$result_type = $constructed_type ?? $facts->type;
 		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
 		$text .= $prefix;
+		$physical_arguments /** vector<string> */ = [];
 		$names = '';
 		$separator = '';
 		if ($constructed_type !== null) {
@@ -557,9 +621,9 @@ final class CPP_Declarations
 			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
 			$argument_requirement = self::signature_requirement(false, $boundary === value_boundary_operation::bind_reference);
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {
-				$context->headers['utility'] = true;
-				$name = 'std::move(' . $name . ')';
+				$name = self::move($name, $argument_type, $context, $parameter->access === storage_access::read_only);
 			}
 			if ($index < $facts->fixed_count) {
 				$names .= $separator . $name;
@@ -576,8 +640,8 @@ final class CPP_Declarations
 			$name = 'default_argument_' . $context->next_temporary;
 			$context->next_temporary++;
 			$text .= self::type_for($parameters[$index]->type, $context, cpp_type_requirement::stored_value) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
-			$context->headers['utility'] = true;
-			$names .= $separator . 'std::move(' . $name . ')';
+			if ($transport !== null) { $physical_arguments[] = $name; }
+			$names .= $separator . self::move($name, $parameters[$index]->type, $context);
 			$separator = ', ';
 		}
 		if ($facts->variadic_parameter !== null) {
@@ -585,6 +649,9 @@ final class CPP_Declarations
 			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
 		}
 
+		if ($transport !== null) {
+			return $text . "\treturn " . CPP_Runtime_Operations::invoke($transport, $physical_arguments, $context) . ";\n}())";
+		}
 		$reference = $callee;
 		if ($callee === '') {
 			if ($facts->specialization !== null) {
@@ -633,7 +700,7 @@ final class CPP_Declarations
 		}
 		$base = $syntax->base;
 		// A reference declaration does not supply the layout needed by member access.
-		$payload = CPP_Types::payload($facts->record_type);
+		$payload = CPP_Types::payload($facts->record_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
 		$arrow = ($facts->receiver_storage !== record_storage_kind::inline_value)
 			|| $base->require_preparation()->type->by_value();

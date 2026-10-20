@@ -1,0 +1,267 @@
+{
+  "doc_status": "planning",
+  "base_revision": "df056d90",
+  "modules": [
+    {
+      "module": "core",
+      "type_count": 3,
+      "function_contracts": 21,
+      "types": [
+        {
+          "id": "core.Exception",
+          "name": "Exception",
+          "parameters": [],
+          "capabilities": [],
+          "storage": "shared",
+          "protocols": []
+        },
+        {
+          "id": "core.vector",
+          "name": "vector",
+          "parameters": [
+            {
+              "name": "Value",
+              "requires": [
+                "value_storable"
+              ],
+              "capability_dependencies": [
+                "copyable_value"
+              ]
+            }
+          ],
+          "capabilities": [
+            "copyable_value",
+            "value_storable",
+            "result_payload"
+          ],
+          "storage": "inline",
+          "protocols": [
+            "initialization",
+            "indexing",
+            "iteration"
+          ]
+        },
+        {
+          "id": "core.hash",
+          "name": "hash",
+          "parameters": [
+            {
+              "name": "Value",
+              "requires": [
+                "value_storable"
+              ],
+              "capability_dependencies": [
+                "copyable_value"
+              ]
+            },
+            {
+              "name": "Key",
+              "requires": [
+                "hashable",
+                "comparable"
+              ],
+              "default": "string",
+              "capability_dependencies": [
+                "copyable_value"
+              ]
+            }
+          ],
+          "capabilities": [
+            "copyable_value",
+            "value_storable",
+            "result_payload"
+          ],
+          "storage": "inline",
+          "protocols": [
+            "initialization",
+            "indexing",
+            "iteration"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "datetime",
+      "type_count": 0,
+      "function_contracts": 11,
+      "types": []
+    },
+    {
+      "module": "filesystem",
+      "type_count": 1,
+      "function_contracts": 22,
+      "types": [
+        {
+          "id": "filesystem.file_lock_handle",
+          "name": "file_lock_handle",
+          "parameters": [],
+          "capabilities": [
+            "result_payload"
+          ],
+          "storage": "shared",
+          "protocols": []
+        }
+      ]
+    },
+    {
+      "module": "json",
+      "type_count": 3,
+      "function_contracts": 16,
+      "types": [
+        {
+          "id": "json.json_document",
+          "name": "json_document",
+          "parameters": [],
+          "capabilities": [
+            "result_payload"
+          ],
+          "storage": "shared",
+          "protocols": []
+        },
+        {
+          "id": "json.json_node",
+          "name": "json_node",
+          "parameters": [],
+          "capabilities": [
+            "result_payload"
+          ],
+          "storage": "shared",
+          "protocols": []
+        },
+        {
+          "id": "json.json_parse_error",
+          "name": "json_parse_error",
+          "parameters": [],
+          "capabilities": [
+            "result_payload"
+          ],
+          "storage": "shared",
+          "protocols": []
+        }
+      ]
+    },
+    {
+      "module": "process",
+      "type_count": 2,
+      "function_contracts": 5,
+      "types": [
+        {
+          "id": "process.process_handle",
+          "name": "process_handle",
+          "parameters": [],
+          "capabilities": [
+            "result_payload"
+          ],
+          "storage": "shared",
+          "protocols": []
+        },
+        {
+          "id": "process.process_output",
+          "name": "process_output",
+          "parameters": [],
+          "capabilities": [
+            "result_payload"
+          ],
+          "storage": "shared",
+          "protocols": []
+        }
+      ]
+    },
+    {
+      "module": "regex",
+      "type_count": 0,
+      "function_contracts": 18,
+      "types": []
+    },
+    {
+      "module": "source",
+      "type_count": 3,
+      "function_contracts": 13,
+      "types": [
+        {
+          "id": "source.source_buffer",
+          "name": "source_buffer",
+          "parameters": [],
+          "capabilities": [
+            "value_storable",
+            "copyable_value"
+          ],
+          "storage": "inline",
+          "protocols": []
+        },
+        {
+          "id": "source.source_line_index",
+          "name": "source_line_index",
+          "parameters": [],
+          "capabilities": [
+            "value_storable",
+            "copyable_value"
+          ],
+          "storage": "inline",
+          "protocols": []
+        },
+        {
+          "id": "source.source_location",
+          "name": "source_location",
+          "parameters": [],
+          "capabilities": [
+            "value_storable",
+            "copyable_value"
+          ],
+          "storage": "inline",
+          "protocols": []
+        }
+      ]
+    },
+    {
+      "module": "strings",
+      "type_count": 2,
+      "function_contracts": 65,
+      "types": [
+        {
+          "id": "strings.string_parts_builder",
+          "name": "string_parts_builder",
+          "parameters": [],
+          "capabilities": [
+            "value_storable",
+            "copyable_value"
+          ],
+          "storage": "inline",
+          "protocols": []
+        },
+        {
+          "id": "strings.text_builder",
+          "name": "text_builder",
+          "parameters": [],
+          "capabilities": [
+            "value_storable",
+            "copyable_value"
+          ],
+          "storage": "inline",
+          "protocols": []
+        }
+      ]
+    }
+  ],
+  "proofs": {
+    "runtime_inventory": "PASS",
+    "runtime_types": "PASS",
+    "runtime_protocols": "PASS"
+  },
+  "demand_proof": {
+    "catalogs_loaded": 8,
+    "requested": "hash<vector<int>,string>",
+    "generated_types": [
+      "int",
+      "vector<int>",
+      "hash<vector<int>,string>"
+    ],
+    "repeat_changes_output": false,
+    "repeat_changes_semantic_types": false,
+    "fresh_engine_inherits_demand": false
+  },
+  "limits": [
+    "PHP-host emission proof, not native compilation",
+    "No claim of complete runtime metadata or operation coverage"
+  ]
+}

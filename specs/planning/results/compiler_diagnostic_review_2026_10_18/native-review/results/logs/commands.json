@@ -1,0 +1,516 @@
+[
+  {
+    "name": "has_include-publish",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "publish",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/publish.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.189,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-publish",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "publish",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/publish.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.189,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "has_include_pch-publish",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "publish",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/publish.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.187,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "has_include-cold",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.709,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-cold",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.829,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "has_include-warm",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.329,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-warm",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.41,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-execute",
+    "command": [
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 7,
+    "expected": 7,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "failures-publish-invalid",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "publish",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/publish-invalid.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.208,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "has_include-added-file",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.439,
+    "code": 1,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-invalid-compile",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.469,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-retry-compile",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.479,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-publish-link-invalid",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "publish",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/publish-link-invalid.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.156,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-missing-definition",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.522,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-publish-repair",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "publish",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/publish-repair.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.183,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-repair",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.43,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-digest-mismatch",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.172,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-digest-repair",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.412,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-publish-header",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "publish",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/publish-header.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.172,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-header-cold",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.597,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-same-stat-header",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.419,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-header-repair",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.324,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "has_include_pch-cold",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/runtime",
+      "pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 5.966,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-corrupt-objects",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.395,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-warm-again",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.309,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-corrupt-executable",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.492,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "failures-repaired-execute",
+    "command": [
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/dbb4885e7da69b79e8a71193fde91df165e90b25f6e49a48373797e914e96ef6.bin"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 7,
+    "expected": 7,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "failures-pending-publication",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/failures/runtime",
+      "no-pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.154,
+    "code": 1,
+    "expected": 1,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "has_include_pch-warm",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/runtime",
+      "pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.511,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "has_include_pch-added-file",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/native-review/driver.php",
+      "build",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/published",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/cache",
+      "/tmp/mytry-diagnostic-review/native-review/results/has_include_pch/runtime",
+      "pch"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.159,
+    "code": 1,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  }
+]

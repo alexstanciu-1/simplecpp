@@ -45,7 +45,7 @@ PHS,
 foreach ($cases as $name => $source) {
 	compound_test_source($source);
 	$cpp = CPP_Probe::text(Model::$cpp_files);
-	$compiler = new Compiler(); $compiler->prepare(); $compiler->cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->prepare(); $compiler->cpp();
 	if ($cpp !== CPP_Probe::text(Model::$cpp_files)) { throw new \LogicException('Compound no-op changed output'); }
 	file_put_contents($argv[1] . '/' . $name . '.cpp', $cpp);
 }

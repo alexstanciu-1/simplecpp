@@ -1,0 +1,198 @@
+{
+  "counters": {
+    "direct-O0": {
+      "output_sha256": "50342f7277128386418201adf875a26de5f22e69cfa5f16bdfa05cde9b94e440",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "reference_proof": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "direct-O2": {
+      "output_sha256": "50342f7277128386418201adf875a26de5f22e69cfa5f16bdfa05cde9b94e440",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "reference_proof": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "direct-sanitized": {
+      "output_sha256": "0c43ce89cc43d474ac8901d805076853aec14594f9001a2ff29b215e17aaf205",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "reference_proof": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "composed-O0": {
+      "output_sha256": "50342f7277128386418201adf875a26de5f22e69cfa5f16bdfa05cde9b94e440",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "reference_proof": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "composed-O2": {
+      "output_sha256": "50342f7277128386418201adf875a26de5f22e69cfa5f16bdfa05cde9b94e440",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "reference_proof": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "composed-sanitized": {
+      "output_sha256": "0c43ce89cc43d474ac8901d805076853aec14594f9001a2ff29b215e17aaf205",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "reference_proof": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    }
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-concrete-init-final/cache-direct/artifacts/141cb950f0a8a0dcb3fd0e51593d89e6f42dfac8421da9b89d6ff9e7159775d7.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "executable": "/tmp/prelower-concrete-init-final/cache-direct/artifacts/141cb950f0a8a0dcb3fd0e51593d89e6f42dfac8421da9b89d6ff9e7159775d7.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-concrete-init-final/cache-direct/artifacts/4a089dfdc94f8b4c2c4956393fd89775fc0ab267c9ac92c226739643e7c0657f.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "executable": "/tmp/prelower-concrete-init-final/cache-direct/artifacts/4a089dfdc94f8b4c2c4956393fd89775fc0ab267c9ac92c226739643e7c0657f.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-concrete-init-final/cache-composed/artifacts/c6d729f0a4965c9ea556d8c9acb60407bb23844d2be4fef0e0d31d419d8bb809.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "executable": "/tmp/prelower-concrete-init-final/cache-composed/artifacts/c6d729f0a4965c9ea556d8c9acb60407bb23844d2be4fef0e0d31d419d8bb809.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-concrete-init-final/cache-composed/artifacts/1321e7624a7022d5dfd9b1dcda636c0b59204a964a2406dc30eedcfd55a81c03.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "executable": "/tmp/prelower-concrete-init-final/cache-composed/artifacts/1321e7624a7022d5dfd9b1dcda636c0b59204a964a2406dc30eedcfd55a81c03.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-concrete-init-final/cache-composed/artifacts/8e3dc6feb8866302813abb2f3961cb37510a370ebc69a975620421e082e8ac13.bin",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "executable": "/tmp/prelower-concrete-init-final/cache-composed/artifacts/5acb769e78c87bf318ab4aa40687c83a930e9846bcc3fa67d24a18b8dff7714f.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "executable": "/tmp/prelower-concrete-init-final/cache-composed/artifacts/c6d729f0a4965c9ea556d8c9acb60407bb23844d2be4fef0e0d31d419d8bb809.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ],
+  "proof_seconds": 167.23,
+  "legacy_proof_seconds": 221.1,
+  "portability": {
+    "checked": 4,
+    "cache": {
+      "listed_directories": 1,
+      "read_sources": 4,
+      "tokenized": 4,
+      "loaded_tokens": 0
+    }
+  },
+  "accounting": {
+    "emitted": 250,
+    "total": 285,
+    "first_failures": {
+      "prelower_templates: binary operation needs a concrete family adapter": 29,
+      "prelower_templates: noninteger checked casts need a concrete adapter": 3,
+      "prelower_templates: indexed compound assignment is not in the first slice": 1,
+      "prelower_templates: runtime call needs an adapter: core.strlen": 1,
+      "prelower_templates: container operation requires an admitted family adapter": 1
+    }
+  },
+  "accounting_whole_program": {
+    "ok": false,
+    "stage": "cpp",
+    "error": "prelower_templates: binary operation needs a concrete family adapter",
+    "trace": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1029): scpp\\compiler\\CPP_Concrete_Operations::binary()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(1020): scpp\\compiler\\CPP_Generator::render_eager_binary()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(873): scpp\\compiler\\CPP_Generator::render_binary_decision()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#7 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#8 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#9 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#10 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#11 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(304): scpp\\compiler\\CPP_Syntax->expression()\n#12 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(292): scpp\\compiler\\CPP_Syntax->native_condition()\n#13 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(208): scpp\\compiler\\CPP_Syntax->generate_if()\n#14 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#15 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(373): scpp\\compiler\\CPP_Generator::generate_statements()\n#16 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(137): scpp\\compiler\\CPP_Generator->render()\n#17 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(306): scpp\\compiler\\CPP_Generator->generate_program()\n#18 /home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_concrete_coverage_2026_10_19/probe.php(16): scpp\\compiler\\Compiler->cpp()\n#19 {main}"
+  }
+}

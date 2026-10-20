@@ -1,0 +1,98 @@
+{
+  "cold": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin",
+    "compiled": 2,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"9f1609e8f6f0162c4e13e8f73269a571ce6c759f18e99b22ca6204590c5b54cf\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin\",\"sha256\":\"bfdb92a8dd1254bdb4c6e5c5c3ed8dc5d8ed0b942a30c2ba2131948604d2972a\"}\n"
+  },
+  "warm": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin",
+    "compiled": 0,
+    "reused": 2,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"9f1609e8f6f0162c4e13e8f73269a571ce6c759f18e99b22ca6204590c5b54cf\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin\",\"sha256\":\"bfdb92a8dd1254bdb4c6e5c5c3ed8dc5d8ed0b942a30c2ba2131948604d2972a\"}\n"
+  },
+  "invalid-compile": {
+    "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/results/failures/published/answer.cpp:1:21: error: use of undeclared identifier 'missing'; did you mean 'using'?\n    1 | int answer(){return missing;}\n      |                     ^~~~~~~\n      |                     using\n/tmp/mytry-diagnostic-review/native-review/results/failures/published/answer.cpp:1:21: error: expected expression\n2 errors generated.\n",
+    "status": "pending\n"
+  },
+  "retry-compile": {
+    "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/results/failures/published/answer.cpp:1:21: error: use of undeclared identifier 'missing'; did you mean 'using'?\n    1 | int answer(){return missing;}\n      |                     ^~~~~~~\n      |                     using\n/tmp/mytry-diagnostic-review/native-review/results/failures/published/answer.cpp:1:21: error: expected expression\n2 errors generated.\n",
+    "status": "pending\n"
+  },
+  "missing-definition": {
+    "error": "Native compilation failed: /usr/bin/ld: /tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/4bf97418cc2e4c8de5d8cd2c8effd0ea1d5c911f262a217f6bda934702828bb1.o: in function `main':\nentry.cpp:(.text+0x10): undefined reference to `answer()'\nclang++: error: linker command failed with exit code 1 (use -v to see invocation)\n",
+    "status": "pending\n"
+  },
+  "repair": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin",
+    "compiled": 0,
+    "reused": 2,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"9f1609e8f6f0162c4e13e8f73269a571ce6c759f18e99b22ca6204590c5b54cf\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin\",\"sha256\":\"bfdb92a8dd1254bdb4c6e5c5c3ed8dc5d8ed0b942a30c2ba2131948604d2972a\"}\n"
+  },
+  "digest-mismatch": {
+    "error": "Published artifact changed: answer.cpp",
+    "status": "pending\n"
+  },
+  "digest-repair": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin",
+    "compiled": 0,
+    "reused": 2,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"9f1609e8f6f0162c4e13e8f73269a571ce6c759f18e99b22ca6204590c5b54cf\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/11f082de54e8df91dfba4baaeb4af34ce068d81665e7550398a2632b63a44e96.bin\",\"sha256\":\"bfdb92a8dd1254bdb4c6e5c5c3ed8dc5d8ed0b942a30c2ba2131948604d2972a\"}\n"
+  },
+  "header-cold": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin",
+    "compiled": 1,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"21dd42164cd29d4cc724937de9e9ee5329c2e8d136b6bc99177db64be01e4ae8\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin\",\"sha256\":\"e955c9e8f120dff2551fb717b07eeb35aed5ac8b6be1ae7273d0aa5219dc8ce0\"}\n"
+  },
+  "same-stat-header": {
+    "error": "Native compilation failed: In file included from /tmp/mytry-diagnostic-review/native-review/results/failures/published/entry.cpp:1:\n/tmp/mytry-diagnostic-review/native-review/results/failures/runtime/ordinary.hpp:1:27: error: use of undeclared identifier 'x'\n    1 | inline int value(){return x;}\n      |                           ^\n1 error generated.\n",
+    "status": "pending\n"
+  },
+  "header-repair": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin",
+    "compiled": 0,
+    "reused": 1,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"21dd42164cd29d4cc724937de9e9ee5329c2e8d136b6bc99177db64be01e4ae8\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin\",\"sha256\":\"e955c9e8f120dff2551fb717b07eeb35aed5ac8b6be1ae7273d0aa5219dc8ce0\"}\n"
+  },
+  "corrupt-objects": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin",
+    "compiled": 1,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"21dd42164cd29d4cc724937de9e9ee5329c2e8d136b6bc99177db64be01e4ae8\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin\",\"sha256\":\"e955c9e8f120dff2551fb717b07eeb35aed5ac8b6be1ae7273d0aa5219dc8ce0\"}\n"
+  },
+  "warm-again": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin",
+    "compiled": 0,
+    "reused": 1,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"21dd42164cd29d4cc724937de9e9ee5329c2e8d136b6bc99177db64be01e4ae8\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/2884cca3b64cceeb1d010e9f4ac0156dd93815e29be08c1208b616cb022f478c.bin\",\"sha256\":\"e955c9e8f120dff2551fb717b07eeb35aed5ac8b6be1ae7273d0aa5219dc8ce0\"}\n"
+  },
+  "corrupt-executable": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/results/failures/cache/artifacts/dbb4885e7da69b79e8a71193fde91df165e90b25f6e49a48373797e914e96ef6.bin",
+    "compiled": 0,
+    "reused": 1,
+    "pch_built": 0,
+    "linked": 1,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"21dd42164cd29d4cc724937de9e9ee5329c2e8d136b6bc99177db64be01e4ae8\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/results\\/failures\\/cache\\/artifacts\\/dbb4885e7da69b79e8a71193fde91df165e90b25f6e49a48373797e914e96ef6.bin\",\"sha256\":\"e955c9e8f120dff2551fb717b07eeb35aed5ac8b6be1ae7273d0aa5219dc8ce0\"}\n"
+  },
+  "pending-publication": {
+    "error": "Output revision is pending or failed",
+    "status": "pending\n"
+  }
+}

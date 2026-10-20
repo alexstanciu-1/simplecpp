@@ -1,0 +1,34 @@
+{
+  "cold": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include/cache/artifacts/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin",
+    "compiled": 1,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include\\/cache\\/artifacts\\/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin\",\"sha256\":\"617e381f4b8d8d4e212db934da602a9ebfadf5a2be3b1ab7fdaf16f2ff6e4ddb\"}\n"
+  },
+  "warm": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include/cache/artifacts/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin",
+    "compiled": 0,
+    "reused": 1,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include\\/cache\\/artifacts\\/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin\",\"sha256\":\"617e381f4b8d8d4e212db934da602a9ebfadf5a2be3b1ab7fdaf16f2ff6e4ddb\"}\n"
+  },
+  "added-file": {
+    "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/include-results/has_include/published/entry.cpp:2:15: error: static assertion failed: newly selected invalid code\n    2 | static_assert(false, \"newly selected invalid code\");\n      |               ^~~~~\n1 error generated.\n",
+    "status": "pending\n"
+  },
+  "fresh-invalid": {
+    "error": "Native compilation failed: /tmp/mytry-diagnostic-review/native-review/include-results/has_include/published/entry.cpp:2:15: error: static assertion failed: newly selected invalid code\n    2 | static_assert(false, \"newly selected invalid code\");\n      |               ^~~~~\n1 error generated.\n",
+    "status": "pending\n"
+  },
+  "repair": {
+    "executable": "/tmp/mytry-diagnostic-review/native-review/include-results/has_include/cache/artifacts/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin",
+    "compiled": 0,
+    "reused": 1,
+    "pch_built": 0,
+    "linked": 0,
+    "status": "{\"format\":\"scpp-native-ready-v1\",\"source\":\"56729357dfc1161c4f4a3bf66d2163b83556e9ba56a2c95da4e453e0be1b7c58\",\"executable\":\"\\/tmp\\/mytry-diagnostic-review\\/native-review\\/include-results\\/has_include\\/cache\\/artifacts\\/9c3c8163cca65984399c026efc11746971952a8a7c91cde43a34bb46edeeec3a.bin\",\"sha256\":\"617e381f4b8d8d4e212db934da602a9ebfadf5a2be3b1ab7fdaf16f2ff6e4ddb\"}\n"
+  }
+}

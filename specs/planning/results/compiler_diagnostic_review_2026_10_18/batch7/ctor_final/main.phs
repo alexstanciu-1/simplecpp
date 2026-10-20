@@ -1,0 +1,1 @@
+class B { final function __construct() {} } class C extends B { function __construct() {} } $c = new C(); return 0;

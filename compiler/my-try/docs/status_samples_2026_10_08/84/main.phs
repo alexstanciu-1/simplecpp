@@ -1,0 +1,5 @@
+function &identity(int &$value): int { return $value; }
+$value int = 7;
+$alias =& identity($value);
+$copy int = $value;
+return $copy;

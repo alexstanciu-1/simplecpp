@@ -92,7 +92,7 @@ try {
 	foreach ($cases as $name => [$source, $exit]) {
 		Compiler_Lifecycle::reset();
 		file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		$text = CPP_Probe::text(Model::$cpp_files);
 		if (str_starts_with($name, 'typed_')) {
 			if (!str_contains($text, 'std::function')) { throw new \LogicException('Explicit callable boundary was not emitted'); }
@@ -175,29 +175,29 @@ try {
 	];
 	foreach ($invalid as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]);
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]);
 		$rejected = false;
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Invalid closure program was accepted: ' . $source); }
 	}
 	Compiler_Lifecycle::reset(); file_put_contents($path, $cases['local'][0]);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	file_put_contents($path, str_replace('+ 2', '+ 3', $cases['local'][0])); $compiler->update_cpp([$path]);
 	$incremental = CPP_Probe::text(Model::$cpp_files);
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $incremental) { throw new \LogicException('Closure edit disagrees with clean output'); }
 	$dependency_source = 'function external(int $n = 1): int { return $n; } $f = function (): int { return external(); }; return $f();';
 	Compiler_Lifecycle::reset(); file_put_contents($path, $dependency_source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	file_put_contents($path, str_replace('$n = 1', '$n = 2', $dependency_source)); $compiler->update_cpp([$path]);
 	$dependency_output = CPP_Probe::text(Model::$cpp_files);
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $dependency_output) { throw new \LogicException('Anonymous dependency edit left stale C++'); }
 	file_put_contents($output . '/dependency_edit.cpp', $dependency_output);
 	$executions[] = ['path' => $output . '/dependency_edit.cpp', 'exit_code' => 2];
 	$capture_source = 'function calc(int $n): int { $f = function () use ($n): int { return (int)$n; }; return $f(); } return calc(6);';
 	Compiler_Lifecycle::reset(); file_put_contents($path, $capture_source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	foreach (Model::collected_files()[0]->anonymous_callables as $identity) { $capture_identity = $identity; }
 	$capture_body = $capture_identity->syntax()->require_body()->work();
 	$capture_version = $capture_body->version;
@@ -218,7 +218,7 @@ try {
 	file_put_contents($path, 'return 0;'); $compiler->update_cpp([$path]);
 	if (count($capture_body->captures) !== 0) { throw new \LogicException('Retired body retained capture environment'); }
 	file_put_contents($path, $capture_changed);
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $capture_output) { throw new \LogicException('Capture signature edit disagrees with fresh output'); }
 	file_put_contents($output . '/capture_signature_edit.cpp', $capture_output);
 	$executions[] = ['path' => $output . '/capture_signature_edit.cpp', 'exit_code' => 6];
@@ -233,7 +233,7 @@ try {
 	}
 	$arrow_source = 'function calc(int $n): int { $m = 7; $f = fn(): int => (int)$n; return $f(); } return calc(4);';
 	Compiler_Lifecycle::reset(); file_put_contents($path, $arrow_source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	foreach (Model::collected_files()[0]->anonymous_callables as $identity) { $arrow_syntax = $identity->syntax(); }
 	if ($arrow_syntax->syntax_kind !== closure_syntax_kind::arrow || count($arrow_syntax->captures) !== 0
 		|| !($arrow_syntax->require_body()->statements[0] instanceof return_node)
@@ -244,7 +244,7 @@ try {
 		$arrow_source = str_replace([$before, 'calc(4)'], [$after, 'calc(4.0)'], $arrow_source);
 		file_put_contents($path, $arrow_source); $compiler->update_cpp([$path]);
 		$arrow_output = CPP_Probe::text(Model::$cpp_files);
-		Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $arrow_output) { throw new \LogicException('Arrow capture edit disagrees with fresh output'); }
 	}
 	file_put_contents($output . '/arrow_capture_edit.cpp', $arrow_output);
@@ -253,7 +253,7 @@ try {
 	// Both directions through anonymous callables participate in the existing cycle policy.
 	$reference_source = $cases['reference_return_named_forward'][0];
 	Compiler_Lifecycle::reset(); file_put_contents($path, $reference_source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	$reference_output = CPP_Probe::text(Model::$cpp_files);
 	foreach ([
 		'function &select(int &$n): int { $f = fn&(int &$v): int => select($v); return $f($n); } return 0;',
@@ -276,10 +276,10 @@ try {
 	file_put_contents($path, $reference_source); $compiler->update_cpp([$path]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $reference_output) { throw new \LogicException('Reference-return repair disagrees with fresh output'); }
 	Compiler_Lifecycle::reset(); file_put_contents($path, $default_source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	file_put_contents($path, str_replace('$n = 4', '$n = 6', $default_source)); $compiler->update_cpp([$path]);
 	$default_output = CPP_Probe::text(Model::$cpp_files);
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $default_output) { throw new \LogicException('Closure default edit disagrees with fresh output'); }
 	file_put_contents($output . '/closure_default_edit.cpp', $default_output);
 	$executions[] = ['path' => $output . '/closure_default_edit.cpp', 'exit_code' => 6];
@@ -293,7 +293,7 @@ try {
 	if (!$rejected) { throw new \LogicException('Factory signature edit retained incompatible return'); }
 	file_put_contents($path, $factory_source); $compiler->update_cpp([$path]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $factory_output) { throw new \LogicException('Factory signature recovery changed output'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $factory_output) { throw new \LogicException('Factory fresh/incremental output differs'); }
 	file_put_contents($output . '/typed_factory_edit.cpp', $factory_output);
 	$executions[] = ['path' => $output . '/typed_factory_edit.cpp', 'exit_code' => 8];

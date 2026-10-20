@@ -1,0 +1,1 @@
+$v vector<unique<int>>; return isset($v[0]) ? 1 : 0;

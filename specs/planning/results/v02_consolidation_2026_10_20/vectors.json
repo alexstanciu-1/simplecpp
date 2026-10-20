@@ -1,0 +1,68 @@
+{
+  "passed": true,
+  "blockers": [],
+  "checks": {
+    "programs": [
+      "forms",
+      "scalars",
+      "copies",
+      "observation",
+      "noncopyable",
+      "order",
+      "errors"
+    ],
+    "rejections": [
+      {
+        "source": "vector_reserve();",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      },
+      {
+        "source": "vector_capacity(1);",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      },
+      {
+        "source": "$v vector<int>;vector_reserve($v,1.0);",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      },
+      {
+        "source": "vector_resize(vector<int>::[],1,7);",
+        "diagnostic": "S2S reference arguments require stable storage of the exact parameter type\n"
+      },
+      {
+        "source": "function bad(const vector<int> &$v):void{vector_clear($v);}",
+        "diagnostic": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+      },
+      {
+        "source": "$v vector<int>;vector_resize($v,2,\"x\");",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      },
+      {
+        "source": "$v vector<unique<int>>;$x unique<int>;vector_resize($v,0,$x);",
+        "diagnostic": "S2S value copy requires copyable_value\n"
+      },
+      {
+        "source": "vector_compact(vector<int>::[]);",
+        "diagnostic": "S2S reference arguments require stable storage of the exact parameter type\n"
+      },
+      {
+        "source": "$v vector<int>;vector_compact($v,1,2);",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      }
+    ],
+    "move_probes": {
+      "filled": {
+        "source": "function probe(unique<int> $x):vector<unique<int>>{return vector_filled(0,move($x));}",
+        "compiled": false,
+        "diagnostic": "S2S value copy requires copyable_value\n"
+      },
+      "resize": {
+        "source": "function probe(vector<unique<int>> &$v,unique<int> $x):void{vector_resize($v,0,move($x));}",
+        "compiled": false,
+        "diagnostic": "S2S value copy requires copyable_value\n"
+      }
+    },
+    "recovery_cycles": 2
+  },
+  "production_build": true,
+  "runtime_changes": false
+}

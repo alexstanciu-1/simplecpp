@@ -1,0 +1,1 @@
+$s shared<int>; return 0;

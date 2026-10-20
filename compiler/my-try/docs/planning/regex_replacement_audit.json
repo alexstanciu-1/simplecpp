@@ -1,0 +1,43 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "source_files_checked": 6302,
+  "tested_production_and_test_hashes_match": true,
+  "compiler_implementation_unchanged": true,
+  "runtime_changed": [
+    "runtime/include/modules/regex/regex.cpp",
+    "runtime/include/modules/regex/regex.hpp",
+    "runtime/metadata/modules/regex.json"
+  ],
+  "evidence_digest_verified": true,
+  "evidence_records": 146,
+  "accepted_commands": 56,
+  "native_executions_including_baseline": 16,
+  "runtime_checks": 54,
+  "source_checks": 54,
+  "recovery_cycles": 2,
+  "source_rejections": 5,
+  "closed_issues": [
+    "V-R04",
+    "V-R09"
+  ],
+  "progress": {
+    "closed": 31,
+    "partial": 0,
+    "total": 64,
+    "percent": 48.4375
+  },
+  "remaining_batch_blockers": [],
+  "docs_changed_after_tested_snapshot": [
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/README.md",
+    "compiler/my-try/docs/planning/runtime_catalog_coverage.md"
+  ],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "implementation_commits": [
+    "cea1d5d4",
+    "1d4fcbb2"
+  ]
+}

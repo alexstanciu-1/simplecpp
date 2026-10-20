@@ -1,0 +1,1 @@
+namespace App { use function Lib\f; } namespace App { return f(); }

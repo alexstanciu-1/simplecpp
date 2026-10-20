@@ -24,7 +24,7 @@ $executions = [];
 try {
 	foreach ($cases as $name => [$source, $exit]) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		$text = CPP_Probe::text(Model::$cpp_files);
 		$compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Callable state no-op changed output'); }
@@ -48,12 +48,12 @@ try {
 		'$n = 1; $f function<int()>; $f = function () use (&$n): int { return $n; }; return 0;',
 	] as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Invalid callable state operation accepted: ' . $source); }
 	}
 	Compiler_Lifecycle::reset(); file_put_contents($path, $cases['absent'][0]);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	file_put_contents($path, $cases['unset_reassign'][0]); $compiler->update_cpp([$path]);
 	$updated = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, '$f function<int()>; return empty($f);'); $rejected = false;
@@ -61,7 +61,7 @@ try {
 	if (!$rejected) { throw new \LogicException('Callable emptiness edit accepted'); }
 	file_put_contents($path, $cases['unset_reassign'][0]); $compiler->update_cpp([$path]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $updated) { throw new \LogicException('Callable recovery changed output'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $updated) { throw new \LogicException('Fresh/incremental callable output differs'); }
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	echo "Empty callable storage: PASS\n";

@@ -1,0 +1,49 @@
+{
+  "ctor_void_return": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch10/ctor_void_return/cpp/units/n6d61696e/n6d61696e2e706873.cpp:9:2: error: constructor 'record_C' must not return void expression\n    9 |         return ([&]() -> void {\n      |         ^      ~~~~~~~~~~~~~~~~\n   10 |         return function_cleanup();\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~\n   11 | }());\n      | ~~~~\n1 error generated.\n"
+    ]
+  },
+  "dtor_void_minimal": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch10/dtor_void_minimal/cpp/units/n6d61696e/n6d61696e2e706873.cpp:9:2: error: destructor '~record_C' must not return void expression\n    9 |         return ([&]() -> void {\n      |         ^      ~~~~~~~~~~~~~~~~\n   10 |         return function_cleanup();\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~\n   11 | }());\n      | ~~~~\n1 error generated.\n"
+    ]
+  },
+  "ctor_bare_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dtor_bare_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_struct_void": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch10/ctor_struct_void/cpp/units/n6d61696e/n6d61696e2e706873.cpp:9:2: error: constructor 'record_C' must not return void expression\n    9 |         return ([&]() -> void {\n      |         ^      ~~~~~~~~~~~~~~~~\n   10 |         return function_cleanup();\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~\n   11 | }());\n      | ~~~~\n1 error generated.\n"
+    ]
+  },
+  "dtor_struct_void": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch10/dtor_struct_void/cpp/units/n6d61696e/n6d61696e2e706873.cpp:9:2: error: destructor '~record_C' must not return void expression\n    9 |         return ([&]() -> void {\n      |         ^      ~~~~~~~~~~~~~~~~\n   10 |         return function_cleanup();\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~\n   11 | }());\n      | ~~~~\n1 error generated.\n"
+    ]
+  },
+  "ctor_self_second": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_empty_abstract_control": {
+    "stage": "prepare",
+    "error": "Abstract type cannot be stored or returned as an inline value\n"
+  }
+}

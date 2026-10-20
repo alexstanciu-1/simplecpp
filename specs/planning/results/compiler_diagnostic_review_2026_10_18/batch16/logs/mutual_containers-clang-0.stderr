@@ -1,0 +1,6 @@
+In file included from /tmp/mytry-diagnostic-review/batch16/mutual_containers/cpp/entry.cpp:1:
+In file included from /tmp/mytry-diagnostic-review/batch16/mutual_containers/cpp/types/n415c4974656d.hpp:2:
+/tmp/mytry-diagnostic-review/batch16/mutual_containers/cpp/types/n425c4974656d.hpp:8:34: error: use of undeclared identifier 'record_AUqItem'
+    8 |         scpp::vector_t<::scpp::shared_p<record_AUqItem>> field_others;
+      |                                         ^
+1 error generated.

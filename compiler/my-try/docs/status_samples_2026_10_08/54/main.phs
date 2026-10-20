@@ -1,0 +1,11 @@
+class Counter {
+    private int $value = 1;
+    public static int $total = 2;
+    public const EXTRA = 3;
+    public function read(): int { return $this->value; }
+    public static function extra(): int { $total = self::$total; return $total + self::EXTRA; }
+}
+$counter = new Counter();
+$value = $counter->read();
+$extra = Counter::extra();
+return $value + $extra;

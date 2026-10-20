@@ -1,0 +1,1 @@
+$f = function &(int &$n, int $x = 1): int { return $n; }; $n = 1; $r =& $f($n); return $r;

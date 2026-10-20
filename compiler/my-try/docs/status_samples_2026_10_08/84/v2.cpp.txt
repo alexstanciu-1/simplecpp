@@ -1,0 +1,31 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === callables/n6964656e74697479.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+scpp::int_t<>& function_identity(scpp::int_t<>& local_value);
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "callables/n6964656e74697479.hpp"
+#include "scpp/int_t.hpp"
+scpp::int_t<>& function_identity(scpp::int_t<>& local_value)
+{
+	return local_value;
+}
+
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "callables/n6964656e74697479.hpp"
+
+int main()
+{
+	scpp::int_t<> local_value = static_cast<scpp::int_t<>>(7LL);
+	scpp::int_t<>& local_alias = ([&]() -> scpp::int_t<>& {
+	scpp::int_t<>& argument_0 = local_value;
+	return function_identity(argument_0);
+}());
+	scpp::int_t<> local_copy = local_value;
+	return static_cast<int>((local_copy).native_value());
+	return 0;
+}

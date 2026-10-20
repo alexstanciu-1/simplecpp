@@ -1,0 +1,5 @@
+$optional ?int = null;
+$fallback = $optional ?? 5;
+$chosen = $fallback > 2 ? 1 : 0;
+$elvis = $fallback ?: 9;
+return $chosen + $elvis;

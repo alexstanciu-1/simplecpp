@@ -17,7 +17,7 @@ function result_source(string $path, string $source): Compiler
 {
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([dirname($path)]);
 	$compiler->exec_cpp();
 	return $compiler;
@@ -66,6 +66,22 @@ try
 		=== conversion_operation::result_wrap, 'Construction policy depends on Result spelling');
 	result_check(Conversion_Preparation::decide($catalog->boolean_sentinel_type(true), $target,
 		conversion_context::argument)->operation === conversion_operation::result_true, 'Sentinel policy ignored the role');
+	$failure_definition = $registry->define_result('RenamedFailure', type_definition_origin::runtime,
+		nominal_type_kind::class_type, $parameters, [generic_contract::value_storable], result_kind::structured_error);
+	$failure_application = $registry->intern_application($failure_definition, [$bool_type]);
+	$failure_target = $registry->use($failure_application->type_id());
+	result_check(Conversion_Preparation::decide(Language_Types::error_type(Model::$language_scope),
+		$failure_target, conversion_context::return_value)->operation === conversion_operation::result_error,
+		'Structured error conversion depends on Result spelling');
+	$impostor = $registry->define_nominal('error', type_definition_origin::source,
+		nominal_type_kind::structure, [generic_contract::copyable_value, generic_contract::value_storable]);
+	$impostor_rejected = false;
+	try {
+		Conversion_Preparation::decide($registry->use($registry->canonical($impostor)->type_id()),
+			$failure_target, conversion_context::assignment);
+	}
+	catch (\RuntimeException $error) { $impostor_rejected = true; }
+	result_check($impostor_rejected, 'Source error spelling granted failure semantics');
 	$ordinary = $registry->define_template('result', type_definition_origin::source,
 		nominal_type_kind::class_type, $parameters, [generic_contract::value_storable]);
 	$ordinary_type = $registry->intern_application($ordinary, [$bool_type]);
@@ -107,7 +123,6 @@ try
 		['$a result_or_bool<int> = 1; $b = $a ?? 2;', 'coalesce does not permit result_or_bool'],
 		['$a result_or_bool<int> = 1; $b = 2 ?? $a;', 'coalesce does not permit result_or_bool'],
 		['$a result<int> = 1; $b result_or_bool<int> = 2; $c = $a ?? $b;', 'coalesce does not permit result_or_bool'],
-		['$a result<int> = 1; $b = !$a;', 'unary operation requires'],
 		['$a result<int> = 1; $b = $a ?: 2.0;', 'conditional Result branches require'],
 		['$a result<int> = 1; $b result_or_false<int> = 2; $c = true ? $a : $b;', 'conditional Result branches require'],
 		['$a result<int> = 1; $b ?int = 2; $c = true ? $a : $b;', 'conditional Result branches require'],

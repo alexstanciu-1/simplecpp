@@ -1,0 +1,3 @@
+$php_style hash<int> = ["left" => 1];
+$js_style hash<int> = {right: 2};
+return $php_style["left"] + $js_style["right"];

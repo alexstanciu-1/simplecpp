@@ -33,6 +33,7 @@ final class CPP_Compiler_Functions
 
 	public static function reference(prepared_compiler_call $specialization, cpp_generation_context $context): string
 	{
+		if ($context->concrete_types()) { throw new \RuntimeException('prelower_templates: compiler helper requires concrete transport'); }
 		$facts = self::enum_facts($specialization);
 		$name = self::owner_name($facts);
 		$kind = self::helper_kind($facts);

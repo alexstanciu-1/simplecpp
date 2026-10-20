@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught LogicException: Abstract constructor parameter passed preparation in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructor_parameters.php:28
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructor_parameters.php(50): scpp\compiler\constructor_parameter_rejection()
+#1 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructor_parameters.php on line 28

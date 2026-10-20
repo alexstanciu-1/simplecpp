@@ -8,7 +8,7 @@ import sys
 APP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(APP / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
-from cpp_fixture import CppFixtureCompiler
+from cpp_fixture import CppFixtureCompiler, build_runtime_object
 from cpp_artifacts import decode_artifacts, materialize_artifacts, probe_bundle, probe_text
 
 
@@ -30,17 +30,22 @@ def main():
             runner.run(name, command)
         run_tasks([Task(name, lambda name=name: suite(name)) for name in suites], jobs=12)
         manifest = json.loads((programs / 'executions.json').read_text())
+        runtime_object = build_runtime_object(runner, APP.parents[1], output)
         compilers = []
         for pch in (False, True):
             folder = output / ('pch' if pch else 'no-pch')
             folder.mkdir()
-            compilers.append((folder, CppFixtureCompiler(runner, APP.parents[1], folder, pch=pch)))
+            compilers.append((folder, CppFixtureCompiler(runner, APP.parents[1], folder, pch=pch, runtime=True,
+                                                        runtime_object=runtime_object)))
         def execute(folder, compiler, fixture):
             path = Path(fixture['path'])
             payload = path.read_bytes()
             # Editable probe transport must preserve every file byte when uninstrumented.
             roundtrip = probe_bundle(probe_text(payload))
-            if decode_artifacts(roundtrip) != decode_artifacts(payload):
+            # Editable probes carry identity and source bytes, not publication include metadata.
+            original = [{key: artifact[key] for key in ('id', 'kind', 'path', 'text')}
+                        for artifact in decode_artifacts(payload)]
+            if decode_artifacts(roundtrip) != original:
                 raise RuntimeError('Probe transport changed artifacts')
             executable = folder / path.stem
             compiler.compile_artifacts(folder.name + '-' + path.stem, payload, executable)
@@ -84,19 +89,19 @@ def main():
             source.mkdir()
             (source / 'main.phs').write_text('return answer();')
             (source / 'library.phs').write_text('function answer(): int { return 7; }')
-            payload = runner.run('cli-relocation-' + str(index), ['php', APP / 'main.php', '--s2s', source,
+            payload = runner.run('cli-relocation-' + str(index), ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates',
                                 '--entry', 'main.phs'], cli_reason='Tests explicit entry and process restart')
             if baseline is not None and baseline != payload:
                 raise RuntimeError('Relocation changed generated artifacts')
             baseline = payload
-            rejected = runner.run('cli-no-entry-' + str(index), ['php', APP / 'main.php', '--s2s', source],
+            rejected = runner.run('cli-no-entry-' + str(index), ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates'],
                                   expected=1, cli_reason='Tests missing multi-source entry')
             if rejected:
                 raise RuntimeError('Missing entry published partial output')
         (output / 'summary.json').write_text(json.dumps(dict(passed=True, php_suites=len(suites),
             generated_program_runs=2 * len(manifest), pch_and_no_pch=True,
             standalone_header_checks=len(header_tasks), transitive_dependency_checks=3,
-            native_compiler_rebuilt=False, incremental_native_cache=False), indent=2) + '\n')
+            native_compiler_rebuilt=False, incremental_native_cache=False, shadow_warnings_enabled=True), indent=2) + '\n')
 
 
 if __name__ == '__main__':

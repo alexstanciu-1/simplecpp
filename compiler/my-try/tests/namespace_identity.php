@@ -60,7 +60,7 @@ namespace_identity_check($alpha_box->definition_id() !== $beta_box->definition_i
 namespace_identity_check(count(Scope_Lookup::functions($nested->published_scope(), 'answer')) === 0, 'Parent namespace fallback leaked');
 namespace_identity_check(count(Scope_Lookup::functions(Model::$global_scope, 'answer')) === 0, 'Namespace members leaked globally');
 namespace_identity_check(count(Scope_Lookup::types($nested->published_scope(), 'int')) === 1, 'Builtins lost language availability');
-$artifacts = (new CPP_Generator())->generate_program($prepared, $prepared[0]);
+$artifacts = (new CPP_Generator(null, new cpp_lowering_options(false)))->generate_program($prepared, $prepared[0]);
 $identities = [];
 foreach ($artifacts as $artifact) {
 	namespace_identity_check(!isset($identities[$artifact->identity]), 'Duplicate backend identity');

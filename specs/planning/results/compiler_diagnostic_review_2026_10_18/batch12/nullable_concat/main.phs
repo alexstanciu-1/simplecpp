@@ -1,0 +1,1 @@
+$a ?string = 'x'; $s = $a . 'y'; return 0;

@@ -1,0 +1,1 @@
+namespace Lib; class B { static function make(): static { return new static(); } }

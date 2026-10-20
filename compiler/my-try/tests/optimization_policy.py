@@ -32,7 +32,7 @@ return 0;''')
     driver.write_text('''<?php
 namespace scpp\\compiler;
 require ''' + repr(str(ROOT/'boot.php')) + ''';
-$compiler = new Compiler(); $compiler->init([''' + repr(str(src)) + ''']);
+$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([''' + repr(str(src)) + ''']);
 $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 $baseline = CPP_Output::encode(Model::$cpp_files);
 foreach ([2, 0, 1, 3, 0, 2] as $index => $level) {

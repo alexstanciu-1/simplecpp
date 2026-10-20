@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/boot.php';
 try
 {
 	if ($argc < 3) {
-		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--no-pch] [-O0|-O1|-O2|-O3] [--linker=PATH] [--linker-threads=N] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
+		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--pch|--no-pch] [-O0|-O1|-O2|-O3] [--linker=PATH] [--linker-threads=N] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
 	}
 	$config = new native_ninja_config('/usr/bin/clang++', dirname(__DIR__, 3) . '/runtime/include', $argv[2]);
 	for ($index = 3; $index < $argc; $index++)
@@ -15,6 +15,7 @@ try
 		if ($option === '--reuse') {
 			$config->reuse = true;
 		}
+		elseif ($option === '--pch') { $config->pch = true; }
 		elseif ($option === '--no-pch') {
 			$config->pch = false;
 		}

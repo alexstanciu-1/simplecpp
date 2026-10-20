@@ -90,6 +90,9 @@ enum node_kind
 	case expression_statement;
 	case echo_statement;
 	case return_statement;
+	case throw_statement;
+	case try_statement;
+	case catch_clause;
 	case variable_declaration;
 }
 
@@ -162,4 +165,22 @@ enum control_transfer_kind {
 enum switch_label_kind {
 	case value;
 	case fallback;
+}
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Passing_Mode_Name
+{
+	public static function text(passing_mode $kind): string
+	{
+		return enum_name($kind);
+	}
+}
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Storage_Access_Name
+{
+	public static function text(storage_access $kind): string
+	{
+		return enum_name($kind);
+	}
 }

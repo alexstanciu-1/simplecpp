@@ -1,0 +1,1 @@
+class C { int $n = 1; } $c value<C> = new C(); $v vector<value<C>> = [$c]; $v[0] = $c; $d = $v[0]; return $d->n;

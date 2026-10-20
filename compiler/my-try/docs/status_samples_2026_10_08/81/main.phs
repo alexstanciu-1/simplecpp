@@ -1,0 +1,6 @@
+$stage string = "";
+$failure error;
+if (!take($stage, $failure, scpp_output_stage("output"))) { return 1; }
+$removed bool = false;
+take($removed, $failure, scpp_output_discard("output", $stage));
+return 0;

@@ -10,8 +10,8 @@
 namespace scpp {
 
 // Copy out before any receiver temporary dies. No interior reference escapes.
-template <typename T>
-T checked_index_read(const vector_t<T> &receiver, const int_t<> &key) {
+template <typename T, typename K> requires detail::is_int_t_v<K>
+T checked_index_read(const vector_t<T> &receiver, const K &key) {
 	return receiver.at(key);
 }
 

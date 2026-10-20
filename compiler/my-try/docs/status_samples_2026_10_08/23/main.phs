@@ -1,0 +1,4 @@
+$values vector<int> = [1, 2];
+$table hash<vector<int>> = ["row" => [3, 4]];
+$boxed mixed = ["nested" => [1, false]];
+return $values[0];

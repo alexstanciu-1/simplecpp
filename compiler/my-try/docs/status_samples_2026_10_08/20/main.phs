@@ -1,0 +1,3 @@
+$failure error;
+$copy error = $failure;
+return !$copy ? 0 : 1;

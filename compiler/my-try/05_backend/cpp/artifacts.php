@@ -4,6 +4,19 @@ namespace scpp\compiler;
 /** Output spelling is backend-owned; identities never use object IDs or source positions. */
 final class CPP_Artifacts
 {
+	/** Bounded readable label plus stable identity, including for recursively composed types. */
+	public static function bounded_component(string $label, string $identity): string
+	{
+		$result = '';
+		for ($index = 0; ($index < string_byte_len($label)) && ($index < 48); $index++) {
+			$byte = string_byte_at($label, $index);
+			$identifier = (($byte >= 65) && ($byte <= 90)) || (($byte >= 97) && ($byte <= 122))
+				|| (($byte >= 48) && ($byte <= 57));
+			$result .= $identifier ? string_byte_slice($label, $index, 1) : '_';
+		}
+		return 'n_' . $result . '_' . content_sha256($identity);
+	}
+
 	/** Materialize one assembled group through the same described-artifact protocol. */
 	public static function implementation(cpp_implementation_group $group): cpp_artifact
 	{

@@ -1,0 +1,1 @@
+$v vector<int> = [1]; return $v[true];

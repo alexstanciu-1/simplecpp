@@ -1,6 +1,357 @@
 # Test runners
 Doc Status: supporting
 
+Production CLI/API generation now defaults to strict template prelowering. Existing
+ordinary-language/emission baselines explicitly construct
+`Compiler(new cpp_lowering_options(false))` or use `--no-prelower-templates`;
+this preserves their scope rather than treating them as concrete-coverage proofs.
+Prelowering fixtures select their mode explicitly except for the public-default
+proof, which intentionally exercises unconfigured CLI, API and standalone generation.
+
+`python3 compiler/my-try/tests/prelower_acceptance.py --results FRESH_DIRECTORY`
+is the combined prelowering solidification acceptance command. It runs the existing
+metadata, unsupported-contract, public-option, provider/PCH-boundary, counter/reference,
+source-lifecycle, layout-cache and accounting proofs. Suites run sequentially, each
+retaining its existing shared 12-slot runner; there is no second test scheduler.
+Native builds use O0 without debug. Strict application builds reject PCH; the provider
+suite also retains an explicitly ordinary-mode PCH compatibility control.
+
+`result.json` records revision, worktree status, tool versions, entrypoint hashes,
+per-phase status, result directories and the accounting closure totals. A failed
+phase remains failed even if later independent phases pass; the command exits nonzero.
+Interrupted or incomplete evidence cannot produce a passing summary. Each suite's
+command logs and detailed results remain under its own directory. The contract suite
+tests these reporting failure cases without rebuilding native programs.
+This is bounded acceptance of the current surface, not full runtime coverage, a
+native compiler rebuild, an incremental-compiler maturity claim or a timing benchmark.
+
+`python3 compiler/my-try/tests/prelower_accounting_acceptance.py --results FRESH_DIRECTORY`
+publishes ordinary and prelowered accounting through the public CLI, builds both
+at O0 without debug/PCH in fresh native caches, and requires identical output with
+998 checks and zero failures. It checks warm reuse and automatically records the
+actual native commands for the complete manifest-driven application closure audit.
+Runtime/middleware and layout probes are explicitly excluded from that application
+audit. Source hashes, revision, toolchain, options and results are retained in the
+requested directory. This is correctness/closure acceptance, not a timing benchmark.
+Any emission, native policy or closure failure fails the run; no fallback is selected.
+
+`python3 compiler/my-try/tests/prelower_null_output.py --results FRESH_DIRECTORY`
+also proves default CLI/API/standalone artifact parity, default no-PCH native builds,
+explicit ordinary/PCH builds, mode switching without semantic repreparation, absence of temporary
+selectors, strict CLI failure/repair, ordinary opt-out, and native PCH
+rejection. The CLI-published application is compiled and audited without PCH.
+The fixture builds a fresh concrete application with null interleaved with side-effecting echo
+operands. It checks ordered bytes, warm reuse and the complete no-PCH template closure
+using recorded native commands and the existing audit. The header-boundary suite
+supplies direct/concrete counters and output failure-prefix equivalence.
+
+`python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
+checks concrete rejection for callable locals, parameters, results, fields and nested
+containers, plus object tests/casts, weak creation/locking, source throw/catch/finally,
+`take`, match without a default, boxed extraction, runtime-backed conditions/value
+probes and enum helpers. Repair cases include supported integer/boolean
+conditions and explicit-default match emission and replay.
+It verifies ordinary emission, no partial in-memory output on rejection,
+mode-switch recovery, source repair and replay through the existing shared runner.
+Each attempt uses a fresh `Output_Publication`: rejected revisions are not ready on
+disk, ordinary recovery restores the manifest, and repaired replay preserves it.
+This is a PHP-host backend contract proof, not a native compiler rebuild or complete
+application closure audit. The same runner also exercises closure-recording coverage
+checks: missing/unknown units, conflicting commands, failed compiles, PCH use and
+unclassified compilation artifacts.
+
+`python3 compiler/my-try/tests/prelower_header_boundaries.py --results FRESH_DIRECTORY`
+reuses the output, indexing and compound fixtures at O0 only. It checks native scalar
+output bridge demand, broad indexing-header exclusion, direct/concrete behavior and
+allocation/copy parity, nested references, source evaluation order and warm reuse.
+Output emission also exercises request retirement, replay and option switching.
+The source-demand fixture also publishes uninstrumented compiler output separately,
+checks cached-replay manifest identity, removes demand and verifies retired files are
+gone, then restores the exact original manifest while preserving user-owned files.
+The metadata inventory task compares the complete middleware/layout bundle across
+nested-first and dependency-first request discovery orders. It also checks bounded
+names/filenames for ten nested template levels with distinct leaves beyond the
+readable prefix; this naming check does not claim deep operation execution.
+Its byte proof covers empty, short, embedded-NUL and long literals, copy/move
+allocation parity, borrowed identity and native/concrete string-hash parity, including
+an alternate metadata-selected byte adapter.
+
+`tests/prelower_template_closure.py --commands RECORDED_JSONL --published APP_DIRECTORY --results FRESH_DIRECTORY`
+replays recorded app object commands as preprocessing and full-granularity Clang
+traces. It rejects PCH use, template declarations in transitive input, or class/function
+instantiations. The audit obtains the ready manifest through `Output_Publication`, checks published
+artifact digests and requires every application unit, including entry.cpp, in the
+recording. Conflicting commands and unclassified compilation artifacts reject.
+`coverage.json` records application units and explicit middleware/layout exclusions.
+
+`python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
+checks source payload layout, generated source-class append/store/read calls, shared
+identity/reference counts, allocation/copy parity, source header cycles and incremental
+body/layout cache behavior. This is a focused harness; use the combined acceptance
+for the current strict application closure and the migrated source-lifecycle coverage.
+
+`python3 compiler/my-try/tests/runtime_template_demand.py --output --alternate-storage --results FRESH_DIRECTORY`
+adds scalar echo transport, borrowed/temporary operands, exact ordered bytes and
+failure suppression to the source-demand proof. It compares direct/concrete allocation
+and payload counters and checks that the alternate storage binding was actually enabled.
+
+`python3 compiler/my-try/tests/runtime_template_demand.py --results FRESH_DIRECTORY`
+proves ordinary source emission selects concrete types from runtime recipes, including
+a closed native template behind a nominal type. It checks exact used-type closure,
+unused metadata, nested references, shared pointee identity, source-copy behavior,
+request removal/restoration, fragment replay and option switching. Direct/concrete
+O0/O2 and sanitizer runs must report zero boundary allocations and tracked payload
+lifecycle counters; warm native builds compile/link nothing. Primitive numeric
+copies are not instrumented payload copies.
+
+The combined acceptance's `runtime_type_bindings.php` metadata task covers 39
+malformed/missing/duplicate recipes, including late provider failures after private
+core installation. Each rejection preserves the installed configuration and is
+followed by valid reconfiguration. Demanded concrete artifacts must remain identical
+across a registry reset. These are PHP-host contract checks; native provider validity
+and template-free exposure are separate checks in the provider-boundary suite.
+
+`python3 compiler/my-try/tests/runtime_type_bindings.py --results FRESH_DIRECTORY`
+checks malformed/duplicate type recipes, existing-identity targets, argument reordering,
+closed native templates, reset and explicit demand. It compiles the generated layout
+probes and concrete lifecycle code at O0/O2 and under ASan/UBSan without PCH. This
+proves generated applications, not a native compiler rebuild. The existing mutation
+substitution suite supplies the broader allocation/copy and incremental replay proof.
+
+`python3 compiler/my-try/tests/runtime_inventory.py --results FRESH_DIRECTORY`
+checks all production catalogs together, their type/protocol contracts and demand-only
+concrete preparation. Loading every catalog emits no concrete type headers; requesting
+a nested container emits only its required concrete type closure. Repeated requests
+preserve output and semantic identity. This is a PHP-host emission proof, not native
+compilation or full runtime metadata coverage.
+
+`python3 compiler/my-try/tests/prelower_substitution.py --mutations --results FRESH_DIRECTORY`
+compares ordinary and concrete prefix/postfix increments and decrements, local
+aliases, field receiver evaluation, ordered expressions, native float passthrough
+and nullable-float success/empty failure. It checks request removal/replay, option
+switching and body/layout cache reuse at O0, O2, ASan/UBSan and controlled O2.
+Mutation counters must be zero in both paths. Primitive integer copies are not
+instrumented payload copies; see the [dated evidence](../../../specs/planning/results/prelower_concrete_mutations_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --iteration --results FRESH_DIRECTORY`
+compares ordinary and concrete iteration over vectors, hashes, nested containers and
+an independently metadata-registered `tray<T>` provider. It covers source evaluation
+once, key order, empty loops, break/continue/return, throwing payload copies, inline
+protocol storage, demand removal/replay and layout-cache reuse. Instrumented O0,
+ASan/UBSan and controlled O2 compare all counters; stock O2 differences are reported
+separately. The tracked-payload loop must allocate zero times and perform exactly the
+ordinary three copies/destructions, including early return.
+
+`python3 compiler/my-try/tests/prelower_substitution.py --observations --results FRESH_DIRECTORY`
+checks concrete runtime free calls: counts on several physical container types,
+byte-oriented strlen, temporary-owner observation, value argument sequencing and a
+provider returning an already-concrete payload. It retains the controlled allocator
+comparison and records ordinary O2 deltas separately. See
+[runtime-call evidence](../../../specs/planning/results/prelower_concrete_runtime_calls_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --compound --results FRESH_DIRECTORY`
+extends the cast proof with existing-element compound updates, RHS growth/replacement,
+nested paths, string concatenation, missing/deleted entries and division failure.
+It verifies demand removal and incremental reuse. O0, sanitizer and O2 with allocator
+assumptions disabled compare full direct/concrete counters. Stock O2 compares payload
+lifecycle counters and records its allocation delta separately: inline native code
+can elide allocations that survive the out-of-line concrete boundary.
+See [compound evidence](../../../specs/planning/results/prelower_concrete_compound_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --casts --results FRESH_DIRECTORY`
+extends the binary proof with string/integer, numeric, boolean and narrowing/widening
+casts plus implicit text conversion. It checks source effects and failed-cast
+suppression in binary operands and keyed initializers, helper demand removal/replay,
+and direct/concrete allocation/copy parity. See [cast evidence](../../../specs/planning/results/prelower_concrete_casts_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --binary --results FRESH_DIRECTORY`
+extends the initializer/indexing proof with existing string concatenation and strict
+identity, boolean identity, integer arithmetic/power/bitwise/three-way operations,
+enum equality, snapshot order, short-circuiting and division-failure order. It checks
+binary-helper demand removal/restoration and compares successful workload counters
+across direct/concrete O0/O2 and sanitizer builds. Runtime-error stack allocations
+are outside the counter window. See [binary evidence](../../../specs/planning/results/prelower_concrete_binary_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --initializers --results FRESH_DIRECTORY`
+extends the indexing proof with empty source-field defaults, nonempty list/keyed
+initialization, nested concrete elements, 40-element buffer allocation, key/value
+order and throwing-copy budgets through successful completion. It verifies initializer
+request removal/restoration, cached replay, native/layout reuse and direct/concrete
+counter parity. See [initializer evidence](../../../specs/planning/results/prelower_concrete_initializers_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --indexing --results FRESH_DIRECTORY`
+adds ordinary indexed reads/writes, append and nested `unset` to the concrete proof.
+It checks key/RHS order, root replacement, missing-prefix short-circuiting, concrete
+integer hash keys, negative-key append/overflow behavior, internal reference identity,
+and throwing-copy cleanup. Counters compare direct/concrete builds within each
+configuration: disabling optional elision adds the same source-return move to both.
+See [indexing evidence](../../../specs/planning/results/prelower_indexing_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --members --results FRESH_DIRECTORY`
+extends the concrete source-field proof with ordinary compiler-emitted `append` and
+`replace` calls across integer, nested-vector and tracked-payload arguments. It
+compares lvalue snapshots and consumed results at O0/O2 and with ASan/UBSan, checks
+member-demand removal/restoration, cached-fragment replay and native/layout reuse.
+See [member forwarding evidence](../../../specs/planning/results/prelower_members_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
+adds `vector<Record>`, an independently registered `parcel<Record>`, and
+`vector<MyClass>` using the shared class handle representation. It compiles actual
+published source definitions with concrete fields, compares native/composed counters,
+checks nested reference identity and class sharing, and proves that a method-body edit
+leaves shared headers/support bytes unchanged and rebuilds only the source object.
+The sibling cycle fixture proves explicit generated-header-cycle rejection and recovery.
+See [source argument evidence](../../../specs/planning/results/prelower_source_arguments_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --source-fields --results FRESH_DIRECTORY`
+adds compiler-emitted inline source records, nested fields, method calls, parameter
+and return bindings, reference aliases, fragment replay, method-body edit restoration
+and lowering-option switching to the existing concrete-argument proof. Published
+specialization artifacts must match the demand set, and generated source artifacts
+must not retain tested native integer/vector spellings. The C++ harness drives the
+emitted declarations and supplies container seeding/mutation; runtime-container member
+forwarding is not covered. See [source-field evidence](../../../specs/planning/results/prelower_source_fields_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --results FRESH_DIRECTORY`
+proves production type-binding and lifecycle generation with concrete runtime
+arguments, including nested containers and an independently registered template.
+It checks direct/composed allocation/copy parity, actual nested references, throwing
+copy cleanup, request-order replay, layered layout caching and edit restoration at
+`-O0`, `-O2` and ASan/UBSan. The source record and operation adapters are fixture C++;
+this does not prove ordinary source-field emission or a native compiler rebuild.
+See the [binding integration checkpoint](../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_composition.py --results FRESH_DIRECTORY`
+compares a source record containing actual concrete fields against original native
+template fields. It checks field/reference identity, record and nested-container
+copy/move/growth, shared/unique ownership, partial-copy cleanup, layout/lifecycle
+traits, sanitizer behavior and zero extra allocation/payload-copy counts. A negative
+control verifies counter sensitivity. `--timing-repeats 5` adds paired separate-unit
+compile timings. This is a native representation experiment, not compiler lowering;
+see the [composition proof](../../../specs/planning/results/prelower_composition_2026_10_19/README.md).
+
+The comparison-only `prelower_expressions.py` harness and its source-method/constructor
+fixtures are preserved in [the historical proof archive](../tests/historical/prelowering/README.md).
+They exercised the removed runtime-ABI source-lowering mode, not current acceptance.
+Use the general substitution and header-boundary proofs above.
+
+`python3 compiler/my-try/tests/prelower_source_lifecycle.py --results FRESH_DIRECTORY`
+migrates the detailed source-method/constructor cases to the public concrete API
+option. It compares ordinary/concrete O0 behavior and allocation/copy/move counters,
+including receiver replacement/clearing, defaults, ordered reference arguments,
+inline results, five injected copy-failure stages, shared aliasing, unique transfer
+and independent value copies. It checks const pointer interfaces, strict unsupported
+boundary rejection/recovery, unchanged replay, warm reuse, method-only layout reuse
+and layout-edit rebuilding. Generated application units retain strict template
+validation; native test instrumentation lives under specialization support.
+The former mode's exact unit-rebuild count and O2/sanitizer results are not claims
+of this migrated proof.
+
+`python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
+checks real prepared observation/type bindings through opaque lifecycle generation,
+publication and native layout caching, including provider dependency edits, recovery,
+allocation/copy counters and sanitizers. This is API integration, not ordinary source
+expression adoption; see the [checkpoint](../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
+Add `--o0-only` to retain the layout/cache/counter checks while skipping optimized
+and sanitizer builds.
+
+`python3 compiler/my-try/tests/prelower_boundary.py --results FRESH_DIRECTORY`
+compares direct and in-place opaque runtime objects with allocation/lifecycle counters,
+nested-reference identity, failure cleanup and a deliberately copying negative control.
+This is a native boundary experiment, not compiler integration; see the
+[dated proof](../../../specs/planning/results/prelower_boundary_2026_10_19/README.md).
+
+The handwritten integer/vector comparison harness is also archived. Its useful
+emission/replay/recovery fixture (`fixtures/prelower_templates.php`) now exercises the
+single general path and runs within `prelower_null_output.py`; old per-family spellings
+and timings are historical evidence only.
+
+`python3 compiler/my-try/tests/records.py --suite duplicate_types --no-pch --results FRESH_DIRECTORY`
+checks duplicate type admission before emission, all source type kinds, cross-file
+retry/rename/removal recovery and valid namespace/import controls. See
+[the DR-03 proof](planning/duplicate_type_admission_2026_10_18/README.md).
+
+`python3 compiler/my-try/tests/records.py --suite ownership_targets --no-pch --results FRESH_DIRECTORY`
+checks shared/unique void target rejection across source contexts, retry/recovery,
+and generated shared/unique controls plus unchanged weak<void> admission.
+See [the bounded DR-02 proof](planning/ownership_void_targets_2026_10_18/README.md).
+
+`python3 compiler/my-try/tests/records.py --suite constructor_parameters --no-pch --results FRESH_DIRECTORY`
+checks abstract inline constructor input rejection before emission, inherited
+signature invalidation/recovery, and four generated concrete/shared input controls.
+See [the bounded DR-04 repair proof](planning/constructor_parameter_admission_2026_10_18/README.md).
+
+`tests/scalar_admission.py --php /usr/bin/php8.2 --jobs 32 --results FRESH`
+checks bool equality and float arithmetic, conversions, deferred boundaries and
+seven generated programs. Run on dev002. The agreed contract preserves
+`division_by_zero`. `--ieee-zero` retains the historical counterfactual IEEE probe;
+it is expected to fail and is not an acceptance check or an open blocker.
+
+For the v0.1 compatibility milestone, use the [pinned original-source corpus and
+differential runner](planning/v0_1_compatibility_testing.md). It runs both compiler/
+runtime generations, distinguishes baseline failures from v0.2 gaps, and excludes
+operator matrices for a separate semantic-review pass.
+
+CH14-EMIT-01 enables `-Wshadow` in shared fixture compilation (including runtime/PCH)
+and native build actions. `tests/project_cpp.py` covers qualified lookup and legal
+block/parameter/foreach-key/catch shadowing with PCH/no-PCH execution and standalone
+headers. `tests/native_invalidation.py` checks the flag on compile/PCH paths and
+successful warning delivery alongside its existing exact rebuild matrix. Warnings
+remain diagnostics, not errors; these runners do not rebuild the compiler itself.
+
+Chapter 14 native closeout uses the same conversion/build setup:
+
+```sh
+python3 compiler/my-try/tools/native_validate.py --target-checkout "$PWD" \
+  --candidate-revision "$(git rev-parse HEAD)" --results /tmp/ch14-native-FRESH \
+  --types-only --no-stan --chapter14
+```
+
+The converted driver compares exported multi-file projects with PHP, compiles native
+artifact bundles with and without PCH, and checks standalone headers. It also invokes
+the native compiler's actual publication and native-build workers for byte-identical
+manifests, no-op/body-edit reuse, failure/repair, successful warning delivery and an
+optional provider's source/definition/library invalidation. Build consumption is tested
+with the source catalog removed. These bounded checks do not sweep every historical
+publication interruption, locking or toolchain case. `--resume` retains attempt logs
+and objects; a successful summary is required before closeout. Source, harness,
+runtime-catalog and candidate hashes identify the exact tested overlay.
+
+Chapter 13 native closeout uses the shared candidate validator:
+
+```sh
+python3 compiler/my-try/tools/native_validate.py --target-checkout "$PWD" \
+  --candidate-revision "$(git rev-parse HEAD)" --results /tmp/ch13-native-FRESH \
+  --types-only --no-stan --chapter13
+```
+
+This converts the compiler to PHS, installs the existing portable framework, builds
+it natively and compares all exported error-value/exception/finally fixtures against
+PHP before compiling and running their C++. It also checks rejection/recovery,
+retained-session edits, production CLI failures and a no-change native rebuild.
+The mode uses no fixture PCH; the native compiler build retains its normal cache.
+`--resume` refreshes the source snapshot while preserving native objects and prior
+attempt logs. `source_hashes.json`, `harness_hashes.json`, `candidate.json` and the
+executable hash distinguish the tested source/overlay from an earlier revision.
+Test-owned native instrumentation executes only after byte equality of its complete
+uninstrumented base. A missing successful summary keeps the closeout gate open.
+
+`python3 compiler/my-try/tests/records.py --suite finally --no-pch --results FRESH`
+checks scalar/void delayed returns, nested exception propagation/replacement, cleanup
+order, local versus crossing transfers, source closure isolation and incremental
+rejection/repair. It compiles generated programs; no native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/records.py --suite exceptions --no-pch --results FRESH`
+checks the bounded Exception factory, canonical throw/catch admission, shared identity,
+handler lifetime, reverse exceptional cleanup, partial construction, outer reporting
+and incremental rejection/repair. It compiles generated programs, not the compiler.
+
+`python3 compiler/my-try/tests/records.py --suite error_values --no-pch --results FRESH`
+checks metadata error factory/defaults/getters, Result failure boundaries, state and
+copy behavior, no-error rejection with assignment preservation, preparation rejections
+and incremental repair/fresh agreement. It compiles generated programs; it does not
+rebuild the compiler.
+
 `python3 compiler/my-try/tests/lowering_report.py --results FRESH_DIRECTORY` checks
 optional lowering-report correctness, output equivalence and retained-generation
 purity at O0/O1/O2. See the [report schema](architecture/lowering_report.md).
@@ -1054,6 +1405,272 @@ indexed compound preparation and generated C++: key/RHS sequencing, vector resiz
 and replacement, nested COW/shared identity, and missing/deleted/wrong-kind paths.
 It does not rebuild the compiler natively.
 
+
+V-L04 focused float comparisons/mutations: run
+`python3 compiler/my-try/tests/float_operators.py --results FRESH` on dev002.
+This proves six exact float/float comparisons and four value-snapshot mutations,
+including preparation cleanup/recovery and native special values. It is not a
+whole operator-matrix run; see [the bounded report](planning/float_operators_l04.md).
+
+
+V-L05 numeric logical checks:
+`python3 compiler/my-try/tests/numeric_logical.py --results FRESH` on dev002.
+The bounded proof covers canonical numeric !/AND/OR, word aliases and mixed numeric
+pairs, with independent counts/traces, exceptions, truth snapshots and preparation
+recovery. See [scope and results](planning/numeric_logical_l05.md).
+
+`python3 compiler/my-try/tests/string_comparisons.py --results FRESH` verifies
+V-L03 on dev002: seven exact string comparisons, unsigned-byte expected ordering,
+embedded NUL/high bytes, once-only ordered effects and exceptions, local/property
+snapshots, excluded types, cleanup and failure/repair/fresh equivalence. See the
+[bounded report](planning/string_comparisons_l03.md). No full matrix or native compiler rebuild.
+
+`python3 compiler/my-try/tests/guarded_operators.py --results FRESH` verifies the
+[four-carrier guarded-wrapper slice](planning/guarded_wrappers_02.md) on dev002: 228 binary
+and 16 unary signatures, checked states, eager snapshots, lazy guards, errors,
+condition/selection preservation, exclusions and retained-session repair. The
+runtime extraction controls use existing APIs; no runtime implementation changes,
+full matrix run or native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_float.py --results FRESH` verifies the
+[guarded-float slice](planning/guarded_float.md) on dev002: 144 binary and 12 unary
+signatures across four carriers. It checks signed zero, NaN/infinities, missing
+states, exact scalar results, snapshots/lazy effects, division_by_zero, separate
+selector/take semantics, excluded types/operators and retained-session recovery.
+Use `guarded_operators.py` for the companion int regression; no full matrix or
+native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_mixed.py --results FRESH` verifies the
+[mixed-numeric guarded slice](planning/guarded_mixed.md) on dev002: 192 binary
+signatures, independent integer/float states, arithmetic promotion, lazy truth
+conversion, errors, snapshots, alias precedence and retained repair. Companion
+int/float guarded runners retain mixed-ordering and other unsupported-form rejection checks;
+only newly admitted negatives were retired. No full matrix or native rebuild.
+
+`python3 compiler/my-try/tests/guarded_bool.py --results FRESH` verifies the
+[guarded-bool slice](planning/guarded_bool.md) on dev002: four unary and 48 binary
+signatures, payload/sentinel distinctions through source construction/assignment,
+lazy effects, truth snapshots, separate selector/take semantics, exclusions and
+retained recovery. Numeric guarded suites remain companion regressions; no runtime
+change, full matrix or native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_string.py --results FRESH` verifies the
+[guarded-string ordering slice](planning/guarded_string.md) on dev002: 48 signatures,
+independent unsigned-byte ordering, missing states, ordered effects, local/property
+snapshots, selector/take preservation and retained recovery. Equality and string
+logical operators remain separate. No full matrix or native compiler rebuild.
+
+`python3 compiler/my-try/tests/guarded_cross.py --results FRESH` verifies the
+[cross-family slice](planning/guarded_cross.md) on dev002. It runs the five payload
+fixtures in `--cross` mode through the shared runner, builds one shared snippet
+runtime object, and checks exactly 660 distinct binary signatures. Independent
+state/value oracles check family-specific errors, left precedence, lazy effects,
+local/property snapshots and 72 retained repair sequences. Ordinary fixture modes
+remain regression controls. No full matrix or native compiler rebuild is implied.
+
+`python3 compiler/my-try/tests/guarded_bool_xor.py --results FRESH` verifies all 24
+guarded-bool XOR signatures using `guarded_bool.php --xor`, with exact signature-set
+validation, eager source/error products, local/property snapshots, assignment
+precedence and 24 retained recovery sequences. It reuses the independent bool state
+oracle and snapshot helper. AND/OR and cross-family fixture modes retain their
+existing scope; only newly valid bool-XOR negatives are retired. See the
+[dev002 proof](planning/guarded_bool_xor.md). No runtime changes or full matrix run.
+
+`python3 compiler/my-try/tests/guarded_spaceship.py --results FRESH` verifies 48
+canonical-int/string spaceship signatures using the existing payload fixtures in
+`--spaceship` mode. It checks exact signature sets, int -1/0/1 results, integer
+boundaries, complete byte strings, errors, eager effects, local/property snapshots
+and 48 retained recovery sequences. Exhaustive focused type exclusions retain
+fixed-width, float, bool and mixed-payload boundaries. See the [dev002 proof](planning/guarded_spaceship.md).
+This is a bounded suite, not a full matrix or native compiler rebuild.
+
+`python3 compiler/my-try/tests/numeric_xor.py --results FRESH` verifies all 100
+canonical numeric XOR signatures through `guarded_mixed.php --numeric-xor`.
+Preparation proofs retain each truth conversion's actual payload type; native
+oracles check eager reach, signed zero, NaN/infinities, large integers, source errors,
+local/property snapshots and assignment precedence. The exact signature set and
+100 retained recovery sequences are required. Shared recovery now uses an unresolved
+call as its invalid edit so ordinary plain equality need not be misclassified.
+See [dev002 evidence](planning/numeric_xor.md); no runtime changes or full matrix run.
+
+`python3 compiler/my-try/tests/nullable_int_equality.py --results FRESH` verifies
+all 12 nullable/plain canonical-int equality and identity signatures on dev002.
+It checks state-preserving preparation, integer boundaries, empty versus zero,
+eager RHS reach on empty left, distinct source errors, local/property state
+replacement, 12 retained recovery sequences and 136 excluded sources. Literal-null
+presence and throwing guarded arithmetic/ordering are controls. See the
+[proof](planning/nullable_int_equality.md); no runtime changes or full matrix run.
+
+
+### Nullable bool/string equality — 2026-10-19
+
+`python3 compiler/my-try/tests/nullable_bool_string_equality.py --results FRESH`
+verifies 24 `== != === !==` signatures over nullable/nullable and nullable/plain
+matching bool/string payloads. The shared `wrapper_equality_fixture.php` also
+serves the existing nullable-int runner. It checks complete-state decisions,
+eager error ordering, empty versus false/empty-string distinctions, full byte
+comparison, local/property replacement snapshots and retained recovery. Native
+oracles use presence plus exact payload equality, independently of compiler helpers.
+See the [dev002 proof](planning/nullable_bool_string_equality.md). No runtime changes,
+full matrix run or native compiler rebuild.
+
+
+### Nullable-float equality — 2026-10-19
+
+`python3 compiler/my-try/tests/nullable_float_equality.py --results FRESH` verifies
+12 matching nullable/plain float equality and identity signatures. The shared
+nullable equality fixture distinguishes value comparison (NaN unequal, signed zeros
+equal) from bit-preserving storage checks. It covers eager source errors, presence,
+local/property replacement and retained recovery. Plain float identity, mixed
+payloads and Result equality remain negative controls. See the
+[dev002 evidence](planning/nullable_float_equality.md).
+
+
+### Structured-error Result equality — 2026-10-19
+
+`python3 compiler/my-try/tests/result_equality.py --results FRESH` verifies 48
+signatures across int/float/bool/string. The shared `wrapper_equality_fixture.php`
+(formerly nullable-only) uses separate state equality and identity oracles, five
+valid error payloads with independently varied fields, eager source failures,
+bit-preserving float storage observers, local/property replacement and recovery.
+`error::$no_error` construction rejects. Sentinel families, mixed payloads,
+cross-family comparisons and direct `error` comparisons remain negative controls.
+See [the dev002 proof](planning/result_equality.md); no runtime change/full matrix.
+
+
+### False-sentinel bool equality — 2026-10-19
+
+`python3 compiler/my-try/tests/false_bool_equality.py --results FRESH` proves 12
+signatures over `result_or_false<bool>` and plain bool. The shared wrapper fixture
+uses state-sensitive equality for two carriers and visible-bool comparison for
+identity and wrapper/plain pairs. It proves sentinel/payload-false distinction,
+eager errors, snapshots, recovery and literal bool construction; explicit sentinel
+comparisons and non-bool payloads remain negative controls. See the
+[dev002 report](planning/false_bool_equality.md).
+
+
+### Two-sentinel bool equality — 2026-10-19
+
+`python3 compiler/my-try/tests/bool_sentinel_equality.py --results FRESH` verifies
+12 `result_or_bool<bool>` equality/identity signatures across four carrier states
+and two plain bool values. The shared bool-state oracle distinguishes carrier
+equality from visible identity; false/true literal construction, explicit sentinel
+construction, eager errors, local/property snapshots and recovery are checked.
+Both absent-payload states still fail guarded negation. See the
+[dev002 report](planning/bool_sentinel_equality.md).
+
+
+### Non-bool sentinel equality — 2026-10-19
+
+`python3 compiler/my-try/tests/nonbool_sentinel_equality.py --results FRESH` proves
+72 signatures over two carriers and int/float/string, with states, scalar edges,
+eager errors, local/property snapshots, construction and retained recovery.
+`nonbool_sentinel_deferred.py` separately observes 24 native wrapper/plain equality
+instantiations, recording compiler outcomes and diagnostics. Its task success means
+an observation was collected, not that the comparison compiled. See the
+[dev002 report](planning/nonbool_sentinel_equality.md).
+
+
+### Sentinel/plain equality repair — 2026-10-19
+
+`nonbool_sentinel_equality.py` now verifies the 24 newly admitted ordinary
+carrier/plain comparisons alongside the previous 48 (72 total, 72 recoveries).
+`sentinel_plain_runtime.py` verifies their direct runtime behavior, preserved bool
+and boxed delegation, and 20 scalar/mixed-payload/fixed-width compile rejections.
+The historical `nonbool_sentinel_deferred.py` remains an observation tool: its
+24 instantiations now compile. The earlier failure archive remains unchanged.
+See [the repair report](planning/sentinel_plain_equality.md).
+
+
+### Carrier updates and V-R10 — 2026-10-19
+
+`python3 compiler/my-try/tests/carrier_updates.py --results FRESH` verifies 32
+canonical numeric carrier updates, native prefix/postfix contracts, source snapshots,
+state/error preservation, references, local/instance/static storage, once-only static
+qualifiers, null owners, error ordering and retained recovery.
+`carrier_updates_runtime.py` runs the original nullable native test and 80 negative
+native update controls. See [dev002 evidence](planning/carrier_updates.md).
+
+
+### Canonical-int arithmetic compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/int_carrier_compounds.py --results FRESH` verifies
+48 same-carrier/plain `+= -= *= /=` signatures. It checks preparation, recovery,
+state/error precedence, RHS replacement effects, source snapshots, aliases, nested
+updates, locals/references, stable property owners and static qualifiers.
+See [dev002 evidence and proof boundaries](planning/int_carrier_compounds.md).
+
+
+### Canonical-int remainder/bitwise/shift compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/int_carrier_compounds.py --group bitwise --results FRESH`
+verifies 72 same-carrier/plain `%= &= |= ^= <<= >>=` signatures. The shared fixture
+retains arithmetic mode separately and uses safe shift pairs, signed remainder,
+bit patterns, distinct RHS/computation errors and the existing state/snapshot/owner
+proof. See [dev002 evidence](planning/int_bitwise_compounds.md).
+
+
+### Canonical-int cross-family compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/int_carrier_compounds.py --group cross --results FRESH`
+verifies all 120 ordered distinct-carrier signatures. The shared fixture independently
+models left/right states and checks ordered extraction kinds, destination wrapping,
+error precedence, RHS effects, snapshots, stable owners, write-back and recovery.
+Arithmetic and bitwise modes retain the preceding 120 same-carrier/plain signatures.
+See [dev002 evidence](planning/int_cross_compounds.md).
+
+
+### Exact-float compounds — 2026-10-19
+
+`python3 compiler/my-try/tests/float_compounds.py --results FRESH` runs four scalar
+prerequisites first, then all 96 carrier signatures. It shares
+`numeric_compound_fixture.php` with the retained int modes and adds float state/value
+oracles: NaN classification, signed zero, bit-preserving untouched storage and
+replacement snapshots. See [dev002 evidence](planning/float_compounds.md).
+
+
+### Mixed numeric ordering O1 — 2026-10-19
+
+`python3 compiler/my-try/tests/mixed_ordering.py --results FRESH` runs eight scalar
+prerequisites first, then 192 carrier signatures in 24 family-pair tasks. It checks
+precision boundaries, NaNs/zeros/infinities, ordered errors and conversions, snapshots,
+property-owner rebinding and 50 retained recovery sequences. See [dev002 evidence](planning/mixed_ordering.md).
+
+
+### Float-destination mixed compounds C2W — 2026-10-19
+
+`python3 compiler/my-try/tests/widening_compounds.py --results FRESH` verifies four
+scalar prerequisites before all 96 carrier signatures. The shared numeric fixture
+retains independent float destination and int RHS representations through precision
+boundaries, extraction/conversion facts, errors, snapshots and storage/recovery checks.
+See [dev002 evidence](planning/widening_compounds.md).
+
+
+### Cross-family strict identity E3I — 2026-10-19
+
+`python3 compiler/my-try/tests/cross_identity.py --results FRESH` first verifies
+runtime normalization over all carrier pairs, then all 96 source signatures with
+state, exception-order, local/property snapshot and retained recovery proofs.
+`--runtime-only` selects the prerequisite gate. Run on dev002; see
+[the dated evidence](planning/cross_identity.md).
+
+
+### Mixed numeric strict identity E4I — 2026-10-19
+
+`python3 compiler/my-try/tests/mixed_identity.py --results FRESH` verifies unchanged
+runtime support, then four scalar prerequisites and 96 carrier signatures using
+the shared identity state/snapshot fixture. `--runtime-only` selects the prerequisite
+gate. Run on dev002; see [the dated proof](planning/mixed_identity.md).
+
+
+### Bool/numeric strict identity E5BNI — 2026-10-19
+
+`python3 compiler/my-try/tests/mixed_identity.py --group bool-numeric --results FRESH`
+verifies runtime support first, then eight scalar prerequisites and 192 carrier
+signatures with independent state normalization and source snapshots. Add
+`--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/bool_numeric_identity.md).
+
 ## Shared-handle completeness
 
 `python3 compiler/my-try/tests/shared_handle_completeness.py --results FRESH` runs
@@ -1084,3 +1701,193 @@ compatibility umbrella headers. `data_initialization.py --no-pch` exercises the
 existing typed/mixed/dynamic source-construction and runtime-observation fixtures.
 See the [dev002 header-split checkpoint](planning/initialization_headers_20261016.md)
 for native compiler, build timing, memory and runtime evidence.
+
+### Heterogeneous string strict identity E5SI — 2026-10-20
+
+`python3 compiler/my-try/tests/mixed_identity.py --group string-other --results FRESH`
+verifies runtime support, twelve scalar prerequisites and 288 carrier signatures
+with independent normalized-state expectations, exact string-byte storage checks,
+eager source order, reference/property snapshots and retained recovery. Add
+`--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/string_other_identity.md). Ordinary equality and other
+string operators are outside this group.
+
+
+### Mixed numeric nullable/Result ordinary equality E4NR — 2026-10-20
+
+`python3 compiler/my-try/tests/mixed_equality.py --results FRESH` verifies unchanged
+runtime support, four scalar prerequisites and 24 nullable/structured Result
+carrier signatures. The independent oracle checks numeric promotion and absence/
+failure-state equality, including different error metadata; complete-state
+storage, eager source order, snapshots and retained repair are observed separately.
+Add `--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/mixed_equality.md). Cross-family ordinary equality remains
+a negative control; sentinel support is covered by the next group.
+
+### Mixed numeric sentinel ordinary equality E4S — 2026-10-20
+
+Run `python3 compiler/my-try/tests/mixed_equality.py --group sentinel --results FRESH`
+on dev002 for the 24 same-family/plain sentinel signatures and four existing scalar
+controls. Add `--runtime-only` for a runtime gate. `--probe-runtime` is an
+observational baseline mode: it records compilation failures and is not an
+acceptance run. The repaired source proof covers every sentinel state, numeric
+boundaries and NaNs, eager source evaluation, complete operand snapshots, source
+failures and retained recovery. `sentinel_plain_runtime.py` retains matching-payload,
+bool and boxed controls plus fixed-width and numeric/string rejection boundaries.
+See [the E4S proof and preserved baseline](planning/sentinel_mixed_equality.md).
+
+### Cross-family non-bool ordinary equality E3NB — 2026-10-20
+
+Run `python3 compiler/my-try/tests/cross_equality.py --results FRESH` on dev002.
+This checks 72 source signatures for matching int/float/string payloads, with
+24 existing same-family runtime controls. `--runtime-only` selects the runtime
+gate; adding `--probe-runtime` records baseline failures without treating them
+as acceptance. Source proofs reuse the state/snapshot fixture's ordinary-cross
+mode and independent oracle. The initial proof retained 24 bool and 48 mixed-numeric cross-family negatives;
+E4 below now admits the mixed-numeric pairs while preserving bool exclusions.
+See [the proof](planning/cross_equality.md).
+
+### Cross-family mixed numeric ordinary equality E4 — 2026-10-20
+
+Run `python3 compiler/my-try/tests/mixed_equality.py --group cross --results FRESH`
+on dev002 for all 48 distinct-family int/float `==`/`!=` signatures. Add
+`--runtime-only` for the prerequisite gate; `--probe-runtime` additionally records
+baseline failures rather than claiming acceptance. The independent numeric oracle
+checks every selected state/value combination, rounding and NaNs; source proofs
+check eager snapshots, effects, failures, recovery and all 24 bool cross-family
+exclusions. Existing nullable/Result and sentinel groups remain separate controls.
+See [the E4 report](planning/cross_mixed_equality.md).
+
+
+## V-L07 canonical-carrier completion — 2026-10-20
+
+Run `tests/vl07_completion.py --results <fresh-dir>` on dev002 for the 150 spaceship,
+power-compound and text rows; `tests/cross_equality.py --group bool --results
+<fresh-dir>` adds 24 bool cross-family equalities. Source tests inspect preparation,
+cleanup, retained edit/recovery, native values/states, source errors, snapshots,
+property/static/receiver lifetime and write-back. Independent runtime probes live in
+`tests/vl07_runtime.py` (`--final` requires the checked NaN helper).
+
+`tests/vl07_rejections.py` enumerates all 576 E5/C2 negative rows from the inventory,
+with failure/recovery and empty-artifact checks. `tests/vl07_existing.py` reconciles
+129 prior boundary cells, proving 17 supported paths and 112 rejections.
+`tests/vl07_controls.py` checks explicit conversions, power precedence/snapshots and
+indexed boundaries. `tests/vl07_indexed_text.py` audits the existing four-carrier
+indexed text protocol; inspect its per-row `supported` field, not task completion
+alone. Similarly, completion runner acceptance requires `summary.json` passed=true.
+
+All use the shared runner with 12 slots and native fixture compilation. The
+[completion report](planning/vl07_completion.md) and evidence distinguish failed
+attempts, corrected fixtures and accepted suites. This is not a full matrix run or
+a native rebuild of the compiler itself.
+
+
+## V-L06 scalar float identity and S04 — 2026-10-20
+
+On dev002, run `tests/float_identity.py --runtime-only --results <fresh-dir>` for
+the unchanged runtime prerequisite; omit `--runtime-only` to include both source
+forms with snapshots, source exceptions and retained recovery. The fixture reuses
+the independent carrier-identity oracle for plain float values, preserving float
+bits while comparing numeric identity.
+
+`tests/carrier_equality_reconciliation.py --results <fresh-dir>` replays the twelve
+original homogeneous nullable/int, Result/int and falseable/int equality/identity
+cells. `tests/falseable_process_identity.py --results <fresh-dir>` compiles and runs
+the unchanged strict S04 fixture with its exact metadata output, plus deterministic
+false-sentinel/string controls in both comparison orders. It copies source bytes
+without migration into an isolated compiler input directory.
+
+See [the report](planning/float_identity.md) for failed fixture attempts, corrected
+regressions and proof bounds. No runtime changes, native compiler rebuild or full
+matrix run were needed.
+
+## Bounded text contexts: V-L11 / V-D14
+
+On dev002, run `tests/carrier_text_runtime.py --results <fresh-dir>` before source
+admission changes. It checks existing state/payload composition and exposes the
+float-format difference between scalar text and explicit carrier casts. Run
+`tests/carrier_text.py --results <fresh-dir>` for the 864 named-type rows (729 `.`
+and 135 `.=`); `--smoke` selects four representative rows. These use the existing
+completion fixture with independent scalar text expectations and carrier states,
+ordered source errors, local/property/static snapshots, receiver rebinding,
+write-back and invalid-edit recovery. Width boundaries, binary strings and float
+rounding/NaN/infinity/signed-zero rendering are included.
+
+`tests/carrier_text_controls.py --results <fresh-dir>` covers literal-null rows,
+the four original findings and deferred-domain/value-boundary rejection controls.
+Regressions include existing indexed string-carrier writes, boxed text, explicit
+casts, interpolation and compound effects. This is a bounded text inventory, not
+a full operator matrix; `int`/`int64` source spellings are counted separately.
+Use fresh result directories and retain failed attempts. See [the report](planning/carrier_text.md)
+for exact tested manifests and evidence. Compiler-native portability is a separate
+proof; these tests compile emitted C++ with the existing runtime.
+
+## S06 single-statement conditional bodies
+
+Run `tests/unbraced_conditionals.py --results <fresh-dir>` on dev002. It checks
+nearest-if and nested-elseif binding, mixed braced/unbraced arms, branch-local
+scope, once-only/lazy evaluation, selected errors, loop transfers and completion.
+AST checks cover the three nested single-body token spans. Retained edits add and
+remove braces, change else ownership and recover from syntax and preparation
+failures; fresh and no-op results must agree. Native programs check the behavioral
+result of those edits. The test-only entry-observation marker lets the shared
+fixture adapter expose runtime exceptions to the native observer.
+
+`--baseline` reproduces the old required-brace failure and records the unchanged
+original fixture. On the repaired compiler that original fixture must advance to
+the separately tracked wrapper-to-integer call blocker (S09-B1), following the
+S09 search repair; this does not claim an end-to-end pass. Run `tests/control_flow.py --no-pch --results <fresh-dir>` for existing
+control-flow, AST, completion, tokenizer and retained-preparation regressions.
+See [the S06 report](planning/s06_unbraced_conditionals.md) for exact evidence.
+
+## S07 exact-mixed predicates
+
+Run `tests/mixed_predicates_runtime.py --results <fresh-dir>` first on dev002 to
+probe the existing runtime, then `tests/mixed_predicates.py --results <fresh-dir>`.
+The source suite checks the unchanged strict fixture's exact stdout, empty stderr
+and exit status, plus a 23-state truth table through three source functions.
+AddressSanitizer covers temporary property owners; additional checks cover once-only
+producers, readonly observation, subsequent mutation, saved bool values, source
+errors, 47 rejected calls and six incremental recovery cycles. The optional
+`--baseline` mode requires the pre-admission metadata and reproduces unresolved
+`is_bool`; it is not a check to run against the completed implementation.
+
+Focused regressions are `runtime_observation.py`, `mixed.py --no-pch` and
+`unbraced_conditionals.py`, each with its own fresh `--results` directory. The
+[dated S07 evidence](planning/s07_mixed_predicates.md) preserves the runtime-first
+probe and failed test-observer attempt. No full matrix is needed for this slice.
+
+## S09 byte search
+
+On dev002, run `tests/string_search_runtime.py --results <fresh-dir>` and
+`tests/string_search.py --results <fresh-dir>`. The optional `--baseline` modes
+require the pre-admission snapshot: they record code-point adapter behavior and
+unresolved source calls. The completed runtime suite checks 1,760 byte-search calls
+under UBSan; compiled source repeats those checks under ASan/UBSan and adds
+argument snapshots, short-circuited evaluation after an error, saved results,
+explicit extraction, 18 invalid calls and four recovery cycles. Original fixtures
+are never edited; compiled ones use their exact stored output oracle, while
+remaining preparation failures are recorded in the summary.
+
+Focused regressions are `runtime_strings.py`, `nonbool_sentinel_equality.py` and
+`unbraced_conditionals.py`. The conditional first-blocker assertion now expects
+S09-B1's exact runtime signature failure; the earlier unresolved-strpos evidence
+remains historical. See [the report](planning/s09_byte_search.md) for boundaries
+and the unchanged original edge fixture's pass. No full matrix is needed.
+
+## S09 offset replacement
+
+On dev002, run `tests/substr_replace_runtime.py --results <fresh-dir>` first, then
+`tests/substr_replace.py --results <fresh-dir>`. Each checks 3,312 replacement calls
+under ASan/UBSan using an independent byte oracle, including signed extrema,
+empty/non-ASCII/arbitrary-byte inputs and aliased inputs. The runtime driver also
+runs the existing full native PHP-string suite with reconciled expectations. The
+source driver checks the unchanged original surface fixture's exact output,
+argument snapshots/order, no-op argument evaluation, saved results, argument
+errors, 11 invalid calls and two recovery cycles.
+
+The optional `--baseline` modes require the pre-repair snapshot and record the
+runtime contract discrepancies and unresolved source name. Focused regressions
+are `runtime_strings.py` and `string_search.py`, each with a fresh results directory.
+S09-B1 remains a separately observed call-boundary blocker; no full matrix or
+fixture migration is part of this slice. See [the report](planning/s09_substr_replace.md).

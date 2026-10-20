@@ -1,0 +1,1 @@
+$s = Lib\make(); return $s->n;

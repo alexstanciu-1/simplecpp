@@ -343,6 +343,14 @@ auto a = string_t("x");
 
 ## LIT-STR-002
 
+
+**Current scope — 2026-10-19 (CS008).** Double-quoted controls, octal/hex, unknown escape preservation and empty bytes are asserted. Unsupported Unicode escape rejects. Interpolation is independently supported; old broad interpolation-rejection wording is stale and must not override current interpolation contract.
+
+Contracts and owners: [simple_cpp_php_strict_quick_learn.md](../../../../specs/simple_cpp_php_strict_quick_learn.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS008`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** A non-interpolated double-quoted literal maps to
 the same canonical binary-safe `string` value and C++ representation as
 `LIT-STR-001`:
@@ -372,6 +380,8 @@ double-quoted spans, unterminated rejection, canonical AST/type identity, byte e
 decoding, interpolation and Unicode-escape rejection, output spelling, cleanup and
 source purity. The native checkpoint proves byte-identical PHP/native emission plus
 Clang compilation and execution of `string_double`.
+
+</details>
 
 ### Imported version 1
 
@@ -937,6 +947,14 @@ auto a = static_cast<int_t>(1); auto b = a; auto c = b;
 
 ## VAR-CHAIN-004
 
+
+**Current scope — 2026-10-19 (CS017).** Prepared arithmetic and inferred local identity compose. Initial canonical-int-only prose is a dated slice: later fixed-width/float admission and boundary ledgers supersede that restriction. No unsupported all-domain arithmetic claim.
+
+Contracts and owners: [simple_cpp_php_strict_quick_learn.md](../../../../specs/simple_cpp_php_strict_quick_learn.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS017`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** The initial arithmetic slice accepts binary `+`
 when both operands have the canonical Simple C++ `int` identity. The exact input
 emits:
@@ -977,6 +995,8 @@ source purity. Focused rejection proofs cover an undeclared operand, a boolean
 operand, an unresolved narrow-integer promotion and an effectful call operand.
 The native checkpoint compiles and executes `var_chain_004` after verifying
 byte-identical PHP/native emission.
+
+</details>
 
 ### Imported version 1
 

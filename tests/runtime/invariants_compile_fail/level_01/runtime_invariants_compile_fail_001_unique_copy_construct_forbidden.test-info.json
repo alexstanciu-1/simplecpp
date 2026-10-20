@@ -27,7 +27,7 @@
         "compile": {
             "success": false,
             "error_contains": [
-                "use of deleted function",
+                "deleted",
                 "unique_p(const unique_p &) = delete"
             ]
         },

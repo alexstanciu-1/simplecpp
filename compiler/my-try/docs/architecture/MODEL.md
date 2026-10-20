@@ -912,13 +912,24 @@ that immutable family; inherited `result_kind()` still classifies template outpu
 as class/struct. Separate registered definitions and backend bindings preserve each
 family's canonical identity. Payload access validates the owning application.
 Result construction and checked required-value extraction decisions live in
-`conversions/results.php`; explicit casts, other operators and profile availability
-remain separate follow-up work. Explicit
+`conversions/results.php`; explicit casts and profile availability remain separate.
+Guarded operators have the bounded owner described below. Explicit
 boolean sentinel constants use ordinary internal runtime nominal tag identities
 with no storage capabilities/exposure; singleton constant definitions carry those
 identities through existing lookup. They are not boolean payload values. `nullopt`
 uses the existing null identity. No additional AST or template class is introduced.
 Conversion/comparison/truthiness policy remains worker-owned.
+Guarded operator admission lives in `operators/guarded.php`. The existing
+`operator_decision` retains `operand_extractions`: empty for ordinary operations,
+otherwise one checked extraction (or plain identity) per source operand, before
+its existing payload conversion or truthiness decision. This is a bounded
+extraction stage, not a general implicit-conversion chain. Preparation delegates
+payload admission to ordinary operator owners. C++ composes extraction inside each
+operand expression, preserving eager snapshot order and lazy RHS checks. Compound
+preparation passes a distinct `compound_assignment` context so value lifting cannot
+authorize write-back. The first slice is canonical int in nullable, Result and
+falseable Result; state-aware equality and mutation remain separate.
+
 Concatenation retains ordinary operand conversion decisions with a dedicated text
 context and `text_conversion` operation; no new AST or conversion-chain structure
 is needed. Text normalization is distinct from explicit casts and required extraction.

@@ -1,0 +1,4 @@
+{
+  "NAME-04": "S2S generation failed: Private method is not accessible here: f\n\n",
+  "REF-03": "S2S generation failed: S2S mutation or mutable borrowing through read-only storage is not allowed\n\n"
+}

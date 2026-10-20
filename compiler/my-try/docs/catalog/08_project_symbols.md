@@ -11,6 +11,14 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Implementation roadmap
 
+
+**Current scope — 2026-10-19 (CS317).** Roadmap consolidates separate artifact/entry/publication/cache and namespace stages. Existing project/incremental ledgers supply exact observed revisions, not universal invalidation or performance guarantees. Namespace/import identities and explicit body scope have passing suites. Later class/static and root-qualified runtime symbols supersede dated exclusions; native compiler parity and validation-overhead optimization remain deferred.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [project_build_v1.md](../../../../specs/project_build_v1.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS317`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 The [multi-file output and incremental-build roadmap](../planning/incremental_cpp_artifacts.md)
 records the agreed direction, ownership boundaries, staged work and runtime-PCH
 requirements. Start with stable identities, explicit entry selection and cross-file
@@ -44,7 +52,17 @@ outside this bounded pass.
 Imported cards below are not implementation evidence; their obsolete import restrictions
 do not override the agreed contract or newer generator rules.
 
+</details>
+
 ## Remaining-card reconciliation — 2026-10-06
+
+
+**Current scope — 2026-10-19 (CS318).** Current/rooted/relative lookup, imports, executable-body locals and scalar constants have dedicated proofs. Later namespace/class probes replace CH10 prerequisite labels; one-executable-body and current-relative naming are intentional contract differences. Include/require is not project composition; nested namespace declarations and persistent namespace variables remain deferred. Historical backend names/interpolation guidance do not impose lowering parity.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [project_build_v1.md](../../../../specs/project_build_v1.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS318`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Review against the existing namespace/import fixtures and the agreed v0.2 contract,
 updated after the scalar-constant slice below. Historical examples
@@ -88,6 +106,8 @@ with their existing Chapter 15 owners. The latest whole-native-compiler checkpoi
 predates Chapter 08; generated-program execution is not a native compiler rebuild.
 The bounded positive-pass conclusion below does not complete those deferred extensions.
 
+</details>
+
 ## Scalar source constants — 2026-10-06
 
 Agreed slice: `const NAME = initializer;` in global/named source bodies; inferred
@@ -114,6 +134,14 @@ this slice. Compiler portability conversion and native compiler build are not cl
 
 ## Positive-pass conclusion — 2026-10-06
 
+
+**Current scope — 2026-10-19 (CS320).** Bounded historical conclusion does not certify native compiler portability. Nested declarations, broader constants, dedicated diagnostic wording and persistent namespace storage remain scoped debt; class/static prerequisites have later proof rather than remaining globally absent. Cache/performance claims require their separate evidence.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [project_build_v1.md](../../../../specs/project_build_v1.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS320`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Chapter 08's bounded frontend + C++ S2S pass is concluded: multi-file artifacts,
 entry selection, publication/native-cache baseline, canonical namespace bodies,
 qualified lookup, local imports and scalar constants. Unsupported/deferred rows
@@ -137,7 +165,17 @@ discussion/implementation and aim to finish its bounded pass before requesting t
 combined native checkpoint. Existing generated-program execution does not certify
 the compiler's native portability. No new LLVM semantics are enabled.
 
+</details>
+
 ## Progress
+
+
+**Current scope — 2026-10-19 (CS321).** Namespace class/static calls and exact echo/body examples have subsequent catalog proofs, superseding the old prerequisite labels. Per-card notes below give the supported boundaries. Project/native-cache ledgers retain their tested revisions and original failures. JSON production linkage is now verified separately in simple_repairs_03; this does not broaden the original core-cache proof. Include/nested forms remain intentional rejection or deferred policy, without a promise of identical diagnostics.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [project_build_v1.md](../../../../specs/project_build_v1.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS321`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
@@ -190,9 +228,22 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-025](#note-025) | split-review | — (example pending) | partial | partial | deferred | See remaining-card reconciliation; imported prose spans multiple owners |
 | [NOTE-031](#note-031) | split-review | — (example pending) | partial | partial | deferred | See remaining-card reconciliation; imported prose spans multiple owners |
 | [NOTE-051](#note-051) | split-review | — (example pending) | partial | partial | deferred | See remaining-card reconciliation; imported prose spans multiple owners |
+
+</details>
+
 ## CLASS-STATIC-NS-003
 
+
+**Current scope — 2026-10-19 (CS322).** Completed X declaration and typed make() return 7 through instance-based static access. This proves the supported source form, not the historical class_t spelling or blanket permission to defer invalid member admission to C++. Preparation policy supersedes the imported type-blind generator rule.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS322`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Pending discussion.
+
+</details>
 
 ### Imported version 1
 
@@ -229,7 +280,17 @@ auto x = create<X>(); return ::scpp::class_t<decltype(x)>::make();
 
 ## CLASS-STATIC-NS-002
 
+
+**Current scope — 2026-10-19 (CS323).** Typed f() calls rooted A\X::make() and native execution returns 7. The supplied class and entry make the imported fragment executable; historical C++ spelling/new-token diagnostics are not v0.2 semantic requirements.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS323`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Pending discussion.
+
+</details>
 
 ### Imported version 1
 
@@ -1024,7 +1085,17 @@ syntactic lowering only
 
 ## CLASS-NS-001
 
+
+**Current scope — 2026-10-19 (CS344).** Namespaced X declaration, construction and presence test execute to 7. This supports the source namespace/class form; exact C++ namespace syntax and trailing punctuation are backend correctness details, not lowering parity requirements.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md), [08_project_symbols.md](08_project_symbols.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS344`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Pending discussion.
+
+</details>
 
 ### Imported version 1
 
@@ -1061,7 +1132,17 @@ namespace scpp::A { class X {}; }
 
 ## CLASS-NS-002
 
+
+**Current scope — 2026-10-19 (CS345).** Typed f():X constructs unqualified same-namespace X with field n=7 and caller reads 7. Explicit signature replaces the imported untyped function. Canonical type identity governs construction; emitting a qualified backend name is allowed.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md), [08_project_symbols.md](08_project_symbols.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS345`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Pending discussion.
+
+</details>
 
 ### Imported version 1
 
@@ -1098,7 +1179,17 @@ namespace scpp::A { class X {}; auto f() { return create<X>(); } }
 
 ## CLASS-NS-003
 
+
+**Current scope — 2026-10-19 (CS346).** Typed f():X constructs rooted A\X and returns its initialized n=7 to the caller. Rooted source identity is preserved; no requirement to retain historical create template spelling follows.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md), [08_project_symbols.md](08_project_symbols.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS346`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Pending discussion.
+
+</details>
 
 ### Imported version 1
 
@@ -1135,7 +1226,17 @@ namespace scpp::A { class X {}; auto f() { return create<::scpp::A::X>(); } }
 
 ## CLASS-NS-004
 
+
+**Current scope — 2026-10-19 (CS347).** Non-root A\B\X inside A\B resolves A\B\A\B\X with n=7 despite a competing A\B\X with n=99. Native result 7 proves current-relative selection. The historical blanket self-reference rejection is intentionally replaced; explicit return typing remains fixture migration.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md), [08_project_symbols.md](08_project_symbols.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS347`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Pending discussion.
+
+</details>
 
 ### Imported version 1
 
@@ -1172,7 +1273,17 @@ ERROR
 
 ## CLASS-STATIC-NS-001
 
+
+**Current scope — 2026-10-19 (CS348).** Typed same-namespace f() calls X::make() and native execution returns 7. This supplies omitted class/method definitions and strict signatures. Source identity matters, not whether emitted C++ remains unqualified.
+
+Contracts and owners: [namespaces_v0_2.md](../../../../specs/namespaces_v0_2.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md), [08_project_symbols.md](08_project_symbols.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS348`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Pending discussion.
+
+</details>
 
 ### Imported version 1
 

@@ -50,6 +50,14 @@ final class Native_Ninja_Build
 			$manifest = Output_Publication::require_ready($source);
 			$document = json_read($manifest);
 			Native_CPP_Publication::require_policy($document, $this->config->optimization);
+			if (!$document->has('application_templates')) {
+				throw new \RuntimeException('Publication lacks application template policy; republish with the current compiler');
+			}
+			$template_policy = $document->member('application_templates')->text();
+			if ($template_policy === 'forbidden') {
+				throw new \RuntimeException('prelower_templates: Ninja does not yet support concrete layouts and strict application validation; use Native_CPP_Build');
+			}
+			if ($template_policy !== 'allowed') { throw new \RuntimeException('Unknown application template policy'); }
 			if (!$document->has('runtime_build')) {
 				throw new \RuntimeException('Publication lacks runtime build requirements; republish');
 			}

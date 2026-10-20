@@ -15,11 +15,62 @@ final class String_Conversions
 		if ($source->matches($target)) {
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
 		}
+		if (self::is_string_carrier($source)) {
+			// Carrier text follows the explicit cast contract, not the PHP display adapter.
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::explicit_runtime_cast);
+		}
+		$payload = self::text_carrier_payload($source);
+		if ($payload !== null) {
+			$role = Result_Conversions::role($source);
+			$operation = conversion_operation::optional_payload_text;
+			if (($role !== null) && ($role->result_family() === result_kind::structured_error)) {
+				$operation = conversion_operation::required_payload_text;
+			}
+			return Conversion_Preparation::operation($source, $target, $context, $operation);
+		}
+		if (self::is_ready_integer($source)) {
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::text_conversion);
+		}
 		if (!Boxed_Conversions::is_boxed($source) && !Boxed_Conversions::is_scalar_payload($source)
 			&& !Nullable_Conversions::is_null($source)) {
 			throw new \RuntimeException('S2S concatenation requires boxed, ordinary scalar or null operands');
 		}
 		return Conversion_Preparation::operation($source, $target, $context, conversion_operation::text_conversion);
+	}
+
+	/** Identify the four string carriers admitted as text-assignment destinations. */
+	public static function is_string_carrier(canonical_type_use $source): bool
+	{
+		$payload = self::text_carrier_payload($source);
+		return ($payload !== null) && self::is_string($payload);
+	}
+
+	/** Canonical scalar carriers only; nested and fixed-width payloads are separate. */
+	public static function text_carrier_payload(canonical_type_use $source): ?canonical_type_use
+	{
+		if ($source->by_value()) { return null; }
+		$payload = Nullable_Conversions::payload($source);
+		if ($payload === null) {
+			$role = Result_Conversions::role($source);
+			if ($role === null) { return null; }
+			if (($role->result_family() !== result_kind::structured_error)
+				&& ($role->result_family() !== result_kind::false_sentinel)
+				&& ($role->result_family() !== result_kind::boolean_sentinels)) { return null; }
+			$payload = Result_Conversions::require_payload($source, $role);
+		}
+		if (!Boxed_Conversions::is_scalar_payload($payload) || $payload->by_value()) { return null; }
+		return $payload;
+	}
+
+	/** Registered integer facts define the ready text family; uint64 remains separate. */
+	public static function is_ready_integer(canonical_type_use $source): bool
+	{
+		if ($source->by_value()) { return false; }
+		$type = Type_Queries::canonical($source);
+		if (!($type instanceof integer_type)) { return false; }
+		$definition = object_cast($type, integer_type::class)->integer_definition();
+		return ($definition->signed() && ($definition->bit_width() <= 64))
+			|| (!$definition->signed() && ($definition->bit_width() <= 32));
 	}
 
 	public static function is_string(canonical_type_use $type): bool

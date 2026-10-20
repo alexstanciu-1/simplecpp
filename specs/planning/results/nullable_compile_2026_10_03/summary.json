@@ -1,0 +1,928 @@
+{
+  "isolated": {
+    "wall_seconds": 3.0267665880091954,
+    "tasks": [
+      {
+        "name": "nullable_elvis_present",
+        "seconds": 3.0257813349890057
+      }
+    ]
+  },
+  "pch-isolated": {
+    "wall_seconds": 0.8777641810011119,
+    "tasks": [
+      {
+        "name": "nullable_elvis_present",
+        "seconds": 0.8766421080217697
+      }
+    ]
+  },
+  "baseline-12": {
+    "wall_seconds": 47.63153760199202,
+    "tasks": [
+      {
+        "name": "nullable_probe_null_isset",
+        "seconds": 4.031820036994759
+      },
+      {
+        "name": "nullable_probe_null_empty",
+        "seconds": 3.952456776984036
+      },
+      {
+        "name": "nullable_probe_absent",
+        "seconds": 7.49661299600848
+      },
+      {
+        "name": "nullable_probe_zero",
+        "seconds": 4.107711482007289
+      },
+      {
+        "name": "nullable_probe_false",
+        "seconds": 4.238969762984198
+      },
+      {
+        "name": "nullable_probe_float",
+        "seconds": 4.492203158995835
+      },
+      {
+        "name": "nullable_probe_string_empty",
+        "seconds": 4.230200050980784
+      },
+      {
+        "name": "nullable_probe_string_zero",
+        "seconds": 7.437603358994238
+      },
+      {
+        "name": "nullable_probe_present",
+        "seconds": 7.144576867023716
+      },
+      {
+        "name": "nullable_probe_plain_false",
+        "seconds": 3.9351326409960166
+      },
+      {
+        "name": "nullable_probe_plain_zero",
+        "seconds": 4.191791752004065
+      },
+      {
+        "name": "nullable_probe_plain_float",
+        "seconds": 3.8307417220203206
+      },
+      {
+        "name": "nullable_probe_plain_string",
+        "seconds": 7.236944874020992
+      },
+      {
+        "name": "nullable_probe_once",
+        "seconds": 7.335356243012939
+      },
+      {
+        "name": "nullable_probe_isset_once",
+        "seconds": 7.557707233005203
+      },
+      {
+        "name": "nullable_probe_nonmutating",
+        "seconds": 7.490801831008866
+      },
+      {
+        "name": "nullable_probe_throw",
+        "seconds": 7.656548988015857
+      },
+      {
+        "name": "nullable_probe_throw_throw",
+        "seconds": 7.713633662991924
+      },
+      {
+        "name": "nullable_elvis_empty",
+        "seconds": 7.295144299016101
+      },
+      {
+        "name": "nullable_elvis_zero",
+        "seconds": 7.373838573985267
+      },
+      {
+        "name": "nullable_elvis_present",
+        "seconds": 7.706410307000624
+      },
+      {
+        "name": "nullable_elvis_both_empty",
+        "seconds": 7.159183896990726
+      },
+      {
+        "name": "nullable_elvis_scalar_left",
+        "seconds": 6.791942112991819
+      },
+      {
+        "name": "nullable_elvis_scalar_zero",
+        "seconds": 7.420421565999277
+      },
+      {
+        "name": "nullable_elvis_bool",
+        "seconds": 7.130299637996359
+      },
+      {
+        "name": "nullable_elvis_float",
+        "seconds": 6.645957911008736
+      },
+      {
+        "name": "nullable_elvis_string",
+        "seconds": 6.631070619012462
+      },
+      {
+        "name": "nullable_elvis_once",
+        "seconds": 6.7114077439764515
+      },
+      {
+        "name": "nullable_elvis_fallback_once",
+        "seconds": 6.804462526022689
+      },
+      {
+        "name": "nullable_ternary_left",
+        "seconds": 6.512065162009094
+      },
+      {
+        "name": "nullable_ternary_right",
+        "seconds": 7.077721292997012
+      },
+      {
+        "name": "nullable_ternary_wrap_left",
+        "seconds": 2.3750116800074466
+      },
+      {
+        "name": "nullable_ternary_wrap_right",
+        "seconds": 2.4624555229966063
+      },
+      {
+        "name": "nullable_ternary_copy",
+        "seconds": 2.6426483700051904
+      },
+      {
+        "name": "nullable_ternary_lazy",
+        "seconds": 7.167943168984493
+      },
+      {
+        "name": "nullable_ternary_required_empty",
+        "seconds": 2.5402707789908163
+      },
+      {
+        "name": "nullable_ternary_required_empty_throw",
+        "seconds": 2.4371371190063655
+      },
+      {
+        "name": "nullable_condition_empty",
+        "seconds": 6.943698349001352
+      },
+      {
+        "name": "nullable_condition_zero",
+        "seconds": 6.998349362023873
+      },
+      {
+        "name": "nullable_condition_false",
+        "seconds": 6.599832806008635
+      },
+      {
+        "name": "nullable_condition_true",
+        "seconds": 6.829659564013127
+      },
+      {
+        "name": "nullable_condition_float",
+        "seconds": 6.675189237983432
+      },
+      {
+        "name": "nullable_condition_string",
+        "seconds": 7.005205241992371
+      },
+      {
+        "name": "nullable_condition_string_zero",
+        "seconds": 6.7733226740092505
+      },
+      {
+        "name": "nullable_condition_string_empty",
+        "seconds": 7.805658067984041
+      },
+      {
+        "name": "nullable_condition_elseif",
+        "seconds": 6.991755649010884
+      },
+      {
+        "name": "nullable_condition_while",
+        "seconds": 7.188837073015748
+      },
+      {
+        "name": "nullable_condition_do",
+        "seconds": 8.428828737000003
+      },
+      {
+        "name": "nullable_condition_for",
+        "seconds": 9.660898347006878
+      },
+      {
+        "name": "nullable_condition_once",
+        "seconds": 9.878263616003096
+      },
+      {
+        "name": "nullable_coalesce_empty",
+        "seconds": 3.522757469996577
+      },
+      {
+        "name": "nullable_coalesce_zero",
+        "seconds": 4.2103836000023875
+      },
+      {
+        "name": "nullable_coalesce_false",
+        "seconds": 3.1435190929914825
+      },
+      {
+        "name": "nullable_coalesce_string",
+        "seconds": 7.118968238995876
+      },
+      {
+        "name": "nullable_coalesce_string_empty",
+        "seconds": 8.710409908992006
+      },
+      {
+        "name": "nullable_coalesce_float",
+        "seconds": 3.911345917993458
+      },
+      {
+        "name": "nullable_coalesce_scalar",
+        "seconds": 9.359542016987689
+      },
+      {
+        "name": "nullable_coalesce_lazy",
+        "seconds": 9.709736013988731
+      },
+      {
+        "name": "nullable_coalesce_once",
+        "seconds": 9.287356915010605
+      },
+      {
+        "name": "nullable_coalesce_skip",
+        "seconds": 8.868230259016855
+      },
+      {
+        "name": "nullable_coalesce_chain",
+        "seconds": 4.409136338013923
+      },
+      {
+        "name": "nullable_coalesce_precedence",
+        "seconds": 9.197824997012503
+      },
+      {
+        "name": "nullable_coalesce_logic",
+        "seconds": 3.58419984599459
+      },
+      {
+        "name": "nullable_coalesce_value",
+        "seconds": 3.6880294709990267
+      },
+      {
+        "name": "nullable_coalesce_throw",
+        "seconds": 7.6815836150199175
+      },
+      {
+        "name": "nullable_coalesce_throw_throw",
+        "seconds": 7.523829924990423
+      },
+      {
+        "name": "nullable_empty",
+        "seconds": 7.471656701993197
+      },
+      {
+        "name": "nullable_default_empty",
+        "seconds": 7.558891480002785
+      },
+      {
+        "name": "nullable_present",
+        "seconds": 2.7684744379948825
+      },
+      {
+        "name": "nullable_reset",
+        "seconds": 7.506867705989862
+      },
+      {
+        "name": "nullable_reassign",
+        "seconds": 3.0450903119926807
+      },
+      {
+        "name": "nullable_copy",
+        "seconds": 2.9039383939816616
+      },
+      {
+        "name": "nullable_copy_empty",
+        "seconds": 7.074338796985103
+      },
+      {
+        "name": "nullable_false_present",
+        "seconds": 6.968152620975161
+      },
+      {
+        "name": "nullable_zero_present",
+        "seconds": 2.511988033016678
+      },
+      {
+        "name": "nullable_float",
+        "seconds": 2.4778192520025186
+      },
+      {
+        "name": "nullable_string_empty_present",
+        "seconds": 2.6729625280131586
+      },
+      {
+        "name": "nullable_string_copy",
+        "seconds": 4.833488281001337
+      },
+      {
+        "name": "nullable_alias",
+        "seconds": 2.3507719619956333
+      },
+      {
+        "name": "nullable_calls",
+        "seconds": 2.5250329409900587
+      },
+      {
+        "name": "nullable_return_null",
+        "seconds": 6.639144457993098
+      },
+      {
+        "name": "nullable_return_value",
+        "seconds": 2.397658515983494
+      },
+      {
+        "name": "nullable_argument_extract",
+        "seconds": 2.2983810610021465
+      },
+      {
+        "name": "nullable_null_argument",
+        "seconds": 6.521500253002159
+      },
+      {
+        "name": "nullable_compare_once",
+        "seconds": 6.402464048995171
+      },
+      {
+        "name": "nullable_extract_once",
+        "seconds": 6.6618803450255655
+      },
+      {
+        "name": "nullable_store_error",
+        "seconds": 2.282761768990895
+      },
+      {
+        "name": "nullable_store_error_throw",
+        "seconds": 2.2329134719911963
+      },
+      {
+        "name": "nullable_reference",
+        "seconds": 6.317689107992919
+      },
+      {
+        "name": "nullable_for",
+        "seconds": 5.987936514982721
+      },
+      {
+        "name": "nullable_ternary_statement",
+        "seconds": 1.871915802010335
+      },
+      {
+        "name": "nullable_empty_extract",
+        "seconds": 2.2947232290171087
+      },
+      {
+        "name": "nullable_empty_extract_throw",
+        "seconds": 2.3028376169968396
+      },
+      {
+        "name": "nullable_empty_string_extract",
+        "seconds": 2.5361897710245103
+      },
+      {
+        "name": "nullable_empty_string_extract_throw",
+        "seconds": 2.6660978220170364
+      },
+      {
+        "name": "nullable_empty_argument",
+        "seconds": 2.4074101980077103
+      },
+      {
+        "name": "nullable_empty_argument_throw",
+        "seconds": 2.330243071017321
+      },
+      {
+        "name": "nullable_explicit_string",
+        "seconds": 3.744774157006759
+      },
+      {
+        "name": "nullable_explicit_string_value",
+        "seconds": 3.655813525983831
+      }
+    ]
+  },
+  "pch-12": {
+    "wall_seconds": 16.92383216699818,
+    "tasks": [
+      {
+        "name": "nullable_probe_null_isset",
+        "seconds": 1.8566108400118537
+      },
+      {
+        "name": "nullable_probe_null_empty",
+        "seconds": 1.8096259089943487
+      },
+      {
+        "name": "nullable_probe_absent",
+        "seconds": 1.9827808419940993
+      },
+      {
+        "name": "nullable_probe_zero",
+        "seconds": 1.9357827349740546
+      },
+      {
+        "name": "nullable_probe_false",
+        "seconds": 1.8745166959997732
+      },
+      {
+        "name": "nullable_probe_float",
+        "seconds": 1.8660587859922089
+      },
+      {
+        "name": "nullable_probe_string_empty",
+        "seconds": 1.9189964210090693
+      },
+      {
+        "name": "nullable_probe_string_zero",
+        "seconds": 1.963826908991905
+      },
+      {
+        "name": "nullable_probe_present",
+        "seconds": 1.8925920089823194
+      },
+      {
+        "name": "nullable_probe_plain_false",
+        "seconds": 1.793139124987647
+      },
+      {
+        "name": "nullable_probe_plain_zero",
+        "seconds": 1.7750537719985005
+      },
+      {
+        "name": "nullable_probe_plain_float",
+        "seconds": 1.8044676709978376
+      },
+      {
+        "name": "nullable_probe_plain_string",
+        "seconds": 1.9430384669976775
+      },
+      {
+        "name": "nullable_probe_once",
+        "seconds": 2.1286934489908163
+      },
+      {
+        "name": "nullable_probe_isset_once",
+        "seconds": 1.729222055990249
+      },
+      {
+        "name": "nullable_probe_nonmutating",
+        "seconds": 2.0449975579977036
+      },
+      {
+        "name": "nullable_probe_throw",
+        "seconds": 2.0621608040237334
+      },
+      {
+        "name": "nullable_probe_throw_throw",
+        "seconds": 2.002247427997645
+      },
+      {
+        "name": "nullable_elvis_empty",
+        "seconds": 2.029942483000923
+      },
+      {
+        "name": "nullable_elvis_zero",
+        "seconds": 1.8972407119872514
+      },
+      {
+        "name": "nullable_elvis_present",
+        "seconds": 1.9342049139959272
+      },
+      {
+        "name": "nullable_elvis_both_empty",
+        "seconds": 1.9445967830251902
+      },
+      {
+        "name": "nullable_elvis_scalar_left",
+        "seconds": 1.998721668991493
+      },
+      {
+        "name": "nullable_elvis_scalar_zero",
+        "seconds": 1.758939825987909
+      },
+      {
+        "name": "nullable_elvis_bool",
+        "seconds": 2.0252620140090585
+      },
+      {
+        "name": "nullable_elvis_float",
+        "seconds": 1.995265122008277
+      },
+      {
+        "name": "nullable_elvis_string",
+        "seconds": 2.0180072609800845
+      },
+      {
+        "name": "nullable_elvis_once",
+        "seconds": 1.9504433299880475
+      },
+      {
+        "name": "nullable_elvis_fallback_once",
+        "seconds": 1.968222040013643
+      },
+      {
+        "name": "nullable_ternary_left",
+        "seconds": 1.7723067289916798
+      },
+      {
+        "name": "nullable_ternary_right",
+        "seconds": 1.7754709289874882
+      },
+      {
+        "name": "nullable_ternary_wrap_left",
+        "seconds": 1.9520057019835804
+      },
+      {
+        "name": "nullable_ternary_wrap_right",
+        "seconds": 1.9658770649984945
+      },
+      {
+        "name": "nullable_ternary_copy",
+        "seconds": 1.930208460020367
+      },
+      {
+        "name": "nullable_ternary_lazy",
+        "seconds": 1.9548401029896922
+      },
+      {
+        "name": "nullable_ternary_required_empty",
+        "seconds": 1.8901777720020618
+      },
+      {
+        "name": "nullable_ternary_required_empty_throw",
+        "seconds": 1.87832884999807
+      },
+      {
+        "name": "nullable_condition_empty",
+        "seconds": 2.0163441640033852
+      },
+      {
+        "name": "nullable_condition_zero",
+        "seconds": 1.9967675109801348
+      },
+      {
+        "name": "nullable_condition_false",
+        "seconds": 1.9067847010155674
+      },
+      {
+        "name": "nullable_condition_true",
+        "seconds": 1.9474763890029863
+      },
+      {
+        "name": "nullable_condition_float",
+        "seconds": 1.9495414150005672
+      },
+      {
+        "name": "nullable_condition_string",
+        "seconds": 1.8984253169910517
+      },
+      {
+        "name": "nullable_condition_string_zero",
+        "seconds": 1.9913035119825508
+      },
+      {
+        "name": "nullable_condition_string_empty",
+        "seconds": 1.9625069570029154
+      },
+      {
+        "name": "nullable_condition_elseif",
+        "seconds": 1.9437046899984125
+      },
+      {
+        "name": "nullable_condition_while",
+        "seconds": 1.9179751880001277
+      },
+      {
+        "name": "nullable_condition_do",
+        "seconds": 2.0285634539905004
+      },
+      {
+        "name": "nullable_condition_for",
+        "seconds": 2.2162562939920463
+      },
+      {
+        "name": "nullable_condition_once",
+        "seconds": 2.104191009013448
+      },
+      {
+        "name": "nullable_coalesce_empty",
+        "seconds": 2.0744996989960782
+      },
+      {
+        "name": "nullable_coalesce_zero",
+        "seconds": 2.1052918920177035
+      },
+      {
+        "name": "nullable_coalesce_false",
+        "seconds": 1.979253316996619
+      },
+      {
+        "name": "nullable_coalesce_string",
+        "seconds": 2.037346114986576
+      },
+      {
+        "name": "nullable_coalesce_string_empty",
+        "seconds": 2.165797569992719
+      },
+      {
+        "name": "nullable_coalesce_float",
+        "seconds": 2.084647476003738
+      },
+      {
+        "name": "nullable_coalesce_scalar",
+        "seconds": 1.738495730998693
+      },
+      {
+        "name": "nullable_coalesce_lazy",
+        "seconds": 2.027136579999933
+      },
+      {
+        "name": "nullable_coalesce_once",
+        "seconds": 2.0275786950078327
+      },
+      {
+        "name": "nullable_coalesce_skip",
+        "seconds": 2.2730902869952843
+      },
+      {
+        "name": "nullable_coalesce_chain",
+        "seconds": 1.938844540010905
+      },
+      {
+        "name": "nullable_coalesce_precedence",
+        "seconds": 1.8628104320087004
+      },
+      {
+        "name": "nullable_coalesce_logic",
+        "seconds": 1.904774020978948
+      },
+      {
+        "name": "nullable_coalesce_value",
+        "seconds": 2.0443787570111454
+      },
+      {
+        "name": "nullable_coalesce_throw",
+        "seconds": 1.9939212010067422
+      },
+      {
+        "name": "nullable_coalesce_throw_throw",
+        "seconds": 1.999348666984588
+      },
+      {
+        "name": "nullable_empty",
+        "seconds": 1.8075470729963854
+      },
+      {
+        "name": "nullable_default_empty",
+        "seconds": 1.783144426997751
+      },
+      {
+        "name": "nullable_present",
+        "seconds": 1.861177092010621
+      },
+      {
+        "name": "nullable_reset",
+        "seconds": 1.9614931840042118
+      },
+      {
+        "name": "nullable_reassign",
+        "seconds": 1.9310086549958214
+      },
+      {
+        "name": "nullable_copy",
+        "seconds": 1.9843700400087982
+      },
+      {
+        "name": "nullable_copy_empty",
+        "seconds": 2.215188180009136
+      },
+      {
+        "name": "nullable_false_present",
+        "seconds": 2.310415323008783
+      },
+      {
+        "name": "nullable_zero_present",
+        "seconds": 2.171181040001102
+      },
+      {
+        "name": "nullable_float",
+        "seconds": 2.3462875330005772
+      },
+      {
+        "name": "nullable_string_empty_present",
+        "seconds": 2.005274251976516
+      },
+      {
+        "name": "nullable_string_copy",
+        "seconds": 2.3581222550128587
+      },
+      {
+        "name": "nullable_alias",
+        "seconds": 2.08934518598835
+      },
+      {
+        "name": "nullable_calls",
+        "seconds": 2.1340832769928966
+      },
+      {
+        "name": "nullable_return_null",
+        "seconds": 2.0413356329954695
+      },
+      {
+        "name": "nullable_return_value",
+        "seconds": 2.2365689240104984
+      },
+      {
+        "name": "nullable_argument_extract",
+        "seconds": 2.1650561730202753
+      },
+      {
+        "name": "nullable_null_argument",
+        "seconds": 2.0018219010089524
+      },
+      {
+        "name": "nullable_compare_once",
+        "seconds": 1.925750438007526
+      },
+      {
+        "name": "nullable_extract_once",
+        "seconds": 2.0621573959942907
+      },
+      {
+        "name": "nullable_store_error",
+        "seconds": 1.963650645018788
+      },
+      {
+        "name": "nullable_store_error_throw",
+        "seconds": 2.0486524770094547
+      },
+      {
+        "name": "nullable_reference",
+        "seconds": 1.9709481729951221
+      },
+      {
+        "name": "nullable_for",
+        "seconds": 1.8909614690055605
+      },
+      {
+        "name": "nullable_ternary_statement",
+        "seconds": 1.8571469520102255
+      },
+      {
+        "name": "nullable_empty_extract",
+        "seconds": 1.9614062230102718
+      },
+      {
+        "name": "nullable_empty_extract_throw",
+        "seconds": 1.9534729459846858
+      },
+      {
+        "name": "nullable_empty_string_extract",
+        "seconds": 1.887659956002608
+      },
+      {
+        "name": "nullable_empty_string_extract_throw",
+        "seconds": 1.907159533991944
+      },
+      {
+        "name": "nullable_empty_argument",
+        "seconds": 1.8463897820038255
+      },
+      {
+        "name": "nullable_empty_argument_throw",
+        "seconds": 1.2979458519839682
+      },
+      {
+        "name": "nullable_explicit_string",
+        "seconds": 1.203845876007108
+      },
+      {
+        "name": "nullable_explicit_string_value",
+        "seconds": 1.1954469800111838
+      }
+    ]
+  },
+  "baseline-repeat-12": {
+    "wall_seconds": 5.499605937016895,
+    "tasks": [
+      {
+        "name": "nullable_elvis_present",
+        "seconds": 5.342664291994879
+      },
+      {
+        "name": "nullable_probe_null_isset",
+        "seconds": 3.8443339499935973
+      },
+      {
+        "name": "nullable_probe_null_empty",
+        "seconds": 3.8278097279835492
+      },
+      {
+        "name": "nullable_probe_absent",
+        "seconds": 5.462078975018812
+      },
+      {
+        "name": "nullable_probe_zero",
+        "seconds": 3.974169010994956
+      },
+      {
+        "name": "nullable_probe_false",
+        "seconds": 3.98905441298848
+      },
+      {
+        "name": "nullable_probe_float",
+        "seconds": 4.078518289985368
+      },
+      {
+        "name": "nullable_probe_string_empty",
+        "seconds": 4.063028672011569
+      },
+      {
+        "name": "nullable_probe_string_zero",
+        "seconds": 5.367735863983398
+      },
+      {
+        "name": "nullable_probe_present",
+        "seconds": 5.487893967976561
+      },
+      {
+        "name": "nullable_probe_plain_false",
+        "seconds": 3.8661642910155933
+      },
+      {
+        "name": "nullable_probe_plain_zero",
+        "seconds": 4.039456060010707
+      }
+    ]
+  },
+  "pch-repeat-12": {
+    "wall_seconds": 2.0150212129810825,
+    "tasks": [
+      {
+        "name": "nullable_elvis_present",
+        "seconds": 1.9775100590195507
+      },
+      {
+        "name": "nullable_probe_null_isset",
+        "seconds": 1.7110023220011499
+      },
+      {
+        "name": "nullable_probe_null_empty",
+        "seconds": 1.8541067430051044
+      },
+      {
+        "name": "nullable_probe_absent",
+        "seconds": 1.9687868170149159
+      },
+      {
+        "name": "nullable_probe_zero",
+        "seconds": 1.9603421060019173
+      },
+      {
+        "name": "nullable_probe_false",
+        "seconds": 1.9931951939943247
+      },
+      {
+        "name": "nullable_probe_float",
+        "seconds": 1.9867083610151894
+      },
+      {
+        "name": "nullable_probe_string_empty",
+        "seconds": 1.938933534984244
+      },
+      {
+        "name": "nullable_probe_string_zero",
+        "seconds": 1.9969248400011566
+      },
+      {
+        "name": "nullable_probe_present",
+        "seconds": 2.0061517209978774
+      },
+      {
+        "name": "nullable_probe_plain_false",
+        "seconds": 1.8108628370100632
+      },
+      {
+        "name": "nullable_probe_plain_zero",
+        "seconds": 1.7762485850253142
+      }
+    ]
+  }
+}

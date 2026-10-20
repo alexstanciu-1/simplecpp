@@ -21,7 +21,7 @@ Doc Status: normative
 - Replaces non-overlapping matches of the PCRE2-delimited pattern inside the subject.
 - Default limit is unlimited.
 - Positive limit replaces at most that many matches.
-- `limit == 0` performs zero replacements and returns the original subject unchanged.
+- `limit == 0` performs zero replacements and returns the original subject unchanged after validating the pattern.
 - The replacement string supports positional backreference expansion for `$1`, `${1}`, and `\\1`.
 - Unmatched capture references expand to an empty string in the current pass.
 - Invalid pattern syntax returns `false`.
@@ -33,6 +33,7 @@ Doc Status: normative
 ## Error policy
 - Invalid pattern syntax returns `false`.
 - Negative limit other than `-1` throws `ValueError`.
+- Validate the limit first and the pattern second, including zero limit and empty subject. Invalid limits take precedence over invalid pattern syntax.
 
 ## Runtime and wrapper split
 - Runtime: compile the shared PCRE2 pattern, iterate matches, and assemble the output string.
@@ -45,6 +46,10 @@ Doc Status: normative
 - Shared runtime support lives in `runtime/include/modules/regex/regex.hpp` and `runtime/include/modules/regex/regex.cpp`.
 - PHP wrapper exposure lives in `runtime/include/lang/php/php_regex.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+
+## v0.2 binding boundary
+- Four-argument `regex_replace` takes a value limit through `scpp::regex::replace_limited`; generated writable snapshots cannot bind to the older count-output overload. The three-argument form remains unlimited. Public count-output signatures remain separate.
+- Zero-length matching keeps output-copy position separate from search progress, preserving all untouched bytes. After an empty match, try a nonempty match at that position before advancing the search by one character (one UTF-8 code point in UTF mode).
 
 ## Test matrix
 - no matches returns original subject

@@ -1,0 +1,1 @@
+{"stage":"prepare","error":"S2S non-void function f can reach the end without returning a value\n"}

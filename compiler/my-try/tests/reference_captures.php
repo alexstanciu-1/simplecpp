@@ -83,7 +83,7 @@ $invalid = [
 try {
 	foreach ($cases as $name => [$source, $exit]) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		$text = CPP_Probe::text(Model::$cpp_files);
 		capture_check(!str_contains($text, 'std::function'), 'Borrowing closure was erased');
 		file_put_contents($output . '/' . $name . '.cpp', $text);
@@ -92,14 +92,14 @@ try {
 	}
 	foreach ($invalid as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		capture_check($rejected, 'Invalid borrow accepted: ' . $source);
 	}
 	// Owned fields have invocation-local origins; reborrowing preserves the original lifetime.
 	foreach (['owned_nested', 'reborrow_nested'] as $name) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $cases[$name][0]);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		$outer_capture = null; $inner_capture = null;
 		foreach (Model::collected_files()[0]->anonymous_callables as $identity) {
 			$candidate = $identity->syntax()->require_body()->work()->captures[0];
@@ -120,19 +120,19 @@ try {
 	// Change the outer capture's ownership while retaining a nested reference capture.
 	$nested_source = $cases['reborrow_nested'][0];
 	Compiler_Lifecycle::reset(); file_put_contents($path, $nested_source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	$nested_before = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, preg_replace('/use \(&\$n\)/', 'use ($n)', $nested_source, 1)); $rejected = false;
 	try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
 	capture_check($rejected, 'Owned capture edit retained writable nested borrow');
 	file_put_contents($path, $nested_source); $compiler->update_cpp([$path]);
 	capture_check(CPP_Probe::text(Model::$cpp_files) === $nested_before, 'Nested capture repair changed output');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	capture_check(CPP_Probe::text(Model::$cpp_files) === $nested_before, 'Nested capture repair differs from fresh');
 	// Ordinary blocks share collected lookup scopes, but must have distinct semantic lifetimes.
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, 'if (true) { $n = 3; $f = function () use (&$n): int { return $n; }; $g = $f; } $later = 0; $h = function () use (&$later): int { return $later; }; return 0;');
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	foreach (Model::collected_files()[0]->anonymous_callables as $identity) {
 		$capture = $identity->syntax()->require_body()->work()->captures[0];
 		if ($identity->syntax()->captures[0]->variable->name === 'n') { $inner_borrow = $capture->borrow; }
@@ -144,7 +144,7 @@ try {
 	capture_check(!Storage_Lifetimes::outlives($outer_borrow->lifetime, $inner_borrow->lifetime), 'Later outer storage incorrectly existed at block entry');
 	$source = '$n = 3; $f = function () use ($n): int { return $n; }; $n = 7; return $f();';
 	Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	$source = str_replace('use ($n)', 'use (&$n)', $source); file_put_contents($path, $source); $compiler->update_cpp([$path]);
 	$incremental = CPP_Probe::text(Model::$cpp_files);
 	foreach (Model::collected_files()[0]->anonymous_callables as $identity) { $borrow_work = $identity->syntax()->require_body()->work(); }
@@ -152,7 +152,7 @@ try {
 	capture_check($borrow !== null && $identity->syntax()->captures[0]->mode === passing_mode::reference, 'Borrow model missing');
 	$version = $borrow_work->version; $compiler->exec_cpp();
 	capture_check($version === $borrow_work->version && $borrow === $borrow_work->captures[0]->borrow, 'No-op replaced lifetime facts');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	capture_check(CPP_Probe::text(Model::$cpp_files) === $incremental, 'Capture-mode edit differs from fresh output');
 	file_put_contents($output . '/mode_edit.cpp', $incremental);
 	$executions[] = ['path' => $output . '/mode_edit.cpp', 'exit_code' => 7];
@@ -182,7 +182,7 @@ try {
 	capture_check($rejected, 'Invalid receiver mode accepted after incremental edit');
 	file_put_contents($path, $source); $compiler->update_cpp([$path]);
 	capture_check(CPP_Probe::text(Model::$cpp_files) === $receiver_text, 'Receiver mode recovery changed output');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	capture_check(CPP_Probe::text(Model::$cpp_files) === $receiver_text, 'Receiver incremental/fresh output differs');
 	file_put_contents($output . '/receiver_edit.cpp', $receiver_text);
 	$executions[] = ['path' => $output . '/receiver_edit.cpp', 'exit_code' => 3];

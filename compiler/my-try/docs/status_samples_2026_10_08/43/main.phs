@@ -1,0 +1,3 @@
+$values vector<int> = [1, 2];
+clean($values);
+return empty($values) ? 0 : 1;

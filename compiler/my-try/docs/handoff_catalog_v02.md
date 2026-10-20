@@ -5,6 +5,29 @@ The active feature roadmap is [docs/catalog](catalog/README.md), including its f
 examples, rule cards, progress and decisions. This entry retains the agreed direction;
 the [original handoff](archive/handoff_catalog_v02.md) is historical.
 
+## Current chapter handoff — 2026-10-16
+
+[Chapter 13 is finalized within its implemented bounds](catalog/13_errors.md#bounded-closeout-and-native-gate--2026-10-16).
+Its gate passed PHS conversion and native compiler compilation, 68 feature-program
+parity/execution proofs, 52 rejection/recovery comparisons and four native edit/repair
+proofs. NOTE-047 is reconciled; uniform source-location diagnostics and the other
+[explicit extensions](catalog/15_blocking_debt.md#chapter-13-deferred-work) remain deferred.
+This is focused chapter evidence, not a full cumulative native sweep.
+
+[Chapter 14 is closed within its implemented bounds](catalog/14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16).
+The requested compiler PHS conversion/native build and focused native artifact,
+publication, runtime-linkage and incremental gate pass. Legal source shadowing and
+visible warnings remain intentional. [Deferred extensions](catalog/15_blocking_debt.md#chapter-14-closeout-deferrals)
+keep their owners. [Chapter 15 review](catalog/15_review.md) now provides the full
+52-group decision list and dependency ordering. Only the two iteration debts retain
+explicit final-catalog blocker status. Proposed next: CH15-ITER-DESIGN-01 policy and
+guard-ownership design, before any cross-owner implementation; user prioritization
+is pending. A checked current-build reader is an independent workflow alternative.
+
+The [Chapter 12 closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16)
+retains its separate evidence limits; this CH13 gate does not retroactively certify
+complete CH12 native coverage. LLVM remains parked.
+
 ## Agreed v0.2 scope
 
 Progress the frontend and C++ S2S first. General validation/STAN follows in a second

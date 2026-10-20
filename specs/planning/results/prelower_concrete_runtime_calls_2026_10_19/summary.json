@@ -1,0 +1,229 @@
+{
+  "counters": {
+    "direct-O0": {
+      "sha256": "2d89a03124ed446cbf0a90b359bf1f9a35110f13969d32e22e7f2c154cd8adbe",
+      "workloads": [
+        "observations 26 475 26 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-O2": {
+      "sha256": "82e4266d39e3de8679c9f42cb599cc65205d0edbc3eab3ca8adfd49b15352c2b",
+      "workloads": [
+        "observations 25 467 25 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-sanitized": {
+      "sha256": "d8254176287819f41429097592f8c25b38363e45a9a33cbf8db9d2c14fbc8160",
+      "workloads": [
+        "observations 26 475 26 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-observable": {
+      "sha256": "d8254176287819f41429097592f8c25b38363e45a9a33cbf8db9d2c14fbc8160",
+      "workloads": [
+        "observations 26 475 26 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-O0": {
+      "sha256": "2d89a03124ed446cbf0a90b359bf1f9a35110f13969d32e22e7f2c154cd8adbe",
+      "workloads": [
+        "observations 26 475 26 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-O2": {
+      "sha256": "2d89a03124ed446cbf0a90b359bf1f9a35110f13969d32e22e7f2c154cd8adbe",
+      "workloads": [
+        "observations 26 475 26 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-sanitized": {
+      "sha256": "d8254176287819f41429097592f8c25b38363e45a9a33cbf8db9d2c14fbc8160",
+      "workloads": [
+        "observations 26 475 26 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-observable": {
+      "sha256": "d8254176287819f41429097592f8c25b38363e45a9a33cbf8db9d2c14fbc8160",
+      "workloads": [
+        "observations 26 475 26 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    }
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ],
+  "stock_O2_allocation_delta": {
+    "allocations": 1,
+    "bytes": 8,
+    "frees": 1
+  },
+  "accounting": {
+    "total": 285,
+    "emitted": 283,
+    "failures": [
+      {
+        "owner": "GeneralLedger::validate",
+        "kind": "function_body",
+        "error": "prelower_templates: container operation requires an admitted family adapter"
+      },
+      {
+        "owner": "SalesService::total_outstanding",
+        "kind": "function_body",
+        "error": "prelower_templates: container operation requires an admitted family adapter"
+      }
+    ]
+  },
+  "validation": {
+    "runtime_call_proof_seconds": 186.11,
+    "legacy_initializer_proof_seconds": 148.52,
+    "production_php_portability": "PASS (six changed files)",
+    "full_runtime_metadata_expansion": "DEFERRED per user instruction",
+    "optimized_allocation_parity": "NOT ACHIEVED: one allocation / eight bytes in this workload"
+  }
+}

@@ -1,0 +1,1 @@
+class C {} $v vector<C> = [new C()]; return empty($v[0]) ? 1 : 0;

@@ -20,7 +20,7 @@ Doc Status: normative
 - Returns absolute zero-based byte position on success.
 - Returns `false` when not found.
 - Positive offset limits the search to the suffix starting at that offset.
-- Negative offset limits the search to the prefix ending at `size + offset`.
+- Negative offset limits the latest allowed match starting position to `byte_size + offset`; the full needle may extend beyond that position.
 
 ## Compatibility table
 - PHP returns `int|false` and preserves `0` vs `false` â†’ Prism++ preserves it through `result_or_false<int_t>` â†’ kept
@@ -49,3 +49,26 @@ Doc Status: normative
 - found with negative offset
 - not found returns `false`
 - out-of-range offset throws
+
+## v0.2 source admission — 2026-10-20
+
+The strings module exposes exactly the two forms above through value parameters
+and `result_or_false<int>`. Positions and offsets count bytes. Arbitrary bytes,
+including embedded NUL and malformed UTF-8, are accepted without UTF-8 decoding.
+An empty needle matches a byte boundary. Offset bounds are inclusive
+`[-byte_size, byte_size]`; out-of-range offsets throw `ValueError` even when the
+needle is empty or absent. Negative normalization must safely handle the full
+signed integer domain. Position zero remains a successful payload, never false.
+
+Argument expressions evaluate once, left to right. Earlier argument values are
+snapshotted before later expressions can mutate their source storage. Inputs are
+not mutated, returned positions are independent values, and argument evaluation
+errors propagate without evaluating subsequent arguments. No implicit wrapper
+extraction or flow-sensitive narrowing is introduced by these bindings.
+
+The v0.2 provider target is `scpp::php::strrpos_bytes` in
+`runtime/include/lang/php/support/php_string.hpp`. The historical
+`scpp::php::strrpos` adapter retains its code-point behavior for existing generated
+consumers and the portability text framework. That adapter's behavior does not
+override this source contract. Shared code-point search and the explicit
+`string_byte_find` nonnegative-offset contract remain unchanged.

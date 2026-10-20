@@ -1,0 +1,1 @@
+{"entry.cpp": "#if __has_include(\"optional.hpp\")\nstatic_assert(false, \"newly selected invalid code\");\n#endif\nint main() { return 7; }\n"}

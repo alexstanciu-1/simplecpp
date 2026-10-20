@@ -1,0 +1,1 @@
+class B { function __construct(int $n) {} function f(): int { return 1; } } class C extends B { function __construct() { parent::__construct(parent::f()); } } return 0;

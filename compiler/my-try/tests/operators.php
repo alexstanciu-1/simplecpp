@@ -17,7 +17,7 @@ function operator_test_source(string $text): parsed_file
 	$modules->add($module->name, $module);
 	$record = Source_Registry::add($module, $input);
 	Source_Publication::publish_parsed($record, $syntax);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->prepare();
 	$compiler->cpp();
 	return $syntax;
@@ -274,37 +274,31 @@ $rejections = [
 	'shift count type' => ['return 1 >> true;', 'canonical int operands'],
 	'bitwise comparison precedence' => ['return 1 & 1 == 1;', 'canonical int operands'],
 	'shift spaced punctuation' => ['return 1 < < 2;', 'Expected scalar literal'],
-	'unary positive float' => ['return +1.5;', 'unary operation requires'],
-	'unary float' => ['return -1.5;', 'unary operation requires'],
 	'unary bool' => ['return +true;', 'unary operation requires'],
 	'unary complement string' => ['return ~"x";', 'unary operation requires'],
-	'unary not int' => ['return !1;', 'unary operation requires'],
 	'unary narrow' => ['$x uint8 = 1; return -$x;', 'unary operation requires'],
 	'unary oversized magnitude' => ['return -9223372036854775808;', 'exceeds signed 64-bit'],
 
 	'boolean operand' => ['$value = 1 + true;', 'integer binary operation requires integer operands'],
 	'narrow operand' => ['$left uint8 = 1; $value = $left + 2;', 'integer binary operation requires matching signedness'],
 	'subtraction boolean' => ['$value = 1 - true;', 'integer binary operation requires integer operands'],
-	'subtraction float' => ['$value = 3.0 - 1;', 'integer binary operation requires integer operands'],
 	'subtraction string' => ['$value = 3 - "1";', 'integer binary operation requires integer operands'],
 	'subtraction width' => ['$left uint8 = 3; $value = $left - 1;', 'integer binary operation requires matching signedness'],
 	'multiplication boolean' => ['$value = true * 2;', 'integer binary operation requires integer operands'],
-	'multiplication float' => ['$value = 2 * 3.5;', 'integer binary operation requires integer operands'],
 	'multiplication string' => ['$value = "2" * 3;', 'integer binary operation requires integer operands'],
 	'multiplication width' => ['$x uint8 = 2; $value = $x * 3;', 'integer binary operation requires matching signedness'],
-	'division float' => ['return 7 / 3.0;', 'integer binary operation requires integer operands'],
 	'remainder width' => ['$x uint8 = 7; return $x % 3;', 'integer binary operation requires matching signedness'],
 	'comparison string' => ['return 3 == "3";', 'integer binary operation requires integer operands'],
-	'comparison bool' => ['return 1 === true;', 'integer binary operation requires canonical int operands'],
-	'comparison float' => ['return 1 < 2.0;', 'integer binary operation requires integer operands'],
+	'ordinary comparison bool' => ['return 1 == true;', 'integer binary operation requires integer operands'],
+	'ordinary bool float equality' => ['return true == 2.0;', 'floating comparison requires canonical float or int operands'],
 	'relational chain' => ['return 1 < 2 < 3;', 'integer binary operation requires integer operands'],
-	'wrapper concatenation' => ['$n ?int = 1; $a = "x" . $n;', 'concatenation requires boxed'],
+	'deferred width-carrier concatenation' => ['$n ?int16; $a = "x" . $n;', 'concatenation requires boxed'],
 	'cross-family concatenation' => ['$d dynamic; $m mixed; $a = $d . $m;', 'same boxed family'],
 	'logical non-bool' => ['return false && 1;', 'logical operation requires canonical bool operands'],
 	'logical skipped unknown' => ['return false && $missing;', 'established local declaration for missing'],
 	'power float' => ['return 2.0 ** 3;', 'canonical int operands'],
 	'power narrow' => ['$x uint8 = 2; return $x ** 3;', 'canonical int operands'],
-	'power compound deferred' => ['$x = 2; $x **= 3;', 'Expected scalar literal'],
+	'power compound float' => ['$x = 2.0; $x **= 3;', 'canonical int operands'],
 ];
 foreach ($rejections as $name => [$source, $diagnostic])
 {
@@ -329,7 +323,7 @@ try
 {
 	file_put_contents($path, $initial);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$function = Model::$global_scope->functions_named('value')[0]->syntax();
@@ -382,7 +376,7 @@ try
 {
 	file_put_contents($path, $initial);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$function = Model::$global_scope->functions_named('value')[0]->syntax();

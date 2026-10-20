@@ -5,6 +5,16 @@ namespace scpp\compiler;
 
 final class Completion_Preparation
 {
+	/** Finally must finish normally before a protected normal exit can resume. */
+	public static function finalized(statement_completion $protected_completion, statement_completion $finalizer): statement_completion
+	{
+		$result = new statement_completion($protected_completion->can_fall_through && $finalizer->can_fall_through);
+		$result->can_return = $protected_completion->can_return && $finalizer->can_fall_through;
+		$result->can_break = $protected_completion->can_break && $finalizer->can_fall_through;
+		$result->can_continue = $protected_completion->can_continue && $finalizer->can_fall_through;
+		return $result;
+	}
+
 	public static function returned(): statement_completion
 	{
 		$result = new statement_completion(false);

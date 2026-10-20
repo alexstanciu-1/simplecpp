@@ -5,12 +5,13 @@
 namespace scpp {
 
 // Validation occurs before RHS evaluation; numeric-string normalization stays in hash storage.
-inline void require_write_key(const int_t<> &) {}
+template<class K> requires detail::is_int_t_v<K>
+void require_write_key(const K &) {}
 inline void require_write_key(const string_t &) {}
 inline void require_write_key(const mixed_t &key) { require_index_key(key); }
 
-template <typename T>
-void index_store(vector_t<T> &receiver, const int_t<> &key, const T &value) {
+template <typename T, typename K> requires detail::is_int_t_v<K>
+void index_store(vector_t<T> &receiver, const K &key, const T &value) {
 	receiver.at(key) = value;
 }
 
@@ -33,8 +34,8 @@ inline void index_store(mixed_t &receiver, const mixed_t &key, const mixed_t &va
 template <typename T>
 void index_append(vector_t<T> &receiver, const T &value) { (void)receiver.append(value); }
 
-template <typename V>
-void index_append(hash_t<V, int_t<>> &receiver, const V &value) { (void)receiver.append(value); }
+template <typename V, typename K> requires detail::is_int_t_v<K>
+void index_append(hash_t<V, K> &receiver, const V &value) { (void)receiver.append(value); }
 
 inline void index_append(mixed_t &receiver, const mixed_t &value) { receiver.append(value); }
 

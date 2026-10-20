@@ -70,9 +70,13 @@ final class Mutation_Preparation
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
 		$facts->write_back_mode = compound_write_back::converted_assignment;
 		if ($source_operator === operator_kind::concatenation) {
+			if (($facts->indexed_target !== null) && !self::existing_indexed_text_pair($target_type, $value->type)) {
+				throw new \RuntimeException('S2S extended text operands in indexed compounds remain deferred');
+			}
 			// Text replacement may change a boxed payload kind; numeric stored-kind checks do not apply.
-			if (!String_Conversions::is_string($target_type) && !Boxed_Conversions::is_boxed($target_type)) {
-				throw new \RuntimeException('S2S compound concatenation requires string or boxed storage');
+			if (!String_Conversions::is_string($target_type) && !String_Conversions::is_string_carrier($target_type)
+				&& !Boxed_Conversions::is_boxed($target_type)) {
+				throw new \RuntimeException('S2S compound concatenation requires string, string-carrier or boxed storage');
 			}
 		}
 		else {
@@ -94,7 +98,19 @@ final class Mutation_Preparation
 			}
 		}
 		$facts->decision = Operator_Preparation::decide(
-			$source_operator, $operands, operator_context::expression, $context);
+			$source_operator, $operands, operator_context::compound_assignment, $context);
+		if ($facts->decision->result_type->matches(Language_Types::floating(Model::$language_scope))) {
+			if (q_count($facts->decision->operand_extractions) === 0) {
+				Floating_Point_Operators::require_compound_operands($source_operator, $operands);
+			}
+			if ($facts->indexed_target !== null) {
+				throw new \RuntimeException('S2S indexed floating compounds remain deferred');
+			}
+		}
+
+		if (($facts->indexed_target !== null) && (q_count($facts->decision->operand_extractions) !== 0)) {
+			throw new \RuntimeException('S2S indexed guarded compounds remain deferred');
+		}
 		$facts->write_back = Conversion_Preparation::decide(
 			$facts->decision->result_type, $target_type, conversion_context::assignment);
 		return $facts;
@@ -114,7 +130,7 @@ final class Mutation_Preparation
 		}
 	}
 
-	/** Mutate established integer or boxed storage; boxed payload validity remains runtime-owned. */
+	/** Mutate established canonical numeric or boxed storage; boxed payload validity remains runtime-owned. */
 	public static function decide(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
@@ -122,24 +138,41 @@ final class Mutation_Preparation
 			throw new \LogicException('Mutation requires one target');
 		}
 		$integer = $context->integer;
+		$floating = Language_Types::floating(Model::$language_scope);
+		$carrier_payload = self::carrier_payload($operands[0]);
+		$wrapped = $carrier_payload !== null;
+		if ($carrier_payload !== null) {
+			if (!$carrier_payload->matches($integer) && !$carrier_payload->matches($floating)) {
+				throw new \RuntimeException('S2S carrier mutation requires canonical int or float payload');
+			}
+		}
 		$boxed = Boxed_Conversions::is_boxed($operands[0]) && !$operands[0]->by_value();
-		if (!$operands[0]->matches($integer) && !$boxed) {
-			throw new \RuntimeException('S2S mutation requires canonical int or boxed storage');
+		if (!$operands[0]->matches($integer) && !$operands[0]->matches($floating) && !$boxed && !$wrapped) {
+			throw new \RuntimeException('S2S mutation requires canonical int, float or boxed storage');
 		}
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
-		$decision->result_type = $boxed ? $operands[0] : $integer;
+		$decision->result_type = ($boxed || $wrapped) ? $operands[0]
+			: ($operands[0]->matches($floating) ? $floating : $integer);
 		if ($source_operator === operator_kind::pre_increment) {
-			$decision->operation = $boxed ? operator_operation::boxed_pre_increment : operator_operation::integer_pre_increment;
+			$decision->operation = operator_operation::scalar_pre_increment;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_pre_increment; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_pre_increment; }
 		}
 		elseif ($source_operator === operator_kind::post_increment) {
-			$decision->operation = $boxed ? operator_operation::boxed_post_increment : operator_operation::integer_post_increment;
+			$decision->operation = operator_operation::scalar_post_increment;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_post_increment; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_post_increment; }
 		}
 		elseif ($source_operator === operator_kind::pre_decrement) {
-			$decision->operation = $boxed ? operator_operation::boxed_pre_decrement : operator_operation::integer_pre_decrement;
+			$decision->operation = operator_operation::scalar_pre_decrement;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_pre_decrement; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_pre_decrement; }
 		}
 		elseif ($source_operator === operator_kind::post_decrement) {
-			$decision->operation = $boxed ? operator_operation::boxed_post_decrement : operator_operation::integer_post_decrement;
+			$decision->operation = operator_operation::scalar_post_decrement;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_post_decrement; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_post_decrement; }
 		}
 		else {
 			throw new \LogicException('Unsupported mutation operator');
@@ -148,4 +181,30 @@ final class Mutation_Preparation
 			$operands[0], $decision->result_type, conversion_context::operator_operand);
 		return $decision;
 	}
+	/** Preserve the previously admitted indexed pairs; new text values need their own write-path proof. */
+	private static function existing_indexed_text_pair(canonical_type_use $target, canonical_type_use $value): bool
+	{
+		if (String_Conversions::is_string_carrier($target)) {
+			return String_Conversions::is_string($value) || String_Conversions::is_string_carrier($value);
+		}
+		return Boxed_Conversions::is_scalar_payload($value) || Boxed_Conversions::is_boxed($value)
+			|| Nullable_Conversions::is_null($value) || String_Conversions::is_string_carrier($value);
+	}
+
+	/** Writable carrier identity stays intact; only the runtime accesses its payload. */
+	private static function carrier_payload(canonical_type_use $source): ?canonical_type_use
+	{
+		if ($source->by_value()) { return null; }
+		$nullable = Nullable_Conversions::payload($source);
+		if ($nullable !== null) { return $nullable; }
+		$role = Result_Conversions::role($source);
+		if ($role === null) { return null; }
+		if (($role->result_family() === result_kind::structured_error)
+			|| ($role->result_family() === result_kind::false_sentinel)
+			|| ($role->result_family() === result_kind::boolean_sentinels)) {
+			return Result_Conversions::require_payload($source, $role);
+		}
+		return null;
+	}
+
 }

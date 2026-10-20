@@ -15,6 +15,15 @@ fallthrough are repaired. Duplicate declarations are explicitly deferred debt (P
 alongside conditional runtime capability debt. The proved rows below describe bounded examples, not unrestricted
 copying or declaration validity.
 
+## Direct bool equality and float arithmetic — 2026-10-17
+
+The agreed scalar admission slice is implemented and verified on dev002:
+bool equality, canonical float arithmetic with canonical int peers, and float
+unary signs. [Evidence and resolved zero-division contract](../planning/v0_1_compatibility_scalar_admission.md)
+record ten PHP suites, seven generated programs, 48 original compile cases and
+60 direct scalar matrix rows. Lifted wrappers, conditional selection, float
+comparisons/updates, fixture migration and table semantics remain deferred.
+
 ## Compound RHS effects — 2026-10-10
 
 The [compound contract](../../../../specs/expression_evaluation.md#compound-updates--2026-10-10)
@@ -30,6 +39,91 @@ compile/run). Proof includes RHS replacement of the destination/last field owner
 nested updates, lazy expressions, mixed/dynamic values and failure side effects.
 The accounting retry at `/tmp/accounting-compound-20261010` now reports only indexed
 compound mutation. No full application execution or native compiler rebuild yet.
+
+## Guarded wrapper operators — 2026-10-19
+
+The [current guarded contracts](../s2s_scalar_operators.md#guarded-wrapper-operators--current-through-2026-10-19)
+cover canonical-int, float, mixed numeric arithmetic/logical, bool logical and
+string ordering operations. All four carrier families use independent checked
+payload extraction, ordinary scalar decisions and ordered value snapshots.
+The [cross-family slice](../planning/guarded_cross.md) adds all 660 approved
+signatures across 12 ordered distinct-family pairs, including local/property
+snapshots, byte semantics, left-error precedence and lazy RHS checks.
+
+The [guarded-bool XOR slice](../planning/guarded_bool_xor.md) adds all 24 bool
+signatures with eager evaluation, family-specific errors and local/property snapshots.
+
+The [guarded spaceship slice](../planning/guarded_spaceship.md) adds 48 canonical-int
+and string signatures with exact int results, byte semantics and checked snapshots.
+Other payload types and mixed pairs remain excluded.
+
+The [numeric XOR slice](../planning/numeric_xor.md) adds four plain and 96 guarded
+canonical int/float signatures with eager truth snapshots and checked extraction.
+Bool/numeric mixing, strings and fixed-width expansion remain excluded.
+
+The [nullable-int equality slice](../planning/nullable_int_equality.md) adds 12
+`== != === !==` signatures over nullable/nullable and nullable/plain canonical int.
+It snapshots complete states; empty/empty is equal, empty/payload is unequal, and
+both operands remain eager. Guarded extraction and literal-null presence stay separate.
+
+The [nullable bool/string extension](../planning/nullable_bool_string_equality.md)
+adds 24 matching-payload signatures with the same state/snapshot contract. Empty
+states remain distinct from false, empty string and zero string; string equality
+uses complete bytes.
+
+The [nullable-float extension](../planning/nullable_float_equality.md) adds the final
+12 canonical nullable signatures, including NaN and signed-zero behavior.
+
+The [structured-error Result extension](../planning/result_equality.md) adds 48
+matching `result<T>`/plain signatures. Failure equality compares states; strict
+identity compares error metadata. `Wrapper_Equality` owns both this and nullable admission.
+
+The [false-sentinel bool extension](../planning/false_bool_equality.md) adds 12
+`result_or_false<bool>`/plain-bool signatures with distinct equality/identity
+normalization and preserved carrier snapshots. Other sentinel payloads remain separate.
+
+The [two-sentinel bool extension](../planning/bool_sentinel_equality.md) adds 12
+`result_or_bool<bool>`/plain-bool signatures, verifying both sentinels separately
+from their matching payload values.
+
+[Non-bool sentinel equality](../planning/nonbool_sentinel_equality.md) adds 48
+same-carrier comparisons and carrier/plain strict identities for int/float/string.
+The [subsequent sentinel/plain repair](../planning/sentinel_plain_equality.md)
+resolves all 24 ordinary carrier/plain runtime blockers: sentinels differ from
+matching plain non-bool values; present payloads compare normally.
+
+[Carrier updates](../planning/carrier_updates.md) now cover all 32 numeric carrier
+prefix/postfix forms, preserving state on failure and returning source snapshots.
+The original V-R10 nullable runtime test passes. [Canonical-int arithmetic compounds](../planning/int_carrier_compounds.md) now cover
+48 same-carrier/plain signatures with ordered extraction and once-only write-back.
+[The remainder/bitwise/shift extension](../planning/int_bitwise_compounds.md) adds
+72 more, completing the ten bounded same-carrier/plain canonical-int compounds.
+[Cross-family int compounds](../planning/int_cross_compounds.md) add all 120 ordered
+distinct-carrier forms with independent extraction and destination-typed wrapping.
+[Exact-float compounds](../planning/float_compounds.md) add four scalar prerequisites
+and all 96 carrier signatures, preserving signed-zero division errors and snapshots.
+[Mixed ordering O1](../planning/mixed_ordering.md) adds 192 carrier signatures and eight
+scalar prerequisites with explicit int-to-float conversion and eager snapshots.
+[Float-destination C2](../planning/widening_compounds.md) adds 96 carrier signatures
+and four scalar prerequisites with int RHS promotion and stable write-back.
+Indexed updates, narrowing/indexed and other compounds remain separate.
+
+V-D13 and nullable-int V-L08 are repaired; V-L07 remains partial. Equality/identity beyond matching nullable/result int/float/bool/string and both sentinel-result bool families,
+mixed numeric ordering, updates/compounds, other-type spaceship and other
+payload/operator domains remain separate. Bool/numeric and string logical pairs
+are excluded. Direct conditions/selectors retain their separate contracts.
+Historical broad lifting gaps below are narrowed only by these explicit scopes;
+earlier evidence is linked from the current guide.
+
+## Ordinary string comparisons — 2026-10-19
+
+[V-L03](../planning/string_comparisons_l03.md) implements all seven exact
+string/string comparisons with complete-byte equality, lexicographic byte ordering
+and left-to-right value snapshots. Six results are bool; spaceship is canonical
+int -1/0/1. The focused dev002 proof covers embedded NUL/high bytes, numeric-looking
+strings, exceptions, mutation and retained-session repair. No numeric coercion,
+Unicode normalization, wrapper expansion or runtime implementation change is implied.
+This supersedes ordinary-string admission gaps in the earlier checkpoints below.
 
 ## String strict identity — 2026-10-10
 
@@ -92,6 +186,14 @@ The supplementary S2S PHP regression passed in 39.00s at
 
 ## Positive pass conclusion — 2026-10-02
 
+
+**Current scope — 2026-10-19 (CS037).** October 02 closeout is revision-specific. Old bracket and child-block deferrals are superseded by later owners; this section cannot prove current completion or native-compiler parity.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md), [compact_layout_types.md](../../../../specs/compact_layout_types.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS037`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Status: positive pass complete for the agreed bounded frontend + C++ S2S scope.**
 Implementation checkpoint: `d3cedb46aee4b35dcd76763179535c0eef25dc2d`.
 
@@ -113,6 +215,8 @@ The latest repairs have focused PHP and generated-C++ validation. The earlier na
 compiler checkpoint remains revision-specific; this conclusion does not claim a
 native rebuild of the latest implementation. Existing row-level proof/deferred
 statuses remain authoritative for individual capabilities.
+
+</details>
 
 ## Progress
 
@@ -499,13 +603,21 @@ auto a = static_cast<int_t>(2) * static_cast<int_t>(3);
 
 ## EXPR-DIV-001
 
+
+**Current scope — 2026-10-19 (CS044).** Integer division truncation, negative operands, grouping and zero guard have native evidence; current scalar-error-code proof preserves division_by_zero for float and mixed int/float order as well. Integer division remains distinct from PHP division typing. Minimum divided by minus one is outside promised checked arithmetic.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [compact_layout_types.md](../../../../specs/compact_layout_types.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [spec.md](../../../../runtime/specs/spec.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS044`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -542,13 +654,21 @@ auto a = static_cast<int_t>(4) / static_cast<int_t>(2);
 
 ## EXPR-MOD-001
 
+
+**Current scope — 2026-10-19 (CS045).** Remainder sign, precedence, grouping and zero guard have native evidence. Modulo_by_zero remains distinct from division_by_zero. Broad numeric-compatible prose does not admit float or lifted operands automatically.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [compact_layout_types.md](../../../../specs/compact_layout_types.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [spec.md](../../../../runtime/specs/spec.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS045`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -744,13 +864,21 @@ auto a = ~b;
 
 ## EXPR-NESTED-001
 
+
+**Current scope — 2026-10-19 (CS050).** Nested arithmetic source runs through recursive operator preparation; independent grouping tree assertions and eager mixed-precedence/native sequencing prove composition rather than numeric coincidence alone. No per-combination rule or literal-spelling obligation follows.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [compact_layout_types.md](../../../../specs/compact_layout_types.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [spec.md](../../../../runtime/specs/spec.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS050`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -787,13 +915,21 @@ auto a = (b + static_cast<int_t>(1)) * static_cast<int_t>(2);
 
 ## EXPR-CHAIN-001
 
+
+**Current scope — 2026-10-19 (CS051).** Arithmetic chains reuse recursive preparation and preserve parsed left associativity. Native catalog result is supplemented by subtraction/multiplication associativity and grouping proofs; imported associative wording does not authorize algebraic reassociation.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [compact_layout_types.md](../../../../specs/compact_layout_types.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [spec.md](../../../../runtime/specs/spec.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS051`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -830,13 +966,21 @@ auto a = b + static_cast<int_t>(1) + c;
 
 ## EXPR-CONCAT-001
 
+
+**Current scope — 2026-10-19 (CS052).** Text concatenation owns a string result and prepared text conversion, not general explicit casting. Native string-content observers and mixed-state observers cover literals, both operand orders, null/bool/int/float/string and table behavior. The later [V-L11 / V-D14 proof](../planning/carrier_text.md) admits ready plain widths and canonical scalar carriers with explicit sentinel/error rules; uint64 and wider domains remain separate.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS052`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -871,13 +1015,21 @@ auto a = string_t("a") + string_t("b");
 
 ## EXPR-CONCAT-002
 
+
+**Current scope — 2026-10-19 (CS053).** Variable-left concatenation follows prepared text conversion and owned string results, including exact content observers. Imported `cast<string_t>` is illustrative and cannot substitute checked extraction for text conversion. The later [V-L11 / V-D14 proof](../planning/carrier_text.md) resolves ready plain widths and canonical scalar carrier text; uint64 and wider domains remain separate.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS053`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -910,13 +1062,21 @@ auto a = cast<string_t>(b) + string_t("x");
 
 ## EXPR-CONCAT-003
 
+
+**Current scope — 2026-10-19 (CS054).** Variable-right concatenation is observed by exact-content native tests and ordered eager text-call effects. No raw C-string pointer arithmetic is implied; non-string operands follow text context, not universal castability. The later [V-L11 / V-D14 proof](../planning/carrier_text.md) resolves ready plain widths and canonical scalar carriers, including both operand orders; wider domains remain separate.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS054`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -951,13 +1111,21 @@ auto a = string_t("x") + cast<string_t>(b);
 
 ## EXPR-COMP-001
 
+
+**Current scope — 2026-10-19 (CS055).** Canonical integer equality and bool equality are observed; same-signedness width policy has a separate domain-pair ledger. V-L03 now verifies byte-exact ordinary string equality; carrier equality remains separate and imported loose-PHP prose does not broaden it. Exact float/float ordinary equality is now verified by V-L04; cross-type comparisons remain separate.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS055`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -994,13 +1162,21 @@ auto a = (b == static_cast<int_t>(1));
 
 ## EXPR-NEQ-001
 
+
+**Current scope — 2026-10-19 (CS056).** Inequality is independently observed, with bool equality/inequality truth tables in the scalar suite and numeric width coverage separately retained. V-L03 now verifies byte-exact ordinary string inequality; carrier admission remains separate. V-L04 now admits exact float/float ordinary inequality; cross-type comparisons remain separate.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS056`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1035,13 +1211,21 @@ auto a = (b != static_cast<int_t>(1));
 
 ## EXPR-SEQ-001
 
+
+**Current scope — 2026-10-19 (CS057).** Strict identity returns the semantic bool type; string_identity.php checks noncoercing prepared facts plus complete byte contents/NUL, case and Unicode normalization distinction, bool truth table and eager snapshots. Imported valid-expressions/PHP semantics is broader than the proved slice; float/carrier gaps remain.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS057`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1078,13 +1262,21 @@ auto a = php::identical(b, static_cast<int_t>(1));
 
 ## EXPR-SNEQ-001
 
+
+**Current scope — 2026-10-19 (CS058).** Strict nonidentity is separately asserted as negation of same-type value identity, with byte-exact string and bool cases and snapshot sequencing. Imported helper spelling is not a requirement for identical lowering. Float/carrier admission stays explicitly missing.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS058`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1121,13 +1313,21 @@ auto a = php::not_identical(b, static_cast<int_t>(1));
 
 ## EXPR-LT-001
 
+
+**Current scope — 2026-10-19 (CS059).** Integer less-than observes order and signed extremes without subtraction-based comparison. Same-signedness pair proof is separate; V-L03 now verifies lexicographic string ordering; the bounded guarded-int ordering slice above now passes; wider lifting remains separate. V-L04 now admits exact float/float ordering, without cross-type promotion.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS059`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1160,13 +1360,21 @@ auto a = (b < static_cast<int_t>(1));
 
 ## EXPR-LTE-001
 
+
+**Current scope — 2026-10-19 (CS060).** Less-or-equal has independent canonical native observation and full same-signedness domain-pair proof, including equality boundaries. V-L03 now verifies lexicographic string operands; the bounded guarded-int slice above now passes; other lifted domains remain missing. V-L04 now admits exact float/float ordering, without cross-type promotion.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS060`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1199,13 +1407,21 @@ auto a = (b <= static_cast<int_t>(1));
 
 ## EXPR-GT-001
 
+
+**Current scope — 2026-10-19 (CS061).** Greater-than has independent native observation and domain-pair coverage. No universal PHP comparison/coercion promise follows; V-L03 now verifies lexicographic string ordering; bounded guarded-int ordering now passes; wider lifting remains missing. V-L04 now admits exact float/float ordering, without cross-type promotion.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS061`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1238,13 +1454,21 @@ auto a = (b > static_cast<int_t>(1));
 
 ## EXPR-GTE-001
 
+
+**Current scope — 2026-10-19 (CS062).** Greater-or-equal has independent native observation with domain-pair and equality-boundary coverage. V-L03 now verifies lexicographic string ordering; bounded guarded-int ordering now passes; wider lifting remains missing under its configured contract. V-L04 now admits exact float/float ordering, without cross-type promotion.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS062`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1277,13 +1501,21 @@ auto a = (b >= static_cast<int_t>(1));
 
 ## EXPR-SPACESHIP-001
 
+
+**Current scope — 2026-10-19 (CS063).** Spaceship returns canonical signed -1/0/1, with an exact negative-value observer, equality, greater and signed-extreme cases. Integer width suite verifies unsigned extremes. Imported scpp::cmp helper creation and exact lowering are superseded by prepared ordered comparisons; V-L03 additionally verifies exact string/string byte ordering with the same -1/0/1 result contract; other comparable families remain separate.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS063`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1320,13 +1552,21 @@ auto a = scpp::cmp(b, c);
 
 ## EXPR-LOGIC-001
 
+
+**Current scope — 2026-10-19 (CS064).** Canonical bool AND/OR truth tables, precedence, grouping, skipped throwing RHS and reached throwing RHS are independently executed. Compile-time validation still inspects skipped operands. Canonical int/float logical admission, including mixed numeric pairs and word aliases, is now verified by V-L05. Lifted and wider-domain admission remain separate gaps, not a universal intentional exclusion.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS064`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1363,13 +1603,21 @@ auto a = static_cast<bool_t>(true) && static_cast<bool_t>(false);
 
 ## EXPR-OR-001
 
+
+**Current scope — 2026-10-19 (CS065).** OR truth table and skipped/reached failure paths prove laziness through native bool bridging. V-L05 now verifies canonical numeric OR, including int/float pairs and its word alias. Lifted and wider-domain admission remain separate.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS065`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -1557,12 +1805,22 @@ ERROR
 
 ## EXPR-PREINC-001
 
+
+**Current scope — 2026-10-19 (CS070).** Native prefix increment observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS070`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -1597,12 +1855,22 @@ auto a = ++b;
 
 ## EXPR-POSTINC-001
 
+
+**Current scope — 2026-10-19 (CS071).** Native postfix increment observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS071`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -1637,12 +1905,22 @@ auto a = b++;
 
 ## EXPR-PREDEC-001
 
+
+**Current scope — 2026-10-19 (CS072).** Native prefix decrement observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS072`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -1677,12 +1955,22 @@ auto a = --b;
 
 ## EXPR-POSTDEC-001
 
+
+**Current scope — 2026-10-19 (CS073).** Native postfix decrement observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS073`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -1717,13 +2005,21 @@ auto a = b--;
 
 ## STMT-EXPR-001
 
+
+**Current scope — 2026-10-19 (CS074).** Expression statements execute admitted expressions and discard their result; initialized-local and grouped source cases preserve storage. Preparation still rejects unresolved names. Imported direct-emission spelling is not a semantic requirement.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS074`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-01 within the existing binary
 expression/statement structures. The [scalar operator guide](../s2s_scalar_operators.md)
 defines the bounded operand contract, lowering, legacy differences and proof.
 The initialized strict working example is in the progress table; imported examples
 below remain historical evidence. Native compiler execution was not rerun.
 
-**v0.2 decision / target C++:** Pending discussion.
+</details>
 
 ### Imported version 1
 
@@ -2242,12 +2538,22 @@ a >>= static_cast<int_t>(1);
 
 ## STMT-PREINC-001
 
+
+**Current scope — 2026-10-19 (CS087).** Native statement prefix increment observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS087`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -2282,12 +2588,22 @@ expressions remain outside this slice. Native compiler execution was not rerun.
 
 ## STMT-PREDEC-001
 
+
+**Current scope — 2026-10-19 (CS088).** Native statement prefix decrement observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS088`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -2322,12 +2638,22 @@ expressions remain outside this slice. Native compiler execution was not rerun.
 
 ## STMT-POSTINC-001
 
+
+**Current scope — 2026-10-19 (CS089).** Native statement postfix increment observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS089`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -2362,12 +2688,22 @@ a++;
 
 ## STMT-POSTDEC-001
 
+
+**Current scope — 2026-10-19 (CS090).** Native statement postfix decrement observation distinguishes returned old/new values and final storage. Mutation PHP assertions prove non-addressable snapshots, established writable targets, spans, cleanup and incremental operator edits. Statement forms discard only the result. No overflow checking is promised. Fields/indexes/eager operands have later owners; old blanket target exclusions are stale. V-L04 now admits canonical float mutations with the same value-snapshot rule. Lifted mutation remains missing support, with nullable runtime increment separately incomplete.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [string_interpolation.md](../../../../specs/string_interpolation.md), [array_semantics.md](../../../../specs/array_semantics.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS090`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Implemented 2026-10-02 for established canonical
 `int` locals and parameters. The dedicated mutation node retains the target and
 prefix/postfix syntax; preparation selects the operation and a value snapshot
 result. See [mutation contracts and proof](../s2s_scalar_operators.md#increment-and-decrement).
 Statements discard that result. Fields, indexes and mutation operands of binary
 expressions remain outside this slice. Native compiler execution was not rerun.
+
+</details>
 
 ### Imported version 1
 
@@ -2460,6 +2796,14 @@ _Not supplied in source._
 
 ## STR-INDEX-001
 
+
+**Current scope — 2026-10-19 (CS093).** String operator[] has no settled byte/code-point/result/write contract and is explicitly reserved. Fresh indexing.php execution proves both arities and specific rejection for read/write/compound/mutation uses, plus syntax and incremental recovery. This is deliberate string deferral, not a successful index lowering claim. Generic container reads/writes now have later contracts, so the old chapter-wide overload/lowering-deferred statement is stale.
+
+Contracts and owners: [index_operator.md](../../../../specs/index_operator.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS093`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Both `base[expression]` and `base[]` use one
 operator model and preparation path. Empty brackets mean zero explicit arguments,
 not compiler-defined append or write-only syntax. The type's eventual overload
@@ -2469,6 +2813,8 @@ Frontend proof covers syntax, arity and deliberate rejection, not successful ove
 selection. C++ lowering and general overload resolution are deferred. See the
 [normative bracket model](../../../../specs/index_operator.md) and
 [focused proof](../../tests/indexing.php).
+
+</details>
 
 ### Imported version 1
 
@@ -2524,6 +2870,14 @@ follows unchanged as provenance.
 
 ## NOTE-018
 
+
+**Current scope — 2026-10-19 (CS095).** Expression discard and compound computation/conversion/store are covered. Old locals/parameters-only and fields/brackets-await prose is stale: field and indexed compounds have separate passing owners. String-only concatenation prose is bounded historical guidance, not proof of the entire normative operand policy.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md), [compact_layout_types.md](../../../../specs/compact_layout_types.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS095`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Source:** [generators/php/specs/rules.md:263](../../../../generators/php/specs/rules.md)
 
 **v0.2 decision / examples:** Agreed 2026-10-02. Supported expressions may stand alone with
@@ -2546,6 +2900,8 @@ follows unchanged as provenance.
 > - `++` and `--` require a declared variable
 >
 > ---
+
+</details>
 
 ## NOTE-027
 
@@ -2733,3 +3089,26 @@ follows unchanged as provenance.
 > - Example statement: `$x[0]["name"] = "first";` lowers to `x[0]["name"] = "first";`.
 > - Example simple expression: `$y = ($x[0]["name"] = "first");` lowers to `mixed_t y = (x[0]["name"] = "first");` when native C++ assignment-expression semantics already preserve the assigned value.
 > - Fallback rule: emit a helper lambda only for complex expression contexts where the generator must guarantee single evaluation and return the assigned value explicitly, especially append expressions or larger composed expressions such as function-call arguments / concatenations that would otherwise duplicate work or lose PHP assignment-value semantics.
+
+
+### Cross-family strict identity — 2026-10-19
+
+[The E3I proof](../planning/cross_identity.md) verifies 96 matching-payload
+cross-family `===`/`!==` signatures after the authorized runtime dispatch repair.
+Whole-state snapshots and normalized identity are preserved. Ordinary equality
+and mixed payloads remain separate.
+
+
+### Mixed numeric strict identity — 2026-10-19
+
+[The E4I proof](../planning/mixed_identity.md) verifies 96 carrier signatures and
+four scalar prerequisites for int/float `===`/`!==`. Numeric kinds and whole-state
+snapshots are preserved without promotion. Ordinary mixed equality remains separate.
+
+
+### Bool/numeric strict identity — 2026-10-19
+
+[The E5BNI proof](../planning/bool_numeric_identity.md) verifies 192 carrier
+signatures and eight scalar prerequisites, preserving states and eager snapshots
+without truth conversion. Ordinary equality and bool/numeric logical mixing remain
+separate. Runtime implementation is unchanged.

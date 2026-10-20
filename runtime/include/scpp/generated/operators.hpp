@@ -25,7 +25,7 @@
 
 namespace scpp {
 
-// Generated from runtime/specs/config.json on 2026-06-26T04:01:41+00:00.
+// Generated from runtime/specs/config.json on 2026-10-20T05:02:12+00:00.
 // Enabled config families: bool_logical, float_arithmetic, float_logical, float_mutation, int_arithmetic, int_bitwise_and_mutation, int_logical, mixed_numeric, mixed_numeric_logical, null_comparisons, nullable_lifted_ops, nullable_ops, pointer_null_comparisons, string_ops, table_identity_comparisons.
 // Do not edit manually.
 
@@ -154,6 +154,63 @@ concept is_lifted_ordering_operand =
 	(is_native_number<T> || is_string_like<T> || is_mixed<T>)
 	|| (is_lifted_compound_wrapper<T> && (is_native_number<lifted_compound_inner_t<T>> || is_string_like<lifted_compound_inner_t<T>> || is_mixed<lifted_compound_inner_t<T>>));
 
+// Ordinary equality preserves carrier states rather than normalizing them to values.
+namespace detail {
+enum class equality_carrier_family { nullable, structured_result, false_result, bool_result };
+enum class equality_carrier_state { payload, null_value, error, false_value, true_value };
+
+template <typename T> struct equality_carrier_traits;
+template <typename T> struct equality_carrier_traits<nullable<T>> {
+	using payload_t = T;
+	static constexpr auto family = equality_carrier_family::nullable;
+	static equality_carrier_state state(const nullable<T> &value) {
+		return value.has_value().native_value() ? equality_carrier_state::payload : equality_carrier_state::null_value;
+	}
+};
+template <typename T> struct equality_carrier_traits<result<T>> {
+	using payload_t = T;
+	static constexpr auto family = equality_carrier_family::structured_result;
+	static equality_carrier_state state(const result<T> &value) {
+		return value.has_error().native_value() ? equality_carrier_state::error : equality_carrier_state::payload;
+	}
+};
+template <typename T> struct equality_carrier_traits<result_or_false<T>> {
+	using payload_t = T;
+	static constexpr auto family = equality_carrier_family::false_result;
+	static equality_carrier_state state(const result_or_false<T> &value) {
+		return value.has_value().native_value() ? equality_carrier_state::payload : equality_carrier_state::false_value;
+	}
+};
+template <typename T> struct equality_carrier_traits<result_or_bool<T>> {
+	using payload_t = T;
+	static constexpr auto family = equality_carrier_family::bool_result;
+	static equality_carrier_state state(const result_or_bool<T> &value) {
+		if (value.has_value().native_value()) return equality_carrier_state::payload;
+		return value.is_true().native_value() ? equality_carrier_state::true_value : equality_carrier_state::false_value;
+	}
+};
+template <typename T>
+using equality_carrier_info = equality_carrier_traits<remove_cvref_t<T>>;
+template <typename T>
+concept equality_carrier = requires { typename equality_carrier_info<T>::payload_t; };
+template <typename T>
+using equality_payload_t = typename equality_carrier_info<T>::payload_t;
+
+// Canonical numeric pairs and matching strings share non-bool equality semantics.
+// Bool, fixed-width and boxed operands retain their separate dispatch contracts.
+template <typename Left, typename Right>
+concept nonbool_equality_payload_pair =
+	((is_default_int<Left> || is_native_float<Left>) && (is_default_int<Right> || is_native_float<Right>))
+	|| (is_string_like<Left> && is_string_like<Right>);
+
+// Distinct families use the state-aware route only for the admitted payload domain.
+template <typename Left, typename Right>
+concept cross_carrier_equality_pair = equality_carrier<Left> && equality_carrier<Right>
+	&& (equality_carrier_info<Left>::family != equality_carrier_info<Right>::family)
+	&& (nonbool_equality_payload_pair<equality_payload_t<Left>, equality_payload_t<Right>>
+		|| (is_bool<equality_payload_t<Left>> && is_bool<equality_payload_t<Right>>));
+} // namespace detail
+
 template <typename T>
 concept is_lifted_equality_operand =
 	(is_bool<T> || is_native_number<T> || is_string_like<T> || is_mixed<T>)
@@ -256,6 +313,45 @@ inline float_t &operator--(float_t &value) noexcept {
 
 inline float_t operator--(float_t &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_dec(value);
+}
+
+// Canonical numeric carrier updates: validate presence before mutation, preserve the carrier.
+template <typename T>
+concept is_numeric_update_carrier = is_lifted_compound_wrapper<T>
+	&& (is_default_int<lifted_compound_inner_t<T>> || is_native_float<lifted_compound_inner_t<T>>)
+	&& (!std::is_const_v<std::remove_reference_t<T>>);
+
+// Prefix returns the original native carrier; the source compiler snapshots its value.
+template <is_numeric_update_carrier T>
+inline T &operator++(T &value) {
+	auto &payload = require_lifted_compound_value(value, "prefix increment requires a present operand");
+	++payload;
+	return value;
+}
+
+// Postfix preserves an independent old carrier after validating the writable payload.
+template <is_numeric_update_carrier T>
+inline T operator++(T &value, int) {
+	auto &payload = require_lifted_compound_value(value, "postfix increment requires a present operand");
+	T previous = value;
+	++payload;
+	return previous;
+}
+
+// Decrement shares the same checked payload and same-object contract as increment.
+template <is_numeric_update_carrier T>
+inline T &operator--(T &value) {
+	auto &payload = require_lifted_compound_value(value, "prefix decrement requires a present operand");
+	--payload;
+	return value;
+}
+
+template <is_numeric_update_carrier T>
+inline T operator--(T &value, int) {
+	auto &payload = require_lifted_compound_value(value, "postfix decrement requires a present operand");
+	T previous = value;
+	--payload;
+	return previous;
 }
 
 [[nodiscard]] inline string_t operator+(const string_t &lhs, const string_t &rhs) {
@@ -458,6 +554,23 @@ template <typename T1, typename T2>
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
+// Distinct carrier families compare state tags before reading any payload.
+template <typename Left, typename Right>
+	requires detail::cross_carrier_equality_pair<Left, Right>
+[[nodiscard]] inline bool_t operator==(const Left &lhs, const Right &rhs) {
+	const auto left_state = detail::equality_carrier_info<Left>::state(lhs);
+	const auto right_state = detail::equality_carrier_info<Right>::state(rhs);
+	if (left_state != right_state) return bool_t(false);
+	if (left_state != detail::equality_carrier_state::payload) return bool_t(true);
+	return lhs.value() == rhs.value();
+}
+
+template <typename Left, typename Right>
+	requires detail::cross_carrier_equality_pair<Left, Right>
+[[nodiscard]] inline bool_t operator!=(const Left &lhs, const Right &rhs) {
+	return bool_t(!(lhs == rhs).native_value());
+}
+
 template <typename T, typename U>
 [[nodiscard]] inline bool_t operator==(const nullable<T> &lhs, const nullable<U> &rhs) {
 	if (!lhs.has_value().native_value()) {
@@ -470,7 +583,7 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<nullable<T>, Right>)
 [[nodiscard]] inline bool_t operator==(const nullable<T> &lhs, const Right &rhs) {
 	if (!lhs.has_value().native_value()) {
 		return bool_t(false);
@@ -479,7 +592,7 @@ template <typename T, typename Right>
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, nullable<T>>)
 [[nodiscard]] inline bool_t operator==(const Left &lhs, const nullable<T> &rhs) {
 	if (!rhs.has_value().native_value()) {
 		return bool_t(false);
@@ -493,16 +606,30 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<nullable<T>, Right>)
 [[nodiscard]] inline bool_t operator!=(const nullable<T> &lhs, const Right &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, nullable<T>>)
 [[nodiscard]] inline bool_t operator!=(const Left &lhs, const nullable<T> &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
+
+// Runtime spec 6.10: a bool sentinel differs from canonical non-bool scalars.
+// Preserve existing bool and boxed dispatch; this helper is only used by sentinel branches.
+namespace detail {
+template <typename Payload, typename Left, typename Right>
+[[nodiscard]] inline bool_t sentinel_plain_equal(const Left &lhs, const Right &rhs) {
+	if constexpr ((is_bool<Left> && nonbool_equality_payload_pair<Payload, Right>)
+		|| (is_bool<Right> && nonbool_equality_payload_pair<Payload, Left>)) {
+		return bool_t(false);
+	} else {
+		return bool_t(lhs == rhs);
+	}
+}
+} // namespace detail
 
 template <typename T, typename U>
 [[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const result_or_false<U> &rhs) {
@@ -516,10 +643,10 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<result_or_false<T>, Right>)
 [[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const Right &rhs) {
 	if (!lhs.has_value().native_value()) {
-		return bool_t(bool_t(false) == rhs);
+		return detail::sentinel_plain_equal<T>(bool_t(false), rhs);
 	}
 	if constexpr (is_bool<Right> && !is_bool<T>) {
 		return bool_t(false);
@@ -529,10 +656,10 @@ template <typename T, typename Right>
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, result_or_false<T>>)
 [[nodiscard]] inline bool_t operator==(const Left &lhs, const result_or_false<T> &rhs) {
 	if (!rhs.has_value().native_value()) {
-		return bool_t(lhs == bool_t(false));
+		return detail::sentinel_plain_equal<T>(lhs, bool_t(false));
 	}
 	if constexpr (is_bool<Left> && !is_bool<T>) {
 		return bool_t(false);
@@ -567,13 +694,13 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<result_or_false<T>, Right>)
 [[nodiscard]] inline bool_t operator!=(const result_or_false<T> &lhs, const Right &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, result_or_false<T>>)
 [[nodiscard]] inline bool_t operator!=(const Left &lhs, const result_or_false<T> &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
@@ -593,10 +720,10 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<result_or_bool<T>, Right>)
 [[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, const Right &rhs) {
 	if (!lhs.has_value().native_value()) {
-		return bool_t(bool_t(lhs.is_true().native_value()) == rhs);
+		return detail::sentinel_plain_equal<T>(bool_t(lhs.is_true().native_value()), rhs);
 	}
 	if constexpr (is_bool<Right> && !is_bool<T>) {
 		return bool_t(false);
@@ -606,10 +733,10 @@ template <typename T, typename Right>
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, result_or_bool<T>>)
 [[nodiscard]] inline bool_t operator==(const Left &lhs, const result_or_bool<T> &rhs) {
 	if (!rhs.has_value().native_value()) {
-		return bool_t(lhs == bool_t(rhs.is_true().native_value()));
+		return detail::sentinel_plain_equal<T>(lhs, bool_t(rhs.is_true().native_value()));
 	}
 	if constexpr (is_bool<Left> && !is_bool<T>) {
 		return bool_t(false);
@@ -664,13 +791,13 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<result_or_bool<T>, Right>)
 [[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, const Right &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, result_or_bool<T>>)
 [[nodiscard]] inline bool_t operator!=(const Left &lhs, const result_or_bool<T> &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
@@ -687,7 +814,7 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<result<T>, Right>)
 [[nodiscard]] inline bool_t operator==(const result<T> &lhs, const Right &rhs) {
 	if (lhs.has_error().native_value()) {
 		return bool_t(false);
@@ -696,7 +823,7 @@ template <typename T, typename Right>
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, result<T>>)
 [[nodiscard]] inline bool_t operator==(const Left &lhs, const result<T> &rhs) {
 	if (rhs.has_error().native_value()) {
 		return bool_t(false);
@@ -710,13 +837,13 @@ template <typename T, typename U>
 }
 
 template <typename T, typename Right>
-	requires is_lifted_equality_operand<Right>
+	requires (is_lifted_equality_operand<Right> && !detail::cross_carrier_equality_pair<result<T>, Right>)
 [[nodiscard]] inline bool_t operator!=(const result<T> &lhs, const Right &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
 template <typename Left, typename T>
-	requires is_lifted_equality_operand<Left>
+	requires (is_lifted_equality_operand<Left> && !detail::cross_carrier_equality_pair<Left, result<T>>)
 [[nodiscard]] inline bool_t operator!=(const Left &lhs, const result<T> &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }

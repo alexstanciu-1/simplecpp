@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "output": "3",
+  "build": {
+    "executable": "/tmp/v02-consolidated-concrete-policy-20261020/cache/artifacts/f3d35b99a9eda456361fc87a0c5dd3c07f939315e7f5c186767a8e476b7853f5.bin",
+    "compiled": 8,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1,
+    "layouts_built": 2,
+    "layouts_reused": 0
+  },
+  "application_templates": "forbidden",
+  "cpp_policy": "cpp-lowering-v2:latency"
+}

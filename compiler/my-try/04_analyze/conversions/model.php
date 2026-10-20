@@ -23,8 +23,11 @@ enum conversion_operation
 	case callable_wrap;
 	case identity;
 	case integer_value_cast;
+	case integer_to_floating;
 	case explicit_runtime_cast;
 	case text_conversion;
+	case optional_payload_text;
+	case required_payload_text;
 	case nullable_empty;
 	case ownership_empty;
 	case ownership_upcast;
@@ -32,6 +35,7 @@ enum conversion_operation
 	case nullable_wrap;
 	case nullable_extract;
 	case result_wrap;
+	case result_error;
 	case result_false;
 	case result_true;
 	case result_extract;
@@ -50,6 +54,8 @@ interface conversion_relationship_query
 /** Retained semantic result of comparing one produced value with its consumer. */
 final class conversion_decision
 {
+	/** Stable descriptive tag; enum-name lowering stays beside its declaration. */
+	public function operation_name(): string { return enum_name($this->operation); }
 	public canonical_type_use $source_type;
 	public canonical_type_use $target_type;
 	public canonical_type_use $result_type;

@@ -1,0 +1,1 @@
+class C { unique<int> $p; function __construct(set:$p) {} } return 0;

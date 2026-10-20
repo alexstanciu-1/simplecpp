@@ -1,0 +1,7 @@
+/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_once.cpp:9:2: warning: expression result unused [-Wunused-value]
+    9 |         static_cast<scpp::int_t<>>(local_n++);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/temp/compile-probe-20261003/programs/nullable_coalesce_once.cpp:15:2: warning: expression result unused [-Wunused-value]
+   15 |         static_cast<scpp::int_t<>>(local_n++);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2 warnings generated.

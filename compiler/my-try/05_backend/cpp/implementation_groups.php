@@ -15,11 +15,11 @@ final class CPP_Implementation_Groups
 
 	/** Existing file order and source membership remain the grouping policy. */
 	public static function assemble(Storage $files /** Storage<prepared_file> */,
-		Storage $ordered /** Storage<preparation_owner> */, cpp_program $program): Storage /** Storage<cpp_implementation_group> */
+		Storage $ordered /** Storage<preparation_owner> */, cpp_program $program, ?CPP_Specializations $engine = null): Storage /** Storage<cpp_implementation_group> */
 	{
 		$groups /** Storage<cpp_implementation_group> */ = new Storage();
 		foreach ($files as $prepared) {
-			$group = self::source_group($prepared->source, $ordered, $program);
+			$group = self::source_group($prepared->source, $ordered, $program, $engine);
 			if ($group->text !== '') { $groups->append($group); }
 		}
 		return $groups;
@@ -27,11 +27,11 @@ final class CPP_Implementation_Groups
 
 	/** Preserve member/dispatch/storage and include insertion order from artifact assembly. */
 	private static function source_group(collected_file $source,
-		Storage $ordered /** Storage<preparation_owner> */, cpp_program $program): cpp_implementation_group
+		Storage $ordered /** Storage<preparation_owner> */, cpp_program $program, ?CPP_Specializations $engine): cpp_implementation_group
 	{
 		$path = CPP_Artifacts::unit_path($source);
 		$group = new cpp_implementation_group('implementation:' . $path, $path);
-		$dispatch_context = new cpp_generation_context();
+		$dispatch_context = new cpp_generation_context($engine);
 		foreach ($ordered as $callable_owner) {
 			if (($callable_owner instanceof record_definition_work) || ($callable_owner instanceof type_contract_work)) {
 				if ($callable_owner->source === $source) {

@@ -1,0 +1,1 @@
+abstract struct S { abstract function f(): int; } class C { ?S $s = null; } return 0;

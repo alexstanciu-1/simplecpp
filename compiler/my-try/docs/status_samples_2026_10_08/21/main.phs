@@ -1,0 +1,6 @@
+$boxed mixed = ["count" => 1];
+$shared dynamic = ["count" => 2];
+$copy = $boxed;
+$alias = $shared;
+$alias["count"] = 3;
+return (int) $copy["count"];

@@ -8,6 +8,7 @@ final class CPP_Runtime_Catalog
 	public static function validate(runtime_catalog_input $input, registered_type_catalog $types): void
 	{
 		CPP_Runtime_Build::requirements($input);
+		CPP_Runtime_Type_Bindings::install($input, $types, CPP_Type_Binding_Registration::install($types));
 		foreach ($input->modules as $module)
 		{
 			$initializers /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_initialization;
@@ -41,19 +42,6 @@ final class CPP_Runtime_Catalog
 				if (!$property->static_member || ($property_owner instanceof abstract_template_type_definition)) {
 					self::member_identifier($property_binding->symbol);
 				}
-			}
-			$type_bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_types;
-			if (q_count($type_bindings) !== q_count($module->types)) {
-				throw new \RuntimeException('Runtime type binding count mismatch: ' . $module->file);
-			}
-			foreach ($module->types as $type_spec) {
-				if (!isset($type_bindings[$type_spec->identity])) {
-					throw new \RuntimeException('Missing runtime type binding: ' . $type_spec->identity);
-				}
-			}
-			foreach ($type_bindings as $type_binding) {
-				self::spelling($type_binding->symbol, false);
-				self::spelling($type_binding->header, true);
 			}
 			$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp;
 			if (q_count($bindings) !== q_count($module->functions)) {
@@ -100,7 +88,7 @@ final class CPP_Runtime_Catalog
 	}
 
 	/** Reject expression/source fragments; the C++ toolchain still proves symbol existence. */
-	private static function spelling(string $text, bool $header): void
+	public static function spelling(string $text, bool $header): void
 	{
 		if ($text === '') {
 			throw new \RuntimeException('Empty runtime C++ binding');
@@ -128,14 +116,7 @@ final class CPP_Runtime_Catalog
 	public static function install_types(runtime_catalog_input $input, registered_type_catalog $types,
 		CPP_Type_Bindings $bindings): void
 	{
-		foreach ($input->modules as $module)
-		{
-			$specs /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_types;
-			foreach ($module->types as $type_spec) {
-				$binding = $specs[$type_spec->identity];
-				$bindings->bind_definition($types->definition($type_spec->name), $binding->symbol, $binding->header);
-			}
-		}
+		CPP_Runtime_Type_Bindings::install($input, $types, $bindings);
 	}
 
 	/** Callable installation follows both semantic and type-binding installation. */
@@ -163,7 +144,7 @@ final class CPP_Runtime_Catalog
 		$binding /** runtime_cpp_spec */ = Model::$cpp_property_bindings[$definition];
 		$context->headers[$binding->header] = true;
 		if ($definition->static_member && ($definition->owner instanceof abstract_template_type_definition)) {
-			$mapping = CPP_Types::payload($property->owner_type);
+			$mapping = CPP_Types::payload($property->owner_type, $context);
 			CPP_Types::record_dependencies($mapping, $context);
 			return $mapping->spelling . '::' . $binding->symbol;
 		}

@@ -13,7 +13,7 @@ function inheritance_source(string $source): string
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -119,7 +119,7 @@ try {
 	file_put_contents($child_path, $child_text);
 	file_put_contents($main_path, 'use Types\\C; $c = new C(); $n = $c->n; return $n;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();

@@ -1,0 +1,101 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n4e6f6465.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Node
+{
+public:
+	scpp::int_t<> field_value = static_cast<scpp::int_t<>>(1LL);
+public:
+};
+
+
+// === types/n4c656166.hpp ===
+#pragma once
+#include "types/n4e6f6465.hpp"
+struct record_Leaf : public record_Node
+{
+public:
+};
+
+
+// === types/n50726f7669646572.hpp ===
+#pragma once
+#include "scpp/shared_p.hpp"
+struct record_Node;
+struct record_Provider
+{
+public:
+public:
+	virtual ::scpp::shared_p<record_Node> dispatch_Provider__method_node() = 0;
+::scpp::shared_p<record_Node> method_node();
+public:
+	virtual ~record_Provider() noexcept = default;
+	record_Provider() = default;
+	record_Provider(const record_Provider&) = default;
+	record_Provider(record_Provider&&) = default;
+	record_Provider& operator=(const record_Provider&) = default;
+	record_Provider& operator=(record_Provider&&) = default;
+};
+
+
+// === types/n4c6561665f50726f7669646572.hpp ===
+#pragma once
+#include "scpp/shared_p.hpp"
+#include "types/n50726f7669646572.hpp"
+struct record_Leaf;
+struct record_Node;
+struct record_LeafU_Provider : public record_Provider
+{
+public:
+public:
+	::scpp::shared_p<record_Leaf> implementation_LeafU_Provider__method_node();
+	virtual ::scpp::shared_p<record_Leaf> dispatch_LeafU_Provider__method_node();
+::scpp::shared_p<record_Leaf> method_node();
+public:
+	::scpp::shared_p<record_Node> dispatch_Provider__method_node() override;
+public:
+	virtual ~record_LeafU_Provider() noexcept = default;
+	record_LeafU_Provider() = default;
+	record_LeafU_Provider(const record_LeafU_Provider&) = default;
+	record_LeafU_Provider(record_LeafU_Provider&&) = default;
+	record_LeafU_Provider& operator=(const record_LeafU_Provider&) = default;
+	record_LeafU_Provider& operator=(record_LeafU_Provider&&) = default;
+};
+
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "types/n4c6561665f50726f7669646572.hpp"
+#include "types/n4c656166.hpp"
+#include "scpp/shared_p.hpp"
+#include "scpp/memory.hpp"
+#include "types/n4e6f6465.hpp"
+#include "types/n50726f7669646572.hpp"
+::scpp::shared_p<record_Node> record_Provider::method_node() { return dispatch_Provider__method_node(); }
+::scpp::shared_p<record_Leaf> record_LeafU_Provider::dispatch_LeafU_Provider__method_node() { return record_LeafU_Provider::implementation_LeafU_Provider__method_node(); }
+::scpp::shared_p<record_Leaf> record_LeafU_Provider::method_node() { return dispatch_LeafU_Provider__method_node(); }
+::scpp::shared_p<record_Node> record_LeafU_Provider::dispatch_Provider__method_node() { return ::scpp::shared_p<record_Node>{dispatch_LeafU_Provider__method_node()}; }
+::scpp::shared_p<record_Leaf> record_LeafU_Provider::implementation_LeafU_Provider__method_node()
+{
+	return ::scpp::shared<record_Leaf>();
+}
+
+
+// === entry.cpp ===
+#include "types/n4c6561665f50726f7669646572.hpp"
+#include "scpp/memory.hpp"
+#include "types/n50726f7669646572.hpp"
+#include "scpp/shared_p.hpp"
+#include "types/n4e6f6465.hpp"
+
+int main()
+{
+	::scpp::shared_p<record_Provider> local_provider = ::scpp::shared_p<record_Provider>{::scpp::shared<record_LeafU_Provider>()};
+	return static_cast<int>(((([&]() -> ::scpp::shared_p<record_Node> {
+auto receiver_0 = local_provider;
+(void)receiver_0.operator->();
+	return receiver_0->method_node();
+}()))->field_value).native_value());
+	return 0;
+}

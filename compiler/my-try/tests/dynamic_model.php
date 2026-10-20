@@ -84,7 +84,7 @@ $source->content = '$boxed mixed; $object_table dynamic; return 0;';
 Source_Registry::add($input_module, $source);
 $modules /** Keyed_Storage<module> */ = Model::$modules;
 $modules->add($input_module->name, $input_module);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->exec_cpp();
 $outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
 $text = CPP_Probe::text($outputs);

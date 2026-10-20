@@ -1,0 +1,4 @@
+trait First { public function value(): int { return 1; } }
+trait Second { public function value(): int { return 2; } }
+class Item { use First, Second { First::value insteadof Second; Second::value as other; } }
+return (new Item())->other();

@@ -1,0 +1,7 @@
+/tmp/mytry-diagnostic-review/batch6/capture_receiver_reassign/cpp/units/n6d61696e/n6d61696e2e706873.cpp:10:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch6/capture_receiver_reassign/cpp/units/n6d61696e/n6d61696e2e706873.cpp:6:17)' cannot be assigned because its copy assignment operator is implicitly deleted
+   10 |         local_h = local_g;
+      |                 ^
+/tmp/mytry-diagnostic-review/batch6/capture_receiver_reassign/cpp/units/n6d61696e/n6d61696e2e706873.cpp:6:17: note: lambda expression begins here
+    6 |         auto local_g = [this]() mutable -> scpp::int_t<> {
+      |                        ^
+1 error generated.

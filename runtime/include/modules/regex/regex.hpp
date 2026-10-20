@@ -34,7 +34,7 @@ namespace scpp::regex {
 // Filters packed input strings by pattern match.
 [[nodiscard]] result_or_false<vector_t<string_t>> grep(const string_t &pattern, const vector_t<string_t> &input);
 
-// Applies literal replacement and returns only rows where at least one replacement happened.
+// Applies positional-backreference replacement and returns only rows where at least one replacement happened.
 [[nodiscard]] result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input);
 [[nodiscard]] result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t<> &limit);
 [[nodiscard]] result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, int_t<> &count);
@@ -53,6 +53,10 @@ namespace scpp::regex {
 [[nodiscard]] result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit);
 [[nodiscard]] result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, int_t<> &count);
 [[nodiscard]] result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit, int_t<> &count);
+
+// Source metadata targets whose final argument always means a limit.
+[[nodiscard]] result_or_false<string_t> replace_limited(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit);
+[[nodiscard]] result_or_false<vector_t<string_t>> filter_limited(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t<> &limit);
 
 [[nodiscard]] result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject);
 [[nodiscard]] result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject, const int_t<> &limit);

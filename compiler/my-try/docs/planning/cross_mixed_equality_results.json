@@ -1,0 +1,953 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/cross-mixed-equality/20261020-01",
+  "scope": {
+    "new_binary_signatures": 48,
+    "new_scalar_prerequisites": 0,
+    "recovery_sequences": 48,
+    "negative_source_checks": 168
+  },
+  "signatures": [
+    [
+      "?float",
+      "==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!=",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!=",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?float",
+      "==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!=",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!=",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?float",
+      "==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!=",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!=",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!=",
+      "?int",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!=",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!=",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!=",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!=",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!=",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!=",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!=",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!=",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!=",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!=",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!=",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!=",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!=",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!=",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!=",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!=",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!=",
+      "result_or_bool<float>",
+      "bool"
+    ]
+  ],
+  "carrier_signatures": [
+    [
+      "?float",
+      "==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!=",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!=",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "?float",
+      "==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!=",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!=",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "?float",
+      "==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?float",
+      "!=",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "?int",
+      "==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "?int",
+      "!=",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!=",
+      "?int",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!=",
+      "?float",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!=",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!=",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<float>",
+      "!=",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result<int>",
+      "!=",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!=",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!=",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!=",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!=",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "==",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<float>",
+      "!=",
+      "result_or_false<int>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "==",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_bool<int>",
+      "!=",
+      "result_or_false<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "==",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!=",
+      "?int",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "==",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!=",
+      "?float",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "==",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!=",
+      "result<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "==",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!=",
+      "result<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "==",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<float>",
+      "!=",
+      "result_or_bool<int>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "==",
+      "result_or_bool<float>",
+      "bool"
+    ],
+    [
+      "result_or_false<int>",
+      "!=",
+      "result_or_bool<float>",
+      "bool"
+    ]
+  ],
+  "counts": {
+    "verification/cross-mixed-equality/logs/nullable-result-float-int-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 16184,
+      "property_cases": 8092
+    },
+    "verification/cross-mixed-equality/logs/nullable-result-float-int-runtime-execute.stdout": {
+      "runtime_cases": 238
+    },
+    "verification/cross-mixed-equality/logs/nullable-result-int-float-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 9680,
+      "property_cases": 4840
+    },
+    "verification/cross-mixed-equality/logs/nullable-result-int-float-runtime-execute.stdout": {
+      "runtime_cases": 220
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 13872,
+      "property_cases": 6936
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_bool-float-int-runtime-execute.stdout": {
+      "runtime_cases": 204
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 8712,
+      "property_cases": 4356
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_bool-int-float-runtime-execute.stdout": {
+      "runtime_cases": 198
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 12716,
+      "property_cases": 6358
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_false-float-int-runtime-execute.stdout": {
+      "runtime_cases": 187
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 8228,
+      "property_cases": 4114
+    },
+    "verification/cross-mixed-equality/logs/nullable-result_or_false-int-float-runtime-execute.stdout": {
+      "runtime_cases": 187
+    },
+    "verification/cross-mixed-equality/logs/result-nullable-float-int-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 17600,
+      "property_cases": 8800
+    },
+    "verification/cross-mixed-equality/logs/result-nullable-float-int-runtime-execute.stdout": {
+      "runtime_cases": 220
+    },
+    "verification/cross-mixed-equality/logs/result-nullable-int-float-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 13328,
+      "property_cases": 6664
+    },
+    "verification/cross-mixed-equality/logs/result-nullable-int-float-runtime-execute.stdout": {
+      "runtime_cases": 238
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1920,
+      "local_cases": 19200,
+      "property_cases": 9600
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_bool-float-int-runtime-execute.stdout": {
+      "runtime_cases": 240
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 2016,
+      "local_cases": 14112,
+      "property_cases": 7056
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_bool-int-float-runtime-execute.stdout": {
+      "runtime_cases": 252
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 17600,
+      "property_cases": 8800
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_false-float-int-runtime-execute.stdout": {
+      "runtime_cases": 220
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 13328,
+      "property_cases": 6664
+    },
+    "verification/cross-mixed-equality/logs/result-result_or_false-int-float-runtime-execute.stdout": {
+      "runtime_cases": 238
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-nullable-float-int-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 14256,
+      "property_cases": 7128
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-nullable-float-int-runtime-execute.stdout": {
+      "runtime_cases": 198
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-nullable-int-float-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 9792,
+      "property_cases": 4896
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-nullable-int-float-runtime-execute.stdout": {
+      "runtime_cases": 204
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result-float-int-execute.stdout": {
+      "binary_cases": 2016,
+      "local_cases": 18144,
+      "property_cases": 9072
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result-float-int-runtime-execute.stdout": {
+      "runtime_cases": 252
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result-int-float-execute.stdout": {
+      "binary_cases": 1920,
+      "local_cases": 11520,
+      "property_cases": 5760
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result-int-float-runtime-execute.stdout": {
+      "runtime_cases": 240
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 14256,
+      "property_cases": 7128
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result_or_false-float-int-runtime-execute.stdout": {
+      "runtime_cases": 198
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 9792,
+      "property_cases": 4896
+    },
+    "verification/cross-mixed-equality/logs/result_or_bool-result_or_false-int-float-runtime-execute.stdout": {
+      "runtime_cases": 204
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-nullable-float-int-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 12716,
+      "property_cases": 6358
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-nullable-float-int-runtime-execute.stdout": {
+      "runtime_cases": 187
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-nullable-int-float-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 8228,
+      "property_cases": 4114
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-nullable-int-float-runtime-execute.stdout": {
+      "runtime_cases": 187
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result-float-int-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 16184,
+      "property_cases": 8092
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result-float-int-runtime-execute.stdout": {
+      "runtime_cases": 238
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result-int-float-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 9680,
+      "property_cases": 4840
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result-int-float-runtime-execute.stdout": {
+      "runtime_cases": 220
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 13872,
+      "property_cases": 6936
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result_or_bool-float-int-runtime-execute.stdout": {
+      "runtime_cases": 204
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 8712,
+      "property_cases": 4356
+    },
+    "verification/cross-mixed-equality/logs/result_or_false-result_or_bool-int-float-runtime-execute.stdout": {
+      "runtime_cases": 198
+    }
+  },
+  "suites": {
+    "cross-mixed-equality": {
+      "commands": 169,
+      "all_expected_exits": true
+    },
+    "generator": {
+      "commands": 2,
+      "all_expected_exits": true
+    },
+    "regression-bool_numeric_identity": {
+      "commands": 509,
+      "all_expected_exits": true
+    },
+    "regression-bool_sentinel_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-cross_equality": {
+      "commands": 277,
+      "all_expected_exits": true
+    },
+    "regression-cross_identity": {
+      "commands": 249,
+      "all_expected_exits": true
+    },
+    "regression-eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "regression-false_bool_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-float_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-guarded_bool": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-guarded_cross": {
+      "commands": 26,
+      "all_expected_exits": true
+    },
+    "regression-guarded_float": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-guarded_mixed": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-mixed_equality": {
+      "commands": 99,
+      "all_expected_exits": true
+    },
+    "regression-mixed_identity": {
+      "commands": 255,
+      "all_expected_exits": true
+    },
+    "regression-mixed_ordering": {
+      "commands": 126,
+      "all_expected_exits": true
+    },
+    "regression-nonbool_sentinel_equality": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "regression-nullable_bool_string_equality": {
+      "commands": 11,
+      "all_expected_exits": true
+    },
+    "regression-nullable_float_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-nullable_int_equality": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-numeric_xor": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "regression-result_equality": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "regression-scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "regression-sentinel_mixed_equality": {
+      "commands": 99,
+      "all_expected_exits": true
+    },
+    "regression-sentinel_plain_runtime": {
+      "commands": 23,
+      "all_expected_exits": true
+    },
+    "regression-string_identity": {
+      "commands": 12,
+      "all_expected_exits": true
+    },
+    "regression-string_other_identity": {
+      "commands": 763,
+      "all_expected_exits": true
+    },
+    "runtime-repaired": {
+      "commands": 49,
+      "all_expected_exits": true
+    }
+  },
+  "source_integrity": {
+    "checked": 6247,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "runtime_changes": [
+    "runtime/tools/generate_operators.php",
+    "runtime/include/scpp/generated/operators.hpp",
+    "runtime/specs/config.json",
+    "runtime/specs/spec.md"
+  ],
+  "compiler_change": "Canonical mixed numeric ordinary equality now spans all supported carrier/plain families; reuses whole-state snapshots and existing emitter.",
+  "attempts": {
+    "runtime_baseline": "All 24 pair probes fail with ambiguous equality overloads, blocking 48 signature targets. Original diagnostics preserved.",
+    "runtime_repaired": "All 48 signatures pass after bounded payload-pair predicate repair. E3 state comparison unchanged.",
+    "focused": "All 48 source signatures pass on first attempt.",
+    "regressions": "All 27 focused suites pass."
+  },
+  "generator": {
+    "passed": true,
+    "normalized_reproducible": true,
+    "normalization": "Only the existing generated timestamp line",
+    "old_sha256": "661d8a11da5fd82fcb91c681e8249319156d2f3b8ea02a96ebd4785760e8b82b",
+    "generated_sha256": "06695db3e43fd78194dd9f632a2be02ca639bc88463a27e7deadd6055de349e6"
+  },
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "evidence_sha256": "f6402000091951842124d0a92686b30605a0928a2d57b1c5bf68244bf1558d6d",
+  "vl07_progress": {
+    "completed_slices": 33,
+    "binary_signatures": 2712,
+    "unary_signatures": 64,
+    "compound_signatures": 432,
+    "verified_total": 3208,
+    "design_scope_candidates": 744,
+    "original_proposed_core_denominator": 2080,
+    "original_proposed_core_coverage_percent": 100.0,
+    "approved_beyond_original_core": 1128
+  }
+}

@@ -1,0 +1,1 @@
+class B { int $n; } class C extends B { int $n; } return 0;

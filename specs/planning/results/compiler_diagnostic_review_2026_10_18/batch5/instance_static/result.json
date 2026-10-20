@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Static methods require :: and instance methods require ->\n"
+}

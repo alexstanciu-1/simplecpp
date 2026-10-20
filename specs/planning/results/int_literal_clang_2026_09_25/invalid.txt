@@ -1,0 +1,13 @@
+/tmp/scpp-int-literal-bench/invalid.cpp:3:20: error: no viable conversion from 'int' to 'int_t<>'
+    3 | void f() { int_t<> a = 10; }
+      |                    ^   ~~
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/int_t.hpp:15:7: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const int_t<> &' for 1st argument
+   15 | class int_t final {
+      |       ^~~~~
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/int_t.hpp:15:7: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'int_t<> &&' for 1st argument
+   15 | class int_t final {
+      |       ^~~~~
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/int_t.hpp:29:21: note: explicit constructor is not a candidate
+   29 |         explicit constexpr int_t(Value value) noexcept
+      |                            ^
+1 error generated.

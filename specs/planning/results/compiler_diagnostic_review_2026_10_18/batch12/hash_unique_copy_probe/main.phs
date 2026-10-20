@@ -1,0 +1,1 @@
+$h hash<unique<int>>; $x = isset($h['x']); return 0;

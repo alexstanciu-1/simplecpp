@@ -1,0 +1,632 @@
+{
+  "i8_add": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "i8_div": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "i8_pow": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "i8_shift": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "i8_identity": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "i8_compare": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "i8_and": {
+    "stage": "prepare",
+    "error": "S2S logical operation requires canonical bool operands\n"
+  },
+  "i8_concat": {
+    "stage": "prepare",
+    "error": "S2S concatenation requires boxed, ordinary scalar or null operands\n"
+  },
+  "i8_bitnot": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "i8_negate": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "i8_not": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "i8_update_add": {
+    "stage": "prepare",
+    "error": "S2S fixed-width compound assignment is deferred\n"
+  },
+  "i8_update_concat": {
+    "stage": "prepare",
+    "error": "S2S compound concatenation requires string or boxed storage\n"
+  },
+  "u64_add": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "u64_div": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "u64_pow": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "u64_shift": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "u64_identity": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "u64_compare": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "u64_and": {
+    "stage": "prepare",
+    "error": "S2S logical operation requires canonical bool operands\n"
+  },
+  "u64_concat": {
+    "stage": "prepare",
+    "error": "S2S concatenation requires boxed, ordinary scalar or null operands\n"
+  },
+  "u64_bitnot": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "u64_negate": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "u64_not": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "u64_update_add": {
+    "stage": "prepare",
+    "error": "S2S fixed-width compound assignment is deferred\n"
+  },
+  "u64_update_concat": {
+    "stage": "prepare",
+    "error": "S2S compound concatenation requires string or boxed storage\n"
+  },
+  "float_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "float_div": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "float_pow": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "float_shift": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "float_identity": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "float_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "float_and": {
+    "stage": "prepare",
+    "error": "S2S logical operation requires canonical bool operands\n"
+  },
+  "float_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "float_bitnot": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "float_negate": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "float_not": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "float_update_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "float_update_concat": {
+    "stage": "prepare",
+    "error": "S2S compound concatenation requires string or boxed storage\n"
+  },
+  "bool_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "bool_div": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "bool_pow": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "bool_shift": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "bool_identity": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "bool_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "bool_and": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "bool_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "bool_bitnot": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "bool_negate": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "bool_not": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "bool_update_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "bool_update_concat": {
+    "stage": "prepare",
+    "error": "S2S compound concatenation requires string or boxed storage\n"
+  },
+  "mixed_add": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_div": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_pow": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "mixed_shift": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "mixed_identity": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_compare": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "mixed_and": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_bitnot": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "mixed_negate": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_not": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_update_add": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_update_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_add": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_div": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_pow": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "dynamic_shift": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "dynamic_identity": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_compare": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "dynamic_and": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_bitnot": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "dynamic_negate": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_not": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_update_add": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dynamic_update_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "nullable_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "nullable_div": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "nullable_pow": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "nullable_shift": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "nullable_identity": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "nullable_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "nullable_and": {
+    "stage": "prepare",
+    "error": "S2S logical operation requires canonical bool operands\n"
+  },
+  "nullable_concat": {
+    "stage": "prepare",
+    "error": "S2S concatenation requires boxed, ordinary scalar or null operands\n"
+  },
+  "nullable_bitnot": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "nullable_negate": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "nullable_not": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "nullable_update_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "nullable_update_concat": {
+    "stage": "prepare",
+    "error": "S2S compound concatenation requires string or boxed storage\n"
+  },
+  "result_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "result_div": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "result_pow": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "result_shift": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "result_identity": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "result_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "result_and": {
+    "stage": "prepare",
+    "error": "S2S logical operation requires canonical bool operands\n"
+  },
+  "result_concat": {
+    "stage": "prepare",
+    "error": "S2S concatenation requires boxed, ordinary scalar or null operands\n"
+  },
+  "result_bitnot": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "result_negate": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "result_not": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "result_update_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "result_update_concat": {
+    "stage": "prepare",
+    "error": "S2S compound concatenation requires string or boxed storage\n"
+  },
+  "string_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "string_div": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "string_pow": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "string_shift": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  },
+  "string_identity": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "string_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "string_and": {
+    "stage": "prepare",
+    "error": "S2S logical operation requires canonical bool operands\n"
+  },
+  "string_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "string_bitnot": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "string_negate": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "string_not": {
+    "stage": "prepare",
+    "error": "S2S unary operation requires its canonical int or bool operand type\n"
+  },
+  "string_update_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "string_update_concat": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "i8_to_bool": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "i8_to_int": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "i8_to_int8": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "i8_to_uint64": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "i8_to_float": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "i8_to_string": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "u64_to_bool": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "u64_to_int": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "u64_to_int8": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "u64_to_uint64": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "u64_to_float": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "u64_to_string": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "float_to_bool": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "float_to_int": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "float_to_int8": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "float_to_uint64": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "float_to_float": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "float_to_string": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "bool_to_bool": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "bool_to_int": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "bool_to_int8": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "bool_to_uint64": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "bool_to_float": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "bool_to_string": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "string_to_bool": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "string_to_int": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "string_to_int8": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "string_to_uint64": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "string_to_float": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "string_to_string": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  }
+}

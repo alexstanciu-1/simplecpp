@@ -1,0 +1,32 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/dynamic_t.hpp"
+#include "scpp/error_t.hpp"
+#include "scpp/string_t.hpp"
+#include "lang/php/support/php_take.hpp"
+#include "scpp/result.hpp"
+#include "modules/json/json.hpp"
+#include "scpp/generated/operators.hpp"
+#include "scpp/int_t.hpp"
+
+int main()
+{
+	scpp::dynamic_t<> local_value;
+	scpp::error_t local_failure;
+	scpp::string_t local_text = scpp::string_t("");
+if (((!([&]() -> scpp::bool_t { auto take_source_1 = ([&]() -> scpp::result<scpp::dynamic_t<>> {
+	scpp::string_t argument_0 = scpp::string_t("{\"n\":7}");
+	return scpp::json::decode(argument_0);
+}()); return scpp::php::take(local_value, local_failure, take_source_1); }()))).native_value()) {
+	return static_cast<int>((static_cast<scpp::int_t<>>(1LL)).native_value());
+}
+if (((!([&]() -> scpp::bool_t { auto take_source_3 = ([&]() -> scpp::result<scpp::string_t> {
+	scpp::dynamic_t<> argument_2 = local_value;
+	return scpp::json::encode(argument_2);
+}()); return scpp::php::take(local_text, local_failure, take_source_3); }()))).native_value()) {
+	return static_cast<int>((static_cast<scpp::int_t<>>(2LL)).native_value());
+}
+	return static_cast<int>((static_cast<scpp::int_t<>>(0LL)).native_value());
+	return 0;
+}

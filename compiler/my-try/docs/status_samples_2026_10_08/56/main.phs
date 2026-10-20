@@ -1,0 +1,6 @@
+class Entry {
+    public readonly string $name;
+    public function __construct(string $value) { $this->name = $value; }
+}
+$entry = new Entry("main");
+return $entry->name === "main" ? 0 : 1;

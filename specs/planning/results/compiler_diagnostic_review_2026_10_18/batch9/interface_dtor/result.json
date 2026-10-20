@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Interface methods require public bodyless instance contracts\n"
+}

@@ -1,0 +1,149 @@
+{
+  "ref_wrong_return": {
+    "stage": "prepare",
+    "error": "Reference return requires the exact parameter storage type\n"
+  },
+  "ref_const_return": {
+    "stage": "prepare",
+    "error": "S2S const-reference returns are deferred\n"
+  },
+  "ref_local": {
+    "stage": "prepare",
+    "error": "S2S reference return cannot escape local, value-parameter or interior storage\n"
+  },
+  "ref_temporary": {
+    "stage": "prepare",
+    "error": "S2S reference arguments require stable storage of the exact parameter type\n"
+  },
+  "void_argument": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "extra_arguments": {
+    "stage": "prepare",
+    "error": "S2S call argument count does not match its signature\n"
+  },
+  "missing_argument": {
+    "stage": "prepare",
+    "error": "S2S call is missing a required argument\n"
+  },
+  "readonly_call": {
+    "stage": "prepare",
+    "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+  },
+  "readonly_method": {
+    "stage": "prepare",
+    "error": "Mutation through read-only value storage is not allowed\n"
+  },
+  "readonly_shared_method": {
+    "stage": "prepare",
+    "error": "Mutation through read-only value storage is not allowed\n"
+  },
+  "readonly_assignment": {
+    "stage": "prepare",
+    "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+  },
+  "readonly_index": {
+    "stage": "prepare",
+    "error": "Mutation through read-only value storage is not allowed\n"
+  },
+  "readonly_alias": {
+    "stage": "prepare",
+    "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+  },
+  "temporary_field_assign": {
+    "stage": "prepare",
+    "error": "S2S assignment requires stable storage or an indexed shared receiver\n"
+  },
+  "temporary_method": {
+    "stage": "prepare",
+    "error": "Inline method receiver requires stable whole storage\n"
+  },
+  "assign_void": {
+    "stage": "prepare",
+    "error": "S2S void is not a storage type\n"
+  },
+  "assign_function": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "closure_self_assign": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "closure_copy_assign": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "closure_capture_assign": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch4/closure_capture_assign/cpp/entry.cpp:12:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch4/closure_capture_assign/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted\n   12 |         local_g = local_f;\n      |                 ^\n/tmp/mytry-diagnostic-review/batch4/closure_capture_assign/cpp/entry.cpp:8:17: note: lambda expression begins here\n    8 |         auto local_f = [local_n]() mutable -> scpp::int_t<> {\n      |                        ^\n1 error generated.\n"
+    ]
+  },
+  "closure_ref_assign": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch4/closure_ref_assign/cpp/entry.cpp:12:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch4/closure_ref_assign/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted\n   12 |         local_g = local_f;\n      |                 ^\n/tmp/mytry-diagnostic-review/batch4/closure_ref_assign/cpp/entry.cpp:8:17: note: lambda expression begins here\n    8 |         auto local_f = [&local_n]() mutable -> scpp::int_t<> {\n      |                        ^\n1 error generated.\n"
+    ]
+  },
+  "closure_assignment_expr": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "unique_assign_expr": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "unique_self_move": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "break_2": {
+    "stage": "parse",
+    "error": "main.phs: Expected ';' at main.phs: byte 36\n"
+  },
+  "continue_switch": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "switch_decl": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for y\n"
+  },
+  "for_decl_update": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for x\n"
+  },
+  "do_scope": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for x\n"
+  },
+  "if_scope": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for x\n"
+  },
+  "void_condition": {
+    "stage": "prepare",
+    "error": "S2S condition truthiness requires a supported scalar type\n"
+  },
+  "move_borrow": {
+    "stage": "prepare",
+    "error": "S2S reference binding cannot borrow heap-backed properties\n"
+  },
+  "escape_capture": {
+    "stage": "prepare",
+    "error": "Callable boundary requires an exact parameter and return signature\n"
+  },
+  "capture_readonly_assign": {
+    "stage": "prepare",
+    "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "f18d7db49aba31ed3863e112d35a16ae7a9f9ee7d6c44997178544781cf928e5",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "stage": "prepare",
+    "error": "Cannot extend a final type\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Cannot extend a final type\n"
+  },
+  "retry": {
+    "stage": "prepare",
+    "error": "Cannot extend a final type\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Cannot extend a final type\n"
+  },
+  "fresh_invalid": {
+    "stage": "prepare",
+    "error": "Cannot extend a final type\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Cannot extend a final type\n"
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "f18d7db49aba31ed3863e112d35a16ae7a9f9ee7d6c44997178544781cf928e5",
+    "empty": false,
+    "ready": true
+  }
+}

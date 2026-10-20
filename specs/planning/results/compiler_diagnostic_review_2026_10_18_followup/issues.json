@@ -1,0 +1,200 @@
+{
+  "doc_status": "planning",
+  "issues": [
+    {
+      "id": "DR-01",
+      "title": "Typed hash key constraints admit bool/float",
+      "cases": [
+        "TYPE-01",
+        "TYPE-02"
+      ],
+      "category": "normal discussion",
+      "impact": "High: invalid source reaches Clang",
+      "owner": "Type application, generic capabilities and runtime metadata requirements",
+      "analysis": "Runtime limits keys to supported families while registration advertises broad hashable/comparable capabilities. Agree the reusable key-domain contract; do not add source-name branches.",
+      "required_proof": "Pair supported integer/string keys with rejected bool/float applications, including signatures and incremental rebuilds.",
+      "status": "open; review only",
+      "evidence": [
+        "results/TYPE-01.json",
+        "results/TYPE-02.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": [
+        "DR-08 for full source-location acceptance"
+      ]
+    },
+    {
+      "id": "DR-02",
+      "title": "Void ownership targets admitted",
+      "cases": [
+        "TYPE-03",
+        "TYPE-04"
+      ],
+      "category": "light discussion",
+      "impact": "High: unsupported targets reach Clang",
+      "owner": "Shared ownership type-application admission",
+      "analysis": "User chose rejection. The registry currently installs empty Target requirements. Agree a narrow common no-value target check versus a reusable target capability without broadening this slice.",
+      "required_proof": "Reject shared/unique void at the source type application; preserve valid ownership types; align normative contract first.",
+      "status": "semantic admission fixed and focused tests passed; source-location acceptance remains DR-08",
+      "evidence": [
+        "results/TYPE-03.json",
+        "results/TYPE-04.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": [
+        "DR-08 for full source-location acceptance"
+      ],
+      "repair_evidence": "compiler/my-try/docs/planning/ownership_void_targets_2026_10_18/README.md"
+    },
+    {
+      "id": "DR-03",
+      "title": "Duplicate types rejected only during emission",
+      "cases": [
+        "NAME-01"
+      ],
+      "category": "light discussion",
+      "impact": "High: source declaration conflict escapes preparation",
+      "owner": "Collection identity and declaration preparation",
+      "analysis": "Duplicate source records survive until C++ artifact identity checks. Decide the existing declaration-validation point and related-location attribution, preserving distinct symbol kinds.",
+      "required_proof": "Same-namespace duplicates fail before emission; distinct qualified types and notified add/remove recovery pass.",
+      "status": "semantic admission fixed and focused tests passed; source-location acceptance remains DR-08",
+      "evidence": [
+        "results/NAME-01.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": [
+        "DR-08 for full source-location acceptance"
+      ],
+      "repair_evidence": "compiler/my-try/docs/planning/duplicate_type_admission_2026_10_18/README.md"
+    },
+    {
+      "id": "DR-04",
+      "title": "Abstract inline constructor parameter missing admission check",
+      "cases": [
+        "OBJ-01"
+      ],
+      "category": "simple fix",
+      "impact": "High: invalid by-value input reaches Clang",
+      "owner": "Constructor_Preparation::signature / existing parameter admission",
+      "analysis": "Ordinary Declaration_Preparation::parameter_contract calls require_concrete_value; the constructor ordinary-parameter branch only calls require_value_type. Reuse the existing concrete-value admission path locally.",
+      "required_proof": "Reject abstract inline constructor inputs, including inherited signatures; keep concrete structs and abstract shared handles valid. Do not broaden constructor syntax.",
+      "status": "semantic admission fixed and focused tests passed; source-location acceptance remains DR-08",
+      "evidence": [
+        "results/OBJ-01.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": [
+        "DR-08 for full source-location acceptance"
+      ],
+      "repair_evidence": "compiler/my-try/docs/planning/constructor_parameter_admission_2026_10_18/README.md"
+    },
+    {
+      "id": "DR-05",
+      "title": "Captured closure assignment cannot be represented by direct lambda assignment",
+      "cases": [
+        "LOW-01"
+      ],
+      "category": "normal discussion",
+      "impact": "High: user-approved valid source fails Clang",
+      "owner": "Closure operation capabilities and C++ closure representation",
+      "analysis": "Copy initialization works; captured C++ lambda assignment is deleted. User requires same-concrete-type reassignment. Agree representation and capture/lifetime semantics; do not disable copying or substitute destroy/reconstruct without a lifetime design.",
+      "required_proof": "Source/control compile and execute; cover self/nonself assignment and supported borrowed captures after design agreement.",
+      "status": "open; review only",
+      "evidence": [
+        "results/LOW-01.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": [
+        "DR-08 for full source-location acceptance"
+      ]
+    },
+    {
+      "id": "DR-06",
+      "title": "Lifecycle bodies accept void-expression return",
+      "cases": [
+        "LOW-03",
+        "LOW-04"
+      ],
+      "category": "light discussion",
+      "impact": "High: prohibited source return reaches Clang",
+      "owner": "Body return preparation and lifecycle callable context",
+      "analysis": "Ordinary void forwarding has no lifecycle-specific admission boundary in prepare_return. User decided to reject every return expression in constructors/destructors. Identify existing callable context or discuss a narrowly scoped fact if required; new retained structure promotes this to normal discussion.",
+      "required_proof": "Reject value and void-expression returns; preserve bare returns, fallthrough, ordinary void forwarding, required initialization and automatic cleanup. Align normative contracts first.",
+      "status": "open; review only",
+      "evidence": [
+        "results/LOW-03.json",
+        "results/LOW-04.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": [
+        "DR-08 for full source-location acceptance"
+      ]
+    },
+    {
+      "id": "DR-07",
+      "title": "Mutual container payload headers form invalid include cycle",
+      "cases": [
+        "LOW-05"
+      ],
+      "category": "normal discussion",
+      "impact": "High: valid shared-object graph fails Clang",
+      "owner": "C++ type completeness requirements and header assembly",
+      "analysis": "Both mutually referring vector fields use ordinary class handles, not recursive inline values. Generated header inclusion leaves record_AUqItem undeclared. Reconcile declaration versus completeness dependencies; detailed root-cause design remains open.",
+      "required_proof": "Mutual and one-way payload controls compile every unit and link; prove dependency correctness without weakening completeness for actual value operations.",
+      "status": "open; review only",
+      "evidence": [
+        "results/LOW-05.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": [
+        "DR-08 for full source-location acceptance"
+      ]
+    },
+    {
+      "id": "DR-08",
+      "title": "Preparation errors lose source attribution",
+      "cases": [
+        "NAME-02",
+        "NAME-03",
+        "NAME-04",
+        "CALL-01",
+        "CALL-02",
+        "REF-01",
+        "REF-02",
+        "REF-03",
+        "OP-05",
+        "CONT-01",
+        "CONT-02",
+        "CONT-03",
+        "OBJ-02",
+        "OBJ-03",
+        "REC-01"
+      ],
+      "category": "red flag",
+      "impact": "High: systemic diagnostic quality gap",
+      "owner": "Semantic error creation, retained preparation failures, propagation, API/CLI rendering",
+      "analysis": "Worker failure stores only failure_message and require_success concatenates strings. Source file/line is absent in all 14 sampled preparation rejections and REC-01. Direct CLI probes confirm NAME-04/REF-03 also lack locations. An honest repair likely needs a structured diagnostic/source-origin contract across these boundaries; do not infer location from exception implementation lines or append guessed positions.",
+      "required_proof": "Design source identity/span retention, propagation/deduplication, related declarations and stale-generation behavior. Prove multiline/cross-file locations, distinct identical-message errors and incremental retry/recovery. Assess affected areas and validation cost before implementation.",
+      "status": "open; review only",
+      "evidence": [
+        "results/NAME-02.json",
+        "results/NAME-03.json",
+        "results/NAME-04.json",
+        "results/CALL-01.json",
+        "results/CALL-02.json",
+        "results/REF-01.json",
+        "results/REF-02.json",
+        "results/REF-03.json",
+        "results/OP-05.json",
+        "results/CONT-01.json",
+        "results/CONT-02.json",
+        "results/CONT-03.json",
+        "results/OBJ-02.json",
+        "results/OBJ-03.json",
+        "results/REC-01.json"
+      ],
+      "confidence": "reproduction confirmed; architectural repair scope remains proposed",
+      "dependencies": []
+    }
+  ]
+}

@@ -21,7 +21,7 @@ function indexing_prepare(string $text): void
 	Model::$modules->add($module->name, $module);
 	$record = Source_Registry::add($module, $syntax->source_file());
 	Source_Publication::publish_parsed($record, $syntax);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->prepare();
 	$compiler->cpp();
 }
@@ -202,7 +202,7 @@ try
 	$valid = '$s = "abc"; return 0;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$expected = CPP_Probe::text(Model::$cpp_files);
@@ -247,7 +247,7 @@ try
 	$compiler->update_cpp([$path]);
 	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
-	$fresh = new Compiler();
+	$fresh = new Compiler(new cpp_lowering_options(false));
 	$fresh->init([$directory]);
 	$fresh->exec_cpp();
 	if ($incremental !== CPP_Probe::text(Model::$cpp_files)) {
@@ -275,7 +275,7 @@ try
 	$fresh->update_cpp([$path]);
 	$incremental = CPP_Probe::text(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
-	$recovered = new Compiler();
+	$recovered = new Compiler(new cpp_lowering_options(false));
 	$recovered->init([$directory]);
 	$recovered->exec_cpp();
 	if ($incremental !== CPP_Probe::text(Model::$cpp_files)) {

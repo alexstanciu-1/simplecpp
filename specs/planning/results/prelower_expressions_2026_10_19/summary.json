@@ -1,0 +1,8 @@
+{
+  "direct-O0": "expressions 27 857 27 1 9 0 9\nfailure 0 0 0 1 0 0 1\n",
+  "direct-O2": "expressions 27 857 27 1 9 0 9\nfailure 0 0 0 1 0 0 1\n",
+  "direct-sanitized": "expressions 27 857 27 1 9 0 9\nfailure 0 0 0 1 0 0 1\n",
+  "opaque-O0": "expressions 27 857 27 1 9 0 9\nfailure 0 0 0 1 0 0 1\n",
+  "opaque-O2": "expressions 27 857 27 1 9 0 9\nfailure 0 0 0 1 0 0 1\n",
+  "opaque-sanitized": "expressions 27 857 27 1 9 0 9\nfailure 0 0 0 1 0 0 1\n"
+}

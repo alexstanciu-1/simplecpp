@@ -1,0 +1,1 @@
+function f(result<string> $r): string { return $r . 'x'; } return 0;

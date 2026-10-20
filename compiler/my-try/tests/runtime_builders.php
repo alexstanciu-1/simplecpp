@@ -38,7 +38,7 @@ function builder_compile(string $source): string
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->exec_cpp();
 	$text = CPP_Probe::text(Model::$cpp_files);
 	$compiler->exec_cpp();

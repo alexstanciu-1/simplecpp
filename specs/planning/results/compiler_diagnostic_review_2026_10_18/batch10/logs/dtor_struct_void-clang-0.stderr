@@ -1,0 +1,8 @@
+/tmp/mytry-diagnostic-review/batch10/dtor_struct_void/cpp/units/n6d61696e/n6d61696e2e706873.cpp:9:2: error: destructor '~record_C' must not return void expression
+    9 |         return ([&]() -> void {
+      |         ^      ~~~~~~~~~~~~~~~~
+   10 |         return function_cleanup();
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   11 | }());
+      | ~~~~
+1 error generated.

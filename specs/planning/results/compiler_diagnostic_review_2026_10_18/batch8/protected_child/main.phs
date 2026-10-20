@@ -1,0 +1,1 @@
+class B { protected int $n = 1; } class C extends B { function f(C $c): int { return $c->n; } } $c = new C(); return $c->f($c);

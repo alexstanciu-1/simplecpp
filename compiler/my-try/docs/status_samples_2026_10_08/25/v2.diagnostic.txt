@@ -1,0 +1,2 @@
+S2S generation failed: shared<Class> repeats the declaration default storage
+

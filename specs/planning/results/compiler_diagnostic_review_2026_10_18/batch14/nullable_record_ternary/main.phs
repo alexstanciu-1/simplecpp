@@ -1,0 +1,1 @@
+struct S { int $n = 1; } $s ?S = new S(); $t = true ? $s : $s; return isset($t) ? 1 : 0;

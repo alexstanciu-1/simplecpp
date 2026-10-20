@@ -75,6 +75,33 @@ inline int_t<std::uint64_t> stable_hash_string_u64(const string_t &value) {
 	return scpp::stable_hash::string_uint64(value);
 }
 
+// v0.2 source search uses bytes. Keep the historical code-point adapters below
+// intact for the portability text framework and existing generated consumers.
+inline result_or_false<int_t<>> strpos_bytes(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto start = scpp::normalize_forward_search_offset(haystack.size(), offset.native_value(), "strpos");
+	const auto position = scpp::str::byte_find(haystack, needle, int_t<>(static_cast<std::int64_t>(start)));
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline result_or_false<int_t<>> strpos_bytes(const string_t &haystack, const string_t &needle) {
+	return strpos_bytes(haystack, needle, int_t<>(0));
+}
+
+inline result_or_false<int_t<>> strrpos_bytes(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto position = scpp::str::byte_rfind(haystack, needle, offset);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline result_or_false<int_t<>> strrpos_bytes(const string_t &haystack, const string_t &needle) {
+	return strrpos_bytes(haystack, needle, int_t<>(0));
+}
+
 inline result_or_false<int_t<>> strpos(const string_t &haystack, const string_t &needle) {
 	const auto position = scpp::str::find(haystack, needle);
 	if (!position.has_value().native_value()) {

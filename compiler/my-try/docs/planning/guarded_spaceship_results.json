@@ -1,0 +1,143 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-19",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/guarded-spaceship/20261019-01",
+  "scope": {
+    "binary_signatures": 48,
+    "int_signatures": 24,
+    "string_signatures": 24,
+    "recovery_sequences": 48,
+    "extra_exclusion_probes": 672,
+    "native_counts": {
+      "operators": {
+        "cross_snapshot_cases": 3299,
+        "cross_property_cases": 2624,
+        "binary_cases": 7844
+      },
+      "string": {
+        "cross_snapshot_cases": 41478,
+        "cross_property_cases": 37908,
+        "binary_cases": 34804,
+        "snapshot_cases": 5832
+      }
+    }
+  },
+  "suites": {
+    "focused-01": {
+      "commands": 11,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "ordered_family_pairs": 12,
+        "binary_signatures": 48,
+        "domains": {
+          "operators": 24,
+          "string": 24
+        },
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_operators": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 19,
+        "binary_signatures": 228,
+        "unary_signatures": 16,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_string": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 4,
+        "binary_signatures": 48,
+        "unary_signatures": 0,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_cross": {
+      "commands": 26,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "ordered_family_pairs": 12,
+        "binary_signatures": 660,
+        "domains": {
+          "operators": 228,
+          "float": 144,
+          "mixed": 192,
+          "bool": 48,
+          "string": 48
+        },
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "guarded_bool_xor": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "carriers": 4,
+        "binary_forms": 1,
+        "binary_signatures": 24,
+        "unary_signatures": 4,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    },
+    "eager_binary": {
+      "commands": 25,
+      "all_expected_exits": true
+    },
+    "scalar_admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "string_comparisons": {
+      "commands": 6,
+      "all_expected_exits": true,
+      "summary": {
+        "passed": true,
+        "comparison_forms": 7,
+        "string_values": 18,
+        "value_error_cases": 9072,
+        "snapshot_cases": 4536,
+        "full_matrix_run": false,
+        "native_compiler_rebuilt": false
+      }
+    }
+  },
+  "source_integrity": {
+    "checked": 6207,
+    "mismatches": []
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "b2e9ef44ca57d2a7734fd2866cdc8ba8090a75463e69dec0d2533a10824a89d9",
+  "attempts": {
+    "focused-01": "Passed on first attempt: int 5.77s, string 7.12s.",
+    "regressions": "All seven passed."
+  },
+  "runtime_changes": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "issue_status": {
+    "V-L07": "partially-implemented-and-verified"
+  }
+}

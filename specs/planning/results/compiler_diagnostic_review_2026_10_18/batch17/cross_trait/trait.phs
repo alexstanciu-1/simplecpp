@@ -1,0 +1,1 @@
+namespace Lib; trait T { function f(): int { return 1; } }

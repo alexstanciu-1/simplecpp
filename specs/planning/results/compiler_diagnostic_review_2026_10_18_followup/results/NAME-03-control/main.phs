@@ -1,0 +1,1 @@
+use A\C as X; use B\C as Y; return 0;

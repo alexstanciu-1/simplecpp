@@ -1,0 +1,37 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/data_initializer.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+#include "scpp/value_iteration.hpp"
+#include "scpp/generated/operators.hpp"
+
+int main()
+{
+	scpp::vector_t<scpp::int_t<>> local_values = ([&]() -> scpp::vector_t<scpp::int_t<>> {
+scpp::initializer_buffer<scpp::int_t<>> initializer_0(2);
+{
+scpp::int_t<> initializer_value_1 = static_cast<scpp::int_t<>>(3LL);
+initializer_0.append(initializer_value_1);
+}
+{
+scpp::int_t<> initializer_value_2 = static_cast<scpp::int_t<>>(4LL);
+initializer_0.append(initializer_value_2);
+}
+return scpp::data_initializer<scpp::vector_t<scpp::int_t<>>>::from_list(initializer_0.view());
+}());
+	scpp::int_t<> local_sum = static_cast<scpp::int_t<>>(0LL);
+{
+const auto& foreach_source_3 = local_values;
+for (auto foreach_entry_3 : scpp::value_iteration(foreach_source_3)) {
+scpp::int_t<> local_key = foreach_entry_3.key();
+scpp::int_t<> local_value = foreach_entry_3.value_copy();
+{
+	([&]() -> scpp::int_t<> { auto& target_4 = local_sum; target_4 = (target_4 + (local_key + local_value)); return target_4; }());
+}
+}
+}
+	return static_cast<int>((local_sum).native_value());
+	return 0;
+}

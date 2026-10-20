@@ -1,0 +1,1 @@
+function f(int $n): int { return $n; } return f(1);

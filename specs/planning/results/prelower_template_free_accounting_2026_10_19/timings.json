@@ -1,0 +1,40 @@
+{
+  "logical_cpus": 12,
+  "units": 16,
+  "samples": {
+    "1": [
+      {
+        "compilation_wall_seconds": 2.7838662620051764,
+        "link_seconds": 0.49687484197784215,
+        "total_seconds": 3.2807411039830185
+      },
+      {
+        "compilation_wall_seconds": 2.7812899710261263,
+        "link_seconds": 0.4957407740294002,
+        "total_seconds": 3.2770307450555265
+      },
+      {
+        "compilation_wall_seconds": 2.784167646022979,
+        "link_seconds": 0.493177458003629,
+        "total_seconds": 3.277345104026608
+      }
+    ],
+    "12": [
+      {
+        "compilation_wall_seconds": 0.6047128070495091,
+        "link_seconds": 0.49048287799814716,
+        "total_seconds": 1.0951956850476563
+      },
+      {
+        "compilation_wall_seconds": 0.7505244680214673,
+        "link_seconds": 0.536836467043031,
+        "total_seconds": 1.2873609350644983
+      },
+      {
+        "compilation_wall_seconds": 0.6194219460012391,
+        "link_seconds": 0.509806665009819,
+        "total_seconds": 1.129228611011058
+      }
+    ]
+  }
+}

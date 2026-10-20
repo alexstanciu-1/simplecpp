@@ -62,6 +62,59 @@ Reference-bearing signatures participate in exact-type overload selection. Ordin
 call admission still checks reference places, access and lifetime after selection.
 Reference/value or readonly/writable mode alone cannot distinguish overloads.
 
+### Explicit qualified callable aliases
+
+A free function may add `"qualified_aliases": ["php"]`. Each entry exposes the
+same owned callable identity as `qualifier::name(...)`, using the function's
+existing name, signature and backend binding. Overload selection, argument
+preparation and snapshots follow the ordinary call path. This indexes identities;
+it creates neither a language type nor a general namespace.
+
+Qualifiers are nonempty ASCII identifiers (letter/underscore first, then letters,
+underscores or digits). `self`, `parent` and `static` are reserved and rejected.
+Duplicate qualifiers on one callable, nested paths and aliases on member contracts
+are rejected before catalog publication. Absent aliases expose only the free call.
+
+A visible type takes precedence over the alias, including when its method is
+missing or lookup is ambiguous. Shared preparation observes the type lookup even
+when empty, so adding/removing source types invalidates retained alias calls.
+Configuration/reset reinstalls the alias index with the callable catalog; aliases
+never retain source facts. Current production exposure is limited to the two
+[microtime](builtins/datetime/microtime.md) overloads under `php`.
+
+### Checked-payload fallback for overloaded calls
+
+The experimental v0.2 compiler first performs exact concrete/generic selection.
+Only when there are no exact matches may it select a unique fully concrete,
+fixed-arity signature whose inputs match by identity or one existing checked
+nullable/Result extraction to the exact payload type. At least one input must
+extract. Only value parameters may extract; reference and observation inputs
+remain exact. Candidates with default or variadic parameters are excluded.
+Multiple eligible candidates are ambiguous, without conversion ranking.
+
+Selection does not infer generic variables through extraction, promote numbers,
+chain conversions, wrap values or narrow flow types. The selected arguments use
+ordinary conversion, copy-capability and emission rules: left-to-right snapshots,
+checked extraction before later arguments, unchanged wrapper state, and the
+existing missing-payload exception behavior. Single concrete callable admission
+continues to use its existing ordinary conversion path.
+
+### Provider copy requirements
+
+A fixed value parameter may declare `"requires_copy": true` (default `false`).
+This records that the provider itself copies the input, independently of whether
+caller-side transport copies or moves it. Shared call preparation requires the
+selected parameter type to satisfy the existing `copyable_value` capability,
+including explicit moves, fresh temporaries and omitted default arguments.
+
+This applies to concrete contracts and instantiated generic contracts. It adds no
+inference rule or overload discriminator and does not cache source capabilities in
+metadata. Reference, observation and variadic parameters cannot use this flag;
+structural callable-type inputs cannot carry provider copy requirements. Existing
+variadic copy rules remain unchanged. Source declaration syntax and runtime ABI do
+not change. Core `vector_resize` and `vector_filled` require copying their fill
+parameter even when the requested size is zero or smaller than the current size.
+
 ### Scalar parameter defaults
 
 A value parameter may add `default` with exactly one typed scalar member:
@@ -251,16 +304,129 @@ and ordinary registry interning completes omitted arguments. The core hash recip
 uses `Value` requiring storage, then `Key` requiring hashability/comparison and
 defaulting to `string`; both arguments gate hash copyability.
 
-Each type has exactly one `cpp_types` binding in its declaring module, using the
-same `id`/`symbol`/`header` fields as a function binding. No orphan entries, source
-fragments, baked-in template arguments or alternative parameter order are supported.
-The backend appends canonical type arguments in declaration order. The compiler
-does not verify C++ symbols exist; generated-program compilation proves that boundary.
+Each ordinary type has exactly one `cpp_types` binding in its declaring module,
+with `id`, `symbol` and `header`. By default the backend appends semantic template
+arguments in declaration order using their stored representations. A nominal binding
+without explicit arguments names a plain native type. The compiler does not verify
+C++ symbols exist; generated-program compilation proves that boundary.
+
+### Native type representation recipes
+
+`cpp_types` also accepts bindings to existing compiler-interpreted identities. These
+rows retain a unique `id`, and add exactly one of `type` (registered source type name)
+or `modifier` (registered modifier name). They supply C++ representation only: they
+do not declare another semantic type, change its role, or add capabilities. Ordinary
+metadata definitions must still join by their declaring `id`; explicit targets
+cannot redirect those rows or bind another module's ordinary declaration. Duplicate
+bindings to the same canonical definition or modifier reject before configuration
+publication, including through aliases. Unresolved targets and orphan rows reject.
+The native language spelling of void remains compiler-owned. The internal null
+literal sentinel likewise has an intrinsic C++ binding in the existing backend
+registry: it has no source type name for a metadata target. That physical binding
+does not expose a source storage type or add storable capabilities.
+
+An optional `arguments` array makes a binding an explicit native template application.
+An empty array means `Symbol<>`, distinct from a plain type. Each argument has one
+of these shapes:
+
+```json
+{"native":"std::int32_t"}
+{"native":"provider::native_type","header":"provider/native_type.hpp"}
+{"parameter":"Value","representation":"stored"}
+{"parameter":"Target","representation":"payload"}
+{"modified_type":true,"representation":"payload"}
+```
+
+`native` and its optional header are validated qualified-name/include-path spellings,
+not C++ expressions or arbitrary source. Parameter references must name a formal of
+the existing semantic definition. The list supplies native argument order and may
+use fixed native types; source application order and formation rules do not change.
+Stored arguments include their normal storage representation. Payload arguments name
+the underlying type, retaining the established ownership-wrapper behavior. Semantic
+arguments require an explicit representation and cannot supply a header. A native
+argument cannot select a semantic representation. Other fields and multiple targets
+are rejected. Non-type arguments and recursively authored native-template expressions
+are outside this bounded recipe vocabulary.
+
+Modifier bindings require explicit arguments; only they can use `modified_type`.
+That argument requires payload representation so it cannot recursively apply its
+own modifier. The existing value modifier's normalization and source admission stay
+with the registry. No modifier or language role can be declared through this schema.
+
+For example, core binds the existing integer and ownership identities:
+
+```json
+{"id":"core.representation.int","type":"int","symbol":"scpp::int_t",
+ "header":"scpp/int_t.hpp","arguments":[]}
+{"id":"core.representation.shared","type":"shared","symbol":"scpp::shared_p",
+ "header":"scpp/shared_p.hpp",
+ "arguments":[{"parameter":"Target","representation":"payload"}]}
+```
+
+Candidate configuration is validated privately through the existing lifecycle owner
+before replacing the installed metadata. Rejected recipes must leave that input
+usable for a subsequent valid configuration; concrete demand after reset consumes
+fresh registry identities with the same recipes. This is startup configuration,
+not runtime hot reload. Schema/name validation does not certify provider C++ or
+transitive header contents: the native build must still enforce the strict
+application template policy. See the [recovery proof](planning/results/prelower_metadata_recovery_2026_10_20/README.md).
+
+A type recipe may set `concrete_boundary: true` to require concrete application
+storage even when its native spelling is not a template. This is physical exposure
+metadata; it does not change semantic identity or capabilities. Template applications
+continue to select concrete storage without this flag.
+
+An optional `pointee` names a formal parameter already present in the explicit native
+arguments with `representation: "payload"`. It declares a native pointer interface:
+`operator->() const` and `operator*() const` access that payload using the runtime's
+checks. The native handle must support layout/special-member trait inspection with a
+forward-declared source payload; complete payload definitions are required only by
+its compiled implementations. Unknown parameters, omitted explicit arguments, missing
+payload arguments and modifier targets reject. This mechanism also supplies the
+implicit source-class storage binding through the existing shared owner policy.
+
+A modifier binding may instead set `pointee_modified_type: true`. It identifies
+the explicit `modified_type: true, representation: "payload"` native argument as
+the pointer target. It cannot coexist with `pointee`, and rejects on a definition
+binding or without that payload argument. The concrete interface delegates
+`operator->()` and `operator*()` to the native wrapper; the modifier's existing
+storage and copy semantics are unchanged. Unlike an indirect handle, inline
+modifier storage still requires the complete payload for its layout probe.
+
+The optional `literal_interface` selects a physical contract, not source semantics:
+
+- `scalar` exposes construction/extraction through the prepared native scalar ABI
+  (boolean, double, or the canonical integer width/signedness). Integer interfaces
+  retain the existing runtime integer marker; booleans expose explicit truth access.
+- `bytes` requires `byte_interface`, a validated qualified runtime adapter name.
+  The adapter provides `construct(const char*, size_t)`, `data(const Native&)`,
+  `size(const Native&)` and `append(Native&, const Native&)`. Construction returns
+  the native value directly; data/size borrow its bytes. The concrete declaration
+  uses only pointer/length types and the runtime byte-sequence marker. Embedded NUL
+  is preserved. The binding header supplies the adapter and native implementation.
+
+A byte adapter without the byte literal contract rejects. These interfaces do not
+add source operations or decide source admission. Existing prepared operations and
+runtime implementations remain authoritative. Runtime hash keys can consume the
+byte-sequence marker without allocating an intermediate string.
+
+Core supplies runtime representations of the existing scalars, boxed types,
+nullable/Result and ownership families, plus the value modifier. Hosts emitting
+those runtime representations must select core (directly or through dependencies);
+an empty metadata selection does not silently reinstall compiler-local runtime
+bindings. Definitions still exist independently for semantic-only use.
+
+Loading and validating recipes does not request native preparation. Recipes attach
+to current identities on reset; backend demands and their dependency closure own
+concrete support generation. Layout/trait probes remain target-specific and are not
+replaced with size/alignment constants in metadata. Operation/member interfaces
+continue using their separate registered/prepared contracts.
 
 The core vector/hash definitions and their C++ bindings now come solely from this
 metadata. Source publication enumerates registered exposures rather than a second
-name list. Language-interpreted scalars, mixed/dynamic, nullable, Result and ownership
-families remain compiler-owned: ordinary JSON declarations cannot claim those roles.
+name list. Language-interpreted scalar, mixed/dynamic, nullable, Result and ownership
+semantics remain compiler-owned: ordinary JSON declarations cannot claim those roles.
+Their physical C++ representations are runtime-owned recipes as described above.
 Type declaration alone grants no initialization/indexing/iteration protocol, borrowed
 storage, non-type parameters or handle-lifetime contract. Indexing and iteration
 require the independent opt-ins below, as does initialization.
@@ -488,7 +654,9 @@ Generic inputs support fixed value/reference parameters, typed variadics, scalar
 defaults and the bounded unary observation contract. User-authored generics,
 explicit source type arguments and explicit variable capability constraints remain
 outside this slice. Variables impose no implicit copyability constraint: the formed
-type and selected value boundary own storage/copy requirements.
+type and selected value boundary own storage/copy requirements. The explicit
+parameter-level provider requirement below is checked after selection and does not
+participate in inference or overload ranking.
 
 Installation resolves named parts to registry identities once, retaining a type-pattern
 recipe rather than a placeholder concrete signature. Preparation evaluates argument
@@ -705,3 +873,13 @@ reference-return lifetime contracts,
 profile availability and the rest of the runtime inventory are not encoded by this
 version's bounded consumer yet. Extend the shared models before enabling these rows;
 do not generate fake concrete overloads or function-name-specific preparation paths.
+
+
+## Core exact-mixed predicates — 2026-10-20
+
+Core registers `is_bool`, `is_int` and `is_float`, each with one exact `mixed`
+observation input and a bool value return. Provider bindings use the existing
+`scpp::php` helpers in `lang/php/operators/type_predicates/type_predicates.hpp`.
+The [predicate contract](builtins/type_predicates.md) owns kind semantics and the
+bounded source domain. Generic runtime fallbacks do not widen source admission;
+no predicate-specific compiler dispatch or flow narrowing is introduced.

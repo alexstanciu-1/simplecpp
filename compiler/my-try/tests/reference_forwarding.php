@@ -22,7 +22,7 @@ try
 	file_put_contents($caller_path, $caller);
 	file_put_contents($provider_path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->sync([]);
 	// Multi-source preparation is supported; the current C++ assembly still accepts one file.
@@ -77,7 +77,7 @@ try
 	$compiler->prepare();
 	forwarding_check(count(Model::$prepared_files) === 2, 'Retired reference call remained in the cycle graph');
 	Compiler_Lifecycle::reset();
-	$clean = new Compiler();
+	$clean = new Compiler(new cpp_lowering_options(false));
 	$clean->init([$directory]);
 	$clean->sync([]);
 	$clean->prepare();

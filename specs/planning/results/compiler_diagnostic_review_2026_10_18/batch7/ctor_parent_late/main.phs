@@ -1,0 +1,1 @@
+class B { function __construct() {} } class C extends B { function __construct() { $n = 1; parent::__construct(); } } return 0;

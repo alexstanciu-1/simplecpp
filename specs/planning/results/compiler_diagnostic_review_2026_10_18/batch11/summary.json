@@ -1,0 +1,149 @@
+{
+  "vector_nodefault_create": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_nodefault_write": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_nodefault_append": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "hash_nodefault_write": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "hash_nodefault_read": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_unique_read": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "vector_unique_write": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "vector_unique_isset": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_unique_empty": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_unique_count": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_unique_foreach": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "hash_unique_unset": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_bad_key": {
+    "stage": "prepare",
+    "error": "S2S indexed access keys require int, string or mixed\n"
+  },
+  "hash_bad_index": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "nested_bad_index": {
+    "stage": "prepare",
+    "error": "S2S operator[] with 1 argument(s) overload resolution is deferred\n"
+  },
+  "vector_scalar_conversion": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "vector_container_conversion": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "vector_derived_conversion": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "mixed_vector_conversion": {
+    "stage": "prepare",
+    "error": "S2S boxed extraction currently supports required bool, ordinary int, float and string\n"
+  },
+  "vector_mixed_conversion": {
+    "stage": "prepare",
+    "error": "S2S boxed wrapping currently supports null, bool, ordinary int, float and string\n"
+  },
+  "dynamic_mixed_conversion": {
+    "stage": "prepare",
+    "error": "S2S mixed/dynamic family conversion requires an explicit scalar/null cast without storage modifiers\n"
+  },
+  "nullable_vector_extract": {
+    "stage": "prepare",
+    "error": "S2S nullable value boundary requires a scalar or inline record payload\n"
+  },
+  "result_vector_extract": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "string_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "vector_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "object_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "vector_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "nullable_arithmetic": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "float_modulo": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "bool_add": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "int_float_assign": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "int_string_assign": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "uint_narrow": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "float_bitwise": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires canonical int operands\n"
+  }
+}

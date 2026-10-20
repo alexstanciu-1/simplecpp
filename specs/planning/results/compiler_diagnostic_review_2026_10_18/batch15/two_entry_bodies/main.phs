@@ -1,0 +1,1 @@
+namespace A { return 1; } namespace B { return 2; }

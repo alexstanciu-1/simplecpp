@@ -18,7 +18,7 @@ function mixed_source(string $path, string $source): Compiler
 {
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([dirname($path)]);
 	$compiler->exec_cpp();
 	return $compiler;
@@ -211,7 +211,7 @@ try
 		['$x mixed = 7; $y = $x + true;', 'boxed arithmetic requires'],
 		['$x mixed = 7; $y = $x + "1";', 'boxed arithmetic requires'],
 		['$x mixed = 7; $n uint8 = 1; $y = $x + $n;', 'boxed arithmetic requires'],
-		['$x mixed = 7; $n ?int = 1; $y = $x + $n;', 'boxed arithmetic requires'],
+		['$x mixed = 7; $n ?int = 1; $y = $x + $n;', 'guarded operators require'],
 		['$x mixed = 7; $y = $x % 1.5;', 'boxed remainder requires'],
 		['$x mixed = 7; $y = 1.5 % $x;', 'boxed remainder requires'],
 		['$x mixed = 7; $y = $x ** 2;', 'boxed operator is outside'],
@@ -227,16 +227,16 @@ try
 		['$x mixed = 7; $x &= 1;', 'boxed operator is outside'],
 		['$x mixed = 7; $n result<int> = 1; $x .= $n;', 'concatenation requires boxed'],
 		['$x mixed = 7; $d dynamic; $x .= $d;', 'same boxed family'],
-		['$x = false; $x .= "x";', 'compound concatenation requires string or boxed storage'],
-		['$x = 1.5; $x .= "x";', 'compound concatenation requires string or boxed storage'],
+		['$x = false; $x .= "x";', 'compound concatenation requires string, string-carrier or boxed storage'],
+		['$x = 1.5; $x .= "x";', 'compound concatenation requires string, string-carrier or boxed storage'],
 		['$x mixed = 7; $n result<int> = 1; $y = $x . $n;', 'concatenation requires boxed'],
 		['$x mixed = 7; $n uint8 = 1; $y = $x . $n;', 'concatenation requires boxed'],
 		['$x mixed = 7; $x %= 1.5;', 'boxed remainder requires'],
 		['$x mixed = 7; $d dynamic; $y = $x + $d;', 'family conversion requires'],
 		['$x mixed = 7; $y = ($x xor true);', 'supports only AND and OR'],
 		['$x mixed = 7; $y = $x && "yes";', 'boxed logical operands require'],
-		['$x mixed = 7; $n ?int = 1; $y = $n || $x;', 'boxed logical operands require'],
-		['$x mixed = 7; $n result<int> = 1; $y = $x && $n;', 'boxed logical operands require'],
+		['$x mixed = 7; $n ?int = 1; $y = $n || $x;', 'guarded operators require'],
+		['$x mixed = 7; $n result<int> = 1; $y = $x && $n;', 'guarded operators require'],
 		['$x mixed = 7; $d dynamic; $y = $d || $x;', 'same boxed family'],
 		['$x mixed = 7; $y = $x ?: null;', 'boxed selection requires'],
 		['$x mixed = 7; $y = null ?? $x;', 'boxed selection requires'],

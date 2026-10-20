@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cctype>
+#include <cstdint>
 #include <cstdlib>
 #include <cstdio>
 #include <exception>

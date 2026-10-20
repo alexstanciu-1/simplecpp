@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lang/php/cli_context.hpp"
+#include "core/string_support.hpp"
 
 #include "scpp/bool_t.hpp"
 #include "scpp/hash_t.hpp"
@@ -64,6 +65,9 @@ inline int shell_pclose(FILE* handle) {
 }
 
 [[nodiscard]] inline result_or_false<string_t> getenv(const string_t &name) {
+	if (name.native_value().find('\0') != std::string::npos) {
+		throw scpp::ValueError("getenv name must not contain NUL");
+	}
 	const char* raw = std::getenv(name.native_value().c_str());
 	if (raw == nullptr) {
 		return false_sentinel;

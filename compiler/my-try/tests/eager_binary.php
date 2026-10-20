@@ -13,7 +13,7 @@ function eager_binary_compile(string $source): string
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->exec_cpp();
 	$result = CPP_Probe::text(Model::$cpp_files);
 	$compiler->exec_cpp();
@@ -138,12 +138,12 @@ foreach ([
 	'$n = 0; return (true ? ($n = 1) : 2) + $n;',
 	'function value(): int { return 1; } $a = value() + 1;',
 	'function value(): int { return 1; } $a = (value()) + 1;',
+	'function source(): mixed { return 1; } $y = !source() === false;',
+	'function probe(): bool { return true; } $y = false == probe();',
 ] as $accepted) {
 	eager_binary_compile($accepted);
 }
 foreach ([
-	'function source(): mixed { return 1; } $y = !source() === false;',
-	'function probe(): bool { return true; } $y = false == probe();',
 	'$x = 1 + ($new = 2);',
 ] as $invalid) {
 	$failed = false;

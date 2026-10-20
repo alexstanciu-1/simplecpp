@@ -546,6 +546,14 @@ The following checkpoint covers bounded property updates.
 
 ## Property mutation integration — 2026-10-07
 
+
+**Current scope — 2026-10-19 (CS394).** Effectful property RHS values are admitted under ordered expression evaluation. H04 replaced the stale negative with class/struct result/store/call-count checks (3:3:1); all 14 property native programs passed on dev002 in fixture_repairs_02. Existing failure observers use H01 entry handling. The earlier replay and receiver-replacement trace remain separate evidence. division_by_zero is preserved; the property failure observer proves unchanged storage, while the scalar error-code suite owns the exact error-code assertion.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [data_initialization.md](../../../../specs/data_initialization.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS394`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Instance/static properties now join locals/parameters in the existing mutation
 target admission. Prepared property places already carry stable storage and
 writability; existing operator selection, conversions and C++ lowering implement
@@ -564,6 +572,8 @@ private/read-only instance targets, weak/temporary receivers and effectful RHS.
 No native compiler rebuild or conversion was performed.
 
 The following checkpoint covers property inference; construction shortcuts remain separate.
+
+</details>
 
 ## Default-based property inference — 2026-10-07
 
@@ -618,6 +628,14 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ### Reconciliation — 2026-10-07
 
+
+**Current scope — 2026-10-19 (CS399).** Historical row totals and nine diagnostic/emission probes are dated evidence, not coverage. Later nullable, protected/interface, inherited/static dispatch and callable work supersedes early gates; exact current cards and owning suites govern. Native checkpoint status above also supersedes the old pending native-build statement. Historical source examples stay intact and do not require identical lowering.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [data_initialization.md](../../../../specs/data_initialization.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS399`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Reconciled the working rows and individual card decisions against the dated CH10
 proofs, current preparation/emission and authoritative amendments. Original imported
 examples remain intact as historical evidence, not additional implementation work.
@@ -640,7 +658,17 @@ nullable-operation gate (superseded by the nullable checkpoints above).
 These nine diagnostic/emission probes are not generated-program execution or
 a native compiler rebuild. Existing checkpoint suites supply behavioral evidence.
 
+</details>
+
 ### Actual remaining work and owners
+
+
+**Current scope — 2026-10-19 (CS400).** Nullable joins, property operations and direct-new shortcuts have separate bounded proof above. The table routes CH11 relationships/dispatch and CH12 callable/lifetime obligations rather than certifying them here; stale deferred-CH11 and native-build-pending labels require later reconciliation. Static reference escape and broader receiver lifetimes remain explicit gates. Per-card proof is still required below.
+
+Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [data_initialization.md](../../../../specs/data_initialization.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS400`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 1. **Nullable inline-record joins — bounded complete.**
    The normalization checkpoint above settles TYPE-VAR-004 for class handles and
@@ -752,6 +780,8 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-PROP-002](#type-prop-002) | partial-split | `class A { protected ?string $x; protected ?B $b; }` | bounded nullable fields | proved bounded | deferred | nullable_records.php; protected access CH11 |
 | [NOTE-029](#note-029) | reconciled-bounded | — (example pending) | see reconciliation | see reconciliation | deferred | Construction/static slices supersede imported struct-argument and unevaluated-qualifier restrictions |
 | [NOTE-050](#note-050) | partial-split | — (example pending) | see reconciliation | see reconciliation | deferred | Layout/members/lifecycle, inference, updates and shortcuts supported; relationships/dispatch CH11 |
+
+</details>
 
 ### Deferred legacy syntax
 
@@ -1019,8 +1049,18 @@ property declaration appears only in header
 
 ## CLASS-PROP-004
 
+
+**Current scope — 2026-10-19 (CS407).** Completed ordinary set():void method assigns this->x=1 and caller reads 1. This directly supersedes the card line claiming general method execution deferred. Missing-instance/static-this contexts still reject under separate method tests; the source spelling does not authorize arbitrary receiver escape.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS407`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** supported-bounded. Constructor bodies; general method execution deferred.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -1171,8 +1211,18 @@ CurrentClass::x = static_cast<int_t>(1);
 
 ## CLASS-PROP-006B
 
+
+**Current scope — 2026-10-19 (CS411).** Child static method parent::$x updates original A storage and caller reads A::$x=1. The card deferred-CH11 label is stale. Normative lookup begins at immediate base while retaining actual owner/access; this probe does not establish all protected/private/ancestor cases.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS411`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -1209,8 +1259,18 @@ ParentClass::x = static_cast<int_t>(1);
 
 ## CLASS-PROP-006C
 
+
+**Current scope — 2026-10-19 (CS412).** Inherited static method using static::$x, called as B::set(), updates original A storage to 1. Original probe added a redeclared B::$x and correctly failed inherited-member-redeclaration admission; follow-up removes that out-of-scope feature. The pass proves inherited call/original-owner storage, not overridden static properties or by itself a discriminator between self and called-type selection. Broader late-static dispatch retains CH11 proofs; v0.1 file-local-only restriction is superseded.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS412`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -1284,8 +1344,18 @@ $a::$x = 2;
 
 ## CLASS-PROP-008
 
+
+**Current scope — 2026-10-19 (CS414).** Completed derived B method writes inherited A::x through this and native read returns 1. Deferred-CH11 status is stale; inherited member identity/access belongs to shared preparation, superseding historical no-cross-file-validation policy. The single-file probe does not itself prove cross-file edits.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS414`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -1618,8 +1688,18 @@ this->f(static_cast<int_t>(1));
 
 ## CLASS-CALL-005
 
+
+**Current scope — 2026-10-19 (CS422).** Completed B::g instance method calls parent::f(1) on the current instance and returns1. Deferred-CH11 label is stale. Immediate-base lookup/access and original owner govern selection; no literal base alias spelling or general virtual-dispatch claim follows.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS422`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -1656,10 +1736,20 @@ base::f(static_cast<int_t>(1));
 
 ## CLASS-CALL-005A
 
+
+**Current scope — 2026-10-19 (CS423).** Inherited A::g uses static::f(1), with A::f returning9 and B::f returning its argument. Native B::g result1 distinguishes called-type child selection from lexical-base selection. Deferred label and historical file-local restriction are superseded; this single-file probe does not independently establish cross-file specialization.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS423`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
 
 Different imported versions share this ID and remain below for provenance. The current v0.2 decision and bounded checkpoints above govern; their presence does not imply additional pending implementation.
+
+</details>
 
 ### Imported version 1
 
@@ -1760,8 +1850,18 @@ ordinary non-virtual declaration unless another explicit rule applies
 
 ## CLASS-CALL-007
 
+
+**Current scope — 2026-10-19 (CS425).** Completed interface I, implementing A and interface-typed handle invoke f(1) and return1. This is an actual interface call, not a concrete-only method probe. Historical deferred-CH11 and local/syntactic diagnostics are superseded; interface obligations and dispatch are prepared semantically. Multiple-interface/override variance behavior retains CH11 proof.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS425`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. Interface relationships and dispatch.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -1870,8 +1970,18 @@ create<A>(static_cast<int_t>(1))
 
 ## CLASS-CALL-008A
 
+
+**Current scope — 2026-10-19 (CS427).** Inherited static factory on abstract A returns new static(1); B supplies constructor and read implementation, and B::make()->read() returns1 through the A result boundary. This proves called-class shared construction and initialized payload, not merely accepting new static syntax. File-local-only and deferred-CH11 text is superseded; cross-file/more storage families retain separate scope.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS427`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2195,8 +2305,18 @@ CurrentClass::X
 
 ## CLASS-CONST-004
 
+
+**Current scope — 2026-10-19 (CS435).** B::f reads parent::X declared on A and returns1. Historical deferred-CH11 wording is superseded by prepared inheritance lookup. Missing-parent rejection is a separate negative obligation, not proved by this positive.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS435`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2233,8 +2353,18 @@ ParentClass::X
 
 ## CLASS-CONST-005
 
+
+**Current scope — 2026-10-19 (CS436).** Inherited A::f invoked as B::f admits static::X and returns inherited constant1. Because both class contexts resolve the same declaration, this fixture does not distinguish lexical from called-class selection. Historical file-local-only and deferred-CH11 restrictions are superseded by the inheritance contract; broader late-static and cross-file proofs remain in CH11.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS436`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2533,8 +2663,18 @@ int_t f(int_t a);
 
 ## CLASS-MEMBER-006
 
+
+**Current scope — 2026-10-19 (CS443).** Abstract A::f is implemented by B and invoked through an A-typed handle with result1. Historical CH11 deferral is superseded. Bodyless declaration and virtual contract are exercised; abstract-body rejection retains dedicated inheritance-suite scope.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS443`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2571,8 +2711,18 @@ virtual int_t f(int_t a) = 0;
 
 ## CLASS-MEMBER-007
 
+
+**Current scope — 2026-10-19 (CS444).** Explicit Override implementation of abstract A::f dispatches through A handle and returns1. Historical no-semantic-validation claim is superseded: the attribute asserts an inherited virtual/interface contract during preparation. Positive dispatch is not by itself an invalid-override rejection proof.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS444`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2609,8 +2759,18 @@ int_t f(int_t a) override;
 
 ## CLASS-MEMBER-008
 
+
+**Current scope — 2026-10-19 (CS445).** Inherited final method on B returns supplied argument1. This proves final declaration admission and inherited call, not rejection of a further override; finality negatives remain owned by CH11. Historical deferred label is stale.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS445`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2647,8 +2807,18 @@ int_t f(int_t a) final;
 
 ## CLASS-MEMBER-009
 
+
+**Current scope — 2026-10-19 (CS446).** Abstract static method in an explicitly abstract class rejects with Abstract methods must be non-final public/protected instance methods. The diagnostic isolates the prohibited modifier combination; historical deferred label should describe current rejection.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS446`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2683,8 +2853,18 @@ ERROR
 
 ## CLASS-MEMBER-010
 
+
+**Current scope — 2026-10-19 (CS447).** Child static method with Override over an existing base static method rejects with Override assertion requires an inherited virtual method. Both signatures and bodies are valid; static hiding does not establish a virtual override contract. Historical deferred label is stale.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS447`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -2791,8 +2971,18 @@ function __destruct() {}
 
 ## CLASS-MEMBER-013
 
+
+**Current scope — 2026-10-19 (CS450).** Bodyless interface I::f is implemented by A and called through I handle with argument/result1. Deferred-CH11 wording is superseded. This proves this instance interface contract; it does not generalize the historical always-pure-virtual statement to later static-interface extensions.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS450`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. Interface contracts and dispatch.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3085,8 +3275,18 @@ int_t& f();
 
 ## CLASS-MEMBER-018C
 
+
+**Current scope — 2026-10-19 (CS457).** Completed same-origin reference-return body produces an owned copy1 and explicit alias; alias write2 updates original local while copy remains1, combined result12. Empty imported body is not treated as executable valid code. Current preparation validates origin despite historical purely-explicit wording.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS457`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Supported with a complete same-origin body; shared
 callable signatures preserve `T&`. See the method-return checkpoint above.
+
+</details>
 
 ### Imported version 1
 
@@ -3123,8 +3323,18 @@ int_t& f(int_t& a);
 
 ## CLASS-MEMBER-018D
 
+
+**Current scope — 2026-10-19 (CS458).** Shared same-origin method probe distinguishes ordinary copied result from explicit alias with result12. Explicit markers preserve reference intent, but historical no semantic inference or alias analysis claim is superseded by preparation lifetime/origin validation.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [destructors_v0_2.md](../../../../specs/destructors_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS458`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Supported for fixed native-reference parameters and
 bounded same-origin method returns; explicit markers do not bypass lifetime checks.
+
+</details>
 
 ### Imported version 1
 
@@ -3269,8 +3479,18 @@ CurrentClass::x
 
 ## CLASS-PROP-002C
 
+
+**Current scope — 2026-10-19 (CS462).** B::f reads parent::$x from A and returns1. Prepared inherited lookup is supported; historical deferred-CH11 label is documentation drift. Missing-parent contexts are separate negatives.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS462`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3307,8 +3527,18 @@ ParentClass::x
 
 ## CLASS-PROP-002D
 
+
+**Current scope — 2026-10-19 (CS463).** Follow-up B::f reads inherited A::$x via static::$x and returns1 without redeclaring the property. Original failed redeclaration attempt remains distinct. This proves original-owner inherited storage, not a lexical/called-class discriminator or permitted property overriding. Historical file-local-only and deferred labels are superseded.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS463`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** deferred-CH11. CH11 relationship, access and dispatch prerequisites.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3453,8 +3683,18 @@ int_t A::f() { return this->x; }
 
 ## CLASS-NEW-001
 
+
+**Current scope — 2026-10-19 (CS467).** Ordinary new A produces a present shared handle observed by isset and native result1. This proves construction and presence, not a mandatory literal `create<A>` spelling. Current preparation resolves nominal targets and storage policy; generation is not solely syntactic.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS467`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** supported-bounded. Class/struct storage matrix; records.php and constructors.php.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3491,8 +3731,18 @@ auto a = create<A>();
 
 ## CLASS-NEW-002
 
+
+**Current scope — 2026-10-19 (CS468).** Rooted new \A\B constructs the declared namespaced class and reads initialized field1. This supplies actual generated execution beyond the card outdated no-execution checkpoint. Historical type-blind/rooted C++ spelling restrictions are superseded by prepared identity and partitioned backend naming.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS468`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** supported-bounded. Qualified construction accepted/emitted in audit; no new generated execution proof.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3710,6 +3960,14 @@ shared_p<A> x = create<A>();
 
 ## TYPE-VAR-004
 
+
+**Current scope — 2026-10-19 (CS475).** Strict ?A local initialized null compares null and returns1. Current ?handle normalization is semantic identity, not a pending non-null runtime check. This absence observation alone does not prove reference identity normalization; dedicated nullable-handle suite owns that.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS475`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Strict-mode PHP input example:** `$x ?A = null;`
 
 For a class, nullable spelling now explicitly normalizes to its already-nullable
@@ -3717,6 +3975,8 @@ handle identity. For a struct/inline class payload, nullable remains a real wrap
 
 **v0.2 decision / target C++:** supported-bounded for class handles under the explicit
 normalization contract, not merely accidental backend equivalence. See checkpoint above.
+
+</details>
 
 ### Imported version 1
 
@@ -3753,8 +4013,18 @@ shared_p<A> x = null;
 
 ## TYPE-PARAM-004
 
+
+**Current scope — 2026-10-19 (CS476).** Corrected context supplies A, B and interface I implementations; function checks nullable B and calls I::n before returning the A handle. Caller mutates returned handle to7 and original A reads7. Wrong null/interface branch returns fresh A and would fail this identity observer. Initial failed probe remains separate; current interface support supersedes partial-split label.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS476`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** partial-split. Concrete and nullable-record value boundaries supported; interfaces/abstract types CH11. See nullable_records.php.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3791,8 +4061,18 @@ shared_p<A> f(shared_p<A> a, shared_p<B> b, shared_p<I> i) { return a; }
 
 ## TYPE-PROP-001
 
+
+**Current scope — 2026-10-19 (CS477).** Protected string and B fields are assigned/read inside their owner, producing exact stdout ok and present-handle result1. Corrected probe uses local B for isset rather than unsupported direct property operand. This proves legal protected-field use, not every external/inherited access boundary. Historical blanket protected-access deferral is stale.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS477`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** partial-split. Public/private typed fields supported; protected access CH11.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3871,8 +4151,18 @@ class A { public: int_t x; };
 
 ## TYPE-PROP-002
 
+
+**Current scope — 2026-10-19 (CS479).** Protected nullable string and nullable class fields default to null and native combined predicate returns1. This observes both empty states. Wrapper versus normalized handle representation follows current type-use contract; result alone does not prove exact C++ wrapper spelling. Historical protected-access deferral is stale.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS479`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** partial-split. Nullable scalar and inline-record fields supported; protected access CH11. See nullable_records.php.
 See the progress table and dated checkpoints; imported text below is historical.
+
+</details>
 
 ### Imported version 1
 
@@ -3908,6 +4198,14 @@ class B; class A { protected: nullable<string_t> x; shared_p<B> b; };
 
 
 ## NOTE-029
+
+
+**Current scope — 2026-10-19 (CS480).** Imported struct no-argument-only restriction and unevaluated expression-qualified static access are intentionally superseded. Current constructor/storage proofs cover class and struct arguments plus explicit local ownership; expression qualifiers execute once and release temporaries before arguments, with preparation rejecting invalid static targets. Rooted construction now has an actual initialized-field execution observer. No literal create/class_t spelling or C++-only semantic rejection is required.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [language_verification_plan.md](../planning/language_verification_plan.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS480`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 **Source:** [generators/php/specs/rules.md:520](../../../../generators/php/specs/rules.md)
 
@@ -3959,7 +4257,17 @@ The incompatible v0.1 restrictions below are superseded, not outstanding tasks.
 >
 > This is the single source of truth for generation rules and runtime assumptions.
 
+</details>
+
 ## NOTE-050
+
+
+**Current scope — 2026-10-19 (CS481).** Consolidates previously reviewed fields, initialization, method signatures, reference safety, cleanup, static qualification and partitioned emission. Historical type-blind validation, mandatory base alias, file-local late static rules, blanket inline-class prohibition and no-traits statement do not govern v0.2. Relationships, virtual/interface dispatch, trait composition and parent construction retain CH11-specific obligations; this summary does not certify those pending sections. PHPDoc stays legacy-only.
+
+Contracts and owners: [instance_methods_v0_2.md](../../../../specs/instance_methods_v0_2.md), [static_members_v0_2.md](../../../../specs/static_members_v0_2.md), [inheritance_v0_2.md](../../../../specs/inheritance_v0_2.md), [language_verification_plan.md](../planning/language_verification_plan.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS481`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 **Source:** [generators/php/specs/rules.md:1102](../../../../generators/php/specs/rules.md)
 
@@ -4043,6 +4351,8 @@ source types and current preparation diagnostics supersede the v0.1 type-blind r
 > - `$x::make()` â†’ `::scpp::class_t<decltype(x)>::make()`
 > - `$x::$prop` â†’ `::scpp::class_t<decltype(x)>::prop`
 > - the generator must not attempt to validate whether the generated C++ member access is semantically valid
+
+</details>
 
 ## Chapter-end debt
 

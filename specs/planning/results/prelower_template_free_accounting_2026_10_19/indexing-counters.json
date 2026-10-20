@@ -1,0 +1,4 @@
+{
+  "direct": "indexing 61 3723 61 5 25 10 35\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+  "composed": "indexing 61 3723 61 5 25 10 35\nindexed-references 0 0 0 0 0 0 0\nindexed-copy-failure 9 1000 9 3 8 1 10\nindexed-copy-failure 9 1000 9 3 10 1 11\nindexed-copy-failure 10 1512 10 3 11 1 12\nmembers 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n"
+}

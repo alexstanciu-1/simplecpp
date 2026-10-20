@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Override requires a compatible instance signature\n"
+}

@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S receiver does not support append\n"
+}

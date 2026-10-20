@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S unary operation requires its canonical int or bool operand type\n"
+}

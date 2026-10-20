@@ -58,11 +58,27 @@ def probe_text(payload):
                    + artifact['text'] + '// SCPP-END-ARTIFACT\n' for artifact in artifacts)
 
 
+def probe_entry(text):
+    """Let explicit test observers bypass only the production entry boundary."""
+    marker = '// SCPP-PROBE-OBSERVE-ENTRY\n'
+    if marker not in text and 'int main(int argc, char** argv) try' not in text:
+        return text
+    text = text.replace(marker, '')
+    # Remove only the marked production boundary, preserving source handlers.
+    text = text.replace('// SCPP-ENTRY-TRY\n\ttry {\n', '')
+    return re.sub(r'^// SCPP-ENTRY-CATCH\n.*?^// SCPP-ENTRY-END\n',
+                  '', text, flags=re.M | re.S)
+
+
 def probe_bundle(text, *, instrumented=False):
     """Recover files after test-only textual instrumentation, without combining definitions."""
     pattern = re.compile(r'^// SCPP-ARTIFACT (\{[^\n]*\})\n(.*?)^// SCPP-END-ARTIFACT\n', re.M | re.S)
     matches = list(pattern.finditer(text))
     if not matches:
+        entry_text = probe_entry(text) if instrumented else text
+        if entry_text != text:
+            return json.dumps({'format': 'scpp-cpp-artifacts-v1', 'artifacts': [
+                {'id': 'entry', 'kind': 'translation_unit', 'path': 'entry.cpp', 'text': entry_text}]})
         return None
     prefix = text[:matches[0].start()]
     suffix = text[matches[-1].end():]
@@ -83,6 +99,8 @@ def probe_bundle(text, *, instrumented=False):
         headers = ''.join('#include "' + artifact['path'] + '"\n' for artifact in artifacts
                           if artifact['kind'] == 'header')
         entry['text'] = headers + entry['text'] + suffix
+    if instrumented:
+        entry['text'] = probe_entry(entry['text'])
     return json.dumps({'format': 'scpp-cpp-artifacts-v1', 'artifacts': artifacts})
 
 

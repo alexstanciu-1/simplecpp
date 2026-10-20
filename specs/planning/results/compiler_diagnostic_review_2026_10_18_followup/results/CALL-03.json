@@ -1,0 +1,14 @@
+{
+  "control": {
+    "stage": "emitted",
+    "compile": "passed",
+    "compile_logs": [],
+    "link": "passed"
+  },
+  "source": {
+    "stage": "emitted",
+    "compile": "passed",
+    "compile_logs": [],
+    "link": "passed"
+  }
+}

@@ -31,8 +31,7 @@ final class CPP_Dispatch
 		foreach ($parameters as $index => $parameter) {
 			$value = 'argument_' . $index;
 			if ($parameter->mode === passing_mode::value) {
-				$context->headers['utility'] = true;
-				$value = 'std::move(' . $value . ')';
+				$value = CPP_Declarations::move($value, $parameter->type, $context, $parameter->access === storage_access::read_only);
 			}
 			if ($adaptation !== null) { $value = CPP_Declarations::conversion($value, $adaptation->parameters[$index], $context); }
 			$text .= $separator . $value;

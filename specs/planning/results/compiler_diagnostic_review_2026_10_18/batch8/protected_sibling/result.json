@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Protected instance access requires the accessing type or a descendant receiver\n"
+}

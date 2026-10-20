@@ -17,7 +17,7 @@ function control_program(string $path, string $source): Compiler
 {
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([dirname($path)]);
 	$compiler->sync([]);
 	return $compiler;
@@ -137,6 +137,8 @@ try
 		'for_return' => ['function f(): int { for (;;) { return 6; } } return f();', 6],
 		'unreachable_break' => ['function f(): int { for (;;) { return 6; break; } } return f();', 6],
 		'do_arm_return' => ['function f(bool $b): int { do { if ($b) { return 3; } else { return 4; } } while (false); } return f(false);', 4],
+		'if_unbraced' => ['if (true) return 1;', 1],
+		'else_if_unbraced' => ['if (false) {} else if (true) return 1;', 1],
 		'if_true' => ['$x = 1; if (true) { $x = 7; } return $x;', 7],
 		'outer_assignment' => ['$x = 1; if (true) { $x = 2; } return $x;', 2],
 		'if_false' => ['$x = 1; if (false) { $x = 7; } return $x;', 1],
@@ -211,7 +213,7 @@ try
 	control_check(CPP_Probe::text(Model::$cpp_files) === $joined_output, 'Split elseif changed incremental output');
 	$compiler = control_program($path, $split); $compiler->prepare(); $compiler->cpp();
 	control_check(CPP_Probe::text(Model::$cpp_files) === $joined_output, 'Split elseif changed fresh output');
-	foreach (['if (false) {} else if (true) return 1;', 'if (false) {} else if { return 1; }'] as $invalid) {
+	foreach (['if (false) {} else if (true) return 1', 'if (false) {} else if { return 1; }'] as $invalid) {
 		$rejected = false;
 		try { control_program($path, $invalid); }
 		catch (\RuntimeException $error) { $rejected = true; }
@@ -222,7 +224,7 @@ try
 	$compiler = control_program($path, 'return (bool) "yes";');
 	$compiler->prepare();
 	$compiler->cpp();
-	$cast_text = str_replace('int main(int argc, char** argv)', 'int cast_probe(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
+	$cast_text = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint cast_probe(int argc = 0, char** argv = nullptr)", CPP_Probe::text(Model::$cpp_files));
 	$cast_text .= "\nint main() { try { cast_probe(); } catch (const scpp::runtime_error& error) { return error.code() == \"invalid_cast_string_literal\" ? 0 : 2; } return 1; }\n";
 	if (isset($argv[1])) {
 		$output = $argv[1] . '/truth_explicit_cast_reject.cpp';
@@ -238,7 +240,7 @@ try
 	$compiler = control_program($path, 'return match (2) { 1 => 7 };');
 	$compiler->prepare();
 	$compiler->cpp();
-	$match_text = str_replace('int main(int argc, char** argv)', 'int match_probe(int argc = 0, char** argv = nullptr)', CPP_Probe::text(Model::$cpp_files));
+	$match_text = str_replace('int main(int argc, char** argv)', "// SCPP-PROBE-OBSERVE-ENTRY\nint match_probe(int argc = 0, char** argv = nullptr)", CPP_Probe::text(Model::$cpp_files));
 	$match_text .= "\n#include <string>\nint main() { try { match_probe(); } catch (const std::runtime_error& error) { return std::string(error.what()) == \"Unhandled match expression\" ? 0 : 2; } return 1; }\n";
 	if (isset($argv[1])) {
 		$output = $argv[1] . '/match_unhandled.cpp';
@@ -325,7 +327,7 @@ try
 		control_reject($compiler, $diagnostic);
 	}
 
-	// The bounded grammar requires braces and does not admit declarations in branch bodies.
+	// Other statement forms keep their bounded grammar; branch-local function declarations still reject.
 	foreach (['switch (1) { $x = 2; case 1: break; }', 'switch (1) { case 1: return 1;',
 		'return match (1) { 1 => 2;', 'return match (1) { 1 2 };',
 		'return match (1) { default, 1 => 2 };', 'return match (1) { 1 => { return 2; } };',
@@ -335,7 +337,7 @@ try
 		'switch (1) { default: function local(): int { return 1; } }',
 		'while (true) break;', 'do {} while (true)', 'for (;;) { break 2; }',
 		'for (;;) { continue 2; }', 'foreach ($items as &$item) {}',
-		'if (true) return 1;', 'if (true): return 1; endif;',
+		'if (true) ;', 'if (true): return 1; endif;',
 		'if (true) { function local(): int { return 1; } }', 'if (true) { return 1;'] as $source)
 	{
 		$rejected_sources[] = $source;

@@ -1,0 +1,1 @@
+namespace App; use function strlen as length; return length('x');

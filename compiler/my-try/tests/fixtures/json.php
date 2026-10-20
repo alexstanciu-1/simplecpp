@@ -5,6 +5,13 @@ $json_fixtures = [];
 foreach (['mixed' => 'json_decode_mixed', 'dynamic' => 'json_decode'] as $family => $decode)
 {
 	$native = $family === 'dynamic' ? 'scpp::dynamic_t<>' : 'scpp::mixed_t';
+	// Checked-payload overload selection now composes decode and encode directly.
+	$json_fixtures['json_' . $family . '_checked_payload'] = [
+		'function roundtrip(string $text):result<string>{return json_encode(' . $decode . '($text));}',
+		'([&]() { auto good = function_roundtrip(scpp::string_t{"{\"n\":1}"}); '
+			. 'if (!good.has_value().native_value() || good.value().native_value() != "{\"n\":1}") return false; '
+			. 'try { function_roundtrip(scpp::string_t{"{"}); } catch (const std::runtime_error&) { return true; } return false; }())',
+	];
 	$json_fixtures['json_' . $family . '_roots'] = [
 		'function parse(string $text): result<' . $family . '> { return ' . $decode . '($text); } '
 			. 'function encode(' . $family . ' $value): result<string> { return json_encode($value); } '

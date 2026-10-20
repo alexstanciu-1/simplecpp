@@ -6,7 +6,7 @@ mkdir($directory);
 try
 {
 	file_put_contents($directory . '/a.phs', 'return 1;');
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$source = Model::$modules[$directory]->sources['a.phs']->file;

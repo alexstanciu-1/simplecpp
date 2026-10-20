@@ -14,9 +14,24 @@ php compiler/my-try/tools/build_cpp.php /absolute/published /absolute/cache --no
 ```
 
 The CLI defaults to `/usr/bin/clang++`, the checkout runtime headers, C++23, PHP target,
-threads and `-O0`. It emits a JSON result only after success, with executable path and
+threads, `-Wshadow` and `-O0`, without PCH or native debug information. API configuration
+also defaults to no PCH. Ordinary builds may explicitly select `--pch` or
+`$config->pch = true`; `--no-pch` remains accepted. Pass `--native-debug` (or set
+`$config->native_debug = true`) to request full Clang `-g` information for
+PCH, generated units and runtime provider objects. Debug selection is independent
+of optimization and participates in the existing action cache keys; returning to
+the default configuration reuses its prior artifacts. This does not disable
+source-language diagnostics or runtime checks.
+
+The builder emits a JSON result only after success, with executable path and
 counts for compiled/reused objects, PCH creation and linking. It does not execute the
 program or rebuild the compiler itself. Programmatic callers use `native_cpp_config`.
+
+Successful compile/link diagnostics are returned in `native_cpp_result::diagnostics`;
+the CLI writes them to stderr while preserving JSON stdout. Only actions executed in
+this invocation contribute diagnostics; cached warnings are not replayed. Legal source
+shadowing is accepted, and `-Wshadow` is not promoted to an error. The flag participates
+in the ordinary action/PCH keys, so caches from before its introduction rebuild once.
 
 
 ## Application optimization and C++ lowering
@@ -31,7 +46,7 @@ optimization used to build the compiler executable.
 For a latency-oriented two-step build, select the level at both boundaries:
 
 ```bash
-php compiler/my-try/main.php --s2s /absolute/source --entry main.phs --output /absolute/published --optimization 1
+php compiler/my-try/main.php --s2s /absolute/source --entry main.phs --output /absolute/published --optimization 1 --no-prelower-templates
 php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/build --reuse -O1 --jobs=8
 ```
 
@@ -232,6 +247,40 @@ same-byte symlink retargeting, no-op/revert behavior and failed-link recovery.
 
 ## Dependencies and PCH
 
+Publications carry `application_templates: "allowed" | "forbidden"`. The compiler
+coordinator publishes `forbidden` for the general concrete-substitution mode.
+Missing/unknown policies reject with a republish diagnostic; the native builder
+does not infer lowering mode from C++ text. Standalone artifact publishers must pass
+their intended policy to `Output_Publication::publish` (the third argument).
+
+For `forbidden`, the broad runtime PCH is incompatible; the default is already no PCH.
+The builder rejects rather than silently disabling PCH or reverting lowering mode.
+`entry.cpp` and every `units/` translation unit are checked; `specializations/`
+implementation units and layout probes retain native templates. Unknown translation
+unit locations and a missing entry reject instead of being silently excluded.
+
+Before compiling a new strict application object, Clang dumps its active preprocessed
+tokens with the same flags, definitions, includes and resolved layouts. A `template`
+keyword rejects; comments, string literals and inactive preprocessor branches do not
+constitute template declarations. Missing token-stream completion or compiler failure
+also rejects. This is deliberately a conservative no-template-keyword input contract,
+not a second C++ parser or a provider-name allowlist. The existing independent
+complete-closure regression still checks template declarations and instantiation traces.
+
+Validated objects use the existing native action cache with a versioned validation
+identity. Ordinary objects cannot satisfy these keys. Strict app objects always use
+fresh Clang dependency discovery, even with `--runtime-snapshot`; thus a changed or
+newly selected transitive provider header invalidates their validation. Unchanged
+validated objects reuse without another token dump. Failures leave native readiness
+pending and cannot publish a successful executable for the attempted inputs. Source
+publication readiness means generated inputs are complete, not that native validation
+has succeeded. Toolchain/runtime quiescence during a build remains required.
+
+Focused proof: `tests/prelower_native_boundary.py` covers provider mutation/recovery,
+macro-expanded templates, comment/string/inactive text, strict PCH rejection,
+ordinary PCH support and cache separation. `tests/prelower_null_output.py` exercises
+the policy through real concrete generation and the independent closure audit.
+
 The opt-in `--runtime-snapshot` option reuses Clang dependency discovery when the
 publication supplies complete generated include metadata. Generated inputs retain
 current content validation; external dependencies and include-search inventories
@@ -281,6 +330,32 @@ file; cached linking rechecks those library/startup/script inputs as well. First
 metadata associates the completed artifact with the discovered dependency key,
 without copying the executable. Permissions are checked before binary cache reuse.
 
+## Runtime layout actions
+
+Published `layout_probe` artifacts are compiled and linked through the existing
+native action cache before application units. These small host executables print
+layout/trait definitions; their output is a cached `.hpp` action, identified by
+protocol version, toolchain, configuration and probe executable digest. The regular
+fresh dependency scan covers their runtime and published headers. There is no second
+layout cache or mutation of the source publication.
+
+Generated units receive the resolved headers using `-include`, so dependency hashing
+also covers layout contents. Native status remains pending if layout compilation or
+execution fails. Missing/corrupt cache-owned layout output is regenerated using the
+same action ownership/readiness protocol. Layout headers are reused on body-only
+edits. `layouts_built`/`layouts_reused` report resolved headers; ordinary object/link
+counts exclude probe actions. Probe compilation/linking still performs its normal
+cache validation on warm builds.
+
+This protocol is host-executed and Linux/Clang only. Probes run in manifest order;
+each receives all previously resolved layout headers. The specialization engine groups
+concrete layout requests by dependency depth, allowing outer native templates to
+contain concrete inner owners. Prior header contents participate in the existing
+dependency scan/cache; source publication remains immutable. Grouped headers and
+all-prior-batch inclusion conservatively couple consumers; finer partitioning remains
+follow-up work. Acyclic source-record headers participate through the same generated-header dependency
+facts. Cross-compilation and recursive header/layout graphs remain unsupported. Runtime provider objects do not receive application layout macros.
+
 ## Bounded first implementation and next work
 
 This is Linux, Clang plus GNU ld or Mold with dependency-file support, ordinary core runtime
@@ -311,3 +386,13 @@ linkage require further acceptance work before claiming a hermetic/general cache
 Focused module evidence: `tests/runtime_module_build.py` proves cold/warm reuse,
 one-unit body/provider edits, definition/PCH invalidation and library-only relinking.
 This validates generated executables, not a native rebuild of the compiler.
+
+The native-debug cache proof in `tests/native_cache.py` checks actual ELF debug
+sections, execution, cold/warm debug builds and reuse when returning to the default.
+This option does not implement source-language stepping, variable inspection or
+source-mapped runtime stacks; those require a compiler-owned debugging design.
+
+Concrete prelowered publications currently use `Native_CPP_Build`. The optional
+Ninja consumer rejects them explicitly until it supports layout probes and strict
+application closure validation. Shared-allocation outlining remains ordinary-only;
+concrete construction continues through the existing prepared transport.

@@ -1,0 +1,3 @@
+S2S generation failed: Static call requires a source class or struct
+S2S enum backing requires an integer type
+

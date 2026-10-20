@@ -22,7 +22,7 @@ $executions = [];
 try {
 	foreach ($cases as $name => [$source, $stdout]) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		$text = CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Echo no-op changed output'); }
 		file_put_contents($output . '/' . $name . '.cpp', $text);
@@ -30,12 +30,12 @@ try {
 	}
 	foreach (['echo;', 'echo 1,;', '$v vector<int> = [1]; echo $v;', '$f function<int()>; echo $f;', 'function f(): void {} echo f();', 'struct S { int $n; } $s = new S(); echo $s;'] as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $rejected = false;
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $rejected = false;
 		try { $compiler->exec_cpp(); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Invalid echo accepted: ' . $source); }
 	}
 	Compiler_Lifecycle::reset(); file_put_contents($path, '$v = 7; echo $v; return 0;');
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	$before = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, '$v vector<int> = [7]; echo $v; return 0;');
 	$failed = false;
@@ -43,7 +43,7 @@ try {
 	if (!$failed) { throw new \LogicException('Unsupported echo edit accepted'); }
 	file_put_contents($path, '$v = 7; echo $v; return 0;'); $compiler->update_cpp([$path]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Echo repair differs'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Fresh echo differs'); }
 	file_put_contents($output . '/executions.json', json_encode($executions));
 	echo "Echo preparation and recovery: PASS\n";

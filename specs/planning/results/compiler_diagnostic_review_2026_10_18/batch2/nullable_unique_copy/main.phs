@@ -1,0 +1,1 @@
+$s ?unique<int> = null; $t = $s; return 0;

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "macro",
+    "command": [
+      "/usr/bin/env",
+      "-i",
+      "PATH=/usr/bin:/bin",
+      "LC_ALL=C",
+      "TZ=UTC",
+      "SOURCE_DATE_EPOCH=0",
+      "/usr/bin/clang++",
+      "-E",
+      "-P",
+      "/tmp/mytry-diagnostic-review/native-review/timestamp.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.04,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

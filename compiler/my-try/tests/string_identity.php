@@ -24,7 +24,7 @@ foreach (['===' => operator_operation::scalar_identical, '!==' => operator_opera
 		if ($conversion->operation !== conversion_operation::identity) { throw new \LogicException('Boolean identity used coercion'); }
 	}
 }
-foreach (['"1" === 1', '1 !== "1"', '"a" < "b"', '"a" == "a"', 'true === 1', 'false !== ""', 'true < false'] as $expression) {
+foreach (['"1" == 1', '1 != "1"', 'true == 1', 'false != ""', 'true < false'] as $expression) {
 	$failed = false;
 	try { operator_test_source('$a = ' . $expression . ';'); }
 	catch (\RuntimeException $error) { $failed = true; }
@@ -56,7 +56,7 @@ if (($debit === 0) === ($credit === 0)) { return 9; }
 return 0;
 PHS);
 $cpp = CPP_Probe::text(Model::$cpp_files);
-$compiler = new Compiler(); $compiler->prepare(); $compiler->cpp();
+$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->prepare(); $compiler->cpp();
 if ($cpp !== CPP_Probe::text(Model::$cpp_files)) { throw new \LogicException('String identity no-op changed output'); }
 file_put_contents($argv[1] . '/values.cpp', $cpp);
 $cpp = str_replace('int main(int argc, char** argv)', 'int unused_entry(int argc, char** argv)', $cpp);

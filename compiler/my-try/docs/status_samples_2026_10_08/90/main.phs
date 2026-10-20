@@ -1,0 +1,4 @@
+class Item { public int $value = 7; }
+$item = new Item();
+$name string = "value";
+return $item->$name;

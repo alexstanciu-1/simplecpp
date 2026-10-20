@@ -1,0 +1,1 @@
+{"stage":"prepare","error":"S2S clean requires supported scalar, vector, hash, mixed, dynamic or explicit callable storage\n"}

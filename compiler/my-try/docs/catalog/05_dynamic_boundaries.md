@@ -64,6 +64,14 @@ Existing type preparation, registry contracts and conversion workers own these r
 
 ### Reconciled imported notes
 
+
+**Current scope — 2026-10-19 (CS167).** Imported-note map separates semantic type modifiers, signatures, casts, nullable/Result state and later object/closure/container owners. It cannot close their individual prose obligations. Unknown types and union gaps remain distinct from legacy annotations; later reference/error/ownership capabilities supersede blanket deferrals.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS167`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 | Cards | Current disposition | Proof / remaining owner |
 | --- | --- | --- |
 | TYPE-VAR-006B | Strict explicit intent: `$p weird<int>;` rejects | `tests/constructed_type.php`; legacy annotations remain separate |
@@ -76,7 +84,17 @@ Existing type preparation, registry contracts and conversion workers own these r
 | NOTE-063 | Explicit Result identity, sentinel distinctions and existing-output take covered | `tests/results.php`, `tests/take.php`; structured errors remain chapter 13; output declarations below |
 | CAST-OBJECT-001 | Deferred with dynamic/container construction, not unrestricted casting | Chapter 06 handoff; existing `(mixed)`/`(dynamic)` bridges are distinct |
 
+</details>
+
 ### Consolidated remaining debt
+
+
+**Current scope — 2026-10-19 (CS168).** Consolidated debt retains actual wider joins/lifted operators, take output declarations, table comparison/cycle policy and legacy profile scope. Dynamic container integration and ownership execution have later proofs, not missing prerequisites. Runtime availability alone does not prove source admission; current operator gaps retain V-L issues and contract conflicts.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS168`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 - **CH05-OWN-01 — resolved in chapter 07.** The [ownership model](07_references_lifetime.md#ownership-model-and-direct-nesting--2026-10-06)
   classifies all three families and rejects immediate ownership nesting and
@@ -99,11 +117,14 @@ Existing type preparation, registry contracts and conversion workers own these r
 - **CH05-PROFILE-01 — legacy availability.** The Result kind model preserves all
   three families, but strict-vs-legacy availability enforcement remains deferred.
 - **RSL-ERROR-01** stays in [chapter 13](13_errors.md#structured-error-value-debt-from-chapter-05).
-  Error construction/members are not invented by take or Result preparation.
+  Its bounded factory/getter/failure-transport slice is now implemented (2026-10-16);
+  see the CH13 checkpoint. General runtime constructors remain excluded.
 - **MIXED-TRUTH-001 / MIXED-COMPARE-001** remain runtime-contract reconciliation:
   broader table/object truthiness, weak equality wording versus implementation,
   and recursive/cyclic table comparison hardening. Nullable/null generic identity
   helper repair also remains separate; compiled nullable checks use presence tests.
+
+</details>
 
 ### Verification and next chapter
 
@@ -124,6 +145,14 @@ templates and index AST; establish read/write and lifetime contracts before muta
 and foreach. Chapter closeout does not authorize an ownership-model redesign.
 
 ## Text concatenation write-back — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS170).** Text write-back converts preserved operands, may change mixed numeric kind to string, retains self/alias snapshots and does not roll back an update after outer conversion failure. Distinct numeric stored-kind guard remains. Later dynamic/property/index/eager contracts supersede old exclusions; nullable/fixed-width text admission remains missing.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS170`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Implemented `.=` for established string or mixed locals/parameters. Right operands
 reuse binary concatenation admission: mixed, ordinary bool/int/float/string or
@@ -157,7 +186,17 @@ Verification passed first attempt: 15 PHP suites and 322 generated programs in
 `/tmp/my-try-mixed-append-20261004-no-pch`. This is generated-program evidence,
 not a native compiler rebuild. Numeric update regressions remain in the same run.
 
+</details>
+
 ## Mixed and scalar text concatenation — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS171).** Native content/state probes establish string result and text-context conversion rather than checked extraction or universal explicit casts. Null/false/true and numeric/text/table formatting have observers. Old dynamic-handle and effect gates are superseded by separated families/eager sequencing; configured nullable/fixed-width text remains missing.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS171`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Implemented binary `.` for mixed, ordinary bool/int/float/string and literal null,
 in either order. `String_Conversions` owns text-context admission through the named
@@ -191,7 +230,17 @@ dependency in `php_string.hpp`, now explicit. The header-first runtime regressio
 is `tests/runtime/native/test_php_text_header.cpp`; its supplementary proof also
 covers owned/shared/weak tables. Native compiler rebuilding remains on demand.
 
+</details>
+
 ## Mixed short-circuit logical operators — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS172).** Mixed logical fixtures distinguish truthiness from explicit bool casts, lazy RHS effects/failures, source order and scalar peers. Invalid boxed container truth remains runtime policy, not universal type rejection. Guarded wrapper logical admission remains missing; earlier eager-parent and dynamic-handle bans are superseded.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS172`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Implemented `&&` / `||` and their `and` / `or` spellings when at least one operand
 is mixed. Peers may be mixed, bool, ordinary int or float, in either order. The
@@ -224,7 +273,17 @@ Verification: 15 PHP suites and 290 generated programs pass in
 sequenced-call restriction and stale rejection expectations; these were repaired
 before the first generated-program run, which passed.
 
+</details>
+
 ## Mixed numeric updates — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS173).** Numeric updates preserve original stored numeric kind before commit and return old/new snapshots. Runtime failures and later typed-consumer failures have distinct commit boundaries; value/reference parameter observers preserve alias semantics. Later shared boxed dynamic and property/index/eager contracts supersede non-goals. Boxed bits are a separate missing admission issue.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS173`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Implemented `+=`, `-=`, `*=`, `/=`, `%=` and prefix/postfix `++`/`--` for established
 mixed locals and parameters. Compound right operands reuse numeric arithmetic
@@ -272,7 +331,17 @@ compound-suite helper named `take`, corrected to an ordinary function name befor
 the final run. The older monolithic native mixed test's widening expectation was
 updated, but that whole historical smoke test is not part of this focused proof.
 
+</details>
+
 ## Mixed comparisons and empty-carrier repair — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS174).** Comparison probes distinguish numeric equality from strict kind identity and observe scalar peers, ordering failure/no store and once-only null checks. Historical empty dynamic handle versus boxed-null distinctions are replaced by one-null separated-family semantics. Weak-table inequality wording and cyclic/deep table semantics remain explicit unresolved debt, not silently declared verified.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS174`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Implemented `==`, `!=`, `===`, `!==`, `<`, `<=`, `>` and `>=` through the existing
 binary AST and `Boxed_Operators`. All return owned bool values. Equality/identity
@@ -329,7 +398,17 @@ dependency. Both were corrected before the final passing runs.
 `!=` implementation as the negation of `==`. Weak-carrier semantics are not changed
 by this slice. Recursive/cyclic table content-comparison hardening is also deferred.
 
+</details>
+
 ## Mixed numeric arithmetic — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS175).** Boxed numeric dispatch preserves family, boxes admitted scalar peers, and checks runtime nonnumeric kinds, modulo float payloads and zero divisors without altering receiving storage on failed computation/conversion. Division_by_zero remains preserved. Dynamic nonnumeric/old effect exclusions are historical under the separated-family amendment; broader bitwise/width rules are not inferred.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS175`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Implemented binary `+`, `-`, `*`, `/`, `%` and unary `+`/`-` for mixed values.
 `Boxed_Operators` owns candidate selection on existing expression nodes; retained
@@ -368,6 +447,8 @@ Verification passed first attempt: 14 PHP suites and 234 generated programs in
 `/tmp/my-try-mixed-arithmetic-20261004-1`; the 16 new arithmetic programs also passed
 without PCH in `/tmp/my-try-mixed-arithmetic-20261004-no-pch`. Existing scalar,
 wrapper, conversion and mixed behavior remains covered by the focused runner.
+
+</details>
 
 ## Explicit mixed/dynamic bridges — 2026-10-04
 
@@ -541,6 +622,14 @@ fallback after sandbox FPM startup failed). The compiler was not rebuilt nativel
 
 ## Single-value probes — 2026-10-03
 
+
+**Current scope — 2026-10-19 (CS182).** Collection-only empty amendment supersedes old scalar/null/nullable emptiness claims. Current fixtures and value_probes.php verify isset separately, string emptiness and rejection/recovery after changing a string producer to int. Native fixture names do not imply that old wrapper empty calls are still tested. Keyed probes have later dedicated contracts.
+
+Contracts and owners: [error_values_and_take.md](../../../../specs/error_values_and_take.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS182`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 `value_probe_node` owns one operand and an `isset`/`empty` kind; these are language
 expressions, not ordinary function-name lookups. `Value_Probe_Preparation` admits
 supported scalar values, nullable scalars and literal null, retaining the selected
@@ -564,6 +653,8 @@ error propagation, arity, syntax traversal/cleanup and incremental admission rec
 Checkpoint: eleven focused PHP suites and 99 generated C++ programs/probes pass in
 `/tmp/my-try-probes-20261003-final/` (shared 12-slot runner, CLI fallback after sandbox
 FPM startup failed). No native compiler rebuild was performed.
+
+</details>
 
 ## Result-wrapper model checkpoint — 2026-10-03
 
@@ -590,6 +681,14 @@ the three C++ spellings/headers. Six focused PHP suites pass through the shared
 compiler rebuild or Result runtime execution is claimed.
 
 ## Result construction — 2026-10-03
+
+
+**Current scope — 2026-10-19 (CS184).** Native construction/state observers separate bool payloads from explicit sentinels and prove independent copies and exact boundaries. Legacy literal-false destination rewriting is intentionally absent. Later source error and aggregate/boxed contracts supersede dated scalar-only debt; implicit defaults and cross-family conversions are not inferred.
+
+Contracts and owners: [error_values_and_take.md](../../../../specs/error_values_and_take.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS184`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 The next bounded slice enables all three registered Result families in the source
 type scope. `conversions/results.php` owns exact scalar payload construction and
@@ -636,16 +735,25 @@ Debt/non-goals:
 
 - **RSL-ERROR-01:** structured `error` construction and getters belong
   to [chapter 13](13_errors.md#structured-error-value-debt-from-chapter-05).
-  `error -> result<T>` failure construction is blocked on that prerequisite. Use a
-  reusable runtime-type construction/member-call path, not an error-specific AST.
-  Do not fabricate an empty error to bypass this dependency.
+  Resolved on 2026-10-16 through core factory/member metadata and shared failure
+  conversion. No general runtime-constructor syntax was added.
 - Explicit casts, logical/arithmetic operators, broader selection/coalescing joins and
   profile-availability changes remain follow-up work.
 - Implicit default construction, cross-payload/family conversion, non-scalar/nested
   payload operations (including `result<error>`), and legacy implicit bool-sentinel
   admission remain deferred. Current Result locals require an explicit initializer.
 
+</details>
+
 ## Checked Result extraction — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS185).** Native extraction and paired state observers cover false/zero/empty successes, all nonvalue states, owned strings, once-only evaluation, unchanged failed stores and calls not entered after argument failure. Exact reference rules remain. Historical source-error deferral is superseded; no universal casts/lifted operators follow.
+
+Contracts and owners: [error_values_and_take.md](../../../../specs/error_values_and_take.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS185`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 All three Result families now support exact scalar payload extraction at required
 assignment (including initialization), by-value argument and return boundaries.
@@ -679,7 +787,17 @@ run also passed its 88 programs, before adding the byte/uint8 alias fixture.
 This proves the PHP-hosted compiler and generated C++ behavior, not a native compiler
 rebuild. LLVM and source error construction remain deferred.
 
+</details>
+
 ## Conditional take and no-error values — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS186).** Both spellings normalize to one node; rejection/cleanup/retry/repair assertions supplement native state checks. Source is evaluated before output; falsey payloads succeed, failures preserve value, structured success clears error and bool sentinels preserve value while setting flag. Repeated-take state ledger proves nonconsumption. Existing-output restriction remains; later boxed/container/callable admission supersedes aggregate blanket deferral.
+
+Contracts and owners: [error_values_and_take.md](../../../../specs/error_values_and_take.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS186`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Contract: [error values and take](../../../../specs/error_values_and_take.md).
 Primary `take($value[, $alternative]) = source` and compatibility helper spelling
@@ -698,9 +816,9 @@ Source exceptions propagate, not turn into false.
 The registered nominal `error` has default/copy semantics and readonly
 `error::$no_error`. Conditions and `!$error` use explicit presence. A real empty-message
 error stays true. Runtime Result failure construction/assignment rejects no-error;
-const inspection prevents bypassing that invariant. Source constructors/getters and
-`error -> result<T>` remain chapter 13 debt. Qualified constant lookup is not general
-static-member support.
+const inspection prevents bypassing that invariant. Chapter 13 now adds the bounded
+`error::make`/getter surface and `error -> result<T>` conversion; general runtime
+constructor syntax remains excluded.
 
 Deferred: inline typed/inferred take declarations and their branch availability/scope,
 tuple spelling, aggregate payloads, fields/index outputs, reference-alias analysis and
@@ -716,7 +834,17 @@ all wrapper states, both spellings, error reset/truthiness, single evaluation, l
 skipping, unchanged outputs, cleanup and incremental failure/retry/repair. The v0.3
 auxiliary-data idea is recorded only in top-level `docs/v0.3/result_auxiliary_data.md`.
 
+</details>
+
 ## Result conditions and value probes — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS187).** Current state observers test conditions and isset/!isset, not the old wrapper empty contract. Collection-only amendment intentionally rejects empty on every Result family. True sentinel may be truthy/present without a payload; falsey success remains present. Guarded logical operators remain separate missing admission, not condition semantics.
+
+Contracts and owners: [error_values_and_take.md](../../../../specs/error_values_and_take.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS187`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 All three Result families now admit supported scalar payloads in ordinary conditions
 (`if`/`elseif`, loops and full ternary conditions) and single-value `isset`/`empty`.
@@ -747,6 +875,8 @@ all Result families with bool/int/float/string payloads, non-value states, strin
 `"0"`, single evaluation and all existing condition consumers. PHP checks cover
 role-based admission, prepared facts/cleanup, exclusions and incremental invalidation,
 retry and clean-build agreement. No native compiler rebuild or LLVM work is claimed.
+
+</details>
 
 ## Result-valued ternary and Elvis joins — 2026-10-04
 
@@ -828,6 +958,14 @@ Mixed and the remaining chapter debt are unchanged; this is not chapter closeout
 
 ## Mixed and dynamic model foundation — 2026-10-04
 
+
+**Current scope — 2026-10-19 (CS191).** dynamic_model.php verifies role/identity separation, canonical bindings and ordinary nominal formation. Current tagged dynamic has value storage for its binding and scalar/null values; container copies share identity. Object-only/class-like storage prose is superseded by the separated-family amendment. Model assertions do not prove source operation admission.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS191`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 Implemented the agreed model-only slice following
 [`dynamic_types.md`](../../../../specs/dynamic_types.md). `mixed` is a broad boxed
 value; `dynamic` is shared object/table storage whose ordinary copies preserve
@@ -865,7 +1003,17 @@ calls separately; current Phase 1 uses `[]` and does not promise method dispatch
 The following slice supplies normal snippet-runtime linkage for mixed execution
 fixtures; generated semantics do not change to work around missing linkage.
 
+</details>
+
 ## Mixed scalar value boundaries — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS192).** Prepared required_cast versus explicit cast decisions are distinct. Bounded native fixtures prove scalar boxing/copies and checked boundaries with failed destination preservation and no callee entry after argument failure. Ordinary int required extraction remains stricter than explicit int conversion. Old boxed dynamic cross-carrier bridge and blanket operator/index/iteration deferrals are superseded; fixed-width and wrapper conversion limits remain separate.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS192`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 `Mixed_Conversions` owns role-based admission through the existing conversion path.
 `mixed_box` constructs a box from null, bool, ordinary int, float or string;
@@ -914,7 +1062,17 @@ do not fully distinguish required int extraction from explicit conversion; follo
 `dynamic_types.md` and the explicit required helper, not those broader fallbacks.
 The following slice adds explicit scalar casts and mixed truthiness/probes.
 
+</details>
+
 ## Mixed casts, conditions and probes — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS193).** Native scalar cast, condition and probe observers plus preparation cleanup/recovery establish separate authorities. Current collection-only empty rejects unsupported runtime scalar/null kinds; old scalar emptiness prose is superseded. String false/hello truthiness differs from boolean casting. Container truthiness remains explicitly partial; old direct-dynamic and eager-parent gates are superseded, not universal runtime support.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS193`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Agreed scope follows [dynamic typed extraction](../../../../specs/dynamic_types.md#explicit-typed-extraction),
 the [condition matrix](../../../../specs/conditional_expression_matrix.md) and
@@ -982,7 +1140,17 @@ were not changed to accommodate those tests. No native compiler rebuild was run.
 
 The next slice implements the direct mixed-valued selection rows below.
 
+</details>
+
 ## Direct mixed selection joins — 2026-10-04
+
+
+**Current scope — 2026-10-19 (CS194).** Eleven state rows, symmetric scalar joins, mixed-null selections and failure observers prove lazy once-only selection and owned scalar/string results. Native shared-table probe observes initial selected backing identity and rejected Elvis, not mutation/COW behavior. Current mixed container value semantics follow the separated-family amendment; no broad shared-object semantics are inferred. Both branches prepare; invalid boolable fallback remains rejected.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS194`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Agreed and implemented: `mixed`/`mixed`, `mixed`/`T` and `T`/`mixed` branch pairs
 for ternary, Elvis and coalescing, with `T` limited to bool, ordinary int, float and
@@ -1045,6 +1213,8 @@ rebuild or a compilation-performance measurement.
 
 The next agreed slice supplies those wrapper-left/mixed-fallback rows.
 
+</details>
+
 ## Wrapper-left mixed coalescing — 2026-10-04
 
 Agreed scope: `nullable<T> ?? mixed`, `result<T> ?? mixed` and
@@ -1053,6 +1223,14 @@ int, float and string. This follows the authoritative conditional matrix, not a 
 general wrapper-to-mixed conversion right.
 
 ### Important consequences
+
+
+**Current scope — 2026-10-19 (CS196).** Native observers retain false/zero/empty/string-zero success, select fallback on failure, accept mixed-null fallback, count source/fallback evaluations and preserve receiving storage after selected failures. Original source state remains unchanged. Table observer checks initial backing identity only; it does not prove mutation sharing or override mixed COW semantics.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS196`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 - Successful false, zero, empty string and `"0"` payloads are retained and boxed.
 - An empty nullable, failed Result or false sentinel selects the mixed fallback.
@@ -1093,7 +1271,17 @@ attempt. Tests use the shared 12-slot pool; PHP fell back to CLI after sandbox F
 denial. No native compiler rebuild, runtime semantic changes or native-compiler
 portability claim is included.
 
+</details>
+
 ## Progress
+
+
+**Current scope — 2026-10-19 (CS197).** Progress table aggregates bounded historical rows and does not provide independent execution proof. RSL-PROBES/VAR-EMPTY still claim wrapper/scalar/null empty, now intentionally rejected. Keyed probe deferrals and scalar-only take wording are superseded by later bounded support. Cast/native parity links remain historical; broader fallback/operator gaps remain unresolved.
+
+Contracts and owners: [dynamic_types.md](../../../../specs/dynamic_types.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS197`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
 
 Edit these rows as work proceeds. Imported source support is recorded below, independently of this progress.
 
@@ -1133,6 +1321,9 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [NOTE-045](#note-045) | reconciled/debt | `$nullable ?? $mixed` | proved subset | proved subset | deferred | CH05-VAL-01 for remaining joins; boolable coalesce rejects early |
 | [NOTE-052](#note-052) | split/debt | `"value=$v"` | bounded proof | bounded proof | deferred | Scalar interpolation covered; ownership CH05-OWN-01; path interpolation deferred |
 | [NOTE-063](#note-063) | reconciled/debt | `take($v, $e) = source();` | proved subset | proved subset | deferred | Existing outputs; CH05-TAKE-01, CH05-PROFILE-01 and RSL-ERROR-01 |
+
+</details>
+
 ## LIT-NULL-001
 
 **v0.2 decision / target C++:** Non-storable null sentinel; an explicit scalar nullable
@@ -1171,8 +1362,18 @@ $a = null;
 
 ## VAR-ISSET-001
 
+
+**Current scope — 2026-10-19 (CS199).** Bounded one-value isset observers distinguish missing nullable from false/zero/empty-string payloads and count evaluation once. Undeclared names still reject; later keyed nonmutating probes supersede blanket path deferral. Runtime-only imported diagnostics are replaced by preparation when types prove invalid.
+
+Contracts and owners: [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [simple_cpp_php_strict_quick_learn.md](../../../../specs/simple_cpp_php_strict_quick_learn.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS199`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** One-value probe node; prepared scalar/nullable/null
 admission and runtime `php::isset` semantics. Missing-name/path behavior is not added.
+
+</details>
 
 ### Imported version 1
 
@@ -1207,8 +1408,18 @@ auto a = php::isset(b);
 
 ## VAR-EMPTY-001
 
+
+**Current scope — 2026-10-19 (CS200).** String empty versus string-zero is proved. Collection-only amendment intentionally replaces scalar/null/nullable/Result empty: known invalid types reject in preparation; unknown boxed kind checks at runtime. The generic source form remains valid only for admitted operands; old v0.2 decision wording is stale.
+
+Contracts and owners: [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [simple_cpp_php_strict_quick_learn.md](../../../../specs/simple_cpp_php_strict_quick_learn.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS200`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** One-value probe node; prepared scalar/nullable/null
 admission and runtime `php::empty` semantics. `empty("0")` is false, unlike PHP.
+
+</details>
 
 ### Imported version 1
 
@@ -1515,9 +1726,19 @@ auto a = cast<string_t>(b);
 
 ## CAST-OBJECT-001
 
+
+**Current scope — 2026-10-19 (CS207).** Unrestricted (object)$b remains outside approved support. Imported special (object)[...] and stdClass construction are separate later container contracts, not justification for arbitrary casts. Historical dynamic-inside-mixed representation is superseded by separated families.
+
+Contracts and owners: [count_empty_isset_contract.md](../../../../specs/count_empty_isset_contract.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [simple_cpp_php_strict_quick_learn.md](../../../../specs/simple_cpp_php_strict_quick_learn.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS207`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Deferred with CH05-DYN-01 to chapter 06. Supported
 object construction forms need container/runtime-construction preparation first;
 this is not permission for unrestricted object casting.
+
+</details>
 
 ### Imported version 1
 
@@ -1633,8 +1854,18 @@ nullable<string_t> x = null;
 
 ## NULL-CHECK-001
 
+
+**Current scope — 2026-10-19 (CS210).** Strict nullable null comparison tests presence, including reverse order and one operand evaluation. Catalog phrase neither operand order evaluates once is a wording defect: either order must evaluate once. Prepared presence lowering need not use imported helper spelling; broader handle families retain their separate proofs.
+
+Contracts and owners: [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS210`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **v0.2 decision / target C++:** Prepared nullable presence test, negated for `=== null`;
 either operand order evaluates the nullable expression once.
+
+</details>
 
 ### Imported version 1
 
@@ -1709,6 +1940,14 @@ php::not_null(x)
 
 ## TYPE-VAR-006B
 
+
+**Current scope — 2026-10-19 (CS212).** Unknown explicit local/parameter/return/field type rejects without mixed/auto fallback, with exact diagnostics and no output in constructed_type.php. Comment annotation is legacy S02. Imported note claiming permissive untyped-null fallback contradicts both current and imported LIT-NULL-001 rejection.
+
+Contracts and owners: [type_use_modifiers.md](../../../../specs/type_use_modifiers.md), [error_values_and_take.md](../../../../specs/error_values_and_take.md), [conditional_expression_matrix.md](../../../../specs/conditional_expression_matrix.md), [v0_2_preparation_diagnostics.md](../../../../specs/v0_2_preparation_diagnostics.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS212`).
+
+<details>
+<summary>Earlier checkpoint / imported guidance — historical</summary>
+
 **Strict-first scope:** `$p weird<int>;` and equivalent unknown explicit parameter,
 return and field types reject during preparation. Legacy annotations below are reference only.
 
@@ -1716,6 +1955,8 @@ return and field types reject during preparation. Legacy annotations below are r
 type model or rejects without output; it never degrades to mixed/auto. Proved by
 `tests/constructed_type.php`. Ownership nesting is separately covered by the
 chapter 07 model proof (CH05-OWN-01), not by this unknown-type rejection.
+
+</details>
 
 ### Imported version 1
 
@@ -2068,9 +2309,9 @@ chapter 02; indexed/property/call interpolation needs the corresponding access o
 **v0.2 decision / examples:** Explicit Result family identities, scalar payload/sentinel
 distinctions and existing-output take are covered. Main v0.2 syntax is
 `take($value, $error) = source();`; helper spelling shares its node. Output declaration
-and profile availability remain CH05-TAKE-01/CH05-PROFILE-01. General error members/
-construction remain RSL-ERROR-01 in chapter 13; imported member examples are not
-current my-try support claims.
+and profile availability remain CH05-TAKE-01/CH05-PROFILE-01. Chapter 13 resolves
+RSL-ERROR-01 through the bounded factory/getter/failure-transport slice; imported
+Result member examples are not current my-try support claims.
 
 > ## Explicit result_or_false<T> and result<T> type intent
 >

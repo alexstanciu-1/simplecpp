@@ -1,0 +1,1 @@
+{"entry.cpp": "int answer(); int main(){return answer();}", "answer.cpp": "int answer(){return 7;}"}

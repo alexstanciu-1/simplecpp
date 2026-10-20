@@ -1,0 +1,26 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/data_initializer.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+#include "lang/php/operators/empty/empty.hpp"
+
+int main()
+{
+	scpp::vector_t<scpp::int_t<>> local_values = ([&]() -> scpp::vector_t<scpp::int_t<>> {
+scpp::initializer_buffer<scpp::int_t<>> initializer_0(2);
+{
+scpp::int_t<> initializer_value_1 = static_cast<scpp::int_t<>>(1LL);
+initializer_0.append(initializer_value_1);
+}
+{
+scpp::int_t<> initializer_value_2 = static_cast<scpp::int_t<>>(2LL);
+initializer_0.append(initializer_value_2);
+}
+return scpp::data_initializer<scpp::vector_t<scpp::int_t<>>>::from_list(initializer_0.view());
+}());
+	local_values = scpp::vector_t<scpp::int_t<>>{};
+	return static_cast<int>((([&]() -> scpp::int_t<> { if ((scpp::php::empty(local_values)).native_value()) { return static_cast<scpp::int_t<>>(0LL); } return static_cast<scpp::int_t<>>(1LL); }())).native_value());
+	return 0;
+}

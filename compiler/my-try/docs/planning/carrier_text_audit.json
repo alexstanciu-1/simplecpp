@@ -1,0 +1,31 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "source_files_checked": 6160,
+  "source_mismatches": [],
+  "remote_source_files_checked": 6269,
+  "unchanged_runtime_implementation_files": 217,
+  "runtime_contract_metadata_changed": true,
+  "source_rows": 924,
+  "original_findings_replayed": 4,
+  "scope_rejections": 71,
+  "accepted_suites": 11,
+  "accepted_commands": 5906,
+  "evidence_records": 22384,
+  "evidence_digest_verified": true,
+  "failed_attempts_preserved": true,
+  "original_issue_closure": "24/64",
+  "remaining_blockers_in_scope": [],
+  "deferred_domains": [
+    "uint64 text",
+    "wrapped fixed widths",
+    "nested carriers",
+    "object/container text",
+    "new boxed combinations",
+    "new indexed capabilities",
+    "other conversion contexts"
+  ],
+  "full_matrix_run": false,
+  "docs_closeout_after_tested_snapshot": true
+}

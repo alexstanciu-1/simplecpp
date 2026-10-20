@@ -91,7 +91,8 @@ final class Operator_Preparation
 		array $operands /** vector<canonical_type_use> */, operator_context $operator_context,
 		preparation_context $context): operator_decision
 	{
-		if ($operator_context !== operator_context::expression) {
+		if (($operator_context !== operator_context::expression)
+			&& ($operator_context !== operator_context::compound_assignment)) {
 			throw new \RuntimeException('S2S operator context is not supported yet');
 		}
 		if ($source_operator === operator_kind::concatenation) {
@@ -112,6 +113,14 @@ final class Operator_Preparation
 			|| ($source_operator === operator_kind::pre_decrement) || ($source_operator === operator_kind::post_decrement)) {
 			return Mutation_Preparation::decide($source_operator, $operands, $context);
 		}
+		$wrapper_equality = Wrapper_Equality::try_decide($source_operator, $operands, $operator_context, $context);
+		if ($wrapper_equality !== null) {
+			return $wrapper_equality;
+		}
+		$guarded = Guarded_Operators::try_decide($source_operator, $operands, $operator_context, $context);
+		if ($guarded !== null) {
+			return $guarded;
+		}
 		if (($source_operator === operator_kind::unary_plus) || ($source_operator === operator_kind::unary_minus)
 			|| ($source_operator === operator_kind::bitwise_not) || ($source_operator === operator_kind::logical_not)) {
 			return self::decide_unary($source_operator, $operands, $context);
@@ -130,32 +139,35 @@ final class Operator_Preparation
 				return Boxed_Operators::decide($source_operator, $operands);
 			}
 		}
-		if (($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical)) {
-			if (q_count($operands) === 2) {
-				$same_string = String_Conversions::is_string($operands[0]) && String_Conversions::is_string($operands[1]);
-				$same_bool = $operands[0]->matches($context->boolean) && $operands[1]->matches($context->boolean);
-				if ($same_string || $same_bool) {
-					return self::decide_scalar_identity($source_operator, $operands, $context);
+		$scalar_identity = Scalar_Identity::try_decide($source_operator, $operands, $context);
+		if ($scalar_identity !== null) {
+			return $scalar_identity;
+		}
+		if (($source_operator === operator_kind::equal) || ($source_operator === operator_kind::not_equal)) {
+			if ((q_count($operands) === 2) && $operands[0]->matches($context->boolean)
+				&& $operands[1]->matches($context->boolean)) {
+				return Boolean_Operators::decide_equality($source_operator, $operands, $context);
+			}
+		}
+		if (String_Operators::is_comparison($source_operator) && (q_count($operands) === 2)
+			&& String_Conversions::is_string($operands[0]) && String_Conversions::is_string($operands[1])) {
+			return String_Operators::decide_comparison($source_operator, $operands, $context);
+		}
+		if (Floating_Point_Operators::is_comparison($source_operator)) {
+			foreach ($operands as $operand) {
+				if ($operand->matches(Language_Types::floating(Model::$language_scope))) {
+					return Floating_Point_Operators::decide_comparison($source_operator, $operands, $context);
+				}
+			}
+		}
+		if (Floating_Point_Operators::is_arithmetic($source_operator)) {
+			foreach ($operands as $operand) {
+				if ($operand->matches(Language_Types::floating(Model::$language_scope))) {
+					return Floating_Point_Operators::decide($source_operator, $operands, $context);
 				}
 			}
 		}
 		return Integer_Operators::decide_binary($source_operator, $operands, $context);
-	}
-
-	/** Admitted same-type scalars compare values without text or truthiness coercion. */
-	private static function decide_scalar_identity(operator_kind $source_operator,
-		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
-	{
-		$decision = new operator_decision();
-		$decision->source_operator = $source_operator;
-		$decision->operation = $source_operator === operator_kind::identical
-			? operator_operation::scalar_identical : operator_operation::scalar_not_identical;
-		$decision->result_type = $context->boolean;
-		foreach ($operands as $operand) {
-			$decision->operands[] = Conversion_Preparation::decide(
-				$operand, $operands[0], conversion_context::operator_operand);
-		}
-		return $decision;
 	}
 
 	/** Exact numeric/bool candidates plus explicit condition-negation roles; no numeric promotion. */
@@ -165,11 +177,16 @@ final class Operator_Preparation
 		if (q_count($operands) !== 1) {
 			throw new \LogicException('Unary operation requires one operand');
 		}
+		if ((($source_operator === operator_kind::unary_plus) || ($source_operator === operator_kind::unary_minus))
+			&& $operands[0]->matches(Language_Types::floating(Model::$language_scope))) {
+			return Floating_Point_Operators::decide($source_operator, $operands, $context);
+		}
 		$expected = $context->integer;
 		if ($source_operator === operator_kind::logical_not)
 		{
 			$definition = Type_Queries::canonical($operands[0])->definition();
-			if ($operands[0]->matches(Language_Types::error_type(Model::$language_scope))
+			if (self::is_logical_numeric($operands[0])
+				|| $operands[0]->matches(Language_Types::error_type(Model::$language_scope))
 				|| ($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)
 				|| Boxed_Conversions::is_boxed($operands[0]) || (Ownership_Conversions::role($operands[0]) !== null)
 				|| (Type_Queries::source_record($operands[0]) !== null)
@@ -216,6 +233,15 @@ final class Operator_Preparation
 		if (q_count($operands) !== 2) {
 			throw new \LogicException('Concatenation requires two operands');
 		}
+		// The bounded text extension does not widen the existing boxed operand domain.
+		if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
+			foreach ($operands as $operand) {
+				if (!Boxed_Conversions::is_boxed($operand) && !Boxed_Conversions::is_scalar_payload($operand)
+					&& !Nullable_Conversions::is_null($operand)) {
+					throw new \RuntimeException('S2S boxed concatenation requires boxed, ordinary scalar or null operands');
+				}
+			}
+		}
 		$string_type = $context->string_type;
 		if (Boxed_Conversions::is_boxed($operands[0]) && Boxed_Conversions::is_boxed($operands[1])) {
 			if (!$operands[0]->matches($operands[1])) {
@@ -233,7 +259,7 @@ final class Operator_Preparation
 		return $decision;
 	}
 
-	/** Selected boolean operations require lazy RHS lowering, not overloaded C++ logical calls. */
+	/** Numeric logical operands retain truth conversion; the operation decides lazy or eager evaluation. */
 	private static function decide_logical(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
@@ -244,8 +270,22 @@ final class Operator_Preparation
 		if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
 			return Boxed_Operators::decide_logical($source_operator, $operands);
 		}
+		if (self::is_logical_numeric($operands[0]) && self::is_logical_numeric($operands[1])) {
+			$decision = new operator_decision();
+			$decision->source_operator = $source_operator;
+			$decision->operation = $source_operator === operator_kind::logical_and
+				? operator_operation::condition_and : operator_operation::condition_or;
+			if ($source_operator === operator_kind::logical_xor) {
+				$decision->operation = operator_operation::condition_xor;
+			}
+			$decision->result_type = $boolean;
+			foreach ($operands as $operand) {
+				$decision->operand_truthiness[] = Condition_Truthiness::decide($operand);
+			}
+			return $decision;
+		}
 		if ((!$operands[0]->matches($boolean)) || (!$operands[1]->matches($boolean))) {
-			throw new \RuntimeException('S2S logical operation requires canonical bool operands');
+			throw new \RuntimeException('S2S logical operation requires canonical bool operands or canonical int/float operands');
 		}
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
@@ -260,6 +300,13 @@ final class Operator_Preparation
 		$decision->operands[] = Conversion_Preparation::decide(
 			$operands[1], $boolean, conversion_context::operator_operand);
 		return $decision;
+	}
+
+	/** Numeric logical admission is narrower than the general condition surface. */
+	private static function is_logical_numeric(canonical_type_use $operand): bool
+	{
+		return $operand->matches(Language_Types::integer(Model::$language_scope))
+			|| $operand->matches(Language_Types::floating(Model::$language_scope));
 	}
 
 	/** Normalize token spelling before candidate discovery; backends never inspect it. */

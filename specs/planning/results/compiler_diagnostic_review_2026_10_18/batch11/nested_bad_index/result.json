@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S operator[] with 1 argument(s) overload resolution is deferred\n"
+}
