@@ -168,6 +168,12 @@ application boundary check without undocumented API toggles or local recordings.
 - [ ] Update CLI/API examples, runtime interoperability docs and test instructions.
 - [ ] Remove superseded branches, temporary helpers and stale tests only after the
   acceptance workflow covers the replacement. Preserve unrelated worktree changes.
+- [ ] Naming debt: review readable, bounded, stable specialization and operation
+  names, generated file paths and debug discoverability for deeply nested types.
+  Concrete type labels already use a 48-byte readable prefix plus a SHA-256 identity;
+  audit other generated names before choosing changes. Preserve identity separation,
+  collision handling and deterministic replay; avoid recursively expanding full type
+  spellings in public names. This is recorded debt, not a new optimization blocker.
 - [ ] Review and commit bounded slices with their relevant proofs.
 
 ## Explicitly deferred / non-blocking
