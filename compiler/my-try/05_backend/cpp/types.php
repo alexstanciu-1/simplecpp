@@ -6,8 +6,14 @@ namespace scpp\compiler;
 final class CPP_Types
 {
 	/** Allocation and ownership wrappers name the payload, not its default stored representation. */
-	public static function payload(canonical_type_use $type_use, ?cpp_generation_context $context = null,
-		cpp_type_requirement $requirement = cpp_type_requirement::complete): cpp_type
+	public static function payload(canonical_type_use $type_use, ?cpp_generation_context $context = null): cpp_type
+	{
+		return self::payload_for($type_use, cpp_type_requirement::complete, $context);
+	}
+
+	/** Explicit completeness follows the same contract as representation_for. */
+	public static function payload_for(canonical_type_use $type_use, cpp_type_requirement $requirement,
+		?cpp_generation_context $context = null): cpp_type
 	{
 		return self::unmodified_representation($type_use, $requirement, $context);
 	}
@@ -59,7 +65,8 @@ final class CPP_Types
 		if ($type_use->by_value()) {
 			$modifier = Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value);
 			$no_arguments /** vector<canonical_type_use> */ = [];
-			$result = self::native_recipe($modifier->recipe(), $no_arguments, $result, $context, $argument_engine);
+			$no_payloads /** hash<cpp_type,int> */ = [];
+			$result = self::native_recipe($modifier->recipe(), $no_arguments, $result, $context, $argument_engine, $no_payloads);
 			$result->literal = cpp_literal_kind::none;
 		}
 		return $result;
@@ -103,7 +110,8 @@ final class CPP_Types
 	{
 		$result = self::representation_for($type, $requirement, $context);
 		if (($result->opaque) && ($requirement === cpp_type_requirement::declaration)) {
-			$result->headers = [CPP_Opaque_Representation::declaration_header($result->spelling) => true];
+			$headers /** hash<bool> */ = [CPP_Opaque_Representation::declaration_header($result->spelling) => true];
+			$result->headers = $headers;
 		}
 		return $result;
 	}
@@ -163,7 +171,8 @@ final class CPP_Types
 		if ($type instanceof applied_template_type) {
 			$application = object_cast($type, applied_template_type::class);
 			$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
-			$result = self::native_recipe($binding->recipe(), $application->arguments(), null, $context, $argument_engine);
+			$no_payloads /** hash<cpp_type,int> */ = [];
+			$result = self::native_recipe($binding->recipe(), $application->arguments(), null, $context, $argument_engine, $no_payloads);
 			$result->literal = cpp_literal_kind::none;
 			return $result;
 		}
@@ -199,7 +208,8 @@ final class CPP_Types
 
 		$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
 		$no_arguments /** vector<canonical_type_use> */ = [];
-		$result = self::native_recipe($binding->recipe(), $no_arguments, null, $context, $argument_engine);
+		$no_payloads /** hash<cpp_type,int> */ = [];
+		$result = self::native_recipe($binding->recipe(), $no_arguments, null, $context, $argument_engine, $no_payloads);
 		$result->literal = self::literal_kind($type, $definition);
 		return $result;
 	}
@@ -207,7 +217,7 @@ final class CPP_Types
 	/** Render structured runtime binding data; argument interpretation never depends on family names. */
 	private static function native_recipe(cpp_type_recipe $recipe, array $arguments /** vector<canonical_type_use> */,
 		?cpp_type $modified, ?cpp_generation_context $context, ?CPP_Specializations $engine,
-		array $payloads /** hash<cpp_type,int> */ = []): cpp_type
+		array $payloads /** hash<cpp_type,int> */): cpp_type
 	{
 		$result = new cpp_type();
 		$result->spelling = $recipe->symbol;
@@ -262,7 +272,8 @@ final class CPP_Types
 	public static function needs_concrete_storage(canonical_type_use $type): bool
 	{
 		$recipe = self::stored_recipe($type);
-		return $recipe !== null && ($recipe->template_application || $recipe->concrete_boundary);
+		if ($recipe === null) { return false; }
+		return $recipe->template_application || $recipe->concrete_boundary;
 	}
 
 	/** A physical pointer interface identifies its payload through the installed recipe. */

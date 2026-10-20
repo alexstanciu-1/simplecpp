@@ -25,8 +25,10 @@ final class CPP_Runtime_Operations
 				? CPP_Callables::argument_identity($request->call) : CPP_Source_Calls::identity($request->call));
 		}
 		if ($request->construction !== null) {
-			$key .= ':payload=' . CPP_Opaque_Representation::identity($request->construction->constructed_type)
-				. ':storage=' . enum_name($request->construction->storage);
+			$construction /** prepared_object_construction */ = $request->construction;
+			$storage /** record_storage_kind */ = $construction->storage;
+			$key .= ':payload=' . CPP_Opaque_Representation::identity($construction->constructed_type)
+				. ':storage=' . Record_Storage_Kind_Name::text($storage);
 		}
 		if ($request->binding !== null) { $key .= ':' . $request->binding->target()->key() . ':' . $request->binding->symbol() . ':' . $request->binding->header(); }
 		if ($request->initialization !== null) { $key .= ':' . CPP_Data_Construction::binding_identity($request->initialization); }
@@ -83,13 +85,14 @@ final class CPP_Runtime_Operations
 		}
 		// Native outer implementations retain concrete stored arguments. Key checking
 		// alone consumes its original scalar representation.
-		$implementation_engine = (($request->kind === cpp_runtime_operation_kind::binary)
+		$implementation_engine /** nullable<CPP_Specializations> */ = null;
+		if (($request->kind === cpp_runtime_operation_kind::binary)
 			|| ($request->kind === cpp_runtime_operation_kind::conversion)
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
 			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 			|| ($request->kind === cpp_runtime_operation_kind::construct_default)
-			|| ($request->kind === cpp_runtime_operation_kind::construct_call)) ? $engine : null;
+			|| ($request->kind === cpp_runtime_operation_kind::construct_call)) { $implementation_engine = $engine; }
 		$native_context = new cpp_generation_context();
 		$native_context->implementation_engine = $implementation_engine;
 		$signature = '';
@@ -148,7 +151,8 @@ final class CPP_Runtime_Operations
 			. 'namespace scpp::internal { ' . $prototype . "; }\n";
 		$implementation = CPP_Artifacts::includes($native_context->headers, '') . "#include <memory>\n#include <new>\n"
 			. 'namespace scpp::internal { ' . $prototype . ' { ' . $body . " } }\n";
-		return new cpp_specialization_entry($name, $header, $declaration, $implementation, []);
+		$layout_dependencies /** hash<bool> */ = [];
+		return new cpp_specialization_entry($name, $header, $declaration, $implementation, $layout_dependencies);
 	}
 
 	/** Providers can return native outer objects or already-substituted physical payloads. */
@@ -219,7 +223,8 @@ final class CPP_Runtime_Operations
 	public static function initialize(data_construction_node $node, initialization_binding $binding,
 		cpp_generation_context $context): string
 	{
-		if (!$node->entries->is_empty()) {
+		$entries /** Storage<data_entry_node> */ = $node->entries;
+		if (!$entries->is_empty()) {
 			return CPP_Data_Construction::sequence($node, $binding, $context);
 		}
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::initialize_empty);

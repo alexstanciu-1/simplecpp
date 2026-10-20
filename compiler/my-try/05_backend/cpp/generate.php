@@ -26,7 +26,8 @@ final class CPP_Generator
 	public function __construct(?cpp_program $program = null, ?cpp_lowering_options $options = null)
 	{
 		$this->program = $program ?? new cpp_program();
-		$enabled = $options !== null && $options->prelower_templates;
+		$enabled = false;
+		if ($options !== null) { $enabled = $options->prelower_templates; }
 		if ($this->program->prelower_templates !== $enabled) {
 			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
 			$this->program->prelower_templates = $enabled;
@@ -44,7 +45,8 @@ final class CPP_Generator
 	/** One partitioning path for single-source and multi-source programs. */
 	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
 	{
-		$this->specializations = $this->program->prelower_templates ? new CPP_Specializations() : null;
+		$this->specializations = null;
+		if ($this->program->prelower_templates) { $this->specializations = new CPP_Specializations(); }
 		$ordered /** Storage<preparation_owner> */ = new Storage();
 		$found_entry = false;
 		foreach ($files as $prepared)
@@ -216,6 +218,7 @@ final class CPP_Generator
 		$entry_fragment = $this->program->fragments[$entry_owner];
 		// Executable ABI initialization belongs to artifact assembly, not call preparation.
 		$entry_headers /** hash<bool> */ = $entry_fragment->headers;
+		$entry_text = '';
 		if ($this->specializations !== null) {
 			$entry_headers['specializations/base.hpp'] = true;
 			$entry_text = self::compiled_entry($entry_fragment->text);

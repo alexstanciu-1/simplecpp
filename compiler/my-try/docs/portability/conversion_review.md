@@ -12,6 +12,28 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Native refresh after prelowering — 2026-10-20
+
+Candidate base `2a302b1a` plus authored portability repairs now passes conversion
+of 233 compiler/proof PHP files and native compilation. The bounded Chapter 14
+gate passes 14 byte-identical PHP/native artifact comparisons, 28 generated
+program executions with/without PCH, 27 standalone header checks, native
+publication parity and failure/recovery, five incremental build scenarios and
+seven runtime-module build scenarios. The final compiler rebuild reports no work.
+
+[Retained evidence](../../../../specs/planning/results/native_compiler_refresh_2026_10_20/README.md)
+includes the result and source/harness hashes. Raw attempts remain under
+`/tmp/prelower-native-compiler-20261020/`; attempt 13 passes. Repairs use explicit
+typed collection/nullable/scope boundaries and declaration-local enum reflection.
+Execution also exposed overloaded-boolean eager evaluation of a nullable guard;
+explicit branches preserve PHP behavior. No prelowering fallback is added.
+
+This rebuild includes the prelowering implementation, but the native execution
+gate exercises ordinary emission. Native execution of the prelowering engine is
+not claimed. STAN and parked LLVM were skipped; build warnings remain. The
+separate O0 prelowering regression uses the PHP-hosted compiler. See the evidence
+note for its result and the exact build configuration.
+
 ## Chapter 14 native gate — 2026-10-16
 
 The [bounded closeout](../catalog/14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16)

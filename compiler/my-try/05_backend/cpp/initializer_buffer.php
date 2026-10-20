@@ -50,7 +50,8 @@ final class CPP_Initializer_Buffer
 			. 'namespace scpp::internal { ' . $prototype . "; }\n";
 		$implementation = CPP_Artifacts::includes($context->headers, '') . "#include <new>\n"
 			. 'namespace scpp::internal { ' . $prototype . ' { ' . $body . " } }\n";
-		return new cpp_specialization_entry($name, $header, $declaration, $implementation, []);
+		$layout_dependencies /** hash<bool> */ = [];
+		return new cpp_specialization_entry($name, $header, $declaration, $implementation, $layout_dependencies);
 	}
 
 	public static function reference(data_construction_node $node, initialization_binding $binding,

@@ -52,13 +52,21 @@ final class CPP_Source_Calls
 		$key = $method->declaring_type()->qualified_name() . ':' . CPP_Callables::method_name($method);
 		if ($facts->receiver !== null) {
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
-			$key .= ':' . enum_name($receiver->lifetime);
+			$lifetime /** method_receiver_lifetime */ = $receiver->lifetime;
+			$key .= ':' . Method_Receiver_Lifetime_Name::text($lifetime);
 			if ($receiver->dispatch_type !== null) { $key .= ':' . CPP_Opaque_Representation::identity($receiver->dispatch_type); }
 		}
-		foreach ($facts->signature->parameters as $parameter) {
-			$key .= ':' . enum_name($parameter->mode) . ':' . enum_name($parameter->access);
+		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
+		foreach ($parameters as $parameter) {
+			$mode /** passing_mode */ = $parameter->mode;
+			$access /** storage_access */ = $parameter->access;
+			$key .= ':' . Passing_Mode_Name::text($mode) . ':' . Storage_Access_Name::text($access);
 		}
-		foreach ($facts->arguments as $argument) { $key .= ':' . enum_name($argument->boundary); }
+		$arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
+		foreach ($arguments as $argument) {
+			$boundary /** value_boundary_operation */ = $argument->boundary;
+			$key .= ':' . Value_Boundary_Operation_Name::text($boundary);
+		}
 		return $key;
 	}
 

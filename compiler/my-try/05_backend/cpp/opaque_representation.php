@@ -95,8 +95,9 @@ final class CPP_Opaque_Representation
 		$implementation = CPP_Artifacts::includes($headers, '') . "#include <new>\nnamespace scpp::internal {\n"
 			. $signature . ' { ::new(destination) ' . $output->spelling . '(' . $binding->symbol()
 			. '(*std::launder(static_cast<const ' . $input->spelling . "*>(input)))); }\n}\n";
+		$layout_dependencies /** hash<bool> */ = [];
 		return new cpp_specialization_entry($name, $header,
-			"#pragma once\nnamespace scpp::internal { " . $signature . "; }\n", $implementation, []);
+			"#pragma once\nnamespace scpp::internal { " . $signature . "; }\n", $implementation, $layout_dependencies);
 	}
 
 	public static function entry(canonical_type_use $type, CPP_Specializations $engine, bool $compose_arguments = false): cpp_specialization_entry
@@ -125,13 +126,13 @@ final class CPP_Opaque_Representation
 			. 'struct operation_result {}; ' . $name . '(operation_result, void (*construct)(void*, const void*), const void* input);' . "\n"
 			. 'private: unsigned char storage_[' . $prefix . "_SIZE];\npublic:\n"
 			. "void* address() noexcept { return storage_; }\nconst void* address() const noexcept { return storage_; }\n";
-		$payload = null;
+		$payload /** nullable<cpp_type> */ = null;
 		$pointee = $compose_arguments ? CPP_Types::pointee($type) : null;
 		$implementation_headers /** hash<bool> */ = [];
 		if ($pointee !== null) {
 			$payload = CPP_Types::payload($pointee, new cpp_generation_context($engine));
 			$implementation_headers = $payload->headers;
-			$payload_declaration = CPP_Types::payload($pointee, new cpp_generation_context($engine), cpp_type_requirement::declaration);
+			$payload_declaration = CPP_Types::payload_for($pointee, cpp_type_requirement::declaration, new cpp_generation_context($engine));
 			$declaration = CPP_Artifacts::preamble($payload_declaration->headers, $payload_declaration->forward_declarations, '') . $declaration;
 			$readonly_payload = ($type->by_value() ? 'const ' : '') . $payload->spelling;
 			$declaration .= $payload->spelling . '* operator->(); ' . $payload->spelling . "& operator*();\n"

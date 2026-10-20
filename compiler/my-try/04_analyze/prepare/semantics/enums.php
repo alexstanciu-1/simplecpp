@@ -8,7 +8,7 @@ final class Enum_Preparation
 	/** Name membership and backing dependencies use the ordinary declaration scheduler. */
 	public static function declaration(enum_node $syntax, preparation_context $context): prepared_enum
 	{
-		$entry = $syntax->occurrence();
+		$entry = object_cast($syntax->occurrence(), collected_type_definition::class);
 		$definition = object_cast(Declaration_Preparation::type_name($entry, $context), enum_type_definition::class);
 		$registry = Model::$type_catalog->registry();
 		$facts = new prepared_enum();

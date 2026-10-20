@@ -143,7 +143,8 @@ final class CPP_Data_Construction
 		$factory = self::reference($binding, $context);
 		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
 		$input_type = CPP_Declarations::type($parameters[0]->type, $context);
-		if ($node->entries->is_empty()) { return $factory . '(' . $input_type . '{})'; }
+		$entries /** Storage<data_entry_node> */ = $node->entries;
+		if ($entries->is_empty()) { return $factory . '(' . $input_type . '{})'; }
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
 		$element = CPP_Declarations::type($input->arguments()[0], $context);
 		return self::emit_sequence($node, $binding, $context, 'scpp::initializer_buffer<' . $element . '>', $element, $factory);

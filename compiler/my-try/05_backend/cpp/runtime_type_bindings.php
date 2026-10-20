@@ -61,7 +61,8 @@ final class CPP_Runtime_Type_Bindings
 		if ($spec->arguments === null) {
 			throw new \RuntimeException('Modified pointee requires explicit arguments');
 		}
-		foreach ($spec->arguments as $argument) {
+		$arguments /** Storage<runtime_cpp_argument_spec> */ = $spec->arguments;
+		foreach ($arguments as $argument) {
 			if (($argument->modified_type) && ($argument->payload)) {
 				return;
 			}
@@ -96,7 +97,8 @@ final class CPP_Runtime_Type_Bindings
 			$recipe->pointee_position = $parameters[$spec->pointee_parameter];
 			if ($spec->arguments === null) { throw new \RuntimeException('C++ pointee requires explicit payload arguments'); }
 			$found = false;
-			foreach ($spec->arguments as $argument_spec) {
+			$pointee_arguments /** Storage<runtime_cpp_argument_spec> */ = $spec->arguments;
+			foreach ($pointee_arguments as $argument_spec) {
 				if ($argument_spec->parameter === $spec->pointee_parameter) {
 					if (!$argument_spec->payload) { throw new \RuntimeException('C++ pointee requires payload representation'); }
 					$found = true;

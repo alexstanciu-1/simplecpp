@@ -22,10 +22,13 @@ final class cpp_type_recipe
 	public bool $concrete_boundary = false;
 	public string $literal_interface = '';
 	public string $byte_interface = '';
-	public int $pointee_position = -1;
+	public int $pointee_position;
 	public bool $pointee_modified_type = false;
 	public array $arguments /** vector<cpp_type_argument_binding> */ = [];
-	public function __construct(public string $symbol, public string $header) {}
+	public function __construct(public string $symbol, public string $header)
+	{
+		$this->pointee_position = -1;
+	}
 }
 
 final class cpp_type_definition_binding

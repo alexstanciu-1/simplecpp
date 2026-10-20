@@ -14,7 +14,7 @@ final class Guarded_Operators
 			return null;
 		}
 
-		$carrier_extraction /** ?conversion_decision */ = null;
+		$carrier_extraction /** nullable<conversion_decision> */ = null;
 		foreach ($operands as $operand)
 		{
 			$carrier_extraction = self::scalar_extraction($operand, $source_operator, $context);

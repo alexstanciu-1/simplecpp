@@ -31,10 +31,12 @@ final class CPP_Concrete_Index
 	{
 		$destination = $facts->target;
 		$current = $destination->root->require_preparation()->type;
-		foreach ($destination->path as $step) {
+		$path /** Storage<prepared_index_path_step> */ = $destination->path;
+		foreach ($path as $step) {
 			$key = $step->key_conversion->target_type;
-			self::reference('index_path_probe', [$current, $key], $step->element_type, $context);
-			self::reference('index_path_descend', [$current, $key], $step->element_type, $context);
+			$operand_types /** vector<canonical_type_use> */ = [$current, $key];
+			self::reference('index_path_probe', $operand_types, $step->element_type, $context);
+			self::reference('index_path_descend', $operand_types, $step->element_type, $context);
 			$current = $step->element_type;
 		}
 		$append = $destination->decision->operation === operator_operation::index_append;
@@ -44,7 +46,7 @@ final class CPP_Concrete_Index
 			$inputs[] = $key;
 		}
 		$inputs[] = $facts->destination_type();
-		if (!$destination->path->is_empty()) {
+		if (!$path->is_empty()) {
 			self::reference($append ? 'index_path_check_append' : 'index_path_check_store', $inputs, null, $context);
 		}
 		self::reference($append ? 'index_append' : 'index_store', $inputs, null, $context);
@@ -53,7 +55,8 @@ final class CPP_Concrete_Index
 	public static function keyed_step(canonical_type_use $receiver, prepared_keyed_step $step, bool $last,
 		bool $removing, bool $presence, cpp_generation_context $context): void
 	{
-		self::reference('keyed_ready', [$receiver], null, $context);
+		$operand_types /** vector<canonical_type_use> */ = [$receiver];
+		self::reference('keyed_ready', $operand_types, null, $context);
 		$inputs /** vector<canonical_type_use> */ = [$receiver, $step->key_conversion->target_type];
 		self::reference('keyed_lookup', $inputs, $step->element_type, $context);
 		if (!$last) {
@@ -112,6 +115,7 @@ final class CPP_Concrete_Index
 		$body = CPP_Artifacts::includes($native_headers, '') . "#include <memory>\n#include <scpp/keyed_path.hpp>\n#include <scpp/index_existing.hpp>\nnamespace scpp { "
 			. $signature . ' { return scpp::' . $helper . '(' . $arguments . ')'
 			. ($helper === 'keyed_probe' ? '.native_value()' : '') . "; } }\n";
-		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $declaration, $body, []);
+		$layout_dependencies /** hash<bool> */ = [];
+		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $declaration, $body, $layout_dependencies);
 	}
 }

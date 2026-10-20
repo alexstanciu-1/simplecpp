@@ -1007,3 +1007,21 @@ final class prepared_return
 		return $this->conversion;
 	}
 }
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Value_Boundary_Operation_Name
+{
+	public static function text(value_boundary_operation $kind): string
+	{
+		return enum_name($kind);
+	}
+}
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Method_Receiver_Lifetime_Name
+{
+	public static function text(method_receiver_lifetime $kind): string
+	{
+		return enum_name($kind);
+	}
+}

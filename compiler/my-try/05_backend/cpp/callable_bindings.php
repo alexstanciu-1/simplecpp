@@ -154,9 +154,12 @@ final class CPP_Callables
 	public static function argument_identity(prepared_call $call): string
 	{
 		$key = CPP_Opaque_Representation::identity($call->type);
-		foreach ($call->signature->parameters as $index => $parameter) {
+		$parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
+		foreach ($parameters as $index => $parameter) {
+			$mode /** passing_mode */ = $parameter->mode;
+			$access /** storage_access */ = $parameter->access;
 			$key .= ':' . CPP_Opaque_Representation::identity($parameter->type)
-				. ':' . enum_name($parameter->mode) . ':' . enum_name($parameter->access)
+				. ':' . Passing_Mode_Name::text($mode) . ':' . Storage_Access_Name::text($access)
 				. ':' . (self::argument_consumed($call, $index) ? 'rvalue' : 'lvalue');
 		}
 		return $key;

@@ -57,7 +57,8 @@ final class CPP_Concrete_Mutations
 		$implementation = CPP_Artifacts::includes($headers, '')
 			. "#include <memory>\n#include <type_traits>\nnamespace scpp::internal {\n"
 			. $output . ' ' . $owner->name . '::' . $prototype . ' { ' . $body . " }\n}\n";
+		$layout_dependencies /** hash<bool> */ = [];
 		return new cpp_specialization_entry($name, $owner->header, $output . ' ' . $prototype . ";\n",
-			$implementation, [], '', '', '', $owner->name);
+			$implementation, $layout_dependencies, '', '', '', $owner->name);
 	}
 }

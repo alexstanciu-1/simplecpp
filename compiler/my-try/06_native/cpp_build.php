@@ -86,7 +86,8 @@ final class Native_CPP_Build
 				elseif ($kind !== 'header') { throw new \RuntimeException('Unknown native artifact kind: ' . $kind); }
 			}
 			if (q_count($units) === 0) { throw new \RuntimeException('No published translation units'); }
-			if ($template_free && !isset($checked_units[$source_root . '/entry.cpp'])) {
+			$entry_path = $source_root . '/entry.cpp';
+			if ($template_free && !isset($checked_units[$entry_path])) {
 				throw new \RuntimeException('prelower_templates: missing application entry translation unit');
 			}
 			$runtime = fs_require_realpath($this->config->runtime_include);

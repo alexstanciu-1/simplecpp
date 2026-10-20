@@ -82,14 +82,16 @@ final class CPP_Index_Write
 		$current = $destination->root->require_preparation()->type;
 		foreach ($destination->path as $position => $step)
 		{
-			$helper = CPP_Concrete_Index::reference('index_path_descend', [$current, $step->key_conversion->target_type], $step->element_type, $context);
+			$operand_types /** vector<canonical_type_use> */ = [$current, $step->key_conversion->target_type];
+			$helper = CPP_Concrete_Index::reference('index_path_descend', $operand_types, $step->element_type, $context);
 			$child = 'update_child_' . $context->next_temporary++;
 			$text .= 'auto& ' . $child . ' = ' . $helper . '(' . $receiver . ', ' . $keys[$position] . '); ';
 			$receiver = $child;
 			$current = $step->element_type;
 		}
-		$helper = CPP_Concrete_Index::reference('index_store', [$current, $destination->decision->operands[1]->target_type,
-			$destination->decision->result_type], null, $context);
+		$operand_types /** vector<canonical_type_use> */ = [$current, $destination->decision->operands[1]->target_type,
+			$destination->decision->result_type];
+		$helper = CPP_Concrete_Index::reference('index_store', $operand_types, null, $context);
 		return $text . $helper . '(' . $receiver . ', ' . $keys[q_count($keys) - 1] . ', ' . $value . '); ';
 	}
 
@@ -101,13 +103,15 @@ final class CPP_Index_Write
 		$current = $destination->root->require_preparation()->type;
 		foreach ($destination->path as $position => $step)
 		{
-			$helper = CPP_Concrete_Index::reference('index_existing_probe', [$current, $step->key_conversion->target_type], $step->element_type, $context);
+			$operand_types /** vector<canonical_type_use> */ = [$current, $step->key_conversion->target_type];
+			$helper = CPP_Concrete_Index::reference('index_existing_probe', $operand_types, $step->element_type, $context);
 			$child = 'update_probe_' . $context->next_temporary++;
 			$result->statements .= 'const auto& ' . $child . ' = ' . $helper . '(' . $receiver . ', ' . $keys[$position] . '); ';
 			$receiver = $child;
 			$current = $step->element_type;
 		}
-		$helper = CPP_Concrete_Index::reference('index_existing_probe', [$current, $destination->decision->operands[1]->target_type],
+		$operand_types /** vector<canonical_type_use> */ = [$current, $destination->decision->operands[1]->target_type];
+		$helper = CPP_Concrete_Index::reference('index_existing_probe', $operand_types,
 			$destination->decision->result_type, $context);
 		$result->value = $helper . '(' . $receiver . ', ' . $keys[q_count($keys) - 1] . ')';
 		return $result;

@@ -7,7 +7,8 @@ final class CPP_Physical_Interfaces
 	public static function literal(canonical_type_use $type, cpp_type $mapping, string $name, string $native): cpp_type_interface
 	{
 		$recipe = CPP_Types::stored_recipe($type);
-		if ($recipe === null || $recipe->literal_interface === '') { return new cpp_type_interface(); }
+		if ($recipe === null) { return new cpp_type_interface(); }
+		if ($recipe->literal_interface === '') { return new cpp_type_interface(); }
 		if ($recipe->literal_interface === 'scalar') { return self::scalar($type, $mapping->literal, $name, $native); }
 		if ($recipe->literal_interface === 'bytes') { return self::bytes($recipe, $name, $native); }
 		throw new \LogicException('Unknown physical literal interface');

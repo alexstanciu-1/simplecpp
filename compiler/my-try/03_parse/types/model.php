@@ -1531,3 +1531,12 @@ final class Type_Registry implements type_capability_query
 		return (int)$identity;
 	}
 }
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Record_Storage_Kind_Name
+{
+	public static function text(record_storage_kind $kind): string
+	{
+		return enum_name($kind);
+	}
+}

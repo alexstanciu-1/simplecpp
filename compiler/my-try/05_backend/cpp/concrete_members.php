@@ -11,7 +11,8 @@ final class CPP_Concrete_Members
 		$request->call = $call;
 		$request->binding = Model::$cpp_callable_bindings->function_binding($target);
 		$receiver /** prepared_method_receiver */ = $call->receiver;
-		$request->inputs->append($receiver->record_type);
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$inputs->append($receiver->record_type);
 		$engine /** CPP_Specializations */ = $context->specialization_engine;
 		$entry = $engine->entry($engine->request_operation($request));
 		$context->runtime_operations[$entry->name] = $request;
@@ -71,7 +72,8 @@ final class CPP_Concrete_Members
 			. '*>(address()))->' . $binding->symbol() . '(' . $arguments . "); }\n}\n";
 		$prefix = CPP_Artifacts::includes($declaration_headers, '');
 		foreach ($forwards as $declaration => $used) { $prefix .= $declaration . "\n"; }
-		return new cpp_specialization_entry($name, $owner->header, 'void ' . $prototype . ";\n", $body, [], '', '', '',
+		$layout_dependencies /** hash<bool> */ = [];
+		return new cpp_specialization_entry($name, $owner->header, 'void ' . $prototype . ";\n", $body, $layout_dependencies, '', '', '',
 			$owner->name, $prefix);
 	}
 }

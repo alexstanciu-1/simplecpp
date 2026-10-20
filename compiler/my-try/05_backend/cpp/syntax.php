@@ -182,8 +182,9 @@ final class CPP_Syntax
 			throw new \LogicException('Unsupported prepared index operation');
 		}
 		if (CPP_Concrete_Index::active($this->context)) {
+			$operand_types /** vector<canonical_type_use> */ = [$node->base->require_preparation()->type, $decision->operands[1]->target_type];
 			$helper = CPP_Concrete_Index::reference($decision->operation === operator_operation::index_checked_read ? 'checked_index_read' : 'null_index_read',
-				[$node->base->require_preparation()->type, $decision->operands[1]->target_type], $decision->result_type, $this->context);
+				$operand_types, $decision->result_type, $this->context);
 		}
 		else { $this->context->headers['scpp/index_read.hpp'] = true; }
 		$id = $this->context->next_temporary;

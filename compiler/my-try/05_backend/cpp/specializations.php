@@ -74,7 +74,7 @@ final class CPP_Specializations
 	public function entry(cpp_specialization_ref $reference): cpp_specialization_entry
 	{
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
-		return $entries[$reference->entry_id];
+		return $entries[(int)$reference->entry_id];
 	}
 
 	/** Avoid rendering an already requested entry; this index owns no separate semantic facts. */
@@ -150,14 +150,15 @@ final class CPP_Specializations
 			foreach ($entry->layout_dependencies as $header => $used) { $required[$header] = true; }
 		}
 		// Only headers reached by layout requirements participate; unrelated includes are not layout work.
+		$required_before = 0;
 		do {
-			$before = q_count($required);
+			$required_before = q_count($required);
 			foreach ($artifacts as $artifact) {
 				if (($artifact->kind() !== cpp_artifact_kind::header) || !isset($required[$artifact->file_name])) { continue; }
 				$known[$artifact->file_name] = true;
 				foreach ($artifact->header_dependencies as $header => $used) { $required[$header] = true; }
 			}
-		} while (q_count($required) !== $before);
+		} while (q_count($required) !== $required_before);
 		while (q_count($depths) < q_count($known)) {
 			$before = q_count($depths);
 			foreach ($artifacts as $artifact) {
