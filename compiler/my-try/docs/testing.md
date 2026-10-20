@@ -70,9 +70,20 @@ supplies direct/concrete counters and output failure-prefix equivalence.
 `python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
 checks concrete rejection for callable locals, parameters, results, fields and nested
 containers, plus object tests/casts, weak creation/locking, source throw/catch/finally,
-`take`, match without a default, boxed extraction, runtime-backed conditions/value
+match without a default, wider boxed extraction, runtime-backed conditions/value
 probes and enum helpers. Repair cases include supported integer/boolean
 conditions and explicit-default match emission and replay.
+
+The bounded curl prerequisites have separate default-prelowered checks:
+`python3 compiler/my-try/tests/curl_prelower.py --results FRESH_DIRECTORY`
+includes both retained blockers and supported cases, so it is not yet an all-green
+acceptance suite. Use repeated `--case` selectors for `properties_snapshots`,
+`null_read`, `null_write`, `mixed_null_int`, `mixed_null_string`, and
+`mixed_kind_int` to verify the implemented field/extraction slice. The runner
+records fixture migrations, preserves original oracles and builds external HTTPS
+without executing it. `curl_transport_recovery.php OUTPUT_DIRECTORY` checks
+rejection/repair/no-op behavior; `curl_runtime.py --results FRESH_DIRECTORY`
+proves the independent runtime HTTP contract with sanitizers. Run these on dev002.
 It verifies ordinary emission, no partial in-memory output on rejection,
 mode-switch recovery, source repair and replay through the existing shared runner.
 Each attempt uses a fresh `Output_Publication`: rejected revisions are not ready on

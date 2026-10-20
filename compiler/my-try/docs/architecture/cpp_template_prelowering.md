@@ -52,6 +52,16 @@ Error and mixed storage select concrete boundaries through their core metadata
 recipes. See the [tokenizer/IO verification report](../planning/tokenizer_io.md)
 for the bounded proof scope and remaining acceptance work.
 
+Shared provider instance properties now use compiled read, target-check and plain
+write operations for int, string and vector<string> values. The target handle is
+retained and checked before RHS evaluation; vector fields copy between native and
+concrete element representations. Reading a vector field for indexing uses a value
+snapshot; indexed writes, updates, compounds, reference escape, static properties
+and wider field types remain outside this transport slice. Prepared mixed-to-int
+and mixed-to-string extraction uses the existing required-cast implementation in
+the compiled conversion bridge. This does not enable boxed wrapping or mixed index
+key/result transport. See [curl integration](../planning/curl_integration.md).
+
 ## Existing owners
 
 | Responsibility | Owner and contract |

@@ -12,6 +12,11 @@ experiment retained for regressions, not a second semantic development path.
 Current repair checkpoint: [typed tokenizer and strict IO](planning/tokenizer_io.md),
 41/64 original issues closed (64.0625%); supplementary BS-R01 also closed.
 
+The active [strict curl integration](planning/curl_integration.md) has verified
+runtime HTTP behavior and bounded concrete property/extraction transport.
+Full fixture acceptance still needs provider vector arguments and mixed
+key-construction/index-read transport; V-R03/V-E02 remain open.
+
 ## Reading map
 
 The completed bounded [runtime module integration plan](planning/runtime_module_integration.md)
