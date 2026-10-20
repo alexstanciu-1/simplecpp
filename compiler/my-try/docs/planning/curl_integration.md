@@ -138,9 +138,33 @@ The five full curl fixtures are **not yet verified**. Further work needs discuss
 
 These are physical backend gaps, not missing curl runtime algorithms. Metadata
 source exposure and the passing runtime tests do not close V-R03 or V-E02.
-Baseline replay, complete local source oracles, provider failure configuration and
+Complete v0.2 local source oracles, provider failure configuration and
 full fixture cold/warm acceptance remain unfinished. External HTTPS execution
 remains explicitly opt-in.
+
+## Original v0.1 baseline replay
+
+The independent baseline harness now resolves the old baseline/provider uncertainty.
+`tests/curl_baseline.py` replays the original sources without migrations against
+`75de94c71e37060c564b6ade19850b7686bd457a`. On dev002,
+`/home/alex-ai/curl/20261020-baseline-01` proves all five strict fixtures compile;
+the file, local GET, POST and JSON fixtures execute with their original exact
+stdout oracles and no leftover application files. The external HTTPS fixture is
+compile-only, not an execution pass. This does not close V-E02 until the v0.2
+comparison is also verified.
+
+The reused baseline is checked against 1,289 Git blobs from the pinned revision
+across bin, generators, runtime, specs and curl fixtures, with zero mismatches.
+The shared local HTTP router and payload match the baseline bytes. Baseline
+runtime composition was rebuilt with curl enabled; no old object was reused.
+The shared runner used CLI fallback because available PHP CLI/FPM versions differ.
+
+[Baseline evidence](curl_evidence/curl-baseline-evidence.tar.gz) includes generated
+C++, commands, exact outputs, per-fixture results and the source audit, excluding
+executables/objects. Archive SHA256:
+`35526a226f719832906c7ee845b3185c5f89a584cd47fc36659919f14f21662c`.
+The tested `curl_baseline.py` SHA256 is
+`79e0d6ea42806019aeaccbe479a89bf4a5c19fae0de0cbb67a5caf069e7ec177`.
 
 ## Evidence
 
