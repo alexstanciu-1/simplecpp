@@ -39,8 +39,18 @@ Runtime and middleware implementations still use templates. Only application inp
 must be template-free. Metadata registration alone is not a support claim; consult
 the [representation/operation coverage matrix](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md#current-coverage-contract--2026-10-20).
 Callable storage, object tests/casts, weak observation, source exception transport,
-`take`, match without a default, and specified boxed/runtime helper paths still reject
+match without a default, and specified boxed/runtime helper paths still reject
 until concrete transports exist. Ordinary mode retains its existing semantics.
+
+Prepared `take`, nullable/Result construction and required extraction, and wrapper
+usable-value coalescing use the existing compiled operation bridge. Provider
+wrappers adapt their payload representation at the compiled boundary, preserving
+null, false, true and error states. Concrete runtime member results use that same
+owned-result transport. Provider-owned nominal handles do not expose their native
+pointee headers to application units; source-owned pointee interfaces are retained.
+Error and mixed storage select concrete boundaries through their core metadata
+recipes. See the [tokenizer/IO verification report](../planning/tokenizer_io.md)
+for the bounded proof scope and remaining acceptance work.
 
 ## Existing owners
 

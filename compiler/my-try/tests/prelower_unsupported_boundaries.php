@@ -29,7 +29,6 @@ $cases['lock_weak'] = ['class C {} $w weak<C>; $c = lock($w); return 0;', '.lock
 $cases['throw'] = ['$e Exception; throw $e;', '::scpp::php::make_thrown(', 'throw operation requires concrete transport'];
 $cases['catch'] = ['try { return 0; } catch (Exception $e) { return 1; }', '::scpp::php::catch_as<', 'catch operation requires concrete transport'];
 $cases['finally'] = ['try { return 0; } finally {}', 'std::optional<', 'finally operation requires concrete transport'];
-$cases['take'] = ['$r ?int; $v = 0; $ok bool = take($v) = $r; return 0;', 'scpp::php::take(', 'take operation requires concrete transport'];
 $cases['match_failure'] = ['return match (3) { 1 => 7, 2 => 8 };', 'throw std::runtime_error("Unhandled match expression")', 'match failure operation requires concrete transport'];
 $cases['boxed_extract'] = ['$a mixed = 7; $b int = $a; return 0;', 'scpp::required_cast<', 'boxed extraction requires concrete transport'];
 $cases['boxed_condition'] = ['$a mixed = 7; if ($a) { return 1; } return 0;', 'condition_truthy(', 'runtime condition requires concrete transport'];

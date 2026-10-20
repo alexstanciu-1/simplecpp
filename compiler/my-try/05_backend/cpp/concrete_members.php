@@ -26,9 +26,8 @@ final class CPP_Concrete_Members
 		$existing = $engine->find($name);
 		if ($existing !== null) { return $existing; }
 		$call /** prepared_call */ = $request->call;
-		if (($call->signature->reference_return !== null) || ($call->variadic_parameter !== null)
-			|| (Type_Queries::canonical($call->type)->family() !== type_family::no_value)) {
-			throw new \RuntimeException('Concrete runtime members: result and variadic transport are not implemented');
+		if (($call->signature->reference_return !== null) || ($call->variadic_parameter !== null)) {
+			throw new \RuntimeException('Concrete runtime members: reference result and variadic transport are not implemented');
 		}
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$owner_type = $inputs[0];
@@ -64,16 +63,38 @@ final class CPP_Concrete_Members
 			$separator = ', ';
 		}
 		$prototype = $binding->symbol() . '(' . $parameters . ')';
+		$return_type = 'void';
+		$expression = 'std::launder(static_cast<' . $native->spelling
+			. '*>(address()))->' . $binding->symbol() . '(' . $arguments . ')';
+		$operation = $expression . ';';
+		if (Type_Queries::canonical($call->type)->family() !== type_family::no_value) {
+			$result = CPP_Types::representation($call->type, $context);
+			CPP_Types::record_dependencies($result, $context);
+			$return_type = $result->spelling;
+			if ($result->opaque) {
+				$result_entry = $engine->entry($engine->request($call->type));
+				$forwards['namespace scpp::internal { struct ' . $result_entry->name . '; }'] = true;
+				$native_result = CPP_Types::implementation_representation($call->type, $engine);
+				CPP_Types::record_dependencies($native_result, $context);
+				if (CPP_Wrapper_Transport::payload($call->type) !== null) {
+					$expression = CPP_Wrapper_Transport::adapt($call->type, $expression, true, $engine, $context);
+				}
+				$operation = CPP_Runtime_Operations::concrete_call_result($return_type, $native_result->spelling, '', $expression);
+			}
+			else {
+				foreach ($result->headers as $header => $used) { $declaration_headers[$header] = true; }
+				$operation = 'return ' . $expression . ';';
+			}
+		}
 		$headers = $native->headers;
 		if ($binding->header() !== '') { $headers[$binding->header()] = true; }
 		foreach ($context->headers as $header => $used) { $headers[$header] = true; }
-		$body = CPP_Artifacts::includes($headers, '') . "#include <memory>\n#include <utility>\nnamespace scpp::internal {\n"
-			. 'void ' . $owner->name . '::' . $prototype . ' { std::launder(static_cast<' . $native->spelling
-			. '*>(address()))->' . $binding->symbol() . '(' . $arguments . "); }\n}\n";
+		$body = CPP_Artifacts::includes($headers, '') . "#include <memory>\n#include <utility>\n#include <type_traits>\n#include <new>\nnamespace scpp::internal {\n"
+			. $return_type . ' ' . $owner->name . '::' . $prototype . ' { ' . $operation . " }\n}\n";
 		$prefix = CPP_Artifacts::includes($declaration_headers, '');
 		foreach ($forwards as $declaration => $used) { $prefix .= $declaration . "\n"; }
 		$layout_dependencies /** hash<bool> */ = [];
-		return new cpp_specialization_entry($name, $owner->header, 'void ' . $prototype . ";\n", $body, $layout_dependencies, '', '', '',
+		return new cpp_specialization_entry($name, $owner->header, $return_type . ' ' . $prototype . ";\n", $body, $layout_dependencies, '', '', '',
 			$owner->name, $prefix);
 	}
 }

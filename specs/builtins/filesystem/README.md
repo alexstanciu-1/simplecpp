@@ -2,6 +2,8 @@
 Doc Status: normative
 This folder contains one contract file per filesystem or stdio builtin in the first-pass Prism++ filesystem surface.
 
+The current strict prefixed surface is specified in [Strict IO handles](strict_io.md).
+
 ## Current first-pass coverage
 
 ### stdio

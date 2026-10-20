@@ -167,6 +167,10 @@ final class CPP_Type_Binding_Registration
 		$bindings->bind_definition($types->definition('void'), 'void', '');
 		// The expression-only sentinel has no source type name for a metadata target.
 		$bindings->bind_definition($types->registry()->type($types->null_type()->type_id())->definition(), 'scpp::null_t', 'scpp/null_t.hpp');
+		$bindings->bind_definition($types->registry()->type($types->boolean_sentinel_type(false)->type_id())->definition(),
+			'scpp::false_sentinel_t', 'scpp/false_sentinel_t.hpp');
+		$bindings->bind_definition($types->registry()->type($types->boolean_sentinel_type(true)->type_id())->definition(),
+			'scpp::true_sentinel_t', 'scpp/true_sentinel_t.hpp');
 		return $bindings;
 	}
 }

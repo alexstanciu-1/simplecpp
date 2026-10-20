@@ -127,7 +127,7 @@ final class CPP_Opaque_Representation
 			. 'private: unsigned char storage_[' . $prefix . "_SIZE];\npublic:\n"
 			. "void* address() noexcept { return storage_; }\nconst void* address() const noexcept { return storage_; }\n";
 		$payload /** nullable<cpp_type> */ = null;
-		$pointee = $compose_arguments ? CPP_Types::pointee($type) : null;
+		$pointee = $compose_arguments ? CPP_Types::application_pointee($type) : null;
 		$implementation_headers /** hash<bool> */ = [];
 		if ($pointee !== null) {
 			$payload = CPP_Types::payload($pointee, new cpp_generation_context($engine));

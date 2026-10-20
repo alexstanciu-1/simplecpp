@@ -523,12 +523,27 @@ final class CPP_Syntax
 	/** Snapshot the source before any output write, then delegate branch behavior to the runtime. */
 	public function generate_take_expression(take_expression_node $node): string
 	{
-		$this->require_native_operation('take operation');
-		$node->require_take_preparation();
-		$this->context->headers['lang/php/support/php_take.hpp'] = true;
+		$facts = $node->require_take_preparation();
 		$source = $this->expression($node->source);
 		$name = 'take_source_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
+		if ($this->context->concrete_types()) {
+			$request = new cpp_runtime_operation(cpp_runtime_operation_kind::take);
+			$request->result = $facts->type;
+			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+			$inputs->append($node->value_binding->require_preparation()->type);
+			$arguments /** vector<string> */ = [$this->expression($node->value_binding)];
+			if ($node->alternative_binding !== null) {
+				$inputs->append($node->alternative_binding->require_preparation()->type);
+				$arguments[] = $this->expression($node->alternative_binding);
+			}
+			$inputs->append($node->source->require_preparation()->type);
+			$arguments[] = $name;
+			$result = CPP_Declarations::type($facts->type, $this->context);
+			$call = CPP_Runtime_Operations::invoke($request, $arguments, $this->context);
+			return '([&]() -> ' . $result . ' { auto ' . $name . ' = ' . $source . '; return ' . $call . '; }())';
+		}
+		$this->context->headers['lang/php/support/php_take.hpp'] = true;
 		$outputs = $this->expression($node->value_binding);
 		if ($node->alternative_binding !== null) {
 			$outputs .= ', ' . $this->expression($node->alternative_binding);
@@ -580,7 +595,9 @@ final class CPP_Syntax
 		$selected = CPP_Declarations::conversion($extracted, $facts->left_conversion, $this->context);
 		$presence = '';
 		if ($facts->presence === coalesce_presence::wrapper_value) {
-			$presence = $temporary . '.has_value().native_value()';
+			$presence = $this->context->concrete_types()
+				? CPP_Runtime_Operations::wrapper_presence($facts->left_extraction->source_type, $temporary, $this->context)
+				: $temporary . '.has_value().native_value()';
 		}
 		elseif ($facts->presence === coalesce_presence::boxed_nonnull) {
 			$presence = '!' . $temporary . '.is_null().native_value()';

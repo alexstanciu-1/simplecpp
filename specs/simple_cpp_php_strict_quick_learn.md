@@ -1226,9 +1226,9 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 | Name | Compact signature | Return shape / note |
 | --- | --- | --- |
 | `io_open` | `io_open(string $path, string $mode)` | wrapper result to `resource_handle`; use `take($fh, ...)` |
-| `io_seek` | `io_seek(resource_handle $fh, int $offset)` | current result is seek-status style; see examples/specs if it matters |
+| `io_seek` | `io_seek(resource_handle $fh, int $offset [, int $whence])` | `?int`: zero on success, null on operational failure |
 | `io_tell` | `io_tell(resource_handle $fh)` | wrapper result to `int`; use `take($pos, ...)` |
-| `io_read_line` | `io_read_line(resource_handle $fh)` | wrapper result to `string`; use `take($line, ...)` |
+| `io_read_line` | `io_read_line(resource_handle $fh [, int $length])` | `result_or_false<string>`; positive width limits reads to width minus one bytes |
 | `io_read` | `io_read(resource_handle $fh, int $len)` | wrapper result to `string`; use `take($data, ...)` |
 | `io_write` | `io_write(resource_handle $fh, string $data)` | wrapper result to `int`; use `take($written, ...)` |
 | `io_rewind` | `io_rewind(resource_handle $fh)` | `bool` |

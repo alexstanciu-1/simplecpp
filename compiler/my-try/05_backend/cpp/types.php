@@ -32,7 +32,7 @@ final class CPP_Types
 			if ($context->concrete_types() && self::needs_concrete_storage($type_use)) {
 				$engine /** CPP_Specializations */ = $context->specialization_engine;
 				$result = $engine->representation($type_use, $context);
-				$pointee = self::pointee($type_use);
+				$pointee = self::application_pointee($type_use);
 				if (($pointee !== null) && ($requirement === cpp_type_requirement::complete)) {
 					self::merge_headers($result, self::payload($pointee, $context));
 				}
@@ -147,6 +147,11 @@ final class CPP_Types
 			$engine = $context->specialization_engine;
 			if ($engine !== null) {
 				$selected = self::has_template_recipe($type_use);
+				if (($definition->origin() !== type_definition_origin::source)
+					&& !($definition instanceof callable_type_definition)) {
+					$recipe = Model::$cpp_type_bindings->definition($definition->definition_id())->recipe();
+					$selected = $selected || $recipe->concrete_boundary;
+				}
 				// Payload queries must not select the complete stored owner again.
 				if ($selected && !Type_Queries::is_nominal_handle($type_use)) { return $engine->representation($type_use, $context); }
 			}
@@ -296,6 +301,17 @@ final class CPP_Types
 		$canonical = Type_Queries::canonical($type);
 		if (!($canonical instanceof applied_template_type)) { throw new \LogicException('Pointer interface requires an applied template'); }
 		return object_cast($canonical, applied_template_type::class)->arguments()[$recipe->pointee_position];
+	}
+
+	/** Provider-owned nominal payloads stay behind compiled calls, not application pointer interfaces. */
+	public static function application_pointee(canonical_type_use $type): ?canonical_type_use
+	{
+		$pointee = self::pointee($type);
+		if ($pointee === null) { return null; }
+		$definition = Type_Queries::canonical($pointee)->definition();
+		if (Type_Queries::is_nominal_handle($pointee)
+			&& ($definition->origin() === type_definition_origin::runtime)) { return null; }
+		return $pointee;
 	}
 
 	/** A native template application is a binding fact, independent of source type category. */

@@ -49,7 +49,8 @@ final class CPP_Runtime_Operations
 		foreach ($inputs as $position => $input) {
 			$operand = new cpp_runtime_operand($input, $expressions[$position]);
 			// Source constructors consume application representations, not native unwrapped values.
-			$parts[] = ($context->concrete_types() && ($request->kind === cpp_runtime_operation_kind::construct_call))
+			$parts[] = ($context->concrete_types() && (($request->kind === cpp_runtime_operation_kind::construct_call)
+				|| (($request->kind === cpp_runtime_operation_kind::take) && ($position === 0))))
 				? '&(' . $operand->expression . ')' : self::address($operand, $context);
 		}
 		return 'scpp::internal::' . $entry->name . '(' . self::join($parts) . ')';
@@ -91,6 +92,8 @@ final class CPP_Runtime_Operations
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
 			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
+			|| ($request->kind === cpp_runtime_operation_kind::take)
+			|| ($request->kind === cpp_runtime_operation_kind::wrapper_presence)
 			|| ($request->kind === cpp_runtime_operation_kind::construct_default)
 			|| ($request->kind === cpp_runtime_operation_kind::construct_call)) { $implementation_engine = $engine; }
 		$native_context = new cpp_generation_context();
@@ -103,7 +106,8 @@ final class CPP_Runtime_Operations
 		foreach ($inputs as $position => $input) {
 			CPP_Opaque_Representation::require_native_type($input);
 			$input_context = $native_context;
-			if ($request->kind === cpp_runtime_operation_kind::construct_call) {
+			if (($request->kind === cpp_runtime_operation_kind::construct_call)
+				|| (($request->kind === cpp_runtime_operation_kind::take) && ($position === 0))) {
 				$input_context = new cpp_generation_context($engine);
 			}
 			$native = CPP_Declarations::type($input, $input_context);
@@ -127,7 +131,9 @@ final class CPP_Runtime_Operations
 			$output = $mapping->spelling;
 			$declaration_headers = $mapping->headers;
 			$body = $unpack . 'return ' . $expression . ';';
-			if ((($request->kind === cpp_runtime_operation_kind::observation) || ($request->kind === cpp_runtime_operation_kind::runtime_call)) && $mapping->opaque) {
+			if ((($request->kind === cpp_runtime_operation_kind::observation)
+				|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
+				|| ($request->kind === cpp_runtime_operation_kind::conversion)) && $mapping->opaque) {
 				$body = self::concrete_call_result($output, $native_result, $unpack, $expression);
 				$native_context->headers['type_traits'] = true;
 			}
@@ -170,6 +176,10 @@ final class CPP_Runtime_Operations
 
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool
 	{
+		if ($request->kind === cpp_runtime_operation_kind::take) {
+			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+			return $position < $inputs->count() - 1;
+		}
 		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, false); }
 		return false;
 	}
@@ -177,6 +187,13 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::wrapper_presence) {
+			return '(' . $arguments[0] . ').has_value()';
+		}
+		if ($request->kind === cpp_runtime_operation_kind::take) {
+			$context->headers['lang/php/support/php_take.hpp'] = true;
+			return 'scpp::php::take(' . self::join($arguments) . ')';
+		}
 		if ($request->kind === cpp_runtime_operation_kind::output) {
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			return CPP_Declarations::output($arguments[0], $inputs[0], $context);
@@ -189,9 +206,27 @@ final class CPP_Runtime_Operations
 		if (($request->kind === cpp_runtime_operation_kind::observation) || ($request->kind === cpp_runtime_operation_kind::runtime_call)) {
 			$binding /** cpp_function_binding */ = $request->binding;
 			if ($binding->header() !== '') { $context->headers[$binding->header()] = true; }
+			$engine /** CPP_Specializations */ = $context->implementation_engine;
+			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+			foreach ($inputs as $position => $input) {
+				if (CPP_Wrapper_Transport::payload($input) !== null) {
+					if ($request->call !== null) {
+						$parameters /** Storage<callable_parameter> */ = $request->call->signature->parameters;
+						$parameter = $parameters[$position];
+						if (($parameter->mode === passing_mode::reference) && ($parameter->access !== storage_access::read_only)) {
+							throw new \RuntimeException('prelower_templates: mutable provider wrapper arguments require write-back transport');
+						}
+					}
+					$arguments[$position] = CPP_Wrapper_Transport::adapt($input, $arguments[$position], false, $engine, $context);
+				}
+			}
 			$values = self::join($arguments);
 			if ($request->call !== null) { $values = CPP_Source_Calls::native_arguments($request->call, $arguments, 0, $context); }
-			return $binding->symbol() . '(' . $values . ')';
+			$expression = $binding->symbol() . '(' . $values . ')';
+			if (($request->result !== null) && (CPP_Wrapper_Transport::payload($request->result) !== null)) {
+				return CPP_Wrapper_Transport::adapt($request->result, $expression, true, $engine, $context);
+			}
+			return $expression;
 		}
 		if ($request->kind === cpp_runtime_operation_kind::binary) {
 			$decision /** operator_decision */ = $request->decision;
@@ -200,6 +235,18 @@ final class CPP_Runtime_Operations
 		}
 		if ($request->kind === cpp_runtime_operation_kind::conversion) {
 			$conversion /** conversion_decision */ = $request->conversion;
+			$engine /** CPP_Specializations */ = $context->implementation_engine;
+			if (($conversion->operation === conversion_operation::nullable_wrap)
+				|| ($conversion->operation === conversion_operation::result_wrap)) {
+				$payload = CPP_Wrapper_Transport::payload_value($conversion->source_type, $arguments[0], true, $engine, $context);
+				return CPP_Declarations::type($conversion->target_type, $context) . '(' . $payload . ')';
+			}
+			if (($conversion->operation === conversion_operation::nullable_extract)
+				|| ($conversion->operation === conversion_operation::result_extract)) {
+				$message = $conversion->operation === conversion_operation::nullable_extract
+					? 'nullable required-value extraction' : 'Result required-value extraction';
+				return '(' . $arguments[0] . ').require_value("' . $message . '")';
+			}
 			return CPP_Declarations::conversion($arguments[0], $conversion, $context);
 		}
 		if ($request->kind === cpp_runtime_operation_kind::write_key) {
@@ -259,6 +306,14 @@ final class CPP_Runtime_Operations
 		$engine = $context->specialization_engine;
 		if ($engine === null) { return false; }
 		return ($decision->operation === conversion_operation::explicit_runtime_cast)
+			|| ($decision->operation === conversion_operation::nullable_empty)
+			|| ($decision->operation === conversion_operation::nullable_wrap)
+			|| ($decision->operation === conversion_operation::nullable_extract)
+			|| ($decision->operation === conversion_operation::result_wrap)
+			|| ($decision->operation === conversion_operation::result_extract)
+			|| ($decision->operation === conversion_operation::result_error)
+			|| ($decision->operation === conversion_operation::result_false)
+			|| ($decision->operation === conversion_operation::result_true)
 			|| ($decision->operation === conversion_operation::text_conversion)
 			|| ($decision->operation === conversion_operation::integer_value_cast)
 			|| ($decision->operation === conversion_operation::ownership_empty)
@@ -274,6 +329,15 @@ final class CPP_Runtime_Operations
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($decision->source_type);
 		return self::single_value($request, $expression, $context);
+	}
+
+	public static function wrapper_presence(canonical_type_use $type, string $expression, cpp_generation_context $context): string
+	{
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::wrapper_presence);
+		$request->result = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('bool')->type_id());
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$inputs->append($type);
+		return '(' . self::invoke($request, [$expression], $context) . ').native_value()';
 	}
 
 	/** Borrow within the full expression, including any temporary that owns a nested reference. */

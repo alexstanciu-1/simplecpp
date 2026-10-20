@@ -3,7 +3,7 @@ namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 
 // Current production catalogs must compose, not merely pass in isolated fixtures.
-$names = ['process', 'source', 'regex', 'filesystem', 'datetime', 'strings', 'json', 'core'];
+$names = ['process', 'source', 'regex', 'filesystem', 'datetime', 'strings', 'json', 'tokenizer', 'io', 'core'];
 $input = Runtime_Catalog_Loader::load(dirname(__DIR__, 3) . '/runtime/metadata/modules', $names);
 Compiler_Lifecycle::configure_runtime($input);
 Compiler_Lifecycle::reset();

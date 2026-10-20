@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+The [tokenizer/IO closeout](planning/tokenizer_io.md) uses `tests/tokenizer_io_runtime.py`,
+`tests/tokenizer_io.py` and `tests/tokenizer_io_prelower.py`, each with
+`--results FRESH_DIRECTORY` on dev002. The prelowering runner uses the default
+production API, enforces template-free application inputs and checks cold/warm
+execution. Ordinary sanitizer controls remain explicitly ordinary and do not
+substitute for default production acceptance.
+
 The [checked-shift/compact-layout closeout](planning/compact_layout_shifts.md)
 uses these focused dev002 runners:
 

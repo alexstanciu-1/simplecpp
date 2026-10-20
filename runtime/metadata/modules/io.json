@@ -1,0 +1,308 @@
+{
+  "version": 1,
+  "module": "io",
+  "dependencies": [
+    "core"
+  ],
+  "types": [
+    {
+      "id": "io.resource_handle",
+      "name": "resource_handle",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    }
+  ],
+  "cpp_types": [
+    {
+      "id": "io.resource_handle",
+      "symbol": "scpp::resource_t",
+      "header": "core/resource.hpp"
+    }
+  ],
+  "functions": [
+    {
+      "id": "io.open.2",
+      "name": "io_open",
+      "parameters": [
+        {
+          "name": "path",
+          "type": "string",
+          "passing": "value"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result_or_false",
+        "arguments": [
+          "resource_handle"
+        ]
+      }
+    },
+    {
+      "id": "io.tell.1",
+      "name": "io_tell",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result_or_false",
+        "arguments": [
+          "int"
+        ]
+      }
+    },
+    {
+      "id": "io.read_line.1",
+      "name": "io_read_line",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result_or_false",
+        "arguments": [
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "io.read_line.2",
+      "name": "io_read_line",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        },
+        {
+          "name": "length",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result_or_false",
+        "arguments": [
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "io.read.2",
+      "name": "io_read",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        },
+        {
+          "name": "length",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result_or_false",
+        "arguments": [
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "io.write.2",
+      "name": "io_write",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        },
+        {
+          "name": "data",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "result_or_false",
+        "arguments": [
+          "int"
+        ]
+      }
+    },
+    {
+      "id": "io.rewind.1",
+      "name": "io_rewind",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "io.flush.1",
+      "name": "io_flush",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "io.eof.1",
+      "name": "io_eof",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "io.close.1",
+      "name": "io_close",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "io.seek.2",
+      "name": "io_seek",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "nullable",
+        "arguments": [
+          "int"
+        ]
+      }
+    },
+    {
+      "id": "io.seek.3",
+      "name": "io_seek",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "resource_handle",
+          "passing": "value"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "whence",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "nullable",
+        "arguments": [
+          "int"
+        ]
+      }
+    }
+  ],
+  "cpp": [
+    {
+      "id": "io.open.2",
+      "symbol": "scpp::io::open",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.tell.1",
+      "symbol": "scpp::io::tell",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.read_line.1",
+      "symbol": "scpp::io::read_line",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.read_line.2",
+      "symbol": "scpp::io::read_line",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.read.2",
+      "symbol": "scpp::io::read",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.write.2",
+      "symbol": "scpp::io::write",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.rewind.1",
+      "symbol": "scpp::io::rewind",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.flush.1",
+      "symbol": "scpp::io::flush",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.eof.1",
+      "symbol": "scpp::io::eof",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.close.1",
+      "symbol": "scpp::io::close",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.seek.2",
+      "symbol": "scpp::io::seek",
+      "header": "core/stdio.hpp"
+    },
+    {
+      "id": "io.seek.3",
+      "symbol": "scpp::io::seek",
+      "header": "core/stdio.hpp"
+    }
+  ]
+}

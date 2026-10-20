@@ -225,6 +225,8 @@ final class cpp_program {
 
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
+	case wrapper_presence;
+	case take;
 	case concrete_member;
 	case concrete_index;
 	case concrete_iteration;
