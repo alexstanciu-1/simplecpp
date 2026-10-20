@@ -8,6 +8,11 @@
     {"name":"PREG_SPLIT_DELIM_CAPTURE","type":"int","value":2}
   ],
   "functions": [
+    {"id":"regex.replace_callback.3","name":"regex_replace_callback","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"callback","type":{"callable":{"parameters":[{"name":"matches","type":{"name":"vector","arguments":["string"]},"passing":"value"}],"returns":"string"}},"passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
+    {"id":"regex.replace_callback.4","name":"regex_replace_callback","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"callback","type":{"callable":{"parameters":[{"name":"matches","type":{"name":"vector","arguments":["string"]},"passing":"value"}],"returns":"string"}},"passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"limit","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
+    {"id":"regex.replace_callback_array.2","name":"regex_replace_callback_array","parameters":[{"name":"callbacks","type":{"name":"hash","arguments":[{"callable":{"parameters":[{"name":"matches","type":{"name":"vector","arguments":["string"]},"passing":"value"}],"returns":"string"}},"string"]},"passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
+    {"id":"regex.replace_callback_array.3","name":"regex_replace_callback_array","parameters":[{"name":"callbacks","type":{"name":"hash","arguments":[{"callable":{"parameters":[{"name":"matches","type":{"name":"vector","arguments":["string"]},"passing":"value"}],"returns":"string"}},"string"]},"passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"limit","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
+
     {"id":"regex.replace.4","name":"regex_replace","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"limit","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
     {"id":"regex.filter.3","name":"regex_filter","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"input","type":{"name":"vector","arguments":["string"]},"passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}},
     {"id":"regex.filter.4","name":"regex_filter","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"input","type":{"name":"vector","arguments":["string"]},"passing":"value"},{"name":"limit","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}},
@@ -32,6 +37,11 @@
     {"id":"regex.split.4","name":"regex_split","parameters":[{"name":"pattern","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"},{"name":"limit","type":"int","passing":"value"},{"name":"flags","type":"int","passing":"value"}],"returns":{"name":"result_or_false","arguments":[{"name":"vector","arguments":["string"]}]}}
   ],
   "cpp": [
+    {"id":"regex.replace_callback.3","symbol":"scpp::regex::replace_callback","header":"modules/regex/regex.hpp"},
+    {"id":"regex.replace_callback.4","symbol":"scpp::regex::replace_callback_limited","header":"modules/regex/regex.hpp"},
+    {"id":"regex.replace_callback_array.2","symbol":"scpp::regex::replace_callback_array","header":"modules/regex/regex.hpp"},
+    {"id":"regex.replace_callback_array.3","symbol":"scpp::regex::replace_callback_array_limited","header":"modules/regex/regex.hpp"},
+
     {"id":"regex.replace.4","symbol":"scpp::regex::replace_limited","header":"modules/regex/regex.hpp"},
     {"id":"regex.filter.3","symbol":"scpp::regex::filter","header":"modules/regex/regex.hpp"},
     {"id":"regex.filter.4","symbol":"scpp::regex::filter_limited","header":"modules/regex/regex.hpp"},
