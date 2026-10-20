@@ -1,6 +1,13 @@
 # 05. Null, mixed, wrappers and conversions
 Doc Status: planning
 
+Current repair update — 2026-10-20: [V-L09/V-L10](../planning/boxed_selection.md)
+now admit homogeneous boxed bitwise/shift/complement expressions and homogeneous
+canonical-scalar nullable/Result/falseable-Result coalesces. This supersedes earlier
+bounded exclusions below only for those domains. Wider peers/updates/records remain
+separate. The report keeps the primitive invalid-shift-count finding BS-R01 open.
+
+
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)

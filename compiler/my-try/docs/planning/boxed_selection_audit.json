@@ -1,0 +1,50 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "source_files_checked": 6319,
+  "tested_production_and_test_hashes_match": true,
+  "evidence_digest_verified": true,
+  "evidence_records": 1628,
+  "accepted_commands": 376,
+  "native_executions_including_boundary_reproductions": 107,
+  "expected_ubsan_failures": 6,
+  "runtime_signature_passes": 24,
+  "source_forms": 24,
+  "source_rejections": 49,
+  "recovery_cycles": 2,
+  "regression_programs": 58,
+  "matrix_expectation_rows_reconciled": 980,
+  "matrix_changes_limited_to_result_family_and_profile": true,
+  "closed_issues": [
+    "V-L09",
+    "V-L10"
+  ],
+  "progress": {
+    "closed": 35,
+    "partial": 0,
+    "total": 64,
+    "percent": 54.6875
+  },
+  "runtime_repair_authorized_after_probe": true,
+  "runtime_changed": [
+    "runtime/include/operators/arithmetic/boxed_numeric.hpp",
+    "runtime/include/operators/coalesce/coalesce.hpp"
+  ],
+  "remaining_batch_blockers": [],
+  "separate_open_findings": [
+    {
+      "id": "BS-R01",
+      "status": "open",
+      "finding": "Negative and width-or-greater shift counts reach unchecked native integer shifts; UBSan rejects scalar, mixed and dynamic controls.",
+      "owner": "shared primitive integer shift-count contract and runtime validation",
+      "scope": "Outside the two authorized runtime owners; scalar control reproduces the same gap. No invalid-count behavior is certified."
+    }
+  ],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "implementation_commits": [
+    "0de3db03",
+    "a56e17be"
+  ]
+}

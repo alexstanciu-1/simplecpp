@@ -188,3 +188,8 @@ The [platform/alias slice](planning/platform_alias.md) covers explicit core
 `php::microtime` aliases with observed source-type precedence, restored
 `fs_is_windows`, and the environment-name contract. General namespaces and other
 compatibility aliases remain separate.
+
+The [V-L09/V-L10 closeout](planning/boxed_selection.md) adds homogeneous boxed
+integer expressions and canonical-scalar wrapper coalescing with lazy payload
+normalization. Its separate BS-R01 finding keeps unchecked primitive shift counts
+explicit; it does not certify those counts or widen pairs/updates.

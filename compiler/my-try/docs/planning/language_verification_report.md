@@ -730,3 +730,19 @@ Current progress is **33/64 (51.5625%)**, zero partial and 31 other open issues,
 **+3.125 percentage points**. Earlier findings/counts remain historical. General
 namespaces, other aliases and native Windows evidence remain separate; no full
 matrix or native compiler rebuild.
+
+## Boxed integer / wrapper coalescing closeout — 2026-10-20
+
+[V-L09 and V-L10](boxed_selection.md) close within the approved homogeneous scope:
+12 boxed integer forms and 12 canonical-scalar wrapper coalesces. Boxed families,
+ordered snapshots and lazy usable-value selection are preserved. Runtime-first
+probes exposed absent dynamic operators and wrong homogeneous coalesce result
+types; the user subsequently authorized both bounded runtime repairs. Source,
+retained recovery, focused native regressions and production cold/warm builds
+pass on dev002. No full matrix or native compiler rebuild was run.
+
+Current progress is **35/64 (54.6875%)**, zero partial and 29 other original issues,
+**+3.125 percentage points**. Separate open finding **BS-R01** records unchecked
+primitive shift counts: -1 and 64 trigger UBSan in scalar, mixed and dynamic
+controls. No safe invalid-count behavior is claimed or repaired here. Earlier
+findings/counts remain historical; wider pairs and updates remain separate.

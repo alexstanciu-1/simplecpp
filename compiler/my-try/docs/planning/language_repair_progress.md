@@ -2,18 +2,18 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) now closes V-D09 and V-D12. This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) now closes V-L09 and V-L10. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired, then verified | 33 |
+| Implemented or already repaired, then verified | 35 |
 | Partially implemented and verified | 0 |
-| Other issues not yet closed | 31 |
+| Other issues not yet closed | 29 |
 | Total | 64 |
 
-Fully closed: **33/64 = 51.5625%** (about **51.6% by issue count**). This is not an
+Fully closed: **35/64 = 54.6875%** (about **54.7% by issue count**). This is not an
 engineering-effort estimate. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
@@ -21,7 +21,7 @@ much larger than fixture repairs. There is no defensible weighted effort percent
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 16 | 0 | 1 | 17 |
-| Normal discussion | 4 | 0 | 30 | 34 |
+| Normal discussion | 6 | 0 | 28 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
@@ -53,6 +53,14 @@ platform query and NUL-safe environment-name contract. Source-type shadowing and
 retained failure/recovery pass on dev002, alongside native cold/warm production
 builds. This batch adds two closures, **+3.125 points**. Other aliases, general
 namespaces and actual Windows execution remain separate.
+
+V-L09 and V-L10 close the approved homogeneous boxed integer expressions and
+canonical-scalar wrapper coalesces, adding **+3.125 points**. Runtime-first probes
+exposed two prerequisites, both subsequently authorized and repaired. Dev002
+source/state/effect/recovery and production builds pass. The separate **BS-R01**
+primitive invalid-shift-count finding remains open: UBSan rejects -1/64 counts in
+scalar, mixed and dynamic controls. It is not a supported-operation pass and is
+tracked outside the original frozen denominator. Wider pairs/updates remain separate.
 
 “Not closed” does not mean every remaining entry is an accidental regression or an
 authorized implementation task. Some entries still require policy decisions or

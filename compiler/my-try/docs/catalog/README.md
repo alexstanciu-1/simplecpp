@@ -324,3 +324,8 @@ Intake totals: **402 source rows → 330 distinct rule IDs**, with **13 IDs reta
 The [V-D09/V-D12 closeout](../planning/platform_alias.md) records qualified runtime
 callable aliases with observed source-type precedence, restored `fs_is_windows`
 and NUL-rejecting `getenv`. Other aliases and general namespace work are separate.
+
+The [boxed/selection closeout](../planning/boxed_selection.md) records V-L09/V-L10
+and their two approved runtime prerequisites. Homogeneous boxed results preserve
+family; homogeneous canonical-scalar wrapper coalesces return usable payloads.
+Primitive invalid-shift-count validation remains the separate BS-R01 finding.

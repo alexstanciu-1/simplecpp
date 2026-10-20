@@ -63,7 +63,7 @@ promises. Review contracts and feasibility before freezing each goal.
 | --- | --- | --- |
 | Regex contract and provider bindings — completed | V-R04, V-R09 | [Closeout](regex_replacement.md): 31/64 closed, +3.125 points. V-R05 callback ABI remains a separate discussion. |
 | Public platform and compatibility aliases — completed | V-D12, V-D09 | [Closeout](platform_alias.md): 33/64 closed, +3.125 points. Qualified aliases preserve source types; platform/environment contracts verified on dev002. |
-| Remaining boxed/selection operators | V-L09, V-L10 | Settle integer-kind bitwise/shift admission and homogeneous wrapper coalescing; separate implementation owners and focused state/effect proofs. |
+| Boxed/selection operators — completed | V-L09, V-L10 | [Closeout](boxed_selection.md): 35/64 closed, +3.125 points. Two runtime prerequisites separately authorized. Primitive invalid-shift-count finding BS-R01 remains open. |
 
 V-E01 needs a separate evidence/status reconciliation: its ledger already says
 resolved-environment but lacks the fully-closed repair status. Such a justified

@@ -1,0 +1,504 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "head": "842276aa",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/boxed-selection/20261020-01",
+  "suites": {
+    "runtime-03": {
+      "commands": 49,
+      "all_expected_exits": true,
+      "command_seconds": 77.44,
+      "native_executions": 24
+    },
+    "source-03": {
+      "commands": 75,
+      "all_expected_exits": true,
+      "command_seconds": 95.3,
+      "native_executions": 19
+    },
+    "regressions-03": {
+      "commands": 242,
+      "all_expected_exits": true,
+      "command_seconds": 183.81,
+      "native_executions": 58
+    },
+    "shift-boundary": {
+      "commands": 10,
+      "all_expected_exits": true,
+      "command_seconds": 13.23,
+      "native_executions": 6
+    }
+  },
+  "summaries": {
+    "runtime-03": {
+      "probe_completed": true,
+      "results": {
+        "dynamic-and": {
+          "stage": "passed"
+        },
+        "dynamic-left": {
+          "stage": "passed"
+        },
+        "dynamic-not": {
+          "stage": "passed"
+        },
+        "dynamic-or": {
+          "stage": "passed"
+        },
+        "dynamic-right": {
+          "stage": "passed"
+        },
+        "dynamic-xor": {
+          "stage": "passed"
+        },
+        "mixed-and": {
+          "stage": "passed"
+        },
+        "mixed-left": {
+          "stage": "passed"
+        },
+        "mixed-not": {
+          "stage": "passed"
+        },
+        "mixed-or": {
+          "stage": "passed"
+        },
+        "mixed-right": {
+          "stage": "passed"
+        },
+        "mixed-xor": {
+          "stage": "passed"
+        },
+        "nullable-bool": {
+          "stage": "passed"
+        },
+        "nullable-float": {
+          "stage": "passed"
+        },
+        "nullable-int": {
+          "stage": "passed"
+        },
+        "nullable-string": {
+          "stage": "passed"
+        },
+        "result-bool": {
+          "stage": "passed"
+        },
+        "result-float": {
+          "stage": "passed"
+        },
+        "result-int": {
+          "stage": "passed"
+        },
+        "result-string": {
+          "stage": "passed"
+        },
+        "result_or_false-bool": {
+          "stage": "passed"
+        },
+        "result_or_false-float": {
+          "stage": "passed"
+        },
+        "result_or_false-int": {
+          "stage": "passed"
+        },
+        "result_or_false-string": {
+          "stage": "passed"
+        }
+      },
+      "runtime_changes": false
+    },
+    "source-03": {
+      "passed": true,
+      "programs": 17,
+      "checks": {
+        "boxed_forms": 12,
+        "coalesce_forms": 12,
+        "rejections": [
+          {
+            "source": "$a mixed=7;$b dynamic=2;$v=$a & $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=$a & 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=2 & $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$b mixed=2;$a &= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a mixed=7;$b dynamic=2;$v=$a | $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=$a | 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=2 | $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$b mixed=2;$a |= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a mixed=7;$b dynamic=2;$v=$a ^ $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=$a ^ 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=2 ^ $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$b mixed=2;$a ^= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a mixed=7;$b dynamic=2;$v=$a << $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=$a << 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=2 << $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$b mixed=2;$a <<= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a mixed=7;$b dynamic=2;$v=$a >> $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=$a >> 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$v=2 >> $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a mixed=7;$b mixed=2;$a >>= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a dynamic=7;$b mixed=2;$v=$a & $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=$a & 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=2 & $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$b dynamic=2;$a &= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a dynamic=7;$b mixed=2;$v=$a | $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=$a | 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=2 | $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$b dynamic=2;$a |= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a dynamic=7;$b mixed=2;$v=$a ^ $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=$a ^ 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=2 ^ $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$b dynamic=2;$a ^= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a dynamic=7;$b mixed=2;$v=$a << $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=$a << 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=2 << $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$b dynamic=2;$a <<= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a dynamic=7;$b mixed=2;$v=$a >> $b;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=$a >> 2;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$v=2 >> $a;",
+            "diagnostic": "Boxed bitwise operators require the same boxed family\n"
+          },
+          {
+            "source": "$a dynamic=7;$b dynamic=2;$a >>= $b;",
+            "diagnostic": "Boxed bitwise updates remain deferred\n"
+          },
+          {
+            "source": "$a ?int=1;$b result_or_bool<int> =2;$v=$a ?? $b;",
+            "diagnostic": "S2S coalesce does not permit result_or_bool on either side\n"
+          },
+          {
+            "source": "$a result_or_bool<int> =1;$b ?int=2;$v=$a ?? $b;",
+            "diagnostic": "S2S coalesce does not permit result_or_bool on either side\n"
+          },
+          {
+            "source": "$a result<int>=1;$b result_or_bool<int> =2;$v=$a ?? $b;",
+            "diagnostic": "main.phs: Expected '>' at main.phs: byte 13\n"
+          },
+          {
+            "source": "$a result_or_bool<int> =1;$b result<int>=2;$v=$a ?? $b;",
+            "diagnostic": "main.phs: Expected '>' at main.phs: byte 39\n"
+          },
+          {
+            "source": "$a result_or_false<int>=1;$b result_or_bool<int> =2;$v=$a ?? $b;",
+            "diagnostic": "main.phs: Expected '>' at main.phs: byte 22\n"
+          },
+          {
+            "source": "$a result_or_bool<int> =1;$b result_or_false<int>=2;$v=$a ?? $b;",
+            "diagnostic": "main.phs: Expected '>' at main.phs: byte 48\n"
+          },
+          {
+            "source": "$a ?int=1;$b result<int> =2;$v=$a ?? $b;",
+            "diagnostic": "S2S nullable value boundary requires a scalar or inline record payload\n"
+          },
+          {
+            "source": "$a ?int=1;$b ?float=2.0;$v=$a ?? $b;",
+            "diagnostic": "S2S nullable value boundary requires a scalar or inline record payload\n"
+          },
+          {
+            "source": "struct Row {public int $x;} $a ?Row; $b ?Row; $v=$a ?? $b;",
+            "diagnostic": "Wrapper coalescing requires an exact canonical scalar payload\n"
+          }
+        ],
+        "recovery_cycles": 2
+      },
+      "full_matrix_run": false
+    },
+    "regressions-03": {
+      "passed": true,
+      "php_suites": 9,
+      "native_programs": 58,
+      "full_matrix_run": false
+    },
+    "shift-boundary": {
+      "probe_completed": true,
+      "finding": "Negative and width-or-greater shift counts reach unchecked native integer shifts; UBSan rejects scalar, mixed and dynamic controls.",
+      "cases": 6,
+      "primitive_policy_changed": false
+    }
+  },
+  "baseline": {
+    "probe_completed": true,
+    "results": {
+      "dynamic-and": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-and.cpp:5:120: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a & b),B>);auto r=a & b;return r.get_int().native_value()==2?0:1;}\n      |                                                                                                                      ~ ^ ~\n/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-and.cpp:5:138: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a & b),B>);auto r=a & b;return r.get_int().native_value()==2?0:1;}\n      |                                                                                                                                        ~ ^ ~\n2 errors generated.\n"
+      },
+      "dynamic-left": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-left.cpp:5:120: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a << b),B>);auto r=a << b;return r.get_int().native_value()==28?0:1;}\n      |                                                                                                                      ~ ^  ~\n/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-left.cpp:5:139: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a << b),B>);auto r=a << b;return r.get_int().native_value()==28?0:1;}\n      |                                                                                                                                         ~ ^  ~\n2 errors generated.\n"
+      },
+      "dynamic-not": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-not.cpp:5:118: error: invalid argument type 'B' (aka 'scpp::detail::dynamic_value') to unary expression\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(~a),B>);auto r=~a;return r.get_int().native_value()==-8?0:1;}\n      |                                                                                                                      ^~\n/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-not.cpp:5:133: error: invalid argument type 'B' (aka 'scpp::detail::dynamic_value') to unary expression\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(~a),B>);auto r=~a;return r.get_int().native_value()==-8?0:1;}\n      |                                                                                                                                     ^~\n2 errors generated.\n"
+      },
+      "dynamic-or": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-or.cpp:5:120: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a | b),B>);auto r=a | b;return r.get_int().native_value()==7?0:1;}\n      |                                                                                                                      ~ ^ ~\n/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-or.cpp:5:138: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a | b),B>);auto r=a | b;return r.get_int().native_value()==7?0:1;}\n      |                                                                                                                                        ~ ^ ~\n2 errors generated.\n"
+      },
+      "dynamic-right": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-right.cpp:5:120: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a >> b),B>);auto r=a >> b;return r.get_int().native_value()==1?0:1;}\n      |                                                                                                                      ~ ^  ~\n/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-right.cpp:5:139: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a >> b),B>);auto r=a >> b;return r.get_int().native_value()==1?0:1;}\n      |                                                                                                                                         ~ ^  ~\n2 errors generated.\n"
+      },
+      "dynamic-xor": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-xor.cpp:5:120: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a ^ b),B>);auto r=a ^ b;return r.get_int().native_value()==5?0:1;}\n      |                                                                                                                      ~ ^ ~\n/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/dynamic-xor.cpp:5:138: error: invalid operands to binary expression ('B' (aka 'scpp::detail::dynamic_value') and 'B')\n    5 | int main(){using B=scpp::dynamic_t<>;B a{scpp::int_t<>{7}},b{scpp::int_t<>{2}};static_assert(std::is_same_v<decltype(a ^ b),B>);auto r=a ^ b;return r.get_int().native_value()==5?0:1;}\n      |                                                                                                                                        ~ ^ ~\n2 errors generated.\n"
+      },
+      "mixed-and": {
+        "stage": "passed"
+      },
+      "mixed-left": {
+        "stage": "passed"
+      },
+      "mixed-not": {
+        "stage": "passed"
+      },
+      "mixed-or": {
+        "stage": "passed"
+      },
+      "mixed-right": {
+        "stage": "passed"
+      },
+      "mixed-xor": {
+        "stage": "passed"
+      },
+      "nullable-bool": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/nullable-bool.cpp:5:188: error: static assertion failed due to requirement 'std::is_same_v<scpp::nullable<scpp::bool_t>, scpp::bool_t>'\n    5 | int main(){using T=scpp::bool_t;using W=scpp::nullable<T>;W a{scpp::bool_t{false}},b{scpp::bool_t{false}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "nullable-float": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/nullable-float.cpp:5:187: error: static assertion failed due to requirement 'std::is_same_v<scpp::nullable<scpp::float_t>, scpp::float_t>'\n    5 | int main(){using T=scpp::float_t;using W=scpp::nullable<T>;W a{scpp::float_t{7.0}},b{scpp::float_t{7.0}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "nullable-int": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/nullable-int.cpp:5:183: error: static assertion failed due to requirement 'std::is_same_v<scpp::nullable<scpp::int_t<long>>, scpp::int_t<long>>'\n    5 | int main(){using T=scpp::int_t<>;using W=scpp::nullable<T>;W a{scpp::int_t<>{7}},b{scpp::int_t<>{7}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "nullable-string": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/nullable-string.cpp:5:188: error: static assertion failed due to requirement 'std::is_same_v<scpp::nullable<scpp::string_t>, scpp::string_t>'\n    5 | int main(){using T=scpp::string_t;using W=scpp::nullable<T>;W a{scpp::string_t{\"\"}},b{scpp::string_t{\"\"}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result-bool": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result-bool.cpp:5:186: error: static assertion failed due to requirement 'std::is_same_v<scpp::result<scpp::bool_t>, scpp::bool_t>'\n    5 | int main(){using T=scpp::bool_t;using W=scpp::result<T>;W a{scpp::bool_t{false}},b{scpp::bool_t{false}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result-float": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result-float.cpp:5:185: error: static assertion failed due to requirement 'std::is_same_v<scpp::result<scpp::float_t>, scpp::float_t>'\n    5 | int main(){using T=scpp::float_t;using W=scpp::result<T>;W a{scpp::float_t{7.0}},b{scpp::float_t{7.0}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result-int": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result-int.cpp:5:181: error: static assertion failed due to requirement 'std::is_same_v<scpp::result<scpp::int_t<long>>, scpp::int_t<long>>'\n    5 | int main(){using T=scpp::int_t<>;using W=scpp::result<T>;W a{scpp::int_t<>{7}},b{scpp::int_t<>{7}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result-string": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result-string.cpp:5:186: error: static assertion failed due to requirement 'std::is_same_v<scpp::result<scpp::string_t>, scpp::string_t>'\n    5 | int main(){using T=scpp::string_t;using W=scpp::result<T>;W a{scpp::string_t{\"\"}},b{scpp::string_t{\"\"}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result_or_false-bool": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result_or_false-bool.cpp:5:195: error: static assertion failed due to requirement 'std::is_same_v<scpp::result_or_false<scpp::bool_t>, scpp::bool_t>'\n    5 | int main(){using T=scpp::bool_t;using W=scpp::result_or_false<T>;W a{scpp::bool_t{false}},b{scpp::bool_t{false}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result_or_false-float": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result_or_false-float.cpp:5:194: error: static assertion failed due to requirement 'std::is_same_v<scpp::result_or_false<scpp::float_t>, scpp::float_t>'\n    5 | int main(){using T=scpp::float_t;using W=scpp::result_or_false<T>;W a{scpp::float_t{7.0}},b{scpp::float_t{7.0}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result_or_false-int": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result_or_false-int.cpp:5:190: error: static assertion failed due to requirement 'std::is_same_v<scpp::result_or_false<scpp::int_t<long>>, scpp::int_t<long>>'\n    5 | int main(){using T=scpp::int_t<>;using W=scpp::result_or_false<T>;W a{scpp::int_t<>{7}},b{scpp::int_t<>{7}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      },
+      "result_or_false-string": {
+        "stage": "compile-failed",
+        "diagnostic": "/home/alex-ai/boxed-selection/20261020-01/verification/runtime-01/result_or_false-string.cpp:5:195: error: static assertion failed due to requirement 'std::is_same_v<scpp::result_or_false<scpp::string_t>, scpp::string_t>'\n    5 | int main(){using T=scpp::string_t;using W=scpp::result_or_false<T>;W a{scpp::string_t{\"\"}},b{scpp::string_t{\"\"}};auto r=scpp::php::coalesce_eval([&](){return a;},[&](){return b;});static_assert(std::is_same_v<decltype(r),T>);return 0;}\n      |                                                                                                                                                                                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n1 error generated.\n"
+      }
+    },
+    "runtime_changes": false
+  },
+  "source_integrity": {
+    "checked": 6319,
+    "mismatches": [],
+    "runtime_changed": [
+      "runtime/include/operators/arithmetic/boxed_numeric.hpp",
+      "runtime/include/operators/coalesce/coalesce.hpp"
+    ],
+    "changed": [
+      "compiler/my-try/04_analyze/conversions/model.php",
+      "compiler/my-try/04_analyze/operators/boxed.php",
+      "compiler/my-try/04_analyze/operators/model.php",
+      "compiler/my-try/04_analyze/operators/preparation.php",
+      "compiler/my-try/04_analyze/prepare/README.md",
+      "compiler/my-try/04_analyze/prepare/semantics/coalesce_expressions.php",
+      "compiler/my-try/05_backend/cpp/declarations.php",
+      "compiler/my-try/05_backend/cpp/generate.php",
+      "compiler/my-try/docs/README.md",
+      "compiler/my-try/docs/architecture/MODEL.md",
+      "compiler/my-try/docs/catalog/05_dynamic_boundaries.md",
+      "compiler/my-try/docs/catalog/README.md",
+      "compiler/my-try/tests/boxed_selection.php",
+      "compiler/my-try/tests/boxed_selection.py",
+      "compiler/my-try/tests/boxed_selection_oracle.hpp",
+      "compiler/my-try/tests/boxed_selection_regressions.php",
+      "compiler/my-try/tests/boxed_selection_regressions.py",
+      "compiler/my-try/tests/boxed_selection_runtime.py",
+      "compiler/my-try/tests/boxed_selection_runtime_control.cpp",
+      "compiler/my-try/tests/boxed_selection_shift_boundary.py",
+      "compiler/my-try/tests/dynamic_boundaries.php",
+      "compiler/my-try/tests/mixed.php",
+      "compiler/my-try/tests/results.php",
+      "runtime/include/operators/arithmetic/boxed_numeric.hpp",
+      "runtime/include/operators/coalesce/coalesce.hpp",
+      "specs/conditional_expression_matrix.md",
+      "specs/dynamic_types.md",
+      "specs/operator_matrix/data/semantics/operators_binary_bitwise/bitwise_and__mixed_t__mixed_t.tsv",
+      "specs/operator_matrix/data/semantics/operators_binary_bitwise/bitwise_or__mixed_t__mixed_t.tsv",
+      "specs/operator_matrix/data/semantics/operators_binary_bitwise/bitwise_xor__mixed_t__mixed_t.tsv",
+      "specs/operator_matrix/data/semantics/operators_binary_bitwise/shift_left__mixed_t__mixed_t.tsv",
+      "specs/operator_matrix/data/semantics/operators_binary_bitwise/shift_right__mixed_t__mixed_t.tsv"
+    ]
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_records": 1628,
+  "evidence_sha256": "2e466706338b07e9cd1c976147871cb6de6b202b6e0b5615e269a651d1777be4",
+  "runtime_repair_authorized_after_probe": true,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "original_issue_closure": {
+    "closed": 35,
+    "partial": 0,
+    "total": 64,
+    "percent": 54.6875
+  },
+  "remaining_batch_blockers": [],
+  "separate_findings": [
+    {
+      "id": "BS-R01",
+      "status": "open",
+      "finding": "Negative and width-or-greater shift counts reach unchecked native integer shifts; UBSan rejects scalar, mixed and dynamic controls.",
+      "owner": "shared primitive integer shift-count contract and runtime validation",
+      "scope": "Outside the two authorized runtime owners; scalar control reproduces the same gap. No invalid-count behavior is certified."
+    }
+  ],
+  "deferred": [
+    "Cross-family boxed and wrapper pairs",
+    "Boxed/scalar bitwise peers",
+    "Compounds and indexed updates",
+    "Payload widening, fixed-width, record and ownership joins"
+  ]
+}

@@ -1614,10 +1614,19 @@
       ],
       "finding": "Twelve mixed/dynamic int-payload &, |, ^, <<, >> and ~ cells reject; structured semantic rows and shared boxed policy admit integer-kind dispatch.",
       "dependencies": [],
-      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "next_action": "Closed within the approved homogeneous expression domain. Wider pairs/updates remain separate; see boxed_selection.md for the independent BS-R01 primitive invalid-shift-count finding.",
       "acceptance": "Prove int payload results, exact result domains, unsuitable-kind errors, shift boundaries and left-to-right single evaluation.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "boxed_selection.md",
+        "results": "boxed_selection_results.json",
+        "audit": "boxed_selection_audit.json",
+        "scope": "12 homogeneous boxed integer forms; preserved family, kinds and ordered snapshots. Invalid primitive shift counts remain a separate finding.",
+        "runtime_prerequisites": "Both bounded repairs explicitly authorized after runtime-first probes."
+      }
     },
     {
       "id": "V-L10",
@@ -1632,10 +1641,19 @@
       ],
       "finding": "Three homogeneous nullable/Result/falseable-Result int coalesces reject. The usable-value contract and explicit reference helper specialization select the normalized payload domain from either wrapper.",
       "dependencies": [],
-      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "next_action": "Closed within the approved homogeneous expression domain. Wider pairs/updates remain separate; see boxed_selection.md for the independent BS-R01 primitive invalid-shift-count finding.",
       "acceptance": "Prove present-left, absent-left/present-right, both-unusable errors, zero preservation, lazy RHS and normalized result type; keep result_or_bool rejected.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "boxed_selection.md",
+        "results": "boxed_selection_results.json",
+        "audit": "boxed_selection_audit.json",
+        "scope": "12 homogeneous nullable/Result/falseable Result coalesces over canonical int/float/bool/string, with lazy usable-value normalization and selected-branch errors.",
+        "runtime_prerequisites": "Both bounded repairs explicitly authorized after runtime-first probes."
+      }
     },
     {
       "id": "V-L11",
