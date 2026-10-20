@@ -33,6 +33,7 @@ final class CPP_Compiler_Functions
 
 	public static function reference(prepared_compiler_call $specialization, cpp_generation_context $context): string
 	{
+		if ($context->concrete_types()) { throw new \RuntimeException('prelower_templates: compiler helper requires concrete transport'); }
 		if ($specialization instanceof prepared_layout_query) {
 			return self::layout_reference(object_cast($specialization, prepared_layout_query::class), $context);
 		}

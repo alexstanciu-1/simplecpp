@@ -1,0 +1,1 @@
+$v ?vector<int> = null; $w vector<int> = $v; return 0;

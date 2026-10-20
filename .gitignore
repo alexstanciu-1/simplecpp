@@ -102,3 +102,7 @@ build/
 nbproject/private/cache/
 .nb-gradle/
 .dev-deploy/
+
+# Python bytecode and local compiler experiments (curated evidence lives in specs/planning/results/)
+__pycache__/
+/compiler/my-try/temp/

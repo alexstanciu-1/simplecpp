@@ -33,7 +33,7 @@ $program='class Box { public '.$left.' $v='.$lv.'; public static '.$left.' $s='.
 if(!$compound)$program.='function binary('.$left.' $a,'.$right.' $b,int &$lc,int &$rc,int &$trace,bool $lf,bool $rf):'.$ret.'{return markl($a,$lc,$trace,$lf) '.$op.' markr($b,$rc,$trace,$rf);} ';
 $dir=sys_get_temp_dir().'/scpp_completion_'.bin2hex(random_bytes(6));mkdir($dir);$path=$dir.'/main.phs';
 try{
- file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$dir]);$compiler->exec_cpp();$fresh=CPP_Probe::text(Model::$cpp_files);
+ file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$dir]);$compiler->exec_cpp();$fresh=CPP_Probe::text(Model::$cpp_files);
  file_put_contents($path,'function probe('.$left.' $a,'.$right.' $b):'.$ret.'{return missing($a);}');
  foreach([[$path],[]] as $changes){$failed=false;try{$compiler->update_cpp($changes);}catch(\RuntimeException $e){$failed=true;}completion_check($failed&&Model::$prepared_files->is_empty()&&Model::$cpp_files->is_empty(),'Invalid source retained artifacts');}
  file_put_contents($path,$valid);$compiler->update_cpp([$path]);completion_check(CPP_Probe::text(Model::$cpp_files)===$fresh,'Repair differs from fresh');$compiler->update_cpp([]);completion_check(CPP_Probe::text(Model::$cpp_files)===$fresh,'No-op differs');

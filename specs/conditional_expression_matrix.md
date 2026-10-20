@@ -282,3 +282,22 @@ Current version note:
 - `??` uses wrapper-state / usable-value presence for approved wrappers
 - `?:` / ternary use condition-truthiness rules instead
 - helper result behavior must therefore be documented per helper family rather than inferred from a single PHP-visible nullability rule
+
+## Locally typed string-hash coalescing in the legacy generator — 2026-10-16
+
+For a single indexed read from a locally typed, string-keyed `hash<string>`,
+`$values[$key] ?? $fallback` supplies absence when the key is missing and a present
+string when it exists. A present empty string or string `"0"` is usable and must
+not select fallback. The existing nullable/string coalescing rules govern the
+result; no new branch-join conversions are introduced.
+
+The key is evaluated once. The fallback is evaluated only on absence, once; errors
+in evaluated key/fallback expressions propagate. Lookup never inserts a key or
+mutates the hash. The selected result is owned, not a reference into the container.
+Ordinary indexed reads retain their checked-access behavior.
+
+This bounded legacy-generator rule uses existing local declaration metadata. It
+adds no whole-program inference or v0.2 preparation behavior. Nested paths, member
+receivers, arbitrary receiver calls, other payload/key families, and `??=` are
+outside this amendment. Mutation of the receiver from inside its key expression
+is not established by this slice's single-evaluation guarantee.

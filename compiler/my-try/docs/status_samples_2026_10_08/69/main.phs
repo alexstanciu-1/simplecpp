@@ -1,0 +1,3 @@
+$offset int = 2;
+$callback = fn(int $value): int => $value + $offset;
+return $callback(3);

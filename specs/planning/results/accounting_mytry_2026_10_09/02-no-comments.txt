@@ -1,0 +1,13 @@
+S2S generation failed: main.phs: Expected ';' at main.phs: byte 718
+src/assets.phs: Expected ';' at src/assets.phs: byte 3095
+src/banking.phs: Expected ';' at src/banking.phs: byte 651
+src/checks.phs: Expected ';' at src/checks.phs: byte 100
+src/closing.phs: Expected ';' at src/closing.phs: byte 232
+src/core.phs: Expected ';' at src/core.phs: byte 1316
+src/ledger.phs: Expected ';' at src/ledger.phs: byte 44
+src/money.phs: Expected ';' at src/money.phs: byte 3635
+src/purchasing.phs: Expected ';' at src/purchasing.phs: byte 1264
+src/reports.phs: Expected ';' at src/reports.phs: byte 2411
+src/sales.phs: Expected ';' at src/sales.phs: byte 474
+src/stock.phs: Expected ';' at src/stock.phs: byte 312
+

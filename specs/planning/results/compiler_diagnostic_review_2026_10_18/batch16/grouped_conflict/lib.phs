@@ -1,0 +1,1 @@
+namespace Lib; function f(): int { return 1; } function g(): int { return 2; }

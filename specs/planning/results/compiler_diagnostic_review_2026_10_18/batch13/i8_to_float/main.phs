@@ -1,0 +1,1 @@
+$x int8 = 1; $y float = $x; return 0;

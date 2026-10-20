@@ -1,0 +1,1 @@
+$v vector<int> = [1]; $r =& $v[0]; return 0;

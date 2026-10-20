@@ -1,0 +1,15 @@
+{
+  "base_commit": "e7f809ed789d4b6523c4878cb98d24eb827bfa4e",
+  "candidate": "base plus scoped duplicate type admission changes",
+  "sha256": {
+    "compiler/my-try/04_analyze/prepare/lookup.php": "2b7f2e7a6790dfe6c9c090296edb7b01e9c3024fb5c549263d937101d50d3016",
+    "compiler/my-try/04_analyze/prepare/semantics/declarations.php": "a83d150ad45cc166c05154f21833d462bb059ee0683ad310c8bf27ded0c959dc",
+    "compiler/my-try/04_analyze/prepare/semantics/enums.php": "734ef1551a4a7a85a9b1ac1d7295a79ef65077347687f78ef7699efcf6e0443b",
+    "compiler/my-try/04_analyze/prepare/semantics/relationships.php": "a2230cb888d7075aadc7f57b9b69127c7f839c059cc3039d99f38309c4766ab4",
+    "compiler/my-try/04_analyze/prepare/semantics/traits.php": "fcbf393945f7a9670f1b72e6bf23b260b0138d4672b5befcbbd175e9d0bcec76",
+    "compiler/my-try/tests/duplicate_types.php": "4091f32d0600f6a1cbbcaeaea83d62f38eeab5fb51b3a4d83c1234514090c234",
+    "compiler/my-try/tests/enums.php": "db406760a004cd258bfec8a508d56c99f4326bd6d9a0c6fae62eeb35ac62df48",
+    "compiler/my-try/tests/records.py": "d45138df26c74266cc8ebf3691bf87429583f1e56059869ff1be465368dca346",
+    "specs/namespaces_v0_2.md": "ba2cd3930c4a28aefaf4f8885d33db3d6355e01986249d0100670498e30d9f09"
+  }
+}

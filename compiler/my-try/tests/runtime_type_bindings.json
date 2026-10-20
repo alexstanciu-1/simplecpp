@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "module": "binding_proof",
+  "dependencies": [
+    "core"
+  ],
+  "functions": [],
+  "cpp": [],
+  "types": [
+    {
+      "id": "proof.duo",
+      "name": "duo",
+      "kind": "struct",
+      "capabilities": [
+        "value_storable",
+        "copyable_value"
+      ],
+      "parameters": [
+        {
+          "name": "First",
+          "requires": [
+            "value_storable"
+          ],
+          "capability_dependencies": [
+            "copyable_value"
+          ]
+        },
+        {
+          "name": "Second",
+          "requires": [
+            "value_storable"
+          ],
+          "capability_dependencies": [
+            "copyable_value"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proof.closed",
+      "name": "closed",
+      "kind": "struct",
+      "capabilities": [
+        "value_storable",
+        "copyable_value"
+      ]
+    },
+    {
+      "id": "proof.unused",
+      "name": "unused",
+      "kind": "struct",
+      "capabilities": [
+        "value_storable",
+        "copyable_value"
+      ]
+    },
+    {
+      "id": "proof.shared_closed",
+      "name": "shared_closed",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    }
+  ],
+  "cpp_types": [
+    {
+      "id": "proof.duo",
+      "symbol": "std::pair",
+      "header": "utility",
+      "arguments": [
+        {
+          "parameter": "Second",
+          "representation": "stored"
+        },
+        {
+          "parameter": "First",
+          "representation": "stored"
+        }
+      ]
+    },
+    {
+      "id": "proof.closed",
+      "symbol": "scpp::int_t",
+      "header": "scpp/int_t.hpp",
+      "arguments": [
+        {
+          "native": "std::int32_t",
+          "header": "cstdint"
+        }
+      ]
+    },
+    {
+      "id": "proof.unused",
+      "symbol": "std::pair",
+      "header": "utility",
+      "arguments": [
+        {
+          "native": "int"
+        },
+        {
+          "native": "bool"
+        }
+      ]
+    },
+    {
+      "id": "proof.shared_closed",
+      "symbol": "scpp::int_t",
+      "header": "scpp/int_t.hpp",
+      "arguments": [
+        {
+          "native": "std::int32_t"
+        }
+      ]
+    }
+  ]
+}

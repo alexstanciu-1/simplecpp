@@ -1,0 +1,1 @@
+abstract struct A { abstract function f(): int; } class C { function __construct(A $a) {} } return 0;

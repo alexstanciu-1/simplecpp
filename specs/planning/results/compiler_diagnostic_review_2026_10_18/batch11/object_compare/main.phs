@@ -1,0 +1,1 @@
+class C {} $a = new C(); $b = new C(); return $a == $b ? 1 : 0;

@@ -1,0 +1,7 @@
+class Lifetime {
+    public static int $destroyed = 0;
+    public function __destruct() { self::$destroyed++; }
+}
+function scope(): void { $object = new Lifetime(); }
+scope();
+return Lifetime::$destroyed;

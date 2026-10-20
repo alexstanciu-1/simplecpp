@@ -1,0 +1,6 @@
+class Box {
+    public int $value = 2;
+    public function __construct(int $initial) { $this->value = $initial; }
+}
+$box = new Box(7);
+return $box->value;

@@ -35,7 +35,7 @@ foreach($forms as $name=>[$expression,$operation,$delta,$post]) {
  foreach(['?bool','?string','?int16','result<bool>','result<string>','result<int16>','result_or_false<bool>','result_or_bool<string>','result<?int>'] as $badtype) { guarded_cross_reject('function bad('.$badtype.' &$x): void { '.$expression.'; }');++$negatives; }
  $dir=sys_get_temp_dir().'/scpp_updates_'.bin2hex(random_bytes(6));mkdir($dir);$path=$dir.'/main.phs';
  $valid='function probe('.$type.' &$x): '.$type.' { return '.$expression.'; }';
- try { file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$dir]);$compiler->exec_cpp();file_put_contents($path,str_replace($type.' &$x','const '.$type.' &$x',$valid));
+ try { file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$dir]);$compiler->exec_cpp();file_put_contents($path,str_replace($type.' &$x','const '.$type.' &$x',$valid));
  foreach([[$path],[]] as $changes) { $failed=false;try{$compiler->update_cpp($changes);}catch(\RuntimeException $e){$failed=true;} update_check($failed && Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(),'Failed edit retained artifacts'); }
  file_put_contents($path,$valid);$compiler->update_cpp([$path]);$output=CPP_Probe::text(Model::$cpp_files);$compiler->update_cpp([]);update_check($output===CPP_Probe::text(Model::$cpp_files),'No-op changed output');Compiler_Lifecycle::reset();$compiler->init([$dir]);$compiler->exec_cpp();update_check($output===CPP_Probe::text(Model::$cpp_files),'Fresh mismatch');
  }finally{unlink($path);rmdir($dir);}

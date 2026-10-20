@@ -1,0 +1,45 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === callables/n73756d.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+scpp::int_t<> function_sum(scpp::vector_t<scpp::int_t<>> local_values = scpp::vector_t<scpp::int_t<>>{});
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "callables/n73756d.hpp"
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+#include "scpp/value_iteration.hpp"
+#include "scpp/generated/operators.hpp"
+scpp::int_t<> function_sum(scpp::vector_t<scpp::int_t<>> local_values)
+{
+	scpp::int_t<> local_total = static_cast<scpp::int_t<>>(0LL);
+{
+const auto& foreach_source_0 = local_values;
+for (auto foreach_entry_0 : scpp::value_iteration(foreach_source_0)) {
+scpp::int_t<> local_value = foreach_entry_0.value_copy();
+{
+	([&]() -> scpp::int_t<> { auto& target_1 = local_total; target_1 = (target_1 + local_value); return target_1; }());
+}
+}
+}
+	return local_total;
+}
+
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "scpp/vector_t.hpp"
+#include "callables/n73756d.hpp"
+
+int main()
+{
+	return static_cast<int>((([&]() -> scpp::int_t<> {
+	scpp::int_t<> argument_0 = static_cast<scpp::int_t<>>(1LL);
+	scpp::int_t<> argument_1 = static_cast<scpp::int_t<>>(2LL);
+	scpp::int_t<> argument_2 = static_cast<scpp::int_t<>>(3LL);
+	return function_sum(scpp::vector_t<scpp::int_t<>>{argument_0, argument_1, argument_2});
+}())).native_value());
+	return 0;
+}

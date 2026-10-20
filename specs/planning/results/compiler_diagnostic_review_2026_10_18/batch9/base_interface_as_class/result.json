@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Record base must be a class or struct\n"
+}

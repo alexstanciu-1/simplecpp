@@ -20,8 +20,10 @@ string remain distinct from absence. Use the established take_nullable helper wh
 a concrete scalar payload is needed; do not assume PHP automatic nullable narrowing.
 
 Nullable parameters permit only null defaults. Ordinary nonnullable `bool` parameters
-also accept matching `true`/`false` literal defaults. Implicitly nullable `T $x = null`,
-other non-null defaults, nullable containers, mixed/object, unions, by-reference/variadic
+also accept matching `true`/`false` literal defaults. Nonnullable `int` parameters now
+have a separate [integer literal default contract](integer_method_defaults.md).
+Implicitly nullable `T $x = null`, non-null defaults on nullable parameters,
+nullable containers, mixed/object, unions, by-reference/variadic
 parameters and arbitrary default expressions remain rejected. Constructor handling
 keeps its existing contract; nullable callback parameters and nullable interface
 returns are not added by this slice. General object-property unset is not added.

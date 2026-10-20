@@ -22,7 +22,7 @@ $initial = 'struct Box { int32 $value; } function target(): int { return 1; } fu
 try
 {
 	file_put_contents($path, $initial);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
@@ -60,7 +60,7 @@ try
 	cpp_check($target_body->version === $work_version && $target_body->dependencies === $dependencies && $target_body->lookups === $lookups, 'Read-only queries changed work');
 
 	// Standalone output may be inspected repeatedly without consuming another caller's handoff.
-	$standalone_generator = new CPP_Generator(Model::$cpp_output_program);
+	$standalone_generator = new CPP_Generator(Model::$cpp_output_program, new cpp_lowering_options(false));
 	$standalone = $standalone_generator->generate($source->prepared);
 	$standalone_fragment = Model::$cpp_output_program->fragments[$target_body];
 	$again = $standalone_generator->generate($source->prepared);

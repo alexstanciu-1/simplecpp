@@ -89,12 +89,12 @@ def main():
             source.mkdir()
             (source / 'main.phs').write_text('return answer();')
             (source / 'library.phs').write_text('function answer(): int { return 7; }')
-            payload = runner.run('cli-relocation-' + str(index), ['php', APP / 'main.php', '--s2s', source,
+            payload = runner.run('cli-relocation-' + str(index), ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates',
                                 '--entry', 'main.phs'], cli_reason='Tests explicit entry and process restart')
             if baseline is not None and baseline != payload:
                 raise RuntimeError('Relocation changed generated artifacts')
             baseline = payload
-            rejected = runner.run('cli-no-entry-' + str(index), ['php', APP / 'main.php', '--s2s', source],
+            rejected = runner.run('cli-no-entry-' + str(index), ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates'],
                                   expected=1, cli_reason='Tests missing multi-source entry')
             if rejected:
                 raise RuntimeError('Missing entry published partial output')

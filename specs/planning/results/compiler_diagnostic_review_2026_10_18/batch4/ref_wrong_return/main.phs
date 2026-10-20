@@ -1,0 +1,1 @@
+function &f(int &$x): string { return $x; } return 0;

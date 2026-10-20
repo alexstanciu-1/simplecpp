@@ -1,0 +1,125 @@
+{
+  "closure_capture_self": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch5/closure_capture_self/cpp/entry.cpp:11:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch5/closure_capture_self/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted\n   11 |         local_f = local_f;\n      |                 ^\n/tmp/mytry-diagnostic-review/batch5/closure_capture_self/cpp/entry.cpp:8:17: note: lambda expression begins here\n    8 |         auto local_f = [local_n]() mutable -> scpp::int_t<> {\n      |                        ^\n1 error generated.\n"
+    ]
+  },
+  "closure_clean": {
+    "stage": "prepare",
+    "error": "S2S clean requires supported scalar, vector, hash, mixed, dynamic or explicit callable storage\n"
+  },
+  "closure_unset": {
+    "stage": "prepare",
+    "error": "S2S whole-variable unset requires nullable storage, an ownership handle or an explicit callable; use clean for values\n"
+  },
+  "closure_clean_free": {
+    "stage": "prepare",
+    "error": "S2S clean requires supported scalar, vector, hash, mixed, dynamic or explicit callable storage\n"
+  },
+  "closure_erased_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "closure_copy_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "closure_capture_reference_call": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "closure_reference_scope": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "closure_param_default": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "closure_ref_return_default": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "closure_variadic": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "void_return_forward": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "unique_variadic": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "private_dtor_parameter": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "private_dtor_return": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "abstract_byref": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "unused_private_method": {
+    "stage": "prepare",
+    "error": "Private method is not accessible here: f\n"
+  },
+  "static_instance": {
+    "stage": "prepare",
+    "error": "Static methods require :: and instance methods require ->\n"
+  },
+  "instance_static": {
+    "stage": "prepare",
+    "error": "Static methods require :: and instance methods require ->\n"
+  },
+  "clean_ref_return": {
+    "stage": "prepare",
+    "error": "S2S whole-storage cleanup requires a local or parameter variable\n"
+  },
+  "readonly_clean": {
+    "stage": "prepare",
+    "error": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+  },
+  "unique_to_base_no_virtual": {
+    "stage": "prepare",
+    "error": "Unique upcast requires virtual destruction on the destination base\n"
+  },
+  "unique_reborrow": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ref_return_private_field": {
+    "stage": "prepare",
+    "error": "Reference return requires the exact parameter storage type\n"
+  },
+  "null_assignment_scalar": {
+    "stage": "prepare",
+    "error": "S2S nullable boundary requires the same payload type\n"
+  },
+  "chain_unique": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "chain_capture": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:13:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted\n   13 |         local_g = local_f;\n      |                 ^\n/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17: note: lambda expression begins here\n    8 |         auto local_f = [local_n]() mutable -> scpp::int_t<> {\n      |                        ^\n/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:14:10: error: object of type '(lambda at /tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17)' cannot be assigned because its copy assignment operator is implicitly deleted\n   14 |         local_h = local_g;\n      |                 ^\n/tmp/mytry-diagnostic-review/batch5/chain_capture/cpp/entry.cpp:8:17: note: lambda expression begins here\n    8 |         auto local_f = [local_n]() mutable -> scpp::int_t<> {\n      |                        ^\n2 errors generated.\n"
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S boxed wrapping currently supports null, bool, ordinary int, float and string\n"
+}

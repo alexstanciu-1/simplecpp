@@ -1,0 +1,22 @@
+{
+"mutual_vector_min":{"main.phs":"$a = new A(); return 0;","a.phs":"class A { vector<B> $bs; }","b.phs":"class B { vector<A> $as; }"},
+"mutual_hash_min":{"main.phs":"$a = new A(); return 0;","a.phs":"class A { hash<B> $bs; }","b.phs":"class B { hash<A> $as; }"},
+"mutual_vector_single_file":{"main.phs":"class A { vector<B> $bs; } class B { vector<A> $as; } $a = new A(); return 0;"},
+"self_vector_control":{"main.phs":"class A { vector<A> $as; } $a = new A(); return 0;"},
+"acyclic_vector_control":{"main.phs":"$a = new A(); return 0;","a.phs":"class A { vector<B> $bs; }","b.phs":"class B {}"},
+"mutual_direct_control":{"main.phs":"$a = new A(); return 0;","a.phs":"class A { B $b; }","b.phs":"class B { A $a; }"},
+"mixed_vector_direct":{"main.phs":"$a = new A(); return 0;","a.phs":"class A { vector<B> $bs; }","b.phs":"class B { A $a; }"},
+"three_cycle_vector":{"main.phs":"$a = new A(); return 0;","a.phs":"class A { vector<B> $bs; }","b.phs":"class B { vector<C> $cs; }","c.phs":"class C { vector<A> $as; }"},
+"mutual_callable":{"main.phs":"$a = new A(); return 0;","a.phs":"class A { function<B()> $f; }","b.phs":"class B { function<A()> $f; }"},
+"cross_enum":{"main.phs":"$e = Lib\\get(); return $e === Lib\\E::A ? 1 : 0;","types.phs":"namespace Lib; enum E : uint8 { case A = 1; }","api.phs":"namespace Lib; function get(): E { return E::A; }"},
+"alias_type_bad_kind":{"main.phs":"use function Lib\\f as T; $x T; return 0;","lib.phs":"namespace Lib; function f(): int { return 1; }"},
+"relative_import_absolute":{"main.phs":"namespace App; use Lib\\C; $c = new C(); return 0;","lib.phs":"namespace App\\Lib; class C {}"},
+"runtime_shadow_type":{"main.phs":"use vector as V; $v V<int>; return 0;","lib.phs":"class vector {}"},
+"constant_import_wrong":{"main.phs":"use const Lib\\C; return 0;","lib.phs":"namespace Lib; class C {}"},
+"same_alias_different_files":{"main.phs":"return App\\left() + App\\right();","left.phs":"namespace App; use function Lib\\a as pick; function left(): int { return pick(); }","right.phs":"namespace App; use function Lib\\b as pick; function right(): int { return pick(); }","lib.phs":"namespace Lib; function a(): int { return 1; } function b(): int { return 2; }"},
+"cross_trait":{"main.phs":"$c = new App\\C(); return $c->f();","trait.phs":"namespace Lib; trait T { function f(): int { return 1; } }","class.phs":"namespace App; use Lib\\T; class C { use T; }"},
+"cross_unknown_property_type":{"main.phs":"return 0;","lib.phs":"namespace Lib; class C { Missing $x; }"},
+"cross_interface_incompatible":{"main.phs":"return 0;","i.phs":"namespace Lib; interface I { function f(): int; }","c.phs":"namespace App; use Lib\\I; class C implements I { function f(): string { return 'x'; } }"},
+"cross_const_forward":{"main.phs":"return A\\N;","a.phs":"namespace A; use const B\\N as X; const N = X;","b.phs":"namespace B; const N = 1;"},
+"cross_static_return":{"main.phs":"$c = App\\C::make(); return 0;","base.phs":"namespace Lib; class B { static function make(): static { return new static(); } }","child.phs":"namespace App; use Lib\\B; class C extends B {}"}
+}

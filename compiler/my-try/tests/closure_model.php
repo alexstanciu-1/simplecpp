@@ -34,7 +34,7 @@ $text = 'function owner(): int { $a = function (int $amount): int { return $amou
 try {
 	file_put_contents($path, $text);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]);
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]);
 	$owner = closure_model_function();
 	$first = closure_model_local($owner, 0); $second = closure_model_local($owner, 1);
 	$first_identity = $first->anonymous_identity(); $second_identity = $second->anonymous_identity();

@@ -1,0 +1,1 @@
+{"base": {"main.phs": "return 0;"}, "edit": {"bad.phs": "function f(): int { return $missing; }"}}

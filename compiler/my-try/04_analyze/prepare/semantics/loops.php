@@ -76,7 +76,7 @@ final class Loop_Preparation
 		$remaining = q_count($conditions);
 		foreach ($conditions as $condition)
 		{
-			$remaining -= 1;
+			--$remaining;
 			if ($remaining === 0) {
 				$facts->condition = Body_Preparation::prepare_condition($condition, $context);
 			}

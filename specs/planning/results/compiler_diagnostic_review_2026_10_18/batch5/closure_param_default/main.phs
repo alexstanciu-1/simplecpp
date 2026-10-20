@@ -1,0 +1,1 @@
+$n = 1; $f = function (int $x = 2) use ($n): int { return $x + $n; }; return $f();

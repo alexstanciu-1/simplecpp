@@ -1,0 +1,135 @@
+{
+  "keyed_empty_record": {
+    "stage": "prepare",
+    "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
+  },
+  "keyed_empty_handle": {
+    "stage": "prepare",
+    "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
+  },
+  "keyed_empty_unique": {
+    "stage": "prepare",
+    "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
+  },
+  "keyed_empty_function": {
+    "stage": "prepare",
+    "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
+  },
+  "keyed_isset_function": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "keyed_empty_result": {
+    "stage": "prepare",
+    "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
+  },
+  "keyed_empty_nullable": {
+    "stage": "prepare",
+    "error": "S2S empty requires a collection or string; wrappers do not delegate emptiness\n"
+  },
+  "hash_unique_copy_probe": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "nested_unique_remove": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "nested_unique_probe": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "vector_enum": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_key_vector": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_key_hash": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_key_unset": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mixed_key_probe": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "nested_nodefault": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "nested_hash_nodefault": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "foreach_nodefault": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "result_nodefault": {
+    "stage": "prepare",
+    "error": "S2S Result operations require an unmodified type registered for result_payload\n"
+  },
+  "nullable_nodefault": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "result_boolable_coalesce": {
+    "stage": "prepare",
+    "error": "S2S coalesce does not permit result_or_bool on either side\n"
+  },
+  "result_logical": {
+    "stage": "prepare",
+    "error": "S2S logical operation requires canonical bool operands\n"
+  },
+  "mixed_mod_float": {
+    "stage": "prepare",
+    "error": "S2S boxed remainder requires boxed or ordinary int operands\n"
+  },
+  "mixed_bitwise": {
+    "stage": "prepare",
+    "error": "S2S boxed operator is outside the numeric arithmetic slice\n"
+  },
+  "mixed_vector_add": {
+    "stage": "prepare",
+    "error": "S2S boxed arithmetic requires matching boxed, ordinary int or float operands\n"
+  },
+  "typed_enum_conversion": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  },
+  "enum_comparison": {
+    "stage": "prepare",
+    "error": "S2S enum comparison requires the same enum type\n"
+  },
+  "nullable_compare": {
+    "stage": "prepare",
+    "error": "S2S integer binary operation requires integer operands\n"
+  },
+  "nullable_concat": {
+    "stage": "prepare",
+    "error": "S2S concatenation requires boxed, ordinary scalar or null operands\n"
+  },
+  "result_concat": {
+    "stage": "prepare",
+    "error": "S2S concatenation requires boxed, ordinary scalar or null operands\n"
+  }
+}

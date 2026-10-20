@@ -1,0 +1,441 @@
+# Plan: accounting-shaped concrete C++ specialization
+Doc Status: planning
+
+Date: 2026-10-19
+Status: template-free accounting boundary validated; current priority is solidifying
+preprocessed templates. This document records the implementation sequence under the
+[agreed decision](cpp_template_prelowering_decision_2026_10_19.md); checkpoints below
+are historical. The [current coverage guide](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md)
+distinguishes implemented behavior from remaining work.
+
+The [runtime review direction](runtime_prepared_facts_review_v0_3_2026_10_20.md) is
+non-blocking, tentatively v0.3. It records template-cost findings and candidates for
+prepared facts/native operations; it authorizes no implementation or further
+optimization now.
+
+The active follow-up is the [end-to-end solidification TODO](prelower_templates_solidification_todo_2026_10_20.md), combining runtime-contract and backend audits.
+
+## Accounting coverage checkpoint
+
+The [unchanged small-app audit](results/accounting_concrete_coverage_2026_10_19/README.md)
+passes 998 checks with the ordinary backend. General concrete emission stops before
+Clang; independent prepared-fragment probes identify construction/iteration,
+noninteger operations/conversions, indexed compound updates and runtime-call routing
+gaps. Nominal class handles still expose native shared templates. Use this observed
+coverage to prioritize general integration; do not extend the old family recipes.
+
+The [concrete initialization slice](results/prelower_concrete_initializers_2026_10_19/README.md)
+now routes list/keyed initialization through the selected factory and existing buffer
+worker. The accounting retry passes its eleven initializer failure sites; later
+operation failures remain. This does not establish whole-accounting compilation.
+
+The [binary integration slice](results/prelower_concrete_binary_2026_10_19/README.md)
+now delegates concrete eager binaries to the existing native renderer through the
+operation bridge. No `_02` semantic/operator work is duplicated. Accounting's binary
+adapter failures disappear. The [cast integration slice](results/prelower_concrete_casts_2026_10_19/README.md)
+also reuses prepared conversion decisions and the native conversion renderer. All
+three cast failures disappear. The [indexed compound integration](results/prelower_concrete_compound_2026_10_19/README.md)
+then clears both compound failures; a later container failure becomes visible.
+282 of 285 fragments emit. The remaining failures are two container-operation sites
+and one strlen call. The focused compound fixture also exposed concrete `count`
+and increment interface gaps, retained as follow-up work. Controlled compound boundary
+counters match, but stock O2 loses three allocation-elision opportunities across the
+middleware boundary; optimized allocation parity remains unresolved. No whole-accounting
+concrete executable is claimed; broader ownership/wrapper interfaces remain separate.
+
+The [runtime-call slice](results/prelower_concrete_runtime_calls_2026_10_19/README.md)
+routes free calls through existing observation/value contracts and registered bindings.
+Accounting now emits 283/285 fragments; the two remaining failures are iteration sites.
+No accounting source workaround was needed. The user permits documented workarounds
+for unrelated accounting issues, not bypasses of prelowering coverage gaps.
+
+The [iteration adapter](results/prelower_concrete_iteration_2026_10_19/README.md)
+reuses ordinary foreach emission, prepared key/value contracts and native iteration.
+Accounting now emits **285/285 fragments**, publishes and reaches Clang. Native
+compilation first fails on the existing concrete integer increment interface gap in
+calendar code (`year++`, `month++`). No source workaround or parked iteration work
+was imported. Whole-accounting compilation remains unproved. The focused iteration
+proof matches controlled boundary counters; stock O2 has +1 allocation / +8 bytes.
+
+After integrating `_02`'s `v0.2/develop` through `3afc0573` (runtime guarded
+operator repair, scalar/guarded compiler compatibility and audit evidence), the
+unmodified accounting retry still emits 285/285 fragments and fails at the same
+concrete integer `year++` / `month++` operations. The shared decisions now use
+`scalar_pre_increment` / `scalar_post_increment` and the corresponding decrement
+forms; ordinary C++ emission still expects the represented object to implement
+those operators. The [mutation interface slice](results/prelower_concrete_mutations_2026_10_19/README.md)
+now supplies that physical interface using existing prepared decisions, member
+assembly and runtime operators. Prefix/postfix and incremental proofs pass without
+extra measured boundary allocations or tracked payload copies; stock O2 allocation
+delta is zero for this fixture. Earlier compound/iteration O2 differences remain
+unresolved. Accounting publishes and passes the calendar increments, then stops at
+concrete integer `echo_one` / `to_string` output conversion. That representation
+adapter is the next gap; no accounting source workaround was introduced. Full
+numeric-carrier coverage and whole-accounting native compilation remain unproved.
+
+The user has now brought the runtime metadata inventory forward. Audit and extend
+the existing metadata/binding owners before continuing accounting adapters; see the
+[current audit and proposed representation-binding slice](runtime_template_capability_matrix_2026_10_19.md#current-metadata-audit-and-proposed-next-slice--df056d90).
+Coverage of descriptions does not request compilation. Prepare only types used by
+application demand and their required dependencies, never the entire runtime.
+Full operation coverage remains incremental; add no parallel registry. The user
+approved the existing-identity/structured-argument schema extension. The first
+migration now moves core runtime representations out of PHP registration and renders
+the installed recipes in the ordinary backend. Automatic template selection and
+nested substitution now consume the recipe, including nominal source types whose
+native representation is a closed template. The [source-demand proof](results/prelower_runtime_template_demand_2026_10_19/README.md)
+passes for inline and shared storage, including retirement/replay and zero measured
+boundary allocations. Implicit shared-storage wrapper spelling now consumes its
+installed binding, preserving source forward-declaration requirements. Default and
+alternate binding proofs compile mutually referring source classes.
+Concrete output now borrows through the existing runtime-operation bridge and calls
+`echo_one`; the scalar proof preserves ordered bytes and failure suppression.
+Nested argument mappings now reuse ordinary stored/payload selection. This resolves
+the source-class container mismatch, and accounting compiles/runs at O0 with 998 checks
+passing. Native shared wrappers are still exposed, so audit remaining template
+exposure and runtime-interface coverage before claiming full prelowering. The
+[current accounting comparison](results/prelower_accounting_timing_2026_10_19/README.md)
+measures this partial implementation: application compile/link is about 2.16× faster
+at O0 and 1.91× at O2 with PCH on both paths; initial preparation costs remain explicit.
+
+## Current optimization measurement policy
+
+At the user's request, use O0 only for further timing/profiling until optimizations
+are complete. Retain historical O2 evidence; do not rerun O2 as a routine measurement.
+The [handmade-baseline gap assessment](results/prelower_accounting_gap_2026_10_19/README.md)
+identifies remaining runtime-header/template exposure first, then source ownership
+interfaces and prepared-expression emission overhead. Current application compilation
+is about 10.03 s versus the handmade no-debug baseline's 2.47 s; the production path
+has not yet achieved that experimental compilation boundary.
+
+## Active integration sequence: concrete type substitution
+
+1. Reuse the type-binding owner to spell native implementations with recursively
+   selected concrete arguments. Reuse the existing lifecycle generator and engine.
+   Resolve dependent layout probes in publication order through the native cache.
+   First prove nested runtime applications with real registry/prepared types; this
+   foundation is implemented; the source integration below consumes it.
+2. Integrate concrete source fields and signatures in the existing declaration
+   emitter. Publish one source payload definition and resolve its layout dependencies.
+   Preserve ordinary field/reference access and evaluate recursive source-type graphs
+   explicitly. No new AST, semantic pass or parallel registry. The [inline source
+   checkpoint](results/prelower_source_fields_2026_10_19/README.md) now covers ordinary
+   fields/signatures/source methods and fragment replay. The [source argument
+   checkpoint](results/prelower_source_arguments_2026_10_19/README.md) adds acyclic
+   source class/record payloads through emitted header dependencies. Recursive
+   header/layout graphs remain open.
+3. Bind ordinary operations/members to concrete interfaces from existing prepared
+   decisions and runtime bindings. Prove nested mutation, constructors, references,
+   providers and allocation/copy parity before enabling broader application coverage.
+   The [void-member slice](results/prelower_members_2026_10_19/README.md) now forwards
+   registered runtime members through demanded concrete reference overloads, preserving
+   prepared argument categories. Result transport, unrelated fixed native parameter
+   adaptation and ownership-wrapper access remain open. The subsequent indexing audit
+   reproduced a [runtime interoperability prerequisite](prelower_index_contract_2026_10_19.md):
+   substituted hash keys lacked the native key/integer traits required for indexing
+   and removal. The approved [interoperability extension](../../runtime/specs/concrete_type_interoperability.md)
+   now supplies integer traits and demanded concrete indexing/path interfaces. The
+   [indexing proof](results/prelower_indexing_2026_10_19/README.md) covers ordinary
+   reads/writes, append and nested removal with the existing sequencing emitters.
+4. Consolidate the lowering setting around the proven substitution path. Keep
+   ordinary C++ as the baseline; remove superseded experimental routing rather than
+   maintaining an expanding matrix of permanent flags.
+
+Cleanup is incremental and proof-gated. Keep specialization identity/demand, native
+lifecycle generation, layout probes/cache, publication and reusable tests. Retire
+source-call/constructor opaque transport once ordinary emission with substituted
+types passes equivalent tests. Retire handwritten accounting recipes after the
+general path covers their workload. Keep native-address transport only for interfaces
+that still require original native storage. Archive historical performance evidence;
+rewrite current guidance so it describes one intended architecture.
+
+## Future optimization: ThinLTO (non-blocking)
+
+Evaluate optional ThinLTO for `-O2` and higher release builds after the concrete
+substitution path has representative application coverage. This is not a prerequisite
+for prelowering implementation, correctness, or acceptance, and does not change
+current build defaults. Configuration belongs to the native builder, separately
+from lowering options.
+
+The hypothesis is that cross-module optimization can inline concrete forwarding
+methods across the application/support boundary while preserving the frontend
+savings of prelowering. Participating support and application objects must carry
+compatible LLVM bitcode into the same final link; an already-linked shared-library
+boundary is outside this experiment. Runtime gains are not yet measured.
+
+Compare matched builds with and without `-flto=thin`: runtime performance, binary
+size, clean build/link time, peak memory, and warm incremental rebuild/link time
+with ThinLTO caching enabled. Keep correctness and allocation/copy proofs active.
+Use the results to decide whether to offer an opt-in release profile.
+See [LLVM's ThinLTO documentation](https://clang.llvm.org/docs/ThinLTO.html).
+
+## First-slice checkpoint
+
+The [integer/vector proof](results/prelower_first_slice_2026_10_19/README.md) covers
+general recipes, runtime integer widths, source-record elements, fragment replay,
+option switching, error parity and native object reuse. Steps below remain the
+expansion sequence; full accounting coverage and the runtime-family review are not
+marked complete by this checkpoint.
+
+## Target and baseline
+
+Implement `prelower_templates` inside the existing C++ backend, with a dedicated
+specialization engine and compact reference structure. Use the current AST and
+prepared facts directly. The first vertical slice is general integer-wrapper and vector-family recipes.
+`vector<int>` is the first test, not a hard-coded implementation. Exercise additional
+element types, integer widths and signedness through the same recipes; expand toward
+the accounting inventory after that slice is proved.
+
+The measured reference is [the accounting conversion](results/accounting_template_free_2026_10_18/README.md):
+15 application units, 44 concrete handles, 24 concrete vector/hash representations,
+and three grouped support units. Its `manifest.json`, `converted/concrete.hpp`,
+`base.hpp`, `base.cpp`, `containers.cpp`, `objects.cpp` and behavioral probes provide
+concrete examples. The bounded text converter is evidence, not production code to
+insert after emission.
+
+The completed first experiment used these choices (the generalization below supersedes
+handwritten family recipes; original runtime templates may remain in support units):
+
+- Concrete declarations and out-of-line implementations, not aliases or explicit
+  instantiations of the existing runtime templates.
+- Group support into base/container/object implementation units as applicable.
+  Do not split every method/type into a separate native compilation yet.
+- Generate all methods in each admitted implementation family. Unsupported semantic
+  operations are rejected/reported explicitly, never silently implemented differently.
+- Ordinary C++ automatic cleanup and dispatch; no full C or new lifetime lowering.
+- No PCH for concrete proof builds, debug disabled by default, explicit debug opt-in.
+  Keep native optimization and debug configuration separate from lowering options.
+
+## Early runtime-template review
+
+The initial [family-by-capability matrix](runtime_template_capability_matrix_2026_10_19.md)
+and [runtime source index](runtime_template_source_inventory_2026_10_19.md) now distinguish
+existing registry facts, missing bindings and internal helper exposure. Extend those
+existing owners; do not introduce another registry or multiply handwritten family recipes.
+The [representation and ownership audit](prelower_representation_audit_2026_10_19.md)
+identifies the existing owners, current duplication and the next proof: direct or
+in-place opaque storage, borrowed transport, target layout and nested-reference ABI
+compatibility. The [native counter/identity experiment](results/prelower_boundary_2026_10_19/README.md)
+proves the storage/borrow mechanism without extra measured allocation or payload
+copy. The [first ABI integration slice](results/prelower_layout_integration_2026_10_19/README.md)
+now consumes prepared observation signatures and existing bindings, publishes grouped
+layout probes, and resolves/cache-validates them in the native builder. The [ordinary-expression checkpoint](results/prelower_expressions_2026_10_19/README.md)
+now adds opt-in runtime ABI emission, operation replay and shared prepared-path lowering.
+The [nonempty-initializer checkpoint](results/prelower_initializers_2026_10_19/README.md)
+adds the existing runtime buffer through the same request/layout owners. Broader
+call/iteration/reference transports remain deferred.
+The [source-payload checkpoint](results/prelower_source_payloads_2026_10_19/README.md)
+adds one native source definition, demand-driven ownership/value representations,
+default construction and source payload container arguments. Only requested forms
+and their dependencies are generated; do not eagerly produce every ownership form.
+Fixed-parameter source instance calls now reuse existing prepared calls and the
+ordinary argument-sequencing emitter, including retained shared/borrowed inline
+receivers and owned results. Selected positional constructors reuse this call
+transport, existing allocation selection and final result storage. Property crossings,
+static/provider methods, reference results and variadic/observation transport remain
+follow-ups using the same prepared call/place owners.
+The [concrete-composition proof](results/prelower_composition_2026_10_19/README.md)
+supports the user's preferred next direction: define source fields as real concrete
+owners, allowing ordinary member calls/references. Integration must consistently
+select physical template arguments and resolve dependent layouts through existing
+bindings/build owners. The [backend binding foundation](results/prelower_substitution_2026_10_19/README.md)
+now integrates concrete physical arguments and dependent layout caching. The [source-field
+checkpoint](results/prelower_source_fields_2026_10_19/README.md) adds bounded inline-record
+fields/signatures and ordinary source member emission. The [source argument
+checkpoint](results/prelower_source_arguments_2026_10_19/README.md) now covers acyclic
+source payload dependencies while leaving method bodies in source units. Runtime
+forwarding interfaces and recursive header/layout graphs remain the next steps.
+The [native-place proposal](prelower_native_places_2026_10_19.md) is deferred for
+source fields and retained for boundaries that still expose original native storage.
+The [ordinary-expression contract proposal](prelower_expression_integration_2026_10_19.md)
+details the missing backend request replay and native-address transport, and the
+prepared nested-read/write distinction. Its retained contract is agreed; the linked expression checkpoint records implemented coverage.
+
+Before locking the initial representation interfaces, inventory runtime template
+families and review them explicitly. Discovery must include runtime headers, operator
+helpers, metadata bindings and generated adapters; metadata alone is not a complete
+inventory. For each family record its purpose, canonical arguments, prepared facts /
+capabilities consumed, internal template dependencies, current measured cost (or
+unknown), ABI/behavior obligations and proposed disposition. Discuss every discovered
+family; do not assume that unmeasured means cheap or that every template needs removal.
+
+The initial checklist includes fixed-width/signed integer wrappers; vector/hash;
+shared/unique/weak and value ownership; nullable/result/sentinel wrappers; dynamic
+representations; callable adapters; initialization buffers/factories; iteration,
+indexing and keyed-path helpers; conversions, arithmetic/operator helpers and traits;
+compiler Storage/Keyed_Storage where exposed to generated native units; and templates
+inside runtime implementation providers. Expand the checklist from actual discovery.
+Distinguish source-facing generic types, compiler-only storage and implementation-only
+helpers so the discussion does not silently widen the application backend scope.
+
+Record an explicit disposition: implement in the initial slice, discuss for the next
+slice, or retain templates for now with a reason. Integer representations are included
+from the start: derive native width/signedness from registered facts, rather than
+leaving `int_t<Rep>` beneath the concrete vector. Runtime bindings may differ; concrete
+type combinations must be generated from data, without family-specific engine branches.
+Selective methods, operation closure and ABI bridges remain explicit follow-up topics.
+
+## 1. Establish configuration and engine ownership in one vertical slice
+
+Inspect existing generator invocation/configuration and retained fragment structures
+before choosing exact field/class names. Add a dedicated typed C++ lowering-options
+structure containing `prelower_templates`, carried from CLI/API through emission.
+Keep the existing path as the default during initial opt-in integration.
+
+Place the engine, its entry data and compact reference alongside the existing C++
+backend. Keep workers and records separate according to local ownership rules. A
+request receives existing canonical type information and the supported operation
+family; it returns a dedicated reference. Start with one entry ID in that reference
+if existing storage conventions permit it without introducing a new retention model.
+
+The engine resolves readable, namespace-scoped names, deduplicates requests and
+provides their declaration dependencies. Record representation policy and versioned
+implementation inputs explicitly. Separate the stable emitted name from artifact
+content hashes and process-local IDs. Prove collision handling for distinct source
+types sharing a short name, and request-order-independent names.
+
+The emitter's boolean branches dispatch to named methods. The engine, not those
+branches, generates specialization bodies. Avoid a broad emitter refactor first.
+
+## 2. Produce and execute one concrete integer vector
+
+Request `vector<int>` from a supported source program using existing prepared types
+and resolved operations. Generate its concrete declaration, typed storage, growth,
+indexing, iteration, copy/move/destruction and admitted family methods. Reuse the
+accounting implementation shape after checking each behavior against the owning
+language/runtime contracts.
+
+Inventory scalar and ownership dependencies first. Generate concrete integer
+bindings from registered width/signedness and preserve the production conversion,
+arithmetic and error contracts. Do not assume the experiment's signed-64 wrapper
+implements every integer rule. Audit remaining template exposure and label it
+explicitly; no silent integer-template fallback is allowed in the concrete path.
+
+Compile generated application and grouped support units with Clang through the
+existing native builder, then link and execute them. Keep lowering and native build
+configuration distinct. Unsupported concrete families must produce a clear coverage
+diagnostic during this bounded opt-in mode; no silent fallback concealed by the flag.
+
+Acceptance: equivalent results through both paths for empty/growing vectors,
+indexing and bounds failure, independent copies, self-assignment, iteration and
+cleanup. Add negative/error probes appropriate to the admitted production contract.
+Audit preprocessed exposure, not just the absence of angle brackets in app.cpp.
+
+## 3. Prove publication, reuse and invalidation
+
+Integrate generated headers/support units into the existing artifact membership and
+publication transaction. Finish engine generation before publishing readiness.
+Clang object reuse remains owned by the existing native builder.
+
+Explicitly account for retained emitter fragments: their unchanged consumers must
+still contribute required specialization artifacts to a new publication. Either
+reconstruct requests from existing dependency records or retain them with an explicit
+valid lifecycle. Do not let an invocation-local engine silently omit support needed
+by a cached fragment. Do not introduce a new generic lifecycle framework by default.
+
+| Change | Required proof |
+|---|---|
+| Repeated request in one emission | One specialization definition; consistent reference/name |
+| Unchanged rebuild | Same generated bytes; native objects reused |
+| Application body only | Unchanged specialization support reused |
+| Toggle lowering option | Correct artifact membership and executable; no stale cross-mode reuse |
+| Toggle native debug | Semantic/lowering output unchanged; correct native variant selected |
+| Change implementation recipe | Affected support rebuilt even if source type identity is unchanged |
+| Request removed/source deleted | Unused support membership removed without breaking retained consumers |
+| Generation failure then repair | No partial ready publication; valid recovery |
+
+As handle/vector-of-class support is added, prove body versus payload-layout versus
+capability changes separately. Avoid depending on payload layout merely because a
+handle names the payload; retain dependencies wherever destruction, construction or
+actual field access needs them. Do not infer ABI compatibility from matching names.
+
+## 4. Expand toward the measured accounting representation
+
+Expand through concrete shared handles/factories and vectors of handles, then the
+ordered hash families needed by accounting. Include scalar/string/common ownership
+support necessary to avoid pulling the original template-heavy umbrella into every
+consumer. Follow the measured grouped support layout first.
+
+Use existing canonical identities and capability queries for each family. Repair
+shared preparation only for a demonstrated missing semantic fact. Representation
+names, generated method bodies and artifact dependencies belong in the engine.
+
+Compare production contracts with the experiment before adapting each implementation:
+integer overflow/conversions, string byte/codepoint behavior, ownership and copy
+identity, iteration/removal order, failure types/metadata and allocation behavior.
+Do not import the experiment's simplified failure hierarchy, unused argv substitution
+or lack of weak/reflection support as silent production behavior. Existing runtime
+ABI boundaries need explicit support or a clear rejection; concrete and templated
+objects are not interchangeable by default.
+
+Run the accounting application's existing 998 checks when its source features are
+supported by this backend. First audit that source against my-try coverage: the
+historic experiment started from another generator's output. Any source-feature
+blockers must be reported separately, not solved by adding an unplanned language
+feature or claiming the artifact conversion proves my-try source support.
+
+Reuse the additional accounting probes for container growth/copy/order, aliases,
+shared replacement, cleanup and string/numeric boundaries. Use ASan/UBSan where
+relevant, recording the existing LeakSanitizer limitation and what owner counts do
+and do not prove. Runtime behavior/performance must be checked before making the
+concrete path a general default.
+
+## 5. Measure the production path against the experiment
+
+The [controlled header-exposure experiment](results/prelower_header_impact_2026_10_19/README.md)
+reduces prepared accounting application compilation from 10.892 s to 7.409 s
+(32%) by narrowing indexing and string-output headers, with all 998 checks passing.
+The [production boundary repair](results/prelower_header_fix_2026_10_19/README.md)
+now removes these accounting includes through existing output/key adapters, with a
+matched O0 improvement from 9.907 s to 7.387 s (25.4%). Remaining template exposure
+and broader runtime coverage are separate work.
+Continue O0-only measurements until the agreed optimization work is complete.
+
+Use identical supported workloads and toolchain configuration for both emission
+modes. Keep application partitioning and support grouping comparable. Compare the
+existing runtime PCH path, improved PCH where available, and concrete/no-PCH output.
+
+Report separately:
+
+- Keep source preparation, emission and engine generation outside the initial native
+  timing comparison, as agreed. Measuring the extra lowering cost is deferred.
+- Application compilation, grouped support compilation, linking and PCH setup.
+- Cold native work, unchanged reuse and representative edit/rebuild work.
+- O0 and O2 with debug disabled on both sides; an explicit matched debug-enabled run
+  connects the new measurements to the historical accounting table if needed.
+- Artifact/source hashes, commands, repetitions and exact behavioral results.
+
+Start with serial native measurements and at least three varied-order repetitions,
+with no object reuse inside fresh-compilation rounds. Do not compare a cached support
+build with a cold baseline without labelling the difference. Do not attribute all
+savings to template syntax: concrete runtime representation also contributes.
+
+The historical sixfold whole-build advantage is evidence and a comparison point,
+not a guaranteed threshold for the first integer-vector slice. Investigate material
+regressions before expanding families. Fine-grained native partitioning, further
+header reduction and parallel scheduling need their own later measurements.
+
+## Deferred extensions
+
+Selective method generation must include the transitive dependencies of requested
+methods. Clang cannot supply omitted concrete definitions. Keep the type name stable
+when additional methods are requested; operation coverage and artifact freshness are
+separate concerns. Generate all family methods first.
+
+Background generation may later separate request/name resolution from completion.
+Workers would consume settled immutable inputs, not mutate the AST/preparation state.
+Publication must wait for all required outputs and propagate failures.
+
+Persistent engine caches, one-object-per-specialization layouts, full debugger
+support and generalized template families are outside the first implementation.
+Source-facing debugging remains compiler-owned in direction; see the
+[debugging note](compiler_owned_debugging_2026_10_18.md).
+
+## Completion criteria
+
+The first production slice is complete when configuration reaches the existing
+backend, one real specialization is generated through the engine, its compact
+reference is used by consumers, both paths execute equivalently, and publication /
+reuse / configuration switching are proved. Record coverage and remaining limitations
+before expanding. The broader accounting checkpoint additionally requires its full
+behavioral proof and a matched native compilation comparison.

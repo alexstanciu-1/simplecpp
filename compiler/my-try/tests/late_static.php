@@ -10,7 +10,7 @@ function late_source(string $text): string
 	$module = new module('/late-static', '/late-static', '/late-static');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 $results = [];
@@ -50,7 +50,7 @@ try {
 	file_put_contents($base_path, 'class B { static function pick(): int { return 2; } static function run(): int { return static::pick(); } }');
 	file_put_contents($child_path, 'class C extends B { static function pick(): int { return 9; } }');
 	file_put_contents($main_path, 'return C::run();');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$initial = CPP_Output::encode(Model::$cpp_files);
 	$compiler->update_cpp([]);
 	if ($initial !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('No-op late-static output changed'); }
@@ -74,7 +74,7 @@ try {
 	}
 	Compiler_Lifecycle::reset_preparation(); $compiler->prepare(); $compiler->cpp();
 	if ($repaired !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('Preparation reset changed late-static output'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	if ($repaired !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('Fresh and incremental late-static output differ'); }
 }
 finally {

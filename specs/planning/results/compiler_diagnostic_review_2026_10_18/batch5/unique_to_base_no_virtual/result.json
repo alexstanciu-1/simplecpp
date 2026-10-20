@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Unique upcast requires virtual destruction on the destination base\n"
+}

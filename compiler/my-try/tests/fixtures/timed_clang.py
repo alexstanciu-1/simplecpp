@@ -9,6 +9,7 @@ import time
 args = sys.argv[1:]
 phase = ('version' if '--version' in args else
          'dependency_scan' if '-M' in args else
+         'template_validation' if '-dump-tokens' in args else
          'pch_validation' if '-fsyntax-only' in args else
          'pch_creation' if 'c++-header' in args else
          'object_compile' if '-c' in args else 'link')

@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S void is not a storage type\n"
+}

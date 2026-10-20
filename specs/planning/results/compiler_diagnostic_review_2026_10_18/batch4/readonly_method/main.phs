@@ -1,0 +1,1 @@
+struct S { int $n = 0; function mutate(): void { $this->n++; } } function f(const S &$s): void { $s->mutate(); } return 0;

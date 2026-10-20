@@ -1,0 +1,1 @@
+struct A { private function __destruct() {} } class C { A $a; } return 0;

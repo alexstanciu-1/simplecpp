@@ -1,0 +1,234 @@
+{
+  "counters": {
+    "direct-O0": {
+      "output_sha256": "c45dbb32ee91fca9ececec41080917f4aa7f11cab6675e0547ae13d48db5b5d8",
+      "binary": "binary 13 962 13 0 0 0 0",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "references": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "direct-O2": {
+      "output_sha256": "c45dbb32ee91fca9ececec41080917f4aa7f11cab6675e0547ae13d48db5b5d8",
+      "binary": "binary 13 962 13 0 0 0 0",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "references": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "direct-sanitized": {
+      "output_sha256": "6bb044a78cee18f16a911d8f9bec1a05b295a5d1b0c99f6f668ef798a1b47d8f",
+      "binary": "binary 13 962 13 0 0 0 0",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "references": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "composed-O0": {
+      "output_sha256": "c45dbb32ee91fca9ececec41080917f4aa7f11cab6675e0547ae13d48db5b5d8",
+      "binary": "binary 13 962 13 0 0 0 0",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "references": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "composed-O2": {
+      "output_sha256": "c45dbb32ee91fca9ececec41080917f4aa7f11cab6675e0547ae13d48db5b5d8",
+      "binary": "binary 13 962 13 0 0 0 0",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "references": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    },
+    "composed-sanitized": {
+      "output_sha256": "6bb044a78cee18f16a911d8f9bec1a05b295a5d1b0c99f6f668ef798a1b47d8f",
+      "binary": "binary 13 962 13 0 0 0 0",
+      "initializers": "initializers 34 16516 34 1 215 50 266",
+      "copy_budgets": 216,
+      "references": [
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ]
+    }
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-direct/artifacts/58369f860ed194968c97d7698bf57237d03159629ecb8e4afe7ed0a8552bc0ce.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-direct/artifacts/58369f860ed194968c97d7698bf57237d03159629ecb8e4afe7ed0a8552bc0ce.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-direct/artifacts/ac865865563e6fc1d41c1ab0b4e89f6a121cc9db56e4d53f4b771ac5b82340a8.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-direct/artifacts/ac865865563e6fc1d41c1ab0b4e89f6a121cc9db56e4d53f4b771ac5b82340a8.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-composed/artifacts/a66b5821c90041dcc247392f6e618f77bb4c8b644a3f4ce14fd65570ccf39181.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-composed/artifacts/a66b5821c90041dcc247392f6e618f77bb4c8b644a3f4ce14fd65570ccf39181.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-composed/artifacts/f3a673adb8baf334855468b2d2bd8a484338d3e6a346c5fd6734e799600ed3ff.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-composed/artifacts/f3a673adb8baf334855468b2d2bd8a484338d3e6a346c5fd6734e799600ed3ff.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-composed/artifacts/7a8edc0219cb43f9cce13bf7d99c72ed34f104f0f7a5274c5c61475025ff9b4b.bin",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-composed/artifacts/d7ea2879ea7062063b3eb5c1b62353bc017493e8475b7bb31a23cfc339e008a4.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "executable": "/tmp/prelower-concrete-binary-2/cache-composed/artifacts/a66b5821c90041dcc247392f6e618f77bb4c8b644a3f4ce14fd65570ccf39181.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ],
+  "base_revision": "e59c2b79",
+  "proof_seconds": 182.51,
+  "legacy_seconds": 165.89,
+  "portability": {
+    "checked": 2,
+    "cache": {
+      "listed_directories": 1,
+      "read_sources": 2,
+      "tokenized": 2,
+      "loaded_tokens": 0
+    }
+  },
+  "accounting": {
+    "emitted": 278,
+    "total": 285,
+    "first_failures": {
+      "prelower_templates: noninteger checked casts need a concrete adapter": 3,
+      "prelower_templates: indexed compound assignment is not in the first slice": 2,
+      "prelower_templates: runtime call needs an adapter: core.strlen": 1,
+      "prelower_templates: container operation requires an admitted family adapter": 1
+    },
+    "failures": [
+      {
+        "owner": "AssetRegister::depreciate",
+        "error": "prelower_templates: noninteger checked casts need a concrete adapter"
+      },
+      {
+        "owner": "AdjustmentBook::release_prepayment",
+        "error": "prelower_templates: noninteger checked casts need a concrete adapter"
+      },
+      {
+        "owner": "GeneralLedger::validate",
+        "error": "prelower_templates: indexed compound assignment is not in the first slice"
+      },
+      {
+        "owner": "MoneyAllocation::weighted",
+        "error": "prelower_templates: indexed compound assignment is not in the first slice"
+      },
+      {
+        "owner": "PurchasingBook::bill_key",
+        "error": "prelower_templates: runtime call needs an adapter: core.strlen"
+      },
+      {
+        "owner": "BudgetBook::add",
+        "error": "prelower_templates: noninteger checked casts need a concrete adapter"
+      },
+      {
+        "owner": "SalesService::total_outstanding",
+        "error": "prelower_templates: container operation requires an admitted family adapter"
+      }
+    ]
+  },
+  "accounting_whole_program": {
+    "ok": false,
+    "stage": "cpp",
+    "error": "prelower_templates: noninteger checked casts need a concrete adapter",
+    "trace": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(89): scpp\\compiler\\CPP_Concrete_Operations::cast()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(553): scpp\\compiler\\CPP_Declarations::conversion()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(617): scpp\\compiler\\CPP_Generator::generate_cast()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(134): scpp\\compiler\\CPP_Syntax->generate_cast_expression()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(872): scpp\\compiler\\CPP_Syntax->expression()\n#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#7 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#8 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#9 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#10 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#11 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#12 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#13 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(626): scpp\\compiler\\CPP_Syntax->expression()\n#14 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(591): scpp\\compiler\\CPP_Generator::generate_assignment_sequence()\n#15 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(543): scpp\\compiler\\CPP_Generator::generate_assignment_statement()\n#16 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(652): scpp\\compiler\\CPP_Generator::generate_expression_statement()\n#17 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(229): scpp\\compiler\\CPP_Syntax->generate_expression_statement()\n#18 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#19 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(269): scpp\\compiler\\CPP_Generator::generate_statements()\n#20 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(294): scpp\\compiler\\CPP_Syntax->generate_block()\n#21 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(208): scpp\\compiler\\CPP_Syntax->generate_if()\n#22 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#23 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(373): scpp\\compiler\\CPP_Generator::generate_statements()\n#24 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(137): scpp\\compiler\\CPP_Generator->render()\n#25 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(306): scpp\\compiler\\CPP_Generator->generate_program()\n#26 /home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_concrete_coverage_2026_10_19/probe.php(16): scpp\\compiler\\Compiler->cpp()\n#27 {main}"
+  }
+}

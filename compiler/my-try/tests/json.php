@@ -20,7 +20,7 @@ function json_source(string $text): Compiler
 	$file->content = $text;
 	Source_Registry::add($input_module, $file);
 	Model::$modules->add($input_module->name, $input_module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->exec_cpp();
 	return $compiler;
 }
@@ -106,7 +106,7 @@ $duplicate = $catalog->register_function('proof.duplicate', 'custom', $signature
 Model::$language_scope->register_function($duplicate);
 $record = Model::sources()[0];
 $record->file->content = 'custom(dynamic::{n: 1});';
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->sync(['/json-proof/main.phs']);
 $failed = false;
 try {

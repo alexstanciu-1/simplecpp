@@ -1,0 +1,2 @@
+namespace Outer { namespace Inner { function value(): int { return 7; } } }
+namespace { return \Outer\Inner\value(); }

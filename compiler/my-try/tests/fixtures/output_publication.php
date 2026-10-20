@@ -111,7 +111,7 @@ $file->path = 'main.phs';
 $file->content = 'function answer(): int { return 7; } return answer();';
 Source_Registry::add($module, $file);
 Model::$modules->add($module->name, $module);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->sync(['/project/main.phs']);
 $compiler->prepare(true);
 $source = $module->sources['main.phs'];

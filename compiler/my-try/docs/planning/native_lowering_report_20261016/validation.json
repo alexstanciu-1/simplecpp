@@ -1,0 +1,50 @@
+[
+  {
+    "level": 0,
+    "report": false,
+    "artifacts": 292,
+    "sha256": "9af4415e408ee70d5c10d42bc4a47eaeb85a91c8ae349629d6098e450304a99a",
+    "prior_artifacts_identical": true,
+    "php_report_parity": false
+  },
+  {
+    "level": 0,
+    "report": true,
+    "artifacts": 292,
+    "sha256": "9af4415e408ee70d5c10d42bc4a47eaeb85a91c8ae349629d6098e450304a99a",
+    "prior_artifacts_identical": true,
+    "php_report_parity": true
+  },
+  {
+    "level": 1,
+    "report": false,
+    "artifacts": 292,
+    "sha256": "9af4415e408ee70d5c10d42bc4a47eaeb85a91c8ae349629d6098e450304a99a",
+    "prior_artifacts_identical": true,
+    "php_report_parity": false
+  },
+  {
+    "level": 1,
+    "report": true,
+    "artifacts": 292,
+    "sha256": "9af4415e408ee70d5c10d42bc4a47eaeb85a91c8ae349629d6098e450304a99a",
+    "prior_artifacts_identical": true,
+    "php_report_parity": true
+  },
+  {
+    "level": 2,
+    "report": false,
+    "artifacts": 292,
+    "sha256": "87a3770d13de77cbb56da314aeda46e16748ef987591ade6c09ad2da3117a67d",
+    "prior_artifacts_identical": true,
+    "php_report_parity": false
+  },
+  {
+    "level": 2,
+    "report": true,
+    "artifacts": 292,
+    "sha256": "87a3770d13de77cbb56da314aeda46e16748ef987591ade6c09ad2da3117a67d",
+    "prior_artifacts_identical": true,
+    "php_report_parity": true
+  }
+]

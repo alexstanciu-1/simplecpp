@@ -1,0 +1,122 @@
+{
+  "counters": {
+    "direct-O0": "members 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-O2": "members 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-sanitized": "members 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O0": "members 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O2": "members 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-sanitized": "members 11 520 11 1 4 1 6\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n"
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-members-verified/cache-direct/artifacts/3221c4d26bbc0ffdc1aa94d6c936778353bac0cc1964504237cdef4a0febc50d.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "executable": "/tmp/prelower-members-verified/cache-direct/artifacts/3221c4d26bbc0ffdc1aa94d6c936778353bac0cc1964504237cdef4a0febc50d.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-members-verified/cache-direct/artifacts/f064e2e7109101aab3c7fcf4320dc6d5af409caa7f8026dfda1a0fa51f8ed025.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "executable": "/tmp/prelower-members-verified/cache-direct/artifacts/f064e2e7109101aab3c7fcf4320dc6d5af409caa7f8026dfda1a0fa51f8ed025.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-members-verified/cache-composed/artifacts/0f04178b62f8978a7b8a08e1261c6ea4977f15e97f0310bf25ecdd388daa7a7d.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "executable": "/tmp/prelower-members-verified/cache-composed/artifacts/0f04178b62f8978a7b8a08e1261c6ea4977f15e97f0310bf25ecdd388daa7a7d.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-members-verified/cache-composed/artifacts/7492abb13cacbcad61b4eb720a31fd4ecbd1deba54541d5b852f41d93ec07bda.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "executable": "/tmp/prelower-members-verified/cache-composed/artifacts/7492abb13cacbcad61b4eb720a31fd4ecbd1deba54541d5b852f41d93ec07bda.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-members-verified/cache-composed/artifacts/8d3899556e3c3755569383bc9e82a10a6d1beaf055628b8063a4b1662215c052.bin",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "executable": "/tmp/prelower-members-verified/cache-composed/artifacts/9250fe02f085566f4f6e1acdc8e307c00dfb6a00141e5e42574406e9c2d85cbb.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "executable": "/tmp/prelower-members-verified/cache-composed/artifacts/0f04178b62f8978a7b8a08e1261c6ea4977f15e97f0310bf25ecdd388daa7a7d.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ]
+}

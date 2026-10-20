@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S integer binary operation requires integer operands\n"
+}

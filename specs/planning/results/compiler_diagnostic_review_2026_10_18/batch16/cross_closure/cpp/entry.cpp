@@ -1,0 +1,17 @@
+#include "scpp/int_t.hpp"
+#include "functional"
+#include "callables/n4c69625c6d616b65.hpp"
+#include "lang/php/cli_context.hpp"
+
+int main(int argc, char** argv)
+{
+	scpp::php::set_cli_args(argc, argv);
+	auto local_f = ([&]() -> std::function<scpp::int_t<>()> {
+	return function_LibUqmake();
+}());
+	return static_cast<int>((([&]() -> scpp::int_t<> {
+auto callee_0 = local_f;
+	return callee_0();
+}())).native_value());
+	return 0;
+}

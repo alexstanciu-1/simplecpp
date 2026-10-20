@@ -1,0 +1,1 @@
+class B {} class D extends B {} $v vector<D> = [new D()]; $w vector<B> = $v; return 0;

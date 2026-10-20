@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Protected member is not accessible here\n"
+}

@@ -1,0 +1,135 @@
+{
+  "base": "3ea16d2a",
+  "source_argument_seconds": 87.36,
+  "recipe_output_seconds": 68.71,
+  "counters": {
+    "direct-O0": "source-values 12 1416 12 2 8 1 11\nsource-shared 5 96 5 0 0 0 0\nsource-references 0 0 0 0 0 0 0\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-O2": "source-values 12 1416 12 2 8 1 11\nsource-shared 5 96 5 0 0 0 0\nsource-references 0 0 0 0 0 0 0\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "direct-sanitized": "source-values 12 1416 12 2 8 1 11\nsource-shared 5 96 5 0 0 0 0\nsource-references 0 0 0 0 0 0 0\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O0": "source-values 12 1416 12 2 8 1 11\nsource-shared 5 96 5 0 0 0 0\nsource-references 0 0 0 0 0 0 0\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-O2": "source-values 12 1416 12 2 8 1 11\nsource-shared 5 96 5 0 0 0 0\nsource-references 0 0 0 0 0 0 0\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n",
+    "composed-sanitized": "source-values 12 1416 12 2 8 1 11\nsource-shared 5 96 5 0 0 0 0\nsource-references 0 0 0 0 0 0 0\nworkload 15 832 15 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 5 328 5 0 1 0 1\n"
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 4,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 4
+    },
+    {
+      "label": "composed-O2",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 4,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 4
+    },
+    {
+      "label": "body-edit",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 4
+    },
+    {
+      "label": "layout-edit",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 2,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 4
+    }
+  ],
+  "accounting_build": {
+    "compiled": 22,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1,
+    "layouts_built": 3,
+    "layouts_reused": 0
+  },
+  "accounting_checks": {
+    "passed": 998,
+    "failed": 0
+  },
+  "limited_literal_scan": {
+    "scope": "generated .hpp/.cpp app artifacts excluding specializations, not preprocessed headers",
+    "files_with_selected_spellings": 48,
+    "shared_p_occurrences": 1374,
+    "vector_t_occurrences": 0,
+    "hash_t_occurrences": 0,
+    "int_t_occurrences": 0,
+    "value_t_occurrences": 0
+  }
+}

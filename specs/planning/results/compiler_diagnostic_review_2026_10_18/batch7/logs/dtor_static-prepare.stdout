@@ -1,0 +1,1 @@
+{"stage":"prepare","error":"Destructor requires instance access, no parameters and no declared return type\/reference\n"}

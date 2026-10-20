@@ -17,7 +17,7 @@ file_put_contents($path, 'return 1;');
 file_put_contents($directory . '/b.phs', 'return 2;');
 try
 {
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$module = Model::$modules[$directory];
 	$a = $module->sources['a.phs'];

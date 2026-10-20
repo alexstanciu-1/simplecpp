@@ -1,0 +1,1 @@
+namespace A; function &f(int &$n): int { return \B\g($n); }

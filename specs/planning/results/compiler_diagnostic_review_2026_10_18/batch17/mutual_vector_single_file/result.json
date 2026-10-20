@@ -1,0 +1,7 @@
+{
+  "stage": "emitted",
+  "clang": "failed",
+  "errors": [
+    "In file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_single_file/cpp/entry.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch17/mutual_vector_single_file/cpp/types/n41.hpp:2:\n/tmp/mytry-diagnostic-review/batch17/mutual_vector_single_file/cpp/types/n42.hpp:8:34: error: use of undeclared identifier 'record_A'\n    8 |         scpp::vector_t<::scpp::shared_p<record_A>> field_as;\n      |                                         ^\n1 error generated.\n"
+  ]
+}

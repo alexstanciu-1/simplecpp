@@ -1,0 +1,1 @@
+struct S { function __construct(int $n) {} } function f(result<S> $r): S { return $r; } return 0;

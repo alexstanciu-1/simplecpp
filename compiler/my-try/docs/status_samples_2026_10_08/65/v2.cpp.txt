@@ -1,0 +1,53 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n42617365.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Base
+{
+public:
+public:
+	static scpp::int_t<> implementation_value_for_type_Child();
+};
+
+
+// === types/n4368696c64.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+#include "types/n42617365.hpp"
+struct record_Child : public record_Base
+{
+public:
+public:
+	static scpp::int_t<> implementation_number_for_type_Child();
+};
+
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "types/n42617365.hpp"
+#include "scpp/int_t.hpp"
+#include "types/n4368696c64.hpp"
+scpp::int_t<> record_Base::implementation_value_for_type_Child()
+{
+	return ([&]() -> scpp::int_t<> {
+	return record_Child::implementation_number_for_type_Child();
+}());
+}
+
+scpp::int_t<> record_Child::implementation_number_for_type_Child()
+{
+	return static_cast<scpp::int_t<>>(7LL);
+}
+
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "types/n42617365.hpp"
+
+int main()
+{
+	return static_cast<int>((([&]() -> scpp::int_t<> {
+	return record_Base::implementation_value_for_type_Child();
+}())).native_value());
+	return 0;
+}

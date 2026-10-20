@@ -1,0 +1,22 @@
+[
+  {
+    "revision": "method-edit",
+    "executable": "/tmp/prelower-source-final2/cache-opaque/artifacts/995c9ab1f07592eacb33fdf42d1580d53f91b17e67d4062d17ab3c95edff45c7.bin",
+    "compiled": 1,
+    "reused": 9,
+    "pch_built": 0,
+    "linked": 1,
+    "layouts_built": 0,
+    "layouts_reused": 1
+  },
+  {
+    "revision": "layout-edit",
+    "executable": "/tmp/prelower-source-final2/cache-opaque/artifacts/77d3d8370a458d4fc6f46796ee6e78238ae6097651975cad286e6a71fd48f772.bin",
+    "compiled": 7,
+    "reused": 3,
+    "pch_built": 0,
+    "linked": 1,
+    "layouts_built": 1,
+    "layouts_reused": 0
+  }
+]

@@ -1,0 +1,162 @@
+{
+  "counters": {
+    "direct-O0": [
+      "iteration 25 331 25 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ],
+    "direct-O2": [
+      "iteration 24 323 24 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ],
+    "direct-sanitized": [
+      "iteration 25 331 25 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ],
+    "direct-observable": [
+      "iteration 25 331 25 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ],
+    "composed-O0": [
+      "iteration 25 331 25 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ],
+    "composed-O2": [
+      "iteration 25 331 25 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ],
+    "composed-sanitized": [
+      "iteration 25 331 25 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ],
+    "composed-observable": [
+      "iteration 25 331 25 0 0 0 0",
+      "iteration-copies 0 0 0 0 3 0 3"
+    ]
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-iteration-2/cache-direct/artifacts/5262393ec02afac6dacd69b68aa2dd9da0f64f6f074922602e64770cb081914a.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "executable": "/tmp/prelower-iteration-2/cache-direct/artifacts/5262393ec02afac6dacd69b68aa2dd9da0f64f6f074922602e64770cb081914a.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-iteration-2/cache-direct/artifacts/964216a5205f5c1f6f0e8717393abe57e664bd478cddfd0d16e67c7e17a20016.bin",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "executable": "/tmp/prelower-iteration-2/cache-direct/artifacts/964216a5205f5c1f6f0e8717393abe57e664bd478cddfd0d16e67c7e17a20016.bin",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-iteration-2/cache-composed/artifacts/114a0205eb3c74c8dc5d164b981c24291eb142be62f8dcfdf818f0996d0919c4.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "executable": "/tmp/prelower-iteration-2/cache-composed/artifacts/114a0205eb3c74c8dc5d164b981c24291eb142be62f8dcfdf818f0996d0919c4.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-iteration-2/cache-composed/artifacts/f8c4f0c90421c9fc890142020636670df70101959a9b3656d537a33185666c69.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "executable": "/tmp/prelower-iteration-2/cache-composed/artifacts/f8c4f0c90421c9fc890142020636670df70101959a9b3656d537a33185666c69.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-iteration-2/cache-composed/artifacts/a4e58a4c766ebce72a7e0b96d74c577e7f9936f957610c32575cf5b134bf744a.bin",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "executable": "/tmp/prelower-iteration-2/cache-composed/artifacts/fa7b99f8826afbf387023ad9830731fccb2425c8ca30d6e2d7ddd98c92a189f0.bin",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "executable": "/tmp/prelower-iteration-2/cache-composed/artifacts/114a0205eb3c74c8dc5d164b981c24291eb142be62f8dcfdf818f0996d0919c4.bin",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ],
+  "stock_O2_allocation_delta": {
+    "allocations": 1,
+    "bytes": 8,
+    "frees": 1
+  },
+  "command": "python3 compiler/my-try/tests/prelower_substitution.py --iteration --results /tmp/prelower-iteration-2",
+  "elapsed_seconds": 190.3,
+  "accounting": {
+    "emitted_fragments": 285,
+    "total_fragments": 285,
+    "publication": true,
+    "native_build": false,
+    "first_failure": "Concrete integer increment interface missing: calendar.phs year++ / month++"
+  }
+}

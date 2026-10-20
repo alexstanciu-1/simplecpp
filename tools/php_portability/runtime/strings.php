@@ -27,6 +27,19 @@ function string_codepoint_at(string $text, int $index): int {
 }
 
 namespace scpp\compat {
+/** Byte-preserving join of an explicitly typed string vector; never coerce elements. */
+function implode(string $separator, array $pieces): string {
+    if (!\array_is_list($pieces)) {
+        throw new \InvalidArgumentException('q_implode requires a list of strings');
+    }
+    foreach ($pieces as $piece) {
+        if (!\is_string($piece)) {
+            throw new \InvalidArgumentException('q_implode requires string elements');
+        }
+    }
+    return \implode($separator, $pieces);
+}
+
 function strlen(string $text): int {
     \scpp\require_utf8($text);
     return \mb_strlen($text, 'UTF-8');

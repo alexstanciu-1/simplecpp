@@ -106,7 +106,7 @@ function catalog_compile(string $source): void
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->exec_cpp();
 }
 

@@ -1,0 +1,5 @@
+class Base { public int $value = 2; }
+class Child extends Base {}
+$base Base = new Child();
+$child = scpp_portability_object_cast($base, Child::class);
+return $child->value;

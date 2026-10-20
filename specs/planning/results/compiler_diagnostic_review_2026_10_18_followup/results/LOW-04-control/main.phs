@@ -1,0 +1,1 @@
+function cleanup(): void {} class C { function __destruct() { cleanup(); return; } } $c = new C(); return 0;

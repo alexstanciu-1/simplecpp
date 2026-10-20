@@ -83,7 +83,7 @@ function generic_compile(string $source): Compiler
 	$file = new file(); $file->path = 'main.phs'; $file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler(); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->exec_cpp();
 	return $compiler;
 }
 

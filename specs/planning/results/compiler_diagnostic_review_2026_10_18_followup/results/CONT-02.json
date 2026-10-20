@@ -1,0 +1,12 @@
+{
+  "control": {
+    "stage": "emitted",
+    "compile": "passed",
+    "compile_logs": [],
+    "link": "passed"
+  },
+  "source": {
+    "stage": "prepare",
+    "error": "S2S coalesce does not permit result_or_bool on either side\n"
+  }
+}

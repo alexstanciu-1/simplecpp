@@ -1,0 +1,1 @@
+enum E : uint8 { case A = 1; } $v vector<E> = [E::A]; $v[0] = E::A; return 0;

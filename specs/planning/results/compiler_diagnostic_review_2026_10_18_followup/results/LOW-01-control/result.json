@@ -1,0 +1,8 @@
+{
+  "stage": "emitted",
+  "compile": "passed",
+  "compile_logs": [],
+  "link": "passed",
+  "execution": "passed",
+  "expected_exit": 1
+}

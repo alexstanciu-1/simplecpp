@@ -146,6 +146,12 @@ public:
 		return at(static_cast<std::size_t>(native));
 	}
 
+	// Concrete integer keys use the same checked native access path.
+	template<class K> requires requires { typename K::scpp_runtime_integer_rep; }
+	T &at(const K &key) { return at(int_t<>{key.native_value()}); }
+	template<class K> requires requires { typename K::scpp_runtime_integer_rep; }
+	const T &at(const K &key) const { return at(int_t<>{key.native_value()}); }
+
 	T &operator[](std::size_t index) {
 		return at(index);
 	}

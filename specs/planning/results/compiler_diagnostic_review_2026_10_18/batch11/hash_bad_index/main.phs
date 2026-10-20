@@ -1,0 +1,1 @@
+$v hash<int> = {x: 1}; return $v[1];

@@ -10,7 +10,7 @@ final class Model_Test
 	/** Verify publication and shared graph links across numeric Storage boundaries. */
 	public static function run(): void
 	{
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		$type_catalog = self::check_type_roots();
 		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {

@@ -1,0 +1,392 @@
+{
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+  "cpu": "model name\t: AMD Ryzen 5 PRO 4650G with Radeon Graphics",
+  "load_start": [
+    2.728515625,
+    2.314453125,
+    1.95263671875
+  ],
+  "repeats": 7,
+  "results": {
+    "-O0": {
+      "C": {
+        "median_ms": 51.15358700277284,
+        "min_ms": 49.70386700006202,
+        "max_ms": 86.03994600707665,
+        "samples_s": [
+          0.05450120900059119,
+          0.05039664899231866,
+          0.05121429602149874,
+          0.050705636967904866,
+          0.05115358700277284,
+          0.04970386700006202,
+          0.08603994600707665
+        ],
+        "command": [
+          "clang",
+          "-std=c17",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O0",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/money.c"
+        ]
+      },
+      "lean_CXX": {
+        "median_ms": 52.970176038797945,
+        "min_ms": 51.32474098354578,
+        "max_ms": 241.71672598458827,
+        "samples_s": [
+          0.052810186985880136,
+          0.052970176038797945,
+          0.053023188025690615,
+          0.05285817902768031,
+          0.05132474098354578,
+          0.12023135699564591,
+          0.24171672598458827
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O0",
+          "-x",
+          "c++",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/money.c"
+        ]
+      },
+      "generated_CXX": {
+        "median_ms": 4990.903870959301,
+        "min_ms": 4771.350011986215,
+        "max_ms": 12838.831407949328,
+        "samples_s": [
+          5.07150557503337,
+          4.9909038709593005,
+          4.816942506993655,
+          4.771350011986215,
+          4.8406962850131094,
+          5.251164859975688,
+          12.838831407949328
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O0",
+          "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+          "-DSCPP_LANGUAGE_TARGET_PHP=1",
+          "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/generated_money.cpp"
+        ]
+      },
+      "generated_CXX_PCH": {
+        "median_ms": 1885.7016819529235,
+        "min_ms": 1832.9729099641554,
+        "max_ms": 7617.223770997953,
+        "samples_s": [
+          7.617223770997953,
+          1.8329729099641554,
+          1.865148248965852,
+          1.8857016819529235,
+          1.8997846739948727,
+          1.8723849149537273,
+          3.180131872999482
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O0",
+          "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+          "-DSCPP_LANGUAGE_TARGET_PHP=1",
+          "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+          "-include-pch",
+          "/tmp/accounting-c-cpp-ve5araxk/-O0.pch",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/generated_money.cpp"
+        ]
+      },
+      "bridge_PCH": {
+        "median_ms": 1784.976823022589,
+        "min_ms": 1748.8238679943606,
+        "max_ms": 2829.9838330131024,
+        "samples_s": [
+          1.8013343140482903,
+          1.784976823022589,
+          1.768157905957196,
+          1.7496928349719383,
+          1.7488238679943606,
+          2.453987031010911,
+          2.8299838330131024
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O0",
+          "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+          "-DSCPP_LANGUAGE_TARGET_PHP=1",
+          "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+          "-include-pch",
+          "/tmp/accounting-c-cpp-ve5araxk/-O0.pch",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/bridge.cpp"
+        ]
+      }
+    },
+    "-O2": {
+      "C": {
+        "median_ms": 65.77306904364377,
+        "min_ms": 64.58113697590306,
+        "max_ms": 71.7677419888787,
+        "samples_s": [
+          0.0717677419888787,
+          0.0655934710521251,
+          0.06458113697590306,
+          0.0660504040424712,
+          0.06577306904364377,
+          0.06545283400919288,
+          0.065974596014712
+        ],
+        "command": [
+          "clang",
+          "-std=c17",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O2",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/money.c"
+        ]
+      },
+      "lean_CXX": {
+        "median_ms": 67.86283699329942,
+        "min_ms": 66.83752697426826,
+        "max_ms": 71.55144796706736,
+        "samples_s": [
+          0.06683752697426826,
+          0.06786283699329942,
+          0.06868278299225494,
+          0.07155144796706736,
+          0.06798599800094962,
+          0.06697934295516461,
+          0.06729655800154433
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O2",
+          "-x",
+          "c++",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/money.c"
+        ]
+      },
+      "generated_CXX": {
+        "median_ms": 5175.752823008224,
+        "min_ms": 5079.787668946665,
+        "max_ms": 7847.364076995291,
+        "samples_s": [
+          7.847364076995291,
+          5.200600932992529,
+          5.175752823008224,
+          5.11941324401414,
+          5.117021986981854,
+          5.340484552027192,
+          5.079787668946665
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O2",
+          "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+          "-DSCPP_LANGUAGE_TARGET_PHP=1",
+          "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/generated_money.cpp"
+        ]
+      },
+      "generated_CXX_PCH": {
+        "median_ms": 2195.5833900137804,
+        "min_ms": 2180.1496649859473,
+        "max_ms": 3405.6031370419078,
+        "samples_s": [
+          3.4056031370419078,
+          2.251914980006404,
+          2.1801496649859473,
+          2.1846056720241904,
+          2.1955833900137804,
+          2.196502957958728,
+          2.1806154169607908
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O2",
+          "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+          "-DSCPP_LANGUAGE_TARGET_PHP=1",
+          "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+          "-include-pch",
+          "/tmp/accounting-c-cpp-ve5araxk/-O2.pch",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/generated_money.cpp"
+        ]
+      },
+      "bridge_PCH": {
+        "median_ms": 1916.3811189937405,
+        "min_ms": 1893.9814339973964,
+        "max_ms": 7932.262941030785,
+        "samples_s": [
+          7.932262941030785,
+          1.9305525650270283,
+          1.8939814339973964,
+          1.9163811189937405,
+          1.9124641609960236,
+          1.8954218190046959,
+          1.9369608429842629
+        ],
+        "command": [
+          "clang++",
+          "-std=c++23",
+          "-fPIC",
+          "-g",
+          "-pipe",
+          "-O2",
+          "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+          "-DSCPP_LANGUAGE_TARGET_PHP=1",
+          "-DSCPP_ENABLE_CALL_DEPTH_GUARD=0",
+          "-include-pch",
+          "/tmp/accounting-c-cpp-ve5araxk/-O2.pch",
+          "-c",
+          "/home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_c_vs_cpp_2026_10_18/bridge.cpp"
+        ]
+      }
+    }
+  },
+  "pch_seconds": {
+    "-O0": 5.737606664013583,
+    "-O2": 4.243307504977565
+  },
+  "trace_seconds": {
+    "-O0": {
+      "C": {
+        "Total ExecuteCompiler": 0.012658,
+        "Total Frontend": 0.005845,
+        "Total Backend": 0.004704
+      },
+      "lean_CXX": {
+        "Total ExecuteCompiler": 0.013316,
+        "Total Frontend": 0.006812,
+        "Total Backend": 0.004308
+      },
+      "generated_CXX": {
+        "Total ExecuteCompiler": 13.587961,
+        "Total Frontend": 13.41082,
+        "Total InstantiateClass": 4.283642,
+        "Total InstantiateFunction": 4.21956,
+        "Total Backend": 0.127481
+      },
+      "generated_CXX_PCH": {
+        "Total ExecuteCompiler": 1.968467,
+        "Total Frontend": 1.814777,
+        "Total InstantiateFunction": 1.576785,
+        "Total InstantiateClass": 0.412952,
+        "Total Backend": 0.109375
+      },
+      "bridge_PCH": {
+        "Total ExecuteCompiler": 1.853392,
+        "Total Frontend": 1.763334,
+        "Total InstantiateFunction": 1.58395,
+        "Total InstantiateClass": 0.416462,
+        "Total Backend": 0.048475
+      }
+    },
+    "-O2": {
+      "C": {
+        "Total ExecuteCompiler": 0.026174,
+        "Total Backend": 0.019077,
+        "Total Frontend": 0.005221
+      },
+      "lean_CXX": {
+        "Total ExecuteCompiler": 0.02876,
+        "Total Backend": 0.020379,
+        "Total Frontend": 0.006427
+      },
+      "generated_CXX": {
+        "Total ExecuteCompiler": 5.398226,
+        "Total Frontend": 4.90871,
+        "Total InstantiateFunction": 1.942591,
+        "Total InstantiateClass": 1.578727,
+        "Total Backend": 0.44095
+      },
+      "generated_CXX_PCH": {
+        "Total ExecuteCompiler": 2.2479,
+        "Total Frontend": 1.767328,
+        "Total InstantiateFunction": 1.532461,
+        "Total Backend": 0.438659,
+        "Total InstantiateClass": 0.396772
+      },
+      "bridge_PCH": {
+        "Total ExecuteCompiler": 2.035194,
+        "Total Frontend": 1.787433,
+        "Total InstantiateFunction": 1.613058,
+        "Total InstantiateClass": 0.412317,
+        "Total Backend": 0.209073
+      }
+    }
+  },
+  "source_sha256": {
+    "generated_money.cpp": "3eb14ea959a4810f948fde6127a30a0fa7bf91e3226a6cac1f2bbae7a424852b",
+    "generated_money.hpp": "982fa4d37eb510ca2b2cf3857f756de1afe3b223fde1dbdfc4e176ab6f250159",
+    "money.c": "54639794e3dcf054f416fee436b31a9c8a06e79493ca51e2346dd0b1313913d8",
+    "money_abi.h": "d98f9ad8cd6664f50af5715e134c0d6e10bf3627027d64261c5c8ea6ada9f786",
+    "bridge.cpp": "0bbc7dfb3cb216d97551fba3735da5e9e4e2ed8a0871224a0a86bd926c69529d",
+    "driver.c": "205461686bd967b63c4f96d19bc3b951393bf58a7624a958a3dcdae66cbe267c"
+  },
+  "behavior": {
+    "-O0": {
+      "cases_per_variant": 21870,
+      "variants": [
+        "C",
+        "lean_CXX",
+        "generated_CXX_PCH"
+      ],
+      "passed": true
+    },
+    "-O2": {
+      "cases_per_variant": 21870,
+      "variants": [
+        "C",
+        "lean_CXX",
+        "generated_CXX_PCH"
+      ],
+      "passed": true
+    }
+  },
+  "load_end": [
+    2.2841796875,
+    2.544921875,
+    2.140625
+  ]
+}

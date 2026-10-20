@@ -1,0 +1,1 @@
+class C { int $n = 1; function f(): int { $g = fn(): int => $this->n; $h = $g; $h = $g; return $h(); } } $c = new C(); return $c->f();

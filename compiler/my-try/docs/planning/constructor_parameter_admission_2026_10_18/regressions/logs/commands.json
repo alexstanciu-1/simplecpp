@@ -1,0 +1,28 @@
+[
+  {
+    "name": "abstract_dispatch.php",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/abstract_dispatch.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.734,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "constructors.php",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructors.php"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.328,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  }
+]

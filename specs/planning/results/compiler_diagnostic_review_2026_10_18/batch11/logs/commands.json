@@ -1,0 +1,835 @@
+[
+  {
+    "name": "vector_nodefault_append-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_append"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.428,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_unique_read-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_read"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.429,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_unique_isset-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_isset"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.457,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_unique_write-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_write"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.494,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_unique_empty-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_empty"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.499,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_nodefault_create-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_create"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.515,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_nodefault_write-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_write"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.511,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "hash_nodefault_read-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_read"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.526,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_unique_foreach-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_foreach"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.551,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "hash_nodefault_write-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_write"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.565,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_unique_count-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_count"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.553,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "hash_unique_unset-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/hash_unique_unset"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.551,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "hash_bad_index-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/hash_bad_index"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.624,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_bad_key-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_bad_key"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.74,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "nested_bad_index-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/nested_bad_index"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.938,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_container_conversion-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_container_conversion"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.521,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_scalar_conversion-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_scalar_conversion"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.57,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_derived_conversion-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_derived_conversion"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.484,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "mixed_vector_conversion-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/mixed_vector_conversion"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.447,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_mixed_conversion-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_mixed_conversion"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.504,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_nodefault_append-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_append/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_append/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.946,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hash_nodefault_write-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_write/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_write/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.82,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "dynamic_mixed_conversion-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/dynamic_mixed_conversion"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.394,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_nodefault_create-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_create/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_create/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.958,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hash_nodefault_read-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_read/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_read/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.952,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "vector_nodefault_write-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_write/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_write/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.963,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "nullable_vector_extract-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/nullable_vector_extract"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.406,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "result_vector_extract-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/result_vector_extract"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.427,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "string_add-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/string_add"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.377,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_add-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_add"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.376,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "object_compare-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/object_compare"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.373,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_compare-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/vector_compare"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.429,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "nullable_arithmetic-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/nullable_arithmetic"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.527,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "float_modulo-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/float_modulo"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.437,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "bool_add-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/bool_add"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.461,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "int_float_assign-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/int_float_assign"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.433,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "hash_unique_unset-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/hash_unique_unset/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/hash_unique_unset/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.882,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "vector_unique_empty-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_empty/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_empty/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.944,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "vector_unique_isset-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_isset/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_isset/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 4.1,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "int_string_assign-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/int_string_assign"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.427,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "uint_narrow-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/uint_narrow"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.446,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "float_bitwise-prepare",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/probe.php",
+      "/tmp/mytry-diagnostic-review/batch11/float_bitwise"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.363,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "vector_nodefault_append-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_append/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_append/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.17,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "vector_nodefault_create-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_create/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_create/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.092,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "vector_nodefault_write-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_write/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_nodefault_write/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.192,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hash_nodefault_write-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_write/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_write/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.356,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hash_nodefault_read-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_read/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/hash_nodefault_read/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.282,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "vector_unique_count-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_count/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/vector_unique_count/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 5.244,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "uint_narrow-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/uint_narrow/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/uint_narrow/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.119,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "result_vector_extract-clang-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/result_vector_extract/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/result_vector_extract/cpp/units/n6d61696e/n6d61696e2e706873.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.979,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "result_vector_extract-clang-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch11/result_vector_extract/cpp",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch11/result_vector_extract/cpp/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.667,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

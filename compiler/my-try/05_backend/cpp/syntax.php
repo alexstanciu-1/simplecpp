@@ -12,6 +12,14 @@ final class CPP_Syntax
 		$this->context = $context;
 	}
 
+	/** Native-only handlers must reject before emitting operands or exposing runtime headers. */
+	private function require_native_operation(string $operation): void
+	{
+		if ($this->context->concrete_types()) {
+			throw new \RuntimeException('prelower_templates: ' . $operation . ' requires concrete transport');
+		}
+	}
+
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
@@ -48,12 +56,13 @@ final class CPP_Syntax
 			}
 			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
-			return '[' . self::comma_list($capture_parts) . '](' . self::comma_list($parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
+			return '[' . q_implode(', ', $capture_parts) . '](' . q_implode(', ', $parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
 		}
 		if ($node instanceof object_type_node) {
+			$this->require_native_operation('object type operation');
 			$object_type = object_cast($node, object_type_node::class);
 			$facts = $object_type->require_object_type_preparation();
-			$target = CPP_Types::payload($facts->target_payload);
+			$target = CPP_Types::payload($facts->target_payload, $this->context);
 			CPP_Types::record_dependencies($target, $this->context);
 			CPP_Declarations::type($object_type->operand->require_preparation()->type, $this->context);
 			$this->context->headers['scpp/object_cast.hpp'] = true;
@@ -63,6 +72,7 @@ final class CPP_Syntax
 		}
 		if ($node instanceof ownership_observation_node)
 		{
+			$this->require_native_operation('ownership observation');
 			$observation = object_cast($node, ownership_observation_node::class);
 			$facts = $observation->require_observation_preparation();
 			$operand = $this->expression($observation->operand);
@@ -77,10 +87,9 @@ final class CPP_Syntax
 		{
 			$move = object_cast($node, move_expression_node::class);
 			$facts = $move->require_move_preparation();
-			$this->context->headers['utility'] = true;
-			// Materialize an owner now: std::move alone would only change the value category.
+			// Materialize an owner now; a category cast alone does not consume it.
 			return CPP_Declarations::type($facts->type, $this->context)
-				. '(std::move(' . $this->expression($move->operand) . '))';
+				. '(' . CPP_Declarations::move($this->expression($move->operand), $facts->type, $this->context) . ')';
 		}
 		if ($node instanceof object_construction_node) {
 			$construction = object_cast($node, object_construction_node::class);
@@ -172,7 +181,12 @@ final class CPP_Syntax
 		elseif ($decision->operation !== operator_operation::index_checked_read) {
 			throw new \LogicException('Unsupported prepared index operation');
 		}
-		$this->context->headers['scpp/index_read.hpp'] = true;
+		if (CPP_Concrete_Index::active($this->context)) {
+			$operand_types /** vector<canonical_type_use> */ = [$node->base->require_preparation()->type, $decision->operands[1]->target_type];
+			$helper = CPP_Concrete_Index::reference($decision->operation === operator_operation::index_checked_read ? 'checked_index_read' : 'null_index_read',
+				$operand_types, $decision->result_type, $this->context);
+		}
+		else { $this->context->headers['scpp/index_read.hpp'] = true; }
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$receiver = 'index_receiver_' . $id;
@@ -180,16 +194,18 @@ final class CPP_Syntax
 		$argument /** expression_node */ = $node->index;
 		$base = CPP_Declarations::bind_storage_receiver($node->base, $this->context);
 		$converted_key = CPP_Declarations::conversion($this->expression($argument), $decision->operands[1], $this->context);
+		$operation = $helper . '(' . $receiver . ', ' . $key . ')';
 		return '([&]() -> ' . CPP_Declarations::type($decision->result_type, $this->context) . ' { '
 			. $base->statements . 'const auto& ' . $receiver . ' = ' . $base->value . '; '
 			. CPP_Declarations::type($decision->operands[1]->target_type, $this->context) . ' ' . $key . ' = ' . $converted_key . '; '
-			. 'return ' . $helper . '(' . $receiver . ', ' . $key . '); }())';
+			. 'return ' . $operation . '; }())';
 	}
 
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function statement(statement_node $node): string
 	{
 		if ($node instanceof throw_node) {
+			$this->require_native_operation('throw operation');
 			$throw_statement = object_cast($node, throw_node::class);
 			$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 			return 'throw ::scpp::php::make_thrown(' . $this->expression($throw_statement->expression) . ");\n";
@@ -232,11 +248,11 @@ final class CPP_Syntax
 		}
 		if ($node instanceof echo_node) {
 			$output = object_cast($node, echo_node::class);
-			$this->context->headers['lang/php/support/php_string.hpp'] = true;
 			$result = '';
 			$operands /** Storage<expression_node> */ = $output->operands;
 			foreach ($operands as $operand) {
-				$result .= "\t::scpp::php::echo_one(" . $this->expression($operand) . ");\n";
+				$result .= "\t" . CPP_Declarations::output($this->expression($operand),
+					$operand->require_preparation()->type, $this->context) . ";\n";
 			}
 			return $result;
 		}
@@ -270,6 +286,7 @@ final class CPP_Syntax
 	private function generate_try(try_node $node): string
 	{
 		if ($node->finalizer !== null) {
+			$this->require_native_operation('finally operation');
 			return CPP_Finally::generate($node, $this->context);
 		}
 		return $this->generate_protected($node);
@@ -281,6 +298,7 @@ final class CPP_Syntax
 		if ($node->handler === null) {
 			return $this->generate_block($node->body);
 		}
+		$this->require_native_operation('catch operation');
 		$handler /** catch_node */ = $node->handler;
 		$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 		$id = $this->context->next_temporary;
@@ -397,13 +415,14 @@ final class CPP_Syntax
 			$text .= 'if (' . $checks . ') { return ' . $result . '; } ';
 		}
 		if ($fallback === '') {
+			$this->require_native_operation('match failure operation');
 			$this->context->headers['stdexcept'] = true;
 			$fallback = 'throw std::runtime_error("Unhandled match expression"); ';
 		}
 		return $text . $fallback . '}())';
 	}
 
-	private function loop_body(loop_node $node): string
+	public function loop_body(loop_node $node): string
 	{
 		$outer_break /** nullable<breakable_node> */ = $this->context->break_target;
 		$outer_continue /** nullable<loop_node> */ = $this->context->continue_target;
@@ -440,7 +459,7 @@ final class CPP_Syntax
 		foreach ($conditions as $condition)
 		{
 			if ($test !== '') { $test .= ', '; }
-			$remaining -= 1;
+			--$remaining;
 			if ($remaining === 0) {
 				$facts /** prepared_condition */ = $node->require_preparation()->condition;
 				$test .= $this->native_condition($condition, $facts);
@@ -459,8 +478,10 @@ final class CPP_Syntax
 	/** Borrow the once-evaluated source; value bindings copy entries, not the collection. */
 	public function generate_foreach(foreach_node $node): string
 	{
+
 		$facts /** prepared_iteration */ = $node->require_preparation()->iteration;
-		$this->context->headers['scpp/value_iteration.hpp'] = true;
+		if ($this->context->concrete_types()) { CPP_Concrete_Iteration::require_interface($node, $this->context); }
+		else { $this->context->headers['scpp/value_iteration.hpp'] = true; }
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$source = 'foreach_source_' . $id;
@@ -474,7 +495,7 @@ final class CPP_Syntax
 		return $text . $this->loop_body($node) . "}\n}\n";
 	}
 
-	private function initialized_binding(prepared_binding $binding, string $value): string
+	public function initialized_binding(prepared_binding $binding, string $value): string
 	{
 		$entry = object_cast(weakref_get($binding->declaration), collected_name::class);
 		return CPP_Generator::generate_storage_value($binding, CPP_Generator::local_name($entry),
@@ -502,6 +523,7 @@ final class CPP_Syntax
 	/** Snapshot the source before any output write, then delegate branch behavior to the runtime. */
 	public function generate_take_expression(take_expression_node $node): string
 	{
+		$this->require_native_operation('take operation');
 		$node->require_take_preparation();
 		$this->context->headers['lang/php/support/php_take.hpp'] = true;
 		$source = $this->expression($node->source);
@@ -517,8 +539,8 @@ final class CPP_Syntax
 
 	public function generate_null_literal(null_literal_node $node): string
 	{
-		$node->require_null_preparation();
-		$this->context->headers['scpp/null_t.hpp'] = true;
+		$facts = $node->require_null_preparation();
+		CPP_Declarations::type($facts->type, $this->context);
 		return 'scpp::null';
 	}
 
@@ -528,12 +550,12 @@ final class CPP_Syntax
 		$facts = $node->require_probe_preparation();
 		$path = $facts->path;
 		if ($path !== null) {
-			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty, $facts->presence);
+			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty, $facts->presence, $facts->type);
 		}
 		if ($facts->presence !== null) {
-			$this->context->headers['scpp/bool_t.hpp'] = true;
-			return 'scpp::bool_t(' . CPP_Declarations::truthiness($this->expression($node->operand), $facts->presence, $this->context) . ')';
+			return CPP_Declarations::type($facts->type, $this->context) . '(' . CPP_Declarations::truthiness($this->expression($node->operand), $facts->presence, $this->context) . ')';
 		}
+		$this->require_native_operation('value probe operation');
 		$name = $facts->operation === value_probe_kind::isset ? 'isset' : 'empty';
 		$this->context->headers['lang/php/operators/' . $name . '/' . $name . '.hpp'] = true;
 		return 'scpp::php::' . $name . '(' . $this->expression($node->operand) . ')';
@@ -696,16 +718,5 @@ final class CPP_Syntax
 	public function generate_assignment_expression(assignment_expression_node $node): string
 	{
 		return CPP_Generator::generate_assignment_expression($node, $this->context);
-	}
-
-	private static function comma_list(array $parts /** vector<string> */): string
-	{
-		$result = '';
-		$separator = '';
-		foreach ($parts as $part) {
-			$result .= $separator . $part;
-			$separator = ', ';
-		}
-		return $result;
 	}
 }

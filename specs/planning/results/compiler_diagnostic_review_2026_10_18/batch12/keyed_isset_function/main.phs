@@ -1,0 +1,1 @@
+$v vector<function<int()>> = [fn(): int => 1]; return isset($v[0]) ? 1 : 0;

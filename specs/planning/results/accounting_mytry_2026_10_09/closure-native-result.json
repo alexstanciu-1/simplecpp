@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": "",
+  "build": {
+    "executable": "/tmp/accounting-mytry-audit/closure-native/artifacts/08b64ff7c6b5323c632a39546a46117a5a84cb610e2729cfbd7db2d9ba69e950.bin",
+    "compiled": 2,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1
+  }
+}

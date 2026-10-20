@@ -120,7 +120,7 @@ foreach (['?int','result<int>','result_or_false<int>','result_or_bool<int>'] as 
 		try
 		{
 			file_put_contents($path, $valid); Compiler_Lifecycle::reset();
-			$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+			$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 			file_put_contents($path, str_replace('$b = 3', '$b = "bad"', $valid));
 			foreach ([[$path], []] as $changes)
 			{

@@ -1,0 +1,15 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === entry.cpp ===
+#include "scpp/int_t.hpp"
+#include "scpp/generated/operators.hpp"
+
+int main()
+{
+	scpp::int_t<> local_bits = static_cast<scpp::int_t<>>(3LL);
+	([&]() -> scpp::int_t<> { auto& target_0 = local_bits; target_0 = (target_0 << static_cast<scpp::int_t<>>(2LL)); return target_0; }());
+	([&]() -> scpp::int_t<> { auto& target_1 = local_bits; target_1 = (target_1 | static_cast<scpp::int_t<>>(1LL)); return target_1; }());
+	([&]() -> scpp::int_t<> { auto& target_2 = local_bits; target_2 = (target_2 ^ static_cast<scpp::int_t<>>(2LL)); return target_2; }());
+	return static_cast<int>((((local_bits & static_cast<scpp::int_t<>>(7LL)) >> static_cast<scpp::int_t<>>(1LL))).native_value());
+	return 0;
+}

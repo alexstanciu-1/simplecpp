@@ -5,12 +5,35 @@ namespace scpp\compiler;
 
 final class CPP_Generator
 {
+	/** Keep exception implementation headers in compiled middleware. */
+	private static function compiled_entry(string $body): string
+	{
+		return "\nstatic int application_body()\n{\n" . $body . "\treturn 0;\n}\n"
+			. "int main(int argc, char** argv) { return scpp::internal::run_application(argc, argv, application_body); }\n";
+	}
+
+	private static function native_entry(string $body): string
+	{
+		return "\nint main(int argc, char** argv)\n{\n// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n"
+			. $body . "\treturn 0;\n// SCPP-ENTRY-CATCH\n"
+			. "\t} catch (const std::exception& failure) {\n\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n";
+	}
+
 	private cpp_program $program;
+	private ?CPP_Specializations $specializations = null;
+	private cpp_lowering_policy $policy;
 
 	/** Standalone callers get private storage; Compiler supplies the retained program. */
-	public function __construct(?cpp_program $program = null)
+	public function __construct(?cpp_program $program = null, ?cpp_lowering_options $options = null, ?cpp_lowering_policy $policy = null)
 	{
 		$this->program = $program ?? new cpp_program();
+		$this->policy = $policy ?? new cpp_lowering_policy();
+		$effective_options = $options ?? new cpp_lowering_options();
+		$enabled = $effective_options->prelower_templates;
+		if ($this->program->prelower_templates !== $enabled) {
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+			$this->program->prelower_templates = $enabled;
+		}
 	}
 
 	/** Assemble output without acknowledging shared changes; publication belongs to the caller. */
@@ -24,6 +47,13 @@ final class CPP_Generator
 	/** One partitioning path for single-source and multi-source programs. */
 	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
 	{
+		$this->specializations = null;
+		if ($this->program->prelower_templates) { $this->specializations = new CPP_Specializations(); }
+		// Policy changes invalidate only backend fragments, even with unchanged preparation.
+		if ($this->program->policy_identity !== $this->policy->identity()) {
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+			$this->program->policy_identity = $this->policy->identity();
+		}
 		$ordered /** Storage<preparation_owner> */ = new Storage();
 		$found_entry = false;
 		foreach ($files as $prepared)
@@ -81,6 +111,14 @@ final class CPP_Generator
 		}
 		if (!$found_entry) { throw new \RuntimeException('Prepared entry is outside the program'); }
 		$ordered->append(object_cast($entry_file->executable_body()->work(), preparation_owner::class));
+		$allocations /** hash<bool> */ = [];
+		if ($this->specializations === null) { $allocations = CPP_Shared_Allocations::select($ordered, $this->policy); }
+		// Eligibility is a backend placement decision, not a semantic body dependency.
+		// Re-render on shape changes so cached callers cannot reference retired helpers.
+		if (CPP_Shared_Allocations::changed($this->program->outlined_shared_allocations, $allocations)) {
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+		}
+		$this->program->outlined_shared_allocations = $allocations;
 		$definitions /** Storage<preparation_owner> */ = new Storage();
 		$bodies /** Storage<preparation_owner> */ = new Storage();
 		foreach ($ordered as $owner)
@@ -121,7 +159,7 @@ final class CPP_Generator
 		}
 
 		$result /** Storage<cpp_artifact> */ = new Storage();
-		$record_context = new cpp_generation_context();
+		$record_context = new cpp_generation_context($this->specializations);
 		foreach ($ordered as $owner)
 		{
 			Preparation_Status::require_active($owner);
@@ -141,7 +179,7 @@ final class CPP_Generator
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
 				$identity = 'type:' . $definition->qualified_name();
 				$record = object_cast($definition, collected_member_owner::class);
-				$bridge_context = new cpp_generation_context();
+				$bridge_context = new cpp_generation_context($this->specializations);
 				$text = CPP_Declarations::type_opening($record, $bridge_context) . $fragment->text;
 				$contract = $record->contract_work->require_facts();
 				$dispatch /** Keyed_Storage<prepared_method_contract> */ = $contract->methods;
@@ -170,7 +208,7 @@ final class CPP_Generator
 					$text .= CPP_Declarations::lifecycle_special_members(object_cast($record, collected_record::class), $contract);
 				}
 				else { $text .= "public:\n\tvirtual ~" . self::source_name('record', $record->qualified_name()) . "() noexcept = default;\n"; }
-				$text .= "};\n\n";
+				$text .= "};\n\n" . $fragment->allocation_declaration_text;
 			}
 			elseif ($definition instanceof collected_enum) {
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
@@ -182,77 +220,32 @@ final class CPP_Generator
 				$identity = 'callable:' . $definition->qualified_name();
 				$text = $fragment->prototype_text . ";\n";
 			}
-			$result->append(CPP_Artifacts::described($identity, cpp_artifact_kind::header, $path,
-				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text, $artifact_headers));
+			$artifact = CPP_Artifacts::described($identity, cpp_artifact_kind::header, $path,
+				"#pragma once\n" . CPP_Artifacts::preamble($artifact_headers, $artifact_declarations, $path) . $text, $artifact_headers);
+			$artifact->header_dependencies = $artifact_headers;
+			unset($artifact->header_dependencies[$path]);
+			$result->append($artifact);
 		}
-		foreach ($files as $prepared)
-		{
-			$headers /** hash<bool> */ = [];
-			$declarations /** hash<bool> */ = [];
-			$body_text = '';
-			$dispatch_context = new cpp_generation_context();
-			foreach ($ordered as $callable_owner) {
-				if (($callable_owner instanceof record_definition_work) || ($callable_owner instanceof type_contract_work)) {
-					if ($callable_owner->source === $prepared->source) {
-						$dispatch_owner = object_cast($callable_owner->declaration(), collected_member_owner::class);
-						$body_text .= CPP_Dispatch::definitions($dispatch_owner, $dispatch_context);
-					}
-				}
-				if (($callable_owner instanceof record_definition_work) && ($callable_owner->source === $prepared->source)) {
-					$layout = $this->program->fragments[$callable_owner];
-					if ($layout->storage_text !== '') {
-						$record = object_cast($callable_owner, record_definition_work::class)->record_definition();
-						$headers[CPP_Artifacts::type_header($record->qualified_name())] = true;
-						foreach ($layout->definition_headers as $header => $used) { $headers[$header] = true; }
-						$body_text .= $layout->storage_text;
-					}
-				}
-				if (!($callable_owner instanceof source_callable_signature_work)) { continue; }
-				$definition = object_cast($callable_owner, source_callable_signature_work::class)->callable_definition();
-				$implementation_source = $definition->collection;
-				if ($definition instanceof collected_method) {
-					$implementation_source = object_cast($definition, collected_method::class)->declaring_type()->collection;
-				}
-				if ($implementation_source !== $prepared->source) { continue; }
-				$function = $definition->callable_syntax();
-				if (!$function->has_parsed_body()) { continue; }
-				$signature_owner = object_cast($definition->preparation_work_owner(), preparation_owner::class);
-				$body_owner = object_cast($function->require_body()->work(), preparation_owner::class);
-				$signature = $this->program->fragments[$signature_owner];
-				$body = $this->program->fragments[$body_owner];
-				if ($definition instanceof collected_method) {
-					$headers[CPP_Artifacts::type_header(object_cast($definition, collected_method::class)->declaring_type()->qualified_name())] = true;
-				}
-				else { $headers[CPP_Artifacts::callable_header($definition->qualified_name())] = true; }
-				foreach ($signature->definition_headers as $header => $used) {
-					$headers[$header] = true;
-				}
-				foreach ($body->headers as $header => $used) { $headers[$header] = true; }
-				foreach ($body->forward_declarations as $name => $used) {
-					$declarations[$name] = true;
-				}
-				$body_text .= $signature->text . $body->initializer_text . "\n{\n" . $body->text . "}\n\n";
-			}
-			foreach ($dispatch_context->headers as $header => $used) { $headers[$header] = true; }
-			foreach ($dispatch_context->forward_declarations as $name => $used) { $declarations[$name] = true; }
-			if ($body_text !== '') {
-				$path = CPP_Artifacts::unit_path($prepared->source);
-				$result->append(CPP_Artifacts::described('implementation:' . $path, cpp_artifact_kind::translation_unit,
-					$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text, $headers));
-			}
+		$groups /** Storage<cpp_implementation_group> */ = CPP_Implementation_Groups::assemble($files, $ordered, $this->program, $this->specializations);
+		foreach ($groups as $group) {
+			$result->append(CPP_Artifacts::implementation($group));
 		}
 		$entry_owner = object_cast($entry_file->executable_body()->work(), preparation_owner::class);
 		$entry_fragment = $this->program->fragments[$entry_owner];
 		// Executable ABI initialization belongs to artifact assembly, not call preparation.
 		$entry_headers /** hash<bool> */ = $entry_fragment->headers;
-		$entry_headers['lang/php/cli_context.hpp'] = true;
-		$entry_headers['scpp/runtime_error.hpp'] = true;
+		$entry_text = '';
+		if ($this->specializations !== null) {
+			$entry_headers['specializations/base.hpp'] = true;
+			$entry_text = self::compiled_entry($entry_fragment->text);
+		}
+		else {
+			$entry_headers['lang/php/cli_context.hpp'] = true;
+			$entry_headers['scpp/runtime_error.hpp'] = true;
+			$entry_text = self::native_entry($entry_fragment->text);
+		}
 		$result->append(CPP_Artifacts::described('entry', cpp_artifact_kind::translation_unit, 'entry.cpp',
-			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . "\nint main(int argc, char** argv)\n{\n"
-			. "// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n"
-			. $entry_fragment->text . "\treturn 0;\n// SCPP-ENTRY-CATCH\n"
-			. "\t} catch (const std::exception& failure) {\n"
-			. "\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n", $entry_headers));
+			CPP_Artifacts::preamble($entry_headers, $entry_fragment->forward_declarations, '') . $entry_text, $entry_headers));
 		$helpers /** hash<prepared_compiler_call> */ = [];
 		foreach ($ordered as $owner) {
 			foreach ($this->program->fragments[$owner]->compiler_helpers as $key => $request) {
@@ -260,6 +253,17 @@ final class CPP_Generator
 			}
 		}
 		foreach ($helpers as $request) { CPP_Compiler_Functions::append_artifacts($request, $result); }
+		if ($this->specializations !== null) {
+			foreach ($ordered as $owner) {
+				foreach ($this->program->fragments[$owner]->runtime_operations as $request) {
+					$this->specializations->request_operation($request);
+				}
+				foreach ($this->program->fragments[$owner]->specializations as $type) {
+					$this->specializations->request($type);
+				}
+			}
+			$this->specializations->append_artifacts($result);
+		}
 		return $result;
 	}
 
@@ -277,14 +281,15 @@ final class CPP_Generator
 		}
 	}
 
-	/** Each body owns its temporary numbering; publish a fragment only after successful rendering. */
+	/** Keep native payload implementations out of application translation units. */
 	private function render(preparation_owner $owner): void
 	{
 		Preparation_Status::require_active($owner);
 		if (($owner->state !== preparation_state::ready) || $owner->failed) {
 			throw new \LogicException('C++ generation requires successfully prepared work');
 		}
-		$context = new cpp_generation_context();
+		$context = new cpp_generation_context($this->specializations);
+		$context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
 		$next = new cpp_fragment();
 		if ($owner instanceof body_work) {
 			$body_owner = object_cast($owner, body_work::class);
@@ -303,9 +308,14 @@ final class CPP_Generator
 			$entry = object_cast($owner->declaration(), collected_name::class);
 			if ($entry instanceof collected_source_callable) {
 				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
-				$definition_context = new cpp_generation_context();
+				$definition_context = new cpp_generation_context($this->specializations);
+				$definition_context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;
+				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
+				foreach ($definition_context->specializations as $id => $type) {
+					$context->specializations[$id] = $type;
+				}
 				$next->prototype_text = CPP_Declarations::signature($function_syntax, $context, true);
 			}
 			elseif ($entry instanceof collected_enum) {
@@ -318,11 +328,27 @@ final class CPP_Generator
 			else
 			{
 				$syntax = object_cast($entry, collected_record::class)->syntax();
-				CPP_Declarations::generate_record($syntax, $context);
+				$outline = CPP_Default_Constructors::eligible(object_cast($entry, collected_record::class), $this->policy);
+				CPP_Declarations::generate_record($syntax, $context, $outline);
 				$next->text = $context->records;
-				$definition_context = new cpp_generation_context();
-				$next->storage_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
+				$definition_context = new cpp_generation_context($this->specializations);
+				$definition_context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
+				$next->record_definition_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
+				if ($outline) {
+					$next->record_definition_text .= CPP_Default_Constructors::definition(object_cast($entry, collected_record::class), $definition_context);
+				}
+				$allocation_record = object_cast($entry, collected_record::class);
+				$allocation_name = $allocation_record->qualified_name();
+				if (isset($this->program->outlined_shared_allocations[$allocation_name])) {
+					$next->allocation_declaration_text = CPP_Shared_Allocations::signature($allocation_record) . ";\n\n";
+					$context->headers['scpp/shared_p.hpp'] = true;
+					$next->record_definition_text .= CPP_Shared_Allocations::definition($allocation_record, $definition_context);
+				}
 				$next->definition_headers = $definition_context->headers;
+				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
+				foreach ($definition_context->specializations as $id => $type) {
+					$context->specializations[$id] = $type;
+				}
 				$fields /** Key_Storage_List<prepared_field> */ = $syntax->require_preparation()->fields;
 				$records /** Storage<collected_record> */ = $next->records;
 				foreach ($fields->items() as $field) {
@@ -337,6 +363,8 @@ final class CPP_Generator
 				}
 			}
 		}
+		$next->specializations = $context->specializations;
+		$next->runtime_operations = $context->runtime_operations;
 		$next->headers = $context->headers;
 		$next->compiler_helpers = $context->compiler_helpers;
 		$next->forward_declarations = $context->forward_declarations;
@@ -390,7 +418,7 @@ final class CPP_Generator
 
 		// Typed declarations without initializers retain their normal C++ default construction.
 		if ($initializer === null) {
-			return CPP_Declarations::type($binding->type, $context) . ' ' . $name;
+			return CPP_Declarations::type_for($binding->type, $context, cpp_type_requirement::stored_value) . ' ' . $name;
 		}
 
 		$initializer /** expression_node */ = $initializer;
@@ -412,8 +440,8 @@ final class CPP_Generator
 	/** Render one declaration or assignment from an already evaluated value expression. */
 	public static function generate_storage_value(prepared_binding $binding, string $name, string $value, bool $explicit_type, cpp_generation_context $context): string
 	{
-		// Even an inferred `auto` copy or replacement needs its concrete value definition.
-		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+		// An inferred copy needs the stored representation, not necessarily a shared payload layout.
+		$requirement = $binding->alias_target !== null ? cpp_type_requirement::declaration : cpp_type_requirement::stored_value;
 		$type_name = 'auto';
 		if (!(Type_Queries::canonical($binding->type)->definition() instanceof closure_type_definition)) {
 			$type_name = CPP_Declarations::type_for($binding->type, $context, $requirement);
@@ -625,7 +653,7 @@ final class CPP_Generator
 	/** Constants and source literals share exact integer representation and header selection. */
 	private static function generate_integer_value(canonical_type_use $type, string $decimal, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($type);
+		$mapping = CPP_Types::representation($type, $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::signed_integer) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
@@ -725,7 +753,9 @@ final class CPP_Generator
 	public static function generate_mutation(mutation_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_mutation_preparation()->decision;
-		self::record_operator_headers($decision, $context);
+		if ($context->specialization_engine === null) {
+			self::record_operator_headers($decision, $context);
+		}
 		$prefix = '';
 		$suffix = '';
 		if (($decision->operation === operator_operation::scalar_pre_increment)
@@ -751,9 +781,15 @@ final class CPP_Generator
 		else {
 			throw new \LogicException('Unsupported prepared mutation operation');
 		}
+		if ($context->concrete_types()) {
+			CPP_Concrete_Mutations::require_interface($decision, $syntax->target->require_preparation()->type,
+				$prefix === '' ? $suffix : $prefix, $context);
+		}
 		$target = (new CPP_Syntax($context))->expression($syntax->target);
 		$result_type = CPP_Declarations::type($decision->result_type, $context);
-		$context->headers['scpp/generated/operators.hpp'] = true;
+		if ($context->specialization_engine === null) {
+			$context->headers['scpp/generated/operators.hpp'] = true;
+		}
 		return 'static_cast<' . $result_type . '>(' . $prefix . $target . $suffix . ')';
 	}
 
@@ -761,14 +797,15 @@ final class CPP_Generator
 	public static function generate_unary(unary_expression_node $syntax, cpp_generation_context $context): string
 	{
 		$decision = $syntax->require_unary_preparation()->decision;
-		self::record_operator_headers($decision, $context);
+		if ($context->specialization_engine === null) {
+			self::record_operator_headers($decision, $context);
+		}
 		$operand = (new CPP_Syntax($context))->expression($syntax->operand);
 		$operand = self::extract_operator_operand($operand, $decision, 0, $context);
 		if ($decision->operation === operator_operation::condition_not)
 		{
-			$context->headers['scpp/bool_t.hpp'] = true;
 			$truthiness /** truthiness_decision */ = $decision->truthiness;
-			return 'scpp::bool_t(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
+			return CPP_Declarations::type($decision->result_type, $context) . '(!(' . CPP_Declarations::truthiness($operand, $truthiness, $context) . '))';
 		}
 		$spelling = '';
 		if (($decision->operation === operator_operation::integer_positive)
@@ -792,6 +829,9 @@ final class CPP_Generator
 			throw new \RuntimeException('C++ unary operation is not supported');
 		}
 		$operand = CPP_Declarations::conversion($operand, $decision->operands[0], $context);
+		if ($context->specialization_engine !== null) {
+			return CPP_Declarations::type($decision->result_type, $context) . '(' . $spelling . '(' . $operand . ').native_value())';
+		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $spelling . $operand . ')';
 	}
@@ -810,7 +850,9 @@ final class CPP_Generator
 	private static function render_binary_decision(operator_decision $decision,
 		string $left, string $right, cpp_generation_context $context): string
 	{
-		self::record_operator_headers($decision, $context);
+		if ($context->specialization_engine === null) {
+			self::record_operator_headers($decision, $context);
+		}
 		$left = self::extract_operator_operand($left, $decision, 0, $context);
 		$right = self::extract_operator_operand($right, $decision, 1, $context);
 		if (($decision->operation === operator_operation::condition_and)
@@ -818,9 +860,8 @@ final class CPP_Generator
 			$logical_spelling = $decision->operation === operator_operation::condition_and ? '&&' : '||';
 			$logical_left = CPP_Declarations::truthiness($left, $decision->operand_truthiness[0], $context);
 			$logical_right = CPP_Declarations::truthiness($right, $decision->operand_truthiness[1], $context);
-			$context->headers['scpp/bool_t.hpp'] = true;
 			// Both operands are native bool: C++ must skip the RHS when the left decides the result.
-			return 'scpp::bool_t((' . $logical_left . ') ' . $logical_spelling . ' (' . $logical_right . '))';
+			return CPP_Declarations::type($decision->result_type, $context) . '((' . $logical_left . ') ' . $logical_spelling . ' (' . $logical_right . '))';
 		}
 		if (($decision->operation === operator_operation::presence_is_null)
 			|| ($decision->operation === operator_operation::presence_not_null)) {
@@ -979,8 +1020,7 @@ final class CPP_Generator
 
 		if (($decision->operation === operator_operation::boolean_and)
 			|| ($decision->operation === operator_operation::boolean_or)) {
-			$context->headers['scpp/bool_t.hpp'] = true;
-			return 'scpp::bool_t(static_cast<bool>(' . $left . ') ' . $spelling
+			return CPP_Declarations::type($decision->result_type, $context) . '(static_cast<bool>(' . $left . ') ' . $spelling
 				. ' static_cast<bool>(' . $right . '))';
 		}
 
@@ -1007,9 +1047,12 @@ final class CPP_Generator
 	}
 
 	/** Compute from already converted, ordered values; no source expression is repeated. */
-	private static function render_eager_binary(operator_decision $decision, string $spelling,
+	public static function render_eager_binary(operator_decision $decision, string $spelling,
 		string $left, string $right, cpp_generation_context $context): string
 	{
+		if ($context->specialization_engine !== null) {
+			return CPP_Runtime_Operations::binary($decision, $spelling, $left, $right, $context);
+		}
 		// Read native bytes only after both source values have been copied in order.
 		if (($decision->operation === operator_operation::string_equal)
 			|| ($decision->operation === operator_operation::string_not_equal)
@@ -1022,7 +1065,7 @@ final class CPP_Generator
 			$left .= '.native_value()';
 			$right .= '.native_value()';
 			if ($decision->operation !== operator_operation::string_three_way) {
-				return 'scpp::bool_t(' . $left . ' ' . $spelling . ' ' . $right . ')';
+				return CPP_Declarations::type($decision->result_type, $context) . '(' . $left . ' ' . $spelling . ' ' . $right . ')';
 			}
 		}
 		if ($decision->operation === operator_operation::floating_three_way) {
@@ -1035,7 +1078,7 @@ final class CPP_Generator
 		}
 		if (($decision->operation === operator_operation::boolean_xor)
 			|| ($decision->operation === operator_operation::condition_xor)) {
-			return 'scpp::bool_t(static_cast<bool>(' . $left . ') != static_cast<bool>(' . $right . '))';
+			return CPP_Declarations::type($decision->result_type, $context) . '(static_cast<bool>(' . $left . ') != static_cast<bool>(' . $right . '))';
 		}
 		if (($decision->operation === operator_operation::integer_three_way)
 			|| ($decision->operation === operator_operation::string_three_way)) {
@@ -1057,15 +1100,14 @@ final class CPP_Generator
 		}
 		if (($decision->operation === operator_operation::enum_equal)
 			|| ($decision->operation === operator_operation::enum_not_equal)) {
-			$context->headers['scpp/bool_t.hpp'] = true;
-			return 'scpp::bool_t(' . $left . ' ' . $spelling . ' ' . $right . ')';
+			return CPP_Declarations::type($decision->result_type, $context) . '(' . $left . ' ' . $spelling . ' ' . $right . ')';
 		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $left . ' ' . $spelling . ' ' . $right . ')';
 	}
 
 	/** Runtime includes follow the prepared operation, not source spelling or boxed family. */
-	private static function record_operator_headers(operator_decision $decision, cpp_generation_context $context): void
+	public static function record_operator_headers(operator_decision $decision, cpp_generation_context $context): void
 	{
 		$operation /** operator_operation */ = $decision->operation;
 		switch ($operation) {
@@ -1111,7 +1153,7 @@ final class CPP_Generator
 
 	public static function generate_float_value(canonical_type_use $type, string $decimal, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($type);
+		$mapping = CPP_Types::representation($type, $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::floating) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
@@ -1128,7 +1170,7 @@ final class CPP_Generator
 
 	public static function generate_boolean_value(canonical_type_use $type, bool $value, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($type);
+		$mapping = CPP_Types::representation($type, $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::boolean) {
 			throw new \RuntimeException('C++ literal emission is not implemented for this type');
@@ -1163,13 +1205,14 @@ final class CPP_Generator
 
 	public static function generate_string_value(canonical_type_use $type, string $value, cpp_generation_context $context): string
 	{
-		$mapping = CPP_Types::representation($type);
+		$mapping = CPP_Types::representation($type, $context);
 		CPP_Types::record_dependencies($mapping, $context);
 		if ($mapping->literal !== cpp_literal_kind::string_value) {
 			throw new \RuntimeException('C++ string literal emission requires the canonical string type');
 		}
 
 		$spelling = self::cpp_string_literal($value);
+		if ($mapping->opaque) { return $mapping->spelling . '(' . $spelling . ', ' . string_byte_len($value) . ')'; }
 		if (!self::contains_zero_byte($value)) {
 			return $mapping->spelling . '(' . $spelling . ')';
 		}

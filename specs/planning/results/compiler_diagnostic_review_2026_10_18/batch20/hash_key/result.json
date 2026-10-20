@@ -1,0 +1,37 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "2107424baf6dcd7bc46187737687cb6125bfc4d5d07d93aec806ea8c61055290",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "0522d133fa613c51ae4b220d69c97132b7ad8ec98dcba07efab418cb227d0124",
+    "empty": false,
+    "ready": true
+  },
+  "retry": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "0522d133fa613c51ae4b220d69c97132b7ad8ec98dcba07efab418cb227d0124",
+    "empty": false,
+    "ready": true
+  },
+  "fresh_invalid": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "0522d133fa613c51ae4b220d69c97132b7ad8ec98dcba07efab418cb227d0124",
+    "empty": false,
+    "ready": true
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "2107424baf6dcd7bc46187737687cb6125bfc4d5d07d93aec806ea8c61055290",
+    "empty": false,
+    "ready": true
+  }
+}

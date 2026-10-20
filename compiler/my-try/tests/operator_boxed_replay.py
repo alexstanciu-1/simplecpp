@@ -35,7 +35,7 @@ with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
         source.write_text('$v ' + family + ' = 1; $out ' + family + ' = $v++ + $v; '
                           '$sum int = $out; $after int = $v; '
                           'if ($sum !== 3 || $after !== 2) { return 1; } return 0;\n')
-        artifacts = runner.run(family + '-snapshot-generate', ['php', APP / 'main.php', '--s2s', source_dir])
+        artifacts = runner.run(family + '-snapshot-generate', ['php', APP / 'main.php', '--s2s', source_dir, '--no-prelower-templates'])
         (source_dir / 'artifacts.json').write_bytes(artifacts)
         executable = out / (family + '-snapshot')
         compiler.compile_artifacts(family + '-snapshot-build', artifacts, executable)

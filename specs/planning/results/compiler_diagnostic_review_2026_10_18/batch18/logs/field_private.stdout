@@ -1,0 +1,1 @@
+{"base":{"stage":"prepare","error":"Select an existing program entry by logical module and relative source path","empty":true,"ready":false,"post_failure_cpp":"C++ emission requires a prepared program entry; run prepare first","direct_retry":"Select an existing program entry by logical module and relative source path"}}

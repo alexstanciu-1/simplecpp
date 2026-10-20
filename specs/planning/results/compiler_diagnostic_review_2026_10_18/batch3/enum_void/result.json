@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S enum backing requires an integer type\n"
+}

@@ -1,0 +1,3 @@
+try { throw new Exception("sample"); }
+catch (Exception $failure) { return 7; }
+return 0;

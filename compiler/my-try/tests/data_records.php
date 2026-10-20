@@ -16,7 +16,7 @@ function data_records_source(string $source): string
 	$input->content = $source;
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -87,7 +87,7 @@ try {
 	file_put_contents($types_path, $declaration);
 	file_put_contents($main_path, 'use Types\C; $c C = {n: 2}; $v = $c->v; $a = $v[0]; $b = $c->n; return $a + $b;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();
@@ -119,7 +119,7 @@ try {
 		throw new \LogicException('Container default dependency change was lost');
 	}
 	Compiler_Lifecycle::reset();
-	$fresh = new Compiler();
+	$fresh = new Compiler(new cpp_lowering_options(false));
 	$fresh->init([$directory]);
 	$fresh->select_entry('main', 'main.phs');
 	$fresh->exec_cpp();

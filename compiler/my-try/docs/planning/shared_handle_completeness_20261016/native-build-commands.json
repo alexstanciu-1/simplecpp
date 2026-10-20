@@ -1,0 +1,54 @@
+[
+  {
+    "name": "convert",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/tools/php_portability/convert.php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/source",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/phpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.445,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "Native compiler source conversion"
+  },
+  {
+    "name": "framework",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/tools/php_portability/install_native_runtime.php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/phpp",
+      "--filesystem",
+      "--os",
+      "--json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo",
+    "seconds": 0.074,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "Native framework assembly"
+  },
+  {
+    "name": "build",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/compiler-build-shared-handles-resource.txt",
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/repo/bin/scpp.php",
+      "build",
+      "--build-runtime",
+      "--no-stan"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/native-ninja-accounting-20261016/phpp",
+    "seconds": 672.25,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

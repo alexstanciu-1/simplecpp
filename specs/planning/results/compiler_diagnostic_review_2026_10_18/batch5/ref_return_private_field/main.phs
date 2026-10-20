@@ -1,0 +1,1 @@
+struct S { private int $n = 1; } function &f(S &$s): int { return $s->n; } return 0;

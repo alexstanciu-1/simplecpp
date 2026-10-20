@@ -1,0 +1,56 @@
+{
+  "logical_cpus": 12,
+  "units": 16,
+  "samples": {
+    "1": [
+      {
+        "compilation_wall_seconds": 8.010126698005479,
+        "link_seconds": 0.524081361014396,
+        "total_seconds": 8.534208059019875
+      },
+      {
+        "compilation_wall_seconds": 7.427067245007493,
+        "link_seconds": 0.4796746429638006,
+        "total_seconds": 7.906741887971293
+      },
+      {
+        "compilation_wall_seconds": 7.44728646700969,
+        "link_seconds": 0.49360192398307845,
+        "total_seconds": 7.940888390992768
+      }
+    ],
+    "12": [
+      {
+        "compilation_wall_seconds": 1.633852714963723,
+        "link_seconds": 0.473984009004198,
+        "total_seconds": 2.107836723967921
+      },
+      {
+        "compilation_wall_seconds": 1.6579855629825033,
+        "link_seconds": 0.48090455995406955,
+        "total_seconds": 2.138890122936573
+      },
+      {
+        "compilation_wall_seconds": 1.6530844530207105,
+        "link_seconds": 0.48416183999506757,
+        "total_seconds": 2.137246293015778
+      }
+    ]
+  },
+  "revision": "15612367",
+  "configuration": "Clang 18.1.3, C++23, O0, debug disabled, reused eager PCH/runtime/middleware/layouts",
+  "checks_per_execution": 998,
+  "successful_executions": 6,
+  "medians": {
+    "1": {
+      "compilation_wall_seconds": 7.44728646700969,
+      "link_seconds": 0.49360192398307845,
+      "total_seconds": 7.940888390992768
+    },
+    "12": {
+      "compilation_wall_seconds": 1.6530844530207105,
+      "link_seconds": 0.48090455995406955,
+      "total_seconds": 2.137246293015778
+    }
+  }
+}

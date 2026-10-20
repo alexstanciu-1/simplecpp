@@ -1,0 +1,4 @@
+{
+  "stage": "parse",
+  "error": "main.phs: Expected '=' at main.phs: byte 10\n"
+}

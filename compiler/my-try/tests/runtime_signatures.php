@@ -88,7 +88,7 @@ function signature_compile(string $text): string {
 	$module=new module('/signatures','/signatures','/signatures');
 	$file=new file(); $file->path='main.phs'; $file->content=$text;
 	Source_Registry::add($module,$file); Model::$modules->add($module->name,$module);
-	$compiler=new Compiler(); $compiler->exec_cpp();
+	$compiler=new Compiler(new cpp_lowering_options(false)); $compiler->exec_cpp();
 	$result=CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 	signature_check($result===CPP_Probe::text(Model::$cpp_files),'No-op changed default output');
 	return $result;

@@ -1,0 +1,103 @@
+{
+  "control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "missing_unused_import": {
+    "stage": "prepare",
+    "error": "Missing import target or wrong symbol kind: \\Missing\\C"
+  },
+  "wrong_kind_import": {
+    "stage": "prepare",
+    "error": "Missing import target or wrong symbol kind: \\Lib\\C"
+  },
+  "conflicting_alias": {
+    "stage": "prepare",
+    "error": "Conflicting import binding: X"
+  },
+  "alias_local_type": {
+    "stage": "prepare",
+    "error": "Import conflicts with namespace declaration: C"
+  },
+  "alias_local_function": {
+    "stage": "prepare",
+    "error": "Import conflicts with namespace declaration: f"
+  },
+  "duplicate_function": {
+    "stage": "prepare",
+    "error": "S2S duplicate function name: f\n"
+  },
+  "duplicate_type": {
+    "stage": "emit",
+    "error": "Duplicate C++ artifact identity or path"
+  },
+  "duplicate_constant": {
+    "stage": "prepare",
+    "error": "S2S duplicate constant name: X\n"
+  },
+  "import_leak": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved function for f\n"
+  },
+  "reopen_import_leak": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved function for f\n"
+  },
+  "alias_reexport": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved function for App\\g\n"
+  },
+  "global_fallback": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved function for f\n"
+  },
+  "parent_fallback": {
+    "stage": "prepare",
+    "error": "S2S needs one resolved function for f\n"
+  },
+  "library_executable": {
+    "stage": "prepare",
+    "error": "Top-level executable statements are only allowed in the selected entry: lib.phs"
+  },
+  "two_entry_bodies": {
+    "stage": "prepare",
+    "error": "Executable statements may belong to only one namespace body: main.phs"
+  },
+  "constant_cycle": {
+    "stage": "prepare",
+    "error": "Cyclic by-value declaration dependency\n"
+  },
+  "same_leaf_symbols": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "mangle_collision": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "cross_record_cycle": {
+    "stage": "prepare",
+    "error": "Cyclic by-value declaration dependency\n"
+  },
+  "cross_private": {
+    "stage": "prepare",
+    "error": "Private method is not accessible here: f\n"
+  },
+  "same_file_basename": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "same_kind_import_twice": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "cross_signature_mismatch": {
+    "stage": "prepare",
+    "error": "S2S value boundary requires matching types or an integer conversion\n"
+  }
+}

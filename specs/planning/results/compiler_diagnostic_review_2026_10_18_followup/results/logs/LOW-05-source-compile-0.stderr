@@ -1,0 +1,6 @@
+In file included from /tmp/diagnostic-review-20261018-current/results/LOW-05-source/cpp/entry.cpp:1:
+In file included from /tmp/diagnostic-review-20261018-current/results/LOW-05-source/cpp/types/n415c4974656d.hpp:2:
+/tmp/diagnostic-review-20261018-current/results/LOW-05-source/cpp/types/n425c4974656d.hpp:8:34: error: use of undeclared identifier 'record_AUqItem'
+    8 |         scpp::vector_t<::scpp::shared_p<record_AUqItem>> field_others;
+      |                                         ^
+1 error generated.

@@ -1443,24 +1443,30 @@ final class Type_Registry implements type_capability_query
 	{
 		$complete = $this->complete_application_arguments($definition, $arguments);
 		if ($definition instanceof ownership_semantics) {
-			if ($this->type($complete[0]->type_id())->definition() instanceof ownership_semantics) {
+			$payload = $this->type($complete[0]->type_id());
+			$ownership_family = object_cast($definition, ownership_semantics::class)->ownership_family();
+			if (($payload->family() === type_family::no_value)
+				&& (($ownership_family === ownership_kind::shared) || ($ownership_family === ownership_kind::unique))) {
+				throw new \InvalidArgumentException('Shared and unique ownership require a non-void target type');
+			}
+			if ($payload->definition() instanceof ownership_semantics) {
 				throw new \InvalidArgumentException('Direct ownership wrapper nesting is not supported in v0.2');
 			}
 			if ($complete[0]->by_value()) {
 				throw new \InvalidArgumentException('Ownership wrappers require an unmodified payload type');
 			}
-			$payload_definition = $this->type($complete[0]->type_id())->definition();
+			$payload_definition = $payload->definition();
 			if ($this->runtime_storage($payload_definition) === record_storage_kind::shared) {
 				throw new \InvalidArgumentException('Opaque runtime handle ownership transformations are not registered');
 			}
 			if ($payload_definition->origin() === type_definition_origin::source) {
 				if ($payload_definition instanceof abstract_nominal_type_definition) {
 					if ((object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::interface_type)
-						&& (object_cast($definition, ownership_semantics::class)->ownership_family() !== ownership_kind::weak)) {
+						&& ($ownership_family !== ownership_kind::weak)) {
 						throw new \InvalidArgumentException('Interface ownership permits weak<I>; use the default interface type for shared ownership');
 					}
 					if ((object_cast($payload_definition, abstract_nominal_type_definition::class)->nominal_kind() === nominal_type_kind::class_type)
-						&& (object_cast($definition, ownership_semantics::class)->ownership_family() === ownership_kind::shared)) {
+						&& ($ownership_family === ownership_kind::shared)) {
 						throw new \InvalidArgumentException('shared<Class> repeats the declaration default storage');
 					}
 				}
@@ -1523,5 +1529,14 @@ final class Type_Registry implements type_capability_query
 			$this->next_type_id++;
 		}
 		return (int)$identity;
+	}
+}
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Record_Storage_Kind_Name
+{
+	public static function text(record_storage_kind $kind): string
+	{
+		return enum_name($kind);
 	}
 }

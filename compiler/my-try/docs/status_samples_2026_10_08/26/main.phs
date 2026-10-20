@@ -1,0 +1,5 @@
+$values = new vector<int>();
+$table = new hash<int, string>();
+$values[] = 3;
+$table["item"] = 4;
+return $values[0] + $table["item"];

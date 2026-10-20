@@ -1,0 +1,69 @@
+{
+  "revision": "6bfbfb40bb65305fec07be8254c63f18c2d1ea66",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+  "sources": {
+    "main.phs": "5e60d5f701ee533e4548011725816567a02a04113c31a20336dc5788e3add8ab",
+    "src/assets.phs": "cb1937a70a2dcb40d15ed45e2a34eb4a16fc3b41c38899023d568b9c19660da5",
+    "src/banking.phs": "46ead8556a256affe9e4103ee0c2f8ae8bbefd45584a49ffc8dfa5b64e425e7f",
+    "src/business_checks.phs": "9fa9d36809481485c8158e12ef3b722e8a72e2f459bcd13fffddc23e9df2ad71",
+    "src/calendar.phs": "6cc305e6d48a97b0fa7f514bc13800206231776157c5aed8bc8bc4ca247e456a",
+    "src/checks.phs": "c4364d298b2698df20b74ea7f857f7fbeafbea7de4a09268a9e5b39488f49d37",
+    "src/closing.phs": "fc2f9a9255a8aa1f9b0c624266fa1b946806966d6b872bb5c0290a4f2adce6b0",
+    "src/closing_checks.phs": "1fe3e81f2abb8330823d3ebeb9e5e793a3ad44082d2095b1a21ec15f5d8c257f",
+    "src/core.phs": "82819a17f5c3d485b4bc6d23c210adbdbafd210fe7a97abf8531289bf0f254c3",
+    "src/ledger.phs": "5eb90a6919ca43abe4cc7bf3b69a3031392f0880825efd907e0c6f521874f439",
+    "src/money.phs": "d386f11b39a3f11862ca00956049788d86310b164dc3d4fc5f41cc42c0940609",
+    "src/purchasing.phs": "b9e08c16043d318a51bd5e2579bff4714ed76a1e142da485a40f7c30111c8944",
+    "src/reports.phs": "7194a1d75d83260f1d8444fccb36775f5b6785184d3d4ca0e17d5a5e0baccaa7",
+    "src/sales.phs": "5ad11cbdfd004f5e5706b6c381379798b93487ac13b9a8d13067dfd808b1e231",
+    "src/stock.phs": "2f2999384900663641f7eac501970564717e8a705de59f267c4e97f44a272401"
+  },
+  "optimization": "O0",
+  "native_debug": false,
+  "pch": false,
+  "scope": "Behavior/closure acceptance; not an isolated timing benchmark",
+  "behavior_identical": true,
+  "checks_passed": 998,
+  "checks_failed": 0,
+  "application_units": 16,
+  "template_declarations": 0,
+  "instantiations": 0,
+  "builds": {
+    "ordinary": {
+      "cold": {
+        "executable": "/tmp/prelower-public-accounting-20261020/ordinary/cache/artifacts/bd9ac5ab2312fc93fdc7a0e7dfcbb039b50c3a5cb8d8f89b1670c27191924fc2.bin",
+        "compiled": 20,
+        "reused": 0,
+        "pch_built": 0,
+        "linked": 1
+      },
+      "warm": {
+        "executable": "/tmp/prelower-public-accounting-20261020/ordinary/cache/artifacts/bd9ac5ab2312fc93fdc7a0e7dfcbb039b50c3a5cb8d8f89b1670c27191924fc2.bin",
+        "compiled": 0,
+        "reused": 20,
+        "pch_built": 0,
+        "linked": 0
+      },
+      "output": "accounting workload: invoice/payment/trial-balance checks passed\nCHECKS passed=998 failed=0\nACCOUNTING_WORKLOAD_PASS\n",
+      "output_sha256": "44a042bf168c9fa0b4be6b625ad941a9dbea60aa932fc60eb799cb4ff36b1e9a"
+    },
+    "prelowered": {
+      "cold": {
+        "executable": "/tmp/prelower-public-accounting-20261020/prelowered/cache/artifacts/e30f88cc53431fd11e77000a31de9bda20f09991fcd07dca61d8c5874258fe02.bin",
+        "compiled": 22,
+        "reused": 0,
+        "pch_built": 0,
+        "linked": 1
+      },
+      "warm": {
+        "executable": "/tmp/prelower-public-accounting-20261020/prelowered/cache/artifacts/e30f88cc53431fd11e77000a31de9bda20f09991fcd07dca61d8c5874258fe02.bin",
+        "compiled": 0,
+        "reused": 22,
+        "pch_built": 0,
+        "linked": 0
+      },
+      "output": "accounting workload: invoice/payment/trial-balance checks passed\nCHECKS passed=998 failed=0\nACCOUNTING_WORKLOAD_PASS\n",
+      "output_sha256": "44a042bf168c9fa0b4be6b625ad941a9dbea60aa932fc60eb799cb4ff36b1e9a"
+    }
+  }
+}

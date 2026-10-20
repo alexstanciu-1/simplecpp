@@ -1,0 +1,82 @@
+[
+  {
+    "name": "fresh-invalid0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-fresh-invalid",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-fresh-invalid/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.583,
+    "code": 1,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "edit0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-edit",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-edit/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.596,
+    "code": 1,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "base0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-base",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-base/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.616,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "repair0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-repair",
+      "-fsyntax-only",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/cpp-repair/entry.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.642,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

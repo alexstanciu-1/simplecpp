@@ -4,6 +4,26 @@ namespace scpp\compiler;
 /** Output spelling is backend-owned; identities never use object IDs or source positions. */
 final class CPP_Artifacts
 {
+	/** Bounded readable label plus stable identity, including for recursively composed types. */
+	public static function bounded_component(string $label, string $identity): string
+	{
+		$result = '';
+		for ($index = 0; ($index < string_byte_len($label)) && ($index < 48); $index++) {
+			$byte = string_byte_at($label, $index);
+			$identifier = (($byte >= 65) && ($byte <= 90)) || (($byte >= 97) && ($byte <= 122))
+				|| (($byte >= 48) && ($byte <= 57));
+			$result .= $identifier ? string_byte_slice($label, $index, 1) : '_';
+		}
+		return 'n_' . $result . '_' . content_sha256($identity);
+	}
+
+	/** Materialize one assembled group through the same described-artifact protocol. */
+	public static function implementation(cpp_implementation_group $group): cpp_artifact
+	{
+		return self::described($group->identity, cpp_artifact_kind::translation_unit, $group->file_name,
+			self::preamble($group->headers, $group->forward_declarations, '') . $group->text, $group->headers);
+	}
+
 	/** Preserve the same include set that produced the artifact preamble. */
 	public static function described(string $identity, cpp_artifact_kind $kind, string $path,
 		string $text, array $headers /** hash<bool> */): cpp_artifact

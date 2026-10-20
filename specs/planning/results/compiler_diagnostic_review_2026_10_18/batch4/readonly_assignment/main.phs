@@ -1,0 +1,1 @@
+function f(const int &$x): void { $x = 1; } return 0;

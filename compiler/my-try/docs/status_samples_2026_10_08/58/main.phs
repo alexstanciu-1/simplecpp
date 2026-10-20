@@ -1,0 +1,4 @@
+struct Point { public int32 $x; }
+$point ?Point = null;
+$point = new Point();
+return isset($point) ? 0 : 1;

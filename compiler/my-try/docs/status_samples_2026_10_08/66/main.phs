@@ -1,0 +1,2 @@
+$callback = function(int $value): int { return $value + 1; };
+return $callback(3);

@@ -1,0 +1,6 @@
+$number int = 7;
+$fraction float = 1.5;
+$ready bool = true;
+$text string = "sample";
+$inferred = $number;
+return $inferred;

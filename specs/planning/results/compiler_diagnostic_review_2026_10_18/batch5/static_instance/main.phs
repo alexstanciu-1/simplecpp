@@ -1,0 +1,1 @@
+class S { function f(): int { return 1; } } return S::f();

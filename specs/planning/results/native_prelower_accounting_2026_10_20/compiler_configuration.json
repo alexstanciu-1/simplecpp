@@ -1,0 +1,10 @@
+{
+  "compiler_optimization": "O2",
+  "native_debug": false,
+  "recorded_object_actions": 488,
+  "unique_sources": 244,
+  "failed_actions": 0,
+  "commands_sha256": "f0f3c1d27b2b54a13acd968adceab285f8d565532cb7fa7aa29b30c2246bd171",
+  "raw_commands": "/tmp/prelower-native-compiler-20261020/compiler-o2.jsonl",
+  "note": "Includes resumed O2 rebuilds; counts are validation evidence, not timings"
+}

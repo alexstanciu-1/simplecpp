@@ -20,7 +20,7 @@ function payload_compile(string $source): void
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 }
 
 $schema = ['version'=>1, 'module'=>'payload_probe', 'dependencies'=>['core'], 'functions'=>[], 'cpp'=>[]];
@@ -158,7 +158,7 @@ try
 	foreach (['?int','result<int>','result_or_false<int>','result_or_bool<int>'] as $type)
 	{
 		$valid = 'function read('.$type.' $v):int{return probe_value($v);}';
-		file_put_contents($file, $valid);Compiler_Lifecycle::reset();$compiler = new Compiler();$compiler->init([$dir]);$compiler->exec_cpp();$fresh = CPP_Probe::text(Model::$cpp_files);
+		file_put_contents($file, $valid);Compiler_Lifecycle::reset();$compiler = new Compiler(new cpp_lowering_options(false));$compiler->init([$dir]);$compiler->exec_cpp();$fresh = CPP_Probe::text(Model::$cpp_files);
 		file_put_contents($file, str_replace('probe_value','probe_numeric',$valid));
 		foreach ([[$file],[]] as $changes)
 		{

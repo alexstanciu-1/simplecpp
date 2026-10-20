@@ -1,0 +1,10 @@
+$handle process_handle;
+$failure error;
+$args vector<string> = ["--version"];
+if (!take($handle, $failure, process_start("tool", $args, "", 1000, "."))) { return 1; }
+$done bool = false;
+take($done, $failure, process_poll($handle));
+dt_sleep_ms(1);
+$closed bool = false;
+take($closed, $failure, process_close($handle));
+return 0;

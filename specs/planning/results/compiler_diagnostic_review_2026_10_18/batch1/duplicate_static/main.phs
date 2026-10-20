@@ -1,0 +1,1 @@
+class C { static int $n; static int $n; } return 0;

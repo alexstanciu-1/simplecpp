@@ -1,0 +1,172 @@
+# 52 — Explicit `enum_name`, `enum_value`, `enum_from_value` helpers
+Doc Status: supporting
+
+Representative subset; generation only, not native execution or full row coverage.
+
+Source and generated text below are a representative example, not proof of the whole feature row. No emitted C++ was compiled or executed.
+
+## PHP++ sample
+
+[Source file](main.phs) · [Intended strict project configuration](prism.json)
+
+```php
+enum Code: uint16 { case Ok = 0; case Failed = 1; }
+$name = enum_name(Code::Ok);
+$value = enum_value(Code::Ok);
+$parsed = enum_from_value(Code::class, 0);
+return $parsed === Code::Ok ? 0 : 1;
+```
+
+## S2S generated v1
+
+Emitted; exit code `0`. [Command and raw logs](../logs/commands.json).
+
+[Complete emitted text](v1.cpp.txt). File separators identify the emitted units.
+
+```cpp
+// === main.hpp ===
+#pragma once
+
+#include <scpp/lang/php.hpp>
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+
+namespace scpp {
+
+
+enum class Code : std::uint16_t {
+	Ok = 0,
+	Failed = 1
+};
+
+int __scpp_main();
+
+}
+
+// === main.cpp ===
+#include "main.hpp"
+
+namespace scpp {
+	using namespace ::scpp;
+
+int __scpp_main() {
+	int_t<> argc = php::cli_argc();
+	mixed_t argv = php::cli_argv();
+	SCPP_CALL_DEPTH_GUARD("__scpp_main", "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/docs/status_samples_2026_10_08/52/main.phs", 0);
+	auto name = ([&]() -> string_t { switch (Code::Ok) { case Code::Ok: return string_t("Ok"); case Code::Failed: return string_t("Failed"); default: throw std::runtime_error("Invalid value for enum Code"); } }());
+	auto value = int_t<std::uint16_t>(static_cast<std::uint16_t>(Code::Ok));
+	auto parsed = ([&]() -> Code { const auto __scpp_enum_value = cast<int_t<std::uint16_t>>(static_cast<int_t<> >(0)).native_value(); switch (__scpp_enum_value) { case static_cast<std::uint16_t>(0): return Code::Ok; case static_cast<std::uint16_t>(1): return Code::Failed; default: throw std::runtime_error("Invalid value for enum Code"); } }());
+	return php::ternary_eval([&]() -> decltype(auto) { return php::identical(parsed, Code::Ok); }, [&]() -> decltype(auto) { return static_cast<int_t<> >(0); }, [&]() -> decltype(auto) { return static_cast<int_t<> >(1); });
+	return 0;
+}
+}
+
+int main(int __scpp_argc, char** __scpp_argv) {
+	try {
+		::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);
+		return scpp::__scpp_main();
+	} catch (const std::exception &exception) {
+		::scpp::print_runtime_exception(exception);
+		return 1;
+	}
+}
+```
+
+## S2S generated v2
+
+Emitted; exit code `0`. [Command and raw logs](../logs/commands.json).
+
+[Complete emitted text](v2.cpp.txt). File separators identify the emitted units.
+
+```cpp
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n436f6465.hpp ===
+#pragma once
+#include "cstdint"
+enum class enum_Code : std::uint16_t {
+	case_Ok = 0ULL,
+	case_Failed = 1ULL,
+};
+
+// === entry.cpp ===
+#include "scpp/string_t.hpp"
+#include "types/n436f6465.hpp"
+#include "helpers/enum_name_n436f6465.hpp"
+#include "scpp/int_t.hpp"
+#include "helpers/enum_value_n436f6465.hpp"
+#include "helpers/enum_from_value_i64_n436f6465.hpp"
+#include "scpp/bool_t.hpp"
+
+int main()
+{
+	auto local_name = ([&]() -> scpp::string_t {
+	enum_Code argument_0 = enum_Code::case_Ok;
+	return enum_name_Code(argument_0);
+}());
+	auto local_value = ([&]() -> scpp::int_t<std::uint16_t> {
+	enum_Code argument_1 = enum_Code::case_Ok;
+	return enum_value_Code(argument_1);
+}());
+	auto local_parsed = ([&]() -> enum_Code {
+	scpp::int_t<> argument_2 = static_cast<scpp::int_t<>>(0LL);
+	return enum_from_value_i64_Code(argument_2);
+}());
+	return static_cast<int>((([&]() -> scpp::int_t<> { if ((scpp::bool_t(local_parsed == enum_Code::case_Ok)).native_value()) { return static_cast<scpp::int_t<>>(0LL); } return static_cast<scpp::int_t<>>(1LL); }())).native_value());
+	return 0;
+}
+
+// === helpers/enum_name_n436f6465.hpp ===
+#pragma once
+#include "scpp/string_t.hpp"
+#include "types/n436f6465.hpp"
+scpp::string_t enum_name_Code(enum_Code value);
+
+// === helpers/enum_name_n436f6465.cpp ===
+#include "scpp/string_t.hpp"
+#include "types/n436f6465.hpp"
+#include "stdexcept"
+#include "helpers/enum_name_n436f6465.hpp"
+scpp::string_t enum_name_Code(enum_Code value) {
+	switch (value) {
+	case enum_Code::case_Ok: return scpp::string_t("Ok");
+	case enum_Code::case_Failed: return scpp::string_t("Failed");
+	}
+	throw std::runtime_error("Invalid value for enum helper");
+}
+
+// === helpers/enum_value_n436f6465.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+#include "types/n436f6465.hpp"
+scpp::int_t<std::uint16_t> enum_value_Code(enum_Code value);
+
+// === helpers/enum_value_n436f6465.cpp ===
+#include "scpp/int_t.hpp"
+#include "types/n436f6465.hpp"
+#include "type_traits"
+#include "helpers/enum_value_n436f6465.hpp"
+scpp::int_t<std::uint16_t> enum_value_Code(enum_Code value) {
+	return scpp::int_t<std::uint16_t>(static_cast<std::underlying_type_t<enum_Code>>(value));
+}
+
+// === helpers/enum_from_value_i64_n436f6465.hpp ===
+#pragma once
+#include "types/n436f6465.hpp"
+#include "scpp/int_t.hpp"
+enum_Code enum_from_value_i64_Code(scpp::int_t<> value);
+
+// === helpers/enum_from_value_i64_n436f6465.cpp ===
+#include "types/n436f6465.hpp"
+#include "scpp/int_t.hpp"
+#include "utility"
+#include "stdexcept"
+#include "helpers/enum_from_value_i64_n436f6465.hpp"
+enum_Code enum_from_value_i64_Code(scpp::int_t<> value) {
+	if (std::cmp_equal(value.native_value(), 0ULL)) return enum_Code::case_Ok;
+	if (std::cmp_equal(value.native_value(), 1ULL)) return enum_Code::case_Failed;
+	throw std::runtime_error("Invalid value for enum helper");
+}
+```
+

@@ -1,0 +1,1 @@
+abstract struct A {} function f(A $a): void {} return 0;

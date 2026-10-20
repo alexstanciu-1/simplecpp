@@ -1,0 +1,1 @@
+{"stage":"prepare","error":"S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization\/assignment\n"}

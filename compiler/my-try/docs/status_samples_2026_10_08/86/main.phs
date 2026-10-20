@@ -1,0 +1,3 @@
+$values vector<int> = [1, 2];
+foreach ($values as $key => &$value) { $value += $key; }
+return $values[1];

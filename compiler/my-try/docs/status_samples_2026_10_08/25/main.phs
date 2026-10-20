@@ -1,0 +1,5 @@
+class Owner { public int $id = 1; }
+$owner = new Owner();
+$seen hash<bool, shared<Owner>> = new hash<bool, shared<Owner>>();
+$seen[$owner] = true;
+return isset($seen[$owner]) ? 0 : 1;

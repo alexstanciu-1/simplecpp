@@ -1,0 +1,1 @@
+Error: Object of class ast\Node could not be converted to string

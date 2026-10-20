@@ -1,0 +1,13 @@
+{
+  "doc_status": "supporting",
+  "base_revision": "05f34d8c63faf258ec6dada00ec016b965415e78",
+  "source_sha256": {
+    "compiler/my-try/03_parse/types/model.php": "b554feaeccf4cde7788e017b272e701d9b0e02135d162a5fef28df1d00905d8a",
+    "compiler/my-try/tests/ownership_model.php": "f19d9b32a95dc129177750c510542aa76ca8f89e7567f336bec488cef5655d20",
+    "compiler/my-try/tests/ownership_targets.php": "8158139b24c372f5bc395a332a4982c544613c857b0a8854889d4974cf653541",
+    "compiler/my-try/tests/records.py": "b21c71d04e6bba94455f3e41cb94536ad6df2cca161fcb2aad0c57211e77c44c",
+    "specs/type_use_modifiers.md": "725ec1ba61d8817ef55ac788f55a0eda8ed2c8f517e402cee34b7b5b6ea7aaa5"
+  },
+  "native_compiler_rebuilt": false,
+  "excluded": "Empty streams, binaries, objects and generated programs; original paths in journals retained as provenance."
+}

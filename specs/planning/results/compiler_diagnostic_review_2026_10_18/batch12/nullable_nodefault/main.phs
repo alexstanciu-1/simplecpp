@@ -1,0 +1,1 @@
+struct S { function __construct(int $n) {} } $v ?S = null; $s S = $v; return 0;

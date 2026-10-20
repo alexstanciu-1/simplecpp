@@ -1,0 +1,14 @@
+In file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:
+In file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/callables/n66.hpp:2:
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/shared_p.hpp:91:4: error: cannot form a reference to 'void'
+   91 |         T &deref() const {
+      |           ^
+/tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/units/n6d61696e/n6d61696e2e706873.cpp:3:38: note: in instantiation of template class 'scpp::shared_p<void>' requested here
+    3 | void function_f(scpp::shared_p<void> local_s)
+      |                                      ^
+In file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:
+In file included from /tmp/mytry-diagnostic-review/batch3/shared_void_parameter/cpp/callables/n66.hpp:2:
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/shared_p.hpp:104:4: error: cannot form a reference to 'void'
+  104 |         T &operator*() const { return deref(); }
+      |           ^
+2 errors generated.

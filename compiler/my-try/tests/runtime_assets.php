@@ -20,7 +20,7 @@ foreach ([
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
 	$failed = false;
-	try { (new Compiler())->exec_cpp(); } catch (\RuntimeException $error) { $failed = true; }
+	try { (new Compiler(new cpp_lowering_options(false)))->exec_cpp(); } catch (\RuntimeException $error) { $failed = true; }
 	if (!$failed || !Model::$cpp_files->is_empty()) { throw new \LogicException('Invalid asset call admitted: ' . $invalid); }
 }
 echo "Runtime asset rejection checks passed\n";

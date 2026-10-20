@@ -1,0 +1,1 @@
+{"entry.cpp": "#include \"ordinary.hpp\"\nint main(){return value();}"}

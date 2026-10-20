@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Cannot construct an abstract type\n"
+}

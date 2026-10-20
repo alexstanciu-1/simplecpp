@@ -1,0 +1,1 @@
+namespace Lib; enum E : uint8 { case A = 1; }

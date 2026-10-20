@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Private method is not accessible here: f\n"
+}

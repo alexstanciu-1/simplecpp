@@ -1,0 +1,1 @@
+function f(int $n): int { for (;;) { switch ($n) { case 1: continue; default: return 1; } } } return f(0);

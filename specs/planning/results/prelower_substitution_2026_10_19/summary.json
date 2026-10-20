@@ -1,0 +1,122 @@
+{
+  "counters": {
+    "direct-O0": "workload 12 784 12 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 4 312 4 0 1 0 1\n",
+    "direct-O2": "workload 12 784 12 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 4 312 4 0 1 0 1\n",
+    "direct-sanitized": "workload 12 784 12 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 4 312 4 0 1 0 1\n",
+    "composed-O0": "workload 12 784 12 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 4 312 4 0 1 0 1\n",
+    "composed-O2": "workload 12 784 12 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 4 312 4 0 1 0 1\n",
+    "composed-sanitized": "workload 12 784 12 2 4 1 7\nreferences 0 0 0 0 0 0 0\ncopy-failure 4 312 4 0 1 0 1\n"
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "executable": "/tmp/prelower-substitution-final/cache-direct/artifacts/4d0f2c38f2b744d3ec7264c68c615bc16470750b5fd2b7bf73dc5bb6ec42100c.bin",
+      "compiled": 3,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "executable": "/tmp/prelower-substitution-final/cache-direct/artifacts/4d0f2c38f2b744d3ec7264c68c615bc16470750b5fd2b7bf73dc5bb6ec42100c.bin",
+      "compiled": 0,
+      "reused": 3,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "executable": "/tmp/prelower-substitution-final/cache-direct/artifacts/3b5192e01bb8bd5c99f67b59a1943272f176bdb9effdea792cd0e80eb318b4fa.bin",
+      "compiled": 3,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "executable": "/tmp/prelower-substitution-final/cache-direct/artifacts/3b5192e01bb8bd5c99f67b59a1943272f176bdb9effdea792cd0e80eb318b4fa.bin",
+      "compiled": 0,
+      "reused": 3,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "executable": "/tmp/prelower-substitution-final/cache-composed/artifacts/8003a6d857cdd02d0bdc3c91d8f97bd3ce2882e20cf4bc4ceb082cf61fc76545.bin",
+      "compiled": 5,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "executable": "/tmp/prelower-substitution-final/cache-composed/artifacts/8003a6d857cdd02d0bdc3c91d8f97bd3ce2882e20cf4bc4ceb082cf61fc76545.bin",
+      "compiled": 0,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "executable": "/tmp/prelower-substitution-final/cache-composed/artifacts/9dca1152d866686fa3f597ebefda3f614e5f1b4a7b7313176852ebb8d3030285.bin",
+      "compiled": 5,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "executable": "/tmp/prelower-substitution-final/cache-composed/artifacts/9dca1152d866686fa3f597ebefda3f614e5f1b4a7b7313176852ebb8d3030285.bin",
+      "compiled": 0,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "executable": "/tmp/prelower-substitution-final/cache-composed/artifacts/60e09207e75e11e656017a9a9efb647972a72888c326cc84c1cdcc5508cdfeea.bin",
+      "compiled": 1,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "executable": "/tmp/prelower-substitution-final/cache-composed/artifacts/e71eb990e60cae60399e1c5774c8f4594af60fcc8321aec2cb587e5c2a12d436.bin",
+      "compiled": 5,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "executable": "/tmp/prelower-substitution-final/cache-composed/artifacts/8003a6d857cdd02d0bdc3c91d8f97bd3ce2882e20cf4bc4ceb082cf61fc76545.bin",
+      "compiled": 0,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "direct": "output 0 0 0 0 0 0 0\nbyte-lifetime 0 0 0 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nbyte-lifetime 0 0 0 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nbyte-lifetime 0 0 0 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nbyte-lifetime 2 108 2 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nsource-owner 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n",
+  "composed": "output 0 0 0 0 0 0 0\nbyte-lifetime 0 0 0 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nbyte-lifetime 0 0 0 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nbyte-lifetime 0 0 0 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nbyte-lifetime 2 108 2 0 0 0 0\nbyte-borrow-hash 0 0 0 0 0 0 0\nsource-owner 0 0 0 0 0 0 0\nrecipe-boundary 0 0 0 0 0 0 0\n"
+}

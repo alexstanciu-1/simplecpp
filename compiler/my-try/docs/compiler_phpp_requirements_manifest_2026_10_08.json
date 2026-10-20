@@ -1,0 +1,833 @@
+{
+  "doc_status": "supporting",
+  "source_root": "/tmp/my-try-ch11-native-20261008/phpp",
+  "read_snapshot": "/tmp/my-try-phpp-requirements-rxqe58a0",
+  "scope": "204 generated PHS files; comments and string contents excluded from feature discovery; focused source reads confirm requirements; no builds/tests run",
+  "file_count": 204,
+  "line_count": 31584,
+  "groups": {
+    "compiler": 180,
+    "parked_llvm": 12,
+    "framework": 9,
+    "validation_driver": 3
+  },
+  "source_files_changed_since_capture": [],
+  "files": {
+    "01_prepare_inputs/file.phs": {
+      "sha256": "c3fe805735d363af732dd749062e9e6e8c2b374c474391cf2a143b2b41018f61",
+      "lines": 27
+    },
+    "01_prepare_inputs/module.phs": {
+      "sha256": "6573902832ec0d17521fa9b5b7e4858090294c57afe0ed3852de9959395b9fce",
+      "lines": 105
+    },
+    "01_prepare_inputs/structures.phs": {
+      "sha256": "b2979eb4f7b715dc8d963d59c6dbe985ef5ce9289f00480f723ce046b9770dd9",
+      "lines": 105
+    },
+    "02_tokenize/buffer.phs": {
+      "sha256": "3155932987dd73ee481809a4d29667f3c683b6cd97ee64ca8b0e80379789c50e",
+      "lines": 33
+    },
+    "02_tokenize/structures.phs": {
+      "sha256": "36fb25e53f2ff8952fca3930a1b51af267fb027c8001dc517dd787e6f3d3957d",
+      "lines": 86
+    },
+    "02_tokenize/text.phs": {
+      "sha256": "cc67e84f9ce21ba0a5a7fa8160edaf74574b1e036a451f1304fa3050615c98b8",
+      "lines": 57
+    },
+    "02_tokenize/tokens.phs": {
+      "sha256": "c7b7ff31f5413565e62d25646c73221b8d13def7aaf81954d2e0682b66c0c18d",
+      "lines": 175
+    },
+    "03_parse/collect/collect.phs": {
+      "sha256": "5ec7943b991007431641ee1d2b59ad476593d1d27f73c006bcf1b367219a397a",
+      "lines": 405
+    },
+    "03_parse/collect/retirement.phs": {
+      "sha256": "f4526ee4773b942364d926aa39b5cea4fe5026c06ea704f4a50f999d45c92e1d",
+      "lines": 72
+    },
+    "03_parse/collect/structures.phs": {
+      "sha256": "3172081a3a3e8b2e85e2a30ed1b037579b8985dcfec047d07651fca6f0760739",
+      "lines": 541
+    },
+    "03_parse/parser.phs": {
+      "sha256": "1b2977690d8d34a2e7ebb891cc6023d142461b56ba5ef79af2a6a81fa518025e",
+      "lines": 2446
+    },
+    "03_parse/scopes/candidates.phs": {
+      "sha256": "a9fa7a30e371b03c2027d62583ed2529c9d55e696ddf3f893a58a5908f3ab1dc",
+      "lines": 7
+    },
+    "03_parse/scopes/lookup.phs": {
+      "sha256": "10232383c1670bf0845b8bf7fc90e9a7430e6ea3c2c7f3e1a16a141dea1d76d2",
+      "lines": 148
+    },
+    "03_parse/scopes/namespaces.phs": {
+      "sha256": "46aaa4ad6c549df6215bbf893bfbd3023718e46c6b08343083fb3e687025a73f",
+      "lines": 74
+    },
+    "03_parse/scopes/structures.phs": {
+      "sha256": "60121523cbab14debb4d41d3837820b000a783e8b06e94155faa92d5bef38002",
+      "lines": 302
+    },
+    "03_parse/structures/abstractions.phs": {
+      "sha256": "6c439ad830b85a9b7b43a2894055afeaf2373bd5f0bbbc2d4ba1cbe330137e3a",
+      "lines": 275
+    },
+    "03_parse/structures/iterators.phs": {
+      "sha256": "125c5ea4e1c57af03c2bfc2d85c055570a3e3d6c4693482a8831dff21b06e7da",
+      "lines": 1146
+    },
+    "03_parse/structures/structures.phs": {
+      "sha256": "3067b6c7dbd397d06d19190cce37bbde98b044bde90b23ae961450a256295c8e",
+      "lines": 41
+    },
+    "03_parse/structures/structures_conditional.phs": {
+      "sha256": "df3ef0795ac9fbc9b21bc68b3ad897636dda70844527c09b8b53a76fd89bf4cd",
+      "lines": 123
+    },
+    "03_parse/structures/structures_construction.phs": {
+      "sha256": "5b46d056f963c9a1a6f980dbd0ab19fce9286a36695ea273d3e1a4fcb056ce47",
+      "lines": 99
+    },
+    "03_parse/structures/structures_declarations.phs": {
+      "sha256": "ff2aeac33d5cab0edd852ba5556194dd6d037a19c07311c0ac4ae066c84d649d",
+      "lines": 568
+    },
+    "03_parse/structures/structures_enum.phs": {
+      "sha256": "2f01aff584c047f6c20639bee66d6fc775e3ed0b7482647652f320ce67819ad4",
+      "lines": 223
+    },
+    "03_parse/structures/structures_kinds.phs": {
+      "sha256": "83e8cce81018e0c8469adea40a9f3d076fa076bf6b11a1a8eeb49d58f0a7f5c8",
+      "lines": 148
+    },
+    "03_parse/structures/structures_loops.phs": {
+      "sha256": "e554e2758aa941b5ba36b23f7d8db44802e93cf4fb9566df2660b15ed74d7b73",
+      "lines": 130
+    },
+    "03_parse/structures/structures_match.phs": {
+      "sha256": "9519f88e0c7619ddc41e091090072a04b15f6d6ea3c281cdef5e276c17507a5f",
+      "lines": 142
+    },
+    "03_parse/structures/structures_move.phs": {
+      "sha256": "b499ac0b975b5bb918b24e97b833327b50008171ce2fb59042d1d4776795aac0",
+      "lines": 82
+    },
+    "03_parse/structures/structures_object_type.phs": {
+      "sha256": "e1f47318ef19bd14193644c34c8eb97f06bc42aa29b37c0dbc877fa9d353cac0",
+      "lines": 75
+    },
+    "03_parse/structures/structures_ownership_observation.phs": {
+      "sha256": "fac5b34c8e4227d15c12f96bf2d11056d7d2ab31c953c3e7309940571c9b6cfe",
+      "lines": 88
+    },
+    "03_parse/structures/structures_probes.phs": {
+      "sha256": "c19e3843ed7e3a897cc45dd3493dce591bc6fc1683dad1dd9a2efab17df32df1",
+      "lines": 115
+    },
+    "03_parse/structures/structures_specialization.phs": {
+      "sha256": "524ef3e3e8c864454171355f3a099c5cfc0f3e827aea25d6cd45e5070fca9189",
+      "lines": 2617
+    },
+    "03_parse/structures/structures_switch.phs": {
+      "sha256": "dfc6b8f5e65eece12497cefbdb91415aa1c2ba100a33d9966764279344a4bab4",
+      "lines": 160
+    },
+    "03_parse/structures/structures_take.phs": {
+      "sha256": "a5f21f1893cdd5c1e1f714d2cdf2ce2c223acc866ecd3febd4d60d75c40f93cc",
+      "lines": 97
+    },
+    "03_parse/syntax.phs": {
+      "sha256": "3826f5464b2fc7a71e2addb7fd2224b8b82ff779d0e0bd00fdbe30d17a7c6950",
+      "lines": 15
+    },
+    "03_parse/token_cleanup.phs": {
+      "sha256": "f7ada9967d0f746356e796f7e99edfae0ed4a762f3a7d50c722f25317ba49bfe",
+      "lines": 71
+    },
+    "03_parse/types/catalog.phs": {
+      "sha256": "6206a3577d42998d29bbab4b36b2d4eb07b01a419a52ebeaccc2f223a6e3c954",
+      "lines": 372
+    },
+    "03_parse/types/model.phs": {
+      "sha256": "ed539118b4db94a10595deea36233d65a79f906656313059f1717b9e5aebdf8c",
+      "lines": 1153
+    },
+    "03_parse/types/register.phs": {
+      "sha256": "dd969eff099b3cc5c5858248f5e162aa2cfcfaadf069f144d46a3dedf85860d9",
+      "lines": 149
+    },
+    "04_analyze/conversions/booleans.phs": {
+      "sha256": "1a6e276e20dfa3855234ed06c8551d6ba00e3ae158cc4f8919d209439ba8966a",
+      "lines": 18
+    },
+    "04_analyze/conversions/boxed.phs": {
+      "sha256": "e15d510964e9b564a5a91c1d216df8bf5a1ac585fb5b8663970e583378ea91ad",
+      "lines": 118
+    },
+    "04_analyze/conversions/floating_points.phs": {
+      "sha256": "220f952b780765568cdcc98d3979148029dae0c5cf5f25ab5fc63deb3cbff84f",
+      "lines": 18
+    },
+    "04_analyze/conversions/integers.phs": {
+      "sha256": "e9bb2f65cd823deacdf989e9ea73b64f5193f3918f7df31ac5a0e333922f3d51",
+      "lines": 25
+    },
+    "04_analyze/conversions/model.phs": {
+      "sha256": "6b8edcc1cc0f637ead09c6be3052e7ed7ec86fa4913ceeb20461748d1d0cc840",
+      "lines": 72
+    },
+    "04_analyze/conversions/nullable.phs": {
+      "sha256": "6c8e0d1cc9e74be612e82ca83c20ec13e9e2c44a0b3042eb6c367ef1767cf6db",
+      "lines": 66
+    },
+    "04_analyze/conversions/ownership.phs": {
+      "sha256": "aa653c115c654d4319a0d0c592af258a682c344bdcab7435d0ff93d296556629",
+      "lines": 63
+    },
+    "04_analyze/conversions/preparation.phs": {
+      "sha256": "59435e03cb4c888eee43cca4d54edd3a7cf4c834258dcc42200cb92fa4c90d87",
+      "lines": 82
+    },
+    "04_analyze/conversions/results.phs": {
+      "sha256": "ec26e5ef2a83fa56246a21836790f222f7b499a60cfbb95af4e117ef750a2f5d",
+      "lines": 77
+    },
+    "04_analyze/conversions/strings.phs": {
+      "sha256": "106814d38be4e5dbd8d764b10b55a7515e8925be870ae3756698bae31222d5de",
+      "lines": 37
+    },
+    "04_analyze/conversions/truthiness.phs": {
+      "sha256": "e747043d7e6069d5ae1a9160edbde9c7838474ad80363304a1bce0c5a1577ec1",
+      "lines": 68
+    },
+    "04_analyze/operators/boxed.phs": {
+      "sha256": "334cebd52aa6284c8afdaefb7cd05c6388510adde46b813c844fae63ca1b2a74",
+      "lines": 164
+    },
+    "04_analyze/operators/enums.phs": {
+      "sha256": "42e6efee8c8874d55ee60db18398d45baebc3ea8d459cbc347611365af39ec3c",
+      "lines": 25
+    },
+    "04_analyze/operators/indexing.phs": {
+      "sha256": "2f90d01fb926b04be220fd48fc72a89d0fa1030d66afe689d13b5996b4701c9f",
+      "lines": 168
+    },
+    "04_analyze/operators/indexing_signature.phs": {
+      "sha256": "0c8973bb1b861e69c8a52ed92108ee1fb8cba7c8a43b96740c7c8f57b0fcb110",
+      "lines": 10
+    },
+    "04_analyze/operators/integers.phs": {
+      "sha256": "082f3a05ad84e08289be46b06948f0ca7e5044129b9612c13d3233002f10b915",
+      "lines": 92
+    },
+    "04_analyze/operators/model.phs": {
+      "sha256": "23c623a6fad2ae821ab8c23655293ce4e409ec0cef52a05c3fb99d189a4eed71",
+      "lines": 124
+    },
+    "04_analyze/operators/mutations.phs": {
+      "sha256": "d363ef4c344201d40629af18264b438686a2d640302928f569d07bbb8822d873",
+      "lines": 110
+    },
+    "04_analyze/operators/preparation.phs": {
+      "sha256": "c3a28e7454542b7981be2ef916843c9443a94e6d04c7dfdc7d85f5d9692f30e3",
+      "lines": 401
+    },
+    "04_analyze/operators/presence.phs": {
+      "sha256": "abb2e3506bbeea706cb7ad0cd162ee2fdf6c22d1f5036f3b2ae73b460b286686",
+      "lines": 37
+    },
+    "04_analyze/prepare/changes.phs": {
+      "sha256": "6720f94a3bb5dc0b51bf4a437831d3e48c9a2f3101106a21c4188e1d329bc3db",
+      "lines": 128
+    },
+    "04_analyze/prepare/cleanup.phs": {
+      "sha256": "bf17a24bb5629a6ba3f9604126ab684894d53577a6f83e731682397509e28812",
+      "lines": 21
+    },
+    "04_analyze/prepare/data/callable_adaptation.phs": {
+      "sha256": "6f01afb0c59a592fbce698cf6fc17aac33600a85acae8a6cf51e50b97b23b190",
+      "lines": 15
+    },
+    "04_analyze/prepare/data/compiler_calls.phs": {
+      "sha256": "c8dc7d971a45bd1da301a6ce312eb8e6de393ac21af0bee93e22205c011ef6f7",
+      "lines": 18
+    },
+    "04_analyze/prepare/data/enums.phs": {
+      "sha256": "9da9e860ce9875e6a75a184f25363ae04366042934034a893e5a9a169ced7637",
+      "lines": 34
+    },
+    "04_analyze/prepare/data/instance_requests.phs": {
+      "sha256": "019f630f9a130a9bd3dd00c5cc01dd80e04d6f204df442ee886123b1479b09b0",
+      "lines": 7
+    },
+    "04_analyze/prepare/data/relationships.phs": {
+      "sha256": "82f958af57307f4e1479fa0f23757a1782cf9bd814a0fdf0aa6e72196be93075",
+      "lines": 58
+    },
+    "04_analyze/prepare/data/selection.phs": {
+      "sha256": "2db186bb1b03c9a13de80a0e19476a5e1dbee59e30d20be7559f6b75dff478da",
+      "lines": 18
+    },
+    "04_analyze/prepare/data/structures.phs": {
+      "sha256": "4c739f4cd26a24c05c8368562363dd7d3e3df20a9913460468011993df2c28f8",
+      "lines": 811
+    },
+    "04_analyze/prepare/data/type_lifecycle.phs": {
+      "sha256": "776ed6c6468b432c203a57c1a09d63e3479a44c646a255585ae6b918a004ca65",
+      "lines": 7
+    },
+    "04_analyze/prepare/data/work_records.phs": {
+      "sha256": "f58db947e88d4a86f50829b2c4505b5f8e96560a3f08d144d673c49c3aba2819",
+      "lines": 218
+    },
+    "04_analyze/prepare/file.phs": {
+      "sha256": "fd01a6507432df448ac8192c2d28bc203c566fa4c4c36f44d00b2a539c730b74",
+      "lines": 23
+    },
+    "04_analyze/prepare/imports.phs": {
+      "sha256": "b247338b7a1715dfdc962ec7536c7b41e204cfe8f894524991d10d2f1971dd4f",
+      "lines": 61
+    },
+    "04_analyze/prepare/inherited_lookup.phs": {
+      "sha256": "9673daaaae9518f907d1983c6270414c9cefcda3494c54e0e0996ad0b3841865",
+      "lines": 82
+    },
+    "04_analyze/prepare/lookup.phs": {
+      "sha256": "b102708bc8ea368c053ac761a36c4404e18307836a7aa4c96d826db8d6d75d1a",
+      "lines": 119
+    },
+    "04_analyze/prepare/program.phs": {
+      "sha256": "dda49f921e950186ac8bd4986b450d307b74f3697c5f51fe51ee5b2fe92fcc55",
+      "lines": 70
+    },
+    "04_analyze/prepare/semantics/bodies.phs": {
+      "sha256": "9cf4cbad004d3c48b1c222eab6c94ce71c20e19b8acabb878828ede0d533b61a",
+      "lines": 287
+    },
+    "04_analyze/prepare/semantics/callable_adaptation.phs": {
+      "sha256": "55b69253e5f57c0408a2b44e57d49cae3c33c11a59c57cadca196b0153d3bd0d",
+      "lines": 67
+    },
+    "04_analyze/prepare/semantics/calls.phs": {
+      "sha256": "0f7ddcdb04358c3c3991c393d3cbad3df7e4851353251ca08d7cb3f1fa1e0d39",
+      "lines": 149
+    },
+    "04_analyze/prepare/semantics/capabilities.phs": {
+      "sha256": "c63e0733e97b2fd63d568fd2a111f2de503fe5230295e89f5542322ffa5c19ba",
+      "lines": 53
+    },
+    "04_analyze/prepare/semantics/cleanup.phs": {
+      "sha256": "9a851e04dce372e03ddd278f15e76e9319e5b34a8f48e9f99ab17ef4a1960e15",
+      "lines": 62
+    },
+    "04_analyze/prepare/semantics/coalesce_expressions.phs": {
+      "sha256": "57acd4b56083e59392f3bf778a98bedaa5e0a527ac478e2ea19adc24376a2de5",
+      "lines": 67
+    },
+    "04_analyze/prepare/semantics/compiler_calls.phs": {
+      "sha256": "18d75e05932beae32f20df88644b1ab04f47f41c78c64c2b087bd4cff4e138ae",
+      "lines": 61
+    },
+    "04_analyze/prepare/semantics/completion.phs": {
+      "sha256": "51b2afba27082a8b437bd6b5e662780c3422964c84bd39683f53f7f0c7b88b85",
+      "lines": 52
+    },
+    "04_analyze/prepare/semantics/conditional_expressions.phs": {
+      "sha256": "4193f196682954029c41008030c8c1e410141d737726a8a713e3847a480d8f2b",
+      "lines": 80
+    },
+    "04_analyze/prepare/semantics/constants.phs": {
+      "sha256": "c537b2364ceef2f76be9d8b07b6fc8adc170a7a81ffd7f3a421a2c85d61644f9",
+      "lines": 195
+    },
+    "04_analyze/prepare/semantics/constructors.phs": {
+      "sha256": "1cf8c6458e3c2ffa36934dda35710b16cd50c104b0823e0ad1ae392d79c31225",
+      "lines": 181
+    },
+    "04_analyze/prepare/semantics/contract_types.phs": {
+      "sha256": "8725438d00a4d64c6f67b30989873b105db3a559702a34d918f3b743996c6af1",
+      "lines": 20
+    },
+    "04_analyze/prepare/semantics/conversion_relationships.phs": {
+      "sha256": "20049d79b54d88e39b77f5a18cf2c38010cc124a1ee34484f8d16bf2ab0138a6",
+      "lines": 39
+    },
+    "04_analyze/prepare/semantics/data_construction.phs": {
+      "sha256": "5efd0e23f901063ea83c0706623dcd99b58f1f26ce339b9417c5338a7695e6a8",
+      "lines": 136
+    },
+    "04_analyze/prepare/semantics/declarations.phs": {
+      "sha256": "251bf5c261846232f01a175f581d9119d9fd6c4bdcdef30d99e7df86b89779ed",
+      "lines": 222
+    },
+    "04_analyze/prepare/semantics/defaults.phs": {
+      "sha256": "d32f4d56731715ab3b81f26d4cd5c9adf351c877f2b902f764db32ceeed110d3",
+      "lines": 160
+    },
+    "04_analyze/prepare/semantics/enums.phs": {
+      "sha256": "4460312629d3eb49edd2522f29c7b4bde7f21fb465f0dc5d586a02ae7c6821e5",
+      "lines": 178
+    },
+    "04_analyze/prepare/semantics/expressions.phs": {
+      "sha256": "115096598c258f7c643e15f36364d53fd7b9d08ac87463fad1e1738638a79f30",
+      "lines": 430
+    },
+    "04_analyze/prepare/semantics/inheritance.phs": {
+      "sha256": "cacb6ca885c9a339d7fbbf5c5c3aec279deecc126aaee06102a6420579d7a997",
+      "lines": 71
+    },
+    "04_analyze/prepare/semantics/initialization.phs": {
+      "sha256": "d84be3c1f7a7ee1316d721ce7d7b5fcb92f8c3f9b70731155341767e5a6b45d4",
+      "lines": 99
+    },
+    "04_analyze/prepare/semantics/iteration.phs": {
+      "sha256": "f052b4320cce04945fc0c1ad3149d5d5e29beff0d13d52adffe8e208c7ee9cd4",
+      "lines": 67
+    },
+    "04_analyze/prepare/semantics/keyed_paths.phs": {
+      "sha256": "ddf5ef9c6b8074a05d64fa1130ee0494d8dd3ca013b17b79b06b078d41529586",
+      "lines": 79
+    },
+    "04_analyze/prepare/semantics/literals.phs": {
+      "sha256": "47a11e851698b1031fc10c3f9476bd57ba71ffe32e3575a86d4e13332461c679",
+      "lines": 209
+    },
+    "04_analyze/prepare/semantics/loops.phs": {
+      "sha256": "751fbd1747ebd0ce1771224e476390c652e2a754754e855ea9154b78fc4721d0",
+      "lines": 88
+    },
+    "04_analyze/prepare/semantics/matches.phs": {
+      "sha256": "738b0164bfb7ae91cc3ec518b5f7f5f8f2556b8beec813e0b06435b33f4196eb",
+      "lines": 45
+    },
+    "04_analyze/prepare/semantics/members.phs": {
+      "sha256": "a824bc6d0c153407f5a021daa0f44c10c655ab97f86f2af18e9f2bbb89e1c176",
+      "lines": 158
+    },
+    "04_analyze/prepare/semantics/methods.phs": {
+      "sha256": "37e8859d1268c4cc41101c91d41c02d34e1ba32ceef67ed35b43a70640f6f93e",
+      "lines": 195
+    },
+    "04_analyze/prepare/semantics/moves.phs": {
+      "sha256": "83ff8172b9e4ef66fd1c7c55615c5b2aca79e234858e38aeba5ee7089ddc8791",
+      "lines": 41
+    },
+    "04_analyze/prepare/semantics/object_construction.phs": {
+      "sha256": "93708379da5dc9e4750741819f4719524b442ab81628aff34172ca5b1cbabe53",
+      "lines": 139
+    },
+    "04_analyze/prepare/semantics/object_types.phs": {
+      "sha256": "f93849364842afa2c212a49b23a382f5988267c633a90bffcfae0b4c5c03f9ce",
+      "lines": 61
+    },
+    "04_analyze/prepare/semantics/ownership_observation.phs": {
+      "sha256": "9966cb63a395f386a8bc338d9437a02efd29698416eccce9f7ce09e5e79daa48",
+      "lines": 39
+    },
+    "04_analyze/prepare/semantics/reference_cycles.phs": {
+      "sha256": "e7b96e4fdca27e1397e2bab2eb5119c44d8c4fa00eef317690bb1f1fb356cf09",
+      "lines": 205
+    },
+    "04_analyze/prepare/semantics/references.phs": {
+      "sha256": "088adcf457534de04bdecf2fbcc3a519528b05f1006a305fbf12bba010183cf0",
+      "lines": 127
+    },
+    "04_analyze/prepare/semantics/relationships.phs": {
+      "sha256": "6b34941e9af39d9888ec75f8fd889882ae9050202f91216e82f7435b738abcb4",
+      "lines": 76
+    },
+    "04_analyze/prepare/semantics/selection.phs": {
+      "sha256": "63448d7e97cb6d0896ed6a24b7bf96d1dc8741c91d98fb596fceb27de103706d",
+      "lines": 30
+    },
+    "04_analyze/prepare/semantics/selection_results.phs": {
+      "sha256": "532cac40bfac3ec493a3dadf8aafb7239240d2f48772bafc4d80698199c7216b",
+      "lines": 80
+    },
+    "04_analyze/prepare/semantics/switches.phs": {
+      "sha256": "f7948a24fcd4fbf7d8cd6b7544cc9eecfa04f90cc2d3289a0fbbd0425027a903",
+      "lines": 50
+    },
+    "04_analyze/prepare/semantics/take.phs": {
+      "sha256": "9e8e3fe20f270481a7015a5dfb95de0d06c18b712dc9046a3966fcb44fef6342",
+      "lines": 80
+    },
+    "04_analyze/prepare/semantics/traits.phs": {
+      "sha256": "e3e383ccc952121f07b262847da4112548d6dd9a5674d99d1593a72b51fbb7bf",
+      "lines": 104
+    },
+    "04_analyze/prepare/semantics/transfers.phs": {
+      "sha256": "ff49a5a0027c212e1bc4b6c930415fcdc7edc6c454f3020fb2f007cf96a4566a",
+      "lines": 22
+    },
+    "04_analyze/prepare/semantics/type_contracts.phs": {
+      "sha256": "f349d6200d775cf55951bb61ccdeb36149077cd580472cf7c357b8d2113dfbea",
+      "lines": 292
+    },
+    "04_analyze/prepare/semantics/type_lifecycle.phs": {
+      "sha256": "bbeace4b3f0e9619b9f8eb026f52e9d0eefd0a77ddb7ac5638cad812c16642d7",
+      "lines": 67
+    },
+    "04_analyze/prepare/semantics/types.phs": {
+      "sha256": "28df0eac6b8215bb1561a5896966a80f0f176aae2b7202981a91190a57803eed",
+      "lines": 218
+    },
+    "04_analyze/prepare/semantics/value_boundaries.phs": {
+      "sha256": "41680b5480da76b78f387ad6c0aafb85f02159f240f43c66f76bfa97daa53253",
+      "lines": 42
+    },
+    "04_analyze/prepare/semantics/value_probes.phs": {
+      "sha256": "58574b66d2d8b7f1756dda694ef5ca583e5a9819cb4308c281b15eca0751a07f",
+      "lines": 63
+    },
+    "04_analyze/prepare/status.phs": {
+      "sha256": "780f7d7c10d092b0a18291dab4a71b43f75e60aed14e224d46babeb3007757c6",
+      "lines": 53
+    },
+    "04_analyze/prepare/worker.phs": {
+      "sha256": "6a11b1c337d0af3110f0937b463a41e3ecaf2c588743b510114e7a6894586f98",
+      "lines": 1001
+    },
+    "05_backend/cpp/artifacts.phs": {
+      "sha256": "4f6fa154a9e298391edc17266b4e92b31f78c95eb5e880ccd617db13cdc554c1",
+      "lines": 47
+    },
+    "05_backend/cpp/callable_bindings.phs": {
+      "sha256": "3d0f41027ddd63b90dd6c565a4029b965fd577aeaddeae711e12a6a082edc148",
+      "lines": 207
+    },
+    "05_backend/cpp/compiler_functions.phs": {
+      "sha256": "742458efad83d2678d4159b15802fdae7bdd0267aae39d69f3859f5c7ed394da",
+      "lines": 82
+    },
+    "05_backend/cpp/data_construction.phs": {
+      "sha256": "c2840ea486e0d5e4bab98eab42ab9650037e341ef8986ee7965a8df91c28c41b",
+      "lines": 196
+    },
+    "05_backend/cpp/declarations.phs": {
+      "sha256": "e706a007fbbc7cdd6fdf77a5203f8f2aa76ad5cd33dfaeed44b00b38c808bad8",
+      "lines": 560
+    },
+    "05_backend/cpp/dispatch.phs": {
+      "sha256": "93705264edb87fc1d5e58af962781463c014a9929c538cd58cd0acd7ec22d227",
+      "lines": 101
+    },
+    "05_backend/cpp/enums.phs": {
+      "sha256": "fb9c9f23757821c3393ce0fb3a33050a4b7aff842b7fff726fade493c20b5a30",
+      "lines": 28
+    },
+    "05_backend/cpp/generate.phs": {
+      "sha256": "6d1b24ed4f763622341cf0ed8ead2155760bf30e65737b8fce6c82901c23ef3b",
+      "lines": 999
+    },
+    "05_backend/cpp/index_write.phs": {
+      "sha256": "f7b1fe2a5d78f72bddd67a59b212d4900506b7cf06c0afee197f89ba44941c52",
+      "lines": 83
+    },
+    "05_backend/cpp/json_bindings.phs": {
+      "sha256": "aaada640d43eb8a7f547665b6a518bd0cf1d8dc3194ef099fba5b4ffaf6f6058",
+      "lines": 16
+    },
+    "05_backend/cpp/keyed_paths.phs": {
+      "sha256": "2f11fb11d6c586b39532f7f9561a187e7a1a33ab1ae32b431397ffe9d4d10a49",
+      "lines": 58
+    },
+    "05_backend/cpp/literals.phs": {
+      "sha256": "9231edf28bf25223d96671b4d2d5bfedde03c46e96d5aeaa56f185c21220428a",
+      "lines": 13
+    },
+    "05_backend/cpp/output.phs": {
+      "sha256": "8f38301f9ae61eb9a044fd39a8502d9e402b1190992ad420d9b3e93fb243b07d",
+      "lines": 44
+    },
+    "05_backend/cpp/selection.phs": {
+      "sha256": "f361a7c76768cf5ba579ba5b3e927b4111d44ff7dfa87a53393191333b99a004",
+      "lines": 23
+    },
+    "05_backend/cpp/structures.phs": {
+      "sha256": "a36704da9d3bcbd411b4704cc876a528a1d84fbaa24a1f29e3b137d54bba3fc2",
+      "lines": 121
+    },
+    "05_backend/cpp/syntax.phs": {
+      "sha256": "b4c18e19c5bf4898f098ed8b5331054335bd67349736bdd1cd88f2b125e21103",
+      "lines": 559
+    },
+    "05_backend/cpp/type_bindings_catalog.phs": {
+      "sha256": "853b561034ac632f82b288afd7b1b5c603e9172e3054226034d68510c556538f",
+      "lines": 142
+    },
+    "05_backend/cpp/types.phs": {
+      "sha256": "f40522bd798775cb6c174e9d9049f7d8ee3c27003394ed8b2a72aaec8b43e8fe",
+      "lines": 136
+    },
+    "05_backend/llvm/expressions.phs": {
+      "sha256": "e7f09f8c4ae2172e06f874236e5118e9de81fb271e7c593bf60b91fa83ef9a4a",
+      "lines": 8
+    },
+    "05_backend/llvm/functions.phs": {
+      "sha256": "d3e1fb60795123488ee1ee36b191d533855cc26ca25f2702dbdd3e80094b4c65",
+      "lines": 8
+    },
+    "05_backend/llvm/generate.phs": {
+      "sha256": "70b89cbf8d738a661236ef009ef1dd43a9d650055ab19b033038f518194e3d7e",
+      "lines": 424
+    },
+    "05_backend/llvm/legacy_names.phs": {
+      "sha256": "ea70bca1d4fc95ce35be772e0cdb2e2f8e2a76491b86bc16a7c7a17cea4f489e",
+      "lines": 129
+    },
+    "05_backend/llvm/legacy_templates.phs": {
+      "sha256": "83e9398d25927e7df8e49789bdc5118a9417275ff57ca73c5ccdef4aecee0618",
+      "lines": 212
+    },
+    "05_backend/llvm/names.phs": {
+      "sha256": "d58324d26cae0f931e663a020800c5f18dee9de17e684a87d7df24898c95f1f7",
+      "lines": 121
+    },
+    "05_backend/llvm/prepare.phs": {
+      "sha256": "1e393a6f3fec2acdd272231310190f7a5d991e48c9d2977c80aae48c3879ce7d",
+      "lines": 294
+    },
+    "05_backend/llvm/statements.phs": {
+      "sha256": "d829d51cf621e91e38c6239ff824e7559a95d35bf0adfc29edb7b5e89fe8f885",
+      "lines": 8
+    },
+    "05_backend/llvm/structs.phs": {
+      "sha256": "ceca223bab9baa8f1e4390d7c5749fbbc5f1aa2c7f3af9c7d7a39a92d1c93fa2",
+      "lines": 88
+    },
+    "05_backend/llvm/structures.phs": {
+      "sha256": "7398587b69e8b983455baf40119bcb72ddbcac739709896c258d6e700a07e8b7",
+      "lines": 233
+    },
+    "05_backend/llvm/text.phs": {
+      "sha256": "4c15d50d39a0181808d6c2a6cee0889a3317d2f37db139c68c3853d1e4054fec",
+      "lines": 58
+    },
+    "05_backend/llvm/write.phs": {
+      "sha256": "ec7417bbebcf00815f42467b924b4cd63cbaf9a7b8c8e24b7d334de55d90e59d",
+      "lines": 57
+    },
+    "06_native/cpp_build.phs": {
+      "sha256": "8b39f2f30801ff5bc409d924c8d82c11352703d92134082fef5662d4c4572446",
+      "lines": 250
+    },
+    "06_native/cpp_structures.phs": {
+      "sha256": "17975cb06b548b0f2b58d58dec7976164e41ab600adc3b5cfe844fb675001ccb",
+      "lines": 35
+    },
+    "06_native/depfiles.phs": {
+      "sha256": "051cd5ce85c929ae68f8812297717a77a79f6c01ccc135db64a6793770a8565e",
+      "lines": 51
+    },
+    "06_native/run.phs": {
+      "sha256": "cbb918b26ae3ae565fb59c49bc8169038bdc2a93bae944b6b8cad4c475a55067",
+      "lines": 8
+    },
+    "06_native/structures.phs": {
+      "sha256": "11c923c74aaa13aa87e17d0e2bb3c931d20397914b35f779ee567568b6c81404",
+      "lines": 18
+    },
+    "compiler/callables/catalog.phs": {
+      "sha256": "9aad944576a678e15181fc18725e3f162c1bb8b904f1bfefe7f889a3fd6429a0",
+      "lines": 110
+    },
+    "compiler/callables/instance_structures.phs": {
+      "sha256": "27041175e03ea7277f90c7a2e4a4ee4e6b13f9946f0a3a7b2063a906a6f10d4e",
+      "lines": 31
+    },
+    "compiler/callables/instances.phs": {
+      "sha256": "241ff91f9072569a29b20b5a9f0a792dfabd9c3be9b506629ce8bc79b571f6cd",
+      "lines": 160
+    },
+    "compiler/callables/inventory.phs": {
+      "sha256": "5daac5b47fe7d0901328307739664ece4cbe38b95f34cfa9276276946940f1be",
+      "lines": 63
+    },
+    "compiler/callables/json.phs": {
+      "sha256": "df40c420735ebe1dc54c9257cb51d5a1c23a98de00e9c7bbcc1c696fc80cea16",
+      "lines": 38
+    },
+    "compiler/callables/language.phs": {
+      "sha256": "a03a892caafe0d4644603b1bba7e9cfe6961e1f3d12608b4642ca82f362e4eb7",
+      "lines": 9
+    },
+    "compiler/callables/structures.phs": {
+      "sha256": "2cbf28e5efcc016b4e3314f240dd16ae1f6e557e415f8c009b23c0531afb75a5",
+      "lines": 115
+    },
+    "compiler/compile.phs": {
+      "sha256": "3b43a461bfb0341dbac209f7186b2d2b6b6283363e5a372705c03090f635b0bb",
+      "lines": 420
+    },
+    "compiler/constants/language.phs": {
+      "sha256": "828dea57608369f45a1b6ab979be066b710dd6bcac2c5ed8d9c8b6506a663b57",
+      "lines": 27
+    },
+    "compiler/constants/structures.phs": {
+      "sha256": "7ccea328558d7f03572d43fc26b169570e25b7ac85f3d16dd184a9cff7e3c5e8",
+      "lines": 60
+    },
+    "compiler/frontend.phs": {
+      "sha256": "e82d47f6367c0e7fb5902f92be707968ed01b2cb38ff7655e31eb05e47374562",
+      "lines": 34
+    },
+    "compiler/host_report.phs": {
+      "sha256": "8da19627e92266b11eee443f502363947df13b28dfd5fe9dcfd68fbe4e639cbb",
+      "lines": 3
+    },
+    "compiler/indexing/contracts.phs": {
+      "sha256": "4147e3df2a4c48ab5004c95df3e35a63498c1557cb6c12fe4fa3874b5da814a9",
+      "lines": 93
+    },
+    "compiler/initialization/catalog.phs": {
+      "sha256": "927f27ac77e6960e19cb500e0b2345c434bd742257ef04338f643e1911ccd7a9",
+      "lines": 98
+    },
+    "compiler/initialization/structures.phs": {
+      "sha256": "0859a9e0e55f0f6f2833d097889cfa899a4aa90ed1aea3f82426172da6742168",
+      "lines": 61
+    },
+    "compiler/iteration/contracts.phs": {
+      "sha256": "c637a0745716e9f882356057e38de25aa198f3380a5ae0faf3f66e9963e22369",
+      "lines": 54
+    },
+    "compiler/lifecycle.phs": {
+      "sha256": "0ba579c3649eb923b990ff85fa7e6db74b5b7e746b0b6c7115ae606faf359711",
+      "lines": 237
+    },
+    "compiler/model.phs": {
+      "sha256": "10f5b9a812a6be08412598dd6b4f65935ac99d6c2931b1690703aca0d1669f71",
+      "lines": 103
+    },
+    "compiler/output_publication.phs": {
+      "sha256": "74697139939573daa4e23697fec0cf7f55f67d5e74c768a8004229295b9a72d4",
+      "lines": 254
+    },
+    "compiler/preparation.phs": {
+      "sha256": "7324649f76bb5985c3b1a108c81c3e1590da8ade9fb7a879477ab34353f55ba5",
+      "lines": 29
+    },
+    "compiler/publication.phs": {
+      "sha256": "c99a89f20326a2a42be32820d275e5f50d27a868c96e458837a34949d46bf298",
+      "lines": 61
+    },
+    "compiler/scope_publication.phs": {
+      "sha256": "7a92ab67205e6baaf90cd3afb07ce1eb049269d0ab28da6eef88624d9cc7a309",
+      "lines": 49
+    },
+    "compiler/source_fragments.phs": {
+      "sha256": "b2f3b3aa8a204c7efab04c51b0a24e201d7aea19f7224aca01d70a88eca3c642",
+      "lines": 40
+    },
+    "compiler/sources.phs": {
+      "sha256": "27766a0e823762dfb324952e28652a616c8a9b53ce0373b55eb048f11a6870c2",
+      "lines": 142
+    },
+    "compiler/structures.phs": {
+      "sha256": "863a1a6e899873275e719bdebb3b024de46b2eb001353a5384a6d67b5eb97ee3",
+      "lines": 38
+    },
+    "compiler/sync/sources.phs": {
+      "sha256": "68ad7bdd939ec936d50a8ab907e716a7e9c235a91eb250cdc073ff2d3980098d",
+      "lines": 25
+    },
+    "compiler/sync/structures.phs": {
+      "sha256": "03c1b586879792b4f29b60c505d340ac54d3d9e2dd7405c55245f60a82ac42a5",
+      "lines": 17
+    },
+    "compiler/traits/composition.phs": {
+      "sha256": "c44035d3285368a81a97378bbab98a1301c00464790ba25a198e07efa00cd25b",
+      "lines": 81
+    },
+    "compiler/traits/inventory.phs": {
+      "sha256": "2aee215fd71a2809ba9aed12756525229cc38f703b36cb582888f25ed4df7197",
+      "lines": 105
+    },
+    "compiler/traits/materialization.phs": {
+      "sha256": "67d719148ef8fe8416fa2a322837885c761631de46902a537bf6dc83d3f63661",
+      "lines": 43
+    },
+    "compiler/traits/structures.phs": {
+      "sha256": "b792c62d5345d6d50bc809a4c6997a194a56112fab1180554db3d86648bfa7ad",
+      "lines": 39
+    },
+    "compiler/types/contract_reference.phs": {
+      "sha256": "99ee5af9aa2ab9c43811d2f07659b27d640e4045b3e51d93da7bb968676d1e5c",
+      "lines": 49
+    },
+    "compiler/types/language.phs": {
+      "sha256": "90e035b27dcac874e0ad1aad4eb35309e40b3af7cb32921d5be93e76411fb053",
+      "lines": 54
+    },
+    "compiler/types/queries.phs": {
+      "sha256": "b561ccbdf3a59e358e7e8a9900f7b4031951e75914c117e504234a0f8eb4275f",
+      "lines": 75
+    },
+    "compiler/types/source.phs": {
+      "sha256": "079f3409197cddede8e3e33a15722ff52c11bff2efa7640357ec6faa8e695e4f",
+      "lines": 30
+    },
+    "compiler/types/structures.phs": {
+      "sha256": "f2cd8e008567e68734486064e837504c7df53d6bf2b3ec08cb2275ccc2f3b826",
+      "lines": 3
+    },
+    "compiler/work_queue.phs": {
+      "sha256": "cea4bbe5275fe35b519c2209c64d0950ae0262d0d1acf87cdc5a4fa2971c23a4",
+      "lines": 81
+    },
+    "cpp_probe.phs": {
+      "sha256": "f67a085c2e3e39717a8c71a9f802f1366ee5f4d028d0fb18522cc741a5205b2e",
+      "lines": 21
+    },
+    "main.phs": {
+      "sha256": "26a2be0f439861f1847e927935102c63416ea806c0f0442b452cdb2b9e2244b5",
+      "lines": 251
+    },
+    "s2s_proof.phs": {
+      "sha256": "2a67de3813d911c426fb656fee21f5055a085360c80b5bfeeb2da30c409db172",
+      "lines": 303
+    },
+    "scpp_framework/collections.phs": {
+      "sha256": "49e42c2b01269b4b4af88ba7d5122de6564831fc0ef99089ea5fa2b63aed67d8",
+      "lines": 3
+    },
+    "scpp_framework/exceptions.phs": {
+      "sha256": "596849ad4f2323a47ebb621bb24fa13b96aacfa6593199c69a8161dc6e2f56d4",
+      "lines": 62
+    },
+    "scpp_framework/file_locks.phs": {
+      "sha256": "6c175c524066d390362a32309577cbd4cae1d0a02f983dbc2b4edc7bd0fa2cad",
+      "lines": 28
+    },
+    "scpp_framework/filesystem.phs": {
+      "sha256": "979d003e3f6d6fd4ba7bedbc5462583603539726e33ea55f81ced263378c95ca",
+      "lines": 85
+    },
+    "scpp_framework/json_document.phs": {
+      "sha256": "8914ce16c5889000d9a2499f86a9fb1779f02c2fc6ae4e6c4d37040544cc3de4",
+      "lines": 73
+    },
+    "scpp_framework/lock_reservation.phs": {
+      "sha256": "611ac1b90f8b6fbec156f22060a11c8e505cab1972974c4010903c1b287824e7",
+      "lines": 30
+    },
+    "scpp_framework/output_stage.phs": {
+      "sha256": "43183dcac9538dd6c97ecf957349ea19b49ec06e072061f583a553d90e8ae30d",
+      "lines": 39
+    },
+    "scpp_framework/processes.phs": {
+      "sha256": "9eaac789e027f3468de2fe2e5d072b6db3240773c729abb067858ffdf8ccebc2",
+      "lines": 31
+    },
+    "scpp_framework/strings.phs": {
+      "sha256": "2bd8c85d0051c3ce9b2e2e8635b47286fa15de06fbbe7f019d3dd355385ff876",
+      "lines": 133
+    }
+  }
+}

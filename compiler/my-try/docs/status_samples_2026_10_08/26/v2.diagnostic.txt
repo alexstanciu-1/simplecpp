@@ -1,0 +1,2 @@
+S2S generation failed: S2S new requires a source struct or class
+

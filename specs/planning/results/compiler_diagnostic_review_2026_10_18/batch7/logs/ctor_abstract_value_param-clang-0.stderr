@@ -1,0 +1,12 @@
+In file included from /tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:
+In file included from /tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/types/n43.hpp:3:
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/value_p.hpp:19:4: error: field type 'record_A' is an abstract class
+   19 |         T value_;
+      |           ^
+/tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/units/n6d61696e/n6d61696e2e706873.cpp:6:44: note: in instantiation of template class 'scpp::value_p<record_A>' requested here
+    6 | record_C::record_C(scpp::value_p<record_A> local_a)
+      |                                            ^
+/tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/types/n41.hpp:7:24: note: unimplemented pure virtual method 'dispatch_A__method_f' in 'record_A'
+    7 |         virtual scpp::int_t<> dispatch_A__method_f() = 0;
+      |                               ^
+1 error generated.

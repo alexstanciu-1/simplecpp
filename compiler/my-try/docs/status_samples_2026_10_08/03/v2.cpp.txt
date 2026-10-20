@@ -1,0 +1,27 @@
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n546f6b656e.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Token
+{
+public:
+	scpp::int_t<std::uint32_t> field_offset;
+public:
+};
+
+
+// === entry.cpp ===
+#include "types/n546f6b656e.hpp"
+#include "scpp/memory.hpp"
+#include "scpp/shared_p.hpp"
+#include "scpp/int_t.hpp"
+
+int main()
+{
+	auto local_token = ::scpp::shared<record_Token>();
+	(local_token)->field_offset = static_cast<scpp::int_t<std::uint32_t>>((static_cast<scpp::int_t<>>(12LL)).native_value());
+	scpp::int_t<> local_result = static_cast<scpp::int_t<>>(((local_token)->field_offset).native_value());
+	return static_cast<int>((local_result).native_value());
+	return 0;
+}

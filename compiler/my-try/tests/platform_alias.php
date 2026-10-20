@@ -8,7 +8,7 @@ function platform_compile(string $source):string {
  $module=new module('/platform','/platform','/platform');
  $file=new file();$file->path='main.phs';$file->content=$source;
  Source_Registry::add($module,$file);Model::$modules->add($module->name,$module);
- (new Compiler())->exec_cpp();return CPP_Probe::text(Model::$cpp_files);
+ (new Compiler(new cpp_lowering_options(false)))->exec_cpp();return CPP_Probe::text(Model::$cpp_files);
 }
 $out=$argv[1];$root=dirname(__DIR__,3);
 $input=Runtime_Catalog_Loader::load($root.'/runtime/metadata/modules',['filesystem']);
@@ -79,7 +79,7 @@ foreach(['microtime(1);','php::microtime(1);','php::microtime(true,false);','fs_
 // Unedited caller must observe a source type being added, broken, then removed.
 $dir=$out.'/retained';mkdir($dir);$types=$dir.'/types.phs';$caller=$dir.'/main.phs';
 file_put_contents($types,'');file_put_contents($caller,'function caller():float{return php::microtime(true);}');
-Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$dir]);$compiler->select_entry('main','main.phs');$compiler->exec_cpp();
+Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$dir]);$compiler->select_entry('main','main.phs');$compiler->exec_cpp();
 file_put_contents($out.'/retained-alias.cpp',str_replace('int main(int argc, char** argv)','int unused_entry(int argc, char** argv)',CPP_Probe::text(Model::$cpp_files))."\nint main(){return function_caller().native_value()>1000.0?0:1;}\n");
 file_put_contents($types,'class php {public static function microtime(bool $mode):float{return 7.0;}}');
 $compiler->sync([$types]);$compiler->prepare();$compiler->cpp();
@@ -92,6 +92,6 @@ $compiler->sync([]);$retry='';try{$compiler->prepare();}catch(\RuntimeException 
 file_put_contents($types,'');$compiler->sync([$types]);$compiler->prepare();$compiler->cpp();
 $text=CPP_Probe::text(Model::$cpp_files);platform_check(str_contains($text,'scpp::php::microtime('),'Type removal did not restore alias');
 $compiler->sync([]);$compiler->prepare();$compiler->cpp();platform_check($text===CPP_Probe::text(Model::$cpp_files),'No-op recovery changed output');
-Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$dir]);$compiler->select_entry('main','main.phs');$compiler->exec_cpp();platform_check($text===CPP_Probe::text(Model::$cpp_files),'Fresh and retained outputs differ');
+Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$dir]);$compiler->select_entry('main','main.phs');$compiler->exec_cpp();platform_check($text===CPP_Probe::text(Model::$cpp_files),'Fresh and retained outputs differ');
 file_put_contents($out.'/checks.json',json_encode(['admission'=>$admission,'rejections'=>$rejections,'retained'=>'alias / source type / missing method / retry / removed type / no-op / fresh'],JSON_PRETTY_PRINT)."\n");
 echo "Platform aliases passed\n";

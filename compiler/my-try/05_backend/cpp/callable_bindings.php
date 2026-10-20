@@ -150,6 +150,28 @@ final class CPP_Callable_Bindings
 
 final class CPP_Callables
 {
+	/** Physical call identity includes prepared parameter modes and argument value categories. */
+	public static function argument_identity(prepared_call $call): string
+	{
+		$key = CPP_Opaque_Representation::identity($call->type);
+		$parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
+		foreach ($parameters as $index => $parameter) {
+			$mode /** passing_mode */ = $parameter->mode;
+			$access /** storage_access */ = $parameter->access;
+			$key .= ':' . CPP_Opaque_Representation::identity($parameter->type)
+				. ':' . Passing_Mode_Name::text($mode) . ':' . Storage_Access_Name::text($access)
+				. ':' . (self::argument_consumed($call, $index) ? 'rvalue' : 'lvalue');
+		}
+		return $key;
+	}
+
+	public static function argument_consumed(prepared_call $call, int $index): bool
+	{
+		$arguments /** Storage<prepared_call_argument> */ = $call->arguments;
+		if ($index >= q_count($arguments)) { return true; }
+		return $arguments[$index]->boundary === value_boundary_operation::consume_value;
+	}
+
 	/** Emission view only: authored inventories keep source methods, not specialization helpers. */
 	public static function implementations(collected_member_owner $record): Storage /** Storage<method_node> */
 	{
@@ -190,13 +212,16 @@ final class CPP_Callables
 	public static function call_reference(prepared_call $facts, cpp_generation_context $context): string
 	{
 		$target = weakref_get($facts->target);
+		if (($context->specialization_engine !== null) && ($target instanceof runtime_function_definition)) {
+			throw new \RuntimeException('prelower_templates: runtime call requires prepared concrete transport');
+		}
 		$reference = self::reference($target, $context);
 		if ($facts->runtime_owner !== null) {
 			$owner /** canonical_type_use */ = $facts->runtime_owner;
 			$member = Model::$runtime_callables->member_for(object_cast($target, runtime_function_definition::class));
 			if ($member !== null) {
 				if ($member->static_member && ($member->owner instanceof abstract_template_type_definition)) {
-					$mapping = CPP_Types::payload($owner);
+					$mapping = CPP_Types::payload($owner, $context);
 					CPP_Types::record_dependencies($mapping, $context);
 					return $mapping->spelling . '::' . $reference;
 				}
@@ -220,6 +245,9 @@ final class CPP_Callables
 		}
 		if ($target instanceof runtime_function_definition) {
 			$binding = Model::$cpp_callable_bindings->function_binding(object_cast($target, runtime_function_definition::class));
+			if ($context->specialization_engine !== null) {
+				throw new \RuntimeException('prelower_templates: runtime calls require concrete ABI adapters');
+			}
 			$header = $binding->header();
 			if ($header !== '') {
 				$context->headers[$header] = true;
@@ -238,12 +266,16 @@ final class CPP_Callables
 	}
 
 	public static function runtime_reference(registered_static_factory $target,
-		cpp_generation_context $context): string
+		cpp_generation_context $context, ?CPP_Specializations $implementation_engine = null): string
 	{
 		$binding = Model::$cpp_callable_bindings->definition($target);
 		$header = $binding->header();
 		if ($header !== '') { $context->headers[$header] = true; }
-		$receiver = CPP_Declarations::type($target->owner(), $context);
+		$mapping = $implementation_engine !== null
+			? CPP_Types::implementation_representation($target->owner(), $implementation_engine)
+			: CPP_Types::representation($target->owner(), $context);
+		CPP_Types::record_dependencies($mapping, $context);
+		$receiver = $mapping->spelling;
 		if ($binding->adapter() !== '') { $receiver = $binding->adapter() . '<' . $receiver . '>'; }
 		return $receiver . '::' . $binding->member();
 	}

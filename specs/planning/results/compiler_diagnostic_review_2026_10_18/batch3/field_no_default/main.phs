@@ -1,0 +1,1 @@
+struct S { int $n; function __construct(int $n) { $this->n = $n; } } struct T { S $s; } return 0;

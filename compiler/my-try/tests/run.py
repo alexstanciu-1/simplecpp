@@ -77,7 +77,7 @@ def verify_cli(root, output, runner):
     cli_source = output / 'cli-source'
     cli_source.mkdir()
     (cli_source / 'main.phs').write_text('$a = 10; return $a;')
-    cli = run('cli-s2s', ['php', root / 'main.php', '--s2s', cli_source])
+    cli = run('cli-s2s', ['php', root / 'main.php', '--s2s', cli_source, '--no-prelower-templates'])
     if single_unit_text(cli).encode() != (output / 's2s/value.cpp').read_bytes() or (runner.logs / 'cli-s2s.stderr').read_bytes():
         raise RuntimeError('Host S2S mode differs from direct generation')
     for index, arguments in enumerate((['--s2s'], ['--unknown'], ['--s2s', str(cli_source), 'extra'])):

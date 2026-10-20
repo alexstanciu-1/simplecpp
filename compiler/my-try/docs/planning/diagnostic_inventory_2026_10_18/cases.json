@@ -1,0 +1,1804 @@
+{
+  "doc_status": "planning",
+  "inventory_date": "2026-10-18",
+  "status": "not executed; awaiting scope/expectation review",
+  "baseline_head": "bccaef7fb51b8e9287998cbd5e971ae7f905a573",
+  "configuration": {
+    "language": "strict PHS without PHP opening tag",
+    "project_profile": {
+      "runtime": {
+        "languages": {
+          "php": {
+            "profile": "strict"
+          }
+        }
+      }
+    },
+    "compiler": "compiler/my-try PHP-hosted",
+    "entry": "main.phs",
+    "module": "main",
+    "runtime_modules": [
+      "core"
+    ],
+    "legacy_stan": false,
+    "backend": "C++",
+    "optional_modules": [],
+    "note": "Use existing compiler test fixture/project setup at execution; this JSON is an inventory, not an executable runner configuration. Pin actual selected metadata closure, toolchain and source hashes before execution."
+  },
+  "cases": [
+    {
+      "id": "TYPE-01",
+      "title": "Unsupported typed hash key: float",
+      "family": "Type formation",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "runtime/specs/hash_t.md",
+        "section": "Supported typed key families"
+      },
+      "candidate_owner": "shared type application / runtime metadata admission",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT.md",
+      "source_files": {
+        "main.phs": "$h hash<int, float>; return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "$s hash<int, string>; return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "98679438645061e59e726650e06419c11be7146b5248d865359e808a4429c758"
+      },
+      "control_sha256": {
+        "main.phs": "6064dd7daa2ce870a327f55144012f524fc1d3561eb0832ddba488ab0ababdd8"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "float is outside the current runtime typed-key family contract",
+        "file": "main.phs",
+        "line": 1,
+        "token": "float",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/TYPE-01.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-01"
+        ]
+      },
+      "issue_category": [
+        "normal discussion"
+      ]
+    },
+    {
+      "id": "TYPE-02",
+      "title": "Unsupported typed hash key: bool",
+      "family": "Type formation",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "runtime/specs/hash_t.md",
+        "section": "Supported typed key families"
+      },
+      "candidate_owner": "shared type application / runtime metadata admission",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT.md",
+      "source_files": {
+        "main.phs": "$h hash<int, bool>; return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "$s hash<int, string>; return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "723e7b0e69b15c0b4d7b9034e27a2b321664c4c170fb05f9066ad3e2b33b02e3"
+      },
+      "control_sha256": {
+        "main.phs": "6064dd7daa2ce870a327f55144012f524fc1d3561eb0832ddba488ab0ababdd8"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "bool is outside the current runtime typed-key family contract",
+        "file": "main.phs",
+        "line": 1,
+        "token": "bool",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/TYPE-02.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-01"
+        ]
+      },
+      "issue_category": [
+        "normal discussion"
+      ]
+    },
+    {
+      "id": "TYPE-03",
+      "title": "shared<void> target admission",
+      "family": "Type formation",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/type_use_modifiers.md",
+        "section": "Ownership composition; target eligibility needs clarification"
+      },
+      "candidate_owner": "shared type application / ownership target requirements",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT.md",
+      "source_files": {
+        "main.phs": "$h shared<void>; return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "$h shared<int>; return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "a9d75498fcae2c998a665f96a685b2ea2972794710d07a4b74b802824b251d12"
+      },
+      "control_sha256": {
+        "main.phs": "a482b1ead43ccdbe29de814a7671ebd1dacdec4fc5d331291b9bbdd2f00af9fd"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "shared<void> and unique<void> are rejected during preparation; opaque ownership is outside the current subset.",
+        "file": "main.phs",
+        "line": 1,
+        "token": "void",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/TYPE-03.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-02"
+        ]
+      },
+      "issue_category": [
+        "light discussion"
+      ],
+      "decision": {
+        "date": "2026-10-18",
+        "authority": "Explicit user decision in this chat",
+        "question_id": "Q1",
+        "text": "shared<void> and unique<void> are rejected during preparation; opaque ownership is outside the current subset.",
+        "follow_up": "Align owning normative contract with this decision before implementation; no compiler changes authorized here."
+      },
+      "repair": {
+        "status": "semantic admission fixed; source attribution pending DR-08",
+        "evidence": "compiler/my-try/docs/planning/ownership_void_targets_2026_10_18/README.md"
+      }
+    },
+    {
+      "id": "TYPE-04",
+      "title": "unique<void> target admission",
+      "family": "Type formation",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/type_use_modifiers.md",
+        "section": "Ownership composition; target eligibility needs clarification"
+      },
+      "candidate_owner": "shared type application / ownership target requirements",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT.md",
+      "source_files": {
+        "main.phs": "$h unique<void>; return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "$h unique<int>; return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "13023a3977b465065c8c22188507028fc16593c87388cfd3fbe0de4680a27d0f"
+      },
+      "control_sha256": {
+        "main.phs": "1d1a10258af3383adfee3e4a5113e4a09b6c6ab129b568ca0cc7a3616e46f36f"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "shared<void> and unique<void> are rejected during preparation; opaque ownership is outside the current subset.",
+        "file": "main.phs",
+        "line": 1,
+        "token": "void",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/TYPE-04.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-02"
+        ]
+      },
+      "issue_category": [
+        "light discussion"
+      ],
+      "decision": {
+        "date": "2026-10-18",
+        "authority": "Explicit user decision in this chat",
+        "question_id": "Q1",
+        "text": "shared<void> and unique<void> are rejected during preparation; opaque ownership is outside the current subset.",
+        "follow_up": "Align owning normative contract with this decision before implementation; no compiler changes authorized here."
+      },
+      "repair": {
+        "status": "semantic admission fixed; source attribution pending DR-08",
+        "evidence": "compiler/my-try/docs/planning/ownership_void_targets_2026_10_18/README.md"
+      }
+    },
+    {
+      "id": "NAME-01",
+      "title": "Duplicate qualified type across files",
+      "family": "Names",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/namespaces_v0_2.md",
+        "section": "Namespace identity and source bodies"
+      },
+      "candidate_owner": "collection identities / declaration preparation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT.md",
+      "source_files": {
+        "main.phs": "return 0;\n",
+        "a.phs": "namespace Lib; class C {}\n",
+        "b.phs": "namespace Lib; class C {}\n"
+      },
+      "control_files": {
+        "main.phs": "return 0;\n",
+        "a.phs": "namespace Lib; class C {}\n",
+        "b.phs": "namespace Lib; class D {}\n"
+      },
+      "source_sha256": {
+        "main.phs": "038f4adc32c3aa8411771dc1aea2168aab7c3a1d1eebef25afdea521fa963640",
+        "a.phs": "cb8e901defd40580bd0dc0b6b21b344cc0c3cb9fa982a45435d385e7c3c0eb33",
+        "b.phs": "cb8e901defd40580bd0dc0b6b21b344cc0c3cb9fa982a45435d385e7c3c0eb33"
+      },
+      "control_sha256": {
+        "main.phs": "038f4adc32c3aa8411771dc1aea2168aab7c3a1d1eebef25afdea521fa963640",
+        "a.phs": "cb8e901defd40580bd0dc0b6b21b344cc0c3cb9fa982a45435d385e7c3c0eb33",
+        "b.phs": "bce39336a0b73cb28054b2e286b742cc468e9dad2f5fd826b742e338f00f8198"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Duplicate qualified type must be diagnosed before backend artifact identity checks",
+        "file": "b.phs",
+        "line": 1,
+        "token": "C",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/NAME-01.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-03"
+        ]
+      },
+      "issue_category": [
+        "light discussion"
+      ],
+      "repair": {
+        "status": "semantic admission fixed; source-location acceptance remains DR-08",
+        "evidence": "compiler/my-try/docs/planning/duplicate_type_admission_2026_10_18/README.md"
+      }
+    },
+    {
+      "id": "NAME-02",
+      "title": "Unused missing import",
+      "family": "Names",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/namespaces_v0_2.md",
+        "section": "Imports"
+      },
+      "candidate_owner": "import preparation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases15.json#missing_unused_import",
+      "source_files": {
+        "main.phs": "use Missing\\C; return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "use Lib\\C; return 0;\n",
+        "lib.phs": "namespace Lib; class C {}\n"
+      },
+      "source_sha256": {
+        "main.phs": "16b44a61e03b551d8cf04c90ecfed2bf657c39c8c5319caa2604eef58754c540"
+      },
+      "control_sha256": {
+        "main.phs": "b7b7a0214195ea4c1fc0c42236c596a539b23cb41d4fe548929c6cdc41571d68",
+        "lib.phs": "cb8e901defd40580bd0dc0b6b21b344cc0c3cb9fa982a45435d385e7c3c0eb33"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Validate imports even when unused",
+        "file": "main.phs",
+        "line": 1,
+        "token": "Missing",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/NAME-02.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "NAME-03",
+      "title": "Conflicting aliases",
+      "family": "Names",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/namespaces_v0_2.md",
+        "section": "Imports"
+      },
+      "candidate_owner": "import preparation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases15.json#conflicting_alias",
+      "source_files": {
+        "main.phs": "use A\\C as X; use B\\C as X; return 0;\n",
+        "a.phs": "namespace A; class C {}\n",
+        "b.phs": "namespace B; class C {}\n"
+      },
+      "control_files": {
+        "main.phs": "use A\\C as X; use B\\C as Y; return 0;\n",
+        "a.phs": "namespace A; class C {}\n",
+        "b.phs": "namespace B; class C {}\n"
+      },
+      "source_sha256": {
+        "main.phs": "0e7f30c6495a0468782440d07674f159de17801f3e13112d1f01a7e5d96d716c",
+        "a.phs": "e3f6146e4ac738cfb8d80bdf4cf832d06c19964e4c1e1920702d2a5b8cd852d1",
+        "b.phs": "c0547857c5bbf6defb50e3f146d2ff389a1bce0c50e04c61377ffcf0aec18792"
+      },
+      "control_sha256": {
+        "main.phs": "39416b8a3c4b22923253f4a2fe1bcd5f0259c40e3fb86c5f85c1caa08c4e3b6a",
+        "a.phs": "e3f6146e4ac738cfb8d80bdf4cf832d06c19964e4c1e1920702d2a5b8cd852d1",
+        "b.phs": "c0547857c5bbf6defb50e3f146d2ff389a1bce0c50e04c61377ffcf0aec18792"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Two targets for the same local name and kind conflict",
+        "file": "main.phs",
+        "line": 1,
+        "token": "B\\C",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/NAME-03.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "NAME-04",
+      "title": "Private member access across files",
+      "family": "Names",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/inheritance_v0_2.md",
+        "section": "Access"
+      },
+      "candidate_owner": "member lookup/access preparation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases15.json#cross_private",
+      "source_files": {
+        "main.phs": "// Cross-file diagnostic must identify the use, not generated C++.\n$c = new Lib\\C();\n\nreturn $c->f();\n",
+        "lib.phs": "namespace Lib; class C { private function f(): int { return 1; } }\n"
+      },
+      "control_files": {
+        "main.phs": "// Cross-file diagnostic must identify the use, not generated C++.\n$c = new Lib\\C();\n\nreturn $c->f();\n",
+        "lib.phs": "namespace Lib; class C { public function f(): int { return 1; } }\n"
+      },
+      "source_sha256": {
+        "main.phs": "f82aaa8b2930b44fcb116c43f64535becff1fadc1ce1a1690da4541059a59ad5",
+        "lib.phs": "6a92972988460b0175330aa1822f5ec501e442bff67f71ecc19aeaa8de9eeb41"
+      },
+      "control_sha256": {
+        "main.phs": "f82aaa8b2930b44fcb116c43f64535becff1fadc1ce1a1690da4541059a59ad5",
+        "lib.phs": "c2cb8bdc9fb21c298bbf4c871bb2841ed709c082beeda72e7d59dd57baa1ac6f"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Private method inaccessible from entry context",
+        "file": "main.phs",
+        "line": 4,
+        "token": "f()",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/NAME-04.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "CALL-01",
+      "title": "Missing required argument",
+      "family": "Calls and completion",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/v0_2_preparation_diagnostics.md",
+        "section": "Early rejection of statically invalid operations"
+      },
+      "candidate_owner": "call argument binding",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases4.json#missing_argument",
+      "source_files": {
+        "main.phs": "function f(int $x): void {} f(); return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function f(int $x): void {} f(1); return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "fac2329426b93427f2d61248bc20c2f8910a66729ecb5ad9fa6a3a9072718345"
+      },
+      "control_sha256": {
+        "main.phs": "066368c60d6f70ebccb7cb3929d98da62f3513055e6fbd22c4eb777329e897a8"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Required argument missing",
+        "file": "main.phs",
+        "line": 1,
+        "token": "f();",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/CALL-01.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "CALL-02",
+      "title": "Non-void fallthrough",
+      "family": "Calls and completion",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/v0_2_preparation_diagnostics.md",
+        "section": "Early rejection; bounded structured completion"
+      },
+      "candidate_owner": "body preparation/completion",
+      "origin": "compiler/my-try/docs/catalog/04_functions.md",
+      "source_files": {
+        "main.phs": "function f(bool $x): int { if ($x) { return 1; } } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function f(bool $x): int { if ($x) { return 1; } return 0; } return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "6eb930c8a9d51e34c3bb6b843c7ffbf57bd797594361631395ee843877832900"
+      },
+      "control_sha256": {
+        "main.phs": "28e516695613572a49848ed23a3a457136adcad95d5f8c03db5414eea7871f00"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Possible non-void fallthrough",
+        "file": "main.phs",
+        "line": 1,
+        "token": "f(",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/CALL-02.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "CALL-03",
+      "title": "Ordinary void forwarding remains valid",
+      "family": "Calls and completion",
+      "status": "reviewed-bounded-pass",
+      "question": null,
+      "contract": {
+        "path": "specs/v0_2_preparation_diagnostics.md",
+        "section": "Do not reject valid operations"
+      },
+      "candidate_owner": "body return preparation / return lowering",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases5.json#void_return_forward",
+      "source_files": {
+        "main.phs": "function g(): void {} function f(): void { return g(); } f(); return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function g(): void {} function f(): void { g(); return; } f(); return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "b31233f5f4c4818c9eacc357688b96b27b2f4e880efda85bb66ab3f75dceee1c"
+      },
+      "control_sha256": {
+        "main.phs": "d01ecfcccc6e506ccc43b97048343b06bf686454cb2456782d9dfb8fab23351d"
+      },
+      "expected_outcome": "accept",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "No diagnostic expected for ordinary void forwarding",
+        "file": "main.phs",
+        "line": 1,
+        "token": "return g()",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "prepare",
+        "compile/link source and control"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/CALL-03.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "not applicable: accepted valid source",
+        "issues": []
+      },
+      "issue_category": []
+    },
+    {
+      "id": "REF-01",
+      "title": "Escaping local reference",
+      "family": "References",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/native_reference_safety.md",
+        "section": "v0.2 same-origin reference returns"
+      },
+      "candidate_owner": "reference return provenance",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases4.json#ref_local",
+      "source_files": {
+        "main.phs": "function &f(int &$x): int { $y = 1; return $y; } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function &f(int &$x): int { return $x; } return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "f60e7e43a72e0e00e8d9d2169e8a207c3e2951bf0266d65c6ab374f5c99edbb9"
+      },
+      "control_sha256": {
+        "main.phs": "7527d8b4413efdbfe1347e3bddd7ea902c90611c8d43dc9f51bc631fa3195553"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Return origin is a local, not the fixed reference parameter",
+        "file": "main.phs",
+        "line": 1,
+        "token": "return $y",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/REF-01.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "REF-02",
+      "title": "Temporary reference argument",
+      "family": "References",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/native_reference_safety.md",
+        "section": "Allowed native-reference sources"
+      },
+      "candidate_owner": "reference argument binding",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases4.json#ref_temporary",
+      "source_files": {
+        "main.phs": "function &f(int &$x): int { return $x; } $r =& f(1); return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function &f(int &$x): int { return $x; } $x = 1; $r =& f($x); return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "e326c05baa8c9f034250652023f33ee1b0c2d553d5ecf7249c461fb360df8610"
+      },
+      "control_sha256": {
+        "main.phs": "fdf021e1322603e90bd6c2eb493132926c4a995809b458c9eda1723722c19fe4"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Temporary lacks eligible stable storage",
+        "file": "main.phs",
+        "line": 1,
+        "token": "f(1)",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/REF-02.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "REF-03",
+      "title": "Write through readonly parameter",
+      "family": "References",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/native_reference_safety.md",
+        "section": "v0.2 explicit read-only reference parameters"
+      },
+      "candidate_owner": "place access / mutation preparation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases4.json#readonly_assignment",
+      "source_files": {
+        "main.phs": "function f(const int &$x): void {\n\t// Writing through a readonly parameter is invalid.\n\t$x = 1;\n}\nreturn 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function f(int &$x): void {\n\t// Writing through a readonly parameter is invalid.\n\t$x = 1;\n}\nreturn 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "898b5f5881c37beeca1171cec12c3fe15c3b11e91a674d18f9d4ebfe49af45db"
+      },
+      "control_sha256": {
+        "main.phs": "9c30451b9089c324dc368d19fa5105cdfa66fa82922ac5ad21dfac5bac33ae08"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Readonly parameter cannot be assigned",
+        "file": "main.phs",
+        "line": 3,
+        "token": "$x = 1",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/REF-03.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "OP-01",
+      "title": "Canonical int ++$x snapshot",
+      "family": "Operators",
+      "status": "reviewed-bounded-pass",
+      "question": null,
+      "contract": {
+        "path": "compiler/my-try/docs/s2s_scalar_operators.md",
+        "section": "Increment and decrement"
+      },
+      "candidate_owner": "Mutation_Preparation / operator decision",
+      "origin": "compiler/my-try/docs/catalog/02_expressions.md",
+      "source_files": {
+        "main.phs": "$x int = 3; $y = ++$x; return $y;\n"
+      },
+      "control_files": {
+        "main.phs": "$x int = 3; $y int = 4; return $y;\n"
+      },
+      "source_sha256": {
+        "main.phs": "4680be09e1cafe9ccfe09657b8f5f8946923ad29d27af71a98cbf8f661e0ad11"
+      },
+      "control_sha256": {
+        "main.phs": "7f19ad7c2837db45dd89d2ddfcbc95edd7e85bcfc82b114e32c60bd225e92b23"
+      },
+      "expected_outcome": "accept",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Accept; returned value is a snapshot, not a reference",
+        "file": "main.phs",
+        "line": 1,
+        "token": "++$x",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "prepare",
+        "compile/link",
+        "execute isolated program: exit 4 for source and control"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OP-01.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "not applicable: accepted valid source",
+        "issues": []
+      },
+      "issue_category": []
+    },
+    {
+      "id": "OP-02",
+      "title": "Canonical int $x++ snapshot",
+      "family": "Operators",
+      "status": "reviewed-bounded-pass",
+      "question": null,
+      "contract": {
+        "path": "compiler/my-try/docs/s2s_scalar_operators.md",
+        "section": "Increment and decrement"
+      },
+      "candidate_owner": "Mutation_Preparation / operator decision",
+      "origin": "compiler/my-try/docs/catalog/02_expressions.md",
+      "source_files": {
+        "main.phs": "$x int = 3; $y = $x++; return $y;\n"
+      },
+      "control_files": {
+        "main.phs": "$x int = 3; $y int = 3; return $y;\n"
+      },
+      "source_sha256": {
+        "main.phs": "4cd5a839f1ac6b9942d2642e37425a87d206a3b5e5fdc2f95937fda092747d95"
+      },
+      "control_sha256": {
+        "main.phs": "9bfea895e07a83960b0feba3eb5369946b23d5277d01913c4f8676b3c24f5d48"
+      },
+      "expected_outcome": "accept",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Accept; returned value is a snapshot, not a reference",
+        "file": "main.phs",
+        "line": 1,
+        "token": "$x++",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "prepare",
+        "compile/link",
+        "execute isolated program: exit 3 for source and control"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OP-02.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "not applicable: accepted valid source",
+        "issues": []
+      },
+      "issue_category": []
+    },
+    {
+      "id": "OP-03",
+      "title": "Canonical int --$x snapshot",
+      "family": "Operators",
+      "status": "reviewed-bounded-pass",
+      "question": null,
+      "contract": {
+        "path": "compiler/my-try/docs/s2s_scalar_operators.md",
+        "section": "Increment and decrement"
+      },
+      "candidate_owner": "Mutation_Preparation / operator decision",
+      "origin": "compiler/my-try/docs/catalog/02_expressions.md",
+      "source_files": {
+        "main.phs": "$x int = 3; $y = --$x; return $y;\n"
+      },
+      "control_files": {
+        "main.phs": "$x int = 3; $y int = 2; return $y;\n"
+      },
+      "source_sha256": {
+        "main.phs": "2538120e9027e4500b9a2a7f2afd44744b6d58520c0f9bf33d5fbbea55d385d1"
+      },
+      "control_sha256": {
+        "main.phs": "a7b659e44d3219372480588105940d7da837d223b70abb746a5145415f1b86a7"
+      },
+      "expected_outcome": "accept",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Accept; returned value is a snapshot, not a reference",
+        "file": "main.phs",
+        "line": 1,
+        "token": "--$x",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "prepare",
+        "compile/link",
+        "execute isolated program: exit 2 for source and control"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OP-03.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "not applicable: accepted valid source",
+        "issues": []
+      },
+      "issue_category": []
+    },
+    {
+      "id": "OP-04",
+      "title": "Canonical int $x-- snapshot",
+      "family": "Operators",
+      "status": "reviewed-bounded-pass",
+      "question": null,
+      "contract": {
+        "path": "compiler/my-try/docs/s2s_scalar_operators.md",
+        "section": "Increment and decrement"
+      },
+      "candidate_owner": "Mutation_Preparation / operator decision",
+      "origin": "compiler/my-try/docs/catalog/02_expressions.md",
+      "source_files": {
+        "main.phs": "$x int = 3; $y = $x--; return $y;\n"
+      },
+      "control_files": {
+        "main.phs": "$x int = 3; $y int = 3; return $y;\n"
+      },
+      "source_sha256": {
+        "main.phs": "01d4a0e5b14ddffce4378e2668dafc9091f6ea563d6bfb3108869f21751919a3"
+      },
+      "control_sha256": {
+        "main.phs": "9bfea895e07a83960b0feba3eb5369946b23d5277d01913c4f8676b3c24f5d48"
+      },
+      "expected_outcome": "accept",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Accept; returned value is a snapshot, not a reference",
+        "file": "main.phs",
+        "line": 1,
+        "token": "$x--",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "prepare",
+        "compile/link",
+        "execute isolated program: exit 3 for source and control"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OP-04.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "not applicable: accepted valid source",
+        "issues": []
+      },
+      "issue_category": []
+    },
+    {
+      "id": "OP-05",
+      "title": "Readonly decrement rejection",
+      "family": "Operators",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/native_reference_safety.md",
+        "section": "v0.2 explicit read-only reference parameters"
+      },
+      "candidate_owner": "mutation target preparation",
+      "origin": "compiler/my-try/docs/s2s_scalar_operators.md#increment-and-decrement",
+      "source_files": {
+        "main.phs": "function f(const int &$x): void { --$x; } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function f(int &$x): void { --$x; } return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "094856dfb937252f6a99cf8890c8d91f858c5b985c7c86abf5ac2d1c0cfb28ba"
+      },
+      "control_sha256": {
+        "main.phs": "e36ce50b36741d8867f6181ee633fd68547cb07aef3809bf5f9650bf0933d424"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Readonly storage cannot be decremented",
+        "file": "main.phs",
+        "line": 1,
+        "token": "--$x",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OP-05.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "CONT-01",
+      "title": "Container interior alias",
+      "family": "Containers and wrappers",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/native_reference_safety.md",
+        "section": "Forbidden native-reference sources"
+      },
+      "candidate_owner": "place/reference binding",
+      "origin": "specs/array_semantics.md",
+      "source_files": {
+        "main.phs": "$v vector<int> = [1]; $r =& $v[0]; return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "$v vector<int> = [1]; $r = $v[0]; return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "9ec87d5b0dbea69a013e75723fecd14cda438e4ed50db8daf50b78f03214ef7d"
+      },
+      "control_sha256": {
+        "main.phs": "bbb946b2b5cd793d40ff804578c08bdcb122631f4d3fdd279c0c75bd018dca6f"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Container interior cannot supply native alias",
+        "file": "main.phs",
+        "line": 1,
+        "token": "$v[0]",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/CONT-01.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "CONT-02",
+      "title": "Boolable Result coalescing",
+      "family": "Containers and wrappers",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/v0_2_preparation_diagnostics.md",
+        "section": "Early rejection; result_or_bool coalescing example"
+      },
+      "candidate_owner": "coalescing preparation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases12.json#result_boolable_coalesce",
+      "source_files": {
+        "main.phs": "function f(result_or_bool<int> $r): int { return $r ?? 1; } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function f(?int $r): int { return $r ?? 1; } return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "9c11ab82060e9f74f0e3e5922ea6447910e6a854edd98f37eef3cfbe154ca950"
+      },
+      "control_sha256": {
+        "main.phs": "28a08e87360548e12acbea9b30b40126aa48831ed697dddbd1cf8fc469d1a944"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "result_or_bool is not an admitted coalescing operand",
+        "file": "main.phs",
+        "line": 1,
+        "token": "$r ??",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/CONT-02.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "CONT-03",
+      "title": "Record empty versus presence",
+      "family": "Containers and wrappers",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/count_empty_isset_contract.md",
+        "section": "v0.2 collection-only emptiness"
+      },
+      "candidate_owner": "probe preparation",
+      "origin": "specs/type_use_modifiers.md",
+      "source_files": {
+        "main.phs": "struct S {} $s = new S(); return empty($s) ? 1 : 0;\n"
+      },
+      "control_files": {
+        "main.phs": "struct S {} $s = new S(); return isset($s) ? 1 : 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "6aecfa00042dc89ea3eb8a4bf5a3012ea10f05be4adc0f156f6508bad4d6fc22"
+      },
+      "control_sha256": {
+        "main.phs": "8e4eb8c08d6aaec56e827079fb125fd7b6303bcb490e04d01a09c418b57068f0"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "empty is collection-only, not record presence",
+        "file": "main.phs",
+        "line": 1,
+        "token": "empty($s)",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/CONT-03.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "OBJ-01",
+      "title": "Abstract inline constructor parameter",
+      "family": "Objects and inheritance",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/inheritance_v0_2.md",
+        "section": "Abstract types and overriding / Construction"
+      },
+      "candidate_owner": "Constructor_Preparation signature",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INHERITANCE.md",
+      "source_files": {
+        "main.phs": "abstract struct A { abstract function f(): int; } class C { function __construct(A $a) {} } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "struct A {} class C { function __construct(A $a) {} } $a = new A(); $c = new C($a); return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "7346775af226bfddd050bc1822be4699d8cd538398726e040679543b81982c37"
+      },
+      "control_sha256": {
+        "main.phs": "5e65a5db5f4cf3032ebe1b2bcb3022d2f25fe5b785f3ec79ab2ab2304d2e3425"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Abstract inline storage is not a concrete by-value parameter",
+        "file": "main.phs",
+        "line": 1,
+        "token": "A $a",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OBJ-01.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-04"
+        ]
+      },
+      "issue_category": [
+        "simple fix"
+      ],
+      "repair": {
+        "status": "semantic admission fixed; source attribution pending DR-08",
+        "evidence": "compiler/my-try/docs/planning/constructor_parameter_admission_2026_10_18/README.md"
+      }
+    },
+    {
+      "id": "OBJ-02",
+      "title": "Interface result mismatch",
+      "family": "Objects and inheritance",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/inheritance_v0_2.md",
+        "section": "Interface implementation"
+      },
+      "candidate_owner": "interface/override preparation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases7.json#interface_wrong_return",
+      "source_files": {
+        "main.phs": "interface I { function f(): int; } class C implements I { function f(): string { return 'x'; } } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "interface I { function f(): int; } class C implements I { function f(): int { return 1; } } return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "d3410029b7b6fdc4082a4b1ff14f0288423b4db22e570eb984decd0367958dec"
+      },
+      "control_sha256": {
+        "main.phs": "07920e77ca5ed3a06d67339d7fe05f49ae985aa1960bce77c5884158a3d25c5d"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Implementation return contract is incompatible",
+        "file": "main.phs",
+        "line": 1,
+        "token": "string",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OBJ-02.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "OBJ-03",
+      "title": "Inheritance cycle",
+      "family": "Objects and inheritance",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/inheritance_v0_2.md",
+        "section": "Layout and lookup"
+      },
+      "candidate_owner": "inheritance completion/dependency checks",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases7.json#inherit_cycle",
+      "source_files": {
+        "main.phs": "class B extends C {} class C extends B {} return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "class B {} class C extends B {} return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "1091beeadf5456f05b9d40be4e22967087c098bac2c9d661fdfcf969ff12db91"
+      },
+      "control_sha256": {
+        "main.phs": "37e10cc35cd6a47beec49bddf3b464a0018f804824405712f5cf34c9dfd76700"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Cyclic ancestry",
+        "file": "main.phs",
+        "line": 1,
+        "token": "extends C",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/OBJ-03.json",
+        "behavior": "matches expected phase/outcome",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ]
+    },
+    {
+      "id": "LOW-01",
+      "title": "Captured closure reassignment",
+      "family": "Source/backend boundary",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "compiler/my-try/docs/catalog/12_closures.md",
+        "section": "Capture copy and assignment capability"
+      },
+      "candidate_owner": "closure capabilities / assignment / C++ representation",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-OPERATIONS.md",
+      "source_files": {
+        "main.phs": "$n = 1; $f = fn(): int => $n; $f = $f; return $f();\n"
+      },
+      "control_files": {
+        "main.phs": "$n = 1; $f = fn(): int => $n; $g = $f; return $g();\n"
+      },
+      "source_sha256": {
+        "main.phs": "4e7a78bd4223efad2836e1e1f5d02d695ec236eb944f24cbd5013bde405b2bbf"
+      },
+      "control_sha256": {
+        "main.phs": "25667b9d08f56dac4734cd232cb0b50c3699ed86f6b340b5f1405ee92846de9b"
+      },
+      "expected_outcome": "accept",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Same-concrete-type captured closure reassignment is supported, preserving copy initialization, capture and lifetime semantics.",
+        "file": "main.phs",
+        "line": 1,
+        "token": "$f = $f",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "prepare source and control",
+        "compile/link source and control",
+        "execute source and control: expected exit 1; preserve capture/lifetime semantics"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/LOW-01.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-05"
+        ]
+      },
+      "issue_category": [
+        "normal discussion"
+      ],
+      "decision": {
+        "date": "2026-10-18",
+        "authority": "Explicit user decision in this chat",
+        "question_id": "Q2",
+        "text": "Same-concrete-type captured closure reassignment is supported, preserving copy initialization, capture and lifetime semantics.",
+        "follow_up": "Align owning normative contract with this decision before implementation; no compiler changes authorized here."
+      }
+    },
+    {
+      "id": "LOW-02",
+      "title": "Self-value constructor shape",
+      "family": "Source/backend boundary",
+      "status": "deferred-by-user",
+      "question": null,
+      "contract": {
+        "path": "specs/data_initialization.md",
+        "section": "Authored constructor contracts"
+      },
+      "candidate_owner": "constructor preparation / C++ constructor mapping",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INHERITANCE.md",
+      "source_files": {
+        "main.phs": "struct S { function __construct(S $other) {} } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "struct S { function __construct(S $other, int $n) {} } return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "02fa0fc9fd4ecf403a387f3aad51fde15eee6520f3ac43324a7c5e4ceaebc893"
+      },
+      "control_sha256": {
+        "main.phs": "8cb0e5ca3cce814ac4f45c0a6406c679330d05f0a63afb5c457a7588665a80dd"
+      },
+      "expected_outcome": "unresolved",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Choose source admission versus alternate lowering; C++ copy-constructor restriction alone is insufficient",
+        "file": "main.phs",
+        "line": 1,
+        "token": "S $other",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": null,
+      "issue_category": null,
+      "decision": {
+        "date": "2026-10-18",
+        "authority": "Explicit user decision in this chat",
+        "question_id": "Q3",
+        "text": "Defer self-value constructor policy and this case to a later discussion; exclude from this review execution."
+      }
+    },
+    {
+      "id": "LOW-03",
+      "title": "Void-expression return in constructor",
+      "family": "Source/backend boundary",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/data_initialization.md",
+        "section": "Void-body / authored lifecycle callable boundary"
+      },
+      "candidate_owner": "body return preparation / C++ special-member lowering",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INHERITANCE.md",
+      "source_files": {
+        "main.phs": "function cleanup(): void {} class C { function __construct() { return cleanup(); } } $c = new C(); return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function cleanup(): void {} class C { function __construct() { cleanup(); return; } } $c = new C(); return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "f5180e5a52ef46173186ff53a384009fadfefbdf44ebe9995c9ba44963689d2a"
+      },
+      "control_sha256": {
+        "main.phs": "66b4e0741fa0bd8d0de0f02ab376df6fd91f63211ecfab778c6c46f1e5ff7837"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Constructors/destructors reject every return expression, including void expressions. Fallthrough and bare return remain allowed; write cleanup(); return; for early exit after cleanup.",
+        "file": "main.phs",
+        "line": 1,
+        "token": "return cleanup()",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/LOW-03.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-06"
+        ]
+      },
+      "issue_category": [
+        "light discussion"
+      ],
+      "decision": {
+        "date": "2026-10-18",
+        "authority": "Explicit user decision in this chat",
+        "question_id": "Q4",
+        "text": "Constructors/destructors reject every return expression, including void expressions. Fallthrough and bare return remain allowed; write cleanup(); return; for early exit after cleanup.",
+        "follow_up": "Align owning normative contract with this decision before implementation; no compiler changes authorized here."
+      }
+    },
+    {
+      "id": "LOW-04",
+      "title": "Void-expression return in destructor",
+      "family": "Source/backend boundary",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/destructors_v0_2.md",
+        "section": "Void-body / authored lifecycle callable boundary"
+      },
+      "candidate_owner": "body return preparation / C++ special-member lowering",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INHERITANCE.md",
+      "source_files": {
+        "main.phs": "function cleanup(): void {} class C { function __destruct() { return cleanup(); } } return 0;\n"
+      },
+      "control_files": {
+        "main.phs": "function cleanup(): void {} class C { function __destruct() { cleanup(); return; } } $c = new C(); return 0;\n"
+      },
+      "source_sha256": {
+        "main.phs": "87ddb0156277e796c2a2303fdb4bcb25c6ae9dd808a9769871a319d237d6fda2"
+      },
+      "control_sha256": {
+        "main.phs": "956f27507b06577f010071962977b7d29cae846bd4ad10830af76dfc6983a841"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Constructors/destructors reject every return expression, including void expressions. Fallthrough and bare return remain allowed; write cleanup(); return; for early exit after cleanup.",
+        "file": "main.phs",
+        "line": 1,
+        "token": "return cleanup()",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "preparation with source attribution",
+        "compile/link valid control",
+        "if unexpectedly accepted, inspect emission and compile all emitted units; do not redefine expected meaning from Clang"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/LOW-04.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-06"
+        ]
+      },
+      "issue_category": [
+        "light discussion"
+      ],
+      "decision": {
+        "date": "2026-10-18",
+        "authority": "Explicit user decision in this chat",
+        "question_id": "Q4",
+        "text": "Constructors/destructors reject every return expression, including void expressions. Fallthrough and bare return remain allowed; write cleanup(); return; for early exit after cleanup.",
+        "follow_up": "Align owning normative contract with this decision before implementation; no compiler changes authorized here."
+      }
+    },
+    {
+      "id": "LOW-05",
+      "title": "Mutual shared-object container payloads",
+      "family": "Source/backend boundary",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/compact_layout_types.md",
+        "section": "Container fields and ordinary shared class storage"
+      },
+      "candidate_owner": "C++ completeness dependencies/header assembly",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-NAMESPACES.md",
+      "source_files": {
+        "main.phs": "$a = new A\\Item(); return 0;\n",
+        "a.phs": "namespace A; class Item { vector<\\B\\Item> $others; }\n",
+        "b.phs": "namespace B; class Item { vector<\\A\\Item> $others; }\n"
+      },
+      "control_files": {
+        "main.phs": "$a = new A\\Item(); return 0;\n",
+        "a.phs": "namespace A; class Item { vector<\\B\\Item> $others; }\n",
+        "b.phs": "namespace B; class Item {}\n"
+      },
+      "source_sha256": {
+        "main.phs": "16ae17420bf2117b49259dbf4a0c9720b11dcd7616ead0e109b8ff5973d36671",
+        "a.phs": "2aeaaeffb5e4a61f2e21587821448947de6c4f6671708816b0fcefe11e6a39b5",
+        "b.phs": "bcd3cdb5c8c123c229f9f2925833f23da5b897005fcd9ddb1c85d447ce99d781"
+      },
+      "control_sha256": {
+        "main.phs": "16ae17420bf2117b49259dbf4a0c9720b11dcd7616ead0e109b8ff5973d36671",
+        "a.phs": "2aeaaeffb5e4a61f2e21587821448947de6c4f6671708816b0fcefe11e6a39b5",
+        "b.phs": "92bd61ec56d27d21b3d0856d2b9da3e74757f386502a1f5f309a6551d563fd70"
+      },
+      "expected_outcome": "accept",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Shared handles do not make recursive inline layout; accepted source must yield compilable artifact graph",
+        "file": "a.phs",
+        "line": 1,
+        "token": "vector",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "prepare",
+        "emit all artifacts",
+        "compile every translation unit and link; do not require each header standalone without a contract"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/LOW-05.json",
+        "behavior": "mismatch",
+        "location": "expected source diagnostic absent or downstream only",
+        "issues": [
+          "DR-07"
+        ]
+      },
+      "issue_category": [
+        "normal discussion"
+      ]
+    },
+    {
+      "id": "REC-01",
+      "title": "Notified semantic failure and repair",
+      "family": "Recovery",
+      "status": "reviewed-with-issues",
+      "question": null,
+      "contract": {
+        "path": "specs/v0_2_preparation_diagnostics.md",
+        "section": "Failed preparation must not publish/reuse executable output"
+      },
+      "candidate_owner": "lifecycle coordinator / output publication",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases18.json#body_unknown",
+      "source_files": {
+        "main.phs": "return f(1);\n",
+        "a.phs": "function f(int $x): int { return $missing; }\n"
+      },
+      "control_files": {
+        "main.phs": "return f(1);\n",
+        "a.phs": "function f(int $x): int { return $x; }\n"
+      },
+      "source_sha256": {
+        "main.phs": "d65d5ecc3798306cdcfd6f8be3cdc77c430864284a1ae75bd87ad947cbb9af47",
+        "a.phs": "25866119775dc9e5bb1e0aaa527a2f017605a2d6bb2e64ea6567e567e9758e70"
+      },
+      "control_sha256": {
+        "main.phs": "d65d5ecc3798306cdcfd6f8be3cdc77c430864284a1ae75bd87ad947cbb9af47",
+        "a.phs": "370719b7b066a0bb7180ea59015f447585d45bb3ea8dbb907720e643e5eff217"
+      },
+      "expected_outcome": "reject-preparation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Reject changed source and withhold ready output; restored source recovers",
+        "file": "a.phs",
+        "line": 1,
+        "token": "$missing",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "same-instance baseline publication",
+        "explicit changed-path notification with fresh publisher created first",
+        "failed edit then retry; direct cpp cannot publish stale success",
+        "fresh-instance comparison",
+        "restore baseline and notify; publication ready and artifacts match baseline"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/REC-01.json",
+        "behavior": "passed failure withholding/retry/fresh/repair checks",
+        "location": "missing source location",
+        "issues": [
+          "DR-08"
+        ]
+      },
+      "issue_category": [
+        "red flag"
+      ],
+      "sequence": {
+        "baseline": {
+          "main.phs": "return f(1);\n",
+          "a.phs": "function f(int $x): int { return $x; }\n"
+        },
+        "edit": {
+          "main.phs": "return f(1);\n",
+          "a.phs": "function f(int $x): int { return $missing; }\n"
+        },
+        "repair": {
+          "main.phs": "return f(1);\n",
+          "a.phs": "function f(int $x): int { return $x; }\n"
+        },
+        "notification": "absolute paths of edited sources; publisher per attempt, close in finally"
+      }
+    },
+    {
+      "id": "REC-02",
+      "title": "Notified syntax failure and repair",
+      "family": "Recovery",
+      "status": "reviewed-bounded-pass",
+      "question": null,
+      "contract": {
+        "path": "specs/v0_2_preparation_diagnostics.md",
+        "section": "Failed preparation must not publish/reuse executable output"
+      },
+      "candidate_owner": "lifecycle coordinator / output publication",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/cases18.json#parse_error",
+      "source_files": {
+        "main.phs": "return f(1);\n",
+        "a.phs": "function f(int $x): int { return ;\n"
+      },
+      "control_files": {
+        "main.phs": "return f(1);\n",
+        "a.phs": "function f(int $x): int { return $x; }\n"
+      },
+      "source_sha256": {
+        "main.phs": "d65d5ecc3798306cdcfd6f8be3cdc77c430864284a1ae75bd87ad947cbb9af47",
+        "a.phs": "80d3ccfec3d55f49c9321def9ff0a006cd286cacb7358f0c85ef8b2d9be97811"
+      },
+      "control_sha256": {
+        "main.phs": "d65d5ecc3798306cdcfd6f8be3cdc77c430864284a1ae75bd87ad947cbb9af47",
+        "a.phs": "370719b7b066a0bb7180ea59015f447585d45bb3ea8dbb907720e643e5eff217"
+      },
+      "expected_outcome": "reject-frontend",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Reject changed source and withhold ready output; restored source recovers",
+        "file": "a.phs",
+        "line": 1,
+        "token": "return ;",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "same-instance baseline publication",
+        "explicit changed-path notification with fresh publisher created first",
+        "failed edit then retry; direct cpp cannot publish stale success",
+        "fresh-instance comparison",
+        "restore baseline and notify; publication ready and artifacts match baseline"
+      ],
+      "execution_result": {
+        "review": "specs/planning/results/compiler_diagnostic_review_2026_10_18_followup",
+        "evidence": "results/REC-02.json",
+        "behavior": "passed failure withholding/retry/fresh/repair checks",
+        "location": "source filename and byte offset reported; syntax error is missing closing brace at EOF, not return-expression error",
+        "issues": []
+      },
+      "issue_category": [],
+      "sequence": {
+        "baseline": {
+          "main.phs": "return f(1);\n",
+          "a.phs": "function f(int $x): int { return $x; }\n"
+        },
+        "edit": {
+          "main.phs": "return f(1);\n",
+          "a.phs": "function f(int $x): int { return ;\n"
+        },
+        "repair": {
+          "main.phs": "return f(1);\n",
+          "a.phs": "function f(int $x): int { return $x; }\n"
+        },
+        "notification": "absolute paths of edited sources; publisher per attempt, close in finally"
+      }
+    },
+    {
+      "id": "REC-03",
+      "title": "Scan-only unchanged metadata edit",
+      "family": "Recovery",
+      "status": "deferred-by-user",
+      "question": null,
+      "contract": {
+        "path": "compiler/my-try/docs/planning/incremental_strategy.md",
+        "section": "Deferred stronger file-change detection"
+      },
+      "candidate_owner": "input discovery / scan change detection",
+      "origin": "specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INCREMENTAL.md",
+      "source_files": {
+        "main.phs": "$x = 1; return $y;\n"
+      },
+      "control_files": {
+        "main.phs": "$x = 1; return $x;\n"
+      },
+      "source_sha256": {
+        "main.phs": "23662c19a667580f7ccef6242e506d3984373d9074b2922200ed1620dbea81b3"
+      },
+      "control_sha256": {
+        "main.phs": "8bba093a5f1287ed132676794ba815c50770789ff413fa22d412329704fff798"
+      },
+      "expected_outcome": "known-limitation-observation",
+      "control_expected": "accept preparation and generated-C++ compile/link",
+      "diagnostic": {
+        "reason": "Documented detection limitation; do not count as new semantic defect without changing review scope",
+        "file": "main.phs",
+        "line": 1,
+        "token": "$y",
+        "policy": "Relevant source span required; exact message and column are not contractual. Earlier incidental parser failure is inconclusive for a semantic case."
+      },
+      "proof": [
+        "same-instance baseline then equal-size/equal-mtime edit without notification",
+        "contrast explicit notification and fresh-instance rejection",
+        "record readiness; no repair or native-cache expansion"
+      ],
+      "execution_result": null,
+      "issue_category": null,
+      "debt": "CH15-SOURCE-DETECTION-01",
+      "decision": {
+        "date": "2026-10-18",
+        "authority": "Explicit user decision in this chat",
+        "question_id": "Q5",
+        "text": "Defer scan-only equal-metadata change detection to CH15-SOURCE-DETECTION-01; exclude REC-03 from this review execution."
+      }
+    }
+  ]
+}

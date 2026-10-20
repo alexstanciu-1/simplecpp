@@ -1,0 +1,53 @@
+#pragma once
+
+namespace scpp {
+class AccountingCheck;
+struct AccountingDate;
+class AccrualRecord;
+class AdjustmentBook;
+class AllocationResult;
+class AmountResult;
+class AssetRegister;
+class BankMatch;
+class BankReconciliation;
+class BankReconciliationReport;
+class BankStatementLine;
+class BudgetBook;
+class BudgetLine;
+class BudgetReport;
+class BudgetVarianceRow;
+class CalendarRules;
+class DecliningBalanceDepreciation;
+class DepreciationPolicy;
+class FinancialPosition;
+class FinancialReports;
+class FixedAsset;
+class GeneralLedger;
+class InventoryBook;
+class JournalEntry;
+class JournalLine;
+class LedgerAccount;
+class MoneyAllocation;
+class MoneyRules;
+class PayableRecord;
+class PaymentProposal;
+class PaymentProposalRow;
+class PaymentTerms;
+class PrepaymentSchedule;
+class ProfitAndLoss;
+class PurchasingBook;
+class SalesInvoice;
+class SalesService;
+class StockIssueResult;
+class StockItem;
+class StockLot;
+class StockReservation;
+class StraightLineDepreciation;
+class SupplierBill;
+class SupplierRecord;
+class TrialBalance;
+class TrialBalanceRow;
+class WorkingCapital;
+class WorkloadChecks;
+}
+

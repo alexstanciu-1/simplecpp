@@ -1,0 +1,1 @@
+function &id(int &$n): int { return $n; } $n = 1; id($n) = 2; return $n;

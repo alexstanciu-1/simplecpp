@@ -1,0 +1,189 @@
+class BankStatementLine {
+    public string $reference = "";
+    public string $description = "";
+    public int $day = 0;
+    public int $amount = 0;
+}
+
+class BankMatch {
+    public string $statement_reference = "";
+    public string $journal_reference = "";
+    public int $amount = 0;
+}
+
+class BankReconciliationReport {
+    public int $opening_balance = 0;
+    public int $statement_movement = 0;
+    public int $statement_closing = 0;
+    public int $ledger_closing = 0;
+    public int $unmatched_count = 0;
+    public int $unmatched_amount = 0;
+    public int $difference = 0;
+    public bool $complete = false;
+    public $unmatched_references vector<string> = [];
+}
+
+class BankReconciliation {
+    private bool $initialized = false;
+    private bool $finalized = false;
+    private int $opening_balance = 0;
+    private int $closing_balance = 0;
+    private int $first_day = 0;
+    private int $last_day = 0;
+    private $lines hash<BankStatementLine> = [];
+    private $line_order vector<string> = [];
+    private $matches hash<BankMatch> = [];
+    private $used_journals hash<bool> = [];
+
+    public function import_statement(int $opening, int $closing, int $first_day, int $last_day, vector<BankStatementLine> $source): AccountingCheck {
+        if ($this->initialized) {
+            return accounting_failure("statement.imported", "Statement is already loaded");
+        }
+        if (!MoneyRules::accepts($opening) || !MoneyRules::accepts($closing)) {
+            return accounting_failure("statement.balance", "Statement balances exceed workload limits");
+        }
+        if ($first_day < 0 || $last_day < $first_day || $last_day > 36524) {
+            return accounting_failure("statement.dates", "Statement date range is invalid");
+        }
+        if (count($source) > 10000) {
+            return accounting_failure("statement.limit", "Statement contains too many lines");
+        }
+        $seen hash<bool> = [];
+        $running int = $opening;
+        foreach ($source as $line) {
+            if ($line->reference === "" || isset($seen[$line->reference])) {
+                return accounting_failure("statement.reference", "Statement line reference is empty or repeated");
+            }
+            if ($line->day < $first_day || $line->day > $last_day || $line->amount === 0) {
+                return accounting_failure("statement.line", "Statement line has an invalid day or zero movement");
+            }
+            $next AmountResult = MoneyRules::add($running, $line->amount);
+            if (!$next->valid) {
+                return accounting_failure("statement.range", "Statement running balance exceeds workload limits");
+            }
+            $running = $next->amount;
+            $seen[$line->reference] = true;
+        }
+        if ($running !== $closing) {
+            return accounting_failure("statement.control", "Opening plus movements differs from statement closing");
+        }
+        foreach ($source as $line) {
+            $copy BankStatementLine = new BankStatementLine();
+            $copy->reference = $line->reference;
+            $copy->description = $line->description;
+            $copy->day = $line->day;
+            $copy->amount = $line->amount;
+            $this->lines[$copy->reference] = $copy;
+            $this->line_order[] = $copy->reference;
+        }
+        $this->opening_balance = $opening;
+        $this->closing_balance = $closing;
+        $this->first_day = $first_day;
+        $this->last_day = $last_day;
+        $this->initialized = true;
+        return accounting_success();
+    }
+
+    public function match_entry(GeneralLedger $ledger, string $statement_reference, string $journal_reference): AccountingCheck {
+        if (!$this->initialized || $this->finalized) {
+            return accounting_failure("statement.state", "Statement is not open for matching");
+        }
+        if (!isset($this->lines[$statement_reference])) {
+            return accounting_failure("statement.missing-line", $statement_reference);
+        }
+        if (isset($this->matches[$statement_reference]) || isset($this->used_journals[$journal_reference])) {
+            return accounting_failure("statement.duplicate-match", "Statement line or ledger entry is already matched");
+        }
+        if (!$ledger->has_reference($journal_reference)) {
+            return accounting_failure("statement.missing-journal", $journal_reference);
+        }
+        $line BankStatementLine = $this->lines[$statement_reference];
+        $movement int = $ledger->reference_movement($journal_reference, "bank");
+        if ($movement !== $line->amount) {
+            return accounting_failure("statement.amount-mismatch", "Signed bank movement differs from statement line");
+        }
+        $match BankMatch = new BankMatch();
+        $match->statement_reference = $statement_reference;
+        $match->journal_reference = $journal_reference;
+        $match->amount = $movement;
+        $this->matches[$statement_reference] = $match;
+        $this->used_journals[$journal_reference] = true;
+        return accounting_success();
+    }
+
+    public function unmatch(string $statement_reference): AccountingCheck {
+        if (!$this->initialized || $this->finalized) {
+            return accounting_failure("statement.state", "Statement is not open for matching");
+        }
+        if (!isset($this->matches[$statement_reference])) {
+            return accounting_failure("statement.unmatched", $statement_reference);
+        }
+        $match BankMatch = $this->matches[$statement_reference];
+        unset($this->used_journals[$match->journal_reference]);
+        unset($this->matches[$statement_reference]);
+        return accounting_success();
+    }
+
+    public function post_adjustment(GeneralLedger $ledger, string $statement_reference, string $counter_account): AccountingCheck {
+        if (!$this->initialized || $this->finalized || !isset($this->lines[$statement_reference])) {
+            return accounting_failure("statement.state", "Adjustment needs an open statement line");
+        }
+        if (isset($this->matches[$statement_reference])) {
+            return accounting_failure("statement.duplicate-match", $statement_reference);
+        }
+        if ($counter_account !== "bank-fees" && $counter_account !== "interest-income") {
+            return accounting_failure("statement.adjustment-account", "Only bank fees and interest use this adjustment workflow");
+        }
+        $line BankStatementLine = $this->lines[$statement_reference];
+        if (($counter_account === "bank-fees" && $line->amount >= 0) || ($counter_account === "interest-income" && $line->amount <= 0)) {
+            return accounting_failure("statement.adjustment-sign", "Fee or interest has an unexpected sign");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "bank-adjustment:" . $statement_reference;
+        $entry->origin = "banking";
+        $entry->period = $ledger->current_period();
+        if ($line->amount < 0) {
+            $entry->add_debit($counter_account, -$line->amount, $line->description);
+            $entry->add_credit("bank", -$line->amount, $line->description);
+        } else {
+            $entry->add_debit("bank", $line->amount, $line->description);
+            $entry->add_credit($counter_account, $line->amount, $line->description);
+        }
+        $check AccountingCheck = $ledger->post($entry);
+        if (!$check->accepted) {
+            return $check;
+        }
+        return $this->match_entry($ledger, $statement_reference, $entry->reference);
+    }
+
+    public function report(GeneralLedger $ledger): BankReconciliationReport {
+        $report BankReconciliationReport = new BankReconciliationReport();
+        $report->opening_balance = $this->opening_balance;
+        $report->statement_closing = $this->closing_balance;
+        $report->ledger_closing = $ledger->balance_of("bank");
+        foreach ($this->line_order as $reference) {
+            $line BankStatementLine = $this->lines[$reference];
+            $report->statement_movement += $line->amount;
+            if (!isset($this->matches[$reference])) {
+                $report->unmatched_count += 1;
+                $report->unmatched_amount += $line->amount;
+                $report->unmatched_references[] = $reference;
+            }
+        }
+        $report->difference = $report->ledger_closing - $report->statement_closing;
+        $report->complete = $this->initialized && $report->unmatched_count === 0 && $report->difference === 0;
+        return $report;
+    }
+
+    public function finalize(GeneralLedger $ledger): AccountingCheck {
+        if ($this->finalized) {
+            return accounting_failure("statement.finalized", "Statement was already finalized");
+        }
+        $report BankReconciliationReport = $this->report($ledger);
+        if (!$report->complete) {
+            return accounting_failure("statement.incomplete", "Statement contains unmatched lines or a closing difference");
+        }
+        $this->finalized = true;
+        return accounting_success();
+    }
+}

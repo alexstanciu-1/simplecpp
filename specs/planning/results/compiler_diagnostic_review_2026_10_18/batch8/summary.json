@@ -1,0 +1,127 @@
+{
+  "ctor_unique": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_inherited_unique": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_parent_unique": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_unique_field": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "ctor_concrete_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ordinary_abstract_param": {
+    "stage": "prepare",
+    "error": "Abstract type cannot be stored or returned as an inline value\n"
+  },
+  "ctor_abstract_handle_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_abstract_inherited": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch8/ctor_abstract_inherited/cpp/units/n6d61696e/n6d61696e2e706873.cpp:5:20: error: parameter type 'record_A' is an abstract class\n    5 | record_B::record_B(record_A local_a)\n      |                    ^\n/tmp/mytry-diagnostic-review/batch8/ctor_abstract_inherited/cpp/types/n41.hpp:7:24: note: unimplemented pure virtual method 'dispatch_A__method_f' in 'record_A'\n    7 |         virtual scpp::int_t<> dispatch_A__method_f() = 0;\n      |                               ^\n1 error generated.\n"
+    ]
+  },
+  "ctor_empty_abstract": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_private_dtor": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "protected_dtor_override": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "private_dtor_interface": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dtor_explicit": {
+    "stage": "prepare",
+    "error": "Member call requires one ordinary method: __destruct\n"
+  },
+  "dtor_parent": {
+    "stage": "prepare",
+    "error": "Member call requires one ordinary method: __destruct\n"
+  },
+  "protected_sibling": {
+    "stage": "prepare",
+    "error": "Protected instance access requires the accessing type or a descendant receiver\n"
+  },
+  "protected_child": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "protected_ctor_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "private_ctor_factory": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "interface_inherited_final": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "interface_private_inherited": {
+    "stage": "prepare",
+    "error": "Interface implementation requires a compatible public instance signature\n"
+  },
+  "interface_abstract_inherited": {
+    "stage": "prepare",
+    "error": "Concrete type has unimplemented abstract methods\n"
+  },
+  "interface_reabstract": {
+    "stage": "prepare",
+    "error": "Concrete type has unimplemented abstract methods\n"
+  },
+  "interface_two_return_conflict": {
+    "stage": "prepare",
+    "error": "Incompatible same-named interface contracts\n"
+  },
+  "interface_ancestry_cycle": {
+    "stage": "prepare",
+    "error": "Cyclic type relationship\nCyclic type relationship\n"
+  },
+  "struct_interface_copy": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "inherit_noncopyable": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  },
+  "dtor_noncopyable": {
+    "stage": "prepare",
+    "error": "S2S value copy requires copyable_value\n"
+  }
+}

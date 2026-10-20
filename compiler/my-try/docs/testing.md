@@ -16,6 +16,286 @@ CL-H01 records the original `enums.py` runner's stale SIGABRT expectation for
 diagnostic. The original runner is unchanged. These checks compile generated
 programs, not the compiler itself.
 
+Production CLI/API generation now defaults to strict template prelowering. Existing
+ordinary-language/emission baselines explicitly construct
+`Compiler(new cpp_lowering_options(false))` or use `--no-prelower-templates`;
+this preserves their scope rather than treating them as concrete-coverage proofs.
+Prelowering fixtures select their mode explicitly except for the public-default
+proof, which intentionally exercises unconfigured CLI, API and standalone generation.
+
+`python3 compiler/my-try/tests/prelower_acceptance.py --results FRESH_DIRECTORY`
+is the combined prelowering solidification acceptance command. It runs the existing
+metadata, unsupported-contract, public-option, provider/PCH-boundary, counter/reference,
+source-lifecycle, layout-cache and accounting proofs. Suites run sequentially, each
+retaining its existing shared 12-slot runner; there is no second test scheduler.
+Native builds use O0 without debug. Strict application builds reject PCH; the provider
+suite also retains an explicitly ordinary-mode PCH compatibility control.
+
+`result.json` records revision, worktree status, tool versions, entrypoint hashes,
+per-phase status, result directories and the accounting closure totals. A failed
+phase remains failed even if later independent phases pass; the command exits nonzero.
+Interrupted or incomplete evidence cannot produce a passing summary. Each suite's
+command logs and detailed results remain under its own directory. The contract suite
+tests these reporting failure cases without rebuilding native programs.
+This is bounded acceptance of the current surface, not full runtime coverage, a
+native compiler rebuild, an incremental-compiler maturity claim or a timing benchmark.
+
+`python3 compiler/my-try/tests/prelower_accounting_acceptance.py --results FRESH_DIRECTORY`
+publishes ordinary and prelowered accounting through the public CLI, builds both
+at O0 without debug/PCH in fresh native caches, and requires identical output with
+998 checks and zero failures. It checks warm reuse and automatically records the
+actual native commands for the complete manifest-driven application closure audit.
+Runtime/middleware and layout probes are explicitly excluded from that application
+audit. Source hashes, revision, toolchain, options and results are retained in the
+requested directory. This is correctness/closure acceptance, not a timing benchmark.
+Any emission, native policy or closure failure fails the run; no fallback is selected.
+
+`python3 compiler/my-try/tests/prelower_null_output.py --results FRESH_DIRECTORY`
+also proves default CLI/API/standalone artifact parity, default no-PCH native builds,
+explicit ordinary/PCH builds, mode switching without semantic repreparation, absence of temporary
+selectors, strict CLI failure/repair, ordinary opt-out, and native PCH
+rejection. The CLI-published application is compiled and audited without PCH.
+The fixture builds a fresh concrete application with null interleaved with side-effecting echo
+operands. It checks ordered bytes, warm reuse and the complete no-PCH template closure
+using recorded native commands and the existing audit. The header-boundary suite
+supplies direct/concrete counters and output failure-prefix equivalence.
+
+`python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
+checks concrete rejection for callable locals, parameters, results, fields and nested
+containers, plus object tests/casts, weak creation/locking, source throw/catch/finally,
+`take`, match without a default, boxed extraction, runtime-backed conditions/value
+probes and enum helpers. Repair cases include supported integer/boolean
+conditions and explicit-default match emission and replay.
+It verifies ordinary emission, no partial in-memory output on rejection,
+mode-switch recovery, source repair and replay through the existing shared runner.
+Each attempt uses a fresh `Output_Publication`: rejected revisions are not ready on
+disk, ordinary recovery restores the manifest, and repaired replay preserves it.
+This is a PHP-host backend contract proof, not a native compiler rebuild or complete
+application closure audit. The same runner also exercises closure-recording coverage
+checks: missing/unknown units, conflicting commands, failed compiles, PCH use and
+unclassified compilation artifacts.
+
+`python3 compiler/my-try/tests/prelower_header_boundaries.py --results FRESH_DIRECTORY`
+reuses the output, indexing and compound fixtures at O0 only. It checks native scalar
+output bridge demand, broad indexing-header exclusion, direct/concrete behavior and
+allocation/copy parity, nested references, source evaluation order and warm reuse.
+Output emission also exercises request retirement, replay and option switching.
+The source-demand fixture also publishes uninstrumented compiler output separately,
+checks cached-replay manifest identity, removes demand and verifies retired files are
+gone, then restores the exact original manifest while preserving user-owned files.
+The metadata inventory task compares the complete middleware/layout bundle across
+nested-first and dependency-first request discovery orders. It also checks bounded
+names/filenames for ten nested template levels with distinct leaves beyond the
+readable prefix; this naming check does not claim deep operation execution.
+Its byte proof covers empty, short, embedded-NUL and long literals, copy/move
+allocation parity, borrowed identity and native/concrete string-hash parity, including
+an alternate metadata-selected byte adapter.
+
+`tests/prelower_template_closure.py --commands RECORDED_JSONL --published APP_DIRECTORY --results FRESH_DIRECTORY`
+replays recorded app object commands as preprocessing and full-granularity Clang
+traces. It rejects PCH use, template declarations in transitive input, or class/function
+instantiations. The audit obtains the ready manifest through `Output_Publication`, checks published
+artifact digests and requires every application unit, including entry.cpp, in the
+recording. Conflicting commands and unclassified compilation artifacts reject.
+`coverage.json` records application units and explicit middleware/layout exclusions.
+
+`python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
+checks source payload layout, generated source-class append/store/read calls, shared
+identity/reference counts, allocation/copy parity, source header cycles and incremental
+body/layout cache behavior. This is a focused harness; use the combined acceptance
+for the current strict application closure and the migrated source-lifecycle coverage.
+
+`python3 compiler/my-try/tests/runtime_template_demand.py --output --alternate-storage --results FRESH_DIRECTORY`
+adds scalar echo transport, borrowed/temporary operands, exact ordered bytes and
+failure suppression to the source-demand proof. It compares direct/concrete allocation
+and payload counters and checks that the alternate storage binding was actually enabled.
+
+`python3 compiler/my-try/tests/runtime_template_demand.py --results FRESH_DIRECTORY`
+proves ordinary source emission selects concrete types from runtime recipes, including
+a closed native template behind a nominal type. It checks exact used-type closure,
+unused metadata, nested references, shared pointee identity, source-copy behavior,
+request removal/restoration, fragment replay and option switching. Direct/concrete
+O0/O2 and sanitizer runs must report zero boundary allocations and tracked payload
+lifecycle counters; warm native builds compile/link nothing. Primitive numeric
+copies are not instrumented payload copies.
+
+The combined acceptance's `runtime_type_bindings.php` metadata task covers 39
+malformed/missing/duplicate recipes, including late provider failures after private
+core installation. Each rejection preserves the installed configuration and is
+followed by valid reconfiguration. Demanded concrete artifacts must remain identical
+across a registry reset. These are PHP-host contract checks; native provider validity
+and template-free exposure are separate checks in the provider-boundary suite.
+
+`python3 compiler/my-try/tests/runtime_type_bindings.py --results FRESH_DIRECTORY`
+checks malformed/duplicate type recipes, existing-identity targets, argument reordering,
+closed native templates, reset and explicit demand. It compiles the generated layout
+probes and concrete lifecycle code at O0/O2 and under ASan/UBSan without PCH. This
+proves generated applications, not a native compiler rebuild. The existing mutation
+substitution suite supplies the broader allocation/copy and incremental replay proof.
+
+`python3 compiler/my-try/tests/runtime_inventory.py --results FRESH_DIRECTORY`
+checks all production catalogs together, their type/protocol contracts and demand-only
+concrete preparation. Loading every catalog emits no concrete type headers; requesting
+a nested container emits only its required concrete type closure. Repeated requests
+preserve output and semantic identity. This is a PHP-host emission proof, not native
+compilation or full runtime metadata coverage.
+
+`python3 compiler/my-try/tests/prelower_substitution.py --mutations --results FRESH_DIRECTORY`
+compares ordinary and concrete prefix/postfix increments and decrements, local
+aliases, field receiver evaluation, ordered expressions, native float passthrough
+and nullable-float success/empty failure. It checks request removal/replay, option
+switching and body/layout cache reuse at O0, O2, ASan/UBSan and controlled O2.
+Mutation counters must be zero in both paths. Primitive integer copies are not
+instrumented payload copies; see the [dated evidence](../../../specs/planning/results/prelower_concrete_mutations_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --iteration --results FRESH_DIRECTORY`
+compares ordinary and concrete iteration over vectors, hashes, nested containers and
+an independently metadata-registered `tray<T>` provider. It covers source evaluation
+once, key order, empty loops, break/continue/return, throwing payload copies, inline
+protocol storage, demand removal/replay and layout-cache reuse. Instrumented O0,
+ASan/UBSan and controlled O2 compare all counters; stock O2 differences are reported
+separately. The tracked-payload loop must allocate zero times and perform exactly the
+ordinary three copies/destructions, including early return.
+
+`python3 compiler/my-try/tests/prelower_substitution.py --observations --results FRESH_DIRECTORY`
+checks concrete runtime free calls: counts on several physical container types,
+byte-oriented strlen, temporary-owner observation, value argument sequencing and a
+provider returning an already-concrete payload. It retains the controlled allocator
+comparison and records ordinary O2 deltas separately. See
+[runtime-call evidence](../../../specs/planning/results/prelower_concrete_runtime_calls_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --compound --results FRESH_DIRECTORY`
+extends the cast proof with existing-element compound updates, RHS growth/replacement,
+nested paths, string concatenation, missing/deleted entries and division failure.
+It verifies demand removal and incremental reuse. O0, sanitizer and O2 with allocator
+assumptions disabled compare full direct/concrete counters. Stock O2 compares payload
+lifecycle counters and records its allocation delta separately: inline native code
+can elide allocations that survive the out-of-line concrete boundary.
+See [compound evidence](../../../specs/planning/results/prelower_concrete_compound_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --casts --results FRESH_DIRECTORY`
+extends the binary proof with string/integer, numeric, boolean and narrowing/widening
+casts plus implicit text conversion. It checks source effects and failed-cast
+suppression in binary operands and keyed initializers, helper demand removal/replay,
+and direct/concrete allocation/copy parity. See [cast evidence](../../../specs/planning/results/prelower_concrete_casts_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --binary --results FRESH_DIRECTORY`
+extends the initializer/indexing proof with existing string concatenation and strict
+identity, boolean identity, integer arithmetic/power/bitwise/three-way operations,
+enum equality, snapshot order, short-circuiting and division-failure order. It checks
+binary-helper demand removal/restoration and compares successful workload counters
+across direct/concrete O0/O2 and sanitizer builds. Runtime-error stack allocations
+are outside the counter window. See [binary evidence](../../../specs/planning/results/prelower_concrete_binary_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --initializers --results FRESH_DIRECTORY`
+extends the indexing proof with empty source-field defaults, nonempty list/keyed
+initialization, nested concrete elements, 40-element buffer allocation, key/value
+order and throwing-copy budgets through successful completion. It verifies initializer
+request removal/restoration, cached replay, native/layout reuse and direct/concrete
+counter parity. See [initializer evidence](../../../specs/planning/results/prelower_concrete_initializers_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --indexing --results FRESH_DIRECTORY`
+adds ordinary indexed reads/writes, append and nested `unset` to the concrete proof.
+It checks key/RHS order, root replacement, missing-prefix short-circuiting, concrete
+integer hash keys, negative-key append/overflow behavior, internal reference identity,
+and throwing-copy cleanup. Counters compare direct/concrete builds within each
+configuration: disabling optional elision adds the same source-return move to both.
+See [indexing evidence](../../../specs/planning/results/prelower_indexing_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --members --results FRESH_DIRECTORY`
+extends the concrete source-field proof with ordinary compiler-emitted `append` and
+`replace` calls across integer, nested-vector and tracked-payload arguments. It
+compares lvalue snapshots and consumed results at O0/O2 and with ASan/UBSan, checks
+member-demand removal/restoration, cached-fragment replay and native/layout reuse.
+See [member forwarding evidence](../../../specs/planning/results/prelower_members_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
+adds `vector<Record>`, an independently registered `parcel<Record>`, and
+`vector<MyClass>` using the shared class handle representation. It compiles actual
+published source definitions with concrete fields, compares native/composed counters,
+checks nested reference identity and class sharing, and proves that a method-body edit
+leaves shared headers/support bytes unchanged and rebuilds only the source object.
+The sibling cycle fixture proves explicit generated-header-cycle rejection and recovery.
+See [source argument evidence](../../../specs/planning/results/prelower_source_arguments_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --source-fields --results FRESH_DIRECTORY`
+adds compiler-emitted inline source records, nested fields, method calls, parameter
+and return bindings, reference aliases, fragment replay, method-body edit restoration
+and lowering-option switching to the existing concrete-argument proof. Published
+specialization artifacts must match the demand set, and generated source artifacts
+must not retain tested native integer/vector spellings. The C++ harness drives the
+emitted declarations and supplies container seeding/mutation; runtime-container member
+forwarding is not covered. See [source-field evidence](../../../specs/planning/results/prelower_source_fields_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_substitution.py --results FRESH_DIRECTORY`
+proves production type-binding and lifecycle generation with concrete runtime
+arguments, including nested containers and an independently registered template.
+It checks direct/composed allocation/copy parity, actual nested references, throwing
+copy cleanup, request-order replay, layered layout caching and edit restoration at
+`-O0`, `-O2` and ASan/UBSan. The source record and operation adapters are fixture C++;
+this does not prove ordinary source-field emission or a native compiler rebuild.
+See the [binding integration checkpoint](../../../specs/planning/results/prelower_substitution_2026_10_19/README.md).
+
+`python3 compiler/my-try/tests/prelower_composition.py --results FRESH_DIRECTORY`
+compares a source record containing actual concrete fields against original native
+template fields. It checks field/reference identity, record and nested-container
+copy/move/growth, shared/unique ownership, partial-copy cleanup, layout/lifecycle
+traits, sanitizer behavior and zero extra allocation/payload-copy counts. A negative
+control verifies counter sensitivity. `--timing-repeats 5` adds paired separate-unit
+compile timings. This is a native representation experiment, not compiler lowering;
+see the [composition proof](../../../specs/planning/results/prelower_composition_2026_10_19/README.md).
+
+The comparison-only `prelower_expressions.py` harness and its source-method/constructor
+fixtures are preserved in [the historical proof archive](../tests/historical/prelowering/README.md).
+They exercised the removed runtime-ABI source-lowering mode, not current acceptance.
+Use the general substitution and header-boundary proofs above.
+
+`python3 compiler/my-try/tests/prelower_source_lifecycle.py --results FRESH_DIRECTORY`
+migrates the detailed source-method/constructor cases to the public concrete API
+option. It compares ordinary/concrete O0 behavior and allocation/copy/move counters,
+including receiver replacement/clearing, defaults, ordered reference arguments,
+inline results, five injected copy-failure stages, shared aliasing, unique transfer
+and independent value copies. It checks const pointer interfaces, strict unsupported
+boundary rejection/recovery, unchanged replay, warm reuse, method-only layout reuse
+and layout-edit rebuilding. Generated application units retain strict template
+validation; native test instrumentation lives under specialization support.
+The former mode's exact unit-rebuild count and O2/sanitizer results are not claims
+of this migrated proof.
+
+`python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
+checks real prepared observation/type bindings through opaque lifecycle generation,
+publication and native layout caching, including provider dependency edits, recovery,
+allocation/copy counters and sanitizers. This is API integration, not ordinary source
+expression adoption; see the [checkpoint](../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
+Add `--o0-only` to retain the layout/cache/counter checks while skipping optimized
+and sanitizer builds.
+
+`python3 compiler/my-try/tests/prelower_boundary.py --results FRESH_DIRECTORY`
+compares direct and in-place opaque runtime objects with allocation/lifecycle counters,
+nested-reference identity, failure cleanup and a deliberately copying negative control.
+This is a native boundary experiment, not compiler integration; see the
+[dated proof](../../../specs/planning/results/prelower_boundary_2026_10_19/README.md).
+
+The handwritten integer/vector comparison harness is also archived. Its useful
+emission/replay/recovery fixture (`fixtures/prelower_templates.php`) now exercises the
+single general path and runs within `prelower_null_output.py`; old per-family spellings
+and timings are historical evidence only.
+
+`python3 compiler/my-try/tests/records.py --suite duplicate_types --no-pch --results FRESH_DIRECTORY`
+checks duplicate type admission before emission, all source type kinds, cross-file
+retry/rename/removal recovery and valid namespace/import controls. See
+[the DR-03 proof](planning/duplicate_type_admission_2026_10_18/README.md).
+
+`python3 compiler/my-try/tests/records.py --suite ownership_targets --no-pch --results FRESH_DIRECTORY`
+checks shared/unique void target rejection across source contexts, retry/recovery,
+and generated shared/unique controls plus unchanged weak<void> admission.
+See [the bounded DR-02 proof](planning/ownership_void_targets_2026_10_18/README.md).
+
+`python3 compiler/my-try/tests/records.py --suite constructor_parameters --no-pch --results FRESH_DIRECTORY`
+checks abstract inline constructor input rejection before emission, inherited
+signature invalidation/recovery, and four generated concrete/shared input controls.
+See [the bounded DR-04 repair proof](planning/constructor_parameter_admission_2026_10_18/README.md).
+
 `tests/scalar_admission.py --php /usr/bin/php8.2 --jobs 32 --results FRESH`
 checks bool equality and float arithmetic, conversions, deferred boundaries and
 seven generated programs. Run on dev002. The agreed contract preserves
@@ -86,6 +366,18 @@ checks metadata error factory/defaults/getters, Result failure boundaries, state
 copy behavior, no-error rejection with assignment preservation, preparation rejections
 and incremental repair/fresh agreement. It compiles generated programs; it does not
 rebuild the compiler.
+
+`python3 compiler/my-try/tests/lowering_report.py --results FRESH_DIRECTORY` checks
+optional lowering-report correctness, output equivalence and retained-generation
+purity at O0/O1/O2. See the [report schema](architecture/lowering_report.md).
+This is PHP-hosted behavior, not a native compiler rebuild.
+
+`python3 compiler/my-try/tests/ninja_build.py --results FRESH_DIRECTORY` checks
+published-program builds through the shared command recipes and Ninja: fresh/warm,
+body/provider/header edits, source-unit addition/removal, link-only configuration,
+PCH dependency rebuild, no-PCH/O2, failure/retry, path escaping and readiness guards.
+It uses the shared runner and executes generated programs. It does not rebuild the
+compiler natively or test its incremental/MT internals.
 
 `python3 compiler/my-try/tests/indexed_properties.py --results FRESH_DIRECTORY`
 checks plain indexed shared-object property writes, reference/place boundaries,
@@ -1394,6 +1686,36 @@ signatures with independent state normalization and source snapshots. Add
 `--runtime-only` for the prerequisite gate. Run on dev002; see
 [the dated proof](planning/bool_numeric_identity.md).
 
+## Shared-handle completeness
+
+`python3 compiler/my-try/tests/shared_handle_completeness.py --results FRESH` runs
+a focused PHP-hosted lowering proof and compiles/executes separate generated C++
+units before and after a class-layout edit. It verifies declaration-only handle
+transfer, shared identity/last-owner cleanup, and complete payload dependencies
+for construction, member access, upcasts, value copies and template arguments.
+It does not rebuild the compiler itself.
+
+## Optimization-policy and construction outlining proof
+
+`python3 compiler/my-try/tests/optimization_policy.py --results FRESH` exercises
+O0/O1/O2/O3 generated programs, six retained policy switches without source edits,
+execution-spelling byte preservation, independent containers/shared aliases,
+ineligible constructor/value/inheritance cases, release-policy mismatch rejection,
+a default edit confined to the owning implementation unit, unique-allocation
+preservation, and eligibility changes refreshing untouched callers. This is a PHP-hosted
+compiler proof with compiled generated programs; native compiler and dev002 timing
+evidence are recorded in the [constructor checkpoint](planning/optimization_policy_20261016.md)
+and [allocation checkpoint](planning/allocation_outlining_20261016.md).
+
+## Initialization header isolation
+
+`python3 compiler/my-try/tests/initialization_headers.py --results FRESH` checks all
+five initializer headers without a PCH, both include orders, typed-only exclusion
+of the mixed adapter, and input lifetime/unwinding through both narrow typed and
+compatibility umbrella headers. `data_initialization.py --no-pch` exercises the
+existing typed/mixed/dynamic source-construction and runtime-observation fixtures.
+See the [dev002 header-split checkpoint](planning/initialization_headers_20261016.md)
+for native compiler, build timing, memory and runtime evidence.
 
 ### Heterogeneous string strict identity E5SI — 2026-10-20
 

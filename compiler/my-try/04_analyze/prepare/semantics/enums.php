@@ -8,13 +8,8 @@ final class Enum_Preparation
 	/** Name membership and backing dependencies use the ordinary declaration scheduler. */
 	public static function declaration(enum_node $syntax, preparation_context $context): prepared_enum
 	{
-		$entry = $syntax->occurrence();
-		$declaring_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$candidates = Observed_Lookup::types($declaring_scope, $entry->name, $context);
-		if (q_count($candidates) !== 1) {
-			throw new \RuntimeException('S2S duplicate enum/type name: ' . $entry->name);
-		}
-		$definition = object_cast($candidates[0], enum_type_definition::class);
+		$entry = object_cast($syntax->occurrence(), collected_type_definition::class);
+		$definition = object_cast(Declaration_Preparation::type_name($entry, $context), enum_type_definition::class);
 		$registry = Model::$type_catalog->registry();
 		$facts = new prepared_enum();
 		$facts->type = $registry->use($registry->canonical($definition)->type_id());

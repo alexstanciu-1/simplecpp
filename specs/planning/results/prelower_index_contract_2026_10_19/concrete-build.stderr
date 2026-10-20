@@ -1,0 +1,19 @@
+Native compilation failed: In file included from /tmp/prelower-index-contract/concrete/specializations/layout_1.cpp:4:
+In file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/hash_t.hpp:3:
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:248:16: error: static assertion failed: hash_t<T, T_KEY> requires a supported typed key family
+  248 |         static_assert(hash_detail::typed_hash_key<T_KEY>, "hash_t<T, T_KEY> requires a supported typed key family");
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/prelower-index-contract/concrete/specializations/layout_1.cpp:7:258: note: in instantiation of template class 'scpp::hash_t<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421, scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>' requested here
+    7 | std::printf("#define SCPP_LAYOUT_concrete_n_hash_int_int__5e912e7fb27285762c663458936d210bd804579fa9dfdf5f5b9c5f684cfe4a70_SIZE %zu\n#define SCPP_LAYOUT_concrete_n_hash_int_int__5e912e7fb27285762c663458936d210bd804579fa9dfdf5f5b9c5f684cfe4a70_ALIGN %zu\n", sizeof(native_concrete_n_hash_int_int__5e912e7fb27285762c663458936d210bd804579fa9dfdf5f5b9c5f684cfe4a70), alignof(native_concrete_n_hash_int_int__5e912e7fb27285762c663458936d210bd804579fa9dfdf5f5b9c5f684cfe4a70));
+      |                                                                                                                                                                                                                                                                  ^
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:248:16: note: because 'scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421' does not satisfy 'typed_hash_key'
+  248 |         static_assert(hash_detail::typed_hash_key<T_KEY>, "hash_t<T, T_KEY> requires a supported typed key family");
+      |                       ^
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:240:26: note: because 'scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421' does not satisfy 'hash_key'
+  240 | concept typed_hash_key = hash_key<T_KEY>;
+      |                          ^
+/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/support/hash_t.hpp:235:4: note: because 'key_ops<T_KEY>::hash(left)' would be invalid: implicit instantiation of undefined template 'scpp::hash_detail::key_ops<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>'
+  235 |         { key_ops<T_KEY>::hash(left) } -> std::convertible_to<std::uint64_t>;
+      |           ^
+1 error generated.
+

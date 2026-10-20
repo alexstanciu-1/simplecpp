@@ -1,0 +1,1 @@
+$v hash<int> = {x: 1}; $k mixed = 'x'; return $v[$k];

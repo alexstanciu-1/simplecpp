@@ -1,0 +1,1 @@
+interface I { function f(): int; } abstract class B { abstract function f(): int; } class C extends B implements I {} return 0;

@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Cyclic type relationship\nCyclic type relationship\n"
+}

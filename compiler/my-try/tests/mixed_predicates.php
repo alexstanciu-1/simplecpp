@@ -48,7 +48,7 @@ foreach($rejections as $source){$error='';try{operator_test_source($source);}cat
 $dir=sys_get_temp_dir().'/scpp_predicate_'.bin2hex(random_bytes(6));mkdir($dir);$path=$dir.'/main.phs';$recoveries=0;
 try{
  foreach(['is_bool','is_int','is_float'] as $name){
-  $valid='function probe(mixed $v):bool{return '.$name.'($v);}';file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$dir]);$compiler->exec_cpp();$fresh=CPP_Probe::text(Model::$cpp_files);
+  $valid='function probe(mixed $v):bool{return '.$name.'($v);}';file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$dir]);$compiler->exec_cpp();$fresh=CPP_Probe::text(Model::$cpp_files);
   foreach(['int','dynamic'] as $wrong){
    file_put_contents($path,str_replace('mixed $v',$wrong.' $v',$valid));
    foreach([[$path],[]] as $changes){$failed=false;try{$compiler->update_cpp($changes);}catch(\RuntimeException $e){$failed=true;}predicate_check($failed&&Model::$cpp_files->is_empty()&&Model::$prepared_files->is_empty(),'Failed predicate update retained artifacts');}

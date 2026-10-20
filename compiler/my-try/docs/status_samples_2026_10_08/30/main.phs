@@ -1,0 +1,3 @@
+$values vector<int> = [10, 20, 30];
+unset($values[1]);
+return $values[1];

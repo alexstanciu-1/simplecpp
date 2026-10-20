@@ -16,7 +16,7 @@ function property_defaults_source(string $source): string
 	$input->content = $source;
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -94,7 +94,7 @@ try {
 	file_put_contents($types_path, 'namespace Types; use const Defaults\N as LIMIT; class C { int $n = LIMIT; }');
 	file_put_contents($main_path, 'use Types\C; $c = new C(); return $c->n;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();
@@ -129,7 +129,7 @@ try {
 	}
 	$incremental = CPP_Output::encode(Model::$cpp_files);
 	Compiler_Lifecycle::reset();
-	$fresh = new Compiler();
+	$fresh = new Compiler(new cpp_lowering_options(false));
 	$fresh->init([$directory]);
 	$fresh->select_entry('main', 'main.phs');
 	$fresh->exec_cpp();
@@ -157,7 +157,7 @@ try {
 	$inferred_string = CPP_Output::encode(Model::$cpp_files);
 	if ($inferred_string === $inferred_int) { throw new \LogicException('Inferred property type did not invalidate output'); }
 	Compiler_Lifecycle::reset();
-	$check = new Compiler();
+	$check = new Compiler(new cpp_lowering_options(false));
 	$check->init([$directory]);
 	$check->select_entry('main', 'main.phs');
 	$check->exec_cpp();

@@ -1,0 +1,5 @@
+class Item { public int $value = 7; }
+$owner = new Item();
+$observer = weak($owner);
+$held = lock($observer);
+return $held->value;

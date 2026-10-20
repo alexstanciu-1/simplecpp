@@ -10,7 +10,7 @@ function static_redeclaration_source(string $text): string
 	$module = new module('/static-redeclarations', '/static-redeclarations', '/static-redeclarations');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 

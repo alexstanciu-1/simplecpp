@@ -1,0 +1,1 @@
+$c = App\C::make(); return 0;

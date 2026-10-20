@@ -38,15 +38,39 @@
     }
   ],
   "cpp_initialization": [
-    {"id": "core.vector", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"},
-    {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"}
+    {"id": "core.vector", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer_typed.hpp"},
+    {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer_typed.hpp"}
   ],
   "cpp_types": [
     {"id":"core.Exception","symbol":"scpp::Exception","header":"lang/php/php_exceptions.hpp"},
     {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},
-    {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"}
+    {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"},
+    {"id":"core.representation.bool","type":"bool","literal_interface":"scalar","concrete_boundary":true,"symbol":"scpp::bool_t","header":"scpp/bool_t.hpp"},
+    {"id":"core.representation.int","type":"int","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[]},
+    {"id":"core.representation.float","type":"float","literal_interface":"scalar","concrete_boundary":true,"symbol":"scpp::float_t","header":"scpp/float_t.hpp"},
+    {"id":"core.representation.string","type":"string","symbol":"scpp::string_t","header":"scpp/support/string_representation.hpp","concrete_boundary":true,"literal_interface":"bytes","byte_interface":"scpp::string_representation"},
+    {"id":"core.representation.error","type":"error","symbol":"scpp::error_t","header":"scpp/error_t.hpp"},
+    {"id":"core.representation.mixed","type":"mixed","symbol":"scpp::mixed_t","header":"scpp/mixed_t.hpp"},
+    {"id":"core.representation.dynamic","type":"dynamic","symbol":"scpp::dynamic_t","header":"scpp/dynamic_t.hpp","arguments":[]},
+    {"id":"core.representation.int8","type":"int8","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::int8_t"}]},
+    {"id":"core.representation.uint8","type":"uint8","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::uint8_t"}]},
+    {"id":"core.representation.int16","type":"int16","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::int16_t"}]},
+    {"id":"core.representation.uint16","type":"uint16","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::uint16_t"}]},
+    {"id":"core.representation.int32","type":"int32","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::int32_t"}]},
+    {"id":"core.representation.uint32","type":"uint32","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::uint32_t"}]},
+    {"id":"core.representation.int64","type":"int64","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::int64_t"}]},
+    {"id":"core.representation.uint64","type":"uint64","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[{"native":"std::uint64_t"}]},
+    {"id":"core.representation.nullable","type":"nullable","symbol":"scpp::nullable","header":"scpp/nullable.hpp"},
+    {"id":"core.representation.result","type":"result","symbol":"scpp::result","header":"scpp/result.hpp"},
+    {"id":"core.representation.result_or_false","type":"result_or_false","symbol":"scpp::result_or_false","header":"scpp/result_or_false.hpp"},
+    {"id":"core.representation.result_or_bool","type":"result_or_bool","symbol":"scpp::result_or_bool","header":"scpp/result_or_bool.hpp"},
+    {"id":"core.representation.shared","type":"shared","pointee":"Target","symbol":"scpp::shared_p","header":"scpp/shared_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
+    {"id":"core.representation.weak","type":"weak","symbol":"scpp::weak_p","header":"scpp/weak_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
+    {"id":"core.representation.unique","type":"unique","pointee":"Target","symbol":"scpp::unique_p","header":"scpp/unique_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
+    {"id":"core.representation.value","modifier":"value","pointee_modified_type":true,"symbol":"scpp::value_p","header":"scpp/value_p.hpp","arguments":[{"modified_type":true,"representation":"payload"}]}
   ],
   "functions": [
+    {"id":"core.vector.append","name":"append","member":{"owner":"vector","dispatch":"instance"},"parameters":[{"name":"value","type":{"parameter":"Value"},"passing":"value"}],"returns":"void"},
     {"id":"core.microtime.0","name":"microtime","qualified_aliases":["php"],"parameters":[],"returns":"string"},
     {"id":"core.microtime.1","name":"microtime","qualified_aliases":["php"],"parameters":[{"name":"as_float","type":"bool","passing":"value"}],"returns":"float"},
     {"id":"core.vector_reserve.2","name":"vector_reserve","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"},{"name":"capacity","type":"int","passing":"value"}],"returns":"void"},
@@ -115,6 +139,7 @@
     }
   ],
   "cpp": [
+    {"id":"core.vector.append","symbol":"append","header":"scpp/vector_t.hpp"},
     {"id":"core.microtime.0","symbol":"scpp::php::microtime","header":"scpp/lang/php.hpp"},
     {"id":"core.microtime.1","symbol":"scpp::php::microtime","header":"scpp/lang/php.hpp"},
     {"id":"core.vector_reserve.2","symbol":"scpp::php::vector_reserve","header":"scpp/lang/php.hpp"},

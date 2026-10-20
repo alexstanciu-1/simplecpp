@@ -17,7 +17,7 @@ try {
 	$valid = 'function source(): vector<int> { return [2, 3]; } function sum(): int { $n = 0; foreach (source() as $k => $v) { $n += $v; } return $n; } return sum();';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);
@@ -48,7 +48,7 @@ try {
 	Preparation_Cleanup::tree(Model::syntax_files()[0]->root);
 	iteration_check($loop->preparation() === null && $loop->iterable->preparation() === null, 'Cleanup retained iteration facts');
 	Compiler_Lifecycle::reset();
-	$clean = new Compiler();
+	$clean = new Compiler(new cpp_lowering_options(false));
 	$clean->init([$directory]);
 	$clean->exec_cpp();
 	iteration_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental iteration differ');
@@ -64,7 +64,7 @@ try {
 	] as $invalid) {
 		file_put_contents($path, $invalid);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$failed = false;
 		try { $compiler->init([$directory]); $compiler->exec_cpp(); }
 		catch (\RuntimeException $error) { $failed = true; }

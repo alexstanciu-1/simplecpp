@@ -1,0 +1,1 @@
+struct S { shared<void> $s; } return 0;

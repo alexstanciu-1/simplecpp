@@ -1,0 +1,6 @@
+$handle file_lock_handle;
+$acquired bool = false;
+$failure error;
+if (!take($acquired, $failure, fs_lock_try($handle, "sample.lock", false))) { return 1; }
+if ($acquired) { $released bool = false; take($released, $failure, fs_lock_release($handle)); }
+return 0;

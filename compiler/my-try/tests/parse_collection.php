@@ -48,7 +48,7 @@ file_put_contents($directory . '/a.phs', 'struct Box { int $value; bool $ready; 
 file_put_contents($directory . '/b.phs', 'function other(): int { return 2; }');
 try
 {
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$module = Model::$modules[$directory];
 	$a = $module->sources['a.phs'];

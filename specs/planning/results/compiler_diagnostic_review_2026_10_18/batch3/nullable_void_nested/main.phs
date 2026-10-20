@@ -1,0 +1,1 @@
+$s shared<nullable<void>>; return 0;

@@ -1,0 +1,1 @@
+$n = 256; $b uint8 = $n; return 0;

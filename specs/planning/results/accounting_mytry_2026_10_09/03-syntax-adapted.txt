@@ -1,0 +1,4 @@
+S2S generation failed: main.phs: Expected ';' at main.phs: byte 718
+src/assets.phs: Expected '{' at src/assets.phs: byte 7954
+src/checks.phs: Expected ';' at src/checks.phs: byte 940
+

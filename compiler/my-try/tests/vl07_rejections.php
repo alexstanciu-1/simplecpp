@@ -10,7 +10,7 @@ try {
   $lhs=$row['lhs'];$rhs=$row['rhs'];$op=$row['operator'];
   $valid='function probe('.$lhs.' $a, '.$rhs.' $b): bool { return true; }';
   $invalid='function probe('.$lhs.' $a, '.$rhs.' $b): void { $out=($a '.$op.' $b); }';
-  file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$directory]);$compiler->exec_cpp();$fresh=CPP_Probe::text(Model::$cpp_files);
+  file_put_contents($path,$valid);Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$directory]);$compiler->exec_cpp();$fresh=CPP_Probe::text(Model::$cpp_files);
   file_put_contents($path,$invalid);$diagnostic='';
   foreach([[$path],[]] as $changes) {
    $failed=false;try{$compiler->update_cpp($changes);}catch(\RuntimeException $e){$failed=true;$diagnostic=$e->getMessage();}

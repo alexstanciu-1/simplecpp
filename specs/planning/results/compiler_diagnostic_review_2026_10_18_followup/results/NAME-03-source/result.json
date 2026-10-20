@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Conflicting import binding: X"
+}

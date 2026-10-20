@@ -1,0 +1,377 @@
+[
+  {
+    "name": "body_unknown",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/body_unknown",
+      "/tmp/mytry-diagnostic-review/batch18b/body_unknown/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.112,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "param_string",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/param_string",
+      "/tmp/mytry-diagnostic-review/batch18b/param_string/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.183,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "delete_file",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/delete_file",
+      "/tmp/mytry-diagnostic-review/batch18b/delete_file/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.198,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "duplicate_function",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/duplicate_function",
+      "/tmp/mytry-diagnostic-review/batch18b/duplicate_function/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.155,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "extra_parameter",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/extra_parameter",
+      "/tmp/mytry-diagnostic-review/batch18b/extra_parameter/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.377,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "missing_type",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/missing_type",
+      "/tmp/mytry-diagnostic-review/batch18b/missing_type/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.424,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "return_string",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/return_string",
+      "/tmp/mytry-diagnostic-review/batch18b/return_string/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.45,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "parse_error",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/parse_error",
+      "/tmp/mytry-diagnostic-review/batch18b/parse_error/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.4,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "removed_symbol",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/removed_symbol",
+      "/tmp/mytry-diagnostic-review/batch18b/removed_symbol/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.487,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "missing_method",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/missing_method",
+      "/tmp/mytry-diagnostic-review/batch18b/missing_method/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.584,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "body_wrong_return",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/body_wrong_return",
+      "/tmp/mytry-diagnostic-review/batch18b/body_wrong_return/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.702,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "token_error",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/token_error",
+      "/tmp/mytry-diagnostic-review/batch18b/token_error/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.728,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "method_return",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/method_return",
+      "/tmp/mytry-diagnostic-review/batch18b/method_return/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.512,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "constructor_param",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/constructor_param",
+      "/tmp/mytry-diagnostic-review/batch18b/constructor_param/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.437,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "method_param",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/method_param",
+      "/tmp/mytry-diagnostic-review/batch18b/method_param/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.65,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "field_type",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/field_type",
+      "/tmp/mytry-diagnostic-review/batch18b/field_type/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.377,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "abstract_class",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/abstract_class",
+      "/tmp/mytry-diagnostic-review/batch18b/abstract_class/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.649,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "interface_extra",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/interface_extra",
+      "/tmp/mytry-diagnostic-review/batch18b/interface_extra/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.455,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "base_final",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/base_final",
+      "/tmp/mytry-diagnostic-review/batch18b/base_final/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.501,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "private_method",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/private_method",
+      "/tmp/mytry-diagnostic-review/batch18b/private_method/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.788,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "field_private",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/field_private",
+      "/tmp/mytry-diagnostic-review/batch18b/field_private/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.581,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "add_bad_file",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/add_bad_file",
+      "/tmp/mytry-diagnostic-review/batch18b/add_bad_file/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.483,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "duplicate_class",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/duplicate_class",
+      "/tmp/mytry-diagnostic-review/batch18b/duplicate_class/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.411,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "delete_entry",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/delete_entry",
+      "/tmp/mytry-diagnostic-review/batch18b/delete_entry/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.436,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "known_hash_gap",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch18b/known_hash_gap",
+      "/tmp/mytry-diagnostic-review/batch18b/known_hash_gap/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.169,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  }
+]

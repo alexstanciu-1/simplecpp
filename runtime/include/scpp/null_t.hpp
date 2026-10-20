@@ -1,7 +1,5 @@
 #pragma once
 
-#include "scpp/detail.hpp"
-
 namespace scpp {
 
 // Sentinel representing the generic runtime notion of "null".

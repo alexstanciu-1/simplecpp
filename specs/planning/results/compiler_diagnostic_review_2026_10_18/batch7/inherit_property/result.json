@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Inherited member redeclaration is deferred: n\n"
+}

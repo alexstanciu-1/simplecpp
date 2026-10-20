@@ -23,7 +23,7 @@ file_put_contents($second, 'return first();');
 file_put_contents($nested, 'function nested(): int { return 3; }');
 try
 {
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$root . '/one', $root . '/two']);
 	$one = Model::$modules[$root . '/one'];
 	$two = Model::$modules[$root . '/two'];

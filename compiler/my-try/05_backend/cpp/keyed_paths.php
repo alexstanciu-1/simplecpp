@@ -6,9 +6,13 @@ namespace scpp\compiler;
 final class CPP_Keyed_Path
 {
 	public static function generate(prepared_keyed_path $path, cpp_generation_context $context,
-		bool $removing, bool $emptiness = false, ?truthiness_decision $presence = null): string
+		bool $removing, bool $emptiness = false, ?truthiness_decision $presence = null,
+		?canonical_type_use $result = null): string
 	{
-		$context->headers['scpp/keyed_path.hpp'] = true;
+		if ($context->specialization_engine !== null && !CPP_Concrete_Index::active($context)) {
+			throw new \RuntimeException('prelower_templates: keyed probes/removal require a concrete adapter');
+		}
+		if (!CPP_Concrete_Index::active($context)) { $context->headers['scpp/keyed_path.hpp'] = true; }
 		$id = $context->next_temporary;
 		$context->next_temporary++;
 		$emitter = new CPP_Syntax($context);
@@ -16,19 +20,24 @@ final class CPP_Keyed_Path
 		$steps /** Storage<prepared_keyed_step> */ = $path->steps;
 		$root_type = CPP_Declarations::type($path->root->require_preparation()->type, $context);
 		$mode = $removing ? 'true' : 'false';
-		$result_type = $removing ? 'void' : 'scpp::bool_t';
+		if (!$removing && $result === null) { throw new \LogicException('Keyed probe requires its prepared result type'); }
+		$result_type = $removing ? 'void' : CPP_Declarations::type($result, $context);
 		$stop = 'return;';
-		if (!$removing) { $stop = 'return scpp::bool_t{' . ($emptiness ? 'true' : 'false') . '};'; }
+		if (!$removing) { $stop = 'return ' . $result_type . '{' . ($emptiness ? 'true' : 'false') . '};'; }
 		if (!$removing && $emptiness) { $stop = 'scpp::detail::throw_invalid_empty();'; }
 		$binding = CPP_Declarations::bind_storage_receiver($path->root, $context);
 		$text = '([&]() -> ' . $result_type . ' { ' . $binding->statements . ($removing ? 'auto& ' : 'const auto& ')
 			. $root . ' = ' . $binding->value . '; ';
 		$resolver = 'keyed_resolve_' . $id . '_0';
 		$text .= 'auto ' . $resolver . ' = [&]() -> const ' . $root_type . '* { return &' . $root . '; }; ';
+		$current_type = $path->root->require_preparation()->type;
 		$position = 0;
 		$last = $steps->count() - 1;
 		foreach ($steps as $step)
 		{
+			if (CPP_Concrete_Index::active($context)) {
+				CPP_Concrete_Index::keyed_step($current_type, $step, $position === $last, $removing, $presence !== null, $context);
+			}
 			$text .= 'if (!scpp::keyed_ready(' . $resolver . '(), ' . $mode . ')) { ' . $stop . ' } ';
 			$key = 'keyed_key_' . $id . '_' . $position;
 			$key_syntax /** expression_node */ = $step->syntax->index;
@@ -46,11 +55,11 @@ final class CPP_Keyed_Path
 				if ($presence !== null) {
 					$leaf = 'keyed_leaf_' . $id;
 					$text .= 'const auto* ' . $leaf . ' = scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', false); ';
-					$text .= 'if (!' . $leaf . ') { return scpp::bool_t{false}; } return scpp::bool_t('
+					$text .= 'if (!' . $leaf . ') { return ' . $result_type . '{false}; } return ' . $result_type . '('
 						. CPP_Declarations::truthiness('(*' . $leaf . ')', $presence, $context) . '); ';
 				}
 				else {
-					$text .= 'return scpp::keyed_probe(' . $resolver . '(), ' . $key . ', ' . ($emptiness ? 'true' : 'false') . '); ';
+					$text .= 'return ' . $result_type . '(scpp::keyed_probe(' . $resolver . '(), ' . $key . ', ' . ($emptiness ? 'true' : 'false') . ')); ';
 				}
 			}
 			else
@@ -65,6 +74,7 @@ final class CPP_Keyed_Path
 				}
 				$text .= 'scpp::keyed_erase(' . $parent . ', ' . $key . '); ';
 			}
+			$current_type = $step->element_type;
 			$position++;
 		}
 		return $text . '}())';

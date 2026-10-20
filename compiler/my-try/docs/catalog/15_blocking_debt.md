@@ -649,6 +649,35 @@ is now resolved; see Chapter 06's positive-pass conclusion.
 These items require review, not automatic implementation or an implicit promotion
 to blocking feature debt. Preserve the distinction from the blocking inventory above.
 
+### CH15-SOURCE-DETECTION-01 — scan-only edits with unchanged file metadata
+
+Deferred to Chapter 15 by explicit user decision on 2026-10-18. This is existing
+input change-detection debt, not a newly verified semantic preparation defect.
+The current [incremental strategy](../planning/incremental_strategy.md) records
+that mtime/size scanning can miss equal-size edits when timestamps are unchanged;
+explicit changed-path notifications force reads.
+
+The [historical review](../../../../specs/planning/results/compiler_diagnostic_review_2026_10_18/REPORT-INCREMENTAL.md)
+replaced `$x = 1; return $x;` with `$x = 1; return $y;` while preserving file size
+and mtime. Without notification, the same compiler instance reused old valid output
+and publication remained ready. Notified edits and fresh compilation detected the
+invalid source. Historical native-cache observations were downstream consequences
+of the missed input change, not proof of an independent cache invalidation defect.
+
+Owner: input discovery/change detection and its lifecycle notification contract.
+Discuss the required scan-only freshness guarantee and a sound detection strategy
+before implementation; do not silently add content hashing or redesign the cache.
+Assess detection cost alongside correctness once a strategy is agreed.
+
+Closeout needs same-instance equal-size/equal-mtime semantic and syntax edit cases,
+explicit-notification and fresh-instance controls, failure/readiness checks, and
+successful recovery after repair. Verify native-output reuse only where the chosen
+contract requires it. Establish evidence against the then-current revision.
+
+The diagnostic inventory's REC-03 is deferred here and excluded from the current
+review execution. Explicitly notified semantic/syntax failure and recovery cases
+REC-01/02 remain in scope. No implementation or execution is authorized by this entry.
+
 ### CH15-NATIVE-CACHE-PERF-01 — native cache validation overhead
 
 Transferred by user request on 2026-10-06; optimization is deferred, not a reason to
@@ -729,33 +758,89 @@ recovery. A stored digest without a refresh protocol cannot detect later edits.
 This is the explicit temporary runtime exception to CH15-NATIVE-CACHE-PERF-01;
 that item's generated-input and recovery requirements remain in force.
 
+### CH15-CPP-OPT-POLICY-01 — optimization-aware C++ lowering
+
+Recorded by user request on 2026-10-16. The first policy flow and bounded default
+constructor and no-argument shared-allocation outlining are implemented; see the
+[constructor measurements](../planning/optimization_policy_20261016.md) and
+[allocation measurements](../planning/allocation_outlining_20261016.md).
+Application O0/O1 prioritize compile latency; O2/O3 retain
+execution-oriented output. The compiler executable's own optimization is independent.
+See the [configuration and publication contract](../architecture/native_cpp_build.md#application-optimization-and-c-lowering).
+
+Remaining non-blocking debt: broaden eligible construction only after ownership,
+initialization/lifecycle and execution-cost proofs; use measured execution performance
+to select future O2+ patterns. Levels beyond 0/1/2/3 are not silently mapped. Retain
+policy versioning and generated-fragment invalidation as patterns evolve. Native
+flag identity alone is not generated-code invalidation. Automatic splitting,
+multi-file classes and compiler incremental/MT redesign remain deferred.
+
+### CH15-CPP-GROUP-SPLIT-01 — automatic implementation-unit splitting
+
+Deferred by user decision on 2026-10-16. Prepare an explicit implementation-group
+assembly boundary in the C++ backend, but preserve today's source-based membership
+and artifact paths. Automatic size/cost-based splitting, hash buckets, persistent
+assignment maps, rebalancing, and one-function-per-unit policies are not part of the
+immediate work. This debt must not block Ninja/Clang/Mold integration.
+
+The C++ backend owns any future grouping policy, using existing prepared fragments;
+shared semantic preparation must not acquire native compilation policy. Before
+resuming, agree stable group/member identities and rules for add/delete/move edits.
+Evaluate individual Clang latency against the 2–3 second p80 target, duplicated
+header/template work, clean-build throughput, rebuild spread, and application
+performance. One expensive function may remain slow even after its group is split.
+See the [lowering and toolchain plan](../planning/clang_units_and_mold.md).
+
+### CH15-PARTIAL-TYPE-01 — multi-file class declarations
+
+Deferred by user decision on 2026-10-16. Multi-file/partial classes could eventually
+let users control implementation grouping through source parts, but no syntax or
+semantics are adopted now. Do not introduce this feature merely to prepare the
+C++ assembly structure. It is not a prerequisite for lowering/toolchain work.
+
+This is a language/model feature: the top-level semantic spec, collection, and shared
+preparation must define one type assembled from multiple source contributions. Agree
+module/type identity, explicit opt-in, member visibility, duplicates/conflicts,
+inheritance/contracts, field layout/initialization order, and constructor/destructor
+ownership. A primary declaration plus method-only parts was discussed as a bounded
+option, not selected as the language contract.
+
+The backend would preserve both semantic type ownership and physical source-part
+placement: one consistent type declaration with implementations emitted into stable
+part-specific units. Current method placement follows the declaring type's source;
+merging declarations without changing that placement would not split Clang work.
+Future acceptance must cover cross-part private access, diagnostics, stable output,
+body-only versus signature/layout changes, and equivalent runtime behavior. Runtime
+library grouping is independent of partial-class source grouping. No implementation
+or automatic splitting is authorized by recording this debt.
+
 ### CH15-MOLD-01 — configurable Mold linking
 
-Recorded by user request on 2026-10-10 as deferred native-build integration debt.
-This is a performance/tooling follow-up, not a new v0.2 release gate. Mold has been
-benchmarked externally; the compiler's native-build path does not yet select it.
+The bounded linker-selection slice is implemented in the shared native-build
+configuration and recipes. Both consumers accept an absolute linker executable and
+an independent thread count; GNU ld remains the default. Selected-linker resolved
+path/content identity and link-only arguments invalidate linking without invalidating
+objects/PCH. See the [native build contract](../architecture/native_cpp_build.md#linker-selection-and-identity)
+and [native dev002 acceptance](../planning/native_linker_configuration_20261016.md).
 
-The historical accounting measurements used the same 20 objects, warm OS caches
-and Clang's normal link driver on WSL. Their benchmark artifacts are outside this
-compiler-only recovery (2026-10-16).
-Median driver times were 614.505 ms for GNU BFD, 104.965 ms for Mold 3 with two
-threads and 172.775 ms with eight threads. These results establish a useful local
-option, not a universal thread count or demonstrated scaling on larger workloads.
+The focused consumer proof covers GNU/Mold selection, thread changes, same-path
+replacement with preserved mtime, same-byte symlink retargeting, no-op/revert reuse
+and failed-link recovery. Native accounting acceptance replaces the former benchmark
+wrapper's hidden linker substitution with production configuration. Earlier
+[WSL/dev002 measurements](../planning/native_ninja_mold_20261016.md) remain historical
+comparison evidence, not the current configuration mechanism.
 
-The native-build consumer owns this integration. Provide explicit linker selection
-and thread/argument configuration; fingerprint the actual selected linker and its
-configuration in link-cache identity. Replacing the invocation while retaining the
-hard-coded `/usr/bin/ld` identity is insufficient. Preserve object/PCH reuse,
-dependency-file handling, failure reporting and executable publication/recovery.
-Keep the existing linker usable through explicit configuration.
+Remaining performance exploration follows the [Clang unit and Mold plan](../planning/clang_units_and_mold.md):
+larger inputs, thread-count tuning and one executable versus up to 20 stable shared
+libraries. These are not release gates. No split policy or shared-library layout is
+selected. Automatic grouping and multi-file classes remain deferred; compiler
+incremental/MT internals stay outside this slice. Optional between-run reuse belongs
+to Ninja in that exploration and must not block lowering work.
 
-Before closing, prove selected-tool invocation, executable behavior, no-op and
-revert reuse, linker/flag change invalidation and failed-link recovery. Measure
-request-to-executable-ready separately from cleanup, with cold and warm runs and
-CPU/peak RSS. Mold's default fork behavior requires separately labelled resource
-measurements using `--no-fork`; do not mistake parent-only usage for total cost.
-Thread tuning remains workload/host dependent. No integration is implemented by
-this debt entry; cache-validation optimization remains CH15-NATIVE-CACHE-PERF-01.
+Toolchain shared-library/search-environment completeness remains the native build
+contract's existing limitation. Do not mistake parent-only resource measurements
+under Mold's default fork mode for total CPU/RSS; use separately labelled
+`--no-fork` replays for that purpose. Thread tuning remains workload/host dependent.
 
 ### Chapter 07 closeout debt — 2026-10-06
 
@@ -956,3 +1041,25 @@ their current guides:
 
 Prioritize a bounded contract before implementation. The closeout is not a promise
 of a hermetic cache, replayed cached warnings, or exhaustive publication crash recovery.
+
+
+### CH15-NINJA-01 — Ninja adapter follow-ups
+
+The first Ninja consumer shares Clang recipes and consumes ready publications with
+optional directory reuse. Keep compiler incremental/MT internals outside this work.
+Before widening this bounded adapter, address:
+
+- General dependency-path escaping: Clang/Ninja quote parsing and GNU ld depfiles
+  limit accepted paths. Relative link inputs/outputs handle spaces in build roots;
+  quotes, backslashes, pipes and control whitespace in dependency paths reject.
+- Response files for very large object inventories, with independently proved
+  escaping and unchanged argument/library order.
+- Toolchain/include-search installation changes during retained reuse: use a fresh
+  build directory for now; ordinary depfiles do not discover newly shadowing headers.
+- Extended native adapter coverage beyond the bounded
+  [O2 accounting checkpoint](../planning/native_ninja_accounting_20261016.md), which
+  now proves native full/no-op/body-edit builds and publication addition/removal.
+  Broader path, configuration and failure matrices remain separate follow-up work.
+
+Mold selection/thread tuning remains CH15-MOLD-01. Automatic grouping and multi-file
+classes remain CH15-CPP-GROUP-SPLIT-01 and CH15-PARTIAL-TYPE-01.

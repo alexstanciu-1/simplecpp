@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "expected": "1:1:",
+  "source": "$text string = php::microtime(); $stamp float = php::microtime(true); echo strlen($text) > 0, \":\", $stamp > 0.0, \":\", fs_is_windows();",
+  "application_templates": "forbidden",
+  "build": {
+    "executable": "/tmp/v02-update-platform-concrete-20261020/cache/artifacts/16b056ffb5ca39e7639abf61f4f6f598da3398d6e76b6cd999c5e18c331d4209.bin",
+    "compiled": 7,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1,
+    "layouts_built": 1,
+    "layouts_reused": 0
+  },
+  "warm": {
+    "executable": "/tmp/v02-update-platform-concrete-20261020/cache/artifacts/16b056ffb5ca39e7639abf61f4f6f598da3398d6e76b6cd999c5e18c331d4209.bin",
+    "compiled": 0,
+    "reused": 7,
+    "pch_built": 0,
+    "linked": 0,
+    "layouts_built": 0,
+    "layouts_reused": 1
+  }
+}

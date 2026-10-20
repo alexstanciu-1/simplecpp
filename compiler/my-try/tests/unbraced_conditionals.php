@@ -81,7 +81,7 @@ foreach($rejected as $source){$error='';try{operator_test_source($source);}catch
 $directory=sys_get_temp_dir().'/scpp_unbraced_'.bin2hex(random_bytes(6));mkdir($directory);$path=$directory.'/main.phs';$recoveries=0;
 try{
  $variants=['$x=0;if(true) if(false) $x=1;else $x=2;return $x;', '$x=0;if(true){if(false) $x=1;}else $x=2;return $x;', '$x=0;if(false) $x=1;elseif(true) $x=2;else $x=3;return $x;', '$x=0;if(false){$x=1;}else /* gap */ if(true) $x=2;else {$x=3;}return $x;'];
- file_put_contents($path,$variants[0]);Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$directory]);$compiler->exec_cpp();
+ file_put_contents($path,$variants[0]);Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$directory]);$compiler->exec_cpp();
  foreach($variants as $index=>$valid){
   file_put_contents($path,$valid);$compiler->update_cpp([$path]);$incremental=CPP_Probe::text(Model::$cpp_files);$compiler->update_cpp([]);unbraced_check(CPP_Probe::text(Model::$cpp_files)===$incremental,'No-op changed output');
   $output=$argv[1].'/incremental_'.$index.'.cpp';file_put_contents($output,$incremental);$executions[]=['name'=>'incremental_'.$index,'path'=>$output,'exit_code'=>$index===1?0:2,'source'=>$valid];
@@ -90,7 +90,7 @@ try{
    foreach([[$path],[]] as $changes){$failed=false;try{$compiler->update_cpp($changes);}catch(\RuntimeException $e){$failed=true;}unbraced_check($failed && Model::$cpp_files->is_empty(),'Invalid update published artifacts');}
    file_put_contents($path,$valid);$compiler->update_cpp([$path]);unbraced_check(CPP_Probe::text(Model::$cpp_files)===$incremental,'Recovery changed output');++$recoveries;
   }
-  Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$directory]);$compiler->exec_cpp();unbraced_check(CPP_Probe::text(Model::$cpp_files)===$incremental,'Fresh differs from incremental');
+  Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$directory]);$compiler->exec_cpp();unbraced_check(CPP_Probe::text(Model::$cpp_files)===$incremental,'Fresh differs from incremental');
  }
 }finally{unlink($path);rmdir($directory);}
 file_put_contents($argv[1].'/executions.json',json_encode($executions,JSON_PRETTY_PRINT)."\n");file_put_contents($argv[1].'/checks.json',json_encode(['original'=>$original_result,'positive_programs'=>count($executions),'rejections'=>$rejections,'recovery_cycles'=>$recoveries,'span_checks'=>3],JSON_PRETTY_PRINT)."\n");echo count($executions)." conditional programs, ".count($rejections)." rejections, ".$recoveries." recovery cycles\n";

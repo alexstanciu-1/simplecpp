@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""Registry-backed concrete arguments, production lifecycle generation and layered native caching."""
+import argparse
+import json
+from pathlib import Path
+import sys
+APP = Path(__file__).resolve().parents[1]
+ROOT = APP.parents[1]
+sys.path.insert(0, str(APP / 'tools'))
+from test_runner import CommandRunner, Task, run_tasks
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--indexing', action='store_true')
+    modes.add_argument('--initializers', action='store_true')
+    modes.add_argument('--binary', action='store_true')
+    modes.add_argument('--mutations', action='store_true')
+    modes.add_argument('--iteration', action='store_true')
+    modes.add_argument('--observations', action='store_true')
+    modes.add_argument('--compound', action='store_true')
+    modes.add_argument('--casts', action='store_true')
+    modes.add_argument('--members', action='store_true')
+    modes.add_argument('--source-fields', action='store_true')
+    modes.add_argument('--source-arguments', action='store_true')
+    parser.add_argument('--results', type=Path, required=True)
+    args = parser.parse_args()
+    batches = 4 if args.source_arguments else 3
+    out = args.results.resolve()
+    out.mkdir(parents=True, exist_ok=False)
+    with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
+        def proof():
+            results, builds = {}, []
+            emission = 0
+            def emit(mode, revision=0, alignment=8):
+                nonlocal emission
+                emission += 1
+                runner.run(f'{mode}-emit-{emission}-{revision}-{alignment}', ['php', APP / 'tests/fixtures/prelower_substitution.php',
+                    out / ('source-' + mode), out / mode, mode, revision, alignment, 'mutations' if args.mutations else 'iteration' if args.iteration else 'observations' if args.observations else 'compound' if args.compound else 'casts' if args.casts else ('binary' if args.binary else ('initializers' if args.initializers else ('indexing' if args.indexing else 'members' if args.members else ('arguments' if args.source_arguments else ('fields' if args.source_fields else 'bindings')))))])
+            def build(mode, label, optimization='-O0'):
+                result = json.loads(runner.run(label, ['php', APP / 'tools/build_cpp.php', out / mode,
+                    out / ('cache-' + mode), '--no-pch', optimization], cli_reason='Native builder process'))
+                builds.append(dict(label=label, **result))
+                return result
+            for mode in ['direct', 'composed']:
+                emit(mode)
+                for optimization in ['-O0', '-O2']:
+                    label = mode + optimization
+                    result = build(mode, label, optimization)
+                    results[label] = runner.run(label + '-run', [result['executable']]).decode()
+                    if mode == 'composed':
+                        assert result['layouts_built'] == batches, result
+                    warm = build(mode, label + '-warm', optimization)
+                    assert warm['compiled'] == 0 and warm['linked'] == 0, warm
+                    assert warm['layouts_reused'] == result['layouts_built'], warm
+                folder = out / mode
+                manifest = json.loads((folder / '.scpp-output.manifest').read_text())
+                units = [folder / row['path'] for row in manifest['files'] if row['kind'] == 'translation_unit']
+                # Both optimization configurations emit identical layouts. Include one
+                # header for each distinct content (independent macro definitions).
+                layouts = list((out / ('cache-' + mode) / 'artifacts').glob('*.hpp'))
+                contents = {}
+                for path in layouts:
+                    contents.setdefault(path.read_text(), path)
+                flags = [part for path in contents.values() for part in ['-include', path]]
+                runner.run(mode + '-sanitized-build', ['clang++', '-std=c++23', '-g0', '-O1',
+                    '-fsanitize=address,undefined', '-fno-elide-constructors', '-fno-omit-frame-pointer',
+                    '-I' + str(ROOT / 'runtime/include'), '-I' + str(folder), *flags, *units, '-o', out / (mode + '-sanitized')])
+                results[mode + '-sanitized'] = runner.run(mode + '-sanitized-run',
+                    ['env', 'ASAN_OPTIONS=detect_leaks=0', out / (mode + '-sanitized')]).decode()
+                if args.compound or args.observations or args.iteration or args.mutations:
+                    # Allocation elision across inline runtime code can differ from an
+                    # out-of-line bridge. Keep stock O2 results, and separately make
+                    # allocator effects observable for the boundary parity proof.
+                    runner.run(mode + '-observable-build', ['clang++', '-std=c++23', '-g0', '-O2',
+                        '-fno-assume-sane-operator-new', '-fno-elide-constructors',
+                        '-I' + str(ROOT / 'runtime/include'), '-I' + str(folder), *flags, *units,
+                        '-o', out / (mode + '-observable')])
+                    results[mode + '-observable'] = runner.run(mode + '-observable-run',
+                        [out / (mode + '-observable')]).decode()
+            if args.compound or args.observations or args.iteration or args.mutations:
+                for variant in ['-O0', '-sanitized', '-observable']:
+                    assert results['direct' + variant] == results['composed' + variant], variant
+                assert results['direct-O0'].splitlines()[0] == results['direct-observable'].splitlines()[0]
+                direct = results['direct-O2'].splitlines()
+                composed = results['composed-O2'].splitlines()
+                assert direct[1:] == composed[1:], 'Inherited O2 counter mismatch'
+                assert direct[0].split()[4:] == composed[0].split()[4:], 'O2 payload lifecycle mismatch'
+            elif args.mutations or args.indexing or args.initializers or args.binary or args.casts:
+                for variant in ['-O0', '-O2', '-sanitized']:
+                    assert results['direct' + variant] == results['composed' + variant], results
+                assert results['direct-O0'] == results['direct-O2'], results
+                assert 'indexed-references 0 0 0 0 0 0 0' in results['composed-O0'], results
+            else:
+                assert len(set(results.values())) == 1, results
+            if args.mutations:
+                for mode in ['direct', 'composed']:
+                    for variant in ['-O0', '-O2', '-sanitized', '-observable']:
+                        assert 'mutations 0 0 0 0 0 0 0' in results[mode + variant]
+            if args.iteration:
+                for mode in ['direct', 'composed']:
+                    for variant in ['-O0', '-O2', '-sanitized', '-observable']:
+                        assert 'iteration-copies 0 0 0 0 3 0 3' in results[mode + variant]
+            assert 'references 0 0 0 0 0 0 0' in results['composed-O0'], results
+            shared_before = {}
+            if args.source_arguments:
+                shared_before = {str(path.relative_to(out / 'composed')): path.read_bytes()
+                    for directory in ['specializations', 'types']
+                    for path in (out / 'composed' / directory).glob('*') if path.is_file()}
+            emit('composed', 3)
+            for path, contents in shared_before.items():
+                assert (out / 'composed' / path).read_bytes() == contents, path
+            edited = build('composed', 'body-edit')
+            assert edited['layouts_reused'] == batches and edited['compiled'] == 1, edited
+            runner.run('body-edit-run', [edited['executable']], expected=0 if args.source_arguments else 3)
+            emit('composed', 3, 64)
+            changed = build('composed', 'layout-edit')
+            assert changed['layouts_built'] >= 1, changed
+            runner.run('layout-edit-run', [changed['executable']], expected=0 if args.source_arguments else 3)
+            emit('composed')
+            restored = build('composed', 'restore')
+            assert restored['layouts_reused'] == batches and restored['compiled'] == 0 and restored['linked'] == 0, restored
+            runner.run('restore-run', [restored['executable']])
+            summary = {'counters': results, 'builds': builds}
+            if args.compound or args.observations or args.iteration or args.mutations:
+                baseline = [int(n) for n in results['direct-O2'].splitlines()[0].split()[1:4]]
+                concrete = [int(n) for n in results['composed-O2'].splitlines()[0].split()[1:4]]
+                summary['stock_O2_allocation_delta'] = dict(zip(['allocations', 'bytes', 'frees'],
+                    [b - a for a, b in zip(baseline, concrete)]))
+                print('Stock O2 allocation delta (concrete - direct):', summary['stock_O2_allocation_delta'])
+            (out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+        tasks = [Task('physical-substitution', proof)]
+        if args.source_arguments:
+            tasks.append(Task('source-header-cycle', lambda: runner.run('source-header-cycle',
+                ['php', APP / 'tests/fixtures/prelower_source_cycles.php', out / 'source-cycle'])))
+        run_tasks(tasks)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,6 @@
+$left mixed = 4;
+$right mixed = 2;
+$sum mixed = $left + $right;
+$text mixed = "a";
+$text .= "b";
+return $sum === 6 ? 0 : 1;

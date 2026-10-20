@@ -1,0 +1,1 @@
+{"base": {"main.phs": "$a = new A(); return $a->f();", "a.phs": "class A { function f(): int { return 1; } }"}, "edit": {"a.phs": "class A { private function f(): int { return 1; } }"}}

@@ -1,0 +1,235 @@
+{
+  "counters": {
+    "direct-O0": {
+      "sha256": "d20178ad44b855941bfefe8fe209c1d1a388782ce9d986ab3cd2f7e825b4d9f3",
+      "workloads": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-O2": {
+      "sha256": "25864205b8d87b29a664d8358f841bb4a528b7b03134cd7389a4edd09ae7f9e0",
+      "workloads": [
+        "compound 44 3048 44 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-sanitized": {
+      "sha256": "264ba9048042126d58b8a754d6446dd1be25c069277e68f59642d759291b99a3",
+      "workloads": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-observable": {
+      "sha256": "264ba9048042126d58b8a754d6446dd1be25c069277e68f59642d759291b99a3",
+      "workloads": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-O0": {
+      "sha256": "d20178ad44b855941bfefe8fe209c1d1a388782ce9d986ab3cd2f7e825b4d9f3",
+      "workloads": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-O2": {
+      "sha256": "d20178ad44b855941bfefe8fe209c1d1a388782ce9d986ab3cd2f7e825b4d9f3",
+      "workloads": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-sanitized": {
+      "sha256": "264ba9048042126d58b8a754d6446dd1be25c069277e68f59642d759291b99a3",
+      "workloads": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-observable": {
+      "sha256": "264ba9048042126d58b8a754d6446dd1be25c069277e68f59642d759291b99a3",
+      "workloads": [
+        "compound 47 3127 47 0 0 0 0",
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    }
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ],
+  "stock_O2_allocation_delta": {
+    "allocations": 3,
+    "bytes": 79,
+    "frees": 3
+  },
+  "accounting": {
+    "total": 285,
+    "emitted": 282,
+    "failures": [
+      {
+        "owner": "GeneralLedger::validate",
+        "kind": "function_body",
+        "error": "prelower_templates: container operation requires an admitted family adapter"
+      },
+      {
+        "owner": "PurchasingBook::bill_key",
+        "kind": "function_body",
+        "error": "prelower_templates: runtime call needs an adapter: core.strlen"
+      },
+      {
+        "owner": "SalesService::total_outstanding",
+        "kind": "function_body",
+        "error": "prelower_templates: container operation requires an admitted family adapter"
+      }
+    ]
+  },
+  "validation": {
+    "behavior_sanitizers_controlled_boundary_parity": "PASS",
+    "stock_O2_allocation_parity": "NOT ACHIEVED: three extra allocations / 79 bytes",
+    "initial_builds_seconds": 158.05,
+    "corrected_comparison_and_incremental_seconds": 37.2,
+    "ordinary_regression": "PASS: PHP preparation and native values/failures",
+    "production_php_portability": "PASS (two changed files)"
+  }
+}

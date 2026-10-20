@@ -1,0 +1,40 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for missing\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S needs an established local declaration for missing\n"
+  },
+  "retry": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for missing\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S needs an established local declaration for missing\n"
+  },
+  "fresh_invalid": {
+    "stage": "prepare",
+    "error": "S2S needs an established local declaration for missing\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "S2S needs an established local declaration for missing\n"
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+    "empty": false,
+    "ready": true
+  }
+}

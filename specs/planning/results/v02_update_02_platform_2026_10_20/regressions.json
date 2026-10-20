@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "suites": [
+    "callables",
+    "observed_lookup",
+    "preparation_recovery",
+    "member_owners",
+    "methods",
+    "static_members",
+    "qualified_static_members"
+  ]
+}

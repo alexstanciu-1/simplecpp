@@ -1,0 +1,1 @@
+function f(int $x): int { return $x; } return f(N);

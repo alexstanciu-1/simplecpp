@@ -1,0 +1,1 @@
+$s weak<void>; $t = $s->lock(); return 0;

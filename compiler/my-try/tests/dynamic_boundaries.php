@@ -17,7 +17,7 @@ function dynamic_boundaries_source(string $source): Compiler
 	$file->content = $source;
 	Source_Registry::add($input_module, $file);
 	Model::$modules->add($input_module->name, $input_module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->exec_cpp();
 	return $compiler;
 }

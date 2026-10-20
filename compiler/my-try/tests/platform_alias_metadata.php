@@ -8,7 +8,7 @@ function platform_compile(string $source):string {
  $module=new module('/platform','/platform','/platform');
  $file=new file();$file->path='main.phs';$file->content=$source;
  Source_Registry::add($module,$file);Model::$modules->add($module->name,$module);
- (new Compiler())->exec_cpp();return CPP_Probe::text(Model::$cpp_files);
+ (new Compiler(new cpp_lowering_options(false)))->exec_cpp();return CPP_Probe::text(Model::$cpp_files);
 }
 $out=$argv[1];$root=dirname(__DIR__,3);
 // Metadata exposures are identity indexes and are not tied to the php spelling.

@@ -1,0 +1,1 @@
+$x uint64 = 1; $y string = $x; return 0;

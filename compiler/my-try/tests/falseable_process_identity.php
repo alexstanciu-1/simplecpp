@@ -5,7 +5,7 @@ $source=dirname(__DIR__,3).'/tests/php/process/strict_level_01/strict_process_00
 // The retained compiler accepts a directory; isolate the unchanged fixture bytes.
 $dir=sys_get_temp_dir().'/scpp_s04_'.bin2hex(random_bytes(6));mkdir($dir);$path=$dir.'/main.phs';
 try {
- file_put_contents($path,file_get_contents($source));Compiler_Lifecycle::reset();$compiler=new Compiler();$compiler->init([$dir]);$compiler->exec_cpp();
+ file_put_contents($path,file_get_contents($source));Compiler_Lifecycle::reset();$compiler=new Compiler(new cpp_lowering_options(false));$compiler->init([$dir]);$compiler->exec_cpp();
  file_put_contents($argv[1].'/original.cpp',CPP_Probe::text(Model::$cpp_files));
 } finally {unlink($path);rmdir($dir);}
 operator_test_source('function branch(result_or_false<string> $v):bool{return $v === false;} function reverse(result_or_false<string> $v):bool{return false === $v;} function different(result_or_false<string> $v):bool{return $v !== false;} function differentreverse(result_or_false<string> $v):bool{return false !== $v;}');

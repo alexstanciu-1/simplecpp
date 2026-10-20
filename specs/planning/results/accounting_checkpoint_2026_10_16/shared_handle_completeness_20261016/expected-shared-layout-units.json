@@ -1,0 +1,22 @@
+[
+  "src/allocation_desk.phs",
+  "src/assets.phs",
+  "src/banking.phs",
+  "src/calendar.phs",
+  "src/checks.phs",
+  "src/cli.phs",
+  "src/closing.phs",
+  "src/core.phs",
+  "src/credit_desk.phs",
+  "src/expense_desk.phs",
+  "src/ledger.phs",
+  "src/payroll_desk.phs",
+  "src/procurement_desk.phs",
+  "src/project_desk.phs",
+  "src/purchasing.phs",
+  "src/sales.phs",
+  "src/self_test.phs",
+  "src/stock.phs",
+  "src/treasury_desk.phs",
+  "src/warehouse_desk.phs"
+]

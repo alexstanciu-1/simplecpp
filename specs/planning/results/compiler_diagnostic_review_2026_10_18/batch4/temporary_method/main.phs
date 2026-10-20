@@ -1,0 +1,1 @@
+struct S { function f(): int { return 1; } } return (new S())->f();

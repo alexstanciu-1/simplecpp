@@ -1,0 +1,115 @@
+# 63 — Shared base/interface views, checked shared casts and literal `instanceof`
+Doc Status: supporting
+
+Representative subset; generation only, not native execution or full row coverage.
+
+Source and generated text below are a representative example, not proof of the whole feature row. No emitted C++ was compiled or executed.
+
+## PHP++ sample
+
+[Source file](main.phs) · [Intended strict project configuration](prism.json)
+
+```php
+abstract class Base { abstract public function value(): int; }
+class Child extends Base { public function value(): int { return 7; } }
+$base Base = new Child();
+$child = object_cast($base, Child::class);
+return $child instanceof Child ? $child->value() : 0;
+```
+
+## S2S generated v1
+
+Generation error; exit code `1`. [Command and raw logs](../logs/commands.json).
+
+```text
+Scpp\S2S\Support\GenerationException: Unsupported expression lowering for AST kind 275 at line 4. Category: generator lowering gap. Requirement: add an explicit lowering rule for this expression shape or rewrite the source to a supported form.
+```
+
+No C++ emitted. [Raw diagnostic](v1.diagnostic.txt).
+
+## S2S generated v2
+
+Emitted; exit code `0`. [Command and raw logs](../logs/commands.json).
+
+[Complete emitted text](v2.cpp.txt). File separators identify the emitted units.
+
+```cpp
+// Readable bundle. File separator comments added by the report renderer.
+
+// === types/n42617365.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+struct record_Base
+{
+public:
+public:
+	virtual scpp::int_t<> dispatch_Base__method_value() = 0;
+scpp::int_t<> method_value();
+public:
+	virtual ~record_Base() noexcept = default;
+	record_Base() = default;
+	record_Base(const record_Base&) = default;
+	record_Base(record_Base&&) = default;
+	record_Base& operator=(const record_Base&) = default;
+	record_Base& operator=(record_Base&&) = default;
+};
+
+
+// === types/n4368696c64.hpp ===
+#pragma once
+#include "scpp/int_t.hpp"
+#include "types/n42617365.hpp"
+struct record_Child : public record_Base
+{
+public:
+public:
+	scpp::int_t<> implementation_Child__method_value();
+	virtual scpp::int_t<> dispatch_Child__method_value();
+scpp::int_t<> method_value();
+public:
+	scpp::int_t<> dispatch_Base__method_value() override;
+public:
+	virtual ~record_Child() noexcept = default;
+	record_Child() = default;
+	record_Child(const record_Child&) = default;
+	record_Child(record_Child&&) = default;
+	record_Child& operator=(const record_Child&) = default;
+	record_Child& operator=(record_Child&&) = default;
+};
+
+
+// === units/n6d61696e/n6d61696e2e706873.cpp ===
+#include "types/n4368696c64.hpp"
+#include "scpp/int_t.hpp"
+#include "types/n42617365.hpp"
+scpp::int_t<> record_Base::method_value() { return dispatch_Base__method_value(); }
+scpp::int_t<> record_Child::dispatch_Child__method_value() { return record_Child::implementation_Child__method_value(); }
+scpp::int_t<> record_Child::method_value() { return dispatch_Child__method_value(); }
+scpp::int_t<> record_Child::dispatch_Base__method_value() { return dispatch_Child__method_value(); }
+scpp::int_t<> record_Child::implementation_Child__method_value()
+{
+	return static_cast<scpp::int_t<>>(7LL);
+}
+
+
+// === entry.cpp ===
+#include "types/n4368696c64.hpp"
+#include "scpp/memory.hpp"
+#include "types/n42617365.hpp"
+#include "scpp/shared_p.hpp"
+#include "scpp/object_cast.hpp"
+#include "scpp/int_t.hpp"
+
+int main()
+{
+	::scpp::shared_p<record_Base> local_base = ::scpp::shared_p<record_Base>{::scpp::shared<record_Child>()};
+	auto local_child = ::scpp::checked_object_cast<record_Child>(local_base);
+	return static_cast<int>((([&]() -> scpp::int_t<> { if ((::scpp::object_is<record_Child>(local_child)).native_value()) { return ([&]() -> scpp::int_t<> {
+auto receiver_0 = local_child;
+(void)receiver_0.operator->();
+	return receiver_0->method_value();
+}()); } return static_cast<scpp::int_t<>>(0LL); }())).native_value());
+	return 0;
+}
+```
+

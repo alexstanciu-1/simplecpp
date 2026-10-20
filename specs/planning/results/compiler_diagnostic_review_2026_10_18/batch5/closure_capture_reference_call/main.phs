@@ -1,0 +1,1 @@
+$n = 1; $f = function () use (&$n): int { return ++$n; }; $g = function () use ($f): int { return $f(); }; return $g();

@@ -74,6 +74,13 @@ become inherited lookup caches.
 | `status.php` | Read-only source-change, active-work and completion queries; no scheduling |
 | `cleanup.php` | Typed maintenance traversal clearing affected facts |
 
+Type declaration admission uses `Declaration_Preparation::type_name` across record/
+interface relationships, enum definitions and trait admission. It checks the exact
+published namespace pool through `Observed_Lookup::declared_types`, without import
+or language fallback. Retained relationship/enum work observes name membership;
+traits recheck on each preparation invocation. Collection keeps distinct identities,
+and unused duplicates reject before emission.
+
 ## Work and dispatch
 
 Shared return preparation permits void-to-void expression forwarding for every

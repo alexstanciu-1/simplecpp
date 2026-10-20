@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "name": "dependency-cleanup",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "syntax-0",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "syntax-1",
+      "passed": true,
+      "error": null
+    },
+    {
+      "name": "syntax-2",
+      "passed": true,
+      "error": null
+    }
+  ],
+  "logs": "/tmp/uncommitted-cleanup-20261020",
+  "scope": "Restored cleanup behavior; draft PHP syntax only"
+}

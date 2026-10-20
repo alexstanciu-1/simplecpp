@@ -1,0 +1,1 @@
+namespace Lib; use const Defaults\N; function f(int $n = N): int { return $n; }

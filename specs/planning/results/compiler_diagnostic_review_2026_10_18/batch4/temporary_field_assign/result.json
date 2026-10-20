@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S assignment requires stable storage or an indexed shared receiver\n"
+}

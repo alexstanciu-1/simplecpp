@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Override cannot narrow visibility\n"
+}

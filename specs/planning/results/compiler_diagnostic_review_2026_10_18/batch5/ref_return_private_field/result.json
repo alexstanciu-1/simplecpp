@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "Reference return requires the exact parameter storage type\n"
+}

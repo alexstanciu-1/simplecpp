@@ -89,7 +89,7 @@ def main():
                     prefix = f'{index:05}-{lane}'
                     state = {'stage': 'generation', 'status': 'not-run'}
                     try:
-                        payload = runner.run(prefix + '-generate', [args.php, APP / 'main.php', '--s2s', source_dir], timeout=60)
+                        payload = runner.run(prefix + '-generate', [args.php, APP / 'main.php', '--s2s', source_dir, '--no-prelower-templates'], timeout=60)
                         (work / 'artifacts.json').write_bytes(payload)
                         if lane == 'strict' and args.native_observer:
                             bundle = json.loads(payload)

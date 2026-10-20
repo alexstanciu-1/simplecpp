@@ -16,7 +16,7 @@ function records_source(string $source): string
 	$input->content = $source;
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -95,7 +95,7 @@ try {
 	file_put_contents($types_path, $declaration);
 	file_put_contents($main_path, 'use Types\\C; $a = new C(); $a->x = 7; $b = $a; $b->x = 9; return $a->x;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();
@@ -120,7 +120,7 @@ try {
 	$incremental = CPP_Output::encode(Model::$cpp_files);
 	if ($incremental === $before) { throw new \LogicException('Declaration-kind edit retained shared storage'); }
 	Compiler_Lifecycle::reset();
-	$fresh = new Compiler();
+	$fresh = new Compiler(new cpp_lowering_options(false));
 	$fresh->init([$directory]);
 	$fresh->select_entry('main', 'main.phs');
 	$fresh->exec_cpp();

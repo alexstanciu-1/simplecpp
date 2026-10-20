@@ -1,0 +1,4 @@
+$text string = "";
+$failure error;
+if (take($text, $failure, fs_get("input.txt"))) { return 0; }
+return 1;

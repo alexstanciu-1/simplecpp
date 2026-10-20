@@ -26,7 +26,7 @@ try
 {
 	file_put_contents($a, 'function value(): int { return 1; } struct Box { int $item; }');
 	file_put_contents($b, 'return value();');
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_llvm();
 	sync_check(sync_function('value')->change_status === change_state::added, 'Initial build is not all-added');

@@ -1,0 +1,40 @@
+{
+  "base": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "598571717aa75f6906040b63bd92316c9943ba07a4dd49e826670a0fc2120d1b",
+    "empty": false,
+    "ready": true
+  },
+  "edit": {
+    "stage": "prepare",
+    "error": "Missing import target or wrong symbol kind: \\X\\A",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Missing import target or wrong symbol kind: \\X\\A"
+  },
+  "retry": {
+    "stage": "prepare",
+    "error": "Missing import target or wrong symbol kind: \\X\\A",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Missing import target or wrong symbol kind: \\X\\A"
+  },
+  "fresh_invalid": {
+    "stage": "prepare",
+    "error": "Missing import target or wrong symbol kind: \\X\\A",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Missing import target or wrong symbol kind: \\X\\A"
+  },
+  "repair": {
+    "prepared": true,
+    "emitted": true,
+    "digest": "598571717aa75f6906040b63bd92316c9943ba07a4dd49e826670a0fc2120d1b",
+    "empty": false,
+    "ready": true
+  }
+}

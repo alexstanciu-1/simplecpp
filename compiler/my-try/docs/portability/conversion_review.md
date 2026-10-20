@@ -3,7 +3,8 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest focused gate covers Chapter 14, as detailed below. The historical
+The latest focused gate covers native prelowering and accounting; the preceding
+O2 ordinary gate covers Chapter 14, as detailed below. The historical
 cumulative checkpoint covers the implemented Chapter 05–11 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
 partitioned namespace/constant/enum programs, bounded class/struct behavior,
@@ -11,6 +12,50 @@ inheritance, traits, interface dispatch and shared callable variance.
 The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
+
+## Native prelowering execution — 2026-10-20
+
+The native driver can now select the public `prelower_templates` setting and run
+production publication/build owners. Use `tools/native_validate.py` with
+`--prelower-accounting --compiler-optimization O2 --no-stan --types-only --no-pch`
+plus the normal checkout/revision/results arguments. The compiler executable is
+O2 without debug information; accounting, middleware and application runtime
+objects remain O0. The compiler's own PCH is independent of the strict application
+PCH prohibition. The validation-only compiler proxy records actual Clang arguments
+because the production release preset otherwise selects O3.
+
+[Native execution evidence](../../../../specs/planning/results/native_prelower_accounting_2026_10_20/README.md)
+records the bounded results and source/executable hashes. The proof compares PHP
+and native artifact bytes/manifests, repeats concrete preparation/emission, checks
+explicit unsupported-case and PCH rejection with publication recovery, and checks
+accounting behavior, full application closure and warm reuse. It does not expand
+runtime coverage or establish a compiler-performance benchmark.
+
+Native execution exposed missing-key hash reads through `??` in specialization
+artifact assembly. Explicit initialization and guarded optional reads repair that
+source-portability issue in the existing owner; no fallback or new registry is added.
+
+## Native refresh after prelowering — 2026-10-20
+
+Candidate base `2a302b1a` plus authored portability repairs now passes conversion
+of 233 compiler/proof PHP files and native compilation. The bounded Chapter 14
+gate passes 14 byte-identical PHP/native artifact comparisons, 28 generated
+program executions with/without PCH, 27 standalone header checks, native
+publication parity and failure/recovery, five incremental build scenarios and
+seven runtime-module build scenarios. The final compiler rebuild reports no work.
+
+[Retained evidence](../../../../specs/planning/results/native_compiler_refresh_2026_10_20/README.md)
+includes the result and source/harness hashes. Raw attempts remain under
+`/tmp/prelower-native-compiler-20261020/`; attempt 13 passes. Repairs use explicit
+typed collection/nullable/scope boundaries and declaration-local enum reflection.
+Execution also exposed overloaded-boolean eager evaluation of a nullable guard;
+explicit branches preserve PHP behavior. No prelowering fallback is added.
+
+That earlier refresh includes the prelowering implementation, but its native
+execution gate exercises ordinary emission. Native prelowering execution is
+covered by the later focused gate above. STAN and parked LLVM were skipped; build warnings remain. The
+separate O0 prelowering regression uses the PHP-hosted compiler. See the evidence
+note for its result and the exact build configuration.
 
 ## Chapter 14 native gate — 2026-10-16
 
@@ -79,6 +124,45 @@ combines its recorded focused feature proofs with this limited workspace proof;
 complete chapter-native parity, rejection and incremental coverage remains unclaimed.
 The older 2026-10-10 result directories were absent here, so their recorded summaries
 below were reviewed without rechecking their raw logs or overlay hashes.
+
+## Native lowering-report checkpoint — 2026-10-16
+
+The [report checkpoint](../planning/native_lowering_report_20261016.md) rebuilds
+`779f6f39` plus a declared-type correction at O2. Six accounting invocations cover
+reports off/on at O0/O1/O2; both report modes match PHP and all 292 generated artifacts
+match the previous checkpoint. The report uses a required `collected_definition`
+local for its qualified name, preserving the method's actual declaring type.
+The experiment driver uses JSON requests; this is not production native CLI coverage.
+No new application benchmark or broad compiler regression was performed.
+
+## Native Ninja/accounting checkpoint — 2026-10-16
+
+Base `03cf89a0` plus the authored portability fixes in the accompanying
+[measurement report](../planning/native_ninja_accounting_20261016.md). All 214 PHP
+compiler/driver files convert; the compiler and Ninja worker build natively at `-O2`
+with existing debug information and `--no-stan`. New Ninja code uses a non-keyword
+byte-local name and supported integer-to-text concatenation. The measurement driver
+passes an explicitly typed empty vector. The publication journal uses guarded typed
+map reads instead of missing-key coalescing that the legacy S2S lowers through `at()`.
+
+Three full/unchanged/body-edit trials pass on the 528,088-byte accounting fixture.
+Each full native publication matches all 292 PHP reference artifacts; the application
+passes 94 CLI cases plus its self-tests. Native publication addition/removal and the
+existing PHP publication/recovery fixture pass. Detailed timings, memory observations,
+source hashes, executable identity and the archived harness are linked from the report.
+No PHP publication workaround is used. This bounded native integration proof does not
+claim a repeat of the comprehensive language, retained incremental or MT checks below.
+
+## Native linker configuration checkpoint — 2026-10-16
+
+Base `86aed366` plus the shared linker configuration slice is rebuilt at `-O2 -g`
+with `--no-stan` and executed on dev002. The [acceptance report](../planning/native_linker_configuration_20261016.md)
+records native source/binary identities, full/unchanged/body-edit and eight-edit
+accounting measurements, and 14 native Ninja linker-configuration/recovery cases.
+The 26 focused real-tool cases cover both consumers with PHP-hosted orchestration;
+that is distinct from native execution of the Ninja consumer. The production recipe
+selects Mold directly, and link-only tool/configuration changes preserve objects/PCH.
+No new whole-language, retained incremental or compiler-MT coverage is claimed.
 
 ## Native checkpoint — 2026-10-10
 
@@ -826,8 +910,14 @@ remains separate from this native pass; style/full PHP suites remain on demand.
   native vector contract; the reference-cycle checker keeps its active length
   separate from allocated scratch entries.
 - Keep base-constructor calls first; compute their arguments through typed helpers
-  when setup would otherwise precede the call. Negative integer field sentinels
-  use explicit constructor assignments; nullable optional fields initialize to null.
+  when setup would otherwise precede the call. Ordinary integer fields now support
+  [signed decimal defaults](../../../../specs/portability/signed_integer_fields.md);
+  audit initialization ordering before moving assignments across base construction.
+  Nullable optional fields initialize to null.
+- [Integer decrement](../../../../specs/portability/decrement.md) is now admitted
+  through the ordinary expression-token path. Earlier postfix-decrement repairs
+  describe historical converter limits; only the two for-condition counters have
+  migrated in this slice.
 - Enum-valued method defaults remain outside the converter subset. Use named entry
   methods that select the default and delegate to one explicitly parameterized worker
   (`prepare_for_consumer`, `decide_value`); do not make required enum contracts nullable

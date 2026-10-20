@@ -18,7 +18,7 @@ $initial = 'function value(): int { return 17; } return value();';
 try
 {
 	file_put_contents($path, $initial);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$record = Model::$modules[$directory]->sources['main.phs'];

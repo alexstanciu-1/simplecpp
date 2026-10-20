@@ -1,0 +1,1 @@
+interface I { function f(): int; } class A implements I { function f(): int { return 1; } } abstract class B extends A { abstract function f(): int; } class C extends B { function f(): int { return 2; } } $c = new C(); $i I = $c; return $i->f();

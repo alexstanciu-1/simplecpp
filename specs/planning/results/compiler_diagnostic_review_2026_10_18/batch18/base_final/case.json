@@ -1,0 +1,1 @@
+{"base": {"main.phs": "$b = new B(); return 0;", "a.phs": "class A {}", "b.phs": "class B extends A {}"}, "edit": {"a.phs": "final class A {}"}}

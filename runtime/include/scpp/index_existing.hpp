@@ -7,8 +7,8 @@ namespace scpp {
 
 // Unlike ordinary boxed reads/writes, every segment must exist. No creation or
 // mutable borrow occurs during the initial read or the pre-commit validation.
-template <typename T>
-const T &index_existing_at(const vector_t<T> &receiver, const int_t<> &key) {
+template <typename T, typename K> requires detail::is_int_t_v<K>
+const T &index_existing_at(const vector_t<T> &receiver, const K &key) {
 	return receiver.at(key);
 }
 

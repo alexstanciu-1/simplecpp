@@ -18,7 +18,7 @@ function project_input(array $sources, ?string $entry = 'main.phs'): Compiler
 		Source_Registry::add($module, $file);
 	}
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	if ($entry !== null) { $compiler->select_entry('main', $entry); }
 	return $compiler;
 }

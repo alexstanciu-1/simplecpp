@@ -10,7 +10,7 @@ function environment_compile(string $source): void
 	$file = new file(); $file->path = 'main.phs'; $file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 }
 
 $cases = [

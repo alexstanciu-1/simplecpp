@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S const parameters require a fixed reference without a default\n"
+}

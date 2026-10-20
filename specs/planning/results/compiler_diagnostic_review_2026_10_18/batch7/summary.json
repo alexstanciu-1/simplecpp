@@ -1,0 +1,134 @@
+{
+  "ctor_abstract_param": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch7/ctor_abstract_param/cpp/units/n6d61696e/n6d61696e2e706873.cpp:5:20: error: parameter type 'record_A' is an abstract class\n    5 | record_C::record_C(record_A local_a)\n      |                    ^\n/tmp/mytry-diagnostic-review/batch7/ctor_abstract_param/cpp/types/n41.hpp:7:24: note: unimplemented pure virtual method 'dispatch_A__method_f' in 'record_A'\n    7 |         virtual scpp::int_t<> dispatch_A__method_f() = 0;\n      |                               ^\n1 error generated.\n"
+    ]
+  },
+  "ctor_abstract_value_param": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/types/n43.hpp:3:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/value_p.hpp:19:4: error: field type 'record_A' is an abstract class\n   19 |         T value_;\n      |           ^\n/tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/units/n6d61696e/n6d61696e2e706873.cpp:6:44: note: in instantiation of template class 'scpp::value_p<record_A>' requested here\n    6 | record_C::record_C(scpp::value_p<record_A> local_a)\n      |                                            ^\n/tmp/mytry-diagnostic-review/batch7/ctor_abstract_value_param/cpp/types/n41.hpp:7:24: note: unimplemented pure virtual method 'dispatch_A__method_f' in 'record_A'\n    7 |         virtual scpp::int_t<> dispatch_A__method_f() = 0;\n      |                               ^\n1 error generated.\n"
+    ]
+  },
+  "ctor_private": {
+    "stage": "prepare",
+    "error": "Private member is not accessible here\n"
+  },
+  "ctor_protected_base": {
+    "stage": "prepare",
+    "error": "Protected member is not accessible here\n"
+  },
+  "ctor_private_base": {
+    "stage": "prepare",
+    "error": "Private member is not accessible here\n"
+  },
+  "ctor_base_missing": {
+    "stage": "prepare",
+    "error": "S2S call is missing a required argument\n"
+  },
+  "ctor_final": {
+    "stage": "prepare",
+    "error": "Member requires public, protected or private visibility and supported modifiers\n"
+  },
+  "dtor_final": {
+    "stage": "prepare",
+    "error": "Destructor abstract/final/override modifiers are deferred\n"
+  },
+  "dtor_static": {
+    "stage": "prepare",
+    "error": "Destructor requires instance access, no parameters and no declared return type/reference\n"
+  },
+  "dtor_abstract": {
+    "stage": "prepare",
+    "error": "Destructor abstract/final/override modifiers are deferred\n"
+  },
+  "dtor_return": {
+    "stage": "prepare",
+    "error": "Destructor requires instance access, no parameters and no declared return type/reference\n"
+  },
+  "dtor_params": {
+    "stage": "prepare",
+    "error": "Destructor requires instance access, no parameters and no declared return type/reference\n"
+  },
+  "ctor_static": {
+    "stage": "prepare",
+    "error": "Member requires public, protected or private visibility and supported modifiers\n"
+  },
+  "ctor_returns": {
+    "stage": "prepare",
+    "error": "Void return forwarding requires a void expression; values are not discarded\n"
+  },
+  "ctor_parent_late": {
+    "stage": "prepare",
+    "error": "Member call requires one ordinary method: __construct\n"
+  },
+  "ctor_parent_twice": {
+    "stage": "prepare",
+    "error": "Member call requires one ordinary method: __construct\n"
+  },
+  "interface_missing": {
+    "stage": "prepare",
+    "error": "Concrete type has unimplemented abstract methods\n"
+  },
+  "interface_wrong_return": {
+    "stage": "prepare",
+    "error": "Interface implementation requires a compatible public instance signature\n"
+  },
+  "interface_private": {
+    "stage": "prepare",
+    "error": "Interface implementation requires a compatible public instance signature\n"
+  },
+  "interface_duplicate": {
+    "stage": "prepare",
+    "error": "Duplicate direct interface relationship\n"
+  },
+  "interface_diamond": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "interface_redundant": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "inherit_final": {
+    "stage": "prepare",
+    "error": "Cannot extend a final type\n"
+  },
+  "inherit_cycle": {
+    "stage": "prepare",
+    "error": "Cyclic type relationship\nCyclic type relationship\n"
+  },
+  "inherit_kind": {
+    "stage": "prepare",
+    "error": "Class/struct inheritance requires a same-kind base\n"
+  },
+  "inherit_reverse_kind": {
+    "stage": "prepare",
+    "error": "Class/struct inheritance requires a same-kind base\n"
+  },
+  "inherit_property": {
+    "stage": "prepare",
+    "error": "Inherited member redeclaration is deferred: n\n"
+  },
+  "override_static": {
+    "stage": "prepare",
+    "error": "Override requires a compatible instance signature\n"
+  },
+  "override_private": {
+    "stage": "prepare",
+    "error": "Override cannot narrow visibility\n"
+  },
+  "abstract_new": {
+    "stage": "prepare",
+    "error": "Cannot construct an abstract type\n"
+  },
+  "interface_new": {
+    "stage": "prepare",
+    "error": "S2S new requires a source struct or class\n"
+  }
+}

@@ -1,0 +1,1497 @@
+{
+  "status": "passed",
+  "optimization": "O0",
+  "native_debug": false,
+  "rounds": 3,
+  "source_acceptance_revision": "da17e1bad6ab3751a0dbe3c1729273d55dcff5f7",
+  "sources": {
+    "main.phs": "5e60d5f701ee533e4548011725816567a02a04113c31a20336dc5788e3add8ab",
+    "src/assets.phs": "cb1937a70a2dcb40d15ed45e2a34eb4a16fc3b41c38899023d568b9c19660da5",
+    "src/banking.phs": "46ead8556a256affe9e4103ee0c2f8ae8bbefd45584a49ffc8dfa5b64e425e7f",
+    "src/business_checks.phs": "9fa9d36809481485c8158e12ef3b722e8a72e2f459bcd13fffddc23e9df2ad71",
+    "src/calendar.phs": "6cc305e6d48a97b0fa7f514bc13800206231776157c5aed8bc8bc4ca247e456a",
+    "src/checks.phs": "c4364d298b2698df20b74ea7f857f7fbeafbea7de4a09268a9e5b39488f49d37",
+    "src/closing.phs": "fc2f9a9255a8aa1f9b0c624266fa1b946806966d6b872bb5c0290a4f2adce6b0",
+    "src/closing_checks.phs": "1fe3e81f2abb8330823d3ebeb9e5e793a3ad44082d2095b1a21ec15f5d8c257f",
+    "src/core.phs": "82819a17f5c3d485b4bc6d23c210adbdbafd210fe7a97abf8531289bf0f254c3",
+    "src/ledger.phs": "5eb90a6919ca43abe4cc7bf3b69a3031392f0880825efd907e0c6f521874f439",
+    "src/money.phs": "d386f11b39a3f11862ca00956049788d86310b164dc3d4fc5f41cc42c0940609",
+    "src/purchasing.phs": "b9e08c16043d318a51bd5e2579bff4714ed76a1e142da485a40f7c30111c8944",
+    "src/reports.phs": "7194a1d75d83260f1d8444fccb36775f5b6785184d3d4ca0e17d5a5e0baccaa7",
+    "src/sales.phs": "5ad11cbdfd004f5e5706b6c381379798b93487ac13b9a8d13067dfd808b1e231",
+    "src/stock.phs": "2f2999384900663641f7eac501970564717e8a705de59f267c4e97f44a272401"
+  },
+  "scope": "Application object recompilation; support/PCH/layout/publication/dependency validation excluded",
+  "samples": [
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 1,
+      "trial": 0,
+      "compilation_wall_seconds": 74.21990759001346,
+      "link_seconds": 0.5635069209965877,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 4.503970457997639
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 4.94392681599129
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 8.268404639034998
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 7.656990821997169
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 3.2537545699742623
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 4.82467662502313
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 4.355577363981865
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 5.839866988011636
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 3.215321463998407
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 4.182071234041359
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 3.3485706450301223
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 4.3559244140051305
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 3.842572080960963
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 3.7487695699674077
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 4.375944755971432
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 3.5011600619764067
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 1,
+      "trial": 0,
+      "compilation_wall_seconds": 25.833301723003387,
+      "link_seconds": 0.5811200070311315,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 1.9491193139692768
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 2.1105845179990865
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 1.9524730480043218
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 2.0945743630290963
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.4144604079774581
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 2.372283195029013
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 1.6218670510570519
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 3.315449465007987
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.550289315986447
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 1.711309584963601
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.7074365549487993
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 1.7752498929621652
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 1.466286320996005
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 1.2080748100415803
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 1.6756554750027135
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 0.9061388170230202
+        }
+      ]
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 1,
+      "trial": 0,
+      "compilation_wall_seconds": 2.9673234910005704,
+      "link_seconds": 0.5317139659891836,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 0.09279558004345745
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 0.19992121501127258
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 0.17689441505353898
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 0.3152712640003301
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.15245668002171442
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 0.3308290610439144
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 0.19028905598679557
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 0.28368617000523955
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.08507729199482128
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 0.23201362299732864
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.14180128695443273
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 0.2252127259853296
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 0.12882845400599763
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 0.12390742299612612
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 0.21162768104113638
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 0.07441926602041349
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 12,
+      "trial": 0,
+      "compilation_wall_seconds": 16.711398523999378,
+      "link_seconds": 0.8243274880223908,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 10.69767743803095
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 10.459915729996283
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 11.30220597598236
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 11.991901600034907
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 9.20020502601983
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 13.032752576982602
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 10.854433775006328
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 14.51534390001325
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 9.05883008998353
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 11.388203374051955
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 8.988378965004813
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 11.69229118997464
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 6.886057163996156
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 6.720528498000931
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 7.50550661701709
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 5.7220528749749064
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 12,
+      "trial": 0,
+      "compilation_wall_seconds": 7.505077383946627,
+      "link_seconds": 0.5866664490313269,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 4.7360517689958215
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 4.3213510810164735
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 5.407904090010561
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 6.44067898998037
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 1.5168136600404978
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 6.767172096995637
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 4.946476720040664
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 7.49584055703599
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 1.6538555059814826
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 5.8410483070183545
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 2.4808633460197598
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 5.419553215964697
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 4.0297145179938525
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 3.3385676810285076
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 4.307042972999625
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 2.1793844449566677
+        }
+      ]
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 12,
+      "trial": 0,
+      "compilation_wall_seconds": 0.7241645320318639,
+      "link_seconds": 0.5212687299936078,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 0.188836187007837
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 0.44458891899557784
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 0.36521337897283956
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 0.6145636640139855
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.4365916780079715
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 0.6905563730397262
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 0.5160387039650232
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 0.6597999910009094
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.1704712759819813
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 0.49512061901623383
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.3430961329722777
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 0.5222290900419466
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 0.27579721802612767
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 0.33621417998801917
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 0.36864792596315965
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 0.14526833000127226
+        }
+      ]
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 12,
+      "trial": 1,
+      "compilation_wall_seconds": 0.7031540189636871,
+      "link_seconds": 0.5438606569659896,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 0.1939379470422864
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 0.46392067399574444
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 0.4164621099480428
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 0.5972325390321203
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.37314959103241563
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 0.6600485760136507
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 0.4513950910186395
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 0.5867076570284553
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.1443604189553298
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 0.4723179860156961
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.3499969399999827
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 0.48355934099527076
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 0.28393674502149224
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 0.28214076498989016
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 0.33813132904469967
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 0.1388816370163113
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 12,
+      "trial": 1,
+      "compilation_wall_seconds": 10.122699344996363,
+      "link_seconds": 0.6119412460247986,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 5.352031336980872
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 4.466588629002217
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 5.724196780996863
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 7.984538685996085
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 1.0176183620351367
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 8.089445090969093
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 6.4073728189687245
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 10.116682629974093
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 1.405495395010803
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 6.135772556997836
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 2.1225077399867587
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 6.355483726016246
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 4.565318077977281
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 4.322034951997921
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 5.98442775500007
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 3.032309274014551
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 12,
+      "trial": 1,
+      "compilation_wall_seconds": 20.91178243700415,
+      "link_seconds": 0.7701386340195313,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 12.335663950012531
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 12.707762680016458
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 15.116695240954868
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 15.965953666949645
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 9.610467240971047
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 16.59195022599306
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 12.747822237026412
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 17.714509990997612
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 11.637070393015165
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 15.714477463043295
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 12.102007071021944
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 13.43078383395914
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 9.152811117994133
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 8.437017076998018
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 8.790651602030266
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 7.407626262982376
+        }
+      ]
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 1,
+      "trial": 1,
+      "compilation_wall_seconds": 3.187992397986818,
+      "link_seconds": 0.6024744979804382,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 0.10512993001611903
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 0.21993009198922664
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 0.1973097290028818
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 0.31666609999956563
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.16588960401713848
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 0.37471292197005823
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 0.22020336904097348
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 0.36805655498756096
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.08632384304655716
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 0.20424240996362641
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.14242512499913573
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 0.24162510799942538
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 0.12577694898936898
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 0.12448107701493427
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 0.2139554949826561
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 0.07824036199599504
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 1,
+      "trial": 1,
+      "compilation_wall_seconds": 27.389967143011745,
+      "link_seconds": 0.7687116820015945,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 1.6917314549791627
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 1.3734200580511242
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 1.914291293011047
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 2.4300566960009746
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.39256935101002455
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 2.2972900349996053
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 1.8560502259642817
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 3.6862062799627893
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 1.5392712599714287
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 2.1578465250204317
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.7078826560173184
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 1.9460147979552858
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 1.2737081189989112
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 1.3397029049810953
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 1.6698000270407647
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 1.111773960001301
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 1,
+      "trial": 1,
+      "compilation_wall_seconds": 79.34820120298536,
+      "link_seconds": 0.738856966025196,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 8.766324775991961
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 3.999076045001857
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 5.154090733965859
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 4.94978439604165
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 3.0854520379798487
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 4.794158410048112
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 4.635321053036023
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 6.03856963996077
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 4.738422737980727
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 5.859117051993962
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 4.446709443000145
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 4.958873750991188
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 4.525871260033455
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 3.683538395969663
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 5.046402696985751
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 4.6636876499978825
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 1,
+      "trial": 2,
+      "compilation_wall_seconds": 87.83416669699363,
+      "link_seconds": 0.6348298729863018,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 4.972049516974948
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 4.673059040040243
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 4.690312992956024
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 6.063974082993809
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 5.58214145200327
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 14.091907366004307
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 6.677452489035204
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 6.6160679389722645
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 3.641216763993725
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 5.365474356978666
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 3.5462380010285415
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 4.42866585298907
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 3.8684453110327013
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 3.729910682013724
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 5.849816898000427
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 4.034820096974727
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 1,
+      "trial": 2,
+      "compilation_wall_seconds": 27.131958056008443,
+      "link_seconds": 0.7601200870121829,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 1.779024560994003
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 1.277076060010586
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 1.6247397409752011
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 2.3295741509646177
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.41152796999085695
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 2.708631590998266
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 1.793782574008219
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 3.273494470049627
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.5517774930340238
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 1.6584241960081272
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 1.1024363830219954
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 3.052115891012363
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 1.393933476996608
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 1.1489160499768332
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 1.809445708990097
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 1.214554094010964
+        }
+      ]
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 1,
+      "trial": 2,
+      "compilation_wall_seconds": 6.779605365009047,
+      "link_seconds": 1.022713679005392,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 0.11168324004393071
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 0.2782608490088023
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 0.2491159430355765
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 0.37878044502576813
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.2037254080059938
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 0.5133008499979042
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 0.32069735595723614
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 0.525866769021377
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.11459210800239816
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 0.3333593099960126
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.22427283402066678
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 0.9960753099876456
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 0.5649576249998063
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 0.6168797819991596
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 1.123061606020201
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 0.2213810670073144
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 12,
+      "trial": 2,
+      "compilation_wall_seconds": 18.130433323967736,
+      "link_seconds": 0.5852243959670886,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 12.949852800986264
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 12.797240860993043
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 13.243972571974155
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 14.36414997605607
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 10.026565192034468
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 14.29849211301189
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 13.835418413043953
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 16.063417399011087
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 9.636511982011143
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 12.76482094899984
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 10.49603279598523
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 13.140505763003603
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 7.542521672032308
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 7.414285550010391
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 7.561662666033953
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 5.348363790020812
+        }
+      ]
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 12,
+      "trial": 2,
+      "compilation_wall_seconds": 6.738922341028228,
+      "link_seconds": 0.5677065210184082,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 3.8825172830256633
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 3.8513134439708665
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 4.18953341699671
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 5.699358780984767
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 1.3678495380445383
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 5.3475313520175405
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 4.747945987037383
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 6.729357807023916
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 1.8775137379998341
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 4.812487238959875
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 2.3808079180307686
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 4.560278105025645
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 3.3948824129765853
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 3.036838174040895
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 3.6017636180040427
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 1.7687111049890518
+        }
+      ]
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 12,
+      "trial": 2,
+      "compilation_wall_seconds": 0.671172121015843,
+      "link_seconds": 0.5297319420496933,
+      "units": [
+        {
+          "source": "main.phs",
+          "seconds": 0.21004784101387486
+        },
+        {
+          "source": "src/assets.phs",
+          "seconds": 0.45411608001450077
+        },
+        {
+          "source": "src/banking.phs",
+          "seconds": 0.38816566800232977
+        },
+        {
+          "source": "src/business_checks.phs",
+          "seconds": 0.553031831048429
+        },
+        {
+          "source": "src/calendar.phs",
+          "seconds": 0.34848997299559414
+        },
+        {
+          "source": "src/checks.phs",
+          "seconds": 0.6671901679947041
+        },
+        {
+          "source": "src/closing.phs",
+          "seconds": 0.4023799480055459
+        },
+        {
+          "source": "src/closing_checks.phs",
+          "seconds": 0.6047128580394201
+        },
+        {
+          "source": "src/core.phs",
+          "seconds": 0.15054666297510266
+        },
+        {
+          "source": "src/ledger.phs",
+          "seconds": 0.5066952820052393
+        },
+        {
+          "source": "src/money.phs",
+          "seconds": 0.3570260709966533
+        },
+        {
+          "source": "src/purchasing.phs",
+          "seconds": 0.4374593729735352
+        },
+        {
+          "source": "src/reports.phs",
+          "seconds": 0.2653248949791305
+        },
+        {
+          "source": "src/sales.phs",
+          "seconds": 0.28754174802452326
+        },
+        {
+          "source": "src/stock.phs",
+          "seconds": 0.3127618419821374
+        },
+        {
+          "source": "entry.cpp",
+          "seconds": 0.12242611101828516
+        }
+      ]
+    }
+  ],
+  "revision": "08868a1d94847d7dd2e9f7198f9ec840a5160d42",
+  "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+  "cpu": "Architecture:                         x86_64\nCPU op-mode(s):                       32-bit, 64-bit\nAddress sizes:                        48 bits physical, 48 bits virtual\nByte Order:                           Little Endian\nCPU(s):                               12\nOn-line CPU(s) list:                  0-11\nVendor ID:                            AuthenticAMD\nModel name:                           AMD Ryzen 5 PRO 4650G with Radeon Graphics\nCPU family:                           23\nModel:                                96\nThread(s) per core:                   2\nCore(s) per socket:                   6\nSocket(s):                            1\nStepping:                             1\nBogoMIPS:                             7999.73\nFlags:                                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl tsc_reliable nonstop_tsc cpuid extd_apicid tsc_known_freq pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw topoext perfctr_core ssbd ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 clzero xsaveerptr arat umip rdpid\nHypervisor vendor:                    Microsoft\nVirtualization type:                  full\nL1d cache:                            192 KiB (6 instances)\nL1i cache:                            192 KiB (6 instances)\nL2 cache:                             3 MiB (6 instances)\nL3 cache:                             4 MiB (1 instance)\nNUMA node(s):                         1\nNUMA node0 CPU(s):                    0-11\nVulnerability Gather data sampling:   Not affected\nVulnerability Itlb multihit:          Not affected\nVulnerability L1tf:                   Not affected\nVulnerability Mds:                    Not affected\nVulnerability Meltdown:               Not affected\nVulnerability Mmio stale data:        Not affected\nVulnerability Reg file data sampling: Not affected\nVulnerability Retbleed:               Mitigation; untrained return thunk; SMT enabled with STIBP protection\nVulnerability Spec rstack overflow:   Vulnerable: Safe RET, no microcode\nVulnerability Spec store bypass:      Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:             Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:             Mitigation; Retpolines; IBPB conditional; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                  Not affected\nVulnerability Tsx async abort:        Not affected\n",
+  "system": "Linux randdesk 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n",
+  "medians": [
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 1,
+      "compile_seconds": 79.34820120298536,
+      "link_seconds": 0.6348298729863018,
+      "units": {
+        "main.phs": 4.972049516974948,
+        "src/assets.phs": 4.673059040040243,
+        "src/banking.phs": 5.154090733965859,
+        "src/business_checks.phs": 6.063974082993809,
+        "src/calendar.phs": 3.2537545699742623,
+        "src/checks.phs": 4.82467662502313,
+        "src/closing.phs": 4.635321053036023,
+        "src/closing_checks.phs": 6.03856963996077,
+        "src/core.phs": 3.641216763993725,
+        "src/ledger.phs": 5.365474356978666,
+        "src/money.phs": 3.5462380010285415,
+        "src/purchasing.phs": 4.42866585298907,
+        "src/reports.phs": 3.8684453110327013,
+        "src/sales.phs": 3.729910682013724,
+        "src/stock.phs": 5.046402696985751,
+        "entry.cpp": 4.034820096974727
+      },
+      "slowest_unit": "src/business_checks.phs"
+    },
+    {
+      "mode": "ordinary-no-pch",
+      "jobs": 12,
+      "compile_seconds": 18.130433323967736,
+      "link_seconds": 0.7701386340195313,
+      "units": {
+        "main.phs": 12.335663950012531,
+        "src/assets.phs": 12.707762680016458,
+        "src/banking.phs": 13.243972571974155,
+        "src/business_checks.phs": 14.36414997605607,
+        "src/calendar.phs": 9.610467240971047,
+        "src/checks.phs": 14.29849211301189,
+        "src/closing.phs": 12.747822237026412,
+        "src/closing_checks.phs": 16.063417399011087,
+        "src/core.phs": 9.636511982011143,
+        "src/ledger.phs": 12.76482094899984,
+        "src/money.phs": 10.49603279598523,
+        "src/purchasing.phs": 13.140505763003603,
+        "src/reports.phs": 7.542521672032308,
+        "src/sales.phs": 7.414285550010391,
+        "src/stock.phs": 7.561662666033953,
+        "entry.cpp": 5.7220528749749064
+      },
+      "slowest_unit": "src/closing_checks.phs"
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 1,
+      "compile_seconds": 27.131958056008443,
+      "link_seconds": 0.7601200870121829,
+      "units": {
+        "main.phs": 1.779024560994003,
+        "src/assets.phs": 1.3734200580511242,
+        "src/banking.phs": 1.914291293011047,
+        "src/business_checks.phs": 2.3295741509646177,
+        "src/calendar.phs": 0.41152796999085695,
+        "src/checks.phs": 2.372283195029013,
+        "src/closing.phs": 1.793782574008219,
+        "src/closing_checks.phs": 3.315449465007987,
+        "src/core.phs": 0.5517774930340238,
+        "src/ledger.phs": 1.711309584963601,
+        "src/money.phs": 0.7078826560173184,
+        "src/purchasing.phs": 1.9460147979552858,
+        "src/reports.phs": 1.393933476996608,
+        "src/sales.phs": 1.2080748100415803,
+        "src/stock.phs": 1.6756554750027135,
+        "entry.cpp": 1.111773960001301
+      },
+      "slowest_unit": "src/closing_checks.phs"
+    },
+    {
+      "mode": "ordinary-pch",
+      "jobs": 12,
+      "compile_seconds": 7.505077383946627,
+      "link_seconds": 0.5866664490313269,
+      "units": {
+        "main.phs": 4.7360517689958215,
+        "src/assets.phs": 4.3213510810164735,
+        "src/banking.phs": 5.407904090010561,
+        "src/business_checks.phs": 6.44067898998037,
+        "src/calendar.phs": 1.3678495380445383,
+        "src/checks.phs": 6.767172096995637,
+        "src/closing.phs": 4.946476720040664,
+        "src/closing_checks.phs": 7.49584055703599,
+        "src/core.phs": 1.6538555059814826,
+        "src/ledger.phs": 5.8410483070183545,
+        "src/money.phs": 2.3808079180307686,
+        "src/purchasing.phs": 5.419553215964697,
+        "src/reports.phs": 4.0297145179938525,
+        "src/sales.phs": 3.3385676810285076,
+        "src/stock.phs": 4.307042972999625,
+        "entry.cpp": 2.1793844449566677
+      },
+      "slowest_unit": "src/closing_checks.phs"
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 1,
+      "compile_seconds": 3.187992397986818,
+      "link_seconds": 0.6024744979804382,
+      "units": {
+        "main.phs": 0.10512993001611903,
+        "src/assets.phs": 0.21993009198922664,
+        "src/banking.phs": 0.1973097290028818,
+        "src/business_checks.phs": 0.31666609999956563,
+        "src/calendar.phs": 0.16588960401713848,
+        "src/checks.phs": 0.37471292197005823,
+        "src/closing.phs": 0.22020336904097348,
+        "src/closing_checks.phs": 0.36805655498756096,
+        "src/core.phs": 0.08632384304655716,
+        "src/ledger.phs": 0.23201362299732864,
+        "src/money.phs": 0.14242512499913573,
+        "src/purchasing.phs": 0.24162510799942538,
+        "src/reports.phs": 0.12882845400599763,
+        "src/sales.phs": 0.12448107701493427,
+        "src/stock.phs": 0.2139554949826561,
+        "entry.cpp": 0.07824036199599504
+      },
+      "slowest_unit": "src/checks.phs"
+    },
+    {
+      "mode": "prelowered",
+      "jobs": 12,
+      "compile_seconds": 0.7031540189636871,
+      "link_seconds": 0.5297319420496933,
+      "units": {
+        "main.phs": 0.1939379470422864,
+        "src/assets.phs": 0.45411608001450077,
+        "src/banking.phs": 0.38816566800232977,
+        "src/business_checks.phs": 0.5972325390321203,
+        "src/calendar.phs": 0.37314959103241563,
+        "src/checks.phs": 0.6671901679947041,
+        "src/closing.phs": 0.4513950910186395,
+        "src/closing_checks.phs": 0.6047128580394201,
+        "src/core.phs": 0.15054666297510266,
+        "src/ledger.phs": 0.49512061901623383,
+        "src/money.phs": 0.3499969399999827,
+        "src/purchasing.phs": 0.48355934099527076,
+        "src/reports.phs": 0.27579721802612767,
+        "src/sales.phs": 0.28754174802452326,
+        "src/stock.phs": 0.33813132904469967,
+        "entry.cpp": 0.1388816370163113
+      },
+      "slowest_unit": "src/checks.phs"
+    }
+  ]
+}

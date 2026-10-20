@@ -1,0 +1,8 @@
+{
+  "direct-O0": "expressions 31 2496 31 14 15 4 32\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nconstructor-failure-0 0 0 0 1 0 0 1\nconstructor-failure-1 1 256 1 1 1 0 2\nconstructor-failure-2 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 0 4\n",
+  "direct-O2": "expressions 31 2496 31 14 15 4 32\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nconstructor-failure-0 0 0 0 1 0 0 1\nconstructor-failure-1 1 256 1 1 1 0 2\nconstructor-failure-2 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 0 4\n",
+  "direct-sanitized": "expressions 31 2496 31 14 15 4 32\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nconstructor-failure-0 0 0 0 1 0 0 1\nconstructor-failure-1 1 256 1 1 1 0 2\nconstructor-failure-2 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 1 5\n",
+  "opaque-O0": "expressions 31 2496 31 14 15 4 32\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nconstructor-failure-0 0 0 0 1 0 0 1\nconstructor-failure-1 1 256 1 1 1 0 2\nconstructor-failure-2 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 0 4\n",
+  "opaque-O2": "expressions 31 2496 31 14 15 4 32\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nconstructor-failure-0 0 0 0 1 0 0 1\nconstructor-failure-1 1 256 1 1 1 0 2\nconstructor-failure-2 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 0 4\n",
+  "opaque-sanitized": "expressions 31 2496 31 14 15 4 32\nfailure 0 0 0 1 0 0 1\nparameter-failure 0 0 0 1 1 0 2\nconstructor-failure-0 0 0 0 1 0 0 1\nconstructor-failure-1 1 256 1 1 1 0 2\nconstructor-failure-2 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 1 5\n"
+}

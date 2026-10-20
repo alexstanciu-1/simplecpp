@@ -14,7 +14,7 @@ function result_container_compile(string $source, bool $custom_type = false): st
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->exec_cpp();
 	$text = CPP_Probe::text(Model::$cpp_files);
 	$compiler->exec_cpp();
@@ -143,7 +143,7 @@ $path = $directory . '/main.phs';
 $valid = 'struct Item { public int $n = 1; } function copy_result(result<vector<Item>> &$r): result<vector<Item>> { return $r; } return 0;';
 file_put_contents($path, $valid);
 Compiler_Lifecycle::reset();
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->init([$directory]);
 $compiler->exec_cpp();
 $original = CPP_Probe::text(Model::$cpp_files);
@@ -160,7 +160,7 @@ if ($original !== CPP_Probe::text(Model::$cpp_files)) {
 	throw new \LogicException('Result container copy repair differs');
 }
 Compiler_Lifecycle::reset();
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->init([$directory]);
 $compiler->exec_cpp();
 if ($original !== CPP_Probe::text(Model::$cpp_files)) {

@@ -1,0 +1,1 @@
+struct C { unique<int> $p; function __destruct() {} } $c = new C(); $d = $c; return 0;

@@ -159,7 +159,7 @@ foreach (['[]', '{key: 1}', 'dynamic::{key: 1}'] as $source)
 	Model::$modules->add($module->name, $module);
 	$record = Source_Registry::add($module, $syntax->source_file());
 	Source_Publication::publish_parsed($record, $syntax);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$failed = false;
 	try {
 		$compiler->prepare();

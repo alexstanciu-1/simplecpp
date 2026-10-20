@@ -64,6 +64,7 @@ final class Trait_Preparation
 
 	public static function source(collected_trait $trait): void
 	{
+		Declaration_Preparation::type_name($trait, null);
 		$syntax = $trait->syntax();
 		$constants /** Storage<member_constant_node> */ = $syntax->constants;
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;

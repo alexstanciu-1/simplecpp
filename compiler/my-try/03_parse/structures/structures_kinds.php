@@ -167,3 +167,21 @@ enum switch_label_kind {
 	case value;
 	case fallback;
 }
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Passing_Mode_Name
+{
+	public static function text(passing_mode $kind): string
+	{
+		return enum_name($kind);
+	}
+}
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Storage_Access_Name
+{
+	public static function text(storage_access $kind): string
+	{
+		return enum_name($kind);
+	}
+}

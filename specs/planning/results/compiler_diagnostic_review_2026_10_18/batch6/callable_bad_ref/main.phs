@@ -1,0 +1,1 @@
+$f function<int(int&)> = fn(int &$n): int => $n; return $f(1);

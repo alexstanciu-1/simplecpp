@@ -22,7 +22,7 @@ function enum_project(array $sources): Compiler
 		Source_Registry::add($module, $file);
 	}
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->select_entry('main', 'main.phs');
 	return $compiler;
 }
@@ -112,7 +112,7 @@ $name_output = CPP_Output::encode(Model::$cpp_files);
 $name_identity = Scope_Lookup::functions(Model::$language_scope, 'enum_name')[0];
 enum_check($name_identity instanceof compiler_function_definition && !method_exists($name_identity, 'signature'), 'Compiler definition fabricated a fixed signature');
 $name_syntax = serialize($name_file->parsed->root);
-(new CPP_Generator())->generate_program(Model::$prepared_files, Model::$prepared_entry);
+(new CPP_Generator(null, new cpp_lowering_options(false)))->generate_program(Model::$prepared_files, Model::$prepared_entry);
 enum_check(serialize($name_file->parsed->root) === $name_syntax, 'Helper generation mutated semantic facts');
 enum_edit($compiler, $name_file, "\n" . $name_source);
 $compiler->prepare(true);
@@ -257,8 +257,8 @@ foreach ([
 	'enum E: int8 { case A = -129; }' => 'backing range',
 	'enum E: uint64 { case A = 18446744073709551616; }' => 'backing range',
 	'enum E: string { case A = "x"; }' => 'integer type',
-	'enum E { case A; } enum E { case B; }' => 'duplicate enum/type name',
-	'struct E { int8 $x; } enum E { case A; }' => 'duplicate enum/type name',
+	'enum E { case A; } enum E { case B; }' => 'Duplicate type declaration',
+	'struct E { int8 $x; } enum E { case A; }' => 'Duplicate type declaration',
 	'enum E { case A; } $v = E::Missing;' => 'unknown enum case',
 	'$v = int::A;' => 'enum owner',
 	'enum E { case A; } $v E;' => 'explicit initializer',
@@ -354,7 +354,7 @@ $compiler->cpp();
 $numeric_changed = CPP_Output::encode(Model::$cpp_files);
 enum_check($numeric_changed !== $numeric_before, 'Numeric backing/value edit did not invalidate helpers');
 $numeric_root = serialize(Model::syntax_files()[0]->root);
-(new CPP_Generator())->generate_program(Model::$prepared_files, Model::$prepared_entry);
+(new CPP_Generator(null, new cpp_lowering_options(false)))->generate_program(Model::$prepared_files, Model::$prepared_entry);
 enum_check(serialize(Model::syntax_files()[0]->root) === $numeric_root, 'Type-argument generation mutated syntax');
 enum_edit($compiler, Model::sources()[0], 'return 7;');
 $compiler->prepare(true);
@@ -385,7 +385,7 @@ enum_check(Model::$global_scope->source_types_named('Broken')[0] === $partial, '
 
 // Backend traversal must not attach facts or mutate source syntax.
 $syntax_before = serialize(Model::syntax_files()[0]->root);
-$generated = (new CPP_Generator())->generate_program(Model::$prepared_files, Model::$prepared_entry);
+$generated = (new CPP_Generator(null, new cpp_lowering_options(false)))->generate_program(Model::$prepared_files, Model::$prepared_entry);
 enum_check(serialize(Model::syntax_files()[0]->root) === $syntax_before, 'Enum generation mutated the syntax graph');
 
 if (isset($argv[2])) { file_put_contents($argv[2], json_encode($fixtures, JSON_THROW_ON_ERROR)); }

@@ -1,0 +1,1 @@
+struct S { int $n = 1; } $a unique<S> = new S(); $r =& $a; $b = move($a); return isset($r) ? 1 : 0;

@@ -1,0 +1,4 @@
+$boxed mixed = 7;
+$number int = $boxed;
+$text string = (string) $number;
+return (int) $text;

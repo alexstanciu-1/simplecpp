@@ -1,0 +1,1 @@
+function f(): void {} $x = f(); return 0;

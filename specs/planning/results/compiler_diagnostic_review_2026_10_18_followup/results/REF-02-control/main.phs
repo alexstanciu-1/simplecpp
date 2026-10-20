@@ -1,0 +1,1 @@
+function &f(int &$x): int { return $x; } $x = 1; $r =& f($x); return 0;

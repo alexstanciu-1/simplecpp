@@ -13,7 +13,7 @@ function replacement_compile(string $source): void
 	$file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 }
 function replacement_check(bool $ok, string $message): void
 {
@@ -110,7 +110,7 @@ try
 	{
 		file_put_contents($path, $valid);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		$compiler->exec_cpp();
 		$fresh = CPP_Probe::text(Model::$cpp_files);

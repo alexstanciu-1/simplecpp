@@ -1,0 +1,42 @@
+{
+  "application_units": [
+    "entry.cpp",
+    "units/n6d61696e/n6d61696e2e706873.cpp",
+    "units/n6d61696e/n7372632f6173736574732e706873.cpp",
+    "units/n6d61696e/n7372632f62616e6b696e672e706873.cpp",
+    "units/n6d61696e/n7372632f627573696e6573735f636865636b732e706873.cpp",
+    "units/n6d61696e/n7372632f63616c656e6461722e706873.cpp",
+    "units/n6d61696e/n7372632f636865636b732e706873.cpp",
+    "units/n6d61696e/n7372632f636c6f73696e672e706873.cpp",
+    "units/n6d61696e/n7372632f636c6f73696e675f636865636b732e706873.cpp",
+    "units/n6d61696e/n7372632f636f72652e706873.cpp",
+    "units/n6d61696e/n7372632f6c65646765722e706873.cpp",
+    "units/n6d61696e/n7372632f6d6f6e65792e706873.cpp",
+    "units/n6d61696e/n7372632f70757263686173696e672e706873.cpp",
+    "units/n6d61696e/n7372632f7265706f7274732e706873.cpp",
+    "units/n6d61696e/n7372632f73616c65732e706873.cpp",
+    "units/n6d61696e/n7372632f73746f636b2e706873.cpp"
+  ],
+  "excluded_artifacts": [
+    {
+      "path": "specializations/base.cpp",
+      "kind": "translation_unit"
+    },
+    {
+      "path": "specializations/layout.cpp",
+      "kind": "layout_probe"
+    },
+    {
+      "path": "specializations/layout_1.cpp",
+      "kind": "layout_probe"
+    },
+    {
+      "path": "specializations/layout_2.cpp",
+      "kind": "layout_probe"
+    },
+    {
+      "path": "specializations/containers.cpp",
+      "kind": "translation_unit"
+    }
+  ]
+}

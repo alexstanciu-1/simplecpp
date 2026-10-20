@@ -59,7 +59,7 @@ final class Output_Publication
 	}
 
 	/** Preflight all ownership before writes; journal first, manifest last, readiness after success. */
-	public function publish(Storage $artifacts /** Storage<cpp_artifact> */, runtime_cpp_build_spec $runtime): void
+	public function publish(Storage $artifacts /** Storage<cpp_artifact> */, runtime_cpp_build_spec $runtime, bool $template_free_application = false, ?cpp_lowering_policy $policy = null): void
 	{
 		if (!$this->reservation->active() || $this->attempted) {
 			throw new \LogicException('Publication requires an active unfinished reservation');
@@ -93,7 +93,10 @@ final class Output_Publication
 		if ($units === 0) {
 			throw new \RuntimeException('Publication requires executable translation units');
 		}
-		$manifest .= '],"runtime_build":' . Runtime_Build_Contract::encode($runtime) . "}\n";
+		$selected_policy = $policy ?? new cpp_lowering_policy();
+		$template_policy = $template_free_application ? 'forbidden' : 'allowed';
+		$manifest .= '],"application_templates":' . json_quote($template_policy)
+			. ',"cpp_policy":' . json_quote($selected_policy->identity()) . ',"runtime_build":' . Runtime_Build_Contract::encode($runtime) . "}\n";
 		$current /** hash<string> */ = [];
 		$owned /** Keyed_Storage<output_file_ownership> */ = $this->owned;
 		foreach ($owned as $path => $authorization)
@@ -118,10 +121,15 @@ final class Output_Publication
 		$journal = '{"format":"scpp-output-journal-v1","files":[';
 		$separator = '';
 		foreach ($owned as $path => $authorization) {
+			// Missing digests mean absence. Guard typed-map reads before native at() access.
 			$before = '';
 			$after = '';
-			if (isset($current[$path])) { $before = $current[$path]; }
-			if (isset($hashes[$path])) { $after = $hashes[$path]; }
+			if (isset($current[$path])) {
+				$before = $current[$path];
+			}
+			if (isset($hashes[$path])) {
+				$after = $hashes[$path];
+			}
 			$journal .= $separator . self::inventory_entry($path, $before, $after);
 			$separator = ',';
 		}

@@ -1,0 +1,7 @@
+{
+  "stage": "emitted",
+  "clang": "failed",
+  "errors": [
+    "In file included from /tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/entry.cpp:1:\nIn file included from /tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/types/n41.hpp:2:\n/tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/types/n42.hpp:9:32: error: unknown type name 'record_A'; did you mean 'record_B'?\n    9 |         scpp::hash_t<::scpp::shared_p<record_A>, scpp::string_t> field_as;\n      |                                       ^~~~~~~~\n      |                                       record_B\n/tmp/mytry-diagnostic-review/batch17/mutual_hash_min/cpp/types/n42.hpp:6:8: note: 'record_B' declared here\n    6 | struct record_B\n      |        ^\n1 error generated.\n"
+  ]
+}

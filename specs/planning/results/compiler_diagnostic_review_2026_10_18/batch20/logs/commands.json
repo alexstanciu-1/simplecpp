@@ -1,0 +1,92 @@
+[
+  {
+    "name": "constant_type",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch20/constant_type",
+      "/tmp/mytry-diagnostic-review/batch20/constant_type/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.249,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "import_target",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch20/import_target",
+      "/tmp/mytry-diagnostic-review/batch20/import_target/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.368,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "hash_key",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key",
+      "/tmp/mytry-diagnostic-review/batch20/hash_key/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.394,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "trait_signature",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch20/trait_signature",
+      "/tmp/mytry-diagnostic-review/batch20/trait_signature/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.408,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "two_failures",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch20/two_failures",
+      "/tmp/mytry-diagnostic-review/batch20/two_failures/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.409,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "trait_body",
+    "command": [
+      "php",
+      "/tmp/mytry-diagnostic-review/incremental.php",
+      "/tmp/mytry-diagnostic-review/batch20/trait_body",
+      "/tmp/mytry-diagnostic-review/batch20/trait_body/case.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.423,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  }
+]

@@ -1,0 +1,7 @@
+class Base { public int $value = 3; }
+class Child extends Base {}
+$rows Storage<Child> = new Storage<Child>();
+$rows->append(new Child());
+$cursor Storage_Cursor<Base> = new Storage_Cursor<Base>($rows);
+$cursor->rewind();
+return $cursor->current()->value;

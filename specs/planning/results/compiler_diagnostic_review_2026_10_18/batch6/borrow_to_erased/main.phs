@@ -1,0 +1,1 @@
+$n = 1; $f function<int()> = function () use (&$n): int { return $n; }; return 0;

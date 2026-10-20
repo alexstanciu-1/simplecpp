@@ -30,8 +30,8 @@ inline bool keyed_ready(const detail::dynamic_value *receiver, bool removing) {
 	return receiver->table_if() ? true : keyed_invalid(removing);
 }
 
-template <typename T>
-const T *keyed_lookup(const vector_t<T> *receiver, const int_t<> &key, bool) {
+template <typename T, typename K> requires detail::is_int_t_v<K>
+const T *keyed_lookup(const vector_t<T> *receiver, const K &key, bool) {
 	if (!receiver || key.native_value() < 0
 		|| static_cast<std::uint64_t>(key.native_value()) >= receiver->size()) return nullptr;
 	return &receiver->at(key);
@@ -53,8 +53,8 @@ const V *keyed_lookup(const hash_t<V, K> *receiver, const K &key, bool) {
 template <typename V, typename K> requires (!std::is_same_v<K, mixed_t>)
 const V *keyed_lookup(const hash_t<V, K> *receiver, const mixed_t &key, bool removing) {
 	if (!receiver) return nullptr;
-	if constexpr (std::is_same_v<K, int_t<>>) {
-		if (key.kind() == mixed_t::kind_t::int_v) return keyed_lookup(receiver, key.int_value(), removing);
+	if constexpr (detail::default_index_integer<K>) {
+		if (key.kind() == mixed_t::kind_t::int_v) return keyed_lookup(receiver, K{key.int_value().native_value()}, removing);
 	} else if constexpr (std::is_same_v<K, string_t>) {
 		if (key.kind() == mixed_t::kind_t::string_v) return keyed_lookup(receiver, *key.string_if(), removing);
 	}
@@ -97,10 +97,14 @@ bool_t keyed_probe(const R *receiver, const K &key, bool emptiness) {
 template <typename K>
 const K &keyed_required_key(const K &key) { return key; }
 
+template <typename K, typename Input>
+requires (detail::is_int_t_v<K> && detail::is_int_t_v<Input> && std::same_as<detail::int_rep_t<K>, detail::int_rep_t<Input>> && !std::same_as<K, Input>)
+K keyed_required_key(const Input &key) { return K{key.native_value()}; }
+
 template <typename K> requires (!std::is_same_v<K, mixed_t>)
 K keyed_required_key(const mixed_t &key) {
-	if constexpr (std::is_same_v<K, int_t<>>) {
-		if (key.kind() == mixed_t::kind_t::int_v) return key.int_value();
+	if constexpr (detail::default_index_integer<K>) {
+		if (key.kind() == mixed_t::kind_t::int_v) return K{key.int_value().native_value()};
 	} else if constexpr (std::is_same_v<K, string_t>) {
 		if (key.kind() == mixed_t::kind_t::string_v) return *key.string_if();
 	}

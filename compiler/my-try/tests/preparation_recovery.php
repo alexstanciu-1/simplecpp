@@ -38,7 +38,7 @@ file_put_contents($b, 'function caller(): int { return target(7); } return calle
 file_put_contents($c, 'function independent(): int { return 3; }');
 try
 {
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	Compiler_Lifecycle::reset();
 	$compiler->init([$directory]);
 	$compiler->sync([]);

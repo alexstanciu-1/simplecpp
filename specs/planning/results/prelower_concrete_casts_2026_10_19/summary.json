@@ -1,0 +1,210 @@
+{
+  "counters": {
+    "direct-O0": {
+      "sha256": "7690b7a4ed394ccaf0fb761456a4bff5f75a72091d89e4eff2f688c62a0e336d",
+      "workloads": [
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-O2": {
+      "sha256": "7690b7a4ed394ccaf0fb761456a4bff5f75a72091d89e4eff2f688c62a0e336d",
+      "workloads": [
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "direct-sanitized": {
+      "sha256": "603135dbe8b4a2d4cc2b27ff714cdd0403bc8de6ce29659be9ad75ce2e03e476",
+      "workloads": [
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-O0": {
+      "sha256": "7690b7a4ed394ccaf0fb761456a4bff5f75a72091d89e4eff2f688c62a0e336d",
+      "workloads": [
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-O2": {
+      "sha256": "7690b7a4ed394ccaf0fb761456a4bff5f75a72091d89e4eff2f688c62a0e336d",
+      "workloads": [
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    },
+    "composed-sanitized": {
+      "sha256": "603135dbe8b4a2d4cc2b27ff714cdd0403bc8de6ce29659be9ad75ce2e03e476",
+      "workloads": [
+        "casts 10 146 10 0 0 0 0",
+        "binary 13 962 13 0 0 0 0",
+        "initializers 34 16516 34 1 215 50 266",
+        "indexed-references 0 0 0 0 0 0 0",
+        "references 0 0 0 0 0 0 0"
+      ],
+      "initializer_copy_budgets": 216
+    }
+  },
+  "builds": [
+    {
+      "label": "direct-O0",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O0-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2",
+      "compiled": 4,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "direct-O2-warm",
+      "compiled": 0,
+      "reused": 4,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O0-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "composed-O2",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 3,
+      "layouts_reused": 0
+    },
+    {
+      "label": "composed-O2-warm",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "body-edit",
+      "compiled": 1,
+      "reused": 5,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    },
+    {
+      "label": "layout-edit",
+      "compiled": 6,
+      "reused": 0,
+      "pch_built": 0,
+      "linked": 1,
+      "layouts_built": 1,
+      "layouts_reused": 2
+    },
+    {
+      "label": "restore",
+      "compiled": 0,
+      "reused": 6,
+      "pch_built": 0,
+      "linked": 0,
+      "layouts_built": 0,
+      "layouts_reused": 3
+    }
+  ],
+  "accounting": {
+    "total": 285,
+    "emitted": 281,
+    "failures": [
+      {
+        "owner": "GeneralLedger::validate",
+        "kind": "function_body",
+        "ok": false,
+        "error": "prelower_templates: indexed compound assignment is not in the first slice",
+        "trace": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(757): scpp\\compiler\\CPP_Index_Write::generate_compound()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(622): scpp\\compiler\\CPP_Generator::generate_compound_assignment()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(122): scpp\\compiler\\CPP_Syntax->generate_compound_assignment_expression()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(545): scpp\\compiler\\CPP_Syntax->expression()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(652): scpp\\compiler\\CPP_Generator::generate_expression_statement()\n#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(229): scpp\\compiler\\CPP_Syntax->generate_expression_statement()\n#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#7 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(269): scpp\\compiler\\CPP_Generator::generate_statements()\n#8 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(378): scpp\\compiler\\CPP_Syntax->generate_block()\n#9 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(103): scpp\\compiler\\CPP_Syntax->loop_body()\n#10 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(430): scpp\\compiler\\CPP_Concrete_Operations::iterate()\n#11 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(220): scpp\\compiler\\CPP_Syntax->generate_foreach()\n#12 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#13 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(373): scpp\\compiler\\CPP_Generator::generate_statements()\n#14 [internal function]: scpp\\compiler\\CPP_Generator->render()\n#15 /home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_concrete_coverage_2026_10_19/fragments.php(20): ReflectionMethod->invoke()\n#16 {main}"
+      },
+      {
+        "owner": "MoneyAllocation::weighted",
+        "kind": "function_body",
+        "ok": false,
+        "error": "prelower_templates: indexed compound assignment is not in the first slice",
+        "trace": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(757): scpp\\compiler\\CPP_Index_Write::generate_compound()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(622): scpp\\compiler\\CPP_Generator::generate_compound_assignment()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(122): scpp\\compiler\\CPP_Syntax->generate_compound_assignment_expression()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(545): scpp\\compiler\\CPP_Syntax->expression()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(652): scpp\\compiler\\CPP_Generator::generate_expression_statement()\n#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(229): scpp\\compiler\\CPP_Syntax->generate_expression_statement()\n#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#7 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(269): scpp\\compiler\\CPP_Generator::generate_statements()\n#8 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(378): scpp\\compiler\\CPP_Syntax->generate_block()\n#9 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(388): scpp\\compiler\\CPP_Syntax->loop_body()\n#10 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(211): scpp\\compiler\\CPP_Syntax->generate_while()\n#11 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#12 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(373): scpp\\compiler\\CPP_Generator::generate_statements()\n#13 [internal function]: scpp\\compiler\\CPP_Generator->render()\n#14 /home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_concrete_coverage_2026_10_19/fragments.php(20): ReflectionMethod->invoke()\n#15 {main}"
+      },
+      {
+        "owner": "PurchasingBook::bill_key",
+        "kind": "function_body",
+        "ok": false,
+        "error": "prelower_templates: runtime call needs an adapter: core.strlen",
+        "trace": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/callable_bindings.php(194): scpp\\compiler\\CPP_Concrete_Operations::call_reference()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(634): scpp\\compiler\\CPP_Callables::call_reference()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/declarations.php(501): scpp\\compiler\\CPP_Declarations::selected_call()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(642): scpp\\compiler\\CPP_Declarations::generate_call()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(119): scpp\\compiler\\CPP_Syntax->generate_call()\n#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(552): scpp\\compiler\\CPP_Syntax->expression()\n#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(617): scpp\\compiler\\CPP_Generator::generate_cast()\n#7 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(134): scpp\\compiler\\CPP_Syntax->generate_cast_expression()\n#8 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#9 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#10 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#11 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#12 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#13 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#14 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#15 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#16 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#17 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(871): scpp\\compiler\\CPP_Syntax->expression()\n#18 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(637): scpp\\compiler\\CPP_Generator::generate_binary()\n#19 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(131): scpp\\compiler\\CPP_Syntax->generate_binary_expression()\n#20 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(528): scpp\\compiler\\CPP_Syntax->expression()\n#21 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(657): scpp\\compiler\\CPP_Generator::generate_return()\n#22 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(242): scpp\\compiler\\CPP_Syntax->generate_return()\n#23 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#24 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(373): scpp\\compiler\\CPP_Generator::generate_statements()\n#25 [internal function]: scpp\\compiler\\CPP_Generator->render()\n#26 /home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_concrete_coverage_2026_10_19/fragments.php(20): ReflectionMethod->invoke()\n#27 {main}"
+      },
+      {
+        "owner": "SalesService::total_outstanding",
+        "kind": "function_body",
+        "ok": false,
+        "error": "prelower_templates: container operation requires an admitted family adapter",
+        "trace": "#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/concrete_operations.php(91): scpp\\compiler\\CPP_Concrete_Operations::require_vector()\n#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(430): scpp\\compiler\\CPP_Concrete_Operations::iterate()\n#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(220): scpp\\compiler\\CPP_Syntax->generate_foreach()\n#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(465): scpp\\compiler\\CPP_Syntax->statement()\n#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(373): scpp\\compiler\\CPP_Generator::generate_statements()\n#5 [internal function]: scpp\\compiler\\CPP_Generator->render()\n#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/specs/planning/results/accounting_concrete_coverage_2026_10_19/fragments.php(20): ReflectionMethod->invoke()\n#7 {main}"
+      }
+    ]
+  },
+  "validation": {
+    "concrete_seconds": 165.73,
+    "legacy_initializer_seconds": 147.5,
+    "production_php_portability": "PASS (four changed files)"
+  }
+}

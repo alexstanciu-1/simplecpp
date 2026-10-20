@@ -1,0 +1,115 @@
+{
+  "ctor_self_value": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "In file included from /tmp/mytry-diagnostic-review/batch9/ctor_self_value/cpp/units/n6d61696e/n6d61696e2e706873.cpp:1:\n/tmp/mytry-diagnostic-review/batch9/ctor_self_value/cpp/types/n53.hpp:6:20: error: copy constructor must pass its first argument by reference\n    6 |         record_S(record_S local_other);\n      |                           ^\n      |                           const &\n/tmp/mytry-diagnostic-review/batch9/ctor_self_value/cpp/units/n6d61696e/n6d61696e2e706873.cpp:2:29: error: copy constructor must pass its first argument by reference\n    2 | record_S::record_S(record_S local_other)\n      |                             ^\n      |                             const &\n2 errors generated.\n"
+    ]
+  },
+  "ctor_self_value_extra": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_self_value_default": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_class_self_value": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_self_handle": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_abstract_interface": {
+    "stage": "prepare",
+    "error": "Interface storage requires its default shared handle\n"
+  },
+  "ctor_private_self": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "dtor_method_access": {
+    "stage": "prepare",
+    "error": "Private method is not accessible here: f\n"
+  },
+  "dtor_bad_return": {
+    "stage": "prepare",
+    "error": "Void return forwarding requires a void expression; values are not discarded\n"
+  },
+  "dtor_void_control": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch9/dtor_void_control/cpp/units/n6d61696e/n6d61696e2e706873.cpp:9:2: error: destructor '~record_C' must not return void expression\n    9 |         return ([&]() -> void {\n      |         ^      ~~~~~~~~~~~~~~~~\n   10 |         return function_cleanup();\n      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~\n   11 | }());\n      | ~~~~\n1 error generated.\n"
+    ]
+  },
+  "ctor_this_in_base": {
+    "stage": "prepare",
+    "error": "$this requires an instance body\n"
+  },
+  "ctor_parent_method_in_base": {
+    "stage": "prepare",
+    "error": "Parent instance call requires an initialized $this\n"
+  },
+  "override_unique": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "override_ref_access": {
+    "stage": "prepare",
+    "error": "Interface implementation requires a compatible public instance signature\n"
+  },
+  "override_abstract_base": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "interface_reabstract_control": {
+    "stage": "emitted",
+    "clang": "passed",
+    "errors": []
+  },
+  "ctor_set_inherited": {
+    "stage": "prepare",
+    "error": "set: requires an existing instance property: n\n"
+  },
+  "interface_ctor": {
+    "stage": "prepare",
+    "error": "Interface constructor contracts are deferred\n"
+  },
+  "interface_dtor": {
+    "stage": "prepare",
+    "error": "Interface methods require public bodyless instance contracts\n"
+  },
+  "base_interface_as_class": {
+    "stage": "prepare",
+    "error": "Record base must be a class or struct\n"
+  },
+  "interface_class_as_interface": {
+    "stage": "prepare",
+    "error": "Interface relationship requires an interface target\n"
+  },
+  "abstract_final": {
+    "stage": "prepare",
+    "error": "A type cannot be both abstract and final\n"
+  },
+  "private_dtor_nested": {
+    "stage": "prepare",
+    "error": "Storage requires an accessible destructor\n"
+  },
+  "abstract_ctor_body": {
+    "stage": "emitted",
+    "clang": "failed",
+    "errors": [
+      "/tmp/mytry-diagnostic-review/batch9/abstract_ctor_body/cpp/units/n6d61696e/n6d61696e2e706873.cpp:5:20: error: parameter type 'record_A' is an abstract class\n    5 | record_C::record_C(record_A local_a)\n      |                    ^\n/tmp/mytry-diagnostic-review/batch9/abstract_ctor_body/cpp/types/n41.hpp:7:24: note: unimplemented pure virtual method 'dispatch_A__method_f' in 'record_A'\n    7 |         virtual scpp::int_t<> dispatch_A__method_f() = 0;\n      |                               ^\n1 error generated.\n"
+    ]
+  }
+}

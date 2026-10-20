@@ -1,0 +1,5 @@
+$bits int = 3;
+$bits <<= 2;
+$bits |= 1;
+$bits ^= 2;
+return ($bits & 7) >> 1;

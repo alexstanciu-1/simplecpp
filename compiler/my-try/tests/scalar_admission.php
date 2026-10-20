@@ -57,7 +57,7 @@ return 0;
 PHS;
 operator_test_source($source);
 $cpp = CPP_Probe::text(Model::$cpp_files);
-(new Compiler())->cpp();
+(new Compiler(new cpp_lowering_options(false)))->cpp();
 if ($cpp !== CPP_Probe::text(Model::$cpp_files)) { throw new \LogicException('Scalar no-op publication changed'); }
 $cpp = str_replace('int main(int argc, char** argv)', 'int unused_entry(int argc, char** argv)', $cpp);
 $cpp .= <<<'CPP'

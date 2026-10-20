@@ -1,0 +1,7 @@
+function append(vector<int> &$values): void { $values[] = 9; }
+$original vector<int> = [1];
+$copy = $original;
+append($copy);
+$first = $original[0];
+$last = $copy[1];
+return $first + $last;

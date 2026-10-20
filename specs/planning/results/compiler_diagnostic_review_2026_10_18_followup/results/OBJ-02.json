@@ -1,0 +1,12 @@
+{
+  "control": {
+    "stage": "emitted",
+    "compile": "passed",
+    "compile_logs": [],
+    "link": "passed"
+  },
+  "source": {
+    "stage": "prepare",
+    "error": "Interface implementation requires a compatible public instance signature\n"
+  }
+}

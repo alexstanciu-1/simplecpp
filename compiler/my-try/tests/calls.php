@@ -133,7 +133,7 @@ final class Calls_Test
 			foreach ($sources as $path => $source) {
 				file_put_contents($folder . '/' . $path, $source);
 			}
-			$c = new Compiler();
+			$c = new Compiler(new cpp_lowering_options(false));
 			$c->init([$folder]);
 			$c->tokenize();
 			$c->parse();

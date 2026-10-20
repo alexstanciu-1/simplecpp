@@ -20,7 +20,7 @@ try
 	$valid = 'function consume(int $v): int { return $v; } function run(vector<int> $v): int { return consume($v[0]); } return 0;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);
@@ -48,7 +48,7 @@ try
 	$compiler->update_cpp([$path]);
 	container_call_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Indexed call recovery changed output');
 	Compiler_Lifecycle::reset();
-	$clean = new Compiler();
+	$clean = new Compiler(new cpp_lowering_options(false));
 	$clean->init([$directory]);
 	$clean->exec_cpp();
 	container_call_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental indexed calls differ');
@@ -64,7 +64,7 @@ try
 	{
 		file_put_contents($path, $invalid);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$failed = false;
 		try {
 			$compiler->init([$directory]);

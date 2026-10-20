@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "suites": [
+    "enums",
+    "namespaces",
+    "imports",
+    "traits",
+    "interfaces"
+  ],
+  "native_compiler_rebuilt": false
+}

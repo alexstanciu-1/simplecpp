@@ -1,0 +1,4 @@
+{
+  "stage": "prepare",
+  "error": "S2S reference binding cannot borrow heap-backed properties\n"
+}

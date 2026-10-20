@@ -1,0 +1,294 @@
+[
+  {
+    "name": "duplicate_types",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/duplicate_types.php",
+      "/tmp/duplicate-types-final/programs"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.595,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "CLI explicitly selected"
+  },
+  {
+    "name": "cpp-runtime-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-pthread",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/core/runtime.cpp",
+      "-o",
+      "/tmp/duplicate-types-final/fixture-runtime.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 9.142,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "distinct_namespaces-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/duplicate-types-final/programs/distinct_namespaces.program.artifacts-gngy3_gz/sources",
+      "-c",
+      "/tmp/duplicate-types-final/programs/distinct_namespaces.program.artifacts-gngy3_gz/sources/entry.cpp",
+      "-o",
+      "/tmp/duplicate-types-final/programs/distinct_namespaces.program.artifacts-gngy3_gz/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.93,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "language_shadow-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/duplicate-types-final/programs/language_shadow.program.artifacts-cgv6o4py/sources",
+      "-c",
+      "/tmp/duplicate-types-final/programs/language_shadow.program.artifacts-cgv6o4py/sources/entry.cpp",
+      "-o",
+      "/tmp/duplicate-types-final/programs/language_shadow.program.artifacts-cgv6o4py/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.932,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "repeated_import-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/duplicate-types-final/programs/repeated_import.program.artifacts-j_aq_w1j/sources",
+      "-c",
+      "/tmp/duplicate-types-final/programs/repeated_import.program.artifacts-j_aq_w1j/sources/entry.cpp",
+      "-o",
+      "/tmp/duplicate-types-final/programs/repeated_import.program.artifacts-j_aq_w1j/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.964,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "distinct_kinds-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources",
+      "-c",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.11,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "language_shadow-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/duplicate-types-final/programs/language_shadow.program.artifacts-cgv6o4py/sources/entry.o",
+      "/tmp/duplicate-types-final/fixture-runtime.o",
+      "-o",
+      "/tmp/duplicate-types-final/programs/language_shadow.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.557,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "language_shadow-execute",
+    "command": [
+      "/tmp/duplicate-types-final/programs/language_shadow.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.008,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "repeated_import-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/duplicate-types-final/programs/repeated_import.program.artifacts-j_aq_w1j/sources/entry.o",
+      "/tmp/duplicate-types-final/fixture-runtime.o",
+      "-o",
+      "/tmp/duplicate-types-final/programs/repeated_import.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.558,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "repeated_import-execute",
+    "command": [
+      "/tmp/duplicate-types-final/programs/repeated_import.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.011,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "distinct_namespaces-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/duplicate-types-final/programs/distinct_namespaces.program.artifacts-gngy3_gz/sources/entry.o",
+      "/tmp/duplicate-types-final/fixture-runtime.o",
+      "-o",
+      "/tmp/duplicate-types-final/programs/distinct_namespaces.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.611,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "distinct_namespaces-execute",
+    "command": [
+      "/tmp/duplicate-types-final/programs/distinct_namespaces.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "distinct_kinds-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources",
+      "-c",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources/entry.cpp",
+      "-o",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources/entry.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.061,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "distinct_kinds-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Werror=return-type",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program.artifacts-mt34d4jc/sources/entry.o",
+      "/tmp/duplicate-types-final/fixture-runtime.o",
+      "-o",
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.451,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "distinct_kinds-execute",
+    "command": [
+      "/tmp/duplicate-types-final/programs/distinct_kinds.program"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 7,
+    "expected": 7,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

@@ -11,13 +11,60 @@ enum cpp_literal_kind {
 	case none;
 }
 
+/** Transient physical interface text, owned by the backend renderer. */
+final class cpp_type_interface
+{
+	public string $declaration_prefix = '';
+	public string $declaration = '';
+	public string $implementation = '';
+}
+
 /** Required visibility at a C++ use site, not a semantic type capability. */
 enum cpp_type_requirement {
 	case declaration;
+	// A complete stored value need not expose the payload of a nominal shared handle.
+	case stored_value;
 	case complete;
 }
 
+/** Representation choices only; native optimization/debug belong to the native builder. */
+final class cpp_lowering_options
+{
+	/** Strict concrete application interfaces; native validation enforces template-free inputs. */
+	public bool $prelower_templates = true;
+
+	public function __construct(bool $prelower_templates = true)
+	{
+		$this->prelower_templates = $prelower_templates;
+	}
+}
+
+/** Engine-owned output parts; references only carry the entry position.
+ * A member entry contributes declaration/implementation to member_owner's class/header.
+ * A class entry keeps its closing declaration_tail separate for demand-time assembly.
+ */
+final class cpp_specialization_entry
+{
+	public function __construct(public readonly string $name, public readonly string $header,
+		public readonly string $declaration, public readonly string $implementation,
+		public readonly array $layout_dependencies /** hash<bool> */, // Headers required by the native layout probe.
+		public readonly string $layout_declarations = '', public readonly string $layout_statements = '',
+		public readonly string $declaration_tail = '', public readonly string $member_owner = '',
+		public readonly string $declaration_prefix = '')
+	{
+	}
+}
+
+// Invocation-local entry ID, written only by the engine; never a durable identity.
+/** @scpp-struct */
+final class cpp_specialization_ref
+{
+	public int $entry_id /** uint32 */ = 0;
+}
+
 final class cpp_type {
+	public ?canonical_type_use $specialization = null;
+	public bool $opaque = false;
 	public string $spelling;
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
@@ -34,10 +81,13 @@ final class cpp_assignment_sequence
 enum cpp_artifact_kind {
 	case translation_unit;
 	case header;
+	case layout_probe;
 }
 
 /** One final artifact; its logical identity is independent of storage position. */
 final class cpp_artifact {
+	/** Assembly-only generated header dependencies; copied from emission facts, never parsed from text. */
+	public array $header_dependencies /** hash<bool> */ = [];
 	public readonly string $identity;
 	private cpp_artifact_kind $artifact_kind;
 	public readonly string $file_name;
@@ -59,12 +109,25 @@ final class cpp_artifact {
 
 	public function kind_name(): string
 	{
+		if ($this->artifact_kind === cpp_artifact_kind::layout_probe) { return 'layout_probe'; }
 		return $this->artifact_kind === cpp_artifact_kind::header ? 'header' : 'translation_unit';
 	}
 
 	public function kind(): cpp_artifact_kind
 	{
 		return $this->artifact_kind;
+	}
+}
+
+/** Transient assembled implementation unit; no semantic owners or scheduling/cache state. */
+final class cpp_implementation_group
+{
+	public string $text = '';
+	public array $headers /** hash<bool> */ = [];
+	public array $forward_declarations /** hash<bool> */ = [];
+
+	public function __construct(public readonly string $identity, public readonly string $file_name)
+	{
 	}
 }
 
@@ -84,7 +147,21 @@ final class cpp_finally_return
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	/** Middleware expressions use native outer implementations with concrete physical arguments. */
+	public ?CPP_Specializations $implementation_engine = null;
+	public array $specializations /** hash<canonical_type_use,int> */ = [];
+	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];
+	public function __construct(public ?CPP_Specializations $specialization_engine = null)
+	{
+	}
+	public function concrete_types(): bool
+	{
+		return $this->specialization_engine !== null;
+	}
+
 	public ?cpp_finally_return $finally_return = null;
+	/** Invocation selection of backend-owned, no-argument shared allocation functions. */
+	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;
@@ -105,6 +182,8 @@ final class cpp_generation_context
 /** One independently replaceable C++ fragment; no references to transient generation workers. */
 final class cpp_fragment
 {
+	public array $specializations /** hash<canonical_type_use,int> */ = [];
+	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];
 	/** Used helper requests survive cached body reuse; assembly deduplicates live fragments. */
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public change_state $change_status = change_state::added;
@@ -115,8 +194,9 @@ final class cpp_fragment
 	public string $prototype_text = '';
 	/** Constructor initialization depends on executable body facts, not only the signature. */
 	public string $initializer_text = '';
-	/** Type-owned storage definitions belong to the declaring source implementation unit. */
-	public string $storage_text = '';
+	/** Type-owned storage and constructor definitions belong to the declaring source unit. */
+	public string $record_definition_text = '';
+	public string $allocation_declaration_text = '';
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
 	/** Definition signatures can need layouts that their public prototypes do not. */
@@ -132,10 +212,56 @@ final class cpp_fragment
 
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
+	public bool $prelower_templates = false;
+	public string $policy_identity = '';
+	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()
 	{
 		$this->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
 	}
+}
+
+/** Backend recipes retain settled identities, never syntax or generation workers. */
+enum cpp_runtime_operation_kind {
+	case concrete_member;
+	case concrete_index;
+	case concrete_iteration;
+	case concrete_mutation;
+	case construct_default;
+	case construct_call;
+	case observation;
+	case runtime_call;
+	case output;
+	case initialize_empty;
+	case initialize_buffer;
+	case binary;
+	case conversion;
+	case write_key;
+}
+
+final class cpp_runtime_operation
+{
+	public ?prepared_call $call = null;
+	public ?prepared_iteration $iteration = null;
+	public ?prepared_object_construction $construction = null;
+	public function kind_name(): string { return enum_name($this->kind); }
+	public Storage $inputs /** Storage<canonical_type_use> */;
+	public ?canonical_type_use $result = null;
+	public ?cpp_function_binding $binding = null;
+	public ?initialization_binding $initialization = null;
+	public ?operator_decision $decision = null;
+	public ?conversion_decision $conversion = null;
+	public string $spelling = '';
+	public function __construct(public cpp_runtime_operation_kind $kind)
+	{
+		$this->inputs = new Storage /** Storage<canonical_type_use> */();
+	}
+}
+
+/** Invocation-local physical operand; this record has no source ownership semantics. */
+final class cpp_runtime_operand
+{
+	public function __construct(public canonical_type_use $type, public string $expression) {}
 }

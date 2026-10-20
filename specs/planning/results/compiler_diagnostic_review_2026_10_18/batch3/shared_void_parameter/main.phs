@@ -1,0 +1,1 @@
+function f(shared<void> $s): void {} return 0;

@@ -19,6 +19,7 @@ final class Relationship_Preparation
 	/** Resolve ordered direct edges only; completed dependencies reject indirect cycles. */
 	public static function prepare(collected_member_owner $entry, preparation_context $context): prepared_type_relationships
 	{
+		Declaration_Preparation::type_name($entry, $context);
 		if ($entry instanceof collected_trait) {
 			throw new \RuntimeException('Traits are composition sources, not runtime types');
 		}

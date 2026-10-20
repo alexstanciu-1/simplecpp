@@ -1,0 +1,1 @@
+class S { static function f(): int { return 1; } } $s = new S(); return $s->f();

@@ -22,7 +22,7 @@ function ownership_source(string $source): string
 	$input->content = $source;
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return CPP_Probe::text(Model::$cpp_files);
 }
 
@@ -323,7 +323,7 @@ try
 	$valid = 'function borrow(shared<int> &$v): void {} function absent(shared<int> $v): bool { return !$v; } $s shared<int>; borrow($s); if (!absent($s)) { return 1; } return 0;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);

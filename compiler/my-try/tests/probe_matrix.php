@@ -11,7 +11,7 @@ $file->path = 'main.phs';
 $file->content = file_get_contents($argv[1]);
 Source_Registry::add($module, $file);
 Model::$modules->add($module->name, $module);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->sync(['/probe-matrix/main.phs']);
 try {
 	$compiler->prepare(true);

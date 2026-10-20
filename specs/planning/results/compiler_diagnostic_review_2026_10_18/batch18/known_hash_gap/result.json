@@ -1,0 +1,10 @@
+{
+  "base": {
+    "stage": "sync",
+    "error": "main.phs: Expected ';' at main.phs: byte 8\n",
+    "empty": true,
+    "ready": false,
+    "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+    "direct_retry": "Finish tokenization and parsing before preparation"
+  }
+}

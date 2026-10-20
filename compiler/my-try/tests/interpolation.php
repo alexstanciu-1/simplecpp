@@ -17,7 +17,7 @@ function interpolation_test_source(string $text): parsed_file
 	$modules->add($module->name, $module);
 	$record = Source_Registry::add($module, $input);
 	Source_Publication::publish_parsed($record, $syntax);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->prepare();
 	$compiler->cpp();
 	return $syntax;
@@ -81,7 +81,7 @@ try
 	$source = 'function value(string $x): string { return "A $x"; } $a = value("ok");';
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$function = Model::$global_scope->functions_named('value')[0]->syntax();

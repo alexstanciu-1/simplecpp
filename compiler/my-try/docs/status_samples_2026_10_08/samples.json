@@ -1,0 +1,551 @@
+{
+  "doc_status": "supporting",
+  "cases": [
+    {
+      "id": "01",
+      "feature": "Integer, float, boolean and string literals; inferred and explicitly typed locals",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "02",
+      "feature": "Typed predeclarations and nullable scalar locals",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "03",
+      "feature": "Fixed-width integer fields and integer boundary conversions",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "04",
+      "feature": "Scalar arithmetic, comparisons, boolean logic and unary operators",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "05",
+      "feature": "Bitwise/shift operators and compound assignment",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "06",
+      "feature": "Prefix/postfix updates and assignment expressions",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "07",
+      "feature": "Keyword `and`, `or`, `xor`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "08",
+      "feature": "String concatenation and simple variable interpolation",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "09",
+      "feature": "String bracket indexing",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "10",
+      "feature": "Braced `if`/`elseif`/`else`, `while`, `do`, `for`; ordinary `break`/`continue`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "11",
+      "feature": "`switch` and `match`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "12",
+      "feature": "Ternary, Elvis and null coalescing",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "13",
+      "feature": "Typed signatures, positional calls, returns and terminating recursion",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "14",
+      "feature": "Default arguments",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "15",
+      "feature": "Typed trailing variadics",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "16",
+      "feature": "Ordinary function overloading",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "17",
+      "feature": "Scalar casts and stabilization from `mixed` into typed scalar destinations",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "18",
+      "feature": "Nullable and Result families: success values, extraction, state tests",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "19",
+      "feature": "`take` extraction",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "20",
+      "feature": "No-error state, copying and error truthiness",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "21",
+      "feature": "Separated mixed/value and dynamic/shared container families, explicit bridges",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "22",
+      "feature": "Mixed arithmetic, comparisons, logical operators and text updates",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "23",
+      "feature": "Typed vector/hash construction; nested mixed/container literals",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "24",
+      "feature": "\ud83d\udd34 Typed public Storage collections: `Storage<T>`, `Keyed_Storage<T>`, `Key_Storage_List<T>`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "25",
+      "feature": "\ud83d\udd34 Object-identity keys in typed hashes",
+      "kind": "probe",
+      "scope": "Exact converted source uses explicit shared<Owner>; v2 rejects this before reaching the separate object-key capability gap."
+    },
+    {
+      "id": "26",
+      "feature": "\ud83d\udd34 Empty `new vector<T>()` / `new hash<T,K>()` constructors",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "27",
+      "feature": "Shared PHP-like and JS-like data construction notation",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "28",
+      "feature": "Container reads, direct/nested writes and appends",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "29",
+      "feature": "Keyed `isset`, `empty`, `unset`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "30",
+      "feature": "\ud83d\udd34 Vector-element `unset` with index compaction",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "31",
+      "feature": "Value and key/value `foreach`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "32",
+      "feature": "\ud83d\udd34 Typed `Storage_Cursor<T>` construction and read-view widening",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "33",
+      "feature": "\ud83d\udd34 Global `Iterator` protocol and typed object foreach",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "34",
+      "feature": "Whole-container calls, copies and references",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "35",
+      "feature": "\ud83d\udd34 Legacy PHP `array` / `?array` entry guards and `(array)` casts",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "36",
+      "feature": "Boxed JSON source calls (`json_decode` / `json_encode`)",
+      "kind": "probe",
+      "scope": "Current v2 json_decode uses dynamic; json_decode_mixed is the separate mixed-family API. Same dynamic source sent to v1; C++ validity remains untested."
+    },
+    {
+      "id": "37",
+      "feature": "Explicit reference parameters and stable local aliases",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "38",
+      "feature": "Reference returns and forwarding",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "39",
+      "feature": "Explicit read-only reference parameters",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "40",
+      "feature": "Shared, unique, weak and inline/value ownership",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "41",
+      "feature": "\ud83d\udd34 Converter cast spelling `scpp_portability_object_cast(..., Class::class)`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "42",
+      "feature": "Converter `weakref_get` spelling and implicit shared-to-weak assignment",
+      "kind": "probe",
+      "scope": "Exact shared-to-weak assignment is tested first; v2 rejects that boundary before reaching weakref_get lookup."
+    },
+    {
+      "id": "43",
+      "feature": "Whole-storage reset/clean/unset",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "44",
+      "feature": "Multiple sources and selected executable entry",
+      "kind": "probe",
+      "scope": "Two source files. v1 per-file emission is collected without project include/link assembly; v2 discovers both with main.phs selected as entry."
+    },
+    {
+      "id": "45",
+      "feature": "Namespaces, qualified names, imports and scalar source constants",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "46",
+      "feature": "\ud83d\udd34 Unqualified global facade calls inside compiler namespace",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "47",
+      "feature": "\ud83d\udd34 Nested namespace declarations",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "48",
+      "feature": "\ud83d\udd34 Static prologue `require_once` textual lowering",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "49",
+      "feature": "Retained semantic preparation, dependency invalidation and failure/retry",
+      "kind": "scope",
+      "scope": "Retained preparation, dependency invalidation and failure/retry are compiler process behavior. No single PHP++ expression or generated C++ fragment proves this protocol."
+    },
+    {
+      "id": "50",
+      "feature": "Struct/inline record storage and explicit inline class values",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "51",
+      "feature": "Unit and integral-backed enums",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "52",
+      "feature": "Explicit `enum_name`, `enum_value`, `enum_from_value` helpers",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "53",
+      "feature": "Classes/structs, typed properties, construction and property defaults",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "54",
+      "feature": "Instance methods, visibility, static methods/properties/constants",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "55",
+      "feature": "\ud83d\udd34 Non-null shared-object strict identity",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "56",
+      "feature": "\ud83d\udd34 Readonly instance-field declarations and write enforcement",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "57",
+      "feature": "Destructors and automatic cleanup",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "58",
+      "feature": "Nullable inline records and handle normalization",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "59",
+      "feature": "Explicit `data class` / `data struct` keyed construction",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "60",
+      "feature": "Concrete inheritance, parent calls/construction",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "61",
+      "feature": "Abstract classes, interfaces and explicit virtual/override dispatch",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "62",
+      "feature": "Traits, nested trait use and abstract trait requirements",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "63",
+      "feature": "Shared base/interface views, checked shared casts and literal `instanceof`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "64",
+      "feature": "Shared parameter contravariance and result covariance",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "65",
+      "feature": "Static-context called-type binding and shared factories",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "66",
+      "feature": "\ud83d\udd34 Anonymous functions, concrete callable locals and invocation",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "67",
+      "feature": "\ud83d\udd34 Value and reference captures",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "68",
+      "feature": "\ud83d\udd34 Task runtime callbacks: synchronization and unordered worker/publication",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "69",
+      "feature": "\ud83d\udd34 Arrow functions",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "70",
+      "feature": "Callable values stored in mixed/dynamic entries",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "71",
+      "feature": "\ud83d\udd34 Source `throw` and typed `try`/`catch`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "72",
+      "feature": "\ud83d\udd34 `finally`",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "73",
+      "feature": "Full authored structured errors and conversion into failed Results",
+      "kind": "probe",
+      "scope": "Failure conversion from a real runtime error only. No authored structured-error constructor is claimed; that larger feature remains deferred."
+    },
+    {
+      "id": "74",
+      "feature": "\ud83d\udd34 Runtime error inspection (`get_message`)",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "75",
+      "feature": "Separate C++ declarations/implementations and program entry",
+      "kind": "scope",
+      "scope": "Artifact partitioning is visible in every successful v2 output (declaration/type/source units plus entry), and in v1 header/source pairs. See sample 13 for concrete emitted artifacts."
+    },
+    {
+      "id": "76",
+      "feature": "Content-aware artifact publication and incremental native builds",
+      "kind": "scope",
+      "scope": "Content-aware publication and native caching are host/build protocols. Static C++ text cannot prove content-aware writes or cache invalidation. No native build is requested here."
+    },
+    {
+      "id": "77",
+      "feature": "Early semantic diagnostics",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "78",
+      "feature": "\ud83d\udd34 String byte/text helpers, UTF-8 conversion, search and checked hex decoding",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "79",
+      "feature": "\ud83d\udd34 Filesystem read/scan/stat/snapshot APIs",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "80",
+      "feature": "\ud83d\udd34 File-lock handles and acquire/release/transfer",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "81",
+      "feature": "\ud83d\udd34 Output digests, safe writes, staging/promotion/discard",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "82",
+      "feature": "\ud83d\udd34 Immutable JSON document/node types, parse and typed queries",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "83",
+      "feature": "\ud83d\udd34 Process handles, polling/results/cleanup and dt_sleep_ms",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "84",
+      "feature": "\ud83d\udd34 Nonfatal reference-return/performance advice",
+      "kind": "probe",
+      "scope": "Reference-return/copy source shape only. S2S output does not establish advisory delivery; STAN was not invoked."
+    },
+    {
+      "id": "85",
+      "feature": "\ud83d\udd34 Use by ordinary `scpp build` / `scpp run`",
+      "kind": "scope",
+      "scope": "scpp build/run is project orchestration. Current selection remains legacy; these isolated generator invocations do not change CLI routing."
+    },
+    {
+      "id": "86",
+      "feature": "\ud83d\udd34 Reference `foreach`, with or without explicit key",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "87",
+      "feature": "Safe structural mutation/source replacement during iteration",
+      "kind": "probe",
+      "scope": "Source replacement during iteration is emitted only; no execution or safety guarantee is claimed."
+    },
+    {
+      "id": "88",
+      "feature": "Trait adaptations and trait constructors/destructors",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "89",
+      "feature": "PHP enum reflection (`cases/from/tryFrom`, pseudo-properties), string backing and enum methods/interfaces",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "90",
+      "feature": "Dynamic `->` property access",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    },
+    {
+      "id": "91",
+      "feature": "Named arguments, constructor property promotion",
+      "kind": "probe",
+      "scope": "Representative subset; generation only, not native execution or full row coverage."
+    }
+  ]
+}

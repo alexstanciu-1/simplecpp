@@ -1,0 +1,1005 @@
+{
+  "missing_type": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved type for Missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved type for Missing\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved type for Missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved type for Missing\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved type for Missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved type for Missing\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "return_string": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S entry return requires an integer, float or bool value\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S entry return requires an integer, float or bool value\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S entry return requires an integer, float or bool value\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S entry return requires an integer, float or bool value\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S entry return requires an integer, float or bool value\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S entry return requires an integer, float or bool value\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "param_string": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "extra_parameter": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "removed_symbol": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved function for f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved function for f\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved function for f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved function for f\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved function for f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved function for f\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "delete_file": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved function for f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved function for f\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved function for f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved function for f\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S needs one resolved function for f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs one resolved function for f\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "body_unknown": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "body_wrong_return": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "parse_error": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "sync",
+      "error": "a.phs: Expected '}' at a.phs: byte 34\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    },
+    "retry": {
+      "stage": "sync",
+      "error": "a.phs: Expected '}' at a.phs: byte 34\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    },
+    "fresh_invalid": {
+      "stage": "sync",
+      "error": "a.phs: Expected '}' at a.phs: byte 34\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "token_error": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "sync",
+      "error": "Unterminated quoted string at a.phs: byte 33",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    },
+    "retry": {
+      "stage": "sync",
+      "error": "Unterminated quoted string at a.phs: byte 33",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    },
+    "fresh_invalid": {
+      "stage": "sync",
+      "error": "Unterminated quoted string at a.phs: byte 33",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Finish tokenization and parsing before preparation"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "duplicate_function": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S duplicate function name: f\nS2S source function overloads are deferred\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S duplicate function name: f\nS2S source function overloads are deferred\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S duplicate function name: f\nS2S source function overloads are deferred\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S duplicate function name: f\nS2S source function overloads are deferred\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S duplicate function name: f\nS2S source function overloads are deferred\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S duplicate function name: f\nS2S source function overloads are deferred\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "fb5fe1a88219dbb8471a35d6f508222b5c852f790c30d3b44adc102c0b0b8b4d",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "missing_method": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "Member call requires one ordinary method: f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Member call requires one ordinary method: f\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "Member call requires one ordinary method: f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Member call requires one ordinary method: f\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "Member call requires one ordinary method: f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Member call requires one ordinary method: f\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "private_method": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "Private method is not accessible here: f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Private method is not accessible here: f\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "Private method is not accessible here: f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Private method is not accessible here: f\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "Private method is not accessible here: f\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Private method is not accessible here: f\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "method_param": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "abstract_class": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "Cannot construct an abstract type\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Cannot construct an abstract type\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "Cannot construct an abstract type\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Cannot construct an abstract type\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "Cannot construct an abstract type\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Cannot construct an abstract type\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "method_return": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S entry return requires an integer, float or bool value\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S entry return requires an integer, float or bool value\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S entry return requires an integer, float or bool value\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S entry return requires an integer, float or bool value\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S entry return requires an integer, float or bool value\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S entry return requires an integer, float or bool value\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "constructor_param": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S call is missing a required argument\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S call is missing a required argument\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "0e912946966ab0b36b1c0bd1e7a685a966562f6989e27dfa460b9122a90788c0",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "base_final": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "f18d7db49aba31ed3863e112d35a16ae7a9f9ee7d6c44997178544781cf928e5",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "Cannot extend a final type\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Cannot extend a final type\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "Cannot extend a final type\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Cannot extend a final type\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "Cannot extend a final type\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Cannot extend a final type\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "f18d7db49aba31ed3863e112d35a16ae7a9f9ee7d6c44997178544781cf928e5",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "interface_extra": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "19fa3b3346b051ab94a36874fd0b4dd08946e55fba445118e4003646a1e99175",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "Concrete type has unimplemented abstract methods\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Concrete type has unimplemented abstract methods\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "Concrete type has unimplemented abstract methods\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Concrete type has unimplemented abstract methods\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "Concrete type has unimplemented abstract methods\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Concrete type has unimplemented abstract methods\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "19fa3b3346b051ab94a36874fd0b4dd08946e55fba445118e4003646a1e99175",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "field_type": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "003226a87f3d8e17bc15b58e0f3b15a82fb15c4e2527ebf53e0237e7a3fc7c98",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S value boundary requires matching types or an integer conversion\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S value boundary requires matching types or an integer conversion\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "003226a87f3d8e17bc15b58e0f3b15a82fb15c4e2527ebf53e0237e7a3fc7c98",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "field_private": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "003226a87f3d8e17bc15b58e0f3b15a82fb15c4e2527ebf53e0237e7a3fc7c98",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S private property is not accessible here: x\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S private property is not accessible here: x\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S private property is not accessible here: x\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S private property is not accessible here: x\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S private property is not accessible here: x\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S private property is not accessible here: x\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "003226a87f3d8e17bc15b58e0f3b15a82fb15c4e2527ebf53e0237e7a3fc7c98",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "add_bad_file": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "140043fb013f3bd7493f5c3c32b8b7825e8a1fc42036201201d2f7d097ddea83",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S needs an established local declaration for missing\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S needs an established local declaration for missing\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "140043fb013f3bd7493f5c3c32b8b7825e8a1fc42036201201d2f7d097ddea83",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "duplicate_class": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "b2665dab461bba2824da980bb5ebe267bff6c42c6bb825cf910ec282f99612f6",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "prepared": true,
+      "stage": "cpp",
+      "error": "Duplicate publication artifact",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "emitted",
+      "direct_retry": "prepared"
+    },
+    "retry": {
+      "prepared": true,
+      "stage": "cpp",
+      "error": "Duplicate publication artifact",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "emitted",
+      "direct_retry": "prepared"
+    },
+    "fresh_invalid": {
+      "prepared": true,
+      "stage": "cpp",
+      "error": "Duplicate publication artifact",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "emitted",
+      "direct_retry": "prepared"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "b2665dab461bba2824da980bb5ebe267bff6c42c6bb825cf910ec282f99612f6",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "delete_entry": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "8fdc23bd742d7284703b106385d64cfe300bea87826cbe8b7559337404c045f6",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "Select an existing program entry by logical module and relative source path",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "Select an existing program entry by logical module and relative source path"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "8fdc23bd742d7284703b106385d64cfe300bea87826cbe8b7559337404c045f6",
+      "empty": false,
+      "ready": true
+    }
+  },
+  "known_hash_gap": {
+    "base": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "61fee52e0352e0ba272a960570df6421d11f6ec5461f27ba2ef57a3617f35304",
+      "empty": false,
+      "ready": true
+    },
+    "edit": {
+      "stage": "prepare",
+      "error": "S2S target does not support initialization shape\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S target does not support initialization shape\n"
+    },
+    "retry": {
+      "stage": "prepare",
+      "error": "S2S target does not support initialization shape\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S target does not support initialization shape\n"
+    },
+    "fresh_invalid": {
+      "stage": "prepare",
+      "error": "S2S target does not support initialization shape\n",
+      "empty": true,
+      "ready": false,
+      "post_failure_cpp": "C++ emission requires a prepared program entry; run prepare first",
+      "direct_retry": "S2S target does not support initialization shape\n"
+    },
+    "repair": {
+      "prepared": true,
+      "emitted": true,
+      "digest": "61fee52e0352e0ba272a960570df6421d11f6ec5461f27ba2ef57a3617f35304",
+      "empty": false,
+      "ready": true
+    }
+  }
+}
