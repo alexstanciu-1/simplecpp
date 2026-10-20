@@ -17,9 +17,9 @@
   ],
   "rows": 14848,
   "status_counts": {
-    "verified": 3160,
+    "verified": 3208,
     "scope-exclusion": 10767,
-    "needs-design": 792,
+    "needs-design": 744,
     "separate-existing-path": 129
   },
   "groups": {
@@ -102,9 +102,9 @@
       "signatures": 24
     },
     "E4": {
-      "status": "needs-design",
+      "status": "verified",
       "title": "Cross-family mixed int/float ordinary equality",
-      "authority_or_evidence": "runtime/specs/spec.md section 7a; mixed equality/promotion and NaN decisions",
+      "authority_or_evidence": "cross_mixed_equality.md; cross_mixed_equality_results.json",
       "signatures": 48
     },
     "E5BNI": {
@@ -229,13 +229,13 @@
     }
   },
   "verified": {
-    "binary": 2664,
+    "binary": 2712,
     "compound": 432,
     "unary": 64
   },
   "matrix_wrapper_definitions": 376,
   "matrix_separate_selectors": 144,
-  "remaining_list_rows": 792,
+  "remaining_list_rows": 744,
   "input_hashes": {
     "specs/operator_matrix/data/semantics.index.json": "b734f42dcdc5b14608263d2365104a70f51dc110b5788143e2a2dc5e31ddd331",
     "specs/operator_matrix/data/semantics/operators_conditional_selection/coalesce__bool_t__nullable_bool_t.tsv": "26018a3ee482ac4aa8db2d63125c672b20b29501aadf7418e7e3358da7584697",
@@ -614,12 +614,12 @@
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_int_t__result_int_t.tsv": "3c49ec9815160830bf85381916bf9f081253c9b4eb8b00b8544fa9f3f84a49bd",
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_or_false_int_t__result_or_false_int_t.tsv": "09b1c3941bc3253f445479c42ec8cf1859719bbeade3388e112e0c6f42599df4",
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_or_bool_int_t__result_or_bool_int_t.tsv": "9878700ed912a5755a1a9d80c24fb5d5805b8f761f502a126db066d39a8f37fe",
-    "runtime/specs/spec.md": "1b8ee99fc742898ed5fc581bc9fd74efd21120bb787b62e81c62390bde122c5d",
-    "runtime/specs/config.json": "2e923c2ccd1514cd28ce5480b5bf735e64900589db32e7e23499b86d64a5b4e1",
-    "specs/expression_evaluation.md": "cfa1af572e13be68422af48ceb724ff61ecf4b315077bb461d813bbbc462a8fb",
+    "runtime/specs/spec.md": "bd159c2e23297e525a413851da80d1da770baac87eafad3ae3c310b635824ce6",
+    "runtime/specs/config.json": "0b722aeb6c3f5ebbf0d719432946c4e5543b9b45a1bc4ea01cca3ebe2214b4c5",
+    "specs/expression_evaluation.md": "b04fdb094e85d9aa2d5961b8c8eda190b8b7858d1f5597843099ec0f383ce5ae",
     "specs/integer_power.md": "4b9a96a28d5225fe2e187b1ff74a6f9838ef0d539ab97bc5479a77ec27c45aed",
     "compiler/my-try/04_analyze/operators/guarded.php": "96ad3596a1657f0ca4bb67e7b72b183af3e51b6a6826cbb17d3d6e2ca2ab835f",
-    "compiler/my-try/04_analyze/operators/wrapper_equality.php": "de9aca8fd7fbffeecac8b3bf7e131d5cfc9c2651737314ed474af9d09ed77d04",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php": "7d4bc9eddf1d2bf73c1bdd80c8c9298ee7ea38670054ef294b78e8f0ca0d24b4",
     "compiler/my-try/docs/planning/nullable_bool_string_equality_results.json": "d2fa21d3e07c4ae966b739520185fd547632d392fc4f02ff09b986337162e264",
     "compiler/my-try/docs/planning/nullable_float_equality_results.json": "b12cc7f2722c444e700255e8e8f47b1266f05dfe6e84f8e1df1475eec7a5ca93",
     "compiler/my-try/docs/planning/result_equality_results.json": "45830b47351681de7169fe88f2c7af703371216a20e5c03c2bd580c750e4506f",
@@ -640,6 +640,7 @@
     "compiler/my-try/docs/planning/string_other_identity_results.json": "ac8f8261de65b5e198f73b2f4c9d64a53610ac7e918e78a03d62ed8b41e25950",
     "compiler/my-try/docs/planning/mixed_equality_results.json": "1151f7b2561bfdcec55d87fea08407d7df456b608d792f57f4b69b12e2086b88",
     "compiler/my-try/docs/planning/sentinel_mixed_equality_results.json": "10b7630e94fa102253fdeff71279ecd16c2ccd08778f2d8c8581cb38c8f3609c",
-    "compiler/my-try/docs/planning/cross_equality_results.json": "ef86f2f9ab762005c861e7796b415620d180121d11e0d2da41480a6574aed51f"
+    "compiler/my-try/docs/planning/cross_equality_results.json": "ef86f2f9ab762005c861e7796b415620d180121d11e0d2da41480a6574aed51f",
+    "compiler/my-try/docs/planning/cross_mixed_equality_results.json": "06366e0ee80761b5a23e1261b355a731d62d82080af4b5cb93684b8a9de3029d"
   }
 }

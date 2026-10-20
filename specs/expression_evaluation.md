@@ -325,3 +325,24 @@ saved left operand. Comparison performs no write-back.
 This extension leaves matching-bool and mixed-numeric cross-family ordinary
 comparisons separate. Same-family/plain contracts and strict identity are unchanged;
 fixed-width, boxed, nested and other payload domains are not admitted here.
+
+
+## Cross-family mixed numeric ordinary equality — 2026-10-20
+
+`==` and `!=` also admit canonical int/float payload pairs in both orders across
+distinct nullable, structured Result, false-sentinel and bool-sentinel families.
+The result is plain bool. Both present payloads compare by int-to-float numeric
+equality, including rounding near ±2^53 and int64 limits, signed-zero equality and
+NaN inequality. No stored payload representation is converted in place.
+
+The cross-family state rules remain unchanged: matching false sentinel states
+compare equal; different unavailable states and unavailable/payload pairs compare
+unequal, including sentinel versus zero or one. `!=` negates `==`. No truth
+conversion or unavailable-payload extraction occurs; error metadata is preserved.
+
+Complete operand snapshots are evaluated eagerly left-to-right. Unavailable states
+do not skip the RHS. Source failures stop later evaluation, while earlier effects
+remain visible. RHS replacement cannot alter the saved left operand. There is no
+comparison write-back. Strict identity and existing same-family/plain equality
+are unchanged. Cross-family bool, other heterogeneous payloads, fixed-width,
+boxed, nested, spaceship and update domains remain separate.

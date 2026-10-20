@@ -9,7 +9,7 @@
 		"default_overload_policy": "forbidden",
 		"emit_deleted_for_forbidden_operations": true,
 		"comparison_result_type": "bool_t",
-		"cross_family_nonbool_equality_rule": "For distinct nullable/result/result_or_false/result_or_bool families with matching canonical int_t<>, float_t or string_t payloads: present values compare by scalar equality; matching false sentinels are equal; distinct unavailable states and unavailable/payload pairs are unequal. != negates ==. Bool, mixed numeric pairs, fixed widths and boxed payloads remain outside this route.",
+		"cross_family_nonbool_equality_rule": "For distinct nullable/result/result_or_false/result_or_bool families with canonical int_t<>/float_t payload pairs or matching string_t payloads: present values compare by scalar equality, using int-to-float conversion for mixed numeric pairs; matching false sentinels are equal; distinct unavailable states and unavailable/payload pairs are unequal. != negates ==. Bool, other heterogeneous pairs, fixed widths and boxed payloads remain outside this route.",
 		"condition_lowering": {
 			"semantic_type": "bool_t",
 			"cpp_bridge": "static_cast<bool>"

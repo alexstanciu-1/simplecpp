@@ -916,3 +916,18 @@ plain, bool and mixed-numeric contracts remain unchanged. [The E3NB proof](plann
 covers 72 signatures, state preservation, byte/float values, source failures and
 local/property replacement snapshots. Cross-family bool and mixed-numeric ordinary
 equality remain separate.
+
+## Cross-family mixed numeric ordinary equality — 2026-10-20
+
+`==`/`!=` now admit canonical int/float payload pairs in both orders across all
+four carrier families. The E3 state-comparison path is unchanged: present payloads
+use scalar int-to-float equality; matching false sentinels compare equal; different
+unavailable states and unavailable/payload pairs are unequal. Complete operand
+snapshots preserve source representations and error details.
+
+The runtime generator shares one canonical numeric/matching-string payload-pair
+predicate between cross-family and sentinel/plain equality. Compiler admission
+uses the existing canonical mixed-numeric predicate without family-specific branches.
+[The E4 proof](planning/cross_mixed_equality.md) covers the remaining 48 signatures,
+numeric boundaries, NaNs, eager effects, snapshots and recovery. Cross-family bool
+and other heterogeneous payloads remain separate; strict identity is unchanged.

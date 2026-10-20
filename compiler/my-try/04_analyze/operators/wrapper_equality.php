@@ -73,25 +73,8 @@ final class Wrapper_Equality
 				|| $left_value->matches($context->string_type)
 				|| $left_value->matches(Language_Types::floating(Model::$language_scope));
 		}
-		if (!Floating_Point_Operators::is_mixed_numeric_pair($left_value, $right_value, $context)) {
-			return false;
-		}
-		if (($left_plain || (Nullable_Conversions::payload($left) !== null))
-			&& ($right_plain || (Nullable_Conversions::payload($right) !== null))) {
-			return true;
-		}
-		$left_role = Result_Conversions::role($left);
-		$right_role = Result_Conversions::role($right);
-		if ($left_plain) {
-			return $right_role !== null;
-		}
-		if ($right_plain) {
-			return $left_role !== null;
-		}
-		if (($left_role === null) || ($right_role === null)) {
-			return false;
-		}
-		return $left_role->result_family() === $right_role->result_family();
+		// All supported carrier/plain families now share canonical numeric equality.
+		return Floating_Point_Operators::is_mixed_numeric_pair($left_value, $right_value, $context);
 	}
 
 	/** Only roles whose comparison contracts are admitted here participate. */

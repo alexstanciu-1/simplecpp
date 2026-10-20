@@ -24,12 +24,12 @@ function guarded_fixture_equality_pair(string $left, string $right, string $symb
 	if (in_array($symbol,['===','!=='],true) && $payload!==$right_payload && in_array($payload,['bool','int','float','string'],true) && in_array($right_payload,['bool','int','float','string'],true)) { return true; }
 	if (in_array($symbol,['==','!='],true) && $payload!==$right_payload
 		&& in_array($payload,['int','float'],true) && in_array($right_payload,['int','float'],true)) {
+		$left_types=[$payload]; $right_types=[$right_payload];
 		foreach (['nullable','result','result_or_false','result_or_bool'] as $family) {
-			$left_carrier=$family==='nullable'?'?'.$payload:$family.'<'.$payload.'>';
-			$right_carrier=$family==='nullable'?'?'.$right_payload:$family.'<'.$right_payload.'>';
-			if (in_array($left,[$payload,$left_carrier],true)
-				&& in_array($right,[$right_payload,$right_carrier],true)) { return true; }
+			$left_types[]=$family==='nullable'?'?'.$payload:$family.'<'.$payload.'>';
+			$right_types[]=$family==='nullable'?'?'.$right_payload:$family.'<'.$right_payload.'>';
 		}
+		return in_array($left,$left_types,true) && in_array($right,$right_types,true);
 	}
 	if ($payload!==$right_payload || !in_array($payload,['int','float','bool','string'],true)) { return false; }
 	$carriers=['?'.$payload,'result<'.$payload.'>'];

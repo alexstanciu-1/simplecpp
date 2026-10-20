@@ -434,6 +434,8 @@ admission rule, not a removal of the generic runtime wrapper implementations.
 
 - v0.2 cross-family non-bool equality (2026-10-20): distinct nullable, structured Result, false-sentinel and bool-sentinel families with matching canonical int, float or string payloads compare present values by scalar equality. Matching false sentinel states compare equal across the two sentinel families; distinct unavailable states (null, error, false, true) and unavailable/payload pairs compare unequal. `!=` negates `==`. Comparison preserves states and error metadata, performs no truth conversion or unavailable-payload extraction, and follows whole-state eager snapshots. Bool, mixed numeric pairs and other payload domains remain separate.
 
+- v0.2 cross-family mixed numeric equality extension (2026-10-20): the cross-family state comparison above also admits canonical int/float payloads in both orders. Present values use int-to-float numeric equality, preserving rounding, signed-zero equality and NaN inequality. The unavailable-state rules, stored representations, errors and eager whole-state snapshots are unchanged. Bool and other heterogeneous payload combinations remain separate.
+
 - the temporary typed-boundary bridge is not a general operator-resolution escape hatch and must not be relied on to define operator participation outside the centralized operator surface
 
 

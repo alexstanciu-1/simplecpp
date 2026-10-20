@@ -1421,5 +1421,17 @@ This checks 72 source signatures for matching int/float/string payloads, with
 24 existing same-family runtime controls. `--runtime-only` selects the runtime
 gate; adding `--probe-runtime` records baseline failures without treating them
 as acceptance. Source proofs reuse the state/snapshot fixture's ordinary-cross
-mode and independent oracle. Explicit negatives keep all 24 bool and 48 mixed
-numeric cross-family signatures separate. See [the proof](planning/cross_equality.md).
+mode and independent oracle. The initial proof retained 24 bool and 48 mixed-numeric cross-family negatives;
+E4 below now admits the mixed-numeric pairs while preserving bool exclusions.
+See [the proof](planning/cross_equality.md).
+
+### Cross-family mixed numeric ordinary equality E4 — 2026-10-20
+
+Run `python3 compiler/my-try/tests/mixed_equality.py --group cross --results FRESH`
+on dev002 for all 48 distinct-family int/float `==`/`!=` signatures. Add
+`--runtime-only` for the prerequisite gate; `--probe-runtime` additionally records
+baseline failures rather than claiming acceptance. The independent numeric oracle
+checks every selected state/value combination, rounding and NaNs; source proofs
+check eager snapshots, effects, failures, recovery and all 24 bool cross-family
+exclusions. Existing nullable/Result and sentinel groups remain separate controls.
+See [the E4 report](planning/cross_mixed_equality.md).

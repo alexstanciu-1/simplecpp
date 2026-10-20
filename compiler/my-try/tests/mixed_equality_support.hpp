@@ -17,8 +17,7 @@ template<class P, class Q> bool oracle(State<P> left, State<Q> right) {
 }
 
 template<int L, int R, class V, class P, class W, class Q> long runtime_pair() {
- static_assert((L == R && L >= 0 && L <= 4)
-  || (L == 4 && R >= 0 && R < 4) || (R == 4 && L >= 0 && L < 4));
+ static_assert(L >= 0 && L <= 4 && R >= 0 && R <= 4);
  long count = 0;
  for(auto a : states<L, P>()) for(auto b : states<R, Q>()) {
   auto left = make<L, V>(a);

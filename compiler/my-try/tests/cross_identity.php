@@ -65,10 +65,10 @@ foreach ($forms as $name=>$symbol) foreach ([['n','i']] as [$lt,$rt]) {
 	} finally { unlink($path); rmdir($dir); }
 }
 $negative_count=0;
-if ($ordinary_cross && $payload==='int') {
- foreach ([['bool','bool'],['int','float'],['float','int']] as [$lp,$rp]) foreach (['==','!='] as $symbol) {
-  $lt=$carrier==='nullable'?'?'.$lp:$carrier.'<'.$lp.'>';
-  $rt=$right_carrier==='nullable'?'?'.$rp:$right_carrier.'<'.$rp.'>';
+if (($ordinary_cross || $ordinary_numeric) && !$scalar_pair && $carrier!==$right_carrier && $carrier!=='plain' && $right_carrier!=='plain' && $payload==='int') {
+ foreach (['==','!='] as $symbol) {
+  $lt=$carrier==='nullable'?'?bool':$carrier.'<bool>';
+  $rt=$right_carrier==='nullable'?'?bool':$right_carrier.'<bool>';
   guarded_cross_reject('function bad('.$lt.' $a, '.$rt.' $b): bool { return $a '.$symbol.' $b; }'); ++$negative_count;
  }
 }

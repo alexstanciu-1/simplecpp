@@ -261,12 +261,18 @@ concept equality_carrier = requires { typename equality_carrier_info<T>::payload
 template <typename T>
 using equality_payload_t = typename equality_carrier_info<T>::payload_t;
 
-// This bounded route intentionally excludes bool, mixed payloads and fixed widths.
+// Canonical numeric pairs and matching strings share non-bool equality semantics.
+// Bool, fixed-width and boxed operands retain their separate dispatch contracts.
+template <typename Left, typename Right>
+concept nonbool_equality_payload_pair =
+	((is_default_int<Left> || is_native_float<Left>) && (is_default_int<Right> || is_native_float<Right>))
+	|| (is_string_like<Left> && is_string_like<Right>);
+
+// Distinct families use the state-aware route only for the admitted payload domain.
 template <typename Left, typename Right>
 concept cross_nonbool_equality_pair = equality_carrier<Left> && equality_carrier<Right>
 	&& (equality_carrier_info<Left>::family != equality_carrier_info<Right>::family)
-	&& std::same_as<equality_payload_t<Left>, equality_payload_t<Right>>
-	&& (is_default_int<equality_payload_t<Left>> || is_native_float<equality_payload_t<Left>> || is_string_like<equality_payload_t<Left>>);
+	&& nonbool_equality_payload_pair<equality_payload_t<Left>, equality_payload_t<Right>>;
 } // namespace detail
 
 template <typename T>
@@ -688,17 +694,10 @@ template <typename Left, typename T>
 // Runtime spec 6.10: a bool sentinel differs from canonical non-bool scalars.
 // Preserve existing bool and boxed dispatch; this helper is only used by sentinel branches.
 namespace detail {
-// Sentinel/plain equality admits canonical numeric pairs and matching strings.
-// Keep fixed-width, bool and boxed operands on their existing dispatch paths.
-template <typename Payload, typename Plain>
-concept sentinel_plain_nonbool_pair =
-	((is_default_int<Payload> || is_native_float<Payload>) && (is_default_int<Plain> || is_native_float<Plain>))
-	|| (is_string_like<Payload> && is_string_like<Plain>);
-
 template <typename Payload, typename Left, typename Right>
 [[nodiscard]] inline bool_t sentinel_plain_equal(const Left &lhs, const Right &rhs) {
-	if constexpr ((is_bool<Left> && sentinel_plain_nonbool_pair<Payload, Right>)
-		|| (is_bool<Right> && sentinel_plain_nonbool_pair<Payload, Left>)) {
+	if constexpr ((is_bool<Left> && nonbool_equality_payload_pair<Payload, Right>)
+		|| (is_bool<Right> && nonbool_equality_payload_pair<Payload, Left>)) {
 		return bool_t(false);
 	} else {
 		return bool_t(lhs == rhs);

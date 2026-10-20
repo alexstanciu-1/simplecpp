@@ -1,7 +1,7 @@
 # Overall discovered-issue repair progress
 Doc Status: supporting
 
-Snapshot: 2026-10-20, after E3NB matching non-bool cross-family ordinary equality. This covers all 64
+Snapshot: 2026-10-20, after E4 mixed-numeric cross-family ordinary equality. This covers all 64
 entries in [the issue ledger](language_verification_issues.json), including deferred
 legacy syntax and policy/design issues. It does not count just operators or count
 individual operator signatures as separate closed issues.
@@ -43,8 +43,8 @@ Original verification findings and historical evidence are preserved.
 
 ## Inside V-L07
 
-**32 approved slices completed: 2,664 binary, 64 unary and 432 compound
-signatures (3,160 total).** E3NB adds 72 matching non-bool cross-family ordinary-equality signatures. There are no new scalar prerequisites.
+**33 approved slices completed: 2,712 binary, 64 unary and 432 compound
+signatures (3,208 total).** E4 adds 48 mixed-numeric cross-family ordinary-equality signatures. There are no new scalar prerequisites.
 Aliases count as separate source spellings; the four plain numeric-XOR signatures
 are prerequisites and excluded from this V-L07 total.
 
@@ -81,12 +81,13 @@ are prerequisites and excluded from this V-L07 total.
 | Mixed numeric nullable/Result ordinary equality | 24 | 0 | 0 |
 | Mixed numeric sentinel ordinary equality | 24 | 0 | 0 |
 | Matching non-bool cross-family ordinary equality | 72 | 0 | 0 |
-| Total | 2,664 | 64 | 432 |
+| Mixed-numeric cross-family ordinary equality | 48 | 0 | 0 |
+| Total | 2,712 | 64 | 432 |
 
-Remaining work includes cross-family and mixed ordinary equality semantics, remaining compounds, and other payload/operator domains. The [remaining-signature inventory](vl07_inventory/README.md) now enumerates the
-canonical scalar universe: **zero remaining support targets** and **792 design/scope
+Remaining work includes cross-family bool and other heterogeneous ordinary equality semantics, remaining compounds, and other payload/operator domains. The [remaining-signature inventory](vl07_inventory/README.md) now enumerates the
+canonical scalar universe: **zero remaining support targets** and **744 design/scope
 candidates**, with exclusions and wider domains kept explicit. The original proposed core remains
-**2,080/2,080 signatures (100%)**, with 1,080 additional approved O1/C2/E3I/E4I/E5BNI/E5SI/E4NR/E4S/E3NB signatures. This completes the bounded support inventory, not
+**2,080/2,080 signatures (100%)**, with 1,128 additional approved O1/C2/E3I/E4I/E5BNI/E5SI/E4NR/E4S/E3NB/E4 signatures. This completes the bounded support inventory, not
 all V-L07: design candidates and wider-domain boundaries still need disposition.
 Signature counts measure verified coverage, not engineering effort. The overall 29.7% figure above measures
 closed issues across the entire ledger, not progress within V-L07.
