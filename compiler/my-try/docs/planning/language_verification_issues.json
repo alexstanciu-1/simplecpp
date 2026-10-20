@@ -979,10 +979,18 @@
         "regex_filter"
       ],
       "dependencies": [],
-      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "next_action": "Closed by the approved regex filter/limit goal. Callback ABI, public count-output signatures and legacy wrapper migration remain separate.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "regex_replacement.md",
+        "results": "regex_replacement_results.json",
+        "audit": "regex_replacement_audit.json",
+        "scope": "Strict filter 3/4 forms, positional backreferences, per-row limits, empty/zero validation, preserved rows and source snapshots."
+      }
     },
     {
       "id": "V-R05",
@@ -1155,10 +1163,18 @@
       ],
       "finding": "Three-argument regex_replace admits; documented fourth integer limit rejects during preparation. Existing module audit records const-limit/nonconst-count provider overload collisions for emitted snapshots. This is a missing public overload, distinct from regex_filter semantics and callback ABI.",
       "dependencies": [],
-      "next_action": "Discuss unambiguous provider targets and reference/value overload handling; do not append a speculative metadata row.",
+      "next_action": "Closed by the approved regex filter/limit goal. Callback ABI, public count-output signatures and legacy wrapper migration remain separate.",
       "acceptance": "Production builds prove limits -1, 0 and positive, reject/throw invalid negative per contract, preserve backreferences, and distinguish any separate count-output signature.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Provider overload collision requires shared binding/admission review."
+      "eligibility_reason": "Provider overload collision requires shared binding/admission review.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "regex_replacement.md",
+        "results": "regex_replacement_results.json",
+        "audit": "regex_replacement_audit.json",
+        "scope": "Replacement value-limit binding uses an unambiguous provider target; limits, errors, snapshots and production PCRE2 cold/warm builds pass."
+      }
     },
     {
       "id": "V-D12",

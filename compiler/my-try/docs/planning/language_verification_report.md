@@ -706,3 +706,14 @@ intended unsupported boxing boundary while typed callable storage passes.
 Current progress is **29/64 (45.3125%)**, zero partial and 35 other open issues,
 **+4.6875 percentage points**. Dated earlier findings/counts remain historical.
 No runtime implementation changes, full matrix or native compiler rebuild.
+
+## Regex filter/limit closeout — 2026-10-20
+
+[V-R04 and V-R09](regex_replacement.md) are implemented and verified on dev002.
+Strict filter supports positional backreferences and both arities; replacement
+limits have an unambiguous provider binding. Limit-before-pattern validation now
+also runs for empty input and zero limit, and zero-length replacement preserves
+untouched bytes. Runtime/source oracles and production PCRE2 builds pass.
+Current progress is **31/64 (48.4375%)**, zero partial and 33 other open issues,
+**+3.125 percentage points**. Earlier counts remain dated historical checkpoints.
+Compiler implementation, callback APIs and legacy adapter source are unchanged.

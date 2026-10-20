@@ -2,26 +2,26 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) now closes S09-B1, V-R07 and V-H10. This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) now also closes V-R04 and V-R09. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired, then verified | 29 |
+| Implemented or already repaired, then verified | 31 |
 | Partially implemented and verified | 0 |
-| Other issues not yet closed | 35 |
+| Other issues not yet closed | 33 |
 | Total | 64 |
 
-Fully closed: **29/64 = 45.3125%** (about **45.3% by issue count**). This is not an
+Fully closed: **31/64 = 48.4375%** (about **48.4% by issue count**). This is not an
 engineering-effort estimate. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
-| Light discussion | 13 | 0 | 4 | 17 |
-| Normal discussion | 3 | 0 | 31 | 34 |
+| Light discussion | 14 | 0 | 3 | 17 |
+| Normal discussion | 4 | 0 | 30 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
@@ -42,6 +42,11 @@ bounded checked-payload runtime overload selection; the false-branch fixture als
 passes unchanged. V-R07 exposes all eight vector forms with explicit provider copy
 requirements. V-H10 reaches its intended closure-boxing rejection and preserves
 typed callable storage support. This batch adds three closures, **+4.6875 points**.
+
+V-R04 and V-R09 now expose strict filter and value-limit replacement forms with
+shared validation and preserved zero-length output bytes. The regex batch adds
+two closures, **+3.125 points**, with production PCRE2 builds verified on dev002.
+Callback APIs, count outputs and legacy filter migration remain separate.
 
 “Not closed” does not mean every remaining entry is an accidental regression or an
 authorized implementation task. Some entries still require policy decisions or

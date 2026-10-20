@@ -30,7 +30,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 22 strict fs_* helpers including lock try/release/transfer and file_lock_handle | Shared scalar/container/handle Result calls; providers bundled in snippet runtime |
 | process (opt-in) | Five lifecycle calls, process_handle/process_output and six output fields | Shared storage/Result transport; metadata-declared provider linkage |
-| regex (opt-in) | 10 helpers / 18 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
+| regex (opt-in) | 11 helpers / 21 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
 | source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
 | strings | 52 source helpers / 71 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
 
@@ -186,19 +186,21 @@ installing anything or silently skipping execution.
 | regex_match, regex_match_named | Registered, 2/3 args | Packed or named captures; optional byte offset |
 | regex_match_all, regex_match_all_pattern_order, regex_match_all_named | Registered, 2/3 args | Match-order, pattern-order or named nested containers |
 | regex_grep | Registered | Typed vector<string> input/output, input-order filtering |
-| regex_replace | Registered, 3 args only | Positional backreferences, unlimited replacements |
+| regex_replace | Registered, 3/4 args | Positional backreferences; value limit through an unambiguous provider target |
 | regex_split | Registered, 2/3/4 args | Optional limit/flags; PREG_SPLIT_NO_EMPTY=1 and PREG_SPLIT_DELIM_CAPTURE=2 |
-| regex_replace with limit; replacement/filter count outputs | Held | C++ const-limit/nonconst-count overloads collide for emitted value snapshots; need unambiguous provider bindings and shared reference-overload admission |
-| regex_filter | Held for semantic reconciliation | Its builtin spec says literal replacement; runtime replace_impl expands backreferences; empty inputs also bypass pattern/limit validation |
+| Replacement/filter count outputs | Held separately | Public count-output signatures and reference/value policy remain separate; value-limit forms now use explicit provider targets |
+| regex_filter | Registered, 3/4 args | Backreferences, per-row limits, packed output; limit-before-pattern validation includes empty input and zero limit |
 | regex_replace_callback, regex_replace_callback_array | Pending module re-audit | Structural callable metadata is now available; verify provider callback/container ABI and contracts before registration |
 | preg_* aliases, unsupported output-shape flags | Excluded | Legacy aliases are not strict APIs; runtime retains errors for unsupported split flags |
 
 Empty successful captures are not failure. `take`/`isset` observe Result state;
 container Result conditions and automatic wrapper `empty` remain rejected. Byte
-offsets and `/u` keep existing runtime semantics; registration does not promise new
-Unicode zero-length matching behavior. Scalar and nested container payloads use the
+offsets and `/u` retain their existing contracts. Replacement/filter now preserve
+untouched bytes around zero-length matches, including UTF-8 code-point search
+progress; other matching/callback traversal remains outside that repair. Scalar and nested container payloads use the
 same registry-driven Result transport/copy rules; no regex-specific type admission.
-See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01--regex-contracts-and-binding-prerequisites).
+The [V-R04/V-R09 closeout](regex_replacement.md) supersedes the filter/limit holds
+in the older chapter checkpoint; callback/count-output holds remain. See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01--regex-contracts-and-binding-prerequisites).
 
 ## Remaining work, grouped by prerequisite
 
