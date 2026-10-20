@@ -1,6 +1,25 @@
 # Conditional / Coalesce Runtime Matrix
 Doc Status: normative
 
+## v0.2 homogeneous scalar wrapper coalescing — 2026-10-20
+
+For canonical `T` equal to `int`, `float`, `bool` or `string`, homogeneous pairs
+`nullable<T> ?? nullable<T>`, `result<T> ?? result<T>` and
+`result_or_false<T> ?? result_or_false<T>` produce an owned `T`.
+Both alternatives are validated during preparation; only the needed fallback
+executes. The left is evaluated and captured once. A usable payload, including
+`0`, `0.0`, `false` or `""`, selects that payload without evaluating the fallback.
+Otherwise the fallback is evaluated once and its usable payload is selected.
+If neither branch has a usable payload, throw
+`coalesce_selected_branch_has_no_usable_value_domain`; do not return a wrapper,
+a default payload or silently discard the selected-branch failure.
+
+The source wrappers remain unchanged and results are independent value copies.
+`result_or_bool` remains invalid on either side even when unselected. Cross-family
+wrapper pairs, widening, fixed-width payloads, records and ownership joins are not
+added by this slice. The earlier nullable-record fallback exclusion below remains
+applicable to record payloads.
+
 ## v0.2 nullable inline-record selections — 2026-10-07
 
 For an exact inline-record payload `T` (a struct or `value<Class>`), ternary and

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lang/php/support/php_common.hpp"
+#include "scpp/cast.hpp"
 
 namespace scpp::detail {
 
@@ -63,6 +64,7 @@ template <typename Left, typename Right>
 struct coalesce_result;
 
 template <typename T>
+requires (!coalesce_wrapper_info_v<T>)
 struct coalesce_result<T, T> {
 	using type = T;
 };

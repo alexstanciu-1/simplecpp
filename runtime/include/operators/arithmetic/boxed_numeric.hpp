@@ -26,6 +26,37 @@ Box boxed_numeric_binary(const Box &left, const Box &right, Operation operation,
 	return boxed_numeric_result<Box>(left, right, operation, name);
 }
 
+// Integer-only boxed operations reuse primitive validation and never coerce kinds.
+template <typename Operation>
+dynamic_value dynamic_integer_binary(const dynamic_value &left, const dynamic_value &right,
+	Operation operation, const char *name) {
+	using kind = dynamic_value::kind_t;
+	if (left.kind() != kind::int_v || right.kind() != kind::int_v)
+		throw std::runtime_error(std::string(name) + ": dynamic operation requires int payloads");
+	return dynamic_value{operation(left.get_int(), right.get_int())};
+}
+
+inline dynamic_value operator&(const dynamic_value &left, const dynamic_value &right) {
+	return dynamic_integer_binary(left, right, [](auto lhs, auto rhs) { return lhs & rhs; }, "&");
+}
+inline dynamic_value operator|(const dynamic_value &left, const dynamic_value &right) {
+	return dynamic_integer_binary(left, right, [](auto lhs, auto rhs) { return lhs | rhs; }, "|");
+}
+inline dynamic_value operator^(const dynamic_value &left, const dynamic_value &right) {
+	return dynamic_integer_binary(left, right, [](auto lhs, auto rhs) { return lhs ^ rhs; }, "^");
+}
+inline dynamic_value operator<<(const dynamic_value &left, const dynamic_value &right) {
+	return dynamic_integer_binary(left, right, [](auto lhs, auto rhs) { return lhs << rhs; }, "<<");
+}
+inline dynamic_value operator>>(const dynamic_value &left, const dynamic_value &right) {
+	return dynamic_integer_binary(left, right, [](auto lhs, auto rhs) { return lhs >> rhs; }, ">>");
+}
+inline dynamic_value operator~(const dynamic_value &value) {
+	if (value.kind() != dynamic_value::kind_t::int_v)
+		throw std::runtime_error("dynamic bitwise not requires int payload");
+	return dynamic_value{~value.get_int()};
+}
+
 inline dynamic_value operator+(const dynamic_value &left, const dynamic_value &right) {
 	return boxed_numeric_binary(left, right, std::plus<>{}, "+");
 }

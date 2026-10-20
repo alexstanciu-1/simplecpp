@@ -88,6 +88,24 @@ string/shared-container storage for dynamic. The agreed 24-byte target is an ABI
 measurement goal, not a portable language size guarantee. Shared machinery must not
 provide an admission bypass or duplicate scalar operator semantics.
 
+### v0.2 boxed integer operators — 2026-10-20
+
+Homogeneous `mixed` operands and homogeneous `dynamic` operands admit `&`, `|`,
+`^`, `<<`, `>>` and unary `~`. Each result preserves its boxed family and contains
+an integer payload. Both binary payloads (or the unary payload) must have integer
+kind; bool, float, string, null and container kinds throw instead of coercing.
+This family-preserving result rule supersedes older matrix binary rows that named
+plain `int_t` results. Dynamic never converts through the mixed family.
+
+Binary expressions evaluate left then right exactly once, capturing the left
+value before later source mutation. Runtime kind validation occurs after both
+operand expressions have evaluated. Primitive integer bitwise/shift behavior is
+reused; this slice does not introduce a new invalid-shift-count policy.
+
+The v0.2 admission slice is homogeneous boxed expressions only. Cross-family and
+boxed/scalar pairs, compounds and indexed updates remain separate. Existing
+numeric arithmetic/comparison/concatenation contracts are unchanged.
+
 ### v0.2 migration and repair rules
 
 This is an **intentional, approved breaking change**, not a temporary experiment or
