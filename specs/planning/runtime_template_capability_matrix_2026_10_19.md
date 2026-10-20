@@ -6,6 +6,65 @@ Scope: inventory and proposed extensions for capability-driven `prelower_templat
 This is a review document, not executable configuration or a second type registry.
 No new semantic capabilities, metadata fields or source features are installed by it.
 
+## Current coverage contract — 2026-10-20
+
+Reviewed against `b52a02a8`. This section supersedes the historical work-order and
+gap descriptions below; dated evidence remains a record of its tested revision.
+The general path still requires both API settings `prelower_templates` and
+`concrete_type_substitution`. The CLI flag alone still selects historical recipes.
+This table is evidence, not an admission registry or a promise of full-family support.
+
+**Registered** means an existing semantic identity/protocol and its C++ binding.
+**Concrete-compatible** means the indicated adapter and physical interface exist;
+Clang must still accept the actual provider/type combination.
+**Template-free proven** means a complete application-input closure audit, not just
+absence of template spellings in generated text or a successful native build.
+**Unsupported** means an explicit rejection; **unproved** is not an admission promise.
+
+| Surface | Registered / existing owner | Concrete-compatible scope | Template-free proof and remaining boundary |
+|---|---|---|---|
+| Integer widths, boolean, float, string | Compiler-known identities; core `cpp_types`; prepared literal/operator/conversion facts | Scalar and byte interfaces, opaque storage and demanded operation forwarding | [Accounting closure](results/prelower_closure_coverage_2026_10_20/README.md) proves its used subset. [Binding/demand proof](results/prelower_runtime_template_demand_2026_10_19/README.md) is broader representation evidence, not all widths × operations closure coverage |
+| Null output | Internal non-storable sentinel; intrinsic backend binding; prepared output | Generic output bridge borrows the sentinel; template-free `null_t.hpp` | [Complete two-unit closure and ordered output](results/prelower_null_output_2026_10_20/README.md). No new source storage type |
+| Vector/hash, nested stored arguments | Runtime type/initialization/indexing/iteration contracts; existing registry | Recursive concrete arguments and native outer implementation; demanded interfaces only | Accounting covers its actual container uses. [Nested initialization](results/prelower_concrete_initializers_2026_10_19/README.md) and [indexing](results/prelower_indexing_2026_10_19/README.md) prove additional behavior/counters, not arbitrary nesting or every key/payload combination |
+| Source records/classes as fields, signatures and payloads | Completed source facts; ordinary type/member emission; source declaration artifacts | Concrete fields/signatures, reference identity, payload declarations and construction | [Source-field proof](results/prelower_source_fields_2026_10_19/README.md); accounting closure includes its source classes. Forward-declarable recursion works; unresolvable generated header/layout cycles reject |
+| Shared/unique/value storage | Existing ownership definitions/value modifier, storage policy and prepared transfers; core recipes | Stored/payload distinction; pointee access and trait-probed lifecycle; source construction/upcast adapters | [Source handles](results/prelower_source_handles_2026_10_19/README.md) and earlier [source storage](results/prelower_source_storage_2026_10_19/README.md) are bounded proofs. Accounting is not a full unique/value operation matrix; no blanket pointer-wrapper coverage |
+| Weak operations, object tests/casts | Existing prepared ownership/type-test decisions | Concrete weak creation/locking and object-test/cast adapters missing | Explicitly rejected in concrete mode; [rejection/recovery](results/prelower_operation_boundaries_2026_10_20/README.md). This does not reject all ownership storage |
+| Nullable/Result, mixed/dynamic | Compiler-known identities with core recipes; existing presence/boxed/result facts | Representation demand exists; operation compatibility remains separate. Bounded nullable mutation proof exists | [Mutation evidence](results/prelower_concrete_mutations_2026_10_19/README.md) is not nested-carrier coverage. `take`, boxed extraction and runtime-backed truthiness/value probes explicitly reject. General composition, write-back and output remain unproved |
+| Empty/nonempty initialization | Prepared factory/entry conversions; `CPP_Data_Construction` and `CPP_Initializer_Buffer` | Ordered entries and snapshots; factory constructs in final storage; existing inline/heap buffer policy | [Initializer proof](results/prelower_concrete_initializers_2026_10_19/README.md): throwing copies, order and matching counters. Accounting closure covers its initializers |
+| Ordinary members and source calls | Prepared call/receiver/boundary facts; `CPP_Concrete_Members`, existing source emitters | Source member emission; demanded runtime void-returning nonvariadic members | [Member proof](results/prelower_members_2026_10_19/README.md). Runtime member value/reference results and variadics explicitly reject; source method results are a separate already-tested path |
+| Index/read/write, append, unset, compound updates | Prepared place/keyed-path decisions; ordinary sequencing; `CPP_Concrete_Index` | Concrete overloads invoke native operations, preserving stored references and re-resolution | [Indexing](results/prelower_indexing_2026_10_19/README.md), [compound](results/prelower_concrete_compound_2026_10_19/README.md), accounting closure. No independent container semantics in engine |
+| Iteration | Prepared iteration protocol; ordinary foreach lifetime/control flow; `CPP_Concrete_Iteration` | Concrete inline range/cursor/entry transport over substituted source | [Vector/hash/custom tray proof](results/prelower_concrete_iteration_2026_10_19/README.md); accounting closure. Unsubstituted adapter source explicitly rejects; broader mutation/provider protocols unproved |
+| Binary operations, casts and mutation | Existing prepared decisions; native renderer reused by `CPP_Runtime_Operations` | Demand-driven forwarding with existing operand sequencing/result construction | [Binary](results/prelower_concrete_binary_2026_10_19/README.md), [casts](results/prelower_concrete_casts_2026_10_19/README.md), [mutation](results/prelower_concrete_mutations_2026_10_19/README.md), accounting closure. No exhaustive operator/type product or arbitrary ownership/provider conversions claim |
+| Output | Prepared output admission, ordinary sequencing and runtime `echo_one` | Borrowed operand transport; one full expression per operand | [Output counters](results/prelower_concrete_output_2026_10_19/README.md), newer null proof and accounting closure. Nested wrapper formatters/provider composition unproved |
+| Runtime free calls | Registered callable binding and prepared parameter/boundary/result facts | Owned results, ordinary value/reference arguments; single prepared observation path | [Runtime-call proof](results/prelower_concrete_runtime_calls_2026_10_19/README.md). Reference results/variadics reject; observation path rejects multiple inputs, conversions and parameter/argument count mismatch. Registration alone is insufficient |
+| Callables, source exceptions, enum helpers, match fallback | Existing source facts and emitters | Concrete callback/exception/helper transport missing; explicit-default match remains supported | [Callable](results/prelower_callable_boundary_2026_10_20/README.md), [exception](results/prelower_exception_boundaries_2026_10_20/README.md), [value](results/prelower_value_boundaries_2026_10_20/README.md), [runtime](results/prelower_runtime_boundaries_2026_10_20/README.md) rejection/recovery proofs. Enum declarations/equality are not blanket rejected |
+| Other module/provider types and transitive headers | Existing module catalogs and C++ bindings | Only matching established physical protocols; no family-specific engine extensions | General provider closure is **unproved**, not universally rejected today. Header spelling validation does not inspect header contents. Production enforcement and PCH compatibility remain blockers to the public strict option |
+
+The 16-unit accounting audit is a whole-workload proof against its saved publication,
+not a fresh execution of every row on today's checkout. Focused native counter proofs
+do not by themselves prove complete template-free input. O0 boundary parity is the
+current target; recorded stock-O2 allocation-elision differences remain deferred.
+
+### Contract checks and next enforcement boundary
+
+`Runtime_Catalog_Reader` and `CPP_Runtime_Type_Bindings` validate recipe vocabulary,
+targets, native argument mapping, stored/payload roles, pointee and literal/byte
+interfaces. Candidate installation through `Compiler_Lifecycle` retains the installed
+configuration on rejection. Clang validates provider implementations and probes native
+layout/traits; valid JSON cannot prove those C++ implementations obey the protocol.
+`concrete_boundary` selects representation, **not** transitive-header certification.
+
+Fresh shared-runner checks on 2026-10-20: `runtime_type_bindings.php`,
+`runtime_inventory.php`, `runtime_protocols.php`, `runtime_types.php`.
+Results: `/tmp/prelower-coverage-contract-20261020/logs`. These are PHP contract
+checks, not new native/closure or accounting execution evidence.
+
+Next implementation boundary: enforce generated application input and PCH compatibility
+through existing generation/publication/native-build owners before changing the public
+flag. Keep arbitrary provider exposure and remaining operation combinations explicit
+until that gate exists; no allowlist, parallel registry, semantic re-analysis or silent
+ordinary-template fallback is authorized by this table.
+
 ## Agreed ownership: extend the existing model
 
 `vector` and `hash` already originate in runtime-owned metadata. Their definitions,

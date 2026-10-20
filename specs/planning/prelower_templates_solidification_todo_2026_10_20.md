@@ -53,27 +53,32 @@ claim complete closure validation or broaden runtime coverage.
   historical recipes; accounting uses concrete substitution through the API.
 - Metadata owns type recipes and capabilities, but some physical conventions are
   fixed adapter protocols. Registered does not imply concrete-compatible or proven
-  template-free. Callable representation can still expose `std::function`; several
+  template-free. The original audit found a callable `std::function` escape, now
+  explicitly rejected in concrete mode; several
   call shapes and generated header/layout cycles are explicitly unsupported.
 
 ## 1. Settle the supported boundary and runtime interaction contract
 
 Owners: runtime metadata/specs, existing registry and prepared facts, C++ bindings.
 
-- [ ] Produce one current coverage table for the surface already exercised by the
+- [x] Produce one current coverage table for the surface already exercised by the
   general path. Distinguish **registered**, **concrete-compatible**, **template-free
   proven**, and **explicitly unsupported/unproved**. Reuse the existing
   [family/capability matrix](runtime_template_capability_matrix_2026_10_19.md);
-  this is documentation/evidence, not another executable registry.
-- [ ] Include scalars/strings, nested containers, source-class payloads, shared/unique/
+  this is documentation/evidence, not another executable registry. See its
+  [current coverage contract](runtime_template_capability_matrix_2026_10_19.md#current-coverage-contract--2026-10-20),
+  reviewed against `b52a02a8`; historical checkpoints remain explicitly dated.
+- [x] Include scalars/strings, nested containers, source-class payloads, shared/unique/
   value storage, initialization, ordinary members, indexing/append/unset, iteration,
   conversions, output and runtime calls. Do not mark an entire family supported
   because one operation or accounting passed.
-- [ ] Reconcile [metadata](../runtime_module_metadata.md) and the
+- [x] Reconcile [metadata](../runtime_module_metadata.md) and the
   [interoperability contract](../../runtime/specs/concrete_type_interoperability.md)
   with current implementation. State the division explicitly: metadata declares
   semantics/bindings; preparation selects operations and boundaries; backend adapters
   implement concrete interfaces; runtime implementations retain dynamic algorithms.
+  The interoperability guide now separates these owners, physical transport and
+  layout-probe authority from source admission and complete closure evidence.
 - [ ] Audit argument/result transport, receiver adaptation, borrowing, lifecycle and
   physical interface assumptions. Keep fixed shared protocols documented in code/specs;
   add metadata only for real provider variation. Do not encode arbitrary C++ snippets
