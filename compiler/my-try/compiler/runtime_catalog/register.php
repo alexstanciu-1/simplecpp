@@ -114,6 +114,11 @@ final class Runtime_Catalog_Registration
 					$signature->parameters = $parameters;
 					$result->register_function($function->identity, $function->name, $signature);
 				}
+				foreach ($function->qualified_aliases as $qualifier) {
+					if ($member_owner !== null) { throw new \RuntimeException('Runtime members cannot expose qualified aliases'); }
+					self::validate_qualifier($qualifier);
+					$result->register_qualified_alias($qualifier, $result->function_definition($function->identity));
+				}
 				if ($member_owner !== null) {
 					$membership /** runtime_callable_member_spec */ = $function->member;
 					$result->register_member($member_owner, $result->function_definition($function->identity), $membership->static_member);
@@ -121,6 +126,21 @@ final class Runtime_Catalog_Registration
 			}
 		}
 		return $result;
+	}
+
+	/** Bounded bare qualifiers, not namespace paths or contextual type keywords. */
+	private static function validate_qualifier(string $name): void
+	{
+		if (($name === '') || ($name === 'self') || ($name === 'parent') || ($name === 'static')) {
+			throw new \RuntimeException('Invalid runtime alias qualifier');
+		}
+		$length = string_byte_len($name);
+		for ($index = 0; $index < $length; $index++) {
+			$byte = string_byte_at($name, $index);
+			$letter = (($byte >= 65) && ($byte <= 90)) || (($byte >= 97) && ($byte <= 122)) || ($byte === 95);
+			$digit = ($index > 0) && ($byte >= 48) && ($byte <= 57);
+			if (!$letter && !$digit) { throw new \RuntimeException('Invalid runtime alias qualifier'); }
+		}
 	}
 
 	/** Members belong to definitions, not enumerated concrete template applications. */

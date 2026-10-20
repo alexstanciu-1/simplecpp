@@ -47,6 +47,8 @@
     {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"}
   ],
   "functions": [
+    {"id":"core.microtime.0","name":"microtime","qualified_aliases":["php"],"parameters":[],"returns":"string"},
+    {"id":"core.microtime.1","name":"microtime","qualified_aliases":["php"],"parameters":[{"name":"as_float","type":"bool","passing":"value"}],"returns":"float"},
     {"id":"core.vector_reserve.2","name":"vector_reserve","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"},{"name":"capacity","type":"int","passing":"value"}],"returns":"void"},
     {"id":"core.vector_capacity.1","name":"vector_capacity","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"observe"}],"returns":"int"},
     {"id":"core.vector_resize.3","name":"vector_resize","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"},{"name":"count","type":"int","passing":"value"},{"name":"default_value","type":{"parameter":"T"},"passing":"value","requires_copy":true}],"returns":"void"},
@@ -113,6 +115,8 @@
     }
   ],
   "cpp": [
+    {"id":"core.microtime.0","symbol":"scpp::php::microtime","header":"scpp/lang/php.hpp"},
+    {"id":"core.microtime.1","symbol":"scpp::php::microtime","header":"scpp/lang/php.hpp"},
     {"id":"core.vector_reserve.2","symbol":"scpp::php::vector_reserve","header":"scpp/lang/php.hpp"},
     {"id":"core.vector_capacity.1","symbol":"scpp::php::vector_capacity","header":"scpp/lang/php.hpp"},
     {"id":"core.vector_resize.3","symbol":"scpp::php::vector_resize","header":"scpp/lang/php.hpp"},

@@ -62,6 +62,26 @@ Reference-bearing signatures participate in exact-type overload selection. Ordin
 call admission still checks reference places, access and lifetime after selection.
 Reference/value or readonly/writable mode alone cannot distinguish overloads.
 
+### Explicit qualified callable aliases
+
+A free function may add `"qualified_aliases": ["php"]`. Each entry exposes the
+same owned callable identity as `qualifier::name(...)`, using the function's
+existing name, signature and backend binding. Overload selection, argument
+preparation and snapshots follow the ordinary call path. This indexes identities;
+it creates neither a language type nor a general namespace.
+
+Qualifiers are nonempty ASCII identifiers (letter/underscore first, then letters,
+underscores or digits). `self`, `parent` and `static` are reserved and rejected.
+Duplicate qualifiers on one callable, nested paths and aliases on member contracts
+are rejected before catalog publication. Absent aliases expose only the free call.
+
+A visible type takes precedence over the alias, including when its method is
+missing or lookup is ambiguous. Shared preparation observes the type lookup even
+when empty, so adding/removing source types invalidates retained alias calls.
+Configuration/reset reinstalls the alias index with the callable catalog; aliases
+never retain source facts. Current production exposure is limited to the two
+[microtime](builtins/datetime/microtime.md) overloads under `php`.
+
 ### Checked-payload fallback for overloaded calls
 
 The experimental v0.2 compiler first performs exact concrete/generic selection.

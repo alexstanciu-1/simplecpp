@@ -10,12 +10,37 @@ final class Runtime_Callables
 	private Keyed_Storage $members /** Keyed_Storage<runtime_callable_member> */;
 	private Key_Storage_List $member_names /** Key_Storage_List<runtime_callable_member> */;
 
+	private Key_Storage_List $qualified_names /** Key_Storage_List<runtime_function_definition> */;
+
 	public function __construct()
 	{
+		$this->qualified_names = new Key_Storage_List /** Key_Storage_List<runtime_function_definition> */();
 		$this->definitions = new Keyed_Storage /** Keyed_Storage<registered_static_factory> */();
 		$this->functions = new Keyed_Storage /** Keyed_Storage<runtime_function_definition> */();
 		$this->members = new Keyed_Storage /** Keyed_Storage<runtime_callable_member> */();
 		$this->member_names = new Key_Storage_List /** Key_Storage_List<runtime_callable_member> */();
+	}
+
+	/** Alias membership indexes the original identity; it creates no language type. */
+	public function register_qualified_alias(string $qualifier, runtime_function_definition $target): void
+	{
+		if ($this->function_definition($target->key()) !== $target) {
+			throw new \LogicException('Runtime alias target belongs to another catalog');
+		}
+		$names /** Key_Storage_List<runtime_function_definition> */ = $this->qualified_names;
+		$key = $qualifier . '::' . $target->name();
+		foreach ($names->named($key) as $existing) {
+			if ($existing === $target) { throw new \RuntimeException('Duplicate runtime qualified alias'); }
+		}
+		$names->add($key, $target);
+	}
+
+	public function qualified_named(string $qualifier, string $name): array /** vector<callable_definition_i> */
+	{
+		$result /** vector<callable_definition_i> */ = [];
+		$names /** Key_Storage_List<runtime_function_definition> */ = $this->qualified_names;
+		foreach ($names->named($qualifier . '::' . $name) as $target) { $result[] = $target; }
+		return $result;
 	}
 
 	/** Membership observes the already owned callable; it does not copy its contract. */
