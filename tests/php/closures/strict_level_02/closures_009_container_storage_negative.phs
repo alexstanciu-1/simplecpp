@@ -1,4 +1,4 @@
-$items = [];
+$items vector<mixed> = [];
 $items[] = function (): int {
 	return 1;
 };
